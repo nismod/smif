@@ -1,0 +1,12 @@
+-   repo: git://github.com/pre-commit/pre-commit-hooks
+    sha: 1858edd9da05ded6859b23ef9bdd412b75977937
+    hooks:
+    -   id: flake8
+    args:
+    - --exclude=docs/conf.py
+-   repo: git://github.com/FalconSocial/pre-commit-python-sorter
+    sha: d044ff27300a6dc8b1a56cd22552e3a810dc6f49
+    hooks:
+    -   id: python-import-sorter
+        args:
+        - --silent-overwrite
