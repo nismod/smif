@@ -4,6 +4,8 @@ smif
 
 This is the documentation of **smif**.
 
+.. inheritance-diagram:: smif.abstract
+
 .. note::
 
     This is the main page of your project's `Sphinx <http://sphinx-doc.org/>`_

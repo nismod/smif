@@ -8,20 +8,21 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+# -- Hack for ReadTheDocs ------------------------------------------------------
+# This hack is necessary since RTD does not issue `sphinx-apidoc` before running
+# If extensions (or modules to document with autodoc) are in another directory,
+# DON'T FORGET: Check the box "Install your project inside a virtualenv using
+# setup.py install" in the RTD Advanced Settings.
+# `sphinx-build -b html . _build/html`. See Issue:
+# https://github.com/rtfd/readthedocs.org/issues/1139
+
+import os
 import sys
 
-# If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
 
-# -- Hack for ReadTheDocs ------------------------------------------------------
-# This hack is necessary since RTD does not issue `sphinx-apidoc` before running
-# `sphinx-build -b html . _build/html`. See Issue:
-# https://github.com/rtfd/readthedocs.org/issues/1139
-# DON'T FORGET: Check the box "Install your project inside a virtualenv using
-# setup.py install" in the RTD Advanced Settings.
-import os
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 if on_rtd:
     import inspect
@@ -45,8 +46,9 @@ if on_rtd:
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
               'sphinx.ext.autosummary', 'sphinx.ext.viewcode', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest', 'sphinx.ext.ifconfig', 'sphinx.ext.pngmath',
-              'sphinx.ext.napoleon']
+              'sphinx.ext.doctest', 'sphinx.ext.ifconfig', 'sphinx.ext.imgmath',
+              'sphinx.ext.napoleon', 'sphinx.ext.inheritance_diagram',
+              'sphinx.ext.graphviz']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
