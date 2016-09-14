@@ -6,6 +6,7 @@ Feature: Direct dependencies link two sector models in one direction
       And nismod is initialised with a water_supply sector
       And both of the sectors cover the same region
       And are run for the same time-period
+      And a dependency for energy_supply is water
     When the simulation is performed
       And raininess is 1
     Then the energy_supply sector uses all the water
