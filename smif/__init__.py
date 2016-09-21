@@ -19,7 +19,3 @@ try:
     __version__ = pkg_resources.get_distribution(__name__).version
 except:
     __version__ = 'unknown'
-
-from .abstract import SectorModel
-from .water_supply import WaterSupply
-
