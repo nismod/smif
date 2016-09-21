@@ -53,6 +53,8 @@ class SectorModel(ABC):
     """
     def __init__(self):
         self._run_successful = None
+        self.results = None
+        self.model = None
 
     @property
     def run_successful(self):
@@ -159,7 +161,8 @@ class Input(ABC):
             print('{}'.format(input_tuple))
 
 
-class Dependency(Input):
+
+class Dependency(Input, ABC):
     """A dependency is a type of input which links interfaces
     """
 
@@ -199,19 +202,15 @@ class Asset(ABC):
     The Asset-state is also persisted (written to the datastore)
 
     """
+    assets = []
+
     def __init__(self, name, capacity):
         """
         """
         self._name = name
         self._capacity = capacity
         self._new_capacity = None
-
-    @classmethod
-    @abstractmethod
-    def write_assets_to_datastore(self):
-        """Writes the current :class:`State` of the Asset to the datastore
-        """
-        pass
+        self.assets.append(self)
 
     @abstractmethod
     def get_decisions(self):
@@ -220,12 +219,33 @@ class Asset(ABC):
         pass
 
     @property
+    def capacity(self):
+        return self._capacity
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
     def new_capacity(self):
         return self._new_capacity
 
-    @classmethod
     def get_state(self):
-        return self
+        return [{x._name: x._capacity} for x in self.assets]
+
+
+class ConcreteAsset(Asset):
+
+    def write_assets_to_datastore(self):
+        """Writes the current :class:`State` of the Asset to the datastore
+        """
+        pass
+
+    def get_decisions(self):
+        """Returns a container of :class:`Decision`
+        """
+        pass
+
 
 
 class AbstractState(ABC):
@@ -235,18 +255,52 @@ class AbstractState(ABC):
     def update_state(self):
         pass
 
+    @abstractmethod
+    def write_state_to_datastore(self):
+        """Writes the current state of the sector model to the datastore
+        """
+        pass
 
 class State(AbstractState):
-    """A static representation of an Interface's assets
+    """A static representation of a sector model's assets
 
     The state is used to record (and persist) the inter-temporal transition
     from one time-step to the next of the :class:`Interface`
+
+    Arguments
+    =========
+    region : str
+    timestep : int
+    sector_model : str
+    assets : :class:`Asset`
+
     """
+
+
     def __init__(self, region, timestep, sector_model):
+        self._assets = []
         self._region = region
         self._timestep = timestep
         self._sector_model = sector_model
-        self.assets = Asset.get_state()
+
+    def initialise_from_tuples(self, list_of_assets):
+        for asset in list_of_assets:
+            self._assets.append(ConcreteAsset(asset[0], asset[1]))
+
+    @property
+    def current_state(self):
+        assets = {asset.name : asset.capacity for asset in self._assets}
+
+        return {'model': self._sector_model,
+                'region': self._region,
+                'timestep': self._timestep,
+                'assets': assets
+               }
+
+    def write_state_to_datastore(self):
+        """Writes the current state of the sector model to the datastore
+        """
+        pass
 
     def update_state(self):
         self.increment_timestep()
