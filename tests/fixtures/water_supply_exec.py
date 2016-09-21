@@ -1,6 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""Implements example simulation model which can be run from the command line
+
+Arguments
+=========
+raininess : int
+    Sets the amount of rain
+
+"""
+
 from argparse import ArgumentParser
+
 
 class ExampleWaterSupplySimulation():
     """An example simulation model used for testing purposes
@@ -17,10 +27,14 @@ class ExampleWaterSupplySimulation():
         print("water,{}".format(self.water))
         print("cost,{}".format(self.cost))
 
+
 def argparse():
     parser = ArgumentParser()
-    parser.add_argument("--raininess")
+    parser.add_argument("--raininess",
+                        type=int,
+                        help="Sets the amount of rain")
     return parser.parse_args()
+
 
 def main():
     args = argparse()
