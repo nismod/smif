@@ -12,7 +12,7 @@ __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class Commodity(ABC):
@@ -34,8 +34,8 @@ class Commodity(ABC):
         self._name = value
 
     @classmethod
-    def print_commodities(self):
-        for commodity in self.names:
+    def print_all_commodities(cls):
+        for commodity in cls.names:
             print("{}".format(commodity))
 
 
@@ -55,6 +55,7 @@ class SectorModel(ABC):
         self._run_successful = None
         self.results = None
         self.model = None
+        self._model_executable = None
 
     @property
     def run_successful(self):
@@ -97,14 +98,12 @@ class SectorModel(ABC):
         pass
 
     @property
-    @abstractmethod
     def model_executable(self):
         """The path to the model executable
         """
         return self._model_executable
 
     @model_executable.setter
-    @abstractmethod
     def model_executable(self, value):
         """
         """
@@ -159,7 +158,6 @@ class Input(ABC):
     def list_inputs(self):
         for input_tuple in self.inputs:
             print('{}'.format(input_tuple))
-
 
 
 class Dependency(Input, ABC):
@@ -247,7 +245,6 @@ class ConcreteAsset(Asset):
         pass
 
 
-
 class AbstractState(ABC):
     """
     """
@@ -260,6 +257,7 @@ class AbstractState(ABC):
         """Writes the current state of the sector model to the datastore
         """
         pass
+
 
 class State(AbstractState):
     """A static representation of a sector model's assets
@@ -276,7 +274,6 @@ class State(AbstractState):
 
     """
 
-
     def __init__(self, region, timestep, sector_model):
         self._assets = []
         self._region = region
@@ -289,13 +286,13 @@ class State(AbstractState):
 
     @property
     def current_state(self):
-        assets = {asset.name : asset.capacity for asset in self._assets}
+        assets = {asset.name: asset.capacity for asset in self._assets}
 
         return {'model': self._sector_model,
                 'region': self._region,
                 'timestep': self._timestep,
                 'assets': assets
-               }
+                }
 
     def write_state_to_datastore(self):
         """Writes the current state of the sector model to the datastore

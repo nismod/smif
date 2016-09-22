@@ -115,16 +115,17 @@ class WaterSupplyExecutable(SectorModel):
     """
 
     def initialise(self, data):
-        self.model = self.model_executable()
+        self.model = self.model_executable
         self.data = data
         self.results = None
         self.run_successful = None
+        self.model_executable = './tests/fixtures/water_supply_exec.py'
 
     def optimise(self, method, decision_vars, objective_function):
         pass
 
     def simulate(self):
-        executable = self.model_executable()
+        executable = self.model_executable
         raininess = self.data['raininess']
         argument = "--raininess={}".format(str(raininess))
         output = subprocess.check_output([executable, argument])
@@ -139,6 +140,3 @@ class WaterSupplyExecutable(SectorModel):
             if len(values) == 2:
                 results[str(values[0])] = float(values[1])
         return results
-
-    def model_executable(self):
-        return './tests/fixtures/water_supply_exec.py'

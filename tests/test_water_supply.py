@@ -1,5 +1,6 @@
-import pytest
-from tests.fixtures.water_supply import WaterSupplyPython, WaterSupplyExecutable
+from tests.fixtures.water_supply import (WaterSupplyExecutable,
+                                         WaterSupplyPython)
+
 
 def test_simulate_rain_python():
     ws = WaterSupplyPython()
@@ -7,7 +8,7 @@ def test_simulate_rain_python():
         "raininess": 1
     })
     ws.simulate()
-    assert ws.run_successful == True
+    assert ws.run_successful
     results = ws.results
     assert results["water"] == 1
 
@@ -18,9 +19,10 @@ def test_simulate_rain_cost_python():
         "raininess": 1
     })
     ws.simulate()
-    assert ws.run_successful == True
+    assert ws.run_successful
     results = ws.results
     assert results["cost"] == 1
+
 
 def test_simulate_rain_executable():
     ws = WaterSupplyExecutable()
@@ -28,7 +30,7 @@ def test_simulate_rain_executable():
         "raininess": 1
     })
     ws.simulate()
-    assert ws.run_successful == True
+    assert ws.run_successful
     results = ws.results
     assert results['water'] == 1
 
@@ -39,6 +41,6 @@ def test_simulate_rain_cost_executable():
         "raininess": 1
     })
     ws.simulate()
-    assert ws.run_successful == True
+    assert ws.run_successful
     results = ws.results
     assert results['cost'] == 1
