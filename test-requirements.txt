@@ -4,5 +4,5 @@
 pytest-cov
 pytest
 behave
-pre-commit
-pyyaml
+#pre-commit
+#pyyaml
