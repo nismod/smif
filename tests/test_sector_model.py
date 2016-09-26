@@ -1,6 +1,14 @@
+import logging
+
 from smif.abstract import ConcreteAsset as Asset
 from smif.abstract import State
 from tests.fixtures.water_supply import WaterSupplyPythonAssets
+
+_log_format = '%(asctime)s %(name)-12s: %(levelname)-8s %(message)s'
+logging.basicConfig(filename='test_sector_model.log',
+                    level=logging.DEBUG,
+                    format=_log_format,
+                    filemode='w')
 
 
 class TestAssets:
@@ -36,13 +44,16 @@ class TestStates:
 
     def test_declaring_a_state(self):
 
+        state_dict = {'mega plant': 100.,
+                      'wobbly pipes': 100.}
+
         list_of_assets = [('mega plant', 100.,
                            'oxford', 2010, 'water_supply'),
                           ('wobbly pipes', 100.,
                            'oxford', 2010, 'water_supply')
                           ]
-        state_parameter_map = {'mega plant': None,
-                               'wobbly pipes': None}
+        state_parameter_map = {'mega plant': state_dict['mega plant'],
+                               'wobbly pipes': state_dict['wobbly pipes']}
         state = State('oxford', 2010, 'water_supply', state_parameter_map)
         state.initialise_from_tuples(list_of_assets)
         actual_current_state = state.current_state
@@ -69,10 +80,23 @@ class TestSectorModel:
         actual_pre_state = ws.state.current_state
 
         assert actual_pre_state['assets'] == expected_pre_state
+        assert ws.model.number_of_treatment_plants == 1
+
+        ws.simulate()
+        assert ws.results['water'] == 1
+        assert ws.results['cost'] == 1
 
         additional_asset = [{'name': 'treatment plant', 'capacity': 1}]
         ws.state.add_new_capacity(additional_asset)
-        ws.state.update_asset_capacities()
+        ws.state.update_state()
         actual_post_state = ws.state.current_state
         expected_post_state = {'treatment plant': 2}
         assert actual_post_state['assets'] == expected_post_state
+
+        assert ws.state._assets['treatment plant'].capacity == 2
+        # Note that because we pass by value, the state method cannot update
+        # sector model directly.
+        ws.simulate()
+        assert ws.model.number_of_treatment_plants == 2
+        assert ws.results['water'] == 2
+        assert ws.results['cost'] == 2

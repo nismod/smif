@@ -58,7 +58,6 @@ class SectorModel(ABC):
         A mapping between :class:`Dependency` and sector model inputs
     output_hooks : dict
         A mapping between :class:`Output` and sector model outputs
-    run_successful
 
     """
     def __init__(self):
@@ -67,6 +66,12 @@ class SectorModel(ABC):
         self.model = None
         self._model_executable = None
         self.state = None
+
+    @abstractmethod
+    def initialise(self):
+        """Use this to initialise the model
+        """
+        pass
 
     @property
     def run_successful(self):
@@ -116,7 +121,7 @@ class SectorModel(ABC):
 
     @model_executable.setter
     def model_executable(self, value):
-        """
+        """The path to the model executable
         """
         self._model_executable = value
 
@@ -210,6 +215,13 @@ class Asset(ABC):
 
     The Asset-state is also persisted (written to the datastore)
 
+    Parameters
+    ==========
+    name : str
+        The name of the asset
+    capacity : float
+        The initial capacity of the asset
+
     """
     assets = []
 
@@ -220,6 +232,7 @@ class Asset(ABC):
         self._capacity = capacity
         self._new_capacity = 0
         self._retiring_capacity = 0
+        self._model_asset = None
         self.assets.append(self)
 
     def get_decisions(self):
@@ -229,6 +242,8 @@ class Asset(ABC):
 
     @property
     def capacity(self):
+        """The current capacity of the asset
+        """
         return self._capacity
 
     @capacity.setter
@@ -237,10 +252,14 @@ class Asset(ABC):
 
     @property
     def name(self):
+        """The name of the asset
+        """
         return self._name
 
     @property
     def new_capacity(self):
+        """The capacity of the asset which will be added when updating state
+        """
         return self._new_capacity
 
     @new_capacity.setter
@@ -249,6 +268,8 @@ class Asset(ABC):
 
     @property
     def retiring_capacity(self):
+        """The capacity of the asset which will be removed when updating state
+        """
         return self._retiring_capacity
 
     @retiring_capacity.setter
@@ -257,6 +278,8 @@ class Asset(ABC):
 
     @classmethod
     def get_state(cls):
+        """Returns the state of all assets
+        """
         return [{asset.name: asset.capacity} for asset in cls.assets]
 
 
@@ -275,9 +298,39 @@ class ConcreteAsset(Asset):
 
 class AbstractState(ABC):
     """
+
+    Parameters
+    ==========
+    region : str
+        The name of the region
+    timestep : int
+        The timestep of the state
+    sector_model : str
+        The name of the sector model
+    state_parameter_map : dict
+        The mapping of the asset names (key) and the sector model parameters
+        (value) which can be edited in the model to add
+        or remove asset capacity
     """
+
+    def __init__(self, region, timestep, sector_model, state_parameter_map):
+        self._assets = {}
+        self._region = region
+        self._timestep = timestep
+        self._sector_model = sector_model
+        self._state_parameter_map = state_parameter_map
+
+    def update_state(self, timestep_increment=1):
+        self._increment_timestep(timestep_increment)
+        self._update_asset_capacities()
+
+    def _increment_timestep(self, increment=1):
+        """Increments the timestep by step-length
+        """
+        self._timestep += increment
+
     @abstractmethod
-    def update_state(self):
+    def _update_asset_capacities(self):
         pass
 
     @abstractmethod
@@ -293,32 +346,45 @@ class State(AbstractState):
     The state is used to record (and persist) the inter-temporal transition
     from one time-step to the next of the :class:`Interface`
 
-    Parameters
-    ==========
-    region : str
-    timestep : int
-    sector_model : :class:`SectorModel`
-
     """
 
-    def __init__(self, region, timestep, sector_model, state_parameter):
-        self._assets = {}
-        self._region = region
-        self._timestep = timestep
-        self._sector_model = sector_model
-        self._state_parameter = state_parameter
-
     def initialise_from_tuples(self, list_of_assets):
+        """Initialise the state
+
+        Parameters
+        ==========
+        list_of_assets : list
+            A list of asset dictionaries with which to initialise
+            the SectorModel state.
+        """
         for asset in list_of_assets:
             self._assets[asset[0]] = ConcreteAsset(asset[0], asset[1])
-            assert asset[0] in self._state_parameter.keys()
+            if asset[0] not in self._state_parameter_map.keys():
+                msg = "{} is not defined in the state parameter."
+                logger.error(msg.format(asset[0]))
+                raise ValueError(msg.format(asset[0]))
 
     @property
     def sector_model(self):
+        """
+
+        Returns
+        =======
+        str
+            The name of the sector model
+        """
         return self._sector_model
 
     @property
     def current_state(self):
+        """Returns the current state of the wrapped simulation model
+
+        Returns
+        =======
+        dict
+            A dictionary of the current state including information on the
+            model name, region, timestep, and asset capacities
+        """
         assets = {key: val.capacity for key, val in self._assets.items()}
 
         return {'model': self._sector_model,
@@ -330,64 +396,59 @@ class State(AbstractState):
     def write_state_to_datastore(self):
         """Writes the current state of the sector model to the datastore
         """
-        pass
-
-    def update_state(self):
-        self.increment_timestep()
-        self.update_asset_capacities()
-
-    def increment_timestep(self, increment=1):
-        """Increments the timestep by step-length
-        """
-        self._timestep += increment
+        raise NotImplementedError()
 
     def add_new_capacity(self, list_of_new_assets):
+        """
+        """
         for new_asset in list_of_new_assets:
             name = new_asset['name']
             new_capacity = new_asset['capacity']
             self._assets[name].new_capacity = new_capacity
 
-    def _add_capacity_to_asset(self, asset):
-        """Adds capacity to an asset
-
-        Arguments
-        =========
-        asset : :class:`Asset`
-        name : str
-            The name of the asset
-        capacity : int
-            The capacity to add to the asset total
-        """
-        asset.capacity += asset.new_capacity
-        msg = "Added {} capacity to asset: {}"
-        logger.debug(msg.format(asset.new_capacity, asset.name))
-
-    def _remove_capacity_of_asset(self, asset):
-        """Removes asset capacity
-
-        Arguments
-        =========
-        asset : :class:`Asset`
-        capacity : int
-            The capacity to remove fom the asset total
-        """
-        if asset.retiring_capacity <= asset.capacity:
-            asset.capacity -= asset.retiring_capacity
-            msg = "Removed {} capacity for asset: {}"
-            logger.debug(msg.format(asset.retiring_capacity, asset.name))
-
-        else:
-            raise ValueError("Retiring capacity exceeds existing capacity")
-            msg = "Retiring capacity exceeds existing capacity for asset: {}"
-            logger.error(msg.format(asset.name))
-
-    def update_asset_capacities(self):
-        """
+    def _update_asset_capacities(self):
+        """Pushes the changes to the simulation model
         """
         logger.info("Updating state variable for {}".format(self.sector_model))
         for name, asset in self._assets.items():
             self._add_capacity_to_asset(asset)
             self._remove_capacity_of_asset(asset)
+
+    def _add_capacity_to_asset(self, asset):
+        """Pushes the addition of asset capacity into the simulation model
+
+        Arguments
+        =========
+        asset : :class:`Asset`
+        """
+        msg = "Existing capacity of {} is {}"
+        logger.debug(msg.format(asset.name,
+                                self._state_parameter_map[asset.name]))
+        self._state_parameter_map[asset.name] += asset.new_capacity
+        asset.capacity = self._state_parameter_map[asset.name]
+        msg = "Added {} capacity to asset: {}"
+        logger.debug(msg.format(asset.new_capacity, asset.name))
+        msg = "Capacity of {} is now {}"
+        logger.debug(msg.format(asset.name, asset.capacity))
+
+    def _remove_capacity_of_asset(self, asset):
+        """Pushes the removal of asset capacity into the simulation model
+
+        Arguments
+        =========
+        asset : :class:`Asset`
+        """
+        if asset.retiring_capacity <= self._state_parameter_map[asset.name]:
+            self._state_parameter_map[asset.name] -= asset.retiring_capacity
+            asset.capacity = self._state_parameter_map[asset.name]
+            msg = "Removed {} capacity for asset: {}"
+            logger.debug(msg.format(asset.retiring_capacity, asset.name))
+            msg = "Capacity of {} is now {}"
+            logger.debug(msg.format(asset.name, asset.capacity))
+        else:
+            msg = "Retiring capacity exceeds existing capacity for asset: {}"
+            logger.error(msg.format(asset.name))
+            raise ValueError("Retiring capacity exceeds existing capacity")
 
 
 class AbstractModel(ABC):

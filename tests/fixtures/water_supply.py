@@ -12,6 +12,10 @@ from smif.abstract import SectorModel, State
 class ExampleWaterSupplySimulation:
     """An example simulation model used for testing purposes
 
+    Parameters
+    ==========
+    raininess : int
+        The amount of rain produced in each simulation
     """
     def __init__(self, raininess):
         self.raininess = raininess
@@ -19,6 +23,12 @@ class ExampleWaterSupplySimulation:
         self.cost = None
 
     def simulate(self):
+        """Run the model
+
+        Returns
+        =======
+        dict
+        """
         self.water = self.raininess
         self.cost = 1
         return {
@@ -33,8 +43,10 @@ class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
     Parameters
     ==========
     raininess : int
-
+        The amount of rain produced in each simulation
     number_of_treatment_plants : int
+        The amount of water is a function of the number of treatment plants and
+        the amount of raininess
 
     """
     def __init__(self, raininess, number_of_treatment_plants):
@@ -54,7 +66,7 @@ class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
 
         Each treatment plant costs 1.0 unit.
         """
-        self.water = max(self.number_of_treatment_plants, self.raininess)
+        self.water = min(self.number_of_treatment_plants, self.raininess)
         self.cost = 1.0 * self.number_of_treatment_plants
         return {
             "water": self.water,
@@ -65,9 +77,25 @@ class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
 class WaterSupplyPython(SectorModel):
     """A concrete instance of the water supply model wrapper for testing
 
+    Inherits :class:`SectorModel` to wrap the example simulation tool.
+
+    Methods
+    =======
+    initialise
+    simulate
+
+
     """
 
     def initialise(self, data):
+        """Set up the model
+
+        Parameters
+        ==========
+        data : dict
+            A dictionary of which one key 'raininess' must contain the amount
+            of rain
+        """
         self.model = ExampleWaterSupplySimulation(data['raininess'])
         self.results = None
         self.run_successful = None
@@ -76,6 +104,9 @@ class WaterSupplyPython(SectorModel):
         pass
 
     def simulate(self):
+        """Runs the model and stores the results in the results parameter
+
+        """
         self.results = self.model.simulate()
         self.run_successful = True
 
@@ -86,32 +117,28 @@ class WaterSupplyPython(SectorModel):
 class WaterSupplyPythonAssets(SectorModel):
     """A concrete instance of the water supply wrapper for testing with assets
 
-    Track the state of the model
-    self.model.number_of_treatment_plants
+    Inherits :class:`SectorModel` to wrap the example simulation tool including
+    asset management.
 
-    Methods to add & remove treatment plants
-    self.model.add_a_treatment_plant(new_capacity)
-    self.model.remove_a_treatment_plant(capacity_to_remove)
+    The __state__ of the model is tracked in the asset parameter
+    `number_of_treatment_plants`.
 
     """
-
     def initialise(self, data, assets):
+        """Initialises the model
+        """
         self.model = ExampleWaterSupplySimulationAsset(data['raininess'],
                                                        data['plants'])
         self.results = None
         self.run_successful = None
 
-        state_parameter_map = {'treatment plant':
-                               self.model.number_of_treatment_plants
-                               }
+        treatment_plants = self.model.number_of_treatment_plants
+        state_parameter_map = {'treatment plant': treatment_plants}
 
         self.state = State('oxford', 2010,
                            'water_supply',
                            state_parameter_map)
         self.state.initialise_from_tuples(assets)
-
-    def get_state(self):
-        return self.model.number_of_treatment_plants
 
     def optimise(self, method, decision_vars, objective_function):
         pass
@@ -123,6 +150,8 @@ class WaterSupplyPythonAssets(SectorModel):
         return self.model.cost
 
     def simulate(self):
+        self.model.number_of_treatment_plants = \
+            self.state.current_state['assets']['treatment plant']
         self.results = self.model.simulate()
         self.run_successful = True
 
