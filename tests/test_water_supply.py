@@ -4,7 +4,15 @@
 """
 from pytest import raises
 from tests.fixtures.water_supply import (WaterSupplyExecutable,
-                                         WaterSupplyPython, raininess_oracle)
+                                         WaterSupplyPython, process_results,
+                                         raininess_oracle)
+
+
+def test_process_results():
+    input_bytes = b"cost,1\nwater,1\n"
+    actual = process_results(input_bytes)
+    expected = {'water': 1, 'cost': 1}
+    assert actual == expected
 
 
 def test_raininess_oracle():

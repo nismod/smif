@@ -6,6 +6,15 @@ Simulation Models
 =================
 
 `ExampleWaterSupplySimulation`
+`ExampleWaterSupplySimulationAsset`
+
+
+Wrappers Around the Models
+==========================
+
+`WaterSupplyPython` - wraps `ExampleWaterSupplySimulation`
+`WaterSupplyPythonAssets` - wraps `ExampleWaterSupplySimulationAsset`
+`WaterSupplyExecutable` - wraps `water_supply_exec.py`
 
 """
 
@@ -58,12 +67,6 @@ class WaterSupplyPython(SectorModel):
     """A concrete instance of the water supply model wrapper for testing
 
     Inherits :class:`SectorModel` to wrap the example simulation tool.
-
-    Methods
-    =======
-    initialise
-    simulate
-
 
     """
 

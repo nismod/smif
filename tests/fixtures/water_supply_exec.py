@@ -11,21 +11,7 @@ raininess : int
 
 from argparse import ArgumentParser
 
-
-class ExampleWaterSupplySimulation():
-    """An example simulation model used for testing purposes
-
-    """
-    def __init__(self, raininess):
-        self.raininess = raininess
-        self.water = None
-        self.cost = None
-
-    def simulate(self):
-        self.water = self.raininess
-        self.cost = 1
-        print("water,{}".format(self.water))
-        print("cost,{}".format(self.cost))
+from tests.fixtures.water_supply import ExampleWaterSupplySimulation
 
 
 def argparse():
@@ -40,8 +26,9 @@ def main():
     args = argparse()
     water_supply = ExampleWaterSupplySimulation(args.raininess)
     results = water_supply.simulate()
-    print(results)
-    return results
+    for key, val in results.items():
+        print("{},{}".format(key, val))
+
 
 if __name__ == '__main__':
     main()
