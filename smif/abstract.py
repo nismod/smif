@@ -129,15 +129,24 @@ class SectorModel(ABC):
 class Interface(ABC):
     """Provides the interface between a sector model and other interfaces
 
-    Attributes
+    Parameters
     ==========
-    inputs : :class:`Input`
+    inputs : collection of :class:`Input`
+        The commodities required as inputs to the `sector_model`
+    outputs : collection of :class:`Output`
+        The outputs produced by `sector_model`
+    metrics : collection of :class:`Metric`
+        Metrics computed after running the `sector_model`
     region : str
         The unique identifier for the region
     timestep : int
         The current timestep
     sector_model : :class:`SectorModel`
         The sector model wrapped by the Interface
+
+    Attributes
+    ==========
+    state : :class:`State`
 
     """
     def __init__(self, inputs, region, timestep, sector_model):
@@ -187,21 +196,25 @@ class Decision(ABC):
     Normally, an instance of a decision corresponds to an investment decision
     or policy to increase capacity, or decrease demand
 
+    Parameters
+    ==========
+    target_asset : str
+        The asset which is targetted by the decision
+    lower_bound : float
+        The upper bound on the value of the investment in the target asset
+    upper_bound : float
+        The lower bound on the value of the investment in the target asset
     """
     def __init__(self, target_asset, lower_bound, upper_bound):
-        """The asset which is targetted by the decision
-        """
+        assert isinstance(target_asset, Asset)
         self._target_asset = target_asset
-        """The upper bound on the value of the investment in the target asset
-        """
+        assert upper_bound >= lower_bound
         self._upper_bound = upper_bound
-        """The lower bound on the value of the investment in the target asset
-        """
         self._lower_bound = lower_bound
 
 
 class Asset(ABC):
-    """An asset is a decision targetted capacity that persists across timesteps
+    """An asset is a decision targeted capacity that persists across timesteps
 
     Examples of assets include power stations, water treatment plants, roads,
     railway tracks, airports, ports, centres of demand such as houses or
@@ -209,11 +222,12 @@ class Asset(ABC):
 
     An Asset is targetted by and influenced by a :class:`Decision` but only
     need to be defined in the :class:`Interface` if targetted
-    by a :class:`Decision`
+    by a :class:`Decision`.
 
-    The inter-timestep state of a model is a function of the Asset-base.
+    A snapshot of the current Assets in a model is represented by
+    :class:`State` and is persisted across model-years.
 
-    The Asset-state is also persisted (written to the datastore)
+    The Asset-state is also persisted (written to the datastore).
 
     Parameters
     ==========
@@ -341,10 +355,10 @@ class AbstractState(ABC):
 
 
 class State(AbstractState):
-    """A static representation of a sector model's assets
+    """A static snapshot of a sector model's assets
 
     The state is used to record (and persist) the inter-temporal transition
-    from one time-step to the next of the :class:`Interface`
+    from one time-step to the next of the collection of :class:`Asset`
 
     """
 
@@ -491,8 +505,17 @@ class AbstractModel(ABC):
 
 
 class Model(AbstractModel):
-    def attach_interface(self):
-        pass
+    """A model is a collection of sector models joined through dependencies
+
+
+    """
+    sector_models = []
+
+    def attach_interface(self, interface):
+        """Adds an interface to the list of interfaces which comprise a model
+        """
+        assert isinstance(interface, Interface)
+        self.sector_models.append(interface)
 
 
 class AbstractModelBuilder(ABC):
