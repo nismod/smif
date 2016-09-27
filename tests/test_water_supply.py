@@ -3,9 +3,26 @@
 
 """
 from pytest import raises
-from tests.fixtures.water_supply import (WaterSupplyExecutable,
+from tests.fixtures.water_supply import (ExampleWaterSupplySimulationReservoir,
+                                         WaterSupplyExecutable,
                                          WaterSupplyPython, process_results,
                                          raininess_oracle)
+
+
+def test_water_supply_with_reservoir():
+    raininess = 1
+    reservoir_level = 2
+    model = ExampleWaterSupplySimulationReservoir(raininess, reservoir_level)
+    actual = model.simulate()
+    expected = {'cost': 1.2, 'water': 3, 'reservoir level': 2}
+    assert actual == expected
+
+
+def test_water_supply_with_reservoir_negative_level():
+    raininess = 1
+    reservoir_level = -2
+    with raises(ValueError, message="Reservoir level cannot be negative"):
+        ExampleWaterSupplySimulationReservoir(raininess, reservoir_level)
 
 
 def test_process_results():

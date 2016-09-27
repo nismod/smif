@@ -7,6 +7,7 @@ Simulation Models
 
 `ExampleWaterSupplySimulation`
 `ExampleWaterSupplySimulationAsset`
+`ExampleWaterSupplySimulationReservoir`
 
 
 Wrappers Around the Models
@@ -20,7 +21,6 @@ Wrappers Around the Models
 
 import math
 import subprocess
-
 from smif.abstract import SectorModel, State
 
 
@@ -181,6 +181,50 @@ class WaterSupplyPythonAssets(SectorModel):
         pass
 
 
+class ExampleWaterSupplySimulationReservoir(ExampleWaterSupplySimulation):
+    """This simulation model has a state which is a non-asset variables
+
+    The reservoir level is a function of the previous reservoir level,
+    raininess and a fixed demand for water.
+
+    Parameters
+    ==========
+    raininess : int
+    reservoir_level : int
+
+    Returns
+    =======
+    dict
+
+    """
+    fixed_demand = 1
+
+    def __init__(self, raininess, reservoir_level):
+        super().__init__(raininess)
+        if reservoir_level < 0:
+            raise ValueError("Reservoir level cannot be negative")
+        self._reservoir_level = reservoir_level
+
+    def simulate(self):
+        """Run the model
+
+        Note
+        ====
+        This simulate method has mixed the state transition (computing the new
+        reservoir level) with the simulation of the model.
+
+        """
+        # Work out available water from raininess and initial reservoir level
+        self.water = self.raininess + self._reservoir_level
+        # Compute the reservoir level at the end of the year
+        self._reservoir_level = self.water - self.fixed_demand
+        self.cost = 1 + (0.1 * self._reservoir_level)
+        return {'water': self.water,
+                'cost': self.cost,
+                'reservoir level': self._reservoir_level
+                }
+
+
 class WaterSupplyExecutable(SectorModel):
     """A concrete instance of the water supply which wraps a command line model
 
@@ -207,6 +251,11 @@ class WaterSupplyExecutable(SectorModel):
 
 def process_results(output):
     """Utility function which decodes stdout text from the water supply model
+
+    Returns
+    =======
+    results : dict
+        A dictionary where keys are the results e.g. `cost` and `water`
 
     """
     results = {}
