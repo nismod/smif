@@ -4,18 +4,30 @@
 
 Simulation Models
 =================
+There are a bunch of very simple simulation models to demonstrate different
+functionality.
 
-`ExampleWaterSupplySimulation`
-`ExampleWaterSupplySimulationAsset`
-`ExampleWaterSupplySimulationReservoir`
+`ExampleWaterSupplySimulation`: simulation only, no assets
+
+`ExampleWaterSupplySimulationAsset`: simulation of water with outputs also
+a function of assets
+
+`ExampleWaterSupplySimulationReservoir`: simulation with outputs a function
+of a reservoir level which should be persistent over years
 
 
 Wrappers Around the Models
 ==========================
+Around each of the above simulation models, subclassed wrappers based on
+:class:`SectorModel` are used to present a consistent API
 
 `WaterSupplyPython` - wraps `ExampleWaterSupplySimulation`
+
 `WaterSupplyPythonAssets` - wraps `ExampleWaterSupplySimulationAsset`
+
 `WaterSupplyExecutable` - wraps `water_supply_exec.py`
+
+
 
 """
 
@@ -26,6 +38,16 @@ from smif.abstract import SectorModel, State
 
 def raininess_oracle(timestep):
     """Mimics an external data source for raininess
+
+    Arguments
+    =========
+    timestep : int
+        Requires a year between 2010 and 2050
+
+    Returns
+    =======
+    raininess : int
+
     """
     msg = "timestep {} is outside of the range [2010, 2050]".format(timestep)
     assert timestep in [x for x in range(2010, 2051, 1)], msg

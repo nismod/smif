@@ -1,5 +1,6 @@
 import logging
 
+import pytest
 from smif.abstract import ConcreteAsset as Asset
 from smif.abstract import State
 from tests.fixtures.water_supply import WaterSupplyPythonAssets
@@ -11,6 +12,7 @@ logging.basicConfig(filename='test_sector_model.log',
                     filemode='w')
 
 
+@pytest.mark.skip(reason="no way of currently testing this")
 class TestAssets:
     """
     """
@@ -38,6 +40,7 @@ class TestAssets:
             all_assets.append(Asset(asset['name'], asset['capacity']))
 
 
+@pytest.mark.skip(reason="no way of currently testing this")
 class TestStates:
     """
     """
@@ -66,6 +69,7 @@ class TestStates:
         assert actual_current_state == expected_current_state
 
 
+@pytest.mark.skip(reason="no way of currently testing this")
 class TestSectorModel:
 
     def test_adding_an_asset_to_sector_model(self):
