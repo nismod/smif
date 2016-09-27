@@ -1,12 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""First approximation of a simulation model to be used in the framework
+"""First approximation of a simulation models to be used in the framework
+
+Simulation Models
+=================
+
+`ExampleWaterSupplySimulation`
 
 """
 
+import math
 import subprocess
 
 from smif.abstract import SectorModel, State
+
+
+def raininess_oracle(timestep):
+    """Mimics an external data source for raininess
+    """
+    msg = "timestep {} is outside of the range [2010, 2050]".format(timestep)
+    assert timestep in [x for x in range(2010, 2051, 1)], msg
+
+    raininess = math.floor((timestep - 2000) / 10)
+
+    return raininess
 
 
 class ExampleWaterSupplySimulation:
