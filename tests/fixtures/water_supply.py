@@ -37,6 +37,48 @@ class ExampleWaterSupplySimulation:
         }
 
 
+class WaterSupplyPython(SectorModel):
+    """A concrete instance of the water supply model wrapper for testing
+
+    Inherits :class:`SectorModel` to wrap the example simulation tool.
+
+    Methods
+    =======
+    initialise
+    simulate
+
+
+    """
+
+    def initialise(self, data):
+        """Set up the model
+
+        Parameters
+        ==========
+        data : dict
+            A dictionary of which one key 'raininess' must contain the amount
+            of rain
+        """
+        self.inputs['raininess'] = data['raininess']
+
+        self.model = ExampleWaterSupplySimulation(data['raininess'])
+        self.results = None
+        self.run_successful = None
+
+    def optimise(self, method, decision_vars, objective_function):
+        pass
+
+    def simulate(self):
+        """Runs the model and stores the results in the results parameter
+
+        """
+        self.results = self.model.simulate()
+        self.run_successful = True
+
+    def model_executable(self):
+        pass
+
+
 class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
     """An example simulation model which includes assets
 
@@ -72,46 +114,6 @@ class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
             "water": self.water,
             "cost": self.cost
         }
-
-
-class WaterSupplyPython(SectorModel):
-    """A concrete instance of the water supply model wrapper for testing
-
-    Inherits :class:`SectorModel` to wrap the example simulation tool.
-
-    Methods
-    =======
-    initialise
-    simulate
-
-
-    """
-
-    def initialise(self, data):
-        """Set up the model
-
-        Parameters
-        ==========
-        data : dict
-            A dictionary of which one key 'raininess' must contain the amount
-            of rain
-        """
-        self.model = ExampleWaterSupplySimulation(data['raininess'])
-        self.results = None
-        self.run_successful = None
-
-    def optimise(self, method, decision_vars, objective_function):
-        pass
-
-    def simulate(self):
-        """Runs the model and stores the results in the results parameter
-
-        """
-        self.results = self.model.simulate()
-        self.run_successful = True
-
-    def model_executable(self):
-        pass
 
 
 class WaterSupplyPythonAssets(SectorModel):

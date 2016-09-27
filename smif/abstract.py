@@ -15,30 +15,6 @@ __license__ = "mit"
 logger = logging.getLogger(__name__)
 
 
-class Commodity(ABC):
-    """
-    """
-    names = []
-
-    def __init__(self, name, emission_factor):
-        self._name = name
-        self.names.append(name)
-        self._emissions_factor = emission_factor
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    @classmethod
-    def print_all_commodities(cls):
-        for commodity in cls.names:
-            print("{}".format(commodity))
-
-
 class SectorModel(ABC):
     """An abstract representation of the sector model with inputs and outputs.
 
@@ -66,6 +42,7 @@ class SectorModel(ABC):
         self.model = None
         self._model_executable = None
         self.state = None
+        self.inputs = {}
 
     @abstractmethod
     def initialise(self):
@@ -185,9 +162,53 @@ class Input(ABC):
             print('{}'.format(input_tuple))
 
 
-class Dependency(Input, ABC):
-    """A dependency is a type of input which links interfaces
+class Commodity(ABC):
     """
+    """
+    names = []
+
+    def __init__(self, name, emission_factor):
+        self._name = name
+        self.names.append(name)
+        self._emissions_factor = emission_factor
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    @classmethod
+    def print_all_commodities(cls):
+        for commodity in cls.names:
+            print("{}".format(commodity))
+
+
+class Dependency(ABC):
+    """A dependency is a type of :class:`Input` which links sector models
+
+    A dependency is an input to one model, which is an output from another
+    model.
+
+    Parameters
+    ==========
+    name : str
+        The name of the input
+    value : float
+        The value of the input
+    from_model : str
+        The name of the :class:`SectorModel` which produces the output
+    to_model : str
+        The name of the :class:`SectorModel` which requires the output
+
+    """
+    def __init__(self, name, value, from_model, to_model):
+        self._from_model = from_model
+        self._to_model = to_model
+        self._name = name
+        self._value = value
 
 
 class Decision(ABC):
