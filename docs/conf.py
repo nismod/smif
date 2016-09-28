@@ -44,11 +44,12 @@ if on_rtd:
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
-              'sphinx.ext.autosummary', 'sphinx.ext.viewcode', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest', 'sphinx.ext.ifconfig', 'sphinx.ext.imgmath',
-              'sphinx.ext.napoleon', 'sphinx.ext.inheritance_diagram',
-              'sphinx.ext.graphviz']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
+              'sphinx.ext.inheritance_diagram', 'sphinx.ext.autosummary',
+              'sphinx.ext.imgmath', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
+              'sphinx.ext.autosummary', 'sphinx.ext.viewcode',
+              'sphinx.ext.coverage', 'sphinx.ext.doctest',
+              'sphinx.ext.ifconfig', 'sphinx.ext.graphviz']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -64,7 +65,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'smif'
-copyright = u'2016, Will Usher'
+copyright = u'2016, Will Usher, Tom Russell'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -215,7 +216,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'user_guide.tex', u'smif Documentation',
-   u'Will Usher', 'manual'),
+   u'Will Usher & Tom Russell', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

@@ -349,8 +349,8 @@ class State(AbstractState):
     e.g. 'water treatment plant capacity', and a relevant subset
     of :class:`Output` (optional) e.g. 'reservoir level'.
 
-    State transition
-    ================
+    Note
+    ====
     The state transition is the process by which the current state of the
     model, any decisions which affect asset capacities (e.g. investment or
     retirement) and so on are carried over from one year to the next.
