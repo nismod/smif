@@ -6,6 +6,9 @@ smif
 
 Systems Modelling of Infrastructure Framework
 
+.. image:: https://travis-ci.com/nismod/smif.svg?token=zHcMSQsYgUFq9yhr52P7&branch=master
+    :target: https://travis-ci.com/nismod/smif
+
 Description
 ===========
 
