@@ -17,6 +17,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   Concept <concept>
    License <license>
    Authors <authors>
    Changelog <changes>
