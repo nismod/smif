@@ -3,7 +3,8 @@
 """First approximation of a simulation models to be used in the framework
 
 Simulation Models
-=================
+-----------------
+
 There are a bunch of very simple simulation models to demonstrate different
 functionality.
 
@@ -17,7 +18,8 @@ of a reservoir level which should be persistent over years
 
 
 Wrappers Around the Models
-==========================
+--------------------------
+
 Around each of the above simulation models, subclassed wrappers based on
 :class:`SectorModel` are used to present a consistent API
 
@@ -26,8 +28,6 @@ Around each of the above simulation models, subclassed wrappers based on
 `WaterSupplyPythonAssets` - wraps `ExampleWaterSupplySimulationAsset`
 
 `WaterSupplyExecutable` - wraps `water_supply_exec.py`
-
-
 
 """
 
