@@ -24,3 +24,5 @@ after_success:
   - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 cache:
   - apt
+notifications:
+  email: false
