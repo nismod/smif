@@ -257,7 +257,7 @@ class WaterSupplyExecutable(SectorModel):
         self.data = data
         self.results = None
         self.run_successful = None
-        self.model_executable = './smif/examples/water_supply_exec.py'
+        self.model_executable = 'water_supply_exec'
 
     def optimise(self, method, decision_vars, objective_function):
         pass
