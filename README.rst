@@ -9,6 +9,10 @@ Systems Modelling of Infrastructure Framework
 .. image:: https://travis-ci.org/nismod/smif.svg?branch=master
     :target: https://travis-ci.org/nismod/smif
 
+.. image:: https://readthedocs.org/projects/smif/badge/?version=latest
+    :target: http://smif.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 Description
 ===========
 
