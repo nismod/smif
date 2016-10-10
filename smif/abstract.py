@@ -16,52 +16,44 @@ logger = logging.getLogger(__name__)
 
 
 class SectorModel(ABC):
-    """An abstract representation of the sector model with inputs and outputs.
+    """An abstract representation of the sector model with inputs and outputs
 
     Parameters
     ==========
-
+    schema : dict
+        A dictionary of parameter, asset and exogenous data names with expected
+        types. Used for validating presented data.
 
     Attributes
     ==========
-    state : :class:`State`
-        The state of the sector model
-    results
-        The output from the simulation model
     model
         An instance of the sector model
-    input_hooks : dict
-        A mapping between :class:`Dependency` and sector model inputs
-    output_hooks : dict
-        A mapping between :class:`Output` and sector model outputs
+    inputs : dict
+        A dictionary of inputs to the model. This may include parameters,
+        assets and exogenous data.
 
     """
     def __init__(self):
-        self._run_successful = None
-        self.results = None
         self.model = None
         self._model_executable = None
-        self.state = None
         self.inputs = {}
+        self._schema = None
 
     @abstractmethod
     def initialise(self):
-        """Use this to initialise the model
+        """Use this method to initialise (load the input data into) the model
+
+        Returns
+        =======
+        results : dict
+            A dictionary of results with keys as output names e.g. 'cost' and
+            values
+
         """
-        pass
+        results = None
 
-    @property
-    def run_successful(self):
-        """Indicates whether the simulation or optimisation run was successful
+        return results
 
-        """
-        return self._run_successful
-
-    @run_successful.setter
-    def run_successful(self, outcome):
-        self._run_successful = outcome
-
-    @abstractmethod
     def optimise(self, method, decision_vars, objective_function):
         """Performs an optimisation of the sector model assets
 
@@ -74,7 +66,7 @@ class SectorModel(ABC):
         objective_function : function
             Defines the objective function
         """
-        pass
+        raise NotImplemented("Optimisation is not yet implemented")
 
     @abstractmethod
     def simulate(self):
@@ -108,11 +100,11 @@ class Interface(ABC):
 
     Parameters
     ==========
-    inputs : collection of :class:`Input`
+    inputs : dict of :class:`Input`
         The commodities required as inputs to the `sector_model`
-    outputs : collection of :class:`Output`
+    outputs : dict of :class:`Output`
         The outputs produced by `sector_model`
-    metrics : collection of :class:`Metric`
+    metrics : dict of :class:`Metric`
         Metrics computed after running the `sector_model`
     region : str
         The unique identifier for the region
@@ -160,30 +152,6 @@ class Input(ABC):
     def list_inputs(self):
         for input_tuple in self.inputs:
             print('{}'.format(input_tuple))
-
-
-class Commodity(ABC):
-    """
-    """
-    names = []
-
-    def __init__(self, name, emission_factor):
-        self._name = name
-        self.names.append(name)
-        self._emissions_factor = emission_factor
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    @classmethod
-    def print_all_commodities(cls):
-        for commodity in cls.names:
-            print("{}".format(commodity))
 
 
 class Dependency(ABC):
@@ -235,7 +203,9 @@ class Decision(ABC):
 
 
 class Asset(ABC):
-    """An asset is a decision targeted capacity that persists across timesteps
+    """An asset is a decision targeted capacity that persists across timesteps.
+
+    An Asset is otherwise an Input to a model.
 
     Examples of assets include power stations, water treatment plants, roads,
     railway tracks, airports, ports, centres of demand such as houses or
@@ -342,18 +312,14 @@ class AbstractState(ABC):
         The timestep of the state
     sector_model : str
         The name of the sector model
-    state_parameter_map : dict
-        The mapping of the asset names (key) and the sector model parameters
-        (value) which can be edited in the model to add
-        or remove asset capacity
+
     """
 
-    def __init__(self, region, timestep, sector_model, state_parameter_map):
+    def __init__(self, region, timestep, sector_model):
         self._assets = {}
         self._region = region
         self._timestep = timestep
         self._sector_model = sector_model
-        self._state_parameter_map = state_parameter_map
 
     def update_state(self, timestep_increment=1):
         self._increment_timestep(timestep_increment)
@@ -380,11 +346,25 @@ class State(AbstractState):
 
     The state is used to record (and persist) the inter-temporal transition
     from one time-step to the next of the collection of :class:`Asset`
+    e.g. 'water treatment plant capacity', and a relevant subset
+    of :class:`Output` (optional) e.g. 'reservoir level'.
+
+    Note
+    ====
+    The state transition is the process by which the current state of the
+    model, any decisions which affect asset capacities (e.g. investment or
+    retirement) and so on are carried over from one year to the next.
+
+    An initial (over-complicated) attempt incorporated decisions into the
+    `new_capacity` variables, which then update the state in the private
+    method `_update_asset_capacities`.
+
+    This state-transition may need to be moved into :class:`Interface`.
 
     """
 
     def initialise_from_tuples(self, list_of_assets):
-        """Initialise the state
+        """Utility function to initialise the state from a list of tuples
 
         Parameters
         ==========
@@ -394,14 +374,10 @@ class State(AbstractState):
         """
         for asset in list_of_assets:
             self._assets[asset[0]] = ConcreteAsset(asset[0], asset[1])
-            if asset[0] not in self._state_parameter_map.keys():
-                msg = "{} is not defined in the state parameter."
-                logger.error(msg.format(asset[0]))
-                raise ValueError(msg.format(asset[0]))
 
     @property
     def sector_model(self):
-        """
+        """The sector model with which this state is associated
 
         Returns
         =======
@@ -419,6 +395,12 @@ class State(AbstractState):
         dict
             A dictionary of the current state including information on the
             model name, region, timestep, and asset capacities
+
+        Note
+        ====
+        This should also include anything else which is required to recorded in
+        state, such as in the
+        `tests.fixtures.water_supply.ExampleWaterSupplySimulationReservoir`
         """
         assets = {key: val.capacity for key, val in self._assets.items()}
 
@@ -431,10 +413,18 @@ class State(AbstractState):
     def write_state_to_datastore(self):
         """Writes the current state of the sector model to the datastore
         """
-        raise NotImplementedError()
+        raise NotImplementedError("Can't yet persist the data")
 
     def add_new_capacity(self, list_of_new_assets):
-        """
+        """Populates the new_capacity attribute of the :class:`Asset` with
+        new capacities added in this year
+
+        Parameters
+        ==========
+        list_of_new_assets : list of dict
+            List of new asset capacities in a dict with 'name'
+            and 'capacity' keys
+
         """
         for new_asset in list_of_new_assets:
             name = new_asset['name']
@@ -456,15 +446,7 @@ class State(AbstractState):
         =========
         asset : :class:`Asset`
         """
-        msg = "Existing capacity of {} is {}"
-        logger.debug(msg.format(asset.name,
-                                self._state_parameter_map[asset.name]))
-        self._state_parameter_map[asset.name] += asset.new_capacity
-        asset.capacity = self._state_parameter_map[asset.name]
-        msg = "Added {} capacity to asset: {}"
-        logger.debug(msg.format(asset.new_capacity, asset.name))
-        msg = "Capacity of {} is now {}"
-        logger.debug(msg.format(asset.name, asset.capacity))
+        pass
 
     def _remove_capacity_of_asset(self, asset):
         """Pushes the removal of asset capacity into the simulation model
@@ -473,42 +455,20 @@ class State(AbstractState):
         =========
         asset : :class:`Asset`
         """
-        if asset.retiring_capacity <= self._state_parameter_map[asset.name]:
-            self._state_parameter_map[asset.name] -= asset.retiring_capacity
-            asset.capacity = self._state_parameter_map[asset.name]
-            msg = "Removed {} capacity for asset: {}"
-            logger.debug(msg.format(asset.retiring_capacity, asset.name))
-            msg = "Capacity of {} is now {}"
-            logger.debug(msg.format(asset.name, asset.capacity))
-        else:
-            msg = "Retiring capacity exceeds existing capacity for asset: {}"
-            logger.error(msg.format(asset.name))
-            raise ValueError("Retiring capacity exceeds existing capacity")
+        pass
 
 
 class AbstractModel(ABC):
     """An instance of a model contains Interfaces wrapped around sector models
+
+    This is NISMOD - i.e. the system of system model which brings all of the
+    sector models together.
+
     """
     def __init__(self):
-        self._commodities = []
-        self._regions = []
-        self.timesteps = []
-
-    @property
-    def commodities(self):
-        return self._commodities
-
-    @commodities.setter
-    def commodities(self, commodities):
-        self._commodities = commodities
-
-    @property
-    def regions(self):
-        return self._regions
-
-    @regions.setter
-    def regions(self, value):
-        self._regions = value
+        self._interfaces = None
+        self.timesteps = None
+        self.sector_models = []
 
     @property
     def timesteps(self):
@@ -518,9 +478,14 @@ class AbstractModel(ABC):
     def timesteps(self, value):
         self.timesteps = value
 
-    @abstractmethod
-    def attach_interface(self):
+    def attach_interface(self, interface):
+        """Adds an interface to the list of interfaces which comprise a model
         """
+        assert isinstance(interface, Interface)
+        self.sector_models.append(interface)
+
+    def run(self):
+        """Run the system of systems model
         """
         pass
 
@@ -528,15 +493,9 @@ class AbstractModel(ABC):
 class Model(AbstractModel):
     """A model is a collection of sector models joined through dependencies
 
-
     """
-    sector_models = []
-
-    def attach_interface(self, interface):
-        """Adds an interface to the list of interfaces which comprise a model
-        """
-        assert isinstance(interface, Interface)
-        self.sector_models.append(interface)
+    def __init__(self):
+        super().__init__()
 
 
 class AbstractModelBuilder(ABC):
@@ -549,21 +508,14 @@ class AbstractModelBuilder(ABC):
         self.model = Model()
 
     @abstractmethod
-    def add_commodities(self):
-        pass
-
-    @abstractmethod
-    def add_regions(self):
-        pass
-
-    @abstractmethod
-    def add_timeseteps(self):
+    def add_timesteps(self):
         pass
 
     def validate(self):
         self.validate_commodities()
         self.validate_regions()
         self.validate_timesteps()
+        return self.model
 
     @abstractmethod
     def validate_commodities(self):
