@@ -12,6 +12,7 @@ env:
     - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="false"
 install:
   - source tests/travis_install.sh
+  - pip install git+https://github.com/behave/behave
   - pip install -r test-requirements.txt
 before_script:
   - git config --global user.email "william.usher@ouce.ox.ac.uk"
