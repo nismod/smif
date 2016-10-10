@@ -11,7 +11,7 @@ raininess : int
 
 from argparse import ArgumentParser
 
-from smif.examples.water_supply import ExampleWaterSupplySimulation
+from .. water_supply import ExampleWaterSupplySimulation
 
 
 def argparse():
