@@ -3,10 +3,10 @@
 
 """
 from pytest import raises
-from smif.examples.water_supply import (ExampleWaterSupplySimulationReservoir,
-                                        WaterSupplyExecutable,
-                                        WaterSupplyPython, process_results,
-                                        raininess_oracle)
+from . fixtures.water_supply import (ExampleWaterSupplySimulationReservoir,
+                                     WaterSupplyExecutable,
+                                     WaterSupplyPython, process_results,
+                                     raininess_oracle)
 
 
 def test_water_supply_with_reservoir():
