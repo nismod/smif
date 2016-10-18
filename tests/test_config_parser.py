@@ -2,6 +2,7 @@
 """
 import os
 from pytest import raises
+import jsonschema
 import smif.parse_config
 
 def test_load_simple_config():
@@ -12,13 +13,24 @@ def test_load_simple_config():
 def test_simple_validate_valid():
     path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "simple.yaml")
     conf = smif.parse_config.ConfigParser(path)
-    conf.validate({"name": "string"})
-
+    conf.validate({
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" }
+            },
+            "required": ["name"]
+        })
 
 def test_simple_validate_invalid():
     path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "simple.yaml")
     conf = smif.parse_config.ConfigParser(path)
 
-    msg = "Expected a value in the config file for nonexistent_key"
-    with raises(ValueError, message=msg):
-        conf.validate({"nonexistent_key": "string"})
+    msg = "'nonexistent_key' is a required property"
+    with raises(jsonschema.exceptions.ValidationError, message=msg):
+        conf.validate({
+            "type": "object",
+            "properties": {
+                "nonexistent_key": { "type": "string" }
+            },
+            "required": ["nonexistent_key"]
+        })

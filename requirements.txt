@@ -3,3 +3,4 @@ numpy
 scipy
 pre-commit
 pyyaml=3.12
+jsonschema==2.5.1

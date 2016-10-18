@@ -1,5 +1,6 @@
 # Parse yaml config files, to construct sector models
 import yaml
+import jsonschema
 
 class ConfigParser:
     """Parse yaml config file,
@@ -19,6 +20,4 @@ class ConfigParser:
         if self._config_data is None:
             raise AttributeError("Config data not loaded")
 
-        for key in schema.keys():
-            if key not in self._config_data:
-                raise ValueError("Expected a value in the config file for "+key)
+        jsonschema.validate(self._config_data, schema)
