@@ -2,6 +2,10 @@
 import yaml
 
 class ConfigParser:
+    """Parse yaml config file,
+    hold config data,
+    validate config data against required set
+    """
     def __init__(self, filepath):
         self._config_filepath = filepath
 
@@ -10,3 +14,11 @@ class ConfigParser:
 
     def data(self):
         return self._config_data
+
+    def validate(self,schema):
+        if self._config_data is None:
+            raise AttributeError("Config data not loaded")
+
+        for key in schema.keys():
+            if key not in self._config_data:
+                raise ValueError("Expected a value in the config file for "+key)
