@@ -10,7 +10,7 @@ raininess : int
 """
 
 from argparse import ArgumentParser
-from . water_supply import ExampleWaterSupplySimulation
+from water_supply import ExampleWaterSupplySimulation
 
 
 def argparse():
