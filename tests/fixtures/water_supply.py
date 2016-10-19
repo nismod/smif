@@ -32,8 +32,54 @@ Around each of the above simulation models, subclassed wrappers based on
 """
 
 import math
+from pytest import fixture
 
 
+@fixture(scope='function')
+def one_input():
+    """Returns a model input dictionary for the example water model with one
+    decision variable and one parameter
+    """
+    inputs = {'decision variables': ['water treatment capacity'],
+              'parameters': ['raininess'],
+              'water treatment capacity': {'bounds': (0, 20),
+                                           'index': 0,
+                                           'init': 10
+                                           },
+              'raininess': {'bounds': (0, 5),
+                            'index': 0,
+                            'value': 3
+                            }
+              }
+
+    return inputs
+
+
+@fixture(scope='function')
+def two_inputs():
+    """Returns a model input dictionary for the example water model with two
+    decision variables and one parameter
+    """
+    inputs = {'decision variables': ['water treatment capacity',
+                                     'reservoir pumpiness'],
+              'parameters': ['raininess'],
+              'water treatment capacity': {'bounds': (0, 20),
+                                           'index': 1,
+                                           'init': 10
+                                           },
+              'reservoir pumpiness': {'bounds': (0, 100),
+                                      'index': 0,
+                                      'init': 24.583
+                                      },
+              'raininess': {'bounds': (0, 5),
+                            'index': 0,
+                            'value': 3
+                            }
+              }
+    return inputs
+
+
+@fixture(scope='function')
 def raininess_oracle(timestep):
     """Mimics an external data source for raininess
 
@@ -53,6 +99,24 @@ def raininess_oracle(timestep):
     raininess = math.floor((timestep - 2000) / 10)
 
     return raininess
+
+
+def process_results(output):
+    """Utility function which decodes stdout text from the water supply model
+
+    Returns
+    =======
+    results : dict
+        A dictionary where keys are the results e.g. `cost` and `water`
+
+    """
+    results = {}
+    raw_results = output.decode('utf-8').split('\n')
+    for result in raw_results[0:2]:
+        values = result.split(',')
+        if len(values) == 2:
+            results[str(values[0])] = float(values[1])
+    return results
 
 
 class ExampleWaterSupplySimulation:
@@ -112,11 +176,14 @@ class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
 
         Each treatment plant costs 1.0 unit.
         """
-        self.water = min(self.number_of_treatment_plants, self.raininess)
-        self.cost = 1.0 * self.number_of_treatment_plants
+        print("There are {} plants".format(self.number_of_treatment_plants))
+        print("It is {} rainy".format(self.raininess))
+        water = min(self.number_of_treatment_plants, self.raininess)
+        cost = 1.264 * self.number_of_treatment_plants
+        print("The system costs £{}".format(cost))
         return {
-            "water": self.water,
-            "cost": self.cost
+            "water": water,
+            "cost": cost
         }
 
 
