@@ -16,13 +16,11 @@ The optimisation features requires:
 from unittest.mock import Mock
 
 import numpy as np
+from fixtures.water_supply import ExampleWaterSupplySimulationAsset as WaterMod
 from numpy.testing import assert_allclose, assert_equal
 from pytest import fixture
-from smif.system import (WaterModelAsset, get_decision_variables,
-                         get_parameter_values)
-
-from .fixtures.water_supply import \
-    ExampleWaterSupplySimulationAsset as WaterMod
+from smif.system import (AbstractModelWrapper, WaterModelAsset,
+                         get_decision_variables, get_parameter_values)
 
 
 def one_input():
@@ -94,17 +92,16 @@ def adapter_function(self, inputs):
     return np.array(results['cost'])
 
 
-class ModelWrapper(object):
-
-    def __init__(self, model):
-        self.model = model
+class ModelWrapper(AbstractModelWrapper):
+    """
+    """
 
     def simulate(self, static_inputs, decision_variables):
         """
 
         Arguments
         =========
-        inputs : x-by-1 numpy.ndarray
+        static_inputs : x-by-1 :class:`numpy.ndarray`
             x=1 is raininess
             x=2 is capacity of water treatment plants
         """

@@ -4,12 +4,11 @@
 """
 import subprocess
 
+from fixtures.water_supply import (ExampleWaterSupplySimulation,
+                                   ExampleWaterSupplySimulationReservoir,
+                                   raininess_oracle)
 from pytest import raises
 from smif.abstract import SectorModel
-
-from .fixtures.water_supply import (ExampleWaterSupplySimulation,
-                                    ExampleWaterSupplySimulationReservoir,
-                                    raininess_oracle)
 
 
 class WaterSupplyPython(SectorModel):
