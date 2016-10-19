@@ -112,11 +112,14 @@ class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
 
         Each treatment plant costs 1.0 unit.
         """
-        self.water = min(self.number_of_treatment_plants, self.raininess)
-        self.cost = 1.0 * self.number_of_treatment_plants
+        print("There are {} plants".format(self.number_of_treatment_plants))
+        print("It is {} rainy".format(self.raininess))
+        water = min(self.number_of_treatment_plants, self.raininess)
+        cost = 1.264 * self.number_of_treatment_plants
+        print("The system costs £{}".format(cost))
         return {
-            "water": self.water,
-            "cost": self.cost
+            "water": water,
+            "cost": cost
         }
 
 
