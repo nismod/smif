@@ -13,73 +13,43 @@ The optimisation features requires:
   scalar value
 
 """
-from unittest.mock import Mock
-
-import numpy as np
 from fixtures.water_supply import ExampleWaterSupplySimulationAsset as WaterMod
-from fixtures.water_supply import WaterSupplySimulationAssetWrapper, one_input
+from fixtures.water_supply import one_input
 from numpy.testing import assert_allclose
-from pytest import fixture
+from smif.abstract import AbstractModelWrapper
 from smif.system import WaterModelAsset
 
 
-@fixture(scope='function')
-def mock_model(input_value):
-    """Returns the mocked objective function value of `1` whatever is passed as
-    an input
-
-    Arguments
-    =========
-    input_value : any
-
-    Returns
-    =======
-    int
-
+class WaterSupplySimulationAssetWrapper(AbstractModelWrapper):
+    """Provides an interface for :class:`ExampleWaterSupplyAssetSimulation
     """
-    model = Mock(return_value=1)
-    return model(input_value)
+
+    def simulate(self, static_inputs, decision_variables):
+        """
+
+        Arguments
+        =========
+        static_inputs : x-by-1 :class:`numpy.ndarray`
+            x_0 is raininess
+            x_1 is capacity of water treatment plants
+        """
+        raininess = static_inputs
+        capacity = decision_variables
+        instance = self.model(raininess, capacity)
+        results = instance.simulate()
+        return results
+
+    def extract_obj(self, results):
+        return results['cost']
 
 
-def adapter_function(self, inputs):
-    """
-    Arguments
-    =========
-    inputs : numpy.ndarray
+class TestWaterModelOptimisation:
 
-    Returns
-    =======
-    results = numpy.ndarray
-    """
-    model_instance = self.model(inputs[1], inputs[0])
-    results = model_instance.simulate()
-    return np.array(results['cost'])
-
-
-class TestTest:
-
-    def test_model_adapter(self):
-        adapter = WaterSupplySimulationAssetWrapper(WaterMod)
-        static = np.array(2)
-        decision = np.array(3)
-        results = adapter.simulate(static, decision)
-        assert results == {'water': 2, 'cost': 3.792}
-
-    def test_model_adapter_numpy(self):
-        adapter = WaterSupplySimulationAssetWrapper(WaterMod)
-        static = np.array(2)
-        decision = np.array(3)
-        results = adapter.simulate(static, decision)
-        assert results == {'water': 2, 'cost': 3.792}
-
-
-class TestWaterModel:
-
-    def test_water_model_optimisation(self):
+    def test_water_model_optimisation(self, one_input):
         wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
 
         model = WaterModelAsset(wrapped, wrapped.simulate)
-        model.inputs = one_input()
+        model.inputs = one_input
         actual_value = model.optimise()
         expected_value = {'water treatment capacity': 3}
         for actual, expected in zip(actual_value.values(),

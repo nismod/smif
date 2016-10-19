@@ -8,9 +8,9 @@ from smif.abstract import ModelInputs
 
 class TestModelInputs:
 
-    def test_one_input_decision_variables(self):
+    def test_one_input_decision_variables(self, one_input):
 
-        inputs = ModelInputs(one_input())
+        inputs = ModelInputs(one_input)
         act_names = inputs.decision_variable_names
         act_initial = inputs.decision_variable_values
         act_bounds = inputs.decision_variable_bounds
@@ -23,9 +23,9 @@ class TestModelInputs:
         assert_equal(act_initial, exp_initial)
         assert_equal(act_bounds, exp_bounds)
 
-    def test_two_inputs_decision_variables(self):
+    def test_two_inputs_decision_variables(self, two_inputs):
 
-        inputs = ModelInputs(two_inputs())
+        inputs = ModelInputs(two_inputs)
         act_names = inputs.decision_variable_names
         act_initial = inputs.decision_variable_values
         act_bounds = inputs.decision_variable_bounds
@@ -39,9 +39,9 @@ class TestModelInputs:
         assert_equal(act_initial, exp_initial)
         assert_equal(act_bounds, exp_bounds)
 
-    def test_one_input_parameters(self):
+    def test_one_input_parameters(self, one_input):
 
-        inputs = ModelInputs(one_input())
+        inputs = ModelInputs(one_input)
         act_names = inputs.parameter_names
         act_values = inputs.parameter_values
         act_bounds = inputs.parameter_bounds

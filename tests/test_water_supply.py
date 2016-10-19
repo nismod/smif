@@ -2,10 +2,9 @@
 
 
 """
+import subprocess
 from fixtures.water_supply import (ExampleWaterSupplySimulation,
                                    ExampleWaterSupplySimulationReservoir,
-                                   WaterModelWrapExec,
-                                   WaterSupplySimulationWrapper,
                                    process_results, raininess_oracle)
 from pytest import raises
 
@@ -48,33 +47,19 @@ def test_raininess_oracle_out_of_range():
         raininess_oracle(2051)
 
 
-def test_simulate_rain_python_wrap():
-    adapter = WaterSupplySimulationWrapper(ExampleWaterSupplySimulation)
-    static = 1
-    decision = 1
-    results = adapter.simulate(static, decision)
-    assert results["water"] == 1
-
-
 def test_simulate_rain_cost_python():
-    adapter = WaterSupplySimulationWrapper(ExampleWaterSupplySimulation)
-    static = 1
-    decision = 1
-    results = adapter.simulate(static, decision)
-    assert results["cost"] == 1
+    raininess = 1
+    model = ExampleWaterSupplySimulation(raininess)
+    actual = model.simulate()
+    expected = {'cost': 1, 'water': 1}
+    assert actual == expected
 
 
 def test_simulate_rain_executable():
-    adapter = WaterModelWrapExec('dummy')
-    static = 1
-    decision = 1
-    results = adapter.simulate(static, decision)
-    assert results['water'] == 1
-
-
-def test_simulate_rain_cost_executable():
-    adapter = WaterModelWrapExec('dummy')
-    static = 1
-    decision = 1
-    results = adapter.simulate(static, decision)
+    raininess = 10
+    model_executable = './tests/fixtures/water_supply_exec.py'
+    argument = "--raininess={}".format(str(raininess))
+    output = subprocess.check_output([model_executable, argument])
+    results = process_results(output)
+    assert results['water'] == 10
     assert results['cost'] == 1
