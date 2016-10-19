@@ -32,6 +32,45 @@ Around each of the above simulation models, subclassed wrappers based on
 """
 
 import math
+import subprocess
+
+from smif.abstract import AbstractModelWrapper
+
+
+def one_input():
+    inputs = {'decision variables': ['water treatment capacity'],
+              'parameters': ['raininess'],
+              'water treatment capacity': {'bounds': (0, 20),
+                                           'index': 0,
+                                           'init': 10
+                                           },
+              'raininess': {'bounds': (0, 5),
+                            'index': 0,
+                            'value': 3
+                            }
+              }
+
+    return inputs
+
+
+def two_inputs():
+    inputs = {'decision variables': ['water treatment capacity',
+                                     'reservoir pumpiness'],
+              'parameters': ['raininess'],
+              'water treatment capacity': {'bounds': (0, 20),
+                                           'index': 1,
+                                           'init': 10
+                                           },
+              'reservoir pumpiness': {'bounds': (0, 100),
+                                      'index': 0,
+                                      'init': 24.583
+                                      },
+              'raininess': {'bounds': (0, 5),
+                            'index': 0,
+                            'value': 3
+                            }
+              }
+    return inputs
 
 
 def raininess_oracle(timestep):
@@ -53,6 +92,67 @@ def raininess_oracle(timestep):
     raininess = math.floor((timestep - 2000) / 10)
 
     return raininess
+
+
+class WaterModelWrapExec(AbstractModelWrapper):
+
+    def simulate(self, static_inputs, decision_variables):
+        """Runs the executable version of the water supply model
+
+        Arguments
+        =========
+        static_inputs : x-by-1 :class:`numpy.ndarray`
+            x_0 is raininess
+            x_1 is capacity of water treatment plants
+        """
+        model_executable = './tests/fixtures/water_supply_exec.py'
+        argument = "--raininess={}".format(str(static_inputs))
+        output = subprocess.check_output([model_executable, argument])
+        results = process_results(output)
+        return results
+
+    def extract_obj(self, results):
+        return results
+
+
+def process_results(output):
+    """Utility function which decodes stdout text from the water supply model
+
+    Returns
+    =======
+    results : dict
+        A dictionary where keys are the results e.g. `cost` and `water`
+
+    """
+    results = {}
+    raw_results = output.decode('utf-8').split('\n')
+    for result in raw_results[0:2]:
+        values = result.split(',')
+        if len(values) == 2:
+            results[str(values[0])] = float(values[1])
+    return results
+
+
+class WaterSupplySimulationWrapper(AbstractModelWrapper):
+    """Provides an interface for :class:`ExampleWaterSupplySimulation`
+    """
+
+    def simulate(self, static_inputs, decision_variables):
+        """
+
+        Arguments
+        =========
+        static_inputs : x-by-1 :class:`numpy.ndarray`
+            x_0 is raininess
+            x_1 is capacity of water treatment plants
+        """
+        raininess = static_inputs
+        instance = self.model(raininess)
+        results = instance.simulate()
+        return results
+
+    def extract_obj(self, results):
+        return results['cost']
 
 
 class ExampleWaterSupplySimulation:
@@ -81,6 +181,29 @@ class ExampleWaterSupplySimulation:
             "water": self.water,
             "cost": self.cost
         }
+
+
+class WaterSupplySimulationAssetWrapper(AbstractModelWrapper):
+    """Provides an interface for :class:`ExampleWaterSupplyAssetSimulation
+    """
+
+    def simulate(self, static_inputs, decision_variables):
+        """
+
+        Arguments
+        =========
+        static_inputs : x-by-1 :class:`numpy.ndarray`
+            x_0 is raininess
+            x_1 is capacity of water treatment plants
+        """
+        raininess = static_inputs
+        capacity = decision_variables
+        instance = self.model(raininess, capacity)
+        results = instance.simulate()
+        return results
+
+    def extract_obj(self, results):
+        return results['cost']
 
 
 class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):

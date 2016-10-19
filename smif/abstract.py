@@ -16,6 +16,61 @@ __license__ = "mit"
 logger = logging.getLogger(__name__)
 
 
+class AbstractModelWrapper(ABC):
+    """Provides in interface to wrap any simulation model for optimisation
+    """
+
+    def __init__(self, model):
+        self.model = model
+
+    @abstractmethod
+    def simulate(self, static_inputs, decision_variables):
+        """This method should allow run model with defined inputs and outputs
+
+        Arguments
+        =========
+        static_inputs : x-by-1 :class:`numpy.ndarray`
+        decision_variables : x-by-1 :class:`numpy.ndarray`
+        """
+        pass
+
+    @abstractmethod
+    def extract_obj(self, results):
+        """Implement this method to return a scalar value objective function
+
+        Arguments
+        =========
+        results : :class:`dict`
+            The results from the `simulate` method
+
+        Returns
+        =======
+        float
+            A scalar component generated from the simulation model results
+        """
+        pass
+
+
+class ModelAdapter(object):
+    """Adapts a model so that it can be used by the optimisation protocol
+
+    Arguments
+    =========
+    model :
+        An instance of a model
+    simulate :
+        The function to use for implementing a `simulate` method
+
+    """
+
+    def __init__(self, model, simulate):
+        self.model = model
+        self.simulate = simulate
+
+    def __getattr__(self, attr):
+        return getattr(self.model, attr)
+
+
 class ModelInputs(object):
     """A container for all the model inputs
 
@@ -162,15 +217,13 @@ class SectorModel(ABC):
     ==========
     model
         An instance of the sector model
-    inputs : dict
-        A dictionary of inputs to the model. This may include parameters,
-        assets and exogenous data.
+
 
     """
-    def __init__(self):
+    def __init__(self, model, adapter_function):
         self.model = None
-        self._model_executable = None
-        self._inputs = {}
+        self.adapted = ModelAdapter(model, adapter_function)
+        self._inputs = None
         self._schema = None
 
     @property
@@ -179,22 +232,14 @@ class SectorModel(ABC):
 
     @inputs.setter
     def inputs(self, value):
-        self._inputs = ModelInputs(value)
+        """The inputs to the model
 
-    @abstractmethod
-    def initialise(self):
-        """Use this method to initialise (load the input data into) the model
-
-        Returns
-        =======
-        results : dict
-            A dictionary of results with keys as output names e.g. 'cost' and
-            values
+        value : dict
+            A dictionary of inputs to the model. This may include parameters,
+            assets and exogenous data.
 
         """
-        results = None
-
-        return results
+        self._inputs = ModelInputs(value)
 
     def optimise(self, method, decision_vars, objective_function):
         """Performs an optimisation of the sector model assets
@@ -210,9 +255,12 @@ class SectorModel(ABC):
         """
         raise NotImplemented("Optimisation is not yet implemented")
 
-    @abstractmethod
-    def simulate(self):
+    def simulate(self, decision_variables):
         """Performs an operational simulation of the sector model
+
+        Arguments
+        =========
+        decision_variables : :class:`numpy.ndarray`
 
         Note
         ====
@@ -220,21 +268,12 @@ class SectorModel(ABC):
         simulation-only. This process is described as simulation to distinguish
         from the definition of investments in capacity, versus operation using
         the given capacity
-
         """
-        pass
 
-    @property
-    def model_executable(self):
-        """The path to the model executable
-        """
-        return self._model_executable
-
-    @model_executable.setter
-    def model_executable(self, value):
-        """The path to the model executable
-        """
-        self._model_executable = value
+        static_inputs = self.inputs.parameter_values
+        results = self.adapted.simulate(static_inputs, decision_variables)
+        obj = self.adapted.extract_obj(results)
+        return obj
 
 
 class Interface(ABC):

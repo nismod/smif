@@ -2,91 +2,12 @@
 
 
 """
-import subprocess
-
 from fixtures.water_supply import (ExampleWaterSupplySimulation,
                                    ExampleWaterSupplySimulationReservoir,
-                                   raininess_oracle)
+                                   WaterModelWrapExec,
+                                   WaterSupplySimulationWrapper,
+                                   process_results, raininess_oracle)
 from pytest import raises
-from smif.abstract import SectorModel
-
-
-class WaterSupplyPython(SectorModel):
-    """A concrete instance of the water supply model wrapper for testing
-
-    Inherits :class:`SectorModel` to wrap the example simulation tool.
-
-    """
-
-    def initialise(self, data):
-        """Set up the model
-
-        Parameters
-        ==========
-        data : dict
-            A dictionary of which one key 'raininess' must contain the amount
-            of rain
-        """
-        self.inputs['raininess'] = data['raininess']
-
-        self.model = ExampleWaterSupplySimulation(data['raininess'])
-        self.results = None
-        self.run_successful = None
-
-    def optimise(self, method, decision_vars, objective_function):
-        pass
-
-    def simulate(self):
-        """Runs the model and stores the results in the results parameter
-
-        """
-        self.results = self.model.simulate()
-        self.run_successful = True
-
-    def model_executable(self):
-        pass
-
-
-class WaterSupplyExecutable(SectorModel):
-    """A concrete instance of the water supply which wraps a command line model
-
-    """
-
-    def initialise(self, data):
-        self.model = self.model_executable
-        self.data = data
-        self.results = None
-        self.run_successful = None
-        self.model_executable = './tests/fixtures/water_supply_exec.py'
-
-    def optimise(self, method, decision_vars, objective_function):
-        pass
-
-    def simulate(self):
-        executable = self.model_executable
-        raininess = self.data['raininess']
-        argument = "--raininess={}".format(str(raininess))
-        output = subprocess.check_output([executable, argument])
-        self.results = process_results(output)
-        self.run_successful = True
-
-
-def process_results(output):
-    """Utility function which decodes stdout text from the water supply model
-
-    Returns
-    =======
-    results : dict
-        A dictionary where keys are the results e.g. `cost` and `water`
-
-    """
-    results = {}
-    raw_results = output.decode('utf-8').split('\n')
-    for result in raw_results[0:2]:
-        values = result.split(',')
-        if len(values) == 2:
-            results[str(values[0])] = float(values[1])
-    return results
 
 
 def test_water_supply_with_reservoir():
@@ -127,45 +48,33 @@ def test_raininess_oracle_out_of_range():
         raininess_oracle(2051)
 
 
-def test_simulate_rain_python():
-    ws = WaterSupplyPython()
-    ws.initialise({
-        "raininess": 1
-    })
-    ws.simulate()
-    assert ws.run_successful
-    results = ws.results
+def test_simulate_rain_python_wrap():
+    adapter = WaterSupplySimulationWrapper(ExampleWaterSupplySimulation)
+    static = 1
+    decision = 1
+    results = adapter.simulate(static, decision)
     assert results["water"] == 1
 
 
 def test_simulate_rain_cost_python():
-    ws = WaterSupplyPython()
-    ws.initialise({
-        "raininess": 1
-    })
-    ws.simulate()
-    assert ws.run_successful
-    results = ws.results
+    adapter = WaterSupplySimulationWrapper(ExampleWaterSupplySimulation)
+    static = 1
+    decision = 1
+    results = adapter.simulate(static, decision)
     assert results["cost"] == 1
 
 
 def test_simulate_rain_executable():
-    ws = WaterSupplyExecutable()
-    ws.initialise({
-        "raininess": 1
-    })
-    ws.simulate()
-    assert ws.run_successful
-    results = ws.results
+    adapter = WaterModelWrapExec('dummy')
+    static = 1
+    decision = 1
+    results = adapter.simulate(static, decision)
     assert results['water'] == 1
 
 
 def test_simulate_rain_cost_executable():
-    ws = WaterSupplyExecutable()
-    ws.initialise({
-        "raininess": 1
-    })
-    ws.simulate()
-    assert ws.run_successful
-    results = ws.results
+    adapter = WaterModelWrapExec('dummy')
+    static = 1
+    decision = 1
+    results = adapter.simulate(static, decision)
     assert results['cost'] == 1

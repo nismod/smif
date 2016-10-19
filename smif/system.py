@@ -1,65 +1,22 @@
-from abc import ABC, abstractmethod
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Concrete implementation of classes for sector models
 
+"""
+from __future__ import absolute_import, division, print_function
+
+import logging
 from scipy.optimize import minimize
 from smif.abstract import SectorModel
 
+__author__ = "Will Usher"
+__copyright__ = "Will Usher"
+__license__ = "mit"
 
-class AbstractModelWrapper(ABC):
-    """Provides in interface to wrap any simulation model for optimisation
-    """
-
-    def __init__(self, model):
-        self.model = model
-
-    @abstractmethod
-    def simulate(self, static_inputs, decision_variables):
-        """This method should allow
-
-        Arguments
-        =========
-        static_inputs : x-by-1 :class:`numpy.ndarray`
-        decision_variables : x-by-1 :class:`numpy.ndarray`
-        """
-        pass
-
-    @abstractmethod
-    def extract_obj(self, results):
-        """Implement this method to return a scalar value objective function
-
-        Arguments
-        =========
-        results : :class:`dict`
-            The results from the `simulate` method
-
-        Returns
-        =======
-        float
-            A scalar component generated from the simulation model results
-        """
-        pass
+logger = logging.getLogger(__name__)
 
 
 class WaterModelAsset(SectorModel):
-
-    def __init__(self, model, adapter_function):
-        super().__init__()
-        self.adapted = ModelAdapter(model, adapter_function)
-
-    def initialise(self):
-        pass
-
-    def simulate(self, decision_variables):
-        """
-
-        Arguments
-        =========
-        decision_variables : :class:`numpy.ndarray`
-        """
-
-        static_inputs = self.inputs.parameter_values
-        results = self.adapted.simulate(static_inputs, decision_variables)
-        obj = self.adapted.extract_obj(results)
-        return obj
 
     def optimise(self):
         """Performs a static optimisation for a particular model instance
@@ -107,23 +64,3 @@ class WaterModelAsset(SectorModel):
             print("Solver failed")
 
         return results
-
-
-class ModelAdapter(object):
-    """Adapts a model so that it can be used by the optisation protocol
-
-    Arguments
-    =========
-    model :
-        An instance of a model
-    simulate :
-        The function to use for implementing a `simulate` method
-
-    """
-
-    def __init__(self, model, simulate):
-        self.model = model
-        self.simulate = simulate
-
-    def __getattr__(self, attr):
-        return getattr(self.model, attr)
