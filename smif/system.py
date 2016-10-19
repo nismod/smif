@@ -18,7 +18,26 @@ def get_decision_variables(model_inputs):
     bounds : numpy.ndarray
     initial : numpy.ndarray
 
+    Notes
+    =====
+    The inputs are expected to be defined using the following keys::
+
+        'decision variables': [<list of decision variables>]
+        'parameters': [<list of parameters>]
+        '<decision variable name>': {'bounds': (<tuple of upper and lower
+                                                 bound>),
+                                     'index': <scalar showing position in
+                                               arguments>},
+                                     'init': <scalar showing initial value for
+                                              solver>
+                                      },
+        '<parameter name>': {'bounds': (<tuple of upper and lower range for
+                                        sensitivity analysis>),
+                             'index': <scalar showing position in arguments>,
+                             'value': <scalar showing value for model>
+                              },
     """
+
     names = model_inputs['decision variables']
     number_of_decision_variables = len(names)
 
