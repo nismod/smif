@@ -1,8 +1,43 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 import numpy as np
 from scipy.optimize import minimize
 from smif.abstract import SectorModel
+
+
+class AbstractModelWrapper(ABC):
+    """Provides in interface to wrap any simulation model for optimisation
+    """
+
+    def __init__(self, model):
+        self.model = model
+
+    @abstractmethod
+    def simulate(self, static_inputs, decision_variables):
+        """This method should allow
+
+        Arguments
+        =========
+        static_inputs : x-by-1 :class:`numpy.ndarray`
+        decision_variables : x-by-1 :class:`numpy.ndarray`
+        """
+        pass
+
+    @abstractmethod
+    def extract_obj(self, results):
+        """Implement this method to return a scalar value objective function
+
+        Arguments
+        =========
+        results : :class:`dict`
+            The results from the `simulate` method
+
+        Returns
+        =======
+        float
+            A scalar component generated from the simulation model results
+        """
+        pass
 
 
 def get_decision_variables(model_inputs):
@@ -10,20 +45,25 @@ def get_decision_variables(model_inputs):
 
     Arguments
     =========
-    inputs : dict
+    inputs : :class:`dict`
+        See notes below.
 
     Returns
     =======
-    ordered_names : numpy.ndarray
-    bounds : numpy.ndarray
-    initial : numpy.ndarray
+    ordered_names : :class:`numpy.ndarray`
+        The names of the decision variables in the order specified by the
+        'index' key in the entries of the inputs
+    bounds : :class:`numpy.ndarray`
+        The bounds ordered by the index key
+    initial : :class:`numpy.ndarray`
+        The initial values ordered by the index key
 
     Notes
     =====
     The inputs are expected to be defined using the following keys::
 
-        'decision variables': [<list of decision variables>]
-        'parameters': [<list of parameters>]
+        'decision variables': [<list of decision variable names>]
+        'parameters': [<list of parameter names>]
         '<decision variable name>': {'bounds': (<tuple of upper and lower
                                                  bound>),
                                      'index': <scalar showing position in
@@ -61,13 +101,18 @@ def get_parameter_values(model_inputs):
 
     Arguments
     =========
-    inputs : dict
+    inputs : :class:`dict`
 
     Returns
     =======
-    ordered_names : numpy.ndarray
-    bounds : numpy.ndarray
-    values : numpy.ndarray
+    ordered_names : :class:`numpy.ndarray`
+        The names of the parameters in the order specified by the
+        'index' key in the entries of the inputs
+    bounds : :class:`numpy.ndarray`
+        The parameter bounds (or range) ordered by the index key
+    values : :class:`numpy.ndarray`
+        The parameter values ordered by the index key
+
 
     """
     names = model_inputs['parameters']
@@ -98,6 +143,12 @@ class WaterModelAsset(SectorModel):
         pass
 
     def simulate(self, decision_variables):
+        """
+
+        Arguments
+        =========
+        decision_variables : :class:`numpy.ndarray`
+        """
 
         static_inputs = self.static_data
         results = self.adapted.simulate(static_inputs, decision_variables)
@@ -105,9 +156,17 @@ class WaterModelAsset(SectorModel):
         return obj
 
     def optimise(self):
-        """Finds the minimum of the specified objective function
+        """Performs a static optimisation for a particular model instance
 
         Uses an off-the-shelf optimisation algorithm from the scipy library
+
+        Notes
+        =====
+        This constraint below expresses that water supply must be greater than
+        or equal to 3.  ``x[0]`` is the decision variable for water treatment
+        capacity, while the value ``p_values[0]`` in the min term is the value
+        of the raininess parameter.
+
         """
 
         v_names, v_initial, v_bounds = get_decision_variables(self.inputs)
@@ -115,7 +174,7 @@ class WaterModelAsset(SectorModel):
         self.static_data = p_values
 
         cons = ({'type': 'ineq',
-                 'fun': lambda x: min(x[0], 3) - 3}
+                 'fun': lambda x: min(x[0], p_values[0]) - 3}
                 )
 
         fun = self.simulate
