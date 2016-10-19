@@ -19,8 +19,8 @@ import numpy as np
 from fixtures.water_supply import ExampleWaterSupplySimulationAsset as WaterMod
 from numpy.testing import assert_allclose, assert_equal
 from pytest import fixture
-from smif.system import (AbstractModelWrapper, WaterModelAsset,
-                         get_decision_variables, get_parameter_values)
+from smif.abstract import ModelInputs
+from smif.system import AbstractModelWrapper, WaterModelAsset
 
 
 def one_input():
@@ -150,8 +150,10 @@ class TestInputs:
 
     def test_one_input_decision_variables(self):
 
-        inputs = one_input()
-        act_names, act_initial, act_bounds = get_decision_variables(inputs)
+        inputs = ModelInputs(one_input())
+        act_names = inputs.decision_variable_names
+        act_initial = inputs.decision_variable_values
+        act_bounds = inputs.decision_variable_bounds
 
         exp_names = np.array(['water treatment capacity'], dtype=str)
         exp_initial = np.array([10], dtype=float)
@@ -163,8 +165,10 @@ class TestInputs:
 
     def test_two_inputs_decision_variables(self):
 
-        inputs = two_inputs()
-        act_names, act_initial, act_bounds = get_decision_variables(inputs)
+        inputs = ModelInputs(two_inputs())
+        act_names = inputs.decision_variable_names
+        act_initial = inputs.decision_variable_values
+        act_bounds = inputs.decision_variable_bounds
 
         exp_names = np.array(['reservoir pumpiness',
                               'water treatment capacity'], dtype='U30')
@@ -177,8 +181,10 @@ class TestInputs:
 
     def test_one_input_parameters(self):
 
-        inputs = one_input()
-        act_names, act_bounds, act_values = get_parameter_values(inputs)
+        inputs = ModelInputs(one_input())
+        act_names = inputs.parameter_names
+        act_values = inputs.parameter_values
+        act_bounds = inputs.parameter_bounds
 
         exp_names = np.array(['raininess'], dtype='U30')
         exp_values = np.array([3], dtype=float)

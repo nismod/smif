@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-import numpy as np
 from scipy.optimize import minimize
 from smif.abstract import SectorModel
 
@@ -40,99 +39,6 @@ class AbstractModelWrapper(ABC):
         pass
 
 
-def get_decision_variables(model_inputs):
-    """Extracts an array of decision variables from a dictionary of inputs
-
-    Arguments
-    =========
-    inputs : :class:`dict`
-        See notes below.
-
-    Returns
-    =======
-    ordered_names : :class:`numpy.ndarray`
-        The names of the decision variables in the order specified by the
-        'index' key in the entries of the inputs
-    bounds : :class:`numpy.ndarray`
-        The bounds ordered by the index key
-    initial : :class:`numpy.ndarray`
-        The initial values ordered by the index key
-
-    Notes
-    =====
-    The inputs are expected to be defined using the following keys::
-
-        'decision variables': [<list of decision variable names>]
-        'parameters': [<list of parameter names>]
-        '<decision variable name>': {'bounds': (<tuple of upper and lower
-                                                 bound>),
-                                     'index': <scalar showing position in
-                                               arguments>},
-                                     'init': <scalar showing initial value for
-                                              solver>
-                                      },
-        '<parameter name>': {'bounds': (<tuple of upper and lower range for
-                                        sensitivity analysis>),
-                             'index': <scalar showing position in arguments>,
-                             'value': <scalar showing value for model>
-                              },
-    """
-
-    names = model_inputs['decision variables']
-    number_of_decision_variables = len(names)
-
-    indices = [model_inputs[name]['index'] for name in names]
-    assert len(indices) == number_of_decision_variables, \
-        'Index entries do not match the number of decision variables'
-    initial = np.zeros(number_of_decision_variables, dtype=np.float)
-    bounds = np.zeros(number_of_decision_variables, dtype=(np.float, 2))
-    ordered_names = np.zeros(number_of_decision_variables, dtype='U30')
-
-    for name, index in zip(names, indices):
-        initial[index] = model_inputs[name]['init']
-        bounds[index] = model_inputs[name]['bounds']
-        ordered_names[index] = name
-
-    return ordered_names, initial, bounds
-
-
-def get_parameter_values(model_inputs):
-    """Extracts an array of parameters from a dictionary of inputs
-
-    Arguments
-    =========
-    inputs : :class:`dict`
-
-    Returns
-    =======
-    ordered_names : :class:`numpy.ndarray`
-        The names of the parameters in the order specified by the
-        'index' key in the entries of the inputs
-    bounds : :class:`numpy.ndarray`
-        The parameter bounds (or range) ordered by the index key
-    values : :class:`numpy.ndarray`
-        The parameter values ordered by the index key
-
-
-    """
-    names = model_inputs['parameters']
-    number_of_parameters = len(names)
-
-    indices = [model_inputs[name]['index'] for name in names]
-    assert len(indices) == number_of_parameters, \
-        'Index entries do not match the number of decision variables'
-    values = np.zeros(number_of_parameters, dtype=np.float)
-    bounds = np.zeros(number_of_parameters, dtype=(np.float, 2))
-    ordered_names = np.zeros(number_of_parameters, dtype='U30')
-
-    for name, index in zip(names, indices):
-        values[index] = model_inputs[name]['value']
-        bounds[index] = model_inputs[name]['bounds']
-        ordered_names[index] = name
-
-    return ordered_names, bounds, values
-
-
 class WaterModelAsset(SectorModel):
 
     def __init__(self, model, adapter_function):
@@ -150,7 +56,7 @@ class WaterModelAsset(SectorModel):
         decision_variables : :class:`numpy.ndarray`
         """
 
-        static_inputs = self.static_data
+        static_inputs = self.inputs.parameter_values
         results = self.adapted.simulate(static_inputs, decision_variables)
         obj = self.adapted.extract_obj(results)
         return obj
@@ -169,9 +75,10 @@ class WaterModelAsset(SectorModel):
 
         """
 
-        v_names, v_initial, v_bounds = get_decision_variables(self.inputs)
-        p_names, p_bounds, p_values = get_parameter_values(self.inputs)
-        self.static_data = p_values
+        v_names = self.inputs.decision_variable_names
+        v_initial = self.inputs.decision_variable_values
+        v_bounds = self.inputs.decision_variable_bounds
+        p_values = self.inputs.parameter_values
 
         cons = ({'type': 'ineq',
                  'fun': lambda x: min(x[0], p_values[0]) - 3}
@@ -200,14 +107,6 @@ class WaterModelAsset(SectorModel):
             print("Solver failed")
 
         return results
-
-
-class AbstractModel(ABC):
-    """
-    """
-
-    def simulate(self):
-        pass
 
 
 class ModelAdapter(object):

@@ -7,12 +7,146 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 from abc import ABC, abstractmethod
+import numpy as np
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
 logger = logging.getLogger(__name__)
+
+
+class ModelInputs(object):
+    """A container for all the model inputs
+
+    """
+    def __init__(self, inputs):
+        self.input_dict = inputs
+
+        (self._decision_variable_names,
+         self._decision_variable_values,
+         self._decision_variable_bounds) = self.get_decision_variables()
+
+        (self._parameter_names,
+         self._parameter_bounds,
+         self._parameter_values) = self.get_parameter_values()
+
+    @property
+    def parameter_names(self):
+        """A list of ordered parameter names
+        """
+        return self._parameter_names
+
+    @property
+    def parameter_bounds(self):
+        """An array of tuples of parameter bounds
+        """
+        return self._parameter_bounds
+
+    @property
+    def parameter_values(self):
+        """An array of parameter values
+        """
+        return self._parameter_values
+
+    @property
+    def decision_variable_names(self):
+        """A list of decision variable names
+        """
+        return self._decision_variable_names
+
+    @property
+    def decision_variable_values(self):
+        """An array of decision variable values
+        """
+        return self._decision_variable_values
+
+    @property
+    def decision_variable_bounds(self):
+        """An array of tuples of decision variable bounds
+        """
+        return self._decision_variable_bounds
+
+    def get_decision_variables(self):
+        """Extracts an array of decision variables from a dictionary of inputs
+
+        Returns
+        =======
+        ordered_names : :class:`numpy.ndarray`
+            The names of the decision variables in the order specified by the
+            'index' key in the entries of the inputs
+        bounds : :class:`numpy.ndarray`
+            The bounds ordered by the index key
+        initial : :class:`numpy.ndarray`
+            The initial values ordered by the index key
+
+        Notes
+        =====
+        The inputs are expected to be defined using the following keys::
+
+            'decision variables': [<list of decision variable names>]
+            'parameters': [<list of parameter names>]
+            '<decision variable name>': {'bounds': (<tuple of upper and lower
+                                                     bound>),
+                                         'index': <scalar showing position in
+                                                   arguments>},
+                                         'init': <scalar showing initial value
+                                                  for solver>
+                                          },
+            '<parameter name>': {'bounds': (<tuple of upper and lower range for
+                                            sensitivity analysis>),
+                                 'index': <scalar showing position in
+                                          arguments>,
+                                 'value': <scalar showing value for model>
+                                  },
+        """
+
+        names = self.input_dict['decision variables']
+        number_of_decision_variables = len(names)
+
+        indices = [self.input_dict[name]['index'] for name in names]
+        assert len(indices) == number_of_decision_variables, \
+            'Index entries do not match the number of decision variables'
+        initial = np.zeros(number_of_decision_variables, dtype=np.float)
+        bounds = np.zeros(number_of_decision_variables, dtype=(np.float, 2))
+        ordered_names = np.zeros(number_of_decision_variables, dtype='U30')
+
+        for name, index in zip(names, indices):
+            initial[index] = self.input_dict[name]['init']
+            bounds[index] = self.input_dict[name]['bounds']
+            ordered_names[index] = name
+
+        return ordered_names, initial, bounds
+
+    def get_parameter_values(self):
+        """Extracts an array of parameters from a dictionary of inputs
+
+        Returns
+        =======
+        ordered_names : :class:`numpy.ndarray`
+            The names of the parameters in the order specified by the
+            'index' key in the entries of the inputs
+        bounds : :class:`numpy.ndarray`
+            The parameter bounds (or range) ordered by the index key
+        values : :class:`numpy.ndarray`
+            The parameter values ordered by the index key
+        """
+        names = self.input_dict['parameters']
+        number_of_parameters = len(names)
+
+        indices = [self.input_dict[name]['index'] for name in names]
+        assert len(indices) == number_of_parameters, \
+            'Index entries do not match the number of decision variables'
+        values = np.zeros(number_of_parameters, dtype=np.float)
+        bounds = np.zeros(number_of_parameters, dtype=(np.float, 2))
+        ordered_names = np.zeros(number_of_parameters, dtype='U30')
+
+        for name, index in zip(names, indices):
+            values[index] = self.input_dict[name]['value']
+            bounds[index] = self.input_dict[name]['bounds']
+            ordered_names[index] = name
+
+        return ordered_names, bounds, values
 
 
 class SectorModel(ABC):
@@ -36,8 +170,16 @@ class SectorModel(ABC):
     def __init__(self):
         self.model = None
         self._model_executable = None
-        self.inputs = {}
+        self._inputs = {}
         self._schema = None
+
+    @property
+    def inputs(self):
+        return self._inputs
+
+    @inputs.setter
+    def inputs(self, value):
+        self._inputs = ModelInputs(value)
 
     @abstractmethod
     def initialise(self):
@@ -496,6 +638,26 @@ class Model(AbstractModel):
     """
     def __init__(self):
         super().__init__()
+        self.almanac = None
+
+    def _add_to_almanac(self, model_inputs, model_outputs):
+        self.almanac['inputs'] = model_inputs
+        self.almanac['outputs'] = model_outputs
+
+    def run(self):
+        """
+        1. Determine running order
+        2. Run each sector model
+        3. Return success or failure
+        """
+
+    def _determine_running_order(self):
+        model_inputs = []
+        model_outputs = []
+        for sector_model in self.sector_models:
+            model_inputs.extend(sector_model.get_inputs())
+            model_outputs.extend(sector_model.get_outputs())
+        self._add_to_almanac(model_inputs, model_outputs)
 
 
 class AbstractModelBuilder(ABC):
