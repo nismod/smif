@@ -8,7 +8,6 @@ from __future__ import absolute_import, division, print_function
 import logging
 from abc import ABC, abstractmethod
 import numpy as np
-from scipy.optimize import minimize
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -26,7 +25,7 @@ class AbstractModelWrapper(ABC):
 
     @abstractmethod
     def simulate(self, static_inputs, decision_variables):
-        """This method should allow run model with defined inputs and outputs
+        """This method should allow run model with inputs and outputs as arrays
 
         Arguments
         =========
@@ -58,6 +57,12 @@ class AbstractModelWrapper(ABC):
 
             constraints = ({'type': 'ineq',
                             'fun': lambda x: x - 3})
+
+        Arguments
+        =========
+        parameters : :class:`numpy.ndarray`
+            An array of parameter values passed in from the
+            `SectorModel.optimise` method
 
         """
         constraints = ()
@@ -215,108 +220,6 @@ class ModelInputs(object):
             ordered_names[index] = name
 
         return ordered_names, bounds, values
-
-
-class SectorModel(ABC):
-    """An abstract representation of the sector model with inputs and outputs
-
-    Parameters
-    ==========
-    schema : dict
-        A dictionary of parameter, asset and exogenous data names with expected
-        types. Used for validating presented data.
-
-    Attributes
-    ==========
-    model
-        An instance of the sector model
-
-
-    """
-    def __init__(self, model, adapter_function):
-        self.model = None
-        self.adapted = ModelAdapter(model, adapter_function)
-        self._inputs = None
-        self._schema = None
-
-    @property
-    def inputs(self):
-        return self._inputs
-
-    @inputs.setter
-    def inputs(self, value):
-        """The inputs to the model
-
-        value : dict
-            A dictionary of inputs to the model. This may include parameters,
-            assets and exogenous data.
-
-        """
-        self._inputs = ModelInputs(value)
-
-    def optimise(self):
-        """Performs a static optimisation for a particular model instance
-
-        Uses an off-the-shelf optimisation algorithm from the scipy library
-
-        Notes
-        =====
-        This constraint below expresses that water supply must be greater than
-        or equal to 3.  ``x[0]`` is the decision variable for water treatment
-        capacity, while the value ``p_values[0]`` in the min term is the value
-        of the raininess parameter.
-
-        """
-
-        v_names = self.inputs.decision_variable_names
-        v_initial = self.inputs.decision_variable_values
-        v_bounds = self.inputs.decision_variable_bounds
-
-        cons = self.adapted.constraints(self.inputs.parameter_values)
-
-        fun = self.simulate
-        x0 = v_initial
-        bnds = v_bounds
-        opts = {'disp': True}
-        res = minimize(fun, x0,
-                       options=opts,
-                       method='SLSQP',
-                       bounds=bnds,
-                       constraints=cons
-                       )
-
-        results = {x: y for x, y in zip(v_names, res.x)}
-
-        if res.success:
-            print("Solver exited successfully with obj: {}".format(res.fun))
-            print("and with solution: {}".format(res.x))
-            print("and bounds: {}".format(v_bounds))
-            print("from initial values: {}".format(v_initial))
-            print("for variables: {}".format(v_names))
-        else:
-            print("Solver failed")
-
-        return results
-
-    def simulate(self, decision_variables):
-        """Performs an operational simulation of the sector model
-
-        Arguments
-        =========
-        decision_variables : :class:`numpy.ndarray`
-
-        Note
-        ====
-        The term simulation may refer to operational optimisation, rather than
-        simulation-only. This process is described as simulation to distinguish
-        from the definition of investments in capacity, versus operation using
-        the given capacity
-        """
-
-        static_inputs = self.inputs.parameter_values
-        results = self.adapted.simulate(static_inputs, decision_variables)
-        obj = self.adapted.extract_obj(results)
-        return obj
 
 
 class Interface(ABC):

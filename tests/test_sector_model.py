@@ -3,7 +3,8 @@ import logging
 import pytest
 from fixtures.water_supply import ExampleWaterSupplySimulationAsset
 from smif.abstract import ConcreteAsset as Asset
-from smif.abstract import SectorModel, State
+from smif.abstract import State
+from smif.sectormodel import SectorModel
 
 _log_format = '%(asctime)s %(name)-12s: %(levelname)-8s %(message)s'
 logging.basicConfig(filename='test_sector_model.log',

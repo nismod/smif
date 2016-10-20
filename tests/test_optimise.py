@@ -16,7 +16,8 @@ The optimisation features requires:
 from fixtures.water_supply import ExampleWaterSupplySimulationAsset as WaterMod
 from fixtures.water_supply import one_input
 from numpy.testing import assert_allclose
-from smif.abstract import AbstractModelWrapper, SectorModel
+from smif.abstract import AbstractModelWrapper
+from smif.sectormodel import SectorModel
 # from smif.system import WaterModelAsset
 
 
@@ -31,7 +32,8 @@ class WaterSupplySimulationAssetWrapper(AbstractModelWrapper):
         =========
         static_inputs : x-by-1 :class:`numpy.ndarray`
             x_0 is raininess
-            x_1 is capacity of water treatment plants
+        decision_variables : :class:`numpy.ndarray`
+            x_0 is capacity of water treatment plants
         """
         raininess = static_inputs
         capacity = decision_variables
@@ -43,6 +45,15 @@ class WaterSupplySimulationAssetWrapper(AbstractModelWrapper):
         return results['cost']
 
     def constraints(self, parameters):
+        """
+
+        Notes
+        =====
+        This constraint below expresses that water supply must be greater than
+        or equal to 3.  ``x[0]`` is the decision variable for water treatment
+        capacity, while the value ``parameters[0]`` in the min term is the
+        value of the raininess parameter.
+        """
         constraints = ({'type': 'ineq',
                         'fun': lambda x: min(x[0], parameters[0]) - 3}
                        )
