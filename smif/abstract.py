@@ -18,6 +18,19 @@ logger = logging.getLogger(__name__)
 
 class AbstractModelWrapper(ABC):
     """Provides in interface to wrap any simulation model for optimisation
+
+    To wrap a simulation model, subclass this wrapper, and populate the three
+    methods.
+
+    At run time, instantiate the wrapper with the ``model`` as an argument.
+
+    Attributes
+    ==========
+    model
+        Its useful to have the model being wrapped available via ``self.model``
+        throughout the code.  Instantiate the class with an instance of the
+        model your are trying to wrap
+
     """
 
     def __init__(self, model):
