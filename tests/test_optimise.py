@@ -16,8 +16,8 @@ The optimisation features requires:
 from fixtures.water_supply import ExampleWaterSupplySimulationAsset as WaterMod
 from fixtures.water_supply import one_input
 from numpy.testing import assert_allclose
-from smif.abstract import AbstractModelWrapper
-from smif.system import WaterModelAsset
+from smif.abstract import AbstractModelWrapper, SectorModel
+# from smif.system import WaterModelAsset
 
 
 class WaterSupplySimulationAssetWrapper(AbstractModelWrapper):
@@ -42,13 +42,19 @@ class WaterSupplySimulationAssetWrapper(AbstractModelWrapper):
     def extract_obj(self, results):
         return results['cost']
 
+    def constraints(self, parameters):
+        constraints = ({'type': 'ineq',
+                        'fun': lambda x: min(x[0], parameters[0]) - 3}
+                       )
+        return constraints
+
 
 class TestWaterModelOptimisation:
 
     def test_water_model_optimisation(self, one_input):
         wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
 
-        model = WaterModelAsset(wrapped, wrapped.simulate)
+        model = SectorModel(wrapped, wrapped.simulate)
         model.inputs = one_input
         actual_value = model.optimise()
         expected_value = {'water treatment capacity': 3}

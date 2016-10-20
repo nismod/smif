@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 from abc import ABC, abstractmethod
 import numpy as np
+from scipy.optimize import minimize
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -49,6 +50,18 @@ class AbstractModelWrapper(ABC):
             A scalar component generated from the simulation model results
         """
         pass
+
+    def constraints(self, parameters):
+        """Express constraints for the optimisation
+
+        Use the form outlined in :class:`scipy.optimise.minimize`, namely::
+
+            constraints = ({'type': 'ineq',
+                            'fun': lambda x: x - 3})
+
+        """
+        constraints = ()
+        return constraints
 
 
 class ModelAdapter(object):
@@ -241,19 +254,49 @@ class SectorModel(ABC):
         """
         self._inputs = ModelInputs(value)
 
-    def optimise(self, method, decision_vars, objective_function):
-        """Performs an optimisation of the sector model assets
+    def optimise(self):
+        """Performs a static optimisation for a particular model instance
 
-        Arguments
-        =========
-        method : function
-            Provides the
-        decision_vars : list
-            Defines the decision variables
-        objective_function : function
-            Defines the objective function
+        Uses an off-the-shelf optimisation algorithm from the scipy library
+
+        Notes
+        =====
+        This constraint below expresses that water supply must be greater than
+        or equal to 3.  ``x[0]`` is the decision variable for water treatment
+        capacity, while the value ``p_values[0]`` in the min term is the value
+        of the raininess parameter.
+
         """
-        raise NotImplemented("Optimisation is not yet implemented")
+
+        v_names = self.inputs.decision_variable_names
+        v_initial = self.inputs.decision_variable_values
+        v_bounds = self.inputs.decision_variable_bounds
+
+        cons = self.adapted.constraints(self.inputs.parameter_values)
+
+        fun = self.simulate
+        x0 = v_initial
+        bnds = v_bounds
+        opts = {'disp': True}
+        res = minimize(fun, x0,
+                       options=opts,
+                       method='SLSQP',
+                       bounds=bnds,
+                       constraints=cons
+                       )
+
+        results = {x: y for x, y in zip(v_names, res.x)}
+
+        if res.success:
+            print("Solver exited successfully with obj: {}".format(res.fun))
+            print("and with solution: {}".format(res.x))
+            print("and bounds: {}".format(v_bounds))
+            print("from initial values: {}".format(v_initial))
+            print("for variables: {}".format(v_names))
+        else:
+            print("Solver failed")
+
+        return results
 
     def simulate(self, decision_variables):
         """Performs an operational simulation of the sector model
