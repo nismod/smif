@@ -69,26 +69,6 @@ class AbstractModelWrapper(ABC):
         return constraints
 
 
-class ModelAdapter(object):
-    """Adapts a model so that it can be used by the optimisation protocol
-
-    Arguments
-    =========
-    model :
-        An instance of a model
-    simulate :
-        The function to use for implementing a `simulate` method
-
-    """
-
-    def __init__(self, model, simulate):
-        self.model = model
-        self.simulate = simulate
-
-    def __getattr__(self, attr):
-        return getattr(self.model, attr)
-
-
 class ModelInputs(object):
     """A container for all the model inputs
 

@@ -18,7 +18,6 @@ from fixtures.water_supply import one_input
 from numpy.testing import assert_allclose
 from smif.abstract import AbstractModelWrapper
 from smif.sectormodel import SectorModel
-# from smif.system import WaterModelAsset
 
 
 class WaterSupplySimulationAssetWrapper(AbstractModelWrapper):
