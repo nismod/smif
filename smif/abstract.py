@@ -493,12 +493,21 @@ class Model(AbstractModel):
 
     def optimise(self):
         """Runs a dynamic optimisation over a system-of-simulation models
+
+        Use dynamic programming with memoization where the objective function
+        :math:`Z(s)` are indexed by state :math:`s`
+
+        if :math:`s` is in the hash table: return :math:`Z(s)`
+
+        :math:`Z(s) = min\{Z(s) + E(Z(s'))\}`
+
         """
         for model in self._sector_models:
             model.inputs = {}
 
     def objective_function(self):
         """
+
         """
         return None
 

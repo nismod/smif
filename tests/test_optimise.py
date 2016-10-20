@@ -170,7 +170,7 @@ class TestMultiYearOptimisation:
             assert_allclose(second_results[key], expected_value[key],
                             rtol=1e-6, atol=1e-6)
 
-    def test_model_instantiation(self, dynamic_data):
+    def test_sequential_simulation(self, dynamic_data):
         # Instantiate a sector model
         wrapped = DynamicModelWrapper(DynMod)
         sectormodel = SectorModel(wrapped)
