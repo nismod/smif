@@ -1,17 +1,8 @@
-import logging
-
 import pytest
 from fixtures.water_supply import ExampleWaterSupplySimulationAsset
 from smif.abstract import ConcreteAsset as Asset
 from smif.abstract import State
 from smif.sectormodel import SectorModel
-
-_log_format = '%(asctime)s %(name)-12s: %(levelname)-8s %(message)s'
-logging.basicConfig(filename='test_sector_model.log',
-                    level=logging.DEBUG,
-                    format=_log_format,
-                    filemode='w')
-
 
 class WaterSupplyPythonAssets(SectorModel):
     """A concrete instance of the water supply wrapper for testing with assets
