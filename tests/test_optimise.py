@@ -19,7 +19,7 @@ from fixtures.water_supply import DynamicWaterSupplyModel as DynMod
 from fixtures.water_supply import ExampleWaterSupplySimulationAsset as WaterMod
 from fixtures.water_supply import dynamic_data, one_input
 from numpy.testing import assert_allclose
-from smif.abstract import AbstractModelWrapper
+from smif.abstract import AbstractModelWrapper, Model
 from smif.sectormodel import SectorModel
 
 
@@ -154,6 +154,8 @@ class TestMultiYearOptimisation:
         model.inputs = dynamic_data
         first_results = model.optimise()
 
+        # Updates model state (existing capacity) with total capacity from
+        # previous iteration
         model.inputs.update_parameter_value('existing capacity',
                                             first_results['capacity'])
         second_results = model.optimise()
@@ -167,3 +169,28 @@ class TestMultiYearOptimisation:
         for key in keys:
             assert_allclose(second_results[key], expected_value[key],
                             rtol=1e-6, atol=1e-6)
+
+    def test_model_instantiation(self, dynamic_data):
+        # Instantiate a sector model
+        wrapped = DynamicModelWrapper(DynMod)
+        sectormodel = SectorModel(wrapped)
+        # Instantiate a system-of-system instance
+        sos_model = Model()
+        # Attach the sector model to the system-of-system model
+        sos_model.attach_interface(sectormodel)
+        sos_model.timesteps = [2010, 2015, 2020]
+        decisions = np.array([2, 0, 0], dtype=float)
+        results = sos_model.sequential_simulation(sectormodel,
+                                                  dynamic_data,
+                                                  decisions)
+
+        expected_results = [{'water': np.array([3.], dtype=float),
+                             'cost': np.array([2.528], dtype=float),
+                             'capacity': np.array([3.], dtype=float)},
+                            {'water': np.array([3.], dtype=float),
+                             'cost': np.array([0.], dtype=float),
+                             'capacity': np.array([3.], dtype=float)},
+                            {'water': np.array([3.], dtype=float),
+                             'cost': np.array([0.], dtype=float),
+                             'capacity': np.array([3.], dtype=float)}]
+        assert results == expected_results

@@ -494,12 +494,32 @@ class Model(AbstractModel):
     def optimise(self):
         """Runs a dynamic optimisation over a system-of-simulation models
         """
-        pass
+        for model in self._sector_models:
+            model.inputs = {}
 
     def objective_function(self):
         """
         """
         return None
+
+    def sequential_simulation(self, model, inputs, decisions):
+        results = []
+        for index in range(len(self._timesteps)):
+            # Intialise the model
+            model.inputs = inputs
+            # Update the state from the previous year
+            if index > 0:
+                state_var = 'existing capacity'
+                state_res = results[index - 1]['capacity']
+                logger.debug("Updating {} with {}".format(state_var,
+                                                          state_res))
+                model.inputs.update_parameter_value(state_var,
+                                                    state_res)
+
+            # Run the simulation
+            decision = decisions[index]
+            results.append(model.simulate(decision))
+        return results
 
 
 class AbstractModelBuilder(ABC):

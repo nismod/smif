@@ -151,6 +151,7 @@ class ModelInputs(object):
         bounds = self.parameter_bounds
         assert bounds[index][0] <= value <= bounds[index][1], \
             "Parameter bounds exceeded"
+        logger.debug("Updating {} with {}".format(name, value))
         self._parameter_values[index] = value
 
     @property

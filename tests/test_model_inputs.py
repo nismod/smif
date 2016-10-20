@@ -3,7 +3,7 @@
 import numpy as np
 from fixtures.water_supply import one_input, two_inputs
 from numpy.testing import assert_equal
-from smif.abstract import ModelInputs
+from smif.inputs import ModelInputs
 
 
 class TestModelInputs:
