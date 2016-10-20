@@ -7,7 +7,6 @@ Code Structure
 The following inheritance diagrams illustrate the structure of the code.
 
 .. inheritance-diagram:: smif.abstract
-.. inheritance-diagram:: smif.system
 
 
 Contents

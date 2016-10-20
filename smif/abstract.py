@@ -18,6 +18,19 @@ logger = logging.getLogger(__name__)
 
 class AbstractModelWrapper(ABC):
     """Provides in interface to wrap any simulation model for optimisation
+
+    To wrap a simulation model, subclass this wrapper, and populate the three
+    methods.
+
+    At run time, instantiate the wrapper with the ``model`` as an argument.
+
+    Attributes
+    ==========
+    model
+        Its useful to have the model being wrapped available via ``self.model``
+        throughout the code.  Instantiate the class with an instance of the
+        model your are trying to wrap
+
     """
 
     def __init__(self, model):
@@ -25,7 +38,7 @@ class AbstractModelWrapper(ABC):
 
     @abstractmethod
     def simulate(self, static_inputs, decision_variables):
-        """This method should allow run model with defined inputs and outputs
+        """This method should allow run model with inputs and outputs as arrays
 
         Arguments
         =========
@@ -37,6 +50,10 @@ class AbstractModelWrapper(ABC):
     @abstractmethod
     def extract_obj(self, results):
         """Implement this method to return a scalar value objective function
+
+        This method should take the results from the output of the `simulate`
+        method, process the results, and return a scalar value which can be
+        used as the objective function
 
         Arguments
         =========
@@ -50,25 +67,23 @@ class AbstractModelWrapper(ABC):
         """
         pass
 
+    def constraints(self, parameters):
+        """Express constraints for the optimisation
 
-class ModelAdapter(object):
-    """Adapts a model so that it can be used by the optimisation protocol
+        Use the form outlined in :class:`scipy.optimise.minimize`, namely::
 
-    Arguments
-    =========
-    model :
-        An instance of a model
-    simulate :
-        The function to use for implementing a `simulate` method
+            constraints = ({'type': 'ineq',
+                            'fun': lambda x: x - 3})
 
-    """
+        Arguments
+        =========
+        parameters : :class:`numpy.ndarray`
+            An array of parameter values passed in from the
+            `SectorModel.optimise` method
 
-    def __init__(self, model, simulate):
-        self.model = model
-        self.simulate = simulate
-
-    def __getattr__(self, attr):
-        return getattr(self.model, attr)
+        """
+        constraints = ()
+        return constraints
 
 
 class ModelInputs(object):
@@ -80,11 +95,11 @@ class ModelInputs(object):
 
         (self._decision_variable_names,
          self._decision_variable_values,
-         self._decision_variable_bounds) = self.get_decision_variables()
+         self._decision_variable_bounds) = self._get_decision_variables()
 
         (self._parameter_names,
          self._parameter_bounds,
-         self._parameter_values) = self.get_parameter_values()
+         self._parameter_values) = self._get_parameter_values()
 
     @property
     def parameter_names(self):
@@ -122,7 +137,7 @@ class ModelInputs(object):
         """
         return self._decision_variable_bounds
 
-    def get_decision_variables(self):
+    def _get_decision_variables(self):
         """Extracts an array of decision variables from a dictionary of inputs
 
         Returns
@@ -173,7 +188,7 @@ class ModelInputs(object):
 
         return ordered_names, initial, bounds
 
-    def get_parameter_values(self):
+    def _get_parameter_values(self):
         """Extracts an array of parameters from a dictionary of inputs
 
         Returns
@@ -202,78 +217,6 @@ class ModelInputs(object):
             ordered_names[index] = name
 
         return ordered_names, bounds, values
-
-
-class SectorModel(ABC):
-    """An abstract representation of the sector model with inputs and outputs
-
-    Parameters
-    ==========
-    schema : dict
-        A dictionary of parameter, asset and exogenous data names with expected
-        types. Used for validating presented data.
-
-    Attributes
-    ==========
-    model
-        An instance of the sector model
-
-
-    """
-    def __init__(self, model, adapter_function):
-        self.model = None
-        self.adapted = ModelAdapter(model, adapter_function)
-        self._inputs = None
-        self._schema = None
-
-    @property
-    def inputs(self):
-        return self._inputs
-
-    @inputs.setter
-    def inputs(self, value):
-        """The inputs to the model
-
-        value : dict
-            A dictionary of inputs to the model. This may include parameters,
-            assets and exogenous data.
-
-        """
-        self._inputs = ModelInputs(value)
-
-    def optimise(self, method, decision_vars, objective_function):
-        """Performs an optimisation of the sector model assets
-
-        Arguments
-        =========
-        method : function
-            Provides the
-        decision_vars : list
-            Defines the decision variables
-        objective_function : function
-            Defines the objective function
-        """
-        raise NotImplemented("Optimisation is not yet implemented")
-
-    def simulate(self, decision_variables):
-        """Performs an operational simulation of the sector model
-
-        Arguments
-        =========
-        decision_variables : :class:`numpy.ndarray`
-
-        Note
-        ====
-        The term simulation may refer to operational optimisation, rather than
-        simulation-only. This process is described as simulation to distinguish
-        from the definition of investments in capacity, versus operation using
-        the given capacity
-        """
-
-        static_inputs = self.inputs.parameter_values
-        results = self.adapted.simulate(static_inputs, decision_variables)
-        obj = self.adapted.extract_obj(results)
-        return obj
 
 
 class Interface(ABC):
