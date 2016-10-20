@@ -51,6 +51,10 @@ class AbstractModelWrapper(ABC):
     def extract_obj(self, results):
         """Implement this method to return a scalar value objective function
 
+        This method should take the results from the output of the `simulate`
+        method, process the results, and return a scalar value which can be
+        used as the objective function
+
         Arguments
         =========
         results : :class:`dict`
@@ -91,11 +95,11 @@ class ModelInputs(object):
 
         (self._decision_variable_names,
          self._decision_variable_values,
-         self._decision_variable_bounds) = self.get_decision_variables()
+         self._decision_variable_bounds) = self._get_decision_variables()
 
         (self._parameter_names,
          self._parameter_bounds,
-         self._parameter_values) = self.get_parameter_values()
+         self._parameter_values) = self._get_parameter_values()
 
     @property
     def parameter_names(self):
@@ -133,7 +137,7 @@ class ModelInputs(object):
         """
         return self._decision_variable_bounds
 
-    def get_decision_variables(self):
+    def _get_decision_variables(self):
         """Extracts an array of decision variables from a dictionary of inputs
 
         Returns
@@ -184,7 +188,7 @@ class ModelInputs(object):
 
         return ordered_names, initial, bounds
 
-    def get_parameter_values(self):
+    def _get_parameter_values(self):
         """Extracts an array of parameters from a dictionary of inputs
 
         Returns
