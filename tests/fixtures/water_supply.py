@@ -272,20 +272,21 @@ class DynamicWaterSupplyModel(ExampleWaterSupplySimulation):
         Model Parameter - The amount of rain produced in each simulation
     p_existing_treatment_plants : int
         Model Parameter - The amount of water is a function of the number of
-        treatment plants and the amount of raininess
-    v_new_treatement_plants : float
+        treatment plants and the amount of raininess.  Note that this
+        parameter characterises model state that traverses years.
+    v_new_treatment_plants : float
         Decision Variable - The number of new treatment plants to build
     """
     def __init__(self,
                  raininess,
                  p_existing_treatment_plants,
-                 v_new_treatement_plants):
+                 v_new_treatment_plants):
         """Overrides the basic example class to include treatment plants
 
         """
-        self.new_capacity = v_new_treatement_plants
+        self.new_capacity = v_new_treatment_plants
         self.number_of_treatment_plants = (p_existing_treatment_plants +
-                                           v_new_treatement_plants)
+                                           v_new_treatment_plants)
         self.water = None
         self.cost = None
         super().__init__(raininess)
