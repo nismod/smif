@@ -13,6 +13,7 @@ The optimisation features requires:
   scalar value
 
 """
+import pytest
 from fixtures.water_supply import ExampleWaterSupplySimulationAsset as WaterMod
 from fixtures.water_supply import one_input
 from numpy.testing import assert_allclose
@@ -70,3 +71,11 @@ class TestWaterModelOptimisation:
         for actual, expected in zip(actual_value.values(),
                                     expected_value.values()):
             assert_allclose(actual, expected)
+
+    def test_optimisation_fail_no_input(self, one_input):
+        """Raise an error if no inputs are specified
+        """
+        wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
+        model = SectorModel(wrapped)
+        with pytest.raises(AssertionError):
+            model.optimise()

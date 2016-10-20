@@ -14,7 +14,7 @@ class SectorModel(object):
     Attributes
     ==========
     model : :class:`smif.abstract.AbstractModelWrapper`
-        An instance of the sector model
+        An instance of a wrapped simulation model
 
     """
     def __init__(self, model):
@@ -24,12 +24,21 @@ class SectorModel(object):
 
     @property
     def inputs(self):
+        """The inputs to the model
+
+        Returns
+        =======
+        :class:`smif.abstract.ModelInputs`
+
+        """
         return self._inputs
 
     @inputs.setter
     def inputs(self, value):
         """The inputs to the model
 
+        Arguments
+        =========
         value : dict
             A dictionary of inputs to the model. This may include parameters,
             assets and exogenous data.
@@ -43,6 +52,7 @@ class SectorModel(object):
         Uses an off-the-shelf optimisation algorithm from the scipy library
 
         """
+        assert self.inputs, "Inputs to the model not yet specified"
 
         v_names = self.inputs.decision_variable_names
         v_initial = self.inputs.decision_variable_values
