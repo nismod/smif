@@ -2,26 +2,6 @@ from scipy.optimize import minimize
 from smif.abstract import ModelInputs
 
 
-class ModelAdapter(object):
-    """Adapts a model so that it can be used by the optimisation protocol
-
-    Arguments
-    =========
-    model :
-        An instance of a model
-    simulate :
-        The function to use for implementing a `simulate` method
-
-    """
-
-    def __init__(self, model, simulate):
-        self.model = model
-        self.simulate = simulate
-
-    def __getattr__(self, attr):
-        return getattr(self.model, attr)
-
-
 class SectorModel(object):
     """An abstract representation of the sector model with inputs and outputs
 
@@ -33,13 +13,12 @@ class SectorModel(object):
 
     Attributes
     ==========
-    model
+    model : :class:`smif.abstract.AbstractModelWrapper`
         An instance of the sector model
 
     """
-    def __init__(self, model, adapter_function):
-        self.model = None
-        self.adapted = ModelAdapter(model, adapter_function)
+    def __init__(self, model):
+        self.model = model
         self._inputs = None
         self._schema = None
 
@@ -69,7 +48,7 @@ class SectorModel(object):
         v_initial = self.inputs.decision_variable_values
         v_bounds = self.inputs.decision_variable_bounds
 
-        cons = self.adapted.constraints(self.inputs.parameter_values)
+        cons = self.model.constraints(self.inputs.parameter_values)
 
         opts = {'disp': True}
         res = minimize(self.simulate,
@@ -109,6 +88,6 @@ class SectorModel(object):
         """
 
         static_inputs = self.inputs.parameter_values
-        results = self.adapted.simulate(static_inputs, decision_variables)
-        obj = self.adapted.extract_obj(results)
+        results = self.model.simulate(static_inputs, decision_variables)
+        obj = self.model.extract_obj(results)
         return obj

@@ -63,8 +63,7 @@ class TestWaterModelOptimisation:
 
     def test_water_model_optimisation(self, one_input):
         wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
-
-        model = SectorModel(wrapped, wrapped.simulate)
+        model = SectorModel(wrapped)
         model.inputs = one_input
         actual_value = model.optimise()
         expected_value = {'water treatment capacity': 3}
