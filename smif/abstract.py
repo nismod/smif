@@ -132,6 +132,104 @@ class ModelInputs(object):
         return self._decision_variable_values
 
     @property
+    def decision_variable_indices(self):
+        """A dictionary of index values associated with decision variable names
+
+        Returns
+        =======
+        dict
+            A dictionary of index values associated with decision variable
+            names
+        """
+        return self._enumerate_names(self.decision_variable_names)
+
+    @property
+    def parameter_indices(self):
+        """A dictionary of index values associated with parameter names
+
+        Returns
+        =======
+        dict
+            A dictionary of index values associated with parameter names
+        """
+        return self._enumerate_names(self.parameter_names)
+
+    def _enumerate_names(self, names):
+        """
+
+        Arguments
+        =========
+        names : iterable
+            A list of names
+
+        Returns
+        =======
+        dict
+            Key: value pairs to lookup the index of a name
+        """
+        return {name: index for (index, name) in enumerate(names)}
+
+    def _get_decision_variable_index(self, name):
+        """A index values associated a decision variable name
+
+        Argument
+        ========
+        name : str
+            The name of the decision variable
+        """
+        assert name in self.decision_variable_names, \
+            "That name is not in the list of decision variables"
+        return self.decision_variable_indices[name]
+
+    def _get_parameter_index(self, name):
+        """A index values associated a parameter name
+
+        Argument
+        ========
+        name : str
+            The name of the parameter
+        """
+        assert name in self.parameter_names, \
+            "That name is not in the list of parameters"
+        return self.parameter_indices[name]
+
+    def update_decision_variable_value(self, name, value):
+        """Update the value of a decision variable
+
+        Arguments
+        =========
+        name : str
+            The name of the decision variable
+        value : float
+            The value to which to update the decision variable
+
+        """
+        index = self._get_decision_variable_index(name)
+        logger.debug("Index of {} is {}".format(name, index))
+        bounds = self.decision_variable_bounds
+        assert bounds[index][0] <= value <= bounds[index][1], \
+            "Decision variable bounds exceeded"
+        self._decision_variable_values[index] = value
+
+    def update_parameter_value(self, name, value):
+        """Update the value of a decision variable
+
+        Arguments
+        =========
+        name : str
+            The name of the parameter
+        value : float
+            The value to which to update the parameter
+
+        """
+        index = self._get_parameter_index(name)
+        logger.debug("Index of {} is {}".format(name, index))
+        bounds = self.parameter_bounds
+        assert bounds[index][0] <= value <= bounds[index][1], \
+            "Parameter bounds exceeded"
+        self._parameter_values[index] = value
+
+    @property
     def decision_variable_bounds(self):
         """An array of tuples of decision variable bounds
         """

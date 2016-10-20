@@ -31,8 +31,16 @@ Around each of the above simulation models, subclassed wrappers based on
 
 """
 
+import logging
 import math
+
 from pytest import fixture
+
+__author__ = "Will Usher"
+__copyright__ = "Will Usher"
+__license__ = "mit"
+
+logger = logging.getLogger(__name__)
 
 
 @fixture(scope='function')
@@ -176,11 +184,12 @@ class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
 
         Each treatment plant costs 1.0 unit.
         """
-        print("There are {} plants".format(self.number_of_treatment_plants))
-        print("It is {} rainy".format(self.raininess))
+        logger.debug("There are {} plants".format(
+            self.number_of_treatment_plants))
+        logger.debug("It is {} rainy".format(self.raininess))
         water = min(self.number_of_treatment_plants, self.raininess)
         cost = 1.264 * self.number_of_treatment_plants
-        print("The system costs £{}".format(cost))
+        logger.debug("The system costs £{}".format(cost))
         return {
             "water": water,
             "cost": cost
@@ -229,3 +238,74 @@ class ExampleWaterSupplySimulationReservoir(ExampleWaterSupplySimulation):
                 'cost': self.cost,
                 'reservoir level': self._reservoir_level
                 }
+
+
+@fixture(scope='function')
+def dynamic_data():
+    """Returns a model input dictionary for the example water model with two
+    decision variables and one parameter
+    """
+    inputs = {'decision variables': ['new capacity'],
+              'parameters': ['existing capacity', 'raininess'],
+              'new capacity': {'bounds': (0, 20),
+                               'index': 0,
+                               'init': 10
+                               },
+              'existing capacity': {'bounds': (0, 999),
+                                    'index': 1,
+                                    'value': 1
+                                    },
+              'raininess': {'bounds': (0, 5),
+                            'index': 0,
+                            'value': 3
+                            }
+              }
+    return inputs
+
+
+class DynamicWaterSupplyModel(ExampleWaterSupplySimulation):
+    """An example simulation model which includes historical assets
+
+    Parameters
+    ==========
+    raininess : int
+        Model Parameter - The amount of rain produced in each simulation
+    p_existing_treatment_plants : int
+        Model Parameter - The amount of water is a function of the number of
+        treatment plants and the amount of raininess
+    v_new_treatement_plants : float
+        Decision Variable - The number of new treatment plants to build
+    """
+    def __init__(self,
+                 raininess,
+                 p_existing_treatment_plants,
+                 v_new_treatement_plants):
+        """Overrides the basic example class to include treatment plants
+
+        """
+        self.new_capacity = v_new_treatement_plants
+        self.number_of_treatment_plants = (p_existing_treatment_plants +
+                                           v_new_treatement_plants)
+        self.water = None
+        self.cost = None
+        super().__init__(raininess)
+
+    def simulate(self):
+        """Runs the water supply model
+
+        Only 1 unit of water is produced per treatment plant,
+        no matter how rainy.
+
+        Each treatment plant costs 1.0 unit.
+        """
+        logger.debug("There are {} plants, {} of which are new".format(
+            self.number_of_treatment_plants, self.new_capacity))
+        logger.debug("It is {} rainy".format(self.raininess))
+        water = min(self.number_of_treatment_plants, self.raininess)
+        cost = 1.264 * self.new_capacity
+        logger.debug("The system costs £{}".format(cost))
+        return {
+            "water": water,
+            "cost": cost,
+            "capacity": self.number_of_treatment_plants
+        }

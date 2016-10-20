@@ -51,6 +51,12 @@ class SectorModel(object):
 
         Uses an off-the-shelf optimisation algorithm from the scipy library
 
+        Returns
+        =======
+        dict
+            A set of optimised simulation results
+
+
         """
         assert self.inputs, "Inputs to the model not yet specified"
 
@@ -61,7 +67,7 @@ class SectorModel(object):
         cons = self.model.constraints(self.inputs.parameter_values)
 
         opts = {'disp': True}
-        res = minimize(self.simulate,
+        res = minimize(self._simulate_optimised,
                        v_initial,
                        options=opts,
                        method='SLSQP',
@@ -69,7 +75,8 @@ class SectorModel(object):
                        constraints=cons
                        )
 
-        results = {x: y for x, y in zip(v_names, res.x)}
+        # results = {x: y for x, y in zip(v_names, res.x)}
+        results = self.simulate(res.x)
 
         if res.success:
             print("Solver exited successfully with obj: {}".format(res.fun))
@@ -81,6 +88,11 @@ class SectorModel(object):
             print("Solver failed")
 
         return results
+
+    def _simulate_optimised(self, decision_variables):
+        results = self.simulate(decision_variables)
+        obj = self.model.extract_obj(results)
+        return obj
 
     def simulate(self, decision_variables):
         """Performs an operational simulation of the sector model
@@ -99,5 +111,4 @@ class SectorModel(object):
 
         static_inputs = self.inputs.parameter_values
         results = self.model.simulate(static_inputs, decision_variables)
-        obj = self.model.extract_obj(results)
-        return obj
+        return results
