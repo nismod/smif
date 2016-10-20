@@ -1,5 +1,13 @@
+import logging
+
 from scipy.optimize import minimize
-from smif.abstract import ModelInputs
+from smif.inputs import ModelInputs
+
+__author__ = "Will Usher"
+__copyright__ = "Will Usher"
+__license__ = "mit"
+
+logger = logging.getLogger(__name__)
 
 
 class SectorModel(object):
@@ -79,13 +87,14 @@ class SectorModel(object):
         results = self.simulate(res.x)
 
         if res.success:
-            print("Solver exited successfully with obj: {}".format(res.fun))
-            print("and with solution: {}".format(res.x))
-            print("and bounds: {}".format(v_bounds))
-            print("from initial values: {}".format(v_initial))
-            print("for variables: {}".format(v_names))
+            logger.debug("Solver exited successfully with obj: {}".format(
+                res.fun))
+            logger.debug("and with solution: {}".format(res.x))
+            logger.debug("and bounds: {}".format(v_bounds))
+            logger.debug("from initial values: {}".format(v_initial))
+            logger.debug("for variables: {}".format(v_names))
         else:
-            print("Solver failed")
+            logger.debug("Solver failed")
 
         return results
 
