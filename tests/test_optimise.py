@@ -99,8 +99,14 @@ class DynamicModelWrapper(AbstractModelWrapper):
         decision_variables : :class:`numpy.ndarray`
             x_0 is new capacity of water treatment plants
         """
+        assert static_inputs.shape == (2,)
+        assert decision_variables.shape == (1,)
+
         new_capacity = decision_variables
-        instance = self.model(static_inputs[0], static_inputs[1], new_capacity)
+
+        instance = self.model(static_inputs[0, ],
+                              static_inputs[1, ],
+                              new_capacity[0, ])
         results = instance.simulate()
         return results
 
@@ -179,7 +185,7 @@ class TestMultiYearOptimisation:
         # Attach the sector model to the system-of-system model
         sos_model.attach_interface(sectormodel)
         sos_model.timesteps = [2010, 2015, 2020]
-        decisions = np.array([2, 0, 0], dtype=float)
+        decisions = np.array([[2], [0], [0]], dtype=float)
         results = sos_model.sequential_simulation(sectormodel,
                                                   dynamic_data,
                                                   decisions)
@@ -194,3 +200,32 @@ class TestMultiYearOptimisation:
                              'cost': np.array([0.], dtype=float),
                              'capacity': np.array([3.], dtype=float)}]
         assert results == expected_results
+
+    def test_sequential_optimisation_scipy(self, dynamic_data):
+        # Instantiate a sector model
+        wrapped = DynamicModelWrapper(DynMod)
+        sectormodel = SectorModel(wrapped)
+        sectormodel.inputs = dynamic_data
+        timesteps = [2010, 2015, 2020]
+        decisions = np.array([[5, 0, 0]], dtype=float)
+        results = sectormodel.sequential_simulation(timesteps,
+                                                    decisions)
+        expected = [{'capacity': 5.0, 'cost': 6.32, 'water': 3.0},
+                    {'capacity': 5.0, 'cost': 0.0, 'water': 3.0},
+                    {'capacity': 5.0, 'cost': 0.0, 'water': 3.0}]
+        assert results == expected
+
+    def test_sequential_optimisation_tr(self, dynamic_data):
+        # Instantiate a sector model
+        wrapped = DynamicModelWrapper(DynMod)
+        sectormodel = SectorModel(wrapped)
+        sectormodel.inputs = dynamic_data
+        timesteps = [2010, 2015, 2020]
+        results = sectormodel.sequential_optimisation(timesteps)
+        expected = [{'capacity': 3.0, 'cost': 3.792, 'water': 3.0},
+                    {'capacity': 4.0, 'cost': 1.264, 'water': 3.0},
+                    {'capacity': 5.0, 'cost': 1.264, 'water': 3.0}]
+        for act, exp in zip(results, expected):
+            for key in act.keys():
+                assert_allclose(act[key], exp[key],
+                                rtol=1e-6, atol=1e-6)

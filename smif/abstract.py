@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from smif.sectormodel import SectorModel
 
 __author__ = "Will Usher"
@@ -502,14 +503,12 @@ class Model(AbstractModel):
         :math:`Z(s) = min\{Z(s) + E(Z(s'))\}`
 
         """
-        for model in self._sector_models:
-            model.inputs = {}
+        pass
 
-    def objective_function(self):
-        """
-
-        """
-        return None
+    @lru_cache(maxsize=None)
+    def cost_to_go(self, state):
+        value = self.model._simulate_optimised(state) + self.cost_to_go()
+        return value
 
     def sequential_simulation(self, model, inputs, decisions):
         results = []

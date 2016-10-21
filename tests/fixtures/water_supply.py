@@ -247,7 +247,7 @@ def dynamic_data():
     """
     inputs = {'decision variables': ['new capacity'],
               'parameters': ['existing capacity', 'raininess'],
-              'new capacity': {'bounds': (0, 20),
+              'new capacity': {'bounds': (0, 5),
                                'index': 0,
                                'init': 10
                                },
