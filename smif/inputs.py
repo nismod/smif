@@ -1,6 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
+from abc import ABC, abstractmethod
+
 import numpy as np
 
 __author__ = "Will Usher"
@@ -10,50 +12,11 @@ __license__ = "mit"
 logger = logging.getLogger(__name__)
 
 
-class InputFactory(object):
-    """Defines the types of inputs to a sector model
-
-    The input data are expected to be defined using the following format::
-
-        'decision variables': [<list of decision variable names>]
-        'parameters': [<list of parameter names>]
-        '<decision variable name>': {'bounds': (<tuple of upper and lower
-                                                 bound>),
-                                     'index': <scalar showing position in
-                                               arguments>},
-                                     'init': <scalar showing initial value
-                                              for solver>
-                                      },
-        '<parameter name>': {'bounds': (<tuple of upper and lower range for
-                                        sensitivity analysis>),
-                             'index': <scalar showing position in
-                                      arguments>,
-                             'value': <scalar showing value for model>
-                              },
-
-    """
+class ModelElement(ABC):
 
     def __init__(self):
         self._names = []
         self._values = []
-        self._bounds = []
-
-    @staticmethod
-    def getinput(input_type):
-        """Implements the factory method to return subclasses of
-        :class:`smif.InputFactory`
-
-        Arguments
-        =========
-        input_type : str
-            An input type name
-        """
-        if input_type == 'parameters':
-            return ParameterList()
-        elif input_type == 'decision_variables':
-            return DecisionVariableList()
-        else:
-            raise ValueError("That input type is not defined")
 
     @property
     def names(self):
@@ -75,18 +38,8 @@ class InputFactory(object):
     def values(self, values):
         self._values = values
 
-    @property
-    def bounds(self):
-        """The bounds of the input
-        """
-        return self._bounds
-
-    @bounds.setter
-    def bounds(self, value):
-        self._bounds = value
-
     def _get_index(self, name):
-        """A index values associated a decision variable name
+        """A index values associated an element name
 
         Argument
         ========
@@ -126,6 +79,82 @@ class InputFactory(object):
 
     def update_value(self, name, value):
         """Update the value of an input
+
+        Arguments
+        =========
+        name : str
+            The name of the decision variable
+        value : float
+            The value to which to update the decision variable
+
+        """
+        index = self._get_index(name)
+        logger.debug("Updating {} with {}".format(name, value))
+        self.values[index] = value
+
+    @staticmethod
+    @abstractmethod
+    def getelement(element_type):
+        pass
+
+
+class InputFactory(ModelElement):
+    """Defines the types of inputs to a sector model
+
+    The input data are expected to be defined using the following format::
+
+        'decision variables': [<list of decision variable names>]
+        'parameters': [<list of parameter names>]
+        '<decision variable name>': {'bounds': (<tuple of upper and lower
+                                                 bound>),
+                                     'index': <scalar showing position in
+                                               arguments>},
+                                     'init': <scalar showing initial value
+                                              for solver>
+                                      },
+        '<parameter name>': {'bounds': (<tuple of upper and lower range for
+                                        sensitivity analysis>),
+                             'index': <scalar showing position in
+                                      arguments>,
+                             'value': <scalar showing value for model>
+                              },
+
+    """
+    def __init__(self):
+        super().__init__()
+        self._bounds = []
+
+    @staticmethod
+    def getelement(input_type):
+        """Implements the factory method to return subclasses of
+        :class:`smif.InputFactory`
+
+        Arguments
+        =========
+        input_type : str
+            An input type name
+        """
+        if input_type == 'parameters':
+            return ParameterList()
+        elif input_type == 'decision_variables':
+            return DecisionVariableList()
+        else:
+            raise ValueError("That input type is not defined")
+
+    @property
+    def bounds(self):
+        """The bounds of the input
+        """
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, value):
+        self._bounds = value
+
+    def update_value(self, name, value):
+        """Update the value of an input
+
+        (Over rides :staticmethod:`ModelElement.update_value`)
 
         Arguments
         =========
@@ -207,9 +236,10 @@ class ModelInputs(object):
     def __init__(self, inputs):
 
         self._inputs = InputFactory()
-        self._decision_variables = self._inputs.getinput('decision_variables')
+        self._decision_variables = \
+            self._inputs.getelement('decision_variables')
         self._decision_variables.get_inputs(inputs)
-        self._parameters = self._inputs.getinput('parameters')
+        self._parameters = self._inputs.getelement('parameters')
         self._parameters.get_inputs(inputs)
 
     @property
