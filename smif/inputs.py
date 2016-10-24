@@ -1,8 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-from abc import ABC
-
 import numpy as np
 
 __author__ = "Will Usher"
@@ -12,23 +10,165 @@ __license__ = "mit"
 logger = logging.getLogger(__name__)
 
 
-class Input(ABC):
+class Input(object):
     """An input is a sector model input exposed to the :class:`Interface`
     """
 
     inputs = []
 
-    def __init__(self, name, region, timestep):
+    def __init__(self, name, value, bounds):
         self._name = name
-        self._region = region
-        self._timestep = timestep
-        input_tuple = (name, region, timestep)
-        self.inputs.append(input_tuple)
+        self._value = value
+        self._bounds = bounds
 
-    @classmethod
-    def list_inputs(self):
-        for input_tuple in self.inputs:
-            print('{}'.format(input_tuple))
+    @property
+    def name(self):
+        """A descriptive name of the input
+        """
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    @property
+    def value(self):
+        """The value of the property
+        """
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+
+    @property
+    def bounds(self):
+        """The bounds of the property
+        """
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, value):
+        self._bounds = value
+
+
+class InputFactory(object):
+
+    def __init__(self, inputs, input_type):
+        self._parsed_inputs = self._populate_inputs(inputs, input_type)
+        self._names = self._parsed_inputs.names
+        self._values = self._parsed_inputs.values
+        self._bounds = self._parsed_inputs.bounds
+
+    @property
+    def names(self):
+        """A descriptive name of the input
+        """
+        return self._names
+
+    @names.setter
+    def names(self, value):
+        self._names = value
+
+    @property
+    def values(self):
+        """The value of the property
+        """
+        return self._values
+
+    @values.setter
+    def values(self, values):
+        self._values = values
+
+    @property
+    def bounds(self):
+        """The bounds of the property
+        """
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, value):
+        self._bounds = value
+
+    def _populate_inputs(self, inputs, input_type):
+        if input_type == 'parameters':
+            return ParameterList(inputs, 'parameters')
+        elif input_type == 'decision_variables':
+            mapping = {'values': 'init', 'bounds': 'bounds'}
+            return DecisionVariableList(inputs, 'decision variables', mapping)
+
+
+class InputList(object):
+
+    default_mapping = {'values': 'value', 'bounds': 'bounds'}
+
+    def __init__(self, inputs, input_type, mapping=default_mapping):
+        (self.names,
+         self.values,
+         self.bounds) = self._parse_input_dictionary(inputs,
+                                                     input_type,
+                                                     mapping)
+
+    def _parse_input_dictionary(self, inputs, input_type, mapping):
+        """Extracts an array of decision variables from a dictionary of inputs
+
+        Returns
+        =======
+        ordered_names : :class:`numpy.ndarray`
+            The names of the decision variables in the order specified by the
+            'index' key in the entries of the inputs
+        bounds : :class:`numpy.ndarray`
+            The bounds ordered by the index key
+        values : :class:`numpy.ndarray`
+            The initial values ordered by the index key
+
+        Notes
+        =====
+        The inputs are expected to be defined using the following keys::
+
+            'decision variables': [<list of decision variable names>]
+            'parameters': [<list of parameter names>]
+            '<decision variable name>': {'bounds': (<tuple of upper and lower
+                                                     bound>),
+                                         'index': <scalar showing position in
+                                                   arguments>},
+                                         'init': <scalar showing initial value
+                                                  for solver>
+                                          },
+            '<parameter name>': {'bounds': (<tuple of upper and lower range for
+                                            sensitivity analysis>),
+                                 'index': <scalar showing position in
+                                          arguments>,
+                                 'value': <scalar showing value for model>
+                                  },
+        """
+
+        names = inputs[input_type]
+        number_of_decision_variables = len(names)
+
+        indices = [inputs[name]['index'] for name in names]
+        assert len(indices) == number_of_decision_variables, \
+            'Index entries do not match the number of {}'.format(input_type)
+        values = np.zeros(number_of_decision_variables, dtype=np.float)
+        bounds = np.zeros(number_of_decision_variables, dtype=(np.float, 2))
+        ordered_names = np.zeros(number_of_decision_variables, dtype='U30')
+
+        for name, index in zip(names, indices):
+            values[index] = inputs[name][mapping['values']]
+            bounds[index] = inputs[name][mapping['bounds']]
+            ordered_names[index] = name
+
+        return ordered_names, values, bounds
+
+
+class ParameterList(InputList):
+
+    pass
+
+
+class DecisionVariableList(InputList):
+
+    pass
 
 
 class ModelInputs(object):
@@ -38,43 +178,47 @@ class ModelInputs(object):
     def __init__(self, inputs):
         self.input_dict = inputs
 
-        (self._decision_variable_names,
-         self._decision_variable_values,
-         self._decision_variable_bounds) = self._get_decision_variables()
+        # (self._decision_variable_names,
+        #  self._decision_variable_values,
+        #  self._decision_variable_bounds) = self._get_decision_variables()
 
-        (self._parameter_names,
-         self._parameter_bounds,
-         self._parameter_values) = self._get_parameter_values()
+        self._decision_variables = InputFactory(inputs, 'decision_variables')
+
+        # (self._parameter_names,
+        #  self._parameter_bounds,
+        #  self._parameter_values) = self._get_parameter_values()
+
+        self._parameters = InputFactory(inputs, 'parameters')
 
     @property
     def parameter_names(self):
         """A list of ordered parameter names
         """
-        return self._parameter_names
+        return self._parameters.names
 
     @property
     def parameter_bounds(self):
         """An array of tuples of parameter bounds
         """
-        return self._parameter_bounds
+        return self._parameters.bounds
 
     @property
     def parameter_values(self):
         """An array of parameter values
         """
-        return self._parameter_values
+        return self._parameters.values
 
     @property
     def decision_variable_names(self):
         """A list of decision variable names
         """
-        return self._decision_variable_names
+        return self._decision_variables.names
 
     @property
     def decision_variable_values(self):
         """An array of decision variable values
         """
-        return self._decision_variable_values
+        return self._decision_variables.values
 
     @property
     def decision_variable_indices(self):
@@ -169,17 +313,17 @@ class ModelInputs(object):
         """
         index = self._get_parameter_index(name)
         logger.debug("Index of {} is {}".format(name, index))
-        bounds = self.parameter_bounds
+        bounds = self._parameters.bounds
         assert bounds[index][0] <= value <= bounds[index][1], \
             "Parameter bounds exceeded"
         logger.debug("Updating {} with {}".format(name, value))
-        self._parameter_values[index] = value
+        self._parameters.values[index] = value
 
     @property
     def decision_variable_bounds(self):
         """An array of tuples of decision variable bounds
         """
-        return self._decision_variable_bounds
+        return self._decision_variables.bounds
 
     def _get_decision_variables(self):
         """Extracts an array of decision variables from a dictionary of inputs
@@ -250,7 +394,7 @@ class ModelInputs(object):
 
         indices = [self.input_dict[name]['index'] for name in names]
         assert len(indices) == number_of_parameters, \
-            'Index entries do not match the number of decision variables'
+            'Index entries do not match the number of parameters'
         values = np.zeros(number_of_parameters, dtype=np.float)
         bounds = np.zeros(number_of_parameters, dtype=(np.float, 2))
         ordered_names = np.zeros(number_of_parameters, dtype='U30')
