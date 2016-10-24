@@ -42,6 +42,11 @@ class InputFactory(object):
     def getinput(input_type):
         """Implements the factory method to return subclasses of
         :class:`smif.InputFactory`
+
+        Arguments
+        =========
+        input_type : str
+            An input type name
         """
         if input_type == 'parameters':
             return ParameterList()
