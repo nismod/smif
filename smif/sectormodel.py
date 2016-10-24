@@ -68,11 +68,11 @@ class SectorModel(object):
         """
         assert self.inputs, "Inputs to the model not yet specified"
 
-        v_names = self.inputs.decision_variable_names
-        v_initial = self.inputs.decision_variable_values
-        v_bounds = self.inputs.decision_variable_bounds
+        v_names = self.inputs.decision_variables.names
+        v_initial = self.inputs.decision_variables.values
+        v_bounds = self.inputs.decision_variables.bounds
 
-        cons = self.model.constraints(self.inputs.parameter_values)
+        cons = self.model.constraints(self.inputs.parameters.values)
 
         opts = {'disp': True}
         res = minimize(self._simulate_optimised,
@@ -120,7 +120,7 @@ class SectorModel(object):
 
         assert self.inputs, "Inputs to the model not yet specified"
 
-        static_inputs = self.inputs.parameter_values
+        static_inputs = self.inputs.parameters.values
         results = self.model.simulate(static_inputs, decision_variables)
         return results
 
@@ -197,9 +197,9 @@ class SectorModel(object):
 
         number_of_steps = len(timesteps)
 
-        v_names = self.inputs.decision_variable_names
-        v_initial = self.inputs.decision_variable_values
-        v_bounds = self.inputs.decision_variable_bounds
+        v_names = self.inputs.decision_variables.names
+        v_initial = self.inputs.decision_variables.values
+        v_bounds = self.inputs.decision_variables.bounds
 
         t_v_initial = np.tile(v_initial, (1, number_of_steps))
         t_v_bounds = np.tile(v_bounds, (number_of_steps, 1))

@@ -11,10 +11,10 @@ class TestModelInputs:
     def test_one_input_decision_variables(self, one_input):
 
         inputs = ModelInputs(one_input)
-        act_names = inputs.decision_variable_names
-        act_initial = inputs.decision_variable_values
-        act_bounds = inputs.decision_variable_bounds
-        act_indices = inputs.decision_variable_indices
+        act_names = inputs.decision_variables.names
+        act_initial = inputs.decision_variables.values
+        act_bounds = inputs.decision_variables.bounds
+        act_indices = inputs.decision_variables.indices
 
         exp_names = np.array(['water treatment capacity'], dtype=str)
         exp_initial = np.array([10], dtype=float)
@@ -29,9 +29,9 @@ class TestModelInputs:
     def test_two_inputs_decision_variables(self, two_inputs):
 
         inputs = ModelInputs(two_inputs)
-        act_names = inputs.decision_variable_names
-        act_initial = inputs.decision_variable_values
-        act_bounds = inputs.decision_variable_bounds
+        act_names = inputs.decision_variables.names
+        act_initial = inputs.decision_variables.values
+        act_bounds = inputs.decision_variables.bounds
 
         exp_names = np.array(['reservoir pumpiness',
                               'water treatment capacity'], dtype='U30')
@@ -45,9 +45,9 @@ class TestModelInputs:
     def test_one_input_parameters(self, one_input):
 
         inputs = ModelInputs(one_input)
-        act_names = inputs.parameter_names
-        act_values = inputs.parameter_values
-        act_bounds = inputs.parameter_bounds
+        act_names = inputs.parameters.names
+        act_values = inputs.parameters.values
+        act_bounds = inputs.parameters.bounds
 
         exp_names = np.array(['raininess'], dtype='U30')
         exp_values = np.array([3], dtype=float)
