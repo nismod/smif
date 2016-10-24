@@ -1,3 +1,9 @@
+"""Encapsulates the inputs to a sector model
+
+
+.. inheritance-diagram:: smif.inputs
+
+"""
 from __future__ import absolute_import, division, print_function
 
 import logging
