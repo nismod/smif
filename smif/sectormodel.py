@@ -68,11 +68,11 @@ class SectorModel(object):
         """
         assert self.inputs, "Inputs to the model not yet specified"
 
-        v_names = self.inputs.decision_variable_names
-        v_initial = self.inputs.decision_variable_values
-        v_bounds = self.inputs.decision_variable_bounds
+        v_names = self.inputs.decision_variables.names
+        v_initial = self.inputs.decision_variables.values
+        v_bounds = self.inputs.decision_variables.bounds
 
-        cons = self.model.constraints(self.inputs.parameter_values)
+        cons = self.model.constraints(self.inputs.parameters.values)
 
         opts = {'disp': True}
         res = minimize(self._simulate_optimised,
@@ -120,7 +120,7 @@ class SectorModel(object):
 
         assert self.inputs, "Inputs to the model not yet specified"
 
-        static_inputs = self.inputs.parameter_values
+        static_inputs = self.inputs.parameters.values
         results = self.model.simulate(static_inputs, decision_variables)
         return results
 
@@ -136,7 +136,7 @@ class SectorModel(object):
 
         """
         assert self.inputs, "Inputs to the model not yet specified"
-        self.inputs.update_parameter_value('existing capacity', 0)
+        self.inputs.parameters.update_value('existing capacity', 0)
 
         results = []
         for index in range(len(timesteps)):
@@ -146,8 +146,8 @@ class SectorModel(object):
                 state_res = results[index - 1]['capacity']
                 logger.debug("Updating {} with {}".format(state_var,
                                                           state_res))
-                self.inputs.update_parameter_value(state_var,
-                                                   state_res)
+                self.inputs.parameters.update_value(state_var,
+                                                    state_res)
 
             # Run the simulation
             decision = decisions[:, index]
@@ -157,8 +157,8 @@ class SectorModel(object):
     def _optimise_over_timesteps(self, decisions):
         """
         """
-        self.inputs.update_parameter_value('raininess', 3)
-        self.inputs.update_parameter_value('existing capacity', 0)
+        self.inputs.parameters.update_value('raininess', 3)
+        self.inputs.parameters.update_value('existing capacity', 0)
         assert decisions.shape == (3,)
         results = []
         years = [2010, 2015, 2020]
@@ -170,8 +170,8 @@ class SectorModel(object):
                 state_res = results[index - 1]['capacity']
                 logger.debug("Updating {} with {}".format(state_var,
                                                           state_res))
-                self.inputs.update_parameter_value(state_var,
-                                                   state_res)
+                self.inputs.parameters.update_value(state_var,
+                                                    state_res)
             # Run the simulation
             decision = np.array([decisions[index], ])
             assert decision.shape == (1, )
@@ -197,9 +197,9 @@ class SectorModel(object):
 
         number_of_steps = len(timesteps)
 
-        v_names = self.inputs.decision_variable_names
-        v_initial = self.inputs.decision_variable_values
-        v_bounds = self.inputs.decision_variable_bounds
+        v_names = self.inputs.decision_variables.names
+        v_initial = self.inputs.decision_variables.values
+        v_bounds = self.inputs.decision_variables.bounds
 
         t_v_initial = np.tile(v_initial, (1, number_of_steps))
         t_v_bounds = np.tile(v_bounds, (number_of_steps, 1))

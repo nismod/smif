@@ -10,53 +10,95 @@ __license__ = "mit"
 logger = logging.getLogger(__name__)
 
 
-class ModelInputs(object):
-    """A container for all the model inputs
+class InputFactory(object):
+    """Defines the types of inputs to a sector model
+
+    The input data are expected to be defined using the following format::
+
+        'decision variables': [<list of decision variable names>]
+        'parameters': [<list of parameter names>]
+        '<decision variable name>': {'bounds': (<tuple of upper and lower
+                                                 bound>),
+                                     'index': <scalar showing position in
+                                               arguments>},
+                                     'init': <scalar showing initial value
+                                              for solver>
+                                      },
+        '<parameter name>': {'bounds': (<tuple of upper and lower range for
+                                        sensitivity analysis>),
+                             'index': <scalar showing position in
+                                      arguments>,
+                             'value': <scalar showing value for model>
+                              },
 
     """
-    def __init__(self, inputs):
-        self.input_dict = inputs
 
-        (self._decision_variable_names,
-         self._decision_variable_values,
-         self._decision_variable_bounds) = self._get_decision_variables()
+    def __init__(self):
+        self._names = []
+        self._values = []
+        self._bounds = []
 
-        (self._parameter_names,
-         self._parameter_bounds,
-         self._parameter_values) = self._get_parameter_values()
+    @staticmethod
+    def getinput(input_type):
+        """Implements the factory method to return subclasses of
+        :class:`smif.InputFactory`
 
-    @property
-    def parameter_names(self):
-        """A list of ordered parameter names
+        Arguments
+        =========
+        input_type : str
+            An input type name
         """
-        return self._parameter_names
+        if input_type == 'parameters':
+            return ParameterList()
+        elif input_type == 'decision_variables':
+            return DecisionVariableList()
+        else:
+            raise ValueError("That input type is not defined")
 
     @property
-    def parameter_bounds(self):
-        """An array of tuples of parameter bounds
+    def names(self):
+        """A descriptive name of the input
         """
-        return self._parameter_bounds
+        return self._names
+
+    @names.setter
+    def names(self, value):
+        self._names = value
 
     @property
-    def parameter_values(self):
-        """An array of parameter values
+    def values(self):
+        """The value of the input
         """
-        return self._parameter_values
+        return self._values
+
+    @values.setter
+    def values(self, values):
+        self._values = values
 
     @property
-    def decision_variable_names(self):
-        """A list of decision variable names
+    def bounds(self):
+        """The bounds of the input
         """
-        return self._decision_variable_names
+        return self._bounds
 
-    @property
-    def decision_variable_values(self):
-        """An array of decision variable values
+    @bounds.setter
+    def bounds(self, value):
+        self._bounds = value
+
+    def _get_index(self, name):
+        """A index values associated a decision variable name
+
+        Argument
+        ========
+        name : str
+            The name of the decision variable
         """
-        return self._decision_variable_values
+        assert name in self.names, \
+            "That name is not in the list of input names"
+        return self.indices[name]
 
     @property
-    def decision_variable_indices(self):
+    def indices(self):
         """A dictionary of index values associated with decision variable names
 
         Returns
@@ -65,18 +107,7 @@ class ModelInputs(object):
             A dictionary of index values associated with decision variable
             names
         """
-        return self._enumerate_names(self.decision_variable_names)
-
-    @property
-    def parameter_indices(self):
-        """A dictionary of index values associated with parameter names
-
-        Returns
-        =======
-        dict
-            A dictionary of index values associated with parameter names
-        """
-        return self._enumerate_names(self.parameter_names)
+        return self._enumerate_names(self.names)
 
     def _enumerate_names(self, names):
         """
@@ -93,32 +124,8 @@ class ModelInputs(object):
         """
         return {name: index for (index, name) in enumerate(names)}
 
-    def _get_decision_variable_index(self, name):
-        """A index values associated a decision variable name
-
-        Argument
-        ========
-        name : str
-            The name of the decision variable
-        """
-        assert name in self.decision_variable_names, \
-            "That name is not in the list of decision variables"
-        return self.decision_variable_indices[name]
-
-    def _get_parameter_index(self, name):
-        """A index values associated a parameter name
-
-        Argument
-        ========
-        name : str
-            The name of the parameter
-        """
-        assert name in self.parameter_names, \
-            "That name is not in the list of parameters"
-        return self.parameter_indices[name]
-
-    def update_decision_variable_value(self, name, value):
-        """Update the value of a decision variable
+    def update_value(self, name, value):
+        """Update the value of an input
 
         Arguments
         =========
@@ -128,41 +135,25 @@ class ModelInputs(object):
             The value to which to update the decision variable
 
         """
-        index = self._get_decision_variable_index(name)
+        index = self._get_index(name)
         logger.debug("Index of {} is {}".format(name, index))
-        bounds = self.decision_variable_bounds
+        bounds = self.bounds
         assert bounds[index][0] <= value <= bounds[index][1], \
-            "Decision variable bounds exceeded"
-        self._decision_variable_values[index] = value
+            "Bounds exceeded"
+        self.values[index] = value
 
-    def update_parameter_value(self, name, value):
-        """Update the value of a decision variable
+    def _parse_input_dictionary(self, inputs, input_type, mapping):
+        """Extracts an array of decision variables from a dictionary of inputs
 
         Arguments
         =========
-        name : str
-            The name of the parameter
-        value : float
-            The value to which to update the parameter
-
-        """
-        index = self._get_parameter_index(name)
-        logger.debug("Index of {} is {}".format(name, index))
-        bounds = self.parameter_bounds
-        assert bounds[index][0] <= value <= bounds[index][1], \
-            "Parameter bounds exceeded"
-        logger.debug("Updating {} with {}".format(name, value))
-        self._parameter_values[index] = value
-
-    @property
-    def decision_variable_bounds(self):
-        """An array of tuples of decision variable bounds
-        """
-        return self._decision_variable_bounds
-
-    def _get_decision_variables(self):
-        """Extracts an array of decision variables from a dictionary of inputs
-
+        inputs : dict
+            A dictionary of key: val pairs including a list of input types and
+            names, followed by nested dictionaries of input attributes
+        input_type : str
+            A string input type
+        mapping : dict
+            A mapping for the expected keys `values`, `bounds` and `indices`
         Returns
         =======
         ordered_names : :class:`numpy.ndarray`
@@ -170,73 +161,73 @@ class ModelInputs(object):
             'index' key in the entries of the inputs
         bounds : :class:`numpy.ndarray`
             The bounds ordered by the index key
-        initial : :class:`numpy.ndarray`
+        values : :class:`numpy.ndarray`
             The initial values ordered by the index key
 
-        Notes
-        =====
-        The inputs are expected to be defined using the following keys::
-
-            'decision variables': [<list of decision variable names>]
-            'parameters': [<list of parameter names>]
-            '<decision variable name>': {'bounds': (<tuple of upper and lower
-                                                     bound>),
-                                         'index': <scalar showing position in
-                                                   arguments>},
-                                         'init': <scalar showing initial value
-                                                  for solver>
-                                          },
-            '<parameter name>': {'bounds': (<tuple of upper and lower range for
-                                            sensitivity analysis>),
-                                 'index': <scalar showing position in
-                                          arguments>,
-                                 'value': <scalar showing value for model>
-                                  },
         """
 
-        names = self.input_dict['decision variables']
-        number_of_decision_variables = len(names)
+        names = inputs[input_type]
+        number_if_inputs = len(names)
 
-        indices = [self.input_dict[name]['index'] for name in names]
-        assert len(indices) == number_of_decision_variables, \
-            'Index entries do not match the number of decision variables'
-        initial = np.zeros(number_of_decision_variables, dtype=np.float)
-        bounds = np.zeros(number_of_decision_variables, dtype=(np.float, 2))
-        ordered_names = np.zeros(number_of_decision_variables, dtype='U30')
+        indices = [inputs[name][mapping['indices']] for name in names]
+        assert len(indices) == number_if_inputs, \
+            'Index entries do not match the number of {}'.format(input_type)
+        values = np.zeros(number_if_inputs, dtype=np.float)
+        bounds = np.zeros(number_if_inputs, dtype=(np.float, 2))
+        ordered_names = np.zeros(number_if_inputs, dtype='U30')
 
         for name, index in zip(names, indices):
-            initial[index] = self.input_dict[name]['init']
-            bounds[index] = self.input_dict[name]['bounds']
+            values[index] = inputs[name][mapping['values']]
+            bounds[index] = inputs[name][mapping['bounds']]
             ordered_names[index] = name
 
-        return ordered_names, initial, bounds
+        self.names = ordered_names
+        self.values = values
+        self.bounds = bounds
 
-    def _get_parameter_values(self):
-        """Extracts an array of parameters from a dictionary of inputs
+
+class ParameterList(InputFactory):
+
+    def get_inputs(self, inputs):
+        mapping = {'values': 'value', 'bounds': 'bounds', 'indices': 'index'}
+        self._parse_input_dictionary(inputs, 'parameters', mapping)
+
+
+class DecisionVariableList(InputFactory):
+
+    def get_inputs(self, inputs):
+        mapping = {'values': 'init', 'bounds': 'bounds', 'indices': 'index'}
+        self._parse_input_dictionary(inputs, 'decision variables', mapping)
+
+
+class ModelInputs(object):
+    """A container for all the model inputs
+
+    """
+    def __init__(self, inputs):
+
+        self._inputs = InputFactory()
+        self._decision_variables = self._inputs.getinput('decision_variables')
+        self._decision_variables.get_inputs(inputs)
+        self._parameters = self._inputs.getinput('parameters')
+        self._parameters.get_inputs(inputs)
+
+    @property
+    def parameters(self):
+        """A list of the model parameters
 
         Returns
         =======
-        ordered_names : :class:`numpy.ndarray`
-            The names of the parameters in the order specified by the
-            'index' key in the entries of the inputs
-        bounds : :class:`numpy.ndarray`
-            The parameter bounds (or range) ordered by the index key
-        values : :class:`numpy.ndarray`
-            The parameter values ordered by the index key
+        :class:`smif.inputs.ParameterList`
         """
-        names = self.input_dict['parameters']
-        number_of_parameters = len(names)
+        return self._parameters
 
-        indices = [self.input_dict[name]['index'] for name in names]
-        assert len(indices) == number_of_parameters, \
-            'Index entries do not match the number of decision variables'
-        values = np.zeros(number_of_parameters, dtype=np.float)
-        bounds = np.zeros(number_of_parameters, dtype=(np.float, 2))
-        ordered_names = np.zeros(number_of_parameters, dtype='U30')
+    @property
+    def decision_variables(self):
+        """A list of the decision variables
 
-        for name, index in zip(names, indices):
-            values[index] = self.input_dict[name]['value']
-            bounds[index] = self.input_dict[name]['bounds']
-            ordered_names[index] = name
-
-        return ordered_names, bounds, values
+        Returns
+        =======
+        :class:`smif.inputs.DecisionVariableList`
+        """
+        return self._decision_variables
