@@ -136,7 +136,7 @@ class SectorModel(object):
 
         """
         assert self.inputs, "Inputs to the model not yet specified"
-        self.inputs.update_parameter_value('existing capacity', 0)
+        self.inputs.parameters.update_value('existing capacity', 0)
 
         results = []
         for index in range(len(timesteps)):
@@ -146,8 +146,8 @@ class SectorModel(object):
                 state_res = results[index - 1]['capacity']
                 logger.debug("Updating {} with {}".format(state_var,
                                                           state_res))
-                self.inputs.update_parameter_value(state_var,
-                                                   state_res)
+                self.inputs.parameters.update_value(state_var,
+                                                    state_res)
 
             # Run the simulation
             decision = decisions[:, index]
@@ -157,8 +157,8 @@ class SectorModel(object):
     def _optimise_over_timesteps(self, decisions):
         """
         """
-        self.inputs.update_parameter_value('raininess', 3)
-        self.inputs.update_parameter_value('existing capacity', 0)
+        self.inputs.parameters.update_value('raininess', 3)
+        self.inputs.parameters.update_value('existing capacity', 0)
         assert decisions.shape == (3,)
         results = []
         years = [2010, 2015, 2020]
@@ -170,8 +170,8 @@ class SectorModel(object):
                 state_res = results[index - 1]['capacity']
                 logger.debug("Updating {} with {}".format(state_var,
                                                           state_res))
-                self.inputs.update_parameter_value(state_var,
-                                                   state_res)
+                self.inputs.parameters.update_value(state_var,
+                                                    state_res)
             # Run the simulation
             decision = np.array([decisions[index], ])
             assert decision.shape == (1, )

@@ -137,6 +137,24 @@ class InputFactory(object):
         """
         return {name: index for (index, name) in enumerate(names)}
 
+    def update_value(self, name, value):
+        """Update the value of a decision variable
+
+        Arguments
+        =========
+        name : str
+            The name of the decision variable
+        value : float
+            The value to which to update the decision variable
+
+        """
+        index = self._get_index(name)
+        logger.debug("Index of {} is {}".format(name, index))
+        bounds = self.bounds
+        assert bounds[index][0] <= value <= bounds[index][1], \
+            "Bounds exceeded"
+        self.values[index] = value
+
     def _parse_input_dictionary(self, inputs, input_type, mapping):
         """Extracts an array of decision variables from a dictionary of inputs
 
@@ -224,46 +242,3 @@ class ModelInputs(object):
     @property
     def decision_variables(self):
         return self._decision_variables
-
-    def update_decision_variable_value(self, name, value):
-        """Update the value of a decision variable
-
-        Arguments
-        =========
-        name : str
-            The name of the decision variable
-        value : float
-            The value to which to update the decision variable
-
-        """
-        index = self._decision_variables._get_index(name)
-        logger.debug("Index of {} is {}".format(name, index))
-        bounds = self.decision_variables.bounds
-        assert bounds[index][0] <= value <= bounds[index][1], \
-            "Decision variable bounds exceeded"
-        self._decision_variables.values[index] = value
-
-    def update_parameter_value(self, name, value):
-        """Update the value of a decision variable
-
-        Arguments
-        =========
-        name : str
-            The name of the parameter
-        value : float
-            The value to which to update the parameter
-
-        """
-        index = self._parameters._get_index(name)
-        logger.debug("Index of {} is {}".format(name, index))
-        bounds = self._parameters.bounds
-        assert bounds[index][0] <= value <= bounds[index][1], \
-            "Parameter bounds exceeded"
-        logger.debug("Updating {} with {}".format(name, value))
-        self._parameters.values[index] = value
-
-    @property
-    def decision_variable_bounds(self):
-        """An array of tuples of decision variable bounds
-        """
-        return self._decision_variables.bounds
