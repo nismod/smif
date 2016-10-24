@@ -10,49 +10,28 @@ __license__ = "mit"
 logger = logging.getLogger(__name__)
 
 
-class Input(object):
-    """An input is a sector model input exposed to the :class:`Interface`
-    """
-
-    inputs = []
-
-    def __init__(self, name, value, bounds):
-        self._name = name
-        self._value = value
-        self._bounds = bounds
-
-    @property
-    def name(self):
-        """A descriptive name of the input
-        """
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    @property
-    def value(self):
-        """The value of the property
-        """
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        self._value = value
-
-    @property
-    def bounds(self):
-        """The bounds of the property
-        """
-        return self._bounds
-
-    @bounds.setter
-    def bounds(self, value):
-        self._bounds = value
-
-
 class InputFactory(object):
+    """Defines the types of inputs to a sector model
+
+    The input data are expected to be defined using the following format::
+
+        'decision variables': [<list of decision variable names>]
+        'parameters': [<list of parameter names>]
+        '<decision variable name>': {'bounds': (<tuple of upper and lower
+                                                 bound>),
+                                     'index': <scalar showing position in
+                                               arguments>},
+                                     'init': <scalar showing initial value
+                                              for solver>
+                                      },
+        '<parameter name>': {'bounds': (<tuple of upper and lower range for
+                                        sensitivity analysis>),
+                             'index': <scalar showing position in
+                                      arguments>,
+                             'value': <scalar showing value for model>
+                              },
+
+    """
 
     def __init__(self):
         self._names = []
@@ -61,6 +40,9 @@ class InputFactory(object):
 
     @staticmethod
     def getinput(input_type):
+        """Implements the factory method to return subclasses of
+        :class:`smif.InputFactory`
+        """
         if input_type == 'parameters':
             return ParameterList()
         elif input_type == 'decision_variables':
@@ -80,7 +62,7 @@ class InputFactory(object):
 
     @property
     def values(self):
-        """The value of the property
+        """The value of the input
         """
         return self._values
 
@@ -90,7 +72,7 @@ class InputFactory(object):
 
     @property
     def bounds(self):
-        """The bounds of the property
+        """The bounds of the input
         """
         return self._bounds
 
@@ -138,7 +120,7 @@ class InputFactory(object):
         return {name: index for (index, name) in enumerate(names)}
 
     def update_value(self, name, value):
-        """Update the value of a decision variable
+        """Update the value of an input
 
         Arguments
         =========
@@ -158,6 +140,15 @@ class InputFactory(object):
     def _parse_input_dictionary(self, inputs, input_type, mapping):
         """Extracts an array of decision variables from a dictionary of inputs
 
+        Arguments
+        =========
+        inputs : dict
+            A dictionary of key: val pairs including a list of input types and
+            names, followed by nested dictionaries of input attributes
+        input_type : str
+            A string input type
+        mapping : dict
+            A mapping for the expected keys `values`, `bounds` and `indices`
         Returns
         =======
         ordered_names : :class:`numpy.ndarray`
@@ -168,36 +159,17 @@ class InputFactory(object):
         values : :class:`numpy.ndarray`
             The initial values ordered by the index key
 
-        Notes
-        =====
-        The inputs are expected to be defined using the following keys::
-
-            'decision variables': [<list of decision variable names>]
-            'parameters': [<list of parameter names>]
-            '<decision variable name>': {'bounds': (<tuple of upper and lower
-                                                     bound>),
-                                         'index': <scalar showing position in
-                                                   arguments>},
-                                         'init': <scalar showing initial value
-                                                  for solver>
-                                          },
-            '<parameter name>': {'bounds': (<tuple of upper and lower range for
-                                            sensitivity analysis>),
-                                 'index': <scalar showing position in
-                                          arguments>,
-                                 'value': <scalar showing value for model>
-                                  },
         """
 
         names = inputs[input_type]
-        number_of_decision_variables = len(names)
+        number_if_inputs = len(names)
 
-        indices = [inputs[name]['index'] for name in names]
-        assert len(indices) == number_of_decision_variables, \
+        indices = [inputs[name][mapping['indices']] for name in names]
+        assert len(indices) == number_if_inputs, \
             'Index entries do not match the number of {}'.format(input_type)
-        values = np.zeros(number_of_decision_variables, dtype=np.float)
-        bounds = np.zeros(number_of_decision_variables, dtype=(np.float, 2))
-        ordered_names = np.zeros(number_of_decision_variables, dtype='U30')
+        values = np.zeros(number_if_inputs, dtype=np.float)
+        bounds = np.zeros(number_if_inputs, dtype=(np.float, 2))
+        ordered_names = np.zeros(number_if_inputs, dtype='U30')
 
         for name, index in zip(names, indices):
             values[index] = inputs[name][mapping['values']]
@@ -212,14 +184,14 @@ class InputFactory(object):
 class ParameterList(InputFactory):
 
     def get_inputs(self, inputs):
-        mapping = {'values': 'value', 'bounds': 'bounds'}
+        mapping = {'values': 'value', 'bounds': 'bounds', 'indices': 'index'}
         self._parse_input_dictionary(inputs, 'parameters', mapping)
 
 
 class DecisionVariableList(InputFactory):
 
     def get_inputs(self, inputs):
-        mapping = {'values': 'init', 'bounds': 'bounds'}
+        mapping = {'values': 'init', 'bounds': 'bounds', 'indices': 'index'}
         self._parse_input_dictionary(inputs, 'decision variables', mapping)
 
 
@@ -237,8 +209,20 @@ class ModelInputs(object):
 
     @property
     def parameters(self):
+        """A list of the model parameters
+
+        Returns
+        =======
+        :class:`smif.inputs.ParameterList`
+        """
         return self._parameters
 
     @property
     def decision_variables(self):
+        """A list of the decision variables
+
+        Returns
+        =======
+        :class:`smif.inputs.DecisionVariableList`
+        """
         return self._decision_variables
