@@ -8,6 +8,8 @@ from __future__ import absolute_import, division, print_function
 import logging
 from abc import ABC, abstractmethod
 from functools import lru_cache
+
+from smif.inputs import ModelInputs
 from smif.sectormodel import SectorModel
 
 __author__ = "Will Usher"
@@ -122,28 +124,7 @@ class Interface(ABC):
 
     @inputs.setter
     def inputs(self, list_of_inputs):
-        for single_input in list_of_inputs:
-            assert isinstance(single_input, Input)
-        self._inputs = list_of_inputs
-
-
-class Input(ABC):
-    """An input is a sector model input exposed to the :class:`Interface`
-    """
-
-    inputs = []
-
-    def __init__(self, name, region, timestep):
-        self._name = name
-        self._region = region
-        self._timestep = timestep
-        input_tuple = (name, region, timestep)
-        self.inputs.append(input_tuple)
-
-    @classmethod
-    def list_inputs(self):
-        for input_tuple in self.inputs:
-            print('{}'.format(input_tuple))
+        self._inputs = ModelInputs(list_of_inputs)
 
 
 class Dependency(ABC):

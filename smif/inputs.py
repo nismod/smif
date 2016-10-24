@@ -1,6 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
+from abc import ABC
+
 import numpy as np
 
 __author__ = "Will Usher"
@@ -8,6 +10,25 @@ __copyright__ = "Will Usher"
 __license__ = "mit"
 
 logger = logging.getLogger(__name__)
+
+
+class Input(ABC):
+    """An input is a sector model input exposed to the :class:`Interface`
+    """
+
+    inputs = []
+
+    def __init__(self, name, region, timestep):
+        self._name = name
+        self._region = region
+        self._timestep = timestep
+        input_tuple = (name, region, timestep)
+        self.inputs.append(input_tuple)
+
+    @classmethod
+    def list_inputs(self):
+        for input_tuple in self.inputs:
+            print('{}'.format(input_tuple))
 
 
 class ModelInputs(object):
