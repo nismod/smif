@@ -3,7 +3,7 @@
 import numpy as np
 from fixtures.water_supply import one_input, two_inputs
 from numpy.testing import assert_equal
-from smif.abstract import ModelInputs
+from smif.inputs import ModelInputs
 
 
 class TestModelInputs:
@@ -14,14 +14,17 @@ class TestModelInputs:
         act_names = inputs.decision_variable_names
         act_initial = inputs.decision_variable_values
         act_bounds = inputs.decision_variable_bounds
+        act_indices = inputs.decision_variable_indices
 
         exp_names = np.array(['water treatment capacity'], dtype=str)
         exp_initial = np.array([10], dtype=float)
         exp_bounds = np.array([(0, 20)], dtype=(float, 2))
+        exp_indices = {'water treatment capacity': 0}
 
         assert_equal(act_names, exp_names)
         assert_equal(act_initial, exp_initial)
         assert_equal(act_bounds, exp_bounds)
+        assert act_indices == exp_indices
 
     def test_two_inputs_decision_variables(self, two_inputs):
 
