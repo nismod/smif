@@ -8,11 +8,11 @@ import smif.parse_config
 def test_load_simple_config():
     path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "simple.yaml")
     conf = smif.parse_config.ConfigParser(path)
-    assert conf.data()["name"] == "test"
+    assert conf.data["name"] == "test"
 
 def test_simple_validate_valid():
-    path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "simple.yaml")
-    conf = smif.parse_config.ConfigParser(path)
+    conf = smif.parse_config.ConfigParser()
+    conf.data = {"name": "test"}
     conf.validate({
             "type": "object",
             "properties": {
@@ -22,8 +22,8 @@ def test_simple_validate_valid():
         })
 
 def test_simple_validate_invalid():
-    path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "simple.yaml")
-    conf = smif.parse_config.ConfigParser(path)
+    conf = smif.parse_config.ConfigParser()
+    conf.data = {"name": "test"}
 
     msg = "'nonexistent_key' is a required property"
     with raises(jsonschema.exceptions.ValidationError, message=msg):
