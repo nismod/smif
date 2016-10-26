@@ -1,5 +1,6 @@
+import os
 import subprocess
-
+import sys
 import numpy as np
 from fixtures.water_supply import ExampleWaterSupplySimulation as WaterMod
 from fixtures.water_supply import process_results
@@ -29,6 +30,15 @@ class WaterSupplySimulationWrapper(AbstractModelWrapper):
 
 
 class WaterModelWrapExec(AbstractModelWrapper):
+    def get_model_executable(self):
+        """Return path of current python interpreter
+        """
+        return sys.executable
+
+    def get_model_script(self):
+        """Return relative path to water_supply_exec.py script
+        """
+        return os.path.join(os.getcwd(), "tests", "fixtures", "water_supply_exec.py")
 
     def simulate(self, static_inputs, decision_variables):
         """Runs the executable version of the water supply model
@@ -39,10 +49,16 @@ class WaterModelWrapExec(AbstractModelWrapper):
             x_0 is raininess
             x_1 is capacity of water treatment plants
         """
-        model_executable = './tests/fixtures/water_supply_exec.py'
-        argument = "--raininess={}".format(str(static_inputs))
-        output = subprocess.check_output([model_executable, argument])
-        results = process_results(output)
+        model_executable = self.get_model_executable()
+        model_script = self.get_model_script()
+
+        if model_executable != "" and model_executable is not None:
+            argument = "--raininess={}".format(str(static_inputs))
+            output = subprocess.check_output([model_executable, model_script, argument])
+            results = process_results(output)
+        else:
+            results = None
+
         return results
 
     def extract_obj(self, results):

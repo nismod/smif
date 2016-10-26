@@ -3,6 +3,8 @@
 
 """
 import subprocess
+import os
+import sys
 from fixtures.water_supply import (ExampleWaterSupplySimulation,
                                    ExampleWaterSupplySimulationReservoir,
                                    process_results, raininess_oracle)
@@ -57,9 +59,11 @@ def test_simulate_rain_cost_python():
 
 def test_simulate_rain_executable():
     raininess = 10
-    model_executable = './tests/fixtures/water_supply_exec.py'
-    argument = "--raininess={}".format(str(raininess))
-    output = subprocess.check_output([model_executable, argument])
-    results = process_results(output)
-    assert results['water'] == 10
-    assert results['cost'] == 1
+    model_executable = sys.executable
+    if model_executable != "" and model_executable is not None:
+        model_script = os.path.join(os.getcwd(), "tests", "fixtures", "water_supply_exec.py")
+        argument = "--raininess={}".format(str(raininess))
+        output = subprocess.check_output([model_executable, model_script, argument])
+        results = process_results(output)
+        assert results['water'] == 10
+        assert results['cost'] == 1
