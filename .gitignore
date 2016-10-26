@@ -20,6 +20,7 @@ venv
 .pydevproject
 .settings
 .idea
+.vscode
 
 # Package files
 *.egg
