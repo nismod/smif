@@ -63,10 +63,10 @@ def run_model(args):
     if args.model == 'all':
         logger.info("Running the system of systems model")
     else:
-        logger.ingo("Running the {} sector model".format(args.model))
+        logger.info("Running the {} sector model".format(args.model))
 
 
-def parse_arguments(args, list_of_sector_models):
+def parse_arguments(list_of_sector_models):
     """
 
     Arguments
@@ -76,9 +76,16 @@ def parse_arguments(args, list_of_sector_models):
     list_of_sector_models : list
         A list of sector model names
 
+    Returns
+    =======
+
+
     """
+    assert isinstance(list_of_sector_models, list)
+    list_of_sector_models.append('all')
 
     parser = ArgumentParser(description='Command line tools for smif')
+    parser.set_defaults(modellist=list_of_sector_models)
 
     subparsers = parser.add_subparsers()
 
@@ -90,13 +97,12 @@ def parse_arguments(args, list_of_sector_models):
 
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
-    parser_run.set_defaults(func=run_model)
-
-    run_model_list = list_of_sector_models.extend('all')
 
     parser_run.add_argument('model',
-                            choices=run_model_list,
+                            choices=list_of_sector_models,
+                            type=str,
                             help='The name of the model to run')
+    parser_run.set_defaults(func=run_model)
 
     return parser
 
@@ -157,8 +163,8 @@ def confirm(prompt=None, response=False):
 
 def main(arguments=None):
     list_of_sector_models = ['water_supply', 'solid_waste']
-    parser = parse_arguments(arguments, list_of_sector_models)
-    args = parser.parse_args()
+    parser = parse_arguments(list_of_sector_models)
+    args = parser.parse_args(arguments)
     if 'func' in args:
         args.func(args)
     else:
