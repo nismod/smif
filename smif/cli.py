@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from argparse import ArgumentParser
+from smif.controller import Controller
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -31,29 +32,26 @@ def setup_project_folder(project_path):
     for folder in folder_list:
         if os.path.exists(folder):
             msg = "The {} folder already exists, skipping...".format(folder)
-            logger.info(msg)
         else:
             msg = "Creating {} folder in {}".format(folder, project_path)
-            logger.info(msg)
             os.mkdir(folder)
+        logger.info(msg)
 
 
 def setup_configuration(args):
     """Sets up the configuration files into the defined project folder
 
     """
-
-    print("Arguments: {}".format(args))
     project_path = os.path.abspath(args.path)
     msg = "Set up the project folders in {}?".format(project_path)
     response = confirm(msg,
                        response=False)
     if response:
         msg = "Setting up the project folders in {}".format(project_path)
-        logger.info(msg)
         setup_project_folder(project_path)
     else:
-        logger.info("Setup cancelled.")
+        msg = "Setup cancelled."
+    logger.info(msg)
 
 
 def run_model(args):
@@ -62,8 +60,14 @@ def run_model(args):
     """
     if args.model == 'all':
         logger.info("Running the system of systems model")
+        controller = Controller(os.getcwd())
+        controller.run_sos_model()
+
     else:
         logger.info("Running the {} sector model".format(args.model))
+        model_name = args.model
+        controller = Controller(os.getcwd())
+        controller.run_sector_model(model_name)
 
 
 def parse_arguments(list_of_sector_models):
@@ -78,7 +82,7 @@ def parse_arguments(list_of_sector_models):
 
     Returns
     =======
-
+    :class:`argparse.ArgumentParser`
 
     """
     assert isinstance(list_of_sector_models, list)
