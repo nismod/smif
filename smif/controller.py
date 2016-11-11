@@ -15,9 +15,12 @@ class Controller:
     """
     def __init__(self, project_folder):
         self._project_folder = project_folder
+        self._model_list = []
+        self._timesteps = []
+        self._assets = []
+
         logger.info("Getting config from {}".format(project_folder))
         self._configuration = self._get_config()
-        self._model_list = []
 
     def _get_config(self):
         config_path = os.path.join(self._project_folder,
@@ -28,13 +31,12 @@ class Controller:
 
         config_data = ConfigParser(config_path).data
 
-        self._model_list = config_data['sector_models']
+        self.load_model(config_data['sector_models'])
         self._timesteps = self.load_timesteps(config_data['timesteps'])
         self._assets = self.load_assets(config_data['assets'])
         planning_config = config_data['planning']
-
-        logger.info("Loading models: {}".format(self._model_list))
         logger.info("Loading planning config: {}".format(planning_config))
+        return config_data
 
     def load_assets(self, file_path):
         assets = []
@@ -53,11 +55,13 @@ class Controller:
         logger.info("Loading timesteps from {}".format(file_path))
         return ConfigParser(file_path).data
 
-    def load_models(self):
-        pass
+    def load_models(self, model_list):
+        for model in model_list:
+            self.load_model(model)
 
-    def load_model(self):
-        pass
+    def load_model(self, model_name):
+        logger.info("Loading models: {}".format(model_name))
+        self._model_list.extend(model_name)
 
     def run_sector_model(self, model_name):
         msg = "Can't run the {} sector model yet".format(model_name)

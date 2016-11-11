@@ -46,19 +46,31 @@ def setup_project_folder():
     return project_folder
 
 
-def test_controller(setup_project_folder):
+class TestController():
 
-    with setup_project_folder as folder_name:
-        cont = Controller(folder_name)
+    def test_model_list(self, setup_project_folder):
 
-    expected = ['water_supply']
-    actual = cont.model_list
-    # assert actual == expected
+        with setup_project_folder as folder_name:
+            cont = Controller(folder_name)
 
-    expected = [2010, 2011, 2012]
-    actual = cont._timesteps
-    assert actual == expected
+        expected = ['water_supply']
+        actual = cont.model_list
+        assert actual == expected
 
-    expected = ['asset_a', 'asset_b', 'asset_c']
-    actual = cont._assets
-    assert actual == expected
+    def test_timesteps(self, setup_project_folder):
+
+        with setup_project_folder as folder_name:
+            cont = Controller(folder_name)
+
+        expected = [2010, 2011, 2012]
+        actual = cont._timesteps
+        assert actual == expected
+
+    def test_assets(self, setup_project_folder):
+
+        with setup_project_folder as folder_name:
+            cont = Controller(folder_name)
+
+        expected = ['asset_a', 'asset_b', 'asset_c']
+        actual = cont._assets
+        assert actual == expected
