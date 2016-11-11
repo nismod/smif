@@ -155,9 +155,9 @@ def confirm(prompt=None, response=False):
         prompt = 'Confirm'
 
     if response:
-        prompt = '%s [%s]|%s: ' % (prompt, 'y', 'n')
+        prompt = '{} [{}]|{}: '.format(prompt, 'y', 'n')
     else:
-        prompt = '%s [%s]|%s: ' % (prompt, 'n', 'y')
+        prompt = '{} [{}]|{}: '.format(prompt, 'n', 'y')
 
     while True:
         ans = input(prompt)
@@ -166,9 +166,9 @@ def confirm(prompt=None, response=False):
         if ans not in ['y', 'Y', 'n', 'N']:
             print('please enter y or n.')
             continue
-        if ans == 'y' or ans == 'Y':
+        if ans in ['y', 'Y']:
             return True
-        if ans == 'n' or ans == 'N':
+        if ans in ['n', 'N']:
             return False
 
 
