@@ -24,6 +24,9 @@ class Controller:
         self._configuration = self._get_config()
 
     def _get_config(self):
+        """Loads the model configuration from the configuration file
+
+        """
         config_path = os.path.join(self._project_folder,
                                    'config',
                                    'model.yaml')
@@ -136,6 +139,8 @@ class Controller:
             raise Exception(msg)
 
     def run_sos_model(self):
+        """Runs the system-of-system model
+        """
         msg = "Can't run the SOS model yet"
         logger.error(msg)
         raise NotImplementedError(msg)
