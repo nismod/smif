@@ -11,8 +11,10 @@ from smif.controller import Controller
 def setup_project_folder():
     """Sets up a temporary folder with the required project folder structure
 
-        /assets/
-        /assets/assets1.yaml
+        /models
+        /models/water_supply/
+        /models/water_supply/run.py
+        /models/water_supply/assets/assets1.yaml
         /config/
         /config/model.yaml
         /config/timesteps.yaml
@@ -22,9 +24,12 @@ def setup_project_folder():
     """
 
     project_folder = TemporaryDirectory()
-    folder_list = ['assets', 'config', 'planning']
+    folder_list = ['config', 'planning', 'models']
     for folder in folder_list:
         os.mkdir(os.path.join(project_folder.name, folder))
+    os.mkdir(os.path.join(project_folder.name, 'models', 'water_supply'))
+    os.mkdir(os.path.join(project_folder.name, 'models', 'water_supply',
+                          'assets'))
 
     filename = os.path.join(project_folder.name, 'config', 'model.yaml')
 
@@ -49,10 +54,35 @@ def setup_project_folder():
         timesteps_contents = [2010, 2011, 2012]
         yaml.dump(timesteps_contents, config_file)
 
-    filename = os.path.join(project_folder.name, 'assets', 'assets1.yaml')
+    filename = os.path.join(project_folder.name,
+                            'models',
+                            'water_supply',
+                            'assets',
+                            'assets1.yaml')
     with open(filename, 'w') as config_file:
-        timesteps_contents = ['asset_a', 'asset_b', 'asset_c']
+        timesteps_contents = ['water_asset_a',
+                              'water_asset_b',
+                              'water_asset_c']
         yaml.dump(timesteps_contents, config_file)
+
+    # Write a run.py file for the water_supply model
+    filename = os.path.join(project_folder.name,
+                            'models',
+                            'water_supply',
+                            'run.py')
+    with open(filename, 'w') as run_file:
+        contents = """from unittest.mock import MagicMock
+from smif.sectormodel import SectorModel
+import time
+
+if __name__ == '__main__':
+    model = SectorModel('water_supply')
+    model.simulate = MagicMock(return_value=3)
+    model.simulate()
+    time.sleep(1) # delays for 1 seconds
+"""
+        for line in contents:
+            run_file.write(line)
 
     return project_folder
 
@@ -82,6 +112,20 @@ class TestController():
         with setup_project_folder as folder_name:
             cont = Controller(folder_name)
 
-        expected = ['asset_a', 'asset_b', 'asset_c']
-        actual = cont._assets
+        expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
+        actual = cont._all_assets
         assert actual == expected
+
+
+class TestRunModel():
+
+    def test_run_sector_model(self, setup_project_folder):
+        with setup_project_folder as folder_name:
+            cont = Controller(folder_name)
+
+            assert os.path.exists(os.path.join(folder_name,
+                                               'models',
+                                               'water_supply',
+                                               'run.py'))
+
+            cont.run_sector_model('water_supply')
