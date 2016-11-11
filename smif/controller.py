@@ -1,5 +1,6 @@
 import logging
 import os
+from subprocess import run
 
 from smif.parse_config import ConfigParser
 
@@ -17,7 +18,7 @@ class Controller:
         self._project_folder = project_folder
         self._model_list = []
         self._timesteps = []
-        self._assets = []
+        self._all_assets = []
 
         logger.info("Getting config file from {}".format(project_folder))
         self._configuration = self._get_config()
@@ -33,22 +34,54 @@ class Controller:
 
         self.load_model(config_data['sector_models'])
         self._timesteps = self.load_timesteps(config_data['timesteps'])
-        self._assets = self.load_assets(config_data['assets'])
+        self._all_assets = self.load_assets()
         planning_config = config_data['planning']
         logger.info("Loading planning config: {}".format(planning_config))
         return config_data
 
-    def load_assets(self, file_path):
+    def load_assets(self):
+        """Loads the assets from the sector model folders
+
+        Using the list of model folders extracted from the configuration file,
+        this function returns a list of all the assets from the sector models
+
+        Returns
+        =======
+        list
+            A list of assets from all the sector models
+
+
+        Notes
+        =====
+        This should really be pushed into a SectorModel class, with a list of
+        assets generated for the sos on demand
+
+        """
         assets = []
-        for asset in file_path:
+        for model in self._model_list:
             path_to_assetfile = os.path.join(self._project_folder,
-                                             'assets',
-                                             asset)
-            logger.info("Loading assets from {}".format(path_to_assetfile))
-            assets.extend(ConfigParser(path_to_assetfile).data)
+                                             'models',
+                                             model,
+                                             'assets')
+            for assetfile in os.listdir(path_to_assetfile):
+                asset_path = os.path.join(path_to_assetfile, assetfile)
+                logger.info("Loading assets from {}".format(asset_path))
+                assets.extend(ConfigParser(asset_path).data)
         return assets
 
     def load_timesteps(self, file_path):
+        """Load the timesteps from the configuration file
+
+        Arguments
+        =========
+        file_path: str
+            The path to the timesteps file
+
+        Returns
+        =======
+        list
+            A list of timesteps
+        """
         file_path = os.path.join(self._project_folder,
                                  'config',
                                  str(file_path[0]))
@@ -56,17 +89,51 @@ class Controller:
         return ConfigParser(file_path).data
 
     def load_models(self, model_list):
+        """Loads the sector models into the controller
+
+        Arguments
+        =========
+        model_list : list
+            A list of sector model names
+
+        """
         for model in model_list:
             self.load_model(model)
 
     def load_model(self, model_name):
+        """Loads the sector model
+
+        Arguments
+        =========
+        model_name : str
+            The name of the model, corresponding to the folder name in the
+            models subfolder of the project folder
+        """
         logger.info("Loading models: {}".format(model_name))
         self._model_list.extend(model_name)
 
     def run_sector_model(self, model_name):
-        msg = "Can't run the {} sector model yet".format(model_name)
-        logger.error(msg)
-        raise NotImplementedError(msg)
+        """Runs the sector model in a subprocess
+
+        Arguments
+        =========
+        model_name : str
+            The name of the model, corresponding to the folder name in the
+            models subfolder of the project folder
+        """
+        msg = "Running the {} sector model".format(model_name)
+        logger.info(msg)
+
+        model_path = os.path.join(self._project_folder,
+                                  'models',
+                                  model_name,
+                                  'run.py')
+        if os.path.exists(model_path):
+            # Run up a subprocess to run the simulation
+            run(['python', model_path], check=True)
+        else:
+            msg = "Cannot find `run.py` for the {} model".format(model_name)
+            raise Exception(msg)
 
     def run_sos_model(self):
         msg = "Can't run the SOS model yet"
@@ -75,4 +142,11 @@ class Controller:
 
     @property
     def model_list(self):
+        """The list of sector model names
+
+        Returns
+        =======
+        list
+            A list of sector model names
+        """
         return self._model_list
