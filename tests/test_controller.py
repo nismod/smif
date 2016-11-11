@@ -72,11 +72,12 @@ def setup_project_folder():
                             'run.py')
     with open(filename, 'w') as run_file:
         contents = """from unittest.mock import MagicMock
-from smif.sectormodel import SectorModel
 import time
 
 if __name__ == '__main__':
-    model = SectorModel('water_supply')
+    class Model():
+        pass
+    model = Model()
     model.simulate = MagicMock(return_value=3)
     model.simulate()
     time.sleep(1) # delays for 1 seconds
