@@ -25,7 +25,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # Configure the conda environment and put it in the path using the
     # provided versions
-    conda create -n testenv --yes python=$PYTHON_VERSION pip scipy numpy
+    conda create -n testenv --yes python=$PYTHON_VERSION pip scipy numpy pyyaml
     source activate testenv
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then

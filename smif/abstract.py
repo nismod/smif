@@ -450,6 +450,10 @@ class AbstractModel(ABC):
     def timesteps(self, value):
         self._timesteps = value
 
+    @property
+    def model_list(self):
+        return [x.name for x in self._sector_models]
+
     def attach_interface(self, interface):
         """Adds an interface to the list of interfaces which comprise a model
         """
@@ -472,6 +476,7 @@ class Model(AbstractModel):
         2. Run each sector model
         3. Return success or failure
         """
+        raise NotImplementedError("Can't run the SOS model yet")
 
     def optimise(self):
         """Runs a dynamic optimisation over a system-of-simulation models
