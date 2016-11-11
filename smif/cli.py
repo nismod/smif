@@ -34,7 +34,7 @@ def setup_project_folder(project_path):
         Absolute path to an empty folder
 
     """
-    folder_list = ['assets', 'config', 'planning']
+    folder_list = ['config', 'planning', 'models']
     for folder in folder_list:
         folder_path = os.path.join(project_path, folder)
         if os.path.exists(folder_path):

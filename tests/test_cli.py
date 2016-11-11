@@ -30,7 +30,7 @@ def test_setup_project_folder():
 
         assert os.path.exists(project_folder)
 
-        folder_list = ['assets', 'config', 'planning']
+        folder_list = ['config', 'planning', 'models']
         for folder in folder_list:
             folder_path = os.path.join(project_folder, folder)
             print(folder_path)
