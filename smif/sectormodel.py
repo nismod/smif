@@ -3,12 +3,63 @@ import logging
 import numpy as np
 from scipy.optimize import minimize
 from smif.inputs import ModelInputs
+from smif.parse_config import ConfigParser
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
 logger = logging.getLogger(__name__)
+
+
+class Assets:
+    """
+
+{'CCGT': {'cost': {'value': 1000, 'unit': '£/kW'}},
+ 'wind_turbine': {'cost': {'value': 1800, 'unit': '£/kW'}},
+ 'solar_pv': {'cost': {'value': 2200, 'unit': '£/kW'}},
+ 'nuclear': {'cost': {'value': 3000, 'unit': '£/kW'}}}
+
+    """
+
+    def __init__(self, filepath):
+        self._asset_list = ConfigParser(filepath)
+        self._validate({
+                        "type": "array",
+                        "uniqueItems": True
+                        })
+        self._asset_attributes = None
+
+    def _validate(self, schema):
+        self._asset_list.validate(schema)
+
+    @property
+    def asset_list(self):
+        return self._asset_list.data
+
+    @property
+    def asset_attributes(self):
+        return self._asset_attributes.data
+
+    def load_attributes(self, filepath):
+        """
+        """
+        self._asset_attributes = ConfigParser(filepath)
+        schema = {
+                  "type": "array",
+                  "oneof": self.asset_list,
+                  "properties": {
+                      "cost": {
+                          "properties": {
+                              "value": {"type": "number",
+                                        "minimum": 0,
+                                        "exclusiveMinimum": True},
+                              "unit": {'type': 'string'}
+                           }
+                       }
+                    }
+                    }
+        self._validate(schema)
 
 
 class SectorModel(object):
