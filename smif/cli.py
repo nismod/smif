@@ -1,4 +1,10 @@
-"""
+"""A command line interface to the system of systems framework
+
+This command line interface implements a number of methods.
+
+- `setup` creates a new project folder structure in a location
+- `run` performs a simulation of an individual sector model, or the whole
+        system of systems model
 """
 import logging
 import os
@@ -30,11 +36,12 @@ def setup_project_folder(project_path):
     """
     folder_list = ['assets', 'config', 'planning']
     for folder in folder_list:
-        if os.path.exists(folder):
-            msg = "The {} folder already exists, skipping...".format(folder)
+        folder_path = os.path.join(project_path, folder)
+        if os.path.exists(folder_path):
+            msg = "{} already exists, skipping...".format(folder_path)
         else:
             msg = "Creating {} folder in {}".format(folder, project_path)
-            os.mkdir(folder)
+            os.mkdir(folder_path)
         logger.info(msg)
 
 

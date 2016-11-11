@@ -9,6 +9,17 @@ from smif.controller import Controller
 
 @fixture(scope='function')
 def setup_project_folder():
+    """Sets up a temporary folder with the required project folder structure
+
+        /assets/
+        /assets/assets1.yaml
+        /config/
+        /config/model.yaml
+        /config/timesteps.yaml
+        /planning/
+        /planning/pre-specified.yaml
+
+    """
 
     project_folder = TemporaryDirectory()
     folder_list = ['assets', 'config', 'planning']

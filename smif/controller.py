@@ -19,14 +19,14 @@ class Controller:
         self._timesteps = []
         self._assets = []
 
-        logger.info("Getting config from {}".format(project_folder))
+        logger.info("Getting config file from {}".format(project_folder))
         self._configuration = self._get_config()
 
     def _get_config(self):
         config_path = os.path.join(self._project_folder,
                                    'config',
                                    'model.yaml')
-        msg = "Looking for config file in {}".format(config_path)
+        msg = "Looking for configuration data in {}".format(config_path)
         logger.info(msg)
 
         config_data = ConfigParser(config_path).data
