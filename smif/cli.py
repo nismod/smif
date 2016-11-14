@@ -5,6 +5,7 @@ This command line interface implements a number of methods.
 - `setup` creates a new project folder structure in a location
 - `run` performs a simulation of an individual sector model, or the whole
         system of systems model
+
 """
 import logging
 import os

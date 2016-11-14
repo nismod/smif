@@ -1,3 +1,25 @@
+"""This module coordinates the software components that make up the integration
+framework.
+
+Folder structure
+----------------
+
+When configuring a system-of-systems model, the folder structure below should
+be used.  In this example, there is one sector model, called ``water_supply``::
+
+    /models
+    /models/water_supply/
+    /models/water_supply/run.py
+    /models/water_supply/assets/assets1.yaml
+    /config/
+    /config/model.yaml
+    /config/timesteps.yaml
+    /planning/
+    /planning/pre-specified.yaml
+
+The ``models`` folder contains one subfolder for each sector model.
+
+"""
 import logging
 import os
 from subprocess import run
