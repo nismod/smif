@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 from scipy.optimize import minimize
+# from smif.abstract import Asset
 from smif.inputs import ModelInputs
 from smif.parse_config import ConfigParser
 
@@ -14,6 +15,14 @@ logger = logging.getLogger(__name__)
 
 class Assets:
     """
+
+- The set of assets (power stations etc.) should be explicitly declared
+  in a yaml file.
+- Assets are associated with sector models, not the integration configuration.
+- Assets should be stored in a sub-folder associated with the sector model
+  name.
+
+
 
 {'CCGT': {'cost': {'value': 1000, 'unit': '£/kW'}},
  'wind_turbine': {'cost': {'value': 1800, 'unit': '£/kW'}},
