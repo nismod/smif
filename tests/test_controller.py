@@ -1,38 +1,44 @@
 import os
-from tempfile import TemporaryDirectory
-
 import yaml
 
 from pytest import fixture
 from smif.controller import Controller
 
 
-@fixture(scope='function')
-def setup_project_folder():
-    """Sets up a temporary folder with the required project folder structure
-
-        /models
-        /models/water_supply/
-        /models/water_supply/run.py
-        /models/water_supply/assets/assets1.yaml
-        /config/
-        /config/model.yaml
-        /config/timesteps.yaml
-        /planning/
-        /planning/pre-specified.yaml
-
+@fixture(scope='session')
+def setup_folder_structure(tmpdir_factory):
     """
 
-    project_folder = TemporaryDirectory()
+    Returns
+    -------
+    :class:`LocalPath`
+        Path to the temporary folder
+    """
     folder_list = ['config', 'planning', 'models']
+    test_folder = tmpdir_factory.mktemp("smif")
+
     for folder in folder_list:
-        os.mkdir(os.path.join(project_folder.name, folder))
-    os.mkdir(os.path.join(project_folder.name, 'models', 'water_supply'))
-    os.mkdir(os.path.join(project_folder.name, 'models', 'water_supply',
-                          'assets'))
+        test_folder.mkdir(folder)
 
-    filename = os.path.join(project_folder.name, 'config', 'model.yaml')
+    return test_folder
 
+
+@fixture(scope='function')
+def setup_assets_file(setup_folder_structure):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('models',
+                                'water_supply',
+                                'assets',
+                                'assets1.yaml')
+    assets_contents = ['water_asset_a',
+                       'water_asset_b',
+                       'water_asset_c']
+    contents = yaml.dump(assets_contents)
+    filename.write(contents, ensure=True)
+
+
+@fixture(scope='function')
+def setup_config_file(setup_folder_structure):
     file_contents = {'sector_models': ['water_supply'],
                      'timesteps': ['timesteps.yaml'],
                      'assets': ['assets1.yaml'],
@@ -46,32 +52,19 @@ def setup_project_folder():
                                   }
                      }
 
-    with open(filename, 'w') as config_file:
-        yaml.dump(file_contents, config_file)
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
 
-    filename = os.path.join(project_folder.name, 'config', 'timesteps.yaml')
-    with open(filename, 'w') as config_file:
-        timesteps_contents = [2010, 2011, 2012]
-        yaml.dump(timesteps_contents, config_file)
 
-    filename = os.path.join(project_folder.name,
-                            'models',
-                            'water_supply',
-                            'assets',
-                            'assets1.yaml')
-    with open(filename, 'w') as config_file:
-        timesteps_contents = ['water_asset_a',
-                              'water_asset_b',
-                              'water_asset_c']
-        yaml.dump(timesteps_contents, config_file)
-
+@fixture(scope='function')
+def setup_runpy_file(tmpdir, setup_folder_structure):
+    base_folder = setup_folder_structure
     # Write a run.py file for the water_supply model
-    filename = os.path.join(project_folder.name,
-                            'models',
-                            'water_supply',
-                            'run.py')
-    with open(filename, 'w') as run_file:
-        contents = """from unittest.mock import MagicMock
+    filename = base_folder.join('models',
+                                'water_supply',
+                                'run.py')
+    contents = """from unittest.mock import MagicMock
 import time
 
 if __name__ == '__main__':
@@ -82,18 +75,47 @@ if __name__ == '__main__':
     model.simulate()
     time.sleep(1) # delays for 1 seconds
 """
-        for line in contents:
-            run_file.write(line)
+    filename.write(contents, ensure=True)
 
-    return project_folder
+
+@fixture(scope='function')
+def setup_project_folder(setup_runpy_file,
+                         setup_assets_file,
+                         setup_folder_structure,
+                         setup_config_file,
+                         setup_timesteps_file):
+    """Sets up a temporary folder with the required project folder structure
+
+        /models
+        /models/water_supply/
+        /models/water_supply/run.py
+        /models/water_supply/assets/assets1.yaml
+        /config/
+        /config/model.yaml
+        /config/timesteps.yaml
+        /planning/
+        /planning/pre-specified.yaml
+
+    """
+    base_folder = setup_folder_structure
+
+    return base_folder
+
+
+@fixture(scope='function')
+def setup_timesteps_file(setup_folder_structure):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('config', 'timesteps.yaml')
+    timesteps_contents = [2010, 2011, 2012]
+    contents = yaml.dump(timesteps_contents)
+    filename.write(contents, ensure=True)
 
 
 class TestController():
 
     def test_model_list(self, setup_project_folder):
 
-        with setup_project_folder as folder_name:
-            cont = Controller(folder_name)
+        cont = Controller(str(setup_project_folder))
 
         expected = ['water_supply']
         actual = cont.model_list
@@ -101,8 +123,7 @@ class TestController():
 
     def test_timesteps(self, setup_project_folder):
 
-        with setup_project_folder as folder_name:
-            cont = Controller(folder_name)
+        cont = Controller(str(setup_project_folder))
 
         expected = [2010, 2011, 2012]
         actual = cont._timesteps
@@ -110,8 +131,7 @@ class TestController():
 
     def test_assets(self, setup_project_folder):
 
-        with setup_project_folder as folder_name:
-            cont = Controller(folder_name)
+        cont = Controller(str(setup_project_folder))
 
         expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
         actual = cont._all_assets
@@ -121,12 +141,10 @@ class TestController():
 class TestRunModel():
 
     def test_run_sector_model(self, setup_project_folder):
-        with setup_project_folder as folder_name:
-            cont = Controller(folder_name)
+        cont = Controller(str(setup_project_folder))
+        assert os.path.exists(os.path.join(str(setup_project_folder),
+                                           'models',
+                                           'water_supply',
+                                           'run.py'))
 
-            assert os.path.exists(os.path.join(folder_name,
-                                               'models',
-                                               'water_supply',
-                                               'run.py'))
-
-            cont.run_sector_model('water_supply')
+        cont.run_sector_model('water_supply')
