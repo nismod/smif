@@ -41,8 +41,15 @@ def test_modelrun_config_validate():
 
     conf.validate_as_modelrun_config()
 
-def test_modelrun_config_validate_invalid():
+def test_modelrun_config_validate_invalid_missing_timestep():
     path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "modelrun_config_missing_timestep.yaml")
+    conf = smif.parse_config.ConfigParser(path)
+
+    with raises(jsonschema.exceptions.ValidationError):
+        conf.validate_as_modelrun_config()
+
+def test_modelrun_config_validate_invalid_used_planning_needs_files():
+    path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "modelrun_config_used_planning_needs_files.yaml")
     conf = smif.parse_config.ConfigParser(path)
 
     with raises(jsonschema.exceptions.ValidationError):

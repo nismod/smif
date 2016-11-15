@@ -27,8 +27,15 @@ class ConfigParser:
     def validate_as_modelrun_config(self):
         """Validate the loaded data as required for model run configuration
         """
+        if self.data is None:
+            raise AttributeError("Config data not loaded")
+
         model_config_schema_path = os.path.join(os.path.dirname(__file__), "schema", "modelrun_config_schema.json")
         with open(model_config_schema_path, 'r') as fh:
             schema = json.load(fh)
+
+        for planning_type in self.data["planning"].values():
+            if planning_type["use"] and "files" not in planning_type:
+                raise jsonschema.ValidationError("A planning type needs files if it is going to be used.")
 
         self.validate(schema)
