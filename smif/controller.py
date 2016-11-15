@@ -62,7 +62,10 @@ class Controller:
         msg = "Looking for configuration data in {}".format(config_path)
         logger.info(msg)
 
-        config_data = ConfigParser(config_path).data
+        config_parser = ConfigParser(config_path)
+        config_parser.validate_as_modelrun_config()
+
+        config_data = config_parser.data
 
         self.load_models(config_data['sector_models'])
         self._timesteps = self.load_timesteps(config_data['timesteps'])
@@ -85,7 +88,7 @@ class Controller:
         """
         file_path = os.path.join(self._project_folder,
                                  'config',
-                                 str(file_path[0]))
+                                 str(file_path))
         logger.info("Loading timesteps from {}".format(file_path))
         return ConfigParser(file_path).data
 

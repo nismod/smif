@@ -34,3 +34,23 @@ def test_simple_validate_invalid():
             },
             "required": ["nonexistent_key"]
         })
+
+def test_modelrun_config_validate():
+    path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "modelrun_config.yaml")
+    conf = smif.parse_config.ConfigParser(path)
+
+    conf.validate_as_modelrun_config()
+
+def test_modelrun_config_validate_invalid_missing_timestep():
+    path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "modelrun_config_missing_timestep.yaml")
+    conf = smif.parse_config.ConfigParser(path)
+
+    with raises(jsonschema.exceptions.ValidationError):
+        conf.validate_as_modelrun_config()
+
+def test_modelrun_config_validate_invalid_used_planning_needs_files():
+    path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "modelrun_config_used_planning_needs_files.yaml")
+    conf = smif.parse_config.ConfigParser(path)
+
+    with raises(jsonschema.exceptions.ValidationError):
+        conf.validate_as_modelrun_config()

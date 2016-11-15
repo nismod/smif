@@ -1,0 +1,53 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Model Run Configuration",
+    "description": "Config for a smif model run",
+    "type": "object",
+    "properties": {
+        "sector_models": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+        },
+        "timesteps": {
+            "type": "string"
+        },
+        "planning": {
+            "type": "object",
+            "properties": {
+                "pre_specified": {
+                    "$ref": "#/definitions/planning_config"
+                },
+                "rule_based": {
+                    "$ref": "#/definitions/planning_config"
+                },
+                "optimisation": {
+                    "$ref": "#/definitions/planning_config"
+                }
+            },
+            "required": ["pre_specified", "rule_based", "optimisation"]
+        }
+    },
+    "required": ["sector_models", "timesteps", "planning"],
+
+    "definitions": {
+        "planning_config": {
+            "type": "object",
+            "properties": {
+                "use": {
+                    "type": "boolean"
+                },
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": ["use"]
+        }
+    }
+}

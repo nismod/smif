@@ -1,0 +1,10 @@
+sector_models:
+  - water_supply
+timesteps: timesteps.yaml
+planning:
+  pre_specified:
+    use: true
+  rule_based:
+    use: false
+  optimisation:
+    use: false
