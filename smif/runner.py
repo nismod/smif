@@ -10,19 +10,15 @@ logger = logging.getLogger(__name__)
 
 
 class Asset(object):
-    """An asset is a decision targeted capacity that persists across timesteps.
-
-    An Asset is otherwise an Input to a model.
+    """An asset represents a physical structure that persists across timesteps.
 
     Examples of assets include power stations, water treatment plants, roads,
     railway tracks, airports, ports, centres of demand such as houses or
     factories, waste processing plants etc.
 
-    An Asset is targetted by and influenced by a :class:`Decision` but only
-    need to be defined in the :class:`Interface` if targetted
-    by a :class:`Decision`.
+    An Asset is targetted by and influenced by the decision-layer.
 
-    A snapshot of the current Assets in a model is represented by
+    A snapshot of the current set of assets in a model is represented by
     :class:`State` and is persisted across model-years.
 
     The Asset-state is also persisted (written to the datastore).
@@ -49,7 +45,16 @@ class Asset(object):
 
 
 class ModelRunner(object):
-    """
+    """Contains the data and methods associated with the smif facing aspects of
+    running a sector model
+
+    ModelRunner expects to find a yaml configuration file containing
+    - lists of assets in ``models/<model_name>/*``
+
+    ModelRunner expects to find a ``run.py`` file in ``models/<model_name>``.
+    ``run.py`` contains a python script which subclasses
+    :class:`smif.sectormodel.SectorModel` to wrap the sector model.
+
     """
     def __init__(self, project_folder, model_name):
         """
@@ -106,12 +111,6 @@ class ModelRunner(object):
         =======
         list
             A list of assets from all the sector models
-
-
-        Notes
-        =====
-        This should really be pushed into a SectorModel class, with a list of
-        assets generated for the sos on demand
 
         """
         assets = []
