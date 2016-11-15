@@ -46,12 +46,11 @@ def setup_config_file(setup_folder_structure):
     planning
     """
     file_contents = {'sector_models': ['water_supply'],
-                     'timesteps': ['timesteps.yaml'],
-                     'planning': {'rule_based': {'use': False,
-                                                 'files': None},
-                                  'optimisation': {'use': False,
-                                                   'files': None},
-                                  'pre_spec': {'use': True,
+                     'timesteps': 'timesteps.yaml',
+                     'assets': ['assets1.yaml'],
+                     'planning': {'rule_based': {'use': False },
+                                  'optimisation': {'use': False },
+                                  'pre_specified': {'use': True,
                                                'files': ['pre-specified.yaml']
                                                }
                                   }

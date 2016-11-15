@@ -1,0 +1,11 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Model Run Timesteps",
+    "description": "List of timesteps for a smif model run",
+    "type": "array",
+    "items": {
+        "type": "integer"
+    },
+    "minItems": 1,
+    "uniqueItems": true
+}

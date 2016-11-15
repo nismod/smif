@@ -1,6 +1,8 @@
 # Parse yaml config files, to construct sector models
-import yaml
+import json
 import jsonschema
+import os
+import yaml
 
 class ConfigParser:
     """Parse yaml config file,
@@ -21,3 +23,12 @@ class ConfigParser:
             raise AttributeError("Config data not loaded")
 
         jsonschema.validate(self.data, schema)
+
+    def validate_as_modelrun_config(self):
+        """Validate the loaded data as required for model run configuration
+        """
+        model_config_schema_path = os.path.join(os.path.dirname(__file__), "schema", "modelrun_config_schema.json")
+        with open(model_config_schema_path, 'r') as fh:
+            schema = json.load(fh)
+
+        self.validate(schema)
