@@ -9,6 +9,45 @@ __license__ = "mit"
 logger = logging.getLogger(__name__)
 
 
+class Asset(object):
+    """An asset is a decision targeted capacity that persists across timesteps.
+
+    An Asset is otherwise an Input to a model.
+
+    Examples of assets include power stations, water treatment plants, roads,
+    railway tracks, airports, ports, centres of demand such as houses or
+    factories, waste processing plants etc.
+
+    An Asset is targetted by and influenced by a :class:`Decision` but only
+    need to be defined in the :class:`Interface` if targetted
+    by a :class:`Decision`.
+
+    A snapshot of the current Assets in a model is represented by
+    :class:`State` and is persisted across model-years.
+
+    The Asset-state is also persisted (written to the datastore).
+
+    Parameters
+    ==========
+    name : str
+        The name of the asset
+
+    """
+    def __init__(self, name):
+        self._name = name
+
+    @property
+    def name(self):
+        """Returns the name of the asset
+
+        Returns
+        =======
+        str
+            The name of the asset
+        """
+        return self._name
+
+
 class ModelRunner(object):
     """
     """
@@ -28,11 +67,34 @@ class ModelRunner(object):
 
     @property
     def name(self):
+        """The name of the sector model
+
+        Returns
+        =======
+        str
+            The name of the sector model
+
+        Note
+        ====
+        The name corresponds to the name of the folder in which the
+        configuration is expected to be found
+
+        """
         return self._model_name
 
     @property
     def assets(self):
-        return self._assets
+        """The names of the assets
+
+        Returns
+        =======
+        list
+            A list of the names of the assets
+        """
+        asset_names = []
+        for asset in self._assets:
+            asset_names.append(asset.name)
+        return asset_names
 
     def load_assets(self):
         """Loads the assets from the sector model folders
@@ -61,5 +123,7 @@ class ModelRunner(object):
         for assetfile in os.listdir(path_to_assetfile):
             asset_path = os.path.join(path_to_assetfile, assetfile)
             logger.info("Loading assets from {}".format(asset_path))
-            assets.extend(ConfigParser(asset_path).data)
+
+            for asset in ConfigParser(asset_path).data:
+                assets.append(Asset(asset))
         return assets
