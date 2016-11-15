@@ -5,13 +5,18 @@ This command line interface implements a number of methods.
 - `setup` creates a new project folder structure in a location
 - `run` performs a simulation of an individual sector model, or the whole
         system of systems model
+- `validate` performs a validation check of the configuration file
 
 """
 import logging
 import os
 import sys
 from argparse import ArgumentParser
+
+import jsonschema
+
 from smif.controller import Controller
+from smif.parse_config import ConfigParser
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -78,6 +83,19 @@ def run_model(args):
         controller.run_sector_model(model_name)
 
 
+def validate_config(args):
+    project_path = os.path.abspath(args.path)
+    config_path = os.path.join(project_path, 'config', 'model.yaml')
+    model_config = ConfigParser(config_path)
+    try:
+        model_config.validate_as_modelrun_config()
+    except jsonschema.exceptions.ValidationError as e:
+        logger.error("The model configuration is invalid")
+        print("{}".format(e))
+    else:
+        logger.info("The model configuration is valid")
+
+
 def parse_arguments(list_of_sector_models):
     """
 
@@ -100,6 +118,13 @@ def parse_arguments(list_of_sector_models):
     parser.set_defaults(modellist=list_of_sector_models)
 
     subparsers = parser.add_subparsers()
+
+    help_msg = 'Validate the model configuration file'
+    parser_validate = subparsers.add_parser('validate',
+                                            help=help_msg)
+    parser_validate.set_defaults(func=validate_config)
+    parser_validate.add_argument('path',
+                                 help="Path to the project folder")
 
     parser_setup = subparsers.add_parser('setup',
                                          help='Setup the project folder')

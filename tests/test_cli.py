@@ -57,3 +57,17 @@ def test_dont_run_invalid_sector_model():
     commands = ['run', 'energy_supply']
     with raises(SystemExit):
         parser.parse_args(commands)
+
+
+def test_validation():
+    """Ensure configuration file is valid
+    """
+    with TemporaryDirectory() as project_folder:
+        parser = parse_arguments(['water_supply'])
+        commands = ['validate', project_folder]
+        # Project folder setup here
+        args = parser.parse_args(commands)
+        expected = project_folder
+        actual = args.path
+        assert actual == expected
+        assert args.func.__name__ == 'validate_config'
