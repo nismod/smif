@@ -1,8 +1,31 @@
+"""This module coordinates the software components that make up the integration
+framework.
+
+Folder structure
+----------------
+
+When configuring a system-of-systems model, the folder structure below should
+be used.  In this example, there is one sector model, called ``water_supply``::
+
+    /models
+    /models/water_supply/
+    /models/water_supply/run.py
+    /models/water_supply/assets/assets1.yaml
+    /config/
+    /config/model.yaml
+    /config/timesteps.yaml
+    /planning/
+    /planning/pre-specified.yaml
+
+The ``models`` folder contains one subfolder for each sector model.
+
+"""
 import logging
 import os
 from subprocess import run
 
 from smif.parse_config import ConfigParser
+from smif.runner import ModelRunner
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -15,10 +38,16 @@ class Controller:
     """Coordinates the data-layer, decision-layer and model-runner
     """
     def __init__(self, project_folder):
+        """
+        Arguments
+        =========
+        project_folder : str
+            File path to the project folder
+
+        """
         self._project_folder = project_folder
         self._model_list = []
         self._timesteps = []
-        self._all_assets = []
 
         logger.info("Getting config file from {}".format(project_folder))
         self._configuration = self._get_config()
@@ -35,42 +64,11 @@ class Controller:
 
         config_data = ConfigParser(config_path).data
 
-        self.load_model(config_data['sector_models'])
+        self.load_models(config_data['sector_models'])
         self._timesteps = self.load_timesteps(config_data['timesteps'])
-        self._all_assets = self.load_assets()
         planning_config = config_data['planning']
         logger.info("Loading planning config: {}".format(planning_config))
         return config_data
-
-    def load_assets(self):
-        """Loads the assets from the sector model folders
-
-        Using the list of model folders extracted from the configuration file,
-        this function returns a list of all the assets from the sector models
-
-        Returns
-        =======
-        list
-            A list of assets from all the sector models
-
-
-        Notes
-        =====
-        This should really be pushed into a SectorModel class, with a list of
-        assets generated for the sos on demand
-
-        """
-        assets = []
-        for model in self._model_list:
-            path_to_assetfile = os.path.join(self._project_folder,
-                                             'models',
-                                             model,
-                                             'assets')
-            for assetfile in os.listdir(path_to_assetfile):
-                asset_path = os.path.join(path_to_assetfile, assetfile)
-                logger.info("Loading assets from {}".format(asset_path))
-                assets.extend(ConfigParser(asset_path).data)
-        return assets
 
     def load_timesteps(self, file_path):
         """Load the timesteps from the configuration file
@@ -113,7 +111,7 @@ class Controller:
             models subfolder of the project folder
         """
         logger.info("Loading models: {}".format(model_name))
-        self._model_list.extend(model_name)
+        self._model_list.append(ModelRunner(self._project_folder, model_name))
 
     def run_sector_model(self, model_name):
         """Runs the sector model in a subprocess
@@ -146,6 +144,31 @@ class Controller:
         raise NotImplementedError(msg)
 
     @property
+    def timesteps(self):
+        """Returns the list of timesteps
+
+        Returns
+        =======
+        list
+            A list of timesteps
+        """
+        return self._timesteps
+
+    @property
+    def all_assets(self):
+        """Returns the list of all assets across the system-of-systems model
+
+        Returns
+        =======
+        list
+            A list of all assets across the system-of-systems model
+        """
+        assets = []
+        for model in self._model_list:
+            assets.extend(model.assets)
+        return assets
+
+    @property
     def model_list(self):
         """The list of sector model names
 
@@ -154,4 +177,7 @@ class Controller:
         list
             A list of sector model names
         """
-        return self._model_list
+        models = []
+        for model in self._model_list:
+            models.append(model.name)
+        return models
