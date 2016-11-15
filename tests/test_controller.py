@@ -25,6 +25,9 @@ def setup_folder_structure(tmpdir_factory):
 
 @fixture(scope='function')
 def setup_assets_file(setup_folder_structure):
+    """Assets are associated with sector models, not the integration config
+
+    """
     base_folder = setup_folder_structure
     filename = base_folder.join('models',
                                 'water_supply',
@@ -39,9 +42,11 @@ def setup_assets_file(setup_folder_structure):
 
 @fixture(scope='function')
 def setup_config_file(setup_folder_structure):
+    """Configuration file contains entries for sector models, timesteps and
+    planning
+    """
     file_contents = {'sector_models': ['water_supply'],
                      'timesteps': ['timesteps.yaml'],
-                     'assets': ['assets1.yaml'],
                      'planning': {'rule_based': {'use': False,
                                                  'files': None},
                                   'optimisation': {'use': False,
@@ -59,6 +64,9 @@ def setup_config_file(setup_folder_structure):
 
 @fixture(scope='function')
 def setup_runpy_file(tmpdir, setup_folder_structure):
+    """The run.py model should contain an instance of SectorModel which wraps
+    the sector model and allows it to be run.
+    """
     base_folder = setup_folder_structure
     # Write a run.py file for the water_supply model
     filename = base_folder.join('models',
@@ -126,7 +134,7 @@ class TestController():
         cont = Controller(str(setup_project_folder))
 
         expected = [2010, 2011, 2012]
-        actual = cont._timesteps
+        actual = cont.timesteps
         assert actual == expected
 
     def test_assets(self, setup_project_folder):
@@ -134,7 +142,7 @@ class TestController():
         cont = Controller(str(setup_project_folder))
 
         expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
-        actual = cont._all_assets
+        actual = cont.all_assets
         assert actual == expected
 
 
