@@ -22,7 +22,7 @@ The ``models`` folder contains one subfolder for each sector model.
 """
 import logging
 import os
-from subprocess import run
+from subprocess import check_call
 
 from smif.parse_config import ConfigParser
 from smif.runner import ModelRunner
@@ -134,7 +134,7 @@ class Controller:
                                   'run.py')
         if os.path.exists(model_path):
             # Run up a subprocess to run the simulation
-            run(['python', model_path], check=True)
+            check_call(['python', model_path])
         else:
             msg = "Cannot find `run.py` for the {} model".format(model_name)
             raise Exception(msg)
