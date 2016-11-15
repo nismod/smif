@@ -84,6 +84,15 @@ def run_model(args):
 
 
 def validate_config(args):
+    """Validates the model configuration file against the schema
+
+    Arguments
+    =========
+    args :
+        Parser arguments
+
+
+    """
     project_path = os.path.abspath(args.path)
     config_path = os.path.join(project_path, 'config', 'model.yaml')
     model_config = ConfigParser(config_path)
