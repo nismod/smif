@@ -22,13 +22,6 @@ class Assets:
 - Assets should be stored in a sub-folder associated with the sector model
   name.
 
-
-
-{'CCGT': {'cost': {'value': 1000, 'unit': '£/kW'}},
- 'wind_turbine': {'cost': {'value': 1800, 'unit': '£/kW'}},
- 'solar_pv': {'cost': {'value': 2200, 'unit': '£/kW'}},
- 'nuclear': {'cost': {'value': 3000, 'unit': '£/kW'}}}
-
     """
 
     def __init__(self, filepath):

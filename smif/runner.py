@@ -1,5 +1,7 @@
 import logging
 import os
+from glob import glob
+
 from smif.parse_config import ConfigParser
 
 __author__ = "Will Usher"
@@ -29,8 +31,9 @@ class Asset(object):
         The name of the asset
 
     """
-    def __init__(self, name):
+    def __init__(self, name, attributes):
         self._name = name
+        self._attributes = attributes
 
     @property
     def name(self):
@@ -43,13 +46,25 @@ class Asset(object):
         """
         return self._name
 
+    @property
+    def attributes(self):
+        """Returns the attributes of the asset
+
+        Returns
+        =======
+        dict
+            The attributes of the asset
+        """
+        return self._attributes
+
 
 class ModelRunner(object):
     """Contains the data and methods associated with the smif facing aspects of
     running a sector model
 
     ModelRunner expects to find a yaml configuration file containing
-    - lists of assets in ``models/<model_name>/*``
+    - lists of assets in ``models/<model_name>/asset_*.yaml``
+    - structure of attributes in ``models/<model_name/<asset_name>.yaml
 
     ModelRunner expects to find a ``run.py`` file in ``models/<model_name>``.
     ``run.py`` contains a python script which subclasses
@@ -101,6 +116,20 @@ class ModelRunner(object):
             asset_names.append(asset.name)
         return asset_names
 
+    @property
+    def attributes(self):
+        """The collection of asset attributes
+
+        Returns
+        =======
+        dict
+            The collection of asset attributes
+        """
+        attributes = {}
+        for asset in self._assets:
+            attributes[asset.name] = asset.attributes
+        return attributes
+
     def load_assets(self):
         """Loads the assets from the sector model folders
 
@@ -117,12 +146,36 @@ class ModelRunner(object):
         path_to_assetfile = os.path.join(self._project_folder,
                                          'models',
                                          self._model_name,
-                                         'assets')
+                                         'assets',
+                                         'asset*')
 
-        for assetfile in os.listdir(path_to_assetfile):
+        for assetfile in glob(path_to_assetfile):
             asset_path = os.path.join(path_to_assetfile, assetfile)
             logger.info("Loading assets from {}".format(asset_path))
 
             for asset in ConfigParser(asset_path).data:
-                assets.append(Asset(asset))
+                attributes = self._load_attributes(asset)
+                assets.append(Asset(asset, attributes))
         return assets
+
+    def _load_attributes(self, asset_name):
+        """Loads an asset's attributes into a container
+
+        Arguments
+        =========
+        asset_name : str
+            The name of the asset for which to load attributes
+
+        Returns
+        =======
+        dict
+            A dictionary loaded from the attribute configuration file
+        """
+
+        model_name = self.name
+        project_folder = self._project_folder
+        file_path = os.path.join(project_folder, 'models',
+                                 model_name, 'assets',
+                                 "{}.yaml".format(asset_name))
+        attributes = ConfigParser(file_path).data
+        return attributes
