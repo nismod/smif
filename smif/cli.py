@@ -91,7 +91,6 @@ def validate_config(args):
     args :
         Parser arguments
 
-
     """
     project_path = os.path.abspath(args.path)
     config_path = os.path.join(project_path, 'config', 'model.yaml')
@@ -105,29 +104,18 @@ def validate_config(args):
         logger.info("The model configuration is valid")
 
 
-def parse_arguments(list_of_sector_models):
+def parse_arguments():
     """
-
-    Arguments
-    =========
-    args : list
-        Command line arguments
-    list_of_sector_models : list
-        A list of sector model names
 
     Returns
     =======
     :class:`argparse.ArgumentParser`
 
     """
-    assert isinstance(list_of_sector_models, list)
-    list_of_sector_models.append('all')
-
     parser = ArgumentParser(description='Command line tools for smif')
-    parser.set_defaults(modellist=list_of_sector_models)
-
     subparsers = parser.add_subparsers()
 
+    # VALIDATE
     help_msg = 'Validate the model configuration file'
     parser_validate = subparsers.add_parser('validate',
                                             help=help_msg)
@@ -135,14 +123,24 @@ def parse_arguments(list_of_sector_models):
     parser_validate.add_argument('path',
                                  help="Path to the project folder")
 
+    # SETUP
     parser_setup = subparsers.add_parser('setup',
                                          help='Setup the project folder')
     parser_setup.set_defaults(func=setup_configuration)
     parser_setup.add_argument('path',
                               help="Path to the project folder")
 
+    # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
+    list_of_sector_models = []
+    try:
+        cont = Controller(os.getcwd())
+        list_of_sector_models = cont.model_list
+        list_of_sector_models.append('all')
+    except jsonschema.exceptions.ValidationError as e:
+        logger.error("The model configuration is invalid")
+        print("The model configuration file is invalid. {}".format(e.message))
 
     parser_run.add_argument('model',
                             choices=list_of_sector_models,
@@ -208,8 +206,7 @@ def confirm(prompt=None, response=False):
 
 
 def main(arguments=None):
-    list_of_sector_models = ['water_supply', 'solid_waste']
-    parser = parse_arguments(list_of_sector_models)
+    parser = parse_arguments()
     args = parser.parse_args(arguments)
     if 'func' in args:
         args.func(args)
