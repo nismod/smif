@@ -32,7 +32,7 @@ def setup_assets_file(setup_folder_structure):
     filename = base_folder.join('models',
                                 'water_supply',
                                 'assets',
-                                'assets1.yaml')
+                                'assets_1.yaml')
     assets_contents = ['water_asset_a',
                        'water_asset_b',
                        'water_asset_c']
