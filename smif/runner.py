@@ -159,6 +159,18 @@ class ModelRunner(object):
         return assets
 
     def _load_attributes(self, asset_name):
+        """Loads an asset's attributes into a container
+
+        Arguments
+        =========
+        asset_name : str
+            The name of the asset for which to load attributes
+
+        Returns
+        =======
+        dict
+            A dictionary loaded from the attribute configuration file
+        """
 
         model_name = self.name
         project_folder = self._project_folder
