@@ -5,13 +5,18 @@ This command line interface implements a number of methods.
 - `setup` creates a new project folder structure in a location
 - `run` performs a simulation of an individual sector model, or the whole
         system of systems model
+- `validate` performs a validation check of the configuration file
 
 """
 import logging
 import os
 import sys
 from argparse import ArgumentParser
+
+import jsonschema
+
 from smif.controller import Controller
+from smif.parse_config import ConfigParser
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -68,53 +73,82 @@ def run_model(args):
     """
     if args.model == 'all':
         logger.info("Running the system of systems model")
-        controller = Controller(os.getcwd())
+        controller = Controller(args.path)
         controller.run_sos_model()
-
     else:
         logger.info("Running the {} sector model".format(args.model))
         model_name = args.model
-        controller = Controller(os.getcwd())
+        controller = Controller(args.path)
         controller.run_sector_model(model_name)
 
 
-def parse_arguments(list_of_sector_models):
-    """
+def validate_config(args):
+    """Validates the model configuration file against the schema
 
     Arguments
     =========
-    args : list
-        Command line arguments
-    list_of_sector_models : list
-        A list of sector model names
+    args :
+        Parser arguments
+
+    """
+    project_path = os.path.abspath(args.path)
+    config_path = os.path.join(project_path, 'config', 'model.yaml')
+    try:
+        model_config = ConfigParser(config_path)
+    except os.FileNotFoundError:
+        raise os.FileNotFoundError("The model configuration file " \
+                                   "does not exist")
+    else:
+        try:
+            model_config.validate_as_modelrun_config()
+        except jsonschema.exceptions.ValidationError as e:
+            logger.error("The model configuration is invalid")
+            print("{}".format(e))
+        else:
+            logger.info("The model configuration is valid")
+
+
+def parse_arguments():
+    """
 
     Returns
     =======
     :class:`argparse.ArgumentParser`
 
     """
-    assert isinstance(list_of_sector_models, list)
-    list_of_sector_models.append('all')
-
     parser = ArgumentParser(description='Command line tools for smif')
-    parser.set_defaults(modellist=list_of_sector_models)
-
+    parser.add_argument('--path',
+                        help="Path to the project folder",
+                        default=os.getcwd())
     subparsers = parser.add_subparsers()
 
+    # VALIDATE
+    help_msg = 'Validate the model configuration file'
+    parser_validate = subparsers.add_parser('validate',
+                                            help=help_msg)
+    parser_validate.set_defaults(func=validate_config)
+    parser_validate.add_argument('--path',
+                                 help="Path to the project folder",
+                                 default=os.getcwd())
+
+    # SETUP
     parser_setup = subparsers.add_parser('setup',
                                          help='Setup the project folder')
     parser_setup.set_defaults(func=setup_configuration)
-    parser_setup.add_argument('path',
-                              help="Path to the project folder")
+    parser_setup.add_argument('--path',
+                              help="Path to the project folder",
+                              default=os.getcwd())
 
+    # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
-
     parser_run.add_argument('model',
-                            choices=list_of_sector_models,
                             type=str,
                             help='The name of the model to run')
     parser_run.set_defaults(func=run_model)
+    parser_run.add_argument('--path',
+                            help="Path to the project folder",
+                            default=os.getcwd())
 
     return parser
 
@@ -174,8 +208,7 @@ def confirm(prompt=None, response=False):
 
 
 def main(arguments=None):
-    list_of_sector_models = ['water_supply', 'solid_waste']
-    parser = parse_arguments(list_of_sector_models)
+    parser = parse_arguments()
     args = parser.parse_args(arguments)
     if 'func' in args:
         args.func(args)

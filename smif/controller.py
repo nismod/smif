@@ -125,6 +125,10 @@ class Controller:
             The name of the model, corresponding to the folder name in the
             models subfolder of the project folder
         """
+        msg = "Model {} does not exist. Choose from {}".format(model_name,
+                                                               self.model_list)
+        assert model_name in self.model_list, msg
+
         msg = "Running the {} sector model".format(model_name)
         logger.info(msg)
 
