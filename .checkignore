@@ -1,0 +1,6 @@
+# Ignore folder content
+tests/*
+docs/*
+
+# Ignore files
+setup.py
