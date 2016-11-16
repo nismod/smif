@@ -11,7 +11,7 @@ def test_parse_arguments():
     """
     with TemporaryDirectory() as project_folder:
         parser = parse_arguments()
-        commands = ['setup', project_folder]
+        commands = ['setup', '--path', project_folder]
         # Project folder setup here
         args = parser.parse_args(commands)
         expected = project_folder
@@ -55,20 +55,21 @@ def test_dont_run_invalid_sector_model(setup_folder_structure,
     """
     model_name = 'invalid_model_name'
     parser = parse_arguments()
-    commands = ['run', model_name]
+    commands = ['run', model_name, '--path', str(setup_folder_structure)]
     with raises(SystemExit):
         parser.parse_args(commands)
 
 
-def test_validation():
+def test_validation(setup_folder_structure,
+                    setup_config_file):
     """Ensure configuration file is valid
     """
-    with TemporaryDirectory() as project_folder:
-        parser = parse_arguments()
-        commands = ['validate', project_folder]
-        # Project folder setup here
-        args = parser.parse_args(commands)
-        expected = project_folder
-        actual = args.path
-        assert actual == expected
-        assert args.func.__name__ == 'validate_config'
+    project_folder = str(setup_folder_structure)
+    parser = parse_arguments()
+    commands = ['validate', '--path', project_folder]
+    # Project folder setup here
+    args = parser.parse_args(commands)
+    expected = project_folder
+    actual = args.path
+    assert actual == expected
+    assert args.func.__name__ == 'validate_config'

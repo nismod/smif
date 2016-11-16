@@ -73,12 +73,12 @@ def run_model(args):
     """
     if args.model == 'all':
         logger.info("Running the system of systems model")
-        controller = Controller(os.getcwd())
+        controller = Controller(args.path)
         controller.run_sos_model()
     else:
         logger.info("Running the {} sector model".format(args.model))
         model_name = args.model
-        controller = Controller(os.getcwd())
+        controller = Controller(args.path)
         controller.run_sector_model(model_name)
 
 
@@ -93,14 +93,19 @@ def validate_config(args):
     """
     project_path = os.path.abspath(args.path)
     config_path = os.path.join(project_path, 'config', 'model.yaml')
-    model_config = ConfigParser(config_path)
     try:
-        model_config.validate_as_modelrun_config()
-    except jsonschema.exceptions.ValidationError as e:
-        logger.error("The model configuration is invalid")
-        print("{}".format(e))
+        model_config = ConfigParser(config_path)
+    except os.FileNotFoundError:
+        raise os.FileNotFoundError("The model configuration file " \
+                                   "does not exist")
     else:
-        logger.info("The model configuration is valid")
+        try:
+            model_config.validate_as_modelrun_config()
+        except jsonschema.exceptions.ValidationError as e:
+            logger.error("The model configuration is invalid")
+            print("{}".format(e))
+        else:
+            logger.info("The model configuration is valid")
 
 
 def parse_arguments():
@@ -112,6 +117,9 @@ def parse_arguments():
 
     """
     parser = ArgumentParser(description='Command line tools for smif')
+    parser.add_argument('--path',
+                        help="Path to the project folder",
+                        default=os.getcwd())
     subparsers = parser.add_subparsers()
 
     # VALIDATE
@@ -119,33 +127,28 @@ def parse_arguments():
     parser_validate = subparsers.add_parser('validate',
                                             help=help_msg)
     parser_validate.set_defaults(func=validate_config)
-    parser_validate.add_argument('path',
-                                 help="Path to the project folder")
+    parser_validate.add_argument('--path',
+                                 help="Path to the project folder",
+                                 default=os.getcwd())
 
     # SETUP
     parser_setup = subparsers.add_parser('setup',
                                          help='Setup the project folder')
     parser_setup.set_defaults(func=setup_configuration)
-    parser_setup.add_argument('path',
-                              help="Path to the project folder")
+    parser_setup.add_argument('--path',
+                              help="Path to the project folder",
+                              default=os.getcwd())
 
     # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
-    list_of_sector_models = []
-    try:
-        cont = Controller(os.getcwd())
-        list_of_sector_models = cont.model_list
-        list_of_sector_models.append('all')
-    except jsonschema.exceptions.ValidationError as e:
-        logger.error("The model configuration is invalid")
-        print("The model configuration file is invalid. {}".format(e.message))
-
     parser_run.add_argument('model',
-                            choices=list_of_sector_models,
                             type=str,
                             help='The name of the model to run')
     parser_run.set_defaults(func=run_model)
+    parser_run.add_argument('--path',
+                            help="Path to the project folder",
+                            default=os.getcwd())
 
     return parser
 
