@@ -1,8 +1,6 @@
 import os
 from tempfile import TemporaryDirectory
-
 from smif.cli import parse_arguments, setup_project_folder
-from test_controller import setup_config_file, setup_folder_structure
 
 
 def test_parse_arguments():
