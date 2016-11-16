@@ -1,7 +1,7 @@
 import os
 import yaml
 
-from pytest import fixture
+from pytest import fixture, raises
 from smif.controller import Controller
 
 
@@ -45,14 +45,14 @@ def setup_config_file(setup_folder_structure):
     """Configuration file contains entries for sector models, timesteps and
     planning
     """
+    ps_name = 'pre-specified.yaml'
     file_contents = {'sector_models': ['water_supply'],
                      'timesteps': 'timesteps.yaml',
                      'assets': ['assets1.yaml'],
-                     'planning': {'rule_based': {'use': False },
-                                  'optimisation': {'use': False },
+                     'planning': {'rule_based': {'use': False},
+                                  'optimisation': {'use': False},
                                   'pre_specified': {'use': True,
-                                               'files': ['pre-specified.yaml']
-                                               }
+                                                    'files': [ps_name]}
                                   }
                      }
 
@@ -155,3 +155,8 @@ class TestRunModel():
                                            'run.py'))
 
         cont.run_sector_model('water_supply')
+
+    def test_invalid_sector_model(self, setup_project_folder):
+        cont = Controller(str(setup_project_folder))
+        with raises(AssertionError):
+            cont.run_sector_model('invalid_sector_model')

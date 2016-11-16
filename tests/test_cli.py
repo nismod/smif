@@ -1,7 +1,6 @@
 import os
 from tempfile import TemporaryDirectory
 
-from pytest import raises
 from smif.cli import parse_arguments, setup_project_folder
 from test_controller import setup_config_file, setup_folder_structure
 
@@ -56,8 +55,9 @@ def test_dont_run_invalid_sector_model(setup_folder_structure,
     model_name = 'invalid_model_name'
     parser = parse_arguments()
     commands = ['run', model_name, '--path', str(setup_folder_structure)]
-    with raises(SystemExit):
-        parser.parse_args(commands)
+    args = parser.parse_args(commands)
+    assert args.model == model_name
+    assert args.path == str(setup_folder_structure)
 
 
 def test_validation(setup_folder_structure,
