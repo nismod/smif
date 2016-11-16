@@ -75,7 +75,6 @@ def run_model(args):
         logger.info("Running the system of systems model")
         controller = Controller(os.getcwd())
         controller.run_sos_model()
-
     else:
         logger.info("Running the {} sector model".format(args.model))
         model_name = args.model
