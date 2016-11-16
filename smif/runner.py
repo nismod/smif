@@ -1,5 +1,7 @@
 import logging
 import os
+from glob import glob
+
 from smif.parse_config import ConfigParser
 
 __author__ = "Will Usher"
@@ -49,7 +51,8 @@ class ModelRunner(object):
     running a sector model
 
     ModelRunner expects to find a yaml configuration file containing
-    - lists of assets in ``models/<model_name>/*``
+    - lists of assets in ``models/<model_name>/asset_*.yaml``
+    - structure of attributes in ``models/<model_name/<asset_name>.yaml
 
     ModelRunner expects to find a ``run.py`` file in ``models/<model_name>``.
     ``run.py`` contains a python script which subclasses
@@ -117,9 +120,10 @@ class ModelRunner(object):
         path_to_assetfile = os.path.join(self._project_folder,
                                          'models',
                                          self._model_name,
-                                         'assets')
+                                         'assets',
+                                         'asset*')
 
-        for assetfile in os.listdir(path_to_assetfile):
+        for assetfile in glob(path_to_assetfile):
             asset_path = os.path.join(path_to_assetfile, assetfile)
             logger.info("Loading assets from {}".format(asset_path))
 
