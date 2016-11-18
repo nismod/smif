@@ -26,7 +26,7 @@ from glob import glob
 from subprocess import check_call
 
 from smif.parse_config import ConfigParser
-from smif.sectormodel import SectorModel as ModelRunner
+from smif.sectormodel import SectorModel
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -129,7 +129,7 @@ class Controller:
         attributes = {}
         for asset in assets:
             attributes[asset] = self._load_asset_attributes(model_name, asset)
-        model = ModelRunner(model_name, attributes)
+        model = SectorModel(model_name, attributes)
 
         self._model_list.append(model)
 
