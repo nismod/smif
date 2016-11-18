@@ -66,7 +66,9 @@ class TestWaterModelOptimisation:
 
     def test_water_model_optimisation(self, one_input):
         wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
-        model = SectorModel(wrapped)
+        attributes = {}
+        model = SectorModel('water_supply', attributes)
+        model.model = wrapped
         model.inputs = one_input
         actual_value = model.optimise()
         expected_value = {'water': np.array([3.], dtype=float),
@@ -81,7 +83,9 @@ class TestWaterModelOptimisation:
         """Raise an error if no inputs are specified
         """
         wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
-        model = SectorModel(wrapped)
+        attributes = {}
+        model = SectorModel('water_supply', attributes)
+        model.model = wrapped
         with pytest.raises(AssertionError):
             model.optimise()
 
@@ -142,7 +146,9 @@ class TestMultiYearOptimisation:
 
     def test_dynamic_water_model_one_off(self, dynamic_data):
         wrapped = DynamicModelWrapper(DynMod)
-        model = SectorModel(wrapped)
+        attributes = {}
+        model = SectorModel('water_supply', attributes)
+        model.model = wrapped
         model.inputs = dynamic_data
         actual_value = model.optimise()
         expected_value = {'water': np.array([3.], dtype=float),
@@ -156,7 +162,9 @@ class TestMultiYearOptimisation:
 
     def test_dynamic_water_model_two_off(self, dynamic_data):
         wrapped = DynamicModelWrapper(DynMod)
-        model = SectorModel(wrapped)
+        attributes = {}
+        model = SectorModel('water_supply', attributes)
+        model.model = wrapped
         model.inputs = dynamic_data
         first_results = model.optimise()
 
@@ -179,7 +187,9 @@ class TestMultiYearOptimisation:
     def test_sequential_simulation(self, dynamic_data):
         # Instantiate a sector model
         wrapped = DynamicModelWrapper(DynMod)
-        sectormodel = SectorModel(wrapped)
+        attributes = {}
+        sectormodel = SectorModel('water_supply', attributes)
+        sectormodel.model = wrapped
         # Instantiate a system-of-system instance
         sos_model = Model()
         # Attach the sector model to the system-of-system model
@@ -204,7 +214,9 @@ class TestMultiYearOptimisation:
     def test_sequential_optimisation_scipy(self, dynamic_data):
         # Instantiate a sector model
         wrapped = DynamicModelWrapper(DynMod)
-        sectormodel = SectorModel(wrapped)
+        attributes = {}
+        sectormodel = SectorModel('water_supply', attributes)
+        sectormodel.model = wrapped
         sectormodel.inputs = dynamic_data
         timesteps = [2010, 2015, 2020]
         decisions = np.array([[5, 0, 0]], dtype=float)
@@ -218,7 +230,9 @@ class TestMultiYearOptimisation:
     def test_sequential_optimisation_tr(self, dynamic_data):
         # Instantiate a sector model
         wrapped = DynamicModelWrapper(DynMod)
-        sectormodel = SectorModel(wrapped)
+        attributes = {}
+        sectormodel = SectorModel('water_supply', attributes)
+        sectormodel.model = wrapped
         sectormodel.inputs = dynamic_data
         timesteps = [2010, 2015, 2020]
         results = sectormodel.sequential_optimisation(timesteps)
