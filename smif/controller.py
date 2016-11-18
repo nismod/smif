@@ -26,7 +26,7 @@ from glob import glob
 from subprocess import check_call
 
 from smif.parse_config import ConfigParser
-from smif.runner import ModelRunner
+from smif.sectormodel import SectorModel as ModelRunner
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -37,6 +37,15 @@ logger = logging.getLogger(__name__)
 
 class Controller:
     """Coordinates the data-layer, decision-layer and model-runner
+
+    Controller expects to find a yaml configuration file containing
+    - lists of assets in ``models/<model_name>/asset_*.yaml``
+    - structure of attributes in ``models/<model_name/<asset_name>.yaml
+
+    Controller expects to find a ``run.py`` file in ``models/<model_name>``.
+    ``run.py`` contains a python script which subclasses
+    :class:`smif.sectormodel.SectorModel` to wrap the sector model.
+
     """
     def __init__(self, project_folder):
         """

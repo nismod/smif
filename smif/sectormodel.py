@@ -67,22 +67,61 @@ class Assets:
 class SectorModel(object):
     """An abstract representation of the sector model with inputs and outputs
 
-    Parameters
-    ==========
-    schema : dict
-        A dictionary of parameter, asset and exogenous data names with expected
-        types. Used for validating presented data.
-
-    Attributes
-    ==========
+    Arguments
+    =========
+    model_name : str
+        Name of the model
+    attributes : dict
+        A dictionary of asset attributes
     model : :class:`smif.abstract.AbstractModelWrapper`
         An instance of a wrapped simulation model
 
     """
-    def __init__(self, model):
-        self.model = model
+    def __init__(self, model_name, attributes):
+        self._model_name = model_name
+        self._attributes = attributes
+        self.model = None
         self._inputs = None
         self._schema = None
+
+    @property
+    def name(self):
+        """The name of the sector model
+
+        Returns
+        =======
+        str
+            The name of the sector model
+
+        Note
+        ====
+        The name corresponds to the name of the folder in which the
+        configuration is expected to be found
+
+        """
+        return self._model_name
+
+    @property
+    def assets(self):
+        """The names of the assets
+
+        Returns
+        =======
+        list
+            A list of the names of the assets
+        """
+        return sorted([asset for asset in self._attributes.keys()])
+
+    @property
+    def attributes(self):
+        """The collection of asset attributes
+
+        Returns
+        =======
+        dict
+            The collection of asset attributes
+        """
+        return self._attributes
 
     @property
     def inputs(self):

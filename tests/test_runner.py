@@ -1,4 +1,4 @@
-from smif.runner import ModelRunner
+from smif.sectormodel import SectorModel as ModelRunner
 
 
 class TestAssetLoad:
