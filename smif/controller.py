@@ -22,6 +22,7 @@ The ``models`` folder contains one subfolder for each sector model.
 """
 import logging
 import os
+from glob import glob
 from subprocess import check_call
 
 from smif.parse_config import ConfigParser
@@ -101,8 +102,8 @@ class Controller:
             A list of sector model names
 
         """
-        for model in model_list:
-            self.load_model(model)
+        for model_name in model_list:
+            self.load_model(model_name)
 
     def load_model(self, model_name):
         """Loads the sector model
@@ -114,7 +115,60 @@ class Controller:
             models subfolder of the project folder
         """
         logger.info("Loading models: {}".format(model_name))
-        self._model_list.append(ModelRunner(self._project_folder, model_name))
+
+        assets = self._load_model_assets(model_name)
+        attributes = {}
+        for asset in assets:
+            attributes[asset] = self._load_asset_attributes(model_name, asset)
+        model = ModelRunner(model_name, attributes)
+
+        self._model_list.append(model)
+
+    def _load_model_assets(self, model_name):
+        """Loads the assets from the sector model folders
+
+        Using the list of model folders extracted from the configuration file,
+        this function returns a list of all the assets from the sector models
+
+        Returns
+        =======
+        list
+            A list of assets from all the sector models
+
+        """
+        path_to_assetfile = os.path.join(self._project_folder,
+                                         'models',
+                                         model_name,
+                                         'assets',
+                                         'asset*')
+
+        for assetfile in glob(path_to_assetfile):
+            asset_path = os.path.join(path_to_assetfile, assetfile)
+            logger.info("Loading assets from {}".format(asset_path))
+
+        return ConfigParser(asset_path).data
+
+    def _load_asset_attributes(self, model_name, asset_name):
+        """Loads an asset's attributes into a container
+
+        Arguments
+        =========
+        model_name : str
+            The name of the model for which to load attributes
+        asset_name : str
+            The name of the asset for which to load attributes
+
+        Returns
+        =======
+        dict
+            A dictionary loaded from the attribute configuration file
+        """
+        project_folder = self._project_folder
+        attribute_path = os.path.join(project_folder, 'models',
+                                      model_name, 'assets',
+                                      "{}.yaml".format(asset_name))
+        attributes = ConfigParser(attribute_path).data
+        return attributes
 
     def run_sector_model(self, model_name):
         """Runs the sector model in a subprocess
@@ -184,7 +238,4 @@ class Controller:
         list
             A list of sector model names
         """
-        models = []
-        for model in self._model_list:
-            models.append(model.name)
-        return models
+        return [model.name for model in self._model_list]
