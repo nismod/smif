@@ -91,13 +91,15 @@ def setup_runpy_file(tmpdir, setup_folder_structure):
     contents = """from unittest.mock import MagicMock
 import time
 
-if __name__ == '__main__':
-    class Model():
-        pass
-    model = Model()
-    model.simulate = MagicMock(return_value=3)
-    model.simulate()
-    time.sleep(1) # delays for 1 seconds
+class Model():
+    pass
+model = Model()
+model.simulate = MagicMock(return_value=3)
+model.simulate()
+time.sleep(1) # delays for 1 seconds
+
+wrapper = MagicMock(return_value=1)
+
 """
     filename.write(contents, ensure=True)
 
