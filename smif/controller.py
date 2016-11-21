@@ -56,7 +56,7 @@ class Controller:
 
         """
         self._project_folder = project_folder
-        self._model_list = []
+        self._model_list = {}
         self._timesteps = []
 
         logger.info("Getting config file from {}".format(project_folder))
@@ -131,7 +131,7 @@ class Controller:
             attributes[asset] = self._load_asset_attributes(model_name, asset)
         model = SectorModel(model_name, attributes)
 
-        self._model_list.append(model)
+        self._model_list[model_name] = model
 
     def _load_model_assets(self, model_name):
         """Loads the assets from the sector model folders
@@ -210,7 +210,7 @@ class Controller:
             module = module_from_spec(module_spec)
             module_spec.loader.exec_module(module)
 
-            sector_model = self._model_list[0]
+            sector_model = self._model_list[model_name]
             sector_model.model = module.wrapper
             sector_model.model.simulate()
         else:
@@ -245,7 +245,7 @@ class Controller:
             A list of all assets across the system-of-systems model
         """
         assets = []
-        for model in self._model_list:
+        for model in self._model_list.values():
             assets.extend(model.assets)
         return assets
 
@@ -258,4 +258,4 @@ class Controller:
         list
             A list of sector model names
         """
-        return [model.name for model in self._model_list]
+        return list(self._model_list.keys())
