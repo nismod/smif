@@ -243,7 +243,7 @@ class SectorModelBuilder(object):
 
     def __init__(self, model_name, project_folder):
         self.model_name = model_name
-        self.sectormodel = SectorModel(model_name)
+        self._sectormodel = SectorModel(model_name)
         self.project_folder = project_folder
 
     def load_attributes(self):
@@ -251,7 +251,7 @@ class SectorModelBuilder(object):
         attributes = {}
         for asset in assets:
             attributes[asset] = self._load_asset_attributes(asset)
-        self.sectormodel.attributes = attributes
+        self._sectormodel.attributes = attributes
 
     def load_wrapper(self):
         model_path = os.path.join(self.project_folder,
@@ -265,7 +265,7 @@ class SectorModelBuilder(object):
             module_spec = spec_from_file_location(module_path, model_path)
             module = module_from_spec(module_spec)
             module_spec.loader.exec_module(module)
-            self.sectormodel.model = module.wrapper
+            self._sectormodel.model = module.wrapper
         else:
             msg = "Cannot find {} for the {} model".format(WRAPPER_FILE_NAME,
                                                            self.model_name)
@@ -274,12 +274,12 @@ class SectorModelBuilder(object):
     def validate(self):
         """
         """
-        assert self.sectormodel.attributes
-        assert self.sectormodel.model
+        assert self._sectormodel.attributes
+        assert self._sectormodel.model
 
     def finish(self):
         self.validate()
-        return self.sectormodel
+        return self._sectormodel
 
     def _load_model_assets(self):
         """Loads the assets from the sector model folders
