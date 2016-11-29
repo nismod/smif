@@ -24,6 +24,8 @@ import logging
 import os
 from glob import glob
 from importlib.util import module_from_spec, spec_from_file_location
+
+from smif.inputs import ModelInputs
 from smif.parse_config import ConfigParser
 from smif.sectormodel import SectorModel, SectorModelMode
 
@@ -43,9 +45,10 @@ class Controller:
     - lists of assets in ``models/<model_name>/asset_*.yaml``
     - structure of attributes in ``models/<model_name/<asset_name>.yaml
 
-    Controller expects to find a ``run.py`` file in ``models/<model_name>``.
-    ``run.py`` contains a python script which subclasses
-    :class:`smif.sectormodel.SectorModel` to wrap the sector model.
+    Controller expects to find a `WRAPPER_FILE_NAME` file in
+    ``models/<model_name>``. `WRAPPER_FILE_NAME` contains a python script
+    which subclasses :class:`smif.abstract.AbstractModelWrapper` to wrap the
+    sector model.
 
     """
     def __init__(self, project_folder):
@@ -131,6 +134,7 @@ class Controller:
         builder = SectorModelBuilder(model_name, project_folder)
         builder.load_attributes()
         builder.load_wrapper()
+        builder.load_inputs()
         model = builder.finish()
         return model
 
@@ -271,11 +275,24 @@ class SectorModelBuilder(object):
                                                            self.model_name)
             raise Exception(msg)
 
+    def load_inputs(self):
+        """Input files are located in the `models/<sectormodel> folder`
+
+        """
+        model_path = os.path.join(self.project_folder,
+                                  'models',
+                                  self.model_name,
+                                  'inputs.yaml')
+        input_dict = ConfigParser(model_path).data
+        inputs = ModelInputs(input_dict)
+        self._sectormodel.model.inputs = inputs
+
     def validate(self):
         """
         """
         assert self._sectormodel.attributes
         assert self._sectormodel.model
+        assert self._sectormodel.model.inputs
 
     def finish(self):
         self.validate()
@@ -293,6 +310,7 @@ class SectorModelBuilder(object):
             A list of assets from all the sector models
 
         """
+        assets = []
         path_to_assetfile = os.path.join(self.project_folder,
                                          'models',
                                          self.model_name,
@@ -302,8 +320,9 @@ class SectorModelBuilder(object):
         for assetfile in glob(path_to_assetfile):
             asset_path = os.path.join(path_to_assetfile, assetfile)
             logger.info("Loading assets from {}".format(asset_path))
+            assets.extend(ConfigParser(asset_path).data)
 
-        return ConfigParser(asset_path).data
+        return assets
 
     def _load_asset_attributes(self, asset_name):
         """Loads an asset's attributes into a container
