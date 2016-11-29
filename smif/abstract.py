@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 
 from smif.inputs import ModelInputs
+from smif.outputs import ModelOutputs
 from smif.sectormodel import SectorModel
 
 __author__ = "Will Usher"
@@ -39,6 +40,7 @@ class AbstractModelWrapper(ABC):
     def __init__(self, model):
         self.model = model
         self._inputs = None
+        self._outputs = None
 
     @property
     def inputs(self):
@@ -46,7 +48,7 @@ class AbstractModelWrapper(ABC):
 
         Returns
         =======
-        :class:`smif.abstract.ModelInputs`
+        :class:`smif.inputs.ModelInputs`
 
         """
         return self._inputs
@@ -68,6 +70,28 @@ class AbstractModelWrapper(ABC):
 
         """
         self._inputs = ModelInputs(value)
+
+    @property
+    def outputs(self):
+        """The outputs from the model
+
+        Returns
+        =======
+        :class:`smif.outputs.ModelOutputs`
+
+        """
+        return self._outputs
+
+    @outputs.setter
+    def outputs(self, value):
+        """
+        Arguments
+        =========
+        value : dict
+            A dictionary of outputs from the model. This may include results
+            and metrics
+        """
+        self._outputs = ModelOutputs(value)
 
     @staticmethod
     def replace_line(file_name, line_num, new_data):

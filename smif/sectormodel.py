@@ -11,6 +11,7 @@ from abc import ABC, abstractproperty
 
 import numpy as np
 from scipy.optimize import minimize
+from smif.inputs import ModelInputs
 from smif.parse_config import ConfigParser
 
 __author__ = "Will Usher"
@@ -255,8 +256,9 @@ class SectorModel(object):
         """
 
         assert self.inputs, "Inputs to the model not yet specified"
+        assert isinstance(self.model.inputs, ModelInputs)
 
-        static_inputs = self.inputs.parameters.values
+        static_inputs = self.model.inputs.parameters.values
         results = self.model.simulate(static_inputs, decision_variables)
         return results
 
