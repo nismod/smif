@@ -238,6 +238,11 @@ class DecisionVariableList(InputFactory):
 class ModelInputs(object):
     """A container for all the model inputs
 
+    Arguments
+    =========
+    inputs : dict
+        A dictionary of key: val pairs including a list of input types and
+        names, followed by nested dictionaries of input attributes
     """
     def __init__(self, inputs):
 

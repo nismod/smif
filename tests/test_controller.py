@@ -29,6 +29,18 @@ class TestController():
         actual = cont.all_assets
         assert actual == expected
 
+    def test_assets_two_asset_files(self, setup_project_folder,
+                                    setup_assets_file_two,
+                                    setup_config_file_two,
+                                    setup_water_asset_d):
+
+        cont = Controller(str(setup_project_folder))
+
+        expected = ['water_asset_a', 'water_asset_b',
+                    'water_asset_c', 'water_asset_d']
+        actual = cont.all_assets
+        assert actual == expected
+
 
 class TestRunModel():
 

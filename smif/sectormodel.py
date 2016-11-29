@@ -1,9 +1,16 @@
+"""This module acts as a bridge to the sector models from the controller
+
+ The :class:`SectorModel` exposes several key methods for running wrapped
+ sector models.  To add a sector model to an instance of the framework,
+ first implement :class:`ModelWrapper`
+
+
+"""
 import logging
+from abc import ABC, abstractproperty
 
 import numpy as np
 from scipy.optimize import minimize
-# from smif.abstract import Asset
-from smif.inputs import ModelInputs
 from smif.parse_config import ConfigParser
 
 __author__ = "Will Usher"
@@ -11,6 +18,50 @@ __copyright__ = "Will Usher"
 __license__ = "mit"
 
 logger = logging.getLogger(__name__)
+
+
+class SectorModelMode(ABC):
+    """Enumerates the operating modes of a sector model
+    """
+    def __init__(self):
+        self._type = None
+
+    @abstractproperty
+    @property
+    def model_type(self):
+        return self._type
+
+    @staticmethod
+    def get_mode(sector_model_mode):
+        if sector_model_mode == "static_simulation":
+            return StaticSimulation
+        elif sector_model_mode == "sequential_simulation":
+            return SequentialSimulation
+        elif sector_model_mode == "static_optimisation":
+            return StaticOptimisation
+        elif sector_model_mode == "dynamic_optimisation":
+            return DynamicOptimisation
+
+
+class StaticSimulation(SectorModelMode):
+
+    def model_type(self):
+        return 0
+
+
+class SequentialSimulation(SectorModelMode):
+    def model_type(self):
+        return 1
+
+
+class StaticOptimisation(SectorModelMode):
+    def model_type(self):
+        return 2
+
+
+class DynamicOptimisation(SectorModelMode):
+    def model_type(self):
+        return 3
 
 
 class Assets:
@@ -65,7 +116,7 @@ class Assets:
 
 
 class SectorModel(object):
-    """An abstract representation of the sector model with inputs and outputs
+    """A representation of the sector model with inputs and outputs
 
     Arguments
     =========
@@ -73,15 +124,17 @@ class SectorModel(object):
         Name of the model
     attributes : dict
         A dictionary of asset attributes
+
+    Attributes
+    ==========
     model : :class:`smif.abstract.AbstractModelWrapper`
         An instance of a wrapped simulation model
 
     """
-    def __init__(self, model_name, attributes):
+    def __init__(self, model_name):
         self._model_name = model_name
-        self._attributes = attributes
+        self._attributes = None
         self.model = None
-        self._inputs = None
         self._schema = None
 
     @property
@@ -123,6 +176,10 @@ class SectorModel(object):
         """
         return self._attributes
 
+    @attributes.setter
+    def attributes(self, value):
+        self._attributes = value
+
     @property
     def inputs(self):
         """The inputs to the model
@@ -132,20 +189,7 @@ class SectorModel(object):
         :class:`smif.abstract.ModelInputs`
 
         """
-        return self._inputs
-
-    @inputs.setter
-    def inputs(self, value):
-        """The inputs to the model
-
-        Arguments
-        =========
-        value : dict
-            A dictionary of inputs to the model. This may include parameters,
-            assets and exogenous data.
-
-        """
-        self._inputs = ModelInputs(value)
+        return self.model.inputs
 
     def optimise(self):
         """Performs a static optimisation for a particular model instance
@@ -276,7 +320,8 @@ class SectorModel(object):
         logger.debug("Decisions: {}".format(decisions))
         return self.get_objective(results, discount_rate=0.05)
 
-    def get_objective(self, results, discount_rate=0.05):
+    @staticmethod
+    def get_objective(results, discount_rate=0.05):
         discount_factor = [(1 - discount_rate)**n for n in range(0, 15, 5)]
         costs = sum([x['cost']
                      * discount_factor[ix] for ix, x in enumerate(results)])

@@ -66,10 +66,11 @@ class TestWaterModelOptimisation:
 
     def test_water_model_optimisation(self, one_input):
         wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
+        wrapped.inputs = one_input
         attributes = {}
-        model = SectorModel('water_supply', attributes)
+        model = SectorModel('water_supply')
+        model.attributes = attributes
         model.model = wrapped
-        model.inputs = one_input
         actual_value = model.optimise()
         expected_value = {'water': np.array([3.], dtype=float),
                           'cost': np.array([3.792], dtype=float)}
@@ -84,7 +85,8 @@ class TestWaterModelOptimisation:
         """
         wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
         attributes = {}
-        model = SectorModel('water_supply', attributes)
+        model = SectorModel('water_supply')
+        model.attributes = attributes
         model.model = wrapped
         with pytest.raises(AssertionError):
             model.optimise()
@@ -147,9 +149,10 @@ class TestMultiYearOptimisation:
     def test_dynamic_water_model_one_off(self, dynamic_data):
         wrapped = DynamicModelWrapper(DynMod)
         attributes = {}
-        model = SectorModel('water_supply', attributes)
+        model = SectorModel('water_supply')
+        model.attributes = attributes
         model.model = wrapped
-        model.inputs = dynamic_data
+        wrapped.inputs = dynamic_data
         actual_value = model.optimise()
         expected_value = {'water': np.array([3.], dtype=float),
                           'cost': np.array([1.264 * 2], dtype=float),
@@ -163,9 +166,10 @@ class TestMultiYearOptimisation:
     def test_dynamic_water_model_two_off(self, dynamic_data):
         wrapped = DynamicModelWrapper(DynMod)
         attributes = {}
-        model = SectorModel('water_supply', attributes)
+        model = SectorModel('water_supply')
+        model.attributes = attributes
         model.model = wrapped
-        model.inputs = dynamic_data
+        wrapped.inputs = dynamic_data
         first_results = model.optimise()
 
         # Updates model state (existing capacity) with total capacity from
@@ -188,7 +192,8 @@ class TestMultiYearOptimisation:
         # Instantiate a sector model
         wrapped = DynamicModelWrapper(DynMod)
         attributes = {}
-        sectormodel = SectorModel('water_supply', attributes)
+        sectormodel = SectorModel('water_supply')
+        sectormodel.attributes = attributes
         sectormodel.model = wrapped
         # Instantiate a system-of-system instance
         sos_model = Model()
@@ -215,9 +220,10 @@ class TestMultiYearOptimisation:
         # Instantiate a sector model
         wrapped = DynamicModelWrapper(DynMod)
         attributes = {}
-        sectormodel = SectorModel('water_supply', attributes)
+        sectormodel = SectorModel('water_supply')
+        sectormodel.attributes = attributes
         sectormodel.model = wrapped
-        sectormodel.inputs = dynamic_data
+        wrapped.inputs = dynamic_data
         timesteps = [2010, 2015, 2020]
         decisions = np.array([[5, 0, 0]], dtype=float)
         results = sectormodel.sequential_simulation(timesteps,
@@ -231,9 +237,10 @@ class TestMultiYearOptimisation:
         # Instantiate a sector model
         wrapped = DynamicModelWrapper(DynMod)
         attributes = {}
-        sectormodel = SectorModel('water_supply', attributes)
+        sectormodel = SectorModel('water_supply')
+        sectormodel.attributes = attributes
         sectormodel.model = wrapped
-        sectormodel.inputs = dynamic_data
+        wrapped.inputs = dynamic_data
         timesteps = [2010, 2015, 2020]
         results = sectormodel.sequential_optimisation(timesteps)
         expected = [{'capacity': 3.0, 'cost': 3.792, 'water': 3.0},
