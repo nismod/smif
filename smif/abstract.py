@@ -38,6 +38,87 @@ class AbstractModelWrapper(ABC):
 
     def __init__(self, model):
         self.model = model
+        self._inputs = None
+
+    @property
+    def inputs(self):
+        """The inputs to the model
+
+        Returns
+        =======
+        :class:`smif.abstract.ModelInputs`
+
+        """
+        return self._inputs
+
+    @inputs.setter
+    def inputs(self, value):
+        """The inputs to the model
+
+        The inputs should be specified in a dictionary, with the keys first to
+        declare ``decision variables`` and ``parameters`` and corresponding
+        lists.  The remainder of the dictionary should contain the bounds,
+        index and values of the names decision variables and parameters.
+
+        Arguments
+        =========
+        value : dict
+            A dictionary of inputs to the model. This may include parameters,
+            assets and exogenous data.
+
+        """
+        self._inputs = ModelInputs(value)
+
+    @staticmethod
+    def replace_line(file_name, line_num, new_data):
+        """Replaces a line in a file with new data
+
+        Arguments
+        =========
+        file_name: str
+            The path to the input file
+        line_num: int
+            The number of the line to replace
+        new_data: str
+            The data to replace in the line
+
+        """
+        lines = open(file_name, 'r').readlines()
+        lines[line_num] = new_data
+        out = open(file_name, 'w')
+        out.writelines(lines)
+        out.close()
+
+    @staticmethod
+    def replace_cell(file_name, line_num, column_num, new_data,
+                     delimiter=None):
+        """Replaces a cell in a delimited file with new data
+
+        Arguments
+        =========
+        file_name: str
+            The path to the input file
+        line_num: int
+            The number of the line to replace (0-index)
+        column_num: int
+            The number of the column to replace (0-index)
+        new_data: str
+            The data to replace in the line
+        delimiter: str, default=','
+            The delimiter of the columns
+        """
+        line_num -= 1
+        column_num -= 1
+
+        with open(file_name, 'r') as input_file:
+            lines = input_file.readlines()
+
+        columns = lines[line_num].split(delimiter)
+        columns[column_num] = new_data
+        lines[line_num] = " ".join(columns) + "\n"
+
+        with open(file_name, 'w') as out_file:
+            out_file.writelines(lines)
 
     @abstractmethod
     def simulate(self, static_inputs, decision_variables):
@@ -500,7 +581,7 @@ class Model(AbstractModel):
         results = []
         for index in range(len(self._timesteps)):
             # Intialise the model
-            model.inputs = inputs
+            model.model.inputs = inputs
             # Update the state from the previous year
             if index > 0:
                 state_var = 'existing capacity'
