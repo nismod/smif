@@ -24,15 +24,16 @@ import logging
 import os
 from glob import glob
 from importlib.util import module_from_spec, spec_from_file_location
-
 from smif.parse_config import ConfigParser
-from smif.sectormodel import SectorModel
+from smif.sectormodel import SectorModel, SectorModelMode
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
 logger = logging.getLogger(__name__)
+
+WRAPPER_FILE_NAME = 'run.py'
 
 
 class Controller:
@@ -112,9 +113,11 @@ class Controller:
 
         """
         for model_name in model_list:
-            self.load_model(model_name)
+            self._model_list[model_name] = \
+                self.load_model(model_name,
+                                self._project_folder)
 
-    def load_model(self, model_name):
+    def load_model(self, model_name, project_folder):
         """Loads the sector model
 
         Arguments
@@ -123,61 +126,39 @@ class Controller:
             The name of the model, corresponding to the folder name in the
             models subfolder of the project folder
         """
-        logger.info("Loading models: {}".format(model_name))
+        logger.info("Loading model: {}".format(model_name))
 
-        assets = self._load_model_assets(model_name)
-        attributes = {}
-        for asset in assets:
-            attributes[asset] = self._load_asset_attributes(model_name, asset)
-        model = SectorModel(model_name, attributes)
+        builder = SectorModelBuilder(model_name, project_folder)
+        builder.load_attributes()
+        builder.load_wrapper()
+        model = builder.finish()
+        return model
 
-        self._model_list[model_name] = model
-
-    def _load_model_assets(self, model_name):
-        """Loads the assets from the sector model folders
-
-        Using the list of model folders extracted from the configuration file,
-        this function returns a list of all the assets from the sector models
+    def determine_running_mode(self):
+        """Determines from the config in what model to run the model
 
         Returns
         =======
-        list
-            A list of assets from all the sector models
-
+        :class:`SectorModelMode`
+            The mode in which to run the model
         """
-        path_to_assetfile = os.path.join(self._project_folder,
-                                         'models',
-                                         model_name,
-                                         'assets',
-                                         'asset*')
 
-        for assetfile in glob(path_to_assetfile):
-            asset_path = os.path.join(path_to_assetfile, assetfile)
-            logger.info("Loading assets from {}".format(asset_path))
+        number_of_timesteps = len(self.timesteps)
 
-        return ConfigParser(asset_path).data
+        if number_of_timesteps > 1:
+            # Run a sequential simulation
+            mode_getter = SectorModelMode()
+            mode = mode_getter.get_mode('sequential_simulation')
 
-    def _load_asset_attributes(self, model_name, asset_name):
-        """Loads an asset's attributes into a container
+        elif number_of_timesteps == 0:
+            raise ValueError("No timesteps have been specified")
 
-        Arguments
-        =========
-        model_name : str
-            The name of the model for which to load attributes
-        asset_name : str
-            The name of the asset for which to load attributes
+        else:
+            # Run a single simulation
+            mode_getter = SectorModelMode()
+            mode = mode_getter.get_mode('static_simulation')
 
-        Returns
-        =======
-        dict
-            A dictionary loaded from the attribute configuration file
-        """
-        project_folder = self._project_folder
-        attribute_path = os.path.join(project_folder, 'models',
-                                      model_name, 'assets',
-                                      "{}.yaml".format(asset_name))
-        attributes = ConfigParser(attribute_path).data
-        return attributes
+        return mode
 
     def run_sector_model(self, model_name):
         """Runs the sector model in a subprocess
@@ -195,27 +176,10 @@ class Controller:
         msg = "Running the {} sector model".format(model_name)
         logger.info(msg)
 
-        model_path = os.path.join(self._project_folder,
-                                  'models',
-                                  model_name,
-                                  'run.py')
-        if os.path.exists(model_path):
-            # Run up a subprocess to run the simulation
-            # check_call(['python', model_path])
-
-            logger.info("Importing run module from {}".format(model_name))
-
-            module_path = '{}.run'.format(model_name)
-            module_spec = spec_from_file_location(module_path, model_path)
-            module = module_from_spec(module_spec)
-            module_spec.loader.exec_module(module)
-
-            sector_model = self._model_list[model_name]
-            sector_model.model = module.wrapper
-            sector_model.model.simulate()
-        else:
-            msg = "Cannot find `run.py` for the {} model".format(model_name)
-            raise Exception(msg)
+        sector_model = self._model_list[model_name]
+        # Run a simulation for a single year (assume no decision vars)
+        decision_variables = {}
+        sector_model.simulate(decision_variables)
 
     def run_sos_model(self):
         """Runs the system-of-system model
@@ -259,3 +223,104 @@ class Controller:
             A list of sector model names
         """
         return list(self._model_list.keys())
+
+
+class SectorConfigReader(object):
+    """Parses the models/<sector_model> folder for a configuration files
+    """
+    def __init__(self, model_name):
+        self.model_name = model_name
+        self.elements = self.get_all_yaml_files()
+
+    def get_all_yaml_files(self):
+        pass
+
+
+class SectorModelBuilder(object):
+    """Build the components that make up a sectormodel from the configuration
+
+    """
+
+    def __init__(self, model_name, project_folder):
+        self.model_name = model_name
+        self.sectormodel = SectorModel(model_name)
+        self.project_folder = project_folder
+
+    def load_attributes(self):
+        assets = self._load_model_assets()
+        attributes = {}
+        for asset in assets:
+            attributes[asset] = self._load_asset_attributes(asset)
+        self.sectormodel.attributes = attributes
+
+    def load_wrapper(self):
+        model_path = os.path.join(self.project_folder,
+                                  'models',
+                                  self.model_name,
+                                  WRAPPER_FILE_NAME)
+        if os.path.exists(model_path):
+            logger.info("Importing run module from {}".format(self.model_name))
+
+            module_path = '{}.run'.format(self.model_name)
+            module_spec = spec_from_file_location(module_path, model_path)
+            module = module_from_spec(module_spec)
+            module_spec.loader.exec_module(module)
+            self.sectormodel.model = module.wrapper
+        else:
+            msg = "Cannot find {} for the {} model".format(WRAPPER_FILE_NAME,
+                                                           self.model_name)
+            raise Exception(msg)
+
+    def validate(self):
+        """
+        """
+        assert self.sectormodel.attributes
+        assert self.sectormodel.model
+
+    def finish(self):
+        self.validate()
+        return self.sectormodel
+
+    def _load_model_assets(self):
+        """Loads the assets from the sector model folders
+
+        Using the list of model folders extracted from the configuration file,
+        this function returns a list of all the assets from the sector models
+
+        Returns
+        =======
+        list
+            A list of assets from all the sector models
+
+        """
+        path_to_assetfile = os.path.join(self.project_folder,
+                                         'models',
+                                         self.model_name,
+                                         'assets',
+                                         'asset*')
+
+        for assetfile in glob(path_to_assetfile):
+            asset_path = os.path.join(path_to_assetfile, assetfile)
+            logger.info("Loading assets from {}".format(asset_path))
+
+        return ConfigParser(asset_path).data
+
+    def _load_asset_attributes(self, asset_name):
+        """Loads an asset's attributes into a container
+
+        Arguments
+        =========
+        asset_name : str
+            The name of the asset for which to load attributes
+
+        Returns
+        =======
+        dict
+            A dictionary loaded from the attribute configuration file
+        """
+        project_folder = self.project_folder
+        attribute_path = os.path.join(project_folder, 'models',
+                                      self.model_name, 'assets',
+                                      "{}.yaml".format(asset_name))
+        attributes = ConfigParser(attribute_path).data
+        return attributes
