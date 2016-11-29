@@ -72,7 +72,7 @@ class SoSModelReader(object):
 
         return config_parser.data
 
-    def load_elements(self):
+    def construct(self):
         for element in self.elements:
             if element == 'timesteps':
                 timestep_path = self._configuration['timesteps']
@@ -86,8 +86,6 @@ class SoSModelReader(object):
             elif element == 'planning':
                 planning = self._configuration['planning']
                 self.builder.load_planning(planning)
-
-        return self.builder.finish()
 
 
 class SosModel(object):
@@ -105,6 +103,32 @@ class SosModel(object):
         msg = "Can't run the SOS model yet"
         logger.error(msg)
         raise NotImplementedError(msg)
+
+    def determine_running_mode(self):
+        """Determines from the config in what model to run the model
+
+        Returns
+        =======
+        :class:`SectorModelMode`
+            The mode in which to run the model
+        """
+
+        number_of_timesteps = len(self._timesteps)
+
+        if number_of_timesteps > 1:
+            # Run a sequential simulation
+            mode_getter = SectorModelMode()
+            mode = mode_getter.get_mode('sequential_simulation')
+
+        elif number_of_timesteps == 0:
+            raise ValueError("No timesteps have been specified")
+
+        else:
+            # Run a single simulation
+            mode_getter = SectorModelMode()
+            mode = mode_getter.get_mode('static_simulation')
+
+        return mode
 
     def run_sector_model(self, model_name):
         """Runs the sector model in a subprocess
@@ -165,7 +189,7 @@ class SosModel(object):
 
 
 class SoSModelBuilder(object):
-    """
+    """Constructs a system-of-systems model
     """
     def __init__(self):
         self.sos_model = SosModel()
@@ -254,44 +278,8 @@ class Controller:
         reader = SoSModelReader(project_folder)
         builder = SoSModelBuilder()
         reader.builder = builder
-        self.model = reader.load_elements()
-
-    @property
-    def all_assets(self):
-        """Returns the list of all assets across the system-of-systems model
-
-        Returns
-        =======
-        list
-            A list of all assets across the system-of-systems model
-        """
-        return self.model.all_assets
-
-    def determine_running_mode(self):
-        """Determines from the config in what model to run the model
-
-        Returns
-        =======
-        :class:`SectorModelMode`
-            The mode in which to run the model
-        """
-
-        number_of_timesteps = len(self.model.timesteps)
-
-        if number_of_timesteps > 1:
-            # Run a sequential simulation
-            mode_getter = SectorModelMode()
-            mode = mode_getter.get_mode('sequential_simulation')
-
-        elif number_of_timesteps == 0:
-            raise ValueError("No timesteps have been specified")
-
-        else:
-            # Run a single simulation
-            mode_getter = SectorModelMode()
-            mode = mode_getter.get_mode('static_simulation')
-
-        return mode
+        reader.construct()
+        self.model = builder.finish()
 
 
 class SectorConfigReader(object):
