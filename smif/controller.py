@@ -225,10 +225,11 @@ class SoSModelBuilder(object):
 
         """
         for model_name in model_list:
-            self._model_list[model_name] = self.load_model(model_name)
+            self.sos_model.model_list[model_name] = \
+                self.load_model(model_name, project_folder)
 
-    def load_model(self, model_name):
-        """Loads the sector model
+    def load_model(self, model_name, project_folder):
+        """Loads the sector model into the system-of-systems model
 
         Arguments
         =========
@@ -238,7 +239,7 @@ class SoSModelBuilder(object):
         """
         logger.info("Loading model: {}".format(model_name))
 
-        builder = SectorModelBuilder(model_name, self._project_folder)
+        builder = SectorModelBuilder(model_name, project_folder)
         builder.load_attributes()
         builder.load_wrapper()
         builder.load_inputs()
