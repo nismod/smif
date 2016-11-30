@@ -1,28 +1,47 @@
 """Tests the ModelOutputs class
 """
-from numpy.testing import assert_equal
 from smif.outputs import ModelOutputs
 
 
-class TestModelOutputs:
-    def test_static_result_parsing(self):
-        results = [{'capacity': 5.0, 'cost': 6.32, 'water': 3.0}]
-        mo = ModelOutputs(results)
-        actual = mo.outputs.names
-        expected = ['capacity', 'cost', 'water']
-        # assert actual == expected
-        actual = mo.outputs.values
-        expected = [[5.0], [6.32], [3.0]]
-        assert_equal(actual, expected)
+class TestOutputFile:
 
-    def test_dynamic_result_parsing(self):
-        results = [{'capacity': 5.0, 'cost': 6.32, 'water': 3.0},
-                   {'capacity': 5.0, 'cost': 0.0, 'water': 3.0},
-                   {'capacity': 5.0, 'cost': 0.0, 'water': 3.0}]
-        mo = ModelOutputs(results)
-        actual = mo.outputs.names
-        expected = ['capacity', 'cost', 'water']
-        # assert actual == expected
-        actual = mo.outputs.values
-        expected = [[5.0, 5.0, 5.0], [6.32, 0.0, 0.0], [3.0, 3.0, 3.0]]
-        assert_equal(actual, expected)
+    def test_outputs_file(self, water_outputs_contents):
+        contents = water_outputs_contents
+        mo = ModelOutputs(contents)
+
+        expected = ['unshfl13']
+        actual = mo.outputs
+        assert actual == expected
+
+        expected = ['storage_blobby', 'storage_state']
+        actual = mo.metrics
+        assert actual == expected
+
+    def test_parse_results_iterable(self, water_outputs_contents):
+        contents = water_outputs_contents
+        mo = ModelOutputs(contents)
+        # Iterable by filename which allows ordered searching through file to
+        # extract results
+        expected = {'model/results.txt': {'storage_state': (26, 44),
+                                          'storage_blobby': (33, 55)
+                                          }
+                    }
+        actual = mo._metrics.extract_iterable
+        assert actual == expected
+
+        expected = {'model/results.txt': {'unshfl13': (33, 44)
+                                          }
+                    }
+        actual = mo._outputs.extract_iterable
+        assert actual == expected
+
+    def test_parse_results_file(self, setup_results_file,
+                                water_outputs_contents):
+
+        base_folder = setup_results_file
+        contents = water_outputs_contents
+        mo = ModelOutputs(contents)
+        actual = mo._metrics.get_results(str(base_folder))
+        expected = {'storage_state': '200288', 'storage_blobby': '9080'}
+
+        assert actual == expected

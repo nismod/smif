@@ -4,6 +4,7 @@
 
 """
 import logging
+import os
 from collections import OrderedDict
 
 import numpy as np
@@ -33,6 +34,9 @@ class OutputFactory(ModelElement):
         else:
             raise ValueError("That output type is not defined")
 
+    def populate(self):
+        pass
+
     def get_outputs(self, results):
         """Gets a dictionary of results and returns a list of the relevant types
         """
@@ -54,15 +58,61 @@ class OutputFactory(ModelElement):
             values[:, index] = np.array(sorted_values)
         self.values = values
 
+    @property
+    def extract_iterable(self):
+        """Allows ordered searching through file to extract results from file
+        """
+        entities = {}
+        extract_iterable = {}
+
+        names = set(self.values.keys())
+        # For each file return tuple of row/column
+        for name in names:
+            row_num = self.values[name]['row_num']
+            col_num = self.values[name]['col_num']
+            filename = self.values[name]['file_name']
+
+            entities[name] = {name: (row_num, col_num)}
+
+            if filename in extract_iterable.keys():
+                # Append the entity to the existing entry
+                existing = extract_iterable[filename]
+                existing[name] = (row_num, col_num)
+                extract_iterable[filename] = existing
+            else:
+                # Add the new key to the dict and the entry
+                extract_iterable[filename] = entities[name]
+
+        return extract_iterable
+
+    def get_results(self, path_to_model_root):
+
+        result_list = self.extract_iterable
+        results_instance = {}
+
+        for filename in result_list.keys():
+            file_path = os.path.join(path_to_model_root, filename)
+            with open(file_path, 'r') as results_set:
+                lines = results_set.readlines()
+
+            for name, rowcol in result_list[filename].items():
+                row_num, col_num = rowcol
+                result = lines[row_num][col_num:].strip()
+                results_instance[name] = result
+
+        return results_instance
+
 
 class MetricList(OutputFactory):
 
-    pass
+    def populate(self, results):
+        self.values = results['metrics']
 
 
 class OutputList(OutputFactory):
 
-    pass
+    def populate(self, results):
+        self.values = results['results']
 
 
 class ModelOutputs(object):
@@ -73,9 +123,9 @@ class ModelOutputs(object):
 
         self._results = OutputFactory()
         self._metrics = self._results.getelement('metrics')
-        self._metrics.get_outputs(results)
+        self._metrics.populate(results)
         self._outputs = self._results.getelement('outputs')
-        self._outputs.get_outputs(results)
+        self._outputs.populate(results)
 
     @property
     def metrics(self):
@@ -85,7 +135,7 @@ class ModelOutputs(object):
         =======
         :class:`smif.outputs.MetricList`
         """
-        return self._metrics
+        return sorted(list(self._metrics.values.keys()))
 
     @property
     def outputs(self):
@@ -95,4 +145,4 @@ class ModelOutputs(object):
         =======
         :class:`smif.outputs.OutputList`
         """
-        return self._outputs
+        return sorted(list(self._outputs.values.keys()))
