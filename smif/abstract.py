@@ -69,6 +69,7 @@ class AbstractModelWrapper(ABC):
             assets and exogenous data.
 
         """
+        assert isinstance(value, dict)
         self._inputs = ModelInputs(value)
 
     @property
@@ -612,8 +613,8 @@ class Model(AbstractModel):
                 state_res = results[index - 1]['capacity']
                 logger.debug("Updating {} with {}".format(state_var,
                                                           state_res))
-                model.inputs.parameters.update_value(state_var,
-                                                     state_res)
+                model.model.inputs.parameters.update_value(state_var,
+                                                           state_res)
 
             # Run the simulation
             decision = decisions[index]

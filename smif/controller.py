@@ -24,9 +24,8 @@ import logging
 import os
 from glob import glob
 from importlib.util import module_from_spec, spec_from_file_location
+import numpy as np
 
-from smif.inputs import ModelInputs
-from smif.outputs import ModelOutputs
 from smif.parse_config import ConfigParser
 from smif.sectormodel import SectorModel, SectorModelMode
 
@@ -148,7 +147,7 @@ class SosModel(object):
 
         sector_model = self.model_list[model_name]
         # Run a simulation for a single year (assume no decision vars)
-        decision_variables = {}
+        decision_variables = np.zeros(2)
         sector_model.simulate(decision_variables)
 
     @property
@@ -337,7 +336,7 @@ class SectorModelBuilder(object):
                                   self.model_name,
                                   'inputs.yaml')
         input_dict = ConfigParser(model_path).data
-        self._sectormodel.model.inputs = ModelInputs(input_dict)
+        self._sectormodel.model.inputs = input_dict
 
     def load_outputs(self):
         """Output spec is located in ``models/<sectormodel>/output.yaml``
@@ -347,7 +346,7 @@ class SectorModelBuilder(object):
                                   self.model_name,
                                   'outputs.yaml')
         output_dict = ConfigParser(model_path).data
-        self._sectormodel.model.outputs = ModelOutputs(output_dict)
+        self._sectormodel.model.outputs = output_dict
 
     def validate(self):
         """

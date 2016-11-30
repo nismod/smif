@@ -1,5 +1,6 @@
 from pytest import raises
 from smif.controller import Controller
+from smif.inputs import ModelInputs
 
 
 class TestController():
@@ -45,6 +46,12 @@ class TestRunModel():
 
     def test_run_sector_model(self, setup_project_folder):
         cont = Controller(str(setup_project_folder))
+
+        # Monkey patching inputs as run.py fixture cannot access smif.inputs
+        inputs = cont.model.model_list['water_supply'].model.inputs
+        model_inputs = ModelInputs(inputs)
+        cont.model.model_list['water_supply'].model.inputs = model_inputs
+
         cont.model.run_sector_model('water_supply')
 
     def test_invalid_sector_model(self, setup_project_folder):

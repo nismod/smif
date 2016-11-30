@@ -71,15 +71,16 @@ def run_model(args):
     """Runs the model specified in the args.model argument
 
     """
+    controller = Controller(args.path)
+    sos_model = controller.model
+
     if args.model == 'all':
         logger.info("Running the system of systems model")
-        controller = Controller(args.path)
-        controller.run_sos_model()
+        sos_model.run_sos_model()
     else:
         logger.info("Running the {} sector model".format(args.model))
         model_name = args.model
-        controller = Controller(args.path)
-        controller.run_sector_model(model_name)
+        sos_model.run_sector_model(model_name)
 
 
 def validate_config(args):
@@ -96,7 +97,7 @@ def validate_config(args):
     try:
         model_config = ConfigParser(config_path)
     except os.FileNotFoundError:
-        raise os.FileNotFoundError("The model configuration file " \
+        raise os.FileNotFoundError("The model configuration file "
                                    "does not exist")
     else:
         try:
@@ -214,6 +215,7 @@ def main(arguments=None):
         args.func(args)
     else:
         parser.print_help()
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])

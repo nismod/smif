@@ -139,7 +139,7 @@ model.simulate()
 time.sleep(1) # delays for 1 seconds
 
 wrapper = MagicMock(return_value=1)
-
+wrapper.inputs.parameters.values = MagicMock(return_value=1)
 """
     filename.write(contents, ensure=True)
 
