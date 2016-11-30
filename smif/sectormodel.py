@@ -180,17 +180,6 @@ class SectorModel(object):
     def attributes(self, value):
         self._attributes = value
 
-    @property
-    def inputs(self):
-        """The inputs to the model
-
-        Returns
-        =======
-        :class:`smif.abstract.ModelInputs`
-
-        """
-        return self.model.inputs
-
     def optimise(self):
         """Performs a static optimisation for a particular model instance
 
@@ -202,13 +191,13 @@ class SectorModel(object):
             A set of optimised simulation results
 
         """
-        assert self.inputs, "Inputs to the model not yet specified"
+        assert self.model.inputs, "Inputs to the model not yet specified"
 
-        v_names = self.inputs.decision_variables.names
-        v_initial = self.inputs.decision_variables.values
-        v_bounds = self.inputs.decision_variables.bounds
+        v_names = self.model.inputs.decision_variables.names
+        v_initial = self.model.inputs.decision_variables.values
+        v_bounds = self.model.inputs.decision_variables.bounds
 
-        cons = self.model.constraints(self.inputs.parameters.values)
+        cons = self.model.constraints(self.model.inputs.parameters.values)
 
         opts = {'disp': True}
         res = minimize(self._simulate_optimised,
@@ -253,10 +242,7 @@ class SectorModel(object):
         from the definition of investments in capacity, versus operation using
         the given capacity
         """
-
-        assert self.inputs, "Inputs to the model not yet specified"
-
-        static_inputs = self.inputs.parameters.values
+        static_inputs = self.model.inputs.parameters.values
         results = self.model.simulate(static_inputs, decision_variables)
         return results
 
@@ -271,8 +257,8 @@ class SectorModel(object):
             A vector of decisions of size `timesteps`.`decisions`
 
         """
-        assert self.inputs, "Inputs to the model not yet specified"
-        self.inputs.parameters.update_value('existing capacity', 0)
+        assert self.model.inputs, "Inputs to the model not yet specified"
+        self.model.inputs.parameters.update_value('existing capacity', 0)
 
         results = []
         for index in range(len(timesteps)):
@@ -282,8 +268,8 @@ class SectorModel(object):
                 state_res = results[index - 1]['capacity']
                 logger.debug("Updating {} with {}".format(state_var,
                                                           state_res))
-                self.inputs.parameters.update_value(state_var,
-                                                    state_res)
+                self.model.inputs.parameters.update_value(state_var,
+                                                          state_res)
 
             # Run the simulation
             decision = decisions[:, index]
@@ -293,8 +279,8 @@ class SectorModel(object):
     def _optimise_over_timesteps(self, decisions):
         """
         """
-        self.inputs.parameters.update_value('raininess', 3)
-        self.inputs.parameters.update_value('existing capacity', 0)
+        self.model.inputs.parameters.update_value('raininess', 3)
+        self.model.inputs.parameters.update_value('existing capacity', 0)
         assert decisions.shape == (3,)
         results = []
         years = [2010, 2015, 2020]
@@ -306,8 +292,8 @@ class SectorModel(object):
                 state_res = results[index - 1]['capacity']
                 logger.debug("Updating {} with {}".format(state_var,
                                                           state_res))
-                self.inputs.parameters.update_value(state_var,
-                                                    state_res)
+                self.model.inputs.parameters.update_value(state_var,
+                                                          state_res)
             # Run the simulation
             decision = np.array([decisions[index], ])
             assert decision.shape == (1, )
@@ -330,13 +316,13 @@ class SectorModel(object):
 
     def sequential_optimisation(self, timesteps):
 
-        assert self.inputs, "Inputs to the model not yet specified"
+        assert self.model.inputs, "Inputs to the model not yet specified"
 
         number_of_steps = len(timesteps)
 
-        v_names = self.inputs.decision_variables.names
-        v_initial = self.inputs.decision_variables.values
-        v_bounds = self.inputs.decision_variables.bounds
+        v_names = self.model.inputs.decision_variables.names
+        v_initial = self.model.inputs.decision_variables.values
+        v_bounds = self.model.inputs.decision_variables.bounds
 
         t_v_initial = np.tile(v_initial, (1, number_of_steps))
         t_v_bounds = np.tile(v_bounds, (number_of_steps, 1))

@@ -174,8 +174,8 @@ class TestMultiYearOptimisation:
 
         # Updates model state (existing capacity) with total capacity from
         # previous iteration
-        model.inputs.parameters.update_value('existing capacity',
-                                             first_results['capacity'])
+        model.model.inputs.parameters.update_value('existing capacity',
+                                                   first_results['capacity'])
         second_results = model.optimise()
 
         expected_value = {'water': np.array([3.], dtype=float),
