@@ -220,11 +220,17 @@ class DependencyList(InputList):
         number_of_inputs = len(inputs)
 
         names = np.zeros(number_of_inputs, dtype='U30')
+        spatial_resolutions = np.zeros(number_of_inputs, dtype='U30')
+        temporal_resolutions = np.zeros(number_of_inputs, dtype='U30')
 
         for index, input_data in enumerate(inputs):
             names[index] = input_data['name']
+            spatial_resolutions[index] = input_data['spatial_resolution']
+            temporal_resolutions[index] = input_data['temporal_resolution']
 
         self.names = names
+        self.spatial_resolutions = spatial_resolutions
+        self.temporal_resolutions = temporal_resolutions
 
 
 class ModelInputs(object):

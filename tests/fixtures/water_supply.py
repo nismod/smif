@@ -103,7 +103,9 @@ def one_dependency():
         'parameters': [],
         'dependencies': [
             {
-                'name': 'electricity'
+                'name': 'macguffins produced',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual'
             }
         ]
     }

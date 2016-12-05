@@ -61,6 +61,13 @@ class TestModelInputs:
         inputs = ModelInputs(one_dependency)
 
         actual = inputs.dependencies.names
-        expected = np.array(['electricity'], dtype='U30')
+        expected = np.array(['macguffins produced'], dtype='U30')
+        assert_equal(actual, expected)
 
+        actual = inputs.dependencies.spatial_resolutions
+        expected = np.array(['LSOA'], dtype='U30')
+        assert_equal(actual, expected)
+
+        actual = inputs.dependencies.temporal_resolutions
+        expected = np.array(['annual'], dtype='U30')
         assert_equal(actual, expected)
