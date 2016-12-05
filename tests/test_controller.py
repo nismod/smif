@@ -22,6 +22,7 @@ class TestController():
         assert actual == expected
 
     def test_timesteps_alternate_file(self, setup_project_folder,
+                                      setup_config_file_timesteps_two,
                                       setup_timesteps_file_two):
 
         cont = Controller(str(setup_project_folder))
