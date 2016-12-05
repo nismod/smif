@@ -293,6 +293,24 @@ def setup_timesteps_file(setup_folder_structure):
 
 
 @pytest.fixture(scope='function')
+def setup_timesteps_file_two(setup_folder_structure):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('config', 'timesteps.yaml')
+    timesteps_contents = [2015, 2020, 2025]
+    contents = yaml.dump(timesteps_contents)
+    filename.write(contents, ensure=True)
+
+
+@pytest.fixture(scope='function')
+def setup_timesteps_file_invalid(setup_folder_structure):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('config', 'timesteps.yaml')
+    timesteps_contents = "invalid timesteps file"
+    contents = yaml.dump(timesteps_contents)
+    filename.write(contents, ensure=True)
+
+
+@pytest.fixture(scope='function')
 def setup_water_asset_a(setup_folder_structure,
                         setup_config_file,
                         setup_assets_file):

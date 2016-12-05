@@ -206,8 +206,12 @@ class SoSModelBuilder(object):
         list
             A list of timesteps
         """
-        logger.info("Loading timesteps from {}".format(file_path))
-        self.sos_model._timesteps = ConfigParser(file_path).data
+        logger.info("Loading timesteps from %s", file_path)
+
+        cp = ConfigParser(file_path)
+        cp.validate_as_timesteps()
+
+        self.sos_model._timesteps = cp.data
 
     def load_planning(self, planning):
         """Loads the planning logic into the system of systems model

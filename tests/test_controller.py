@@ -21,6 +21,23 @@ class TestController():
         actual = cont.model.timesteps
         assert actual == expected
 
+    def test_timesteps_alternate_file(self, setup_project_folder,
+                                      setup_timesteps_file_two):
+
+        cont = Controller(str(setup_project_folder))
+
+        expected = [2015, 2020, 2025]
+        actual = cont.model.timesteps
+        assert actual == expected
+
+
+    def test_timesteps_invalid(self, setup_project_folder,
+                                      setup_timesteps_file_invalid):
+
+        with raises(ValueError):
+            Controller(str(setup_project_folder))
+
+
     def test_assets(self, setup_project_folder):
 
         cont = Controller(str(setup_project_folder))
