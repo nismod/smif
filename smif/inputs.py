@@ -128,7 +128,6 @@ class InputFactory(ModelElement):
     """
     def __init__(self):
         super().__init__()
-        self._bounds = []
 
     @staticmethod
     def getelement(input_type):
@@ -146,16 +145,6 @@ class InputFactory(ModelElement):
             return DecisionVariableList()
         else:
             raise ValueError("That input type is not defined")
-
-    @property
-    def bounds(self):
-        """The bounds of the input
-        """
-        return self._bounds
-
-    @bounds.setter
-    def bounds(self, value):
-        self._bounds = value
 
     def update_value(self, name, value):
         """Update the value of an input
@@ -177,7 +166,7 @@ class InputFactory(ModelElement):
             "Bounds exceeded"
         self.values[index] = value
 
-    def _parse_input_dictionary(self, inputs, input_type, mapping):
+    def _parse_input_dictionary(self, inputs):
         """Extracts an array of decision variables from a dictionary of inputs
 
         Arguments
@@ -185,10 +174,7 @@ class InputFactory(ModelElement):
         inputs : dict
             A dictionary of key: val pairs including a list of input types and
             names, followed by nested dictionaries of input attributes
-        input_type : str
-            A string input type
-        mapping : dict
-            A mapping for the expected keys `values`, `bounds` and `indices`
+
         Returns
         =======
         ordered_names : :class:`numpy.ndarray`
@@ -201,20 +187,16 @@ class InputFactory(ModelElement):
 
         """
 
-        names = inputs[input_type]
-        number_if_inputs = len(names)
+        number_of_inputs = len(inputs)
 
-        indices = [inputs[name][mapping['indices']] for name in names]
-        assert len(indices) == number_if_inputs, \
-            'Index entries do not match the number of {}'.format(input_type)
-        values = np.zeros(number_if_inputs, dtype=np.float)
-        bounds = np.zeros(number_if_inputs, dtype=(np.float, 2))
-        ordered_names = np.zeros(number_if_inputs, dtype='U30')
+        values = np.zeros(number_of_inputs, dtype=np.float)
+        bounds = np.zeros(number_of_inputs, dtype=(np.float, 2))
+        ordered_names = np.zeros(number_of_inputs, dtype='U30')
 
-        for name, index in zip(names, indices):
-            values[index] = inputs[name][mapping['values']]
-            bounds[index] = inputs[name][mapping['bounds']]
-            ordered_names[index] = name
+        for index, input_data in enumerate(inputs):
+            values[index] = input_data['value']
+            bounds[index] = input_data['bounds']
+            ordered_names[index] = input_data['name']
 
         self.names = ordered_names
         self.values = values
@@ -224,15 +206,13 @@ class InputFactory(ModelElement):
 class ParameterList(InputFactory):
 
     def get_inputs(self, inputs):
-        mapping = {'values': 'value', 'bounds': 'bounds', 'indices': 'index'}
-        self._parse_input_dictionary(inputs, 'parameters', mapping)
+        self._parse_input_dictionary(inputs['parameters'])
 
 
 class DecisionVariableList(InputFactory):
 
     def get_inputs(self, inputs):
-        mapping = {'values': 'init', 'bounds': 'bounds', 'indices': 'index'}
-        self._parse_input_dictionary(inputs, 'decision variables', mapping)
+        self._parse_input_dictionary(inputs['decision variables'])
 
 
 class ModelInputs(object):
