@@ -96,6 +96,18 @@ def two_inputs():
     }
     return inputs
 
+@fixture(scope='function')
+def one_dependency():
+    inputs = {
+        'decision variables': [],
+        'parameters': [],
+        'dependencies': [
+            {
+                'name': 'electricity'
+            }
+        ]
+    }
+    return inputs
 
 @fixture(scope='function')
 def raininess_oracle(timestep):

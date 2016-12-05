@@ -98,13 +98,9 @@ class ModelElement(ABC):
         logger.debug("Updating {} with {}".format(name, value))
         self.values[index] = value
 
-    @staticmethod
-    @abstractmethod
-    def getelement(element_type):
-        pass
 
 
-class InputFactory(ModelElement):
+class InputList(ModelElement):
     """Defines the types of inputs to a sector model
 
     The input data are expected to be defined using the following format::
@@ -128,23 +124,7 @@ class InputFactory(ModelElement):
     """
     def __init__(self):
         super().__init__()
-
-    @staticmethod
-    def getelement(input_type):
-        """Implements the factory method to return subclasses of
-        :class:`smif.InputFactory`
-
-        Arguments
-        =========
-        input_type : str
-            An input type name
-        """
-        if input_type == 'parameters':
-            return ParameterList()
-        elif input_type == 'decision_variables':
-            return DecisionVariableList()
-        else:
-            raise ValueError("That input type is not defined")
+        self.bounds = []
 
     def update_value(self, name, value):
         """Update the value of an input
@@ -167,23 +147,22 @@ class InputFactory(ModelElement):
         self.values[index] = value
 
     def _parse_input_dictionary(self, inputs):
-        """Extracts an array of decision variables from a dictionary of inputs
+        """Extracts arrays of decision variables and metadata from a list of
+        inputs
 
         Arguments
         =========
-        inputs : dict
-            A dictionary of key: val pairs including a list of input types and
-            names, followed by nested dictionaries of input attributes
+        inputs : list
+            A list of dicts which specify input attributes in key:val pairs
 
-        Returns
-        =======
-        ordered_names : :class:`numpy.ndarray`
-            The names of the decision variables in the order specified by the
-            'index' key in the entries of the inputs
+        Sets attributes
+        ===============
+        names : :class:`numpy.ndarray`
+            The names of the decision variables in the order given in the inputs
         bounds : :class:`numpy.ndarray`
-            The bounds ordered by the index key
+            The bounds in the same order
         values : :class:`numpy.ndarray`
-            The initial values ordered by the index key
+            The initial values in the same order
 
         """
 
@@ -191,28 +170,61 @@ class InputFactory(ModelElement):
 
         values = np.zeros(number_of_inputs, dtype=np.float)
         bounds = np.zeros(number_of_inputs, dtype=(np.float, 2))
-        ordered_names = np.zeros(number_of_inputs, dtype='U30')
+        names = np.zeros(number_of_inputs, dtype='U30')
 
         for index, input_data in enumerate(inputs):
             values[index] = input_data['value']
             bounds[index] = input_data['bounds']
-            ordered_names[index] = input_data['name']
+            names[index] = input_data['name']
 
-        self.names = ordered_names
+        self.names = names
         self.values = values
         self.bounds = bounds
 
 
-class ParameterList(InputFactory):
+class ParameterList(InputList):
 
-    def get_inputs(self, inputs):
-        self._parse_input_dictionary(inputs['parameters'])
+    def __init__(self, parameters):
+        super().__init__()
+        self._parse_input_dictionary(parameters)
 
 
-class DecisionVariableList(InputFactory):
+class DecisionVariableList(InputList):
 
-    def get_inputs(self, inputs):
-        self._parse_input_dictionary(inputs['decision variables'])
+    def __init__(self, decision_variables):
+        super().__init__()
+        self._parse_input_dictionary(decision_variables)
+
+class DependencyList(InputList):
+
+    def __init__(self, dependencies):
+        super().__init__()
+        self._parse_input_dictionary(dependencies)
+
+    def _parse_input_dictionary(self, inputs):
+        """Extracts arrays of decision variables and metadata from a list of
+        inputs
+
+        Arguments
+        =========
+        inputs : list
+            A list of dicts which specify input attributes in key:val pairs
+
+        Sets attributes
+        ===============
+        ordered_names : :class:`numpy.ndarray`
+            The names of the decision variables in the order given in the inputs
+
+        """
+
+        number_of_inputs = len(inputs)
+
+        names = np.zeros(number_of_inputs, dtype='U30')
+
+        for index, input_data in enumerate(inputs):
+            names[index] = input_data['name']
+
+        self.names = names
 
 
 class ModelInputs(object):
@@ -225,13 +237,15 @@ class ModelInputs(object):
         names, followed by nested dictionaries of input attributes
     """
     def __init__(self, inputs):
+        self._inputs = InputList()
 
-        self._inputs = InputFactory()
-        self._decision_variables = \
-            self._inputs.getelement('decision_variables')
-        self._decision_variables.get_inputs(inputs)
-        self._parameters = self._inputs.getelement('parameters')
-        self._parameters.get_inputs(inputs)
+        self._decision_variables = DecisionVariableList(inputs['decision variables'])
+        self._parameters = ParameterList(inputs['parameters'])
+
+        if 'dependencies' in inputs:
+            self._dependencies = DependencyList(inputs['dependencies'])
+        else:
+            self._dependencies = DependencyList([])
 
     @property
     def parameters(self):
@@ -252,3 +266,13 @@ class ModelInputs(object):
         :class:`smif.inputs.DecisionVariableList`
         """
         return self._decision_variables
+
+    @property
+    def dependencies(self):
+        """A list of the model dependencies
+
+        Returns
+        =======
+        :class:`smif.inputs.DependencyList`
+        """
+        return self._dependencies
