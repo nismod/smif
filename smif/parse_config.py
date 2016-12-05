@@ -22,7 +22,7 @@ class ConfigParser:
         if self.data is None:
             raise AttributeError("Config data not loaded")
 
-        self.validate_against_schema(self.data, schema)
+        self._validate_against_schema(self.data, schema)
 
 
     def _validate_against_schema_file(self, data, schema_filename):
@@ -30,17 +30,20 @@ class ConfigParser:
         """
         schema_filepath = self._get_schema_filepath(schema_filename)
         schema = self._load_schema_from_file(schema_filepath)
-        self.validate_against_schema(data, schema)
+        self._validate_against_schema(data, schema)
 
-    def _get_schema_filepath(self, schema_filename):
+    @staticmethod
+    def _get_schema_filepath(schema_filename):
         return os.path.join(os.path.dirname(__file__), "schema", schema_filename)
 
-    def _load_schema_from_file(self,schema_filename):
+    @staticmethod
+    def _load_schema_from_file(schema_filename):
         with open(schema_filename, 'r') as fh:
             schema = json.load(fh)
         return schema
 
-    def validate_against_schema(self, data, schema):
+    @staticmethod
+    def _validate_against_schema(data, schema):
         try:
             jsonschema.validate(data, schema)
         except jsonschema.ValidationError as e:
@@ -59,4 +62,6 @@ class ConfigParser:
                 raise ValueError("A planning type needs files if it is going to be used.")
 
     def validate_as_timesteps(self):
+        """Validate the loaded data as required for model run timesteps
+        """
         self._validate_against_schema_file(self.data, "timesteps_config_schema.json")
