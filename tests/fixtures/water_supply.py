@@ -48,17 +48,22 @@ def one_input():
     """Returns a model input dictionary for the example water model with one
     decision variable and one parameter
     """
-    inputs = {'decision variables': ['water treatment capacity'],
-              'parameters': ['raininess'],
-              'water treatment capacity': {'bounds': (0, 20),
-                                           'index': 0,
-                                           'init': 10
-                                           },
-              'raininess': {'bounds': (0, 5),
-                            'index': 0,
-                            'value': 3
-                            }
-              }
+    inputs = {
+        'decision variables': [
+            {
+                'name': 'water treatment capacity',
+                'bounds': (0, 20),
+                'value': 10
+            }
+        ],
+        'parameters': [
+            {
+                'name': 'raininess',
+                'bounds': (0, 5),
+                'value': 3
+            }
+        ]
+    }
 
     return inputs
 
@@ -68,24 +73,43 @@ def two_inputs():
     """Returns a model input dictionary for the example water model with two
     decision variables and one parameter
     """
-    inputs = {'decision variables': ['water treatment capacity',
-                                     'reservoir pumpiness'],
-              'parameters': ['raininess'],
-              'water treatment capacity': {'bounds': (0, 20),
-                                           'index': 1,
-                                           'init': 10
-                                           },
-              'reservoir pumpiness': {'bounds': (0, 100),
-                                      'index': 0,
-                                      'init': 24.583
-                                      },
-              'raininess': {'bounds': (0, 5),
-                            'index': 0,
-                            'value': 3
-                            }
-              }
+    inputs = {
+        'decision variables': [
+            {
+                'name': 'reservoir pumpiness',
+                'bounds': (0, 100),
+                'value': 24.583
+            },
+            {
+                'name': 'water treatment capacity',
+                'bounds': (0, 20),
+                'value': 10
+            }
+        ],
+        'parameters': [
+            {
+                'name': 'raininess',
+                'bounds': (0, 5),
+                'value': 3
+            }
+        ]
+    }
     return inputs
 
+@fixture(scope='function')
+def one_dependency():
+    inputs = {
+        'decision variables': [],
+        'parameters': [],
+        'dependencies': [
+            {
+                'name': 'macguffins produced',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual'
+            }
+        ]
+    }
+    return inputs
 
 @fixture(scope='function')
 def raininess_oracle(timestep):
@@ -245,21 +269,27 @@ def dynamic_data():
     """Returns a model input dictionary for the example water model with two
     decision variables and one parameter
     """
-    inputs = {'decision variables': ['new capacity'],
-              'parameters': ['existing capacity', 'raininess'],
-              'new capacity': {'bounds': (0, 5),
-                               'index': 0,
-                               'init': 10
-                               },
-              'existing capacity': {'bounds': (0, 999),
-                                    'index': 1,
-                                    'value': 1
-                                    },
-              'raininess': {'bounds': (0, 5),
-                            'index': 0,
-                            'value': 3
-                            }
-              }
+    inputs = {
+        'decision variables': [
+            {
+                'name': 'new capacity',
+                'bounds': (0, 5),
+                'value': 10
+            },
+        ],
+        'parameters': [
+            {
+                'name': 'raininess',
+                'bounds': (0, 5),
+                'value': 3
+            },
+            {
+                'name': 'existing capacity',
+                'bounds': (0, 999),
+                'value': 1
+            }
+        ]
+    }
     return inputs
 
 
