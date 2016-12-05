@@ -2,7 +2,6 @@
 """
 import os
 from pytest import raises
-import jsonschema
 import smif.parse_config
 
 def test_load_simple_config():
@@ -26,7 +25,7 @@ def test_simple_validate_invalid():
     conf.data = {"name": "test"}
 
     msg = "'nonexistent_key' is a required property"
-    with raises(jsonschema.exceptions.ValidationError, message=msg):
+    with raises(ValueError, message=msg):
         conf.validate({
             "type": "object",
             "properties": {
@@ -45,12 +44,12 @@ def test_modelrun_config_validate_invalid_missing_timestep():
     path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "modelrun_config_missing_timestep.yaml")
     conf = smif.parse_config.ConfigParser(path)
 
-    with raises(jsonschema.exceptions.ValidationError):
+    with raises(ValueError):
         conf.validate_as_modelrun_config()
 
 def test_modelrun_config_validate_invalid_used_planning_needs_files():
     path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "modelrun_config_used_planning_needs_files.yaml")
     conf = smif.parse_config.ConfigParser(path)
 
-    with raises(jsonschema.exceptions.ValidationError):
+    with raises(ValueError):
         conf.validate_as_modelrun_config()

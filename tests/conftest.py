@@ -117,6 +117,26 @@ def setup_config_file(setup_folder_structure):
     filepath = setup_folder_structure.join('config', 'model.yaml')
     filepath.write(contents)
 
+@pytest.fixture(scope='function')
+def setup_config_file_timesteps_two(setup_folder_structure):
+    """Configuration file contains entries for sector models, timesteps and
+    planning
+    """
+    ps_name = 'pre-specified.yaml'
+    file_contents = {'sector_models': ['water_supply'],
+                     'timesteps': 'timesteps2.yaml',
+                     'assets': ['assets1.yaml'],
+                     'planning': {'rule_based': {'use': False},
+                                  'optimisation': {'use': False},
+                                  'pre_specified': {'use': True,
+                                                    'files': [ps_name]}
+                                  }
+                     }
+
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
+
 
 @pytest.fixture(scope='function')
 def setup_runpy_file(tmpdir, setup_folder_structure):
@@ -288,6 +308,24 @@ def setup_timesteps_file(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('config', 'timesteps.yaml')
     timesteps_contents = [2010, 2011, 2012]
+    contents = yaml.dump(timesteps_contents)
+    filename.write(contents, ensure=True)
+
+
+@pytest.fixture(scope='function')
+def setup_timesteps_file_two(setup_folder_structure):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('config', 'timesteps2.yaml')
+    timesteps_contents = [2015, 2020, 2025]
+    contents = yaml.dump(timesteps_contents)
+    filename.write(contents, ensure=True)
+
+
+@pytest.fixture(scope='function')
+def setup_timesteps_file_invalid(setup_folder_structure):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('config', 'timesteps.yaml')
+    timesteps_contents = "invalid timesteps file"
     contents = yaml.dump(timesteps_contents)
     filename.write(contents, ensure=True)
 

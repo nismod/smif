@@ -22,7 +22,32 @@ class ConfigParser:
         if self.data is None:
             raise AttributeError("Config data not loaded")
 
-        jsonschema.validate(self.data, schema)
+        self._validate_against_schema(self.data, schema)
+
+
+    def _validate_against_schema_file(self, data, schema_filename):
+        """Validate data against a schema file
+        """
+        schema_filepath = self._get_schema_filepath(schema_filename)
+        schema = self._load_schema_from_file(schema_filepath)
+        self._validate_against_schema(data, schema)
+
+    @staticmethod
+    def _get_schema_filepath(schema_filename):
+        return os.path.join(os.path.dirname(__file__), "schema", schema_filename)
+
+    @staticmethod
+    def _load_schema_from_file(schema_filename):
+        with open(schema_filename, 'r') as fh:
+            schema = json.load(fh)
+        return schema
+
+    @staticmethod
+    def _validate_against_schema(data, schema):
+        try:
+            jsonschema.validate(data, schema)
+        except jsonschema.ValidationError as e:
+            raise ValueError(e.message)
 
     def validate_as_modelrun_config(self):
         """Validate the loaded data as required for model run configuration
@@ -30,12 +55,13 @@ class ConfigParser:
         if self.data is None:
             raise AttributeError("Config data not loaded")
 
-        model_config_schema_path = os.path.join(os.path.dirname(__file__), "schema", "modelrun_config_schema.json")
-        with open(model_config_schema_path, 'r') as fh:
-            schema = json.load(fh)
+        self._validate_against_schema_file(self.data, "modelrun_config_schema.json")
 
         for planning_type in self.data["planning"].values():
             if planning_type["use"] and "files" not in planning_type:
-                raise jsonschema.ValidationError("A planning type needs files if it is going to be used.")
+                raise ValueError("A planning type needs files if it is going to be used.")
 
-        self.validate(schema)
+    def validate_as_timesteps(self):
+        """Validate the loaded data as required for model run timesteps
+        """
+        self._validate_against_schema_file(self.data, "timesteps_config_schema.json")
