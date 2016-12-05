@@ -68,7 +68,7 @@ class TestWaterModelOptimisation:
         wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
         wrapped.inputs = one_input
         attributes = {}
-        model = SectorModel('water_supply')
+        model = SectorModel()
         model.attributes = attributes
         model.model = wrapped
         actual_value = model.optimise()
@@ -85,7 +85,7 @@ class TestWaterModelOptimisation:
         """
         wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
         attributes = {}
-        model = SectorModel('water_supply')
+        model = SectorModel()
         model.attributes = attributes
         model.model = wrapped
         with pytest.raises(AssertionError):
@@ -149,7 +149,7 @@ class TestMultiYearOptimisation:
     def test_dynamic_water_model_one_off(self, dynamic_data):
         wrapped = DynamicModelWrapper(DynMod)
         attributes = {}
-        model = SectorModel('water_supply')
+        model = SectorModel()
         model.attributes = attributes
         model.model = wrapped
         wrapped.inputs = dynamic_data
@@ -166,7 +166,7 @@ class TestMultiYearOptimisation:
     def test_dynamic_water_model_two_off(self, dynamic_data):
         wrapped = DynamicModelWrapper(DynMod)
         attributes = {}
-        model = SectorModel('water_supply')
+        model = SectorModel()
         model.attributes = attributes
         model.model = wrapped
         wrapped.inputs = dynamic_data
@@ -192,7 +192,7 @@ class TestMultiYearOptimisation:
         # Instantiate a sector model
         wrapped = DynamicModelWrapper(DynMod)
         attributes = {}
-        sectormodel = SectorModel('water_supply')
+        sectormodel = SectorModel()
         sectormodel.attributes = attributes
         sectormodel.model = wrapped
         # Instantiate a system-of-system instance
@@ -220,7 +220,7 @@ class TestMultiYearOptimisation:
         # Instantiate a sector model
         wrapped = DynamicModelWrapper(DynMod)
         attributes = {}
-        sectormodel = SectorModel('water_supply')
+        sectormodel = SectorModel()
         sectormodel.attributes = attributes
         sectormodel.model = wrapped
         wrapped.inputs = dynamic_data
@@ -237,7 +237,7 @@ class TestMultiYearOptimisation:
         # Instantiate a sector model
         wrapped = DynamicModelWrapper(DynMod)
         attributes = {}
-        sectormodel = SectorModel('water_supply')
+        sectormodel = SectorModel()
         sectormodel.attributes = attributes
         sectormodel.model = wrapped
         wrapped.inputs = dynamic_data

@@ -117,6 +117,7 @@ def setup_config_file(setup_folder_structure):
     filepath = setup_folder_structure.join('config', 'model.yaml')
     filepath.write(contents)
 
+
 @pytest.fixture(scope='function')
 def setup_config_file_timesteps_two(setup_folder_structure):
     """Configuration file contains entries for sector models, timesteps and
@@ -151,15 +152,10 @@ def setup_runpy_file(tmpdir, setup_folder_structure):
     contents = """from unittest.mock import MagicMock
 import time
 
-class Model():
-    pass
-model = Model()
-model.simulate = MagicMock(return_value=3)
-model.simulate()
+model = MagicMock(return_value=3)
 time.sleep(1) # delays for 1 seconds
 
 wrapper = MagicMock(return_value=1)
-wrapper.inputs.parameters.values = MagicMock(return_value=1)
 """
     filename.write(contents, ensure=True)
 

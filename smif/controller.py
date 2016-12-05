@@ -10,6 +10,8 @@ be used.  In this example, there is one sector model, called ``water_supply``::
     /models
     /models/water_supply/
     /models/water_supply/run.py
+    /models/water_supply/inputs.yaml
+    /models/water_supply/outputs.yaml
     /models/water_supply/assets/assets1.yaml
     /config/
     /config/model.yaml
@@ -241,12 +243,14 @@ class SoSModelBuilder(object):
             The name of the model, corresponding to the folder name in the
             models subfolder of the project folder
         """
-        logger.info("Loading model: {}".format(model_name))
+        logger.info("Loading model: %s", model_name)
 
-        builder = SectorModelBuilder(model_name, project_folder)
-        builder.load_attributes()
-        builder.load_wrapper()
-        builder.load_inputs()
+        reader = SectorConfigReader(model_name, project_folder)
+        builder = SectorModelBuilder()
+        reader.builder = builder
+
+        reader.construct()
+
         model = builder.finish()
         return model
 
@@ -261,7 +265,7 @@ class Controller:
 
     Controller expects to find a yaml configuration file containing
     - lists of assets in ``models/<model_name>/asset_*.yaml``
-    - structure of attributes in ``models/<model_name/<asset_name>.yaml
+    - structure of attributes in ``models/<model_name/<asset_name>.yaml``
 
     Controller expects to find a `WRAPPER_FILE_NAME` file in
     ``models/<model_name>``. `WRAPPER_FILE_NAME` contains a python script
@@ -287,82 +291,62 @@ class Controller:
 
 
 class SectorConfigReader(object):
-    """Parses the models/<sector_model> folder for a configuration files
+    """Parses the ``models/<sector_model>`` folder for a configuration file
+
+    Assign the builder instance to the ``builder`` attribute before running the
+    ``construct`` method.
+
+    Arguments
+    =========
+    model_name : str
+        The name of the model
+    project_folder : str
+        The root path of the project
+
     """
-    def __init__(self, model_name):
-        self.model_name = model_name
-        self.elements = self.get_all_yaml_files()
-
-    def get_all_yaml_files(self):
-        pass
-
-
-class SectorModelBuilder(object):
-    """Build the components that make up a sectormodel from the configuration
-
-    """
-
     def __init__(self, model_name, project_folder):
         self.model_name = model_name
-        self._sectormodel = SectorModel(model_name)
         self.project_folder = project_folder
+        self.elements = self.parse_sector_model_config()
+        self.builder = None
 
-    def load_attributes(self):
+    def construct(self):
+        """Constructs the sector model object from the configuration
+
+        """
+        # First, name the model
+        self.builder.name_model(self.model_name)
+        # Then, load up the wrapper
+        self.builder.load_wrapper(self.elements['wrapper'])
+
+        for key, value in self.elements.items():
+            if key == 'inputs':
+                self.builder.load_inputs(value)
+            elif key == 'outputs':
+                self.builder.load_outputs(value)
+            elif key == 'attributes':
+                self.builder.load_attributes(value)
+
+    def parse_sector_model_config(self):
+        """Searches the model folder for all the configuration files
+
+        """
+        config_path = os.path.join(self.project_folder, 'models',
+                                   self.model_name)
+        input_path = os.path.join(config_path, 'inputs.yaml')
+        output_path = os.path.join(config_path, 'outputs.yaml')
+        wrapper_path = os.path.join(config_path, WRAPPER_FILE_NAME)
+
         assets = self._load_model_assets()
-        attributes = {}
-        for asset in assets:
-            attributes[asset] = self._load_asset_attributes(asset)
-        self._sectormodel.attributes = attributes
+        attribute_paths = {name: os.path.join(self.project_folder, 'models',
+                                              self.model_name, 'assets',
+                                              "{}.yaml".format(name))
+                           for name in assets}
 
-    def load_wrapper(self):
-        model_path = os.path.join(self.project_folder,
-                                  'models',
-                                  self.model_name,
-                                  WRAPPER_FILE_NAME)
-        if os.path.exists(model_path):
-            logger.info("Importing run module from {}".format(self.model_name))
-
-            module_path = '{}.run'.format(self.model_name)
-            module_spec = spec_from_file_location(module_path, model_path)
-            module = module_from_spec(module_spec)
-            module_spec.loader.exec_module(module)
-            self._sectormodel.model = module.wrapper
-        else:
-            msg = "Cannot find {} for the {} model".format(WRAPPER_FILE_NAME,
-                                                           self.model_name)
-            raise Exception(msg)
-
-    def load_inputs(self):
-        """Input spc is located in the ``models/<sectormodel>/inputs.yaml``
-
-        """
-        model_path = os.path.join(self.project_folder,
-                                  'models',
-                                  self.model_name,
-                                  'inputs.yaml')
-        input_dict = ConfigParser(model_path).data
-        self._sectormodel.model.inputs = input_dict
-
-    def load_outputs(self):
-        """Output spec is located in ``models/<sectormodel>/output.yaml``
-        """
-        model_path = os.path.join(self.project_folder,
-                                  'models',
-                                  self.model_name,
-                                  'outputs.yaml')
-        output_dict = ConfigParser(model_path).data
-        self._sectormodel.model.outputs = output_dict
-
-    def validate(self):
-        """
-        """
-        assert self._sectormodel.attributes
-        assert self._sectormodel.model
-        assert self._sectormodel.model.inputs
-
-    def finish(self):
-        self.validate()
-        return self._sectormodel
+        return {'inputs': input_path,
+                'outputs': output_path,
+                'attributes': attribute_paths,
+                'wrapper': wrapper_path}
 
     def _load_model_assets(self):
         """Loads the assets from the sector model folders
@@ -381,8 +365,7 @@ class SectorModelBuilder(object):
                                          'models',
                                          self.model_name,
                                          'assets',
-                                         'asset*')
-
+                                         'asset*.yaml')
         for assetfile in glob(path_to_assetfile):
             asset_path = os.path.join(path_to_assetfile, assetfile)
             logger.info("Loading assets from {}".format(asset_path))
@@ -390,22 +373,83 @@ class SectorModelBuilder(object):
 
         return assets
 
-    def _load_asset_attributes(self, asset_name):
+
+class SectorModelBuilder(object):
+    """Build the components that make up a sectormodel from the configuration
+
+    """
+
+    def __init__(self):
+        self._sectormodel = SectorModel()
+
+    def name_model(self, model_name):
+        self._sectormodel.name = model_name
+
+    def load_attributes(self, dict_of_assets):
+        attributes = {}
+        for asset, path in dict_of_assets.items():
+            attributes[asset] = self._load_asset_attributes(path)
+        self._sectormodel.attributes = attributes
+
+    def load_wrapper(self, model_path):
+        name = self._sectormodel.name
+        if os.path.exists(model_path):
+            logger.info("Importing run module from %s", name)
+
+            module_path = '{}.run'.format(name)
+            module_spec = spec_from_file_location(module_path, model_path)
+            module = module_from_spec(module_spec)
+            module_spec.loader.exec_module(module)
+            self._sectormodel.model = module.wrapper
+        else:
+            msg = "Cannot find {} for the {} model".format(WRAPPER_FILE_NAME,
+                                                           name)
+            raise Exception(msg)
+
+    def load_inputs(self, model_path):
+        """Input spec is located in the ``models/<sectormodel>/inputs.yaml``
+
+        """
+        msg = "No wrapper defined"
+        assert self._sectormodel.model, msg
+
+        input_dict = ConfigParser(model_path).data
+        self._sectormodel.model.inputs = input_dict
+
+    def load_outputs(self, model_path):
+        """Output spec is located in ``models/<sectormodel>/output.yaml``
+
+        """
+        msg = "No wrapper defined"
+        assert self._sectormodel.model, msg
+
+        output_dict = ConfigParser(model_path).data
+        self._sectormodel.model.outputs = output_dict
+
+    def validate(self):
+        """
+        """
+        assert self._sectormodel.attributes
+        assert self._sectormodel.model
+        assert self._sectormodel.model.inputs
+        assert self._sectormodel.model.outputs
+
+    def finish(self):
+        self.validate()
+        return self._sectormodel
+
+    def _load_asset_attributes(self, attribute_path):
         """Loads an asset's attributes into a container
 
         Arguments
         =========
-        asset_name : str
-            The name of the asset for which to load attributes
+        asset_name : list
+            The list of paths to the assets for which to load attributes
 
         Returns
         =======
         dict
             A dictionary loaded from the attribute configuration file
         """
-        project_folder = self.project_folder
-        attribute_path = os.path.join(project_folder, 'models',
-                                      self.model_name, 'assets',
-                                      "{}.yaml".format(asset_name))
         attributes = ConfigParser(attribute_path).data
         return attributes
