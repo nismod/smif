@@ -34,6 +34,7 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 from abc import ABC
+from collections import namedtuple
 
 import numpy as np
 
@@ -204,6 +205,12 @@ class DecisionVariableList(InputList):
         self._parse_input_dictionary(decision_variables)
 
 
+<<<<<<< dd1fae3d39a8a58c0c05a1dabc086a28f1acbb75
+=======
+Dependency = namedtuple("Dependency", ["name", "spatial_resolution" ,"temporal_resolution", "from_model"])
+
+
+>>>>>>> inputs and outputs as InputList or OutputList
 class DependencyList(InputList):
 
     def __init__(self, dependencies):
@@ -232,15 +239,91 @@ class DependencyList(InputList):
         names = np.zeros(number_of_inputs, dtype='U30')
         spatial_resolutions = np.zeros(number_of_inputs, dtype='U30')
         temporal_resolutions = np.zeros(number_of_inputs, dtype='U30')
+        from_models = np.zeros(number_of_inputs, dtype='U30')
 
         for index, input_data in enumerate(inputs):
             names[index] = input_data['name']
             spatial_resolutions[index] = input_data['spatial_resolution']
             temporal_resolutions[index] = input_data['temporal_resolution']
+            from_models[index] = input_data['from_model']
 
         self.names = names
         self.spatial_resolutions = spatial_resolutions
         self.temporal_resolutions = temporal_resolutions
+        self.from_models = from_models
+
+    def __getitem__(self, key):
+        """Implement __getitem__ to make this class iterable
+
+        Example
+        =======
+            dependency_list = DependencyList()
+            ...
+            for dep in dependency_list:
+                # do something with each dependency
+
+        - uses Dependency (defined as a namedtuple) to wrap the data
+        - lets the np.arrays raise TypeError or IndexError for incorrect
+          or out-of-bounds accesses
+        """
+        d = Dependency(
+            self.names[key],
+            self.spatial_resolutions[key],
+            self.temporal_resolutions[key],
+            self.from_models[key]
+        )
+        return d
+
+
+class AssetList:
+    """
+
+- The set of assets (power stations etc.) should be explicitly declared
+  in a yaml file.
+- Assets are associated with sector models, not the integration configuration.
+- Assets should be stored in a sub-folder associated with the sector model
+  name.
+
+    """
+
+    def __init__(self, filepath):
+        self._asset_list = ConfigParser(filepath)
+        self._validate({
+                        "type": "array",
+                        "uniqueItems": True
+                        })
+        self._asset_attributes = None
+
+    def _validate(self, schema):
+        self._asset_list.validate(schema)
+
+    @property
+    def asset_list(self):
+        return self._asset_list.data
+
+    @property
+    def asset_attributes(self):
+        return self._asset_attributes.data
+
+    def load_attributes(self, filepath):
+        """
+        """
+        self._asset_attributes = ConfigParser(filepath)
+        schema = {
+                  "type": "array",
+                  "oneof": self.asset_list,
+                  "properties": {
+                      "cost": {
+                          "properties": {
+                              "value": {"type": "number",
+                                        "minimum": 0,
+                                        "exclusiveMinimum": True},
+                              "unit": {'type': 'string'}
+                           }
+                       }
+                    }
+                    }
+        self._validate(schema)
 
 
 class ModelInputs(object):
@@ -253,16 +336,18 @@ class ModelInputs(object):
         names, followed by nested dictionaries of input attributes
     """
     def __init__(self, inputs):
-        self._inputs = InputList()
+        if 'decision variables' not in inputs:
+            inputs['decision variables'] = []
+        if 'parameters' not in inputs:
+            inputs['parameters'] = []
+        if 'dependencies' not in inputs:
+            inputs['dependencies'] = []
 
         self._decision_variables = DecisionVariableList(
             inputs['decision variables'])
         self._parameters = ParameterList(inputs['parameters'])
+        self._dependencies = DependencyList(inputs['dependencies'])
 
-        if 'dependencies' in inputs:
-            self._dependencies = DependencyList(inputs['dependencies'])
-        else:
-            self._dependencies = DependencyList([])
 
     @property
     def parameters(self):

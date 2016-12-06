@@ -17,7 +17,7 @@ __license__ = "mit"
 logger = logging.getLogger(__name__)
 
 
-class OutputFactory(ModelElement):
+class OutputList(ModelElement):
     """Defines the types of outputs to a sector model
 
     """
@@ -33,9 +33,6 @@ class OutputFactory(ModelElement):
             return OutputList()
         else:
             raise ValueError("That output type is not defined")
-
-    def populate(self):
-        pass
 
     def get_outputs(self, results):
         """Gets a dictionary of results and returns a list of the relevant types
@@ -103,16 +100,18 @@ class OutputFactory(ModelElement):
         return results_instance
 
 
-class MetricList(OutputFactory):
+class MetricList(OutputList):
 
-    def populate(self, results):
-        self.values = results['metrics']
+    def __init__(self, results):
+        super().__init__()
+        self.values = results
 
 
-class OutputList(OutputFactory):
+class ModelOutputList(OutputList):
 
-    def populate(self, results):
-        self.values = results['results']
+    def __init__(self, results):
+        super().__init__()
+        self.values = results
 
 
 class ModelOutputs(object):
@@ -120,12 +119,14 @@ class ModelOutputs(object):
 
     """
     def __init__(self, results):
+        if 'metrics' not in results:
+            results['metrics'] = []
+        if 'model outputs' not in results:
+            results['model outputs'] = []
 
-        self._results = OutputFactory()
-        self._metrics = self._results.getelement('metrics')
-        self._metrics.populate(results)
-        self._outputs = self._results.getelement('outputs')
-        self._outputs.populate(results)
+        self._metrics = MetricList(results['metrics'])
+        self._outputs = ModelOutputList(results['model outputs'])
+
 
     @property
     def metrics(self):
@@ -146,3 +147,61 @@ class ModelOutputs(object):
         :class:`smif.outputs.OutputList`
         """
         return sorted(list(self._outputs.values.keys()))
+
+
+    ##
+    # replace_{line,cell} methods might live somewhere else
+    # - maybe sectormodel, if that deals with replacing file data?
+    # - maybe a utility file handler class?
+    # seem related to outputs for now
+    ##
+    @staticmethod
+    def replace_line(file_name, line_num, new_data):
+        """Replaces a line in a file with new data
+
+        Arguments
+        =========
+        file_name: str
+            The path to the input file
+        line_num: int
+            The number of the line to replace
+        new_data: str
+            The data to replace in the line
+
+        """
+        lines = open(file_name, 'r').readlines()
+        lines[line_num] = new_data
+        out = open(file_name, 'w')
+        out.writelines(lines)
+        out.close()
+
+    @staticmethod
+    def replace_cell(file_name, line_num, column_num, new_data,
+                     delimiter=None):
+        """Replaces a cell in a delimited file with new data
+
+        Arguments
+        =========
+        file_name: str
+            The path to the input file
+        line_num: int
+            The number of the line to replace (0-index)
+        column_num: int
+            The number of the column to replace (0-index)
+        new_data: str
+            The data to replace in the line
+        delimiter: str, default=','
+            The delimiter of the columns
+        """
+        line_num -= 1
+        column_num -= 1
+
+        with open(file_name, 'r') as input_file:
+            lines = input_file.readlines()
+
+        columns = lines[line_num].split(delimiter)
+        columns[column_num] = new_data
+        lines[line_num] = " ".join(columns) + "\n"
+
+        with open(file_name, 'w') as out_file:
+            out_file.writelines(lines)
