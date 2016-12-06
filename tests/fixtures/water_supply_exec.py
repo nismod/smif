@@ -10,7 +10,7 @@ raininess : int
 """
 
 from argparse import ArgumentParser
-from water_supply import ExampleWaterSupplySimulation
+from water_supply import ExampleWaterSupplySimulationModel
 
 
 def argparse():
@@ -23,7 +23,7 @@ def argparse():
 
 def main():
     args = argparse()
-    water_supply = ExampleWaterSupplySimulation(args.raininess)
+    water_supply = ExampleWaterSupplySimulationModel(args.raininess)
     results = water_supply.simulate()
     for key, val in results.items():
         print("{},{}".format(key, val))

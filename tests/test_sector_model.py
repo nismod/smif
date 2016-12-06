@@ -1,5 +1,5 @@
 import pytest
-from fixtures.water_supply import ExampleWaterSupplySimulationWithAsset
+from fixtures.water_supply import ExampleWaterSupplySimulationModelWithAsset as WaterMod
 from smif.abstract import ConcreteAsset as Asset
 from smif.abstract import State
 from smif.sectormodel import SectorModel
@@ -17,8 +17,7 @@ class WaterSupplyPythonAssets(SectorModel):
     def initialise(self, data, assets):
         """Initialises the model
         """
-        self.model = ExampleWaterSupplySimulationWithAsset(data['raininess'],
-                                                       data['plants'])
+        self.model = WaterMod(data['raininess'], data['plants'])
         self.results = None
         self.run_successful = None
 
@@ -60,6 +59,7 @@ class TestAssets:
         asset = Asset(name, capacity)
         state = asset.get_state()
         assert state == [{'dec asset treatment plant': 100.}]
+
         name, capacity = ('dec asset pipes', 100.)
         asset = Asset(name, capacity)
         state = asset.get_state()

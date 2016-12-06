@@ -10,7 +10,7 @@ functionality.
 
 `ExampleWaterSupplySimulation`: simulation only, no assets
 
-`ExampleWaterSupplySimulationAsset`: simulation of water with outputs also
+`ExampleWaterSupplySimulationWithAsset`: simulation of water with outputs also
 a function of assets
 
 `ExampleWaterSupplySimulationWithReservoir`: simulation with outputs a function
@@ -98,6 +98,9 @@ def two_inputs():
 
 @fixture(scope='function')
 def one_dependency():
+    """Returns a model input dictionary with a single (unlikely to be met)
+    dependency
+    """
     inputs = {
         'decision variables': [],
         'parameters': [],
@@ -152,7 +155,89 @@ def process_results(output):
     return results
 
 
-class ExampleWaterSupplySimulation(SectorModel):
+@fixture(scope='function')
+def dynamic_data():
+    """Returns a model input dictionary for the example water model with two
+    decision variables and one parameter
+    """
+    inputs = {
+        'decision variables': [
+            {
+                'name': 'new capacity',
+                'bounds': (0, 5),
+                'value': 10
+            },
+        ],
+        'parameters': [
+            {
+                'name': 'raininess',
+                'bounds': (0, 5),
+                'value': 3
+            },
+            {
+                'name': 'existing capacity',
+                'bounds': (0, 999),
+                'value': 1
+            }
+        ]
+    }
+    return inputs
+
+
+class WaterSupplySectorModel(SectorModel):
+    """Example of a class implementing the SectorModel interface,
+    using one of the toy water models below to simulate the water supply
+    system.
+    """
+
+    def simulate(self, decision_variables):
+        """
+
+        Arguments
+        =========
+        decision_variables : :class:`numpy.ndarray`
+            x_0 is new capacity of water treatment plants
+        """
+
+        # unpack inputs array
+        # static_inputs : x-by-1 :class:`numpy.ndarray`
+        #     x_0 is raininess
+        #     x_1 is existing capacity
+        raininess = self.static_inputs[0, ]
+        capacity = self.static_inputs[1, ]
+
+        # unpack decision variables
+        new_capacity = decision_variables[0, ]
+
+        # simulate (wrapping toy model)
+        instance = DynamicWaterSupplyModel(raininess,
+                                           capacity,
+                                           new_capacity)
+        results = instance.simulate()
+
+        return results
+
+    def extract_obj(self, results):
+        return results['cost']
+
+    def constraints(self, parameters):
+        """
+
+        Notes
+        =====
+        This constraint below expresses that water supply must be greater than
+        or equal to 3.  ``x[0]`` is the decision variable for water treatment
+        capacity, while the value ``parameters[0]`` in the min term is the
+        value of the raininess parameter.
+        """
+        constraints = ({'type': 'ineq',
+                        'fun': lambda x: min(x[0] + parameters[1],
+                                             parameters[0]) - 3}
+                      )
+        return constraints
+
+
+class ExampleWaterSupplySimulationModel(object):
     """An example simulation model used for testing purposes
 
     Parameters
@@ -161,10 +246,10 @@ class ExampleWaterSupplySimulation(SectorModel):
         The amount of rain produced in each simulation
     """
     def __init__(self, raininess):
-        super().__init__()
         self.raininess = raininess
         self.water = None
         self.cost = None
+        self.results = None
 
     def simulate(self):
         """Run the model
@@ -180,11 +265,8 @@ class ExampleWaterSupplySimulation(SectorModel):
             "cost": self.cost
         }
 
-    def extract_obj(self, results):
-        return 0
 
-
-class ExampleWaterSupplySimulationWithAsset(ExampleWaterSupplySimulation):
+class ExampleWaterSupplySimulationModelWithAsset(ExampleWaterSupplySimulationModel):
     """An example simulation model which includes assets
 
     Parameters
@@ -225,7 +307,7 @@ class ExampleWaterSupplySimulationWithAsset(ExampleWaterSupplySimulation):
         }
 
 
-class ExampleWaterSupplySimulationWithReservoir(ExampleWaterSupplySimulation):
+class ExampleWaterSupplySimulationModelWithReservoir(ExampleWaterSupplySimulationModel):
     """This simulation model has a state which is a non-asset variables
 
     The reservoir level is a function of the previous reservoir level,
@@ -266,39 +348,10 @@ class ExampleWaterSupplySimulationWithReservoir(ExampleWaterSupplySimulation):
         return {'water': self.water,
                 'cost': self.cost,
                 'reservoir level': self._reservoir_level
-                }
+               }
 
 
-@fixture(scope='function')
-def dynamic_data():
-    """Returns a model input dictionary for the example water model with two
-    decision variables and one parameter
-    """
-    inputs = {
-        'decision variables': [
-            {
-                'name': 'new capacity',
-                'bounds': (0, 5),
-                'value': 10
-            },
-        ],
-        'parameters': [
-            {
-                'name': 'raininess',
-                'bounds': (0, 5),
-                'value': 3
-            },
-            {
-                'name': 'existing capacity',
-                'bounds': (0, 999),
-                'value': 1
-            }
-        ]
-    }
-    return inputs
-
-
-class DynamicWaterSupplyModel(ExampleWaterSupplySimulation):
+class DynamicWaterSupplyModel(ExampleWaterSupplySimulationModel):
     """An example simulation model which includes historical assets
 
     Parameters
@@ -337,9 +390,13 @@ class DynamicWaterSupplyModel(ExampleWaterSupplySimulation):
         logger.debug("There are {} plants, {} of which are new".format(
             self.number_of_treatment_plants, self.new_capacity))
         logger.debug("It is {} rainy".format(self.raininess))
+
         water = min(self.number_of_treatment_plants, self.raininess)
+
         cost = 1.264 * self.new_capacity
+
         logger.debug("The system costs £{}".format(cost))
+
         return {
             "water": water,
             "cost": cost,

@@ -8,12 +8,9 @@
     https://pytest.org/latest/plugins.html
 """
 from __future__ import absolute_import, division, print_function
-
 import logging
-
-import yaml
-
 import pytest
+import yaml
 
 _log_format = '%(asctime)s %(name)-12s: %(levelname)-8s %(message)s'
 logging.basicConfig(filename='test_logs.log',
