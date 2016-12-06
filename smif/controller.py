@@ -125,16 +125,14 @@ class SosModel(object):
 
         if number_of_timesteps > 1:
             # Run a sequential simulation
-            mode_getter = SectorModelMode()
-            mode = mode_getter.get_mode('sequential_simulation')
+            mode = SectorModelMode.sequential_simulation
 
         elif number_of_timesteps == 0:
             raise ValueError("No timesteps have been specified")
 
         else:
             # Run a single simulation
-            mode_getter = SectorModelMode()
-            mode = mode_getter.get_mode('static_simulation')
+            mode = SectorModelMode.static_simulation
 
         return mode
 

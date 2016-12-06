@@ -7,11 +7,16 @@
 
 """
 import logging
-from abc import ABC, abstractproperty
-
 import numpy as np
+import os
+from abc import ABC, abstractproperty
+from enum import Enum
+from importlib.util import module_from_spec, spec_from_file_location
 from scipy.optimize import minimize
+
 from smif.parse_config import ConfigParser
+from smif.inputs import ModelInputs
+from smif.outputs import ModelOutputs
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -19,111 +24,16 @@ __license__ = "mit"
 
 logger = logging.getLogger(__name__)
 
-
-class SectorModelMode(ABC):
+class SectorModelMode(Enum):
     """Enumerates the operating modes of a sector model
     """
-    def __init__(self):
-        self._type = None
-
-    @abstractproperty
-    @property
-    def model_type(self):
-        return self._type
-
-    @staticmethod
-    def get_mode(sector_model_mode):
-        if sector_model_mode == "static_simulation":
-            return StaticSimulation
-        elif sector_model_mode == "sequential_simulation":
-            return SequentialSimulation
-        elif sector_model_mode == "static_optimisation":
-            return StaticOptimisation
-        elif sector_model_mode == "dynamic_optimisation":
-            return DynamicOptimisation
-
-
-class StaticSimulation(SectorModelMode):
-
-    def model_type(self):
-        return 0
-
-
-class SequentialSimulation(SectorModelMode):
-    def model_type(self):
-        return 1
-
-
-class StaticOptimisation(SectorModelMode):
-    def model_type(self):
-        return 2
-
-
-class DynamicOptimisation(SectorModelMode):
-    def model_type(self):
-        return 3
-
-
-class Assets:
-    """
-
-- The set of assets (power stations etc.) should be explicitly declared
-  in a yaml file.
-- Assets are associated with sector models, not the integration configuration.
-- Assets should be stored in a sub-folder associated with the sector model
-  name.
-
-    """
-
-    def __init__(self, filepath):
-        self._asset_list = ConfigParser(filepath)
-        self._validate({
-                        "type": "array",
-                        "uniqueItems": True
-                        })
-        self._asset_attributes = None
-
-    def _validate(self, schema):
-        self._asset_list.validate(schema)
-
-    @property
-    def asset_list(self):
-        return self._asset_list.data
-
-    @property
-    def asset_attributes(self):
-        return self._asset_attributes.data
-
-    def load_attributes(self, filepath):
-        """
-        """
-        self._asset_attributes = ConfigParser(filepath)
-        schema = {
-                  "type": "array",
-                  "oneof": self.asset_list,
-                  "properties": {
-                      "cost": {
-                          "properties": {
-                              "value": {"type": "number",
-                                        "minimum": 0,
-                                        "exclusiveMinimum": True},
-                              "unit": {'type': 'string'}
-                           }
-                       }
-                    }
-                    }
-        self._validate(schema)
-
+    static_simulation = 0
+    sequential_simulation = 1
+    static_optimisation = 2
+    dynamic_optimisation = 3
 
 class SectorModel(object):
     """A representation of the sector model with inputs and outputs
-
-    Arguments
-    =========
-    model_name : str
-        Name of the model
-    attributes : dict
-        A dictionary of asset attributes
 
     Attributes
     ==========
