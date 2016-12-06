@@ -98,6 +98,10 @@ class SoSModelReader(object):
 class SosModel(object):
     """Consists of the collection of timesteps and sector models
 
+    Sector models may be joined through dependencies
+
+    This is NISMOD - i.e. the system of system model which brings all of the
+    sector models together.
     """
     def __init__(self):
         self.model_list = {}
@@ -107,6 +111,10 @@ class SosModel(object):
     @staticmethod
     def run_sos_model():
         """Runs the system-of-system model
+
+        1. Determine running order
+        2. Run each sector model
+        3. Return success or failure
         """
         msg = "Can't run the SOS model yet"
         logger.error(msg)
@@ -197,6 +205,31 @@ class SosModel(object):
         """
         return list(self.model_list.keys())
 
+    def optimise(self):
+        """Runs a dynamic optimisation over a system-of-simulation models
+
+        Use dynamic programming with memoization where the objective function
+        :math:`Z(s)` are indexed by state :math:`s`
+        """
+        pass
+
+    def sequential_simulation(self, model, inputs, decisions):
+        results = []
+        for index in range(len(self.timesteps)):
+            # Intialise the model
+            model.inputs = inputs
+            # Update the state from the previous year
+            if index > 0:
+                state_var = 'existing capacity'
+                state_res = results[index - 1]['capacity']
+                logger.debug("Updating %s with %s", state_var, state_res)
+                model.inputs.parameters.update_value(state_var, state_res)
+
+            # Run the simulation
+            decision = decisions[index]
+            results.append(model.simulate(inputs, decision))
+        return results
+
 
 class SoSModelBuilder(object):
     """Constructs a system-of-systems model
@@ -211,18 +244,22 @@ class SoSModelBuilder(object):
         =========
         file_path: str
             The path to the timesteps file
-
-        Returns
-        =======
-        list
-            A list of timesteps
         """
         logger.info("Loading timesteps from %s", file_path)
 
         cp = ConfigParser(file_path)
         cp.validate_as_timesteps()
+        self.set_timesteps(cp.data)
 
-        self.sos_model.timesteps = cp.data
+    def set_timesteps(self, timesteps):
+        """Set the timesteps of the system-of-systems model
+
+        Arguments
+        =========
+        list
+            A list of timesteps
+        """
+        self.sos_model.timesteps = timesteps
 
     def load_planning(self, file_paths):
         """Loads the planning logic into the system of systems model
@@ -250,8 +287,8 @@ class SoSModelBuilder(object):
 
         """
         for model_name in model_list:
-            self.sos_model.model_list[model_name] = \
-                self.load_model(model_name, project_folder)
+            model = self.load_model(model_name, project_folder)
+            self.add_model(model)
 
     def load_model(self, model_name, project_folder):
         """Loads the sector model into the system-of-systems model
@@ -298,10 +335,28 @@ class SoSModelBuilder(object):
         self._check_planning_assets_exist()
         self._check_planning_timeperiods_exist()
 
+    def add_model(self, model):
+        """Adds a sector model into the system-of-systems model
+        """
+        self.sos_model.model_list[model.name] = model
+
+    def check_dependencies(self):
+        # for each model, compare dependency list of from_models
+        # against list of available models
+        models_available = self.sos_model.sector_models
+        for model_name, model in self.sos_model.model_list.items():
+            for dep in model.model.inputs.dependencies:
+                if dep.from_model not in models_available:
+                    # report missing dependency type
+                    raise AssertionError("Missing dependency: {} depends on {} from {}, which is not supplied.".format(model_name, dep.name, dep.from_model))
+
     def finish(self):
         """Returns a configured system-of-systems model ready for operation
+
+        - includes validation steps, e.g. to check dependencies
         """
         self.validate()
+        self.check_dependencies()
         return self.sos_model
 
 
@@ -417,85 +472,3 @@ class SectorConfigReader(object):
             assets.extend(ConfigParser(asset_path).data)
 
         return assets
-
-
-class SectorModelBuilder(object):
-    """Build the components that make up a sectormodel from the configuration
-
-    """
-
-    def __init__(self):
-        self._sectormodel = SectorModel()
-
-    def name_model(self, model_name):
-        self._sectormodel.name = model_name
-
-    def load_attributes(self, dict_of_assets):
-        attributes = {}
-        for asset, path in dict_of_assets.items():
-            attributes[asset] = self._load_asset_attributes(path)
-        self._sectormodel.attributes = attributes
-
-    def load_wrapper(self, model_path):
-        name = self._sectormodel.name
-        if os.path.exists(model_path):
-            logger.info("Importing run module from %s", name)
-
-            module_path = '{}.run'.format(name)
-            module_spec = spec_from_file_location(module_path, model_path)
-            module = module_from_spec(module_spec)
-            module_spec.loader.exec_module(module)
-            self._sectormodel.model = module.wrapper
-        else:
-            msg = "Cannot find {} for the {} model".format(WRAPPER_FILE_NAME,
-                                                           name)
-            raise Exception(msg)
-
-    def load_inputs(self, model_path):
-        """Input spec is located in the ``models/<sectormodel>/inputs.yaml``
-
-        """
-        msg = "No wrapper defined"
-        assert self._sectormodel.model, msg
-
-        input_dict = ConfigParser(model_path).data
-        self._sectormodel.model.inputs = input_dict
-
-    def load_outputs(self, model_path):
-        """Output spec is located in ``models/<sectormodel>/output.yaml``
-
-        """
-        msg = "No wrapper defined"
-        assert self._sectormodel.model, msg
-
-        output_dict = ConfigParser(model_path).data
-        self._sectormodel.model.outputs = output_dict
-
-    def validate(self):
-        """
-        """
-        assert self._sectormodel.attributes
-        assert self._sectormodel.model
-        assert self._sectormodel.model.inputs
-        assert self._sectormodel.model.outputs
-
-    def finish(self):
-        self.validate()
-        return self._sectormodel
-
-    @staticmethod
-    def _load_asset_attributes(attribute_path):
-        """Loads an asset's attributes into a container
-
-        Arguments
-        =========
-        asset_name : list
-            The list of paths to the assets for which to load attributes
-
-        Returns
-        =======
-        dict
-            A dictionary loaded from the attribute configuration file
-        """
-        attributes = ConfigParser(attribute_path).data
-        return attributes
