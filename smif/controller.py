@@ -102,6 +102,7 @@ class SosModel(object):
     def __init__(self):
         self.model_list = {}
         self._timesteps = []
+        self.planning = None
 
     @staticmethod
     def run_sos_model():
@@ -169,6 +170,10 @@ class SosModel(object):
         """
         return self._timesteps
 
+    @timesteps.setter
+    def timesteps(self, value):
+        self._timesteps = value
+
     @property
     def all_assets(self):
         """Returns the list of all assets across the system-of-systems model
@@ -219,7 +224,7 @@ class SoSModelBuilder(object):
         cp = ConfigParser(file_path)
         cp.validate_as_timesteps()
 
-        self.sos_model._timesteps = cp.data
+        self.sos_model.timesteps = cp.data
 
     def load_planning(self, file_paths):
         """Loads the planning logic into the system of systems model
