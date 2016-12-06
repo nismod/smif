@@ -64,6 +64,10 @@ class TestModelInputs:
         expected = np.array(['macguffins produced'], dtype='U30')
         assert_equal(actual, expected)
 
+        actual = inputs.dependencies.from_models
+        expected = np.array(['macguffins_model'], dtype='U30')
+        assert_equal(actual, expected)
+
         actual = inputs.dependencies.spatial_resolutions
         expected = np.array(['LSOA'], dtype='U30')
         assert_equal(actual, expected)
