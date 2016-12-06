@@ -7,7 +7,7 @@ class TestAssetLoad:
         attributes = {'water_asset_a': {},
                       'water_asset_b': {},
                       'water_asset_c': {}}
-        model = SectorModel('water_supply')
+        model = SectorModel()
         model.attributes = attributes
         assert model.assets == ['water_asset_a',
                                 'water_asset_b',
@@ -28,7 +28,7 @@ class TestAttributesLoad:
                                                 'unit': '£/kW'}},
              'water_asset_c': {'capital_cost': {'value': 3000,
                                                 'unit': '£/kW'}}}
-        model = SectorModel('water_supply')
+        model = SectorModel()
         model.attributes = attributes
         actual = model.attributes
         expected = \

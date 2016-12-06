@@ -131,8 +131,8 @@ class SectorModel(object):
         An instance of a wrapped simulation model
 
     """
-    def __init__(self, model_name):
-        self._model_name = model_name
+    def __init__(self):
+        self._model_name = None
         self._attributes = None
         self.model = None
         self._schema = None
@@ -153,6 +153,10 @@ class SectorModel(object):
 
         """
         return self._model_name
+
+    @name.setter
+    def name(self, value):
+        self._model_name = value
 
     @property
     def assets(self):

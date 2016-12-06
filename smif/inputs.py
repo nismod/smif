@@ -129,7 +129,7 @@ class InputList(ModelElement):
     def update_value(self, name, value):
         """Update the value of an input
 
-        (Over rides :staticmethod:`ModelElement.update_value`)
+        (Over rides `smif.inputs.ModelElement.update_value`)
 
         Arguments
         =========
