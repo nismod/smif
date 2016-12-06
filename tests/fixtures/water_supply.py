@@ -13,7 +13,7 @@ functionality.
 `ExampleWaterSupplySimulationAsset`: simulation of water with outputs also
 a function of assets
 
-`ExampleWaterSupplySimulationReservoir`: simulation with outputs a function
+`ExampleWaterSupplySimulationWithReservoir`: simulation with outputs a function
 of a reservoir level which should be persistent over years
 
 
@@ -225,7 +225,7 @@ class ExampleWaterSupplySimulationWithAsset(ExampleWaterSupplySimulation):
         }
 
 
-class ExampleWaterSupplySimulationReservoir(ExampleWaterSupplySimulation):
+class ExampleWaterSupplySimulationWithReservoir(ExampleWaterSupplySimulation):
     """This simulation model has a state which is a non-asset variables
 
     The reservoir level is a function of the previous reservoir level,

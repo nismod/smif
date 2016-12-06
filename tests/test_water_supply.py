@@ -6,7 +6,7 @@ import subprocess
 import os
 import sys
 from fixtures.water_supply import (ExampleWaterSupplySimulation,
-                                   ExampleWaterSupplySimulationReservoir,
+                                   ExampleWaterSupplySimulationWithReservoir,
                                    process_results, raininess_oracle)
 from smif.sectormodel import SectorModel
 from pytest import raises
@@ -15,7 +15,7 @@ from pytest import raises
 def test_water_supply_with_reservoir():
     raininess = 1
     reservoir_level = 2
-    model = ExampleWaterSupplySimulationReservoir(raininess, reservoir_level)
+    model = ExampleWaterSupplySimulationWithReservoir(raininess, reservoir_level)
 
     assert issubclass(model.__class__, SectorModel)
 
@@ -28,7 +28,7 @@ def test_water_supply_with_reservoir_negative_level():
     raininess = 1
     reservoir_level = -2
     with raises(ValueError, message="Reservoir level cannot be negative"):
-        ExampleWaterSupplySimulationReservoir(raininess, reservoir_level)
+        ExampleWaterSupplySimulationWithReservoir(raininess, reservoir_level)
 
 
 def test_process_results():
