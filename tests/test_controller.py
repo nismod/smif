@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from unittest.mock import MagicMock
 
 from pytest import raises
@@ -6,6 +7,7 @@ from smif.controller import (Controller, SectorConfigReader,
                              SoSModelReader)
 from smif.inputs import ModelInputs
 from smif.sectormodel import SectorModel
+from fixtures.water_supply import one_dependency, one_input, ExampleWaterSupplySimulation
 
 
 class TestController():
@@ -127,6 +129,32 @@ class TestBuildSosModel():
         assert sos_model.sector_models == ['water_supply']
         assert sos_model.all_assets == ['water_asset_a', 'water_asset_b',
                                         'water_asset_c']
+
+    def test_build_api(self, one_input):
+        builder = SoSModelBuilder()
+        builder.set_timesteps([2010, 2011, 2012])
+
+        ws = ExampleWaterSupplySimulation()
+        ws.inputs = one_input
+        builder.add_model(ws)
+
+        sos_model = builder.finish()
+        assert isinstance(sos_model, SosModel)
+
+        assert sos_model.timesteps == [2010, 2011, 2012]
+        assert sos_model.sector_models == ['water_supply']
+
+    def test_build_valid_dependencies(self, one_dependency):
+        builder = SoSModelBuilder()
+        builder.set_timesteps([2010])
+
+        ws = ExampleWaterSupplySimulation()
+        ws.inputs = one_dependency
+        builder.add_model(ws)
+
+        with raises(AssertionError) as e:
+            builder.finish()
+            assert e.msg == ""
 
 
 class TestBuildSectorModel():
