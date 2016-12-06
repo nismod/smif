@@ -8,6 +8,7 @@ import sys
 from fixtures.water_supply import (ExampleWaterSupplySimulation,
                                    ExampleWaterSupplySimulationReservoir,
                                    process_results, raininess_oracle)
+from smif.sectormodel import SectorModel
 from pytest import raises
 
 
@@ -15,6 +16,9 @@ def test_water_supply_with_reservoir():
     raininess = 1
     reservoir_level = 2
     model = ExampleWaterSupplySimulationReservoir(raininess, reservoir_level)
+
+    assert issubclass(model.__class__, SectorModel)
+
     actual = model.simulate()
     expected = {'cost': 1.2, 'water': 3, 'reservoir level': 2}
     assert actual == expected

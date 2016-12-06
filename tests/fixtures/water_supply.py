@@ -33,7 +33,7 @@ Around each of the above simulation models, subclassed wrappers based on
 
 import logging
 import math
-
+from smif.sectormodel import SectorModel
 from pytest import fixture
 
 __author__ = "Will Usher"
@@ -152,7 +152,7 @@ def process_results(output):
     return results
 
 
-class ExampleWaterSupplySimulation:
+class ExampleWaterSupplySimulation(SectorModel):
     """An example simulation model used for testing purposes
 
     Parameters
@@ -161,6 +161,7 @@ class ExampleWaterSupplySimulation:
         The amount of rain produced in each simulation
     """
     def __init__(self, raininess):
+        super().__init__()
         self.raininess = raininess
         self.water = None
         self.cost = None
@@ -179,8 +180,11 @@ class ExampleWaterSupplySimulation:
             "cost": self.cost
         }
 
+    def extract_obj(self, results):
+        return 0
 
-class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
+
+class ExampleWaterSupplySimulationWithAsset(ExampleWaterSupplySimulation):
     """An example simulation model which includes assets
 
     Parameters
