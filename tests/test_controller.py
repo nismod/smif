@@ -71,11 +71,6 @@ class TestRunModel():
     def test_run_sector_model(self, setup_project_folder):
         cont = Controller(str(setup_project_folder))
 
-        # Monkey patching inputs as run.py fixture cannot access smif.inputs
-        inputs = cont.model.model_list['water_supply'].model.inputs
-        model_inputs = ModelInputs(inputs)
-        cont.model.model_list['water_supply'].model.inputs = model_inputs
-
         cont.model.run_sector_model('water_supply')
 
     def test_invalid_sector_model(self, setup_project_folder):
@@ -100,9 +95,11 @@ class TestBuildSosModel():
         name, args, _ = reader.builder.mock_calls[0]
         assert name == 'load_timesteps'
         assert args[0] == str(timesteps_config)
+
         name, args, _ = reader.builder.mock_calls[1]
         assert name == 'load_models'
         assert args == (['water_supply'], str(project_path))
+
         name, args, _ = reader.builder.mock_calls[2]
         assert name == 'load_planning'
 
@@ -187,13 +184,16 @@ class TestBuildSectorModel():
 
         assert model.assets == ['water_asset_a']
 
-        ext_attr = {'water_asset_a': {'capital_cost': {'unit': '£/kW',
-                                                       'value': 1000
-                                                       },
-                                      'economic_lifetime': 25,
-                                      'operational_lifetime': 25
-                                      }
-                    }
+        ext_attr = {
+            'water_asset_a': {
+                'capital_cost': {
+                    'unit': '£/kW',
+                    'value': 1000
+                    },
+                'economic_lifetime': 25,
+                'operational_lifetime': 25
+            }
+        }
 
         assert model.attributes == ext_attr
 
@@ -208,6 +208,7 @@ class TestBuildSectorModel():
         reader.construct()
 
         name, args, _ = reader.builder.mock_calls[0]
+        # TODO check calls
 
 
 class TestSoSBuilderValidation():
