@@ -227,7 +227,7 @@ class SosModel(object):
 
             # Run the simulation
             decision = decisions[index]
-            results.append(model.simulate(inputs, decision))
+            results.append(model.simulate(decision))
         return results
 
 

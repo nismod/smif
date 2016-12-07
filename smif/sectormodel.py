@@ -68,7 +68,6 @@ class SectorModel(ABC):
         configuration is expected to be found
 
         """
-        # TODO allow model name to be set independently of directory?
         return self._model_name
 
     @name.setter
@@ -183,7 +182,7 @@ class SectorModel(ABC):
             A set of optimised simulation results
 
         """
-        assert self.inputs, "Inputs to the model not yet specified"
+        assert len(self.inputs) > 0, "Inputs to the model not yet specified"
 
         v_names = self.inputs.decision_variables.names
         v_initial = self.inputs.decision_variables.values
@@ -269,10 +268,8 @@ class SectorModel(ABC):
             if index > 0:
                 state_var = 'existing capacity'
                 state_res = results[index - 1]['capacity']
-                logger.debug("Updating {} with {}".format(state_var,
-                                                          state_res))
-                self.inputs.parameters.update_value(state_var,
-                                                          state_res)
+                logger.debug("Updating %s with %s", state_var, state_res)
+                self.inputs.parameters.update_value(state_var, state_res)
 
             # Run the simulation
             decision = decisions[:, index]

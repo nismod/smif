@@ -15,7 +15,7 @@ The optimisation features requires:
 """
 import numpy as np
 import pytest
-from fixtures.water_supply import WaterSupplySectorModel as WaterMod
+from fixtures.water_supply import WaterSupplySectorModel, DynamicWaterSupplySectorModel
 from fixtures.water_supply import dynamic_data, one_input
 from numpy.testing import assert_allclose
 from smif.sectormodel import SectorModel
@@ -25,7 +25,7 @@ from smif.controller import SosModel
 class TestWaterModelOptimisation:
 
     def test_water_model_optimisation(self, one_input):
-        model = WaterMod()
+        model = WaterSupplySectorModel()
         model.inputs = one_input
         model.attributes = {}
 
@@ -41,7 +41,7 @@ class TestWaterModelOptimisation:
     def test_optimisation_fail_no_input(self, one_input):
         """Raise an error if no inputs are specified
         """
-        model = WaterMod()
+        model = WaterSupplySectorModel()
         model.attributes = {}
 
         with pytest.raises(AssertionError):
@@ -59,7 +59,7 @@ class TestMultiYearOptimisation:
     """
 
     def test_dynamic_water_model_one_off(self, dynamic_data):
-        model = WaterMod()
+        model = DynamicWaterSupplySectorModel()
         model.attributes = {}
         model.inputs = dynamic_data
         actual_value = model.optimise()
@@ -73,7 +73,7 @@ class TestMultiYearOptimisation:
             assert_allclose(actual_value[key], expected_value[key])
 
     def test_dynamic_water_model_two_off(self, dynamic_data):
-        model = WaterMod()
+        model = DynamicWaterSupplySectorModel()
         model.attributes = {}
         model.inputs = dynamic_data
 
@@ -82,7 +82,7 @@ class TestMultiYearOptimisation:
         # Updates model state (existing capacity) with total capacity from
         # previous iteration
         model.inputs.parameters.update_value('existing capacity',
-                                                   first_results['capacity'])
+                                             first_results['capacity'])
         second_results = model.optimise()
 
         expected_value = {'water': np.array([3.], dtype=float),
@@ -97,7 +97,7 @@ class TestMultiYearOptimisation:
 
     def test_sequential_simulation(self, dynamic_data):
         # Instantiate a sector model
-        model = WaterMod()
+        model = DynamicWaterSupplySectorModel()
         model.attributes = {}
 
         # Instantiate a system-of-system instance
@@ -124,13 +124,12 @@ class TestMultiYearOptimisation:
     @pytest.mark.skip(reason="should SectorModel be able to run sequential simulation?")
     def test_sequential_simulation_scipy(self, dynamic_data):
         # Instantiate a sector model
-        model = WaterMod()
+        model = DynamicWaterSupplySectorModel()
         model.attributes = {}
         model.inputs = dynamic_data
         timesteps = [2010, 2015, 2020]
         decisions = np.array([[5, 0, 0]], dtype=float)
-        results = model.sequential_simulation(timesteps,
-                                                    decisions)
+        results = model.sequential_simulation(timesteps, decisions)
         expected = [{'capacity': 5.0, 'cost': 6.32, 'water': 3.0},
                     {'capacity': 5.0, 'cost': 0.0, 'water': 3.0},
                     {'capacity': 5.0, 'cost': 0.0, 'water': 3.0}]
@@ -139,7 +138,7 @@ class TestMultiYearOptimisation:
     @pytest.mark.skip(reason="should SectorModel be able to run sequential simulation?")
     def test_sequential_optimisation_tr(self, dynamic_data):
         # Instantiate a sector model
-        model = WaterMod()
+        model = DynamicWaterSupplySectorModel()
         model.attributes = {}
         model.inputs = dynamic_data
         timesteps = [2010, 2015, 2020]

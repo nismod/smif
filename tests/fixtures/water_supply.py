@@ -199,12 +199,55 @@ class WaterSupplySectorModel(SectorModel):
             x_0 is new capacity of water treatment plants
         """
 
-        # unpack inputs array
-        # static_inputs : x-by-1 :class:`numpy.ndarray`
-        #     x_0 is raininess
-        #     x_1 is existing capacity
-        raininess = self.static_inputs[0, ]
-        capacity = self.static_inputs[1, ]
+        # unpack inputs
+        raininess = self.inputs.parameters['raininess']['value']
+
+        # unpack decision variables
+        number_of_treatment_plants = decision_variables[0, ]
+
+        # simulate (wrapping toy model)
+        instance = ExampleWaterSupplySimulationModelWithAsset(raininess, number_of_treatment_plants)
+        results = instance.simulate()
+
+        return results
+
+    def extract_obj(self, results):
+        return results['cost']
+
+    def constraints(self, parameters):
+        """
+
+        Notes
+        =====
+        This constraint below expresses that water supply must be greater than
+        or equal to 3.  ``x[0]`` is the decision variable for water treatment
+        capacity, while the value ``parameters[0]`` in the min term is the
+        value of the raininess parameter.
+        """
+        constraints = ({'type': 'ineq',
+                        'fun': lambda x: min(x[0], parameters[0]) - 3}
+                      )
+        return constraints
+
+
+class DynamicWaterSupplySectorModel(SectorModel):
+    """Example of a class implementing the SectorModel interface,
+    using one of the toy water models below to simulate the water supply
+    system.
+    """
+
+    def simulate(self, decision_variables):
+        """
+
+        Arguments
+        =========
+        decision_variables : :class:`numpy.ndarray`
+            x_0 is new capacity of water treatment plants
+        """
+
+        # unpack inputs
+        raininess = self.inputs.parameters['raininess']['value']
+        capacity = self.inputs.parameters['existing capacity']['value']
 
         # unpack decision variables
         new_capacity = decision_variables[0, ]

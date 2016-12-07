@@ -79,8 +79,8 @@ class ModelElement(ABC):
         name : str
             The name of the decision variable
         """
-        assert name in self.names, \
-            "That name is not in the list of input names"
+        if name not in self.names:
+            raise IndexError("That name is not in the list of input names")
         return self.indices[name]
 
     @property
@@ -134,6 +134,7 @@ class InputList(ModelElement):
         super().__init__()
         self.bounds = []
 
+
     def update_value(self, name, value):
         """Update the value of an input
 
@@ -177,18 +178,25 @@ class InputList(ModelElement):
 
         number_of_inputs = len(inputs)
 
-        values = np.zeros(number_of_inputs, dtype=np.float)
-        bounds = np.zeros(number_of_inputs, dtype=(np.float, 2))
-        names = np.zeros(number_of_inputs, dtype='U30')
+        self.values = np.zeros(number_of_inputs, dtype=np.float)
+        self.bounds = np.zeros(number_of_inputs, dtype=(np.float, 2))
+        self.names = np.zeros(number_of_inputs, dtype='U30')
 
         for index, input_data in enumerate(inputs):
-            values[index] = input_data['value']
-            bounds[index] = input_data['bounds']
-            names[index] = input_data['name']
+            self.values[index] = input_data['value']
+            self.bounds[index] = input_data['bounds']
+            self.names[index] = input_data['name']
 
-        self.names = names
-        self.values = values
-        self.bounds = bounds
+    def __getitem__(self, key):
+        index = self._get_index(key)
+        return {
+            "name": self.names[index],
+            "bounds": self.bounds[index],
+            "value": self.values[index]
+        }
+
+    def __len__(self):
+        return len(self.names)
 
 
 class ParameterList(InputList):
@@ -289,9 +297,9 @@ class AssetList:
     def __init__(self, filepath):
         self._asset_list = ConfigParser(filepath)
         self._validate({
-                        "type": "array",
-                        "uniqueItems": True
-                        })
+            "type": "array",
+            "uniqueItems": True
+        })
         self._asset_attributes = None
 
     def _validate(self, schema):
@@ -378,3 +386,6 @@ class ModelInputs(object):
         :class:`smif.inputs.DependencyList`
         """
         return self._dependencies
+
+    def __len__(self):
+        return len(self.parameters) + len(self.decision_variables) + len(self.dependencies)
