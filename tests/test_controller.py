@@ -7,7 +7,7 @@ from smif.controller import (Controller, SectorConfigReader,
                              SoSModelReader)
 from smif.inputs import ModelInputs
 from smif.sectormodel import SectorModel, SectorModelBuilder
-from fixtures.water_supply import one_dependency, one_input, ExampleWaterSupplySimulationModel
+from fixtures.water_supply import one_dependency, one_input, WaterSupplySectorModel
 
 
 class TestController():
@@ -131,7 +131,7 @@ class TestBuildSosModel():
         builder = SoSModelBuilder()
         builder.set_timesteps([2010, 2011, 2012])
 
-        ws = ExampleWaterSupplySimulation()
+        ws = WaterSupplySectorModel()
         ws.inputs = one_input
         builder.add_model(ws)
 
@@ -145,7 +145,7 @@ class TestBuildSosModel():
         builder = SoSModelBuilder()
         builder.set_timesteps([2010])
 
-        ws = ExampleWaterSupplySimulation()
+        ws = WaterSupplySectorModel()
         ws.inputs = one_dependency
         builder.add_model(ws)
 
