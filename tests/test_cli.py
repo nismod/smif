@@ -39,7 +39,7 @@ def test_run_sector_model():
     """Run a sector model in the list
     """
     parser = parse_arguments()
-    commands = ['run', 'water_supply']
+    commands = ['run', '--model', 'water_supply']
     args = parser.parse_args(commands)
     expected = 'water_supply'
     actual = args.model
@@ -52,7 +52,7 @@ def test_dont_run_invalid_sector_model(setup_folder_structure,
     """
     model_name = 'invalid_model_name'
     parser = parse_arguments()
-    commands = ['run', model_name, '--path', str(setup_folder_structure)]
+    commands = ['run', '-m', model_name, '--path', str(setup_folder_structure)]
     args = parser.parse_args(commands)
     assert args.model == model_name
     assert args.path == str(setup_folder_structure)

@@ -8,12 +8,11 @@ This command line interface implements a number of methods.
 - `validate` performs a validation check of the configuration file
 
 """
+from __future__ import print_function
 import logging
 import os
 import sys
 from argparse import ArgumentParser
-
-import jsonschema
 
 from smif.controller import Controller
 from smif.parse_config import ConfigParser
@@ -29,6 +28,7 @@ logging.basicConfig(filename='cli.log',
                     level=logging.DEBUG,
                     format=_log_format,
                     filemode='a')
+logger.addHandler(logging.StreamHandler())
 
 
 def setup_project_folder(project_path):
@@ -96,15 +96,13 @@ def validate_config(args):
     config_path = os.path.join(project_path, 'config', 'model.yaml')
     try:
         model_config = ConfigParser(config_path)
-    except os.FileNotFoundError:
-        raise os.FileNotFoundError("The model configuration file "
-                                   "does not exist")
+    except FileNotFoundError as e:
+        logger.error("The model configuration file 'model.yaml' was not found")
     else:
         try:
             model_config.validate_as_modelrun_config()
-        except jsonschema.exceptions.ValidationError as e:
-            logger.error("The model configuration is invalid")
-            print("{}".format(e))
+        except ValueError as e:
+            logger.error("The model configuration is invalid: {} in config/model.yaml".format(e))
         else:
             logger.info("The model configuration is valid")
 
@@ -143,8 +141,8 @@ def parse_arguments():
     # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
-    parser_run.add_argument('model',
-                            type=str,
+    parser_run.add_argument('-m', '--model',
+                            default='all',
                             help='The name of the model to run')
     parser_run.set_defaults(func=run_model)
     parser_run.add_argument('--path',
