@@ -1,3 +1,6 @@
+"""Test command line interface
+"""
+
 import os
 from tempfile import TemporaryDirectory
 from smif.cli import parse_arguments, setup_project_folder

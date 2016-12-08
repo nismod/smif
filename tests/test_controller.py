@@ -2,9 +2,7 @@
 from unittest.mock import MagicMock
 
 from pytest import raises
-from smif.controller import (Controller, SectorConfigReader,
-                             SosModel, SoSModelBuilder,
-                             SoSModelReader)
+from smif.controller import Controller, SosModel, SosModelBuilder
 from smif.inputs import ModelInputs
 from smif.sectormodel import SectorModel, SectorModelBuilder
 from fixtures.water_supply import one_dependency, one_input, WaterSupplySectorModel

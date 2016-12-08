@@ -7,6 +7,30 @@ This command line interface implements a number of methods.
         system of systems model
 - `validate` performs a validation check of the configuration file
 
+Folder structure
+----------------
+
+When configuring a system-of-systems model for the CLI, the folder structure
+below should be used.  In this example, there is one sector model, called
+``water_supply``::
+
+    /main_config.yaml
+    /timesteps.yaml
+    /water_supply.yaml
+    /data/all/inputs.yaml
+    /data/water_supply/
+    /data/water_supply/inputs.yaml
+    /data/water_supply/outputs.yaml
+    /data/water_supply/assets/assets1.yaml
+    /data/water_supply/planning/
+    /data/water_supply/planning/pre-specified.yaml
+
+The ``data`` folder contains one subfolder for each sector model.
+
+The sector model implementations can be installed independently of the model
+run configuration. The main_config.yaml file specifies which sector models
+should run, while each set of sector model config
+
 """
 from __future__ import print_function
 import logging
@@ -15,20 +39,21 @@ import sys
 from argparse import ArgumentParser
 
 from smif.controller import Controller
-from smif.parse_config import ConfigParser
+from . parse_config import ConfigParser
+from . parse_model_config import SosModelReader
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
-_log_format = '%(asctime)s %(name)-12s: %(levelname)-8s %(message)s'
 logging.basicConfig(filename='cli.log',
                     level=logging.DEBUG,
-                    format=_log_format,
+                    format='%(asctime)s %(name)-12s: %(levelname)-8s %(message)s',
                     filemode='a')
-logger.addHandler(logging.StreamHandler())
+
+LOGGER.addHandler(logging.StreamHandler())
 
 
 def setup_project_folder(project_path):
@@ -40,7 +65,7 @@ def setup_project_folder(project_path):
         Absolute path to an empty folder
 
     """
-    folder_list = ['config', 'planning', 'models']
+    folder_list = ['planning', 'models']
     for folder in folder_list:
         folder_path = os.path.join(project_path, folder)
         if os.path.exists(folder_path):
@@ -48,7 +73,7 @@ def setup_project_folder(project_path):
         else:
             msg = "Creating {} folder in {}".format(folder, project_path)
             os.mkdir(folder_path)
-        logger.info(msg)
+        LOGGER.info(msg)
 
 
 def setup_configuration(args):
@@ -64,23 +89,23 @@ def setup_configuration(args):
         setup_project_folder(project_path)
     else:
         msg = "Setup cancelled."
-    logger.info(msg)
+    LOGGER.info(msg)
 
 
 def run_model(args):
     """Runs the model specified in the args.model argument
 
     """
-    controller = Controller(args.path)
-    sos_model = controller.model
+    model_config = validate_config(args)
+    controller = Controller(model_config)
 
     if args.model == 'all':
-        logger.info("Running the system of systems model")
-        sos_model.run_sos_model()
+        LOGGER.info("Running the system of systems model")
+        controller.run_sos_model()
     else:
-        logger.info("Running the {} sector model".format(args.model))
+        LOGGER.info("Running the %s sector model", args.model)
         model_name = args.model
-        sos_model.run_sector_model(model_name)
+        controller.run_sector_model(model_name)
 
 
 def validate_config(args):
@@ -92,23 +117,26 @@ def validate_config(args):
         Parser arguments
 
     """
-    project_path = os.path.abspath(args.path)
-    config_path = os.path.join(project_path, 'config', 'model.yaml')
-    try:
-        model_config = ConfigParser(config_path)
-    except FileNotFoundError as e:
-        logger.error("The model configuration file 'model.yaml' was not found")
+    config_path = os.path.abspath(args.path)
+
+    if not os.path.exists(config_path):
+        LOGGER.error("The model configuration file '%s' was not found", config_path)
+        exit(-1)
     else:
         try:
-            model_config.validate_as_modelrun_config()
-        except ValueError as e:
-            logger.error("The model configuration is invalid: {} in config/model.yaml".format(e))
+            model_config = SosModelReader(config_path)
+            # TODO check each sector model
+            print(model_config)
+        except ValueError as error:
+            LOGGER.error("The model configuration is invalid: %s", error)
         else:
-            logger.info("The model configuration is valid")
+            LOGGER.info("The model configuration is valid")
+
+        return model_config
 
 
 def parse_arguments():
-    """
+    """Parse command line arguments
 
     Returns
     =======
@@ -207,6 +235,8 @@ def confirm(prompt=None, response=False):
 
 
 def main(arguments=None):
+    """Parse args and run
+    """
     parser = parse_arguments()
     args = parser.parse_args(arguments)
     if 'func' in args:

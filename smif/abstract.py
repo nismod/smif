@@ -12,7 +12,7 @@ __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 class Decision(ABC):
     """A decision denotes an Asset target, and bounds for the current Interface
@@ -269,7 +269,7 @@ class State(AbstractState):
     def _update_asset_capacities(self):
         """Pushes the changes to the simulation model
         """
-        logger.info("Updating state variable for {}".format(self.sector_model))
+        LOGGER.info("Updating state variable for {}".format(self.sector_model))
         for name, asset in self._assets.items():
             self._add_capacity_to_asset(asset)
             self._remove_capacity_of_asset(asset)

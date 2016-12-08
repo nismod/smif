@@ -10,15 +10,13 @@ import logging
 import os
 import sys
 
-from abc import ABC, abstractproperty, abstractmethod
-from glob import glob
+from abc import ABC, abstractmethod
 from enum import Enum
 from importlib import import_module
 
 import numpy as np
 from scipy.optimize import minimize
 
-from smif.parse_config import ConfigParser
 from smif.inputs import ModelInputs
 from smif.outputs import ModelOutputs
 
@@ -26,7 +24,7 @@ __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 class SectorModelMode(Enum):
     """Enumerates the operating modes of a sector model
@@ -47,7 +45,7 @@ class SectorModel(ABC):
     """
     def __init__(self):
         self._model_name = None
-        self._attributes = {}
+        self._assets = {}
         self._schema = None
 
         self._inputs = ModelInputs({})
@@ -134,7 +132,7 @@ class SectorModel(ABC):
         self._outputs = ModelOutputs(value)
 
     @property
-    def assets(self):
+    def asset_names(self):
         """The names of the assets
 
         Returns
@@ -142,22 +140,22 @@ class SectorModel(ABC):
         list
             A list of the names of the assets
         """
-        return sorted([asset for asset in self._attributes.keys()])
+        return self._assets.keys()
 
     @property
-    def attributes(self):
-        """The collection of asset attributes
+    def assets(self):
+        """The collection of assets, with all attributes
 
         Returns
         =======
         dict
             The collection of asset attributes
         """
-        return self._attributes
+        return self._assets
 
-    @attributes.setter
-    def attributes(self, value):
-        self._attributes = value
+    @assets.setter
+    def assets(self, value):
+        self._assets = value
 
 
     def constraints(self, parameters):
@@ -210,13 +208,13 @@ class SectorModel(ABC):
         results = self.simulate(res.x)
 
         if res.success:
-            logger.debug("Solver exited successfully with obj: %s", res.fun)
-            logger.debug("and with solution: %s", res.x)
-            logger.debug("and bounds: %s", v_bounds)
-            logger.debug("from initial values: %s", v_initial)
-            logger.debug("for variables: %s", v_names)
+            LOGGER.debug("Solver exited successfully with obj: %s", res.fun)
+            LOGGER.debug("and with solution: %s", res.x)
+            LOGGER.debug("and bounds: %s", v_bounds)
+            LOGGER.debug("from initial values: %s", v_initial)
+            LOGGER.debug("for variables: %s", v_names)
         else:
-            logger.debug("Solver failed")
+            LOGGER.debug("Solver failed")
 
         return results
 
@@ -267,15 +265,16 @@ class SectorModel(ABC):
 
         """
         assert self.inputs, "Inputs to the model not yet specified"
-        self.model.parameters.update_value('existing capacity', 0)
+        self.inputs.parameters.update_value('existing capacity', 0)
 
         results = []
         for index in range(len(timesteps)):
             # Update the state from the previous year
             if index > 0:
+                # TODO move this to water_supply implementation
                 state_var = 'existing capacity'
                 state_res = results[index - 1]['capacity']
-                logger.debug("Updating %s with %s", state_var, state_res)
+                LOGGER.debug("Updating %s with %s", state_var, state_res)
                 self.inputs.parameters.update_value(state_var, state_res)
 
             # Run the simulation
@@ -286,21 +285,20 @@ class SectorModel(ABC):
     def _optimise_over_timesteps(self, decisions):
         """
         """
-        self.model.inputs.parameters.update_value('raininess', 3)
+        self.inputs.parameters.update_value('raininess', 3)
         self.inputs.parameters.update_value('existing capacity', 0)
         assert decisions.shape == (3,)
         results = []
         years = [2010, 2015, 2020]
         for index in range(3):
-            logger.debug("Running simulation for year {}".format(years[index]))
+            LOGGER.debug("Running simulation for year %s", years[index])
             # Update the state from the previous year
             if index > 0:
+                # TODO move this to water_supply implementation
                 state_var = 'existing capacity'
                 state_res = results[index - 1]['capacity']
-                logger.debug("Updating {} with {}".format(state_var,
-                                                          state_res))
-                self.inputs.parameters.update_value(state_var,
-                                                          state_res)
+                LOGGER.debug("Updating %s with %s", state_var, state_res)
+                self.inputs.parameters.update_value(state_var, state_res)
             # Run the simulation
             decision = np.array([decisions[index], ])
             assert decision.shape == (1, )
@@ -310,7 +308,7 @@ class SectorModel(ABC):
     def seq_opt_obj(self, decisions):
         assert decisions.shape == (3,)
         results = self._optimise_over_timesteps(decisions)
-        logger.debug("Decisions: {}".format(decisions))
+        LOGGER.debug("Decisions: {}".format(decisions))
         return self.get_objective(results, discount_rate=0.05)
 
     @staticmethod
@@ -318,7 +316,7 @@ class SectorModel(ABC):
         discount_factor = [(1 - discount_rate)**n for n in range(0, 15, 5)]
         costs = sum([x['cost']
                      * discount_factor[ix] for ix, x in enumerate(results)])
-        logger.debug("Objective function: £{:2}".format(float(costs)))
+        LOGGER.debug("Objective function: £%.2f", float(costs))
         return costs
 
     def sequential_optimisation(self, timesteps):
@@ -333,11 +331,12 @@ class SectorModel(ABC):
 
         t_v_initial = np.tile(v_initial, (1, number_of_steps))
         t_v_bounds = np.tile(v_bounds, (number_of_steps, 1))
-        logger.debug("Flat bounds: {}".format(v_bounds))
-        logger.debug("Tiled Bounds: {}".format(t_v_bounds))
-        logger.debug("Flat Bounds: {}".format(t_v_bounds.flatten()))
-        logger.debug("DecVar: {}".format(t_v_initial))
+        LOGGER.debug("Flat bounds: %s", v_bounds)
+        LOGGER.debug("Tiled Bounds: %s", t_v_bounds)
+        LOGGER.debug("Flat Bounds: %s", t_v_bounds.flatten())
+        LOGGER.debug("DecVar: %s", t_v_initial)
 
+        # TODO move this to water_supply implementation
         annual_rainfall = 5
         demand = [3, 4, 5]
 
@@ -358,19 +357,18 @@ class SectorModel(ABC):
                        method='SLSQP',
                        bounds=t_v_bounds,
                        constraints=cons
-                       )
+                      )
 
         results = self.sequential_simulation(timesteps, np.array([res.x]))
 
         if res.success:
-            logger.debug("Solver exited successfully with obj: {}".format(
-                res.fun))
-            logger.debug("and with solution: {}".format(res.x))
-            logger.debug("and bounds: {}".format(v_bounds))
-            logger.debug("from initial values: {}".format(v_initial))
-            logger.debug("for variables: {}".format(v_names))
+            LOGGER.debug("Solver exited successfully with obj: %s", res.fun)
+            LOGGER.debug("and with solution: %s", res.x)
+            LOGGER.debug("and bounds: %s", v_bounds)
+            LOGGER.debug("from initial values: %s", v_initial)
+            LOGGER.debug("for variables: %s", v_names)
         else:
-            logger.debug("Solver failed")
+            LOGGER.debug("Solver failed")
 
         return results
 
@@ -382,154 +380,60 @@ class SectorModelBuilder(object):
 
     def __init__(self, module_name):
         self.module_name = module_name
+        self._sectormodel = None
 
-    def load_attributes(self, dict_of_assets):
-        attributes = {}
-        for asset, path in dict_of_assets.items():
-            attributes[asset] = self._load_asset_attributes(path)
-        self._sectormodel.attributes = attributes
-
-    def load_model(self, model_path):
+    def load_model(self, model_path, classname):
         """Dynamically load model module
+
         """
-        name = self.module_name
-
         if os.path.exists(model_path):
-            logger.info("Importing run module from %s", model_path)
+            LOGGER.info("Importing run module from %s", model_path)
 
-            model_dirname = os.path.dirname(model_path)
+            model_dirname, model_filename = os.path.split(model_path)
             sys.path.append(model_dirname)
 
-            # module_path = '{}.run'.format(name)
-            module = import_module(name)
+            module = import_module(model_filename)
+            klass = module.__dict__[classname]
 
-            self._sectormodel = module.model
+            self._sectormodel = klass()
             self._sectormodel.name = self.module_name
 
         else:
-            msg = "Cannot find {} for the {} model".format(model_path, name)
+            msg = "Cannot find {} for the {} model".format(model_path, self.module_name)
             raise Exception(msg)
 
-    def load_inputs(self, model_path):
-        """Input spec is located in the ``models/<sectormodel>/inputs.yaml``
-
+    def add_inputs(self, input_dict):
+        """Add inputs to the sector model
         """
-        msg = "No wrapper defined"
-        assert self._sectormodel, msg
+        msg = "Sector model must be loaded before adding inputs"
+        assert self._sectormodel is not None, msg
 
-        input_dict = ConfigParser(model_path).data
         self._sectormodel.inputs = input_dict
 
-    def load_outputs(self, model_path):
-        """Output spec is located in ``models/<sectormodel>/output.yaml``
-
+    def add_outputs(self, output_dict):
+        """Add outputs to the sector model
         """
-        msg = "No wrapper defined"
-        assert self._sectormodel, msg
+        msg = "Sector model must be loaded before adding outputs"
+        assert self._sectormodel is not None, msg
 
-        output_dict = ConfigParser(model_path).data
         self._sectormodel.outputs = output_dict
 
+    def add_assets(self, dict_of_assets):
+        """Add assets to the sector model
+        """
+        msg = "Sector model must be loaded before adding assets"
+        assert self._sectormodel is not None, msg
+
+        self._sectormodel.attributes = dict_of_assets
+
     def validate(self):
+        """Check and/or assert that the sector model is correctly set up
         """
-        """
-        assert self._sectormodel
+        assert self._sectormodel is not None
         self._sectormodel.validate()
 
     def finish(self):
+        """Validate and return the sector model
+        """
         self.validate()
         return self._sectormodel
-
-    def _load_asset_attributes(self, attribute_path):
-        """Loads an asset's attributes into a container
-
-        Arguments
-        =========
-        asset_name : list
-            The list of paths to the assets for which to load attributes
-
-        Returns
-        =======
-        dict
-            A dictionary loaded from the attribute configuration file
-        """
-        attributes = ConfigParser(attribute_path).data
-        return attributes
-
-
-class SectorConfigReader(object):
-    """Parses the ``models/<sector_model>`` folder for a configuration file
-
-    Assign the builder instance to the ``builder`` attribute before running the
-    ``construct`` method.
-
-    Arguments
-    =========
-    model_name : str
-        The name of the model
-    model_path : str
-        The path to the module that contains the implementation of SectorModel
-    project_folder : str
-        The root path of the project
-
-    """
-    def __init__(self, model_name, project_folder):
-        self.model_name = model_name
-        self.project_folder = project_folder
-        self.elements = self.parse_sector_model_config()
-        self.builder = None
-
-    def construct(self):
-        """Constructs the sector model object from the configuration
-
-        """
-        self.builder.load_model(self.elements['model_path'])
-        self.builder.load_inputs(self.elements['inputs'])
-        self.builder.load_outputs(self.elements['outputs'])
-        self.builder.load_attributes(self.elements['attributes'])
-
-    def parse_sector_model_config(self):
-        """Searches the model folder for all the configuration files
-
-        """
-        config_path = os.path.join(self.project_folder, 'models',
-                                   self.model_name)
-        input_path = os.path.join(config_path, 'inputs.yaml')
-        output_path = os.path.join(config_path, 'outputs.yaml')
-        model_path = os.path.join(config_path, '{}.py'.format(self.model_name))
-
-        assets = self._load_model_assets()
-        attribute_paths = {name: os.path.join(self.project_folder, 'models',
-                                              self.model_name, 'assets',
-                                              "{}.yaml".format(name))
-                           for name in assets}
-
-        return {'inputs': input_path,
-                'outputs': output_path,
-                'attributes': attribute_paths,
-                'model_path': model_path}
-
-    def _load_model_assets(self):
-        """Loads the assets from the sector model folders
-
-        Using the list of model folders extracted from the configuration file,
-        this function returns a list of all the assets from the sector models
-
-        Returns
-        =======
-        list
-            A list of assets from all the sector models
-
-        """
-        assets = []
-        path_to_assetfile = os.path.join(self.project_folder,
-                                         'models',
-                                         self.model_name,
-                                         'assets',
-                                         'asset*.yaml')
-        for assetfile in glob(path_to_assetfile):
-            asset_path = os.path.join(path_to_assetfile, assetfile)
-            logger.info("Loading assets from {}".format(asset_path))
-            assets.extend(ConfigParser(asset_path).data)
-
-        return assets
