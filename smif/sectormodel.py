@@ -7,11 +7,15 @@
 
 """
 import logging
-import numpy as np
 import os
+import sys
+
 from abc import ABC, abstractproperty, abstractmethod
+from glob import glob
 from enum import Enum
-from importlib.util import module_from_spec, spec_from_file_location
+from importlib import import_module
+
+import numpy as np
 from scipy.optimize import minimize
 
 from smif.parse_config import ConfigParser
@@ -376,9 +380,8 @@ class SectorModelBuilder(object):
 
     """
 
-    def __init__(self, module_name, model_path):
+    def __init__(self, module_name):
         self.module_name = module_name
-        self.load_model(model_path)
 
     def load_attributes(self, dict_of_assets):
         attributes = {}
@@ -387,22 +390,24 @@ class SectorModelBuilder(object):
         self._sectormodel.attributes = attributes
 
     def load_model(self, model_path):
+        """Dynamically load model module
+        """
         name = self.module_name
 
         if os.path.exists(model_path):
             logger.info("Importing run module from %s", model_path)
 
-            filename = os.path.basename(model_path)
-            module_path = '{}.run'.format(name)
-            module_spec = spec_from_file_location(module_path, model_path)
-            module = module_from_spec(module_spec)
-            module_spec.loader.exec_module(module)
+            model_dirname = os.path.dirname(model_path)
+            sys.path.append(model_dirname)
+
+            # module_path = '{}.run'.format(name)
+            module = import_module(name)
 
             self._sectormodel = module.model
             self._sectormodel.name = self.module_name
 
         else:
-            msg = "Cannot find {} for the {} model".format(filename, name)
+            msg = "Cannot find {} for the {} model".format(model_path, name)
             raise Exception(msg)
 
     def load_inputs(self, model_path):
@@ -468,9 +473,8 @@ class SectorConfigReader(object):
         The root path of the project
 
     """
-    def __init__(self, model_name, model_path, project_folder):
+    def __init__(self, model_name, project_folder):
         self.model_name = model_name
-        self.model_path = model_path
         self.project_folder = project_folder
         self.elements = self.parse_sector_model_config()
         self.builder = None
@@ -479,15 +483,10 @@ class SectorConfigReader(object):
         """Constructs the sector model object from the configuration
 
         """
-        self.builder.load_model(self.model_path)
-
-        for key, value in self.elements.items():
-            if key == 'inputs':
-                self.builder.load_inputs(value)
-            elif key == 'outputs':
-                self.builder.load_outputs(value)
-            elif key == 'attributes':
-                self.builder.load_attributes(value)
+        self.builder.load_model(self.elements['model_path'])
+        self.builder.load_inputs(self.elements['inputs'])
+        self.builder.load_outputs(self.elements['outputs'])
+        self.builder.load_attributes(self.elements['attributes'])
 
     def parse_sector_model_config(self):
         """Searches the model folder for all the configuration files
@@ -497,7 +496,7 @@ class SectorConfigReader(object):
                                    self.model_name)
         input_path = os.path.join(config_path, 'inputs.yaml')
         output_path = os.path.join(config_path, 'outputs.yaml')
-        wrapper_path = os.path.join(config_path, WRAPPER_FILE_NAME)
+        model_path = os.path.join(config_path, '{}.py'.format(self.model_name))
 
         assets = self._load_model_assets()
         attribute_paths = {name: os.path.join(self.project_folder, 'models',
@@ -508,7 +507,7 @@ class SectorConfigReader(object):
         return {'inputs': input_path,
                 'outputs': output_path,
                 'attributes': attribute_paths,
-                'wrapper': wrapper_path}
+                'model_path': model_path}
 
     def _load_model_assets(self):
         """Loads the assets from the sector model folders

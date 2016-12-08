@@ -30,7 +30,8 @@ from importlib.util import module_from_spec, spec_from_file_location
 import numpy as np
 from smif.decision import Planning
 from smif.parse_config import ConfigParser
-from smif.sectormodel import SectorModel, SectorModelMode, SectorModelBuilder
+from smif.sectormodel import (SectorModelMode, SectorModelBuilder,
+                              SectorConfigReader)
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -278,7 +279,7 @@ class SoSModelBuilder(object):
         logger.info("Loading model: %s", model_name)
 
         reader = SectorConfigReader(model_name, project_folder)
-        builder = SectorModelBuilder(model_name, project_folder)
+        builder = SectorModelBuilder(model_name)
         reader.builder = builder
 
         reader.construct()

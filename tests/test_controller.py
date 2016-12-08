@@ -114,13 +114,11 @@ class TestBuildSosModel():
         planning_path = project_path.join('planning', 'pre-specified.yaml')
         builder.load_planning([str(planning_path)])
 
-        wrapper_path = str(project_path.join('models',
-                                             'water_supply',
-                                             'run.py'))
-        model = builder.load_model('water_supply', wrapper_path)
-        assert isinstance(model, SectorModel)
 
-        builder.load_models(['water_supply'], [wrapper_path])
+        builder.load_model('water_supply', str(project_path))
+        assert isinstance(builder.sos_model.model_list['water_supply'], SectorModel)
+
+        builder.load_models(['water_supply'], str(project_path))
 
         sos_model = builder.finish()
         assert isinstance(sos_model, SosModel)
@@ -163,10 +161,11 @@ class TestBuildSectorModel():
     def test_sector_model_builder(self, setup_project_folder):
         project_path = setup_project_folder
 
-        wrapper_path = str(project_path.join('models',
-                                             'water_supply',
-                                             'run.py'))
-        builder = SectorModelBuilder('water_supply', wrapper_path)
+        model_path = str(project_path.join('models',
+                                           'water_supply',
+                                           'water_supply.py'))
+        builder = SectorModelBuilder('water_supply')
+        builder.load_model(model_path)
 
         attributes = {name: str(project_path.join('models',
                                                   'water_supply',

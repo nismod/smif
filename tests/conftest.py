@@ -265,9 +265,7 @@ def setup_runpy_file(tmpdir, setup_folder_structure):
     """
     base_folder = setup_folder_structure
     # Write a run.py file for the water_supply model
-    filename = base_folder.join('models',
-                                'water_supply',
-                                'run.py')
+    filename = base_folder.join('models', 'water_supply', 'water_supply.py')
     contents = """
 from smif.sectormodel import SectorModel
 
@@ -279,8 +277,10 @@ class ExampleSectorModel(SectorModel):
         return 0
 
 model = ExampleSectorModel()
+
 """
     filename.write(contents, ensure=True)
+
 
 
 @pytest.fixture(scope='function')
@@ -297,7 +297,7 @@ def setup_project_folder(setup_runpy_file,
 
         /models
         /models/water_supply/
-        /models/water_supply/run.py
+        /models/water_supply/water_supply.py
         /models/water_supply/assets/assets1.yaml
         /models/water_supply/inputs.yaml
         /models/water_supply/outputs.yaml
