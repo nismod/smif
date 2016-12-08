@@ -4,8 +4,10 @@ import os
 from pytest import raises
 from smif.cli.parse_config import ConfigParser
 
+CONFIG_FIXTURES_DIR = os.path.join(os.path.dirname(__file__), "..", "fixtures", "config")
+
 def test_load_simple_config():
-    path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "simple.yaml")
+    path = os.path.join(CONFIG_FIXTURES_DIR, "simple.yaml")
     conf = ConfigParser(path)
     assert conf.data["name"] == "test"
 
@@ -39,15 +41,13 @@ def test_simple_validate_invalid():
         })
 
 def test_modelrun_config_validate():
-    path = os.path.join(os.path.dirname(__file__), "fixtures", "config", "modelrun_config.yaml")
+    path = os.path.join(CONFIG_FIXTURES_DIR, "modelrun_config.yaml")
     conf = ConfigParser(path)
 
     conf.validate_as_modelrun_config()
 
 def test_missing_timestep():
-    path = os.path.join(os.path.dirname(__file__),
-                        "fixtures",
-                        "config",
+    path = os.path.join(CONFIG_FIXTURES_DIR,
                         "modelrun_config_missing_timestep.yaml")
     conf = ConfigParser(path)
 
@@ -55,9 +55,7 @@ def test_missing_timestep():
         conf.validate_as_modelrun_config()
 
 def test_used_planning_needs_files():
-    path = os.path.join(os.path.dirname(__file__),
-                        "fixtures",
-                        "config",
+    path = os.path.join(CONFIG_FIXTURES_DIR,
                         "modelrun_config_used_planning_needs_files.yaml")
     conf = ConfigParser(path)
 
