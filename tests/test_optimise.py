@@ -18,7 +18,7 @@ import pytest
 from fixtures.water_supply import WaterSupplySectorModel, DynamicWaterSupplySectorModel
 from fixtures.water_supply import dynamic_data, one_input
 from numpy.testing import assert_allclose
-from smif.sectormodel import SectorModel
+from smif.sector_model import SectorModel
 from smif.controller import SosModel
 
 

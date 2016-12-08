@@ -66,3 +66,58 @@ class SectorModelReader(object):
             assets.extend(file_assets)
 
         return assets
+
+
+class AssetList:
+    """List of assets to be loaded from files
+
+    - The set of assets (power stations etc.) should be explicitly declared
+    in a yaml file.
+    - Assets are associated with sector models, not the integration configuration.
+    - Assets should be stored in a sub-folder associated with the sector model
+    name.
+    """
+
+    # TODO use or integrate this
+    def __init__(self, filepath):
+        self._asset_list = ConfigParser(filepath)
+        self._validate({
+            "type": "array",
+            "uniqueItems": True
+        })
+        self._asset_attributes = None
+
+    def _validate(self, schema):
+        self._asset_list.validate(schema)
+
+    @property
+    def asset_list(self):
+        return self._asset_list.data
+
+    @property
+    def asset_attributes(self):
+        return self._asset_attributes.data
+
+    def load_attributes(self, filepath):
+        """
+        """
+        self._asset_attributes = ConfigParser(filepath)
+        schema = {
+            "type": "array",
+            "oneof": self.asset_list,
+            "properties": {
+                "cost": {
+                    "properties": {
+                        "value": {
+                            "type": "number",
+                            "minimum": 0,
+                            "exclusiveMinimum": True
+                        },
+                        "unit": {
+                            'type': 'string'
+                        }
+                    }
+                }
+            }
+        }
+        self._validate(schema)

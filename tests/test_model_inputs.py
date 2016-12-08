@@ -1,9 +1,10 @@
 """Tests the ModelInputs class
 """
 import numpy as np
-from fixtures.water_supply import one_input, two_inputs, one_dependency
 from numpy.testing import assert_equal
+
 from smif.inputs import ModelInputs
+from fixtures.water_supply import one_input, two_inputs, one_dependency
 
 
 class TestModelInputs:

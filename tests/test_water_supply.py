@@ -5,11 +5,11 @@
 import subprocess
 import os
 import sys
+from pytest import raises
+
 from fixtures.water_supply import (ExampleWaterSupplySimulationModel,
                                    ExampleWaterSupplySimulationModelWithReservoir,
                                    process_results, raininess_oracle)
-from smif.sectormodel import SectorModel
-from pytest import raises
 
 
 def test_water_supply_with_reservoir():

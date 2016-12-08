@@ -5,120 +5,23 @@
 """
 import logging
 import os
-from collections import OrderedDict
 
-import numpy as np
-from smif.inputs import ModelElement
+from smif.abstract import ModelElementCollection
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
-class OutputList(ModelElement):
+class OutputList(ModelElementCollection):
     """Defines the types of outputs to a sector model
 
     """
-    @property
-    def file_locations(self):
-        """Allows ordered searching through file to extract results from file
-        """
-        locations = {}
-
-        # For each file return tuple of row/column
-        for name in self.names:
-            row_num = self.values[name]['row_num']
-            col_num = self.values[name]['col_num']
-            filename = self.values[name]['file_name']
-
-            if filename not in locations:
-                # add filename to locations
-                locations[filename] = {}
-
-            locations[filename][name] = (row_num, col_num)
-
-        return locations
-
-    def load_results_from_files(self, dirname):
-
-        result_list = self.file_locations
-
-        for filename in result_list:
-            file_path = os.path.join(dirname, filename)
-
-            with open(file_path, 'r') as results_set:
-                lines = results_set.readlines()
-
-            for name, rowcol in result_list[filename].items():
-                row_num, col_num = rowcol
-                result = lines[row_num][col_num:].strip()
-                self.values[name]['value'] = result
-
-    @property
-    def values(self):
-        """The value of the outputs
-        """
-        return self._values
-
-    @values.setter
-    def values(self, values):
-        self._values = {output['name']: output for output in values}
-        self.names = [output['name'] for output in values]
-
-    def __getitem__(self, key):
-        return self.values[key]
-
-
-class MetricList(OutputList):
-
     def __init__(self, results):
         super().__init__()
         self.values = results
-
-
-class ModelOutputList(OutputList):
-
-    def __init__(self, results):
-        super().__init__()
-        self.values = results
-
-
-class ModelOutputs(object):
-    """A container for all the model outputs
-
-    """
-    def __init__(self, results):
-        if 'metrics' not in results:
-            results['metrics'] = []
-        if 'model outputs' not in results:
-            results['model outputs'] = []
-
-        self._metrics = MetricList(results['metrics'])
-        self._outputs = ModelOutputList(results['model outputs'])
-
-
-    @property
-    def metrics(self):
-        """A list of the model result metrics
-
-        Returns
-        =======
-        :class:`smif.outputs.MetricList`
-        """
-        return self._metrics
-
-    @property
-    def outputs(self):
-        """A list of the model outputs
-
-        Returns
-        =======
-        :class:`smif.outputs.OutputList`
-        """
-        return self._outputs
-
 
     ##
     # File interaction methods like load_results_from_files and
@@ -127,10 +30,6 @@ class ModelOutputs(object):
     # - maybe a utility file handler class?
     # seem related to outputs for now
     ##
-    def load_results_from_files(self, dirname):
-        self._metrics.load_results_from_files(dirname)
-        self._outputs.load_results_from_files(dirname)
-
     @staticmethod
     def replace_line(file_name, line_num, new_data):
         """Replaces a line in a file with new data
@@ -181,3 +80,94 @@ class ModelOutputs(object):
 
         with open(file_name, 'w') as out_file:
             out_file.writelines(lines)
+
+    @property
+    def file_locations(self):
+        """Allows ordered searching through file to extract results from file
+        """
+        locations = {}
+
+        # For each file return tuple of row/column
+        for name in self.names:
+            row_num = self.values[name]['row_num']
+            col_num = self.values[name]['col_num']
+            filename = self.values[name]['file_name']
+
+            if filename not in locations:
+                # add filename to locations
+                locations[filename] = {}
+
+            locations[filename][name] = (row_num, col_num)
+
+        return locations
+
+    def load_results_from_files(self, dirname):
+        """Load model outputs from specified files
+        """
+
+        result_list = self.file_locations
+
+        for filename in result_list:
+            file_path = os.path.join(dirname, filename)
+
+            with open(file_path, 'r') as results_set:
+                lines = results_set.readlines()
+
+            for name, rowcol in result_list[filename].items():
+                row_num, col_num = rowcol
+                result = lines[row_num][col_num:].strip()
+                self.values[name]['value'] = result
+
+    @property
+    def values(self):
+        """The value of the outputs
+        """
+        return self._values
+
+    @values.setter
+    def values(self, values):
+        self._values = {output['name']: output for output in values}
+        self.names = [output['name'] for output in values]
+
+    def __getitem__(self, key):
+        return self.values[key]
+
+
+class ModelOutputs(object):
+    """A container for all the model outputs
+
+    """
+    def __init__(self, results):
+        if 'metrics' not in results:
+            results['metrics'] = []
+        if 'model outputs' not in results:
+            results['model outputs'] = []
+
+        self._metrics = OutputList(results['metrics'])
+        self._outputs = OutputList(results['model outputs'])
+
+    @property
+    def metrics(self):
+        """A list of the model result metrics
+
+        Returns
+        =======
+        :class:`smif.outputs.MetricList`
+        """
+        return self._metrics
+
+    @property
+    def outputs(self):
+        """A list of the model outputs
+
+        Returns
+        =======
+        :class:`smif.outputs.OutputList`
+        """
+        return self._outputs
+
+    def load_results_from_files(self, dirname):
+        """Load model outputs from specified files
+        """
+        self._metrics.load_results_from_files(dirname)
+        self._outputs.load_results_from_files(dirname)

@@ -33,8 +33,10 @@ Around each of the above simulation models, subclassed wrappers based on
 
 import logging
 import math
-from smif.sectormodel import SectorModel
+
 from pytest import fixture
+
+from smif.sector_model import SectorModel
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"

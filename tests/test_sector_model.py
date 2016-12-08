@@ -1,8 +1,8 @@
 import pytest
-from fixtures.water_supply import ExampleWaterSupplySimulationModelWithAsset as WaterMod
 from smif.abstract import ConcreteAsset as Asset
 from smif.abstract import State
-from smif.sectormodel import SectorModel
+from smif.sector_model import SectorModel
+from fixtures.water_supply import ExampleWaterSupplySimulationModelWithAsset as WaterMod
 
 class WaterSupplyPythonAssets(SectorModel):
     """A concrete instance of the water supply wrapper for testing with assets

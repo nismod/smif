@@ -9,7 +9,6 @@
 import logging
 import os
 import sys
-
 from abc import ABC, abstractmethod
 from enum import Enum
 from importlib import import_module
@@ -26,13 +25,6 @@ __license__ = "mit"
 
 LOGGER = logging.getLogger(__name__)
 
-class SectorModelMode(Enum):
-    """Enumerates the operating modes of a sector model
-    """
-    static_simulation = 0
-    sequential_simulation = 1
-    static_optimisation = 2
-    dynamic_optimisation = 3
 
 class SectorModel(ABC):
     """A representation of the sector model with inputs and outputs
@@ -437,3 +429,12 @@ class SectorModelBuilder(object):
         """
         self.validate()
         return self._sectormodel
+
+
+class SectorModelMode(Enum):
+    """Enumerates the operating modes of a sector model
+    """
+    static_simulation = 0
+    sequential_simulation = 1
+    static_optimisation = 2
+    dynamic_optimisation = 3

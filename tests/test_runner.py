@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from smif.sectormodel import SectorModel
+from smif.sector_model import SectorModel
 
 class EmptySectorModel(SectorModel):
     def simulate(self, static_inputs, decision_variables):
@@ -8,72 +8,75 @@ class EmptySectorModel(SectorModel):
     def extract_obj(self, results):
         return 0
 
-class TestAssetLoad(object):
 
-    def test_assets_load(self):
-        attributes = {'water_asset_a': {},
-                      'water_asset_b': {},
-                      'water_asset_c': {}}
-        model = EmptySectorModel()
-        model.attributes = attributes
-        assert model.assets == ['water_asset_a',
-                                'water_asset_b',
-                                'water_asset_c']
+def test_assets_load(self):
+    assets = {
+        'water_asset_a': {},
+        'water_asset_b': {},
+        'water_asset_c': {}
+    }
+    model = EmptySectorModel()
+    model.assets = assets
+
+    asset_names = model.asset_names
+
+    assert len(asset_names) == 3
+    assert 'water_asset_a' in asset_names
+    assert 'water_asset_b' in asset_names
+    assert 'water_asset_c' in asset_names
 
 
-class TestAttributesLoad(object):
+def test_attributes_load(self):
 
-    def test_attributes_load(self):
-
-        attributes = {
-            'water_asset_a': {
-                'capital_cost': {
-                    'value': 1000,
-                    'unit': '£/kW'
-                },
-                'economic_lifetime': 25,
-                'operational_lifetime': 25
+    assets = {
+        'water_asset_a': {
+            'capital_cost': {
+                'value': 1000,
+                'unit': '£/kW'
             },
-            'water_asset_b': {
-                'capital_cost': {
-                    'value': 1500,
-                    'unit': '£/kW'
-                }
-            },
-            'water_asset_c': {
-                'capital_cost': {
-                    'value': 3000,
-                    'unit': '£/kW'
-                }
+            'economic_lifetime': 25,
+            'operational_lifetime': 25
+        },
+        'water_asset_b': {
+            'capital_cost': {
+                'value': 1500,
+                'unit': '£/kW'
+            }
+        },
+        'water_asset_c': {
+            'capital_cost': {
+                'value': 3000,
+                'unit': '£/kW'
             }
         }
-        model = EmptySectorModel()
-        model.attributes = attributes
-        actual = model.attributes
-        expected = {
-            'water_asset_a': {
-                'capital_cost': {
-                    'value': 1000,
-                    'unit': '£/kW'
-                },
-                'economic_lifetime': 25,
-                'operational_lifetime': 25
+    }
+    model = EmptySectorModel()
+    model.assets = assets
+    actual = model.assets
+    expected = {
+        'water_asset_a': {
+            'capital_cost': {
+                'value': 1000,
+                'unit': '£/kW'
             },
-            'water_asset_b': {
-                'capital_cost': {
-                    'value': 1500,
-                    'unit': '£/kW'
-                }
-            },
-            'water_asset_c': {
-                'capital_cost': {
-                    'value': 3000,
-                    'unit': '£/kW'
-                }
+            'economic_lifetime': 25,
+            'operational_lifetime': 25
+        },
+        'water_asset_b': {
+            'capital_cost': {
+                'value': 1500,
+                'unit': '£/kW'
+            }
+        },
+        'water_asset_c': {
+            'capital_cost': {
+                'value': 3000,
+                'unit': '£/kW'
             }
         }
+    }
 
-        assert actual == expected
+    assert actual == expected
 
-        for asset in model.assets:
-            assert asset in expected.keys()
+    for asset in model.asset_names:
+        assert asset in expected.keys()
