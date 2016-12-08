@@ -65,7 +65,8 @@ def setup_project_folder(project_path):
         Absolute path to an empty folder
 
     """
-    folder_list = ['planning', 'models']
+    # TODO could place sensible model.yaml, single sector model, and subfolders
+    folder_list = ['data']
     for folder in folder_list:
         folder_path = os.path.join(project_path, folder)
         if os.path.exists(folder_path):
