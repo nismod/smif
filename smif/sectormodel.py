@@ -51,6 +51,9 @@ class SectorModel(ABC):
 
 
     def validate(self):
+        """Validate that this SectorModel has been set up with sufficient data
+        to run
+        """
         pass
 
     @property
@@ -373,12 +376,9 @@ class SectorModelBuilder(object):
 
     """
 
-    def __init__(self, model_module_name, model_path):
-        self.model_module_name = model_module_name
-        self.load_sectormodel(model_path)
-
-    def name_model(self, model_name):
-        self._sectormodel.name = model_name
+    def __init__(self, module_name, model_path):
+        self.module_name = module_name
+        self.load_model(model_path)
 
     def load_attributes(self, dict_of_assets):
         attributes = {}
@@ -386,8 +386,8 @@ class SectorModelBuilder(object):
             attributes[asset] = self._load_asset_attributes(path)
         self._sectormodel.attributes = attributes
 
-    def load_sectormodel(self, model_path):
-        name = self.model_module_name
+    def load_model(self, model_path):
+        name = self.module_name
 
         if os.path.exists(model_path):
             logger.info("Importing run module from %s", model_path)
@@ -397,7 +397,10 @@ class SectorModelBuilder(object):
             module_spec = spec_from_file_location(module_path, model_path)
             module = module_from_spec(module_spec)
             module_spec.loader.exec_module(module)
-            self._sectormodel = module
+
+            self._sectormodel = module.model
+            self._sectormodel.name = self.module_name
+
         else:
             msg = "Cannot find {} for the {} model".format(filename, name)
             raise Exception(msg)
@@ -425,9 +428,8 @@ class SectorModelBuilder(object):
     def validate(self):
         """
         """
-        assert self._sectormodel.attributes
-        assert self._sectormodel.model
-        self._sectormodel.model.validate()
+        assert self._sectormodel
+        self._sectormodel.validate()
 
     def finish(self):
         self.validate()
@@ -448,3 +450,87 @@ class SectorModelBuilder(object):
         """
         attributes = ConfigParser(attribute_path).data
         return attributes
+
+
+class SectorConfigReader(object):
+    """Parses the ``models/<sector_model>`` folder for a configuration file
+
+    Assign the builder instance to the ``builder`` attribute before running the
+    ``construct`` method.
+
+    Arguments
+    =========
+    model_name : str
+        The name of the model
+    model_path : str
+        The path to the module that contains the implementation of SectorModel
+    project_folder : str
+        The root path of the project
+
+    """
+    def __init__(self, model_name, model_path, project_folder):
+        self.model_name = model_name
+        self.model_path = model_path
+        self.project_folder = project_folder
+        self.elements = self.parse_sector_model_config()
+        self.builder = None
+
+    def construct(self):
+        """Constructs the sector model object from the configuration
+
+        """
+        self.builder.load_model(self.model_path)
+
+        for key, value in self.elements.items():
+            if key == 'inputs':
+                self.builder.load_inputs(value)
+            elif key == 'outputs':
+                self.builder.load_outputs(value)
+            elif key == 'attributes':
+                self.builder.load_attributes(value)
+
+    def parse_sector_model_config(self):
+        """Searches the model folder for all the configuration files
+
+        """
+        config_path = os.path.join(self.project_folder, 'models',
+                                   self.model_name)
+        input_path = os.path.join(config_path, 'inputs.yaml')
+        output_path = os.path.join(config_path, 'outputs.yaml')
+        wrapper_path = os.path.join(config_path, WRAPPER_FILE_NAME)
+
+        assets = self._load_model_assets()
+        attribute_paths = {name: os.path.join(self.project_folder, 'models',
+                                              self.model_name, 'assets',
+                                              "{}.yaml".format(name))
+                           for name in assets}
+
+        return {'inputs': input_path,
+                'outputs': output_path,
+                'attributes': attribute_paths,
+                'wrapper': wrapper_path}
+
+    def _load_model_assets(self):
+        """Loads the assets from the sector model folders
+
+        Using the list of model folders extracted from the configuration file,
+        this function returns a list of all the assets from the sector models
+
+        Returns
+        =======
+        list
+            A list of assets from all the sector models
+
+        """
+        assets = []
+        path_to_assetfile = os.path.join(self.project_folder,
+                                         'models',
+                                         self.model_name,
+                                         'assets',
+                                         'asset*.yaml')
+        for assetfile in glob(path_to_assetfile):
+            asset_path = os.path.join(path_to_assetfile, assetfile)
+            logger.info("Loading assets from {}".format(asset_path))
+            assets.extend(ConfigParser(asset_path).data)
+
+        return assets

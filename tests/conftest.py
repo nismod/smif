@@ -268,13 +268,17 @@ def setup_runpy_file(tmpdir, setup_folder_structure):
     filename = base_folder.join('models',
                                 'water_supply',
                                 'run.py')
-    contents = """from unittest.mock import MagicMock
-import time
+    contents = """
+from smif.sectormodel import SectorModel
 
-model = MagicMock(return_value=3)
-time.sleep(1) # delays for 1 seconds
+class ExampleSectorModel(SectorModel):
+    def simulate(self, decisions):
+        pass
 
-wrapper = MagicMock(return_value=1)
+    def extract_obj(self, results):
+        return 0
+
+model = ExampleSectorModel()
 """
     filename.write(contents, ensure=True)
 
@@ -427,7 +431,7 @@ TOTAL DEMAND                 =                         122427
 ------------------------------------------------------------
 '''
     base_folder = setup_folder_structure
-    # Write a run.py file for the water_supply model
+    # Write a results.txt file for the water_supply model
     filename = base_folder.join('models',
                                 'water_supply',
                                 'model',

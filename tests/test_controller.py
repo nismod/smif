@@ -114,10 +114,13 @@ class TestBuildSosModel():
         planning_path = project_path.join('planning', 'pre-specified.yaml')
         builder.load_planning([str(planning_path)])
 
-        model = builder.load_model('water_supply', str(project_path))
+        wrapper_path = str(project_path.join('models',
+                                             'water_supply',
+                                             'run.py'))
+        model = builder.load_model('water_supply', wrapper_path)
         assert isinstance(model, SectorModel)
 
-        builder.load_models(['water_supply'], str(project_path))
+        builder.load_models(['water_supply'], [wrapper_path])
 
         sos_model = builder.finish()
         assert isinstance(sos_model, SosModel)
@@ -131,9 +134,10 @@ class TestBuildSosModel():
         builder = SoSModelBuilder()
         builder.set_timesteps([2010, 2011, 2012])
 
-        ws = WaterSupplySectorModel()
-        ws.inputs = one_input
-        builder.add_model(ws)
+        ws_model = WaterSupplySectorModel()
+        ws_model.name = 'water_supply'
+        ws_model.inputs = one_input
+        builder.add_model(ws_model)
 
         sos_model = builder.finish()
         assert isinstance(sos_model, SosModel)
@@ -158,29 +162,27 @@ class TestBuildSectorModel():
 
     def test_sector_model_builder(self, setup_project_folder):
         project_path = setup_project_folder
-        builder = SectorModelBuilder()
-
-        builder.name_model('a model name')
-
-        attributes = {name: str(project_path.join('models',
-                                                  'water_supply', 'assets',
-                                                  "{}.yaml".format(name)))
-                      for name in ['water_asset_a']}
-
-        builder.load_attributes(attributes)
 
         wrapper_path = str(project_path.join('models',
                                              'water_supply',
                                              'run.py'))
+        builder = SectorModelBuilder('water_supply', wrapper_path)
 
-        builder.load_wrapper(wrapper_path)
+        attributes = {name: str(project_path.join('models',
+                                                  'water_supply',
+                                                  'assets',
+                                                  "{}.yaml".format(name)))
+                      for name in ['water_asset_a']}
+
+        builder.load_attributes(attributes)
         # builder.load_inputs()
         # builder.load_outputs()
         # builder.validate()
+
         model = builder.finish()
         assert isinstance(model, SectorModel)
 
-        assert model.name == 'a model name'
+        assert model.name == 'water_supply'
 
         assert model.assets == ['water_asset_a']
 
@@ -196,19 +198,6 @@ class TestBuildSectorModel():
         }
 
         assert model.attributes == ext_attr
-
-    def test_sector_config_reader(self, setup_project_folder):
-        project_folder = setup_project_folder
-
-        reader = SectorConfigReader('water_supply', str(project_folder))
-
-        mock_builder = MagicMock()
-        reader.builder = mock_builder
-
-        reader.construct()
-
-        name, args, _ = reader.builder.mock_calls[0]
-        # TODO check calls
 
 
 class TestSoSBuilderValidation():
