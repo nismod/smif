@@ -269,9 +269,37 @@ class SoSModelBuilder(object):
         model = builder.finish()
         return model
 
+    def _check_planning_assets_exist(self):
+        """Check existence of all the assets in the pre-specifed planning
+
+        """
+        planning = self.sos_model.planning
+        planning_assets = set([plan['asset'] for plan in planning])
+        sector_assets = self.sos_model.all_assets
+        for asset in planning_assets:
+            msg = "Asset '{}' in planning file not found in sector assets"
+            assert asset in sector_assets, msg.format(asset)
+
+    def _check_planning_timeperiods_exist(self):
+        """Check existence of all the timeperiods in the pre-specified planning
+        """
+        planning = self.sos_model.planning
+        planning_periods = set([plan['timeperiod'] for plan in planning])
+        model_timeperiods = self.sos_model.timesteps
+        for timeperiod in planning_periods:
+            msg = "Timeperiod '{}' in planning file not found model config"
+            assert timeperiod in model_timeperiods, msg.format(timeperiod)
+
+    def validate(self):
+        """Validates the sos model
+        """
+        self._check_planning_assets_exist()
+        self._check_planning_timeperiods_exist()
+
     def finish(self):
         """Returns a configured system-of-systems model ready for operation
         """
+        self.validate()
         return self.sos_model
 
 

@@ -28,7 +28,8 @@ class TestController():
 
     def test_timesteps_alternate_file(self, setup_project_folder,
                                       setup_config_file_timesteps_two,
-                                      setup_timesteps_file_two):
+                                      setup_timesteps_file_two,
+                                      setup_pre_specified_planning_two):
 
         cont = Controller(str(setup_project_folder))
 
@@ -179,3 +180,18 @@ class TestBuildSectorModel():
         reader.construct()
 
         name, args, _ = reader.builder.mock_calls[0]
+
+
+class TestSoSBuilderValidation():
+
+    def test_invalid_assets_in_pre_spec_plan(self, setup_project_folder,
+                                             setup_config_conflict_assets):
+        msg = "Asset '{}' in planning file not found in sector assets"
+        with raises(AssertionError, message=msg.format('water_asset_z')):
+            Controller(str(setup_project_folder))
+
+    def test_invalid_period_in_pre_spec_plan(self, setup_project_folder,
+                                             setup_config_conflict_periods):
+        msg = "Timeperiod '{}' in planning file not found model config"
+        with raises(AssertionError, message=msg.format('2010')):
+            Controller(str(setup_project_folder))

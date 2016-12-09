@@ -61,7 +61,6 @@ def setup_assets_file(setup_folder_structure):
 def setup_assets_file_two(setup_folder_structure):
     """Assets are associated with sector models, not the integration config
 
-
     Defines a second assets file
     """
     base_folder = setup_folder_structure
@@ -98,29 +97,122 @@ def setup_config_file_two(setup_folder_structure):
 
 
 @pytest.fixture(scope='function')
+def setup_pre_specified_planning_conflict(setup_folder_structure):
+    """Sets up a configuration file for pre-specified planning
+
+    """
+    file_name = 'pre-specified_asset_d.yaml'
+    file_contents = [{'new_capacity': {'unit': 'Ml/yr', 'value': 6},
+                      'asset': 'water_asset_z',
+                      'description': 'Existing water treatment plants',
+                      'location': {'lat': 51.74556, 'lon': -1.240528},
+                      'timeperiod': 2015
+                      }]
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('planning', file_name)
+    filepath.write(contents)
+
+
+@pytest.fixture(scope='function')
+def setup_config_conflict_assets(setup_folder_structure,
+                                 setup_pre_specified_planning_conflict):
+    """Configuration file contains entries for sector models, timesteps and
+    planning
+
+    Contains conflicting assets in the pre-specified rules and the sector model
+    """
+    ps_name = 'pre-specified_asset_d.yaml'
+    file_contents = {'sector_models': ['water_supply'],
+                     'timesteps': 'timesteps.yaml',
+                     'assets': ['assets1.yaml'],
+                     'planning': {'rule_based': {'use': False},
+                                  'optimisation': {'use': False},
+                                  'pre_specified': {'use': True,
+                                                    'files': [ps_name]}
+                                  }
+                     }
+
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
+
+
+@pytest.fixture(scope='function')
+def setup_config_conflict_periods(setup_folder_structure,
+                                  setup_timesteps_file_two):
+    """Configuration file contains entries for sector models, timesteps and
+    planning
+
+    Contains conflicting assets in the pre-specified rules and the sector model
+    """
+    ps_name = 'pre-specified.yaml'
+    file_contents = {'sector_models': ['water_supply'],
+                     'timesteps': 'timesteps2.yaml',
+                     'assets': ['assets1.yaml'],
+                     'planning': {'rule_based': {'use': False},
+                                  'optimisation': {'use': False},
+                                  'pre_specified': {'use': True,
+                                                    'files': [ps_name]}
+                                  }
+                     }
+
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
+
+
+@pytest.fixture(scope='function')
 def setup_pre_specified_planning(setup_folder_structure):
     """Sets up a configuration file for pre-specified planning
 
     """
     file_name = 'pre-specified.yaml'
     file_contents = [{'new_capacity': {'unit': 'Ml/yr', 'value': 6},
-                      'asset': 'water_treatment_plant',
+                      'asset': 'water_asset_a',
                       'description': 'Existing water treatment plants',
                       'location': {'lat': 51.74556, 'lon': -1.240528},
                       'timeperiod': 2010
                       },
                      {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
-                      'asset': 'water_treatment_plant',
+                      'asset': 'water_asset_b',
                       'description': 'Existing water treatment plants',
                       'location': {'lat': 51.74556, 'lon': -1.240528},
                       'timeperiod': 2010
                       },
-                     {'new_capacity': {'unit': 'Ml/yr',
-                      'value': 6},
-                      'asset': 'water_treatment_plant',
+                     {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
+                      'asset': 'water_asset_c',
                       'description': 'Existing water treatment plants',
                       'location': {'lat': 51.74556, 'lon': -1.240528},
                       'timeperiod': 2010
+                      }]
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('planning', file_name)
+    filepath.write(contents)
+
+
+@pytest.fixture(scope='function')
+def setup_pre_specified_planning_two(setup_folder_structure):
+    """Sets up a configuration file for pre-specified planning
+
+    """
+    file_name = 'pre-specified_alt.yaml'
+    file_contents = [{'new_capacity': {'unit': 'Ml/yr', 'value': 6},
+                      'asset': 'water_asset_a',
+                      'description': 'Existing water treatment plants',
+                      'location': {'lat': 51.74556, 'lon': -1.240528},
+                      'timeperiod': 2015
+                      },
+                     {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
+                      'asset': 'water_asset_a',
+                      'description': 'Existing water treatment plants',
+                      'location': {'lat': 51.74556, 'lon': -1.240528},
+                      'timeperiod': 2020
+                      },
+                     {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
+                      'asset': 'water_asset_a',
+                      'description': 'Existing water treatment plants',
+                      'location': {'lat': 51.74556, 'lon': -1.240528},
+                      'timeperiod': 2025
                       }]
     contents = yaml.dump(file_contents)
     filepath = setup_folder_structure.join('planning', file_name)
@@ -153,7 +245,7 @@ def setup_config_file_timesteps_two(setup_folder_structure):
     """Configuration file contains entries for sector models, timesteps and
     planning
     """
-    ps_name = 'pre-specified.yaml'
+    ps_name = 'pre-specified_alt.yaml'
     file_contents = {'sector_models': ['water_supply'],
                      'timesteps': 'timesteps2.yaml',
                      'assets': ['assets1.yaml'],
