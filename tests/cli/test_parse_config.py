@@ -6,15 +6,15 @@ from smif.cli.parse_config import ConfigParser
 
 class TestConfigParser(object):
 
-    def __init__(self):
-        self.config_fixtures_dir = os.path.join(
+    def _config_fixtures_dir(self):
+        return os.path.join(
             os.path.dirname(__file__),
             "..",
             "fixtures",
             "config")
 
     def test_load_simple_config(self):
-        path = os.path.join(self.config_fixtures_dir, "simple.yaml")
+        path = os.path.join(self._config_fixtures_dir(), "simple.yaml")
         conf = ConfigParser(path)
         assert conf.data["name"] == "test"
 
@@ -48,13 +48,13 @@ class TestConfigParser(object):
             })
 
     def test_modelrun_config_validate(self):
-        path = os.path.join(self.config_fixtures_dir, "modelrun_config.yaml")
+        path = os.path.join(self._config_fixtures_dir(), "modelrun_config.yaml")
         conf = ConfigParser(path)
 
         conf.validate_as_modelrun_config()
 
     def test_missing_timestep(self):
-        path = os.path.join(self.config_fixtures_dir,
+        path = os.path.join(self._config_fixtures_dir(),
                             "modelrun_config_missing_timestep.yaml")
         conf = ConfigParser(path)
 
@@ -62,7 +62,7 @@ class TestConfigParser(object):
             conf.validate_as_modelrun_config()
 
     def test_used_planning_needs_files(self):
-        path = os.path.join(self.config_fixtures_dir,
+        path = os.path.join(self._config_fixtures_dir(),
                             "modelrun_config_used_planning_needs_files.yaml")
         conf = ConfigParser(path)
 

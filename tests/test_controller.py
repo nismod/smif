@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 
 from pytest import raises
 from smif.controller import Controller, SosModel, SosModelBuilder
+from smif.cli.parse_model_config import SosModelReader
 from smif.sector_model import SectorModel
 from fixtures.water_supply import one_dependency, one_input, WaterSupplySectorModel
 
@@ -10,12 +11,15 @@ from fixtures.water_supply import one_dependency, one_input, WaterSupplySectorMo
 class TestController():
     # TODO replace setup with builder; possibly use fixture for test controller
     def test_run_sector_model(self, setup_project_folder):
-        cont = Controller(str(setup_project_folder))
-
+        reader = SosModelReader(setup_project_folder)
+        reader.load()
+        cont = Controller(reader)
         cont.run_sector_model('water_supply')
 
     def test_invalid_sector_model(self, setup_project_folder):
-        cont = Controller(str(setup_project_folder))
+        reader = SosModelReader(setup_project_folder)
+        reader.load()
+        cont = Controller(reader)
         with raises(AssertionError):
             cont.run_sector_model('invalid_sector_model')
 
@@ -27,15 +31,17 @@ class TestSosModelBuilder():
         project_path = setup_project_folder
         builder = SosModelBuilder()
 
-        timesteps_config = project_path.join('config', 'timesteps.yaml')
-        builder.load_timesteps(str(timesteps_config))
 
         planning_path = project_path.join('planning', 'pre-specified.yaml')
         builder.load_planning([str(planning_path)])
 
+        builder.add_timesteps([2010, 2011, 2012])
+
         builder.add_planning({})
 
         model = WaterSupplySectorModel()
+        model.name = 'water_supply'
+
         builder.add_model(model)
         assert isinstance(builder.sos_model.model_list['water_supply'], SectorModel)
 
@@ -46,8 +52,7 @@ class TestSosModelBuilder():
 
         assert sos_model.timesteps == [2010, 2011, 2012]
         assert sos_model.sector_models == ['water_supply']
-        assert sos_model.all_assets == ['water_asset_a', 'water_asset_b',
-                                        'water_asset_c']
+        # TODO check if there is a requirement to report all assets in the system
 
     def test_build_api(self, one_input):
         builder = SosModelBuilder()

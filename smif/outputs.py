@@ -104,16 +104,13 @@ class OutputList(ModelElementCollection):
     def load_results_from_files(self, dirname):
         """Load model outputs from specified files
         """
-
-        result_list = self.file_locations
-
-        for filename in result_list:
+        for filename in self.file_locations:
             file_path = os.path.join(dirname, filename)
 
             with open(file_path, 'r') as results_set:
                 lines = results_set.readlines()
 
-            for name, rowcol in result_list[filename].items():
+            for name, rowcol in self.file_locations[filename].items():
                 row_num, col_num = rowcol
                 result = lines[row_num][col_num:].strip()
                 self.values[name]['value'] = result

@@ -67,7 +67,7 @@ class SosModelReader(object):
         - model config directory
         - SectorModel class name to call
         """
-        models = self.config['models']
+        models = self.config['sector_models']
         return models
 
     def _load_planning(self):

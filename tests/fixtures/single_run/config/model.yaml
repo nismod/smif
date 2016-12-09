@@ -1,11 +1,12 @@
-sector_models:
+models:
   - water_supply
 timesteps: timesteps.yaml
 planning:
   pre_specified:
     use: false
     files:
-      - pre-specified.yaml
+      - expected_to_2020.yaml
+      - national_infrastructure_pipeline.yaml
   rule_based:
     use: false
   optimisation:

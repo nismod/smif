@@ -238,7 +238,7 @@ class SosModelBuilder(object):
         """Adds a sector model into the system-of-systems model
 
         """
-        LOGGER.info("Loading model: %s", model.model_name)
+        LOGGER.info("Loading model: %s", model.name)
         self.sos_model.model_list[model.name] = model
 
     def add_planning(self, planning):

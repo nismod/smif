@@ -22,7 +22,7 @@ class TestOutputFile:
         # Iterable by filename which allows ordered searching through file to
         # extract results
         expected = {
-            'model/results.txt': {
+            'results.txt': {
                 'storage_state': (26, 44),
                 'storage_blobby': (33, 55)
             }
@@ -31,7 +31,7 @@ class TestOutputFile:
         assert actual == expected
 
         expected = {
-            'model/results.txt': {
+            'results.txt': {
                 'unshfl13': (33, 44)
             }
         }

@@ -22,19 +22,10 @@ class TestSectorModelBuilder():
         builder = SectorModelBuilder('water_supply')
         builder.load_model(model_path, 'WaterSupplySectorModel')
 
-        # builder.add_assets(assets)
-        # builder.add_inputs(inputs)
-        # builder.add_outputs(outputs)
 
-        model = builder.finish()
-        assert isinstance(model, SectorModel)
-
-        assert model.name == 'water_supply'
-
-        assert model.asset_names == ['water_asset_a']
-
-        ext_attr = {
-            'water_asset_a': {
+        assets = [
+            {
+                'name': 'water_asset_a',
                 'capital_cost': {
                     'unit': '£/kW',
                     'value': 1000
@@ -42,9 +33,18 @@ class TestSectorModelBuilder():
                 'economic_lifetime': 25,
                 'operational_lifetime': 25
             }
-        }
+        ]
+        builder.add_assets(assets)
 
-        assert model.assets == ext_attr
+        # builder.add_inputs(inputs)
+        # builder.add_outputs(outputs)
+
+        model = builder.finish()
+        assert isinstance(model, SectorModel)
+
+        assert model.name == 'water_supply'
+        assert model.asset_names == ['water_asset_a']
+        assert model.assets == assets
 
 class TestSectorModel(object):
     def test_assets_load(self):

@@ -11,7 +11,7 @@ import os
 import sys
 from abc import ABC, abstractmethod
 from enum import Enum
-from importlib import import_module
+import importlib
 
 import numpy as np
 from scipy.optimize import minimize
@@ -132,7 +132,7 @@ class SectorModel(ABC):
         list
             A list of the names of the assets
         """
-        return self._assets.keys()
+        return [asset['name'] for asset in self._assets]
 
     @property
     def assets(self):
@@ -140,8 +140,8 @@ class SectorModel(ABC):
 
         Returns
         =======
-        dict
-            The collection of asset attributes
+        list
+            The collection of assets
         """
         return self._assets
 
@@ -370,9 +370,9 @@ class SectorModelBuilder(object):
 
     """
 
-    def __init__(self, module_name):
-        self.module_name = module_name
-        self._sectormodel = None
+    def __init__(self, name):
+        self._sector_model_name = name
+        self._sector_model = None
 
     def load_model(self, model_path, classname):
         """Dynamically load model module
@@ -381,54 +381,56 @@ class SectorModelBuilder(object):
         if os.path.exists(model_path):
             LOGGER.info("Importing run module from %s", model_path)
 
-            model_dirname, model_filename = os.path.split(model_path)
-            sys.path.append(model_dirname)
+            spec = importlib.util.spec_from_file_location(self._sector_model_name, model_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
 
-            module = import_module(model_filename)
             klass = module.__dict__[classname]
 
-            self._sectormodel = klass()
-            self._sectormodel.name = self.module_name
+            self._sector_model = klass()
+            self._sector_model.name = self._sector_model_name
 
         else:
-            msg = "Cannot find {} for the {} model".format(model_path, self.module_name)
+            msg = "Cannot find {} for the {} model".format(model_path, self._sector_model_name)
             raise Exception(msg)
 
     def add_inputs(self, input_dict):
         """Add inputs to the sector model
         """
         msg = "Sector model must be loaded before adding inputs"
-        assert self._sectormodel is not None, msg
+        assert self._sector_model is not None, msg
 
-        self._sectormodel.inputs = input_dict
+        self._sector_model.inputs = input_dict
 
     def add_outputs(self, output_dict):
         """Add outputs to the sector model
         """
         msg = "Sector model must be loaded before adding outputs"
-        assert self._sectormodel is not None, msg
+        assert self._sector_model is not None, msg
 
-        self._sectormodel.outputs = output_dict
+        self._sector_model.outputs = output_dict
 
-    def add_assets(self, dict_of_assets):
+    def add_assets(self, asset_list):
         """Add assets to the sector model
         """
         msg = "Sector model must be loaded before adding assets"
-        assert self._sectormodel is not None, msg
+        assert self._sector_model is not None, msg
 
-        self._sectormodel.attributes = dict_of_assets
+        self._sector_model.assets = asset_list
 
     def validate(self):
         """Check and/or assert that the sector model is correctly set up
+        - should raise errors if invalid
         """
-        assert self._sectormodel is not None
-        self._sectormodel.validate()
+        assert self._sector_model is not None, "Sector model not loaded"
+        self._sector_model.validate()
+        return True
 
     def finish(self):
         """Validate and return the sector model
         """
         self.validate()
-        return self._sectormodel
+        return self._sector_model
 
 
 class SectorModelMode(Enum):
