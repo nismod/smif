@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from unittest.mock import MagicMock
 
+import os
 from pytest import raises
+
 from smif.controller import Controller, SosModel, SosModelBuilder
 from smif.cli.parse_model_config import SosModelReader
 from smif.sector_model import SectorModel
@@ -11,13 +12,15 @@ from fixtures.water_supply import one_dependency, one_input, WaterSupplySectorMo
 class TestController():
     # TODO replace setup with builder; possibly use fixture for test controller
     def test_run_sector_model(self, setup_project_folder):
-        reader = SosModelReader(setup_project_folder)
+        config_file_path = os.path.join(str(setup_project_folder), "config", "model.yaml")
+        reader = SosModelReader(config_file_path)
         reader.load()
         cont = Controller(reader)
         cont.run_sector_model('water_supply')
 
     def test_invalid_sector_model(self, setup_project_folder):
-        reader = SosModelReader(setup_project_folder)
+        config_file_path = os.path.join(str(setup_project_folder), "config", "model.yaml")
+        reader = SosModelReader(config_file_path)
         reader.load()
         cont = Controller(reader)
         with raises(AssertionError):
@@ -28,7 +31,6 @@ class TestSosModelBuilder():
 
     def test_sos_builder(self, setup_project_folder):
 
-        project_path = setup_project_folder
         builder = SosModelBuilder()
 
 

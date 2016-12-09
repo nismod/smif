@@ -126,8 +126,7 @@ def validate_config(args):
     else:
         try:
             model_config = SosModelReader(config_path)
-            # TODO check each sector model
-            print(model_config)
+            # TODO check each sector model either within SosModelReader or here in loop
         except ValueError as error:
             LOGGER.error("The model configuration is invalid: %s", error)
         else:
