@@ -438,7 +438,8 @@ class SectorModelBuilder(object):
         self.validate()
         return self._sectormodel
 
-    def _load_asset_attributes(self, attribute_path):
+    @staticmethod
+    def _load_asset_attributes(attribute_path):
         """Loads an asset's attributes into a container
 
         Arguments
