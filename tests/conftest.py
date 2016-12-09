@@ -98,6 +98,36 @@ def setup_config_file_two(setup_folder_structure):
 
 
 @pytest.fixture(scope='function')
+def setup_pre_specified_planning(setup_folder_structure):
+    """Sets up a configuration file for pre-specified planning
+
+    """
+    file_name = 'pre-specified.yaml'
+    file_contents = [{'new_capacity': {'unit': 'Ml/yr', 'value': 6},
+                      'asset': 'water_treatment_plant',
+                      'description': 'Existing water treatment plants',
+                      'location': {'lat': 51.74556, 'lon': -1.240528},
+                      'timeperiod': 2010
+                      },
+                     {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
+                      'asset': 'water_treatment_plant',
+                      'description': 'Existing water treatment plants',
+                      'location': {'lat': 51.74556, 'lon': -1.240528},
+                      'timeperiod': 2010
+                      },
+                     {'new_capacity': {'unit': 'Ml/yr',
+                      'value': 6},
+                      'asset': 'water_treatment_plant',
+                      'description': 'Existing water treatment plants',
+                      'location': {'lat': 51.74556, 'lon': -1.240528},
+                      'timeperiod': 2010
+                      }]
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('planning', file_name)
+    filepath.write(contents)
+
+
+@pytest.fixture(scope='function')
 def setup_config_file(setup_folder_structure):
     """Configuration file contains entries for sector models, timesteps and
     planning
@@ -168,7 +198,8 @@ def setup_project_folder(setup_runpy_file,
                          setup_timesteps_file,
                          setup_water_attributes,
                          setup_water_inputs,
-                         setup_water_outputs):
+                         setup_water_outputs,
+                         setup_pre_specified_planning):
     """Sets up a temporary folder with the required project folder structure
 
         /models

@@ -111,7 +111,8 @@ class TestBuildSosModel():
         timesteps_config = project_path.join('config', 'timesteps.yaml')
         builder.load_timesteps(str(timesteps_config))
 
-        builder.load_planning({})
+        planning_path = project_path.join('planning', 'pre-specified.yaml')
+        builder.load_planning([str(planning_path)])
 
         model = builder.load_model('water_supply', str(project_path))
         assert isinstance(model, SectorModel)
