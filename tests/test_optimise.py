@@ -14,11 +14,11 @@ The optimisation features requires:
 
 """
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
+
 from fixtures.water_supply import WaterSupplySectorModel, DynamicWaterSupplySectorModel
 from fixtures.water_supply import dynamic_data, one_input
-from numpy.testing import assert_allclose
-from smif.sector_model import SectorModel
 from smif.controller import SosModel
 
 
@@ -122,7 +122,7 @@ class TestMultiYearOptimisation:
         assert results == expected_results
 
     @pytest.mark.skip(reason="should SectorModel be able to run sequential simulation?")
-    def test_sequential_simulation_scipy(self, dynamic_data):
+    def test_sector_model_sequential_simulation(self, dynamic_data):
         # Instantiate a sector model
         model = DynamicWaterSupplySectorModel()
         model.attributes = {}
@@ -135,8 +135,8 @@ class TestMultiYearOptimisation:
                     {'capacity': 5.0, 'cost': 0.0, 'water': 3.0}]
         assert results == expected
 
-    @pytest.mark.skip(reason="should SectorModel be able to run sequential simulation?")
-    def test_sequential_optimisation_tr(self, dynamic_data):
+    @pytest.mark.skip(reason="should SectorModel be able to run sequential optimisation?")
+    def test_sector_model_sequential_optimisation(self, dynamic_data):
         # Instantiate a sector model
         model = DynamicWaterSupplySectorModel()
         model.attributes = {}

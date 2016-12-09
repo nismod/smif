@@ -281,6 +281,49 @@ class DynamicWaterSupplySectorModel(SectorModel):
                       )
         return constraints
 
+class WaterSupplySectorModelWithAssets(SectorModel):
+    """A concrete instance of the water supply wrapper for testing with assets
+
+    Inherits :class:`SectorModel` to wrap the example simulation tool including
+    asset management.
+
+    The __state__ of the model is tracked in the asset parameter
+    `number_of_treatment_plants`.
+
+    """
+    def initialise(self, data, assets):
+        """Initialises the model
+        """
+        self.model = WaterMod(data['raininess'], data['plants'])
+        self.results = None
+        self.run_successful = None
+
+        treatment_plants = self.model.number_of_treatment_plants
+        state_parameter_map = {'treatment plant': treatment_plants}
+
+        self.state = State('oxford', 2010,
+                           'water_supply',
+                           state_parameter_map)
+        self.state.initialise_from_tuples(assets)
+
+    def optimise(self, method, decision_vars, objective_function):
+        pass
+
+    def decision_vars(self):
+        return self.model.number_of_treatment_plants
+
+    def objective_function(self):
+        return self.model.cost
+
+    def simulate(self):
+        self.model.number_of_treatment_plants = \
+            self.state.current_state['assets']['treatment plant']
+        self.results = self.model.simulate()
+        self.run_successful = True
+
+    def model_executable(self):
+        pass
+
 
 class ExampleWaterSupplySimulationModel(object):
     """An example simulation model used for testing purposes
