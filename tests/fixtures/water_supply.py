@@ -37,6 +37,7 @@ import math
 from pytest import fixture
 
 from smif.sector_model import SectorModel
+from smif.abstract import State
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -294,7 +295,7 @@ class WaterSupplySectorModelWithAssets(SectorModel):
     def initialise(self, data, assets):
         """Initialises the model
         """
-        self.model = WaterMod(data['raininess'], data['plants'])
+        self.model = ExampleWaterSupplySimulationModelWithAsset(data['raininess'], data['plants'])
         self.results = None
         self.run_successful = None
 
