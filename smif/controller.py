@@ -45,7 +45,7 @@ class SoSModelReader(object):
 
     """
     def __init__(self, project_folder):
-        logger.info("Getting config file from {}".format(project_folder))
+        logger.info("Getting config file from %s", project_folder)
         self._project_folder = project_folder
         self._configuration = self.parse_sos_config(project_folder)
         self.elements = ['timesteps', 'sector_models', 'planning']
@@ -65,7 +65,7 @@ class SoSModelReader(object):
         config_path = os.path.join(project_folder,
                                    'config',
                                    'model.yaml')
-        msg = "Looking for configuration data in {}".format(config_path)
+        msg = "Looking for configuration data in %s", config_path
         logger.info(msg)
 
         config_parser = ConfigParser(config_path)
@@ -86,7 +86,12 @@ class SoSModelReader(object):
                 self.builder.load_models(models, self._project_folder)
             elif element == 'planning':
                 planning = self._configuration['planning']
-                self.builder.load_planning(planning)
+                file_paths = [os.path.join(self._project_folder,
+                                           'planning',
+                                           filename)
+                              for filename in
+                              planning['pre_specified']['files']]
+                self.builder.load_planning(file_paths)
 
 
 class SosModel(object):
@@ -106,7 +111,7 @@ class SosModel(object):
         raise NotImplementedError(msg)
 
     def determine_running_mode(self):
-        """Determines from the config in what model to run the model
+        """Determines from the config in what mode to run the model
 
         Returns
         =======
@@ -215,10 +220,20 @@ class SoSModelBuilder(object):
 
         self.sos_model._timesteps = cp.data
 
-    def load_planning(self, planning):
+    def load_planning(self, file_paths):
         """Loads the planning logic into the system of systems model
 
+        Arguments
+        =========
+        file_paths : list
+            A list of file paths
+
         """
+        planning = []
+        for filepath in file_paths:
+            parser = ConfigParser(filepath)
+            parser.validate_as_pre_specified_planning()
+            planning.extend(parser.data)
         self.sos_model.planning = planning
 
     def load_models(self, model_list, project_folder):
