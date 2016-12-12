@@ -20,8 +20,15 @@ class TestSosModelReader():
         reader = SosModelReader(self._get_model_config(setup_project_folder))
         reader.load()
 
-        expected = ['water_supply']
-        actual = reader.sector_models
+        expected = [
+            {
+                "name": "water_supply",
+                "path": "./models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "./data/water_supply"
+            }
+        ]
+        actual = reader.sector_model_data
         assert actual == expected
 
     def test_timesteps(self, setup_project_folder):

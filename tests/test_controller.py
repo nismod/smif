@@ -15,14 +15,14 @@ class TestController():
         config_file_path = os.path.join(str(setup_project_folder), "config", "model.yaml")
         reader = SosModelReader(config_file_path)
         reader.load()
-        cont = Controller(reader)
+        cont = Controller(reader.data)
         cont.run_sector_model('water_supply')
 
     def test_invalid_sector_model(self, setup_project_folder):
         config_file_path = os.path.join(str(setup_project_folder), "config", "model.yaml")
         reader = SosModelReader(config_file_path)
         reader.load()
-        cont = Controller(reader)
+        cont = Controller(reader.data)
         with raises(AssertionError):
             cont.run_sector_model('invalid_sector_model')
 
@@ -46,8 +46,6 @@ class TestSosModelBuilder():
 
         builder.add_model(model)
         assert isinstance(builder.sos_model.model_list['water_supply'], SectorModel)
-
-        builder.add_models([model])
 
         sos_model = builder.finish()
         assert isinstance(sos_model, SosModel)

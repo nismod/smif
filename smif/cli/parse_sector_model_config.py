@@ -17,12 +17,15 @@ class SectorModelReader(object):
         The name of the model
     model_path : str
         The path to the python module file that contains an implementation of SectorModel
+    model_classname : str
+        The name of the class that implements SectorModel
     model_config_dir : str
         The root path of model config/data to use
 
     """
-    def __init__(self, model_name, model_config_dir, model_classname):
+    def __init__(self, model_name, model_path, model_classname, model_config_dir):
         self.model_name = model_name
+        self.model_path = model_path
         self.model_classname = model_classname
         self.model_config_dir = model_config_dir
 
@@ -37,14 +40,25 @@ class SectorModelReader(object):
         self.outputs = self._load_outputs()
         self.assets = self._load_model_assets()
 
+    @property
+    def data(self):
+        return {
+            "name": self.model_name,
+            "path": self.model_path,
+            "classname": self.model_classname,
+            "inputs": self.inputs,
+            "outputs": self.outputs,
+            "assets": self.assets
+        }
+
     def _load_inputs(self):
-        """Input spec is located in the ``models/<sectormodel>/inputs.yaml`` file
+        """Input spec is located in the ``data/<sectormodel>/inputs.yaml`` file
         """
         path = os.path.join(self.model_config_dir, 'inputs.yaml')
         return ConfigParser(path).data
 
     def _load_outputs(self):
-        """Output spec is located in ``models/<sectormodel>/output.yaml`` file
+        """Output spec is located in ``data/<sectormodel>/output.yaml`` file
         """
         path = os.path.join(self.model_config_dir, 'outputs.yaml')
         return ConfigParser(path).data

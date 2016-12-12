@@ -24,14 +24,24 @@ class SosModelReader(object):
 
         self.config = None
         self.timesteps = None
-        self.sector_models = None
+        self.sector_model_data = None
 
     def load(self):
         """Load and check all config
         """
         self.config = self._load_sos_config()
         self.timesteps = self._load_timesteps()
-        self.sector_models = self._load_sector_models()
+        self.sector_model_data = self._load_sector_model_data()
+
+    @property
+    def data(self):
+        """Expose all model configuration data
+        """
+        return {
+            "timesteps": self.timesteps,
+            "sector_model_config": self.sector_model_data,
+            "planning": None
+        }
 
     def _load_sos_config(self):
         """Parse model master config
@@ -60,7 +70,7 @@ class SosModelReader(object):
 
         return config_parser.data
 
-    def _load_sector_models(self):
+    def _load_sector_model_data(self):
         """Parse list of sector models to run
 
         Model details include:
@@ -68,8 +78,7 @@ class SosModelReader(object):
         - model config directory
         - SectorModel class name to call
         """
-        models = self.config['sector_models']
-        return models
+        return self.config['sector_models']
 
     def _load_planning(self):
         planning_relative_path = self.config['planning']

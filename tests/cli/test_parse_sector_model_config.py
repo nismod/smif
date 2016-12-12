@@ -10,9 +10,10 @@ class TestSectorModelReader(object):
 
         reader = SectorModelReader(
             'water_supply',
-            self._model_config_dir(setup_project_folder),
-            'WaterSupplySectorModel')
-
+            'path/to/water_supply.py',
+            'WaterSupplySectorModel',
+            self._model_config_dir(setup_project_folder)
+        )
         reader.load()
 
         expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
@@ -25,8 +26,10 @@ class TestSectorModelReader(object):
 
         reader = SectorModelReader(
             'water_supply',
-            self._model_config_dir(setup_project_folder),
-            'WaterSupplySectorModel')
+            'path/to/water_supply.py',
+            'WaterSupplySectorModel',
+            self._model_config_dir(setup_project_folder)
+        )
 
         reader.load()
 

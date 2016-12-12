@@ -70,16 +70,22 @@ def setup_assets_file_two(setup_folder_structure):
 
 
 @pytest.fixture(scope='function')
-def setup_config_file_two(setup_folder_structure):
+def setup_config_file(setup_folder_structure):
     """Configuration file contains entries for sector models, timesteps and
     planning
-
-    Contains two asset files
     """
     file_contents = {
-        'sector_models': ['water_supply'],
+        'sector_models': [
+            {
+                "name": "water_supply",
+                "path": "./models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "./data/water_supply"
+            }
+        ],
+        'base_year': 2010,
         'timesteps': 'timesteps.yaml',
-        'assets': ['assets1.yaml', 'assets2.yaml'],
+        'assets': ['assets1.yaml'],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -219,14 +225,24 @@ def setup_pre_specified_planning_two(setup_folder_structure):
 
 
 @pytest.fixture(scope='function')
-def setup_config_file(setup_folder_structure):
+def setup_config_file_two(setup_folder_structure):
     """Configuration file contains entries for sector models, timesteps and
     planning
+
+    Contains two asset files
     """
     file_contents = {
-        'sector_models': ['water_supply'],
+        'sector_models': [
+            {
+                "name": "water_supply",
+                "path": "./models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "./data/water_supply"
+            }
+        ],
+        'base_year': 2010,
         'timesteps': 'timesteps.yaml',
-        'assets': ['assets1.yaml'],
+        'assets': ['assets1.yaml', 'assets2.yaml'],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -248,7 +264,15 @@ def setup_config_file_timesteps_two(setup_folder_structure):
     planning
     """
     file_contents = {
-        'sector_models': ['water_supply'],
+        'sector_models': [
+            {
+                "name": "water_supply",
+                "path": "./models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "./data/water_supply"
+            }
+        ],
+        'base_year': 2010,
         'timesteps': 'timesteps2.yaml',
         'assets': ['assets1.yaml'],
         'planning': {

@@ -42,6 +42,7 @@ from argparse import ArgumentParser
 from smif.controller import Controller
 from . parse_config import ConfigParser
 from . parse_model_config import SosModelReader
+from . parse_sector_model_config import SectorModelReader
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -126,8 +127,21 @@ def validate_config(args):
         exit(-1)
     else:
         try:
-            model_config = SosModelReader(config_path)
-            # TODO check each sector model either within SosModelReader or here in loop
+            # read system-of-systems config
+            reader = SosModelReader(config_path)
+            model_config = reader.data
+
+            model_config['sector_model_data'] = []
+
+            for model_config in model_config['sector_model_config']:
+                # read each sector model config+data
+                reader = SectorModelReader(
+                    model_config['name'],
+                    model_config['config_dir'],
+                    model_config['classname'])
+                reader.load()
+                model_config['sector_model_data'].append(reader.data)
+
         except ValueError as error:
             LOGGER.error("The model configuration is invalid: %s", error)
         else:

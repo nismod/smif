@@ -4,15 +4,11 @@ framework.
 
 """
 import logging
-import os
-from glob import glob
-from importlib.util import module_from_spec, spec_from_file_location
 
 import numpy as np
 from smif.decision import Planning
-from smif.parse_config import ConfigParser
-from smif.sectormodel import (SectorModelMode, SectorModelBuilder,
-                              SectorConfigReader)
+from smif.cli.parse_config import ConfigParser
+from smif.sector_model import (SectorModelMode, SectorModelBuilder)
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -194,7 +190,7 @@ class SosModelBuilder(object):
         """Set up the whole SosModel
         """
         self.add_timesteps(config_data['timesteps'])
-        self.load_models(config_data['models'])
+        self.load_models(config_data['sector_model_data'])
         self.add_planning(config_data['planning'])
 
     def add_timesteps(self, timesteps):
@@ -223,17 +219,27 @@ class SosModelBuilder(object):
             planning.extend(parser.data)
         self.sos_model.planning = Planning(planning)
 
-    def load_models(self, model_list):
+    def load_models(self, model_data_list):
         """Loads the sector models into the system-of-systems model
 
         Arguments
         =========
-        model_list : list
-            A list of sector model names
+        model_data_list : list
+            A list of sector model config/data
 
         """
-        for model in model_list:
+        for model_data in model_data_list:
+            model = self._build_model(model_data)
             self.add_model(model)
+
+    @staticmethod
+    def _build_model(model_data):
+        builder = SectorModelBuilder(model_data['name'])
+        builder.load_model(model_data['path'], model_data['classname'])
+        builder.add_inputs(model_data['inputs'])
+        builder.add_inputs(model_data['outputs'])
+        builder.add_inputs(model_data['assets'])
+        return builder.finish()
 
     def add_model(self, model):
         """Adds a sector model into the system-of-systems model
@@ -245,6 +251,7 @@ class SosModelBuilder(object):
     def add_planning(self, planning):
         """Loads the planning logic into the system of systems model
         """
+        # TODO think through which parts of this live with sector models / at the top level
         self.sos_model.planning = planning
 
     def _check_planning_assets_exist(self):

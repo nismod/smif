@@ -217,7 +217,7 @@ class SectorModel(ABC):
         return obj
 
     @abstractmethod
-    def simulate(self, decision_variables):
+    def simulate(self, decisions, state, data):
         """This method should allow run model with inputs and outputs as arrays
 
         Arguments

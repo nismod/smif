@@ -9,7 +9,7 @@
 """
 
 import logging
-from smif.sectormodel import SectorModel
+from smif.sector_model import SectorModel
 
 class WaterSupplySectorModel(SectorModel):
     """Example of a class implementing the SectorModel interface,
@@ -17,12 +17,12 @@ class WaterSupplySectorModel(SectorModel):
     system.
     """
 
-    def simulate(self, decision_variables):
+    def simulate(self, decisions, state, data):
         """
 
         Arguments
         =========
-        decision_variables : :class:`numpy.ndarray`
+        decisions : :class:`numpy.ndarray`
             x_0 is new capacity of water treatment plants
         """
 
@@ -30,7 +30,7 @@ class WaterSupplySectorModel(SectorModel):
         raininess = self.inputs.parameters['raininess']['value']
 
         # unpack decision variables
-        number_of_treatment_plants = decision_variables[0, ]
+        number_of_treatment_plants = decisions[0, ]
 
         # simulate (wrapping toy model)
         instance = ExampleWaterSupplySimulationModel(raininess, number_of_treatment_plants)
