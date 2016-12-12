@@ -23,9 +23,9 @@ class TestSosModelReader():
         expected = [
             {
                 "name": "water_supply",
-                "path": "./models/water_supply/__init__.py",
+                "path": "../models/water_supply/__init__.py",
                 "classname": "WaterSupplySectorModel",
-                "config_dir": "./data/water_supply"
+                "config_dir": "../data/water_supply"
             }
         ]
         actual = reader.sector_model_data

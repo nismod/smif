@@ -4,6 +4,7 @@ import os
 from pytest import raises
 
 from smif.controller import Controller, SosModel, SosModelBuilder
+from smif.cli import read_sector_model_data_from_config
 from smif.cli.parse_model_config import SosModelReader
 from smif.sector_model import SectorModel
 from fixtures.water_supply import one_dependency, one_input, WaterSupplySectorModel
@@ -15,14 +16,30 @@ class TestController():
         config_file_path = os.path.join(str(setup_project_folder), "config", "model.yaml")
         reader = SosModelReader(config_file_path)
         reader.load()
-        cont = Controller(reader.data)
+        config_data = reader.data
+
+        main_config_dir = os.path.dirname(config_file_path)
+        config_data['sector_model_data'] = read_sector_model_data_from_config(
+            main_config_dir,
+            config_data['sector_model_config']
+        )
+
+        cont = Controller(config_data)
         cont.run_sector_model('water_supply')
 
     def test_invalid_sector_model(self, setup_project_folder):
         config_file_path = os.path.join(str(setup_project_folder), "config", "model.yaml")
         reader = SosModelReader(config_file_path)
         reader.load()
-        cont = Controller(reader.data)
+        config_data = reader.data
+
+        main_config_dir = os.path.dirname(config_file_path)
+        config_data['sector_model_data'] = read_sector_model_data_from_config(
+            main_config_dir,
+            config_data['sector_model_config']
+        )
+
+        cont = Controller(config_data)
         with raises(AssertionError):
             cont.run_sector_model('invalid_sector_model')
 

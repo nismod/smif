@@ -37,6 +37,36 @@ def setup_folder_structure(tmpdir_factory):
 
 
 @pytest.fixture(scope='function')
+def setup_project_folder(setup_runpy_file,
+                         setup_folder_structure,
+                         setup_config_file,
+                         setup_timesteps_file,
+                         setup_water_attributes,
+                         setup_water_inputs,
+                         setup_water_outputs,
+                         setup_pre_specified_planning):
+    """Sets up a temporary folder with the required project folder structure
+
+        /config
+        /config/model.yaml
+        /config/timesteps.yaml
+        /data
+        /data/water_supply/
+        /data/water_supply/inputs.yaml
+        /data/water_supply/outputs.yaml
+        /data/water_supply/assets
+        /data/water_supply/assets/assets_1.yaml
+        /data/water_supply/pre-specified.yaml
+        /models
+        /models/water_supply/water_supply.py
+
+    """
+    base_folder = setup_folder_structure
+
+    return base_folder
+
+
+@pytest.fixture(scope='function')
 def setup_assets_file(setup_folder_structure):
     """Assets are associated with sector models, not the integration config
 
@@ -78,20 +108,20 @@ def setup_config_file(setup_folder_structure):
         'sector_models': [
             {
                 "name": "water_supply",
-                "path": "./models/water_supply/__init__.py",
+                "path": "../models/water_supply/__init__.py",
                 "classname": "WaterSupplySectorModel",
-                "config_dir": "./data/water_supply"
+                "config_dir": "../data/water_supply"
             }
         ],
         'base_year': 2010,
         'timesteps': 'timesteps.yaml',
-        'assets': ['assets1.yaml'],
+        'assets': ['../data/water_supply/assets/assets_1.yaml'],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
             'pre_specified': {
                 'use': True,
-                'files': ['pre-specified.yaml']
+                'files': ['../data/water_supply/pre-specified.yaml']
             }
         }
     }
@@ -235,20 +265,23 @@ def setup_config_file_two(setup_folder_structure):
         'sector_models': [
             {
                 "name": "water_supply",
-                "path": "./models/water_supply/__init__.py",
+                "path": "../models/water_supply/__init__.py",
                 "classname": "WaterSupplySectorModel",
-                "config_dir": "./data/water_supply"
+                "config_dir": "../data/water_supply"
             }
         ],
         'base_year': 2010,
         'timesteps': 'timesteps.yaml',
-        'assets': ['assets1.yaml', 'assets2.yaml'],
+        'assets': [
+            '../data/water_supply/assets_1.yaml',
+            '../data/water_supply/assets_2.yaml'
+        ],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
             'pre_specified': {
                 'use': True,
-                'files': ['pre-specified.yaml']
+                'files': ['../data/water_supply/pre-specified.yaml']
             }
         }
     }
@@ -267,20 +300,20 @@ def setup_config_file_timesteps_two(setup_folder_structure):
         'sector_models': [
             {
                 "name": "water_supply",
-                "path": "./models/water_supply/__init__.py",
+                "path": "../models/water_supply/__init__.py",
                 "classname": "WaterSupplySectorModel",
-                "config_dir": "./data/water_supply"
+                "config_dir": "../data/water_supply"
             }
         ],
         'base_year': 2010,
-        'timesteps': 'timesteps2.yaml',
-        'assets': ['assets1.yaml'],
+        'timesteps': 'timesteps_2.yaml',
+        'assets': ['../data/water_supply/assets_1.yaml'],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
             'pre_specified': {
                 'use': True,
-                'files': ['pre-specified_alt.yaml']
+                'files': ['../data/water_supply/pre-specified_alt.yaml']
             }
         }
     }
@@ -292,12 +325,12 @@ def setup_config_file_timesteps_two(setup_folder_structure):
 
 @pytest.fixture(scope='function')
 def setup_runpy_file(tmpdir, setup_folder_structure):
-    """The run.py model should contain an instance of SectorModel which wraps
+    """The python script should contain an instance of SectorModel which wraps
     the sector model and allows it to be run.
     """
     base_folder = setup_folder_structure
-    # Write a run.py file for the water_supply model
-    filename = base_folder.join('models', 'water_supply', 'water_supply.py')
+    # Write a file for the water_supply model
+    filename = base_folder.join('models', 'water_supply', '__init__.py')
     contents = """
 from smif.sector_model import SectorModel
 
@@ -310,36 +343,6 @@ class WaterSupplySectorModel(SectorModel):
 
 """
     filename.write(contents, ensure=True)
-
-
-
-@pytest.fixture(scope='function')
-def setup_project_folder(setup_runpy_file,
-                         setup_folder_structure,
-                         setup_config_file,
-                         setup_timesteps_file,
-                         setup_water_attributes,
-                         setup_water_inputs,
-                         setup_water_outputs,
-                         setup_pre_specified_planning):
-    """Sets up a temporary folder with the required project folder structure
-
-        /model.yaml
-        /timesteps.yaml
-        /data
-        /data/water_supply/
-        /data/water_supply/inputs.yaml
-        /data/water_supply/outputs.yaml
-        /data/water_supply/assets
-        /data/water_supply/assets/assets1.yaml
-        /data/water_supply/pre-specified.yaml
-        /models
-        /models/water_supply/water_supply.py
-
-    """
-    base_folder = setup_folder_structure
-
-    return base_folder
 
 
 @pytest.fixture(scope='function')
@@ -480,7 +483,7 @@ def setup_timesteps_file(setup_folder_structure):
 @pytest.fixture(scope='function')
 def setup_timesteps_file_two(setup_folder_structure):
     base_folder = setup_folder_structure
-    filename = base_folder.join('config', 'timesteps2.yaml')
+    filename = base_folder.join('config', 'timesteps_2.yaml')
     timesteps_contents = [2015, 2020, 2025]
     contents = yaml.dump(timesteps_contents)
     filename.write(contents, ensure=True)
@@ -524,20 +527,15 @@ def setup_water_attributes(setup_folder_structure):
     ]
     content = yaml.dump(data)
 
-    project_folder = setup_folder_structure
-    filepath = 'data/water_supply/assets/water_asset_abc.yaml'
-    water_file_abc = project_folder.join(filepath)
-    water_file_abc.write(content, ensure=True)
+    filename = setup_folder_structure.join('data', 'water_supply', 'assets', 'water_asset_abc.yaml')
+    filename.write(content, ensure=True)
 
-    return water_file_abc
+    return filename
 
 
 @pytest.fixture(scope='function')
 def setup_water_asset_d(setup_folder_structure,
                         setup_config_file_two):
-    project_folder = setup_folder_structure
-    filepath = 'data/water_supply/assets/water_asset_d.yaml'
-    water_file_d = project_folder.join(filepath)
 
     content = """
 -
@@ -546,9 +544,10 @@ def setup_water_asset_d(setup_folder_structure,
         value: 3000
         unit: "£/kW"
 """
-    water_file_d.write(content, ensure=True)
+    filename = setup_folder_structure.join('data', 'water_supply', 'assets', 'water_asset_d.yaml')
+    filename.write(content, ensure=True)
 
-    return str(project_folder)
+    return filename
 
 
 @pytest.fixture(scope='function')

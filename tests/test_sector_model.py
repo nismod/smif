@@ -18,7 +18,7 @@ class TestSectorModelBuilder():
 
         model_path = str(project_path.join('models',
                                            'water_supply',
-                                           'water_supply.py'))
+                                           '__init__.py'))
         builder = SectorModelBuilder('water_supply')
         builder.load_model(model_path, 'WaterSupplySectorModel')
 

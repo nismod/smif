@@ -129,18 +129,13 @@ def validate_config(args):
         try:
             # read system-of-systems config
             reader = SosModelReader(config_path)
+            reader.load()
+
             model_config = reader.data
-
-            model_config['sector_model_data'] = []
-
-            for model_config in model_config['sector_model_config']:
-                # read each sector model config+data
-                reader = SectorModelReader(
-                    model_config['name'],
-                    model_config['config_dir'],
-                    model_config['classname'])
-                reader.load()
-                model_config['sector_model_data'].append(reader.data)
+            config_basepath = os.path.dirname(config_path)
+            # read sector model data+config
+            model_config['sector_model_data'] = \
+            read_sector_model_data_from_config(config_basepath, model_config['sector_model_config'])
 
         except ValueError as error:
             LOGGER.error("The model configuration is invalid: %s", error)
@@ -149,6 +144,37 @@ def validate_config(args):
 
         return model_config
 
+def read_sector_model_data_from_config(config_basepath, config):
+    data = []
+
+    for model_config in config:
+        # read from dir relative to main model config file
+        if os.path.isabs(model_config['config_dir']):
+            config_dir = model_config['config_dir']
+        else:
+            config_dir = os.path.join(config_basepath, model_config['config_dir'])
+
+        if os.path.isabs(model_config['path']):
+            path = model_config['path']
+        else:
+            path = os.path.join(config_basepath, model_config['path'])
+
+        # read each sector model config+data
+        reader = SectorModelReader(
+            model_config['name'],
+            path,
+            model_config['classname'],
+            config_dir
+        )
+        try:
+            reader.load()
+            data.append(reader.data)
+        except FileNotFoundError as error:
+            LOGGER.error("%s: %s", model_config['name'], error)
+            raise ValueError("missing sector model configuration")
+
+
+    return data
 
 def parse_arguments():
     """Parse command line arguments
@@ -159,9 +185,6 @@ def parse_arguments():
 
     """
     parser = ArgumentParser(description='Command line tools for smif')
-    parser.add_argument('--path',
-                        help="Path to the project folder",
-                        default=os.getcwd())
     subparsers = parser.add_subparsers()
 
     # VALIDATE
@@ -169,17 +192,15 @@ def parse_arguments():
     parser_validate = subparsers.add_parser('validate',
                                             help=help_msg)
     parser_validate.set_defaults(func=validate_config)
-    parser_validate.add_argument('--path',
-                                 help="Path to the project folder",
-                                 default=os.getcwd())
+    parser_validate.add_argument('path',
+                                 help="Path to the project folder")
 
     # SETUP
     parser_setup = subparsers.add_parser('setup',
                                          help='Setup the project folder')
     parser_setup.set_defaults(func=setup_configuration)
-    parser_setup.add_argument('--path',
-                              help="Path to the project folder",
-                              default=os.getcwd())
+    parser_setup.add_argument('path',
+                              help="Path to the project folder")
 
     # RUN
     parser_run = subparsers.add_parser('run',
@@ -188,9 +209,8 @@ def parse_arguments():
                             default='all',
                             help='The name of the model to run')
     parser_run.set_defaults(func=run_model)
-    parser_run.add_argument('--path',
-                            help="Path to the project folder",
-                            default=os.getcwd())
+    parser_run.add_argument('path',
+                            help="Path to the project folder")
 
     return parser
 

@@ -1,4 +1,4 @@
-models:
+sector_models:
   - name: water_supply
     path: ../models/water_supply.py
     classname: WaterSupplySectorModel

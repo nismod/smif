@@ -237,8 +237,8 @@ class SosModelBuilder(object):
         builder = SectorModelBuilder(model_data['name'])
         builder.load_model(model_data['path'], model_data['classname'])
         builder.add_inputs(model_data['inputs'])
-        builder.add_inputs(model_data['outputs'])
-        builder.add_inputs(model_data['assets'])
+        builder.add_outputs(model_data['outputs'])
+        builder.add_assets(model_data['assets'])
         return builder.finish()
 
     def add_model(self, model):

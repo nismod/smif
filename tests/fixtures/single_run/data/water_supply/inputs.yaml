@@ -1,0 +1,18 @@
+decision variables:
+  - name: reservoir pumpiness
+    value: 24.583
+    bounds:
+    - 0
+    - 100
+  - name: water treatment capacity
+    value: 10
+    bounds:
+    - 0
+    - 20
+parameters:
+  - name: raininess
+    value: 3
+    bounds:
+    - 0
+    - 5
+dependencies: []
