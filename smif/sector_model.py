@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module acts as a bridge to the sector models from the controller
 
  The :class:`SectorModel` exposes several key methods for running wrapped

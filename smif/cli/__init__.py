@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """A command line interface to the system of systems framework
 
 This command line interface implements a number of methods.

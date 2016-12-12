@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Encapsulates the inputs to a sector model
 
 .. inheritance-diagram:: smif.inputs

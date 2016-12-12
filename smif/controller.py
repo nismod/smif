@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module coordinates the software components that make up the integration
 framework.
 

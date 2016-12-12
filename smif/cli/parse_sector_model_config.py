@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Read and parse the config for sector models
 """
 import logging

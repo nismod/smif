@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Read and parse the config files for the system-of-systems model
 """
 import logging

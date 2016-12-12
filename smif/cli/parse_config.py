@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Parse yaml config files, to construct sector models
 """
 import json

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Encapsulates the outputs from a sector model
 
 .. inheritance-diagram:: smif.outputs
