@@ -50,13 +50,8 @@ class TestSosModelBuilder():
 
         builder = SosModelBuilder()
 
-
-        planning_path = project_path.join('planning', 'pre-specified.yaml')
-        builder.load_planning([str(planning_path)])
-
         builder.add_timesteps([2010, 2011, 2012])
-
-        builder.add_planning({})
+        builder.add_planning([])
 
         model = WaterSupplySectorModel()
         model.name = 'water_supply'
@@ -74,6 +69,7 @@ class TestSosModelBuilder():
     def test_build_api(self, one_input):
         builder = SosModelBuilder()
         builder.add_timesteps([2010, 2011, 2012])
+        builder.add_planning([])
 
         ws_model = WaterSupplySectorModel()
         ws_model.name = 'water_supply'
@@ -89,6 +85,7 @@ class TestSosModelBuilder():
     def test_build_valid_dependencies(self, one_dependency):
         builder = SosModelBuilder()
         builder.add_timesteps([2010])
+        builder.add_planning([])
 
         ws = WaterSupplySectorModel()
         ws.inputs = one_dependency

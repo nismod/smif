@@ -222,7 +222,7 @@ def setup_pre_specified_planning(setup_folder_structure):
                       }]
     contents = yaml.dump(file_contents)
     filepath = setup_folder_structure.join('planning', file_name)
-    filepath.write(contents)
+    filepath.write(contents, ensure=True)
 
 
 @pytest.fixture(scope='function')

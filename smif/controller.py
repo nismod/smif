@@ -7,7 +7,6 @@ import logging
 
 import numpy as np
 from smif.decision import Planning
-from smif.cli.parse_config import ConfigParser
 from smif.sector_model import (SectorModelMode, SectorModelBuilder)
 
 __author__ = "Will Usher"
@@ -203,22 +202,6 @@ class SosModelBuilder(object):
         """
         self.sos_model.timesteps = timesteps
 
-    def load_planning(self, file_paths):
-        """Loads the planning logic into the system of systems model
-
-        Arguments
-        =========
-        file_paths : list
-            A list of file paths
-
-        """
-        planning = []
-        for filepath in file_paths:
-            parser = ConfigParser(filepath)
-            parser.validate_as_pre_specified_planning()
-            planning.extend(parser.data)
-        self.sos_model.planning = Planning(planning)
-
     def load_models(self, model_data_list):
         """Loads the sector models into the system-of-systems model
 
@@ -252,7 +235,7 @@ class SosModelBuilder(object):
         """Loads the planning logic into the system of systems model
         """
         # TODO think through which parts of this live with sector models / at the top level
-        self.sos_model.planning = planning
+        self.sos_model.planning = Planning(planning)
 
     def _check_planning_assets_exist(self):
         """Check existence of all the assets in the pre-specifed planning

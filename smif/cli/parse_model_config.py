@@ -81,8 +81,16 @@ class SosModelReader(object):
         return self.config['sector_models']
 
     def _load_planning(self):
+        """Loads the set of build instructions for planning
+        """
         planning_relative_path = self.config['planning']
-        return planning_relative_path
+        planning = []
+        for filepath in planning_relative_path:
+            parser = ConfigParser(filepath)
+            parser.validate_as_pre_specified_planning()
+            planning.extend(parser.data)
+
+        return planning
 
     def _get_path_from_config(self, path):
         """Return an absolute path, given a path provided from a config file
