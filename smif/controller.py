@@ -26,8 +26,9 @@ import logging
 import os
 from glob import glob
 from importlib.util import module_from_spec, spec_from_file_location
-import numpy as np
 
+import numpy as np
+from smif.decision import Planning
 from smif.parse_config import ConfigParser
 from smif.sectormodel import SectorModel, SectorModelMode
 
@@ -45,7 +46,7 @@ class SoSModelReader(object):
 
     """
     def __init__(self, project_folder):
-        logger.info("Getting config file from {}".format(project_folder))
+        logger.info("Getting config file from %s", project_folder)
         self._project_folder = project_folder
         self._configuration = self.parse_sos_config(project_folder)
         self.elements = ['timesteps', 'sector_models', 'planning']
@@ -65,7 +66,7 @@ class SoSModelReader(object):
         config_path = os.path.join(project_folder,
                                    'config',
                                    'model.yaml')
-        msg = "Looking for configuration data in {}".format(config_path)
+        msg = "Looking for configuration data in %s", config_path
         logger.info(msg)
 
         config_parser = ConfigParser(config_path)
@@ -86,7 +87,12 @@ class SoSModelReader(object):
                 self.builder.load_models(models, self._project_folder)
             elif element == 'planning':
                 planning = self._configuration['planning']
-                self.builder.load_planning(planning)
+                file_paths = [os.path.join(self._project_folder,
+                                           'planning',
+                                           filename)
+                              for filename in
+                              planning['pre_specified']['files']]
+                self.builder.load_planning(file_paths)
 
 
 class SosModel(object):
@@ -106,7 +112,7 @@ class SosModel(object):
         raise NotImplementedError(msg)
 
     def determine_running_mode(self):
-        """Determines from the config in what model to run the model
+        """Determines from the config in what mode to run the model
 
         Returns
         =======
@@ -215,11 +221,21 @@ class SoSModelBuilder(object):
 
         self.sos_model._timesteps = cp.data
 
-    def load_planning(self, planning):
+    def load_planning(self, file_paths):
         """Loads the planning logic into the system of systems model
 
+        Arguments
+        =========
+        file_paths : list
+            A list of file paths
+
         """
-        self.sos_model.planning = planning
+        planning = []
+        for filepath in file_paths:
+            parser = ConfigParser(filepath)
+            parser.validate_as_pre_specified_planning()
+            planning.extend(parser.data)
+        self.sos_model.planning = Planning(planning)
 
     def load_models(self, model_list, project_folder):
         """Loads the sector models into the system-of-systems model
@@ -254,9 +270,35 @@ class SoSModelBuilder(object):
         model = builder.finish()
         return model
 
+    def _check_planning_assets_exist(self):
+        """Check existence of all the assets in the pre-specifed planning
+
+        """
+        model = self.sos_model
+        sector_assets = model.all_assets
+        for planning_asset in model.planning.assets:
+            msg = "Asset '{}' in planning file not found in sector assets"
+            assert planning_asset in sector_assets, msg.format(planning_asset)
+
+    def _check_planning_timeperiods_exist(self):
+        """Check existence of all the timeperiods in the pre-specified planning
+        """
+        model = self.sos_model
+        model_timeperiods = model.timesteps
+        for timeperiod in model.planning.timeperiods:
+            msg = "Timeperiod '{}' in planning file not found model config"
+            assert timeperiod in model_timeperiods, msg.format(timeperiod)
+
+    def validate(self):
+        """Validates the sos model
+        """
+        self._check_planning_assets_exist()
+        self._check_planning_timeperiods_exist()
+
     def finish(self):
         """Returns a configured system-of-systems model ready for operation
         """
+        self.validate()
         return self.sos_model
 
 
@@ -438,7 +480,8 @@ class SectorModelBuilder(object):
         self.validate()
         return self._sectormodel
 
-    def _load_asset_attributes(self, attribute_path):
+    @staticmethod
+    def _load_asset_attributes(attribute_path):
         """Loads an asset's attributes into a container
 
         Arguments

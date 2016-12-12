@@ -1,8 +1,10 @@
 # Parse yaml config files, to construct sector models
 import json
-import jsonschema
 import os
+
+import jsonschema
 import yaml
+
 
 class ConfigParser:
     """Parse yaml config file,
@@ -18,12 +20,11 @@ class ConfigParser:
         else:
             self.data = None
 
-    def validate(self,schema):
+    def validate(self, schema):
         if self.data is None:
             raise AttributeError("Config data not loaded")
 
         self._validate_against_schema(self.data, schema)
-
 
     def _validate_against_schema_file(self, data, schema_filename):
         """Validate data against a schema file
@@ -34,7 +35,9 @@ class ConfigParser:
 
     @staticmethod
     def _get_schema_filepath(schema_filename):
-        return os.path.join(os.path.dirname(__file__), "schema", schema_filename)
+        return os.path.join(os.path.dirname(__file__),
+                            "schema",
+                            schema_filename)
 
     @staticmethod
     def _load_schema_from_file(schema_filename):
@@ -55,13 +58,22 @@ class ConfigParser:
         if self.data is None:
             raise AttributeError("Config data not loaded")
 
-        self._validate_against_schema_file(self.data, "modelrun_config_schema.json")
+        self._validate_against_schema_file(self.data,
+                                           "modelrun_config_schema.json")
 
         for planning_type in self.data["planning"].values():
             if planning_type["use"] and "files" not in planning_type:
-                raise ValueError("A planning type needs files if it is going to be used.")
+                msg = "A planning type needs files if it is going to be used."
+                raise ValueError(msg)
 
     def validate_as_timesteps(self):
         """Validate the loaded data as required for model run timesteps
         """
-        self._validate_against_schema_file(self.data, "timesteps_config_schema.json")
+        self._validate_against_schema_file(self.data,
+                                           "timesteps_config_schema.json")
+
+    def validate_as_pre_specified_planning(self):
+        """Validate the loaded data as a pre-specified planning file
+        """
+        self._validate_against_schema_file(self.data,
+                                           "pre_specified_schema.json")

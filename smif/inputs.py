@@ -1,13 +1,39 @@
 """Encapsulates the inputs to a sector model
 
-
 .. inheritance-diagram:: smif.inputs
+
+Inputs are defined in a .yaml file.  There are three types of inputs,
+decision variables, parameters and dependencies.
+
+Decision variables and parameters have three attributes, name, bounds
+and value.
+
+Dependencies also have three attributes, name, spatial resolution
+and temporal resolution.
+
+An example yaml file::
+
+    decision variables:
+    - name: reservoir pumpiness
+      bounds: [0, 100]
+      value: 24.583
+    - name: water treatment capacity
+      bounds: [0, 20]
+      value: 10
+    dependencies:
+    - name: electricity
+      spatial_resolution: LOCAL
+      temporal_resolution: HOURLY
+    parameters:
+    - name: raininess
+      bounds: [0, 5]
+      value: 3
 
 """
 from __future__ import absolute_import, division, print_function
 
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 
 import numpy as np
 
@@ -99,27 +125,8 @@ class ModelElement(ABC):
         self.values[index] = value
 
 
-
 class InputList(ModelElement):
     """Defines the types of inputs to a sector model
-
-    The input data are expected to be defined using the following format::
-
-        'decision variables': [<list of decision variable names>]
-        'parameters': [<list of parameter names>]
-        '<decision variable name>': {'bounds': (<tuple of upper and lower
-                                                 bound>),
-                                     'index': <scalar showing position in
-                                               arguments>},
-                                     'init': <scalar showing initial value
-                                              for solver>
-                                      },
-        '<parameter name>': {'bounds': (<tuple of upper and lower range for
-                                        sensitivity analysis>),
-                             'index': <scalar showing position in
-                                      arguments>,
-                             'value': <scalar showing value for model>
-                              },
 
     """
     def __init__(self):
@@ -158,7 +165,8 @@ class InputList(ModelElement):
         Sets attributes
         ===============
         names : :class:`numpy.ndarray`
-            The names of the decision variables in the order given in the inputs
+            The names of the decision variables in the order given in the
+            inputs
         bounds : :class:`numpy.ndarray`
             The bounds in the same order
         values : :class:`numpy.ndarray`
@@ -195,6 +203,7 @@ class DecisionVariableList(InputList):
         super().__init__()
         self._parse_input_dictionary(decision_variables)
 
+
 class DependencyList(InputList):
 
     def __init__(self, dependencies):
@@ -213,7 +222,8 @@ class DependencyList(InputList):
         Sets attributes
         ===============
         ordered_names : :class:`numpy.ndarray`
-            The names of the decision variables in the order given in the inputs
+            The names of the decision variables in the order given in the
+            inputs
 
         """
 
@@ -245,7 +255,8 @@ class ModelInputs(object):
     def __init__(self, inputs):
         self._inputs = InputList()
 
-        self._decision_variables = DecisionVariableList(inputs['decision variables'])
+        self._decision_variables = DecisionVariableList(
+            inputs['decision variables'])
         self._parameters = ParameterList(inputs['parameters'])
 
         if 'dependencies' in inputs:
