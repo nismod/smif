@@ -17,6 +17,7 @@ before_script:
   - git config --global user.email "william.usher@ouce.ox.ac.uk"
   - git config --global user.name "Will Usher"
 script:
+  - python setup.py develop
   - python setup.py test
   - python setup.py behave_test
 after_success:
