@@ -1,197 +1,143 @@
-from unittest.mock import MagicMock
+# -*- coding: utf-8 -*-
 
+import os
 from pytest import raises
-from smif.controller import (Controller, SectorConfigReader,
-                             SectorModelBuilder, SosModel, SoSModelBuilder,
-                             SoSModelReader)
-from smif.inputs import ModelInputs
-from smif.sectormodel import SectorModel
+
+from smif.controller import Controller, SosModel, SosModelBuilder
+from smif.cli import read_sector_model_data_from_config
+from smif.cli.parse_model_config import SosModelReader
+from smif.sector_model import SectorModel
+from fixtures.water_supply import one_dependency, one_input, WaterSupplySectorModel
 
 
 class TestController():
-
-    def test_model_list(self, setup_project_folder):
-
-        cont = Controller(str(setup_project_folder))
-
-        expected = ['water_supply']
-        actual = cont.model.sector_models
-        assert actual == expected
-
-    def test_timesteps(self, setup_project_folder):
-
-        cont = Controller(str(setup_project_folder))
-
-        expected = [2010, 2011, 2012]
-        actual = cont.model.timesteps
-        assert actual == expected
-
-    def test_timesteps_alternate_file(self, setup_project_folder,
-                                      setup_config_file_timesteps_two,
-                                      setup_timesteps_file_two,
-                                      setup_pre_specified_planning_two):
-
-        cont = Controller(str(setup_project_folder))
-
-        expected = [2015, 2020, 2025]
-        actual = cont.model.timesteps
-        assert actual == expected
-
-    def test_timesteps_invalid(self, setup_project_folder,
-                               setup_timesteps_file_invalid):
-
-        with raises(ValueError):
-            Controller(str(setup_project_folder))
-
-    def test_assets(self, setup_project_folder):
-
-        cont = Controller(str(setup_project_folder))
-
-        expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
-        actual = cont.model.all_assets
-        assert actual == expected
-
-    def test_assets_two_asset_files(self, setup_project_folder,
-                                    setup_assets_file_two,
-                                    setup_config_file_two,
-                                    setup_water_asset_d):
-
-        cont = Controller(str(setup_project_folder))
-
-        expected = ['water_asset_a', 'water_asset_b',
-                    'water_asset_c', 'water_asset_d']
-        actual = cont.model.all_assets
-        assert actual == expected
-
-
-class TestRunModel():
-
+    # TODO replace setup with builder; possibly use fixture for test controller
     def test_run_sector_model(self, setup_project_folder):
-        cont = Controller(str(setup_project_folder))
+        config_file_path = os.path.join(str(setup_project_folder), "config", "model.yaml")
+        reader = SosModelReader(config_file_path)
+        reader.load()
+        config_data = reader.data
 
-        # Monkey patching inputs as run.py fixture cannot access smif.inputs
-        inputs = cont.model.model_list['water_supply'].model.inputs
-        model_inputs = ModelInputs(inputs)
-        cont.model.model_list['water_supply'].model.inputs = model_inputs
+        main_config_dir = os.path.dirname(config_file_path)
+        config_data['sector_model_data'] = read_sector_model_data_from_config(
+            main_config_dir,
+            config_data['sector_model_config']
+        )
 
-        cont.model.run_sector_model('water_supply')
+        cont = Controller(config_data)
+        cont.run_sector_model('water_supply')
 
     def test_invalid_sector_model(self, setup_project_folder):
-        cont = Controller(str(setup_project_folder))
+        config_file_path = os.path.join(str(setup_project_folder), "config", "model.yaml")
+        reader = SosModelReader(config_file_path)
+        reader.load()
+        config_data = reader.data
+
+        main_config_dir = os.path.dirname(config_file_path)
+        config_data['sector_model_data'] = read_sector_model_data_from_config(
+            main_config_dir,
+            config_data['sector_model_config']
+        )
+
+        cont = Controller(config_data)
         with raises(AssertionError):
-            cont.model.run_sector_model('invalid_sector_model')
+            cont.run_sector_model('invalid_sector_model')
 
 
-class TestBuildSosModel():
-
-    def test_read_sos_model(self, setup_project_folder):
-
-        project_path = setup_project_folder
-
-        reader = SoSModelReader(str(project_path))
-        mock_builder = MagicMock()
-        reader.builder = mock_builder
-
-        reader.construct()
-
-        timesteps_config = project_path.join('config', 'timesteps.yaml')
-        name, args, _ = reader.builder.mock_calls[0]
-        assert name == 'load_timesteps'
-        assert args[0] == str(timesteps_config)
-        name, args, _ = reader.builder.mock_calls[1]
-        assert name == 'load_models'
-        assert args == (['water_supply'], str(project_path))
-        name, args, _ = reader.builder.mock_calls[2]
-        assert name == 'load_planning'
+class TestSosModelBuilder():
 
     def test_sos_builder(self, setup_project_folder):
 
-        project_path = setup_project_folder
-        builder = SoSModelBuilder()
+        builder = SosModelBuilder()
 
-        timesteps_config = project_path.join('config', 'timesteps.yaml')
-        builder.load_timesteps(str(timesteps_config))
+        builder.add_timesteps([2010, 2011, 2012])
+        builder.add_planning([])
 
-        planning_path = project_path.join('planning', 'pre-specified.yaml')
-        builder.load_planning([str(planning_path)])
+        model = WaterSupplySectorModel()
+        model.name = 'water_supply'
 
-        model = builder.load_model('water_supply', str(project_path))
-        assert isinstance(model, SectorModel)
-
-        builder.load_models(['water_supply'], str(project_path))
+        builder.add_model(model)
+        assert isinstance(builder.sos_model.model_list['water_supply'], SectorModel)
 
         sos_model = builder.finish()
         assert isinstance(sos_model, SosModel)
 
         assert sos_model.timesteps == [2010, 2011, 2012]
         assert sos_model.sector_models == ['water_supply']
-        assert sos_model.all_assets == ['water_asset_a', 'water_asset_b',
-                                        'water_asset_c']
+        # TODO check if there is a requirement to report all assets in the system
 
+    def test_build_api(self, one_input):
+        builder = SosModelBuilder()
+        builder.add_timesteps([2010, 2011, 2012])
+        builder.add_planning([])
 
-class TestBuildSectorModel():
+        ws_model = WaterSupplySectorModel()
+        ws_model.name = 'water_supply'
+        ws_model.inputs = one_input
+        builder.add_model(ws_model)
 
-    def test_sector_model_builder(self, setup_project_folder):
-        project_path = setup_project_folder
-        builder = SectorModelBuilder()
+        sos_model = builder.finish()
+        assert isinstance(sos_model, SosModel)
 
-        builder.name_model('a model name')
+        assert sos_model.timesteps == [2010, 2011, 2012]
+        assert sos_model.sector_models == ['water_supply']
 
-        attributes = {name: str(project_path.join('models',
-                                                  'water_supply', 'assets',
-                                                  "{}.yaml".format(name)))
-                      for name in ['water_asset_a']}
+    def test_build_valid_dependencies(self, one_dependency):
+        builder = SosModelBuilder()
+        builder.add_timesteps([2010])
+        builder.add_planning([])
 
-        builder.load_attributes(attributes)
+        ws = WaterSupplySectorModel()
+        ws.name = "water_supply"
+        ws.inputs = one_dependency
+        builder.add_model(ws)
 
-        wrapper_path = str(project_path.join('models',
-                                             'water_supply',
-                                             'run.py'))
+        with raises(AssertionError) as error:
+            builder.finish()
 
-        builder.load_wrapper(wrapper_path)
-        # builder.load_inputs()
-        # builder.load_outputs()
-        # builder.validate()
-        model = builder.finish()
-        assert isinstance(model, SectorModel)
+        msg = "Missing dependency: water_supply depends on macguffins produced from macguffins_model, which is not supplied."
+        assert str(error.value) == msg
 
-        assert model.name == 'a model name'
+    def test_cyclic_dependencies(self):
+        a_inputs = {
+            'decision variables': [],
+            'parameters': [],
+            'dependencies': [
+                {
+                    'name': 'b value',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'from_model': 'b_model'
+                }
+            ]
+        }
 
-        assert model.assets == ['water_asset_a']
+        b_inputs = {
+            'decision variables': [],
+            'parameters': [],
+            'dependencies': [
+                {
+                    'name': 'a value',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'from_model': 'a_model'
+                }
+            ]
+        }
 
-        ext_attr = {'water_asset_a': {'capital_cost': {'unit': '£/kW',
-                                                       'value': 1000
-                                                       },
-                                      'economic_lifetime': 25,
-                                      'operational_lifetime': 25
-                                      }
-                    }
+        builder = SosModelBuilder()
+        builder.add_timesteps([2010])
+        builder.add_planning([])
 
-        assert model.attributes == ext_attr
+        a_model = WaterSupplySectorModel()
+        a_model.name = "a_model"
+        a_model.inputs = a_inputs
+        builder.add_model(a_model)
 
-    def test_sector_config_reader(self, setup_project_folder):
-        project_folder = setup_project_folder
+        b_model = WaterSupplySectorModel()
+        b_model.name = "b_model"
+        b_model.inputs = b_inputs
+        builder.add_model(b_model)
 
-        reader = SectorConfigReader('water_supply', str(project_folder))
-
-        mock_builder = MagicMock()
-        reader.builder = mock_builder
-
-        reader.construct()
-
-        name, args, _ = reader.builder.mock_calls[0]
-
-
-class TestSoSBuilderValidation():
-
-    def test_invalid_assets_in_pre_spec_plan(self, setup_project_folder,
-                                             setup_config_conflict_assets):
-        msg = "Asset '{}' in planning file not found in sector assets"
-        with raises(AssertionError, message=msg.format('water_asset_z')):
-            Controller(str(setup_project_folder))
-
-    def test_invalid_period_in_pre_spec_plan(self, setup_project_folder,
-                                             setup_config_conflict_periods):
-        msg = "Timeperiod '{}' in planning file not found model config"
-        with raises(AssertionError, message=msg.format('2010')):
-            Controller(str(setup_project_folder))
+        with raises(NotImplementedError):
+            builder.finish()

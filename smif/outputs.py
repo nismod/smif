@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Encapsulates the outputs from a sector model
 
 .. inheritance-diagram:: smif.outputs
@@ -5,114 +6,129 @@
 """
 import logging
 import os
-from collections import OrderedDict
 
-import numpy as np
-from smif.inputs import ModelElement
+from smif.abstract import ModelElementCollection
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
-class OutputFactory(ModelElement):
+class OutputList(ModelElementCollection):
     """Defines the types of outputs to a sector model
 
     """
+    def __init__(self, results):
+        super().__init__()
+        self.values = results
+
+    ##
+    # File interaction methods like load_results_from_files and
+    # replace_{line,cell} might live somewhere else
+    # - maybe sectormodel, if that deals with replacing file data?
+    # - maybe a utility file handler class?
+    # seem related to outputs for now
+    ##
+    @staticmethod
+    def replace_line(file_name, line_num, new_data):
+        """Replaces a line in a file with new data
+
+        Arguments
+        =========
+        file_name: str
+            The path to the input file
+        line_num: int
+            The number of the line to replace
+        new_data: str
+            The data to replace in the line
+
+        """
+        lines = open(file_name, 'r').readlines()
+        lines[line_num] = new_data
+        out = open(file_name, 'w')
+        out.writelines(lines)
+        out.close()
 
     @staticmethod
-    def getelement(output_type):
-        """Implements the factory method to return subclasses of
-        :class:`smif.outputFactory`
+    def replace_cell(file_name, line_num, column_num, new_data,
+                     delimiter=None):
+        """Replaces a cell in a delimited file with new data
+
+        Arguments
+        =========
+        file_name: str
+            The path to the input file
+        line_num: int
+            The number of the line to replace (0-index)
+        column_num: int
+            The number of the column to replace (0-index)
+        new_data: str
+            The data to replace in the line
+        delimiter: str, default=','
+            The delimiter of the columns
         """
-        if output_type == 'metrics':
-            return MetricList()
-        elif output_type == 'outputs':
-            return OutputList()
-        else:
-            raise ValueError("That output type is not defined")
+        line_num -= 1
+        column_num -= 1
 
-    def populate(self):
-        pass
+        with open(file_name, 'r') as input_file:
+            lines = input_file.readlines()
 
-    def get_outputs(self, results):
-        """Gets a dictionary of results and returns a list of the relevant types
-        """
-        self.names = sorted(list(results[0].keys()))
-        number_outputs = len(self.names)
+        columns = lines[line_num].split(delimiter)
+        columns[column_num] = new_data
+        lines[line_num] = " ".join(columns) + "\n"
 
-        number_timesteps = len(results)
-
-        values = np.zeros((number_outputs, number_timesteps))
-
-        for index in range(number_timesteps):
-
-            sorted_results = OrderedDict(sorted(results[index].items()))
-            sorted_values = list(sorted_results.values())
-
-            logger.debug("Values in timestep {}: {}".format(index,
-                                                            sorted_values))
-
-            values[:, index] = np.array(sorted_values)
-        self.values = values
+        with open(file_name, 'w') as out_file:
+            out_file.writelines(lines)
 
     @property
-    def extract_iterable(self):
+    def file_locations(self):
         """Allows ordered searching through file to extract results from file
         """
-        entities = {}
-        extract_iterable = {}
+        locations = {}
 
-        names = set(self.values.keys())
         # For each file return tuple of row/column
-        for name in names:
+        for name in self.names:
             row_num = self.values[name]['row_num']
             col_num = self.values[name]['col_num']
             filename = self.values[name]['file_name']
 
-            entities[name] = {name: (row_num, col_num)}
+            if filename not in locations:
+                # add filename to locations
+                locations[filename] = {}
 
-            if filename in extract_iterable.keys():
-                # Append the entity to the existing entry
-                existing = extract_iterable[filename]
-                existing[name] = (row_num, col_num)
-                extract_iterable[filename] = existing
-            else:
-                # Add the new key to the dict and the entry
-                extract_iterable[filename] = entities[name]
+            locations[filename][name] = (row_num, col_num)
 
-        return extract_iterable
+        return locations
 
-    def get_results(self, path_to_model_root):
+    def load_results_from_files(self, dirname):
+        """Load model outputs from specified files
+        """
+        for filename in self.file_locations:
+            file_path = os.path.join(dirname, filename)
 
-        result_list = self.extract_iterable
-        results_instance = {}
-
-        for filename in result_list.keys():
-            file_path = os.path.join(path_to_model_root, filename)
             with open(file_path, 'r') as results_set:
                 lines = results_set.readlines()
 
-            for name, rowcol in result_list[filename].items():
+            for name, rowcol in self.file_locations[filename].items():
                 row_num, col_num = rowcol
                 result = lines[row_num][col_num:].strip()
-                results_instance[name] = result
+                self.values[name]['value'] = result
 
-        return results_instance
+    @property
+    def values(self):
+        """The value of the outputs
+        """
+        return self._values
 
+    @values.setter
+    def values(self, values):
+        self._values = {output['name']: output for output in values}
+        self.names = [output['name'] for output in values]
 
-class MetricList(OutputFactory):
-
-    def populate(self, results):
-        self.values = results['metrics']
-
-
-class OutputList(OutputFactory):
-
-    def populate(self, results):
-        self.values = results['results']
+    def __getitem__(self, key):
+        return self.values[key]
 
 
 class ModelOutputs(object):
@@ -120,12 +136,13 @@ class ModelOutputs(object):
 
     """
     def __init__(self, results):
+        if 'metrics' not in results:
+            results['metrics'] = []
+        if 'model outputs' not in results:
+            results['model outputs'] = []
 
-        self._results = OutputFactory()
-        self._metrics = self._results.getelement('metrics')
-        self._metrics.populate(results)
-        self._outputs = self._results.getelement('outputs')
-        self._outputs.populate(results)
+        self._metrics = OutputList(results['metrics'])
+        self._outputs = OutputList(results['model outputs'])
 
     @property
     def metrics(self):
@@ -135,14 +152,20 @@ class ModelOutputs(object):
         =======
         :class:`smif.outputs.MetricList`
         """
-        return sorted(list(self._metrics.values.keys()))
+        return self._metrics
 
     @property
     def outputs(self):
-        """A list of the vanilla outputs
+        """A list of the model outputs
 
         Returns
         =======
         :class:`smif.outputs.OutputList`
         """
-        return sorted(list(self._outputs.values.keys()))
+        return self._outputs
+
+    def load_results_from_files(self, dirname):
+        """Load model outputs from specified files
+        """
+        self._metrics.load_results_from_files(dirname)
+        self._outputs.load_results_from_files(dirname)

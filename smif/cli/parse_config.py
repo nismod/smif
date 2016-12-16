@@ -1,4 +1,6 @@
-# Parse yaml config files, to construct sector models
+# -*- coding: utf-8 -*-
+"""Parse yaml config files, to construct sector models
+"""
 import json
 import os
 
@@ -21,6 +23,8 @@ class ConfigParser:
             self.data = None
 
     def validate(self, schema):
+        """Validate data against a schema dict
+        """
         if self.data is None:
             raise AttributeError("Config data not loaded")
 
@@ -36,21 +40,22 @@ class ConfigParser:
     @staticmethod
     def _get_schema_filepath(schema_filename):
         return os.path.join(os.path.dirname(__file__),
+                            "..",
                             "schema",
                             schema_filename)
 
     @staticmethod
     def _load_schema_from_file(schema_filename):
-        with open(schema_filename, 'r') as fh:
-            schema = json.load(fh)
+        with open(schema_filename, 'r') as file_handle:
+            schema = json.load(file_handle)
         return schema
 
     @staticmethod
     def _validate_against_schema(data, schema):
         try:
             jsonschema.validate(data, schema)
-        except jsonschema.ValidationError as e:
-            raise ValueError(e.message)
+        except jsonschema.ValidationError as error:
+            raise ValueError(error.message)
 
     def validate_as_modelrun_config(self):
         """Validate the loaded data as required for model run configuration

@@ -7,7 +7,7 @@
         "sector_models": {
             "type": "array",
             "items": {
-                "type": "string"
+                "$ref": "#/definitions/sector_model_config"
             },
             "minItems": 1,
             "uniqueItems": true
@@ -48,6 +48,24 @@
                 }
             },
             "required": ["use"]
+        },
+        "sector_model_config": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "config_dir": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "classname": {
+                    "type": "string"
+                }
+            },
+            "required": ["name", "config_dir", "path", "classname"]
         }
     }
 }

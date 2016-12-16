@@ -14,63 +14,21 @@ The optimisation features requires:
 
 """
 import numpy as np
-import pytest
-from fixtures.water_supply import DynamicWaterSupplyModel as DynMod
-from fixtures.water_supply import ExampleWaterSupplySimulationAsset as WaterMod
-from fixtures.water_supply import dynamic_data, one_input
 from numpy.testing import assert_allclose
-from smif.abstract import AbstractModelWrapper, Model
-from smif.sectormodel import SectorModel
+import pytest
 
-
-class WaterSupplySimulationAssetWrapper(AbstractModelWrapper):
-    """Provides an interface for :class:`ExampleWaterSupplyAssetSimulation
-    """
-
-    def simulate(self, static_inputs, decision_variables):
-        """
-
-        Arguments
-        =========
-        static_inputs : x-by-1 :class:`numpy.ndarray`
-            x_0 is raininess
-        decision_variables : :class:`numpy.ndarray`
-            x_0 is capacity of water treatment plants
-        """
-        raininess = static_inputs
-        capacity = decision_variables
-        instance = self.model(raininess, capacity)
-        results = instance.simulate()
-        return results
-
-    def extract_obj(self, results):
-        return results['cost']
-
-    def constraints(self, parameters):
-        """
-
-        Notes
-        =====
-        This constraint below expresses that water supply must be greater than
-        or equal to 3.  ``x[0]`` is the decision variable for water treatment
-        capacity, while the value ``parameters[0]`` in the min term is the
-        value of the raininess parameter.
-        """
-        constraints = ({'type': 'ineq',
-                        'fun': lambda x: min(x[0], parameters[0]) - 3}
-                       )
-        return constraints
+from fixtures.water_supply import WaterSupplySectorModel, DynamicWaterSupplySectorModel
+from fixtures.water_supply import dynamic_data, one_input
+from smif.controller import SosModel
 
 
 class TestWaterModelOptimisation:
 
     def test_water_model_optimisation(self, one_input):
-        wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
-        wrapped.inputs = one_input
-        attributes = {}
-        model = SectorModel()
-        model.attributes = attributes
-        model.model = wrapped
+        model = WaterSupplySectorModel()
+        model.inputs = one_input
+        model.attributes = {}
+
         actual_value = model.optimise()
         expected_value = {'water': np.array([3.], dtype=float),
                           'cost': np.array([3.792], dtype=float)}
@@ -83,57 +41,11 @@ class TestWaterModelOptimisation:
     def test_optimisation_fail_no_input(self, one_input):
         """Raise an error if no inputs are specified
         """
-        wrapped = WaterSupplySimulationAssetWrapper(WaterMod)
-        attributes = {}
-        model = SectorModel()
-        model.attributes = attributes
-        model.model = wrapped
+        model = WaterSupplySectorModel()
+        model.attributes = {}
+
         with pytest.raises(AssertionError):
             model.optimise()
-
-
-class DynamicModelWrapper(AbstractModelWrapper):
-
-    def simulate(self, static_inputs, decision_variables):
-        """
-
-        Arguments
-        =========
-        static_inputs : x-by-1 :class:`numpy.ndarray`
-            x_0 is raininess
-            x_1 is existing capacity
-        decision_variables : :class:`numpy.ndarray`
-            x_0 is new capacity of water treatment plants
-        """
-        assert static_inputs.shape == (2,)
-        assert decision_variables.shape == (1,)
-
-        new_capacity = decision_variables
-
-        instance = self.model(static_inputs[0, ],
-                              static_inputs[1, ],
-                              new_capacity[0, ])
-        results = instance.simulate()
-        return results
-
-    def extract_obj(self, results):
-        return results['cost']
-
-    def constraints(self, parameters):
-        """
-
-        Notes
-        =====
-        This constraint below expresses that water supply must be greater than
-        or equal to 3.  ``x[0]`` is the decision variable for water treatment
-        capacity, while the value ``parameters[0]`` in the min term is the
-        value of the raininess parameter.
-        """
-        constraints = ({'type': 'ineq',
-                        'fun': lambda x: min(x[0] + parameters[1],
-                                             parameters[0]) - 3}
-                       )
-        return constraints
 
 
 class TestMultiYearOptimisation:
@@ -147,12 +59,9 @@ class TestMultiYearOptimisation:
     """
 
     def test_dynamic_water_model_one_off(self, dynamic_data):
-        wrapped = DynamicModelWrapper(DynMod)
-        attributes = {}
-        model = SectorModel()
-        model.attributes = attributes
-        model.model = wrapped
-        wrapped.inputs = dynamic_data
+        model = DynamicWaterSupplySectorModel()
+        model.attributes = {}
+        model.inputs = dynamic_data
         actual_value = model.optimise()
         expected_value = {'water': np.array([3.], dtype=float),
                           'cost': np.array([1.264 * 2], dtype=float),
@@ -164,18 +73,16 @@ class TestMultiYearOptimisation:
             assert_allclose(actual_value[key], expected_value[key])
 
     def test_dynamic_water_model_two_off(self, dynamic_data):
-        wrapped = DynamicModelWrapper(DynMod)
-        attributes = {}
-        model = SectorModel()
-        model.attributes = attributes
-        model.model = wrapped
-        wrapped.inputs = dynamic_data
+        model = DynamicWaterSupplySectorModel()
+        model.attributes = {}
+        model.inputs = dynamic_data
+
         first_results = model.optimise()
 
         # Updates model state (existing capacity) with total capacity from
         # previous iteration
-        model.model.inputs.parameters.update_value('existing capacity',
-                                                   first_results['capacity'])
+        model.inputs.parameters.update_value('existing capacity',
+                                             first_results['capacity'])
         second_results = model.optimise()
 
         expected_value = {'water': np.array([3.], dtype=float),
@@ -190,18 +97,16 @@ class TestMultiYearOptimisation:
 
     def test_sequential_simulation(self, dynamic_data):
         # Instantiate a sector model
-        wrapped = DynamicModelWrapper(DynMod)
-        attributes = {}
-        sectormodel = SectorModel()
-        sectormodel.attributes = attributes
-        sectormodel.model = wrapped
+        model = DynamicWaterSupplySectorModel()
+        model.attributes = {}
+
         # Instantiate a system-of-system instance
-        sos_model = Model()
+        sos_model = SosModel()
         # Attach the sector model to the system-of-system model
-        sos_model.attach_interface(sectormodel)
+        sos_model.model_list = {'water_supply': model}
         sos_model.timesteps = [2010, 2015, 2020]
         decisions = np.array([[2], [0], [0]], dtype=float)
-        results = sos_model.sequential_simulation(sectormodel,
+        results = sos_model.sequential_simulation(model,
                                                   dynamic_data,
                                                   decisions)
 
@@ -216,33 +121,28 @@ class TestMultiYearOptimisation:
                              'capacity': np.array([3.], dtype=float)}]
         assert results == expected_results
 
-    def test_sequential_optimisation_scipy(self, dynamic_data):
+    @pytest.mark.skip(reason="should SectorModel be able to run sequential simulation?")
+    def test_sector_model_sequential_simulation(self, dynamic_data):
         # Instantiate a sector model
-        wrapped = DynamicModelWrapper(DynMod)
-        attributes = {}
-        sectormodel = SectorModel()
-        sectormodel.attributes = attributes
-        sectormodel.model = wrapped
-        wrapped.inputs = dynamic_data
+        model = DynamicWaterSupplySectorModel()
+        model.attributes = {}
+        model.inputs = dynamic_data
         timesteps = [2010, 2015, 2020]
         decisions = np.array([[5, 0, 0]], dtype=float)
-        results = sectormodel.sequential_simulation(timesteps,
-                                                    decisions)
+        results = model.sequential_simulation(timesteps, decisions)
         expected = [{'capacity': 5.0, 'cost': 6.32, 'water': 3.0},
                     {'capacity': 5.0, 'cost': 0.0, 'water': 3.0},
                     {'capacity': 5.0, 'cost': 0.0, 'water': 3.0}]
         assert results == expected
 
-    def test_sequential_optimisation_tr(self, dynamic_data):
+    @pytest.mark.skip(reason="should SectorModel be able to run sequential optimisation?")
+    def test_sector_model_sequential_optimisation(self, dynamic_data):
         # Instantiate a sector model
-        wrapped = DynamicModelWrapper(DynMod)
-        attributes = {}
-        sectormodel = SectorModel()
-        sectormodel.attributes = attributes
-        sectormodel.model = wrapped
-        wrapped.inputs = dynamic_data
+        model = DynamicWaterSupplySectorModel()
+        model.attributes = {}
+        model.inputs = dynamic_data
         timesteps = [2010, 2015, 2020]
-        results = sectormodel.sequential_optimisation(timesteps)
+        results = model.sequential_optimisation(timesteps)
         expected = [{'capacity': 3.0, 'cost': 3.792, 'water': 3.0},
                     {'capacity': 4.0, 'cost': 1.264, 'water': 3.0},
                     {'capacity': 5.0, 'cost': 1.264, 'water': 3.0}]

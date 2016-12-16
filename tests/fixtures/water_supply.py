@@ -10,10 +10,10 @@ functionality.
 
 `ExampleWaterSupplySimulation`: simulation only, no assets
 
-`ExampleWaterSupplySimulationAsset`: simulation of water with outputs also
+`ExampleWaterSupplySimulationWithAsset`: simulation of water with outputs also
 a function of assets
 
-`ExampleWaterSupplySimulationReservoir`: simulation with outputs a function
+`ExampleWaterSupplySimulationWithReservoir`: simulation with outputs a function
 of a reservoir level which should be persistent over years
 
 
@@ -35,6 +35,9 @@ import logging
 import math
 
 from pytest import fixture
+
+from smif.sector_model import SectorModel
+from smif.abstract import State
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -98,6 +101,9 @@ def two_inputs():
 
 @fixture(scope='function')
 def one_dependency():
+    """Returns a model input dictionary with a single (unlikely to be met)
+    dependency
+    """
     inputs = {
         'decision variables': [],
         'parameters': [],
@@ -105,7 +111,8 @@ def one_dependency():
             {
                 'name': 'macguffins produced',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual'
+                'temporal_resolution': 'annual',
+                'from_model': 'macguffins_model'
             }
         ]
     }
@@ -151,7 +158,175 @@ def process_results(output):
     return results
 
 
-class ExampleWaterSupplySimulation:
+@fixture(scope='function')
+def dynamic_data():
+    """Returns a model input dictionary for the example water model with two
+    decision variables and one parameter
+    """
+    inputs = {
+        'decision variables': [
+            {
+                'name': 'new capacity',
+                'bounds': (0, 5),
+                'value': 10
+            },
+        ],
+        'parameters': [
+            {
+                'name': 'raininess',
+                'bounds': (0, 5),
+                'value': 3
+            },
+            {
+                'name': 'existing capacity',
+                'bounds': (0, 999),
+                'value': 1
+            }
+        ]
+    }
+    return inputs
+
+
+class WaterSupplySectorModel(SectorModel):
+    """Example of a class implementing the SectorModel interface,
+    using one of the toy water models below to simulate the water supply
+    system.
+    """
+
+    def simulate(self, decision_variables):
+        """
+
+        Arguments
+        =========
+        decision_variables : :class:`numpy.ndarray`
+            x_0 is new capacity of water treatment plants
+        """
+
+        # unpack inputs
+        raininess = self.inputs.parameters['raininess']['value']
+
+        # unpack decision variables
+        number_of_treatment_plants = decision_variables[0, ]
+
+        # simulate (wrapping toy model)
+        instance = ExampleWaterSupplySimulationModelWithAsset(raininess, number_of_treatment_plants)
+        results = instance.simulate()
+
+        return results
+
+    def extract_obj(self, results):
+        return results['cost']
+
+    def constraints(self, parameters):
+        """
+
+        Notes
+        =====
+        This constraint below expresses that water supply must be greater than
+        or equal to 3.  ``x[0]`` is the decision variable for water treatment
+        capacity, while the value ``parameters[0]`` in the min term is the
+        value of the raininess parameter.
+        """
+        constraints = ({'type': 'ineq',
+                        'fun': lambda x: min(x[0], parameters[0]) - 3}
+                      )
+        return constraints
+
+
+class DynamicWaterSupplySectorModel(SectorModel):
+    """Example of a class implementing the SectorModel interface,
+    using one of the toy water models below to simulate the water supply
+    system.
+    """
+
+    def simulate(self, decision_variables):
+        """
+
+        Arguments
+        =========
+        decision_variables : :class:`numpy.ndarray`
+            x_0 is new capacity of water treatment plants
+        """
+
+        # unpack inputs
+        raininess = self.inputs.parameters['raininess']['value']
+        capacity = self.inputs.parameters['existing capacity']['value']
+
+        # unpack decision variables
+        new_capacity = decision_variables[0, ]
+
+        # simulate (wrapping toy model)
+        instance = DynamicWaterSupplyModel(raininess,
+                                           capacity,
+                                           new_capacity)
+        results = instance.simulate()
+
+        return results
+
+    def extract_obj(self, results):
+        return results['cost']
+
+    def constraints(self, parameters):
+        """
+
+        Notes
+        =====
+        This constraint below expresses that water supply must be greater than
+        or equal to 3.  ``x[0]`` is the decision variable for water treatment
+        capacity, while the value ``parameters[0]`` in the min term is the
+        value of the raininess parameter.
+        """
+        constraints = ({'type': 'ineq',
+                        'fun': lambda x: min(x[0] + parameters[1],
+                                             parameters[0]) - 3}
+                      )
+        return constraints
+
+class WaterSupplySectorModelWithAssets(SectorModel):
+    """A concrete instance of the water supply wrapper for testing with assets
+
+    Inherits :class:`SectorModel` to wrap the example simulation tool including
+    asset management.
+
+    The __state__ of the model is tracked in the asset parameter
+    `number_of_treatment_plants`.
+
+    """
+    def initialise(self, data, assets):
+        """Initialises the model
+        """
+        self.model = ExampleWaterSupplySimulationModelWithAsset(data['raininess'], data['plants'])
+        self.results = None
+        self.run_successful = None
+
+        treatment_plants = self.model.number_of_treatment_plants
+        state_parameter_map = {'treatment plant': treatment_plants}
+
+        self.state = State('oxford', 2010,
+                           'water_supply',
+                           state_parameter_map)
+        self.state.initialise_from_tuples(assets)
+
+    def optimise(self, method, decision_vars, objective_function):
+        pass
+
+    def decision_vars(self):
+        return self.model.number_of_treatment_plants
+
+    def objective_function(self):
+        return self.model.cost
+
+    def simulate(self):
+        self.model.number_of_treatment_plants = \
+            self.state.current_state['assets']['treatment plant']
+        self.results = self.model.simulate()
+        self.run_successful = True
+
+    def model_executable(self):
+        pass
+
+
+class ExampleWaterSupplySimulationModel(object):
     """An example simulation model used for testing purposes
 
     Parameters
@@ -163,6 +338,7 @@ class ExampleWaterSupplySimulation:
         self.raininess = raininess
         self.water = None
         self.cost = None
+        self.results = None
 
     def simulate(self):
         """Run the model
@@ -179,7 +355,7 @@ class ExampleWaterSupplySimulation:
         }
 
 
-class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
+class ExampleWaterSupplySimulationModelWithAsset(ExampleWaterSupplySimulationModel):
     """An example simulation model which includes assets
 
     Parameters
@@ -220,7 +396,7 @@ class ExampleWaterSupplySimulationAsset(ExampleWaterSupplySimulation):
         }
 
 
-class ExampleWaterSupplySimulationReservoir(ExampleWaterSupplySimulation):
+class ExampleWaterSupplySimulationModelWithReservoir(ExampleWaterSupplySimulationModel):
     """This simulation model has a state which is a non-asset variables
 
     The reservoir level is a function of the previous reservoir level,
@@ -261,39 +437,10 @@ class ExampleWaterSupplySimulationReservoir(ExampleWaterSupplySimulation):
         return {'water': self.water,
                 'cost': self.cost,
                 'reservoir level': self._reservoir_level
-                }
+               }
 
 
-@fixture(scope='function')
-def dynamic_data():
-    """Returns a model input dictionary for the example water model with two
-    decision variables and one parameter
-    """
-    inputs = {
-        'decision variables': [
-            {
-                'name': 'new capacity',
-                'bounds': (0, 5),
-                'value': 10
-            },
-        ],
-        'parameters': [
-            {
-                'name': 'raininess',
-                'bounds': (0, 5),
-                'value': 3
-            },
-            {
-                'name': 'existing capacity',
-                'bounds': (0, 999),
-                'value': 1
-            }
-        ]
-    }
-    return inputs
-
-
-class DynamicWaterSupplyModel(ExampleWaterSupplySimulation):
+class DynamicWaterSupplyModel(ExampleWaterSupplySimulationModel):
     """An example simulation model which includes historical assets
 
     Parameters
@@ -332,9 +479,13 @@ class DynamicWaterSupplyModel(ExampleWaterSupplySimulation):
         logger.debug("There are {} plants, {} of which are new".format(
             self.number_of_treatment_plants, self.new_capacity))
         logger.debug("It is {} rainy".format(self.raininess))
+
         water = min(self.number_of_treatment_plants, self.raininess)
+
         cost = 1.264 * self.new_capacity
+
         logger.debug("The system costs £{}".format(cost))
+
         return {
             "water": water,
             "cost": cost,

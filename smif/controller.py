@@ -1,115 +1,70 @@
+# -*- coding: utf-8 -*-
 """This module coordinates the software components that make up the integration
 framework.
 
-Folder structure
-----------------
-
-When configuring a system-of-systems model, the folder structure below should
-be used.  In this example, there is one sector model, called ``water_supply``::
-
-    /models
-    /models/water_supply/
-    /models/water_supply/run.py
-    /models/water_supply/inputs.yaml
-    /models/water_supply/outputs.yaml
-    /models/water_supply/assets/assets1.yaml
-    /config/
-    /config/model.yaml
-    /config/timesteps.yaml
-    /planning/
-    /planning/pre-specified.yaml
-
-The ``models`` folder contains one subfolder for each sector model.
-
 """
 import logging
-import os
-from glob import glob
-from importlib.util import module_from_spec, spec_from_file_location
 
+import networkx
 import numpy as np
 from smif.decision import Planning
-from smif.parse_config import ConfigParser
-from smif.sectormodel import SectorModel, SectorModelMode
+from smif.sector_model import (SectorModelMode, SectorModelBuilder)
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-logger = logging.getLogger(__name__)
-
-WRAPPER_FILE_NAME = 'run.py'
+LOGGER = logging.getLogger(__name__)
 
 
-class SoSModelReader(object):
-    """Encapsulates the parsing of the system-of-systems configuration
+class Controller:
+    """Coordinates the data-layer, decision-layer and model-runner
+
+    The Controller expects to be provided with configuration data to run a set
+    of sector models over a number of timesteps, in a given mode.
+
+    It also requires a data connection to populate model inputs and store
+    results.
 
     """
-    def __init__(self, project_folder):
-        logger.info("Getting config file from %s", project_folder)
-        self._project_folder = project_folder
-        self._configuration = self.parse_sos_config(project_folder)
-        self.elements = ['timesteps', 'sector_models', 'planning']
-        self._builder = None
+    def __init__(self, config_data):
+        builder = SosModelBuilder()
+        builder.construct(config_data)
+        self._model = builder.finish()
 
-    @property
-    def builder(self):
-        return self._builder
-
-    @builder.setter
-    def builder(self, builder_instance):
-        self._builder = builder_instance
-
-    def parse_sos_config(self, project_folder):
+    def run_sos_model(self):
+        """Runs the system-of-system model
         """
+        self._model.run()
+
+    def run_sector_model(self, model_name):
+        """Runs a sector model
         """
-        config_path = os.path.join(project_folder,
-                                   'config',
-                                   'model.yaml')
-        msg = "Looking for configuration data in %s", config_path
-        logger.info(msg)
+        self._model.run_sector_model(model_name)
 
-        config_parser = ConfigParser(config_path)
-        config_parser.validate_as_modelrun_config()
-
-        return config_parser.data
-
-    def construct(self):
-        for element in self.elements:
-            if element == 'timesteps':
-                timestep_path = self._configuration['timesteps']
-                file_path = os.path.join(self._project_folder,
-                                         'config',
-                                         str(timestep_path))
-                self.builder.load_timesteps(file_path)
-            elif element == 'sector_models':
-                models = self._configuration['sector_models']
-                self.builder.load_models(models, self._project_folder)
-            elif element == 'planning':
-                planning = self._configuration['planning']
-                file_paths = [os.path.join(self._project_folder,
-                                           'planning',
-                                           filename)
-                              for filename in
-                              planning['pre_specified']['files']]
-                self.builder.load_planning(file_paths)
 
 
 class SosModel(object):
     """Consists of the collection of timesteps and sector models
 
+    Sector models may be joined through dependencies
+
+    This is NISMOD - i.e. the system of system model which brings all of the
+    sector models together.
     """
     def __init__(self):
         self.model_list = {}
         self._timesteps = []
+        self.planning = None
 
-    @staticmethod
-    def run_sos_model():
+    def run(self):
         """Runs the system-of-system model
+
+        1. Determine running order
+        2. Run each sector model
+        3. Return success or failure
         """
-        msg = "Can't run the SOS model yet"
-        logger.error(msg)
-        raise NotImplementedError(msg)
+        raise NotImplementedError("Can't run the SOS model yet")
 
     def determine_running_mode(self):
         """Determines from the config in what mode to run the model
@@ -124,21 +79,19 @@ class SosModel(object):
 
         if number_of_timesteps > 1:
             # Run a sequential simulation
-            mode_getter = SectorModelMode()
-            mode = mode_getter.get_mode('sequential_simulation')
+            mode = SectorModelMode.sequential_simulation
 
         elif number_of_timesteps == 0:
             raise ValueError("No timesteps have been specified")
 
         else:
             # Run a single simulation
-            mode_getter = SectorModelMode()
-            mode = mode_getter.get_mode('static_simulation')
+            mode = SectorModelMode.static_simulation
 
         return mode
 
     def run_sector_model(self, model_name):
-        """Runs the sector model in a subprocess
+        """Runs the sector model
 
         Arguments
         =========
@@ -151,10 +104,11 @@ class SosModel(object):
         assert model_name in self.model_list, msg
 
         msg = "Running the {} sector model".format(model_name)
-        logger.info(msg)
+        LOGGER.info(msg)
 
         sector_model = self.model_list[model_name]
-        # Run a simulation for a single year (assume no decision vars)
+        # Run a simulation for a single year
+        # TODO fix assumption of no decision vars
         decision_variables = np.zeros(2)
         sector_model.simulate(decision_variables)
 
@@ -168,6 +122,10 @@ class SosModel(object):
             A list of timesteps
         """
         return self._timesteps
+
+    @timesteps.setter
+    def timesteps(self, value):
+        self._timesteps = value
 
     @property
     def all_assets(self):
@@ -194,81 +152,91 @@ class SosModel(object):
         """
         return list(self.model_list.keys())
 
+    def optimise(self):
+        """Runs a dynamic optimisation over a system-of-simulation models
 
-class SoSModelBuilder(object):
+        Use dynamic programming with memoization where the objective function
+        :math:`Z(s)` are indexed by state :math:`s`
+        """
+        pass
+
+    def sequential_simulation(self, model, inputs, decisions):
+        """Runs a sequence of simulations to cover each of the model timesteps
+        """
+        results = []
+        for index in range(len(self.timesteps)):
+            # Intialise the model
+            model.inputs = inputs
+            # Update the state from the previous year
+            if index > 0:
+                state_var = 'existing capacity'
+                state_res = results[index - 1]['capacity']
+                LOGGER.debug("Updating %s with %s", state_var, state_res)
+                model.inputs.parameters.update_value(state_var, state_res)
+
+            # Run the simulation
+            decision = decisions[index]
+            results.append(model.simulate(decision))
+        return results
+
+
+class SosModelBuilder(object):
     """Constructs a system-of-systems model
     """
     def __init__(self):
         self.sos_model = SosModel()
 
-    def load_timesteps(self, file_path):
-        """Load the timesteps from the configuration file
+    def construct(self, config_data):
+        """Set up the whole SosModel
+        """
+        self.add_timesteps(config_data['timesteps'])
+        self.load_models(config_data['sector_model_data'])
+        self.add_planning(config_data['planning'])
+
+    def add_timesteps(self, timesteps):
+        """Set the timesteps of the system-of-systems model
 
         Arguments
         =========
-        file_path: str
-            The path to the timesteps file
-
-        Returns
-        =======
         list
             A list of timesteps
         """
-        logger.info("Loading timesteps from %s", file_path)
+        self.sos_model.timesteps = timesteps
 
-        cp = ConfigParser(file_path)
-        cp.validate_as_timesteps()
-
-        self.sos_model._timesteps = cp.data
-
-    def load_planning(self, file_paths):
-        """Loads the planning logic into the system of systems model
-
-        Arguments
-        =========
-        file_paths : list
-            A list of file paths
-
-        """
-        planning = []
-        for filepath in file_paths:
-            parser = ConfigParser(filepath)
-            parser.validate_as_pre_specified_planning()
-            planning.extend(parser.data)
-        self.sos_model.planning = Planning(planning)
-
-    def load_models(self, model_list, project_folder):
+    def load_models(self, model_data_list):
         """Loads the sector models into the system-of-systems model
 
         Arguments
         =========
-        model_list : list
-            A list of sector model names
+        model_data_list : list
+            A list of sector model config/data
 
         """
-        for model_name in model_list:
-            self.sos_model.model_list[model_name] = \
-                self.load_model(model_name, project_folder)
+        for model_data in model_data_list:
+            model = self._build_model(model_data)
+            self.add_model(model)
 
-    def load_model(self, model_name, project_folder):
-        """Loads the sector model into the system-of-systems model
+    @staticmethod
+    def _build_model(model_data):
+        builder = SectorModelBuilder(model_data['name'])
+        builder.load_model(model_data['path'], model_data['classname'])
+        builder.add_inputs(model_data['inputs'])
+        builder.add_outputs(model_data['outputs'])
+        builder.add_assets(model_data['assets'])
+        return builder.finish()
 
-        Arguments
-        =========
-        model_name : str
-            The name of the model, corresponding to the folder name in the
-            models subfolder of the project folder
+    def add_model(self, model):
+        """Adds a sector model into the system-of-systems model
+
         """
-        logger.info("Loading model: %s", model_name)
+        LOGGER.info("Loading model: %s", model.name)
+        self.sos_model.model_list[model.name] = model
 
-        reader = SectorConfigReader(model_name, project_folder)
-        builder = SectorModelBuilder()
-        reader.builder = builder
-
-        reader.construct()
-
-        model = builder.finish()
-        return model
+    def add_planning(self, planning):
+        """Loads the planning logic into the system of systems model
+        """
+        # TODO think through which parts of this live with sector models / at the top level
+        self.sos_model.planning = Planning(planning)
 
     def _check_planning_assets_exist(self):
         """Check existence of all the assets in the pre-specifed planning
@@ -295,204 +263,32 @@ class SoSModelBuilder(object):
         self._check_planning_assets_exist()
         self._check_planning_timeperiods_exist()
 
+
+    def check_dependencies(self):
+        """For each model, compare dependency list of from_models
+        against list of available models
+        """
+        dependency_graph = networkx.DiGraph()
+        models_available = self.sos_model.sector_models
+        dependency_graph.add_nodes_from(models_available)
+
+        for model_name, model in self.sos_model.model_list.items():
+            for dep in model.inputs.dependencies:
+                if dep.from_model not in models_available:
+                    # report missing dependency type
+                    msg = "Missing dependency: {} depends on {} from {}, which is not supplied."
+                    raise AssertionError(msg.format(model_name, dep.name, dep.from_model))
+                dependency_graph.add_edge(model_name, dep.from_model)
+
+        if not networkx.is_directed_acyclic_graph(dependency_graph):
+            raise NotImplementedError("Graph of dependencies contains a cycle.")
+
+
     def finish(self):
         """Returns a configured system-of-systems model ready for operation
+
+        - includes validation steps, e.g. to check dependencies
         """
         self.validate()
+        self.check_dependencies()
         return self.sos_model
-
-
-class Controller:
-    """Coordinates the data-layer, decision-layer and model-runner
-
-    Controller expects to find a yaml configuration file containing
-    - lists of assets in ``models/<model_name>/asset_*.yaml``
-    - structure of attributes in ``models/<model_name/<asset_name>.yaml``
-
-    Controller expects to find a `WRAPPER_FILE_NAME` file in
-    ``models/<model_name>``. `WRAPPER_FILE_NAME` contains a python script
-    which subclasses :class:`smif.abstract.AbstractModelWrapper` to wrap the
-    sector model.
-
-    """
-    def __init__(self, project_folder):
-        """
-        Arguments
-        =========
-        project_folder : str
-            File path to the project folder
-
-        """
-        self._project_folder = project_folder
-
-        reader = SoSModelReader(project_folder)
-        builder = SoSModelBuilder()
-        reader.builder = builder
-        reader.construct()
-        self.model = builder.finish()
-
-
-class SectorConfigReader(object):
-    """Parses the ``models/<sector_model>`` folder for a configuration file
-
-    Assign the builder instance to the ``builder`` attribute before running the
-    ``construct`` method.
-
-    Arguments
-    =========
-    model_name : str
-        The name of the model
-    project_folder : str
-        The root path of the project
-
-    """
-    def __init__(self, model_name, project_folder):
-        self.model_name = model_name
-        self.project_folder = project_folder
-        self.elements = self.parse_sector_model_config()
-        self.builder = None
-
-    def construct(self):
-        """Constructs the sector model object from the configuration
-
-        """
-        # First, name the model
-        self.builder.name_model(self.model_name)
-        # Then, load up the wrapper
-        self.builder.load_wrapper(self.elements['wrapper'])
-
-        for key, value in self.elements.items():
-            if key == 'inputs':
-                self.builder.load_inputs(value)
-            elif key == 'outputs':
-                self.builder.load_outputs(value)
-            elif key == 'attributes':
-                self.builder.load_attributes(value)
-
-    def parse_sector_model_config(self):
-        """Searches the model folder for all the configuration files
-
-        """
-        config_path = os.path.join(self.project_folder, 'models',
-                                   self.model_name)
-        input_path = os.path.join(config_path, 'inputs.yaml')
-        output_path = os.path.join(config_path, 'outputs.yaml')
-        wrapper_path = os.path.join(config_path, WRAPPER_FILE_NAME)
-
-        assets = self._load_model_assets()
-        attribute_paths = {name: os.path.join(self.project_folder, 'models',
-                                              self.model_name, 'assets',
-                                              "{}.yaml".format(name))
-                           for name in assets}
-
-        return {'inputs': input_path,
-                'outputs': output_path,
-                'attributes': attribute_paths,
-                'wrapper': wrapper_path}
-
-    def _load_model_assets(self):
-        """Loads the assets from the sector model folders
-
-        Using the list of model folders extracted from the configuration file,
-        this function returns a list of all the assets from the sector models
-
-        Returns
-        =======
-        list
-            A list of assets from all the sector models
-
-        """
-        assets = []
-        path_to_assetfile = os.path.join(self.project_folder,
-                                         'models',
-                                         self.model_name,
-                                         'assets',
-                                         'asset*.yaml')
-        for assetfile in glob(path_to_assetfile):
-            asset_path = os.path.join(path_to_assetfile, assetfile)
-            logger.info("Loading assets from {}".format(asset_path))
-            assets.extend(ConfigParser(asset_path).data)
-
-        return assets
-
-
-class SectorModelBuilder(object):
-    """Build the components that make up a sectormodel from the configuration
-
-    """
-
-    def __init__(self):
-        self._sectormodel = SectorModel()
-
-    def name_model(self, model_name):
-        self._sectormodel.name = model_name
-
-    def load_attributes(self, dict_of_assets):
-        attributes = {}
-        for asset, path in dict_of_assets.items():
-            attributes[asset] = self._load_asset_attributes(path)
-        self._sectormodel.attributes = attributes
-
-    def load_wrapper(self, model_path):
-        name = self._sectormodel.name
-        if os.path.exists(model_path):
-            logger.info("Importing run module from %s", name)
-
-            module_path = '{}.run'.format(name)
-            module_spec = spec_from_file_location(module_path, model_path)
-            module = module_from_spec(module_spec)
-            module_spec.loader.exec_module(module)
-            self._sectormodel.model = module.wrapper
-        else:
-            msg = "Cannot find {} for the {} model".format(WRAPPER_FILE_NAME,
-                                                           name)
-            raise Exception(msg)
-
-    def load_inputs(self, model_path):
-        """Input spec is located in the ``models/<sectormodel>/inputs.yaml``
-
-        """
-        msg = "No wrapper defined"
-        assert self._sectormodel.model, msg
-
-        input_dict = ConfigParser(model_path).data
-        self._sectormodel.model.inputs = input_dict
-
-    def load_outputs(self, model_path):
-        """Output spec is located in ``models/<sectormodel>/output.yaml``
-
-        """
-        msg = "No wrapper defined"
-        assert self._sectormodel.model, msg
-
-        output_dict = ConfigParser(model_path).data
-        self._sectormodel.model.outputs = output_dict
-
-    def validate(self):
-        """
-        """
-        assert self._sectormodel.attributes
-        assert self._sectormodel.model
-        assert self._sectormodel.model.inputs
-        assert self._sectormodel.model.outputs
-
-    def finish(self):
-        self.validate()
-        return self._sectormodel
-
-    @staticmethod
-    def _load_asset_attributes(attribute_path):
-        """Loads an asset's attributes into a container
-
-        Arguments
-        =========
-        asset_name : list
-            The list of paths to the assets for which to load attributes
-
-        Returns
-        =======
-        dict
-            A dictionary loaded from the attribute configuration file
-        """
-        attributes = ConfigParser(attribute_path).data
-        return attributes

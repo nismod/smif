@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """A command line interface to the system of systems framework
 
 This command line interface implements a number of methods.
@@ -7,28 +8,54 @@ This command line interface implements a number of methods.
         system of systems model
 - `validate` performs a validation check of the configuration file
 
+Folder structure
+----------------
+
+When configuring a system-of-systems model for the CLI, the folder structure
+below should be used.  In this example, there is one sector model, called
+``water_supply``::
+
+    /main_config.yaml
+    /timesteps.yaml
+    /water_supply.yaml
+    /data/all/inputs.yaml
+    /data/water_supply/
+    /data/water_supply/inputs.yaml
+    /data/water_supply/outputs.yaml
+    /data/water_supply/assets/assets1.yaml
+    /data/water_supply/planning/
+    /data/water_supply/planning/pre-specified.yaml
+
+The ``data`` folder contains one subfolder for each sector model.
+
+The sector model implementations can be installed independently of the model
+run configuration. The main_config.yaml file specifies which sector models
+should run, while each set of sector model config
+
 """
+from __future__ import print_function
 import logging
 import os
 import sys
 from argparse import ArgumentParser
 
-import jsonschema
-
 from smif.controller import Controller
-from smif.parse_config import ConfigParser
+from . parse_config import ConfigParser
+from . parse_model_config import SosModelReader
+from . parse_sector_model_config import SectorModelReader
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
-_log_format = '%(asctime)s %(name)-12s: %(levelname)-8s %(message)s'
 logging.basicConfig(filename='cli.log',
                     level=logging.DEBUG,
-                    format=_log_format,
+                    format='%(asctime)s %(name)-12s: %(levelname)-8s %(message)s',
                     filemode='a')
+
+LOGGER.addHandler(logging.StreamHandler())
 
 
 def setup_project_folder(project_path):
@@ -40,7 +67,8 @@ def setup_project_folder(project_path):
         Absolute path to an empty folder
 
     """
-    folder_list = ['config', 'planning', 'models']
+    # TODO could place sensible model.yaml, single sector model, and subfolders
+    folder_list = ['data']
     for folder in folder_list:
         folder_path = os.path.join(project_path, folder)
         if os.path.exists(folder_path):
@@ -48,7 +76,7 @@ def setup_project_folder(project_path):
         else:
             msg = "Creating {} folder in {}".format(folder, project_path)
             os.mkdir(folder_path)
-        logger.info(msg)
+        LOGGER.info(msg)
 
 
 def setup_configuration(args):
@@ -64,23 +92,23 @@ def setup_configuration(args):
         setup_project_folder(project_path)
     else:
         msg = "Setup cancelled."
-    logger.info(msg)
+    LOGGER.info(msg)
 
 
 def run_model(args):
     """Runs the model specified in the args.model argument
 
     """
-    controller = Controller(args.path)
-    sos_model = controller.model
+    model_config = validate_config(args)
+    controller = Controller(model_config)
 
     if args.model == 'all':
-        logger.info("Running the system of systems model")
-        sos_model.run_sos_model()
+        LOGGER.info("Running the system of systems model")
+        controller.run_sos_model()
     else:
-        logger.info("Running the {} sector model".format(args.model))
+        LOGGER.info("Running the %s sector model", args.model)
         model_name = args.model
-        sos_model.run_sector_model(model_name)
+        controller.run_sector_model(model_name)
 
 
 def validate_config(args):
@@ -92,25 +120,64 @@ def validate_config(args):
         Parser arguments
 
     """
-    project_path = os.path.abspath(args.path)
-    config_path = os.path.join(project_path, 'config', 'model.yaml')
-    try:
-        model_config = ConfigParser(config_path)
-    except os.FileNotFoundError:
-        raise os.FileNotFoundError("The model configuration file "
-                                   "does not exist")
+    config_path = os.path.abspath(args.path)
+
+    if not os.path.exists(config_path):
+        LOGGER.error("The model configuration file '%s' was not found", config_path)
+        exit(-1)
     else:
         try:
-            model_config.validate_as_modelrun_config()
-        except jsonschema.exceptions.ValidationError as e:
-            logger.error("The model configuration is invalid")
-            print("{}".format(e))
-        else:
-            logger.info("The model configuration is valid")
+            # read system-of-systems config
+            reader = SosModelReader(config_path)
+            reader.load()
 
+            model_config = reader.data
+            config_basepath = os.path.dirname(config_path)
+            # read sector model data+config
+            model_config['sector_model_data'] = \
+            read_sector_model_data_from_config(config_basepath, model_config['sector_model_config'])
+
+        except ValueError as error:
+            LOGGER.error("The model configuration is invalid: %s", error)
+        else:
+            LOGGER.info("The model configuration is valid")
+
+        return model_config
+
+def read_sector_model_data_from_config(config_basepath, config):
+    data = []
+
+    for model_config in config:
+        # read from dir relative to main model config file
+        if os.path.isabs(model_config['config_dir']):
+            config_dir = model_config['config_dir']
+        else:
+            config_dir = os.path.join(config_basepath, model_config['config_dir'])
+
+        if os.path.isabs(model_config['path']):
+            path = model_config['path']
+        else:
+            path = os.path.join(config_basepath, model_config['path'])
+
+        # read each sector model config+data
+        reader = SectorModelReader(
+            model_config['name'],
+            path,
+            model_config['classname'],
+            config_dir
+        )
+        try:
+            reader.load()
+            data.append(reader.data)
+        except FileNotFoundError as error:
+            LOGGER.error("%s: %s", model_config['name'], error)
+            raise ValueError("missing sector model configuration")
+
+
+    return data
 
 def parse_arguments():
-    """
+    """Parse command line arguments
 
     Returns
     =======
@@ -118,9 +185,6 @@ def parse_arguments():
 
     """
     parser = ArgumentParser(description='Command line tools for smif')
-    parser.add_argument('--path',
-                        help="Path to the project folder",
-                        default=os.getcwd())
     subparsers = parser.add_subparsers()
 
     # VALIDATE
@@ -128,28 +192,25 @@ def parse_arguments():
     parser_validate = subparsers.add_parser('validate',
                                             help=help_msg)
     parser_validate.set_defaults(func=validate_config)
-    parser_validate.add_argument('--path',
-                                 help="Path to the project folder",
-                                 default=os.getcwd())
+    parser_validate.add_argument('path',
+                                 help="Path to the project folder")
 
     # SETUP
     parser_setup = subparsers.add_parser('setup',
                                          help='Setup the project folder')
     parser_setup.set_defaults(func=setup_configuration)
-    parser_setup.add_argument('--path',
-                              help="Path to the project folder",
-                              default=os.getcwd())
+    parser_setup.add_argument('path',
+                              help="Path to the project folder")
 
     # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
-    parser_run.add_argument('model',
-                            type=str,
+    parser_run.add_argument('-m', '--model',
+                            default='all',
                             help='The name of the model to run')
     parser_run.set_defaults(func=run_model)
-    parser_run.add_argument('--path',
-                            help="Path to the project folder",
-                            default=os.getcwd())
+    parser_run.add_argument('path',
+                            help="Path to the project folder")
 
     return parser
 
@@ -209,6 +270,8 @@ def confirm(prompt=None, response=False):
 
 
 def main(arguments=None):
+    """Parse args and run
+    """
     parser = parse_arguments()
     args = parser.parse_args(arguments)
     if 'func' in args:

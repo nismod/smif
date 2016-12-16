@@ -1,52 +1,123 @@
 import pytest
-from fixtures.water_supply import ExampleWaterSupplySimulationAsset
 from smif.abstract import ConcreteAsset as Asset
 from smif.abstract import State
-from smif.sectormodel import SectorModel
+from smif.sector_model import SectorModel, SectorModelBuilder
+from fixtures.water_supply import WaterSupplySectorModelWithAssets
 
-class WaterSupplyPythonAssets(SectorModel):
-    """A concrete instance of the water supply wrapper for testing with assets
-
-    Inherits :class:`SectorModel` to wrap the example simulation tool including
-    asset management.
-
-    The __state__ of the model is tracked in the asset parameter
-    `number_of_treatment_plants`.
-
-    """
-    def initialise(self, data, assets):
-        """Initialises the model
-        """
-        self.model = ExampleWaterSupplySimulationAsset(data['raininess'],
-                                                       data['plants'])
-        self.results = None
-        self.run_successful = None
-
-        treatment_plants = self.model.number_of_treatment_plants
-        state_parameter_map = {'treatment plant': treatment_plants}
-
-        self.state = State('oxford', 2010,
-                           'water_supply',
-                           state_parameter_map)
-        self.state.initialise_from_tuples(assets)
-
-    def optimise(self, method, decision_vars, objective_function):
+class EmptySectorModel(SectorModel):
+    def simulate(self, static_inputs, decision_variables):
         pass
 
-    def decision_vars(self):
-        return self.model.number_of_treatment_plants
+    def extract_obj(self, results):
+        return 0
 
-    def objective_function(self):
-        return self.model.cost
+class TestSectorModelBuilder():
 
-    def simulate(self):
-        self.model.number_of_treatment_plants = \
-            self.state.current_state['assets']['treatment plant']
-        self.results = self.model.simulate()
-        self.run_successful = True
+    def test_sector_model_builder(self, setup_project_folder):
+        project_path = setup_project_folder
 
-    def model_executable(self):
-        pass
+        model_path = str(project_path.join('models',
+                                           'water_supply',
+                                           '__init__.py'))
+        builder = SectorModelBuilder('water_supply')
+        builder.load_model(model_path, 'WaterSupplySectorModel')
+
+
+        assets = [
+            {
+                'name': 'water_asset_a',
+                'capital_cost': {
+                    'unit': '£/kW',
+                    'value': 1000
+                    },
+                'economic_lifetime': 25,
+                'operational_lifetime': 25
+            }
+        ]
+        builder.add_assets(assets)
+
+        # builder.add_inputs(inputs)
+        # builder.add_outputs(outputs)
+
+        model = builder.finish()
+        assert isinstance(model, SectorModel)
+
+        assert model.name == 'water_supply'
+        assert model.asset_names == ['water_asset_a']
+        assert model.assets == assets
+
+class TestSectorModel(object):
+    def test_assets_load(self):
+        assets = {
+            'water_asset_a': {},
+            'water_asset_b': {},
+            'water_asset_c': {}
+        }
+        model = EmptySectorModel()
+        model.assets = assets
+
+        asset_names = model.asset_names
+
+        assert len(asset_names) == 3
+        assert 'water_asset_a' in asset_names
+        assert 'water_asset_b' in asset_names
+        assert 'water_asset_c' in asset_names
+
+
+    def test_attributes_load(self):
+
+        assets = {
+            'water_asset_a': {
+                'capital_cost': {
+                    'value': 1000,
+                    'unit': '£/kW'
+                },
+                'economic_lifetime': 25,
+                'operational_lifetime': 25
+            },
+            'water_asset_b': {
+                'capital_cost': {
+                    'value': 1500,
+                    'unit': '£/kW'
+                }
+            },
+            'water_asset_c': {
+                'capital_cost': {
+                    'value': 3000,
+                    'unit': '£/kW'
+                }
+            }
+        }
+        model = EmptySectorModel()
+        model.assets = assets
+        actual = model.assets
+        expected = {
+            'water_asset_a': {
+                'capital_cost': {
+                    'value': 1000,
+                    'unit': '£/kW'
+                },
+                'economic_lifetime': 25,
+                'operational_lifetime': 25
+            },
+            'water_asset_b': {
+                'capital_cost': {
+                    'value': 1500,
+                    'unit': '£/kW'
+                }
+            },
+            'water_asset_c': {
+                'capital_cost': {
+                    'value': 3000,
+                    'unit': '£/kW'
+                }
+            }
+        }
+
+        assert actual == expected
+
+        for asset in model.asset_names:
+            assert asset in expected.keys()
 
 
 @pytest.mark.skip(reason="no way of currently testing this")
@@ -60,6 +131,7 @@ class TestAssets:
         asset = Asset(name, capacity)
         state = asset.get_state()
         assert state == [{'dec asset treatment plant': 100.}]
+
         name, capacity = ('dec asset pipes', 100.)
         asset = Asset(name, capacity)
         state = asset.get_state()
@@ -115,7 +187,7 @@ class TestSectorModel:
         """
         assets = [('treatment plant', 1)]
         data = {'raininess': 2, 'plants': 1}
-        ws = WaterSupplyPythonAssets()
+        ws = WaterSupplySectorModelWithAssets()
         ws.initialise(data, assets)
         expected_pre_state = {'treatment plant': 1}
         actual_pre_state = ws.state.current_state

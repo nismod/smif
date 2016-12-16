@@ -5,16 +5,18 @@
 import subprocess
 import os
 import sys
-from fixtures.water_supply import (ExampleWaterSupplySimulation,
-                                   ExampleWaterSupplySimulationReservoir,
-                                   process_results, raininess_oracle)
 from pytest import raises
+
+from fixtures.water_supply import (ExampleWaterSupplySimulationModel,
+                                   ExampleWaterSupplySimulationModelWithReservoir,
+                                   process_results, raininess_oracle)
 
 
 def test_water_supply_with_reservoir():
     raininess = 1
     reservoir_level = 2
-    model = ExampleWaterSupplySimulationReservoir(raininess, reservoir_level)
+    model = ExampleWaterSupplySimulationModelWithReservoir(raininess, reservoir_level)
+
     actual = model.simulate()
     expected = {'cost': 1.2, 'water': 3, 'reservoir level': 2}
     assert actual == expected
@@ -24,7 +26,7 @@ def test_water_supply_with_reservoir_negative_level():
     raininess = 1
     reservoir_level = -2
     with raises(ValueError, message="Reservoir level cannot be negative"):
-        ExampleWaterSupplySimulationReservoir(raininess, reservoir_level)
+        ExampleWaterSupplySimulationModelWithReservoir(raininess, reservoir_level)
 
 
 def test_process_results():
@@ -51,7 +53,7 @@ def test_raininess_oracle_out_of_range():
 
 def test_simulate_rain_cost_python():
     raininess = 1
-    model = ExampleWaterSupplySimulation(raininess)
+    model = ExampleWaterSupplySimulationModel(raininess)
     actual = model.simulate()
     expected = {'cost': 1, 'water': 1}
     assert actual == expected
@@ -61,7 +63,7 @@ def test_simulate_rain_executable():
     raininess = 10
     model_executable = sys.executable
     if model_executable != "" and model_executable is not None:
-        model_script = os.path.join(os.getcwd(), "tests", "fixtures", "water_supply_exec.py")
+        model_script = os.path.join(os.path.dirname(__file__), "fixtures", "water_supply_exec.py")
         argument = "--raininess={}".format(str(raininess))
         output = subprocess.check_output([model_executable, model_script, argument])
         results = process_results(output)

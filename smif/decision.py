@@ -15,7 +15,10 @@ class Planning:
     """
 
     def __init__(self, planning_data):
-        self.planning = planning_data
+        if planning_data is not None:
+            self.planning = planning_data
+        else:
+            self.planning = []
 
     @property
     def assets(self):

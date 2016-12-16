@@ -1,9 +1,10 @@
 """Tests the ModelInputs class
 """
 import numpy as np
-from fixtures.water_supply import one_input, two_inputs, one_dependency
 from numpy.testing import assert_equal
+
 from smif.inputs import ModelInputs
+from fixtures.water_supply import one_input, two_inputs, one_dependency
 
 
 class TestModelInputs:
@@ -62,6 +63,10 @@ class TestModelInputs:
 
         actual = inputs.dependencies.names
         expected = np.array(['macguffins produced'], dtype='U30')
+        assert_equal(actual, expected)
+
+        actual = inputs.dependencies.from_models
+        expected = np.array(['macguffins_model'], dtype='U30')
         assert_equal(actual, expected)
 
         actual = inputs.dependencies.spatial_resolutions
