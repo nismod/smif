@@ -5,6 +5,7 @@ framework.
 """
 import logging
 
+import networkx
 import numpy as np
 from smif.decision import Planning
 from smif.sector_model import (SectorModelMode, SectorModelBuilder)
@@ -267,13 +268,21 @@ class SosModelBuilder(object):
         """For each model, compare dependency list of from_models
         against list of available models
         """
+        dependency_graph = networkx.DiGraph()
         models_available = self.sos_model.sector_models
+        dependency_graph.add_nodes_from(models_available)
+
         for model_name, model in self.sos_model.model_list.items():
             for dep in model.inputs.dependencies:
                 if dep.from_model not in models_available:
                     # report missing dependency type
                     msg = "Missing dependency: {} depends on {} from {}, which is not supplied."
                     raise AssertionError(msg.format(model_name, dep.name, dep.from_model))
+                dependency_graph.add_edge(model_name, dep.from_model)
+
+        if not networkx.is_directed_acyclic_graph(dependency_graph):
+            raise NotImplementedError("Graph of dependencies contains a cycle.")
+
 
     def finish(self):
         """Returns a configured system-of-systems model ready for operation

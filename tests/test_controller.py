@@ -88,9 +88,56 @@ class TestSosModelBuilder():
         builder.add_planning([])
 
         ws = WaterSupplySectorModel()
+        ws.name = "water_supply"
         ws.inputs = one_dependency
         builder.add_model(ws)
 
-        with raises(AssertionError) as e:
+        with raises(AssertionError) as error:
             builder.finish()
-            assert e.msg == ""
+
+        msg = "Missing dependency: water_supply depends on macguffins produced from macguffins_model, which is not supplied."
+        assert str(error.value) == msg
+
+    def test_cyclic_dependencies(self):
+        a_inputs = {
+            'decision variables': [],
+            'parameters': [],
+            'dependencies': [
+                {
+                    'name': 'b value',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'from_model': 'b_model'
+                }
+            ]
+        }
+
+        b_inputs = {
+            'decision variables': [],
+            'parameters': [],
+            'dependencies': [
+                {
+                    'name': 'a value',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'from_model': 'a_model'
+                }
+            ]
+        }
+
+        builder = SosModelBuilder()
+        builder.add_timesteps([2010])
+        builder.add_planning([])
+
+        a_model = WaterSupplySectorModel()
+        a_model.name = "a_model"
+        a_model.inputs = a_inputs
+        builder.add_model(a_model)
+
+        b_model = WaterSupplySectorModel()
+        b_model.name = "b_model"
+        b_model.inputs = b_inputs
+        builder.add_model(b_model)
+
+        with raises(NotImplementedError):
+            builder.finish()
