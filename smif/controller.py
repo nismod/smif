@@ -142,6 +142,20 @@ class SosModel(object):
         return assets
 
     @property
+    def all_asset_names(self):
+        """Returns the list of all asset_names across the system-of-systems model
+
+        Returns
+        =======
+        list
+            A list of all asset_names across the system-of-systems model
+        """
+        asset_names = []
+        for model in self.model_list.values():
+            asset_names.extend(model.asset_names)
+        return asset_names
+
+    @property
     def sector_models(self):
         """The list of sector model names
 
@@ -243,10 +257,10 @@ class SosModelBuilder(object):
 
         """
         model = self.sos_model
-        sector_assets = model.all_assets
-        for planning_asset in model.planning.assets:
+        sector_asset_names = model.all_asset_names
+        for planning_asset_name in model.planning.asset_names:
             msg = "Asset '{}' in planning file not found in sector assets"
-            assert planning_asset in sector_assets, msg.format(planning_asset)
+            assert planning_asset_name in sector_asset_names, msg.format(planning_asset_name)
 
     def _check_planning_timeperiods_exist(self):
         """Check existence of all the timeperiods in the pre-specified planning

@@ -25,6 +25,7 @@ class SosModelReader(object):
         self.config = None
         self.timesteps = None
         self.sector_model_data = None
+        self.planning = None
 
     def load(self):
         """Load and check all config
@@ -32,6 +33,7 @@ class SosModelReader(object):
         self.config = self._load_sos_config()
         self.timesteps = self._load_timesteps()
         self.sector_model_data = self._load_sector_model_data()
+        self.planning = self._load_planning()
 
     @property
     def data(self):
@@ -40,7 +42,7 @@ class SosModelReader(object):
         return {
             "timesteps": self.timesteps,
             "sector_model_config": self.sector_model_data,
-            "planning": None
+            "planning": self.planning
         }
 
     def _load_sos_config(self):
@@ -83,14 +85,18 @@ class SosModelReader(object):
     def _load_planning(self):
         """Loads the set of build instructions for planning
         """
-        planning_relative_path = self.config['planning']
-        planning = []
-        for filepath in planning_relative_path:
-            parser = ConfigParser(filepath)
-            parser.validate_as_pre_specified_planning()
-            planning.extend(parser.data)
+        if self.config['planning']['pre_specified']['use']:
+            planning_relative_paths = self.config['planning']['pre_specified']['files']
+            planning_instructions = []
+            for rel_path in planning_relative_paths:
+                file_path = self._get_path_from_config(rel_path)
+                parser = ConfigParser(file_path)
+                parser.validate_as_pre_specified_planning()
+                planning_instructions.extend(parser.data)
 
-        return planning
+            return planning_instructions
+        else:
+            return []
 
     def _get_path_from_config(self, path):
         """Return an absolute path, given a path provided from a config file

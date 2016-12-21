@@ -21,7 +21,7 @@ class Planning:
             self.planning = []
 
     @property
-    def assets(self):
+    def asset_names(self):
         """Returns the set of unique assets defined in the planning commands
         """
         return set([plan['asset'] for plan in self.planning])
