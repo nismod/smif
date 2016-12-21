@@ -144,7 +144,9 @@ def setup_pre_specified_planning_conflict(setup_folder_structure):
                       'timeperiod': 2015
                       }]
     contents = yaml.dump(file_contents)
-    filepath = setup_folder_structure.join('planning', file_name)
+    filepath = setup_folder_structure.join('data',
+                                           'water_supply',
+                                           file_name)
     filepath.write(contents)
 
 
@@ -207,21 +209,23 @@ def setup_pre_specified_planning(setup_folder_structure):
                       'description': 'Existing water treatment plants',
                       'location': {'lat': 51.74556, 'lon': -1.240528},
                       'timeperiod': 2010
-                      },
+                     },
                      {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
                       'asset': 'water_asset_b',
                       'description': 'Existing water treatment plants',
                       'location': {'lat': 51.74556, 'lon': -1.240528},
                       'timeperiod': 2010
-                      },
+                     },
                      {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
                       'asset': 'water_asset_c',
                       'description': 'Existing water treatment plants',
                       'location': {'lat': 51.74556, 'lon': -1.240528},
                       'timeperiod': 2010
-                      }]
+                     }]
     contents = yaml.dump(file_contents)
-    filepath = setup_folder_structure.join('planning', file_name)
+    filepath = setup_folder_structure.join('data',
+                                           'water_supply',
+                                           file_name)
     filepath.write(contents, ensure=True)
 
 
@@ -236,21 +240,23 @@ def setup_pre_specified_planning_two(setup_folder_structure):
                       'description': 'Existing water treatment plants',
                       'location': {'lat': 51.74556, 'lon': -1.240528},
                       'timeperiod': 2015
-                      },
+                     },
                      {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
                       'asset': 'water_asset_a',
                       'description': 'Existing water treatment plants',
                       'location': {'lat': 51.74556, 'lon': -1.240528},
                       'timeperiod': 2020
-                      },
+                     },
                      {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
                       'asset': 'water_asset_a',
                       'description': 'Existing water treatment plants',
                       'location': {'lat': 51.74556, 'lon': -1.240528},
                       'timeperiod': 2025
-                      }]
+                     }]
     contents = yaml.dump(file_contents)
-    filepath = setup_folder_structure.join('planning', file_name)
+    filepath = setup_folder_structure.join('data',
+                                           'water_supply',
+                                           file_name)
     filepath.write(contents)
 
 
@@ -313,7 +319,7 @@ def setup_config_file_timesteps_two(setup_folder_structure):
             'optimisation': {'use': False},
             'pre_specified': {
                 'use': True,
-                'files': ['../data/water_supply/pre-specified_alt.yaml']
+                'files': ['../data/water_supply/pre-specified.yaml']
             }
         }
     }
