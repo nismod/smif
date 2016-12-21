@@ -64,7 +64,33 @@ class SosModel(object):
         2. Run each sector model
         3. Return success or failure
         """
-        raise NotImplementedError("Can't run the SOS model yet")
+        run_order = self._get_model_names_in_run_order()
+
+        for timestep in self.timesteps:
+            for model_name in run_order:
+                model = self.model_list[model_name]
+                # TODO pass in:
+                # - decisions, anything from strategy space that can be decided by
+                #   explicit planning or rule-based decisions or the optimiser
+                # - state, anything from the previous timestep (assets with all
+                #   attributes, state/condition of any other omdel entities)
+                # - data, anything from scenario space, to be used by the simulation of the model
+
+                # driven by needs of optimise routines, possibly all these
+                # parameters should be np arrays, or return np arrays from helper
+                # or have _simulate_from_array method
+
+                # TODO pick state from previous timestep (or initialise)
+                # TODO pick data and decisions from current timestep
+                decisions = np.array([[]])
+                state = None
+                data = model.inputs.parameters
+
+                model.simulate(decisions, state, data)
+
+    def _get_model_names_in_run_order(self):
+        # topological sort gives a single list from directed graph
+        return networkx.topological_sort(self.dependency_graph)
 
     def determine_running_mode(self):
         """Determines from the config in what mode to run the model
@@ -121,7 +147,7 @@ class SosModel(object):
         list
             A list of timesteps
         """
-        return self._timesteps
+        return sorted(self._timesteps)
 
     @timesteps.setter
     def timesteps(self, value):
@@ -296,6 +322,8 @@ class SosModelBuilder(object):
 
         if not networkx.is_directed_acyclic_graph(dependency_graph):
             raise NotImplementedError("Graph of dependencies contains a cycle.")
+
+        self.sos_model.dependency_graph = dependency_graph
 
 
     def finish(self):
