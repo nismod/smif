@@ -13,7 +13,13 @@ class TestSosModelReader():
         reader = SosModelReader(self._get_model_config(setup_project_folder))
         reader.load()
 
-        # TODO assert top level config is as expectied (pointers to timesteps, sector models)
+        # check timesteps filename
+        expected = 'timesteps.yaml'
+        assert reader.config['timesteps'] == expected
+
+        # check planning filename list
+        expected = ['../data/water_supply/pre-specified.yaml']
+        assert reader.config['planning']['pre_specified']['files'] == expected
 
     def test_model_list(self, setup_project_folder):
 
@@ -28,8 +34,9 @@ class TestSosModelReader():
                 "config_dir": "../data/water_supply"
             }
         ]
-        actual = reader.sector_model_data
-        assert actual == expected
+
+        assert reader.sector_model_data == expected
+        assert reader.data["sector_model_config"] == expected
 
     def test_timesteps(self, setup_project_folder):
 
@@ -37,8 +44,9 @@ class TestSosModelReader():
         reader.load()
 
         expected = [2010, 2011, 2012]
-        actual = reader.timesteps
-        assert actual == expected
+
+        assert reader.timesteps == expected
+        assert reader.data["timesteps"] == expected
 
     def test_timesteps_alternate_file(self, setup_project_folder,
                                       setup_config_file_timesteps_two,
