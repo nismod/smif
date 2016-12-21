@@ -117,6 +117,7 @@ class AssetList:
         """
         """
         self._asset_attributes = ConfigParser(filepath)
+        # TODO drop this or move to json file in schema directory
         schema = {
             "type": "array",
             "oneof": self.asset_list,
