@@ -103,6 +103,10 @@ class SosModelReader(object):
         - if provided path is relative, join it to the config file directory
         """
         if os.path.isabs(path):
-            return path
+            return os.path.normpath(
+                path
+            )
         else:
-            return os.path.join(self.config_file_dir, path)
+            return os.path.normpath(
+                os.path.join(self.config_file_dir, path)
+            )

@@ -73,7 +73,9 @@ class SectorModelReader(object):
 
         """
         assets = []
-        path = os.path.join(self.model_config_dir, 'assets', '*.yaml')
+        path = os.path.normpath(
+            os.path.join(self.model_config_dir, 'assets', '*.yaml')
+        )
 
         for asset_path in glob(path):
             LOGGER.info("Loading assets from %s", asset_path)

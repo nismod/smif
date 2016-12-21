@@ -136,13 +136,13 @@ def validate_config(args):
             # read sector model data+config
             model_config['sector_model_data'] = \
             read_sector_model_data_from_config(config_basepath, model_config['sector_model_config'])
+            return model_config
 
         except ValueError as error:
             LOGGER.error("The model configuration is invalid: %s", error)
         else:
             LOGGER.info("The model configuration is valid")
 
-        return model_config
 
 def read_sector_model_data_from_config(config_basepath, config):
     data = []
