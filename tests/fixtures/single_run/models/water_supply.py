@@ -24,6 +24,12 @@ class WaterSupplySectorModel(SectorModel):
         =========
         decisions : :class:`numpy.ndarray`
             x_0 is new capacity of water treatment plants
+        state
+            unused here:
+            - should contain existing capacity of water treatment plants
+            - could for example contain reservoir level at year start
+        data : dict of dicts
+            contains scenario data about expected level of rainfall
         """
 
         # unpack inputs
