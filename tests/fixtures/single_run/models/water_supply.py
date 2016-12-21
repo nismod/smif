@@ -27,7 +27,7 @@ class WaterSupplySectorModel(SectorModel):
         """
 
         # unpack inputs
-        raininess = self.inputs.parameters['raininess']['value']
+        raininess = data['raininess']['value']
 
         # unpack decision variables
         number_of_treatment_plants = decisions[0, ]
