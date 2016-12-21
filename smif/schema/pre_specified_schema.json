@@ -3,6 +3,39 @@
     "title": "Pre Specified Planning",
     "description": "List of Pre-specified Planning Commands",
     "type": "array",
-    "minItems": 1,
-    "uniqueItems": false
+    "items": {
+        "$ref": "#/definitions/build_instruction"
+    },
+    "definitions": {
+        "build_instruction": {
+            "type": "object",
+            "properties": {
+                "asset": {
+                    "type": "string"
+                },
+                "timeperiod": {
+                    "type": "integer"
+                },
+                "new_capacity": {
+                    "$ref": "#/definitions/measurable_value"
+                },
+                "location": {
+                    "$ref": "http://json-schema.org/geo"
+                }
+            },
+            "required": ["asset", "timeperiod"]
+        },
+        "measurable_value": {
+            "type": "object",
+            "properties": {
+                "unit": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            },
+            "required": ["unit", "value"]
+        }
+    }
 }
