@@ -6,10 +6,10 @@ sector_models:
 timesteps: timesteps.yaml
 planning:
   pre_specified:
-    use: false
+    use: true
     files:
-      - expected_to_2020.yaml
-      - national_infrastructure_pipeline.yaml
+      - ../planning/expected_to_2020.yaml
+      - ../planning/national_infrastructure_pipeline.yaml
   rule_based:
     use: false
   optimisation:
