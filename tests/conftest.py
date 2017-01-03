@@ -54,8 +54,8 @@ def setup_project_folder(setup_runpy_file,
         /data/water_supply/
         /data/water_supply/inputs.yaml
         /data/water_supply/outputs.yaml
-        /data/water_supply/assets
-        /data/water_supply/assets/assets_1.yaml
+        /data/water_supply/asset_types
+        /data/water_supply/asset_types/assets_1.yaml
         /data/water_supply/pre-specified.yaml
         /models
         /models/water_supply/water_supply.py
@@ -74,11 +74,22 @@ def setup_assets_file(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('data',
                                 'water_supply',
-                                'assets',
+                                'asset_types',
                                 'assets_1.yaml')
-    assets_contents = ['water_asset_a',
-                       'water_asset_b',
-                       'water_asset_c']
+    assets_contents = [
+        {
+            'name': 'water_asset_a',
+            'attributes': []
+        },
+        {
+            'name': 'water_asset_b',
+            'attributes': []
+        },
+        {
+            'name': 'water_asset_c',
+            'attributes': []
+        }
+    ]
     contents = yaml.dump(assets_contents)
     filename.write(contents, ensure=True)
 
@@ -92,9 +103,14 @@ def setup_assets_file_two(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('data',
                                 'water_supply',
-                                'assets',
+                                'asset_types',
                                 'assets_2.yaml')
-    assets_contents = ['water_asset_d']
+    assets_contents = [
+        {
+            'name': 'water_asset_d',
+            'attributes': []
+        },
+    ]
     contents = yaml.dump(assets_contents)
     filename.write(contents, ensure=True)
 
@@ -137,12 +153,26 @@ def setup_pre_specified_planning_conflict(setup_folder_structure):
 
     """
     file_name = 'pre-specified_asset_d.yaml'
-    file_contents = [{'new_capacity': {'unit': 'Ml/yr', 'value': 6},
-                      'asset': 'water_asset_z',
-                      'description': 'Existing water treatment plants',
-                      'location': {'lat': 51.74556, 'lon': -1.240528},
-                      'timeperiod': 2015
-                      }]
+    file_contents = [
+        {
+            'asset_type': 'water_asset_z',
+            'attributes': [
+                {
+                    'key': 'description',
+                    'value': 'Existing water treatment plants',
+                },
+                {
+                    'key': 'new_capacity',
+                    'value': 6
+                },
+                {
+                    'key': 'location',
+                    'value': {'lat': 51.74556, 'lon': -1.240528}
+                },
+            ],
+            'build_date': 2015
+        }
+    ]
     contents = yaml.dump(file_contents)
     filepath = setup_folder_structure.join('data',
                                            'water_supply',
@@ -204,24 +234,62 @@ def setup_pre_specified_planning(setup_folder_structure):
 
     """
     file_name = 'pre-specified.yaml'
-    file_contents = [{'new_capacity': {'unit': 'Ml/yr', 'value': 6},
-                      'asset': 'water_asset_a',
-                      'description': 'Existing water treatment plants',
-                      'location': {'lat': 51.74556, 'lon': -1.240528},
-                      'timeperiod': 2010
-                     },
-                     {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
-                      'asset': 'water_asset_b',
-                      'description': 'Existing water treatment plants',
-                      'location': {'lat': 51.74556, 'lon': -1.240528},
-                      'timeperiod': 2010
-                     },
-                     {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
-                      'asset': 'water_asset_c',
-                      'description': 'Existing water treatment plants',
-                      'location': {'lat': 51.74556, 'lon': -1.240528},
-                      'timeperiod': 2010
-                     }]
+    file_contents = [
+        {
+            'asset_type': 'water_asset_a',
+            'build_date': 2010,
+            'attributes': [
+                {
+                    'key': 'new_capacity',
+                    'value': 6
+                },
+                {
+                    'key': 'description',
+                    'value': 'Existing water treatment plants'
+                },
+                {
+                    'key': 'location',
+                    'value': {'lat': 51.74556, 'lon': -1.240528}
+                }
+            ]
+        },
+        {
+            'asset_type': 'water_asset_b',
+            'build_date': 2010,
+            'attributes': [
+                {
+                    'key': 'new_capacity',
+                    'value': 6
+                },
+                {
+                    'key': 'description',
+                    'value': 'Existing water treatment plants'
+                },
+                {
+                    'key': 'location',
+                    'value': {'lat': 51.74556, 'lon': -1.240528}
+                }
+            ]
+        },
+        {
+            'asset_type': 'water_asset_c',
+            'build_date': 2010,
+            'attributes': [
+                {
+                    'key': 'new_capacity',
+                    'value': 6
+                },
+                {
+                    'key': 'description',
+                    'value': 'Existing water treatment plants'
+                },
+                {
+                    'key': 'location',
+                    'value': {'lat': 51.74556, 'lon': -1.240528}
+                }
+            ]
+        }
+    ]
     contents = yaml.dump(file_contents)
     filepath = setup_folder_structure.join('data',
                                            'water_supply',
@@ -235,24 +303,62 @@ def setup_pre_specified_planning_two(setup_folder_structure):
 
     """
     file_name = 'pre-specified_alt.yaml'
-    file_contents = [{'new_capacity': {'unit': 'Ml/yr', 'value': 6},
-                      'asset': 'water_asset_a',
-                      'description': 'Existing water treatment plants',
-                      'location': {'lat': 51.74556, 'lon': -1.240528},
-                      'timeperiod': 2015
-                     },
-                     {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
-                      'asset': 'water_asset_a',
-                      'description': 'Existing water treatment plants',
-                      'location': {'lat': 51.74556, 'lon': -1.240528},
-                      'timeperiod': 2020
-                     },
-                     {'new_capacity': {'unit': 'Ml/yr', 'value': 6},
-                      'asset': 'water_asset_a',
-                      'description': 'Existing water treatment plants',
-                      'location': {'lat': 51.74556, 'lon': -1.240528},
-                      'timeperiod': 2025
-                     }]
+    file_contents = [
+        {
+            'asset_type': 'water_asset_a',
+            'build_date': 2015,
+            'attributes': [
+                {
+                    'key': 'new_capacity',
+                    'value': 6
+                },
+                {
+                    'key': 'description',
+                    'value': 'Existing water treatment plants'
+                },
+                {
+                    'key': 'location',
+                    'value': {'lat': 51.74556, 'lon': -1.240528}
+                }
+            ]
+        },
+        {
+            'asset_type': 'water_asset_a',
+            'build_date': 2020,
+            'attributes': [
+                {
+                    'key': 'new_capacity',
+                    'value': 6
+                },
+                {
+                    'key': 'description',
+                    'value': 'Existing water treatment plants'
+                },
+                {
+                    'key': 'location',
+                    'value': {'lat': 51.74556, 'lon': -1.240528}
+                }
+            ]
+        },
+        {
+            'asset_type': 'water_asset_a',
+            'build_date': 2025,
+            'attributes': [
+                {
+                    'key': 'new_capacity',
+                    'value': 6
+                },
+                {
+                    'key': 'description',
+                    'value': 'Existing water treatment plants'
+                },
+                {
+                    'key': 'location',
+                    'value': {'lat': 51.74556, 'lon': -1.240528}
+                }
+            ]
+        }
+    ]
     contents = yaml.dump(file_contents)
     filepath = setup_folder_structure.join('data',
                                            'water_supply',
@@ -509,31 +615,49 @@ def setup_water_attributes(setup_folder_structure):
     data = [
         {
             "name": "water_asset_a",
-            "capital_cost": {
-                "value": 1000,
-                "unit": "£/kW"
-            },
-            "economic_lifetime": 25, # assume unit of years
-            "operational_lifetime": 25 # assume unit of years
+            "attributes": [
+                {
+                    "key": "capital_cost",
+                    "unit": "£/kW",
+                    "default": 1000
+                },
+                {
+                    "key": "economic_lifetime",
+                    "unit": "years",
+                    "default": 25
+                },
+                {
+                    "key": "operational_lifetime",
+                    "unit": "years",
+                    "default": 25
+                }
+            ]
         },
         {
             "name": "water_asset_b",
-            "capital_cost": {
-                "value": 1500,
-                "unit": "£/kW"
-            }
+            "attributes": [
+                {
+                    "key": "capital_cost",
+                    "unit": "£/kW",
+                    "default": 1500
+                }
+            ]
         },
         {
             "name": "water_asset_c",
-            "capital_cost": {
-                "value": 3000,
-                "unit": "£/kW"
-            }
+            "attributes": [
+                {
+                    "key": "capital_cost",
+                    "unit": "£/kW",
+                    "default": 3000
+                }
+            ]
         }
+
     ]
     content = yaml.dump(data)
 
-    filename = setup_folder_structure.join('data', 'water_supply', 'assets', 'water_asset_abc.yaml')
+    filename = setup_folder_structure.join('data', 'water_supply', 'asset_types', 'water_asset_abc.yaml')
     filename.write(content, ensure=True)
 
     return filename
@@ -546,11 +670,12 @@ def setup_water_asset_d(setup_folder_structure,
     content = """
 -
     name: water_asset_d
-    capital_cost:
-        value: 3000
-        unit: "£/kW"
+    attributes:
+    - key: capital_cost
+      unit: "£/kW"
+      default: 3000
 """
-    filename = setup_folder_structure.join('data', 'water_supply', 'assets', 'water_asset_d.yaml')
+    filename = setup_folder_structure.join('data', 'water_supply', 'asset_types', 'water_asset_d.yaml')
     filename.write(content, ensure=True)
 
     return filename

@@ -17,7 +17,7 @@ class TestSectorModelReader(object):
         reader.load()
 
         expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
-        actual = [asset['name'] for asset in reader.assets]
+        actual = [asset['name'] for asset in reader.asset_types]
         assert actual == expected
 
     def test_assets_two_asset_files(self, setup_project_folder,
@@ -35,5 +35,5 @@ class TestSectorModelReader(object):
 
         expected = ['water_asset_a', 'water_asset_b',
                     'water_asset_c', 'water_asset_d']
-        actual = [asset['name'] for asset in reader.assets]
+        actual = [asset['name'] for asset in reader.asset_types]
         assert actual == expected

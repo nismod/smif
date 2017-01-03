@@ -145,6 +145,8 @@ def validate_config(args):
 
 
 def read_sector_model_data_from_config(config_basepath, config):
+    """Read sector-specific data from the sector config folders
+    """
     data = []
 
     for model_config in config:

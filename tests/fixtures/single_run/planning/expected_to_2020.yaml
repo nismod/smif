@@ -1,8 +1,10 @@
-- asset: test_asset
-  timeperiod: 2015
-  new_capacity:
+- name: new_one
+  asset_type: test_asset
+  build_date: 2015
+  attributes:
+  - key: new_capacity
     value: 5
-    unit: fictional
-  location:
-    latitude: 51.2
-    longitude: -1.1
+  - key: location
+    value:
+      latitude: 51.2
+      longitude: -1.1

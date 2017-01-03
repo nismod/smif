@@ -31,14 +31,14 @@ class SectorModelReader(object):
 
         self.inputs = None
         self.outputs = None
-        self.assets = None
+        self.asset_types = None
 
     def load(self):
         """Load and check all config
         """
         self.inputs = self._load_inputs()
         self.outputs = self._load_outputs()
-        self.assets = self._load_model_assets()
+        self.asset_types = self._load_model_asset_types()
 
     @property
     def data(self):
@@ -48,7 +48,7 @@ class SectorModelReader(object):
             "classname": self.model_classname,
             "inputs": self.inputs,
             "outputs": self.outputs,
-            "assets": self.assets
+            "assets": self.asset_types
         }
 
     def _load_inputs(self):
@@ -63,22 +63,22 @@ class SectorModelReader(object):
         path = os.path.join(self.model_config_dir, 'outputs.yaml')
         return ConfigParser(path).data
 
-    def _load_model_assets(self):
+    def _load_model_asset_types(self):
         """Loads the assets from the sector model config folder
 
         Returns
         =======
         list
-            A list of assets for the sector model
+            A list of asset types for the sector model
 
         """
         assets = []
         path = os.path.normpath(
-            os.path.join(self.model_config_dir, 'assets', '*.yaml')
+            os.path.join(self.model_config_dir, 'asset_types', '*.yaml')
         )
 
         for asset_path in glob(path):
-            LOGGER.info("Loading assets from %s", asset_path)
+            LOGGER.info("Loading asset types from %s", asset_path)
             file_assets = ConfigParser(asset_path).data
             assets.extend(file_assets)
 

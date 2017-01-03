@@ -1,8 +1,10 @@
-- asset: test_asset
-  timeperiod: 2020
-  new_capacity:
+- name: planned_one
+  asset_type: test_asset
+  build_date: 2020
+  attributes:
+  - key: new_capacity
     value: 10
-    unit: fictional
-  location:
-    latitude: 50
-    longitude: 0
+  - key: location
+    value:
+      latitude: 50
+      longitude: 0

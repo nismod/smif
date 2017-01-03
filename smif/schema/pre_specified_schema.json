@@ -10,32 +10,29 @@
         "build_instruction": {
             "type": "object",
             "properties": {
-                "asset": {
+                "asset_type": {
                     "type": "string"
                 },
-                "timeperiod": {
+                "build_date": {
                     "type": "integer"
                 },
-                "new_capacity": {
-                    "$ref": "#/definitions/measurable_value"
-                },
-                "location": {
-                    "$ref": "http://json-schema.org/geo"
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/key_value_pair"
+                    }
                 }
             },
-            "required": ["asset", "timeperiod"]
+            "required": ["asset_type", "build_date"]
         },
-        "measurable_value": {
+        "key_value_pair": {
             "type": "object",
             "properties": {
-                "unit": {
+                "key": {
                     "type": "string"
-                },
-                "value": {
-                    "type": "number"
                 }
             },
-            "required": ["unit", "value"]
+            "required": ["key", "value"]
         }
     }
 }
