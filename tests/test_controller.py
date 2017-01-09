@@ -7,7 +7,7 @@ from smif.controller import Controller, SosModel, SosModelBuilder
 from smif.cli import read_sector_model_data_from_config
 from smif.cli.parse_model_config import SosModelReader
 from smif.sector_model import SectorModel
-from fixtures.water_supply import one_dependency, one_input, WaterSupplySectorModel
+from fixtures.water_supply import one_dependency, WaterSupplySectorModel
 
 
 class TestController():
@@ -66,14 +66,13 @@ class TestSosModelBuilder():
         assert sos_model.sector_models == ['water_supply']
         # TODO check if there is a requirement to report all assets in the system
 
-    def test_build_api(self, one_input):
+    def test_build_api(self):
         builder = SosModelBuilder()
         builder.add_timesteps([2010, 2011, 2012])
         builder.add_planning([])
 
         ws_model = WaterSupplySectorModel()
         ws_model.name = 'water_supply'
-        ws_model.inputs = one_input
         builder.add_model(ws_model)
 
         sos_model = builder.finish()

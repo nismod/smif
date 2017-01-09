@@ -37,7 +37,6 @@ import math
 from pytest import fixture
 
 from smif.sector_model import SectorModel
-from smif.abstract import State
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -300,12 +299,10 @@ class WaterSupplySectorModelWithAssets(SectorModel):
         self.run_successful = None
 
         treatment_plants = self.model.number_of_treatment_plants
-        state_parameter_map = {'treatment plant': treatment_plants}
 
-        self.state = State('oxford', 2010,
-                           'water_supply',
-                           state_parameter_map)
-        self.state.initialise_from_tuples(assets)
+        self.state = {
+            'assets': {'treatment plant': treatment_plants}
+        }
 
     def optimise(self, method, decision_vars, objective_function):
         pass
@@ -318,7 +315,7 @@ class WaterSupplySectorModelWithAssets(SectorModel):
 
     def simulate(self):
         self.model.number_of_treatment_plants = \
-            self.state.current_state['assets']['treatment plant']
+            self.state['assets']['treatment plant']
         self.results = self.model.simulate()
         self.run_successful = True
 

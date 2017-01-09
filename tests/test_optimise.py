@@ -38,7 +38,7 @@ class TestWaterModelOptimisation:
         for key in keys:
             assert_allclose(actual_value[key], expected_value[key])
 
-    def test_optimisation_fail_no_input(self, one_input):
+    def test_optimisation_fail_no_input(self):
         """Raise an error if no inputs are specified
         """
         model = WaterSupplySectorModel()

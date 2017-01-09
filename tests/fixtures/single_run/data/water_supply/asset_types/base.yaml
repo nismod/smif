@@ -1,8 +1,0 @@
-- name: test_asset
-  attributes:
-  - key: new_capacity
-    units: ML/day
-    default: 5
-  - key: location
-    units: EPSG:4326
-    default: {}
