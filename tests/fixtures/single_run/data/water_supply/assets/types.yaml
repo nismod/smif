@@ -1,0 +1,17 @@
+# asset type definitions
+# - currently build_date and location are the only additional attributes that
+# are needed to define an instance of any asset
+- type: small_pumping_station
+  capacity:
+    value: 50
+    units: ML/day
+  technical_lifetime:
+    value: 150
+    units: years
+- type: large_pumping_station
+  capacity:
+    value: 500
+    units: ML/day
+  technical_lifetime:
+    value: 100
+    units: years

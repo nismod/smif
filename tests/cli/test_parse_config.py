@@ -47,6 +47,20 @@ class TestConfigParser(object):
                 "required": ["nonexistent_key"]
             })
 
+    def test_empty_invalid(self):
+        conf = ConfigParser()
+
+        msg = "Config data not loaded"
+        with raises(AttributeError, message=msg):
+            conf.validate({})
+
+    def test_empty_modelrun_invalid(self):
+        conf = ConfigParser()
+
+        msg = "Config data not loaded"
+        with raises(AttributeError, message=msg):
+            conf.validate_as_modelrun_config()
+
     def test_modelrun_config_validate(self):
         path = os.path.join(self._config_fixtures_dir(), "modelrun_config.yaml")
         conf = ConfigParser(path)
