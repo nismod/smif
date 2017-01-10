@@ -41,6 +41,7 @@ def setup_project_folder(setup_runpy_file,
                          setup_folder_structure,
                          setup_config_file,
                          setup_timesteps_file,
+                         setup_assets_file,
                          setup_water_attributes,
                          setup_water_inputs,
                          setup_water_outputs,
@@ -78,15 +79,15 @@ def setup_assets_file(setup_folder_structure):
                                 'assets_1.yaml')
     assets_contents = [
         {
-            'name': 'water_asset_a',
+            'type': 'water_asset_a',
             'attributes': []
         },
         {
-            'name': 'water_asset_b',
+            'type': 'water_asset_b',
             'attributes': []
         },
         {
-            'name': 'water_asset_c',
+            'type': 'water_asset_c',
             'attributes': []
         }
     ]
@@ -107,7 +108,7 @@ def setup_assets_file_two(setup_folder_structure):
                                 'assets_2.yaml')
     assets_contents = [
         {
-            'name': 'water_asset_d',
+            'type': 'water_asset_d',
             'attributes': []
         },
     ]
@@ -131,7 +132,8 @@ def setup_config_file(setup_folder_structure):
         ],
         'base_year': 2010,
         'timesteps': 'timesteps.yaml',
-        'assets': ['../data/water_supply/assets/assets_1.yaml'],
+        'assets': ['../data/water_supply/asset_types/assets_1.yaml'],
+        'asset_types': ['../data/water_supply/asset_types/assets_1.yaml'],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -155,21 +157,10 @@ def setup_pre_specified_planning_conflict(setup_folder_structure):
     file_name = 'pre-specified_asset_d.yaml'
     file_contents = [
         {
-            'asset_type': 'water_asset_z',
-            'attributes': [
-                {
-                    'key': 'description',
-                    'value': 'Existing water treatment plants',
-                },
-                {
-                    'key': 'new_capacity',
-                    'value': 6
-                },
-                {
-                    'key': 'location',
-                    'value': {'lat': 51.74556, 'lon': -1.240528}
-                },
-            ],
+            'type': 'water_asset_z',
+            'description': 'Existing water treatment plants',
+            'capacity': 6,
+            'location': {'lat': 51.74556, 'lon': -1.240528},
             'build_date': 2015
         }
     ]
@@ -189,15 +180,20 @@ def setup_config_conflict_assets(setup_folder_structure,
     Contains conflicting assets in the pre-specified rules and the sector model
     """
     ps_name = 'pre-specified_asset_d.yaml'
-    file_contents = {'sector_models': ['water_supply'],
-                     'timesteps': 'timesteps.yaml',
-                     'assets': ['assets1.yaml'],
-                     'planning': {'rule_based': {'use': False},
-                                  'optimisation': {'use': False},
-                                  'pre_specified': {'use': True,
-                                                    'files': [ps_name]}
-                                  }
-                     }
+    file_contents = {
+        'sector_models': ['water_supply'],
+        'timesteps': 'timesteps.yaml',
+        'asset_types': ['assets1.yaml'],
+        'assets': ['assets1.yaml'],
+        'planning': {
+            'rule_based': {'use': False},
+            'optimisation': {'use': False},
+            'pre_specified': {
+                'use': True,
+                'files': [ps_name]
+            }
+        }
+    }
 
     contents = yaml.dump(file_contents)
     filepath = setup_folder_structure.join('config', 'model.yaml')
@@ -213,15 +209,20 @@ def setup_config_conflict_periods(setup_folder_structure,
     Contains conflicting assets in the pre-specified rules and the sector model
     """
     ps_name = 'pre-specified.yaml'
-    file_contents = {'sector_models': ['water_supply'],
-                     'timesteps': 'timesteps2.yaml',
-                     'assets': ['assets1.yaml'],
-                     'planning': {'rule_based': {'use': False},
-                                  'optimisation': {'use': False},
-                                  'pre_specified': {'use': True,
-                                                    'files': [ps_name]}
-                                  }
-                     }
+    file_contents = {
+        'sector_models': ['water_supply'],
+        'timesteps': 'timesteps2.yaml',
+        'asset_types': ['assets1.yaml'],
+        'assets': ['assets1.yaml'],
+        'planning': {
+            'rule_based': {'use': False},
+            'optimisation': {'use': False},
+            'pre_specified': {
+                'use': True,
+                'files': [ps_name]
+            }
+        }
+    }
 
     contents = yaml.dump(file_contents)
     filepath = setup_folder_structure.join('config', 'model.yaml')
@@ -236,7 +237,7 @@ def setup_pre_specified_planning(setup_folder_structure):
     file_name = 'pre-specified.yaml'
     file_contents = [
         {
-            'asset_type': 'water_asset_a',
+            'type': 'water_asset_a',
             'build_date': 2010,
             'attributes': [
                 {
@@ -254,7 +255,7 @@ def setup_pre_specified_planning(setup_folder_structure):
             ]
         },
         {
-            'asset_type': 'water_asset_b',
+            'type': 'water_asset_b',
             'build_date': 2010,
             'attributes': [
                 {
@@ -272,7 +273,7 @@ def setup_pre_specified_planning(setup_folder_structure):
             ]
         },
         {
-            'asset_type': 'water_asset_c',
+            'type': 'water_asset_c',
             'build_date': 2010,
             'attributes': [
                 {
@@ -305,7 +306,7 @@ def setup_pre_specified_planning_two(setup_folder_structure):
     file_name = 'pre-specified_alt.yaml'
     file_contents = [
         {
-            'asset_type': 'water_asset_a',
+            'type': 'water_asset_a',
             'build_date': 2015,
             'attributes': [
                 {
@@ -323,7 +324,7 @@ def setup_pre_specified_planning_two(setup_folder_structure):
             ]
         },
         {
-            'asset_type': 'water_asset_a',
+            'type': 'water_asset_a',
             'build_date': 2020,
             'attributes': [
                 {
@@ -341,7 +342,7 @@ def setup_pre_specified_planning_two(setup_folder_structure):
             ]
         },
         {
-            'asset_type': 'water_asset_a',
+            'type': 'water_asset_a',
             'build_date': 2025,
             'attributes': [
                 {
@@ -367,7 +368,7 @@ def setup_pre_specified_planning_two(setup_folder_structure):
 
 
 @pytest.fixture(scope='function')
-def setup_config_file_two(setup_folder_structure):
+def setup_config_file_two(setup_folder_structure, setup_assets_file_two):
     """Configuration file contains entries for sector models, timesteps and
     planning
 
@@ -384,10 +385,11 @@ def setup_config_file_two(setup_folder_structure):
         ],
         'base_year': 2010,
         'timesteps': 'timesteps.yaml',
-        'assets': [
-            '../data/water_supply/assets_1.yaml',
-            '../data/water_supply/assets_2.yaml'
+        'asset_types': [
+            '../data/water_supply/asset_types/assets_1.yaml',
+            '../data/water_supply/asset_types/assets_2.yaml'
         ],
+        'assets': [],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -419,7 +421,8 @@ def setup_config_file_timesteps_two(setup_folder_structure):
         ],
         'base_year': 2010,
         'timesteps': 'timesteps_2.yaml',
-        'assets': ['../data/water_supply/assets_1.yaml'],
+        'assets': ['../data/water_supply/asset_types/assets_1.yaml'],
+        'asset_types': ['../data/water_supply/asset_types/assets_1.yaml'],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -614,44 +617,33 @@ def setup_timesteps_file_invalid(setup_folder_structure):
 def setup_water_attributes(setup_folder_structure):
     data = [
         {
-            "name": "water_asset_a",
-            "attributes": [
-                {
-                    "key": "capital_cost",
-                    "unit": "£/kW",
-                    "default": 1000
-                },
-                {
-                    "key": "economic_lifetime",
-                    "unit": "years",
-                    "default": 25
-                },
-                {
-                    "key": "operational_lifetime",
-                    "unit": "years",
-                    "default": 25
-                }
-            ]
+            "type": "water_asset_a",
+            "capital_cost": {
+                "units": "£",
+                "value": 1000
+            },
+            "economic_lifetime": {
+                "units": "years",
+                "value": 25
+            },
+            "operational_lifetime": {
+                "units": "years",
+                "value": 25
+            }
         },
         {
-            "name": "water_asset_b",
-            "attributes": [
-                {
-                    "key": "capital_cost",
-                    "unit": "£/kW",
-                    "default": 1500
-                }
-            ]
+            "type": "water_asset_b",
+            "capital_cost": {
+                "units": "£",
+                "value": 1500
+            }
         },
         {
-            "name": "water_asset_c",
-            "attributes": [
-                {
-                    "key": "capital_cost",
-                    "unit": "£/kW",
-                    "default": 3000
-                }
-            ]
+            "type": "water_asset_c",
+            "capital_cost": {
+                "units": "£",
+                "value": 3000
+            }
         }
 
     ]
@@ -668,12 +660,10 @@ def setup_water_asset_d(setup_folder_structure,
                         setup_config_file_two):
 
     content = """
--
-    name: water_asset_d
-    attributes:
-    - key: capital_cost
-      unit: "£/kW"
-      default: 3000
+- type: water_asset_d
+  capital_cost:
+    units: "£"
+    value: 3000
 """
     filename = setup_folder_structure.join('data', 'water_supply', 'asset_types', 'water_asset_d.yaml')
     filename.write(content, ensure=True)

@@ -4,6 +4,10 @@ sector_models:
     classname: WaterSupplySectorModel
     config_dir: ../data/water_supply
 timesteps: timesteps.yaml
+assets:
+  - ../data/water_supply/assets/initial_2015_oxford.yaml
+asset_types:
+  - ../data/water_supply/asset_types/types.yaml
 planning:
   pre_specified:
     use: true

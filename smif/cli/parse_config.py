@@ -77,6 +77,12 @@ class ConfigParser:
         self._validate_against_schema_file(self.data,
                                            "timesteps_config_schema.json")
 
+    def validate_as_assets(self):
+        """Validate the loaded data as required for model run assets
+        """
+        self._validate_against_schema_file(self.data,
+                                           "assets_schema.json")
+
     def validate_as_pre_specified_planning(self):
         """Validate the loaded data as a pre-specified planning file
         """

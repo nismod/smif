@@ -38,17 +38,17 @@ class SectorModelReader(object):
         """
         self.inputs = self._load_inputs()
         self.outputs = self._load_outputs()
-        self.asset_types = self._load_model_asset_types()
 
     @property
     def data(self):
+        """Expose all loaded config data
+        """
         return {
             "name": self.model_name,
             "path": self.model_path,
             "classname": self.model_classname,
             "inputs": self.inputs,
-            "outputs": self.outputs,
-            "assets": self.asset_types
+            "outputs": self.outputs
         }
 
     def _load_inputs(self):
@@ -62,80 +62,3 @@ class SectorModelReader(object):
         """
         path = os.path.join(self.model_config_dir, 'outputs.yaml')
         return ConfigParser(path).data
-
-    def _load_model_asset_types(self):
-        """Loads the assets from the sector model config folder
-
-        Returns
-        =======
-        list
-            A list of asset types for the sector model
-
-        """
-        assets = []
-        path = os.path.normpath(
-            os.path.join(self.model_config_dir, 'asset_types', '*.yaml')
-        )
-
-        for asset_path in glob(path):
-            LOGGER.info("Loading asset types from %s", asset_path)
-            file_assets = ConfigParser(asset_path).data
-            assets.extend(file_assets)
-
-        return assets
-
-
-class AssetList:
-    """List of assets to be loaded from files
-
-    - The set of assets (power stations etc.) should be explicitly declared
-    in a yaml file.
-    - Assets are associated with sector models, not the integration configuration.
-    - Assets should be stored in a sub-folder associated with the sector model
-    name.
-    """
-
-    # TODO use or integrate this
-    def __init__(self, filepath):
-        self._asset_list = ConfigParser(filepath)
-        self._validate({
-            "type": "array",
-            "uniqueItems": True
-        })
-        self._asset_attributes = None
-
-    def _validate(self, schema):
-        self._asset_list.validate(schema)
-
-    @property
-    def asset_list(self):
-        return self._asset_list.data
-
-    @property
-    def asset_attributes(self):
-        return self._asset_attributes.data
-
-    def load_attributes(self, filepath):
-        """
-        """
-        self._asset_attributes = ConfigParser(filepath)
-        # TODO drop this or move to json file in schema directory
-        schema = {
-            "type": "array",
-            "oneof": self.asset_list,
-            "properties": {
-                "cost": {
-                    "properties": {
-                        "value": {
-                            "type": "number",
-                            "minimum": 0,
-                            "exclusiveMinimum": True
-                        },
-                        "unit": {
-                            'type': 'string'
-                        }
-                    }
-                }
-            }
-        }
-        self._validate(schema)

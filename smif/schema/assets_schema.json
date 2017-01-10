@@ -8,11 +8,8 @@
         "properties": {
             "type": {
                 "type": "string"
-            },
-            "build_date": {
-                "type": "integer"
             }
         },
-        "required": ["type", "build_date"]
+        "required": ["type"]
     }
 }

@@ -33,6 +33,8 @@ class SosModelReader(object):
         self.config = self._load_sos_config()
         self.timesteps = self._load_timesteps()
         self.sector_model_data = self._load_sector_model_data()
+        self.asset_types = self._load_asset_types()
+        self.assets = self._load_assets()
         self.planning = self._load_planning()
 
     @property
@@ -42,7 +44,9 @@ class SosModelReader(object):
         return {
             "timesteps": self.timesteps,
             "sector_model_config": self.sector_model_data,
-            "planning": self.planning
+            "planning": self.planning,
+            "assets": self.assets,
+            "asset_types": self.asset_types
         }
 
     def _load_sos_config(self):
@@ -88,15 +92,42 @@ class SosModelReader(object):
         if self.config['planning']['pre_specified']['use']:
             planning_relative_paths = self.config['planning']['pre_specified']['files']
             planning_instructions = []
-            for rel_path in planning_relative_paths:
-                file_path = self._get_path_from_config(rel_path)
-                parser = ConfigParser(file_path)
+
+            for parser in self._parsers_from_relative_paths(planning_relative_paths):
                 parser.validate_as_pre_specified_planning()
                 planning_instructions.extend(parser.data)
 
             return planning_instructions
         else:
             return []
+
+    def _load_assets(self):
+        assets = []
+        if 'assets' in self.config:
+            asset_relative_paths = self.config['assets']
+
+            for parser in self._parsers_from_relative_paths(asset_relative_paths):
+                parser.validate_as_assets()
+                assets.extend(parser.data)
+
+        return assets
+
+    def _load_asset_types(self):
+        asset_types = []
+        if 'asset_types' in self.config:
+            asset_types_relative_paths = self.config['asset_types']
+
+            for parser in self._parsers_from_relative_paths(asset_types_relative_paths):
+                parser.validate_as_assets()
+                asset_types.extend(parser.data)
+
+        return asset_types
+
+    def _parsers_from_relative_paths(self, paths):
+        for rel_path in paths:
+            file_path = self._get_path_from_config(rel_path)
+            parser = ConfigParser(file_path)
+            yield parser
 
     def _get_path_from_config(self, path):
         """Return an absolute path, given a path provided from a config file

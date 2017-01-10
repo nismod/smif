@@ -8,9 +8,12 @@ class TestSosModelReader():
     def _get_model_config(self, folder):
         return os.path.join(str(folder), "config", "model.yaml")
 
+    def _get_reader(self, folder):
+        return SosModelReader(self._get_model_config(folder))
+
     def test_read_sos_model(self, setup_project_folder):
 
-        reader = SosModelReader(self._get_model_config(setup_project_folder))
+        reader = self._get_reader(setup_project_folder)
         reader.load()
 
         # check timesteps filename
@@ -23,7 +26,7 @@ class TestSosModelReader():
 
     def test_model_list(self, setup_project_folder):
 
-        reader = SosModelReader(self._get_model_config(setup_project_folder))
+        reader = self._get_reader(setup_project_folder)
         reader.load()
 
         expected = [
@@ -40,7 +43,7 @@ class TestSosModelReader():
 
     def test_timesteps(self, setup_project_folder):
 
-        reader = SosModelReader(self._get_model_config(setup_project_folder))
+        reader = self._get_reader(setup_project_folder)
         reader.load()
 
         expected = [2010, 2011, 2012]
@@ -52,7 +55,7 @@ class TestSosModelReader():
                                       setup_config_file_timesteps_two,
                                       setup_timesteps_file_two):
 
-        reader = SosModelReader(self._get_model_config(setup_project_folder))
+        reader = self._get_reader(setup_project_folder)
         reader.load()
 
         expected = [2015, 2020, 2025]
@@ -66,5 +69,26 @@ class TestSosModelReader():
 
         with raises(ValueError):
             reader.load()
+
+    def test_assets(self, setup_project_folder):
+
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+
+        expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
+        actual = [asset['type'] for asset in reader.asset_types]
+        assert actual == expected
+
+    def test_assets_two_asset_files(self, setup_project_folder,
+                                    setup_config_file_two,
+                                    setup_water_asset_d):
+
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+
+        expected = ['water_asset_a', 'water_asset_b',
+                    'water_asset_c', 'water_asset_d']
+        actual = [asset['type'] for asset in reader.asset_types]
+        assert actual == expected
 
 # TODO test for clear error messages from reading

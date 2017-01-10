@@ -55,6 +55,8 @@ class SosModel(object):
     def __init__(self):
         self.model_list = {}
         self._timesteps = []
+        self.asset_types = []
+        self.assets = []
         self.planning = None
 
     def run(self):
@@ -149,37 +151,15 @@ class SosModel(object):
         """
         return sorted(self._timesteps)
 
+    @property
+    def asset_type_names(self):
+        """Names (id-like keys) of all known asset type
+        """
+        return [asset_type['type'] for asset_type in self.asset_types]
+
     @timesteps.setter
     def timesteps(self, value):
         self._timesteps = value
-
-    @property
-    def all_assets(self):
-        """Returns the list of all assets across the system-of-systems model
-
-        Returns
-        =======
-        list
-            A list of all assets across the system-of-systems model
-        """
-        assets = []
-        for model in self.model_list.values():
-            assets.extend(model.assets)
-        return assets
-
-    @property
-    def all_asset_names(self):
-        """Returns the list of all asset_names across the system-of-systems model
-
-        Returns
-        =======
-        list
-            A list of all asset_names across the system-of-systems model
-        """
-        asset_names = []
-        for model in self.model_list.values():
-            asset_names.extend(model.asset_names)
-        return asset_names
 
     @property
     def sector_models(self):
@@ -231,6 +211,8 @@ class SosModelBuilder(object):
         """
         self.add_timesteps(config_data['timesteps'])
         self.load_models(config_data['sector_model_data'])
+        self.add_asset_types(config_data['asset_types'])
+        self.add_assets(config_data['assets'])
         self.add_planning(config_data['planning'])
 
     def add_timesteps(self, timesteps):
@@ -262,7 +244,6 @@ class SosModelBuilder(object):
         builder.load_model(model_data['path'], model_data['classname'])
         builder.add_inputs(model_data['inputs'])
         builder.add_outputs(model_data['outputs'])
-        builder.add_assets(model_data['assets'])
         return builder.finish()
 
     def add_model(self, model):
@@ -278,15 +259,21 @@ class SosModelBuilder(object):
         # TODO think through which parts of this live with sector models / at the top level
         self.sos_model.planning = Planning(planning)
 
+    def add_asset_types(self, asset_types):
+        self.sos_model.asset_types = asset_types
+
+    def add_assets(self, assets):
+        self.sos_model.assets = assets
+
     def _check_planning_assets_exist(self):
         """Check existence of all the assets in the pre-specifed planning
 
         """
         model = self.sos_model
-        sector_asset_names = model.all_asset_names
-        for planning_asset_name in model.planning.asset_names:
-            msg = "Asset '{}' in planning file not found in sector assets"
-            assert planning_asset_name in sector_asset_names, msg.format(planning_asset_name)
+        asset_types = model.asset_type_names
+        for planning_asset_type in model.planning.asset_types:
+            msg = "Asset '{}' in planning file not found in assets"
+            assert planning_asset_type in asset_types, msg.format(planning_asset_type)
 
     def _check_planning_timeperiods_exist(self):
         """Check existence of all the timeperiods in the pre-specified planning
