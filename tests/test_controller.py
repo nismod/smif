@@ -7,7 +7,7 @@ from smif.controller import Controller, SosModel, SosModelBuilder
 from smif.cli import read_sector_model_data_from_config
 from smif.cli.parse_model_config import SosModelReader
 from smif.sector_model import SectorModel
-from fixtures.water_supply import one_dependency, WaterSupplySectorModel
+from . fixtures.water_supply import one_dependency, WaterSupplySectorModel
 
 
 class TestController():

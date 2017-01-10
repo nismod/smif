@@ -17,8 +17,8 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
-from fixtures.water_supply import WaterSupplySectorModel, DynamicWaterSupplySectorModel
-from fixtures.water_supply import dynamic_data, one_input
+from . fixtures.water_supply import WaterSupplySectorModel, DynamicWaterSupplySectorModel
+from . fixtures.water_supply import dynamic_data, one_input
 from smif.controller import SosModel
 
 

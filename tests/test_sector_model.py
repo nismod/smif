@@ -1,7 +1,7 @@
 import pytest
 from smif.asset import Asset
 from smif.sector_model import SectorModel, SectorModelBuilder
-from fixtures.water_supply import WaterSupplySectorModelWithAssets
+from . fixtures.water_supply import WaterSupplySectorModelWithAssets
 
 class EmptySectorModel(SectorModel):
     def simulate(self, static_inputs, decision_variables):
