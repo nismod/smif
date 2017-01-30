@@ -55,6 +55,14 @@ class InputList(ModelElementCollection):
         super().__init__()
         self.bounds = []
 
+    def __repr__(self):
+        """Return literal string representation of this instance
+        """
+        return "{{'names': {}, 'values': {}, 'bounds': {}}}".format(
+            self.names,
+            self.values,
+            self.bounds
+        )
 
     def update_value(self, name, value):
         """Update the value of an input
