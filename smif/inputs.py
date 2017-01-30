@@ -57,7 +57,7 @@ class InputList(ModelElementCollection):
     def __repr__(self):
         """Return literal string representation of this instance
         """
-        return "{{'names': {}, 'values': {}, 'bounds': {}}}".format(
+        return "{{'name': {}, 'value': {}, 'bounds': {}}}".format(
             self.names,
             self.values,
             self.bounds
@@ -158,6 +158,20 @@ class DependencyList(InputList):
     def __init__(self, dependencies):
         super().__init__()
         self._parse_input_dictionary(dependencies)
+
+
+    def __repr__(self):
+        """Return literal string representation of this instance
+        """
+        template = "{{'name': {}, 'spatial_resolution': {}, " + \
+                   "'temporal_resolution': {}, 'from_model': {}}}"
+
+        return template.format(
+            self.names,
+            self.spatial_resolutions,
+            self.temporal_resolutions,
+            self.from_models
+        )
 
     def _parse_input_dictionary(self, inputs):
         """Extracts arrays of decision variables and metadata from a list of
