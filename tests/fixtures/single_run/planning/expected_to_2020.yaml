@@ -1,10 +1,7 @@
 - name: new_one
-  asset_type: test_asset
+  type: small_pumping_station
   build_date: 2015
-  attributes:
-  - key: new_capacity
-    value: 5
-  - key: location
-    value:
-      latitude: 51.2
-      longitude: -1.1
+  new_capacity: 5
+  location:
+    latitude: 51.2
+    longitude: -1.1

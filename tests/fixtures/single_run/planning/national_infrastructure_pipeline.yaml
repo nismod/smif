@@ -1,10 +1,7 @@
 - name: planned_one
-  asset_type: test_asset
+  type: small_pumping_station
   build_date: 2020
-  attributes:
-  - key: new_capacity
-    value: 10
-  - key: location
-    value:
-      latitude: 50
-      longitude: 0
+  new_capacity: 10
+  location:
+    latitude: 50
+    longitude: 0
