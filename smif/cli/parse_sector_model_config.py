@@ -6,7 +6,6 @@ import os
 from glob import glob
 from . parse_config import ConfigParser
 
-LOGGER = logging.getLogger(__name__)
 
 class SectorModelReader(object):
     """Parses the configuration and input data for a sector model

@@ -5,7 +5,6 @@ import logging
 import os
 from . parse_config import ConfigParser
 
-LOGGER = logging.getLogger(__name__)
 
 class SosModelReader(object):
     """Encapsulates the parsing of the system-of-systems configuration
@@ -17,7 +16,8 @@ class SosModelReader(object):
 
     """
     def __init__(self, config_file_path):
-        LOGGER.info("Getting config file from %s", config_file_path)
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Getting config file from %s", config_file_path)
 
         self.config_file_path = config_file_path
         self.config_file_dir = os.path.dirname(config_file_path)
@@ -58,7 +58,7 @@ class SosModelReader(object):
         - points to sector models and sector model data files
         """
         msg = "Looking for configuration data in {}".format(self.config_file_path)
-        LOGGER.info(msg)
+        self.logger.info(msg)
 
         config_parser = ConfigParser(self.config_file_path)
         config_parser.validate_as_modelrun_config()
