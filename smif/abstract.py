@@ -12,7 +12,6 @@ __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-LOGGER = logging.getLogger(__name__)
 
 class ModelElementCollection(ABC):
     """A collection of model elements
@@ -23,6 +22,7 @@ class ModelElementCollection(ABC):
     def __init__(self):
         self._names = []
         self._values = []
+        self.logger = logging.getLogger(__name__)
 
     @property
     def names(self):
@@ -95,5 +95,5 @@ class ModelElementCollection(ABC):
 
         """
         index = self._get_index(name)
-        LOGGER.debug("Updating {} with {}".format(name, value))
+        self.logger.debug("Updating {} with {}".format(name, value))
         self.values[index] = value

@@ -22,21 +22,23 @@ class WaterSupplySectorModel(SectorModel):
 
         Arguments
         =========
-        decisions : :class:`numpy.ndarray`
-            x_0 is new capacity of water treatment plants
+        decisions
+            - asset build instructions
         state
-            unused here:
-            - should contain existing capacity of water treatment plants
-            - could for example contain reservoir level at year start
-        data : dict of dicts
-            contains scenario data about expected level of rainfall
+            - existing system (unless implementation means maintaining system in sector model)
+            - system state, e.g. reservoir level at year start
+        data
+            - scenario data, e.g. expected level of rainfall
         """
 
         # unpack inputs
         raininess = data['raininess']['value']
 
         # unpack decision variables
-        number_of_treatment_plants = decisions[0, ]
+        number_of_treatment_plants = 1 #len(decisions) + len(state['assets'])
+        self.logger.debug(decisions)
+        self.logger.debug(state)
+        self.logger.debug(data)
 
         # simulate (wrapping toy model)
         instance = ExampleWaterSupplySimulationModel(raininess, number_of_treatment_plants)

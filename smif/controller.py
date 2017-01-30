@@ -14,8 +14,6 @@ __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-LOGGER = logging.getLogger(__name__)
-
 
 class Controller:
     """Coordinates the data-layer, decision-layer and model-runner
@@ -59,6 +57,8 @@ class SosModel(object):
         self.assets = []
         self.planning = None
 
+        self.logger = logging.getLogger(__name__)
+
     def run(self):
         """Runs the system-of-system model
 
@@ -88,6 +88,7 @@ class SosModel(object):
                 state = None
                 data = model.inputs.parameters
 
+                self.logger.debug("Running %s model for %s", model_name, timestep)
                 model.simulate(decisions, state, data)
 
     def _get_model_names_in_run_order(self):
@@ -132,7 +133,7 @@ class SosModel(object):
         assert model_name in self.model_list, msg
 
         msg = "Running the {} sector model".format(model_name)
-        LOGGER.info(msg)
+        self.logger.info(msg)
 
         sector_model = self.model_list[model_name]
         # Run a simulation for a single year
@@ -191,7 +192,7 @@ class SosModel(object):
             if index > 0:
                 state_var = 'existing capacity'
                 state_res = results[index - 1]['capacity']
-                LOGGER.debug("Updating %s with %s", state_var, state_res)
+                self.logger.debug("Updating %s with %s", state_var, state_res)
                 model.inputs.parameters.update_value(state_var, state_res)
 
             # Run the simulation
@@ -205,6 +206,8 @@ class SosModelBuilder(object):
     """
     def __init__(self):
         self.sos_model = SosModel()
+
+        self.logger = logging.getLogger(__name__)
 
     def construct(self, config_data):
         """Set up the whole SosModel
@@ -250,7 +253,7 @@ class SosModelBuilder(object):
         """Adds a sector model into the system-of-systems model
 
         """
-        LOGGER.info("Loading model: %s", model.name)
+        self.logger.info("Loading model: %s", model.name)
         self.sos_model.model_list[model.name] = model
 
     def add_planning(self, planning):

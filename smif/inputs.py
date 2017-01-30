@@ -44,8 +44,6 @@ __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-LOGGER = logging.getLogger(__name__)
-
 
 class InputList(ModelElementCollection):
     """Defines the types of inputs to a sector model
@@ -54,6 +52,7 @@ class InputList(ModelElementCollection):
     def __init__(self):
         super().__init__()
         self.bounds = []
+        self.logger = logging.getLogger(__name__)
 
     def __repr__(self):
         """Return literal string representation of this instance
@@ -78,7 +77,7 @@ class InputList(ModelElementCollection):
 
         """
         index = self._get_index(name)
-        LOGGER.debug("Index of {} is {}".format(name, index))
+        self.logger.debug("Index of {} is {}".format(name, index))
         bounds = self.bounds
         assert bounds[index][0] <= value <= bounds[index][1], \
             "Bounds exceeded"
