@@ -44,8 +44,6 @@ __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-LOGGER = logging.getLogger(__name__)
-
 
 class InputList(ModelElementCollection):
     """Defines the types of inputs to a sector model
@@ -54,7 +52,16 @@ class InputList(ModelElementCollection):
     def __init__(self):
         super().__init__()
         self.bounds = []
+        self.logger = logging.getLogger(__name__)
 
+    def __repr__(self):
+        """Return literal string representation of this instance
+        """
+        return "{{'name': {}, 'value': {}, 'bounds': {}}}".format(
+            self.names,
+            self.values,
+            self.bounds
+        )
 
     def update_value(self, name, value):
         """Update the value of an input
@@ -70,7 +77,7 @@ class InputList(ModelElementCollection):
 
         """
         index = self._get_index(name)
-        LOGGER.debug("Index of {} is {}".format(name, index))
+        self.logger.debug("Index of {} is {}".format(name, index))
         bounds = self.bounds
         assert bounds[index][0] <= value <= bounds[index][1], \
             "Bounds exceeded"
@@ -151,6 +158,20 @@ class DependencyList(InputList):
     def __init__(self, dependencies):
         super().__init__()
         self._parse_input_dictionary(dependencies)
+
+
+    def __repr__(self):
+        """Return literal string representation of this instance
+        """
+        template = "{{'name': {}, 'spatial_resolution': {}, " + \
+                   "'temporal_resolution': {}, 'from_model': {}}}"
+
+        return template.format(
+            self.names,
+            self.spatial_resolutions,
+            self.temporal_resolutions,
+            self.from_models
+        )
 
     def _parse_input_dictionary(self, inputs):
         """Extracts arrays of decision variables and metadata from a list of

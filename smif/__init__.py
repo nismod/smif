@@ -15,7 +15,6 @@ __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-LOGGER = logging.getLogger(__name__)
 
 try:
     __version__ = pkg_resources.get_distribution(__name__).version

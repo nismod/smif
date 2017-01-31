@@ -4,12 +4,16 @@ sector_models:
     classname: WaterSupplySectorModel
     config_dir: ../data/water_supply
 timesteps: timesteps.yaml
+assets:
+  - ../data/water_supply/assets/initial_2015_oxford.yaml
+asset_types:
+  - ../data/water_supply/asset_types/types.yaml
 planning:
   pre_specified:
-    use: false
+    use: true
     files:
-      - expected_to_2020.yaml
-      - national_infrastructure_pipeline.yaml
+      - ../planning/expected_to_2020.yaml
+      - ../planning/national_infrastructure_pipeline.yaml
   rule_based:
     use: false
   optimisation:

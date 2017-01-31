@@ -9,7 +9,6 @@
 """
 import logging
 import os
-import sys
 from abc import ABC, abstractmethod
 from enum import Enum
 import importlib
@@ -23,8 +22,6 @@ from smif.outputs import ModelOutputs
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
-
-LOGGER = logging.getLogger(__name__)
 
 
 class SectorModel(ABC):
@@ -43,6 +40,8 @@ class SectorModel(ABC):
 
         self._inputs = ModelInputs({})
         self._outputs = ModelOutputs({})
+
+        self.logger = logging.getLogger(__name__)
 
 
     def validate(self):
@@ -201,13 +200,13 @@ class SectorModel(ABC):
         results = self.simulate(res.x)
 
         if res.success:
-            LOGGER.debug("Solver exited successfully with obj: %s", res.fun)
-            LOGGER.debug("and with solution: %s", res.x)
-            LOGGER.debug("and bounds: %s", v_bounds)
-            LOGGER.debug("from initial values: %s", v_initial)
-            LOGGER.debug("for variables: %s", v_names)
+            self.logger.debug("Solver exited successfully with obj: %s", res.fun)
+            self.logger.debug("and with solution: %s", res.x)
+            self.logger.debug("and bounds: %s", v_bounds)
+            self.logger.debug("from initial values: %s", v_initial)
+            self.logger.debug("for variables: %s", v_names)
         else:
-            LOGGER.debug("Solver failed")
+            self.logger.debug("Solver failed")
 
         return results
 
@@ -267,7 +266,7 @@ class SectorModel(ABC):
                 # TODO move this to water_supply implementation
                 state_var = 'existing capacity'
                 state_res = results[index - 1]['capacity']
-                LOGGER.debug("Updating %s with %s", state_var, state_res)
+                self.logger.debug("Updating %s with %s", state_var, state_res)
                 self.inputs.parameters.update_value(state_var, state_res)
 
             # Run the simulation
@@ -284,13 +283,13 @@ class SectorModel(ABC):
         results = []
         years = [2010, 2015, 2020]
         for index in range(3):
-            LOGGER.debug("Running simulation for year %s", years[index])
+            self.logger.debug("Running simulation for year %s", years[index])
             # Update the state from the previous year
             if index > 0:
                 # TODO move this to water_supply implementation
                 state_var = 'existing capacity'
                 state_res = results[index - 1]['capacity']
-                LOGGER.debug("Updating %s with %s", state_var, state_res)
+                self.logger.debug("Updating %s with %s", state_var, state_res)
                 self.inputs.parameters.update_value(state_var, state_res)
             # Run the simulation
             decision = np.array([decisions[index], ])
@@ -301,7 +300,7 @@ class SectorModel(ABC):
     def seq_opt_obj(self, decisions):
         assert decisions.shape == (3,)
         results = self._optimise_over_timesteps(decisions)
-        LOGGER.debug("Decisions: {}".format(decisions))
+        self.logger.debug("Decisions: {}".format(decisions))
         return self.get_objective(results, discount_rate=0.05)
 
     @staticmethod
@@ -309,7 +308,7 @@ class SectorModel(ABC):
         discount_factor = [(1 - discount_rate)**n for n in range(0, 15, 5)]
         costs = sum([x['cost']
                      * discount_factor[ix] for ix, x in enumerate(results)])
-        LOGGER.debug("Objective function: £%.2f", float(costs))
+        self.logger.debug("Objective function: £%.2f", float(costs))
         return costs
 
     def sequential_optimisation(self, timesteps):
@@ -324,10 +323,10 @@ class SectorModel(ABC):
 
         t_v_initial = np.tile(v_initial, (1, number_of_steps))
         t_v_bounds = np.tile(v_bounds, (number_of_steps, 1))
-        LOGGER.debug("Flat bounds: %s", v_bounds)
-        LOGGER.debug("Tiled Bounds: %s", t_v_bounds)
-        LOGGER.debug("Flat Bounds: %s", t_v_bounds.flatten())
-        LOGGER.debug("DecVar: %s", t_v_initial)
+        self.logger.debug("Flat bounds: %s", v_bounds)
+        self.logger.debug("Tiled Bounds: %s", t_v_bounds)
+        self.logger.debug("Flat Bounds: %s", t_v_bounds.flatten())
+        self.logger.debug("DecVar: %s", t_v_initial)
 
         # TODO move this to water_supply implementation
         annual_rainfall = 5
@@ -355,13 +354,13 @@ class SectorModel(ABC):
         results = self.sequential_simulation(timesteps, np.array([res.x]))
 
         if res.success:
-            LOGGER.debug("Solver exited successfully with obj: %s", res.fun)
-            LOGGER.debug("and with solution: %s", res.x)
-            LOGGER.debug("and bounds: %s", v_bounds)
-            LOGGER.debug("from initial values: %s", v_initial)
-            LOGGER.debug("for variables: %s", v_names)
+            self.logger.debug("Solver exited successfully with obj: %s", res.fun)
+            self.logger.debug("and with solution: %s", res.x)
+            self.logger.debug("and bounds: %s", v_bounds)
+            self.logger.debug("from initial values: %s", v_initial)
+            self.logger.debug("for variables: %s", v_names)
         else:
-            LOGGER.debug("Solver failed")
+            self.logger.debug("Solver failed")
 
         return results
 
@@ -375,12 +374,15 @@ class SectorModelBuilder(object):
         self._sector_model_name = name
         self._sector_model = None
 
+        self.logger = logging.getLogger(__name__)
+
+
     def load_model(self, model_path, classname):
         """Dynamically load model module
 
         """
         if os.path.exists(model_path):
-            LOGGER.info("Importing run module from %s", model_path)
+            self.logger.info("Importing run module from %s", model_path)
 
             spec = importlib.util.spec_from_file_location(self._sector_model_name, model_path)
             module = importlib.util.module_from_spec(spec)

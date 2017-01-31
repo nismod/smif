@@ -1,0 +1,42 @@
+# asset type definitions
+# - currently build_date and location are the only additional attributes that
+# are needed to define an instance of any asset
+- type: small_pumping_station
+  capacity:
+    value: 50
+    units: ML/day
+  operational_lifetime:
+    value: 150
+    units: years
+  economic_lifetime:
+    value: 50
+    units: years
+  capital_cost:
+    value: 5
+    units: million £
+- type: large_pumping_station
+  capacity:
+    value: 500
+    units: ML/day
+  operational_lifetime:
+    value: 100
+    units: years
+  economic_lifetime:
+    value: 50
+    units: years
+  capital_cost:
+    value: 15
+    units: million £
+- type: major_road_segment
+  capacity:
+    value: 2
+    units: lanes
+  operational_lifetime:
+    value: 150
+    units: years
+  economic_lifetime:
+    value: 50
+    units: years
+  capital_cost:
+    value: 50
+    units: million £/km

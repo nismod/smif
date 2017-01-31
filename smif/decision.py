@@ -10,25 +10,24 @@ class Planning:
 
     Arguments
     =========
-    planning_data : dict
-        A dictionary of pre-specified planning commands
+    planning_data : list
+        A list of pre-specified planning commands
     """
 
     def __init__(self, planning_data):
         if planning_data is not None:
-            self.planning = planning_data
+            self.build_instructions = planning_data
         else:
-            self.planning = []
+            self.build_instructions = []
 
     @property
-    def assets(self):
-        """Returns the set of unique assets defined in the planning commands
+    def asset_types(self):
+        """Returns the set of assets defined in the planning commands
         """
-        return set([plan['asset'] for plan in self.planning])
+        return {plan['type'] for plan in self.build_instructions}
 
     @property
     def timeperiods(self):
-        """Returns the set of unique time periods defined in the planning
-        commands
+        """Returns the set of time periods defined in the planning commands
         """
-        return set([plan['timeperiod'] for plan in self.planning])
+        return {plan['build_date'] for plan in self.build_instructions}

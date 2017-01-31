@@ -1,8 +1,18 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "Pre Specified Planning",
-    "description": "List of Pre-specified Planning Commands",
+    "description": "List of pre-specified planning instructions",
     "type": "array",
-    "minItems": 1,
-    "uniqueItems": false
+    "items": {
+        "type": "object",
+        "properties": {
+            "type": {
+                "type": "string"
+            },
+            "build_date": {
+                "type": "integer"
+            }
+        },
+        "required": ["type", "build_date"]
+    }
 }

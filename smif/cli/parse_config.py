@@ -77,6 +77,28 @@ class ConfigParser:
         self._validate_against_schema_file(self.data,
                                            "timesteps_config_schema.json")
 
+    def validate_as_assets(self):
+        """Validate the loaded data as required for model run assets
+        """
+        self._validate_against_schema_file(self.data,
+                                           "assets_schema.json")
+
+        # except for some keys which are allowed simple values,
+        simple_keys = ["type", "sector", "location"]
+        # expect each attribute to be of the form {value: x, units: y}
+        for asset in self.data:
+            for key, value in asset.items():
+                if key not in simple_keys and (
+                        not isinstance(value, dict)
+                        or "value" not in value
+                        or "units" not in value
+                    ):
+                    fmt = "{0}.{1} was {2} but should have specified units, " + \
+                          "e.g. {{'value': {2}, 'units': 'm'}}"
+
+                    msg = fmt.format(asset["type"], key, value)
+                    raise ValueError(msg)
+
     def validate_as_pre_specified_planning(self):
         """Validate the loaded data as a pre-specified planning file
         """

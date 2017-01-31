@@ -34,7 +34,7 @@ should run, while each set of sector model config
 
 """
 from __future__ import print_function
-import logging
+import logging, logging.config
 import os
 import sys
 from argparse import ArgumentParser
@@ -48,14 +48,40 @@ __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
+
+LOGGING_CONFIG = {
+    'version': 1,
+    'formatters': {
+        'default': {
+            'format': '%(asctime)s %(name)-12s: %(levelname)-8s %(message)s'
+        },
+        'message': {
+            'format': '%(message)s'
+        }
+    },
+    'handlers': {
+        'file': {
+            'class': 'logging.FileHandler',
+            'level': 'DEBUG',
+            'formatter': 'default',
+            'filename': 'cli.log',
+            'mode': 'a',
+            'encoding': 'utf-8'
+        },
+        'stream': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'message',
+            'level': 'INFO'
+        }
+    },
+    'root': {
+        'handlers': ['file', 'stream'],
+        'level': 'DEBUG'
+    }
+}
+
+logging.config.dictConfig(LOGGING_CONFIG)
 LOGGER = logging.getLogger(__name__)
-
-logging.basicConfig(filename='cli.log',
-                    level=logging.DEBUG,
-                    format='%(asctime)s %(name)-12s: %(levelname)-8s %(message)s',
-                    filemode='a')
-
-LOGGER.addHandler(logging.StreamHandler())
 
 
 def setup_project_folder(project_path):
@@ -136,15 +162,17 @@ def validate_config(args):
             # read sector model data+config
             model_config['sector_model_data'] = \
             read_sector_model_data_from_config(config_basepath, model_config['sector_model_config'])
+            return model_config
 
         except ValueError as error:
             LOGGER.error("The model configuration is invalid: %s", error)
         else:
             LOGGER.info("The model configuration is valid")
 
-        return model_config
 
 def read_sector_model_data_from_config(config_basepath, config):
+    """Read sector-specific data from the sector config folders
+    """
     data = []
 
     for model_config in config:

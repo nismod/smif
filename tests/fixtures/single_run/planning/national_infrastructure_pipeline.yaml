@@ -1,0 +1,7 @@
+- name: planned_one
+  type: small_pumping_station
+  build_date: 2020
+  location: "POINT(51.1 -1.7)"
+- name: M40 toll
+  type: major_road_segment
+  build_date: 2020

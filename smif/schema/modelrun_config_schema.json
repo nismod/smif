@@ -15,6 +15,18 @@
         "timesteps": {
             "type": "string"
         },
+        "assets": {
+            "type": "array",
+            "items": {
+                 "type": "string"
+            }
+        },
+        "asset_types": {
+            "type": "array",
+            "items": {
+                 "type": "string"
+            }
+        },
         "planning": {
             "type": "object",
             "properties": {
@@ -31,7 +43,7 @@
             "required": ["pre_specified", "rule_based", "optimisation"]
         }
     },
-    "required": ["sector_models", "timesteps", "planning"],
+    "required": ["sector_models", "timesteps", "planning", "assets", "asset_types"],
 
     "definitions": {
         "planning_config": {

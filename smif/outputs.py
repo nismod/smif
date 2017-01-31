@@ -13,8 +13,6 @@ __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
 
-LOGGER = logging.getLogger(__name__)
-
 
 class OutputList(ModelElementCollection):
     """Defines the types of outputs to a sector model

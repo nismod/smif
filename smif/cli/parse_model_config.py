@@ -5,7 +5,6 @@ import logging
 import os
 from . parse_config import ConfigParser
 
-LOGGER = logging.getLogger(__name__)
 
 class SosModelReader(object):
     """Encapsulates the parsing of the system-of-systems configuration
@@ -17,7 +16,8 @@ class SosModelReader(object):
 
     """
     def __init__(self, config_file_path):
-        LOGGER.info("Getting config file from %s", config_file_path)
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Getting config file from %s", config_file_path)
 
         self.config_file_path = config_file_path
         self.config_file_dir = os.path.dirname(config_file_path)
@@ -25,6 +25,7 @@ class SosModelReader(object):
         self.config = None
         self.timesteps = None
         self.sector_model_data = None
+        self.planning = None
 
     def load(self):
         """Load and check all config
@@ -32,6 +33,9 @@ class SosModelReader(object):
         self.config = self._load_sos_config()
         self.timesteps = self._load_timesteps()
         self.sector_model_data = self._load_sector_model_data()
+        self.asset_types = self._load_asset_types()
+        self.assets = self._load_assets()
+        self.planning = self._load_planning()
 
     @property
     def data(self):
@@ -40,7 +44,9 @@ class SosModelReader(object):
         return {
             "timesteps": self.timesteps,
             "sector_model_config": self.sector_model_data,
-            "planning": None
+            "planning": self.planning,
+            "assets": self.assets,
+            "asset_types": self.asset_types
         }
 
     def _load_sos_config(self):
@@ -52,7 +58,7 @@ class SosModelReader(object):
         - points to sector models and sector model data files
         """
         msg = "Looking for configuration data in {}".format(self.config_file_path)
-        LOGGER.info(msg)
+        self.logger.info(msg)
 
         config_parser = ConfigParser(self.config_file_path)
         config_parser.validate_as_modelrun_config()
@@ -83,20 +89,54 @@ class SosModelReader(object):
     def _load_planning(self):
         """Loads the set of build instructions for planning
         """
-        planning_relative_path = self.config['planning']
-        planning = []
-        for filepath in planning_relative_path:
-            parser = ConfigParser(filepath)
-            parser.validate_as_pre_specified_planning()
-            planning.extend(parser.data)
+        if self.config['planning']['pre_specified']['use']:
+            planning_relative_paths = self.config['planning']['pre_specified']['files']
+            planning_instructions = []
 
-        return planning
+            for parser in self._parsers_from_relative_paths(planning_relative_paths):
+                parser.validate_as_pre_specified_planning()
+                planning_instructions.extend(parser.data)
+
+            return planning_instructions
+        else:
+            return []
+
+    def _load_assets(self):
+        assets = []
+        if 'assets' in self.config:
+            asset_relative_paths = self.config['assets']
+
+            for parser in self._parsers_from_relative_paths(asset_relative_paths):
+                assets.extend(parser.data)
+
+        return assets
+
+    def _load_asset_types(self):
+        asset_types = []
+        if 'asset_types' in self.config:
+            asset_types_relative_paths = self.config['asset_types']
+
+            for parser in self._parsers_from_relative_paths(asset_types_relative_paths):
+                parser.validate_as_assets()
+                asset_types.extend(parser.data)
+
+        return asset_types
+
+    def _parsers_from_relative_paths(self, paths):
+        for rel_path in paths:
+            file_path = self._get_path_from_config(rel_path)
+            parser = ConfigParser(file_path)
+            yield parser
 
     def _get_path_from_config(self, path):
         """Return an absolute path, given a path provided from a config file
         - if provided path is relative, join it to the config file directory
         """
         if os.path.isabs(path):
-            return path
+            return os.path.normpath(
+                path
+            )
         else:
-            return os.path.join(self.config_file_dir, path)
+            return os.path.normpath(
+                os.path.join(self.config_file_dir, path)
+            )
