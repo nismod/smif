@@ -24,10 +24,10 @@ class Planning:
     def asset_types(self):
         """Returns the set of assets defined in the planning commands
         """
-        return set([plan['type'] for plan in self.build_instructions])
+        return {plan['type'] for plan in self.build_instructions}
 
     @property
     def timeperiods(self):
         """Returns the set of time periods defined in the planning commands
         """
-        return set([plan['build_date'] for plan in self.build_instructions])
+        return {plan['build_date'] for plan in self.build_instructions}
