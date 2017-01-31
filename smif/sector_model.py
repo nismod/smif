@@ -3,15 +3,14 @@
 
  The :class:`SectorModel` exposes several key methods for running wrapped
  sector models.  To add a sector model to an instance of the framework,
- first implement :class:`ModelWrapper`
+ first implement :class:`SectorModel`.
 
 
 """
+import importlib
 import logging
 import os
 from abc import ABC, abstractmethod
-
-import importlib
 import numpy as np
 from enum import Enum
 from scipy.optimize import minimize
@@ -376,7 +375,8 @@ class SectorModelBuilder(object):
         if os.path.exists(model_path):
             self.logger.info("Importing run module from %s", model_path)
 
-            spec = importlib.util.spec_from_file_location(self._sector_model_name, model_path)
+            spec = importlib.util.spec_from_file_location(
+                self._sector_model_name, model_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
@@ -386,7 +386,8 @@ class SectorModelBuilder(object):
             self._sector_model.name = self._sector_model_name
 
         else:
-            msg = "Cannot find {} for the {} model".format(model_path, self._sector_model_name)
+            msg = "Cannot find {} for the {} model".format(
+                model_path, self._sector_model_name)
             raise Exception(msg)
 
     def add_inputs(self, input_dict):

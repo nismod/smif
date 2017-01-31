@@ -141,7 +141,6 @@ class DecisionVariableList(InputList):
         self._parse_input_dictionary(decision_variables)
 
 
-
 Dependency = namedtuple(
     "Dependency",
     [
@@ -213,10 +212,9 @@ class DependencyList(InputList):
 
         Example
         =======
-            dependency_list = DependencyList()
-            ...
-            for dep in dependency_list:
-                # do something with each dependency
+        >>> dependency_list = DependencyList()
+        >>> for dep in dependency_list:
+        >>>     # do something with each dependency
 
         - uses Dependency (defined as a namedtuple) to wrap the data
         - lets the np.arrays raise TypeError or IndexError for incorrect
@@ -253,7 +251,6 @@ class ModelInputs(object):
         self._parameters = ParameterList(inputs['parameters'])
         self._dependencies = DependencyList(inputs['dependencies'])
 
-
     @property
     def parameters(self):
         """A list of the model parameters
@@ -285,4 +282,5 @@ class ModelInputs(object):
         return self._dependencies
 
     def __len__(self):
-        return len(self.parameters) + len(self.decision_variables) + len(self.dependencies)
+        return len(self.parameters) + len(self.decision_variables) + \
+            len(self.dependencies)
