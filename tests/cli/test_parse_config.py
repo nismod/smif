@@ -95,7 +95,19 @@ class TestConfigParser(object):
         conf.data = [
             {
                 'type': 'asset',
-                'capacity': 3
+                'capacity': 3,
+                'operational_lifetime': {
+                    'value': 150,
+                    'units': "years"
+                },
+                'economic_lifetime': {
+                    'value': 50,
+                    'units': "years"
+                },
+                'capital_cost': {
+                    'value': 50,
+                    'units': "million £/km"
+                }
             }
         ]
 

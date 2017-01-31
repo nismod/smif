@@ -8,8 +8,28 @@
         "properties": {
             "type": {
                 "type": "string"
+            },
+            "capital_cost": {
+                "$ref": "#/definitions/measured_value"
+            },
+            "operational_lifetime": {
+                "$ref": "#/definitions/measured_value"
+            },
+            "economic_lifetime": {
+                "$ref": "#/definitions/measured_value"
             }
         },
-        "required": ["type"]
+        "required": ["type", "capital_cost", "operational_lifetime", "economic_lifetime"]
+    },
+    "definitions": {
+        "measured_value": {
+            "type": "object",
+            "properties": {
+                "units": {
+                    "type": "string"
+                }
+            },
+            "required": ["value", "units"]
+        }
     }
 }

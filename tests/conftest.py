@@ -83,6 +83,18 @@ def setup_assets_file(setup_folder_structure):
             'capacity': {
                 'value': 5,
                 'units': 'GW'
+            },
+            'operational_lifetime': {
+                'value': 150,
+                'units': "years"
+            },
+            'economic_lifetime': {
+                'value': 50,
+                'units': "years"
+            },
+            'capital_cost': {
+                'value': 50,
+                'units': "million £/km"
             }
         },
         {
@@ -90,6 +102,18 @@ def setup_assets_file(setup_folder_structure):
             'capacity': {
                 'value': 15,
                 'units': 'GW'
+            },
+            'operational_lifetime': {
+                'value': 150,
+                'units': "years"
+            },
+            'economic_lifetime': {
+                'value': 50,
+                'units': "years"
+            },
+            'capital_cost': {
+                'value': 50,
+                'units': "million £/km"
             }
         },
         {
@@ -97,6 +121,18 @@ def setup_assets_file(setup_folder_structure):
             'capacity': {
                 'value': 25,
                 'units': 'GW'
+            },
+            'operational_lifetime': {
+                'value': 150,
+                'units': "years"
+            },
+            'economic_lifetime': {
+                'value': 50,
+                'units': "years"
+            },
+            'capital_cost': {
+                'value': 50,
+                'units': "million £/km"
             }
         }
     ]
@@ -121,6 +157,18 @@ def setup_assets_file_two(setup_folder_structure):
             'capacity': {
                 'value': 15,
                 'units': 'GW'
+            },
+            'operational_lifetime': {
+                'value': 150,
+                'units': "years"
+            },
+            'economic_lifetime': {
+                'value': 50,
+                'units': "years"
+            },
+            'capital_cost': {
+                'value': 50,
+                'units': "million £/km"
             }
         }
     ]
