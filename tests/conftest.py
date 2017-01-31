@@ -80,15 +80,24 @@ def setup_assets_file(setup_folder_structure):
     assets_contents = [
         {
             'type': 'water_asset_a',
-            'attributes': []
+            'capacity': {
+                'value': 5,
+                'units': 'GW'
+            }
         },
         {
             'type': 'water_asset_b',
-            'attributes': []
+            'capacity': {
+                'value': 15,
+                'units': 'GW'
+            }
         },
         {
             'type': 'water_asset_c',
-            'attributes': []
+            'capacity': {
+                'value': 25,
+                'units': 'GW'
+            }
         }
     ]
     contents = yaml.dump(assets_contents)
@@ -109,8 +118,11 @@ def setup_assets_file_two(setup_folder_structure):
     assets_contents = [
         {
             'type': 'water_asset_d',
-            'attributes': []
-        },
+            'capacity': {
+                'value': 15,
+                'units': 'GW'
+            }
+        }
     ]
     contents = yaml.dump(assets_contents)
     filename.write(contents, ensure=True)

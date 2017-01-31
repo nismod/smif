@@ -91,4 +91,3 @@ class TestSosModelReader():
         actual = [asset['type'] for asset in reader.asset_types]
         assert actual == expected
 
-# TODO test for clear error messages from reading
