@@ -10,7 +10,6 @@ env:
   matrix:
     - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
 install:
-  - apt-get install -qq glpk
   - source tests/travis_install.sh
   - pip install git+https://github.com/behave/behave
   - pip install -r test-requirements.txt
@@ -27,3 +26,7 @@ cache:
   - apt
 notifications:
   email: false
+addons:
+  apt:
+    packages:
+      glpk
