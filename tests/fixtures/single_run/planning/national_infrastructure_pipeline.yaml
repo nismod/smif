@@ -3,5 +3,5 @@
   build_date: 2020
   location: "POINT(51.1 -1.7)"
 - name: M40 toll
-  type: major_road_segment_1
-  build_date: 2021
+  type: major_road_segment
+  build_date: 2020

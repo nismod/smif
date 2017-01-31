@@ -107,7 +107,6 @@ class SosModelReader(object):
             asset_relative_paths = self.config['assets']
 
             for parser in self._parsers_from_relative_paths(asset_relative_paths):
-                parser.validate_as_assets()
                 assets.extend(parser.data)
 
         return assets

@@ -34,8 +34,12 @@ class WaterSupplySectorModel(SectorModel):
         # unpack inputs
         raininess = data['raininess']['value']
 
-        # unpack decision variables
-        number_of_treatment_plants = 1 #len(decisions) + len(state['assets'])
+        # unpack assets
+        ps_types = ["large_pumping_station", "small_pumping_station"]
+        wtps = [asset for asset in self.assets if asset["type"] in ps_types]
+        number_of_treatment_plants = len(wtps)
+
+        self.logger.debug(self.assets)
         self.logger.debug(decisions)
         self.logger.debug(state)
         self.logger.debug(data)

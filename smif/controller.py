@@ -83,14 +83,16 @@ class SosModel(object):
                 # or have _simulate_from_array method
 
                 # TODO pick state from previous timestep (or initialise)
-                # TODO pick data and decisions from current timestep
+                # TODO decide on approach to infrastructure system and possible
+                # actions/decisions which can change it, then handle system
+                # initialisation and keeping track of system composition over
+                # each timestep of the model run
                 decisions = np.array([[]])
                 state = None
                 data = model.inputs.parameters
 
                 self.logger.debug("Running %s model for %s", model_name, timestep)
                 model.simulate(decisions, state, data)
-
     def _get_model_names_in_run_order(self):
         # topological sort gives a single list from directed graph
         return networkx.topological_sort(self.dependency_graph)
@@ -213,7 +215,7 @@ class SosModelBuilder(object):
         """Set up the whole SosModel
         """
         self.add_timesteps(config_data['timesteps'])
-        self.load_models(config_data['sector_model_data'])
+        self.load_models(config_data['sector_model_data'], config_data['assets'])
         self.add_asset_types(config_data['asset_types'])
         self.add_assets(config_data['assets'])
         self.add_planning(config_data['planning'])
@@ -228,7 +230,7 @@ class SosModelBuilder(object):
         """
         self.sos_model.timesteps = timesteps
 
-    def load_models(self, model_data_list):
+    def load_models(self, model_data_list, assets):
         """Loads the sector models into the system-of-systems model
 
         Arguments
@@ -238,15 +240,16 @@ class SosModelBuilder(object):
 
         """
         for model_data in model_data_list:
-            model = self._build_model(model_data)
+            model = self._build_model(model_data, assets)
             self.add_model(model)
 
     @staticmethod
-    def _build_model(model_data):
+    def _build_model(model_data, assets):
         builder = SectorModelBuilder(model_data['name'])
         builder.load_model(model_data['path'], model_data['classname'])
         builder.add_inputs(model_data['inputs'])
         builder.add_outputs(model_data['outputs'])
+        builder.add_assets(assets)
         return builder.finish()
 
     def add_model(self, model):
