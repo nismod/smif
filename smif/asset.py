@@ -24,7 +24,10 @@ class Asset(object):
 
     An asset's data is set up to be a flexible, plain data structure.
     """
-    def __init__(self, asset_type="", data={}):
+    def __init__(self, asset_type="", data=None):
+        if data is None:
+            data = {}
+
         if asset_type == "" and "asset_type" in data:
             # allow data to set asset_type if none given
             asset_type = data["asset_type"]
