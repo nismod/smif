@@ -43,6 +43,8 @@ class Asset(object):
             self.sector = None
 
     def sha1sum(self):
+        """Compute the SHA1 hash of this asset's data
+        """
         str_to_hash = str(self).encode('utf-8')
         return hashlib.sha1(str_to_hash).hexdigest()
 
@@ -55,10 +57,14 @@ class Asset(object):
 
     @staticmethod
     def deterministic_dict_to_str(data):
+        """Return a reproducible string representation of any dict
+        """
         return json.dumps(data, sort_keys=True)
 
     @property
     def sector(self):
+        """The name of the sector model this asset is used in.
+        """
         return self.data["sector"]
 
     @sector.setter
@@ -67,6 +73,9 @@ class Asset(object):
 
     @property
     def build_date(self):
+        """The build date of this asset instance (if specified - asset types
+        will not have build dates)
+        """
         if "build_date" not in self.data:
             return None
         return self.data["build_date"]
@@ -77,6 +86,9 @@ class Asset(object):
 
     @property
     def location(self):
+        """The location of this asset instance (if specified - asset types
+        may not have explicit locations)
+        """
         if "location" not in self.data:
             return None
         return self.data["location"]
@@ -118,44 +130,75 @@ class AssetRegister(object):
     - each possible_values array should be all of a single type
     """
     def __init__(self):
-        self.asset_types = []
-        self.attribute_keys = []
-        self.attribute_possible_values = []
+        self._asset_types = []
+        self._attribute_keys = []
+        self._attribute_possible_values = []
 
     def register(self, asset):
+        """Add a new asset to the register
+        """
         for key, value in asset.data.items():
             self.register_attribute(key, value)
 
-        numeric_asset = [0] * len(self.attribute_keys)
+        numeric_asset = [0] * len(self._attribute_keys)
 
         for key, value in asset.data.items():
             attr_idx = self.attribute_index(key)
             value_idx = self.attribute_value_index(attr_idx, value)
             numeric_asset[attr_idx] = value_idx
 
-        self.asset_types.append(numeric_asset)
+        self._asset_types.append(numeric_asset)
 
     def register_attribute(self, key, value):
-        if key not in self.attribute_keys:
-            self.attribute_keys.append(key)
-            self.attribute_possible_values.append([None])
+        """Add a new attribute and its possible value to the register (or, if
+        the attribute has been seen before, add a new possible value)
+        """
+        if key not in self._attribute_keys:
+            self._attribute_keys.append(key)
+            self._attribute_possible_values.append([None])
 
         attr_idx = self.attribute_index(key)
 
-        if value not in self.attribute_possible_values[attr_idx]:
-            self.attribute_possible_values[attr_idx].append(value)
+        if value not in self._attribute_possible_values[attr_idx]:
+            self._attribute_possible_values[attr_idx].append(value)
 
     def attribute_index(self, key):
-        return self.attribute_keys.index(key)
+        """Get the index of an attribute name
+        """
+        return self._attribute_keys.index(key)
 
     def attribute_value_index(self, attr_idx, value):
-        return self.attribute_possible_values[attr_idx].index(value)
+        """Get the index of a possible value for a given attribute index
+        """
+        return self._attribute_possible_values[attr_idx].index(value)
 
     def numeric_to_asset(self, numeric_asset):
+        """Convert the numeric representation of an asset back to Asset (with
+        legible key/value data)
+
+        Given a (very minimal) possible state of a register:
+
+            self._asset_types = [[1,1,1]]
+            self._attribute_keys = ["asset_type", "capacity", "sector"]
+            self._attribute_possible_values = [
+                [None, "water_treatment_plant"],
+                [None, {"value": 5, "units": "ML/day"}],
+                [None, "water_supply"]
+            ]
+
+        Calling this function would piece together the asset:
+
+            asset = register.numeric_to_asset([1,1,1])
+            print(asset)
+            >>> Asset("water_treatment_plant", {"asset_type": "water_treatment_
+            ... plant", "capacity": {"units": "ML/day", "value": 5}, "sector":
+            ... "water_supply"})
+
+        """
         asset = Asset()
         for attr_idx, value_idx in enumerate(numeric_asset):
-            key = self.attribute_keys[attr_idx]
-            value = self.attribute_possible_values[attr_idx][value_idx]
+            key = self._attribute_keys[attr_idx]
+            value = self._attribute_possible_values[attr_idx][value_idx]
 
             if key == "asset_type":
                 asset.asset_type = value
