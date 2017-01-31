@@ -98,19 +98,19 @@ class TestAssetSerialiser:
         register = AssetRegister()
         register.register(water_treatment_plant)
 
-        assert len(register.asset_types) == 1
-        assert sorted(register.attribute_keys) == [
+        assert len(register._asset_types) == 1
+        assert sorted(register._attribute_keys) == [
             "asset_type",
             "capacity",
             "sector"
         ]
 
         attr_idx = register.attribute_index("asset_type")
-        possible = register.attribute_possible_values[attr_idx]
+        possible = register._attribute_possible_values[attr_idx]
         assert possible == [None, "water_treatment_plant"]
 
         attr_idx = register.attribute_index("capacity")
-        possible = register.attribute_possible_values[attr_idx]
+        possible = register._attribute_possible_values[attr_idx]
         assert possible == [None, {'units': 'ML/day', 'value': 5}]
 
     def test_retrieve_asset(self):
@@ -119,7 +119,7 @@ class TestAssetSerialiser:
         register.register(water_treatment_plant)
 
         # pick an asset from the list - this is what the optimiser will do
-        numeric_asset = register.asset_types[0]
+        numeric_asset = register._asset_types[0]
 
         asset = register.numeric_to_asset(numeric_asset)
         assert asset.asset_type == "water_treatment_plant"
