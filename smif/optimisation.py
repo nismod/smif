@@ -63,11 +63,17 @@ def _define_basic_model(assets, availability_constraint, asset_costs):
     return model
 
 
-def state_vfa_model(assets, availability_constraint, asset_costs, asset_value):
+def state_vfa_model(assets, availability_constraint, asset_costs, asset_value,
+                    states):
     """Define the value function approximation
 
     Here we assume that the value function approximation is a function
     of the state, rather than individual assets
+
+    Unfortunately, the number of states becomes very large,
+    growing exponentially in the number of assets, and so representing the
+    approximate value function like this is very inefficient as soon as the
+    number of assets increases above 32 (about 4 GB).
 
     Arguments
     =========
@@ -80,6 +86,10 @@ def state_vfa_model(assets, availability_constraint, asset_costs, asset_value):
         The investment cost of each asset
     asset_value : dict
         The value function approximation of each asset
+    states : dict
+        A dictionary where the keys are tuples of entries in `assets` and an
+        index of states (``2 ** len(assets)``) and the value is a binary
+        indicator showing the possible combinations
 
     Returns
     =======
@@ -100,14 +110,7 @@ def state_vfa_model(assets, availability_constraint, asset_costs, asset_value):
                   domain=Binary)
 
     model.e = Param(model.I, model.J,
-                    initialize={('asset_one', 1): 0,
-                                ('asset_one', 2): 0,
-                                ('asset_one', 3): 1,
-                                ('asset_one', 4): 1,
-                                ('asset_two', 1): 0,
-                                ('asset_two', 2): 1,
-                                ('asset_two', 3): 0,
-                                ('asset_two', 4): 1},
+                    initialize=states,
                     doc='The combination to match')
 
     def left_constraint(model, i, j):
