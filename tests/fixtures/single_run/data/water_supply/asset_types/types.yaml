@@ -15,3 +15,7 @@
   technical_lifetime:
     value: 100
     units: years
+- type: major_road_segment
+  capacity:
+    value: 2
+    units: lanes

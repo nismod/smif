@@ -1,7 +1,7 @@
 - name: planned_one
   type: small_pumping_station
   build_date: 2020
-  new_capacity: 10
-  location:
-    latitude: 50
-    longitude: 0
+  location: "POINT(51.1 -1.7)"
+- name: M40 toll
+  type: major_road_segment_1
+  build_date: 2021

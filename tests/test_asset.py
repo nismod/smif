@@ -4,6 +4,7 @@ from smif.asset import Asset, AssetRegister
 def get_wtp():
     asset_type = 'water_treatment_plant'
     data = {
+        'sector': 'water_supply',
         'capacity': {
             'units': 'ML/day',
             'value': 5
@@ -23,6 +24,7 @@ class TestAsset:
     def test_create_asset_with_full_data(self):
         asset_type = 'water_treatment_plant'
         data = {
+            'sector': 'water_supply',
             'capacity': {
                 'units': 'ML/day',
                 'value': 5
@@ -63,6 +65,7 @@ class TestAsset:
 
         assert water_treatment_plant.data == {
             'asset_type': 'water_treatment_plant',
+            'sector': 'water_supply',
             'name': 'oxford treatment plant',
             'capacity': {
                 'units': 'ML/day',
@@ -71,6 +74,23 @@ class TestAsset:
             'location': "POINT(51.1 -1.7)",
             'build_date': 2020
         }
+
+    def test_hash(self):
+        water_treatment_plant = get_wtp()
+        data_str = '{"asset_type": "water_treatment_plant", "capacity": ' + \
+                   '{"units": "ML/day", "value": 5}, "sector": "water_supply"}'
+
+        repr_str = 'Asset("water_treatment_plant", {"asset_type": ' + \
+                   '"water_treatment_plant", "capacity": {"units": "ML/day", ' + \
+                   '"value": 5}, "sector": "water_supply"})'
+
+        # should be able to reproduce sha1sum by doing
+        # `printf "data_str..." | sha1sum` on the command line
+        sha1sum = "3569207430472b3c5348abffa7cfe165c89fa56e"
+        assert str(water_treatment_plant) == data_str
+        assert repr(water_treatment_plant) == repr_str
+        assert water_treatment_plant.sha1sum() == sha1sum
+
 
 class TestAssetSerialiser:
     def test_register_asset(self):
@@ -81,9 +101,8 @@ class TestAssetSerialiser:
         assert len(register.asset_types) == 1
         assert sorted(register.attribute_keys) == [
             "asset_type",
-            "build_date",
             "capacity",
-            "location"
+            "sector"
         ]
 
         attr_idx = register.attribute_index("asset_type")
@@ -107,10 +126,9 @@ class TestAssetSerialiser:
 
         assert asset.data == {
             'asset_type': 'water_treatment_plant',
+            'sector': 'water_supply',
             'capacity': {
                 'units': 'ML/day',
                 'value': 5
-            },
-            'location': None,
-            'build_date': None
+            }
         }

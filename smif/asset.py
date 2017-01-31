@@ -16,6 +16,8 @@ database)
 - output list of assets for reporting
   - write out with legible or traceable keys and units for verification and understanding
 """
+import hashlib
+import json
 
 class Asset(object):
     """An asset.
@@ -23,20 +25,47 @@ class Asset(object):
     An asset's data is set up to be a flexible, plain data structure.
     """
     def __init__(self, asset_type="", data={}):
+        if asset_type == "" and "asset_type" in data:
+            # allow data to set asset_type if none given
+            asset_type = data["asset_type"]
+        else:
+            # otherwise rely on asset_type arg
+            data["asset_type"] = asset_type
+
         self.asset_type = asset_type
         self.data = data # should behave as key=>value dict
 
-        if "build_date" not in data:
-            self.build_date = None
+        if "sector" not in data:
+            # sector is required, may be None
+            self.sector = None
 
-        if "location" not in data:
-            self.location = None
+    def sha1sum(self):
+        str_to_hash = str(self).encode('utf-8')
+        return hashlib.sha1(str_to_hash).hexdigest()
 
-        if "asset_type" not in data:
-            self.data["asset_type"] = asset_type
+    def __repr__(self):
+        data_str = Asset.deterministic_dict_to_str(self.data)
+        return "Asset(\"{}\", {})".format(self.asset_type, data_str)
+
+    def __str__(self):
+        return Asset.deterministic_dict_to_str(self.data)
+
+    @staticmethod
+    def deterministic_dict_to_str(data):
+        return json.dumps(data, sort_keys=True)
+
+    @property
+    def sector(self):
+        return self.data["sector"]
+
+    @sector.setter
+    def sector(self, value):
+        self.data["sector"] = value
 
     @property
     def build_date(self):
+        if "build_date" not in self.data:
+            return None
         return self.data["build_date"]
 
     @build_date.setter
@@ -45,6 +74,8 @@ class Asset(object):
 
     @property
     def location(self):
+        if "location" not in self.data:
+            return None
         return self.data["location"]
 
     @location.setter
@@ -55,7 +86,7 @@ class Asset(object):
 class AssetRegister(object):
     """Controls asset serialisation to/from numeric representation
 
-    - register each asset type with a serialiser
+    - register each asset type
     - translate a set of assets representing an initial system into numeric
       representation
     - translate a set of numeric actions (e.g. from optimisation routine) into
