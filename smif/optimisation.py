@@ -95,6 +95,13 @@ def state_vfa_model(assets, availability_constraint, asset_costs, asset_value,
     =======
     model : pyomo.environ.ConcreteModel
         A concrete instance of the model
+
+    Notes
+    =====
+
+    :math:`\hat{v}_t^n = \min_{a_t \in A_t^n} C_t^{INV}(S^n_t, a^n_t) + \
+    {V}^n_t(S^n_t, a^n_t)`
+
     """
     model = _define_basic_model(assets, availability_constraint, asset_costs)
 
@@ -192,13 +199,19 @@ def linear_vfa_model(assets, availability_constraint, asset_costs,
     return model
 
 
-def solve_model(model):
+def solve_model(model, state=None):
     """Solves the model using glpk
+
+    Passing in a `state` as a list of asset names initialises the state
+    of the model, fixing those decision variables.
 
     Arguments
     =========
     model : pyomo.environ.ConcreteModel
         A concrete instance of the model
+    state : dict, optional, default=None
+        A list of assets which were installed in a previous iteration or time
+        period
 
     returns : pyomo.core.Model.Instance
         An instance of the model populated with results
@@ -207,8 +220,123 @@ def solve_model(model):
     opt = SolverFactory('glpk')
 
     instance = model.create_instance()
+
+    if state:
+        for asset in state:
+            instance.x[asset] = 1
+            instance.x[asset].fixed = True
+        instance.preprocess()
+
     results = opt.solve(instance)
 
     instance.solutions.load_from(results)
+    instance.display()
 
     return instance
+
+
+def feature_vfa_model(assets, availability_constraint, asset_costs,
+                      features, feature_coefficients, asset_features):
+    """Define the value function approximation
+
+    Here we assume that the value function approximation is a function
+    of the features of the state, rather than individual assets, or enumeration
+    of all possible states
+
+    Arguments
+    =========
+    assets : list
+        The list of assets
+    availability_constraint : dict
+        A dictionary of binary constraints on whether you can build
+        each asset in `assets`
+    asset_costs : dict
+        The investment cost of each asset
+    features : list
+        The set of features
+    feature_coefficients : list
+        The regression coefficients for each feature
+    asset_features : dict
+        The mapping of features to assets
+
+    Returns
+    =======
+    model : pyomo.environ.ConcreteModel
+        A concrete instance of the model
+
+    Notes
+    =====
+    The use of features decomposes the optimisation problem into several
+    sub-components.  The first is to find the clusters of 'bits' in the state,
+    which correctly predict minimal cost investments
+    and operation of infrastructure assets.
+
+    These clusters can be used to define a feature, adding an entry to the
+    `feature` set of features and a column to the `asset_features` matrix,
+    where 1 indicates that the feature includes that asset.
+
+    Initially, feature selection could begin by regressing the results from
+    a random sample of investment policies. This could highlight which
+    patterns of investments seem to result in least cost systems. In addition,
+    the attributes of the assets could provide a set of features which at least
+    help categorise the assets (e.g. according to sector, size, location,
+    and asset type).
+
+    The binary integer problem is posed as follows:
+
+    :math:`\min \sum_i^I c_i x_i + x_i \sum_f^{F}( e_{if} b_{f})`
+
+    where
+
+    - :math:`i` is an element in the set of assets :math:`I`
+    - :math:`f` is an element in the set of features :math:`F`
+    - :math:`c_i` is the cost of asset :math:`i`
+    - :math:`x_i` is the decision to invest in asset :math:`i`
+    - :math:`e_{if}` is the mapping of feature :math:`f` to asset :math:`i`
+    - :math:`b_{f}` is the basis coefficient of asset :math:`i` and
+      feature :math:`f`
+
+    """
+    model = _define_basic_model(assets, availability_constraint, asset_costs)
+
+    model.F = Set(initialize=features,
+                  doc='The set of basis functions')
+
+    model.coef = Param(model.F,
+                       initialize=feature_coefficients,
+                       doc='The basis values')
+
+    model.basis = Param(model.F, model.I,
+                        initialize=asset_features,
+                        doc='The asset-feature mapping',
+                        within=Binary)
+
+    def weight_features(model, i):
+        """Computes the blend of features associated with asset `i`
+
+        Arguments
+        =========
+        model : pyomo.core.AbstractModel
+            An instance of the model
+        i : pyomo.core.Set
+            An element in the set of assets
+
+        Returns
+        =======
+        expr : pyomo.core.Expression
+            The blend of features of asset `i`
+        """
+        expr = sum(model.coef[f] * model.basis[f, i] for f in model.F)
+        return expr
+
+    model.weighted = Param(model.I,
+                           initialize=weight_features,
+                           doc='The weighted basis values for each asset')
+
+    def objective_function(model):
+        return summation(model.c, model.x) + summation(model.weighted, model.x)
+
+    model.OBJ = Objective(rule=objective_function,
+                          sense=minimize)
+
+    return model
