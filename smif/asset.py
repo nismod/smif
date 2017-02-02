@@ -9,16 +9,17 @@ This module needs to support:
 
 - initialisation of set of assets from model config (e.g. set of text files;
   database)
-  - hold generic list of key/values
+    - hold generic list of key/values
 - creation of new assets by decision logic (rule-based/optimisation solver)
-  - maintain or derive set of possible assets
-    - hence distinction between known-ahead values and build-time values. At
-    least location and date are specified at build time, possibly also cost,
-    capacity as functions of time and location.
+    - maintain or derive set of possible assets
+        - hence distinction between known-ahead values and build-time values.
+          At least location and date are specified at build time,
+          possibly also cost, capacity as functions of time and location.
 - serialisation for passing to models
-  - ease of access to full generic data structure
+    - ease of access to full generic data structure
 - output list of assets for reporting
-  - write out with legible or traceable keys and units for verification and understanding
+    - write out with legible or traceable keys and units for verification
+      and understanding
 """
 import hashlib
 import json
@@ -120,14 +121,15 @@ class AssetRegister(object):
       Asset objects with human-readable key-value pairs
 
     Possible responsibility of another class:
-    - output a complete list of asset build possibilities (asset type at location)
+    - output a complete list of asset build possibilities (asset type at
+      location)
     - which may then be reduced subject to constraints
 
     Internal data structures
     ------------------------
 
-    `asset_types` is a 2D array of integers: each entry is an array representing
-    an asset type, each integer indexes attribute_possible_values
+    `asset_types` is a 2D array of integers: each entry is an array
+    representing an asset type, each integer indexes attribute_possible_values
 
     `attribute_keys` is a 1D array of strings
 
@@ -148,22 +150,36 @@ class AssetRegister(object):
         self._attribute_keys = []
         self._attribute_possible_values = []
 
+    def _check_new_asset(self, asset):
+        """Checks that the asset doesn't exist in the register
+
+        """
+        hash_list = []
+        for existing_asset in self._asset_types:
+            hash_list.append(self.numeric_to_asset(existing_asset).sha1sum())
+        if asset.sha1sum() in hash_list:
+            return False
+        else:
+            return True
+
     def register(self, asset):
         """Add a new asset to the register
         """
-        for key, value in asset.data.items():
-            self.register_attribute(key, value)
+        if self._check_new_asset(asset):
 
-        numeric_asset = [0] * len(self._attribute_keys)
+            for key, value in asset.data.items():
+                self._register_attribute(key, value)
 
-        for key, value in asset.data.items():
-            attr_idx = self.attribute_index(key)
-            value_idx = self.attribute_value_index(attr_idx, value)
-            numeric_asset[attr_idx] = value_idx
+            numeric_asset = [0] * len(self._attribute_keys)
 
-        self._asset_types.append(numeric_asset)
+            for key, value in asset.data.items():
+                attr_idx = self.attribute_index(key)
+                value_idx = self.attribute_value_index(attr_idx, value)
+                numeric_asset[attr_idx] = value_idx
 
-    def register_attribute(self, key, value):
+            self._asset_types.append(numeric_asset)
+
+    def _register_attribute(self, key, value):
         """Add a new attribute and its possible value to the register (or, if
         the attribute has been seen before, add a new possible value)
         """
@@ -220,3 +236,14 @@ class AssetRegister(object):
             asset.data[key] = value
 
         return asset
+
+    def __iter__(self):
+        """Iterate over the list of Asset held in the register
+        """
+        for asset in self._asset_types:
+            yield self.numeric_to_asset(asset)
+
+    def __len__(self):
+        """Returns the number of asset types stored in the register
+        """
+        return len(self._asset_types)
