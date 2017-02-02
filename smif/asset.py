@@ -6,8 +6,9 @@ Notes
 -----
 
 This module needs to support:
+
 - initialisation of set of assets from model config (e.g. set of text files;
-database)
+  database)
   - hold generic list of key/values
 - creation of new assets by decision logic (rule-based/optimisation solver)
   - maintain or derive set of possible assets
@@ -21,6 +22,7 @@ database)
 """
 import hashlib
 import json
+
 
 class Asset(object):
     """An asset.
@@ -218,4 +220,3 @@ class AssetRegister(object):
             asset.data[key] = value
 
         return asset
-
