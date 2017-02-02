@@ -2,6 +2,9 @@
 
 The set of assets defines the state of the infrastructure system.
 
+Notes
+-----
+
 This module needs to support:
 - initialisation of set of assets from model config (e.g. set of text files;
 database)
@@ -23,6 +26,13 @@ class Asset(object):
     """An asset.
 
     An asset's data is set up to be a flexible, plain data structure.
+
+    Parameters
+    ----------
+    asset_type : str, default=""
+        The type of asset, which should be unique across all sectors
+    data : dict, default=None
+        The dictionary of asset attributes
     """
     def __init__(self, asset_type="", data=None):
         if data is None:
@@ -36,7 +46,7 @@ class Asset(object):
             data["asset_type"] = asset_type
 
         self.asset_type = asset_type
-        self.data = data # should behave as key=>value dict
+        self.data = data
 
         if "sector" not in data:
             # sector is required, may be None
@@ -111,7 +121,8 @@ class AssetRegister(object):
     - output a complete list of asset build possibilities (asset type at location)
     - which may then be reduced subject to constraints
 
-    ## Internal data structures
+    Internal data structures
+    ------------------------
 
     `asset_types` is a 2D array of integers: each entry is an array representing
     an asset type, each integer indexes attribute_possible_values
@@ -122,7 +133,8 @@ class AssetRegister(object):
     (boolean, integer, float, string, tuple). Each entry is a list of possible
     values for the attribute at that index.
 
-    ## Invariants
+    Invariants
+    ----------
 
     - there must be one name and one list of possible values per attribute
     - each asset type must list one value for each attribute, and that
@@ -178,21 +190,21 @@ class AssetRegister(object):
 
         Given a (very minimal) possible state of a register:
 
-            self._asset_types = [[1,1,1]]
-            self._attribute_keys = ["asset_type", "capacity", "sector"]
-            self._attribute_possible_values = [
-                [None, "water_treatment_plant"],
-                [None, {"value": 5, "units": "ML/day"}],
-                [None, "water_supply"]
-            ]
+        >>> register = AssetRegister()
+        >>> register._asset_types = [[1,1,1]]
+        >>> register._attribute_keys = ["asset_type", "capacity", "sector"]
+        >>> register._attribute_possible_values = [
+        ...     [None, "water_treatment_plant"],
+        ...     [None, {"value": 5, "units": "ML/day"}],
+        ...     [None, "water_supply"]
+        ... ]
 
         Calling this function would piece together the asset:
 
-            asset = register.numeric_to_asset([1,1,1])
-            print(asset)
-            >>> Asset("water_treatment_plant", {"asset_type": "water_treatment_
-            ... plant", "capacity": {"units": "ML/day", "value": 5}, "sector":
-            ... "water_supply"})
+        >>> asset = register.numeric_to_asset([1,1,1])
+        >>> print(asset)
+        Asset("water_treatment_plant", {"asset_type": "water_treatment_plant",
+        "capacity": {"units": "ML/day", "value": 5}, "sector": "water_supply"})
 
         """
         asset = Asset()
