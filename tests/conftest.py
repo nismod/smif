@@ -709,7 +709,10 @@ def setup_water_attributes(setup_folder_structure):
     ]
     content = yaml.dump(data)
 
-    filename = setup_folder_structure.join('data', 'water_supply', 'asset_types', 'water_asset_abc.yaml')
+    filename = setup_folder_structure.join('data',
+                                           'water_supply',
+                                           'asset_types',
+                                           'water_asset_abc.yaml')
     filename.write(content, ensure=True)
 
     return filename
@@ -725,7 +728,10 @@ def setup_water_asset_d(setup_folder_structure,
     units: "£"
     value: 3000
 """
-    filename = setup_folder_structure.join('data', 'water_supply', 'asset_types', 'water_asset_d.yaml')
+    filename = setup_folder_structure.join('data',
+                                           'water_supply',
+                                           'asset_types',
+                                           'water_asset_d.yaml')
     filename.write(content, ensure=True)
 
     return filename
@@ -735,3 +741,106 @@ def setup_water_asset_d(setup_folder_structure,
 def setup_minimal_water(setup_folder_structure,
                         setup_config_file):
     return str(setup_folder_structure)
+
+
+@pytest.fixture(scope='function')
+def one_input():
+    """Returns a model input dictionary for the example water model with one
+    decision variable and one parameter
+    """
+    inputs = {
+        'decision variables': [
+            {
+                'name': 'water treatment capacity',
+                'bounds': (0, 20),
+                'value': 10
+            }
+        ],
+        'parameters': [
+            {
+                'name': 'raininess',
+                'bounds': (0, 5),
+                'value': 3
+            }
+        ]
+    }
+
+    return inputs
+
+
+@pytest.fixture(scope='function')
+def two_inputs():
+    """Returns a model input dictionary for the example water model with two
+    decision variables and one parameter
+    """
+    inputs = {
+        'decision variables': [
+            {
+                'name': 'reservoir pumpiness',
+                'bounds': (0, 100),
+                'value': 24.583
+            },
+            {
+                'name': 'water treatment capacity',
+                'bounds': (0, 20),
+                'value': 10
+            }
+        ],
+        'parameters': [
+            {
+                'name': 'raininess',
+                'bounds': (0, 5),
+                'value': 3
+            }
+        ]
+    }
+    return inputs
+
+
+@pytest.fixture(scope='function')
+def one_dependency():
+    """Returns a model input dictionary with a single (unlikely to be met)
+    dependency
+    """
+    inputs = {
+        'decision variables': [],
+        'parameters': [],
+        'dependencies': [
+            {
+                'name': 'macguffins produced',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'from_model': 'macguffins_model'
+            }
+        ]
+    }
+    return inputs
+
+
+@pytest.fixture(scope='function')
+def dynamic_data():
+    """Returns a model input dictionary for the example water model with two
+    decision variables and one parameter
+    """
+    inputs = {
+        'decision variables': [
+            {
+                'name': 'new capacity',
+                'bounds': (0, 5),
+                'value': 10
+            },
+        ],
+        'parameters': [
+            {
+                'name': 'raininess',
+                'bounds': (0, 5),
+                'value': 3
+            },
+            {
+                'name': 'existing capacity',
+                'bounds': (0, 999),
+                'value': 1
+            }
+        ]
+    }
+    return inputs

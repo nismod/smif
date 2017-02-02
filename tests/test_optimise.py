@@ -14,12 +14,12 @@ The optimisation features requires:
 
 """
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
-
-from . fixtures.water_supply import WaterSupplySectorModel, DynamicWaterSupplySectorModel
-from . fixtures.water_supply import dynamic_data, one_input
+from numpy.testing import assert_allclose
 from smif.controller import SosModel
+
+from .fixtures.water_supply import (DynamicWaterSupplySectorModel,
+                                    WaterSupplySectorModel)
 
 
 class TestWaterModelOptimisation:

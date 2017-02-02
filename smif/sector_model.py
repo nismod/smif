@@ -10,12 +10,11 @@
 import logging
 import os
 from abc import ABC, abstractmethod
-from enum import Enum
+
 import importlib
-
 import numpy as np
+from enum import Enum
 from scipy.optimize import minimize
-
 from smif.inputs import ModelInputs
 from smif.outputs import ModelOutputs
 
@@ -42,7 +41,6 @@ class SectorModel(ABC):
         self._outputs = ModelOutputs({})
 
         self.logger = logging.getLogger(__name__)
-
 
     def validate(self):
         """Validate that this SectorModel has been set up with sufficient data
@@ -149,7 +147,6 @@ class SectorModel(ABC):
     def assets(self, value):
         self._assets = value
 
-
     def constraints(self, parameters):
         """Express constraints for the optimisation
 
@@ -193,8 +190,7 @@ class SectorModel(ABC):
                        options=opts,
                        method='SLSQP',
                        bounds=v_bounds,
-                       constraints=cons
-                      )
+                       constraints=cons)
 
         # results = {x: y for x, y in zip(v_names, res.x)}
         results = self.simulate(res.x)
@@ -303,8 +299,7 @@ class SectorModel(ABC):
         self.logger.debug("Decisions: {}".format(decisions))
         return self.get_objective(results, discount_rate=0.05)
 
-    @staticmethod
-    def get_objective(results, discount_rate=0.05):
+    def get_objective(self, results, discount_rate=0.05):
         discount_factor = [(1 - discount_rate)**n for n in range(0, 15, 5)]
         costs = sum([x['cost']
                      * discount_factor[ix] for ix, x in enumerate(results)])
@@ -348,8 +343,7 @@ class SectorModel(ABC):
                        options=opts,
                        method='SLSQP',
                        bounds=t_v_bounds,
-                       constraints=cons
-                      )
+                       constraints=cons)
 
         results = self.sequential_simulation(timesteps, np.array([res.x]))
 
@@ -373,9 +367,7 @@ class SectorModelBuilder(object):
     def __init__(self, name):
         self._sector_model_name = name
         self._sector_model = None
-
         self.logger = logging.getLogger(__name__)
-
 
     def load_model(self, model_path, classname):
         """Dynamically load model module
