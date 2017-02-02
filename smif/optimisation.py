@@ -236,7 +236,7 @@ def solve_model(model, state=None):
 
 
 def feature_vfa_model(assets, availability_constraint, asset_costs,
-                      features, feature_coefficients, asset_features):
+                      feature_coefficients, asset_features):
     """Define the value function approximation
 
     Here we assume that the value function approximation is a function
@@ -254,7 +254,7 @@ def feature_vfa_model(assets, availability_constraint, asset_costs,
         The investment cost of each asset
     features : list
         The set of features
-    feature_coefficients : list
+    feature_coefficients : dict
         The regression coefficients for each feature
     asset_features : dict
         The mapping of features to assets
@@ -299,6 +299,8 @@ def feature_vfa_model(assets, availability_constraint, asset_costs,
     """
     model = _define_basic_model(assets, availability_constraint, asset_costs)
 
+    features = list(feature_coefficients.keys())
+
     model.F = Set(initialize=features,
                   doc='The set of basis functions')
 
@@ -338,5 +340,18 @@ def feature_vfa_model(assets, availability_constraint, asset_costs,
 
     model.OBJ = Objective(rule=objective_function,
                           sense=minimize)
+
+    return model
+
+
+def formulate_model(asset_register, availability_constraint,
+                    feature_coefficients, asset_features):
+
+    assets = [asset.asset_type for asset in asset_register]
+    costs = [asset.data['capital cost']['value'] for asset in asset_register]
+    asset_costs = dict(zip(assets, costs))
+
+    model = feature_vfa_model(assets, availability_constraint, asset_costs,
+                              feature_coefficients, asset_features)
 
     return model
