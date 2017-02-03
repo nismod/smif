@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os
-from pytest import raises
 
-from smif.controller import Controller, SosModel, SosModelBuilder
+from pytest import raises
 from smif.cli import read_sector_model_data_from_config
 from smif.cli.parse_model_config import SosModelReader
+from smif.controller import Controller, SosModel, SosModelBuilder
 from smif.sector_model import SectorModel
-from . fixtures.water_supply import one_dependency, WaterSupplySectorModel
+
+from .fixtures.water_supply import WaterSupplySectorModel
 
 
 class TestController():
@@ -94,7 +95,8 @@ class TestSosModelBuilder():
         with raises(AssertionError) as error:
             builder.finish()
 
-        msg = "Missing dependency: water_supply depends on macguffins produced from macguffins_model, which is not supplied."
+        msg = "Missing dependency: water_supply depends on macguffins produced " + \
+              "from macguffins_model, which is not supplied."
         assert str(error.value) == msg
 
     def test_cyclic_dependencies(self):

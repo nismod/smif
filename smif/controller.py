@@ -8,7 +8,7 @@ import logging
 import networkx
 import numpy as np
 from smif.decision import Planning
-from smif.sector_model import (SectorModelMode, SectorModelBuilder)
+from smif.sector_model import SectorModelBuilder, SectorModelMode
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -39,7 +39,6 @@ class Controller:
         """Runs a sector model
         """
         self._model.run_sector_model(model_name)
-
 
 
 class SosModel(object):
@@ -76,7 +75,8 @@ class SosModel(object):
                 #   explicit planning or rule-based decisions or the optimiser
                 # - state, anything from the previous timestep (assets with all
                 #   attributes, state/condition of any other omdel entities)
-                # - data, anything from scenario space, to be used by the simulation of the model
+                # - data, anything from scenario space, to be used by the
+                #   simulation of the model
 
                 # driven by needs of optimise routines, possibly all these
                 # parameters should be np arrays, or return np arrays from helper
@@ -93,6 +93,7 @@ class SosModel(object):
 
                 self.logger.debug("Running %s model for %s", model_name, timestep)
                 model.simulate(decisions, state, data)
+
     def _get_model_names_in_run_order(self):
         # topological sort gives a single list from directed graph
         return networkx.topological_sort(self.dependency_graph)
@@ -296,7 +297,6 @@ class SosModelBuilder(object):
         self._check_planning_assets_exist()
         self._check_planning_timeperiods_exist()
 
-
     def check_dependencies(self):
         """For each model, compare dependency list of from_models
         against list of available models
@@ -309,7 +309,8 @@ class SosModelBuilder(object):
             for dep in model.inputs.dependencies:
                 if dep.from_model not in models_available:
                     # report missing dependency type
-                    msg = "Missing dependency: {} depends on {} from {}, which is not supplied."
+                    msg = "Missing dependency: {} depends on {} from {}, " + \
+                          "which is not supplied."
                     raise AssertionError(msg.format(model_name, dep.name, dep.from_model))
                 dependency_graph.add_edge(model_name, dep.from_model)
 
@@ -317,7 +318,6 @@ class SosModelBuilder(object):
             raise NotImplementedError("Graph of dependencies contains a cycle.")
 
         self.sos_model.dependency_graph = dependency_graph
-
 
     def finish(self):
         """Returns a configured system-of-systems model ready for operation

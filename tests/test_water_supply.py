@@ -2,14 +2,15 @@
 
 
 """
-import subprocess
 import os
+import subprocess
 import sys
+
 from pytest import raises
 
-from . fixtures.water_supply import (ExampleWaterSupplySimulationModel,
-                                     ExampleWaterSupplySimulationModelWithReservoir,
-                                     process_results, raininess_oracle)
+from .fixtures.water_supply import (ExampleWaterSupplySimulationModel,
+                                    ExampleWaterSupplySimulationModelWithReservoir,
+                                    process_results, raininess_oracle)
 
 
 def test_water_supply_with_reservoir():
@@ -63,7 +64,9 @@ def test_simulate_rain_executable():
     raininess = 10
     model_executable = sys.executable
     if model_executable != "" and model_executable is not None:
-        model_script = os.path.join(os.path.dirname(__file__), "fixtures", "water_supply_exec.py")
+        model_script = os.path.join(os.path.dirname(__file__),
+                                    "fixtures",
+                                    "water_supply_exec.py")
         argument = "--raininess={}".format(str(raininess))
         output = subprocess.check_output([model_executable, model_script, argument])
         results = process_results(output)

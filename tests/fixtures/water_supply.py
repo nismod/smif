@@ -46,78 +46,6 @@ logger = logging.getLogger(__name__)
 
 
 @fixture(scope='function')
-def one_input():
-    """Returns a model input dictionary for the example water model with one
-    decision variable and one parameter
-    """
-    inputs = {
-        'decision variables': [
-            {
-                'name': 'water treatment capacity',
-                'bounds': (0, 20),
-                'value': 10
-            }
-        ],
-        'parameters': [
-            {
-                'name': 'raininess',
-                'bounds': (0, 5),
-                'value': 3
-            }
-        ]
-    }
-
-    return inputs
-
-
-@fixture(scope='function')
-def two_inputs():
-    """Returns a model input dictionary for the example water model with two
-    decision variables and one parameter
-    """
-    inputs = {
-        'decision variables': [
-            {
-                'name': 'reservoir pumpiness',
-                'bounds': (0, 100),
-                'value': 24.583
-            },
-            {
-                'name': 'water treatment capacity',
-                'bounds': (0, 20),
-                'value': 10
-            }
-        ],
-        'parameters': [
-            {
-                'name': 'raininess',
-                'bounds': (0, 5),
-                'value': 3
-            }
-        ]
-    }
-    return inputs
-
-@fixture(scope='function')
-def one_dependency():
-    """Returns a model input dictionary with a single (unlikely to be met)
-    dependency
-    """
-    inputs = {
-        'decision variables': [],
-        'parameters': [],
-        'dependencies': [
-            {
-                'name': 'macguffins produced',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'from_model': 'macguffins_model'
-            }
-        ]
-    }
-    return inputs
-
-@fixture(scope='function')
 def raininess_oracle(timestep):
     """Mimics an external data source for raininess
 
@@ -157,35 +85,6 @@ def process_results(output):
     return results
 
 
-@fixture(scope='function')
-def dynamic_data():
-    """Returns a model input dictionary for the example water model with two
-    decision variables and one parameter
-    """
-    inputs = {
-        'decision variables': [
-            {
-                'name': 'new capacity',
-                'bounds': (0, 5),
-                'value': 10
-            },
-        ],
-        'parameters': [
-            {
-                'name': 'raininess',
-                'bounds': (0, 5),
-                'value': 3
-            },
-            {
-                'name': 'existing capacity',
-                'bounds': (0, 999),
-                'value': 1
-            }
-        ]
-    }
-    return inputs
-
-
 class WaterSupplySectorModel(SectorModel):
     """Example of a class implementing the SectorModel interface,
     using one of the toy water models below to simulate the water supply
@@ -208,7 +107,8 @@ class WaterSupplySectorModel(SectorModel):
         number_of_treatment_plants = decision_variables[0, ]
 
         # simulate (wrapping toy model)
-        instance = ExampleWaterSupplySimulationModelWithAsset(raininess, number_of_treatment_plants)
+        instance = ExampleWaterSupplySimulationModelWithAsset(raininess,
+                                                              number_of_treatment_plants)
         results = instance.simulate()
 
         return results
@@ -227,8 +127,7 @@ class WaterSupplySectorModel(SectorModel):
         value of the raininess parameter.
         """
         constraints = ({'type': 'ineq',
-                        'fun': lambda x: min(x[0], parameters[0]) - 3}
-                      )
+                        'fun': lambda x: min(x[0], parameters[0]) - 3})
         return constraints
 
 
@@ -277,9 +176,9 @@ class DynamicWaterSupplySectorModel(SectorModel):
         """
         constraints = ({'type': 'ineq',
                         'fun': lambda x: min(x[0] + parameters[1],
-                                             parameters[0]) - 3}
-                      )
+                                             parameters[0]) - 3})
         return constraints
+
 
 class WaterSupplySectorModelWithAssets(SectorModel):
     """A concrete instance of the water supply wrapper for testing with assets
@@ -294,7 +193,8 @@ class WaterSupplySectorModelWithAssets(SectorModel):
     def initialise(self, data, assets):
         """Initialises the model
         """
-        self.model = ExampleWaterSupplySimulationModelWithAsset(data['raininess'], data['plants'])
+        self.model = ExampleWaterSupplySimulationModelWithAsset(data['raininess'],
+                                                                data['plants'])
         self.results = None
         self.run_successful = None
 
@@ -431,10 +331,11 @@ class ExampleWaterSupplySimulationModelWithReservoir(ExampleWaterSupplySimulatio
         # Compute the reservoir level at the end of the year
         self._reservoir_level = self.water - self.fixed_demand
         self.cost = 1 + (0.1 * self._reservoir_level)
-        return {'water': self.water,
-                'cost': self.cost,
-                'reservoir level': self._reservoir_level
-               }
+        return {
+            'water': self.water,
+            'cost': self.cost,
+            'reservoir level': self._reservoir_level
+        }
 
 
 class DynamicWaterSupplyModel(ExampleWaterSupplySimulationModel):
