@@ -26,3 +26,7 @@ cache:
   - apt
 notifications:
   email: false
+addons:
+  apt:
+    packages:
+      glpk

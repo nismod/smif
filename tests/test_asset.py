@@ -1,5 +1,5 @@
-import pytest
 from smif.asset import Asset, AssetRegister
+
 
 def get_wtp():
     asset_type = 'water_treatment_plant'
@@ -14,6 +14,7 @@ def get_wtp():
         asset_type,
         data
     )
+
 
 class TestAsset:
 
@@ -81,7 +82,8 @@ class TestAsset:
                    '{"units": "ML/day", "value": 5}, "sector": "water_supply"}'
 
         repr_str = 'Asset("water_treatment_plant", {"asset_type": ' + \
-                   '"water_treatment_plant", "capacity": {"units": "ML/day", ' + \
+                   '"water_treatment_plant", "capacity": ' + \
+                   '{"units": "ML/day", ' + \
                    '"value": 5}, "sector": "water_supply"})'
 
         # should be able to reproduce sha1sum by doing
@@ -98,7 +100,7 @@ class TestAssetSerialiser:
         register = AssetRegister()
         register.register(water_treatment_plant)
 
-        assert len(register._asset_types) == 1
+        assert len(register) == 1
         assert sorted(register._attribute_keys) == [
             "asset_type",
             "capacity",
@@ -132,3 +134,27 @@ class TestAssetSerialiser:
                 'value': 5
             }
         }
+
+    def test_iterate_over_assets(self):
+        """Test __iter___ method of AssetRegister class
+
+        """
+        asset_one = get_wtp()
+        register = AssetRegister()
+        register.register(asset_one)
+
+        for asset in register:
+            assert asset.sha1sum() == asset_one.sha1sum()
+
+    def test_add_duplicate_asset(self):
+        """Tests that only unique assets are retained
+
+        """
+        asset_one = get_wtp()
+        asset_two = get_wtp()
+        register = AssetRegister()
+        register.register(asset_one)
+
+        register.register(asset_two)
+
+        assert len(register) == 1

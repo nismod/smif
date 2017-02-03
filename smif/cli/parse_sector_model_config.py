@@ -7,6 +7,7 @@ from glob import glob
 from . parse_config import ConfigParser
 
 
+
 class SectorModelReader(object):
     """Parses the configuration and input data for a sector model
 
@@ -15,14 +16,16 @@ class SectorModelReader(object):
     model_name : str
         The name of the model
     model_path : str
-        The path to the python module file that contains an implementation of SectorModel
+        The path to the python module file that contains an implementation
+        of SectorModel
     model_classname : str
         The name of the class that implements SectorModel
     model_config_dir : str
         The root path of model config/data to use
 
     """
-    def __init__(self, model_name, model_path, model_classname, model_config_dir):
+    def __init__(self, model_name, model_path, model_classname,
+                 model_config_dir):
         self.model_name = model_name
         self.model_path = model_path
         self.model_classname = model_classname
