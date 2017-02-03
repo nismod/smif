@@ -4,10 +4,18 @@ sector_models:
     classname: WaterSupplySectorModel
     config_dir: ../data/water_supply
 timesteps: timesteps.yaml
+# specify initial conditions:
 assets:
   - ../data/water_supply/assets/initial_2015_oxford.yaml
+# specify buildable asset types:
 asset_types:
   - ../data/water_supply/asset_types/types.yaml
+# specify locations:
+locations:
+  - locations.yaml
+# specify build constraints:
+constraints:
+  - constraints.yaml
 planning:
   pre_specified:
     use: true

@@ -1,5 +1,5 @@
 # list of actually installed assets as initial conditions
-# - rely on type definition to define data here
+# - rely on asset type definition to define data here
 - type: large_pumping_station
-  location: "POINT(51.1 -1.7)"
+  location: "CB1"
   build_date: 1975

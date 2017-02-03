@@ -1,0 +1,33 @@
+# Data structure for specifiying possible locations
+# - each location has (name, type, geography), with the structure here avoiding
+#   the repeated declaration of type for each location
+#
+# Then:
+# - each asset must have a location
+# - each asset type must have a set of locations in which any of its type can be
+#   built, e.g. specified by location type 1-1
+#
+# - how do we constrain the count of assets buildable in a location?
+# - when computing the list of all possible decisions in the capacity-expansion
+#   problem, do we introduce one entry per buildable asset?
+#
+- type: country
+  locations:
+  - name: england
+  - name: scotland
+  - name: wales
+- type: government_office_region
+  locations:
+  - name: east_of_england
+    geography: "POLYGON(1 1, 0 2, 2 2)"
+- type: tempro_zone
+  locations:
+  - name: zone_a
+    geography: "POLYGON(0 0, 0 1, 1 2, 2 2)"
+- type: postcode_sector
+  locations:
+  - name: CB1
+    geography: "POLYGON(2 2, 3 2, 4 3, 0 0)"
+    parent:
+      name: england
+      type: country
