@@ -1,9 +1,79 @@
 # -*- coding: utf-8 -*-
 """This module acts as a bridge to the sector models from the controller
 
- The :class:`SectorModel` exposes several key methods for running wrapped
- sector models.  To add a sector model to an instance of the framework,
- first implement :class:`SectorModel`.
+The :class:`SectorModel` exposes several key methods for running wrapped
+sector models.  To add a sector model to an instance of the framework,
+first implement :class:`SectorModel`.
+
+Data Required to Specify a Sectoral Model
+=========================================
+
+To integrate an infrastructure simulation model within the system-of-systems
+modelling framework, it is necessary to provide the following configuration
+data, alongside the implementation of the :class:`SectorModel` class.
+
+Geographies
+-----------
+Define the set of unique areas which are used within the model as polygons.
+Inputs and outputs are assigned a model-specific geography from this list
+allowing automatic conversion from and to these geographies.
+
+Temporal Resolution
+-------------------
+The attribution of hours in a year to the temporal resolution used
+in the sectoral model.
+
+Inputs
+------
+The collection of inputs required when defined as a dependency, for example
+"electricity demand (kWh, <region>, <hour>)".
+Inputs are defined with a region and temporal-resolution and a unit.
+
+Only those inputs required as dependencies are defined here, although
+dependencies are activated when configured in the system-of-systems model.
+
+Outputs
+-------
+The collection of outputs used as metrics, for the purpose of optimisation or
+rule-based planning approaches (so normally a cost-function), and those
+outputs required for accounting purposes, such as operational cost, and
+emissions.
+
+Units
+-----
+The set of units used to define Inputs, Outputs and Targets.
+
+Targets
+-------
+An exhaustive list of the targets (normally infrastructure assets).
+These are represented internally in the system-of-systems model, collected into
+a gazateer and allow the framework to reason on infrastructure assets across
+all sectors.  Targets are instances of :class:`smif.asset.AssetTypes`
+
+State Parameters
+----------------
+Some simulation models require that state is passed between years, for example
+reservoir level in the water-supply model.
+
+Key Functions
+=============
+This class performs several key functions which ease the integration of sector
+models into the system-of-systems framework.
+
+The user must implement the various abstract functions throughout the class to
+provide an interface to the sector model, which can be called upon by the
+framework. From the model's perspective, :class:`SectorModel` provides a bridge
+from the sector-specific problem representation to the general representation
+which allows reasoning across infrastructure systems.
+
+The key functions include
+
+* converting input/outputs to/from geographies/temporal resolutions
+* converting control vectors from the decision layer of the framework, to
+  asset targets specific to the sector model
+* returning scaler/vector values to the framework to enable measurements of
+  performance, particularly for the purposes of optimisation and rule-based
+  approaches
 
 
 """
@@ -24,11 +94,6 @@ __license__ = "mit"
 
 class SectorModel(ABC):
     """A representation of the sector model with inputs and outputs
-
-    Attributes
-    ==========
-    model : :class:`smif.abstract.AbstractModelWrapper`
-        An instance of a wrapped simulation model
 
     """
     def __init__(self):
