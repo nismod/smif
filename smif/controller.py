@@ -48,6 +48,12 @@ class SosModel(object):
 
     This is NISMOD - i.e. the system of system model which brings all of the
     sector models together.
+
+    Notes
+    =====
+    model_list : dict
+        This is a dictionary of :class:`smif.SectorModel`
+
     """
     def __init__(self):
         self.model_list = {}
@@ -61,10 +67,22 @@ class SosModel(object):
     def run(self):
         """Runs the system-of-system model
 
+        0. Determine run mode
         1. Determine running order
         2. Run each sector model
         3. Return success or failure
         """
+        mode = self.determine_running_mode
+
+        if mode == SectorModelMode.static_simulation:
+            self.run_static_sos_model
+        elif mode == SectorModelMode.sequential_simulation:
+            self.run_sequential_sos_model
+        elif mode == SectorModelMode.static_optimisation:
+            self.run_static_optimisation
+        elif mode == SectorModelMode.dynamic_optimisation:
+            self.run_dynamic_optimisation
+
         run_order = self._get_model_names_in_run_order()
 
         for timestep in self.timesteps:
@@ -74,7 +92,7 @@ class SosModel(object):
                 # - decisions, anything from strategy space that can be decided by
                 #   explicit planning or rule-based decisions or the optimiser
                 # - state, anything from the previous timestep (assets with all
-                #   attributes, state/condition of any other omdel entities)
+                #   attributes, state/condition of any other model entities)
                 # - data, anything from scenario space, to be used by the
                 #   simulation of the model
 
@@ -93,6 +111,40 @@ class SosModel(object):
 
                 self.logger.debug("Running %s model for %s", model_name, timestep)
                 model.simulate(decisions, state, data)
+
+    def run_static_sos_model(self):
+        """Runs the system-of-system model for one timeperiod
+
+        Calls each of the sector models in the order required by the graph of
+        dependencies, passing in the year for which they need to run.
+
+        """
+        run_order = self._get_model_names_in_run_order()
+
+        timestep = self._timesteps[0]
+        for model_name in run_order:
+            model = self.model_list[model_name]
+            model.simulate(timestep)
+
+    def run_sequential_sos_model(self):
+        """Runs the system-of-system model sequentially
+
+        """
+        run_order = self._get_model_names_in_run_order()
+        for timestep in self.timesteps:
+            for model_name in run_order:
+                model = self.model_list[model_name]
+                model.simulate(timestep)
+
+    def run_static_optimisation(self):
+        """Runs the system-of-systems model in a static optimisation format
+        """
+        raise NotImplementedError
+
+    def run_dynamic_optimisation(self):
+        """Runs the system-of-system models in a dynamic optimisation format
+        """
+        raise NotImplementedError
 
     def _get_model_names_in_run_order(self):
         # topological sort gives a single list from directed graph
@@ -176,14 +228,6 @@ class SosModel(object):
         """
         return list(self.model_list.keys())
 
-    def optimise(self):
-        """Runs a dynamic optimisation over a system-of-simulation models
-
-        Use dynamic programming with memoization where the objective function
-        :math:`Z(s)` are indexed by state :math:`s`
-        """
-        pass
-
     def sequential_simulation(self, model, inputs, decisions):
         """Runs a sequence of simulations to cover each of the model timesteps
         """
@@ -216,7 +260,8 @@ class SosModelBuilder(object):
         """Set up the whole SosModel
         """
         self.add_timesteps(config_data['timesteps'])
-        self.load_models(config_data['sector_model_data'], config_data['assets'])
+        self.load_models(config_data['sector_model_data'],
+                         config_data['assets'])
         self.add_asset_types(config_data['asset_types'])
         self.add_assets(config_data['assets'])
         self.add_planning(config_data['planning'])

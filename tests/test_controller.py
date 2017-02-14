@@ -14,7 +14,8 @@ from .fixtures.water_supply import WaterSupplySectorModel
 class TestController():
     # TODO replace setup with builder; possibly use fixture for test controller
     def test_run_sector_model(self, setup_project_folder):
-        config_file_path = os.path.join(str(setup_project_folder), "config", "model.yaml")
+        config_file_path = os.path.join(str(setup_project_folder), "config",
+                                        "model.yaml")
         reader = SosModelReader(config_file_path)
         reader.load()
         config_data = reader.data
@@ -29,7 +30,8 @@ class TestController():
         cont.run_sector_model('water_supply')
 
     def test_invalid_sector_model(self, setup_project_folder):
-        config_file_path = os.path.join(str(setup_project_folder), "config", "model.yaml")
+        config_file_path = os.path.join(str(setup_project_folder), "config",
+                                        "model.yaml")
         reader = SosModelReader(config_file_path)
         reader.load()
         config_data = reader.data
@@ -58,14 +60,15 @@ class TestSosModelBuilder():
         model.name = 'water_supply'
 
         builder.add_model(model)
-        assert isinstance(builder.sos_model.model_list['water_supply'], SectorModel)
+        assert isinstance(builder.sos_model.model_list['water_supply'],
+                          SectorModel)
 
         sos_model = builder.finish()
         assert isinstance(sos_model, SosModel)
 
         assert sos_model.timesteps == [2010, 2011, 2012]
         assert sos_model.sector_models == ['water_supply']
-        # TODO check if there is a requirement to report all assets in the system
+        # TODO check if there is a requirement to report all assets in system
 
     def test_build_api(self):
         builder = SosModelBuilder()
