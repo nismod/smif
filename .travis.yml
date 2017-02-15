@@ -31,3 +31,4 @@ addons:
     packages:
       - glpk
       - libgdal-dev
+      - gdal-bin
