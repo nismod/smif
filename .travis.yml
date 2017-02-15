@@ -30,5 +30,3 @@ addons:
   apt:
     packages:
       - glpk
-      - libgdal-dev
-      - gdal-bin
