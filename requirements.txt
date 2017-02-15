@@ -6,3 +6,4 @@ pyyaml==3.12
 jsonschema==2.5.1
 networkx
 pyomo>=5.1.1
+fiona

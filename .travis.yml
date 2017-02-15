@@ -29,4 +29,5 @@ notifications:
 addons:
   apt:
     packages:
-      glpk
+      - glpk
+      - gdal
