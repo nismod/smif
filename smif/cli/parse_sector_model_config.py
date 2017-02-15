@@ -65,7 +65,7 @@ class SectorModelReader(object):
         path = os.path.join(self.model_config_dir, 'inputs.yaml')
 
         if not os.path.exists(path):
-            msg = "inputs.yaml config file not found for {} model"
+            msg = "inputs config file not found for {} model"
             raise FileNotFoundError(msg.format(self.model_name))
 
         return ConfigParser(path).data
@@ -76,7 +76,7 @@ class SectorModelReader(object):
         path = os.path.join(self.model_config_dir, 'outputs.yaml')
 
         if not os.path.exists(path):
-            msg = "outputs.yaml config file not found for {} model"
+            msg = "outputs config file not found for {} model"
             raise FileNotFoundError(msg.format(self.model_name))
 
         return ConfigParser(path).data
@@ -98,7 +98,7 @@ class SectorModelReader(object):
         path = os.path.join(self.model_config_dir, 'time_intervals.yaml')
 
         if not os.path.exists(path):
-            msg = "time_intervals.yaml config file not found for {} model"
+            msg = "time_intervals config file not found for {} model"
             raise FileNotFoundError(msg.format(self.model_name))
 
         return ConfigParser(path).data
