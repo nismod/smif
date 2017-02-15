@@ -8,7 +8,10 @@
     https://pytest.org/latest/plugins.html
 """
 from __future__ import absolute_import, division, print_function
+
+import json
 import logging
+
 import pytest
 import yaml
 
@@ -45,6 +48,8 @@ def setup_project_folder(setup_runpy_file,
                          setup_water_attributes,
                          setup_water_inputs,
                          setup_water_outputs,
+                         setup_water_time_intervals,
+                         setup_water_regions,
                          setup_pre_specified_planning):
     """Sets up a temporary folder with the required project folder structure
 
@@ -55,11 +60,47 @@ def setup_project_folder(setup_runpy_file,
         /data/water_supply/
         /data/water_supply/inputs.yaml
         /data/water_supply/outputs.yaml
+        /data/water_supply/time_intervals.yaml
+        /data/water_supply/regions.geojson
         /data/water_supply/asset_types
         /data/water_supply/asset_types/assets_1.yaml
         /data/water_supply/pre-specified.yaml
         /models
         /models/water_supply/water_supply.py
+
+    """
+    base_folder = setup_folder_structure
+
+    return base_folder
+
+
+@pytest.fixture(scope='function')
+def setup_project_missing_model_config(setup_runpy_file,
+                                       setup_folder_structure,
+                                       setup_config_file,
+                                       setup_timesteps_file,
+                                       setup_assets_file,
+                                       setup_water_attributes,
+                                       setup_pre_specified_planning):
+    """Sets up a temporary folder with the required project folder structure
+
+        /config
+        /config/model.yaml
+        /config/timesteps.yaml
+        /data
+        /data/water_supply/
+        /data/water_supply/asset_types
+        /data/water_supply/asset_types/assets_1.yaml
+        /data/water_supply/pre-specified.yaml
+        /models
+        /models/water_supply/water_supply.py
+
+        Deliberately missing:
+
+        /data/water_supply/inputs.yaml
+        /data/water_supply/outputs.yaml
+        /data/water_supply/time_intervals.yaml
+        /data/water_supply/regions.geojson
 
     """
     base_folder = setup_folder_structure
@@ -593,6 +634,86 @@ def setup_water_outputs(setup_folder_structure,
     contents = water_outputs_contents
     yaml_contents = yaml.dump(contents)
     filename.write(yaml_contents, ensure=True)
+    return filename
+
+
+@pytest.fixture(scope='function')
+def setup_water_time_intervals(setup_folder_structure):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('data', 'water_supply', 'time_intervals.yaml')
+    contents = [
+        {
+            "start": "P0Y",
+            "end": "P1Y",
+            "name": "whole_year"
+        }
+    ]
+    yaml_contents = yaml.dump(contents)
+    filename.write(yaml_contents, ensure=True)
+    return filename
+
+
+@pytest.fixture(scope='function')
+def setup_water_regions(setup_folder_structure):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('data', 'water_supply', 'regions.geojson')
+    data = {
+        "type": "FeatureCollection",
+        "crs": {
+            "type": "name",
+            "properties": {
+                "name": "urn:ogc:def:crs:EPSG::27700"
+            }
+        },
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "name": "Oxford"
+                    },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [448180, 209366],
+                            [449500, 211092],
+                            [450537, 211029],
+                            [450873, 210673],
+                            [451250, 210793],
+                            [451642, 210023],
+                            [453855, 208466],
+                            [454585, 208468],
+                            [456077, 207967],
+                            [456146, 207738],
+                            [456668, 207779],
+                            [456708, 207444],
+                            [456278, 207122],
+                            [456149, 206615],
+                            [455707, 206798],
+                            [455749, 204521],
+                            [456773, 204488],
+                            [457014, 204184],
+                            [456031, 203475],
+                            [456444, 202854],
+                            [456087, 202044],
+                            [455369, 201799],
+                            [454396, 202203],
+                            [453843, 201634],
+                            [452499, 203209],
+                            [452052, 203566],
+                            [451653, 203513],
+                            [450645, 205137],
+                            [449497, 205548],
+                            [449051, 206042],
+                            [448141, 208446],
+                            [448180, 209366]
+                        ]
+                    ]
+                }
+            },
+        ]
+    }
+    filename.write(json.dumps(data), ensure=True)
     return filename
 
 
