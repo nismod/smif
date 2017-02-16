@@ -14,14 +14,32 @@ data, alongside the implementation of the :class:`SectorModel` class.
 
 Geographies
 -----------
-Define the set of unique areas which are used within the model as polygons.
+Define the set of unique regions which are used within the model as polygons.
 Inputs and outputs are assigned a model-specific geography from this list
 allowing automatic conversion from and to these geographies.
+
+Model regions are specified in ``data/<sectormodel>/regions.*``
+
+The file format must be possible to parse with GDAL, and must contain
+an attribute "name" to use as an identifier for the region.
 
 Temporal Resolution
 -------------------
 The attribution of hours in a year to the temporal resolution used
 in the sectoral model.
+
+Within-year time intervals are specified in ``data/<sectormodel>/time_intervals.yaml``
+
+These specify the mapping of model timesteps to durations within a year
+(assume modelling 365 days: no extra day in leap years, no leap seconds)
+
+Each time interval must have
+- start (period since beginning of year)
+- end (period since beginning of year)
+- id (label to use when passing between integration layer and sector model)
+
+use ISO 8601 duration format to specify periods = P[n]Y[n]M[n]DT[n]H[n]M[n]S
+- https://en.wikipedia.org/wiki/ISO_8601#Durations
 
 Inputs
 ------
