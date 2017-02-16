@@ -212,6 +212,12 @@ class TestAsset:
 
 class TestAssetRegister:
 
+    def test_fail_add_intervention(self, get_intervention):
+        not_an_asset = get_intervention
+        register = AssetRegister()
+        with raises(TypeError):
+            register.register(not_an_asset)
+
     def test_register_assert_length(self, get_wtp):
         water = get_wtp
         register = AssetRegister()

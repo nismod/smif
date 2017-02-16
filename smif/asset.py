@@ -252,6 +252,15 @@ class AssetRegister(Register):
     """Register each asset type
 
     """
+
+    def register(self, asset):
+        if isinstance(asset, Asset):
+            pass
+        else:
+            msg = "You can only register Assets with this register"
+            raise TypeError(msg)
+        super().register(asset)
+
     def __len__(self):
         return len(self._asset_types)
 
@@ -300,6 +309,12 @@ class InterventionRegister(Register):
     def register(self, intervention):
         """Add a new asset to the register
         """
+        if isinstance(intervention, Intervention):
+            pass
+        else:
+            msg = "You can only register Interventions with this register"
+            raise TypeError(msg)
+
         if self._check_new_asset(intervention):
 
             for key, value in intervention.data.items():
