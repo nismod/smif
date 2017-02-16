@@ -41,19 +41,27 @@ emissions.
 
 Units
 -----
-The set of units used to define Inputs, Outputs and Targets.
+The set of units used to define Inputs, Outputs and Interventions.
 
-Targets
--------
-An exhaustive list of the targets (normally infrastructure assets).
-These are represented internally in the system-of-systems model, collected into
-a gazateer and allow the framework to reason on infrastructure assets across
-all sectors.  Targets are instances of :class:`smif.asset.AssetTypes`
+Interventions
+-------------
+An exhaustive list of the Interventions (normally infrastructure assets).
+These are represented internally in the system-of-systems model,
+collected into a gazateer and allow the framework to reason on
+infrastructure assets across all sectors.
+Interventions are instances of :class:`smif.intervention.Intervention` and are
+held in :class:`smif.intervention.InterventionRegister`.
+Interventions include investments in assets,
+supply side efficiency improvements, but not demand side management (these
+are incorporated in the strategies).
 
 State Parameters
 ----------------
 Some simulation models require that state is passed between years, for example
 reservoir level in the water-supply model.
+These are treated as self-dependencies with a temporal offset. For example,
+the sector model depends on the result of running the model for a previous
+timeperiod.
 
 Key Functions
 =============
@@ -70,7 +78,7 @@ The key functions include
 
 * converting input/outputs to/from geographies/temporal resolutions
 * converting control vectors from the decision layer of the framework, to
-  asset targets specific to the sector model
+  asset Interventions specific to the sector model
 * returning scaler/vector values to the framework to enable measurements of
   performance, particularly for the purposes of optimisation and rule-based
   approaches

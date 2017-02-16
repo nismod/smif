@@ -24,6 +24,12 @@ class Controller:
     It also requires a data connection to populate model inputs and store
     results.
 
+    Arguments
+    =========
+    config_data : dict
+        A valid system-of-systems model configuration dictionary
+
+
     """
     def __init__(self, config_data):
         builder = SosModelBuilder()
@@ -37,6 +43,11 @@ class Controller:
 
     def run_sector_model(self, model_name):
         """Runs a sector model
+
+        Arguments
+        =========
+        model_name: str
+            The name of the sector model to run
         """
         self._model.run_sector_model(model_name)
 
@@ -44,10 +55,11 @@ class Controller:
 class SosModel(object):
     """Consists of the collection of timesteps and sector models
 
-    Sector models may be joined through dependencies
-
     This is NISMOD - i.e. the system of system model which brings all of the
-    sector models together.
+    sector models together. Sector models may be joined through dependencies.
+
+    This class is populated at runtime by the :class:`SosModelBuilder` and
+    called from the :class:`Controller`.
 
     Notes
     =====
@@ -61,6 +73,7 @@ class SosModel(object):
         self.asset_types = []
         self.assets = []
         self.planning = None
+        self.intervention_register = None
 
         self.logger = logging.getLogger(__name__)
 
@@ -71,48 +84,40 @@ class SosModel(object):
         1. Determine running order
         2. Run each sector model
         3. Return success or failure
+
+        Notes
+        =====
+        # TODO pass in:
+        - decisions, anything from strategy space that can be decided by
+          explicit planning or rule-based decisions or the optimiser
+        - state, anything from the previous timestep (assets with all
+          attributes, state/condition of any other model entities)
+        - data, anything from scenario space, to be used by the
+          simulation of the model
+
+        driven by needs of optimise routines, possibly all these
+        parameters should be np arrays, or return np arrays from helper
+        or have _simulate_from_array method
+
+        # TODO pick state from previous timestep (or initialise)
+        # TODO decide on approach to infrastructure system and possible
+          actions/decisions which can change it, then handle system
+          initialisation and keeping track of system composition over
+          each timestep of the model run
+
         """
         mode = self.determine_running_mode
 
         if mode == SectorModelMode.static_simulation:
-            self.run_static_sos_model
+            self._run_static_sos_model
         elif mode == SectorModelMode.sequential_simulation:
-            self.run_sequential_sos_model
+            self._run_sequential_sos_model
         elif mode == SectorModelMode.static_optimisation:
-            self.run_static_optimisation
+            self._run_static_optimisation
         elif mode == SectorModelMode.dynamic_optimisation:
-            self.run_dynamic_optimisation
+            self._run_dynamic_optimisation
 
-        run_order = self._get_model_names_in_run_order()
-
-        for timestep in self.timesteps:
-            for model_name in run_order:
-                model = self.model_list[model_name]
-                # TODO pass in:
-                # - decisions, anything from strategy space that can be decided by
-                #   explicit planning or rule-based decisions or the optimiser
-                # - state, anything from the previous timestep (assets with all
-                #   attributes, state/condition of any other model entities)
-                # - data, anything from scenario space, to be used by the
-                #   simulation of the model
-
-                # driven by needs of optimise routines, possibly all these
-                # parameters should be np arrays, or return np arrays from helper
-                # or have _simulate_from_array method
-
-                # TODO pick state from previous timestep (or initialise)
-                # TODO decide on approach to infrastructure system and possible
-                # actions/decisions which can change it, then handle system
-                # initialisation and keeping track of system composition over
-                # each timestep of the model run
-                decisions = np.array([[]])
-                state = None
-                data = model.inputs.parameters
-
-                self.logger.debug("Running %s model for %s", model_name, timestep)
-                model.simulate(decisions, state, data)
-
-    def run_static_sos_model(self):
+    def _run_static_sos_model(self):
         """Runs the system-of-system model for one timeperiod
 
         Calls each of the sector models in the order required by the graph of
@@ -126,7 +131,7 @@ class SosModel(object):
             model = self.model_list[model_name]
             model.simulate(timestep)
 
-    def run_sequential_sos_model(self):
+    def _run_sequential_sos_model(self):
         """Runs the system-of-system model sequentially
 
         """
@@ -136,12 +141,12 @@ class SosModel(object):
                 model = self.model_list[model_name]
                 model.simulate(timestep)
 
-    def run_static_optimisation(self):
+    def _run_static_optimisation(self):
         """Runs the system-of-systems model in a static optimisation format
         """
         raise NotImplementedError
 
-    def run_dynamic_optimisation(self):
+    def _run_dynamic_optimisation(self):
         """Runs the system-of-system models in a dynamic optimisation format
         """
         raise NotImplementedError
@@ -250,6 +255,18 @@ class SosModel(object):
 
 class SosModelBuilder(object):
     """Constructs a system-of-systems model
+
+    Builds a :class:`SosModel`.
+    Call :py:meth:`~controller.SosModelBuilder.construct` to populate
+    a :class:`SosModel` object and :py:meth:`~controller.SosModelBuilder.finish`
+    to return the validated and dependency-checked system-of-systems model.
+
+    Example
+    =======
+    >>> builder = SosModelBuilder()
+    >>> builder.construct(config_data)
+    >>> builder.finish()
+
     """
     def __init__(self):
         self.sos_model = SosModel()
@@ -258,6 +275,11 @@ class SosModelBuilder(object):
 
     def construct(self, config_data):
         """Set up the whole SosModel
+
+        Arguments
+        =========
+        config_data : dict
+            A valid system-of-systems model configuration dictionary
         """
         self.add_timesteps(config_data['timesteps'])
         self.load_models(config_data['sector_model_data'],
@@ -307,6 +329,10 @@ class SosModelBuilder(object):
 
     def add_planning(self, planning):
         """Loads the planning logic into the system of systems model
+
+        Pre-specified planning interventions are defined at the sector-model
+        level, read in through the SectorModel class, but populate the
+        intervention register in the controller.
         """
         # TODO think through which parts of this live with sector models / at the top level
         self.sos_model.planning = Planning(planning)
