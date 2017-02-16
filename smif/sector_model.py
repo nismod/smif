@@ -28,7 +28,8 @@ Temporal Resolution
 The attribution of hours in a year to the temporal resolution used
 in the sectoral model.
 
-Within-year time intervals are specified in ``data/<sectormodel>/time_intervals.yaml``
+Within-year time intervals are specified
+in ``data/<sectormodel>/time_intervals.yaml``
 
 These specify the mapping of model timesteps to durations within a year
 (assume modelling 365 days: no extra day in leap years, no leap seconds)
@@ -63,7 +64,15 @@ The set of units used to define Inputs, Outputs and Interventions.
 
 Interventions
 -------------
-An exhaustive list of the Interventions (normally infrastructure assets).
+An Intervention is an investment which has a name (or asset_type),
+other attributes (such as capital cost and economic lifetime), and location,
+but no build date.
+
+An Intervention is a possible investment, normally an infrastructure asset,
+the timing of which can be decided by the logic-layer.
+
+An exhaustive list of the Interventions (normally infrastructure assets)
+should be defined.
 These are represented internally in the system-of-systems model,
 collected into a gazateer and allow the framework to reason on
 infrastructure assets across all sectors.
@@ -72,6 +81,36 @@ held in :class:`smif.intervention.InterventionRegister`.
 Interventions include investments in assets,
 supply side efficiency improvements, but not demand side management (these
 are incorporated in the strategies).
+
+Existing Infrastructure
+~~~~~~~~~~~~~~~~~~~~~~~
+Existing infrastructure is specified in a
+``<sectormodel>/assets/*.yaml`` file.  This uses the following
+format::
+   -
+    name: CCGT
+    description: Existing roll out of gas-fired power stations
+    timeperiod: 1990 # 2010 is the first year in the model horizon
+    location: "oxford"
+    new_capacity:
+        value: 6
+        unit: GW
+    lifetime:
+        value: 20
+        unit: years
+
+Pre-Specified Planning
+~~~~~~~~~~~~~~~~~~~~~~
+
+A fixed pipeline of investments can be specified using the same format as for
+existing infrastructure, in the ``<sectormodel>/planning/*.yaml`` files.
+
+The only difference is that pre-specified planning investments occur in the
+future (in comparison to the initial modelling date), whereas existing
+infrastructure occur in the past. This difference is semantic at best, but a
+warning is raised if future investments are included in the existing
+infrastructure files in the situation where the initial model timeperiod is
+altered.
 
 State Parameters
 ----------------
