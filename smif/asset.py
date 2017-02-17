@@ -9,20 +9,28 @@ This module needs to support:
 
 - initialisation of set of assets from model config (e.g. set of text files;
   database)
-    - hold generic list of key/values
-- creation of new assets by decision logic (rule-based/optimisation solver)
-    - maintain or derive set of possible assets
-        - hence distinction between known-ahead values and build-time values.
-          At least location and date are specified at build time,
-          possibly also cost, capacity as functions of time and location.
-- serialisation for passing to models
-    - ease of access to full generic data structure
-- output list of assets for reporting
-    - write out with legible or traceable keys and units for verification
-      and understanding
 
-Terminology
-~~~~~~~~~~~
+  - hold generic list of key/values
+
+- creation of new assets by decision logic (rule-based/optimisation solver)
+
+  - maintain or derive set of possible assets
+
+    - hence distinction between known-ahead values and build-time values.
+      At least location and date are specified at build time,
+      possibly also cost, capacity as functions of time and location.
+
+- serialisation for passing to models
+
+  - ease of access to full generic data structure
+
+- output list of assets for reporting
+
+  - write out with legible or traceable keys and units for verification and
+    understanding
+
+*Terminology*
+
 asset_type:
     A category of infrastructure intervention (e.g. power station, policy)
     which holds default attribute/value pairs. These asset_types can be
@@ -59,6 +67,7 @@ class InterventionContainer(object):
         The dictionary of asset attributes
     sector : str, default=""
         The sector associated with the asset
+
     """
     def __init__(self, asset_type="", data=None, sector=""):
 
@@ -86,20 +95,21 @@ class InterventionContainer(object):
         self.sector = sector
 
         (required, omitted) = self.get_attributes()
-        self.validate(required, omitted)
+        self._validate(required, omitted)
 
     def get_attributes(self):
         """Override to return two lists, one containing required attributes,
         the other containing omitted attributes
 
         Returns
+        -------
         tuple
             Tuple of lists, one contained required attributes, the other which
             must be omitted
         """
         raise NotImplementedError
 
-    def validate(self, required_attributes, omitted_attributes):
+    def _validate(self, required_attributes, omitted_attributes):
         """Ensures location is present and no build date is specified
 
         """
@@ -116,6 +126,10 @@ class InterventionContainer(object):
 
     def sha1sum(self):
         """Compute the SHA1 hash of this asset's data
+
+        Returns
+        -------
+        str
         """
         str_to_hash = str(self).encode('utf-8')
         return hashlib.sha1(str_to_hash).hexdigest()
@@ -130,6 +144,16 @@ class InterventionContainer(object):
     @staticmethod
     def deterministic_dict_to_str(data):
         """Return a reproducible string representation of any dict
+
+        Parameters
+        ----------
+        data : dict
+            An intervention attributes dictionary
+
+        Returns
+        -------
+        str
+            A reproducible string representation
         """
         return json.dumps(data, sort_keys=True)
 
@@ -147,9 +171,23 @@ class InterventionContainer(object):
 class Intervention(InterventionContainer):
     """An potential investment to send to the logic-layer
 
-    Has a name (or asset_type), other attributes
-    (such as capital cost and economic lifetime), and location,
-    but no build date.
+    An Intervention, is an investment which has a name (or asset_type),
+    other attributes (such as capital cost and economic lifetime),
+    and location, but no build date.
+
+    The set of interventions are defined within each sector, and these are
+    collected into an :class:`InterventionRegister` when
+    a :class:`smif.controller.SosModel` is instantiated by the controller at
+    runtime.
+
+    Parameters
+    ==========
+    asset_type : str, default=""
+        The type of asset, which should be unique across all sectors
+    data : dict, default=None
+        The dictionary of asset attributes
+    sector : str, default=""
+        The sector associated with the asset
 
     """
     def get_attributes(self):
@@ -176,6 +214,15 @@ class Asset(Intervention):
     Used to represent pre-specified planning and existing infrastructure assets
     and interventions
 
+    Parameters
+    ----------
+    asset_type : str, default=""
+        The type of asset, which should be unique across all sectors
+    data : dict, default=None
+        The dictionary of asset attributes
+    sector : str, default=""
+        The sector associated with the asset
+
     """
     def get_attributes(self):
         """Ensures location is present and no build date is specified
@@ -200,31 +247,9 @@ class Asset(Intervention):
 class Register(object):
     """Holds interventions, pre-spec'd planning instructions & existing assets
 
-    Controls asset serialisation to/from numeric representation
-
     - register each asset type/intervention name
     - translate a set of assets representing an initial system into numeric
       representation
-
-    Internal data structures
-    ------------------------
-
-    `asset_types` is a 2D array of integers: each entry is an array
-    representing an asset type, each integer indexes attribute_possible_values
-
-    `attribute_keys` is a 1D array of strings
-
-    `attribute_possible_values` is a 2D array of simple values, possibly
-    (boolean, integer, float, string, tuple). Each entry is a list of possible
-    values for the attribute at that index.
-
-    Invariants
-    ----------
-
-    - there must be one name and one list of possible values per attribute
-    - each asset type must list one value for each attribute, and that
-      value must be a valid index into the possible_values array
-    - each possible_values array should be all of a single type
 
     """
     def __init__(self):
@@ -271,43 +296,76 @@ class InterventionRegister(Register):
     An InterventionRegister contains an immutable collection of sector specific
     assets and decision points which can be decided on by the Logic Layer
 
-    An Intervention, is basically an investment which has a name (or asset_type),
-    other attributes (such as capital cost and economic lifetime), and location,
-    but no build date.
-
-    An Intervention is a possible investment, normally an infrastructure asset,
-    the timing of which can be decided by the logic-layer.
-
     * Reads in a collection of interventions defined in each sector model
+
     * Builds an ordered and immutable collection of interventions
+
     * Provides interfaces to
-        * optimisation/rule-based planning logic
-        * SectorModel class model wrappers
+
+      * optimisation/rule-based planning logic
+
+      * SectorModel class model wrappers
 
     Key functions:
+
     - outputs a complete list of asset build possibilities (asset type at
       location) which are (potentially) constrained by the pre-specified
       planning instructions and existing infrastructure.
+
     - translate a binary vector of build instructions
       (e.g. from optimisation routine) into Asset objects with human-readable
       key-value pairs
+
     - translates an immutable collection of Asset objects into a binary vector
       to pass to the logic-layer.
+
+    Notes
+    =====
+
+    *Internal data structures*
+
+    `Intervention_types`
+        is a 2D array of integers: each entry is an array
+        representing an Intervention type, each integer indexes
+        attribute_possible_values
+
+    `attribute_keys`
+        is a 1D array of strings
+
+    `attribute_possible_values`
+        is a 2D array of simple values, possibly
+        (boolean, integer, float, string, tuple). Each entry is a list of
+        possible values for the attribute at that index.
+
+    *Invariants*
+
+    - there must be one name and one list of possible values per attribute
+
+    - each Intervention type must list one value for each attribute, and that
+      value must be a valid index into the possible_values array
+
+    - each possible_values array should be all of a single type
+
     """
-    def _check_new_asset(self, intervention):
+    def _check_new_intervention(self, intervention):
         """Checks that the asset doesn't exist in the register
 
         """
         hash_list = []
         for existing_asset in self._asset_types:
-            hash_list.append(self.numeric_to_asset(existing_asset).sha1sum())
+            hash_list.append(self.numeric_to_intervention(existing_asset).sha1sum())
         if intervention.sha1sum() in hash_list:
             return False
         else:
             return True
 
     def register(self, intervention):
-        """Add a new asset to the register
+        """Add a new intervention to the register
+
+        Parameters
+        ----------
+        intervention : :class:`Intervention`
+
         """
         if isinstance(intervention, Intervention):
             pass
@@ -315,7 +373,7 @@ class InterventionRegister(Register):
             msg = "You can only register Interventions with this register"
             raise TypeError(msg)
 
-        if self._check_new_asset(intervention):
+        if self._check_new_intervention(intervention):
 
             for key, value in intervention.data.items():
                 self._register_attribute(key, value)
@@ -352,9 +410,22 @@ class InterventionRegister(Register):
         """
         return self._attribute_possible_values[attr_idx].index(value)
 
-    def numeric_to_asset(self, numeric_asset):
+    def numeric_to_intervention(self, numeric_asset):
         """Convert the numeric representation of an asset back to Asset (with
         legible key/value data)
+
+        Parameters
+        ----------
+        numeric_asset : list
+            A list of integers of length `self._attribute_keys`
+
+        Returns
+        -------
+        Intervention
+            An :class:`Intervention` object
+
+        Examples
+        --------
 
         Given a (very minimal) possible state of a register:
 
@@ -387,10 +458,10 @@ class InterventionRegister(Register):
         return intervention
 
     def __iter__(self):
-        """Iterate over the list of Asset types held in the register
+        """Iterate over the list of asset types held in the register
         """
         for asset in self._asset_types:
-            yield self.numeric_to_asset(asset)
+            yield self.numeric_to_intervention(asset)
 
     def __len__(self):
         """Returns the number of asset types stored in the register
