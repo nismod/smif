@@ -2,6 +2,7 @@
 """Parse yaml config files, to construct sector models
 """
 import json
+import logging
 import os
 
 import jsonschema
@@ -20,6 +21,7 @@ class ConfigParser:
         The filepath of the configuration file to parse
     """
     def __init__(self, filepath=None):
+        self.logger = logging.getLogger(__name__)
         if filepath is not None:
             self._config_filepath = filepath
 
@@ -45,6 +47,9 @@ class ConfigParser:
     def _validate_against_schema_file(self, data, schema_filename):
         """Validate data against a schema file
         """
+        msg = "Validating {} against {}"
+        self.logger.info(msg.format(data, schema_filename))
+
         schema_filepath = self._get_schema_filepath(schema_filename)
         schema = self._load_schema_from_file(schema_filepath)
         self._validate_against_schema(data, schema)
