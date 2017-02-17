@@ -34,13 +34,13 @@ should run, while each set of sector model config
 
 """
 from __future__ import print_function
-import logging, logging.config
+import logging
+import logging.config
 import os
 import sys
 from argparse import ArgumentParser
 
 from smif.controller import Controller
-from . parse_config import ConfigParser
 from . parse_model_config import SosModelReader
 from . parse_sector_model_config import SectorModelReader
 
@@ -161,7 +161,8 @@ def validate_config(args):
             config_basepath = os.path.dirname(config_path)
             # read sector model data+config
             model_config['sector_model_data'] = \
-            read_sector_model_data_from_config(config_basepath, model_config['sector_model_config'])
+                read_sector_model_data_from_config(config_basepath,
+                                                   model_config['sector_model_config'])
             return model_config
 
         except ValueError as error:
@@ -201,8 +202,8 @@ def read_sector_model_data_from_config(config_basepath, config):
             LOGGER.error("%s: %s", model_config['name'], error)
             raise ValueError("missing sector model configuration")
 
-
     return data
+
 
 def parse_arguments():
     """Parse command line arguments
@@ -247,22 +248,23 @@ def confirm(prompt=None, response=False):
     """Prompts for a yes or no response from the user
 
     Arguments
-    =========
+    ---------
     prompt : str, default=None
     response : bool, default=False
 
-
     Returns
-    =======
+    -------
     bool
         True for yes and False for no.
 
-
     Notes
-    =====
+    -----
 
     `response` should be set to the default value assumed by the caller when
     user simply types ENTER.
+
+    Examples
+    --------
 
     >>> confirm(prompt='Create Directory?', response=True)
     Create Directory? [y]|n:
