@@ -95,7 +95,7 @@ class TestIntervention:
     def test_intervention_init_build_date(self, build_intervention_ws):
         actual = Intervention(data=build_intervention_ws)
         with raises(AttributeError):
-            assert actual.build_date is None
+            assert actual.build_date
 
     def test_intervention_init_location(self, build_intervention_ws):
         actual = Intervention(data=build_intervention_ws)
@@ -270,7 +270,7 @@ class TestInterventionRegister:
         # pick an asset from the list - this is what the optimiser will do
         numeric_asset = register._asset_types[0]
 
-        asset = register.numeric_to_asset(numeric_asset)
+        asset = register.numeric_to_intervention(numeric_asset)
         assert asset.asset_type == "water_treatment_plant"
 
         assert asset.data == {

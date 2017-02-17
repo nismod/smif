@@ -50,7 +50,8 @@ def setup_project_folder(setup_runpy_file,
                          setup_water_outputs,
                          setup_water_time_intervals,
                          setup_water_regions,
-                         setup_pre_specified_planning):
+                         setup_pre_specified_planning,
+                         setup_interventions_file_one):
     """Sets up a temporary folder with the required project folder structure
 
         /config
@@ -62,8 +63,10 @@ def setup_project_folder(setup_runpy_file,
         /data/water_supply/outputs.yaml
         /data/water_supply/time_intervals.yaml
         /data/water_supply/regions.geojson
-        /data/water_supply/asset_types
-        /data/water_supply/asset_types/assets_1.yaml
+        /data/water_supply/assets/
+        /data/water_supply/assets/assets_1.yaml
+        /data/water_supply/interventions/
+        /data/water_supply/interventions/assets_new.yaml
         /data/water_supply/pre-specified.yaml
         /models
         /models/water_supply/water_supply.py
@@ -89,8 +92,8 @@ def setup_project_missing_model_config(setup_runpy_file,
         /config/timesteps.yaml
         /data
         /data/water_supply/
-        /data/water_supply/asset_types
-        /data/water_supply/asset_types/assets_1.yaml
+        /data/water_supply/assets
+        /data/water_supply/assets/assets_1.yaml
         /data/water_supply/pre-specified.yaml
         /models
         /models/water_supply/water_supply.py
@@ -116,11 +119,11 @@ def setup_assets_file(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('data',
                                 'water_supply',
-                                'asset_types',
+                                'assets',
                                 'assets_1.yaml')
     assets_contents = [
         {
-            'type': 'water_asset_a',
+            'asset_type': 'water_asset_a',
             'capacity': {
                 'value': 5,
                 'units': 'GW'
@@ -136,10 +139,12 @@ def setup_assets_file(setup_folder_structure):
             'capital_cost': {
                 'value': 50,
                 'units': "million £/km"
-            }
+            },
+            'location': 'oxford',
+            'build_date': 2017
         },
         {
-            'type': 'water_asset_b',
+            'asset_type': 'water_asset_b',
             'capacity': {
                 'value': 15,
                 'units': 'GW'
@@ -155,10 +160,12 @@ def setup_assets_file(setup_folder_structure):
             'capital_cost': {
                 'value': 50,
                 'units': "million £/km"
-            }
+            },
+            'location': 'oxford',
+            'build_date': 2017
         },
         {
-            'type': 'water_asset_c',
+            'asset_type': 'water_asset_c',
             'capacity': {
                 'value': 25,
                 'units': 'GW'
@@ -174,7 +181,9 @@ def setup_assets_file(setup_folder_structure):
             'capital_cost': {
                 'value': 50,
                 'units': "million £/km"
-            }
+            },
+            'location': 'oxford',
+            'build_date': 2017
         }
     ]
     contents = yaml.dump(assets_contents)
@@ -190,11 +199,11 @@ def setup_assets_file_two(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('data',
                                 'water_supply',
-                                'asset_types',
+                                'assets',
                                 'assets_2.yaml')
     assets_contents = [
         {
-            'type': 'water_asset_d',
+            'asset_type': 'water_asset_d',
             'capacity': {
                 'value': 15,
                 'units': 'GW'
@@ -210,7 +219,47 @@ def setup_assets_file_two(setup_folder_structure):
             'capital_cost': {
                 'value': 50,
                 'units': "million £/km"
-            }
+            },
+            'location': 'oxford',
+            'build_date': 2017
+        }
+    ]
+    contents = yaml.dump(assets_contents)
+    filename.write(contents, ensure=True)
+
+
+@pytest.fixture(scope='function')
+def setup_interventions_file_one(setup_folder_structure):
+    """Interventions are associated with sector models,
+    not the integration config
+
+    Defines an interventions file
+    """
+    base_folder = setup_folder_structure
+    filename = base_folder.join('data',
+                                'water_supply',
+                                'interventions',
+                                'new_assets.yaml')
+    assets_contents = [
+        {
+            'asset_type': 'water_asset_d',
+            'capacity': {
+                'value': 15,
+                'units': 'GW'
+            },
+            'operational_lifetime': {
+                'value': 150,
+                'units': "years"
+            },
+            'economic_lifetime': {
+                'value': 50,
+                'units': "years"
+            },
+            'capital_cost': {
+                'value': 50,
+                'units': "million £/km"
+            },
+            'location': 'oxford'
         }
     ]
     contents = yaml.dump(assets_contents)
@@ -233,8 +282,9 @@ def setup_config_file(setup_folder_structure):
         ],
         'base_year': 2010,
         'timesteps': 'timesteps.yaml',
-        'assets': ['../data/water_supply/asset_types/assets_1.yaml'],
-        'asset_types': ['../data/water_supply/asset_types/assets_1.yaml'],
+        'assets': ['../data/water_supply/assets/assets_1.yaml'],
+        'asset_types': ['../data/water_supply/assets/assets_1.yaml'],
+        'interventions': ['../data/water_supply/interventions/new_assets.yaml'],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -258,7 +308,7 @@ def setup_pre_specified_planning_conflict(setup_folder_structure):
     file_name = 'pre-specified_asset_d.yaml'
     file_contents = [
         {
-            'type': 'water_asset_z',
+            'asset_type': 'water_asset_z',
             'description': 'Existing water treatment plants',
             'capacity': 6,
             'location': {'lat': 51.74556, 'lon': -1.240528},
@@ -286,6 +336,7 @@ def setup_config_conflict_assets(setup_folder_structure,
         'timesteps': 'timesteps.yaml',
         'asset_types': ['assets1.yaml'],
         'assets': ['assets1.yaml'],
+        'interventions': [],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -315,6 +366,7 @@ def setup_config_conflict_periods(setup_folder_structure,
         'timesteps': 'timesteps2.yaml',
         'asset_types': ['assets1.yaml'],
         'assets': ['assets1.yaml'],
+        'interventions': [],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -338,7 +390,7 @@ def setup_pre_specified_planning(setup_folder_structure):
     file_name = 'pre-specified.yaml'
     file_contents = [
         {
-            'type': 'water_asset_a',
+            'asset_type': 'water_asset_a',
             'build_date': 2010,
             'attributes': [
                 {
@@ -356,7 +408,7 @@ def setup_pre_specified_planning(setup_folder_structure):
             ]
         },
         {
-            'type': 'water_asset_b',
+            'asset_type': 'water_asset_b',
             'build_date': 2010,
             'attributes': [
                 {
@@ -374,7 +426,7 @@ def setup_pre_specified_planning(setup_folder_structure):
             ]
         },
         {
-            'type': 'water_asset_c',
+            'asset_type': 'water_asset_c',
             'build_date': 2010,
             'attributes': [
                 {
@@ -407,7 +459,7 @@ def setup_pre_specified_planning_two(setup_folder_structure):
     file_name = 'pre-specified_alt.yaml'
     file_contents = [
         {
-            'type': 'water_asset_a',
+            'asset_type': 'water_asset_a',
             'build_date': 2015,
             'attributes': [
                 {
@@ -425,7 +477,7 @@ def setup_pre_specified_planning_two(setup_folder_structure):
             ]
         },
         {
-            'type': 'water_asset_a',
+            'asset_type': 'water_asset_a',
             'build_date': 2020,
             'attributes': [
                 {
@@ -443,7 +495,7 @@ def setup_pre_specified_planning_two(setup_folder_structure):
             ]
         },
         {
-            'type': 'water_asset_a',
+            'asset_type': 'water_asset_a',
             'build_date': 2025,
             'attributes': [
                 {
@@ -487,10 +539,11 @@ def setup_config_file_two(setup_folder_structure, setup_assets_file_two):
         'base_year': 2010,
         'timesteps': 'timesteps.yaml',
         'asset_types': [
-            '../data/water_supply/asset_types/assets_1.yaml',
-            '../data/water_supply/asset_types/assets_2.yaml'
+            '../data/water_supply/assets/assets_1.yaml',
+            '../data/water_supply/assets/assets_2.yaml'
         ],
         'assets': [],
+        'interventions': [],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -522,8 +575,9 @@ def setup_config_file_timesteps_two(setup_folder_structure):
         ],
         'base_year': 2010,
         'timesteps': 'timesteps_2.yaml',
-        'assets': ['../data/water_supply/asset_types/assets_1.yaml'],
-        'asset_types': ['../data/water_supply/asset_types/assets_1.yaml'],
+        'assets': ['../data/water_supply/assets/assets_1.yaml'],
+        'asset_types': ['../data/water_supply/assets/assets_1.yaml'],
+        'interventions': [],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -832,7 +886,7 @@ def setup_water_attributes(setup_folder_structure):
 
     filename = setup_folder_structure.join('data',
                                            'water_supply',
-                                           'asset_types',
+                                           'assets',
                                            'water_asset_abc.yaml')
     filename.write(content, ensure=True)
 
@@ -851,7 +905,7 @@ def setup_water_asset_d(setup_folder_structure,
 """
     filename = setup_folder_structure.join('data',
                                            'water_supply',
-                                           'asset_types',
+                                           'assets',
                                            'water_asset_d.yaml')
     filename.write(content, ensure=True)
 

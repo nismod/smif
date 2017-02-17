@@ -8,8 +8,8 @@ Currently, only pre-specified planning is implemented.
 class Planning:
     """
 
-    Arguments
-    =========
+    Parameters
+    ----------
     planning_data : list
         A list of pre-specified planning commands
     """
@@ -24,7 +24,7 @@ class Planning:
     def asset_types(self):
         """Returns the set of assets defined in the planning commands
         """
-        return {plan['type'] for plan in self.build_instructions}
+        return {plan['asset_type'] for plan in self.build_instructions}
 
     @property
     def timeperiods(self):

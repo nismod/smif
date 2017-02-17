@@ -3,6 +3,7 @@ import os
 from pytest import raises
 from smif.cli.parse_model_config import SosModelReader
 
+
 class TestSosModelReader():
 
     def _get_model_config(self, folder):
@@ -76,7 +77,7 @@ class TestSosModelReader():
         reader.load()
 
         expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
-        actual = [asset['type'] for asset in reader.asset_types]
+        actual = [asset['asset_type'] for asset in reader.asset_types]
         assert actual == expected
 
     def test_assets_two_asset_files(self, setup_project_folder,
@@ -88,6 +89,5 @@ class TestSosModelReader():
 
         expected = ['water_asset_a', 'water_asset_b',
                     'water_asset_c', 'water_asset_d']
-        actual = [asset['type'] for asset in reader.asset_types]
+        actual = [asset['asset_type'] for asset in reader.asset_types]
         assert actual == expected
-

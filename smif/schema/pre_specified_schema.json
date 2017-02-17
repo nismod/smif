@@ -6,13 +6,13 @@
     "items": {
         "type": "object",
         "properties": {
-            "type": {
+            "asset_type": {
                 "type": "string"
             },
             "build_date": {
                 "type": "integer"
             }
         },
-        "required": ["type", "build_date"]
+        "required": ["asset_type", "build_date"]
     }
 }
