@@ -7,6 +7,7 @@ import logging
 
 import networkx
 import numpy as np
+from smif.asset import Asset, AssetRegister, Intervention, InterventionRegister
 from smif.decision import Planning
 from smif.sector_model import SectorModelBuilder, SectorModelMode
 
@@ -24,8 +25,8 @@ class Controller:
     It also requires a data connection to populate model inputs and store
     results.
 
-    Arguments
-    =========
+    Parameters
+    ----------
     config_data : dict
         A valid system-of-systems model configuration dictionary
 
@@ -44,8 +45,8 @@ class Controller:
     def run_sector_model(self, model_name):
         """Runs a sector model
 
-        Arguments
-        =========
+        Parameters
+        ----------
         model_name: str
             The name of the sector model to run
         """
@@ -61,8 +62,8 @@ class SosModel(object):
     This class is populated at runtime by the :class:`SosModelBuilder` and
     called from the :class:`Controller`.
 
-    Notes
-    =====
+    Attributes
+    ==========
     model_list : dict
         This is a dictionary of :class:`smif.SectorModel`
 
@@ -71,9 +72,9 @@ class SosModel(object):
         self.model_list = {}
         self._timesteps = []
         self.asset_types = []
-        self.assets = []
+        self.assets = AssetRegister()
+        self.interventions = InterventionRegister()
         self.planning = None
-        self.intervention_register = None
 
         self.logger = logging.getLogger(__name__)
 
@@ -81,17 +82,24 @@ class SosModel(object):
         """Runs the system-of-system model
 
         0. Determine run mode
+
         1. Determine running order
+
         2. Run each sector model
+
         3. Return success or failure
 
         Notes
         =====
         # TODO pass in:
+
+
         - decisions, anything from strategy space that can be decided by
           explicit planning or rule-based decisions or the optimiser
+
         - state, anything from the previous timestep (assets with all
           attributes, state/condition of any other model entities)
+
         - data, anything from scenario space, to be used by the
           simulation of the model
 
@@ -100,10 +108,11 @@ class SosModel(object):
         or have _simulate_from_array method
 
         # TODO pick state from previous timestep (or initialise)
+
         # TODO decide on approach to infrastructure system and possible
-          actions/decisions which can change it, then handle system
-          initialisation and keeping track of system composition over
-          each timestep of the model run
+        actions/decisions which can change it, then handle system
+        initialisation and keeping track of system composition over
+        each timestep of the model run
 
         """
         mode = self.determine_running_mode
@@ -182,8 +191,8 @@ class SosModel(object):
     def run_sector_model(self, model_name):
         """Runs the sector model
 
-        Arguments
-        =========
+        Parameters
+        ----------
         model_name : str
             The name of the model, corresponding to the folder name in the
             models subfolder of the project folder
@@ -216,7 +225,7 @@ class SosModel(object):
     def asset_type_names(self):
         """Names (id-like keys) of all known asset type
         """
-        return [asset_type['type'] for asset_type in self.asset_types]
+        return [asset_type['asset_type'] for asset_type in self.asset_types]
 
     @timesteps.setter
     def timesteps(self, value):
@@ -257,12 +266,13 @@ class SosModelBuilder(object):
     """Constructs a system-of-systems model
 
     Builds a :class:`SosModel`.
+
+    Examples
+    --------
     Call :py:meth:`~controller.SosModelBuilder.construct` to populate
     a :class:`SosModel` object and :py:meth:`~controller.SosModelBuilder.finish`
     to return the validated and dependency-checked system-of-systems model.
 
-    Example
-    =======
     >>> builder = SosModelBuilder()
     >>> builder.construct(config_data)
     >>> builder.finish()
@@ -276,24 +286,29 @@ class SosModelBuilder(object):
     def construct(self, config_data):
         """Set up the whole SosModel
 
-        Arguments
-        =========
+        Parameters
+        ----------
         config_data : dict
             A valid system-of-systems model configuration dictionary
         """
+        model_list = config_data['sector_model_data']
+
         self.add_timesteps(config_data['timesteps'])
-        self.load_models(config_data['sector_model_data'],
+        self.load_models(model_list,
                          config_data['assets'])
         self.add_asset_types(config_data['asset_types'])
         self.add_assets(config_data['assets'])
         self.add_planning(config_data['planning'])
 
+        models = self.sos_model.model_list.values()
+        self.add_interventions(models)
+
     def add_timesteps(self, timesteps):
         """Set the timesteps of the system-of-systems model
 
-        Arguments
-        =========
-        list
+        Parameters
+        ----------
+        timesteps : list
             A list of timesteps
         """
         self.sos_model.timesteps = timesteps
@@ -301,10 +316,12 @@ class SosModelBuilder(object):
     def load_models(self, model_data_list, assets):
         """Loads the sector models into the system-of-systems model
 
-        Arguments
-        =========
+        Parameters
+        ----------
         model_data_list : list
             A list of sector model config/data
+        assets : list
+            A list of assets to pass to the sector model
 
         """
         for model_data in model_data_list:
@@ -318,10 +335,16 @@ class SosModelBuilder(object):
         builder.add_inputs(model_data['inputs'])
         builder.add_outputs(model_data['outputs'])
         builder.add_assets(assets)
+        builder.add_interventions(model_data['interventions'])
         return builder.finish()
 
     def add_model(self, model):
-        """Adds a sector model into the system-of-systems model
+        """Adds a sector model to the system-of-systems model
+
+        Parameters
+        ----------
+        model : :class:`smif.sector_model.SectorModel`
+            A sector model wrapper
 
         """
         self.logger.info("Loading model: %s", model.name)
@@ -333,15 +356,52 @@ class SosModelBuilder(object):
         Pre-specified planning interventions are defined at the sector-model
         level, read in through the SectorModel class, but populate the
         intervention register in the controller.
+
+        Parameters
+        ----------
+        planning : list
+            A list of planning instructions
+
         """
-        # TODO think through which parts of this live with sector models / at the top level
+        # TODO think through which parts of this live with sector models
+        # / at the top level
         self.sos_model.planning = Planning(planning)
 
     def add_asset_types(self, asset_types):
+        """Add the list of asset types to the
+        """
         self.sos_model.asset_types = asset_types
 
     def add_assets(self, assets):
-        self.sos_model.assets = assets
+        """Add assets to the :class:`~smif.asset.AssetRegister`
+
+        Parameters
+        ----------
+        assets : list
+            A list of dicts of assets
+
+        """
+        for asset in assets:
+            self.sos_model.assets.register(Asset(data=asset))
+
+    def add_interventions(self, model_list):
+        """Add interventions to the :class:`~smif.asset.InterventionRegister`
+
+        Parameters
+        ----------
+        model_list : list
+            A list of sector model names
+
+        """
+        for model in model_list:
+            interventions = model.interventions
+            for intervention in interventions:
+                intervention_object = Intervention(sector=model.name,
+                                                   data=intervention)
+                msg = "Adding {} from {} to SOSModel InterventionRegister"
+                identifier = intervention_object.asset_type
+                self.logger.debug(msg.format(identifier, model.name))
+                self.sos_model.interventions.register(intervention_object)
 
     def _check_planning_assets_exist(self):
         """Check existence of all the assets in the pre-specifed planning
@@ -362,13 +422,13 @@ class SosModelBuilder(object):
             msg = "Timeperiod '{}' in planning file not found model config"
             assert timeperiod in model_timeperiods, msg.format(timeperiod)
 
-    def validate(self):
+    def _validate(self):
         """Validates the sos model
         """
         self._check_planning_assets_exist()
         self._check_planning_timeperiods_exist()
 
-    def check_dependencies(self):
+    def _check_dependencies(self):
         """For each model, compare dependency list of from_models
         against list of available models
         """
@@ -395,6 +455,6 @@ class SosModelBuilder(object):
 
         - includes validation steps, e.g. to check dependencies
         """
-        self.validate()
-        self.check_dependencies()
+        self._validate()
+        self._check_dependencies()
         return self.sos_model

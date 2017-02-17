@@ -9,8 +9,8 @@ from . parse_config import ConfigParser
 class SosModelReader(object):
     """Encapsulates the parsing of the system-of-systems configuration
 
-    Arguments
-    =========
+    Parameters
+    ----------
     config_file_path : str
         A path to the master config file
 
@@ -26,6 +26,9 @@ class SosModelReader(object):
         self.timesteps = None
         self.sector_model_data = None
         self.planning = None
+
+        self.asset_types = None
+        self.assets = None
 
     def load(self):
         """Load and check all config
