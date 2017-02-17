@@ -34,7 +34,9 @@ class SectorModelReader(object):
         self.outputs = None
         self.time_intervals = None
         self.regions = None
-        self.asset_types = None
+
+        self.assets = None
+        self.interventions = None
 
     def load(self):
         """Load and check all config
@@ -43,6 +45,8 @@ class SectorModelReader(object):
         self.outputs = self._load_outputs()
         self.time_intervals = self._load_time_intervals()
         self.regions = self._load_regions()
+        self.assets = self._load_assets()
+        self.interventions = self._load_interventions()
 
     @property
     def data(self):
@@ -55,7 +59,9 @@ class SectorModelReader(object):
             "inputs": self.inputs,
             "outputs": self.outputs,
             "time_intervals": self.time_intervals,
-            "regions": self.regions
+            "regions": self.regions,
+            "assets": self.assets,
+            "interventions": self.interventions
         }
 
     def _load_inputs(self):
@@ -81,6 +87,35 @@ class SectorModelReader(object):
 
         return ConfigParser(path).data
 
+    def _load_assets(self):
+        """Assets are located in ``data/<sectormodel>/assets/*.yaml`` files
+        """
+        data = []
+
+        paths = glob("{}/assets/*.yaml".format(self.model_config_dir))
+        if len(paths) == 0:
+            msg = "Assets config file not found for {} model"
+            raise FileNotFoundError(msg.format(self.model_name))
+        else:
+            for path in paths:
+                new_data = ConfigParser(path).data
+                data.extend(new_data)
+        return data
+
+    def _load_interventions(self):
+        """Interventions are in ``data/<sectormodel>/interventions/*.yaml`` files
+        """
+        data = []
+        paths = glob("{}/interventions/*.yaml".format(self.model_config_dir))
+        if len(paths) == 0:
+            msg = "Interventions config file not found for {} model"
+            raise FileNotFoundError(msg.format(self.model_name))
+        else:
+            for path in paths:
+                new_data = ConfigParser(path).data
+                data.extend(new_data)
+        return data
+
     def _load_time_intervals(self):
         """Within-year time intervals are specified in ``data/<sectormodel>/time_intervals.yaml``
 
@@ -92,8 +127,14 @@ class SectorModelReader(object):
         - end (period since beginning of year)
         - id (label to use when passing between integration layer and sector model)
 
-        use ISO 8601 duration format to specify periods = P[n]Y[n]M[n]DT[n]H[n]M[n]S
-        - https://en.wikipedia.org/wiki/ISO_8601#Durations
+        use ISO 8601[1]_ duration format to specify periods::
+
+            P[n]Y[n]M[n]DT[n]H[n]M[n]S
+
+        References
+        ----------
+        .. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
+
         """
         path = os.path.join(self.model_config_dir, 'time_intervals.yaml')
 

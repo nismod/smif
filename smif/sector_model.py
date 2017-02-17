@@ -35,12 +35,18 @@ These specify the mapping of model timesteps to durations within a year
 (assume modelling 365 days: no extra day in leap years, no leap seconds)
 
 Each time interval must have
+
 - start (period since beginning of year)
 - end (period since beginning of year)
 - id (label to use when passing between integration layer and sector model)
 
-use ISO 8601 duration format to specify periods = P[n]Y[n]M[n]DT[n]H[n]M[n]S
-- https://en.wikipedia.org/wiki/ISO_8601#Durations
+use ISO 8601 [1]_ duration format to specify periods::
+
+    P[n]Y[n]M[n]DT[n]H[n]M[n]S
+
+References
+----------
+.. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
 
 Inputs
 ------
@@ -76,8 +82,8 @@ should be defined.
 These are represented internally in the system-of-systems model,
 collected into a gazateer and allow the framework to reason on
 infrastructure assets across all sectors.
-Interventions are instances of :class:`smif.intervention.Intervention` and are
-held in :class:`smif.intervention.InterventionRegister`.
+Interventions are instances of :class:`~smif.asset.Intervention` and are
+held in :class:`~smif.asset.InterventionRegister`.
 Interventions include investments in assets,
 supply side efficiency improvements, but not demand side management (these
 are incorporated in the strategies).
@@ -146,8 +152,9 @@ import importlib
 import logging
 import os
 from abc import ABC, abstractmethod
-import numpy as np
 from enum import Enum
+
+import numpy as np
 from scipy.optimize import minimize
 from smif.inputs import ModelInputs
 from smif.outputs import ModelOutputs
@@ -165,6 +172,8 @@ class SectorModel(ABC):
         self._model_name = None
         self._assets = {}
         self._schema = None
+
+        self._interventions = {}
 
         self._inputs = ModelInputs({})
         self._outputs = ModelOutputs({})
@@ -491,6 +500,11 @@ class SectorModel(ABC):
 class SectorModelBuilder(object):
     """Build the components that make up a sectormodel from the configuration
 
+    Parameters
+    ----------
+    name : str
+        The name of the sector model
+
     """
 
     def __init__(self, name):
@@ -538,11 +552,30 @@ class SectorModelBuilder(object):
 
     def add_assets(self, asset_list):
         """Add assets to the sector model
+
+        Parameters
+        ----------
+        asset_list : list
+            A list of dicts of assets
         """
         msg = "Sector model must be loaded before adding assets"
         assert self._sector_model is not None, msg
 
         self._sector_model.assets = asset_list
+
+    def add_interventions(self, intervention_list):
+        """Add interventions to the sector model
+
+        Parameters
+        ----------
+        intervention_list : list
+            A list of dicts of interventions
+
+        """
+        msg = "Sector model must be loaded before adding interventions"
+        assert self._sector_model is not None, msg
+
+        self._sector_model.interventions = intervention_list
 
     def validate(self):
         """Check and/or assert that the sector model is correctly set up
