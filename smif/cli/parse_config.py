@@ -9,9 +9,15 @@ import yaml
 
 
 class ConfigParser:
-    """Parse yaml config file,
-    hold config data,
-    validate config data against required set
+    """Parse yaml config file, hold config data, validate config data
+
+    Parse yaml config file, hold config data, validate config data against
+    required set
+
+    Parameters
+    ----------
+    filepath : str, default=None
+        The filepath of the configuration file to parse
     """
     def __init__(self, filepath=None):
         if filepath is not None:
@@ -24,6 +30,12 @@ class ConfigParser:
 
     def validate(self, schema):
         """Validate data against a schema dict
+
+        Parameters
+        ----------
+        schema : str
+            Filename of the json schema stored in the `smif/schema` folder
+
         """
         if self.data is None:
             raise AttributeError("Config data not loaded")
@@ -39,6 +51,8 @@ class ConfigParser:
 
     @staticmethod
     def _get_schema_filepath(schema_filename):
+        # TODO Will need to add schemas as resource for deployment and use
+        # resource links
         return os.path.join(os.path.dirname(__file__),
                             "..",
                             "schema",
@@ -84,19 +98,39 @@ class ConfigParser:
                                            "assets_schema.json")
 
         # except for some keys which are allowed simple values,
-        simple_keys = ["type", "sector", "location"]
+        simple_keys = ["asset_type", "sector", "location", "build_date"]
         # expect each attribute to be of the form {value: x, units: y}
         for asset in self.data:
             for key, value in asset.items():
                 if key not in simple_keys and (
                         not isinstance(value, dict)
                         or "value" not in value
-                        or "units" not in value
-                    ):
+                        or "units" not in value):
                     fmt = "{0}.{1} was {2} but should have specified units, " + \
                           "e.g. {{'value': {2}, 'units': 'm'}}"
 
-                    msg = fmt.format(asset["type"], key, value)
+                    msg = fmt.format(asset["asset_type"], key, value)
+                    raise ValueError(msg)
+
+    def validate_as_interventions(self):
+        """Validate the loaded data as required for model interventions
+        """
+        self._validate_against_schema_file(self.data,
+                                           "intervention_schema.json")
+
+        # except for some keys which are allowed simple values,
+        simple_keys = ["asset_type", "sector", "location"]
+        # expect each attribute to be of the form {value: x, units: y}
+        for asset in self.data:
+            for key, value in asset.items():
+                if key not in simple_keys and (
+                        not isinstance(value, dict)
+                        or "value" not in value
+                        or "units" not in value):
+                    fmt = "{0}.{1} was {2} but should have specified units, " + \
+                          "e.g. {{'value': {2}, 'units': 'm'}}"
+
+                    msg = fmt.format(asset["asset_type"], key, value)
                     raise ValueError(msg)
 
     def validate_as_pre_specified_planning(self):
