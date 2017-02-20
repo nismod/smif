@@ -15,6 +15,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   Getting Started <getting_started>
    Concept <concept>
    License <license>
    Authors <authors>
