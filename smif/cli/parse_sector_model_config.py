@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Read and parse the config for sector models
 """
+import logging
 import os
 from glob import glob
 import fiona
@@ -24,6 +25,7 @@ class SectorModelReader(object):
 
     """
     def __init__(self, initial_config):
+        self.logger = logging.getLogger(__name__)
         self.model_name = initial_config["model_name"]
         self.model_path = initial_config["model_path"]
         self.model_classname = initial_config["model_classname"]
@@ -100,6 +102,7 @@ class SectorModelReader(object):
             raise FileNotFoundError(msg.format(self.model_name))
         else:
             for path in paths:
+                self.logger.debug("Loading initial conditions from {}".format(path))
                 new_data = ConfigParser(path).data
                 data.extend(new_data)
         return data
@@ -115,6 +118,7 @@ class SectorModelReader(object):
             raise FileNotFoundError(msg.format(self.model_name))
         else:
             for path in paths:
+                self.logger.debug("Loading interventions from {}".format(path))
                 new_data = ConfigParser(path).data
                 data.extend(new_data)
         return data
