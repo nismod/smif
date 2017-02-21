@@ -4,6 +4,7 @@ import os
 from pytest import raises
 from smif.cli.parse_config import ConfigParser
 
+
 class TestConfigParser(object):
 
     def _config_fixtures_dir(self):
@@ -94,7 +95,7 @@ class TestConfigParser(object):
         conf = ConfigParser()
         conf.data = [
             {
-                'type': 'asset',
+                'name': 'asset',
                 'capacity': 3,
                 'operational_lifetime': {
                     'value': 150,

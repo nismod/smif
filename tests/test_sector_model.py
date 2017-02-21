@@ -1,5 +1,5 @@
 import pytest
-from smif.asset import Asset
+from smif.intervention import Asset
 from smif.sector_model import SectorModel, SectorModelBuilder
 from . fixtures.water_supply import WaterSupplySectorModelWithAssets
 
@@ -33,7 +33,7 @@ class TestSectorModelBuilder():
                 }
             }
         ]
-        builder.add_assets(assets)
+        builder.add_interventions(assets)
 
         # builder.add_inputs(inputs)
         # builder.add_outputs(outputs)
@@ -42,8 +42,8 @@ class TestSectorModelBuilder():
         assert isinstance(model, SectorModel)
 
         assert model.name == 'water_supply'
-        assert model.asset_names == ['water_asset_a']
-        assert model.assets == assets
+        assert model.intervention_names == ['water_asset_a']
+        assert model.interventions == assets
 
 class TestSectorModel(object):
     def test_assets_load_names(self):
@@ -53,14 +53,14 @@ class TestSectorModel(object):
             {'name': 'water_asset_c'}
         ]
         model = EmptySectorModel()
-        model.assets = assets
+        model.interventions = assets
 
-        asset_names = model.asset_names
+        intervention_names = model.intervention_names
 
-        assert len(asset_names) == 3
-        assert 'water_asset_a' in asset_names
-        assert 'water_asset_b' in asset_names
-        assert 'water_asset_c' in asset_names
+        assert len(intervention_names) == 3
+        assert 'water_asset_a' in intervention_names
+        assert 'water_asset_b' in intervention_names
+        assert 'water_asset_c' in intervention_names
 
 
     def test_assets_load(self):
@@ -86,7 +86,7 @@ class TestSectorModel(object):
 
         assert actual == assets
 
-        for asset_name in model.asset_names:
+        for asset_name in model.intervention_names:
             assert asset_name in [
                 'water_asset_a',
                 'water_asset_b',

@@ -1,9 +1,150 @@
 # -*- coding: utf-8 -*-
 """This module acts as a bridge to the sector models from the controller
 
- The :class:`SectorModel` exposes several key methods for running wrapped
- sector models.  To add a sector model to an instance of the framework,
- first implement :class:`SectorModel`.
+The :class:`SectorModel` exposes several key methods for running wrapped
+sector models.  To add a sector model to an instance of the framework,
+first implement :class:`SectorModel`.
+
+Data Required to Specify a Sectoral Model
+=========================================
+
+To integrate an infrastructure simulation model within the system-of-systems
+modelling framework, it is necessary to provide the following configuration
+data, alongside the implementation of the :class:`SectorModel` class.
+
+Geographies
+-----------
+Define the set of unique regions which are used within the model as polygons.
+Inputs and outputs are assigned a model-specific geography from this list
+allowing automatic conversion from and to these geographies.
+
+Model regions are specified in ``data/<sectormodel>/regions.*``
+
+The file format must be possible to parse with GDAL, and must contain
+an attribute "name" to use as an identifier for the region.
+
+Temporal Resolution
+-------------------
+The attribution of hours in a year to the temporal resolution used
+in the sectoral model.
+
+Within-year time intervals are specified
+in ``data/<sectormodel>/time_intervals.yaml``
+
+These specify the mapping of model timesteps to durations within a year
+(assume modelling 365 days: no extra day in leap years, no leap seconds)
+
+Each time interval must have
+
+- start (period since beginning of year)
+- end (period since beginning of year)
+- id (label to use when passing between integration layer and sector model)
+
+use ISO 8601 [1]_ duration format to specify periods::
+
+    P[n]Y[n]M[n]DT[n]H[n]M[n]S
+
+References
+----------
+.. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
+
+Inputs
+------
+The collection of inputs required when defined as a dependency, for example
+"electricity demand (kWh, <region>, <hour>)".
+Inputs are defined with a region and temporal-resolution and a unit.
+
+Only those inputs required as dependencies are defined here, although
+dependencies are activated when configured in the system-of-systems model.
+
+Outputs
+-------
+The collection of outputs used as metrics, for the purpose of optimisation or
+rule-based planning approaches (so normally a cost-function), and those
+outputs required for accounting purposes, such as operational cost, and
+emissions.
+
+Units
+-----
+The set of units used to define Inputs, Outputs and Interventions.
+
+Interventions
+-------------
+An Intervention is an investment which has a name (or name),
+other attributes (such as capital cost and economic lifetime), and location,
+but no build date.
+
+An Intervention is a possible investment, normally an infrastructure asset,
+the timing of which can be decided by the logic-layer.
+
+An exhaustive list of the Interventions (normally infrastructure assets)
+should be defined.
+These are represented internally in the system-of-systems model,
+collected into a gazateer and allow the framework to reason on
+infrastructure assets across all sectors.
+Interventions are instances of :class:`~smif.asset.Intervention` and are
+held in :class:`~smif.asset.InterventionRegister`.
+Interventions include investments in assets,
+supply side efficiency improvements, but not demand side management (these
+are incorporated in the strategies).
+
+Existing Infrastructure
+~~~~~~~~~~~~~~~~~~~~~~~
+Existing infrastructure is specified in a
+``<sectormodel>/assets/*.yaml`` file.  This uses the following
+format::
+   -
+    name: CCGT
+    description: Existing roll out of gas-fired power stations
+    timeperiod: 1990 # 2010 is the first year in the model horizon
+    location: "oxford"
+    new_capacity:
+        value: 6
+        unit: GW
+    lifetime:
+        value: 20
+        unit: years
+
+Pre-Specified Planning
+~~~~~~~~~~~~~~~~~~~~~~
+
+A fixed pipeline of investments can be specified using the same format as for
+existing infrastructure, in the ``<sectormodel>/planning/*.yaml`` files.
+
+The only difference is that pre-specified planning investments occur in the
+future (in comparison to the initial modelling date), whereas existing
+infrastructure occur in the past. This difference is semantic at best, but a
+warning is raised if future investments are included in the existing
+infrastructure files in the situation where the initial model timeperiod is
+altered.
+
+State Parameters
+----------------
+Some simulation models require that state is passed between years, for example
+reservoir level in the water-supply model.
+These are treated as self-dependencies with a temporal offset. For example,
+the sector model depends on the result of running the model for a previous
+timeperiod.
+
+Key Functions
+=============
+This class performs several key functions which ease the integration of sector
+models into the system-of-systems framework.
+
+The user must implement the various abstract functions throughout the class to
+provide an interface to the sector model, which can be called upon by the
+framework. From the model's perspective, :class:`SectorModel` provides a bridge
+from the sector-specific problem representation to the general representation
+which allows reasoning across infrastructure systems.
+
+The key functions include
+
+* converting input/outputs to/from geographies/temporal resolutions
+* converting control vectors from the decision layer of the framework, to
+  asset Interventions specific to the sector model
+* returning scaler/vector values to the framework to enable measurements of
+  performance, particularly for the purposes of optimisation and rule-based
+  approaches
 
 
 """
@@ -11,8 +152,9 @@ import importlib
 import logging
 import os
 from abc import ABC, abstractmethod
-import numpy as np
 from enum import Enum
+
+import numpy as np
 from scipy.optimize import minimize
 from smif.inputs import ModelInputs
 from smif.outputs import ModelOutputs
@@ -25,16 +167,12 @@ __license__ = "mit"
 class SectorModel(ABC):
     """A representation of the sector model with inputs and outputs
 
-    Attributes
-    ==========
-    model : :class:`smif.abstract.AbstractModelWrapper`
-        An instance of a wrapped simulation model
-
     """
     def __init__(self):
         self._model_name = None
-        self._assets = {}
         self._schema = None
+
+        self.interventions = []
 
         self._inputs = ModelInputs({})
         self._outputs = ModelOutputs({})
@@ -121,30 +259,15 @@ class SectorModel(ABC):
         self._outputs = ModelOutputs(value)
 
     @property
-    def asset_names(self):
-        """The names of the assets
+    def intervention_names(self):
+        """The names of the interventions
 
         Returns
         =======
         list
-            A list of the names of the assets
+            A list of the names of the interventions
         """
-        return [asset['name'] for asset in self._assets]
-
-    @property
-    def assets(self):
-        """The collection of assets, with all attributes
-
-        Returns
-        =======
-        list
-            The collection of assets
-        """
-        return self._assets
-
-    @assets.setter
-    def assets(self, value):
-        self._assets = value
+        return [intervention['name'] for intervention in self.interventions]
 
     def constraints(self, parameters):
         """Express constraints for the optimisation
@@ -192,7 +315,10 @@ class SectorModel(ABC):
                        constraints=cons)
 
         # results = {x: y for x, y in zip(v_names, res.x)}
-        results = self.simulate(res.x)
+        # TODO wire in state and data
+        state = []
+        data = []
+        results = self.simulate(res.x, state, data)
 
         if res.success:
             self.logger.debug("Solver exited successfully with obj: %s", res.fun)
@@ -206,7 +332,10 @@ class SectorModel(ABC):
         return results
 
     def _simulate_optimised(self, decision_variables):
-        results = self.simulate(decision_variables)
+        # TODO wire in state and data
+        state = []
+        data = []
+        results = self.simulate(decision_variables, state, data)
         obj = self.extract_obj(results)
         return obj
 
@@ -266,7 +395,10 @@ class SectorModel(ABC):
 
             # Run the simulation
             decision = decisions[:, index]
-            results.append(self.simulate(decision))
+            # TODO wire in state and data
+            state = []
+            data = []
+            results.append(self.simulate(decision, state, data))
         return results
 
     def _optimise_over_timesteps(self, decisions):
@@ -361,6 +493,11 @@ class SectorModel(ABC):
 class SectorModelBuilder(object):
     """Build the components that make up a sectormodel from the configuration
 
+    Parameters
+    ----------
+    name : str
+        The name of the sector model
+
     """
 
     def __init__(self, name):
@@ -408,11 +545,30 @@ class SectorModelBuilder(object):
 
     def add_assets(self, asset_list):
         """Add assets to the sector model
+
+        Parameters
+        ----------
+        asset_list : list
+            A list of dicts of assets
         """
         msg = "Sector model must be loaded before adding assets"
         assert self._sector_model is not None, msg
 
         self._sector_model.assets = asset_list
+
+    def add_interventions(self, intervention_list):
+        """Add interventions to the sector model
+
+        Parameters
+        ----------
+        intervention_list : list
+            A list of dicts of interventions
+
+        """
+        msg = "Sector model must be loaded before adding interventions"
+        assert self._sector_model is not None, msg
+
+        self._sector_model.interventions = intervention_list
 
     def validate(self):
         """Check and/or assert that the sector model is correctly set up

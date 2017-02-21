@@ -347,7 +347,7 @@ def feature_vfa_model(assets, availability_constraint, asset_costs,
 def formulate_model(asset_register, availability_constraint,
                     feature_coefficients, asset_features):
 
-    assets = [asset.asset_type for asset in asset_register]
+    assets = [asset.name for asset in asset_register]
     costs = [asset.data['capital cost']['value'] for asset in asset_register]
     asset_costs = dict(zip(assets, costs))
 

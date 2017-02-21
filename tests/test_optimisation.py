@@ -1,7 +1,7 @@
 """Tests the definition and solution of the planning problem optimisation
 """
 
-from smif.asset import Asset, AssetRegister
+from smif.intervention import Intervention, InterventionRegister
 from smif.optimisation import (feature_vfa_model, formulate_model,
                                linear_vfa_model, solve_model, state_vfa_model)
 
@@ -120,7 +120,7 @@ def test_features_vfa_model():
 
 
 def get_asset_one():
-    asset_type = 'asset_one'
+    name = 'asset_one'
     data = {
         'sector': 'water_supply',
         'capacity': {
@@ -128,13 +128,14 @@ def get_asset_one():
             'value': 5},
         'capital cost': {
             'units': '£',
-            'value': 10e9}
+            'value': 10e9},
+        'location': 'oxford'
         }
-    return Asset(asset_type, data)
+    return Intervention(name=name, data=data)
 
 
 def get_asset_two():
-    asset_type = 'asset_two'
+    name = 'asset_two'
     data = {
         'sector': 'water_supply',
         'capacity': {
@@ -142,17 +143,18 @@ def get_asset_two():
             'value': 4.5},
         'capital cost': {
             'units': '£',
-            'value': 12e9}
+            'value': 12e9},
+        'location': 'oxford'
         }
-    return Asset(asset_type, data)
+    return Intervention(name=name, data=data)
 
 
 def test_passing_asset_register_to_model():
-    """Tests passing a `smif.asset.AssetRegister` to formulate the model
+    """Tests passing a `smif.asset.InterventionRegister` to formulate the model
     """
     asset_one = get_asset_one()
     asset_two = get_asset_two()
-    register = AssetRegister()
+    register = InterventionRegister()
     register.register(asset_one)
     register.register(asset_two)
 

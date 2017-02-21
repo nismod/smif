@@ -23,18 +23,21 @@ class SectorModelReader(object):
         The root path of model config/data to use
 
     """
-    def __init__(self, model_name, model_path, model_classname,
-                 model_config_dir):
-        self.model_name = model_name
-        self.model_path = model_path
-        self.model_classname = model_classname
-        self.model_config_dir = model_config_dir
+    def __init__(self, initial_config):
+        self.model_name = initial_config["model_name"]
+        self.model_path = initial_config["model_path"]
+        self.model_classname = initial_config["model_classname"]
+        self.model_config_dir = initial_config["model_config_dir"]
+        self.initial_conditions_paths = initial_config["initial_conditions"]
+        self.interventions_paths = initial_config["interventions"]
 
         self.inputs = None
         self.outputs = None
         self.time_intervals = None
         self.regions = None
-        self.asset_types = None
+
+        self.initial_conditions = None
+        self.interventions = None
 
     def load(self):
         """Load and check all config
@@ -43,6 +46,8 @@ class SectorModelReader(object):
         self.outputs = self._load_outputs()
         self.time_intervals = self._load_time_intervals()
         self.regions = self._load_regions()
+        self.initial_conditions = self._load_initial_conditions()
+        self.interventions = self._load_interventions()
 
     @property
     def data(self):
@@ -55,7 +60,9 @@ class SectorModelReader(object):
             "inputs": self.inputs,
             "outputs": self.outputs,
             "time_intervals": self.time_intervals,
-            "regions": self.regions
+            "regions": self.regions,
+            "initial_conditions": self.initial_conditions,
+            "interventions": self.interventions
         }
 
     def _load_inputs(self):
@@ -81,6 +88,37 @@ class SectorModelReader(object):
 
         return ConfigParser(path).data
 
+    def _load_initial_conditions(self):
+        """Inital conditions are located in yaml files
+        specified in sector model blocks in the sos model config
+        """
+        data = []
+
+        paths = self.initial_conditions_paths
+        if len(paths) == 0:
+            msg = "No inital_conditions config files provided for {} model"
+            raise FileNotFoundError(msg.format(self.model_name))
+        else:
+            for path in paths:
+                new_data = ConfigParser(path).data
+                data.extend(new_data)
+        return data
+
+    def _load_interventions(self):
+        """Interventions are located in yaml files
+        specified in sector model blocks in the sos model config
+        """
+        data = []
+        paths = self.interventions_paths
+        if len(paths) == 0:
+            msg = "No interventions config files provided for {} model"
+            raise FileNotFoundError(msg.format(self.model_name))
+        else:
+            for path in paths:
+                new_data = ConfigParser(path).data
+                data.extend(new_data)
+        return data
+
     def _load_time_intervals(self):
         """Within-year time intervals are specified in ``data/<sectormodel>/time_intervals.yaml``
 
@@ -92,8 +130,14 @@ class SectorModelReader(object):
         - end (period since beginning of year)
         - id (label to use when passing between integration layer and sector model)
 
-        use ISO 8601 duration format to specify periods = P[n]Y[n]M[n]DT[n]H[n]M[n]S
-        - https://en.wikipedia.org/wiki/ISO_8601#Durations
+        use ISO 8601[1]_ duration format to specify periods::
+
+            P[n]Y[n]M[n]DT[n]H[n]M[n]S
+
+        References
+        ----------
+        .. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
+
         """
         path = os.path.join(self.model_config_dir, 'time_intervals.yaml')
 
