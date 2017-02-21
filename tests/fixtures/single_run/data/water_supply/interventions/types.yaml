@@ -3,7 +3,7 @@
 #   for every asset type
 # - currently build_date and location are the only additional attributes that
 # are needed to define an instance of any asset
-- type: small_pumping_station
+- name: small_pumping_station
   location: Oxford
   capacity:
     value: 50
@@ -17,7 +17,8 @@
   capital_cost:
     value: 5
     units: million £
-- type: large_pumping_station
+- name: large_pumping_station
+  location: Oxford
   capacity:
     value: 500
     units: ML/day
@@ -30,7 +31,8 @@
   capital_cost:
     value: 15
     units: million £
-- type: major_road_segment
+- name: M40 toll
+  location: Oxford
   capacity:
     value: 2
     units: lanes

@@ -97,14 +97,10 @@ class SectorModelReader(object):
         data = []
 
         paths = self.initial_conditions_paths
-        if len(paths) == 0:
-            msg = "No inital_conditions config files provided for {} model"
-            raise FileNotFoundError(msg.format(self.model_name))
-        else:
-            for path in paths:
-                self.logger.debug("Loading initial conditions from {}".format(path))
-                new_data = ConfigParser(path).data
-                data.extend(new_data)
+        for path in paths:
+            self.logger.debug("Loading initial conditions from {}".format(path))
+            new_data = ConfigParser(path).data
+            data.extend(new_data)
         return data
 
     def _load_interventions(self):
@@ -113,14 +109,10 @@ class SectorModelReader(object):
         """
         data = []
         paths = self.interventions_paths
-        if len(paths) == 0:
-            msg = "No interventions config files provided for {} model"
-            raise FileNotFoundError(msg.format(self.model_name))
-        else:
-            for path in paths:
-                self.logger.debug("Loading interventions from {}".format(path))
-                new_data = ConfigParser(path).data
-                data.extend(new_data)
+        for path in paths:
+            self.logger.debug("Loading interventions from {}".format(path))
+            new_data = ConfigParser(path).data
+            data.extend(new_data)
         return data
 
     def _load_time_intervals(self):

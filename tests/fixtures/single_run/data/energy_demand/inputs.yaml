@@ -1,0 +1,5 @@
+dependencies:
+- name: population
+  spatial_resolution: national
+  temporal_resolution: annual
+  from_model: scenario

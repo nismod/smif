@@ -167,6 +167,7 @@ def validate_config(args):
 
         except ValueError as error:
             LOGGER.error("The model configuration is invalid: %s", error)
+            exit(-1)
         else:
             LOGGER.info("The model configuration is valid")
 
