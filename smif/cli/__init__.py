@@ -170,6 +170,13 @@ def validate_config(args):
         else:
             LOGGER.info("The model configuration is valid")
 
+def path_to_abs(relative_root, path):
+    """Return an absolute path, given a possibly-relative path
+    and the relative root"""
+    if os.path.isabs(path):
+        return path
+    else:
+        return os.path.join(relative_root, path)
 
 def read_sector_model_data_from_config(config_basepath, config):
     """Read sector-specific data from the sector config folders
@@ -178,23 +185,26 @@ def read_sector_model_data_from_config(config_basepath, config):
 
     for model_config in config:
         # read from dir relative to main model config file
-        if os.path.isabs(model_config['config_dir']):
-            config_dir = model_config['config_dir']
-        else:
-            config_dir = os.path.join(config_basepath, model_config['config_dir'])
-
-        if os.path.isabs(model_config['path']):
-            path = model_config['path']
-        else:
-            path = os.path.join(config_basepath, model_config['path'])
+        config_dir = path_to_abs(config_basepath, model_config['config_dir'])
+        path = path_to_abs(config_basepath, model_config['path'])
+        initial_conditions_paths = list(map(
+            lambda path: path_to_abs(config_basepath, path),
+            model_config['initial_conditions']
+        ))
+        interventions_paths = list(map(
+            lambda path: path_to_abs(config_basepath, path),
+            model_config['interventions']
+        ))
 
         # read each sector model config+data
-        reader = SectorModelReader(
-            model_config['name'],
-            path,
-            model_config['classname'],
-            config_dir
-        )
+        reader = SectorModelReader({
+            "model_name": model_config['name'],
+            "model_path": path,
+            "model_classname": model_config['classname'],
+            "model_config_dir": config_dir,
+            "initial_conditions": initial_conditions_paths,
+            "interventions": interventions_paths
+        })
         try:
             reader.load()
             data.append(reader.data)

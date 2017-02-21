@@ -6,7 +6,7 @@
     "items": {
         "type": "object",
         "properties": {
-            "asset_type": {
+            "name": {
                 "type": "string"
             },
             "capital_cost": {
@@ -19,7 +19,7 @@
                 "$ref": "#/definitions/measured_value"
             }
         },
-        "required": ["asset_type", "capital_cost", "operational_lifetime", "economic_lifetime"]
+        "required": ["name", "capital_cost", "operational_lifetime", "economic_lifetime"]
     },
     "definitions": {
         "measured_value": {

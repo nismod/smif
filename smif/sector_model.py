@@ -70,7 +70,7 @@ The set of units used to define Inputs, Outputs and Interventions.
 
 Interventions
 -------------
-An Intervention is an investment which has a name (or asset_type),
+An Intervention is an investment which has a name (or name),
 other attributes (such as capital cost and economic lifetime), and location,
 but no build date.
 
@@ -170,10 +170,9 @@ class SectorModel(ABC):
     """
     def __init__(self):
         self._model_name = None
-        self._assets = {}
         self._schema = None
 
-        self._interventions = {}
+        self.interventions = []
 
         self._inputs = ModelInputs({})
         self._outputs = ModelOutputs({})
@@ -260,30 +259,15 @@ class SectorModel(ABC):
         self._outputs = ModelOutputs(value)
 
     @property
-    def asset_names(self):
-        """The names of the assets
+    def intervention_names(self):
+        """The names of the interventions
 
         Returns
         =======
         list
-            A list of the names of the assets
+            A list of the names of the interventions
         """
-        return [asset['name'] for asset in self._assets]
-
-    @property
-    def assets(self):
-        """The collection of assets, with all attributes
-
-        Returns
-        =======
-        list
-            The collection of assets
-        """
-        return self._assets
-
-    @assets.setter
-    def assets(self, value):
-        self._assets = value
+        return [intervention['name'] for intervention in self.interventions]
 
     def constraints(self, parameters):
         """Express constraints for the optimisation
@@ -331,7 +315,10 @@ class SectorModel(ABC):
                        constraints=cons)
 
         # results = {x: y for x, y in zip(v_names, res.x)}
-        results = self.simulate(res.x)
+        # TODO wire in state and data
+        state = []
+        data = []
+        results = self.simulate(res.x, state, data)
 
         if res.success:
             self.logger.debug("Solver exited successfully with obj: %s", res.fun)
@@ -345,7 +332,10 @@ class SectorModel(ABC):
         return results
 
     def _simulate_optimised(self, decision_variables):
-        results = self.simulate(decision_variables)
+        # TODO wire in state and data
+        state = []
+        data = []
+        results = self.simulate(decision_variables, state, data)
         obj = self.extract_obj(results)
         return obj
 
@@ -405,7 +395,10 @@ class SectorModel(ABC):
 
             # Run the simulation
             decision = decisions[:, index]
-            results.append(self.simulate(decision))
+            # TODO wire in state and data
+            state = []
+            data = []
+            results.append(self.simulate(decision, state, data))
         return results
 
     def _optimise_over_timesteps(self, decisions):

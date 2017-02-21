@@ -23,19 +23,20 @@ class SectorModelReader(object):
         The root path of model config/data to use
 
     """
-    def __init__(self, model_name, model_path, model_classname,
-                 model_config_dir):
-        self.model_name = model_name
-        self.model_path = model_path
-        self.model_classname = model_classname
-        self.model_config_dir = model_config_dir
+    def __init__(self, initial_config):
+        self.model_name = initial_config["model_name"]
+        self.model_path = initial_config["model_path"]
+        self.model_classname = initial_config["model_classname"]
+        self.model_config_dir = initial_config["model_config_dir"]
+        self.initial_conditions_paths = initial_config["initial_conditions"]
+        self.interventions_paths = initial_config["interventions"]
 
         self.inputs = None
         self.outputs = None
         self.time_intervals = None
         self.regions = None
 
-        self.assets = None
+        self.initial_conditions = None
         self.interventions = None
 
     def load(self):
@@ -45,7 +46,7 @@ class SectorModelReader(object):
         self.outputs = self._load_outputs()
         self.time_intervals = self._load_time_intervals()
         self.regions = self._load_regions()
-        self.assets = self._load_assets()
+        self.initial_conditions = self._load_initial_conditions()
         self.interventions = self._load_interventions()
 
     @property
@@ -60,7 +61,7 @@ class SectorModelReader(object):
             "outputs": self.outputs,
             "time_intervals": self.time_intervals,
             "regions": self.regions,
-            "assets": self.assets,
+            "initial_conditions": self.initial_conditions,
             "interventions": self.interventions
         }
 
@@ -87,14 +88,15 @@ class SectorModelReader(object):
 
         return ConfigParser(path).data
 
-    def _load_assets(self):
-        """Assets are located in ``data/<sectormodel>/assets/*.yaml`` files
+    def _load_initial_conditions(self):
+        """Inital conditions are located in yaml files
+        specified in sector model blocks in the sos model config
         """
         data = []
 
-        paths = glob("{}/assets/*.yaml".format(self.model_config_dir))
+        paths = self.initial_conditions_paths
         if len(paths) == 0:
-            msg = "Assets config file not found for {} model"
+            msg = "No inital_conditions config files provided for {} model"
             raise FileNotFoundError(msg.format(self.model_name))
         else:
             for path in paths:
@@ -103,12 +105,13 @@ class SectorModelReader(object):
         return data
 
     def _load_interventions(self):
-        """Interventions are in ``data/<sectormodel>/interventions/*.yaml`` files
+        """Interventions are located in yaml files
+        specified in sector model blocks in the sos model config
         """
         data = []
-        paths = glob("{}/interventions/*.yaml".format(self.model_config_dir))
+        paths = self.interventions_paths
         if len(paths) == 0:
-            msg = "Interventions config file not found for {} model"
+            msg = "No interventions config files provided for {} model"
             raise FileNotFoundError(msg.format(self.model_name))
         else:
             for path in paths:

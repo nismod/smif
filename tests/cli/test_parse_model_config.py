@@ -35,7 +35,13 @@ class TestSosModelReader():
                 "name": "water_supply",
                 "path": "../models/water_supply/__init__.py",
                 "classname": "WaterSupplySectorModel",
-                "config_dir": "../data/water_supply"
+                "config_dir": "../data/water_supply",
+                "initial_conditions": [
+                    "../data/water_supply/initial_conditions/assets_1.yaml"
+                ],
+                "interventions": [
+                    "../data/water_supply/interventions/water_asset_abc.yaml"
+                ]
             }
         ]
 
@@ -70,24 +76,3 @@ class TestSosModelReader():
 
         with raises(ValueError):
             reader.load()
-
-    def test_assets(self, setup_project_folder):
-
-        reader = self._get_reader(setup_project_folder)
-        reader.load()
-
-        expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
-        actual = [asset['asset_type'] for asset in reader.asset_types]
-        assert actual == expected
-
-    def test_assets_two_asset_files(self, setup_project_folder,
-                                    setup_config_file_two,
-                                    setup_water_asset_d):
-
-        reader = self._get_reader(setup_project_folder)
-        reader.load()
-
-        expected = ['water_asset_a', 'water_asset_b',
-                    'water_asset_c', 'water_asset_d']
-        actual = [asset['asset_type'] for asset in reader.asset_types]
-        assert actual == expected

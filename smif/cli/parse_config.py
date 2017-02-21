@@ -103,7 +103,7 @@ class ConfigParser:
                                            "assets_schema.json")
 
         # except for some keys which are allowed simple values,
-        simple_keys = ["asset_type", "sector", "location", "build_date"]
+        simple_keys = ["name", "sector", "location", "build_date"]
         # expect each attribute to be of the form {value: x, units: y}
         for asset in self.data:
             for key, value in asset.items():
@@ -114,7 +114,7 @@ class ConfigParser:
                     fmt = "{0}.{1} was {2} but should have specified units, " + \
                           "e.g. {{'value': {2}, 'units': 'm'}}"
 
-                    msg = fmt.format(asset["asset_type"], key, value)
+                    msg = fmt.format(asset["name"], key, value)
                     raise ValueError(msg)
 
     def validate_as_interventions(self):
@@ -124,7 +124,7 @@ class ConfigParser:
                                            "intervention_schema.json")
 
         # except for some keys which are allowed simple values,
-        simple_keys = ["asset_type", "sector", "location"]
+        simple_keys = ["name", "sector", "location"]
         # expect each attribute to be of the form {value: x, units: y}
         for asset in self.data:
             for key, value in asset.items():
@@ -135,7 +135,7 @@ class ConfigParser:
                     fmt = "{0}.{1} was {2} but should have specified units, " + \
                           "e.g. {{'value': {2}, 'units': 'm'}}"
 
-                    msg = fmt.format(asset["asset_type"], key, value)
+                    msg = fmt.format(asset["name"], key, value)
                     raise ValueError(msg)
 
     def validate_as_pre_specified_planning(self):

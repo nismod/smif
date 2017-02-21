@@ -21,10 +21,10 @@ class Planning:
             self.build_instructions = []
 
     @property
-    def asset_types(self):
+    def names(self):
         """Returns the set of assets defined in the planning commands
         """
-        return {plan['asset_type'] for plan in self.build_instructions}
+        return {plan['name'] for plan in self.build_instructions}
 
     @property
     def timeperiods(self):

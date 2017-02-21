@@ -58,6 +58,11 @@ class TestSosModelBuilder():
 
         model = WaterSupplySectorModel()
         model.name = 'water_supply'
+        model.interventions = [
+            {"name": "water_asset_a", "location": "oxford"},
+            {"name": "water_asset_b", "location": "oxford"},
+            {"name": "water_asset_c", "location": "oxford"}
+        ]
 
         builder.add_model(model)
         assert isinstance(builder.sos_model.model_list['water_supply'],
@@ -68,7 +73,11 @@ class TestSosModelBuilder():
 
         assert sos_model.timesteps == [2010, 2011, 2012]
         assert sos_model.sector_models == ['water_supply']
-        # TODO check if there is a requirement to report all assets in system
+        assert sos_model.intervention_names == [
+            "water_asset_a",
+            "water_asset_b",
+            "water_asset_c"
+        ]
 
     def test_build_api(self):
         builder = SosModelBuilder()

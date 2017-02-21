@@ -31,9 +31,9 @@ This module needs to support:
 
 *Terminology*
 
-asset_type:
+name:
     A category of infrastructure intervention (e.g. power station, policy)
-    which holds default attribute/value pairs. These asset_types can be
+    which holds default attribute/value pairs. These names can be
     inherited by asset/intervention definitions to reduce the degree of
     duplicate data entry.
 asset:
@@ -41,9 +41,9 @@ asset:
     decisions which will take place, or has taken place.
     Historical interventions are defined as initial conditions, while
     future interventions are listed as pre-specified planning.
-    Both historical and future interventions can make use of asset_types to
+    Both historical and future interventions can make use of names to
     ease data entry.  Assets must have ``location``, ``build_date``
-    and ``asset_type`` attributes defined.
+    and ``name`` attributes defined.
 intervention:
     A potential asset or investment.
     Interventions are defined in the same way as for assets,
@@ -61,7 +61,7 @@ class InterventionContainer(object):
 
     Parameters
     ----------
-    asset_type : str, default=""
+    name : str, default=""
         The type of asset, which should be unique across all sectors
     data : dict, default=None
         The dictionary of asset attributes
@@ -69,21 +69,21 @@ class InterventionContainer(object):
         The sector associated with the asset
 
     """
-    def __init__(self, asset_type="", data=None, sector=""):
+    def __init__(self, name="", data=None, sector=""):
 
-        assert isinstance(asset_type, str)
+        assert isinstance(name, str)
 
         if data is None:
             data = {}
 
-        if asset_type == "" and "asset_type" in data:
-            # allow data to set asset_type if none given
-            asset_type = data["asset_type"]
+        if name == "" and "name" in data:
+            # allow data to set name if none given
+            name = data["name"]
         else:
-            # otherwise rely on asset_type arg
-            data["asset_type"] = asset_type
+            # otherwise rely on name arg
+            data["name"] = name
 
-        self.asset_type = asset_type
+        self.name = name
         self.data = data
 
         if sector == "" and "sector" in data:
@@ -136,7 +136,7 @@ class InterventionContainer(object):
 
     def __repr__(self):
         data_str = Asset.deterministic_dict_to_str(self.data)
-        return "Asset(\"{}\", {})".format(self.asset_type, data_str)
+        return "Asset(\"{}\", {})".format(self.name, data_str)
 
     def __str__(self):
         return Asset.deterministic_dict_to_str(self.data)
@@ -171,7 +171,7 @@ class InterventionContainer(object):
 class Intervention(InterventionContainer):
     """An potential investment to send to the logic-layer
 
-    An Intervention, is an investment which has a name (or asset_type),
+    An Intervention, is an investment which has a name (or name),
     other attributes (such as capital cost and economic lifetime),
     and location, but no build date.
 
@@ -182,7 +182,7 @@ class Intervention(InterventionContainer):
 
     Parameters
     ==========
-    asset_type : str, default=""
+    name : str, default=""
         The type of asset, which should be unique across all sectors
     data : dict, default=None
         The dictionary of asset attributes
@@ -194,7 +194,7 @@ class Intervention(InterventionContainer):
         """Ensures location is present and no build date is specified
 
         """
-        return (['asset_type', 'location'], ['build_date'])
+        return (['name', 'location'], ['build_date'])
 
     @property
     def location(self):
@@ -216,7 +216,7 @@ class Asset(Intervention):
 
     Parameters
     ----------
-    asset_type : str, default=""
+    name : str, default=""
         The type of asset, which should be unique across all sectors
     data : dict, default=None
         The dictionary of asset attributes
@@ -228,7 +228,7 @@ class Asset(Intervention):
         """Ensures location is present and no build date is specified
 
         """
-        return (['asset_type', 'location', 'build_date'], [])
+        return (['name', 'location', 'build_date'], [])
 
     @property
     def build_date(self):
@@ -254,16 +254,16 @@ class Register(object):
     """
     def __init__(self):
         self.assets = {}
-        self._asset_types = []
+        self._names = []
         self._attribute_keys = []
         self._attribute_possible_values = []
 
     def register(self, asset):
         """Adds a new asset to the collection
         """
-        asset_type = asset.data['asset_type']
-        self.assets[asset_type] = asset
-        self._asset_types.append(asset.data['asset_type'])
+        name = asset.data['name']
+        self.assets[name] = asset
+        self._names.append(asset.data['name'])
 
         for key in asset.data.keys():
             self._attribute_keys.append(key)
@@ -287,7 +287,7 @@ class AssetRegister(Register):
         super().register(asset)
 
     def __len__(self):
-        return len(self._asset_types)
+        return len(self._names)
 
 
 class InterventionRegister(Register):
@@ -352,7 +352,7 @@ class InterventionRegister(Register):
 
         """
         hash_list = []
-        for existing_asset in self._asset_types:
+        for existing_asset in self._names:
             hash_list.append(self.numeric_to_intervention(existing_asset).sha1sum())
         if intervention.sha1sum() in hash_list:
             return False
@@ -385,7 +385,7 @@ class InterventionRegister(Register):
                 value_idx = self.attribute_value_index(attr_idx, value)
                 numeric_asset[attr_idx] = value_idx
 
-            self._asset_types.append(numeric_asset)
+            self._names.append(numeric_asset)
 
     def _register_attribute(self, key, value):
         """Add a new attribute and its possible value to the register (or, if
@@ -430,8 +430,8 @@ class InterventionRegister(Register):
         Given a (very minimal) possible state of a register:
 
         >>> register = AssetRegister()
-        >>> register._asset_types = [[1,1,1]]
-        >>> register._attribute_keys = ["asset_type", "capacity", "sector"]
+        >>> register._names = [[1,1,1]]
+        >>> register._attribute_keys = ["name", "capacity", "sector"]
         >>> register._attribute_possible_values = [
         ...     [None, "water_treatment_plant"],
         ...     [None, {"value": 5, "units": "ML/day"}],
@@ -442,7 +442,7 @@ class InterventionRegister(Register):
 
         >>> asset = register.numeric_to_asset([1,1,1])
         >>> print(asset)
-        Asset("water_treatment_plant", {"asset_type": "water_treatment_plant",
+        Asset("water_treatment_plant", {"name": "water_treatment_plant",
         "capacity": {"units": "ML/day", "value": 5}, "sector": "water_supply"})
 
         """
@@ -460,10 +460,10 @@ class InterventionRegister(Register):
     def __iter__(self):
         """Iterate over the list of asset types held in the register
         """
-        for asset in self._asset_types:
+        for asset in self._names:
             yield self.numeric_to_intervention(asset)
 
     def __len__(self):
         """Returns the number of asset types stored in the register
         """
-        return len(self._asset_types)
+        return len(self._names)

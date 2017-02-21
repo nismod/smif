@@ -91,7 +91,7 @@ class WaterSupplySectorModel(SectorModel):
     system.
     """
 
-    def simulate(self, decision_variables):
+    def simulate(self, decision_variables, state, data):
         """
 
         Arguments
@@ -109,7 +109,7 @@ class WaterSupplySectorModel(SectorModel):
         # simulate (wrapping toy model)
         instance = ExampleWaterSupplySimulationModelWithAsset(raininess,
                                                               number_of_treatment_plants)
-        results = instance.simulate()
+        results = instance.simulate(decision_variables, state, data)
 
         return results
 
@@ -137,7 +137,7 @@ class DynamicWaterSupplySectorModel(SectorModel):
     system.
     """
 
-    def simulate(self, decision_variables):
+    def simulate(self, decision_variables, state, data):
         """
 
         Arguments
@@ -213,7 +213,7 @@ class WaterSupplySectorModelWithAssets(SectorModel):
     def objective_function(self):
         return self.model.cost
 
-    def simulate(self):
+    def simulate(self, decisions, state, data):
         self.model.number_of_treatment_plants = \
             self.state['assets']['treatment plant']
         self.results = self.model.simulate()
@@ -273,7 +273,7 @@ class ExampleWaterSupplySimulationModelWithAsset(ExampleWaterSupplySimulationMod
         self.cost = None
         super().__init__(raininess)
 
-    def simulate(self):
+    def simulate(self, decisions, state, data):
         """Runs the water supply model
 
         Only 1 unit of water is produced per treatment plant,

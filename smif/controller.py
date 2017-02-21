@@ -7,7 +7,7 @@ import logging
 
 import networkx
 import numpy as np
-from smif.asset import Asset, AssetRegister, Intervention, InterventionRegister
+from smif.intervention import Intervention, InterventionRegister
 from smif.decision import Planning
 from smif.sector_model import SectorModelBuilder, SectorModelMode
 
@@ -71,8 +71,7 @@ class SosModel(object):
     def __init__(self):
         self.model_list = {}
         self._timesteps = []
-        self.asset_types = []
-        self.assets = AssetRegister()
+        self.initial_conditions = []
         self.interventions = InterventionRegister()
         self.planning = None
 
@@ -208,7 +207,9 @@ class SosModel(object):
         # Run a simulation for a single year
         # TODO fix assumption of no decision vars
         decision_variables = np.zeros(2)
-        sector_model.simulate(decision_variables)
+        state = {}
+        data = {}
+        sector_model.simulate(decision_variables, state, data)
 
     @property
     def timesteps(self):
@@ -222,10 +223,10 @@ class SosModel(object):
         return sorted(self._timesteps)
 
     @property
-    def asset_type_names(self):
+    def intervention_names(self):
         """Names (id-like keys) of all known asset type
         """
-        return [asset_type['asset_type'] for asset_type in self.asset_types]
+        return [intervention.name for intervention in self.interventions]
 
     @timesteps.setter
     def timesteps(self, value):
@@ -258,7 +259,9 @@ class SosModel(object):
 
             # Run the simulation
             decision = decisions[index]
-            results.append(model.simulate(decision))
+            state = {}
+            data = {}
+            results.append(model.simulate(decision, state, data))
         return results
 
 
@@ -294,14 +297,10 @@ class SosModelBuilder(object):
         model_list = config_data['sector_model_data']
 
         self.add_timesteps(config_data['timesteps'])
-        self.load_models(model_list,
-                         config_data['assets'])
-        self.add_asset_types(config_data['asset_types'])
-        self.add_assets(config_data['assets'])
+        self.load_models(model_list)
         self.add_planning(config_data['planning'])
 
         models = self.sos_model.model_list.values()
-        self.add_interventions(models)
 
     def add_timesteps(self, timesteps):
         """Set the timesteps of the system-of-systems model
@@ -313,7 +312,7 @@ class SosModelBuilder(object):
         """
         self.sos_model.timesteps = timesteps
 
-    def load_models(self, model_data_list, assets):
+    def load_models(self, model_data_list):
         """Loads the sector models into the system-of-systems model
 
         Parameters
@@ -325,16 +324,15 @@ class SosModelBuilder(object):
 
         """
         for model_data in model_data_list:
-            model = self._build_model(model_data, assets)
+            model = self._build_model(model_data)
             self.add_model(model)
 
     @staticmethod
-    def _build_model(model_data, assets):
+    def _build_model(model_data):
         builder = SectorModelBuilder(model_data['name'])
         builder.load_model(model_data['path'], model_data['classname'])
         builder.add_inputs(model_data['inputs'])
         builder.add_outputs(model_data['outputs'])
-        builder.add_assets(assets)
         builder.add_interventions(model_data['interventions'])
         return builder.finish()
 
@@ -350,6 +348,14 @@ class SosModelBuilder(object):
         self.logger.info("Loading model: %s", model.name)
         self.sos_model.model_list[model.name] = model
 
+        for intervention in model.interventions:
+            intervention_object = Intervention(sector=model.name,
+                                               data=intervention)
+            msg = "Adding {} from {} to SOSModel InterventionRegister"
+            identifier = intervention_object.name
+            self.logger.debug(msg.format(identifier, model.name))
+            self.sos_model.interventions.register(intervention_object)
+
     def add_planning(self, planning):
         """Loads the planning logic into the system of systems model
 
@@ -363,55 +369,17 @@ class SosModelBuilder(object):
             A list of planning instructions
 
         """
-        # TODO think through which parts of this live with sector models
-        # / at the top level
         self.sos_model.planning = Planning(planning)
-
-    def add_asset_types(self, asset_types):
-        """Add the list of asset types to the
-        """
-        self.sos_model.asset_types = asset_types
-
-    def add_assets(self, assets):
-        """Add assets to the :class:`~smif.asset.AssetRegister`
-
-        Parameters
-        ----------
-        assets : list
-            A list of dicts of assets
-
-        """
-        for asset in assets:
-            self.sos_model.assets.register(Asset(data=asset))
-
-    def add_interventions(self, model_list):
-        """Add interventions to the :class:`~smif.asset.InterventionRegister`
-
-        Parameters
-        ----------
-        model_list : list
-            A list of sector model names
-
-        """
-        for model in model_list:
-            interventions = model.interventions
-            for intervention in interventions:
-                intervention_object = Intervention(sector=model.name,
-                                                   data=intervention)
-                msg = "Adding {} from {} to SOSModel InterventionRegister"
-                identifier = intervention_object.asset_type
-                self.logger.debug(msg.format(identifier, model.name))
-                self.sos_model.interventions.register(intervention_object)
 
     def _check_planning_assets_exist(self):
         """Check existence of all the assets in the pre-specifed planning
 
         """
         model = self.sos_model
-        asset_types = model.asset_type_names
-        for planning_asset_type in model.planning.asset_types:
+        names = model.intervention_names
+        for planning_name in model.planning.names:
             msg = "Asset '{}' in planning file not found in assets"
-            assert planning_asset_type in asset_types, msg.format(planning_asset_type)
+            assert planning_name in names, msg.format(planning_name)
 
     def _check_planning_timeperiods_exist(self):
         """Check existence of all the timeperiods in the pre-specified planning

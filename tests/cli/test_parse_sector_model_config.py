@@ -16,8 +16,18 @@ class TestSectorModelReader(object):
         model_path = self._model_path(project_folder)
         model_classname = ''
         config_dir = self._model_config_dir(project_folder)
-        return SectorModelReader(model_name, model_path, model_classname,
-                                 config_dir)
+        return SectorModelReader({
+            "model_name": model_name,
+            "model_path": model_path,
+            "model_classname": model_classname,
+            "model_config_dir": config_dir,
+            "initial_conditions": [
+                os.path.join(config_dir, "initial_conditions/assets_1.yaml")
+            ],
+            "interventions": [
+                os.path.join(config_dir, "interventions/water_asset_abc.yaml")
+            ]
+        })
 
     def test_load(self, setup_project_folder):
         reader = self._reader(setup_project_folder)
@@ -51,3 +61,41 @@ class TestSectorModelReader(object):
             reader._load_regions()
         msg = "regions config file not found for water_supply model"
         assert msg in str(ex.value)
+
+    def test_load_interventions(self, setup_project_folder):
+
+        reader = self._reader(setup_project_folder)
+        reader.load()
+
+        expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
+        actual = [asset['name'] for asset in reader.interventions]
+        assert actual == expected
+
+    def test_load_interventions_two_files(self, setup_project_folder,
+                                          setup_config_file_two,
+                                          setup_water_intervention_d):
+
+        model_name = 'water_supply'
+        model_path = self._model_path(setup_project_folder)
+        model_classname = ''
+        config_dir = self._model_config_dir(setup_project_folder)
+        reader = SectorModelReader({
+            "model_name": model_name,
+            "model_path": model_path,
+            "model_classname": model_classname,
+            "model_config_dir": config_dir,
+            "initial_conditions": [
+                os.path.join(config_dir, "initial_conditions/assets_1.yaml")
+            ],
+            "interventions": [
+                os.path.join(config_dir, "interventions/water_asset_abc.yaml"),
+                os.path.join(config_dir, "interventions/water_asset_d.yaml")
+            ]
+        })
+
+        reader.load()
+
+        expected = ['water_asset_a', 'water_asset_b',
+                    'water_asset_c', 'water_asset_d']
+        actual = [asset['name'] for asset in reader.interventions]
+        assert actual == expected

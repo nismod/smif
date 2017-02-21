@@ -95,7 +95,7 @@ class TestConfigParser(object):
         conf = ConfigParser()
         conf.data = [
             {
-                'asset_type': 'asset',
+                'name': 'asset',
                 'capacity': 3,
                 'operational_lifetime': {
                     'value': 150,

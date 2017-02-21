@@ -27,7 +27,7 @@ class SosModelReader(object):
         self.sector_model_data = None
         self.planning = None
 
-        self.asset_types = None
+        self.names = None
         self.assets = None
 
     def load(self):
@@ -36,7 +36,7 @@ class SosModelReader(object):
         self.config = self._load_sos_config()
         self.timesteps = self._load_timesteps()
         self.sector_model_data = self._load_sector_model_data()
-        self.asset_types = self._load_asset_types()
+        self.names = self._load_names()
         self.assets = self._load_assets()
         self.planning = self._load_planning()
 
@@ -49,7 +49,7 @@ class SosModelReader(object):
             "sector_model_config": self.sector_model_data,
             "planning": self.planning,
             "assets": self.assets,
-            "asset_types": self.asset_types
+            "names": self.names
         }
 
     def _load_sos_config(self):
@@ -114,16 +114,16 @@ class SosModelReader(object):
 
         return assets
 
-    def _load_asset_types(self):
-        asset_types = []
-        if 'asset_types' in self.config:
-            asset_types_relative_paths = self.config['asset_types']
+    def _load_names(self):
+        names = []
+        if 'names' in self.config:
+            names_relative_paths = self.config['names']
 
-            for parser in self._parsers_from_relative_paths(asset_types_relative_paths):
+            for parser in self._parsers_from_relative_paths(names_relative_paths):
                 parser.validate_as_assets()
-                asset_types.extend(parser.data)
+                names.extend(parser.data)
 
-        return asset_types
+        return names
 
     def _parsers_from_relative_paths(self, paths):
         for rel_path in paths:
