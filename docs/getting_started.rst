@@ -35,8 +35,8 @@ particular sector model.  See adding a sector model for more information.::
         /data/<sector_model>/outputs.yaml
         /data/<sector_model>/time_intervals.yaml
         /data/<sector_model>/regions.geojson
-        /data/<sector_model>/interventions/
-        /data/<sector_model>/assets/
+        /data/<sector_model>/interventions.yaml
+        /data/<sector_model>/assets.yaml
 
 The ``/models/<sector_model/`` contains the executable for a sector model,
 as well as a Python file which implements :class:`smif.sector_model.SectorModel`
