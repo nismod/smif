@@ -406,7 +406,7 @@ class SosModelBuilder(object):
 
         for model_name, model in self.sos_model.model_list.items():
             for dep in model.inputs.dependencies:
-                if dep.from_model not in models_available:
+                if dep.from_model not in models_available and dep.from_model != "scenario":
                     # report missing dependency type
                     msg = "Missing dependency: {} depends on {} from {}, " + \
                           "which is not supplied."

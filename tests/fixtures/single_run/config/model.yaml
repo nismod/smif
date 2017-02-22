@@ -14,6 +14,9 @@ sector_models:
     initial_conditions: []
     interventions: []
 timesteps: timesteps.yaml
+scenario_data:
+  - parameter: population
+    file: ../data/scenario/population.yaml
 planning:
   pre_specified:
     use: true

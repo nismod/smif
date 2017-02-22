@@ -56,7 +56,7 @@ LOGGING_CONFIG = {
             'format': '%(asctime)s %(name)-12s: %(levelname)-8s %(message)s'
         },
         'message': {
-            'format': '%(message)s'
+            'format': '\033[1;34m%(levelname)-8s\033[0m %(message)s'
         }
     },
     'handlers': {
@@ -71,7 +71,7 @@ LOGGING_CONFIG = {
         'stream': {
             'class': 'logging.StreamHandler',
             'formatter': 'message',
-            'level': 'INFO'
+            'level': 'DEBUG'
         }
     },
     'root': {
@@ -125,8 +125,19 @@ def run_model(args):
     """Runs the model specified in the args.model argument
 
     """
-    model_config = validate_config(args)
-    controller = Controller(model_config)
+    try:
+        model_config = validate_config(args)
+    except ValueError as error:
+        LOGGER.error("The model configuration is invalid: %s", error)
+        exit(-1)
+    else:
+        LOGGER.info("The model configuration is valid")
+
+    try:
+        controller = Controller(model_config)
+    except AssertionError as error:
+        LOGGER.error(error)
+        exit(-1)
 
     if args.model == 'all':
         LOGGER.info("Running the system of systems model")
@@ -152,24 +163,17 @@ def validate_config(args):
         LOGGER.error("The model configuration file '%s' was not found", config_path)
         exit(-1)
     else:
-        try:
-            # read system-of-systems config
-            reader = SosModelReader(config_path)
-            reader.load()
+        # read system-of-systems config
+        reader = SosModelReader(config_path)
+        reader.load()
 
-            model_config = reader.data
-            config_basepath = os.path.dirname(config_path)
-            # read sector model data+config
-            model_config['sector_model_data'] = \
-                read_sector_model_data_from_config(config_basepath,
-                                                   model_config['sector_model_config'])
-            return model_config
-
-        except ValueError as error:
-            LOGGER.error("The model configuration is invalid: %s", error)
-            exit(-1)
-        else:
-            LOGGER.info("The model configuration is valid")
+        model_config = reader.data
+        config_basepath = os.path.dirname(config_path)
+        # read sector model data+config
+        model_config['sector_model_data'] = \
+            read_sector_model_data_from_config(config_basepath,
+                                                model_config['sector_model_config'])
+        return model_config
 
 def path_to_abs(relative_root, path):
     """Return an absolute path, given a possibly-relative path
