@@ -26,7 +26,7 @@ The ``planning`` folder contains one file for each ::
 The ``data`` folder contains a subfolder for each sector model::
 
         /data/<sector_model_1>
-        /data/<sector_mdoel_2>
+        /data/<sector_model_2>
 
 The ``/data/<sector_model>`` folder contains all the configuration files for a
 particular sector model.  See adding a sector model for more information.::
@@ -75,11 +75,10 @@ The ``model.yaml`` file contains the following::
         assets:
         - assets.yaml
 
-
 System-of-systems Planning Years
 --------------------------------
 
-The ``timesteps.yaml`` contains the following::
+The ``timesteps.yaml`` should contain a list of planning years::
 
         - 2010
         - 2011
@@ -92,6 +91,8 @@ Inputs File
 -----------
 
 The ``inputs.yaml`` file defines the dependencies of one model upon another.
+Enter a list of dependencies, each with four keys, ``name``, 
+``spatial_resolution``, ``temporal_resolution`` and ``from_model``.
 For example, in energy supply::
 
         dependencies: 
@@ -124,4 +125,94 @@ Wrapping a Sector Model
 
 To integrate a sector model into the system-of-systems model, it is necessary
 to write a Python wrapper, 
-which implements :class:`smif.sector_model.SectorModel`.
+which implements :class:`smif.sector_model`.
+
+The key methods which need to be overridden are:
+
+- :py:meth:`smif.sector_model.SectorModel.simulate`
+- :py:meth:`smif.sector_model.SectorModel.get_results`
+- :py:meth:`smif.sector_model.SectorModel.extract_obj`
+
+The path to the location of the ``run.py`` file should be entered in the
+``model.yaml`` file under the ``path`` key 
+(see System-of-Systems Model File above).
+
+Interventions
+~~~~~~~~~~~~~
+
+Define all possible interventions in an ``interventions.yaml`` file.
+For example::
+
+        - name: nuclear_power_station
+          capital_cost:
+            value: 3.5
+            units: £(million)/MW
+          economic_lifetime:
+            value: 30
+            units: years
+          operational_life:
+            value: 40
+            units: years
+          operational_Year:
+            value: 2030
+            units: year
+          capacity:
+            value: 1000
+            units: MW
+          location:
+            value: England
+            units: string
+          power_generation_type:
+            value: 4
+            units: number
+        - name: IOG_gas_terminal_expansion
+          capital_cost:
+            value: 10
+            units: £(million)/mcm
+          economic_lifetime:
+            value: 25
+            units: years
+          operational_life:
+            value: 30
+            units: years
+          operational_Year:
+            value: 2020
+            units: year
+          capacity:
+            value: 10
+            units: mcm
+          location:
+            value: England
+            units: string
+          gas_terminal_number:
+            value: 8
+            units: number
+
+Existing Infrastructure
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Define existing infrasture in an ``initial_conditions.yaml`` file.
+
+Planning
+--------
+
+Pre-Specified Planning
+~~~~~~~~~~~~~~~~~~~~~~
+
+Define a pipeline of interventions in a ``pre-specified.yaml`` file::
+
+        - name: nuclear_power_station
+          build_date: 2017
+          location:
+            lat: 51.745560
+            lon: -1.240528
+
+Rule Based Planning
+~~~~~~~~~~~~~~~~~~~
+
+This feature is not yet implemented
+
+Optimisation
+~~~~~~~~~~~~
+
+This feature is not yet implemented
