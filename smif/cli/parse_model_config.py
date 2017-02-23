@@ -114,8 +114,8 @@ class SosModelReader(object):
                 'year': 2015
             }
         """
-        if self.config['scenario_data']:
-            scenario_data = {}
+        scenario_data = {}
+        if 'scenario_data' in self.config:
             for data_type in self.config['scenario_data']:
                 file_path = self._get_path_from_config(data_type['file'])
                 self.logger.debug("Loading scenario data from %s", file_path)
