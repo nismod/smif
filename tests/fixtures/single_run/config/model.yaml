@@ -3,11 +3,22 @@ sector_models:
     path: ../models/water_supply.py
     classname: WaterSupplySectorModel
     config_dir: ../data/water_supply
+    initial_conditions:
+    - ../data/water_supply/initial_conditions/initial_2015_oxford.yaml
+    interventions:
+    - ../data/water_supply/interventions/types.yaml
   - name: energy_demand
     path: ../models/energy_demand.py
     classname: EDMWrapper
     config_dir: ../data/energy_demand
+    initial_conditions: []
+    interventions: []
 timesteps: timesteps.yaml
+scenario_data:
+  - parameter: population
+    file: ../data/scenario/population.yaml
+  - parameter: raininess
+    file: ../data/scenario/raininess.yaml
 planning:
   pre_specified:
     use: true

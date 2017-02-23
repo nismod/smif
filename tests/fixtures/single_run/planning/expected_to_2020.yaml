@@ -1,4 +1,3 @@
-- name: new_one
-  type: small_pumping_station
+- name: small_pumping_station
   build_date: 2015
   location: "POINT(51.1 -1.7)"

@@ -24,6 +24,7 @@ class SosModelReader(object):
 
         self.config = None
         self.timesteps = None
+        self.scenario_data = None
         self.sector_model_data = None
         self.planning = None
 
@@ -35,6 +36,7 @@ class SosModelReader(object):
         """
         self.config = self._load_sos_config()
         self.timesteps = self._load_timesteps()
+        self.scenario_data = self._load_scenario_data()
         self.sector_model_data = self._load_sector_model_data()
         self.names = self._load_names()
         self.assets = self._load_assets()
@@ -47,6 +49,7 @@ class SosModelReader(object):
         return {
             "timesteps": self.timesteps,
             "sector_model_config": self.sector_model_data,
+            "scenario_data": self.scenario_data,
             "planning": self.planning,
             "assets": self.assets,
             "names": self.names
@@ -65,6 +68,7 @@ class SosModelReader(object):
 
         config_parser = ConfigParser(self.config_file_path)
         config_parser.validate_as_modelrun_config()
+        self.logger.debug(config_parser.data)
 
         return config_parser.data
 
@@ -88,6 +92,38 @@ class SosModelReader(object):
         - SectorModel class name to call
         """
         return self.config['sector_models']
+
+
+    def _load_scenario_data(self):
+        """Load scenario data from list in sos model config
+
+        Working assumptions:
+        - scenario data is list of dicts, each like:
+            {
+                'parameter': 'parameter_name',
+                'file': 'relative file path',
+                'spatial_resolution': 'national'
+                'temporal_resolution': 'annual'
+            }
+        - data in file is list of dicts, each like:
+            {
+                'value': 100,
+                'units': 'kg',
+                # optional, depending on parameter type:
+                'region': 'UK',
+                'year': 2015
+            }
+        """
+        scenario_data = {}
+        if 'scenario_data' in self.config:
+            for data_type in self.config['scenario_data']:
+                file_path = self._get_path_from_config(data_type['file'])
+                self.logger.debug("Loading scenario data from %s", file_path)
+                parser = ConfigParser(file_path)
+                scenario_data[data_type["parameter"]] = parser.data
+
+        return scenario_data
+
 
     def _load_planning(self):
         """Loads the set of build instructions for planning

@@ -1,9 +1,0 @@
-- type: small_pumping_station
-  name: oxford_pump_house
-  location: "Oxford"
-- type: large_pumping_station
-  name: oxford_large_pump_house
-  location: "Oxford"
-- type: major_road_segment
-  name: oxford_cambridge_link
-  location: LINE(50.8 51.2)

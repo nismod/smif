@@ -3,4 +3,8 @@
 from smif.sector_model import SectorModel
 
 class EDMWrapper(SectorModel):
-    pass
+    def simulate(self, decisions, state, data):
+        return []
+
+    def extract_obj(self, results):
+        return 0

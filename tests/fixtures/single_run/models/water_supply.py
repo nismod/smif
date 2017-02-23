@@ -16,7 +16,6 @@ class WaterSupplySectorModel(SectorModel):
     using one of the toy water models below to simulate the water supply
     system.
     """
-
     def simulate(self, decisions, state, data):
         """
 
@@ -32,11 +31,11 @@ class WaterSupplySectorModel(SectorModel):
         """
 
         # unpack inputs
-        raininess = data['raininess']['value']
+        raininess = data['raininess']['UK']['year']['value']
 
         # unpack assets
         ps_types = ["large_pumping_station", "small_pumping_station"]
-        wtps = [asset for asset in self.assets if asset["type"] in ps_types]
+        wtps = [asset for asset in self.assets if asset["name"] in ps_types]
         number_of_treatment_plants = len(wtps)
 
         self.logger.debug(self.assets)

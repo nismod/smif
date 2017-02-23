@@ -1,5 +1,17 @@
 # list of actually installed assets as initial conditions
-# - rely on asset type definition to define data here
-- type: large_pumping_station
-  location: "Oxford"
+# - not currently relying on asset type definition to define data here
+- name: large_pumping_station
+  location: Oxford
+  capacity:
+    value: 500
+    units: ML/day
+  operational_lifetime:
+    value: 100
+    units: years
+  economic_lifetime:
+    value: 50
+    units: years
+  capital_cost:
+    value: 15
+    units: million £
   build_date: 1975
