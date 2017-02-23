@@ -4,12 +4,13 @@ framework.
 
 """
 import logging
+from enum import Enum
 
 import networkx
 import numpy as np
 from smif.intervention import Intervention, InterventionRegister
 from smif.decision import Planning
-from smif.sector_model import SectorModelBuilder, SectorModelMode
+from smif.sector_model import SectorModelBuilder
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -73,7 +74,8 @@ class SosModel(object):
         self._timesteps = []
         self.initial_conditions = []
         self.interventions = InterventionRegister()
-        self.planning = None
+        self.planning = []
+        self.scenario_data = {}
 
         self.logger = logging.getLogger(__name__)
 
@@ -91,7 +93,6 @@ class SosModel(object):
         Notes
         =====
         # TODO pass in:
-
 
         - decisions, anything from strategy space that can be decided by
           explicit planning or rule-based decisions or the optimiser
@@ -114,16 +115,17 @@ class SosModel(object):
         each timestep of the model run
 
         """
-        mode = self.determine_running_mode
+        mode = self.determine_running_mode()
+        self.logger.debug("Running in %s mode", mode.name)
 
-        if mode == SectorModelMode.static_simulation:
-            self._run_static_sos_model
-        elif mode == SectorModelMode.sequential_simulation:
-            self._run_sequential_sos_model
-        elif mode == SectorModelMode.static_optimisation:
-            self._run_static_optimisation
-        elif mode == SectorModelMode.dynamic_optimisation:
-            self._run_dynamic_optimisation
+        if mode == RunMode.static_simulation:
+            self._run_static_sos_model()
+        elif mode == RunMode.sequential_simulation:
+            self._run_sequential_sos_model()
+        elif mode == RunMode.static_optimisation:
+            self._run_static_optimisation()
+        elif mode == RunMode.dynamic_optimisation:
+            self._run_dynamic_optimisation()
 
     def _run_static_sos_model(self):
         """Runs the system-of-system model for one timeperiod
@@ -136,8 +138,12 @@ class SosModel(object):
 
         timestep = self._timesteps[0]
         for model_name in run_order:
+            logging.debug("Running %s", model_name)
             model = self.model_list[model_name]
-            model.simulate(timestep)
+            decisions = []
+            state = {}
+            data = {}
+            model.simulate(decisions, state, data)
 
     def _run_sequential_sos_model(self):
         """Runs the system-of-system model sequentially
@@ -146,8 +152,17 @@ class SosModel(object):
         run_order = self._get_model_names_in_run_order()
         for timestep in self.timesteps:
             for model_name in run_order:
+                logging.debug("Running %s for %d", model_name, timestep)
                 model = self.model_list[model_name]
-                model.simulate(timestep)
+                decisions = []
+                state = {}
+                data = self._get_scenario_data(model_name, timestep)
+                model.simulate(decisions, state, data)
+
+    def _get_scenario_data(self, model_name, timestep):
+        """Given a model, check required parameters, pick data from scenario
+        for the given timestep"""
+        return self.scenario_data[timestep]
 
     def _run_static_optimisation(self):
         """Runs the system-of-systems model in a static optimisation format
@@ -168,7 +183,7 @@ class SosModel(object):
 
         Returns
         =======
-        :class:`SectorModelMode`
+        :class:`RunMode`
             The mode in which to run the model
         """
 
@@ -176,14 +191,14 @@ class SosModel(object):
 
         if number_of_timesteps > 1:
             # Run a sequential simulation
-            mode = SectorModelMode.sequential_simulation
+            mode = RunMode.sequential_simulation
 
         elif number_of_timesteps == 0:
             raise ValueError("No timesteps have been specified")
 
         else:
             # Run a single simulation
-            mode = SectorModelMode.static_simulation
+            mode = RunMode.static_simulation
 
         return mode
 
@@ -299,8 +314,8 @@ class SosModelBuilder(object):
         self.add_timesteps(config_data['timesteps'])
         self.load_models(model_list)
         self.add_planning(config_data['planning'])
-
-        models = self.sos_model.model_list.values()
+        self.add_scenario_data(config_data['scenario_data'])
+        self.logger.debug(config_data['scenario_data'])
 
     def add_timesteps(self, timesteps):
         """Set the timesteps of the system-of-systems model
@@ -333,6 +348,7 @@ class SosModelBuilder(object):
         builder.load_model(model_data['path'], model_data['classname'])
         builder.add_inputs(model_data['inputs'])
         builder.add_outputs(model_data['outputs'])
+        builder.add_assets(model_data['initial_conditions'])
         builder.add_interventions(model_data['interventions'])
         return builder.finish()
 
@@ -371,6 +387,60 @@ class SosModelBuilder(object):
         """
         self.sos_model.planning = Planning(planning)
 
+    def add_scenario_data(self, data):
+        """Load the scenario data into the system of systems model
+
+        Expect a dictionary, where each key maps a parameter name to a list of
+        data, each observation with:
+        - year
+        - value
+        - units
+        - region (optional, must use a region id from scenario regions)
+        - timestep (optional, must use an id from scenario time intervals)
+
+        Add a dictionary re-rolled for ease of lookup:
+            data[year][param][region][timestep] => {value, units}
+
+        Default region: "UK"
+        Default timestep: "year"
+        """
+        nested = {}
+        for param, observations in data.items():
+            for obs in observations:
+                if "year" not in obs:
+                    raise ValueError("Scenario data item missing year: %s", obs)
+                else:
+                    year = obs["year"]
+                if year not in nested:
+                    nested[year] = {}
+
+                if param not in nested[year]:
+                    nested[year][param] = {}
+
+                if "region" not in obs:
+                    region = "UK"
+                else:
+                    region = obs["region"]
+
+                if region not in nested[year][param]:
+                    nested[year][param][region] = {}
+
+                if "timestep" not in obs:
+                    timestep = "year"
+                else:
+                    timestep = obs["timestep"]
+
+                if timestep in nested[year][param][region]:
+                    raise AssertionError(
+                        "Scenario data item duplicated for year, parameter, region: %s, %s",
+                        obs,
+                        nested[year][param][region][timestep]
+                    )
+                else:
+                    nested[year][param][region][timestep] = obs
+
+        self.sos_model.scenario_data = nested
+
     def _check_planning_assets_exist(self):
         """Check existence of all the assets in the pre-specifed planning
 
@@ -406,11 +476,15 @@ class SosModelBuilder(object):
 
         for model_name, model in self.sos_model.model_list.items():
             for dep in model.inputs.dependencies:
-                if dep.from_model not in models_available and dep.from_model != "scenario":
+                if dep.from_model == "scenario":
+                    continue
+
+                if dep.from_model not in models_available:
                     # report missing dependency type
                     msg = "Missing dependency: {} depends on {} from {}, " + \
                           "which is not supplied."
                     raise AssertionError(msg.format(model_name, dep.name, dep.from_model))
+
                 dependency_graph.add_edge(model_name, dep.from_model)
 
         if not networkx.is_directed_acyclic_graph(dependency_graph):
@@ -426,3 +500,12 @@ class SosModelBuilder(object):
         self._validate()
         self._check_dependencies()
         return self.sos_model
+
+
+class RunMode(Enum):
+    """Enumerates the operating modes of a SoS model
+    """
+    static_simulation = 0
+    sequential_simulation = 1
+    static_optimisation = 2
+    dynamic_optimisation = 3

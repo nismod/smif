@@ -152,7 +152,6 @@ import importlib
 import logging
 import os
 from abc import ABC, abstractmethod
-from enum import Enum
 
 import numpy as np
 from scipy.optimize import minimize
@@ -583,12 +582,3 @@ class SectorModelBuilder(object):
         """
         self.validate()
         return self._sector_model
-
-
-class SectorModelMode(Enum):
-    """Enumerates the operating modes of a sector model
-    """
-    static_simulation = 0
-    sequential_simulation = 1
-    static_optimisation = 2
-    dynamic_optimisation = 3

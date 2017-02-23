@@ -17,6 +17,8 @@ timesteps: timesteps.yaml
 scenario_data:
   - parameter: population
     file: ../data/scenario/population.yaml
+  - parameter: raininess
+    file: ../data/scenario/raininess.yaml
 planning:
   pre_specified:
     use: true

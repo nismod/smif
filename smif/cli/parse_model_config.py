@@ -49,6 +49,7 @@ class SosModelReader(object):
         return {
             "timesteps": self.timesteps,
             "sector_model_config": self.sector_model_data,
+            "scenario_data": self.scenario_data,
             "planning": self.planning,
             "assets": self.assets,
             "names": self.names
@@ -114,12 +115,14 @@ class SosModelReader(object):
             }
         """
         if self.config['scenario_data']:
-            self.scenario_data = {}
+            scenario_data = {}
             for data_type in self.config['scenario_data']:
                 file_path = self._get_path_from_config(data_type['file'])
                 self.logger.debug("Loading scenario data from %s", file_path)
                 parser = ConfigParser(file_path)
-                self.scenario_data[data_type["parameter"]] = parser.data
+                scenario_data[data_type["parameter"]] = parser.data
+
+        return scenario_data
 
 
     def _load_planning(self):
