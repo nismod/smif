@@ -19,8 +19,8 @@ class SosModelReader(object):
         self.logger = logging.getLogger(__name__)
         self.logger.info("Getting config file from %s", config_file_path)
 
-        self.config_file_path = config_file_path
-        self.config_file_dir = os.path.dirname(config_file_path)
+        self._config_file_path = config_file_path
+        self._config_file_dir = os.path.dirname(config_file_path)
 
         self._config = None
         self.timesteps = None
@@ -60,10 +60,10 @@ class SosModelReader(object):
         - points to shared data files
         - points to sector models and sector model data files
         """
-        msg = "Looking for configuration data in {}".format(self.config_file_path)
+        msg = "Looking for configuration data in {}".format(self._config_file_path)
         self.logger.info(msg)
 
-        config_parser = ConfigParser(self.config_file_path)
+        config_parser = ConfigParser(self._config_file_path)
         config_parser.validate_as_modelrun_config()
         self.logger.debug(config_parser.data)
 
@@ -112,8 +112,8 @@ class SosModelReader(object):
             }
         """
         scenario_data = {}
-        if 'scenario_data' in self.config:
-            for data_type in self.config['scenario_data']:
+        if 'scenario_data' in self._config:
+            for data_type in self._config['scenario_data']:
                 file_path = self._get_path_from_config(data_type['file'])
                 self.logger.debug("Loading scenario data from %s", file_path)
                 parser = ConfigParser(file_path)
@@ -162,4 +162,4 @@ class SosModelReader(object):
         if os.path.isabs(path):
             return os.path.normpath(path)
         else:
-            return os.path.normpath(os.path.join(self.config_file_dir, path))
+            return os.path.normpath(os.path.join(self._config_file_dir, path))
