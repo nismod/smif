@@ -19,11 +19,11 @@ class TestSosModelReader():
 
         # check timesteps filename
         expected = 'timesteps.yaml'
-        assert reader.config['timesteps'] == expected
+        assert reader._config['timesteps'] == expected
 
         # check planning filename list
         expected = ['../data/water_supply/pre-specified.yaml']
-        assert reader.config['planning']['pre_specified']['files'] == expected
+        assert reader._config['planning']['pre_specified']['files'] == expected
 
     def test_model_list(self, setup_project_folder):
 
