@@ -22,24 +22,22 @@ class SosModelReader(object):
         self.config_file_path = config_file_path
         self.config_file_dir = os.path.dirname(config_file_path)
 
-        self.config = None
+        self._config = None
         self.timesteps = None
         self.scenario_data = None
         self.sector_model_data = None
         self.planning = None
 
         self.names = None
-        self.assets = None
 
     def load(self):
         """Load and check all config
         """
-        self.config = self._load_sos_config()
+        self._config = self._load_sos_config()
         self.timesteps = self._load_timesteps()
         self.scenario_data = self._load_scenario_data()
         self.sector_model_data = self._load_sector_model_data()
         self.names = self._load_names()
-        self.assets = self._load_assets()
         self.planning = self._load_planning()
 
     @property
@@ -51,7 +49,6 @@ class SosModelReader(object):
             "sector_model_config": self.sector_model_data,
             "scenario_data": self.scenario_data,
             "planning": self.planning,
-            "assets": self.assets,
             "names": self.names
         }
 
@@ -75,7 +72,7 @@ class SosModelReader(object):
     def _load_timesteps(self):
         """Parse model timesteps
         """
-        file_path = self._get_path_from_config(self.config['timesteps'])
+        file_path = self._get_path_from_config(self._config['timesteps'])
         os.path.exists(file_path)
 
         config_parser = ConfigParser(file_path)
@@ -91,7 +88,7 @@ class SosModelReader(object):
         - model config directory
         - SectorModel class name to call
         """
-        return self.config['sector_models']
+        return self._config['sector_models']
 
 
     def _load_scenario_data(self):
@@ -128,8 +125,8 @@ class SosModelReader(object):
     def _load_planning(self):
         """Loads the set of build instructions for planning
         """
-        if self.config['planning']['pre_specified']['use']:
-            planning_relative_paths = self.config['planning']['pre_specified']['files']
+        if self._config['planning']['pre_specified']['use']:
+            planning_relative_paths = self._config['planning']['pre_specified']['files']
             planning_instructions = []
 
             for parser in self._parsers_from_relative_paths(planning_relative_paths):
@@ -140,20 +137,10 @@ class SosModelReader(object):
         else:
             return []
 
-    def _load_assets(self):
-        assets = []
-        if 'assets' in self.config:
-            asset_relative_paths = self.config['assets']
-
-            for parser in self._parsers_from_relative_paths(asset_relative_paths):
-                assets.extend(parser.data)
-
-        return assets
-
     def _load_names(self):
         names = []
-        if 'names' in self.config:
-            names_relative_paths = self.config['names']
+        if 'names' in self._config:
+            names_relative_paths = self._config['names']
 
             for parser in self._parsers_from_relative_paths(names_relative_paths):
                 parser.validate_as_assets()
@@ -169,13 +156,10 @@ class SosModelReader(object):
 
     def _get_path_from_config(self, path):
         """Return an absolute path, given a path provided from a config file
-        - if provided path is relative, join it to the config file directory
+
+        If the provided path is relative, join it to the config file directory
         """
         if os.path.isabs(path):
-            return os.path.normpath(
-                path
-            )
+            return os.path.normpath(path)
         else:
-            return os.path.normpath(
-                os.path.join(self.config_file_dir, path)
-            )
+            return os.path.normpath(os.path.join(self.config_file_dir, path))
