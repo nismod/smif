@@ -4,54 +4,17 @@ framework.
 
 """
 import logging
-from enum import Enum
 
 import networkx
 import numpy as np
-from smif.intervention import Intervention, InterventionRegister
+from enum import Enum
 from smif.decision import Planning
+from smif.intervention import Intervention, InterventionRegister
 from smif.sector_model import SectorModelBuilder
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
-
-
-class Controller:
-    """Coordinates the data-layer, decision-layer and model-runner
-
-    The Controller expects to be provided with configuration data to run a set
-    of sector models over a number of timesteps, in a given mode.
-
-    It also requires a data connection to populate model inputs and store
-    results.
-
-    Parameters
-    ----------
-    config_data : dict
-        A valid system-of-systems model configuration dictionary
-
-
-    """
-    def __init__(self, config_data):
-        builder = SosModelBuilder()
-        builder.construct(config_data)
-        self._model = builder.finish()
-
-    def run_sos_model(self):
-        """Runs the system-of-system model
-        """
-        self._model.run()
-
-    def run_sector_model(self, model_name):
-        """Runs a sector model
-
-        Parameters
-        ----------
-        model_name: str
-            The name of the sector model to run
-        """
-        self._model.run_sector_model(model_name)
 
 
 class SosModel(object):
@@ -89,31 +52,6 @@ class SosModel(object):
         2. Run each sector model
 
         3. Return success or failure
-
-        Notes
-        =====
-        # TODO pass in:
-
-        - decisions, anything from strategy space that can be decided by
-          explicit planning or rule-based decisions or the optimiser
-
-        - state, anything from the previous timestep (assets with all
-          attributes, state/condition of any other model entities)
-
-        - data, anything from scenario space, to be used by the
-          simulation of the model
-
-        driven by needs of optimise routines, possibly all these
-        parameters should be np arrays, or return np arrays from helper
-        or have _simulate_from_array method
-
-        # TODO pick state from previous timestep (or initialise)
-
-        # TODO decide on approach to infrastructure system and possible
-        actions/decisions which can change it, then handle system
-        initialisation and keeping track of system composition over
-        each timestep of the model run
-
         """
         mode = self.determine_running_mode()
         self.logger.debug("Running in %s mode", mode.name)
@@ -136,7 +74,6 @@ class SosModel(object):
         """
         run_order = self._get_model_names_in_run_order()
 
-        timestep = self._timesteps[0]
         for model_name in run_order:
             logging.debug("Running %s", model_name)
             model = self.model_list[model_name]

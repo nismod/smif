@@ -40,7 +40,7 @@ import os
 import sys
 from argparse import ArgumentParser
 
-from smif.controller import Controller
+from smif.sos_model import SosModelBuilder
 from . parse_model_config import SosModelReader
 from . parse_sector_model_config import SectorModelReader
 
@@ -93,7 +93,6 @@ def setup_project_folder(project_path):
         Absolute path to an empty folder
 
     """
-    # TODO could place sensible model.yaml, single sector model, and subfolders
     folder_list = ['data']
     for folder in folder_list:
         folder_path = os.path.join(project_path, folder)
@@ -134,18 +133,20 @@ def run_model(args):
         LOGGER.info("The model configuration is valid")
 
     try:
-        controller = Controller(model_config)
+        builder = SosModelBuilder()
+        builder.construct(model_config)
+        sos_model = builder.finish()
     except AssertionError as error:
         LOGGER.error(error)
         exit(-1)
 
     if args.model == 'all':
         LOGGER.info("Running the system of systems model")
-        controller.run_sos_model()
+        sos_model.run()
     else:
         LOGGER.info("Running the %s sector model", args.model)
         model_name = args.model
-        controller.run_sector_model(model_name)
+        sos_model.run_sector_model(model_name)
 
 
 def validate_config(args):
@@ -172,8 +173,9 @@ def validate_config(args):
         # read sector model data+config
         model_config['sector_model_data'] = \
             read_sector_model_data_from_config(config_basepath,
-                                                model_config['sector_model_config'])
+                                               model_config['sector_model_config'])
         return model_config
+
 
 def path_to_abs(relative_root, path):
     """Return an absolute path, given a possibly-relative path
@@ -182,6 +184,7 @@ def path_to_abs(relative_root, path):
         return path
     else:
         return os.path.join(relative_root, path)
+
 
 def read_sector_model_data_from_config(config_basepath, config):
     """Read sector-specific data from the sector config folders
