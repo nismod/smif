@@ -220,8 +220,8 @@ should be defined.
 These are represented internally in the system-of-systems model,
 collected into a gazateer and allow the framework to reason on
 infrastructure assets across all sectors.
-Interventions are instances of :class:`~smif.asset.Intervention` and are
-held in :class:`~smif.asset.InterventionRegister`.
+Interventions are instances of :class:`~smif.intervention.Intervention` and are
+held in :class:`~smif.intervention.InterventionRegister`.
 Interventions include investments in assets,
 supply side efficiency improvements, but not demand side management (these
 are incorporated in the strategies).

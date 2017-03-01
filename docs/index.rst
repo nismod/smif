@@ -1,14 +1,5 @@
 .. include:: ../README.rst
 
-
-Code Structure
-==============
-
-The following inheritance diagrams illustrate the structure of the code.
-
-.. inheritance-diagram:: smif.abstract
-
-
 Contents
 ========
 
