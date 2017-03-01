@@ -67,6 +67,13 @@ The ``model.yaml`` file contains the following::
           interventions:
           - interventions.yaml
         timesteps: timesteps.yaml
+        scenario_data:
+        - file: electricity_demand.yaml
+          parameter: electricity_demand
+          time_intervals: hourly_intervals.yaml
+        - file: gas_demand.yaml
+          parameter: gas_demand
+          time_intervals: hourly_intervals.yaml
         planning:
           pre_specified:
             use: true
@@ -146,6 +153,24 @@ use ISO 8601 [1]_ duration format to specify periods::
 
     P[n]Y[n]M[n]DT[n]H[n]M[n]S
 
+For example::
+
+    - end: P7225H
+      name: '1_0'
+      start: P7224H
+    - end: P7226H
+      name: '1_1'
+      start: P7225H
+    - end: P7227H
+      name: '1_2'
+      start: P7226H
+    - end: P7228H
+      name: '1_3'
+      start: P7227H
+    - end: P7229H
+      name: '1_4'
+      start: P7228H
+
 Inputs
 ------
 Define the collection of inputs required from external sources
@@ -196,6 +221,49 @@ For example::
           - name: total_cost
           - name: water_demand
           - name: total_emissions
+
+Scenarios
+---------
+
+The ``scenario_date:`` section of the system-of-systems configuration file allows
+you to define static sources for simulation model dependencies.
+
+In the case of the example show above, reproduced below::
+
+        scenario_data:
+        - file: electricity_demand.yaml
+          parameter: electricity_demand
+          time_intervals: hourly_intervals.yaml
+        - file: gas_demand.yaml
+          parameter: gas_demand
+          time_intervals: hourly_intervals.yaml
+
+we define two yaml files, one each for the parameters `electricity_demand` and `gas_demand`.
+The ``time_intervals`` attribute allows the use of time intervals in the scenario files which
+are at a different temporal resolution to that expected by the sector model.  In this case,
+both electricity_demand and gas_demand are linked to the same ``hourly_intervals.yaml`` file.
+This is in the same format as the time_intervals.yaml file expected in the ``config_dir`` associated
+with the sector model.
+
+The scenario data should contain entries for (time_interval) ``name``, region, value, 
+units and timestep (year).  For example::
+
+      - name: 1_0
+        region: "England"
+        value: 23.48
+        units: GW
+        year: 2015
+      - name: 1_1
+        region: "England"
+        value: 17.48
+        units: GW
+        year: 2015
+        - name: 1_2
+        region: "England"
+        value: 16.48
+        units: GW
+        year: 2015
+
 
 State Parameters
 ----------------
