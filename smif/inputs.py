@@ -3,11 +3,11 @@
 
 Dependencies are defined in a file called ``inputs.yaml``.
 
-Dependencies have several attributes: ``name``, ``spatial_resolution``, 
+Dependencies have several attributes: ``name``, ``spatial_resolution``,
 ``temporal_resolution`` and ``from_model``.
 
 The ``name`` entry denotes the unique identifier of a model or scenario output.
-The ``spatial_resolution`` and ``temporal_resolution`` are references to the 
+The ``spatial_resolution`` and ``temporal_resolution`` are references to the
 catalogue held by the :class:`~smif.sector_model.SosModel` which define the
 available conversion formats.
 
@@ -39,11 +39,94 @@ from collections import namedtuple
 
 import numpy as np
 
-from smif.abstract import ModelElementCollection
-
-__author__ = "Will Usher"
-__copyright__ = "Will Usher"
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell, University of Oxford 2017"
 __license__ = "mit"
+
+class ModelElementCollection(object):
+    """A collection of model elements
+
+    ModelInputs and ModelOutputs both derive from this class
+    """
+
+    def __init__(self):
+        self._names = []
+        self._values = []
+        self.logger = logging.getLogger(__name__)
+
+    @property
+    def names(self):
+        """A descriptive name of the input
+        """
+        return self._names
+
+    @names.setter
+    def names(self, value):
+        self._names = value
+
+    @property
+    def values(self):
+        """The value of the input
+        """
+        return self._values
+
+    @values.setter
+    def values(self, values):
+        self._values = values
+
+    def _get_index(self, name):
+        """A index values associated an element name
+
+        Argument
+        ========
+        name : str
+            The name of the decision variable
+        """
+        if name not in self.names:
+            raise IndexError("That name is not in the list of input names")
+        return self.indices[name]
+
+    @property
+    def indices(self):
+        """A dictionary of index values associated with decision variable names
+
+        Returns
+        =======
+        dict
+            A dictionary of index values associated with decision variable
+            names
+        """
+        return self._enumerate_names(self.names)
+
+    def _enumerate_names(self, names):
+        """
+
+        Arguments
+        =========
+        names : iterable
+            A list of names
+
+        Returns
+        =======
+        dict
+            Key: value pairs to lookup the index of a name
+        """
+        return {name: index for (index, name) in enumerate(names)}
+
+    def update_value(self, name, value):
+        """Update the value of an input
+
+        Arguments
+        =========
+        name : str
+            The name of the decision variable
+        value : float
+            The value to which to update the decision variable
+
+        """
+        index = self._get_index(name)
+        self.logger.debug("Updating {} with {}".format(name, value))
+        self.values[index] = value
 
 
 class InputList(ModelElementCollection):
@@ -63,58 +146,6 @@ class InputList(ModelElementCollection):
             self.values,
             self.bounds
         )
-
-    def update_value(self, name, value):
-        """Update the value of an input
-
-        (Over rides `smif.inputs.ModelElement.update_value`)
-
-        Arguments
-        =========
-        name : str
-            The name of the decision variable
-        value : float
-            The value to which to update the decision variable
-
-        """
-        index = self._get_index(name)
-        self.logger.debug("Index of {} is {}".format(name, index))
-        bounds = self.bounds
-        assert bounds[index][0] <= value <= bounds[index][1], \
-            "Bounds exceeded"
-        self.values[index] = value
-
-    def _parse_input_dictionary(self, inputs):
-        """Extracts arrays of decision variables and metadata from a list of
-        inputs
-
-        Arguments
-        =========
-        inputs : list
-            A list of dicts which specify input attributes in key:val pairs
-
-        Sets attributes
-        ===============
-        names : :class:`numpy.ndarray`
-            The names of the decision variables in the order given in the
-            inputs
-        bounds : :class:`numpy.ndarray`
-            The bounds in the same order
-        values : :class:`numpy.ndarray`
-            The initial values in the same order
-
-        """
-
-        number_of_inputs = len(inputs)
-
-        self.values = np.zeros(number_of_inputs, dtype=np.float)
-        self.bounds = np.zeros(number_of_inputs, dtype=(np.float, 2))
-        self.names = np.zeros(number_of_inputs, dtype='U30')
-
-        for index, input_data in enumerate(inputs):
-            self.values[index] = input_data['value']
-            self.bounds[index] = input_data['bounds']
-            self.names[index] = input_data['name']
 
     def __getitem__(self, key):
         index = self._get_index(key)
@@ -226,16 +257,9 @@ class ModelInputs(object):
         names, followed by nested dictionaries of input attributes
     """
     def __init__(self, inputs):
-        if 'decision variables' not in inputs:
-            inputs['decision variables'] = []
-        if 'parameters' not in inputs:
-            inputs['parameters'] = []
         if 'dependencies' not in inputs:
             inputs['dependencies'] = []
 
-        self._decision_variables = DecisionVariableList(
-            inputs['decision variables'])
-        self._parameters = ParameterList(inputs['parameters'])
         self._dependencies = DependencyList(inputs['dependencies'])
 
     @property

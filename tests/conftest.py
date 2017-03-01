@@ -1046,8 +1046,6 @@ def one_dependency():
     dependency
     """
     inputs = {
-        'decision variables': [],
-        'parameters': [],
         'dependencies': [
             {
                 'name': 'macguffins produced',
