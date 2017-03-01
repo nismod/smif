@@ -3,15 +3,21 @@
 Getting Started 
 ===============
 
-To wrap a sector model, you need to write a model configuration using yaml
-files.
+To specify a system-of-systems model, you must configure one or more simulation
+models, outlined in the section below, and configure a system-of-systems
+model, as outlined immediately below.
 
-Setup a new system-of-systems modelling project with the following structure::
+First, setup a new system-of-systems modelling project with the following 
+folder structure::
 
         /config
         /planning
         /data
         /models
+
+This folder structure is optional, but helps organise the configuration files,
+which can be important as the number and complexity of simulation models
+increases.
 
 The ``config`` folder contains the configuration for the system-of-systems
 model::
@@ -75,7 +81,7 @@ The ``model.yaml`` file contains the following::
         assets:
         - assets.yaml
 
-System-of-systems Planning Years
+System-of-Systems Planning Years
 --------------------------------
 
 The ``timesteps.yaml`` should contain a list of planning years::
@@ -85,10 +91,75 @@ The ``timesteps.yaml`` should contain a list of planning years::
         - 2012
 
 This is a list of planning years over which the system of systems model will
-run.
+run. Each of the simulation models will be run once for each
+planning year.
 
-Inputs File
+Wrapping a Sector Model
+-----------------------
+
+To integrate a sector model into the system-of-systems model, it is necessary
+to write a Python wrapper, 
+which implements :class:`smif.sector_model.SectorModel`.
+
+The key methods which need to be overridden are:
+
+- :py:meth:`smif.sector_model.SectorModel.simulate`
+- :py:meth:`smif.sector_model.SectorModel.extract_obj`
+
+The path to the location of the ``run.py`` file should be entered in the
+``model.yaml`` file under the ``path`` key 
+(see System-of-Systems Model File above).
+
+To integrate an infrastructure simulation model within the system-of-systems
+modelling framework, it is also necessary to provide the following configuration
+data.
+
+Geographies
 -----------
+Define the set of unique regions which are used within the model as polygons.
+Inputs and outputs are assigned a model-specific geography from this list
+allowing automatic conversion from and to these geographies.
+
+Model regions are specified in ``regions.*``.
+
+The file format must be possible to parse with GDAL, and must contain
+an attribute "name" to use as an identifier for the region.
+
+Temporal Resolution
+-------------------
+The attribution of hours in a year to the temporal resolution used
+in the sectoral model.
+
+Within-year time intervals are specified
+in ``time_intervals.yaml``
+
+These specify the mapping of model timesteps to durations within a year
+(assume modelling 365 days: no extra day in leap years, no leap seconds)
+
+Each time interval must have
+
+- start (period since beginning of year)
+- end (period since beginning of year)
+- id (label to use when passing between integration layer and sector model)
+
+use ISO 8601 [1]_ duration format to specify periods::
+
+    P[n]Y[n]M[n]DT[n]H[n]M[n]S
+
+References
+----------
+.. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
+
+Inputs
+------
+Define the collection of inputs required from external sources
+to run the model.  For example
+"electricity demand (kWh, <region>, <hour>)".
+Inputs are defined with a spatial and temporal-resolution, a unit
+and a ``from_model``.
+
+Only those inputs required as dependencies are defined here, although
+dependencies are activated when configured in the system-of-systems model.
 
 The ``inputs.yaml`` file defines the dependencies of one model upon another.
 Enter a list of dependencies, each with four keys, ``name``, 
@@ -109,8 +180,18 @@ The keys ``spatial_resolution`` and ``temporal_resolution`` define the
 resolution at which the data are required.  ``from_model`` defines the model
 from which the dependendency is required.
 
-Outputs File
-------------
+The entry for the ``from_model`` attribute can be ``scenario``. This allows
+definition of statically defined data for each model year to be specified in
+a ``<name>.yaml`` file, in conjunction with a scenario-specific time-intervals
+file.
+
+Outputs
+-------
+Define the collection of outputs used as metrics, 
+for the purpose of optimisation or
+rule-based planning approaches (so normally a cost-function), and those
+outputs required for accounting purposes, such as operational cost and
+emissions, or as a dependency in another model.
 
 The ``outputs.yaml`` file defines the output metrics from the model.
 For example::
@@ -120,25 +201,34 @@ For example::
           - name: water_demand
           - name: total_emissions
 
-Wrapping a Sector Model
------------------------
-
-To integrate a sector model into the system-of-systems model, it is necessary
-to write a Python wrapper, 
-which implements :class:`smif.sector_model`.
-
-The key methods which need to be overridden are:
-
-- :py:meth:`smif.sector_model.SectorModel.simulate`
-- :py:meth:`smif.sector_model.SectorModel.get_results`
-- :py:meth:`smif.sector_model.SectorModel.extract_obj`
-
-The path to the location of the ``run.py`` file should be entered in the
-``model.yaml`` file under the ``path`` key 
-(see System-of-Systems Model File above).
+State Parameters
+----------------
+Some simulation models require that state is passed between years, for example
+reservoir level in the water-supply model.
+These are treated as self-dependencies with a temporal offset. For example,
+the sector model depends on the result of running the model for a previous
+timeperiod.
 
 Interventions
-~~~~~~~~~~~~~
+-------------
+
+An Intervention is an investment which has a name (or name),
+other attributes (such as capital cost and economic lifetime), and location,
+but no build date.
+
+An Intervention is a possible investment, normally an infrastructure asset,
+the timing of which can be decided by the logic-layer.
+
+An exhaustive list of the Interventions (normally infrastructure assets)
+should be defined.
+These are represented internally in the system-of-systems model,
+collected into a gazateer and allow the framework to reason on
+infrastructure assets across all sectors.
+Interventions are instances of :class:`~smif.asset.Intervention` and are
+held in :class:`~smif.asset.InterventionRegister`.
+Interventions include investments in assets,
+supply side efficiency improvements, but not demand side management (these
+are incorporated in the strategies).
 
 Define all possible interventions in an ``interventions.yaml`` file.
 For example::
@@ -188,16 +278,38 @@ For example::
             value: 8
             units: number
 
-Existing Infrastructure
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Define existing infrasture in an ``initial_conditions.yaml`` file.
 
 Planning
 --------
 
+Existing Infrastructure
+~~~~~~~~~~~~~~~~~~~~~~~
+Existing infrastructure is specified in a
+``*.yaml`` file.  This uses the following format::
+   -
+    name: CCGT
+    description: Existing roll out of gas-fired power stations
+    timeperiod: 1990 # 2010 is the first year in the model horizon
+    location: "oxford"
+    new_capacity:
+        value: 6
+        unit: GW
+    lifetime:
+        value: 20
+        unit: years
+
 Pre-Specified Planning
 ~~~~~~~~~~~~~~~~~~~~~~
+
+A fixed pipeline of investments can be specified using the same format as for
+existing infrastructure, in the ``*.yaml`` files.
+
+The only difference is that pre-specified planning investments occur in the
+future (in comparison to the initial modelling date), whereas existing
+infrastructure occur in the past. This difference is semantic at best, but a
+warning is raised if future investments are included in the existing
+infrastructure files in the situation where the initial model timeperiod is
+altered.
 
 Define a pipeline of interventions in a ``pre-specified.yaml`` file::
 
