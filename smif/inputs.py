@@ -1,34 +1,35 @@
 # -*- coding: utf-8 -*-
 """Encapsulates the inputs to a sector model
 
-.. inheritance-diagram:: smif.inputs
+Dependencies are defined in a file called ``inputs.yaml``.
 
-Inputs are defined in a .yaml file.  There are three types of inputs,
-decision variables, parameters and dependencies.
+Dependencies have several attributes: ``name``, ``spatial_resolution``, 
+``temporal_resolution`` and ``from_model``.
 
-Decision variables and parameters have three attributes, name, bounds
-and value.
-
-Dependencies also have three attributes, name, spatial resolution
-and temporal resolution.
+The ``name`` entry denotes the unique identifier of a model or scenario output.
+The ``spatial_resolution`` and ``temporal_resolution`` are references to the 
+catalogue held by the :class:`~smif.sector_model.SosModel` which define the
+available conversion formats.
 
 An example yaml file::
 
-    decision variables:
-    - name: reservoir pumpiness
-      bounds: [0, 100]
-      value: 24.583
-    - name: water treatment capacity
-      bounds: [0, 20]
-      value: 10
-    dependencies:
-    - name: electricity
-      spatial_resolution: LOCAL
-      temporal_resolution: HOURLY
-    parameters:
-    - name: raininess
-      bounds: [0, 5]
-      value: 3
+        dependencies:
+        - name: eletricity_price
+          spatial_resolution: GB
+          temporal_resolution: annual
+          from_model: energy_supply
+        - name: petrol_price
+          spatial_resolution: GB
+          temporal_resolution: annual
+          from_model: scenario
+        - name: diesel_price
+          spatial_resolution: GB
+          temporal_resolution: annual
+          from_model: energy_supply
+        - name: LPG_price
+          spatial_resolution: GB
+          temporal_resolution: annual
+          from_model: energy_supply
 
 """
 from __future__ import absolute_import, division, print_function
@@ -125,20 +126,6 @@ class InputList(ModelElementCollection):
 
     def __len__(self):
         return len(self.names)
-
-
-class ParameterList(InputList):
-
-    def __init__(self, parameters):
-        super().__init__()
-        self._parse_input_dictionary(parameters)
-
-
-class DecisionVariableList(InputList):
-
-    def __init__(self, decision_variables):
-        super().__init__()
-        self._parse_input_dictionary(decision_variables)
 
 
 Dependency = namedtuple(
