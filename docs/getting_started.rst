@@ -146,10 +146,6 @@ use ISO 8601 [1]_ duration format to specify periods::
 
     P[n]Y[n]M[n]DT[n]H[n]M[n]S
 
-References
-----------
-.. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
-
 Inputs
 ------
 Define the collection of inputs required from external sources
@@ -328,3 +324,7 @@ Optimisation
 ~~~~~~~~~~~~
 
 This feature is not yet implemented
+
+References
+----------
+.. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
