@@ -5,23 +5,6 @@ import numpy as np
 from pytest import fixture
 from smif.inputs import ModelInputs
 
-@fixture(scope='function')
-def one_dependency():
-    """Returns a model input dictionary with a single (unlikely to be met)
-    dependency
-    """
-    inputs = {
-        'dependencies': [
-            {
-                'name': 'macguffins produced',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'from_model': 'macguffins_model'
-            }
-        ]
-    }
-    return inputs
-
 class TestDependencyList:
 
     pass

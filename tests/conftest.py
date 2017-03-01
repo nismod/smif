@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 import json
 import logging
 
-import pytest
+from pytest import fixture
 import yaml
 
 logging.basicConfig(filename='test_logs.log',
@@ -20,8 +20,25 @@ logging.basicConfig(filename='test_logs.log',
                     format='%(asctime)s %(name)-12s: %(levelname)-8s %(message)s',
                     filemode='w')
 
+@fixture(scope='function')
+def one_dependency():
+    """Returns a model input dictionary with a single (unlikely to be met)
+    dependency
+    """
+    inputs = {
+        'dependencies': [
+            {
+                'name': 'macguffins produced',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'from_model': 'macguffins_model'
+            }
+        ]
+    }
+    return inputs
 
-@pytest.fixture(scope='function')
+
+@fixture(scope='function')
 def setup_folder_structure(tmpdir_factory):
     """
 
@@ -39,7 +56,7 @@ def setup_folder_structure(tmpdir_factory):
     return test_folder
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_project_folder(setup_runpy_file,
                          setup_folder_structure,
                          setup_config_file,
@@ -78,7 +95,7 @@ def setup_project_folder(setup_runpy_file,
     return base_folder
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_project_missing_model_config(setup_runpy_file,
                                        setup_folder_structure,
                                        setup_config_file,
@@ -114,7 +131,7 @@ def setup_project_missing_model_config(setup_runpy_file,
     return base_folder
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_initial_conditions_file(setup_folder_structure):
     """Assets are associated with sector models, not the integration config
 
@@ -193,7 +210,7 @@ def setup_initial_conditions_file(setup_folder_structure):
     filename.write(contents, ensure=True)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_initial_conditions_file_two(setup_folder_structure):
     """Assets are associated with sector models, not the integration config
 
@@ -231,7 +248,7 @@ def setup_initial_conditions_file_two(setup_folder_structure):
     filename.write(contents, ensure=True)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_interventions_file_one(setup_folder_structure):
     """Interventions are associated with sector models,
     not the integration config
@@ -268,7 +285,7 @@ def setup_interventions_file_one(setup_folder_structure):
     contents = yaml.dump(assets_contents)
     filename.write(contents, ensure=True)
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_interventions_file_two(setup_folder_structure):
     """Interventions are associated with sector models,
     not the integration config
@@ -306,7 +323,7 @@ def setup_interventions_file_two(setup_folder_structure):
     filename.write(contents, ensure=True)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_config_file(setup_folder_structure):
     """Configuration file contains entries for sector models, timesteps and
     planning
@@ -342,7 +359,7 @@ def setup_config_file(setup_folder_structure):
     filepath.write(contents)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_pre_specified_planning_conflict(setup_folder_structure):
     """Sets up a configuration file for pre-specified planning
 
@@ -364,7 +381,7 @@ def setup_pre_specified_planning_conflict(setup_folder_structure):
     filepath.write(contents)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_config_conflict_assets(setup_folder_structure,
                                  setup_pre_specified_planning_conflict):
     """Configuration file contains entries for sector models, timesteps and
@@ -404,7 +421,7 @@ def setup_config_conflict_assets(setup_folder_structure,
     filepath.write(contents)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_config_conflict_periods(setup_folder_structure,
                                   setup_timesteps_file_two):
     """Configuration file contains entries for sector models, timesteps and
@@ -444,7 +461,7 @@ def setup_config_conflict_periods(setup_folder_structure,
     filepath.write(contents)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_pre_specified_planning(setup_folder_structure):
     """Sets up a configuration file for pre-specified planning
 
@@ -513,7 +530,7 @@ def setup_pre_specified_planning(setup_folder_structure):
     filepath.write(contents, ensure=True)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_pre_specified_planning_two(setup_folder_structure):
     """Sets up a configuration file for pre-specified planning
 
@@ -582,7 +599,7 @@ def setup_pre_specified_planning_two(setup_folder_structure):
     filepath.write(contents)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_config_file_two(setup_folder_structure, setup_interventions_file_one):
     """Configuration file contains entries for sector models, timesteps and
     planning
@@ -621,7 +638,7 @@ def setup_config_file_two(setup_folder_structure, setup_interventions_file_one):
     filepath.write(contents)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_config_file_timesteps_two(setup_folder_structure):
     """Configuration file contains entries for sector models, timesteps and
     planning
@@ -657,7 +674,7 @@ def setup_config_file_timesteps_two(setup_folder_structure):
     filepath.write(contents)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_runpy_file(tmpdir, setup_folder_structure):
     """The python script should contain an instance of SectorModel which wraps
     the sector model and allows it to be run.
@@ -679,7 +696,7 @@ class WaterSupplySectorModel(SectorModel):
     filename.write(contents, ensure=True)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_water_inputs(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('data', 'water_supply', 'inputs.yaml')
@@ -709,7 +726,7 @@ def setup_water_inputs(setup_folder_structure):
     filename.write(yaml_contents, ensure=True)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def water_outputs_contents():
     contents = {
         'metrics': [
@@ -744,7 +761,7 @@ def water_outputs_contents():
     return contents
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_water_outputs(setup_folder_structure,
                         water_outputs_contents):
     base_folder = setup_folder_structure
@@ -755,7 +772,7 @@ def setup_water_outputs(setup_folder_structure,
     return filename
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_water_time_intervals(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('data', 'water_supply', 'time_intervals.yaml')
@@ -771,7 +788,7 @@ def setup_water_time_intervals(setup_folder_structure):
     return filename
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_water_regions(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('data', 'water_supply', 'regions.geojson')
@@ -835,7 +852,7 @@ def setup_water_regions(setup_folder_structure):
     return filename
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_results_file(setup_folder_structure):
     contents = \
         '''
@@ -885,7 +902,7 @@ TOTAL DEMAND                 =                         122427
     return str(base_folder.join('models', 'water_supply'))
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_timesteps_file(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('config', 'timesteps.yaml')
@@ -894,7 +911,7 @@ def setup_timesteps_file(setup_folder_structure):
     filename.write(contents, ensure=True)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_timesteps_file_two(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('config', 'timesteps_2.yaml')
@@ -903,7 +920,7 @@ def setup_timesteps_file_two(setup_folder_structure):
     filename.write(contents, ensure=True)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_timesteps_file_invalid(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('config', 'timesteps.yaml')
@@ -912,7 +929,7 @@ def setup_timesteps_file_invalid(setup_folder_structure):
     filename.write(contents, ensure=True)
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_water_interventions_abc(setup_folder_structure):
     data = [
         {
@@ -960,7 +977,7 @@ def setup_water_interventions_abc(setup_folder_structure):
     return filename
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_water_intervention_d(setup_folder_structure,
                         setup_config_file_two):
 
@@ -980,7 +997,7 @@ def setup_water_intervention_d(setup_folder_structure,
     return filename
 
 
-@pytest.fixture(scope='function')
+@fixture(scope='function')
 def setup_minimal_water(setup_folder_structure,
                         setup_config_file):
     return str(setup_folder_structure)
