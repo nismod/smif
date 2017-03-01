@@ -66,6 +66,9 @@ class DependencyList(object):
     """
 
     def __init__(self, dependencies):
+
+        self.logger = logging.getLogger(__name__)
+
         names = []
         spatial_resolutions = []
         temporal_resolutions = []

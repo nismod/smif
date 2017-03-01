@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """Encapsulates the outputs from a sector model
 
-.. inheritance-diagram:: smif.outputs
+The output definitions are read in from ``outputs.yaml``.  For example::
+
+        metrics:
+        - name: total_cost
+        - name: water_demand
 
 """
 import logging
 import os
-
-from smif.inputs import ModelElementCollection
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -17,26 +19,21 @@ __license__ = "mit"
 class OutputList(object):
     """Defines the types of outputs to a sector model
 
+    Parameters
+    ----------
+    outputs: dict
+
     """
-    def __init__(self, results):
-        super().__init__()
-        self.values = results
+    def __init__(self, outputs):
+        self.logger = logging.getLogger(__name__)
 
-
-
-    @property
-    def values(self):
-        """The value of the outputs
-        """
-        return self._values
-
-    @values.setter
-    def values(self, values):
-        self._values = {output['name']: output for output in values}
-        self.names = [output['name'] for output in values]
+        names = []
+        for output in outputs:
+            names.append(output['name'])
+        self.names = names
 
     def __getitem__(self, key):
-        return self.values[key]
+        return self.names[key]
 
 
 class ModelOutputs(object):
@@ -46,11 +43,7 @@ class ModelOutputs(object):
     def __init__(self, results):
         if 'metrics' not in results:
             results['metrics'] = []
-        if 'model outputs' not in results:
-            results['model outputs'] = []
-
         self._metrics = OutputList(results['metrics'])
-        self._outputs = OutputList(results['model outputs'])
 
     @property
     def metrics(self):
@@ -61,19 +54,3 @@ class ModelOutputs(object):
         :class:`smif.outputs.MetricList`
         """
         return self._metrics
-
-    @property
-    def outputs(self):
-        """A list of the model outputs
-
-        Returns
-        =======
-        :class:`smif.outputs.OutputList`
-        """
-        return self._outputs
-
-    def load_results_from_files(self, dirname):
-        """Load model outputs from specified files
-        """
-        self._metrics.load_results_from_files(dirname)
-        self._outputs.load_results_from_files(dirname)
