@@ -3,7 +3,9 @@
 
 import os
 from tempfile import TemporaryDirectory
-from smif.cli import parse_arguments, setup_project_folder
+from unittest.mock import call, patch
+
+from smif.cli import confirm, parse_arguments, setup_project_folder
 
 
 def test_parse_arguments():
@@ -78,3 +80,39 @@ def test_validation(setup_folder_structure,
     actual = args.path
     assert actual == expected
     assert args.func.__name__ == 'validate_config'
+
+
+@patch('builtins.input', return_value='y')
+def test_confirm_yes(input):
+    assert confirm()
+
+
+@patch('builtins.input', return_value='n')
+def test_confirm_no(input):
+    assert not confirm()
+
+
+@patch('builtins.input', return_value='')
+def test_confirm_default_response(input):
+    assert not confirm()
+
+
+@patch('builtins.input', return_value='n')
+@patch('builtins.print')
+def test_confirm_default_message(input, mock_print):
+    confirm()
+    mock_print.assert_has_calls([call('Confirm [n]|y: ')])
+
+
+@patch('builtins.input', return_value='n')
+@patch('builtins.print')
+def test_confirm_custom_message(input, mock_print):
+    confirm('Create directory?', True)
+    mock_print.assert_has_calls([call('Create directory? [y]|n: ')])
+
+
+@patch('builtins.input', side_effect=['invalid', 'y'])
+@patch('builtins.print')
+def test_confirm_repeat_message(input, mock_print):
+    confirm()
+    mock_print.assert_has_calls([call('Confirm [n]|y: '), call('Confirm [n]|y: ')])
