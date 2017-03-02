@@ -83,7 +83,8 @@ def validate_planning_config(planning):
     # check each planning type
     for key, planning_type in planning.items():
         if "use" not in planning_type:
-            raise ValidationError("")
+            fmt = "No 'use' settings specified for '{}' 'planning'"
+            raise ValidationError(fmt.format(key))
         if planning_type["use"]:
             if "files" not in planning_type or \
                not isinstance(planning_type["files"], list) or \
@@ -108,9 +109,9 @@ def validate_interventions(data, path):
     for intervention in data:
         for key in required_keys:
             if key not in intervention:
-                fmt = "Loading interventions from {}, required" + \
-                        "a value for '{}' in each intervention, but only " + \
-                        "received {}"
+                fmt = "Loading interventions from {}, required " + \
+                      "a value for '{}' in each intervention, but only " + \
+                      "received {}"
                 raise ValidationError(fmt.format(path, key, intervention))
 
         for key, value in intervention.items():
