@@ -20,14 +20,19 @@ class SectorModelReader(object):
         Sector model details, sufficient to read the full config from a set of
         files. Must contain the following fields:
             "model_name": The name of the sector model, for reference within the
-                system-of-systems model
+            system-of-systems model
+
             "model_path": The path to the python module file that contains an
-                implementation of SectorModel
+            implementation of SectorModel
+
             "model_classname": The name of the class that implements SectorModel
+
             "model_config_dir": The root path of model config/data to use, which
-                must contain inputs.yaml, outputs.yaml, time_intervals.yaml and
-                regions.shp/regions.geojson
+            must contain inputs.yaml, outputs.yaml, time_intervals.yaml and
+            regions.shp/regions.geojson
+
             "initial_conditions": List of files containing initial conditions
+
             "interventions": List of files containing interventions
 
     """
@@ -75,21 +80,29 @@ class SectorModelReader(object):
         =======
         data : dict
             Model configuration data, with the following fields:
-            "name": The name of the sector model, for reference within the
+                "name": The name of the sector model, for reference within the
                 system-of-systems model
-            "path": The path to the python module file that contains an
+
+                "path": The path to the python module file that contains an
                 implementation of SectorModel
-            "classname": The name of the class that implements SectorModel
-            "inputs": A list of the inputs that this model requires
-            "outputs": A list of the outputs that this model provides
-            "time_intervals": A list of time intervals within a year that are
+
+                "classname": The name of the class that implements SectorModel
+
+                "inputs": A list of the inputs that this model requires
+
+                "outputs": A list of the outputs that this model provides
+
+                "time_intervals": A list of time intervals within a year that are
                 represented by the model, each with reference to the model's
                 internal identifier for timesteps
-            "regions": A list of geographical regions used within the model, as
+
+                "regions": A list of geographical regions used within the model, as
                 objects with both geography and attributes
-            "initial_conditions": A list of initial conditions required to set up
+
+                "initial_conditions": A list of initial conditions required to set up
                 the modelled system in the base year
-            "interventions": A list of possible interventions that could be made
+
+                "interventions": A list of possible interventions that could be made
                 in the modelled system
 
         """

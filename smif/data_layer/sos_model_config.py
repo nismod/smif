@@ -92,14 +92,18 @@ class SosModelReader(object):
         """Load scenario data from list in sos model config
 
         Working assumptions:
-        - scenario data is list of dicts, each like:
+
+        - scenario data is list of dicts, each like::
+
             {
                 'parameter': 'parameter_name',
                 'file': 'relative file path',
                 'spatial_resolution': 'national'
                 'temporal_resolution': 'annual'
             }
-        - data in file is list of dicts, each like:
+
+        - data in file is list of dicts, each like::
+
             {
                 'value': 100,
                 'units': 'kg',
