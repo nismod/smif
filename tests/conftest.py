@@ -391,6 +391,71 @@ def setup_scenario_data(setup_folder_structure):
 
 
 @fixture(scope='function')
+def setup_no_planning(setup_folder_structure):
+    file_contents = {
+        'sector_models': [
+            {
+                "name": "water_supply",
+                "path": "../models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "../data/water_supply",
+                'initial_conditions': [
+                    '../data/water_supply/initial_conditions/assets_1.yaml'
+                ],
+                'interventions': [
+                    '../data/water_supply/interventions/water_asset_abc.yaml'
+                ]
+            }
+        ],
+        'timesteps': 'timesteps.yaml',
+        'planning': {
+            'rule_based': {'use': False},
+            'optimisation': {'use': False},
+            'pre_specified': {'use': False}
+        }
+    }
+
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
+
+
+@fixture(scope='function')
+def setup_abs_path_to_timesteps(setup_folder_structure):
+    timesteps_abs_path = str(setup_folder_structure.join(
+        'config',
+        'timesteps.yaml'
+    ))
+
+    file_contents = {
+        'sector_models': [
+            {
+                "name": "water_supply",
+                "path": "../models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "../data/water_supply",
+                'initial_conditions': [
+                    '../data/water_supply/initial_conditions/assets_1.yaml'
+                ],
+                'interventions': [
+                    '../data/water_supply/interventions/water_asset_abc.yaml'
+                ]
+            }
+        ],
+        'timesteps': timesteps_abs_path,
+        'planning': {
+            'rule_based': {'use': False},
+            'optimisation': {'use': False},
+            'pre_specified': {'use': False}
+        }
+    }
+
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
+
+
+@fixture(scope='function')
 def setup_config_file(setup_folder_structure):
     """Configuration file contains entries for sector models, timesteps and
     planning
