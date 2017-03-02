@@ -196,7 +196,10 @@ class WaterSupplySectorModel(SectorModel):
         raininess = self.inputs.parameters['raininess']['value']
 
         # unpack decision variables
-        number_of_treatment_plants = decision_variables[0, ]
+        if len(decision_variables) > 0:
+            number_of_treatment_plants = decision_variables[0]
+        else:
+            number_of_treatment_plants = 1
 
         # simulate (wrapping toy model)
         instance = ExampleWaterSupplySimulationModelWithAsset(raininess,

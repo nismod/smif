@@ -37,7 +37,7 @@ class SosModel(object):
         self._timesteps = []
         self.initial_conditions = []
         self.interventions = InterventionRegister()
-        self.planning = []
+        self.planning = Planning([])
         self.scenario_data = {}
 
         self.logger = logging.getLogger(__name__)
@@ -148,8 +148,8 @@ class SosModel(object):
             The name of the model, corresponding to the folder name in the
             models subfolder of the project folder
         """
-        msg = "Model {} does not exist. Choose from {}".format(model_name,
-                                                               self.model_list)
+        msg = "Model '{}' does not exist. Choose from {}".format(model_name,
+                                                                 self.sector_models)
         assert model_name in self.model_list, msg
 
         msg = "Running the {} sector model".format(model_name)

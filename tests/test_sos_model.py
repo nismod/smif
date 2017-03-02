@@ -7,6 +7,95 @@ from smif.sos_model import SosModel, SosModelBuilder
 from .fixtures.water_supply import WaterSupplySectorModel
 
 
+class TestSosModel():
+    def get_sos_model(self):
+        builder = SosModelBuilder()
+        builder.add_timesteps([2010])
+        builder.add_scenario_data({
+            "raininess": [
+                {
+                    'year': 2010,
+                    'value': 3,
+                    'units': 'ml'
+                },
+                {
+                    'year': 2011,
+                    'value': 5,
+                    'units': 'ml'
+                },
+                {
+                    'year': 2012,
+                    'value': 1,
+                    'units': 'ml'
+                }
+            ]
+        })
+
+        ws = WaterSupplySectorModel()
+        ws.name = 'water_supply'
+        ws.inputs = {
+            'parameters': [
+                {
+                    'name': 'raininess',
+                    'bounds': (0, 5),
+                    'value': 3
+                }
+            ]
+        }
+        builder.add_model(ws)
+
+        ws2 = WaterSupplySectorModel()
+        ws2.name = 'water_supply_2'
+        ws2.inputs = {
+            'parameters': [
+                {
+                    'name': 'raininess',
+                    'bounds': (0, 5),
+                    'value': 3
+                }
+            ],
+            'dependencies': [
+                {
+                    'name': 'a value',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'from_model': 'water_supply'
+                }
+            ]
+        }
+        builder.add_model(ws2)
+
+        return builder.finish()
+
+    def test_run_static(self):
+        sos_model = self.get_sos_model()
+        sos_model.run()
+
+    def test_run_no_timesteps(self):
+        sos_model = self.get_sos_model()
+        sos_model.timesteps = []
+
+        with raises(ValueError) as ex:
+            sos_model.run()
+        assert "No timesteps" in str(ex.value)
+
+    def test_run_sequential(self):
+        sos_model = self.get_sos_model()
+        sos_model.timesteps = [2010, 2011, 2012]
+        sos_model.run()
+
+    def test_run_single_sector(self):
+        sos_model = self.get_sos_model()
+        sos_model.run_sector_model('water_supply')
+
+    def test_run_missing_sector(self):
+        sos_model = self.get_sos_model()
+
+        with raises(AssertionError) as ex:
+            sos_model.run_sector_model('impossible')
+        assert "Model 'impossible' does not exist" in str(ex.value)
+
+
 class TestSosModelBuilder():
 
     def test_builder(self, setup_project_folder):
@@ -14,7 +103,6 @@ class TestSosModelBuilder():
         builder = SosModelBuilder()
 
         builder.add_timesteps([2010, 2011, 2012])
-        builder.add_planning([])
 
         model = WaterSupplySectorModel()
         model.name = 'water_supply'
