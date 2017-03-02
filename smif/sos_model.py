@@ -355,17 +355,15 @@ class SosModelBuilder(object):
                     nested[year][param] = {}
 
                 if "region" not in obs:
-                    region = "UK"
-                else:
-                    region = obs["region"]
+                    obs["region"] = "UK"
+                region = obs["region"]
 
                 if region not in nested[year][param]:
                     nested[year][param][region] = {}
 
                 if "timestep" not in obs:
-                    timestep = "year"
-                else:
-                    timestep = obs["timestep"]
+                    obs["timestep"] = "year"
+                timestep = obs["timestep"]
 
                 if timestep in nested[year][param][region]:
                     raise AssertionError(
@@ -374,18 +372,21 @@ class SosModelBuilder(object):
                         nested[year][param][region][timestep]
                     )
                 else:
+                    del obs["year"]
+                    del obs["region"]
+                    del obs["timestep"]
                     nested[year][param][region][timestep] = obs
 
         self.sos_model.scenario_data = nested
 
-    def _check_planning_assets_exist(self):
-        """Check existence of all the assets in the pre-specifed planning
+    def _check_planning_interventions_exist(self):
+        """Check existence of all the interventions in the pre-specifed planning
 
         """
         model = self.sos_model
         names = model.intervention_names
         for planning_name in model.planning.names:
-            msg = "Asset '{}' in planning file not found in assets"
+            msg = "Intervention '{}' in planning file not found in interventions"
             assert planning_name in names, msg.format(planning_name)
 
     def _check_planning_timeperiods_exist(self):
@@ -400,7 +401,7 @@ class SosModelBuilder(object):
     def _validate(self):
         """Validates the sos model
         """
-        self._check_planning_assets_exist()
+        self._check_planning_interventions_exist()
         self._check_planning_timeperiods_exist()
 
     def _check_dependencies(self):
