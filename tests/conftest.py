@@ -325,6 +325,72 @@ def setup_interventions_file_two(setup_folder_structure):
 
 
 @fixture(scope='function')
+def setup_scenario_data(setup_folder_structure):
+    file_contents = [
+        {
+            'value': 100,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2015
+        },
+        {
+            'value': 150,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2016
+        },
+        {
+            'value': 200,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2017
+        }
+    ]
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('data', 'population.yaml')
+    filepath.write(contents)
+
+    # overwrite model.yaml
+    file_contents = {
+        'sector_models': [
+            {
+                "name": "water_supply",
+                "path": "../models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "../data/water_supply",
+                'initial_conditions': [
+                    '../data/water_supply/initial_conditions/assets_1.yaml'
+                ],
+                'interventions': [
+                    '../data/water_supply/interventions/water_asset_abc.yaml'
+                ]
+            }
+        ],
+        'scenario_data': [
+            {
+                'parameter': 'population',
+                'file': '../data/population.yaml',
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
+            }
+        ],
+        'timesteps': 'timesteps.yaml',
+        'planning': {
+            'rule_based': {'use': False},
+            'optimisation': {'use': False},
+            'pre_specified': {
+                'use': True,
+                'files': ['../data/water_supply/pre-specified.yaml']
+            }
+        }
+    }
+
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
+
+
+@fixture(scope='function')
 def setup_config_file(setup_folder_structure):
     """Configuration file contains entries for sector models, timesteps and
     planning

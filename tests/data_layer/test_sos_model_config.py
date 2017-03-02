@@ -78,3 +78,17 @@ class TestSosModelReader():
 
         with raises(ValidationError):
             reader.load()
+
+    def test_load_scenario_data(self, setup_project_folder,
+                                setup_scenario_data):
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+        data = reader.data["scenario_data"]
+        assert "population" in data
+        assert len(data["population"]) == 3
+        assert data["population"][0] == {
+            'value': 100,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2015
+        }
