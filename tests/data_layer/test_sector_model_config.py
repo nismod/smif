@@ -30,6 +30,12 @@ class TestSectorModelReader(object):
             ]
         })
 
+    def test_reader_without_initial_config(self):
+        reader = SectorModelReader()
+        assert reader.model_name is None
+        reader.model_name = "test_model"
+        assert reader.model_name == "test_model"
+
     def test_load(self, setup_project_folder):
         reader = self._reader(setup_project_folder)
         reader.load()
@@ -100,3 +106,11 @@ class TestSectorModelReader(object):
                     'water_asset_c', 'water_asset_d']
         actual = [asset['name'] for asset in reader.interventions]
         assert actual == expected
+
+    def test_load_regions_shapefile(self):
+        reader = SectorModelReader()
+        reader.model_config_dir = os.path.join(
+            os.path.dirname(__file__),
+            "../fixtures/data/uk_nations_shp/")
+        data = reader.load_regions()
+        assert len(data) == 3
