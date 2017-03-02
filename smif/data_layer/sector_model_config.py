@@ -4,8 +4,11 @@
 import logging
 import os
 from glob import glob
+
 import fiona
-from . parse_config import ConfigParser
+
+from .load import load
+from .validate import validate_interventions
 
 
 class SectorModelReader(object):
@@ -13,25 +16,38 @@ class SectorModelReader(object):
 
     Arguments
     =========
-    model_name : str
-        The name of the model
-    model_path : str
-        The path to the python module file that contains an implementation
-        of SectorModel
-    model_classname : str
-        The name of the class that implements SectorModel
-    model_config_dir : str
-        The root path of model config/data to use
+    initial_config : dict
+        Sector model details, sufficient to read the full config from a set of
+        files. Must contain the following fields:
+            "model_name": The name of the sector model, for reference within the
+                system-of-systems model
+            "model_path": The path to the python module file that contains an
+                implementation of SectorModel
+            "model_classname": The name of the class that implements SectorModel
+            "model_config_dir": The root path of model config/data to use, which
+                must contain inputs.yaml, outputs.yaml, time_intervals.yaml and
+                regions.shp/regions.geojson
+            "initial_conditions": List of files containing initial conditions
+            "interventions": List of files containing interventions
 
     """
-    def __init__(self, initial_config):
+    def __init__(self, initial_config=None):
         self.logger = logging.getLogger(__name__)
-        self.model_name = initial_config["model_name"]
-        self.model_path = initial_config["model_path"]
-        self.model_classname = initial_config["model_classname"]
-        self.model_config_dir = initial_config["model_config_dir"]
-        self.initial_conditions_paths = initial_config["initial_conditions"]
-        self.interventions_paths = initial_config["interventions"]
+
+        if initial_config is not None:
+            self.model_name = initial_config["model_name"]
+            self.model_path = initial_config["model_path"]
+            self.model_classname = initial_config["model_classname"]
+            self.model_config_dir = initial_config["model_config_dir"]
+            self.initial_conditions_paths = initial_config["initial_conditions"]
+            self.interventions_paths = initial_config["interventions"]
+        else:
+            self.model_name = None
+            self.model_path = None
+            self.model_classname = None
+            self.model_config_dir = None
+            self.initial_conditions_paths = None
+            self.interventions_paths = None
 
         self.inputs = None
         self.outputs = None
@@ -44,16 +60,38 @@ class SectorModelReader(object):
     def load(self):
         """Load and check all config
         """
-        self.inputs = self._load_inputs()
-        self.outputs = self._load_outputs()
-        self.time_intervals = self._load_time_intervals()
-        self.regions = self._load_regions()
-        self.initial_conditions = self._load_initial_conditions()
-        self.interventions = self._load_interventions()
+        self.inputs = self.load_inputs()
+        self.outputs = self.load_outputs()
+        self.time_intervals = self.load_time_intervals()
+        self.regions = self.load_regions()
+        self.initial_conditions = self.load_initial_conditions()
+        self.interventions = self.load_interventions()
 
     @property
     def data(self):
         """Expose all loaded config data
+
+        Returns
+        =======
+        data : dict
+            Model configuration data, with the following fields:
+            "name": The name of the sector model, for reference within the
+                system-of-systems model
+            "path": The path to the python module file that contains an
+                implementation of SectorModel
+            "classname": The name of the class that implements SectorModel
+            "inputs": A list of the inputs that this model requires
+            "outputs": A list of the outputs that this model provides
+            "time_intervals": A list of time intervals within a year that are
+                represented by the model, each with reference to the model's
+                internal identifier for timesteps
+            "regions": A list of geographical regions used within the model, as
+                objects with both geography and attributes
+            "initial_conditions": A list of initial conditions required to set up
+                the modelled system in the base year
+            "interventions": A list of possible interventions that could be made
+                in the modelled system
+
         """
         return {
             "name": self.model_name,
@@ -67,7 +105,7 @@ class SectorModelReader(object):
             "interventions": self.interventions
         }
 
-    def _load_inputs(self):
+    def load_inputs(self):
         """Input spec is located in the ``data/<sectormodel>/inputs.yaml`` file
 
         """
@@ -77,9 +115,9 @@ class SectorModelReader(object):
             msg = "inputs config file not found for {} model"
             raise FileNotFoundError(msg.format(self.model_name))
 
-        return ConfigParser(path).data
+        return load(path)
 
-    def _load_outputs(self):
+    def load_outputs(self):
         """Output spec is located in ``data/<sectormodel>/output.yaml`` file
         """
         path = os.path.join(self.model_config_dir, 'outputs.yaml')
@@ -88,9 +126,9 @@ class SectorModelReader(object):
             msg = "outputs config file not found for {} model"
             raise FileNotFoundError(msg.format(self.model_name))
 
-        return ConfigParser(path).data
+        return load(path)
 
-    def _load_initial_conditions(self):
+    def load_initial_conditions(self):
         """Inital conditions are located in yaml files
         specified in sector model blocks in the sos model config
         """
@@ -98,24 +136,25 @@ class SectorModelReader(object):
 
         paths = self.initial_conditions_paths
         for path in paths:
-            self.logger.debug("Loading initial conditions from {}".format(path))
-            new_data = ConfigParser(path).data
+            self.logger.debug("Loading initial conditions from %s", path)
+            new_data = load(path)
             data.extend(new_data)
         return data
 
-    def _load_interventions(self):
+    def load_interventions(self):
         """Interventions are located in yaml files
         specified in sector model blocks in the sos model config
         """
         data = []
         paths = self.interventions_paths
         for path in paths:
-            self.logger.debug("Loading interventions from {}".format(path))
-            new_data = ConfigParser(path).data
+            self.logger.debug("Loading interventions from %s", path)
+            new_data = load(path)
+            validate_interventions(new_data, path)
             data.extend(new_data)
         return data
 
-    def _load_time_intervals(self):
+    def load_time_intervals(self):
         """Within-year time intervals are specified in ``data/<sectormodel>/time_intervals.yaml``
 
         These specify the mapping of model timesteps to durations within a year
@@ -130,6 +169,18 @@ class SectorModelReader(object):
 
             P[n]Y[n]M[n]DT[n]H[n]M[n]S
 
+        For example::
+
+            P1Y == 1 year
+            P3M == 3 months
+            P168H == 168 hours
+
+        So to specify a period from the beginning of March to the end of May::
+
+            start: P2M
+            end: P5M
+            id: spring
+
         References
         ----------
         .. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
@@ -141,9 +192,9 @@ class SectorModelReader(object):
             msg = "time_intervals config file not found for {} model"
             raise FileNotFoundError(msg.format(self.model_name))
 
-        return ConfigParser(path).data
+        return load(path)
 
-    def _load_regions(self):
+    def load_regions(self):
         """Model regions are specified in ``data/<sectormodel>/regions.*``
 
         The file format must be possible to parse with GDAL, and must contain

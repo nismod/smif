@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
+
 from pytest import raises
-from smif.cli.parse_sector_model_config import SectorModelReader
+from smif.data_layer.sector_model_config import SectorModelReader
 
 
 class TestSectorModelReader(object):
@@ -43,22 +44,22 @@ class TestSectorModelReader(object):
         reader = self._reader(setup_project_missing_model_config)
 
         with raises(FileNotFoundError) as ex:
-            reader._load_inputs()
+            reader.load_inputs()
         msg = "inputs config file not found for water_supply model"
         assert msg in str(ex.value)
 
         with raises(FileNotFoundError) as ex:
-            reader._load_outputs()
+            reader.load_outputs()
         msg = "outputs config file not found for water_supply model"
         assert msg in str(ex.value)
 
         with raises(FileNotFoundError) as ex:
-            reader._load_time_intervals()
+            reader.load_time_intervals()
         msg = "time_intervals config file not found for water_supply model"
         assert msg in str(ex.value)
 
         with raises(FileNotFoundError) as ex:
-            reader._load_regions()
+            reader.load_regions()
         msg = "regions config file not found for water_supply model"
         assert msg in str(ex.value)
 

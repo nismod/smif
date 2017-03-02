@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+
 from pytest import raises
-from smif.cli.parse_model_config import SosModelReader
+from smif.data_layer.sos_model_config import SosModelReader
+from smif.data_layer.validate import ValidationError
 
 
 class TestSosModelReader():
@@ -72,7 +74,7 @@ class TestSosModelReader():
     def test_timesteps_invalid(self, setup_project_folder,
                                setup_timesteps_file_invalid):
 
-        reader = SosModelReader(self._get_model_config(setup_project_folder))
+        reader = self._get_reader(setup_project_folder)
 
-        with raises(ValueError):
+        with raises(ValidationError):
             reader.load()

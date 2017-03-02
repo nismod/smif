@@ -3,7 +3,9 @@
 """
 import logging
 import os
-from . parse_config import ConfigParser
+
+from .load import load
+from .validate import validate_sos_model_config, validate_timesteps
 
 
 class SosModelReader(object):
@@ -33,12 +35,11 @@ class SosModelReader(object):
     def load(self):
         """Load and check all config
         """
-        self._config = self._load_sos_config()
-        self.timesteps = self._load_timesteps()
-        self.scenario_data = self._load_scenario_data()
-        self.sector_model_data = self._load_sector_model_data()
-        self.names = self._load_names()
-        self.planning = self._load_planning()
+        self._config = self.load_sos_config()
+        self.timesteps = self.load_timesteps()
+        self.scenario_data = self.load_scenario_data()
+        self.sector_model_data = self.load_sector_model_data()
+        self.planning = self.load_planning()
 
     @property
     def data(self):
@@ -48,11 +49,10 @@ class SosModelReader(object):
             "timesteps": self.timesteps,
             "sector_model_config": self.sector_model_data,
             "scenario_data": self.scenario_data,
-            "planning": self.planning,
-            "names": self.names
+            "planning": self.planning
         }
 
-    def _load_sos_config(self):
+    def load_sos_config(self):
         """Parse model master config
 
         - configures run mode
@@ -63,24 +63,22 @@ class SosModelReader(object):
         msg = "Looking for configuration data in {}".format(self._config_file_path)
         self.logger.info(msg)
 
-        config_parser = ConfigParser(self._config_file_path)
-        config_parser.validate_as_modelrun_config()
-        self.logger.debug(config_parser.data)
+        data = load(self._config_file_path)
+        validate_sos_model_config(data)
+        return data
 
-        return config_parser.data
-
-    def _load_timesteps(self):
+    def load_timesteps(self):
         """Parse model timesteps
         """
         file_path = self._get_path_from_config(self._config['timesteps'])
         os.path.exists(file_path)
 
-        config_parser = ConfigParser(file_path)
-        config_parser.validate_as_timesteps()
+        data = load(file_path)
+        validate_timesteps(data, file_path)
 
-        return config_parser.data
+        return data
 
-    def _load_sector_model_data(self):
+    def load_sector_model_data(self):
         """Parse list of sector models to run
 
         Model details include:
@@ -90,8 +88,7 @@ class SosModelReader(object):
         """
         return self._config['sector_models']
 
-
-    def _load_scenario_data(self):
+    def load_scenario_data(self):
         """Load scenario data from list in sos model config
 
         Working assumptions:
@@ -116,43 +113,29 @@ class SosModelReader(object):
             for data_type in self._config['scenario_data']:
                 file_path = self._get_path_from_config(data_type['file'])
                 self.logger.debug("Loading scenario data from %s", file_path)
-                parser = ConfigParser(file_path)
-                scenario_data[data_type["parameter"]] = parser.data
+                data = load(file_path)
+                scenario_data[data_type["parameter"]] = data
 
         return scenario_data
 
-
-    def _load_planning(self):
+    def load_planning(self):
         """Loads the set of build instructions for planning
         """
         if self._config['planning']['pre_specified']['use']:
             planning_relative_paths = self._config['planning']['pre_specified']['files']
             planning_instructions = []
 
-            for parser in self._parsers_from_relative_paths(planning_relative_paths):
-                parser.validate_as_pre_specified_planning()
-                planning_instructions.extend(parser.data)
+            for data in self._data_from_relative_paths(planning_relative_paths):
+                planning_instructions.extend(data)
 
             return planning_instructions
         else:
             return []
 
-    def _load_names(self):
-        names = []
-        if 'names' in self._config:
-            names_relative_paths = self._config['names']
-
-            for parser in self._parsers_from_relative_paths(names_relative_paths):
-                parser.validate_as_assets()
-                names.extend(parser.data)
-
-        return names
-
-    def _parsers_from_relative_paths(self, paths):
+    def _data_from_relative_paths(self, paths):
         for rel_path in paths:
             file_path = self._get_path_from_config(rel_path)
-            parser = ConfigParser(file_path)
-            yield parser
+            yield load(file_path)
 
     def _get_path_from_config(self, path):
         """Return an absolute path, given a path provided from a config file

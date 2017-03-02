@@ -285,6 +285,7 @@ def setup_interventions_file_one(setup_folder_structure):
     contents = yaml.dump(assets_contents)
     filename.write(contents, ensure=True)
 
+
 @fixture(scope='function')
 def setup_interventions_file_two(setup_folder_structure):
     """Interventions are associated with sector models,
@@ -954,6 +955,14 @@ def setup_water_interventions_abc(setup_folder_structure):
             "capital_cost": {
                 "units": "£",
                 "value": 1500
+            },
+            "economic_lifetime": {
+                "units": "years",
+                "value": 25
+            },
+            "operational_lifetime": {
+                "units": "years",
+                "value": 25
             }
         },
         {
@@ -962,6 +971,14 @@ def setup_water_interventions_abc(setup_folder_structure):
             "capital_cost": {
                 "units": "£",
                 "value": 3000
+            },
+            "economic_lifetime": {
+                "units": "years",
+                "value": 25
+            },
+            "operational_lifetime": {
+                "units": "years",
+                "value": 25
             }
         }
 
@@ -979,11 +996,17 @@ def setup_water_interventions_abc(setup_folder_structure):
 
 @fixture(scope='function')
 def setup_water_intervention_d(setup_folder_structure,
-                        setup_config_file_two):
+                               setup_config_file_two):
 
     content = """
 - name: water_asset_d
   location: oxford
+  operational_lifetime:
+    units: years
+    value: 50
+  economic_lifetime:
+    units: years
+    value: 45
   capital_cost:
     units: "£"
     value: 3000
