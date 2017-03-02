@@ -25,7 +25,6 @@ The key functions include
   performance, particularly for the purposes of optimisation and rule-based
   approaches
 
-
 """
 import importlib
 import logging
