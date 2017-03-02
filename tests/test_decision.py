@@ -48,3 +48,7 @@ class TestPlanning:
         expected = {2045, 2035}
         actual = plan.timeperiods
         assert actual == expected
+
+    def test_empty(self):
+        plan = Planning()
+        assert plan.planned_interventions == []
