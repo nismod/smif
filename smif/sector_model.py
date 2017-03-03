@@ -26,11 +26,11 @@ The key functions include
   approaches
 
 """
-import importlib
 import logging
 import os
 from abc import ABC, abstractmethod
 
+import importlib
 from smif.inputs import ModelInputs
 from smif.outputs import ModelOutputs
 
@@ -146,7 +146,6 @@ class SectorModel(ABC):
         """
         return [intervention['name'] for intervention in self.interventions]
 
-
     @abstractmethod
     def simulate(self, decisions, state, data):
         """Implement this method to run the model
@@ -235,9 +234,9 @@ class SectorModelBuilder(object):
             self._sector_model.name = self._sector_model_name
 
         else:
-            msg = "Cannot find {} for the {} model".format(
+            msg = "Cannot find '{}' for the '{}' model".format(
                 model_path, self._sector_model_name)
-            raise Exception(msg)
+            raise FileNotFoundError(msg)
 
     def add_inputs(self, input_dict):
         """Add inputs to the sector model

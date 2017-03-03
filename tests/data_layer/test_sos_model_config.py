@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+
 from pytest import raises
-from smif.cli.parse_model_config import SosModelReader
+from smif.data_layer.sos_model_config import SosModelReader
+from smif.data_layer.validate import ValidationError
 
 
 class TestSosModelReader():
@@ -58,6 +60,17 @@ class TestSosModelReader():
         assert reader.timesteps == expected
         assert reader.data["timesteps"] == expected
 
+    def test_abs_path_for_timesteps(self, setup_project_folder, setup_abs_path_to_timesteps):
+        """Expect absolute paths to work fine
+        """
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+
+        expected = [2010, 2011, 2012]
+
+        assert reader.timesteps == expected
+        assert reader.data["timesteps"] == expected
+
     def test_timesteps_alternate_file(self, setup_project_folder,
                                       setup_config_file_timesteps_two,
                                       setup_timesteps_file_two):
@@ -69,10 +82,33 @@ class TestSosModelReader():
         actual = reader.timesteps
         assert actual == expected
 
-    def test_timesteps_invalid(self, setup_project_folder,
-                               setup_timesteps_file_invalid):
+    def test_timesteps_invalid(self, setup_project_folder, setup_timesteps_file_invalid):
+        """Expect an error on trying to load an invalid file
+        """
+        reader = self._get_reader(setup_project_folder)
 
-        reader = SosModelReader(self._get_model_config(setup_project_folder))
-
-        with raises(ValueError):
+        with raises(ValidationError):
             reader.load()
+
+    def test_load_scenario_data(self, setup_project_folder, setup_scenario_data):
+        """Load a population parameter from scenario config files
+        """
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+        data = reader.data["scenario_data"]
+        assert "population" in data
+        assert len(data["population"]) == 3
+        assert data["population"][0] == {
+            'value': 100,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2015
+        }
+
+    def test_no_planning(self, setup_project_folder, setup_no_planning):
+        """Expect an empty list if planning is not to be used
+        """
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+        data = reader.data["planning"]
+        assert len(data) == 0

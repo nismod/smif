@@ -4,54 +4,16 @@ framework.
 
 """
 import logging
-from enum import Enum
 
 import networkx
-import numpy as np
-from smif.intervention import Intervention, InterventionRegister
+from enum import Enum
 from smif.decision import Planning
+from smif.intervention import Intervention, InterventionRegister
 from smif.sector_model import SectorModelBuilder
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
 __license__ = "mit"
-
-
-class Controller:
-    """Coordinates the data-layer, decision-layer and model-runner
-
-    The Controller expects to be provided with configuration data to run a set
-    of sector models over a number of timesteps, in a given mode.
-
-    It also requires a data connection to populate model inputs and store
-    results.
-
-    Parameters
-    ----------
-    config_data : dict
-        A valid system-of-systems model configuration dictionary
-
-
-    """
-    def __init__(self, config_data):
-        builder = SosModelBuilder()
-        builder.construct(config_data)
-        self._model = builder.finish()
-
-    def run_sos_model(self):
-        """Runs the system-of-system model
-        """
-        self._model.run()
-
-    def run_sector_model(self, model_name):
-        """Runs a sector model
-
-        Parameters
-        ----------
-        model_name: str
-            The name of the sector model to run
-        """
-        self._model.run_sector_model(model_name)
 
 
 class SosModel(object):
@@ -61,7 +23,7 @@ class SosModel(object):
     sector models together. Sector models may be joined through dependencies.
 
     This class is populated at runtime by the :class:`SosModelBuilder` and
-    called from the :class:`Controller`.
+    called from :func:`smif.cli.run_model`.
 
     Attributes
     ==========
@@ -74,7 +36,7 @@ class SosModel(object):
         self._timesteps = []
         self.initial_conditions = []
         self.interventions = InterventionRegister()
-        self.planning = []
+        self.planning = Planning([])
         self.scenario_data = {}
 
         self.logger = logging.getLogger(__name__)
@@ -89,31 +51,6 @@ class SosModel(object):
         2. Run each sector model
 
         3. Return success or failure
-
-        Notes
-        =====
-        # TODO pass in:
-
-        - decisions, anything from strategy space that can be decided by
-          explicit planning or rule-based decisions or the optimiser
-
-        - state, anything from the previous timestep (assets with all
-          attributes, state/condition of any other model entities)
-
-        - data, anything from scenario space, to be used by the
-          simulation of the model
-
-        driven by needs of optimise routines, possibly all these
-        parameters should be np arrays, or return np arrays from helper
-        or have _simulate_from_array method
-
-        # TODO pick state from previous timestep (or initialise)
-
-        # TODO decide on approach to infrastructure system and possible
-        actions/decisions which can change it, then handle system
-        initialisation and keeping track of system composition over
-        each timestep of the model run
-
         """
         mode = self.determine_running_mode()
         self.logger.debug("Running in %s mode", mode.name)
@@ -135,14 +72,14 @@ class SosModel(object):
 
         """
         run_order = self._get_model_names_in_run_order()
+        timestep = self.timesteps[0]
 
-        timestep = self._timesteps[0]
         for model_name in run_order:
             logging.debug("Running %s", model_name)
             model = self.model_list[model_name]
             decisions = []
             state = {}
-            data = {}
+            data = self._get_scenario_data(model_name, timestep)
             model.simulate(decisions, state, data)
 
     def _run_sequential_sos_model(self):
@@ -211,20 +148,21 @@ class SosModel(object):
             The name of the model, corresponding to the folder name in the
             models subfolder of the project folder
         """
-        msg = "Model {} does not exist. Choose from {}".format(model_name,
-                                                               self.model_list)
+        msg = "Model '{}' does not exist. Choose from {}".format(model_name,
+                                                                 self.sector_models)
         assert model_name in self.model_list, msg
 
         msg = "Running the {} sector model".format(model_name)
         self.logger.info(msg)
 
         sector_model = self.model_list[model_name]
-        # Run a simulation for a single year
-        # TODO fix assumption of no decision vars
-        decision_variables = np.zeros(2)
-        state = {}
-        data = {}
-        sector_model.simulate(decision_variables, state, data)
+
+        # Run a simulation for a single model
+        for timestep in self.timesteps:
+            decisions = []
+            state = {}
+            data = self._get_scenario_data(model_name, timestep)
+            sector_model.simulate(decisions, state, data)
 
     @property
     def timesteps(self):
@@ -287,13 +225,13 @@ class SosModelBuilder(object):
 
     Examples
     --------
-    Call :py:meth:`~controller.SosModelBuilder.construct` to populate
-    a :class:`SosModel` object and :py:meth:`~controller.SosModelBuilder.finish`
+    Call :py:meth:`SosModelBuilder.construct` to populate
+    a :class:`SosModel` object and :py:meth:`SosModelBuilder.finish`
     to return the validated and dependency-checked system-of-systems model.
 
     >>> builder = SosModelBuilder()
     >>> builder.construct(config_data)
-    >>> builder.finish()
+    >>> sos_model = builder.finish()
 
     """
     def __init__(self):
@@ -418,17 +356,15 @@ class SosModelBuilder(object):
                     nested[year][param] = {}
 
                 if "region" not in obs:
-                    region = "UK"
-                else:
-                    region = obs["region"]
+                    obs["region"] = "UK"
+                region = obs["region"]
 
                 if region not in nested[year][param]:
                     nested[year][param][region] = {}
 
                 if "timestep" not in obs:
-                    timestep = "year"
-                else:
-                    timestep = obs["timestep"]
+                    obs["timestep"] = "year"
+                timestep = obs["timestep"]
 
                 if timestep in nested[year][param][region]:
                     raise AssertionError(
@@ -437,18 +373,21 @@ class SosModelBuilder(object):
                         nested[year][param][region][timestep]
                     )
                 else:
+                    del obs["year"]
+                    del obs["region"]
+                    del obs["timestep"]
                     nested[year][param][region][timestep] = obs
 
         self.sos_model.scenario_data = nested
 
-    def _check_planning_assets_exist(self):
-        """Check existence of all the assets in the pre-specifed planning
+    def _check_planning_interventions_exist(self):
+        """Check existence of all the interventions in the pre-specifed planning
 
         """
         model = self.sos_model
         names = model.intervention_names
         for planning_name in model.planning.names:
-            msg = "Asset '{}' in planning file not found in assets"
+            msg = "Intervention '{}' in planning file not found in interventions"
             assert planning_name in names, msg.format(planning_name)
 
     def _check_planning_timeperiods_exist(self):
@@ -463,7 +402,7 @@ class SosModelBuilder(object):
     def _validate(self):
         """Validates the sos model
         """
-        self._check_planning_assets_exist()
+        self._check_planning_interventions_exist()
         self._check_planning_timeperiods_exist()
 
     def _check_dependencies(self):

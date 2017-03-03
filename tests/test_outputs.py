@@ -4,6 +4,7 @@
 from pytest import fixture
 from smif.outputs import ModelOutputs
 
+
 @fixture(scope='function')
 def one_output_metric():
     """Returns a model input dictionary with a single (unlikely to be met)
@@ -21,9 +22,9 @@ def one_output_metric():
 class TestModelOutputs:
     """Given a list of dicts from ``outputs.yaml``, return a list of names::
 
-            metrics:
-            - name: total_cost
-            - name: water_demand
+        metrics:
+        - name: total_cost
+        - name: water_demand
 
     """
 

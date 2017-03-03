@@ -91,98 +91,6 @@ class WaterSupplySectorModel(SectorModel):
     system.
     """
 
-    ##
-    # File interaction methods like load_results_from_files and
-    # replace_{line,cell} might live somewhere else
-    # - maybe sectormodel, if that deals with replacing file data?
-    # - maybe a utility file handler class?
-    # seem related to outputs for now
-    ##
-    @staticmethod
-    def replace_line(file_name, line_num, new_data):
-        """Replaces a line in a file with new data
-
-        Arguments
-        =========
-        file_name: str
-            The path to the input file
-        line_num: int
-            The number of the line to replace
-        new_data: str
-            The data to replace in the line
-
-        """
-        lines = open(file_name, 'r').readlines()
-        lines[line_num] = new_data
-        out = open(file_name, 'w')
-        out.writelines(lines)
-        out.close()
-
-    @staticmethod
-    def replace_cell(file_name, line_num, column_num, new_data,
-                     delimiter=None):
-        """Replaces a cell in a delimited file with new data
-
-        Arguments
-        =========
-        file_name: str
-            The path to the input file
-        line_num: int
-            The number of the line to replace (0-index)
-        column_num: int
-            The number of the column to replace (0-index)
-        new_data: str
-            The data to replace in the line
-        delimiter: str, default=','
-            The delimiter of the columns
-        """
-        line_num -= 1
-        column_num -= 1
-
-        with open(file_name, 'r') as input_file:
-            lines = input_file.readlines()
-
-        columns = lines[line_num].split(delimiter)
-        columns[column_num] = new_data
-        lines[line_num] = " ".join(columns) + "\n"
-
-        with open(file_name, 'w') as out_file:
-            out_file.writelines(lines)
-
-    @property
-    def file_locations(self):
-        """Allows ordered searching through file to extract results from file
-        """
-        locations = {}
-
-        # For each file return tuple of row/column
-        for name in self.names:
-            row_num = self.values[name]['row_num']
-            col_num = self.values[name]['col_num']
-            filename = self.values[name]['file_name']
-
-            if filename not in locations:
-                # add filename to locations
-                locations[filename] = {}
-
-            locations[filename][name] = (row_num, col_num)
-
-        return locations
-
-    def load_results_from_files(self, dirname):
-        """Load model outputs from specified files
-        """
-        for filename in self.file_locations:
-            file_path = os.path.join(dirname, filename)
-
-            with open(file_path, 'r') as results_set:
-                lines = results_set.readlines()
-
-            for name, rowcol in self.file_locations[filename].items():
-                row_num, col_num = rowcol
-                result = lines[row_num][col_num:].strip()
-                self.values[name]['value'] = result
-
     def simulate(self, decision_variables, state, data):
         """
 
@@ -193,10 +101,14 @@ class WaterSupplySectorModel(SectorModel):
         """
 
         # unpack inputs
-        raininess = self.inputs.parameters['raininess']['value']
+        self.logger.debug(data)
+        raininess = data['raininess']['UK']['year']['value']
 
         # unpack decision variables
-        number_of_treatment_plants = decision_variables[0, ]
+        if len(decision_variables) > 0:
+            number_of_treatment_plants = decision_variables[0]
+        else:
+            number_of_treatment_plants = 1
 
         # simulate (wrapping toy model)
         instance = ExampleWaterSupplySimulationModelWithAsset(raininess,
@@ -221,98 +133,6 @@ class WaterSupplySectorModel(SectorModel):
         constraints = ({'type': 'ineq',
                         'fun': lambda x: min(x[0], parameters[0]) - 3})
         return constraints
-
-
-class DynamicWaterSupplySectorModel(SectorModel):
-    """Example of a class implementing the SectorModel interface,
-    using one of the toy water models below to simulate the water supply
-    system.
-    """
-
-    def simulate(self, decision_variables, state, data):
-        """
-
-        Arguments
-        =========
-        decision_variables : :class:`numpy.ndarray`
-            x_0 is new capacity of water treatment plants
-        """
-
-        # unpack inputs
-        raininess = self.inputs.parameters['raininess']['value']
-        capacity = self.inputs.parameters['existing capacity']['value']
-
-        # unpack decision variables
-        new_capacity = decision_variables[0, ]
-
-        # simulate (wrapping toy model)
-        instance = DynamicWaterSupplyModel(raininess,
-                                           capacity,
-                                           new_capacity)
-        results = instance.simulate()
-
-        return results
-
-    def extract_obj(self, results):
-        return results['cost']
-
-    def constraints(self, parameters):
-        """
-
-        Notes
-        =====
-        This constraint below expresses that water supply must be greater than
-        or equal to 3.  ``x[0]`` is the decision variable for water treatment
-        capacity, while the value ``parameters[0]`` in the min term is the
-        value of the raininess parameter.
-        """
-        constraints = ({'type': 'ineq',
-                        'fun': lambda x: min(x[0] + parameters[1],
-                                             parameters[0]) - 3})
-        return constraints
-
-
-class WaterSupplySectorModelWithAssets(SectorModel):
-    """A concrete instance of the water supply wrapper for testing with assets
-
-    Inherits :class:`SectorModel` to wrap the example simulation tool including
-    asset management.
-
-    The __state__ of the model is tracked in the asset parameter
-    `number_of_treatment_plants`.
-
-    """
-    def initialise(self, data, assets):
-        """Initialises the model
-        """
-        self.model = ExampleWaterSupplySimulationModelWithAsset(data['raininess'],
-                                                                data['plants'])
-        self.results = None
-        self.run_successful = None
-
-        treatment_plants = self.model.number_of_treatment_plants
-
-        self.state = {
-            'assets': {'treatment plant': treatment_plants}
-        }
-
-    def optimise(self, method, decision_vars, objective_function):
-        pass
-
-    def decision_vars(self):
-        return self.model.number_of_treatment_plants
-
-    def objective_function(self):
-        return self.model.cost
-
-    def simulate(self, decisions, state, data):
-        self.model.number_of_treatment_plants = \
-            self.state['assets']['treatment plant']
-        self.results = self.model.simulate()
-        self.run_successful = True
-
-    def model_executable(self):
-        pass
 
 
 class ExampleWaterSupplySimulationModel(object):
@@ -427,57 +247,4 @@ class ExampleWaterSupplySimulationModelWithReservoir(ExampleWaterSupplySimulatio
             'water': self.water,
             'cost': self.cost,
             'reservoir level': self._reservoir_level
-        }
-
-
-class DynamicWaterSupplyModel(ExampleWaterSupplySimulationModel):
-    """An example simulation model which includes historical assets
-
-    Parameters
-    ==========
-    raininess : int
-        Model Parameter - The amount of rain produced in each simulation
-    p_existing_treatment_plants : int
-        Model Parameter - The amount of water is a function of the number of
-        treatment plants and the amount of raininess.  Note that this
-        parameter characterises model state that traverses years.
-    v_new_treatment_plants : float
-        Decision Variable - The number of new treatment plants to build
-    """
-    def __init__(self,
-                 raininess,
-                 p_existing_treatment_plants,
-                 v_new_treatment_plants):
-        """Overrides the basic example class to include treatment plants
-
-        """
-        self.new_capacity = v_new_treatment_plants
-        self.number_of_treatment_plants = (p_existing_treatment_plants +
-                                           v_new_treatment_plants)
-        self.water = None
-        self.cost = None
-        super().__init__(raininess)
-
-    def simulate(self):
-        """Runs the water supply model
-
-        Only 1 unit of water is produced per treatment plant,
-        no matter how rainy.
-
-        Each treatment plant costs 1.0 unit.
-        """
-        logger.debug("There are {} plants, {} of which are new".format(
-            self.number_of_treatment_plants, self.new_capacity))
-        logger.debug("It is {} rainy".format(self.raininess))
-
-        water = min(self.number_of_treatment_plants, self.raininess)
-
-        cost = 1.264 * self.new_capacity
-
-        logger.debug("The system costs £{}".format(cost))
-
-        return {
-            "water": water,
-            "cost": cost,
-            "capacity": self.number_of_treatment_plants
         }

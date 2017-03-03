@@ -285,6 +285,7 @@ def setup_interventions_file_one(setup_folder_structure):
     contents = yaml.dump(assets_contents)
     filename.write(contents, ensure=True)
 
+
 @fixture(scope='function')
 def setup_interventions_file_two(setup_folder_structure):
     """Interventions are associated with sector models,
@@ -321,6 +322,137 @@ def setup_interventions_file_two(setup_folder_structure):
     ]
     contents = yaml.dump(assets_contents)
     filename.write(contents, ensure=True)
+
+
+@fixture(scope='function')
+def setup_scenario_data(setup_folder_structure):
+    file_contents = [
+        {
+            'value': 100,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2015
+        },
+        {
+            'value': 150,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2016
+        },
+        {
+            'value': 200,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2017
+        }
+    ]
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('data', 'population.yaml')
+    filepath.write(contents)
+
+    # overwrite model.yaml
+    file_contents = {
+        'sector_models': [
+            {
+                "name": "water_supply",
+                "path": "../models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "../data/water_supply",
+                'initial_conditions': [
+                    '../data/water_supply/initial_conditions/assets_1.yaml'
+                ],
+                'interventions': [
+                    '../data/water_supply/interventions/water_asset_abc.yaml'
+                ]
+            }
+        ],
+        'scenario_data': [
+            {
+                'parameter': 'population',
+                'file': '../data/population.yaml',
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
+            }
+        ],
+        'timesteps': 'timesteps.yaml',
+        'planning': {
+            'rule_based': {'use': False},
+            'optimisation': {'use': False},
+            'pre_specified': {
+                'use': True,
+                'files': ['../data/water_supply/pre-specified.yaml']
+            }
+        }
+    }
+
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
+
+
+@fixture(scope='function')
+def setup_no_planning(setup_folder_structure):
+    file_contents = {
+        'sector_models': [
+            {
+                "name": "water_supply",
+                "path": "../models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "../data/water_supply",
+                'initial_conditions': [
+                    '../data/water_supply/initial_conditions/assets_1.yaml'
+                ],
+                'interventions': [
+                    '../data/water_supply/interventions/water_asset_abc.yaml'
+                ]
+            }
+        ],
+        'timesteps': 'timesteps.yaml',
+        'planning': {
+            'rule_based': {'use': False},
+            'optimisation': {'use': False},
+            'pre_specified': {'use': False}
+        }
+    }
+
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
+
+
+@fixture(scope='function')
+def setup_abs_path_to_timesteps(setup_folder_structure):
+    timesteps_abs_path = str(setup_folder_structure.join(
+        'config',
+        'timesteps.yaml'
+    ))
+
+    file_contents = {
+        'sector_models': [
+            {
+                "name": "water_supply",
+                "path": "../models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "../data/water_supply",
+                'initial_conditions': [
+                    '../data/water_supply/initial_conditions/assets_1.yaml'
+                ],
+                'interventions': [
+                    '../data/water_supply/interventions/water_asset_abc.yaml'
+                ]
+            }
+        ],
+        'timesteps': timesteps_abs_path,
+        'planning': {
+            'rule_based': {'use': False},
+            'optimisation': {'use': False},
+            'pre_specified': {'use': False}
+        }
+    }
+
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
 
 
 @fixture(scope='function')
@@ -954,6 +1086,14 @@ def setup_water_interventions_abc(setup_folder_structure):
             "capital_cost": {
                 "units": "£",
                 "value": 1500
+            },
+            "economic_lifetime": {
+                "units": "years",
+                "value": 25
+            },
+            "operational_lifetime": {
+                "units": "years",
+                "value": 25
             }
         },
         {
@@ -962,6 +1102,14 @@ def setup_water_interventions_abc(setup_folder_structure):
             "capital_cost": {
                 "units": "£",
                 "value": 3000
+            },
+            "economic_lifetime": {
+                "units": "years",
+                "value": 25
+            },
+            "operational_lifetime": {
+                "units": "years",
+                "value": 25
             }
         }
 
@@ -979,11 +1127,17 @@ def setup_water_interventions_abc(setup_folder_structure):
 
 @fixture(scope='function')
 def setup_water_intervention_d(setup_folder_structure,
-                        setup_config_file_two):
+                               setup_config_file_two):
 
     content = """
 - name: water_asset_d
   location: oxford
+  operational_lifetime:
+    units: years
+    value: 50
+  economic_lifetime:
+    units: years
+    value: 45
   capital_cost:
     units: "£"
     value: 3000

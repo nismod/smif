@@ -7,27 +7,44 @@ Currently, only pre-specified planning is implemented.
 
 class Planning:
     """
+    Holds the list of planned interventions, where a single planned intervention
+    is an intervention with a build date after which it will be included in the
+    modelled systems.
 
-    Parameters
+    For example, a small pumping station might be built in
+    Oxford in 2045::
+
+            {
+                'name': 'small_pumping_station',
+                'build_date': 2045,
+                'location': 'oxford',
+                'capacity': {
+                    'value': 500,
+                    'units': 'mcm/day'
+                }
+            }
+
+
+    Attributes
     ----------
-    planning_data : list
-        A list of pre-specified planning commands
+    planned_interventions : list
+        A list of pre-specified planned interventions
     """
 
-    def __init__(self, planning_data):
-        if planning_data is not None:
-            self.build_instructions = planning_data
+    def __init__(self, planned_interventions=None):
+        if planned_interventions is not None:
+            self.planned_interventions = planned_interventions
         else:
-            self.build_instructions = []
+            self.planned_interventions = []
 
     @property
     def names(self):
-        """Returns the set of assets defined in the planning commands
+        """Returns the set of assets defined in the planned interventions
         """
-        return {plan['name'] for plan in self.build_instructions}
+        return {plan['name'] for plan in self.planned_interventions}
 
     @property
     def timeperiods(self):
-        """Returns the set of time periods defined in the planning commands
+        """Returns the set of build dates defined in the planned interventions
         """
-        return {plan['build_date'] for plan in self.build_instructions}
+        return {plan['build_date'] for plan in self.planned_interventions}

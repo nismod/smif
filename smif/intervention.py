@@ -1,5 +1,5 @@
 """This module handles the collection of interventions and assets in a sector.
-The set of interventions describes the targets of possible 
+The set of interventions describes the targets of possible
 physical (or non-physical) decisions which can be made in the sector.
 
 An Asset is the general term for an existing component of an infrastructure system.
@@ -16,15 +16,20 @@ This module implements:
 
 - initialisation of the set of assets from model config (either a collection of yaml
   text files, or a database)
+
   - hold generic list of key/values
   - creation of new assets by decision logic (rule-based/optimisation solver)
   - maintain or derive set of possible assets
   - makes the distinction between known-ahead values and build-time values.
     Location and date are specified at build time, while cost and capacity
     are a function of time and location.
+
 - serialisation for passing to models
+
   - ease of access to full generic data structure
+
 - output list of assets for reporting
+
   - write out with legible or traceable keys and units for verification and
     understanding
 

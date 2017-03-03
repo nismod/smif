@@ -1,13 +1,13 @@
-.. _getting_started
+.. _getting_started:
 
-Getting Started 
+Getting Started
 ===============
 
 To specify a system-of-systems model, you must configure one or more simulation
 models, outlined in the section below, and configure a system-of-systems
 model, as outlined immediately below.
 
-First, setup a new system-of-systems modelling project with the following 
+First, setup a new system-of-systems modelling project with the following
 folder structure::
 
         /config
@@ -105,7 +105,7 @@ Wrapping a Sector Model
 -----------------------
 
 To integrate a sector model into the system-of-systems model, it is necessary
-to write a Python wrapper, 
+to write a Python wrapper,
 which implements :class:`smif.sector_model.SectorModel`.
 
 The key methods which need to be overridden are:
@@ -114,7 +114,7 @@ The key methods which need to be overridden are:
 - :py:meth:`smif.sector_model.SectorModel.extract_obj`
 
 The path to the location of the ``run.py`` file should be entered in the
-``model.yaml`` file under the ``path`` key 
+``model.yaml`` file under the ``path`` key
 (see System-of-Systems Model File above).
 
 To integrate an infrastructure simulation model within the system-of-systems
@@ -183,11 +183,11 @@ Only those inputs required as dependencies are defined here, although
 dependencies are activated when configured in the system-of-systems model.
 
 The ``inputs.yaml`` file defines the dependencies of one model upon another.
-Enter a list of dependencies, each with four keys, ``name``, 
+Enter a list of dependencies, each with four keys, ``name``,
 ``spatial_resolution``, ``temporal_resolution`` and ``from_model``.
 For example, in energy supply::
 
-        dependencies: 
+        dependencies:
         - name: electricity_demand
           spatial_resolution: DEFAULT
           temporal_resolution: DEFAULT
@@ -197,7 +197,7 @@ For example, in energy supply::
           temporal_resolution: DEFAULT
           from_model: energy_demand
 
-The keys ``spatial_resolution`` and ``temporal_resolution`` define the 
+The keys ``spatial_resolution`` and ``temporal_resolution`` define the
 resolution at which the data are required.  ``from_model`` defines the model
 from which the dependendency is required.
 
@@ -208,7 +208,7 @@ file.
 
 Outputs
 -------
-Define the collection of outputs used as metrics, 
+Define the collection of outputs used as metrics,
 for the purpose of optimisation or
 rule-based planning approaches (so normally a cost-function), and those
 outputs required for accounting purposes, such as operational cost and
@@ -245,7 +245,7 @@ both electricity_demand and gas_demand are linked to the same ``hourly_intervals
 This is in the same format as the time_intervals.yaml file expected in the ``config_dir`` associated
 with the sector model.
 
-The scenario data should contain entries for (time_interval) ``name``, region, value, 
+The scenario data should contain entries for (time_interval) ``name``, region, value,
 units and timestep (year).  For example::
 
       - name: 1_0
@@ -350,15 +350,15 @@ Existing Infrastructure
 ~~~~~~~~~~~~~~~~~~~~~~~
 Existing infrastructure is specified in a
 ``*.yaml`` file.  This uses the following format::
-   -
-    name: CCGT
-    description: Existing roll out of gas-fired power stations
-    timeperiod: 1990 # 2010 is the first year in the model horizon
-    location: "oxford"
-    new_capacity:
+
+    - name: CCGT
+      description: Existing roll out of gas-fired power stations
+      timeperiod: 1990 # 2010 is the first year in the model horizon
+      location: "oxford"
+      new_capacity:
         value: 6
         unit: GW
-    lifetime:
+      lifetime:
         value: 20
         unit: years
 
