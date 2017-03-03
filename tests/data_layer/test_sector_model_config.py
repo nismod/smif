@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+from unittest.mock import MagicMock
 
 from pytest import raises
 from smif.data_layer.sector_model_config import SectorModelReader
@@ -48,11 +49,12 @@ class TestSectorModelReader(object):
 
     def test_load_errors(self, setup_project_missing_model_config):
         reader = self._reader(setup_project_missing_model_config)
+        reader.logger.warning = MagicMock()
 
-        with raises(FileNotFoundError) as ex:
-            reader.load_inputs()
-        msg = "inputs config file not found for water_supply model"
-        assert msg in str(ex.value)
+        # expect a warning if loading no inputs
+        inputs = reader.load_inputs()
+        reader.logger.warning.assert_called_with("No inputs provided for 'water_supply' model")
+        assert inputs == {}
 
         with raises(FileNotFoundError) as ex:
             reader.load_outputs()

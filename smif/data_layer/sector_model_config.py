@@ -132,10 +132,13 @@ class SectorModelReader(object):
         path = os.path.join(self.model_config_dir, 'inputs.yaml')
 
         if not os.path.exists(path):
-            msg = "inputs config file not found for {} model"
-            raise FileNotFoundError(msg.format(self.model_name))
+            msg = "No inputs provided for '{}' model"
+            self.logger.warning(msg.format(self.model_name))
+            data = {}
+        else:
+            data = load(path)
 
-        return load(path)
+        return data
 
     def load_outputs(self):
         """Output spec is located in ``data/<sectormodel>/output.yaml`` file
