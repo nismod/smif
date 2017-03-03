@@ -19,21 +19,28 @@ class SectorModelReader(object):
     initial_config : dict
         Sector model details, sufficient to read the full config from a set of
         files. Must contain the following fields:
-            "model_name": The name of the sector model, for reference within the
-            system-of-systems model
 
-            "model_path": The path to the python module file that contains an
-            implementation of SectorModel
+            "model_name"
+                The name of the sector model, for reference within the
+                system-of-systems model
 
-            "model_classname": The name of the class that implements SectorModel
+            "model_path"
+                The path to the python module file that contains an
+                implementation of SectorModel
 
-            "model_config_dir": The root path of model config/data to use, which
-            must contain inputs.yaml, outputs.yaml, time_intervals.yaml and
-            regions.shp/regions.geojson
+            "model_classname"
+                The name of the class that implements SectorModel
 
-            "initial_conditions": List of files containing initial conditions
+            "model_config_dir"
+                The root path of model config/data to use, which
+                must contain inputs.yaml, outputs.yaml, time_intervals.yaml and
+                regions.shp/regions.geojson
 
-            "interventions": List of files containing interventions
+            "initial_conditions"
+                List of files containing initial conditions
+
+            "interventions"
+                List of files containing interventions
 
     """
     def __init__(self, initial_config=None):
@@ -186,7 +193,7 @@ class SectorModelReader(object):
 
             P1Y == 1 year
             P3M == 3 months
-            P168H == 168 hours
+            PT168H == 168 hours
 
         So to specify a period from the beginning of March to the end of May::
 
