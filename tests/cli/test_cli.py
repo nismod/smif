@@ -99,20 +99,21 @@ def test_confirm_default_response(input):
 
 @patch('builtins.input', return_value='n')
 @patch('builtins.print')
-def test_confirm_default_message(input, mock_print):
+def test_confirm_default_message(mock_print, input):
     confirm()
-    mock_print.assert_has_calls([call('Confirm [n]|y: ')])
+    input.assert_has_calls([call('Confirm [n]|y: ')])
 
 
 @patch('builtins.input', return_value='n')
 @patch('builtins.print')
-def test_confirm_custom_message(input, mock_print):
+def test_confirm_custom_message(mock_print, input):
     confirm('Create directory?', True)
-    mock_print.assert_has_calls([call('Create directory? [y]|n: ')])
+    input.assert_has_calls([call('Create directory? [y]|n: ')])
 
 
 @patch('builtins.input', side_effect=['invalid', 'y'])
 @patch('builtins.print')
-def test_confirm_repeat_message(input, mock_print):
+def test_confirm_repeat_message(mock_print, input):
     confirm()
-    mock_print.assert_has_calls([call('Confirm [n]|y: '), call('Confirm [n]|y: ')])
+    input.assert_has_calls([call('Confirm [n]|y: '), call('Confirm [n]|y: ')])
+    mock_print.assert_called_with('please enter y or n.')
