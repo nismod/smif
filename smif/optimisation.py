@@ -8,7 +8,7 @@ from pyomo.environ import (AbstractModel, Binary, Constraint,
 from pyomo.opt import SolverFactory
 
 
-def _define_basic_model(assets, availability_constraint, asset_costs):
+def define_basic_model(assets, availability_constraint, asset_costs):
     """Define the binary integer planning problem
 
     Arguments
@@ -103,7 +103,7 @@ def state_vfa_model(assets, availability_constraint, asset_costs, asset_value,
     {V}^n_t(S^n_t, a^n_t)`
 
     """
-    model = _define_basic_model(assets, availability_constraint, asset_costs)
+    model = define_basic_model(assets, availability_constraint, asset_costs)
 
     model.J = RangeSet(1, model.p,
                        doc='The set of states')
@@ -182,7 +182,7 @@ def linear_vfa_model(assets, availability_constraint, asset_costs,
         A concrete instance of the model
     """
 
-    model = _define_basic_model(assets, availability_constraint, asset_costs)
+    model = define_basic_model(assets, availability_constraint, asset_costs)
 
     model.d = Param(model.I,
                     initialize=asset_value,
@@ -297,7 +297,7 @@ def feature_vfa_model(assets, availability_constraint, asset_costs,
       feature :math:`f`
 
     """
-    model = _define_basic_model(assets, availability_constraint, asset_costs)
+    model = define_basic_model(assets, availability_constraint, asset_costs)
 
     features = list(feature_coefficients.keys())
 

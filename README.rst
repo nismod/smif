@@ -42,37 +42,38 @@ To install the **glpk** solver:
   executables. For 64bit Windows, download and unzip the distribution files then
   add the ``w64`` folder to your ``PATH``.
 
-Requirements for fiona
+Requirements for `fiona`
+------------------------
 
 We use `fiona <https://github.com/Toblerity/Fiona>`_, which depends on GDAL and
 GEOS libraries. These can be installed with your OS package manager on Mac or
 Linux, then install the python packages as usual using
-`pip install -r requirements.txt`
+``pip install -r requirements.txt``
 
 On Windows, the simplest approach seems to be using
 `conda <http://conda.pydata.org/miniconda.html>`_, which handles packages and
 virtual environments, along with the `conda-forge` channel which has a host of
 pre-built libraries and packages.
 
-Create a conda environment
-```
-conda create --name smif python=3
-```
+Create a conda environment::
 
-Activate it (run each time you switch projects)
-```
-activate smif
-```
+    conda create --name smif python=3
 
-Add the conda-forge channel, which has shapely and fiona available
-```
-conda config --add channels conda-forge
-```
+Activate it (run each time you switch projects)::
 
-Install fiona, along with GDAL and dependencies
-```
-conda install fiona
-```
+    activate smif
+
+Note that you ``source activate smif`` on OSX and Linux.
+
+Add the conda-forge channel, which has shapely and fiona available::
+
+    conda config --add channels conda-forge
+
+
+Install fiona, along with GDAL and dependencies::
+
+    conda install fiona
+
 
 A word from our sponsors
 ========================

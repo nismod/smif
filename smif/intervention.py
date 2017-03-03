@@ -1,31 +1,30 @@
-"""Asset is the general term for any component of an infrastructure system
+"""This module handles the collection of interventions and assets in a sector.
+The set of interventions describes the targets of possible 
+physical (or non-physical) decisions which can be made in the sector.
 
-The set of assets defines the state of the infrastructure system.
+An Asset is the general term for an existing component of an infrastructure system.
+
+The difference between an Intervention and an Asset, is that the latter exists
+(it has been "built"), whereas the former describes the potential to build an Asset.
+
+The set of assets defines the 'state' of the infrastructure system.
 
 Notes
 -----
 
-This module needs to support:
+This module implements:
 
-- initialisation of set of assets from model config (e.g. set of text files;
-  database)
-
+- initialisation of the set of assets from model config (either a collection of yaml
+  text files, or a database)
   - hold generic list of key/values
-
-- creation of new assets by decision logic (rule-based/optimisation solver)
-
+  - creation of new assets by decision logic (rule-based/optimisation solver)
   - maintain or derive set of possible assets
-
-    - hence distinction between known-ahead values and build-time values.
-      At least location and date are specified at build time,
-      possibly also cost, capacity as functions of time and location.
-
+  - makes the distinction between known-ahead values and build-time values.
+    Location and date are specified at build time, while cost and capacity
+    are a function of time and location.
 - serialisation for passing to models
-
   - ease of access to full generic data structure
-
 - output list of assets for reporting
-
   - write out with legible or traceable keys and units for verification and
     understanding
 
