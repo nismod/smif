@@ -1,6 +1,7 @@
 """Test SectorModel and SectorModelBuilder
 """
 from pytest import raises
+from smif.inputs import ModelInputs
 from smif.sector_model import SectorModel, SectorModelBuilder
 
 
@@ -16,11 +17,7 @@ class EmptySectorModel(SectorModel):
 class TestSectorModelBuilder():
 
     def test_sector_model_builder(self, setup_project_folder):
-        project_path = setup_project_folder
-
-        model_path = str(project_path.join('models',
-                                           'water_supply',
-                                           '__init__.py'))
+        model_path = str(setup_project_folder.join('models', 'water_supply', '__init__.py'))
         builder = SectorModelBuilder('water_supply')
         builder.load_model(model_path, 'WaterSupplySectorModel')
 
@@ -53,6 +50,14 @@ class TestSectorModelBuilder():
             builder.load_model('/fictional/path/to/model.py', 'WaterSupplySectorModel')
         msg = "Cannot find '/fictional/path/to/model.py' for the 'water_supply' model"
         assert msg in str(ex.value)
+
+    def test_add_no_inputs(self, setup_project_folder):
+        model_path = str(setup_project_folder.join('models', 'water_supply', '__init__.py'))
+        builder = SectorModelBuilder('water_supply')
+        builder.load_model(model_path, 'WaterSupplySectorModel')
+        builder.add_inputs(None)
+        assert isinstance(builder._sector_model.inputs, ModelInputs)
+        assert len(builder._sector_model.inputs) == 0
 
 
 class TestSectorModel(object):
