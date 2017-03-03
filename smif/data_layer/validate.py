@@ -3,6 +3,9 @@
 """
 
 
+VALIDATION_ERRORS = []
+
+
 class ValidationError(Exception):
     """Custom exception to use for parsing validation.
     """
@@ -14,33 +17,47 @@ def validate_sos_model_config(data):
     """
     # check timesteps
     if "timesteps" not in data:
-        raise ValidationError("No 'timesteps' file specified in main config file.")
-    validate_path_to_timesteps(data["timesteps"])
+        VALIDATION_ERRORS.append(
+            ValidationError("No 'timesteps' file specified in main config file."))
+    else:
+        validate_path_to_timesteps(data["timesteps"])
 
     # check sector models
     if "sector_models" not in data:
-        raise ValidationError("No 'sector_models' specified in main config file.")
-    validate_sector_models_initial_config(data["sector_models"])
+        VALIDATION_ERRORS.append(
+            ValidationError("No 'sector_models' specified in main config file."))
+    else:
+        validate_sector_models_initial_config(data["sector_models"])
 
     # check planning
     if "planning" not in data:
-        raise ValidationError("No 'planning' mode specified in main config file.")
-    validate_planning_config(data["planning"])
+        VALIDATION_ERRORS.append(
+            ValidationError("No 'planning' mode specified in main config file."))
+    else:
+        validate_planning_config(data["planning"])
 
 
 def validate_path_to_timesteps(timesteps):
     """Check timesteps is a path to timesteps file
     """
     if not isinstance(timesteps, str):
-        raise ValidationError("Expected 'timesteps' in main config to specify " +
-                              "a timesteps file, instead got {}.".format(timesteps))
+        VALIDATION_ERRORS.append(
+            ValidationError(
+                "Expected 'timesteps' in main config to specify " +
+                "a timesteps file, instead got {}.".format(timesteps)))
 
 
 def validate_timesteps(timesteps, file_path):
-    """Check timesteps is a path to timesteps file
+    """Check timesteps is a list of integers
     """
     if not isinstance(timesteps, list):
-        raise ValidationError("Loading {}: expected a list of timesteps.".format(file_path))
+        msg = "Loading {}: expected a list of timesteps.".format(file_path)
+        VALIDATION_ERRORS.append(ValidationError(msg))
+    else:
+        msg = "Loading {}: timesteps should be integer years, instead got {}"
+        for timestep in timesteps:
+            if not isinstance(timestep, int):
+                VALIDATION_ERRORS.append(msg.format(file_path, timestep))
 
 
 def validate_sector_models_initial_config(sector_models):
@@ -49,14 +66,15 @@ def validate_sector_models_initial_config(sector_models):
     if not isinstance(sector_models, list):
         fmt = "Expected 'sector_models' in main config to " + \
               "specify a list of sector models to run, instead got {}."
-        raise ValidationError(fmt.format(sector_models))
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(sector_models)))
+    else:
+        if len(sector_models) == 0:
+            VALIDATION_ERRORS.append(
+                ValidationError("No 'sector_models' specified in main config file."))
 
-    if len(sector_models) == 0:
-        raise ValidationError("No 'sector_models' specified in main config file.")
-
-    # check each sector model
-    for sector_model_config in sector_models:
-        validate_sector_model_initial_config(sector_model_config)
+        # check each sector model
+        for sector_model_config in sector_models:
+            validate_sector_model_initial_config(sector_model_config)
 
 
 def validate_sector_model_initial_config(sector_model_config):
@@ -67,7 +85,7 @@ def validate_sector_model_initial_config(sector_model_config):
         if key not in sector_model_config:
             fmt = "Expected a value for '{}' in each " + \
                   "sector model in main config file, only received {}"
-            raise ValidationError(fmt.format(key, sector_model_config))
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, sector_model_config)))
 
 
 def validate_planning_config(planning):
@@ -78,13 +96,14 @@ def validate_planning_config(planning):
         if key not in planning:
             fmt = "No '{}' settings specified under 'planning' " + \
                   "in main config file."
-            raise ValidationError(fmt.format(key))
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key)))
 
     # check each planning type
     for key, planning_type in planning.items():
         if "use" not in planning_type:
             fmt = "No 'use' settings specified for '{}' 'planning'"
-            raise ValidationError(fmt.format(key))
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key)))
+            continue
         if planning_type["use"]:
             if "files" not in planning_type or \
                not isinstance(planning_type["files"], list) or \
@@ -92,7 +111,7 @@ def validate_planning_config(planning):
 
                 fmt = "No 'files' provided for the '{}' " + \
                       "planning type in main config file."
-                raise ValidationError(fmt.format(key))
+                VALIDATION_ERRORS.append(ValidationError(fmt.format(key)))
 
 
 def validate_interventions(data, path):
@@ -112,7 +131,7 @@ def validate_interventions(data, path):
                 fmt = "Loading interventions from {}, required " + \
                       "a value for '{}' in each intervention, but only " + \
                       "received {}"
-                raise ValidationError(fmt.format(path, key, intervention))
+                VALIDATION_ERRORS.append(ValidationError(fmt.format(path, key, intervention)))
 
         for key, value in intervention.items():
             if key not in simple_keys and (
@@ -124,4 +143,4 @@ def validate_interventions(data, path):
                       "e.g. {{'value': {2}, 'units': 'm'}}"
 
                 msg = fmt.format(intervention["name"], key, value, path)
-                raise ValidationError(msg)
+                VALIDATION_ERRORS.append(ValidationError(msg))

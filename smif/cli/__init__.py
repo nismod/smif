@@ -38,11 +38,13 @@ import logging
 import logging.config
 import os
 import sys
+import traceback
 from argparse import ArgumentParser
 
 from smif.sos_model import SosModelBuilder
 from smif.data_layer.sos_model_config import SosModelReader
 from smif.data_layer.sector_model_config import SectorModelReader
+from smif.data_layer.validate import VALIDATION_ERRORS
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -124,13 +126,7 @@ def run_model(args):
     """Runs the model specified in the args.model argument
 
     """
-    try:
-        model_config = validate_config(args)
-    except ValueError as error:
-        LOGGER.error("The model configuration is invalid: %s", error)
-        exit(-1)
-    else:
-        LOGGER.info("The model configuration is valid")
+    model_config = validate_config(args)
 
     try:
         builder = SosModelBuilder()
@@ -164,17 +160,41 @@ def validate_config(args):
         LOGGER.error("The model configuration file '%s' was not found", config_path)
         exit(-1)
     else:
-        # read system-of-systems config
-        reader = SosModelReader(config_path)
-        reader.load()
+        try:
+            # read system-of-systems config
+            reader = SosModelReader(config_path)
+            reader.load()
 
-        model_config = reader.data
-        config_basepath = os.path.dirname(config_path)
-        # read sector model data+config
-        model_config['sector_model_data'] = \
-            read_sector_model_data_from_config(config_basepath,
-                                               model_config['sector_model_config'])
+            model_config = reader.data
+            config_basepath = os.path.dirname(config_path)
+
+            # read sector model data+config
+            model_config['sector_model_data'] = read_sector_model_data(
+                config_basepath,
+                model_config['sector_model_config'])
+        except Exception as error:
+            # should not raise error, so exit
+            log_validation_errors()
+            LOGGER.debug("Unexpected error validating config: %s", error)
+            if LOGGER.isEnabledFor(logging.DEBUG):
+                traceback.print_tb(error.__traceback__)
+            exit(-1)
+
+        log_validation_errors()
+        if len(VALIDATION_ERRORS) > 0:
+            print("The model configuration was invalid")
+            exit(-1)
+        else:
+            print("The model configuration was valid")
+
         return model_config
+
+
+def log_validation_errors():
+    """Log validation errors
+    """
+    for error in VALIDATION_ERRORS:
+        LOGGER.error(error)
 
 
 def path_to_abs(relative_root, path):
@@ -186,7 +206,7 @@ def path_to_abs(relative_root, path):
         return os.path.join(relative_root, path)
 
 
-def read_sector_model_data_from_config(config_basepath, config):
+def read_sector_model_data(config_basepath, config):
     """Read sector-specific data from the sector config folders
     """
     data = []
