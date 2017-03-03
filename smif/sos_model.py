@@ -23,7 +23,7 @@ class SosModel(object):
     sector models together. Sector models may be joined through dependencies.
 
     This class is populated at runtime by the :class:`SosModelBuilder` and
-    called from the :class:`Controller`.
+    called from :func:`smif.cli.run_model`.
 
     Attributes
     ==========
@@ -225,13 +225,13 @@ class SosModelBuilder(object):
 
     Examples
     --------
-    Call :py:meth:`~controller.SosModelBuilder.construct` to populate
-    a :class:`SosModel` object and :py:meth:`~controller.SosModelBuilder.finish`
+    Call :py:meth:`SosModelBuilder.construct` to populate
+    a :class:`SosModel` object and :py:meth:`SosModelBuilder.finish`
     to return the validated and dependency-checked system-of-systems model.
 
     >>> builder = SosModelBuilder()
     >>> builder.construct(config_data)
-    >>> builder.finish()
+    >>> sos_model = builder.finish()
 
     """
     def __init__(self):
