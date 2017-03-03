@@ -1,14 +1,17 @@
-import pytest
-from smif.intervention import Asset
+"""Test SectorModel and SectorModelBuilder
+"""
+from pytest import raises
 from smif.sector_model import SectorModel, SectorModelBuilder
-from . fixtures.water_supply import WaterSupplySectorModelWithAssets
+
 
 class EmptySectorModel(SectorModel):
+
     def simulate(self, static_inputs, decision_variables):
         pass
 
     def extract_obj(self, results):
         return 0
+
 
 class TestSectorModelBuilder():
 
@@ -20,7 +23,6 @@ class TestSectorModelBuilder():
                                            '__init__.py'))
         builder = SectorModelBuilder('water_supply')
         builder.load_model(model_path, 'WaterSupplySectorModel')
-
 
         assets = [
             {
@@ -45,8 +47,17 @@ class TestSectorModelBuilder():
         assert model.intervention_names == ['water_asset_a']
         assert model.interventions == assets
 
+    def test_path_not_found(self):
+        builder = SectorModelBuilder('water_supply')
+        with raises(FileNotFoundError) as ex:
+            builder.load_model('/fictional/path/to/model.py', 'WaterSupplySectorModel')
+        msg = "Cannot find '/fictional/path/to/model.py' for the 'water_supply' model"
+        assert msg in str(ex.value)
+
+
 class TestSectorModel(object):
-    def test_assets_load_names(self):
+
+    def test_interventions_names(self):
         assets = [
             {'name': 'water_asset_a'},
             {'name': 'water_asset_b'},
@@ -62,9 +73,8 @@ class TestSectorModel(object):
         assert 'water_asset_b' in intervention_names
         assert 'water_asset_c' in intervention_names
 
-
-    def test_assets_load(self):
-        assets = [
+    def test_interventions(self):
+        interventions = [
             {
                 'name': 'water_asset_a',
                 'capital_cost': 1000,
@@ -81,14 +91,13 @@ class TestSectorModel(object):
             }
         ]
         model = EmptySectorModel()
-        model.assets = assets
-        actual = model.assets
+        model.interventions = interventions
+        actual = model.interventions
 
-        assert actual == assets
+        assert actual == interventions
 
-        for asset_name in model.intervention_names:
-            assert asset_name in [
-                'water_asset_a',
-                'water_asset_b',
-                'water_asset_c'
-            ]
+        assert sorted(model.intervention_names) == [
+            'water_asset_a',
+            'water_asset_b',
+            'water_asset_c'
+        ]

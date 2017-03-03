@@ -6,7 +6,6 @@ framework.
 import logging
 
 import networkx
-import numpy as np
 from enum import Enum
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
@@ -73,13 +72,14 @@ class SosModel(object):
 
         """
         run_order = self._get_model_names_in_run_order()
+        timestep = self.timesteps[0]
 
         for model_name in run_order:
             logging.debug("Running %s", model_name)
             model = self.model_list[model_name]
             decisions = []
             state = {}
-            data = {}
+            data = self._get_scenario_data(model_name, timestep)
             model.simulate(decisions, state, data)
 
     def _run_sequential_sos_model(self):
@@ -156,12 +156,13 @@ class SosModel(object):
         self.logger.info(msg)
 
         sector_model = self.model_list[model_name]
-        # Run a simulation for a single year
-        # TODO fix assumption of no decision vars
-        decision_variables = np.zeros(2)
-        state = {}
-        data = {}
-        sector_model.simulate(decision_variables, state, data)
+
+        # Run a simulation for a single model
+        for timestep in self.timesteps:
+            decisions = []
+            state = {}
+            data = self._get_scenario_data(model_name, timestep)
+            sector_model.simulate(decisions, state, data)
 
     @property
     def timesteps(self):
