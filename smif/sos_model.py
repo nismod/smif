@@ -196,27 +196,6 @@ class SosModel(object):
         """
         return list(self.model_list.keys())
 
-    def sequential_simulation(self, model, inputs, decisions):
-        """Runs a sequence of simulations to cover each of the model timesteps
-        """
-        results = []
-        for index in range(len(self.timesteps)):
-            # Intialise the model
-            model.inputs = inputs
-            # Update the state from the previous year
-            if index > 0:
-                state_var = 'existing capacity'
-                state_res = results[index - 1]['capacity']
-                self.logger.debug("Updating %s with %s", state_var, state_res)
-                model.inputs.parameters.update_value(state_var, state_res)
-
-            # Run the simulation
-            decision = decisions[index]
-            state = {}
-            data = {}
-            results.append(model.simulate(decision, state, data))
-        return results
-
 
 class SosModelBuilder(object):
     """Constructs a system-of-systems model

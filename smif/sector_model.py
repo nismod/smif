@@ -93,7 +93,7 @@ class SectorModel(ABC):
         return self._inputs
 
     @inputs.setter
-    def inputs(self, value):
+    def inputs(self, value=None):
         """The inputs/dependencies to the model
 
         The inputs should be specified in a dictionary.  For example::
@@ -111,7 +111,11 @@ class SectorModel(ABC):
             assets and exogenous data.
 
         """
-        assert isinstance(value, dict)
+        if value is not None:
+            assert isinstance(value, dict)
+        else:
+            value = {}
+
         self._inputs = ModelInputs(value)
 
     @property
