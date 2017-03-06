@@ -120,7 +120,9 @@ def test_validation_invalid(
     config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
     args = get_args(['validate', config_file])
 
-    validate_config(args)
+    with raises(SystemExit):
+        validate_config(args)
+
     assert len(VALIDATION_ERRORS) > 0
     error_logger.assert_called()
     mock_print.assert_called_with('The model configuration was invalid')
