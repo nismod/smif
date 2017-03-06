@@ -38,7 +38,6 @@ import logging
 import logging.config
 import os
 import sys
-import traceback
 from argparse import ArgumentParser
 
 from smif.sos_model import SosModelBuilder
@@ -82,7 +81,6 @@ LOGGING_CONFIG = {
     }
 }
 
-logging.config.dictConfig(LOGGING_CONFIG)
 LOGGER = logging.getLogger(__name__)
 
 
@@ -175,9 +173,7 @@ def validate_config(args):
         except Exception as error:
             # should not raise error, so exit
             log_validation_errors()
-            LOGGER.debug("Unexpected error validating config: %s", error)
-            if LOGGER.isEnabledFor(logging.DEBUG):
-                traceback.print_tb(error.__traceback__)
+            LOGGER.exception("Unexpected error validating config: %s", error)
             exit(-1)
 
         log_validation_errors()
@@ -252,6 +248,9 @@ def parse_arguments():
 
     """
     parser = ArgumentParser(description='Command line tools for smif')
+    parser.add_argument('-v', '--verbose',
+                        action='count',
+                        help='Verbosity option: -v to see info messages, -vv to see debug.')
     subparsers = parser.add_subparsers()
 
     # VALIDATE
@@ -342,6 +341,18 @@ def main(arguments=None):
     """
     parser = parse_arguments()
     args = parser.parse_args(arguments)
+
+    if args.verbose is None:
+        LOGGING_CONFIG['root']['level'] = logging.WARNING
+    elif args.verbose == 1:
+        LOGGING_CONFIG['root']['level'] = logging.INFO
+    elif args.verbose >= 2:
+        LOGGING_CONFIG['root']['level'] = logging.DEBUG
+
+    global LOGGER
+    logging.config.dictConfig(LOGGING_CONFIG)
+    LOGGER = logging.getLogger(__name__)
+
     if 'func' in args:
         args.func(args)
     else:
