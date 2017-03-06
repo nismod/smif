@@ -5,17 +5,25 @@ import os
 from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
-from smif.cli import confirm, parse_arguments, setup_project_folder
+from pytest import raises
+from smif.cli import (confirm, parse_arguments, setup_project_folder,
+                      validate_config)
+from smif.data_layer.validate import VALIDATION_ERRORS
+
+
+def get_args(args):
+    """Get args object from list of strings
+    """
+    parser = parse_arguments()
+    return parser.parse_args(args)
 
 
 def test_parse_arguments():
     """Setup a project folder argument parsing
     """
     with TemporaryDirectory() as project_folder:
-        parser = parse_arguments()
-        commands = ['setup', project_folder]
-        # Project folder setup here
-        args = parser.parse_args(commands)
+        args = get_args(['setup', project_folder])
+
         expected = project_folder
         actual = args.path
         assert actual == expected
@@ -43,43 +51,81 @@ def test_setup_project_folder():
 def test_run_sector_model(setup_folder_structure):
     """Run a sector model in the list
     """
-    parser = parse_arguments()
-    config_file = os.path.join(str(setup_folder_structure), "model.yaml")
-    commands = ['run', '--model', 'water_supply', config_file]
-    args = parser.parse_args(commands)
+    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
+    args = get_args(['run', '--model', 'water_supply', config_file])
+
     expected = 'water_supply'
     actual = args.model
     assert actual == expected
 
 
-def test_dont_run_invalid_sector_model(setup_folder_structure,
-                                       setup_config_file):
+def test_dont_run_invalid_sector_model(setup_folder_structure, setup_project_folder):
     """Don't try to run a sector model which is not in the list
     """
     model_name = 'invalid_model_name'
-    parser = parse_arguments()
-    config_file = os.path.join(str(setup_folder_structure), "model.yaml")
+    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
+    args = get_args(['run', '-m', model_name, config_file])
 
-    commands = ['run', '-m', model_name, config_file]
-    args = parser.parse_args(commands)
     assert args.model == model_name
     assert args.path == config_file
 
 
-def test_validation(setup_folder_structure,
-                    setup_config_file):
-    """Ensure configuration file is valid
+def test_validation_call(setup_folder_structure, setup_project_folder):
+    """Ensure validation gets called
     """
-    project_folder = str(setup_folder_structure)
-    config_file = os.path.join(project_folder, "model.yaml")
-    parser = parse_arguments()
-    commands = ['validate', config_file]
-    # Project folder setup here
-    args = parser.parse_args(commands)
+    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
+    args = get_args(['validate', config_file])
+
     expected = config_file
     actual = args.path
     assert actual == expected
     assert args.func.__name__ == 'validate_config'
+
+
+@patch('smif.cli.LOGGER.error')
+def test_validation_no_file(error_logger):
+    """Expect error and quit if model config is missing
+    """
+    args = get_args(['validate', '/path/to/missing_file.yaml'])
+
+    with raises(SystemExit):
+        validate_config(args)
+
+    path = os.path.abspath('/path/to/missing_file.yaml')
+    msg = "The model configuration file '%s' was not found"
+    error_logger.assert_called_with(msg, path)
+
+
+@patch('builtins.print')
+def test_validation_valid(mock_print, setup_folder_structure, setup_project_folder):
+    """Ensure configuration file is valid
+    """
+    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
+    args = get_args(['validate', config_file])
+
+    validate_config(args)
+    mock_print.assert_called_with('The model configuration was valid')
+
+
+@patch('smif.cli.LOGGER.error')
+@patch('builtins.print')
+def test_validation_invalid(
+        mock_print,
+        error_logger,
+        setup_folder_structure,
+        setup_project_folder,
+        setup_timesteps_file_invalid):
+    """Ensure configuration file is valid
+    """
+    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
+    args = get_args(['validate', config_file])
+
+    with raises(SystemExit):
+        validate_config(args)
+
+    assert len(VALIDATION_ERRORS) > 0
+    assert error_logger.called
+    mock_print.assert_called_with('The model configuration was invalid')
 
 
 @patch('builtins.input', return_value='y')
@@ -99,20 +145,21 @@ def test_confirm_default_response(input):
 
 @patch('builtins.input', return_value='n')
 @patch('builtins.print')
-def test_confirm_default_message(input, mock_print):
+def test_confirm_default_message(mock_print, input):
     confirm()
-    mock_print.assert_has_calls([call('Confirm [n]|y: ')])
+    input.assert_has_calls([call('Confirm [n]|y: ')])
 
 
 @patch('builtins.input', return_value='n')
 @patch('builtins.print')
-def test_confirm_custom_message(input, mock_print):
+def test_confirm_custom_message(mock_print, input):
     confirm('Create directory?', True)
-    mock_print.assert_has_calls([call('Create directory? [y]|n: ')])
+    input.assert_has_calls([call('Create directory? [y]|n: ')])
 
 
 @patch('builtins.input', side_effect=['invalid', 'y'])
 @patch('builtins.print')
-def test_confirm_repeat_message(input, mock_print):
+def test_confirm_repeat_message(mock_print, input):
     confirm()
-    mock_print.assert_has_calls([call('Confirm [n]|y: '), call('Confirm [n]|y: ')])
+    input.assert_has_calls([call('Confirm [n]|y: '), call('Confirm [n]|y: ')])
+    mock_print.assert_called_with('please enter y or n.')

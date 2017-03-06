@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
 
-from pytest import raises
 from smif.data_layer.sos_model_config import SosModelReader
-from smif.data_layer.validate import ValidationError
+from smif.data_layer.validate import VALIDATION_ERRORS
 
 
 class TestSosModelReader():
@@ -87,8 +86,9 @@ class TestSosModelReader():
         """
         reader = self._get_reader(setup_project_folder)
 
-        with raises(ValidationError):
-            reader.load()
+        reader.load()
+        ex = VALIDATION_ERRORS.pop()
+        assert "expected a list of timesteps" in str(ex)
 
     def test_load_scenario_data(self, setup_project_folder, setup_scenario_data):
         """Load a population parameter from scenario config files

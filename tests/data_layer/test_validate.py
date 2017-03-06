@@ -1,7 +1,7 @@
 """Test config validation
 """
-from pytest import raises
-from smif.data_layer.validate import (ValidationError, validate_interventions,
+from smif.data_layer.validate import (VALIDATION_ERRORS,
+                                      validate_interventions,
                                       validate_planning_config,
                                       validate_sector_model_initial_config,
                                       validate_sos_model_config)
@@ -103,10 +103,10 @@ def test_missing_timestep():
     data = get_sos_model_config()
     del data['timesteps']
 
+    validate_sos_model_config(data)
+    ex = VALIDATION_ERRORS.pop()
     msg = "No 'timesteps' file specified in main config"
-    with raises(ValidationError) as ex:
-        validate_sos_model_config(data)
-    assert msg in str(ex.value)
+    assert msg in str(ex)
 
 
 def test_invalid_timesteps_file():
@@ -115,10 +115,10 @@ def test_invalid_timesteps_file():
     data = get_sos_model_config()
     data['timesteps'] = 3
 
+    validate_sos_model_config(data)
+    ex = VALIDATION_ERRORS.pop()
     msg = "Expected 'timesteps' in main config to specify a timesteps file, instead got 3"
-    with raises(ValidationError) as ex:
-        validate_sos_model_config(data)
-    assert msg in str(ex.value)
+    assert msg in str(ex)
 
 
 def test_missing_sector_models():
@@ -127,10 +127,10 @@ def test_missing_sector_models():
     data = get_sos_model_config()
     del data['sector_models']
 
+    validate_sos_model_config(data)
+    ex = VALIDATION_ERRORS.pop()
     msg = "No 'sector_models' specified in main config"
-    with raises(ValidationError) as ex:
-        validate_sos_model_config(data)
-    assert msg in str(ex.value)
+    assert msg in str(ex)
 
 
 def test_sector_models_not_list():
@@ -139,11 +139,11 @@ def test_sector_models_not_list():
     data = get_sos_model_config()
     data['sector_models'] = 42
 
+    validate_sos_model_config(data)
+    ex = VALIDATION_ERRORS.pop()
     msg = "Expected 'sector_models' in main config to specify a list of sector " + \
           "models to run, instead got 42."
-    with raises(ValidationError) as ex:
-        validate_sos_model_config(data)
-    assert msg in str(ex.value)
+    assert msg in str(ex)
 
 
 def test_sector_models_empty_list():
@@ -152,10 +152,10 @@ def test_sector_models_empty_list():
     data = get_sos_model_config()
     data['sector_models'] = []
 
+    validate_sos_model_config(data)
+    ex = VALIDATION_ERRORS.pop()
     msg = "No 'sector_models' specified in main config"
-    with raises(ValidationError) as ex:
-        validate_sos_model_config(data)
-    assert msg in str(ex.value)
+    assert msg in str(ex)
 
 
 def test_sector_model_missing_required():
@@ -166,10 +166,10 @@ def test_sector_model_missing_required():
         data = get_sector_model_initial_config()
         del data[key]
 
+        validate_sector_model_initial_config(data)
+        ex = VALIDATION_ERRORS.pop()
         msg = "Expected a value for '{}'".format(key)
-        with raises(ValidationError) as ex:
-            validate_sector_model_initial_config(data)
-        assert msg in str(ex.value)
+        assert msg in str(ex)
 
 
 def test_missing_planning():
@@ -178,10 +178,10 @@ def test_missing_planning():
     data = get_sos_model_config()
     del data['planning']
 
+    validate_sos_model_config(data)
+    ex = VALIDATION_ERRORS.pop()
     msg = "No 'planning' mode specified in main config"
-    with raises(ValidationError) as ex:
-        validate_sos_model_config(data)
-    assert msg in str(ex.value)
+    assert msg in str(ex)
 
 
 def test_used_planning_needs_files():
@@ -190,10 +190,10 @@ def test_used_planning_needs_files():
     data = get_sos_model_config()
     del data["planning"]["pre_specified"]["files"]
 
+    validate_sos_model_config(data)
+    ex = VALIDATION_ERRORS.pop()
     msg = "No 'files' provided for the 'pre_specified' planning type in main config"
-    with raises(ValidationError) as ex:
-        validate_sos_model_config(data)
-    assert msg in str(ex.value)
+    assert msg in str(ex)
 
 
 def test_planning_missing_required():
@@ -204,10 +204,10 @@ def test_planning_missing_required():
         data = get_sos_model_config()["planning"]
         del data[key]
 
+        validate_planning_config(data)
+        ex = VALIDATION_ERRORS.pop()
         msg = "No '{}' settings specified under 'planning'".format(key)
-        with raises(ValidationError) as ex:
-            validate_planning_config(data)
-        assert msg in str(ex.value)
+        assert msg in str(ex)
 
 
 def test_planning_missing_use():
@@ -216,10 +216,10 @@ def test_planning_missing_use():
     data = get_sos_model_config()["planning"]
     del data["rule_based"]["use"]
 
+    validate_planning_config(data)
+    ex = VALIDATION_ERRORS.pop()
     msg = "No 'use' settings specified for 'rule_based' 'planning'"
-    with raises(ValidationError) as ex:
-        validate_planning_config(data)
-    assert msg in str(ex.value)
+    assert msg in str(ex)
 
 
 def test_interventions_missing_required():
@@ -235,9 +235,10 @@ def test_interventions_missing_required():
         data = [intervention]
 
         msg = "required a value for '{}' in each intervention".format(key)
-        with raises(ValidationError) as ex:
-            validate_interventions(data, "/path/to/data.yaml")
-        assert msg in str(ex.value)
+
+        validate_interventions(data, "/path/to/data.yaml")
+        ex = VALIDATION_ERRORS.pop()
+        assert msg in str(ex)
 
 
 def test_interventions_checks_for_units():
@@ -252,7 +253,6 @@ def test_interventions_checks_for_units():
           "was 3 but should have specified units, e.g. " + \
           "{'value': 3, 'units': 'm'}"
 
-    with raises(ValidationError) as ex:
-        validate_interventions(data, "/path/to/data.yaml")
-
-    assert msg in str(ex.value)
+    validate_interventions(data, "/path/to/data.yaml")
+    ex = VALIDATION_ERRORS.pop()
+    assert msg in str(ex)
