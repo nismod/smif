@@ -8,6 +8,8 @@ Contents
 
    Getting Started <getting_started>
    Concept <concept>
+   Developing `smif` <developers>
+   Contributing <contributing>
    License <license>
    Authors <authors>
    Changelog <changes>
