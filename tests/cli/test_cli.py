@@ -116,7 +116,7 @@ def test_validation_invalid(
         setup_folder_structure,
         setup_project_folder,
         setup_timesteps_file_invalid):
-    """Ensure configuration file is valid
+    """Ensure invalid configuration file raises error
     """
     config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
     args = get_args(['validate', config_file])
