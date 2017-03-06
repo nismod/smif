@@ -1,9 +1,10 @@
 """Handles conversion between the set of time intervals used in the `SosModel`
 
 There are three main classes, which are currently rather intertwined.
-:class:`Interval` represents an individual defitions of a period within a year.
+:class:`Interval` represents an individual definition of a period
+within a year.
 This is specified using the ISO8601 period syntax and exposes
-methos which use the isodate library to parse this into an internal hourly
+methods which use the isodate library to parse this into an internal hourly
 representation of the period.
 
 :class:`TimeIntervalRegister` holds the definitions of time-interval sets
@@ -58,6 +59,9 @@ class Interval(object):
         msg = "Interval '{}' starts at hour {} and ends at hour {}"
         start, end = self.to_hours()
         return msg.format(self._name, start, end)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
     def to_hours(self):
         """Return a tuple of the interval in terms of hours
@@ -128,9 +132,9 @@ class TimeSeries(object):
         self.values = values
         self._hourly_values = np.zeros(8760, dtype=np.float64)
         self._register = register
-        self.parse_values_into_hourly_buckets()
+        self._convert_to_hourly_buckets()
 
-    def parse_values_into_hourly_buckets(self):
+    def _convert_to_hourly_buckets(self):
         """Iterates through the time series and assigns values to hourly buckets
 
         """
@@ -169,7 +173,10 @@ class TimeSeries(object):
 
         Returns
         -------
-        data
+        dict
+            A dictionary with keys `name` and `value`, where the entries
+            for `key` are the name of the target time interval, and the
+            values are the resampled timeseries values.
 
         """
         results = []
@@ -189,8 +196,7 @@ class TimeSeries(object):
                 total = sum(self._hourly_values[lower:upper])
 
             results.append({'name': name,
-                            'value': total
-                            })
+                            'value': total})
         return results
 
 

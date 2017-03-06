@@ -194,7 +194,7 @@ class TestTimeSeries:
         expected = [1] * 12
         assert actual == expected
 
-        timeseries.parse_values_into_hourly_buckets()
+        timeseries._convert_to_hourly_buckets()
         actual = timeseries._hourly_values
 
         month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
