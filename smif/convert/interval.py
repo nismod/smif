@@ -1,68 +1,111 @@
 """Handles conversion between the set of time intervals used in the `SosModel`
 
 There are three main classes, which are currently rather intertwined.
-:class:`Interval` represents an individual defitions of a period within a year. This is specified using the ISO8601 period syntax and exposes 
+:class:`Interval` represents an individual defitions of a period within a year.
+This is specified using the ISO8601 period syntax and exposes
 methos which use the isodate library to parse this into an internal hourly
 representation of the period.
 
 :class:`TimeIntervalRegister` holds the definitions of time-interval sets
-specified for the sector models at the :class:`~smif.sos_model.SosModel` 
-level.  
-This class exposes one public method, 
+specified for the sector models at the :class:`~smif.sos_model.SosModel`
+level.
+This class exposes one public method,
 :py:meth:`~TimeIntervalRegister.add_interval_set` which allows the SosModel
 to add an interval definition from a model configuration to the register.
 
-:class:`TimeSeries` is used to encapsulate any data associated with a 
+:class:`TimeSeries` is used to encapsulate any data associated with a
 time interval definition set, and handles conversion from the current time
 interval resolution to a target time interval definition held in the register.
 
 """
-from isodate import parse_duration
-from datetime import datetime, timedelta
 import logging
+from collections import OrderedDict
+from datetime import datetime, timedelta
+
 import numpy as np
+from isodate import parse_duration
+
 
 class Interval(object):
     """A time interval
+
+    Parameters
+    ----------
+    name: str
+        The unique name of the Interval
+    start: str
+        A valid ISO8601 duration definition string denoting the time elapsed from
+        the beginning of the year to the beginning of the interval
+    end: str
+        A valid ISO8601 duration definition string denoting the time elapsed from
+        the beginning of the year to the end of the interval
+    base_year: int, default=2010
+        The reference year used for conversion to a datetime tuple
 
     """
 
     def __init__(self, name, start, end, base_year=2010):
         self._name = name
-        self._start = parse_duration(start)
-        self._end = parse_duration(end)
-        self._reference = datetime(base_year, 1, 1, 0)
+        self._start = start
+        self._end = end
+        self._baseyear = base_year
+
+    def __repr__(self):
+        msg = "Interval('{}', '{}', '{}', base_year={})"
+        return msg.format(self._name, self._start, self._end, self._baseyear)
+
+    def __str__(self):
+        msg = "Interval '{}' starts at hour {} and ends at hour {}"
+        start, end = self.to_hours()
+        return msg.format(self._name, start, end)
 
     def to_hours(self):
         """Return a tuple of the interval in terms of hours
 
+        Returns
+        -------
+        tuple
+            The start and end hours of the year of the interval
+
         """
-        start = self.convert_to_hours(self._start)
-        end = self.convert_to_hours(self._end)
+        start = self._convert_to_hours(self._start)
+        end = self._convert_to_hours(self._end)
 
         return (start, end)
 
-    def convert_to_hours(self, duration):
+    def _convert_to_hours(self, duration):
         """
-        """
-        if isinstance(duration, timedelta):
-            hours = duration.days * 24 + duration.seconds // 3600
-        else:
-            td = duration.totimedelta(self._reference)
-            hours = td.days * 24 + td.seconds // 3600
-        return hours
 
+        Parameters
+        ----------
+        duration: str
+            A valid ISO8601 duration definition string
+
+        Returns
+        -------
+        int
+            The hour in the year associated with the duration
+
+        """
+        reference = datetime(self._baseyear, 1, 1, 0)
+        parsed_duration = parse_duration(duration)
+        if isinstance(parsed_duration, timedelta):
+            hours = parsed_duration.days * 24 + \
+                    parsed_duration.seconds // 3600
+        else:
+            time = parsed_duration.totimedelta(reference)
+            hours = time.days * 24 + time.seconds // 3600
+        return hours
 
     def to_datetime_tuple(self):
         """
         """
-        start_time = self._reference + self._start
-        end_time = self._reference + self._end
+        reference = datetime(self._baseyear, 1, 1, 0)
+        start_time = reference + parse_duration(self._start)
+        end_time = reference + parse_duration(self._end)
         period_tuple = (start_time, end_time)
         return period_tuple
 
-    def duration(self):
-        return timedelta(self._end - self._start)
 
 class TimeSeries(object):
     """A series of values associated with a DatetimeIndex
@@ -83,7 +126,7 @@ class TimeSeries(object):
             values.append(row['value'])
         self.names = name_list
         self.values = values
-        self._hourly_values = np.zeros(8760, dtype=np.float)
+        self._hourly_values = np.zeros(8760, dtype=np.float64)
         self._register = register
         self.parse_values_into_hourly_buckets()
 
@@ -98,9 +141,9 @@ class TimeSeries(object):
             number_hours_in_range = upper - lower
             self.logger.debug("number_hours: %s", number_hours_in_range)
 
-            apportioned_value = float(value) / (number_hours_in_range)
+            apportioned_value = float(value) / number_hours_in_range
             self.logger.debug("apportioned_value: %s", apportioned_value)
-            self._hourly_values[lower:(upper)] = apportioned_value
+            self._hourly_values[lower:upper] = apportioned_value
 
     def get_hourly_range(self, name):
         """Returns the upper and lower hours of a particular interval
@@ -138,7 +181,7 @@ class TimeSeries(object):
             self.logger.debug("Range: %s-%s", lower, upper)
 
             if upper < lower:
-                # We are looping around the end of the year
+                # The interval loops around the end/start hours of the year
                 end_of_year = sum(self._hourly_values[lower:8760])
                 start_of_year = sum(self._hourly_values[0:upper])
                 total = end_of_year + start_of_year
@@ -147,8 +190,9 @@ class TimeSeries(object):
 
             results.append({'name': name,
                             'value': total
-                           })
+                            })
         return results
+
 
 class TimeIntervalRegister:
     """Holds the set of time-intervals used by the SectorModels
@@ -167,10 +211,29 @@ class TimeIntervalRegister:
         self._id_interval_set = {}
 
     def get_intervals_in_set(self, set_name):
+        """
+
+        Parameters
+        ----------
+        set_name: str
+            The unique identifying name of the interval definitions
+
+        Returns
+        -------
+        :class:`collections.OrderedDict`
+            Returns a collection of the intervals in the order in which they
+            were defined
+
+        """
         return self._register[set_name]
 
     def get_interval(self, name):
-        """Returns the interval definition given the name of an Interval
+        """Return the interval definition given the unique name
+
+        Parameters
+        ----------
+        name: str
+            The unique name of the interval
 
         Returns
         -------
@@ -194,16 +257,18 @@ class TimeIntervalRegister:
             A unique identifier for the set of time intervals
 
         """
-        self._register[set_name] = {}
+        self._register[set_name] = OrderedDict()
 
         for interval in intervals:
 
             name = interval['name']
+            self.logger.debug("Adding interval '%s' to set '%s'", name, set_name)
 
             self._id_interval_set[name] = set_name
 
             self._register[set_name][name] = Interval(name,
                                                       interval['start'],
-                                                      interval['end'])
+                                                      interval['end'],
+                                                      self._base_year)
 
-        self.logger.debug("Added %s to register", set_name)
+        self.logger.info("Adding interval set '%s' to register", set_name)

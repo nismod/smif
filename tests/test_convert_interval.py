@@ -1,12 +1,12 @@
 
-from datetime import datetime, timedelta
-from isodate import parse_duration
-from pytest import fixture
-import pytest
+from collections import OrderedDict
+from datetime import datetime
+
 import numpy as np
 from numpy.testing import assert_equal
+from pytest import approx, fixture
+from smif.convert.interval import Interval, TimeIntervalRegister, TimeSeries
 
-from smif.convert.interval import TimeIntervalRegister, Interval, TimeSeries
 
 @fixture(scope='function')
 def months():
@@ -23,6 +23,7 @@ def months():
               {'name': '1_10', 'start': 'P10M', 'end': 'P11M'},
               {'name': '1_11', 'start': 'P11M', 'end': 'P12M'}]
     return months
+
 
 @fixture(scope='function')
 def monthly_data():
@@ -42,6 +43,7 @@ def monthly_data():
             {'name': '1_11', 'value': 31}]
     return data
 
+
 @fixture(scope='function')
 def seasons():
     seasons = [{'name': 'winter', 'start': 'P11M', 'end': 'P2M'},
@@ -49,6 +51,7 @@ def seasons():
                {'name': 'summer', 'start': 'P5M', 'end': 'P8M'},
                {'name': 'autumn', 'start': 'P8M', 'end': 'P11M'}]
     return seasons
+
 
 @fixture(scope='function')
 def twenty_four_hours():
@@ -80,12 +83,86 @@ def twenty_four_hours():
 
     return twenty_four_hours
 
+
 @fixture(scope='function')
 def one_day():
 
     one_day = [{'name': 'one_day', 'start': 'P0D', 'end': 'P1D'}]
 
     return one_day
+
+
+class TestInterval:
+
+    def test_load_interval(self):
+
+        interval = Interval('test', 'PT0H', 'PT1H')
+
+        assert interval._name == 'test'
+        assert interval._start == 'PT0H'
+        assert interval._end == 'PT1H'
+        actual = interval.to_datetime_tuple()
+        expected = (datetime(2010, 1, 1, 0),
+                    datetime(2010, 1, 1, 1))
+        assert actual == expected
+
+    def test_convert_hour_to_hours(self):
+
+        interval = Interval('test', 'PT0H', 'PT1H')
+        actual = interval._convert_to_hours(interval._start)
+        expected = 0
+        assert actual == expected
+
+        actual = interval._convert_to_hours(interval._end)
+        expected = 1
+        assert actual == expected
+
+    def test_convert_month_to_hours(self):
+
+        interval = Interval('test', 'P1M', 'P2M')
+        actual = interval._convert_to_hours(interval._start)
+        expected = 744
+        assert actual == expected
+
+        actual = interval._convert_to_hours(interval._end)
+        expected = 1416
+        assert actual == expected
+
+    def test_convert_week_to_hours(self):
+
+        interval = Interval('test', 'P2D', 'P3D')
+        actual = interval._convert_to_hours(interval._start)
+        expected = 48
+        assert actual == expected
+
+        actual = interval._convert_to_hours(interval._end)
+        expected = 72
+        assert actual == expected
+
+    def test_to_hours_zero(self):
+
+        interval = Interval('test', 'PT0H', 'PT1H')
+        actual = interval.to_hours()
+
+        assert actual == (0, 1)
+
+    def test_to_hours_month(self):
+
+        interval = Interval('test', 'P2M', 'P3M')
+        actual = interval.to_hours()
+
+        assert actual == (1416, 2160)
+
+    def test_str(self):
+        interval = Interval('test', 'P2M', 'P3M')
+        actual = str(interval)
+        assert actual == "Interval 'test' starts at hour 1416 and ends at hour 2160"
+
+    def test_repr(self):
+        interval = Interval('test', 'P2M', 'P3M', 2011)
+        actual = repr(interval)
+        assert actual == "Interval('test', 'P2M', 'P3M', base_year=2011)"
+
 
 class TestTimeSeries:
 
@@ -128,114 +205,15 @@ class TestTimeSeries:
         for hours, expected in zip(month_hours, expected_results):
             expected_array = np.zeros(hours, dtype=np.float)
             expected_array.fill(expected)
-            assert_equal(actual[start:start+hours], expected_array)
+            assert_equal(actual[start:start + hours], expected_array)
             start += hours
-
-
-class TestInterval:
-
-    def test_load_interval(self):
-
-        interval = Interval('test', 'PT0H', 'PT1H')
-
-        assert interval._name == 'test'
-        assert interval._start == timedelta(0)
-        assert interval._end == timedelta(0, 3600)
-        assert interval._reference == datetime(2010, 1, 1, 0)
-
-    def test_convert_hour_to_hours(self):
-
-        interval = Interval('test', 'PT0H', 'PT1H')
-        actual = interval.convert_to_hours(interval._start)
-        expected = 0
-        assert actual == expected
-
-        actual = interval.convert_to_hours(interval._end)
-        expected = 1
-        assert actual == expected
-
-
-    def test_convert_month_to_hours(self):
-
-        interval = Interval('test', 'P1M', 'P2M')
-        actual = interval.convert_to_hours(interval._start)
-        expected = 744
-        assert actual == expected
-
-        actual = interval.convert_to_hours(interval._end)
-        expected = 1416
-        assert actual == expected
-
-    def test_convert_week_to_hours(self):
-
-        interval = Interval('test', 'P2D', 'P3D')
-        actual = interval.convert_to_hours(interval._start)
-        expected = 48
-        assert actual == expected
-
-        actual = interval.convert_to_hours(interval._end)
-        expected = 72
-        assert actual == expected
-
-    def test_to_hours_zero(self):
-
-        interval = Interval('test', 'PT0H', 'PT1H')
-        actual = interval.to_hours()
-
-        assert actual == (0, 1)
-
-    def test_to_hours_month(self):
-
-        interval = Interval('test', 'P2M', 'P3M')
-        actual = interval.to_hours()
-
-        assert actual == (1416, 2160)
-
-class TestIntervalRegister:
-
-    def test_interval_loads(self):
-        """Pass a time-interval definition into the register
-
-        """
-        data = [{'name': '1_1',
-                 'start': 'PT0H',
-                 'end': 'PT1H'}]
-
-        register = TimeIntervalRegister()
-        register.add_interval_set(data, 'energy_supply_hourly')
-
-        actual = register.get_intervals_in_set('energy_supply_hourly')
-        expected = {'1_1': Interval(data[0]['name'],
-                                    data[0]['start'],
-                                    data[0]['end'])
-                   }
-
-        assert actual == expected
-
-    def test_months_load(self, months):
-        """Pass a monthly time-interval definition into the register
-
-        """
-        register = TimeIntervalRegister()
-        register.add_interval_set(months, 'months')
-
-        actual = register.get_intervals_in_set('months')
-
-        expected_names = \
-            ['1_0', '1_1', '1_2', '1_3', '1_4', '1_5',
-             '1_6', '1_7', '1_8', '1_9', '1_10', '1_11']
-
-        expected = []
-
-        for name, time in zip(expected_names, expected):
-            assert actual[name] == time
 
 
 class TestTimeSeriesConversion:
 
-    def test_convert_from_month_to_seasons(self, 
-                                           months, 
-                                           seasons, 
+    def test_convert_from_month_to_seasons(self,
+                                           months,
+                                           seasons,
                                            monthly_data):
 
         data = monthly_data
@@ -246,11 +224,15 @@ class TestTimeSeriesConversion:
 
         timeseries = TimeSeries(data, register)
         actual = timeseries.convert('seasons')
-        expected = [{'name': 'winter', 'value': 3},
-                    {'name': 'spring', 'value': 3},
-                    {'name': 'summer', 'value': 3},
-                    {'name': 'autumn', 'value': 3}]
-        assert actual == expected
+        expected = [{'name': 'winter', 'value': 31. + 31 + 28},
+                    {'name': 'spring', 'value': 31. + 30 + 31},
+                    {'name': 'summer', 'value': 30. + 31 + 31},
+                    {'name': 'autumn', 'value': 30. + 31 + 30}]
+
+        for act, exp in zip(actual, expected):
+            print(act['name'])
+            assert act['name'] == exp['name']
+            assert act['value'] == approx(exp['value'])
 
     def test_convert_from_hour_to_day(self, twenty_four_hours, one_day):
 
@@ -284,8 +266,60 @@ class TestTimeSeriesConversion:
         register.add_interval_set(one_day, 'one_day')
 
         timeseries = TimeSeries(data, register)
-        
+
         actual = timeseries.convert('one_day')
         expected = [{'name': 'one_day', 'value': 24}]
 
         assert actual == expected
+
+
+class TestIntervalRegister:
+
+    def test_interval_loads(self):
+        """Pass a time-interval definition into the register
+
+        """
+        data = [{'name': '1_1',
+                 'start': 'PT0H',
+                 'end': 'PT1H'}]
+
+        register = TimeIntervalRegister()
+        register.add_interval_set(data, 'energy_supply_hourly')
+
+        actual = register.get_intervals_in_set('energy_supply_hourly')
+
+        element = Interval('1_1', 'PT0H', 'PT1H', base_year=2010)
+
+        expected = OrderedDict()
+        expected['1_1'] = element
+
+        assert actual == expected
+
+    def test_months_load(self, months):
+        """Pass a monthly time-interval definition into the register
+
+        """
+        register = TimeIntervalRegister()
+        register.add_interval_set(months, 'months')
+
+        actual = register.get_intervals_in_set('months')
+
+        expected_names = \
+            ['1_0', '1_1', '1_2', '1_3', '1_4', '1_5',
+             '1_6', '1_7', '1_8', '1_9', '1_10', '1_11']
+
+        expected = [Interval('1_0', 'P0M', 'P1M'),
+                    Interval('1_1', 'P1M', 'P2M'),
+                    Interval('1_2', 'P2M', 'P3M'),
+                    Interval('1_3', 'P3M', 'P4M'),
+                    Interval('1_4', 'P4M', 'P5M'),
+                    Interval('1_5', 'P5M', 'P6M'),
+                    Interval('1_6', 'P6M', 'P7M'),
+                    Interval('1_7', 'P7M', 'P8M'),
+                    Interval('1_8', 'P8M', 'P9M'),
+                    Interval('1_9', 'P9M', 'P10M'),
+                    Interval('1_10', 'P10M', 'P11M'),
+                    Interval('1_11', 'P11M', 'P12M')]
+
+        for name, interval in zip(expected_names, expected):
+            assert actual[name] == interval
