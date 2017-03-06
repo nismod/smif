@@ -37,6 +37,7 @@ from __future__ import print_function
 import logging
 import logging.config
 import os
+import re
 import sys
 from argparse import ArgumentParser
 
@@ -81,7 +82,26 @@ LOGGING_CONFIG = {
     }
 }
 
+# Configure logging once, outside of any dependency on argparse
+VERBOSITY = None
+if '--verbose' in sys.argv:
+    VERBOSITY = sys.argv.count('--verbose')
+else:
+    for arg in sys.argv:
+        if re.match(r'\A-v+\Z', arg):
+            VERBOSITY = len(arg) - 1
+            break
+
+if VERBOSITY is None:
+    LOGGING_CONFIG['root']['level'] = logging.WARNING
+elif VERBOSITY == 1:
+    LOGGING_CONFIG['root']['level'] = logging.INFO
+elif VERBOSITY >= 2:
+    LOGGING_CONFIG['root']['level'] = logging.DEBUG
+
+logging.config.dictConfig(LOGGING_CONFIG)
 LOGGER = logging.getLogger(__name__)
+LOGGER.debug('Debug logging enabled.')
 
 
 def setup_project_folder(project_path):
@@ -250,7 +270,8 @@ def parse_arguments():
     parser = ArgumentParser(description='Command line tools for smif')
     parser.add_argument('-v', '--verbose',
                         action='count',
-                        help='Verbosity option: -v to see info messages, -vv to see debug.')
+                        help='show messages: -v to see messages reporting on progress, ' +
+                        '-vv to see debug messages.')
     subparsers = parser.add_subparsers()
 
     # VALIDATE
@@ -341,17 +362,6 @@ def main(arguments=None):
     """
     parser = parse_arguments()
     args = parser.parse_args(arguments)
-
-    if args.verbose is None:
-        LOGGING_CONFIG['root']['level'] = logging.WARNING
-    elif args.verbose == 1:
-        LOGGING_CONFIG['root']['level'] = logging.INFO
-    elif args.verbose >= 2:
-        LOGGING_CONFIG['root']['level'] = logging.DEBUG
-
-    global LOGGER
-    logging.config.dictConfig(LOGGING_CONFIG)
-    LOGGER = logging.getLogger(__name__)
 
     if 'func' in args:
         args.func(args)
