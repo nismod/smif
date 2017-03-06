@@ -124,7 +124,7 @@ def test_validation_invalid(
         validate_config(args)
 
     assert len(VALIDATION_ERRORS) > 0
-    error_logger.assert_called()
+    assert error_logger.called
     mock_print.assert_called_with('The model configuration was invalid')
 
 
