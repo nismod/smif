@@ -66,7 +66,7 @@ LOGGING_CONFIG = {
             'class': 'logging.FileHandler',
             'level': 'DEBUG',
             'formatter': 'default',
-            'filename': 'cli.log',
+            'filename': 'smif.log',
             'mode': 'a',
             'encoding': 'utf-8'
         },
