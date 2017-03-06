@@ -2,6 +2,7 @@
 """
 
 import os
+import subprocess
 from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
@@ -163,3 +164,25 @@ def test_confirm_repeat_message(mock_print, input):
     confirm()
     input.assert_has_calls([call('Confirm [n]|y: '), call('Confirm [n]|y: ')])
     mock_print.assert_called_with('please enter y or n.')
+
+
+def test_verbose_debug():
+    """Expect debug message from `smif -vv`
+    """
+    output = subprocess.run(['smif', '-vv'], stderr=subprocess.PIPE)
+    assert 'DEBUG' in str(output.stderr)
+
+
+def test_verbose_debug_alt():
+    """Expect debug message from `smif --verbose --verbose`
+    """
+    output = subprocess.run(['smif', '--verbose', '--verbose'], stderr=subprocess.PIPE)
+    assert 'DEBUG' in str(output.stderr)
+
+
+def test_verbose_info(setup_folder_structure, setup_project_folder):
+    """Expect info message from `smif -v validate <config_file>`
+    """
+    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
+    output = subprocess.run(['smif', '-v', 'validate', config_file], stderr=subprocess.PIPE)
+    assert 'INFO' in str(output.stderr)
