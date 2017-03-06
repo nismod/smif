@@ -1,10 +1,25 @@
 """Handles conversion between the set of time intervals used in the `SosModel`
 
+There are three main classes, which are currently rather intertwined.
+:class:`Interval` represents an individual defitions of a period within a year. This is specified using the ISO8601 period syntax and exposes 
+methos which use the isodate library to parse this into an internal hourly
+representation of the period.
+
+:class:`TimeIntervalRegister` holds the definitions of time-interval sets
+specified for the sector models at the :class:`~smif.sos_model.SosModel` 
+level.  
+This class exposes one public method, 
+:py:meth:`~TimeIntervalRegister.add_interval_set` which allows the SosModel
+to add an interval definition from a model configuration to the register.
+
+:class:`TimeSeries` is used to encapsulate any data associated with a 
+time interval definition set, and handles conversion from the current time
+interval resolution to a target time interval definition held in the register.
+
 """
 from isodate import parse_duration
 from datetime import datetime, timedelta
 import logging
-from pandas import Series, PeriodIndex, Period, DatetimeIndex, period_range
 import numpy as np
 
 class Interval(object):
@@ -68,24 +83,27 @@ class TimeSeries(object):
             values.append(row['value'])
         self.names = name_list
         self.values = values
-        self._hourly_values = np.array(8760, dtype=np.float)
+        self._hourly_values = np.zeros(8760, dtype=np.float)
         self._register = register
+        self.parse_values_into_hourly_buckets()
 
     def parse_values_into_hourly_buckets(self):
         """Iterates through the time series and assigns values to hourly buckets
 
         """
-
         for name, value in zip(self.names, self.values):
             lower, upper = self.get_hourly_range(name)
             self.logger.debug("lower: %s, upper: %s", lower, upper)
 
             number_hours_in_range = upper - lower
             self.logger.debug("number_hours: %s", number_hours_in_range)
-            self._hourly_values[lower:upper] = value / (number_hours_in_range)
+
+            apportioned_value = float(value) / (number_hours_in_range)
+            self.logger.debug("apportioned_value: %s", apportioned_value)
+            self._hourly_values[lower:(upper)] = apportioned_value
 
     def get_hourly_range(self, name):
-        """Returns the upper and lower indexes of the hour for a particular interval
+        """Returns the upper and lower hours of a particular interval
 
         Parameters
         ----------
@@ -98,6 +116,39 @@ class TimeSeries(object):
         """
         return self._register.get_interval(name).to_hours()
 
+    def convert(self, to_interval_type):
+        """Convert some data to a time_interval type
+
+        Parameters
+        ----------
+        to_interval_type: str
+            The unique identifier of a registered interval type.
+
+        Returns
+        -------
+        data
+
+        """
+        results = []
+
+        target_intervals = self._register.get_intervals_in_set(to_interval_type)
+        for name, interval in target_intervals.items():
+            self.logger.debug("Resampling to %s", name)
+            lower, upper = interval.to_hours()
+            self.logger.debug("Range: %s-%s", lower, upper)
+
+            if upper < lower:
+                # We are looping around the end of the year
+                end_of_year = sum(self._hourly_values[lower:8760])
+                start_of_year = sum(self._hourly_values[0:upper])
+                total = end_of_year + start_of_year
+            else:
+                total = sum(self._hourly_values[lower:upper])
+
+            results.append({'name': name,
+                            'value': total
+                           })
+        return results
 
 class TimeIntervalRegister:
     """Holds the set of time-intervals used by the SectorModels
@@ -115,7 +166,16 @@ class TimeIntervalRegister:
         self.logger = logging.getLogger(__name__)
         self._id_interval_set = {}
 
+    def get_intervals_in_set(self, set_name):
+        return self._register[set_name]
+
     def get_interval(self, name):
+        """Returns the interval definition given the name of an Interval
+
+        Returns
+        -------
+        :class:`smif.convert.interval.Interval`
+        """
 
         set_name = self._id_interval_set[name]
         interval = self._register[set_name][name]
@@ -147,97 +207,3 @@ class TimeIntervalRegister:
                                                       interval['end'])
 
         self.logger.debug("Added %s to register", set_name)
-
-
-    def convert(self, data, to_interval_type):
-        """Convert some data to a time_interval type
-
-        Parameters
-        ----------
-        data: list
-            A list of dicts, containing the keys ``name`` and ``value``.
-            ``name`` must correspond to a key in the register.
-        to_interval_type: str
-            The unique identifier of a registered interval type.
-
-        Returns
-        -------
-        data
-
-        """
-
-        period = []
-        values = []
-        for row in data:
-            # map name to timeperiod
-            name = row['name']
-            interval_set = self.get_interval_set(name)
-
-            interval = self.register(interval_set)[name]
-
-            period.append(interval)
-            values.append(row['value'])
-
-        self.logger.debug(period)
-        time_index = DatetimeIndex(period)
-
-        series = Series(data=values, index=time_index)
-
-        destination = list(self._register[to_interval_type].values())
-        to_index = DatetimeIndex(destination)
-        return series.resample(to_index)
-        # series.asfreq(self._register[to_interval_type])
-
-    @staticmethod
-    def _check_timeperiods_match(period_from, period_to):
-        """Checks that two periods match one another
-
-        Parameters
-        ----------
-        period_from: list
-            A list of time period (datetime) tuples
-        period_to: list
-            A list of time period (datetime) tuples
-
-        """
-        if len(period_from) > len(period_to):
-            # We are aggregating, so check that we cover the whole of `period_to`
-
-            begin = period_from[0]
-            print(begin)
-            end = period_to[0]
-            print(end)
-
-            assert begin[0] == end[0]
-            assert period_from[-1][1] == period_to[-1][1]
-
-        elif len(period_from) < len(period_to):
-            # We are interpolating
-            pass
-        elif len(period_from) == len(period_to):
-            # The time periods could be the same...
-            pass
-
-
-
-    def convert_iso_period_to_pandas_period(self, iso_interval):
-        """
-        """
-        start = parse_duration(iso_interval['start'])
-        start_time = datetime(self.base_year, 1, 1) + start
-
-        end = parse_duration(iso_interval['end'])
-        end_time = datetime(self.base_year, 1, 1) + end
-
-        pandas_period = Period(start_time, end_time - start_time)
-        return pandas_period
-
-    def convert_datetime_to_pandas_period(self, dt_interval):
-        """
-        """
-        start_time = dt_interval[0]
-        end_time = dt_interval[1]
-        duration = end_time - start_time
-
-        pandas_period = Period(start_time, duration)
-        return pandas_period

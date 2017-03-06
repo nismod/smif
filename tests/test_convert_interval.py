@@ -4,6 +4,7 @@ from isodate import parse_duration
 from pytest import fixture
 import pytest
 import numpy as np
+from numpy.testing import assert_equal
 
 from smif.convert.interval import TimeIntervalRegister, Interval, TimeSeries
 
@@ -24,11 +25,29 @@ def months():
     return months
 
 @fixture(scope='function')
+def monthly_data():
+    """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    """
+    data = [{'name': '1_0', 'value': 31},
+            {'name': '1_1', 'value': 28},
+            {'name': '1_2', 'value': 31},
+            {'name': '1_3', 'value': 30},
+            {'name': '1_4', 'value': 31},
+            {'name': '1_5', 'value': 30},
+            {'name': '1_6', 'value': 31},
+            {'name': '1_7', 'value': 31},
+            {'name': '1_8', 'value': 30},
+            {'name': '1_9', 'value': 31},
+            {'name': '1_10', 'value': 30},
+            {'name': '1_11', 'value': 31}]
+    return data
+
+@fixture(scope='function')
 def seasons():
-    seasons = [{'name': 'winter', 'start': 'P12M', 'end': 'P2M'},
-               {'name': 'spring', 'start': 'P3M', 'end': 'P5M'},
-               {'name': 'summer', 'start': 'P6M', 'end': 'P8M'},
-               {'name': 'autumn', 'start': 'P9M', 'end': 'P11M'}]
+    seasons = [{'name': 'winter', 'start': 'P11M', 'end': 'P2M'},
+               {'name': 'spring', 'start': 'P2M', 'end': 'P5M'},
+               {'name': 'summer', 'start': 'P5M', 'end': 'P8M'},
+               {'name': 'autumn', 'start': 'P8M', 'end': 'P11M'}]
     return seasons
 
 @fixture(scope='function')
@@ -98,14 +117,20 @@ class TestTimeSeries:
         expected = [1] * 12
         assert actual == expected
 
-        actual = timeseries._hourly_values
-        expected = np.array(8760, dtype=np.float)
-        assert actual == expected
-
         timeseries.parse_values_into_hourly_buckets()
         actual = timeseries._hourly_values
-        expected = np.array(8760, dtype=np.float)
-        assert actual == expected
+
+        month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        month_hours = [x for x in map(lambda x: x*24, month_days)]
+        expected_results = [x for x in map(lambda x: 1/x, month_hours)]
+
+        start = 0
+        for hours, expected in zip(month_hours, expected_results):
+            expected_array = np.zeros(hours, dtype=np.float)
+            expected_array.fill(expected)
+            assert_equal(actual[start:start+hours], expected_array)
+            start += hours
+
 
 class TestInterval:
 
@@ -179,8 +204,11 @@ class TestIntervalRegister:
         register = TimeIntervalRegister()
         register.add_interval_set(data, 'energy_supply_hourly')
 
-        actual = register.register('energy_supply_hourly')
-        expected = {'1_1': datetime(2010, 1, 1, 0)}
+        actual = register.get_intervals_in_set('energy_supply_hourly')
+        expected = {'1_1': Interval(data[0]['name'],
+                                    data[0]['start'],
+                                    data[0]['end'])
+                   }
 
         assert actual == expected
 
@@ -191,29 +219,33 @@ class TestIntervalRegister:
         register = TimeIntervalRegister()
         register.add_interval_set(months, 'months')
 
-        actual = register.register('months')
+        actual = register.get_intervals_in_set('months')
 
         expected_names = \
             ['1_0', '1_1', '1_2', '1_3', '1_4', '1_5',
              '1_6', '1_7', '1_8', '1_9', '1_10', '1_11']
 
-        expected = DatetimeIndex([datetime(2010, x, 1) for x in range(1, 13)])
+        expected = []
 
         for name, time in zip(expected_names, expected):
             assert actual[name] == time
 
 
-class TestIntervalRegisterConversion:
+class TestTimeSeriesConversion:
 
-    def test_convert_from_month_to_seasons(self, months, seasons):
+    def test_convert_from_month_to_seasons(self, 
+                                           months, 
+                                           seasons, 
+                                           monthly_data):
 
-
+        data = monthly_data
 
         register = TimeIntervalRegister()
         register.add_interval_set(months, 'months')
         register.add_interval_set(seasons, 'seasons')
 
-        actual = register.convert(data, 'seasons')
+        timeseries = TimeSeries(data, register)
+        actual = timeseries.convert('seasons')
         expected = [{'name': 'winter', 'value': 3},
                     {'name': 'spring', 'value': 3},
                     {'name': 'summer', 'value': 3},
@@ -251,7 +283,9 @@ class TestIntervalRegisterConversion:
         register.add_interval_set(twenty_four_hours, 'hourly_day')
         register.add_interval_set(one_day, 'one_day')
 
-        actual = register.convert(data, 'one_day')
+        timeseries = TimeSeries(data, register)
+        
+        actual = timeseries.convert('one_day')
         expected = [{'name': 'one_day', 'value': 24}]
 
         assert actual == expected
