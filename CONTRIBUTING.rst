@@ -2,7 +2,7 @@
 How to contribute
 =================
 
-🎉👍 First things first, thank you for considering contributing to `smif`
+🎉👍 First things first, thank you for considering contributing to *smif*!
 
 Getting started
 ---------------
@@ -14,6 +14,6 @@ continue prototyping before a v1.0 release.
 
 See the `developer documentation`_ for details of testing and other conventions.
 
-.. _developer documentation: http://smif.readthedocs.io/en/latest/
+.. _developer documentation: http://smif.readthedocs.io/en/latest/developers.html
 .. _pull requests: https://help.github.com/articles/about-pull-requests/
 .. _raise an issue: https://github.com/nismod/smif/issues
