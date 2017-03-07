@@ -95,6 +95,7 @@ class SosModel(object):
 
         """
         run_order = self._get_model_names_in_run_order()
+        self.logger.info("Determined run order as %s", run_order)
         for timestep in self.timesteps:
             for model_name in run_order:
                 logging.debug("Running %s for %d", model_name, timestep)
@@ -124,7 +125,8 @@ class SosModel(object):
             self._run_sector_model_timestep(sector_model, timestep)
 
     def _run_sector_model_timestep(self, model, timestep):
-        """
+        """Run the sector model for a specific timestep
+
         Parameters
         ----------
         model: :class:`smif.sector_model.SectorModel`
@@ -293,6 +295,7 @@ class SosModelBuilder(object):
         timesteps : list
             A list of timesteps
         """
+        self.logger.info("Adding timesteps")
         self.sos_model.timesteps = timesteps
 
     def load_models(self, model_data_list):
@@ -306,6 +309,7 @@ class SosModelBuilder(object):
             A list of assets to pass to the sector model
 
         """
+        self.logger.info("Loading models")
         for model_data in model_data_list:
             model = self._build_model(model_data)
             self.add_model(model)
@@ -353,6 +357,7 @@ class SosModelBuilder(object):
             A list of planning instructions
 
         """
+        self.logger.info("Adding planning")
         self.sos_model.planning = Planning(planning)
 
     def add_scenario_data(self, data):
@@ -372,6 +377,7 @@ class SosModelBuilder(object):
         Default region: "UK"
         Default interval: "year"
         """
+        self.logger.info("Adding scenario data")
         nested = {}
         for param, observations in data.items():
             for obs in observations:
@@ -407,7 +413,7 @@ class SosModelBuilder(object):
                     del obs["region"]
                     del obs["interval"]
                     nested[year][param][region][interval] = obs
-
+        self.logger.debug("Added scenario data: %s", nested)
         self.sos_model._scenario_data = nested
 
     def _check_planning_interventions_exist(self):
@@ -445,6 +451,8 @@ class SosModelBuilder(object):
 
         for model_name, model in self.sos_model.model_list.items():
             for dep in model.inputs.dependencies:
+                msg = "Dependency '%s' provided by '%s'"
+                self.logger.debug(msg, dep.name, dep.from_model)
                 if dep.from_model == "scenario":
                     continue
 
