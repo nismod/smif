@@ -37,8 +37,8 @@ from __future__ import print_function
 import logging
 import logging.config
 import os
+import re
 import sys
-import traceback
 from argparse import ArgumentParser
 
 from smif.sos_model import SosModelBuilder
@@ -66,7 +66,7 @@ LOGGING_CONFIG = {
             'class': 'logging.FileHandler',
             'level': 'DEBUG',
             'formatter': 'default',
-            'filename': 'cli.log',
+            'filename': 'smif.log',
             'mode': 'a',
             'encoding': 'utf-8'
         },
@@ -82,8 +82,26 @@ LOGGING_CONFIG = {
     }
 }
 
+# Configure logging once, outside of any dependency on argparse
+VERBOSITY = None
+if '--verbose' in sys.argv:
+    VERBOSITY = sys.argv.count('--verbose')
+else:
+    for arg in sys.argv:
+        if re.match(r'\A-v+\Z', arg):
+            VERBOSITY = len(arg) - 1
+            break
+
+if VERBOSITY is None:
+    LOGGING_CONFIG['root']['level'] = logging.WARNING
+elif VERBOSITY == 1:
+    LOGGING_CONFIG['root']['level'] = logging.INFO
+elif VERBOSITY >= 2:
+    LOGGING_CONFIG['root']['level'] = logging.DEBUG
+
 logging.config.dictConfig(LOGGING_CONFIG)
 LOGGER = logging.getLogger(__name__)
+LOGGER.debug('Debug logging enabled.')
 
 
 def setup_project_folder(project_path):
@@ -175,9 +193,7 @@ def validate_config(args):
         except Exception as error:
             # should not raise error, so exit
             log_validation_errors()
-            LOGGER.debug("Unexpected error validating config: %s", error)
-            if LOGGER.isEnabledFor(logging.DEBUG):
-                traceback.print_tb(error.__traceback__)
+            LOGGER.exception("Unexpected error validating config: %s", error)
             exit(-1)
 
         log_validation_errors()
@@ -252,6 +268,10 @@ def parse_arguments():
 
     """
     parser = ArgumentParser(description='Command line tools for smif')
+    parser.add_argument('-v', '--verbose',
+                        action='count',
+                        help='show messages: -v to see messages reporting on progress, ' +
+                        '-vv to see debug messages.')
     subparsers = parser.add_subparsers()
 
     # VALIDATE
@@ -342,6 +362,7 @@ def main(arguments=None):
     """
     parser = parse_arguments()
     args = parser.parse_args(arguments)
+
     if 'func' in args:
         args.func(args)
     else:
