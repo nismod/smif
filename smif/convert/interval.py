@@ -112,16 +112,14 @@ class Interval(object):
 
 
 class TimeSeries(object):
-    """A series of values associated with a DatetimeIndex
+    """A series of values associated with an interval definition
 
     Parameters
     ----------
     data: list
         A list of dicts, each entry containing 'name' and 'value' keys
-    register: :class:`~smif.convert.interval.TimeIntervalRegister`
-        A pointer to the time interval register
     """
-    def __init__(self, data, register):
+    def __init__(self, data):
         self.logger = logging.getLogger(__name__)
         values = []
         name_list = []
@@ -131,73 +129,16 @@ class TimeSeries(object):
         self.names = name_list
         self.values = values
         self._hourly_values = np.zeros(8760, dtype=np.float64)
-        self._register = register
-        self._convert_to_hourly_buckets()
 
-    def _convert_to_hourly_buckets(self):
-        """Iterates through the time series and assigns values to hourly buckets
-
+    @property
+    def hourly_values(self):
+        """The timeseries resampled to hourly values
         """
-        for name, value in zip(self.names, self.values):
-            lower, upper = self.get_hourly_range(name)
-            self.logger.debug("lower: %s, upper: %s", lower, upper)
+        return self._hourly_values
 
-            number_hours_in_range = upper - lower
-            self.logger.debug("number_hours: %s", number_hours_in_range)
-
-            apportioned_value = float(value) / number_hours_in_range
-            self.logger.debug("apportioned_value: %s", apportioned_value)
-            self._hourly_values[lower:upper] = apportioned_value
-
-    def get_hourly_range(self, name):
-        """Returns the upper and lower hours of a particular interval
-
-        Parameters
-        ----------
-        name: str
-            The name of a registered time interval
-
-        Returns
-        -------
-        tuple
-        """
-        return self._register.get_interval(name).to_hours()
-
-    def convert(self, to_interval_type):
-        """Convert some data to a time_interval type
-
-        Parameters
-        ----------
-        to_interval_type: str
-            The unique identifier of a registered interval type.
-
-        Returns
-        -------
-        dict
-            A dictionary with keys `name` and `value`, where the entries
-            for `key` are the name of the target time interval, and the
-            values are the resampled timeseries values.
-
-        """
-        results = []
-
-        target_intervals = self._register.get_intervals_in_set(to_interval_type)
-        for name, interval in target_intervals.items():
-            self.logger.debug("Resampling to %s", name)
-            lower, upper = interval.to_hours()
-            self.logger.debug("Range: %s-%s", lower, upper)
-
-            if upper < lower:
-                # The interval loops around the end/start hours of the year
-                end_of_year = sum(self._hourly_values[lower:8760])
-                start_of_year = sum(self._hourly_values[0:upper])
-                total = end_of_year + start_of_year
-            else:
-                total = sum(self._hourly_values[lower:upper])
-
-            results.append({'name': name,
-                            'value': total})
-        return results
+    @hourly_values.setter
+    def hourly_values(self, value):
+        self._hourly_values = value
 
 
 class TimeIntervalRegister:
@@ -231,6 +172,7 @@ class TimeIntervalRegister:
             were defined
 
         """
+        self._check_interval_in_register(set_name)
         return self._register[set_name]
 
     def get_interval(self, name):
@@ -278,3 +220,74 @@ class TimeIntervalRegister:
                                                       self._base_year)
 
         self.logger.info("Adding interval set '%s' to register", set_name)
+
+    def _check_interval_in_register(self, interval):
+        if interval not in self._register:
+            msg = "The interval set '{}' is not in the register"
+            raise ValueError(msg.format(interval))
+
+    def convert(self, timeseries, from_interval, to_interval):
+        """Convert some data to a time_interval type
+
+        Parameters
+        ----------
+        timeseries: :class:`~smif.convert.interval.TimeSeries`
+            The timeseries to convert from `from_interval` to `to_interval`
+        from_interval: str
+            The unique identifier of a interval type which matches the
+            timeseries
+        to_interval: str
+            The unique identifier of a registered interval type
+
+        Returns
+        -------
+        dict
+            A dictionary with keys `name` and `value`, where the entries
+            for `key` are the name of the target time interval, and the
+            values are the resampled timeseries values.
+
+        """
+        results = []
+
+        self._check_interval_in_register(from_interval)
+
+        self._convert_to_hourly_buckets(timeseries)
+
+        target_intervals = self.get_intervals_in_set(to_interval)
+        for name, interval in target_intervals.items():
+            self.logger.debug("Resampling to %s", name)
+            lower, upper = interval.to_hours()
+            self.logger.debug("Range: %s-%s", lower, upper)
+
+            if upper < lower:
+                # The interval loops around the end/start hours of the year
+                end_of_year = sum(timeseries.hourly_values[lower:8760])
+                start_of_year = sum(timeseries.hourly_values[0:upper])
+                total = end_of_year + start_of_year
+            else:
+                total = sum(timeseries.hourly_values[lower:upper])
+
+            results.append({'name': name,
+                            'value': total})
+        return results
+
+    def _convert_to_hourly_buckets(self, timeseries):
+        """Iterates through the `timeseries` and assigns values to hourly buckets
+
+        Parameters
+        ----------
+        timeseries: :class:`~smif.convert.interval.TimeSeries`
+            The timeseries to convert to hourly buckets ready for further
+            operations
+
+        """
+        for name, value in zip(timeseries.names, timeseries.values):
+            lower, upper = self.get_interval(name).to_hours()
+            self.logger.debug("lower: %s, upper: %s", lower, upper)
+
+            number_hours_in_range = upper - lower
+            self.logger.debug("number_hours: %s", number_hours_in_range)
+
+            apportioned_value = float(value) / number_hours_in_range
+            self.logger.debug("apportioned_value: %s", apportioned_value)
+            timeseries.hourly_values[lower:upper] = apportioned_value

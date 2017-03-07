@@ -4,7 +4,7 @@ from datetime import datetime
 
 import numpy as np
 from numpy.testing import assert_equal
-from pytest import approx, fixture
+from pytest import approx, fixture, raises
 from smif.convert.interval import Interval, TimeIntervalRegister, TimeSeries
 
 
@@ -184,7 +184,7 @@ class TestTimeSeries:
         register = TimeIntervalRegister(2010)
         register.add_interval_set(months, 'months')
 
-        timeseries = TimeSeries(data, register)
+        timeseries = TimeSeries(data)
         actual = timeseries.names
         expected = ['1_0', '1_1', '1_2', '1_3', '1_4', '1_5',
                     '1_6', '1_7', '1_8', '1_9', '1_10', '1_11']
@@ -194,12 +194,12 @@ class TestTimeSeries:
         expected = [1] * 12
         assert actual == expected
 
-        timeseries._convert_to_hourly_buckets()
+        register._convert_to_hourly_buckets(timeseries)
         actual = timeseries._hourly_values
 
         month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        month_hours = [x for x in map(lambda x: x*24, month_days)]
-        expected_results = [x for x in map(lambda x: 1/x, month_hours)]
+        month_hours = list(map(lambda x: x*24, month_days))
+        expected_results = list(map(lambda x: 1/x, month_hours))
 
         start = 0
         for hours, expected in zip(month_hours, expected_results):
@@ -209,7 +209,14 @@ class TestTimeSeries:
             start += hours
 
 
-class TestTimeSeriesConversion:
+class TestTimeRegisterConversion:
+
+    def test_raises_error_on_no_definition(self):
+
+        register = TimeIntervalRegister()
+        # register.add_interval_set(months, 'months')
+        with raises(ValueError):
+            register.get_intervals_in_set('blobby')
 
     def test_convert_from_month_to_seasons(self,
                                            months,
@@ -222,15 +229,15 @@ class TestTimeSeriesConversion:
         register.add_interval_set(months, 'months')
         register.add_interval_set(seasons, 'seasons')
 
-        timeseries = TimeSeries(data, register)
-        actual = timeseries.convert('seasons')
+        timeseries = TimeSeries(data)
+
+        actual = register.convert(timeseries, 'months', 'seasons')
         expected = [{'name': 'winter', 'value': 31. + 31 + 28},
                     {'name': 'spring', 'value': 31. + 30 + 31},
                     {'name': 'summer', 'value': 30. + 31 + 31},
                     {'name': 'autumn', 'value': 30. + 31 + 30}]
 
         for act, exp in zip(actual, expected):
-            print(act['name'])
             assert act['name'] == exp['name']
             assert act['value'] == approx(exp['value'])
 
@@ -265,9 +272,9 @@ class TestTimeSeriesConversion:
         register.add_interval_set(twenty_four_hours, 'hourly_day')
         register.add_interval_set(one_day, 'one_day')
 
-        timeseries = TimeSeries(data, register)
+        timeseries = TimeSeries(data)
 
-        actual = timeseries.convert('one_day')
+        actual = register.convert(timeseries, 'hourly_day', 'one_day')
         expected = [{'name': 'one_day', 'value': 24}]
 
         assert actual == expected
