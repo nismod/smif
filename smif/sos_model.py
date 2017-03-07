@@ -4,9 +4,9 @@ framework.
 
 """
 import logging
+from enum import Enum
 
 import networkx
-from enum import Enum
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.sector_model import SectorModelBuilder
@@ -37,9 +37,20 @@ class SosModel(object):
         self.initial_conditions = []
         self.interventions = InterventionRegister()
         self.planning = Planning([])
-        self.scenario_data = {}
+        self._scenario_data = {}
 
         self.logger = logging.getLogger(__name__)
+
+    @property
+    def scenario_data(self):
+        """Get nested dict of scenario data
+
+        Returns
+        -------
+        dict
+            Nested dictionary in the format data[year][param][region][interval]
+        """
+        return self._scenario_data
 
     def run(self):
         """Runs the system-of-system model
@@ -76,11 +87,8 @@ class SosModel(object):
 
         for model_name in run_order:
             logging.debug("Running %s", model_name)
-            model = self.model_list[model_name]
-            decisions = []
-            state = {}
-            data = self._get_scenario_data(model_name, timestep)
-            model.simulate(decisions, state, data)
+            sector_model = self.model_list[model_name]
+            self._run_sector_model_timestep(sector_model, timestep)
 
     def _run_sequential_sos_model(self):
         """Runs the system-of-system model sequentially
@@ -90,15 +98,83 @@ class SosModel(object):
         for timestep in self.timesteps:
             for model_name in run_order:
                 logging.debug("Running %s for %d", model_name, timestep)
-                model = self.model_list[model_name]
-                decisions = []
-                state = {}
-                data = self._get_scenario_data(model_name, timestep)
-                model.simulate(decisions, state, data)
+                sector_model = self.model_list[model_name]
+                self._run_sector_model_timestep(sector_model, timestep)
 
-    def _get_scenario_data(self, model_name, timestep):
+    def run_sector_model(self, model_name):
+        """Runs the sector model
+
+        Parameters
+        ----------
+        model_name : str
+            The name of the model, corresponding to the folder name in the
+            models subfolder of the project folder
+        """
+        msg = "Model '{}' does not exist. Choose from {}"
+        assert model_name in self.model_list, \
+            msg.format(model_name, self.sector_models)
+
+        msg = "Running the %s sector model"
+        self.logger.info(msg, model_name)
+
+        sector_model = self.model_list[model_name]
+
+        # Run a simulation for a single model
+        for timestep in self.timesteps:
+            self._run_sector_model_timestep(sector_model, timestep)
+
+    def _run_sector_model_timestep(self, model, timestep):
+        """
+        Parameters
+        ----------
+        model: :class:`smif.sector_model.SectorModel`
+            The instance of the sector model wrapper to run
+        timestep: int
+            The year for which to run the model
+
+        """
+        decisions = []
+        state = {}
+        data = self._get_data(model, model.name, timestep)
+        model.simulate(decisions, state, data)
+
+    def _get_data(self, model, model_name, timestep):
+        """Gets the data in the required format to pass to the simulate method
+
+        Returns
+        -------
+        dict
+            A nested dictionary of the format:
+            ``data[parameter][region][time_interval] = {value, units}``
+
+        Notes
+        -----
+        Note that the timestep is `not` passed to the SectorModel in the
+        nested data dictionary.
+        The current timestep is available in ``data['timestep']``.
+
+        """
+        data = {}
+        for dependency in model.inputs.dependencies:
+            self.logger.debug("Finding data for dependency: %s", dependency.name)
+            if dependency.from_model == 'scenario':
+                data = self._get_scenario_data(timestep)
+                self.logger.debug("Found data: %s", data)
+            else:
+                msg = "Getting data from dependencies is not yet implemented"
+                raise NotImplementedError(msg)
+        return data
+
+    def _get_scenario_data(self, timestep):
         """Given a model, check required parameters, pick data from scenario
-        for the given timestep"""
+        for the given timestep
+
+        Parameters
+        ----------
+        timestep: int
+            The year for which to get scenario data
+
+        """
         return self.scenario_data[timestep]
 
     def _run_static_optimisation(self):
@@ -138,31 +214,6 @@ class SosModel(object):
             mode = RunMode.static_simulation
 
         return mode
-
-    def run_sector_model(self, model_name):
-        """Runs the sector model
-
-        Parameters
-        ----------
-        model_name : str
-            The name of the model, corresponding to the folder name in the
-            models subfolder of the project folder
-        """
-        msg = "Model '{}' does not exist. Choose from {}".format(model_name,
-                                                                 self.sector_models)
-        assert model_name in self.model_list, msg
-
-        msg = "Running the {} sector model".format(model_name)
-        self.logger.info(msg)
-
-        sector_model = self.model_list[model_name]
-
-        # Run a simulation for a single model
-        for timestep in self.timesteps:
-            decisions = []
-            state = {}
-            data = self._get_scenario_data(model_name, timestep)
-            sector_model.simulate(decisions, state, data)
 
     @property
     def timesteps(self):
@@ -313,13 +364,13 @@ class SosModelBuilder(object):
         - value
         - units
         - region (optional, must use a region id from scenario regions)
-        - timestep (optional, must use an id from scenario time intervals)
+        - interval (optional, must use an id from scenario time intervals)
 
         Add a dictionary re-rolled for ease of lookup:
-            data[year][param][region][timestep] => {value, units}
+            data[year][param][region][interval] => {value, units}
 
         Default region: "UK"
-        Default timestep: "year"
+        Default interval: "year"
         """
         nested = {}
         for param, observations in data.items():
@@ -341,23 +392,23 @@ class SosModelBuilder(object):
                 if region not in nested[year][param]:
                     nested[year][param][region] = {}
 
-                if "timestep" not in obs:
-                    obs["timestep"] = "year"
-                timestep = obs["timestep"]
+                if "interval" not in obs:
+                    obs["interval"] = "year"
+                interval = obs["interval"]
 
-                if timestep in nested[year][param][region]:
+                if interval in nested[year][param][region]:
                     raise AssertionError(
                         "Scenario data item duplicated for year, parameter, region: %s, %s",
                         obs,
-                        nested[year][param][region][timestep]
+                        nested[year][param][region][interval]
                     )
                 else:
                     del obs["year"]
                     del obs["region"]
-                    del obs["timestep"]
-                    nested[year][param][region][timestep] = obs
+                    del obs["interval"]
+                    nested[year][param][region][interval] = obs
 
-        self.sos_model.scenario_data = nested
+        self.sos_model._scenario_data = nested
 
     def _check_planning_interventions_exist(self):
         """Check existence of all the interventions in the pre-specifed planning

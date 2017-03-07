@@ -26,11 +26,11 @@ The key functions include
   approaches
 
 """
+import importlib
 import logging
 import os
 from abc import ABC, abstractmethod
 
-import importlib
 from smif.inputs import ModelInputs
 from smif.outputs import ModelOutputs
 
@@ -159,7 +159,8 @@ class SectorModel(ABC):
         decisions: list
         state: list
         data: dict
-
+            A nested dictionary of the format:
+            ``results[timestep][parameter][region][time_interval] = {value, units}``
         Returns
         -------
         dict

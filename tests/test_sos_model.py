@@ -1,95 +1,92 @@
 # -*- coding: utf-8 -*-
 
-from pytest import raises
+from pytest import fixture, raises
 from smif.sector_model import SectorModel
 from smif.sos_model import SosModel, SosModelBuilder
 
 from .fixtures.water_supply import WaterSupplySectorModel
 
 
+@fixture(scope='function')
+def get_sos_model_only_scenario_dependencies():
+    builder = SosModelBuilder()
+    builder.add_timesteps([2010])
+    builder.add_scenario_data({
+        "raininess": [
+            {
+                'year': 2010,
+                'value': 3,
+                'units': 'ml'
+            },
+            {
+                'year': 2011,
+                'value': 5,
+                'units': 'ml'
+            },
+            {
+                'year': 2012,
+                'value': 1,
+                'units': 'ml'
+            }
+        ]
+    })
+
+    ws = WaterSupplySectorModel()
+    ws.name = 'water_supply'
+    ws.inputs = {
+        'dependencies': [
+            {
+                'name': 'raininess',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'from_model': 'scenario'
+            }
+        ]
+    }
+    builder.add_model(ws)
+
+    ws2 = WaterSupplySectorModel()
+    ws2.name = 'water_supply_2'
+    ws2.inputs = {
+        'dependencies': [
+            {
+                'name': 'raininess',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'from_model': 'scenario'
+            }
+        ]
+    }
+    builder.add_model(ws2)
+
+    return builder.finish()
+
+
 class TestSosModel():
-    def get_sos_model(self):
-        builder = SosModelBuilder()
-        builder.add_timesteps([2010])
-        builder.add_scenario_data({
-            "raininess": [
-                {
-                    'year': 2010,
-                    'value': 3,
-                    'units': 'ml'
-                },
-                {
-                    'year': 2011,
-                    'value': 5,
-                    'units': 'ml'
-                },
-                {
-                    'year': 2012,
-                    'value': 1,
-                    'units': 'ml'
-                }
-            ]
-        })
 
-        ws = WaterSupplySectorModel()
-        ws.name = 'water_supply'
-        ws.inputs = {
-            'parameters': [
-                {
-                    'name': 'raininess',
-                    'bounds': (0, 5),
-                    'value': 3
-                }
-            ]
-        }
-        builder.add_model(ws)
-
-        ws2 = WaterSupplySectorModel()
-        ws2.name = 'water_supply_2'
-        ws2.inputs = {
-            'parameters': [
-                {
-                    'name': 'raininess',
-                    'bounds': (0, 5),
-                    'value': 3
-                }
-            ],
-            'dependencies': [
-                {
-                    'name': 'a value',
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'from_model': 'water_supply'
-                }
-            ]
-        }
-        builder.add_model(ws2)
-
-        return builder.finish()
-
-    def test_run_static(self):
-        sos_model = self.get_sos_model()
+    def test_run_static(self, get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
         sos_model.run()
 
-    def test_run_no_timesteps(self):
-        sos_model = self.get_sos_model()
+    def test_run_no_timesteps(self, get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
         sos_model.timesteps = []
 
         with raises(ValueError) as ex:
             sos_model.run()
         assert "No timesteps" in str(ex.value)
 
-    def test_run_sequential(self):
-        sos_model = self.get_sos_model()
+    def test_run_sequential(self, get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
         sos_model.timesteps = [2010, 2011, 2012]
         sos_model.run()
 
-    def test_run_single_sector(self):
-        sos_model = self.get_sos_model()
+    def test_run_single_sector(self, get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
         sos_model.run_sector_model('water_supply')
 
-    def test_run_missing_sector(self):
-        sos_model = self.get_sos_model()
+    def test_run_missing_sector(self, get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
 
         with raises(AssertionError) as ex:
             sos_model.run_sector_model('impossible')
@@ -283,28 +280,28 @@ class TestSosModelBuilder():
                 {
                     'year': 2015,
                     'region': 'GB',
-                    'timestep': 'spring',
+                    'interval': 'spring',
                     'value': 3,
                     'units': 'kg'
                 },
                 {
                     'year': 2015,
                     'region': 'GB',
-                    'timestep': 'summer',
+                    'interval': 'summer',
                     'value': 5,
                     'units': 'kg'
                 },
                 {
                     'year': 2015,
                     'region': 'NI',
-                    'timestep': 'spring',
+                    'interval': 'spring',
                     'value': 1,
                     'units': 'kg'
                 },
                 {
                     'year': 2016,
                     'region': 'GB',
-                    'timestep': 'spring',
+                    'interval': 'spring',
                     'value': 4,
                     'units': 'kg'
                 }
@@ -346,8 +343,8 @@ class TestSosModelBuilder():
 
         builder = SosModelBuilder()
         builder.add_scenario_data(data)
-        assert builder.sos_model.scenario_data[2015]["mass"]["GB"]["spring"]["value"] == 3
-        assert builder.sos_model.scenario_data == expected
+        assert builder.sos_model._scenario_data[2015]["mass"]["GB"]["spring"]["value"] == 3
+        assert builder.sos_model._scenario_data == expected
 
     def test_scenario_data_defaults(self):
         data = {
@@ -375,8 +372,8 @@ class TestSosModelBuilder():
 
         builder = SosModelBuilder()
         builder.add_scenario_data(data)
-        assert builder.sos_model.scenario_data[2015]["length"]["UK"]["year"]["value"] == 3.14
-        assert builder.sos_model.scenario_data == expected
+        assert builder.sos_model._scenario_data[2015]["length"]["UK"]["year"]["value"] == 3.14
+        assert builder.sos_model._scenario_data == expected
 
     def test_scenario_data_missing_year(self):
         data = {
