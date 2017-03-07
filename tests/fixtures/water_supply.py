@@ -92,17 +92,15 @@ class WaterSupplySectorModel(SectorModel):
     """
 
     def simulate(self, decision_variables, state, data):
-        """
-
-        Arguments
-        =========
-        decision_variables : :class:`numpy.ndarray`
-            x_0 is new capacity of water treatment plants
-        """
 
         # unpack inputs
         self.logger.debug(data)
-        raininess = data['raininess']['UK']['year']['value']
+
+        parameter_name = 'raininess'
+        region = 'UK'
+        time_interval = 'year'
+
+        raininess = data[parameter_name][region][time_interval]['value']
 
         # unpack decision variables
         if len(decision_variables) > 0:
