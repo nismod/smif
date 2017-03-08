@@ -65,7 +65,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'smif'
-copyright = u'2016, Will Usher, Tom Russell'
+copyright = u'2017, Will Usher, Tom Russell'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -88,7 +88,7 @@ release = ''  # Is set by calling `setup.py docs`
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', '../tests']
+exclude_patterns = ['_build', '../tests/**']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None
@@ -202,21 +202,21 @@ htmlhelp_basename = 'smif-doc'
 # -- Options for LaTeX output --------------------------------------------------
 
 latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-'papersize': 'a4paper',
+    # The paper size ('letterpaper' or 'a4paper').
+    'papersize': 'a4paper',
 
-# The font size ('10pt', '11pt' or '12pt').
-# 'pointsize': '10pt',
+    # The font size ('10pt', '11pt' or '12pt').
+    # 'pointsize': '10pt',
 
-# Additional stuff for the LaTeX preamble.
-# 'preamble': '',
+    # Additional stuff for the LaTeX preamble.
+    # 'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'user_guide.tex', u'smif Documentation',
-   u'Will Usher & Tom Russell', 'manual'),
+    ('index', 'user_guide.tex', u'smif Documentation',
+     u'Will Usher & Tom Russell', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
