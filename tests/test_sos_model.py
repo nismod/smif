@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from pytest import fixture, raises
+from smif import SpaceTimeValue
 from smif.sector_model import SectorModel
 from smif.sos_model import SosModel, SosModelBuilder
 
@@ -310,69 +311,58 @@ class TestSosModelBuilder():
 
         expected = {
             2015: {
-                "mass": {
-                    "GB": {
-                        "spring": {
-                            'value': 3,
-                            'units': 'kg'
-                        },
-                        "summer": {
-                            'value': 5,
-                            'units': 'kg'
-                        }
+                "mass": [
+                    SpaceTimeValue('GB', 'spring', 3, 'kg'),
+                    SpaceTimeValue('GB', 'summer', 5, 'kg'),
+                    SpaceTimeValue('NI', 'spring', 1, 'kg')
+                    ]
                     },
-                    "NI": {
-                        "spring": {
-                            'value': 1,
-                            'units': 'kg'
-                        }
-                    }
-                }
-            },
             2016: {
-                "mass": {
-                    "GB": {
-                        "spring": {
-                            'value': 4,
-                            'units': 'kg'
-                        }
-                    }
-                }
+                "mass": [
+                    SpaceTimeValue('GB', 'spring', 4, 'kg')
+                         ]
+
             }
         }
 
         builder = SosModelBuilder()
         builder.add_scenario_data(data)
-        assert builder.sos_model._scenario_data[2015]["mass"]["GB"]["spring"]["value"] == 3
-        assert builder.sos_model._scenario_data == expected
+
+        actual = builder.sos_model._scenario_data
+
+        assert actual[2015]["mass"] == \
+            [SpaceTimeValue("GB", "spring", 3, 'kg'),
+             SpaceTimeValue('GB', 'summer', 5, 'kg'),
+             SpaceTimeValue('NI', 'spring', 1, 'kg')]
+        assert actual == expected
+
+        expected_value = [3, 5, 1]
+        expected_region = ['GB', 'GB', 'NI']
+
+        for exp_val, exp_reg, entry in zip(expected_value,
+                                           expected_region,
+                                           actual[2015]['mass']):
+            assert entry.value == exp_val
+            assert entry.region == exp_reg
+            assert entry.units == 'kg'
 
     def test_scenario_data_defaults(self):
         data = {
             "length": [
                 {
                     'year': 2015,
+                    'interval': 'annual',
                     'value': 3.14,
-                    'units': 'm'
+                    'units': 'm',
+                    'region': 'national'
                 }
             ]
         }
 
-        expected = {
-            2015: {
-                "length": {
-                    "UK": {
-                        "year": {
-                            'value': 3.14,
-                            'units': 'm'
-                        }
-                    }
-                }
-            }
-        }
+        expected = {2015: {"length": [SpaceTimeValue("national", 'annual', 3.14, 'm')]}}
 
         builder = SosModelBuilder()
         builder.add_scenario_data(data)
-        assert builder.sos_model._scenario_data[2015]["length"]["UK"]["year"]["value"] == 3.14
         assert builder.sos_model._scenario_data == expected
 
     def test_scenario_data_missing_year(self):

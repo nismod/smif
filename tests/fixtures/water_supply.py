@@ -96,11 +96,10 @@ class WaterSupplySectorModel(SectorModel):
         # unpack inputs
         self.logger.debug(data)
 
-        parameter_name = 'raininess'
-        region = 'UK'
-        time_interval = 'year'
-
-        raininess = data[parameter_name][region][time_interval]['value']
+        scenario_data = data['raininess'][0]
+        assert scenario_data.region == 'national'
+        assert scenario_data.interval == 'annual'
+        raininess = scenario_data.value
 
         # unpack decision variables
         if len(decision_variables) > 0:
