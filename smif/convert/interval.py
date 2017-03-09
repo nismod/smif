@@ -18,6 +18,113 @@ to add an interval definition from a model configuration to the register.
 time interval definition set, and handles conversion from the current time
 interval resolution to a target time interval definition held in the register.
 
+Quantities
+----------
+Quantities are associated with a duration, period or interval.
+For example 120 GWh of electricity generated during each week of February.::
+
+        Week 1: 120 GW
+        Week 2: 120 GW
+        Week 3: 120 GW
+        Week 4: 120 GW
+
+Other examples of quantities:
+
+- greenhouse gas emissions
+- demands for infrastructure services
+- materials use
+- counts of cars past a junction
+- costs of investments, operation and maintenance
+
+Upscale: Divide
+~~~~~~~~~~~~~~~
+
+To convert to a higher temporal resolution, the values need to be apportioned
+across the new time scale. In the above example, the 120 GWh of electricity
+would be divided over the days of February to produce a daily time series
+of generation.  For example::
+
+        1st Feb: 17 GWh
+        2nd Feb: 17 GWh
+        3rd Feb: 17 GWh
+        ...
+
+Downscale: Sum
+~~~~~~~~~~~~~~
+
+To resample weekly values to a lower temporal resolution, the values
+would need to be accumulated.  A monthly total would be::
+
+        Feb: 480 GWh
+
+Remapping
+---------
+
+Remapping quantities, as is required in the conversion from energy
+demand (hourly values over a year) to energy supply (hourly values
+for one week for each of four seasons) requires additional
+averaging operations.  The quantities are averaged over the
+many-to-one relationship of hours to time-slices, so that the
+seasonal-hourly timeslices in the model approximate the hourly
+profiles found across the particular seasons in the year. For example::
+
+        hour 1: 20 GWh
+        hour 2: 15 GWh
+        hour 3: 10 GWh
+        ...
+        hour 8592: 16 GWh
+        hour 8593: 12 GWh
+        hour 8594: 21 GWh
+        ...
+        hour 8760: 43 GWh
+
+To::
+
+        season 1 hour 1: 20+16+.../4 GWh # Denominator number hours in sample
+        season 1 hour 2: 15+12+.../4 GWh
+        season 1 hour 3: 10+21+.../4 GWh
+        ...
+
+Prices
+------
+
+Unlike quantities, prices are associated with a point in time.
+For example a spot price of £870/GWh.  An average price
+can be associated with a duration, but even then,
+we are just assigning a price to any point in time within a
+range of times.
+
+Upscale: Fill
+~~~~~~~~~~~~~
+
+Given a timeseries of monthly spot prices, converting these
+to a daily price can be done by a fill operation.
+E.g. copying the monthly price to each day.
+
+From::
+
+        Feb: £870/GWh
+
+To::
+
+        1st Feb: £870/GWh
+        2nd Feb: £870/GWh
+        ...
+
+Downscale: Average
+~~~~~~~~~~~~~~~~~~
+
+On the other hand, going down scale, such as from daily prices
+to a monthly price requires use of an averaging function. From::
+
+        1st Feb: £870/GWh
+        2nd Feb: £870/GWh
+        ...
+
+To::
+
+        Feb: £870/GWh
+
 """
 import logging
 from collections import OrderedDict

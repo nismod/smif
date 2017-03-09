@@ -9,6 +9,36 @@ from smif.convert.interval import Interval, TimeIntervalRegister, TimeSeries
 
 
 @fixture(scope='function')
+def remap_months():
+    """Remapping four representative months to months across the year
+
+    In this case we have a model which represents the seasons through
+    the year using one month for each season. We then map the four
+    model seasons 1, 2, 3 & 4 onto the months throughout the year that
+    they represent.
+
+    The data will be presented to the model using the four time intervals,
+    1, 2, 3 & 4. When converting to hours, the data will be replicated over
+    the year.  When converting from hours to the model time intervals,
+    data will be averaged and aggregated.
+
+    """
+    data = [{'name': '1', 'start': 'P0M', 'end': 'P1M'},
+            {'name': '2', 'start': 'P1M', 'end': 'P2M'},
+            {'name': '2', 'start': 'P2M', 'end': 'P3M'},
+            {'name': '2', 'start': 'P3M', 'end': 'P4M'},
+            {'name': '3', 'start': 'P4M', 'end': 'P5M'},
+            {'name': '3', 'start': 'P5M', 'end': 'P6M'},
+            {'name': '3', 'start': 'P6M', 'end': 'P7M'},
+            {'name': '4', 'start': 'P7M', 'end': 'P8M'},
+            {'name': '4', 'start': 'P8M', 'end': 'P9M'},
+            {'name': '4', 'start': 'P9M', 'end': 'P10M'},
+            {'name': '1', 'start': 'P10M', 'end': 'P11M'},
+            {'name': '1', 'start': 'P11M', 'end': 'P12M'}]
+    return data
+
+
+@fixture(scope='function')
 def months():
     months = [{'name': '1_0', 'start': 'P0M', 'end': 'P1M'},
               {'name': '1_1', 'start': 'P1M', 'end': 'P2M'},
