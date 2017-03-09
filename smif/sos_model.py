@@ -7,6 +7,7 @@ import logging
 from enum import Enum
 
 import networkx
+from smif import SpaceTimeValue
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.sector_model import SectorModelBuilder
@@ -363,19 +364,21 @@ class SosModelBuilder(object):
     def add_scenario_data(self, data):
         """Load the scenario data into the system of systems model
 
-        Expect a dictionary, where each key maps a parameter name to a list of
-        data, each observation with:
-        - year
+        Expect a dictionary, where each key maps a parameter
+        name to a list of data, each observation with:
+        - timestep
         - value
         - units
         - region (optional, must use a region id from scenario regions)
-        - interval (optional, must use an id from scenario time intervals)
+        - interval (must use an id from scenario time intervals)
 
-        Add a dictionary re-rolled for ease of lookup:
-            data[year][param][region][interval] => {value, units}
+        Add a dictionary of list of :class:`smif.SpaceTimeValue` named
+        tuples,
+        for ease of iteration:
+            data[year][param] = SpaceTimeValue(region, interval, value, units)
 
-        Default region: "UK"
-        Default interval: "year"
+        Default region: "national"
+        Default interval: "annual"
         """
         self.logger.info("Adding scenario data")
         nested = {}
@@ -389,30 +392,22 @@ class SosModelBuilder(object):
                     nested[year] = {}
 
                 if param not in nested[year]:
-                    nested[year][param] = {}
+                    nested[year][param] = []
 
                 if "region" not in obs:
-                    obs["region"] = "UK"
+                    obs["region"] = "national"
                 region = obs["region"]
 
-                if region not in nested[year][param]:
-                    nested[year][param][region] = {}
-
                 if "interval" not in obs:
-                    obs["interval"] = "year"
+                    obs["interval"] = "annual"
                 interval = obs["interval"]
 
-                if interval in nested[year][param][region]:
-                    raise AssertionError(
-                        "Scenario data item duplicated for year, parameter, region: %s, %s",
-                        obs,
-                        nested[year][param][region][interval]
-                    )
-                else:
-                    del obs["year"]
-                    del obs["region"]
-                    del obs["interval"]
-                    nested[year][param][region][interval] = obs
+                del obs["year"]
+                del obs["region"]
+                del obs["interval"]
+                entry = SpaceTimeValue(region, interval,
+                                       obs['value'], obs['units'])
+                nested[year][param].append(entry)
         self.logger.debug("Added scenario data: %s", nested)
         self.sos_model._scenario_data = nested
 
