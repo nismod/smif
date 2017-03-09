@@ -31,7 +31,11 @@ for example, the solution of capacity expansion problems.
 Setup and Configuration
 =======================
 
-**smif** is written in pure Python (Python>=3.5), with very few dependencies.
+**smif** is written in Python (Python>=3.5) and has a number of dependencies.
+See `requirements.txt` for a full list.
+
+GLPK
+----
 
 The optimisation routines currently use GLPK - the GNU Linear Programming Kit.
 To install the **glpk** solver:
@@ -73,6 +77,23 @@ Add the conda-forge channel, which has shapely and fiona available::
 Install fiona, along with GDAL and dependencies::
 
     conda install fiona
+
+Installing `smif`
+=================
+
+Once the dependencies are installed on your system, 
+a normal installation of `smif` can be achieved using pip on the command line::
+
+        pip install git+http://github.com/nismod/smif#egg=v0.2
+
+The suffix ``#egg=v0.2`` refers to a specific version of the source code. 
+Omitting the suffix installs the latest version of the library.
+
+To install from the source code in development mode::
+
+        git clone http://github.com/nismod/smif
+        cd smif
+        python setup.py develop
 
 
 A word from our sponsors

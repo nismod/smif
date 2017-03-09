@@ -2,7 +2,7 @@
 numpy
 scipy
 pre-commit
-pyyaml==3.12
+pyyaml>=3.12
 networkx
 pyomo>=5.1.1
 fiona
