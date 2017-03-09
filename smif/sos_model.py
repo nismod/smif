@@ -42,6 +42,8 @@ class SosModel(object):
 
         self.logger = logging.getLogger(__name__)
 
+        self.results = {}
+
     @property
     def scenario_data(self):
         """Get nested dict of scenario data
@@ -139,7 +141,9 @@ class SosModel(object):
         decisions = []
         state = {}
         data = self._get_data(model, model.name, timestep)
-        model.simulate(decisions, state, data)
+        results = model.simulate(decisions, state, data)
+        self.results[timestep] = results
+        self.logger.debug("Results from %s model:\n %s", model.name, results)
 
     def _get_data(self, model, model_name, timestep):
         """Gets the data in the required format to pass to the simulate method
