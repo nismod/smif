@@ -166,6 +166,8 @@ class SosModel(object):
             else:
                 msg = "Getting data from dependencies is not yet implemented"
                 raise NotImplementedError(msg)
+
+        data['timestep'] = timestep
         return data
 
     def _get_scenario_data(self, timestep):
