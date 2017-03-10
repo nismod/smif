@@ -158,6 +158,16 @@ class Interval(object):
     base_year: int, default=2010
         The reference year used for conversion to a datetime tuple
 
+    Example
+    -------
+
+            >>> a = Interval('name', ('PT0H', 'PT1H'))
+            >>> a.interval = ('PT1H', 'PT2H')
+            >>> repr(a)
+            "Interval('name', [('PT0H', 'PT1H'), ('PT1H', 'PT2H')], base_year=2010)"
+            >>> str(a)
+            "Interval 'name' starts at hour 0 and ends at hour 1"
+
     """
 
     def __init__(self, name, list_of_intervals, base_year=BASE_YEAR):
@@ -227,11 +237,14 @@ class Interval(object):
         return msg.format(self.name, self.interval, self.baseyear)
 
     def __str__(self):
-        msg = "Interval '{}' starts at hour {} and ends at hour {}"
+        string = "Interval '{}' maps to:\n".format(self.name)
         for interval in self.to_hours():
             start = interval[0]
             end = interval[1]
-            return msg.format(self.name, start, end)
+            suffix = "  hour {} to hour {}\n".format(start, end)
+            string += suffix
+
+        return string
 
     def __eq__(self, other):
         if (self.name == other.name) \
