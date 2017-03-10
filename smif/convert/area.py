@@ -1,5 +1,6 @@
 """Handles conversion between the sets of regions used in the `SosModel`
 """
+import logging
 from collections import defaultdict, namedtuple
 
 from rtree import index
@@ -58,6 +59,7 @@ class RegionRegister(object):
     def __init__(self):
         self._register = {}
         self._conversions = defaultdict(dict)
+        self.logger = logging.getLogger(__name__)
 
     @property
     def region_set_names(self):
@@ -116,6 +118,7 @@ class RegionRegister(object):
             for from_region in intersecting_from_regions:
                 proportion = proportion_of_a_intersecting_b(from_region.shape, to_region.shape)
                 coefficient_pair = (to_region.name, proportion)
+                print(coefficient_pair)
                 coefficients[from_region.name].append(coefficient_pair)
 
         return coefficients

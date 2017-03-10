@@ -207,3 +207,18 @@ class TestRegionRegister():
         converted = rreg.convert(data, 'half_squares', 'half_triangles')
         expected = {'zero': 0.25, 'one': 0.75}
         assert converted == expected
+
+    def test_convert_triangle_to_square(self, regions_half_squares, regions_half_triangles):
+        rreg = RegionRegister()
+        rreg.register(regions_half_squares)
+        rreg.register(regions_half_triangles)
+
+        data = {'zero': 1, 'one': 1}
+        converted = rreg.convert(data, 'half_triangles', 'half_squares')
+        expected = {'a': 1, 'b': 1}
+        assert converted == expected
+
+        data = {'zero': 0.25, 'one': 0.75}
+        converted = rreg.convert(data, 'half_triangles', 'half_squares')
+        expected = {'a': 0.375, 'b': 0.625}
+        assert converted == expected
