@@ -196,7 +196,21 @@ class Interval(object):
 
     @property
     def interval(self):
-        return self._interval
+        """The list of intervals
+
+        Setter appends a tuple or list of intervals to the
+        list of intervals
+        """
+        return sorted(self._interval)
+
+    @interval.setter
+    def interval(self, value):
+        if isinstance(value, tuple):
+            self._interval.append(value)
+        elif isinstance(value, list):
+            for element in value:
+                assert isinstance(element, tuple)
+            self._interval.extend(value)
 
     @property
     def baseyear(self):
@@ -204,7 +218,7 @@ class Interval(object):
 
     def __repr__(self):
         msg = "Interval('{}', {}, base_year={})"
-        return msg.format(self.name, self._interval, self.baseyear)
+        return msg.format(self.name, self.interval, self.baseyear)
 
     def __str__(self):
         msg = "Interval '{}' starts at hour {} and ends at hour {}"
@@ -214,7 +228,12 @@ class Interval(object):
             return msg.format(self.name, start, end)
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        if (self.name == other.name) \
+           and (self.interval == other.interval) \
+           and (self.baseyear == other.baseyear):
+            return True
+        else:
+            return False
 
     def to_hours(self):
         """Return a list of tuples of the intervals in terms of hours
@@ -359,12 +378,15 @@ class TimeIntervalRegister:
             name = interval['name']
             self.logger.debug("Adding interval '%s' to set '%s'", name, set_name)
 
-            self._id_interval_set[name] = set_name
-
-            self._register[set_name][name] = Interval(name,
-                                                      interval['start'],
-                                                      interval['end'],
-                                                      self._base_year)
+            if name in self._id_interval_set:
+                interval_tuple = (interval['start'], interval['end'])
+                self._register[set_name][name].interval = interval_tuple
+            else:
+                self._id_interval_set[name] = set_name
+                interval_tuple = (interval['start'], interval['end'])
+                self._register[set_name][name] = Interval(name,
+                                                          interval_tuple,
+                                                          self._base_year)
 
         self.logger.info("Adding interval set '%s' to register", set_name)
 

@@ -352,7 +352,7 @@ class TestIntervalRegister:
 
         actual = register.get_intervals_in_set('energy_supply_hourly')
 
-        element = Interval('1_1', 'PT0H', 'PT1H', base_year=2010)
+        element = Interval('1_1', ('PT0H', 'PT1H'), base_year=2010)
 
         expected = OrderedDict()
         expected['1_1'] = element
@@ -372,18 +372,18 @@ class TestIntervalRegister:
             ['1_0', '1_1', '1_2', '1_3', '1_4', '1_5',
              '1_6', '1_7', '1_8', '1_9', '1_10', '1_11']
 
-        expected = [Interval('1_0', 'P0M', 'P1M'),
-                    Interval('1_1', 'P1M', 'P2M'),
-                    Interval('1_2', 'P2M', 'P3M'),
-                    Interval('1_3', 'P3M', 'P4M'),
-                    Interval('1_4', 'P4M', 'P5M'),
-                    Interval('1_5', 'P5M', 'P6M'),
-                    Interval('1_6', 'P6M', 'P7M'),
-                    Interval('1_7', 'P7M', 'P8M'),
-                    Interval('1_8', 'P8M', 'P9M'),
-                    Interval('1_9', 'P9M', 'P10M'),
-                    Interval('1_10', 'P10M', 'P11M'),
-                    Interval('1_11', 'P11M', 'P12M')]
+        expected = [Interval('1_0', ('P0M', 'P1M')),
+                    Interval('1_1', ('P1M', 'P2M')),
+                    Interval('1_2', ('P2M', 'P3M')),
+                    Interval('1_3', ('P3M', 'P4M')),
+                    Interval('1_4', ('P4M', 'P5M')),
+                    Interval('1_5', ('P5M', 'P6M')),
+                    Interval('1_6', ('P6M', 'P7M')),
+                    Interval('1_7', ('P7M', 'P8M')),
+                    Interval('1_8', ('P8M', 'P9M')),
+                    Interval('1_9', ('P9M', 'P10M')),
+                    Interval('1_10', ('P10M', 'P11M')),
+                    Interval('1_11', ('P11M', 'P12M'))]
 
         for name, interval in zip(expected_names, expected):
             assert actual[name] == interval
