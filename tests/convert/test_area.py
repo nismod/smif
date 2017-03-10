@@ -1,5 +1,6 @@
 """Test aggregation/disaggregation of data between sets of areas
 """
+from copy import copy
 from pytest import fixture
 from shapely.geometry import shape
 from smif.convert.area import (RegionRegister, RegionSet,
@@ -97,13 +98,13 @@ def regions_half_triangles():
         |/......|
 
     """
-    return RegionSet('rect', [
+    return RegionSet('half_triangles', [
         {
             'type': 'Feature',
             'properties': {'name': 'zero'},
             'geometry': {
                 'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 2], [2, 0]]]
+                'coordinates': [[[0, 0], [0, 2], [1, 0]]]
             }
         },
         {
@@ -111,7 +112,7 @@ def regions_half_triangles():
             'properties': {'name': 'one'},
             'geometry': {
                 'type': 'Polygon',
-                'coordinates': [[[0, 2], [2, 2], [2, 0]]]
+                'coordinates': [[[0, 2], [1, 2], [1, 0]]]
             }
         },
     ])
@@ -141,7 +142,10 @@ class TestRegionSet():
     def test_create(self, regions):
         rset = RegionSet('test', regions)
         assert rset.name == 'test'
-        assert len(rset.regions) == 3
+        assert len(rset) == 3
+        assert rset[0].name == 'unit'
+        assert rset[1].name == 'half'
+        assert rset[2].name == 'two'
 
 
 class TestRegionRegister():
@@ -149,4 +153,57 @@ class TestRegionRegister():
     """
     def test_create(self):
         rreg = RegionRegister()
-        assert rreg.registered_sets == []
+        assert rreg.region_set_names == []
+
+    def test_convert_equal(self, regions_rect):
+        rreg = RegionRegister()
+        # register rect
+        rreg.register(regions_rect)
+        # register alt rect (same area)
+        regions_rect_alt = copy(regions_rect)
+        regions_rect_alt.name = 'rect_alt'
+        rreg.register(regions_rect_alt)
+
+        data = {'zero': 1}
+        converted = rreg.convert(data, 'rect', 'rect_alt')
+        assert data == converted
+
+    def test_convert_to_half(self, regions_rect, regions_half_squares):
+        rreg = RegionRegister()
+        rreg.register(regions_rect)
+        rreg.register(regions_half_squares)
+
+        data = {'zero': 1}
+        converted = rreg.convert(data, 'rect', 'half_squares')
+        expected = {'a': 0.5, 'b': 0.5}
+        assert converted == expected
+
+    def test_convert_from_half(self, regions_rect, regions_half_squares):
+        rreg = RegionRegister()
+        rreg.register(regions_rect)
+        rreg.register(regions_half_squares)
+
+        data = {'a': 0.5, 'b': 0.5}
+        converted = rreg.convert(data, 'half_squares', 'rect')
+        expected = {'zero': 1}
+        assert converted == expected
+
+        data = {'a': 2, 'b': 3}
+        converted = rreg.convert(data, 'half_squares', 'rect')
+        expected = {'zero': 5}
+        assert converted == expected
+
+    def test_convert_square_to_triangle(self, regions_half_squares, regions_half_triangles):
+        rreg = RegionRegister()
+        rreg.register(regions_half_squares)
+        rreg.register(regions_half_triangles)
+
+        data = {'a': 1, 'b': 1}
+        converted = rreg.convert(data, 'half_squares', 'half_triangles')
+        expected = {'zero': 1, 'one': 1}
+        assert converted == expected
+
+        data = {'a': 0, 'b': 1}
+        converted = rreg.convert(data, 'half_squares', 'half_triangles')
+        expected = {'zero': 0.25, 'one': 0.75}
+        assert converted == expected
