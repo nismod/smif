@@ -1,7 +1,5 @@
 
 from collections import OrderedDict
-from datetime import datetime
-
 import numpy as np
 from numpy.testing import assert_equal
 from pytest import approx, fixture, raises
@@ -133,74 +131,94 @@ def one_day():
 
 class TestInterval:
 
+    def test_empty_interval_list(self):
+
+        with raises(ValueError):
+            Interval('test', [])
+
+    def test_empty_interval_tuple(self):
+        with raises(ValueError):
+            Interval('test', ())
+
+    def test_empty_interval_list_tuple(self):
+        with raises(ValueError):
+            Interval('test', [()])
+
     def test_load_interval(self):
 
-        interval = Interval('test', 'PT0H', 'PT1H')
+        interval = Interval('test', ('PT0H', 'PT1H'))
 
-        assert interval._name == 'test'
-        assert interval._start == 'PT0H'
-        assert interval._end == 'PT1H'
-        actual = interval.to_datetime_tuple()
-        expected = (datetime(2010, 1, 1, 0),
-                    datetime(2010, 1, 1, 1))
-        assert actual == expected
+        assert interval.name == 'test'
+        assert interval.start == 'PT0H'
+        assert interval.end == 'PT1H'
+
+    def test_raise_error_load_illegal(self):
+        with raises(ValueError):
+            Interval('test', 'start', 'end')
 
     def test_convert_hour_to_hours(self):
 
-        interval = Interval('test', 'PT0H', 'PT1H')
-        actual = interval._convert_to_hours(interval._start)
+        interval = Interval('test', ('PT0H', 'PT1H'))
+        actual = interval._convert_to_hours(interval.start)
         expected = 0
         assert actual == expected
 
-        actual = interval._convert_to_hours(interval._end)
+        actual = interval._convert_to_hours(interval.end)
         expected = 1
         assert actual == expected
 
     def test_convert_month_to_hours(self):
 
-        interval = Interval('test', 'P1M', 'P2M')
-        actual = interval._convert_to_hours(interval._start)
+        interval = Interval('test', ('P1M', 'P2M'))
+        actual = interval._convert_to_hours(interval.start)
         expected = 744
         assert actual == expected
 
-        actual = interval._convert_to_hours(interval._end)
+        actual = interval._convert_to_hours(interval.end)
         expected = 1416
         assert actual == expected
 
     def test_convert_week_to_hours(self):
 
-        interval = Interval('test', 'P2D', 'P3D')
-        actual = interval._convert_to_hours(interval._start)
+        interval = Interval('test', ('P2D', 'P3D'))
+        actual = interval._convert_to_hours(interval.start)
         expected = 48
         assert actual == expected
 
-        actual = interval._convert_to_hours(interval._end)
+        actual = interval._convert_to_hours(interval.end)
         expected = 72
         assert actual == expected
 
     def test_to_hours_zero(self):
 
-        interval = Interval('test', 'PT0H', 'PT1H')
+        interval = Interval('test', ('PT0H', 'PT1H'))
         actual = interval.to_hours()
 
-        assert actual == (0, 1)
+        assert actual == [(0, 1)]
 
     def test_to_hours_month(self):
 
-        interval = Interval('test', 'P2M', 'P3M')
+        interval = Interval('test', ('P2M', 'P3M'))
         actual = interval.to_hours()
 
-        assert actual == (1416, 2160)
+        assert actual == [(1416, 2160)]
 
     def test_str(self):
-        interval = Interval('test', 'P2M', 'P3M')
+        interval = Interval('test', ('P2M', 'P3M'))
         actual = str(interval)
         assert actual == "Interval 'test' starts at hour 1416 and ends at hour 2160"
 
     def test_repr(self):
-        interval = Interval('test', 'P2M', 'P3M', 2011)
+        interval = Interval('test', ('P2M', 'P3M'), 2011)
         actual = repr(interval)
-        assert actual == "Interval('test', 'P2M', 'P3M', base_year=2011)"
+        assert actual == "Interval('test', [('P2M', 'P3M')], base_year=2011)"
+
+    def test_load_remap_timeslices(self):
+        interval = Interval('1', [('P2M', 'P3M'),
+                                  ('P3M', 'P4M'),
+                                  ('P4M', 'P5M')])
+        actual = interval.to_hours()
+        assert actual == [(1416, 2160), (2160, 2880), (2880, 3624)]
 
 
 class TestTimeSeries:
