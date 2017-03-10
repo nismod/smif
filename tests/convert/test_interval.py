@@ -220,6 +220,15 @@ class TestInterval:
 
         assert actual == [(1416, 2160)]
 
+    def test_to_hours_list(self):
+
+        interval = Interval('test', [('PT0H', 'PT1H'),
+                                     ('PT2H', 'PT3H'),
+                                     ('PT5H', 'PT7H')])
+        actual = interval.to_hours()
+
+        assert actual == [(0, 1), (2, 3), (5, 7)]
+
     def test_str(self):
         interval = Interval('test', ('P2M', 'P3M'))
         actual = str(interval)
@@ -476,3 +485,31 @@ class TestRemapConvert:
         for act, exp in zip(actual, expected):
             assert act['name'] == exp['name']
             assert act['value'] == approx(exp['value'])
+
+
+class TestValidation:
+
+    def test_validate_get_hourly_array(self, remap_months):
+
+        data = remap_months
+        register = TimeIntervalRegister()
+        register.add_interval_set(data, 'remap_months')
+
+        actual = register._get_hourly_array('remap_months')
+        expected = np.ones(8760, dtype=np.int)
+        assert_equal(actual, expected)
+
+    def test_validate_intervals_passes(self, remap_months):
+
+        data = remap_months
+        register = TimeIntervalRegister()
+        register.add_interval_set(data, 'remap_months')
+
+    def test_validate_intervals_fails(self, remap_months):
+
+        data = remap_months
+        data.append({'name': '5', 'start': 'PT0H', 'end': 'PT1H'})
+        register = TimeIntervalRegister()
+        with raises(ValueError) as excinfo:
+            register.add_interval_set(data, 'remap_months')
+        assert "Duplicate entry for hour 0 in interval set remap_months." in str(excinfo.value)
