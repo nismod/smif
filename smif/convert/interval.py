@@ -133,6 +133,10 @@ from datetime import datetime, timedelta
 import numpy as np
 from isodate import parse_duration
 
+"""Used as the reference year for computing time intervals
+"""
+BASE_YEAR = 2010
+
 
 class Interval(object):
     """A time interval
@@ -141,48 +145,93 @@ class Interval(object):
     ----------
     name: str
         The unique name of the Interval
-    start: str
-        A valid ISO8601 duration definition string denoting the time elapsed from
-        the beginning of the year to the beginning of the interval
-    end: str
-        A valid ISO8601 duration definition string denoting the time elapsed from
-        the beginning of the year to the end of the interval
+    list_of_intervals: str
+        A list of tuples of valid ISO8601 duration definition
+        string denoting the time elapsed from the beginning
+        of the year to the (beginning, end) of the interval
     base_year: int, default=2010
         The reference year used for conversion to a datetime tuple
 
     """
 
-    def __init__(self, name, start, end, base_year=2010):
+    def __init__(self, name, list_of_intervals, base_year=BASE_YEAR):
         self._name = name
-        self._start = start
-        self._end = end
         self._baseyear = base_year
 
+        if len(list_of_intervals) == 0:
+            msg = "Must construct Interval with at least one interval"
+            raise ValueError(msg)
+
+        if isinstance(list_of_intervals, list):
+            for interval in list_of_intervals:
+                assert isinstance(interval, tuple)
+                if len(interval) != 2:
+                    msg = "Interval tuple must take form (<start>, <end>)"
+                    raise ValueError(msg)
+            self._interval = list_of_intervals
+        elif isinstance(list_of_intervals, tuple):
+            self._interval = []
+            self._interval.append(list_of_intervals)
+        else:
+            msg = "Interval tuple must take form (<start>, <end>)"
+            raise ValueError(msg)
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def start(self):
+        if len(self._interval) == 1:
+            return self._interval[0][0]
+        else:
+            return [x[0] for x in self._interval]
+
+    @property
+    def end(self):
+        if len(self._interval) == 1:
+            return self._interval[0][1]
+        else:
+            return [x[1] for x in self._interval]
+
+    @property
+    def interval(self):
+        return self._interval
+
+    @property
+    def baseyear(self):
+        return self._baseyear
+
     def __repr__(self):
-        msg = "Interval('{}', '{}', '{}', base_year={})"
-        return msg.format(self._name, self._start, self._end, self._baseyear)
+        msg = "Interval('{}', {}, base_year={})"
+        return msg.format(self.name, self._interval, self.baseyear)
 
     def __str__(self):
         msg = "Interval '{}' starts at hour {} and ends at hour {}"
-        start, end = self.to_hours()
-        return msg.format(self._name, start, end)
+        for interval in self.to_hours():
+            start = interval[0]
+            end = interval[1]
+            return msg.format(self.name, start, end)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
     def to_hours(self):
-        """Return a tuple of the interval in terms of hours
+        """Return a list of tuples of the intervals in terms of hours
 
         Returns
         -------
-        tuple
-            The start and end hours of the year of the interval
+        list
+            A list of tuples of the start and end hours of the year
+            of the interval
 
         """
-        start = self._convert_to_hours(self._start)
-        end = self._convert_to_hours(self._end)
-
-        return (start, end)
+        hours = []
+        for start_interval, end_interval in self._interval:
+            start = self._convert_to_hours(start_interval)
+            end = self._convert_to_hours(end_interval)
+            hours.append((start, end))
+        return hours
 
     def _convert_to_hours(self, duration):
         """
@@ -207,15 +256,6 @@ class Interval(object):
             time = parsed_duration.totimedelta(reference)
             hours = time.days * 24 + time.seconds // 3600
         return hours
-
-    def to_datetime_tuple(self):
-        """
-        """
-        reference = datetime(self._baseyear, 1, 1, 0)
-        start_time = reference + parse_duration(self._start)
-        end_time = reference + parse_duration(self._end)
-        period_tuple = (start_time, end_time)
-        return period_tuple
 
 
 class TimeSeries(object):
