@@ -39,6 +39,15 @@ def remap_months():
 
 
 @fixture(scope='function')
+def data_remap():
+    data = [{'name': '1', 'value': 30.333333333},
+            {'name': '2', 'value': 29.666666666},
+            {'name': '3', 'value': 30.666666666},
+            {'name': '4', 'value': 30.666666666}]
+    return data
+
+
+@fixture(scope='function')
 def months():
     months = [{'name': '1_0', 'start': 'P0M', 'end': 'P1M'},
               {'name': '1_1', 'start': 'P1M', 'end': 'P2M'},
@@ -360,3 +369,76 @@ class TestIntervalRegister:
 
         for name, interval in zip(expected_names, expected):
             assert actual[name] == interval
+
+    def test_remap_interval_load(self, remap_months):
+        register = TimeIntervalRegister()
+        register.add_interval_set(remap_months, 'remap_months')
+
+        actual = register.get_intervals_in_set('remap_months')
+
+        expected_names = ['1', '2', '3', '4']
+
+        expected = [Interval('1', [('P10M', 'P11M'),
+                                   ('P11M', 'P12M'),
+                                   ('P0M', 'P1M')]),
+                    Interval('2', [('P1M', 'P2M'),
+                                   ('P2M', 'P3M'),
+                                   ('P3M', 'P4M')]),
+                    Interval('3', [('P4M', 'P5M'),
+                                   ('P5M', 'P6M'),
+                                   ('P6M', 'P7M')]),
+                    Interval('4', [('P7M', 'P8M'),
+                                   ('P8M', 'P9M'),
+                                   ('P9M', 'P10M')])]
+
+        for name, interval in zip(expected_names, expected):
+            assert actual[name] == interval
+
+
+class TestRemapConvert:
+
+    def test_remap_timeslices_to_months(self,
+                                        months,
+                                        monthly_data,
+                                        remap_months,
+                                        data_remap):
+        """
+        """
+        timeslice_data = data_remap
+        monthly_data = monthly_data
+
+        register = TimeIntervalRegister()
+        register.add_interval_set(months, 'months')
+        register.add_interval_set(remap_months, 'remap_months')
+
+        timeseries = TimeSeries(timeslice_data)
+
+        actual = register.convert(timeseries, 'remap_months', 'months')
+        expected = monthly_data
+
+        for act, exp in zip(actual, expected):
+            assert act['name'] == exp['name']
+            assert act['value'] == approx(exp['value'])
+
+    def test_remap_months_to_timeslices(self,
+                                        months,
+                                        monthly_data,
+                                        remap_months,
+                                        data_remap):
+        """
+        """
+        timeslice_data = data_remap
+        monthly_data = monthly_data
+
+        register = TimeIntervalRegister()
+        register.add_interval_set(months, 'months')
+        register.add_interval_set(remap_months, 'remap_months')
+
+        timeseries = TimeSeries(monthly_data)
+
+        actual = register.convert(timeseries, 'months', 'remap_months')
+        expected = timeslice_data
+
+        for act, exp in zip(actual, expected):
+            assert act['name'] == exp['name']
+            assert act['value'] == approx(exp['value'])
