@@ -69,6 +69,27 @@ def regions_half_squares():
 
 
 @fixture(scope='function')
+def regions_single_half_square():
+    """Return single half-size square region::
+
+        |```|
+        | A |
+        |...|
+
+    """
+    return RegionSet('single_half_square', [
+        {
+            'type': 'Feature',
+            'properties': {'name': 'a'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            }
+        }
+    ])
+
+
+@fixture(scope='function')
 def regions_rect():
     """Return single region covering 2x1 area::
 
@@ -191,6 +212,26 @@ class TestRegionRegister():
         data = {'a': 2, 'b': 3}
         converted = rreg.convert(data, 'half_squares', 'rect')
         expected = {'zero': 5}
+        assert converted == expected
+
+    def test_convert_to_half_not_covered(self, regions_rect, regions_single_half_square):
+        rreg = RegionRegister()
+        rreg.register(regions_rect)
+        rreg.register(regions_single_half_square)
+
+        data = {'zero': 3}
+        converted = rreg.convert(data, 'rect', 'single_half_square')
+        expected = {'a': 1.5}
+        assert converted == expected
+
+    def test_convert_from_half_not_covered(self, regions_rect, regions_single_half_square):
+        rreg = RegionRegister()
+        rreg.register(regions_rect)
+        rreg.register(regions_single_half_square)
+
+        data = {'a': 3}
+        converted = rreg.convert(data, 'single_half_square', 'rect')
+        expected = {'zero': 3}
         assert converted == expected
 
     def test_convert_square_to_triangle(self, regions_half_squares, regions_half_triangles):

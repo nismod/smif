@@ -118,7 +118,6 @@ class RegionRegister(object):
             for from_region in intersecting_from_regions:
                 proportion = proportion_of_a_intersecting_b(from_region.shape, to_region.shape)
                 coefficient_pair = (to_region.name, proportion)
-                print(coefficient_pair)
                 coefficients[from_region.name].append(coefficient_pair)
 
         return coefficients
