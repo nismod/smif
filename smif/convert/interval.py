@@ -125,6 +125,12 @@ To::
 
         Feb: £870/GWh
 
+Development Notes
+-----------------
+
+- We could use :py:meth:`numpy.convolve` to compare time intervals as hourly arrays
+  before adding them to the set of intervals
+
 """
 import logging
 from collections import OrderedDict
@@ -246,7 +252,7 @@ class Interval(object):
 
         """
         hours = []
-        for start_interval, end_interval in self._interval:
+        for start_interval, end_interval in self.interval:
             start = self._convert_to_hours(start_interval)
             end = self._convert_to_hours(end_interval)
             hours.append((start, end))
@@ -275,6 +281,16 @@ class Interval(object):
             time = parsed_duration.totimedelta(reference)
             hours = time.days * 24 + time.seconds // 3600
         return hours
+
+    def to_hourly_array(self):
+        """Converts a list of intervals to a boolean array of hours
+
+        """
+        array = np.zeros(8760, dtype=np.int)
+        list_of_tuples = self.to_hours()
+        for lower, upper in list_of_tuples:
+            array[lower:upper] += 1
+        return array
 
 
 class TimeSeries(object):
@@ -362,6 +378,9 @@ class TimeIntervalRegister:
     def add_interval_set(self, intervals, set_name):
         """Add a time-interval definition to the set of intervals types
 
+        Detects duplicate references to the same annual-hours by performing a
+        convolution of the two one-dimensional arrays of time-intervals.
+
         Parameters
         ----------
         intervals: list
@@ -389,8 +408,17 @@ class TimeIntervalRegister:
                                                           self._base_year)
 
         self.logger.info("Adding interval set '%s' to register", set_name)
+        self.validate_intervals()
 
     def _check_interval_in_register(self, interval):
+        """
+
+        Parameters
+        ----------
+        interval: str
+            The name of the interval to look for
+
+        """
         if interval not in self._register:
             msg = "The interval set '{}' is not in the register"
             raise ValueError(msg.format(interval))
@@ -471,3 +499,24 @@ class TimeIntervalRegister:
                 apportioned_value = float(value) / number_hours_in_range
                 self.logger.debug("apportioned_value: %s", apportioned_value)
                 timeseries.hourly_values[lower:upper] = apportioned_value / divisor
+
+    def _get_hourly_array(self, set_name):
+        """
+        """
+        array = np.zeros(8760, dtype=np.int)
+        for interval in self.get_intervals_in_set(set_name).values():
+            print(interval)
+            array += interval.to_hourly_array()
+        return array
+
+    def validate_intervals(self):
+        for set_name in self._register.keys():
+            array = self._get_hourly_array(set_name)
+            duplicate_hours = np.where(array > 1)[0]
+            if len(duplicate_hours) == 0:
+                self.logger.debug("No duplicate hours in %s", set_name)
+            else:
+                for hour in duplicate_hours:
+                    msg = "Duplicate entry for hour {} in interval set {}."
+                    self.logger.warning(msg.format(hour, set_name))
+                    raise ValueError(msg.format(hour, set_name))
