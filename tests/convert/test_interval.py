@@ -169,6 +169,23 @@ class TestInterval:
         assert interval.start == 'PT0H'
         assert interval.end == 'PT1H'
 
+    def test_load_multiple_interval(self):
+
+        interval = Interval('test', [('PT0H', 'PT1H'), ('PT1H', 'PT2H')])
+
+        assert interval.name == 'test'
+        assert interval.start == ['PT0H', 'PT1H']
+        assert interval.end == ['PT1H', 'PT2H']
+
+    def test_add_list_of_interval(sself):
+
+        interval = Interval('test', ('PT0H', 'PT1H'))
+        interval.interval = [('PT1H', 'PT2H')]
+
+        assert interval.name == 'test'
+        assert interval.start == ['PT0H', 'PT1H']
+        assert interval.end == ['PT1H', 'PT2H']
+
     def test_raise_error_load_illegal(self):
         with raises(ValueError):
             Interval('test', 'start', 'end')
@@ -492,9 +509,9 @@ class TestRemapConvert:
         actual = register.convert(timeseries, 'months', 'remap_months')
         expected = timeslice_data
 
-        for act, exp in zip(actual, expected):
-            assert act['name'] == exp['name']
-            assert act['value'] == approx(exp['value'])
+        for exp in zip(expected):
+            assert actual['name'] == exp['name']
+            assert actual['value'] == approx(exp['value'])
 
 
 class TestValidation:

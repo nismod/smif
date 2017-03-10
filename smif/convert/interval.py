@@ -487,7 +487,7 @@ class TimeIntervalRegister:
 
             else:
                 # Remapping operation
-                pass
+                raise NotImplementedError("Remapping to multiple target_intervals")
 
         return results
 
