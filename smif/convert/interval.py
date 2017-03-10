@@ -426,20 +426,28 @@ class TimeIntervalRegister:
         for name, interval in target_intervals.items():
             self.logger.debug("Resampling to %s", name)
             interval_tuples = interval.to_hours()
-            for lower, upper in interval_tuples:
 
-                self.logger.debug("Range: %s-%s", lower, upper)
+            if len(interval_tuples) == 1:
 
-                if upper < lower:
-                    # The interval loops around the end/start hours of the year
-                    end_of_year = sum(timeseries.hourly_values[lower:8760])
-                    start_of_year = sum(timeseries.hourly_values[0:upper])
-                    total = end_of_year + start_of_year
-                else:
-                    total = sum(timeseries.hourly_values[lower:upper])
+                for lower, upper in interval_tuples:
 
-                results.append({'name': name,
-                                'value': total})
+                    self.logger.debug("Range: %s-%s", lower, upper)
+
+                    if upper < lower:
+                        # The interval loops around the end/start hours of the year
+                        end_of_year = sum(timeseries.hourly_values[lower:8760])
+                        start_of_year = sum(timeseries.hourly_values[0:upper])
+                        total = end_of_year + start_of_year
+                    else:
+                        total = sum(timeseries.hourly_values[lower:upper])
+
+                    results.append({'name': name,
+                                    'value': total})
+
+            else:
+                # Remapping operation
+                pass
+
         return results
 
     def _convert_to_hourly_buckets(self, timeseries):
@@ -454,6 +462,7 @@ class TimeIntervalRegister:
         """
         for name, value in zip(timeseries.names, timeseries.values):
             list_of_intervals = self.get_interval(name).to_hours()
+            divisor = len(list_of_intervals)
             for lower, upper in list_of_intervals:
                 self.logger.debug("lower: %s, upper: %s", lower, upper)
                 number_hours_in_range = upper - lower
@@ -461,4 +470,4 @@ class TimeIntervalRegister:
 
                 apportioned_value = float(value) / number_hours_in_range
                 self.logger.debug("apportioned_value: %s", apportioned_value)
-                timeseries.hourly_values[lower:upper] = apportioned_value
+                timeseries.hourly_values[lower:upper] = apportioned_value / divisor

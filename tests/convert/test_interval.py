@@ -38,10 +38,27 @@ def remap_months():
 
 @fixture(scope='function')
 def data_remap():
-    data = [{'name': '1', 'value': 30.333333333},
-            {'name': '2', 'value': 29.666666666},
-            {'name': '3', 'value': 30.666666666},
-            {'name': '4', 'value': 30.666666666}]
+    data = [{'name': '1', 'value': 30+31+31},
+            {'name': '2', 'value': 28+31+30},
+            {'name': '3', 'value': 31+31+30},
+            {'name': '4', 'value': 30+31+31}]
+    return data
+
+
+@fixture(scope='function')
+def expected_data_remap():
+    data = [{'name': '1_0', 'value': 30.666666666},
+            {'name': '1_1', 'value': 29.666666666},
+            {'name': '1_2', 'value': 29.666666666},
+            {'name': '1_3', 'value': 29.666666666},
+            {'name': '1_4', 'value': 30.666666666},
+            {'name': '1_5', 'value': 30.666666666},
+            {'name': '1_6', 'value': 30.666666666},
+            {'name': '1_7', 'value': 30.666666666},
+            {'name': '1_8', 'value': 30.666666666},
+            {'name': '1_9', 'value': 30.666666666},
+            {'name': '1_10', 'value': 30.666666666},
+            {'name': '1_11', 'value': 30.666666666}]
     return data
 
 
@@ -271,7 +288,6 @@ class TestTimeRegisterConversion:
     def test_raises_error_on_no_definition(self):
 
         register = TimeIntervalRegister()
-        # register.add_interval_set(months, 'months')
         with raises(ValueError):
             register.get_intervals_in_set('blobby')
 
@@ -417,13 +433,12 @@ class TestRemapConvert:
 
     def test_remap_timeslices_to_months(self,
                                         months,
-                                        monthly_data,
+                                        expected_data_remap,
                                         remap_months,
                                         data_remap):
         """
         """
         timeslice_data = data_remap
-        monthly_data = monthly_data
 
         register = TimeIntervalRegister()
         register.add_interval_set(months, 'months')
@@ -432,9 +447,10 @@ class TestRemapConvert:
         timeseries = TimeSeries(timeslice_data)
 
         actual = register.convert(timeseries, 'remap_months', 'months')
-        expected = monthly_data
+        expected = expected_data_remap
 
         for act, exp in zip(actual, expected):
+            print(act['name'], act['value'])
             assert act['name'] == exp['name']
             assert act['value'] == approx(exp['value'])
 
