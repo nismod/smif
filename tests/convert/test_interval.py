@@ -229,10 +229,20 @@ class TestInterval:
 
         assert actual == [(0, 1), (2, 3), (5, 7)]
 
-    def test_str(self):
+    def test_str_one_interval(self):
         interval = Interval('test', ('P2M', 'P3M'))
         actual = str(interval)
-        assert actual == "Interval 'test' starts at hour 1416 and ends at hour 2160"
+        assert actual == \
+            "Interval 'test' maps to:\n  hour 1416 to hour 2160\n"
+
+    def test_str_multiple_intervals(self):
+        interval = Interval('test', [('PT0H', 'PT1H'),
+                                     ('PT2H', 'PT3H'),
+                                     ('PT5H', 'PT7H')])
+        actual = str(interval)
+        assert actual == \
+            "Interval 'test' maps to:\n  hour 0 to hour 1\n  hour 2 to hour 3\n  "\
+            "hour 5 to hour 7\n"
 
     def test_repr(self):
         interval = Interval('test', ('P2M', 'P3M'), 2011)
