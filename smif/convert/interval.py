@@ -198,6 +198,14 @@ class Interval(object):
 
     @property
     def start(self):
+        """The start hour of the interval(s)
+
+        Returns
+        -------
+        list
+            A list of integers, representing the hour from the beginning of the
+            year associated with the start of each of the intervals
+        """
         if len(self._interval) == 1:
             return self._interval[0][0]
         else:
@@ -205,6 +213,14 @@ class Interval(object):
 
     @property
     def end(self):
+        """The end hour of the interval(s)
+
+        Returns
+        -------
+        list
+            A list of integers, representing the hour from the beginning of the
+            year associated with the end of each of the intervals
+        """
         if len(self._interval) == 1:
             return self._interval[0][1]
         else:
@@ -230,6 +246,8 @@ class Interval(object):
 
     @property
     def baseyear(self):
+        """The reference year
+        """
         return self._baseyear
 
     def __repr__(self):
@@ -468,26 +486,22 @@ class TimeIntervalRegister:
             self.logger.debug("Resampling to %s", name)
             interval_tuples = interval.to_hours()
 
-            if len(interval_tuples) == 1:
+            total = 0
 
-                for lower, upper in interval_tuples:
+            for lower, upper in interval_tuples:
 
-                    self.logger.debug("Range: %s-%s", lower, upper)
+                self.logger.debug("Range: %s-%s", lower, upper)
 
-                    if upper < lower:
-                        # The interval loops around the end/start hours of the year
-                        end_of_year = sum(timeseries.hourly_values[lower:8760])
-                        start_of_year = sum(timeseries.hourly_values[0:upper])
-                        total = end_of_year + start_of_year
-                    else:
-                        total = sum(timeseries.hourly_values[lower:upper])
+                if upper < lower:
+                    # The interval loops around the end/start hours of the year
+                    end_of_year = sum(timeseries.hourly_values[lower:8760])
+                    start_of_year = sum(timeseries.hourly_values[0:upper])
+                    total += end_of_year + start_of_year
+                else:
+                    total += sum(timeseries.hourly_values[lower:upper])
 
-                    results.append({'name': name,
-                                    'value': total})
-
-            else:
-                # Remapping operation
-                raise NotImplementedError("Remapping to multiple target_intervals")
+            results.append({'name': name,
+                            'value': total})
 
         return results
 
