@@ -485,8 +485,9 @@ class TestRemapConvert:
         actual = register.convert(timeseries, 'remap_months', 'months')
         expected = expected_data_remap
 
+        assert len(actual) == len(expected)
+
         for act, exp in zip(actual, expected):
-            print(act['name'], act['value'])
             assert act['name'] == exp['name']
             assert act['value'] == approx(exp['value'])
 
@@ -509,9 +510,11 @@ class TestRemapConvert:
         actual = register.convert(timeseries, 'months', 'remap_months')
         expected = timeslice_data
 
-        for exp in zip(expected):
-            assert actual['name'] == exp['name']
-            assert actual['value'] == approx(exp['value'])
+        assert len(actual) == len(expected)
+
+        for act, exp in zip(actual, expected):
+            assert act['name'] == exp['name']
+            assert act['value'] == approx(exp['value'])
 
 
 class TestValidation:
