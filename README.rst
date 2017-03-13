@@ -50,9 +50,20 @@ fiona, GDAL and GEOS
 --------------------
 
 We use `fiona <https://github.com/Toblerity/Fiona>`_, which depends on GDAL and
-GEOS libraries. These can be installed with your OS package manager on Mac or
-Linux, then install the python packages as usual using
-``pip install -r requirements.txt``
+GEOS libraries.
+
+On Mac or Linux these can be installed with your OS package manager, then
+install the python packages as usual using::
+
+    # On debian/Ubuntu:
+    apt-get install gdal-bin libspatialindex-dev libgeos-dev
+
+    # or on Mac
+    brew install gdal
+    brew install spatialindex
+    brew install geos
+
+    pip install -r requirements.txt
 
 On Windows, the simplest approach seems to be using
 `conda <http://conda.pydata.org/miniconda.html>`_, which handles packages and
@@ -61,7 +72,7 @@ pre-built libraries and packages.
 
 Create a conda environment::
 
-    conda create --name smif python=3
+    conda create --name smif python=3.5 numpy scipy
 
 Activate it (run each time you switch projects)::
 
@@ -74,9 +85,11 @@ Add the conda-forge channel, which has shapely and fiona available::
     conda config --add channels conda-forge
 
 
-Install fiona, along with GDAL and dependencies::
+Install python packages, along with GDAL and dependencies::
 
-    conda install fiona
+    conda install fiona shapely rtree
+    pip install -r requirements.txt
+
 
 Installing `smif`
 =================
