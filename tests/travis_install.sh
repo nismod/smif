@@ -27,7 +27,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # provided versions
     conda create -n testenv --yes python=$PYTHON_VERSION pip scipy numpy pyyaml
     source activate testenv
-    conda install -y -c conda-forge pyomo pyomo.extras fiona
+    conda install -y -c conda-forge pyomo pyomo.extras fiona rtree shapely
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Use standard ubuntu packages in their default version
