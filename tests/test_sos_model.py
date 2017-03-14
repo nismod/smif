@@ -45,6 +45,11 @@ def get_sos_model_only_scenario_dependencies():
             }
         ]
     }
+    ws.interventions = [
+        {"name": "water_asset_a", "location": "oxford"},
+        {"name": "water_asset_b", "location": "oxford"},
+        {"name": "water_asset_c", "location": "oxford"}
+        ]
     builder.add_model(ws)
 
     ws2 = WaterSupplySectorModel()
@@ -98,28 +103,17 @@ class TestSosModel():
         sos_model = get_sos_model_only_scenario_dependencies
         planning_data = [{'name': 'water_asset_a',
                           'build_date': 2010,
-                          'location': 'oxford',
-                          'capacity': {'value': 500,
-                                       'unit': 'Ml/year'}
                           },
                          {'name': 'energy_asset_a',
                           'build_date': 2011,
-                          'location': 'manchester',
-                          'capacity': {'value': 500,
-                                       'unit': 'MW'}
                           }]
         planning = Planning(planning_data)
         sos_model.planning = planning
 
         model = sos_model.model_list['water_supply']
-        actual = sos_model._get_decisions(2010)
-        expected = [{'name': 'water_asset_a',
-                     'build_date': 2010,
-                     'location': 'oxford',
-                     'capacity': {'value': 500,
-                                  'unit': 'Ml/year'}
-                     }]
-        assert actual == expected
+        actual = sos_model._get_decisions(model, 2010)
+        assert actual[0].name == 'water_asset_a'
+        assert actual[0].location == 'oxford'
 
         sos_model._run_sector_model_timestep(model, 2010)
         actual = sos_model.results[2010]

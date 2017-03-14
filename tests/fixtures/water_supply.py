@@ -91,12 +91,12 @@ class WaterSupplySectorModel(SectorModel):
     system.
     """
 
-    def simulate(self, decision_variables, state, data):
+    def simulate(self, decisions, state, data):
         """
 
         Parameters
         ----------
-        decision_variables: list
+        decisions: list
         state: list
         data: list
 
@@ -111,9 +111,9 @@ class WaterSupplySectorModel(SectorModel):
         raininess = scenario_data.value
 
         # unpack decision variables
-        if len(decision_variables) > 0:
-            selective_list = [x for x in decision_variables
-                              if x['name'].startswith('water_asset')]
+        if len(decisions) > 0:
+            selective_list = [x for x in decisions
+                              if x.name.startswith('water_asset')]
             number_of_treatment_plants = len(selective_list) + 1
         else:
             number_of_treatment_plants = 1
