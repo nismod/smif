@@ -92,6 +92,15 @@ class WaterSupplySectorModel(SectorModel):
     """
 
     def simulate(self, decision_variables, state, data):
+        """
+
+        Parameters
+        ----------
+        decision_variables: list
+        state: list
+        data: list
+
+        """
 
         # unpack inputs
         self.logger.debug(data)
@@ -103,14 +112,16 @@ class WaterSupplySectorModel(SectorModel):
 
         # unpack decision variables
         if len(decision_variables) > 0:
-            number_of_treatment_plants = decision_variables[0]
+            selective_list = [x for x in decision_variables
+                              if x['name'].startswith('water_asset')]
+            number_of_treatment_plants = len(selective_list) + 1
         else:
             number_of_treatment_plants = 1
 
         # simulate (wrapping toy model)
         instance = ExampleWaterSupplySimulationModelWithAsset(raininess,
                                                               number_of_treatment_plants)
-        results = instance.simulate(decision_variables, state, data)
+        results = instance.simulate()
 
         return results
 
@@ -182,7 +193,7 @@ class ExampleWaterSupplySimulationModelWithAsset(ExampleWaterSupplySimulationMod
         self.cost = None
         super().__init__(raininess)
 
-    def simulate(self, decisions, state, data):
+    def simulate(self):
         """Runs the water supply model
 
         Only 1 unit of water is produced per treatment plant,

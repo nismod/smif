@@ -2,6 +2,7 @@
 
 from pytest import fixture, raises
 from smif import SpaceTimeValue
+from smif.decision import Planning
 from smif.sector_model import SectorModel
 from smif.sos_model import SosModel, SosModelBuilder
 
@@ -92,6 +93,43 @@ class TestSosModel():
         with raises(AssertionError) as ex:
             sos_model.run_sector_model('impossible')
         assert "Model 'impossible' does not exist" in str(ex.value)
+
+    def test_run_with_planning(self, get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
+        planning_data = [{'name': 'water_asset_a',
+                          'build_date': 2010,
+                          'location': 'oxford',
+                          'capacity': {'value': 500,
+                                       'unit': 'Ml/year'}
+                          },
+                         {'name': 'energy_asset_a',
+                          'build_date': 2011,
+                          'location': 'manchester',
+                          'capacity': {'value': 500,
+                                       'unit': 'MW'}
+                          }]
+        planning = Planning(planning_data)
+        sos_model.planning = planning
+
+        model = sos_model.model_list['water_supply']
+        actual = sos_model._get_decisions(2010)
+        expected = [{'name': 'water_asset_a',
+                     'build_date': 2010,
+                     'location': 'oxford',
+                     'capacity': {'value': 500,
+                                  'unit': 'Ml/year'}
+                     }]
+        assert actual == expected
+
+        sos_model._run_sector_model_timestep(model, 2010)
+        actual = sos_model.results[2010]
+        expected = {'cost': 2.528, 'water': 2}
+        assert actual == expected
+
+        sos_model._run_sector_model_timestep(model, 2011)
+        actual = sos_model.results[2011]
+        expected = {'cost': 2.528, 'water': 2}
+        assert actual == expected
 
 
 class TestSosModelBuilder():
