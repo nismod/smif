@@ -42,6 +42,8 @@ class SosModel(object):
 
         self.logger = logging.getLogger(__name__)
 
+        self.dependency_graph = None
+
         self.results = {}
 
     @property
@@ -399,6 +401,7 @@ class SosModelBuilder(object):
 
         Expect a dictionary, where each key maps a parameter
         name to a list of data, each observation with:
+
         - timestep
         - value
         - units
@@ -468,6 +471,7 @@ class SosModelBuilder(object):
         """
         self._check_planning_interventions_exist()
         self._check_planning_timeperiods_exist()
+        self._check_dependencies()
 
     def _check_dependencies(self):
         """For each model, compare dependency list of from_models
@@ -500,10 +504,9 @@ class SosModelBuilder(object):
     def finish(self):
         """Returns a configured system-of-systems model ready for operation
 
-        - includes validation steps, e.g. to check dependencies
+        Includes validation steps, e.g. to check dependencies
         """
         self._validate()
-        self._check_dependencies()
         return self.sos_model
 
 
