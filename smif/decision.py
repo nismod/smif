@@ -16,13 +16,9 @@ class Planning:
 
             {
                 'name': 'small_pumping_station',
-                'build_date': 2045,
-                'location': 'oxford',
-                'capacity': {
-                    'value': 500,
-                    'units': 'mcm/day'
-                }
+                'build_date': 2045
             }
+
 
 
     Attributes
