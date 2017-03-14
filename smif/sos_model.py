@@ -138,22 +138,37 @@ class SosModel(object):
             The year for which to run the model
 
         """
-        decisions = self._get_decisions(timestep)
+        decisions = self._get_decisions(model, timestep)
         state = {}
         data = self._get_data(model, model.name, timestep)
         results = model.simulate(decisions, state, data)
         self.results[timestep] = results
         self.logger.debug("Results from %s model:\n %s", model.name, results)
 
-    def _get_decisions(self, timestep):
-        """
+    def _get_decisions(self, model, timestep):
+        """Gets the interventions that correspond to the decisions
+
+        Parameters
+        ----------
+        model: :class:`smif.sector_model.SectorModel`
+            The instance of the sector model wrapper to run
+        timestep: int
+            The current model year
         """
         self.logger.debug("Finding decisions for %i", timestep)
         current_decisions = []
         for decision in self.planning.planned_interventions:
             if decision['build_date'] <= timestep:
-                self.logger.debug("Adding decision '%s' to instruction list", decision['name'])
-                current_decisions.append(decision)
+                name = decision['name']
+                if name in model.intervention_names:
+                    msg = "Adding decision '%s' to instruction list"
+                    self.logger.debug(msg, name)
+                    intervention = self.interventions.get_intervention(name)
+                    current_decisions.append(intervention)
+        # for decision in self.planning.get_rule_based_interventions(timestep):
+        #   current_decisions.append(intervention)
+        # for decision in self.planning.get_optimised_interventions(timestep):
+        #   current_decisions.append(intervention)
 
         return current_decisions
 
@@ -358,9 +373,9 @@ class SosModelBuilder(object):
         for intervention in model.interventions:
             intervention_object = Intervention(sector=model.name,
                                                data=intervention)
-            msg = "Adding {} from {} to SOSModel InterventionRegister"
+            msg = "Adding %s from %s to SosModel InterventionRegister"
             identifier = intervention_object.name
-            self.logger.debug(msg.format(identifier, model.name))
+            self.logger.debug(msg, identifier, model.name)
             self.sos_model.interventions.register(intervention_object)
 
     def add_planning(self, planning):
