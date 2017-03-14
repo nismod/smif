@@ -8,6 +8,8 @@ from enum import Enum
 
 import networkx
 from smif import SpaceTimeValue
+from smif.convert.area import RegionRegister, RegionSet
+from smif.convert.interval import TimeIntervalRegister
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.sector_model import SectorModelBuilder
@@ -37,6 +39,9 @@ class SosModel(object):
         self._timesteps = []
         self.initial_conditions = []
         self.interventions = InterventionRegister()
+        self.regions = RegionRegister()
+        self.intervals = TimeIntervalRegister()
+
         self.planning = Planning([])
         self._scenario_data = {}
 
@@ -318,6 +323,10 @@ class SosModelBuilder(object):
         model_list = config_data['sector_model_data']
 
         self.add_timesteps(config_data['timesteps'])
+
+        self.load_region_sets(config_data['region_sets'])
+        self.load_interval_sets(config_data['interval_sets'])
+
         self.load_models(model_list)
         self.add_planning(config_data['planning'])
         self.add_scenario_data(config_data['scenario_data'])
@@ -333,6 +342,32 @@ class SosModelBuilder(object):
         """
         self.logger.info("Adding timesteps")
         self.sos_model.timesteps = timesteps
+
+    def load_region_sets(self, region_sets):
+        """Loads the region sets into the system-of-system model
+
+        Parameters
+        ----------
+        region_sets: list
+            A list of dicts, each containing `name` and `regions` keys
+        """
+        for region_set in region_sets:
+            name = region_set['name']
+            data = region_set['regions']
+            self.sos_model.regions.register(RegionSet(name, data))
+
+    def load_interval_sets(self, interval_sets):
+        """Loads the time-interval sets into the system-of-system model
+
+        Parameters
+        ----------
+        interval_sets: list
+            A list of dicts, each containing `name` and `data` keys
+        """
+        for interval_set in interval_sets:
+            name = interval_set['name']
+            data = interval_set['data']
+            self.sos_model.intervals.add_interval_set(data, name)
 
     def load_models(self, model_data_list):
         """Loads the sector models into the system-of-systems model
