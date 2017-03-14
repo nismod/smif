@@ -267,8 +267,8 @@ units and timestep (year).  For example::
 
 State Parameters
 ----------------
-Some simulation models require that state is passed between years, for example
-reservoir level in the water-supply model.
+Some simulation models require that state is passed between years, 
+for example reservoir level in the water-supply model.
 These are treated as self-dependencies with a temporal offset. For example,
 the sector model depends on the result of running the model for a previous
 timeperiod.
@@ -297,7 +297,7 @@ are incorporated in the strategies).
 Define all possible interventions in an ``interventions.yaml`` file.
 For example::
 
-        - name: nuclear_power_station
+        - name: nuclear_power_station_england
           capital_cost:
             value: 3.5
             units: £(million)/MW
@@ -377,11 +377,8 @@ altered.
 
 Define a pipeline of interventions in a ``pre-specified.yaml`` file::
 
-        - name: nuclear_power_station
+        - name: nuclear_power_station_england
           build_date: 2017
-          location:
-            lat: 51.745560
-            lon: -1.240528
 
 Rule Based Planning
 ~~~~~~~~~~~~~~~~~~~
