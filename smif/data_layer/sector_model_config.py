@@ -74,7 +74,7 @@ class SectorModelReader(object):
         """
         self.inputs = self.load_inputs()
         self.outputs = self.load_outputs()
-        self.time_intervals = self.load_time_intervals()
+
         self.regions = self.load_regions()
         self.initial_conditions = self.load_initial_conditions()
         self.interventions = self.load_interventions()
@@ -176,46 +176,6 @@ class SectorModelReader(object):
             validate_interventions(new_data, path)
             data.extend(new_data)
         return data
-
-    def load_time_intervals(self):
-        """Within-year time intervals are specified in ``data/<sectormodel>/time_intervals.yaml``
-
-        These specify the mapping of model timesteps to durations within a year
-        (assume modelling 365 days: no extra day in leap years, no leap seconds)
-
-        Each time interval must have
-        - start (period since beginning of year)
-        - end (period since beginning of year)
-        - id (label to use when passing between integration layer and sector model)
-
-        use ISO 8601[1]_ duration format to specify periods::
-
-            P[n]Y[n]M[n]DT[n]H[n]M[n]S
-
-        For example::
-
-            P1Y == 1 year
-            P3M == 3 months
-            PT168H == 168 hours
-
-        So to specify a period from the beginning of March to the end of May::
-
-            start: P2M
-            end: P5M
-            id: spring
-
-        References
-        ----------
-        .. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
-
-        """
-        path = os.path.join(self.model_config_dir, 'time_intervals.yaml')
-
-        if not os.path.exists(path):
-            msg = "time_intervals config file not found for {} model"
-            raise FileNotFoundError(msg.format(self.model_name))
-
-        return load(path)
 
     def load_regions(self):
         """Model regions are specified in ``data/<sectormodel>/regions.*``

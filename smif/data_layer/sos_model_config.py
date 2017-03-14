@@ -29,6 +29,7 @@ class SosModelReader(object):
         self.scenario_data = None
         self.sector_model_data = None
         self.planning = None
+        self.time_intervals = None
 
         self.names = None
 
@@ -40,6 +41,7 @@ class SosModelReader(object):
         self.scenario_data = self.load_scenario_data()
         self.sector_model_data = self.load_sector_model_data()
         self.planning = self.load_planning()
+        self.time_intervals = self.load_time_intervals()
 
     @property
     def data(self):
@@ -150,3 +152,45 @@ class SosModelReader(object):
             return os.path.normpath(path)
         else:
             return os.path.normpath(os.path.join(self._config_file_dir, path))
+
+    def load_time_intervals(self):
+        """Within-year time intervals are specified in ``data/<sectormodel>/time_intervals.yaml``
+
+        These specify the mapping of model timesteps to durations within a year
+        (assume modelling 365 days: no extra day in leap years, no leap seconds)
+
+        Each time interval must have
+        - start (period since beginning of year)
+        - end (period since beginning of year)
+        - id (label to use when passing between integration layer and sector model)
+
+        use ISO 8601[1]_ duration format to specify periods::
+
+            P[n]Y[n]M[n]DT[n]H[n]M[n]S
+
+        For example::
+
+            P1Y == 1 year
+            P3M == 3 months
+            PT168H == 168 hours
+
+        So to specify a period from the beginning of March to the end of May::
+
+            start: P2M
+            end: P5M
+            id: spring
+
+        References
+        ----------
+        .. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
+
+        """
+        time_interval_data = {}
+        if 'interval_sets' in self._config:
+            for interval_set in self._config['interval_sets']:
+                file_path = self._get_path_from_config(interval_set['file'])
+                self.logger.debug("Loading time interval data from %s", file_path)
+                data = load(file_path)
+                time_interval_data[interval_set["name"]] = data
+
+        return time_interval_data
