@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Validate config data for the system-of-systems model
+"""Validate the correct format and presence of the config data
+for the system-of-systems model
 """
-
 
 VALIDATION_ERRORS = []
 
@@ -41,6 +41,20 @@ def validate_sos_model_config(data):
             ValidationError("No 'planning' mode specified in main config file."))
     else:
         validate_planning_config(data["planning"])
+
+    # check region_sets
+    if "region_sets" not in data:
+        VALIDATION_ERRORS.append(
+            ValidationError("No 'region_sets' specified in main config file."))
+    else:
+        validate_region_sets_config(data["region_sets"])
+
+    # check interval_sets
+    if "interval_sets" not in data:
+        VALIDATION_ERRORS.append(
+            ValidationError("No 'interval_sets' specified in main config file."))
+    else:
+        validate_interval_sets_config(data["interval_sets"])
 
 
 def validate_path_to_timesteps(timesteps):
@@ -118,6 +132,30 @@ def validate_planning_config(planning):
                 fmt = "No 'files' provided for the '{}' " + \
                       "planning type in main config file."
                 VALIDATION_ERRORS.append(ValidationError(fmt.format(key)))
+
+
+def validate_region_sets_config(region_sets):
+    """Check regions sets
+    """
+    required_keys = ["name", "file"]
+    for key in required_keys:
+        for region_set in region_sets:
+            if key not in region_set:
+                fmt = "Expected a value for '{}' in each " + \
+                    "region set in main config file, only received {}"
+                VALIDATION_ERRORS.append(ValidationError(fmt.format(key, region_set)))
+
+
+def validate_interval_sets_config(interval_sets):
+    """Check interval sets
+    """
+    required_keys = ["name", "file"]
+    for key in required_keys:
+        for interval_set in interval_sets:
+            if key not in interval_set:
+                fmt = "Expected a value for '{}' in each " + \
+                    "interval set in main config file, only received {}"
+                VALIDATION_ERRORS.append(ValidationError(fmt.format(key, interval_set)))
 
 
 def validate_interventions(data, path):
