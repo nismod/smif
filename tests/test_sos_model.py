@@ -32,6 +32,11 @@ def get_sos_model_only_scenario_dependencies():
             }
         ]
     })
+    builder.load_region_sets([{'name': 'LSOA', 'regions': []}])
+    interval_data = [{'name': 1,
+                      'start': 'P0Y',
+                      'end': 'P1Y'}]
+    builder.load_interval_sets([{'name': 'annual', 'data': interval_data}])
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
@@ -196,8 +201,6 @@ class TestSosModelBuilder():
         assert isinstance(sos_model.model_list['water_supply'], SectorModel)
         assert sos_model.timesteps == [2010, 2011, 2012]
 
-        config = get_config_data
-
     def test_missing_planning_asset(self, get_config_data):
         config = get_config_data
         config["planning"] = [
@@ -237,6 +240,8 @@ class TestSosModelBuilder():
 
     def test_scenario_dependency(self, get_config_data):
         """Expect successful build with dependency on scenario data
+
+        Should raise error if no spatial or temporal sets are defined
         """
         config = get_config_data
         config["sector_model_data"][0]["inputs"] = {
@@ -251,6 +256,17 @@ class TestSosModelBuilder():
         }
         builder = SosModelBuilder()
         builder.construct(config)
+
+        with raises(ValueError):
+            builder.finish()
+
+        builder.load_region_sets([{'name': 'LSOA',
+                                   'regions': []}])
+        interval_data = [{'name': 1,
+                          'start': 'P0Y',
+                          'end': 'P1Y'}]
+        builder.load_interval_sets([{'name': 'annual',
+                                     'data': interval_data}])
         builder.finish()
 
     def test_build_valid_dependencies(self, one_dependency):

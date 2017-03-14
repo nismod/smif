@@ -507,6 +507,39 @@ class SosModelBuilder(object):
         self._check_planning_interventions_exist()
         self._check_planning_timeperiods_exist()
         self._check_dependencies()
+        self._check_region_interval_sets()
+
+    def _check_region_interval_sets(self):
+        """For each model, check for the interval and region sets referenced
+
+        Each model references interval and region sets in the configuration
+        of inputs and outputs.
+        """
+        available_intervals = self.sos_model.intervals.interval_set_names
+        msg = "Available time interval sets in SosModel: %s"
+        self.logger.debug(msg, available_intervals)
+        available_regions = self.sos_model.regions.region_set_names
+        msg = "Available region sets in SosModel: %s"
+        self.logger.debug(msg, available_regions)
+
+        for model_name, model in self.sos_model.model_list.items():
+            exp_regions = []
+            exp_intervals = []
+            exp_regions.extend(model.inputs.dependencies.spatial_resolutions)
+            exp_regions.extend(model.outputs.spatial_resolutions)
+            exp_intervals.extend(model.inputs.dependencies.temporal_resolutions)
+            exp_intervals.extend(model.outputs.temporal_resolutions)
+
+            for region in exp_regions:
+                if region not in available_regions:
+                    msg = "Region set '%s' not specified but is required " + \
+                          "for model '$s'"
+                    raise ValueError(msg, region, model_name)
+            for interval in exp_intervals:
+                if interval not in available_intervals:
+                    msg = "Interval set '%s' not specified but is required " + \
+                          "for model '$s'"
+                    raise ValueError(msg, interval, model_name)
 
     def _check_dependencies(self):
         """For each model, compare dependency list of from_models
