@@ -351,9 +351,7 @@ class SosModelBuilder(object):
         region_sets: list
             A list of dicts, each containing `name` and `regions` keys
         """
-        for region_set in region_sets:
-            name = region_set['name']
-            data = region_set['regions']
+        for name, data in region_sets.items():
             self.sos_model.regions.register(RegionSet(name, data))
 
     def load_interval_sets(self, interval_sets):
@@ -364,9 +362,7 @@ class SosModelBuilder(object):
         interval_sets: list
             A list of dicts, each containing `name` and `data` keys
         """
-        for interval_set in interval_sets:
-            name = interval_set['name']
-            data = interval_set['data']
+        for name, data in interval_sets.items():
             self.sos_model.intervals.add_interval_set(data, name)
 
     def load_models(self, model_data_list):

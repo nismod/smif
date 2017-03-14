@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """Read and parse the config files for the system-of-systems model
 """
+
 import logging
 import os
 
+import fiona
+
 from .load import load
 from .validate import validate_sos_model_config, validate_timesteps
+
+# from glob import glob
 
 
 class SosModelReader(object):
@@ -30,6 +35,7 @@ class SosModelReader(object):
         self.sector_model_data = None
         self.planning = None
         self.time_intervals = None
+        self.regions = None
 
         self.names = None
 
@@ -42,6 +48,7 @@ class SosModelReader(object):
         self.sector_model_data = self.load_sector_model_data()
         self.planning = self.load_planning()
         self.time_intervals = self.load_time_intervals()
+        self.regions = self.load_regions()
 
     @property
     def data(self):
@@ -51,7 +58,9 @@ class SosModelReader(object):
             "timesteps": self.timesteps,
             "sector_model_config": self.sector_model_data,
             "scenario_data": self.scenario_data,
-            "planning": self.planning
+            "planning": self.planning,
+            "region_sets": self.regions,
+            "interval_sets": self.time_intervals
         }
 
     def load_sos_config(self):
@@ -194,3 +203,35 @@ class SosModelReader(object):
                 time_interval_data[interval_set["name"]] = data
 
         return time_interval_data
+
+    def load_regions(self):
+        """Model regions are specified in ``data/<sectormodel>/regions.*``
+
+        The file format must be possible to parse with GDAL, and must contain
+        an attribute "name" to use as an identifier for the region.
+        """
+        region_set_data = {}
+        if 'region_sets' in self._config:
+            for region_set in self._config['region_sets']:
+                file_path = self._get_path_from_config(region_set['file'])
+                self.logger.debug("Loading region set data from %s", file_path)
+                data = self._parse_region_data(file_path)
+                region_set_data[region_set["name"]] = data
+
+        return region_set_data
+
+    def _parse_region_data(self, path):
+
+        # if not os.path.exists(path):
+        #     paths = glob("{}/regions.*".format(self.model_config_dir))
+        #     if len(paths) == 1:
+        #         path = paths[0]
+        #     else:
+        #         msg = "regions config file not found for {} model"
+        #         raise FileNotFoundError(msg.format(self.model_name))
+
+        with fiona.drivers():
+            with fiona.open(path) as src:
+                data = [f for f in src]
+
+        return data
