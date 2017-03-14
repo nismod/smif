@@ -138,12 +138,24 @@ class SosModel(object):
             The year for which to run the model
 
         """
-        decisions = []
+        decisions = self._get_decisions(timestep)
         state = {}
         data = self._get_data(model, model.name, timestep)
         results = model.simulate(decisions, state, data)
         self.results[timestep] = results
         self.logger.debug("Results from %s model:\n %s", model.name, results)
+
+    def _get_decisions(self, timestep):
+        """
+        """
+        self.logger.debug("Finding decisions for %i", timestep)
+        current_decisions = []
+        for decision in self.planning.planned_interventions:
+            if decision['build_date'] <= timestep:
+                self.logger.debug("Adding decision '%s' to instruction list", decision['name'])
+                current_decisions.append(decision)
+
+        return current_decisions
 
     def _get_data(self, model, model_name, timestep):
         """Gets the data in the required format to pass to the simulate method
