@@ -370,6 +370,16 @@ class TimeIntervalRegister:
         self.logger = logging.getLogger(__name__)
         self._id_interval_set = {}
 
+    @property
+    def interval_set_names(self):
+        """A list of the interval set names contained in the register
+
+        Returns
+        -------
+        list
+        """
+        return list(self._register.keys())
+
     def get_intervals_in_set(self, set_name):
         """
 
