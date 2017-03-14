@@ -364,7 +364,7 @@ class InterventionRegister(Register):
             return self.numeric_to_intervention(numeric_key)
         else:
             msg = "Intervention '{}' not found in register"
-            raise KeyError(msg.format(name))
+            raise ValueError(msg.format(name))
 
     def _check_new_intervention(self, intervention):
         """Checks that the asset doesn't exist in the register

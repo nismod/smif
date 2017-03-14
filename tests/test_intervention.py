@@ -303,6 +303,15 @@ class TestInterventionRegister:
             'location': 'oxford'
         }
 
+    def test_error_when_retrieve_by_name(self, get_intervention):
+        water_treatment_plant = get_intervention
+        register = InterventionRegister()
+        register.register(water_treatment_plant)
+        with raises(ValueError) as excinfo:
+            register.get_intervention('not_here')
+        expected = "Intervention 'not_here' not found in register"
+        assert str(excinfo.value) == expected
+
     def test_iterate_over_interventions(self, get_intervention):
         """Test __iter___ method of AssetRegister class
 
