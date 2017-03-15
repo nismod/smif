@@ -17,8 +17,24 @@ timesteps: timesteps.yaml
 scenario_data:
   - parameter: population
     file: ../data/scenario/population.yaml
+    spatial_resolution: nations
+    temporal_resolution: annual
   - parameter: raininess
     file: ../data/scenario/raininess.yaml
+    spatial_resolution: nations
+    temporal_resolution: annual
+interval_sets:
+  - name: energy_intervals
+    file: energy_intervals.yaml
+  - name: water_intervals
+    file: water_intervals.yaml
+  - name: annual
+    file: annual_intervals.yaml
+region_sets:
+  - name: nations
+    file: ../../data/uk_nations_shp/regions.shp
+  - name: oxfordshire
+    file: ../../data/oxfordshire/regions.geojson
 planning:
   pre_specified:
     use: true
