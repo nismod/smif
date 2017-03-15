@@ -1,5 +1,6 @@
 from pytest import fixture, raises
-from smif.intervention import Asset, AssetRegister, Intervention, InterventionRegister
+from smif.intervention import (Asset, AssetRegister, Intervention,
+                               InterventionRegister)
 
 
 @fixture(scope='function')
@@ -176,7 +177,6 @@ class TestAsset:
         water_treatment_plant.data["name"] = "oxford treatment plant"
 
         assert water_treatment_plant.data == {
-            'name': 'water_treatment_plant',
             'sector': 'water_supply',
             'name': 'oxford treatment plant',
             'capacity': {
@@ -269,7 +269,7 @@ class TestInterventionRegister:
         register.register(water_treatment_plant)
 
         # pick an asset from the list - this is what the optimiser will do
-        numeric_asset = register._names[0]
+        numeric_asset = register._numeric_keys[0]
 
         asset = register.numeric_to_intervention(numeric_asset)
         assert asset.name == "water_treatment_plant"
@@ -283,6 +283,34 @@ class TestInterventionRegister:
             },
             'location': 'oxford'
         }
+
+    def test_retrieve_intervention_by_name(self, get_intervention):
+        water_treatment_plant = get_intervention
+        register = InterventionRegister()
+        register.register(water_treatment_plant)
+
+        # pick an asset from the list - this is what the optimiser will do
+        asset = register.get_intervention('water_treatment_plant')
+        assert asset.name == "water_treatment_plant"
+
+        assert asset.data == {
+            'name': 'water_treatment_plant',
+            'sector': 'water_supply',
+            'capacity': {
+                'units': 'ML/day',
+                'value': 5
+            },
+            'location': 'oxford'
+        }
+
+    def test_error_when_retrieve_by_name(self, get_intervention):
+        water_treatment_plant = get_intervention
+        register = InterventionRegister()
+        register.register(water_treatment_plant)
+        with raises(ValueError) as excinfo:
+            register.get_intervention('not_here')
+        expected = "Intervention 'not_here' not found in register"
+        assert str(excinfo.value) == expected
 
     def test_iterate_over_interventions(self, get_intervention):
         """Test __iter___ method of AssetRegister class

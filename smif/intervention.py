@@ -351,12 +351,27 @@ class InterventionRegister(Register):
     - each possible_values array should be all of a single type
 
     """
+    def __init__(self):
+        super().__init__()
+        self._names = {}
+        self._numeric_keys = []
+
+    def get_intervention(self, name):
+        """Returns the named asset data
+        """
+        if name in self._names.keys():
+            numeric_key = self._names[name]
+            return self.numeric_to_intervention(numeric_key)
+        else:
+            msg = "Intervention '{}' not found in register"
+            raise ValueError(msg.format(name))
+
     def _check_new_intervention(self, intervention):
         """Checks that the asset doesn't exist in the register
 
         """
         hash_list = []
-        for existing_asset in self._names:
+        for existing_asset in self._numeric_keys:
             hash_list.append(self.numeric_to_intervention(existing_asset).sha1sum())
         if intervention.sha1sum() in hash_list:
             return False
@@ -389,7 +404,8 @@ class InterventionRegister(Register):
                 value_idx = self.attribute_value_index(attr_idx, value)
                 numeric_asset[attr_idx] = value_idx
 
-            self._names.append(numeric_asset)
+            self._numeric_keys.append(numeric_asset)
+            self._names[intervention.name] = numeric_asset
 
     def _register_attribute(self, key, value):
         """Add a new attribute and its possible value to the register (or, if
@@ -464,10 +480,10 @@ class InterventionRegister(Register):
     def __iter__(self):
         """Iterate over the list of asset types held in the register
         """
-        for asset in self._names:
+        for asset in self._numeric_keys:
             yield self.numeric_to_intervention(asset)
 
     def __len__(self):
         """Returns the number of asset types stored in the register
         """
-        return len(self._names)
+        return len(self._numeric_keys)
