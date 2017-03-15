@@ -5,6 +5,7 @@ Changelog
 Version 0.1
 ===========
 
-- Feature A added
-- FIX: nasty bug #1729 fixed
-- add your changes here!
+- Run a single simulation model for a single timestep
+- Provide a model with scenario data and planned interventions
+- Configure a model with sets of regions and sets of time intervals for within-
+  timestep simulation
