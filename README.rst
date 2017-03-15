@@ -4,7 +4,7 @@
 smif
 ====
 
-Systems Modelling of Infrastructure Framework
+Simulation Modelling Integration Framework
 
 .. image:: https://travis-ci.org/nismod/smif.svg?branch=master
     :target: https://travis-ci.org/nismod/smif
@@ -81,12 +81,12 @@ Install fiona, along with GDAL and dependencies::
 Installing `smif`
 =================
 
-Once the dependencies are installed on your system, 
+Once the dependencies are installed on your system,
 a normal installation of `smif` can be achieved using pip on the command line::
 
         pip install git+http://github.com/nismod/smif#egg=v0.2
 
-The suffix ``#egg=v0.2`` refers to a specific version of the source code. 
+The suffix ``#egg=v0.2`` refers to a specific version of the source code.
 Omitting the suffix installs the latest version of the library.
 
 To install from the source code in development mode::
