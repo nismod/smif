@@ -46,8 +46,8 @@ To install the **glpk** solver:
   executables. For 64bit Windows, download and unzip the distribution files then
   add the ``w64`` folder to your ``PATH``.
 
-Requirements for `fiona`
-------------------------
+fiona, GDAL and GEOS
+--------------------
 
 We use `fiona <https://github.com/Toblerity/Fiona>`_, which depends on GDAL and
 GEOS libraries. These can be installed with your OS package manager on Mac or
@@ -83,6 +83,10 @@ Installing `smif`
 
 Once the dependencies are installed on your system,
 a normal installation of `smif` can be achieved using pip on the command line::
+
+        pip install smif
+
+Versions under development can be installed from github using pip too::
 
         pip install git+http://github.com/nismod/smif#egg=v0.2
 
