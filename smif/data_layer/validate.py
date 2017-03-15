@@ -15,6 +15,12 @@ class ValidationError(Exception):
 def validate_sos_model_config(data):
     """Check expected values for data loaded from master config file
     """
+    if not isinstance(data, dict):
+        msg = "Main config file should contain setup data, instead found: {}"
+        err = ValidationError(msg.format(data))
+        VALIDATION_ERRORS.append(err)
+        return
+
     # check timesteps
     if "timesteps" not in data:
         VALIDATION_ERRORS.append(

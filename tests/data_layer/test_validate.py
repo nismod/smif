@@ -4,7 +4,8 @@ from smif.data_layer.validate import (VALIDATION_ERRORS,
                                       validate_interventions,
                                       validate_planning_config,
                                       validate_sector_model_initial_config,
-                                      validate_sos_model_config)
+                                      validate_sos_model_config,
+                                      validate_timesteps)
 
 
 def get_sos_model_config():
@@ -97,6 +98,23 @@ def test_modelrun_config_validate():
     validate_sos_model_config(data)
 
 
+def test_modelrun_config_invalid():
+    """Expect an error if not a dict
+    """
+    invalid_possibilities = [
+        0,
+        [],
+        "just a string",
+        3.1415
+    ]
+
+    for invalid_data in invalid_possibilities:
+        validate_sos_model_config(invalid_data)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Main config file should contain setup data"
+        assert msg in str(ex)
+
+
 def test_missing_timestep():
     """Expect an error if missing timesteps
     """
@@ -118,6 +136,26 @@ def test_invalid_timesteps_file():
     validate_sos_model_config(data)
     ex = VALIDATION_ERRORS.pop()
     msg = "Expected 'timesteps' in main config to specify a timesteps file, instead got 3"
+    assert msg in str(ex)
+
+
+def test_invalid_timesteps():
+    """Expect a list of timesteps, else error
+    """
+    data = 2010
+    validate_timesteps(data, "timestep.yaml")
+    ex = VALIDATION_ERRORS.pop()
+    msg = "expected a list of timesteps"
+    assert msg in str(ex)
+
+
+def test_invalid_single_timestep():
+    """Expect an error for non-integer timesteps
+    """
+    data = [2010, "January 2015"]
+    validate_timesteps(data, "timestep.yaml")
+    ex = VALIDATION_ERRORS.pop()
+    msg = "timesteps should be integer years"
     assert msg in str(ex)
 
 
