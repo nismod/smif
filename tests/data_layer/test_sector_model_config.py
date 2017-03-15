@@ -44,8 +44,6 @@ class TestSectorModelReader(object):
         # could check actual data from conftest.py:setup_water_inputs
         assert reader.data["inputs"] is not None
         assert reader.data["outputs"] is not None
-        assert reader.data["time_intervals"] is not None
-        assert reader.data["regions"] is not None
 
     def test_load_errors(self, setup_project_missing_model_config):
         reader = self._reader(setup_project_missing_model_config)
@@ -59,16 +57,6 @@ class TestSectorModelReader(object):
         with raises(FileNotFoundError) as ex:
             reader.load_outputs()
         msg = "outputs config file not found for water_supply model"
-        assert msg in str(ex.value)
-
-        with raises(FileNotFoundError) as ex:
-            reader.load_time_intervals()
-        msg = "time_intervals config file not found for water_supply model"
-        assert msg in str(ex.value)
-
-        with raises(FileNotFoundError) as ex:
-            reader.load_regions()
-        msg = "regions config file not found for water_supply model"
         assert msg in str(ex.value)
 
     def test_load_interventions(self, setup_project_folder):
@@ -108,11 +96,3 @@ class TestSectorModelReader(object):
                     'water_asset_c', 'water_asset_d']
         actual = [asset['name'] for asset in reader.interventions]
         assert actual == expected
-
-    def test_load_regions_shapefile(self):
-        reader = SectorModelReader()
-        reader.model_config_dir = os.path.join(
-            os.path.dirname(__file__),
-            "../fixtures/data/uk_nations_shp/")
-        data = reader.load_regions()
-        assert len(data) == 3
