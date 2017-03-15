@@ -112,3 +112,9 @@ class TestSosModelReader():
         reader.load()
         data = reader.data["planning"]
         assert len(data) == 0
+
+    def test_load_regions_shapefile(self, setup_project_folder):
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+        data = reader.data['region_sets']
+        assert len(data) == 1

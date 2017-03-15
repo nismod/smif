@@ -53,6 +53,26 @@ class SosModelReader(object):
     @property
     def data(self):
         """Expose all model configuration data
+
+        Returns
+        -------
+        dict
+            Returns a dictionary with the following keys
+            timesteps
+                the sequence of years
+            sector_model_config: list
+                The list of sector model configuration data
+            scenario_data: dict
+                A dictionary of scenario data, with the parameter name
+                as the key and the data as the value
+            planning: list
+                A list of dicts of planning instructions
+            region_sets: dict
+                A dictionary of region set data, with the name as the key
+                and the data as the value
+            interval_sets: dict
+                A dictionary of interval set data, with the name as the key
+                and the data as the value
         """
         return {
             "timesteps": self.timesteps,
@@ -122,19 +142,37 @@ class SosModelReader(object):
                 'region': 'UK',
                 'year': 2015
             }
+
+        Returns
+        -------
+        dict
+            A dictionary where keys are parameters names and values are the file contents,
+            so a list of dicts
+
         """
         scenario_data = {}
         if 'scenario_data' in self._config:
             for data_type in self._config['scenario_data']:
+
+                spatial_res = data_type['spatial_resolution']
+                temporal_res = data_type['temporal_resolution']
+
                 file_path = self._get_path_from_config(data_type['file'])
-                self.logger.debug("Loading scenario data from %s", file_path)
+                self.logger.debug("Loading scenario data from %s with %s and %s",
+                                  file_path, spatial_res, temporal_res)
                 data = load(file_path)
+
                 scenario_data[data_type["parameter"]] = data
 
         return scenario_data
 
     def load_planning(self):
         """Loads the set of build instructions for planning
+
+        Returns
+        -------
+        list
+            A list of planning instructions loaded from the planning file
         """
         if self._config['planning']['pre_specified']['use']:
             planning_relative_paths = self._config['planning']['pre_specified']['files']
@@ -211,6 +249,7 @@ class SosModelReader(object):
         an attribute "name" to use as an identifier for the region.
         """
         region_set_data = {}
+        assert isinstance(self._config, dict)
         if 'region_sets' in self._config:
             for region_set in self._config['region_sets']:
                 file_path = self._get_path_from_config(region_set['file'])
