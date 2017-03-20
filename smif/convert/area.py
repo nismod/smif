@@ -26,7 +26,9 @@ class RegionSet(object):
     set_name : str
         Name to use as identifier for this set of regions
     fiona_shape_iter: iterable
-        Iterable (probably a list or a reader handle) of fiona feature records
+        Iterable (probably a list or a reader handle)
+        of fiona feature records e.g. the 'features' entry of
+        a GeoJSON collection
 
     """
     def __init__(self, set_name, fiona_shape_iter):

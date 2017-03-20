@@ -933,9 +933,7 @@ def setup_time_intervals(setup_folder_structure):
 
 
 @fixture(scope='function')
-def setup_regions(setup_folder_structure):
-    base_folder = setup_folder_structure
-    filename = base_folder.join('config', 'regions.geojson')
+def setup_region_data():
     data = {
         "type": "FeatureCollection",
         "crs": {
@@ -992,6 +990,14 @@ def setup_regions(setup_folder_structure):
             },
         ]
     }
+    return data
+
+
+@fixture(scope='function')
+def setup_regions(setup_folder_structure, setup_region_data):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('config', 'regions.geojson')
+    data = setup_region_data
     filename.write(json.dumps(data), ensure=True)
     return filename
 

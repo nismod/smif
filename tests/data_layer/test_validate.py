@@ -32,17 +32,21 @@ def get_sos_model_config():
         "scenario_data": [
             {
                 "parameter": "population",
-                "file": "../data/scenario/population.yaml"
+                "file": "../data/scenario/population.yaml",
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
             },
             {
                 "parameter": "raininess",
-                "file": "../data/scenario/raininess.yaml"
+                "file": "../data/scenario/raininess.yaml",
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
             }
         ],
         "region_sets": [{'name': 'national',
                          'file': '../data/national.shp'}],
-        "interval_sets": [{'name': 'hourly',
-                           'file': '../data/hourly_intervals.yaml'}],
+        "interval_sets": [{'name': 'annual',
+                           'file': '../data/annual_intervals.yaml'}],
         "planning": {
             "pre_specified": {
                 "use": True,
