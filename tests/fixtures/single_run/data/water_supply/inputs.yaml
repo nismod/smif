@@ -1,1 +1,9 @@
-dependencies: []
+dependencies:
+- name: raininess
+  from_model: scenario
+  spatial_resolution: national
+  temporal_resolution: annual
+- name: population
+  from_model: scenario
+  spatial_resolution: national
+  temporal_resolution: annual
