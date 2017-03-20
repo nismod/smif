@@ -163,7 +163,7 @@ def run_model(args):
         model_name = args.model
         sos_model.run_sector_model(model_name)
 
-    output_file = "results.yaml"
+    output_file = args.output_file
     LOGGER.info("Writing results to %s", output_file)
     dump(sos_model.results, output_file)
     print("Model run complete")
@@ -301,6 +301,9 @@ def parse_arguments():
     parser_run.add_argument('-m', '--model',
                             default='all',
                             help='The name of the model to run')
+    parser_run.add_argument('-o', '--output-file',
+                            default='results.yaml',
+                            help='Output file')
     parser_run.set_defaults(func=run_model)
     parser_run.add_argument('path',
                             help="Path to the main config file")
