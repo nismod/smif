@@ -76,7 +76,8 @@ class SosModel(object):
             Nested dictionary in the format results[int:year][str:model] => list
             of SpaceTimeValues
         """
-        return self._results
+        # convert from defaultdict to plain dict
+        return dict(self._results)
 
     def run(self):
         """Runs the system-of-system model
