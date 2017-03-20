@@ -10,7 +10,7 @@ from .fixtures.water_supply import WaterSupplySectorModel
 
 
 @fixture(scope='function')
-def get_sos_model_only_scenario_dependencies():
+def get_sos_model_only_scenario_dependencies(setup_region_data):
     builder = SosModelBuilder()
     builder.add_timesteps([2010])
     builder.add_scenario_data({
@@ -32,11 +32,13 @@ def get_sos_model_only_scenario_dependencies():
             }
         ]
     })
-    builder.load_region_sets([{'name': 'LSOA', 'regions': []}])
-    interval_data = [{'name': 1,
+    builder.add_resolution_mapping({'raininess': {'temporal_resolution': 'annual',
+                                                  'spatial_resolution': 'LSOA'}})
+    builder.load_region_sets({'LSOA': setup_region_data['features']})
+    interval_data = [{'id': 1,
                       'start': 'P0Y',
                       'end': 'P1Y'}]
-    builder.load_interval_sets([{'name': 'annual', 'data': interval_data}])
+    builder.load_interval_sets({'annual': interval_data})
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
@@ -132,7 +134,7 @@ class TestSosModel():
 
 
 @fixture(scope='function')
-def get_config_data(setup_project_folder):
+def get_config_data(setup_project_folder, setup_region_data):
     path = setup_project_folder
     water_supply_wrapper_path = str(
         path.join(
@@ -152,9 +154,12 @@ def get_config_data(setup_project_folder):
         }],
         "planning": [],
         "scenario_data": {},
-        "region_sets": [],
-        "interval_sets": []
-    }
+        "region_sets": {'LSOA': setup_region_data['features']},
+        "interval_sets": {'annual': [{'id': 1,
+                                      'start': 'P0Y',
+                                      'end': 'P1Y'}]
+                          }
+             }
 
 
 class TestSosModelBuilder():
@@ -238,7 +243,7 @@ class TestSosModelBuilder():
             builder.finish()
         assert "Timeperiod '2025' in planning file not found" in str(ex.value)
 
-    def test_scenario_dependency(self, get_config_data):
+    def test_scenario_dependency(self, get_config_data, setup_region_data):
         """Expect successful build with dependency on scenario data
 
         Should raise error if no spatial or temporal sets are defined
@@ -248,8 +253,8 @@ class TestSosModelBuilder():
             "dependencies": [
                 {
                     'name': 'population',
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
+                    'spatial_resolution': 'blobby',
+                    'temporal_resolution': 'mega',
                     'from_model': 'scenario'
                 }
             ]
@@ -260,13 +265,12 @@ class TestSosModelBuilder():
         with raises(ValueError):
             builder.finish()
 
-        builder.load_region_sets([{'name': 'LSOA',
-                                   'regions': []}])
-        interval_data = [{'name': 1,
+        builder.load_region_sets({'blobby': setup_region_data['features']})
+
+        interval_data = [{'id': 'ultra',
                           'start': 'P0Y',
                           'end': 'P1Y'}]
-        builder.load_interval_sets([{'name': 'annual',
-                                     'data': interval_data}])
+        builder.load_interval_sets({'mega': interval_data})
         builder.finish()
 
     def test_build_valid_dependencies(self, one_dependency):

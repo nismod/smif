@@ -9,7 +9,7 @@ from enum import Enum
 import networkx
 from smif import SpaceTimeValue
 from smif.convert.area import RegionRegister, RegionSet
-from smif.convert.interval import TimeIntervalRegister
+from smif.convert.interval import TimeIntervalRegister, TimeSeries
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.sector_model import SectorModelBuilder
@@ -51,6 +51,8 @@ class SosModel(object):
 
         self.results = {}
 
+        self.resolution_mapping = {}
+
     @property
     def scenario_data(self):
         """Get nested dict of scenario data
@@ -58,7 +60,8 @@ class SosModel(object):
         Returns
         -------
         dict
-            Nested dictionary in the format data[year][param][region][interval]
+            Nested dictionary in the format ``data[year][param] =
+            SpaceTimeValue(region, interval, value, unit)``
         """
         return self._scenario_data
 
@@ -195,20 +198,42 @@ class SosModel(object):
         The current timestep is available in ``data['timestep']``.
 
         """
-        data = {}
+        new_data = {}
         for dependency in model.inputs.dependencies:
             self.logger.debug("Finding data for dependency: %s", dependency.name)
             if dependency.from_model == 'scenario':
-                data = self._get_scenario_data(timestep)
-                self.logger.debug("Found data: %s", data)
+                name = dependency.name
+                from_data = self._get_scenario_data(timestep, name)
+                to_spatial_resolution = dependency.spatial_resolution
+                to_temporal_resolution = dependency.temporal_resolution
+                from_spatial_resolution = self.resolution_mapping[name]['spatial_resolution']
+                from_temporal_resolution = self.resolution_mapping[name]['temporal_resolution']
+                self.logger.debug("Found data: %s", from_data)
+
+                if from_spatial_resolution != to_spatial_resolution:
+                    converted_data = self.regions.convert(from_data,
+                                                          from_spatial_resolution,
+                                                          to_spatial_resolution)
+                else:
+                    converted_data = from_data
+
+                if from_temporal_resolution != to_temporal_resolution:
+                    timeseries = TimeSeries(converted_data)
+                    converted_data = self.intervals.convert(timeseries,
+                                                            from_temporal_resolution,
+                                                            to_temporal_resolution)
+                    new_data[name] = converted_data
+                else:
+                    new_data[name] = converted_data
+
             else:
                 msg = "Getting data from dependencies is not yet implemented"
                 raise NotImplementedError(msg)
 
-        data['timestep'] = timestep
-        return data
+        new_data['timestep'] = timestep
+        return new_data
 
-    def _get_scenario_data(self, timestep):
+    def _get_scenario_data(self, timestep, name):
         """Given a model, check required parameters, pick data from scenario
         for the given timestep
 
@@ -218,7 +243,7 @@ class SosModel(object):
             The year for which to get scenario data
 
         """
-        return self.scenario_data[timestep]
+        return self.scenario_data[timestep][name]
 
     def _run_static_optimisation(self):
         """Runs the system-of-systems model in a static optimisation format
@@ -343,15 +368,29 @@ class SosModelBuilder(object):
         self.logger.info("Adding timesteps")
         self.sos_model.timesteps = timesteps
 
+    def add_resolution_mapping(self, resolution_mapping):
+        """
+        """
+        self.sos_model.resolution_mapping = resolution_mapping
+
     def load_region_sets(self, region_sets):
         """Loads the region sets into the system-of-system model
 
         Parameters
         ----------
         region_sets: list
-            A list of dicts, each containing `name` and `regions` keys
+            A dict, where key is the name of the region set, and the value
+            the data
         """
-        for name, data in region_sets.items():
+        assert isinstance(region_sets, dict)
+
+        region_set_definitions = region_sets.items()
+        if len(region_set_definitions) == 0:
+            msg = "No region sets have been defined"
+            self.logger.warning(msg)
+        for name, data in region_set_definitions:
+            msg = "Region set data is not a list"
+            assert isinstance(data, list), msg
             self.sos_model.regions.register(RegionSet(name, data))
 
     def load_interval_sets(self, interval_sets):
@@ -360,9 +399,16 @@ class SosModelBuilder(object):
         Parameters
         ----------
         interval_sets: list
-            A list of dicts, each containing `name` and `data` keys
+            A dict, where key is the name of the interval set, and the value
+            the data
         """
-        for name, data in interval_sets.items():
+        interval_set_definitions = interval_sets.items()
+        if len(interval_set_definitions) == 0:
+            msg = "No interval sets have been defined"
+            self.logger.warning(msg)
+
+        for name, data in interval_set_definitions:
+            print(name, data)
             self.sos_model.intervals.add_interval_set(data, name)
 
     def load_models(self, model_data_list):
@@ -475,7 +521,7 @@ class SosModelBuilder(object):
                 entry = SpaceTimeValue(region, interval,
                                        obs['value'], obs['units'])
                 nested[year][param].append(entry)
-        self.logger.debug("Added scenario data: %s", nested)
+        self.logger.info("Added scenario data: %s", nested)
         self.sos_model._scenario_data = nested
 
     def _check_planning_interventions_exist(self):
