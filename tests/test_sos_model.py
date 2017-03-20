@@ -123,12 +123,12 @@ class TestSosModel():
         assert actual[0].location == 'oxford'
 
         sos_model._run_sector_model_timestep(model, 2010)
-        actual = sos_model.results[2010]
+        actual = sos_model.results[2010]['water_supply']
         expected = {'cost': 2.528, 'water': 2}
         assert actual == expected
 
         sos_model._run_sector_model_timestep(model, 2011)
-        actual = sos_model.results[2011]
+        actual = sos_model.results[2011]['water_supply']
         expected = {'cost': 2.528, 'water': 2}
         assert actual == expected
 
