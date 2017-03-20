@@ -4,13 +4,12 @@
 
 import logging
 import os
+from glob import glob
 
 import fiona
 
 from .load import load
 from .validate import validate_sos_model_config, validate_timesteps
-
-# from glob import glob
 
 
 class SosModelReader(object):
@@ -38,6 +37,10 @@ class SosModelReader(object):
         self.regions = None
 
         self.names = None
+
+        self.resolution_mapping = {'scenarios': {},
+                                   'inputs': {},
+                                   'outputs': {}}
 
     def load(self):
         """Load and check all config
@@ -73,6 +76,9 @@ class SosModelReader(object):
             interval_sets: dict
                 A dictionary of interval set data, with the name as the key
                 and the data as the value
+            resolution_mapping: dict
+                The mapping of spatial and temporal resolutions to
+                inputs, outputs and scenarios
         """
         return {
             "timesteps": self.timesteps,
@@ -80,7 +86,8 @@ class SosModelReader(object):
             "scenario_data": self.scenario_data,
             "planning": self.planning,
             "region_sets": self.regions,
-            "interval_sets": self.time_intervals
+            "interval_sets": self.time_intervals,
+            "resolution_mapping": self.resolution_mapping
         }
 
     def load_sos_config(self):
@@ -154,15 +161,21 @@ class SosModelReader(object):
         if 'scenario_data' in self._config:
             for data_type in self._config['scenario_data']:
 
+                name = data_type['parameter']
+
                 spatial_res = data_type['spatial_resolution']
                 temporal_res = data_type['temporal_resolution']
+
+                self.resolution_mapping['scenarios'][name] = \
+                    {'spatial_resolution': spatial_res,
+                     'temporal_resolution': temporal_res}
 
                 file_path = self._get_path_from_config(data_type['file'])
                 self.logger.debug("Loading scenario data from %s with %s and %s",
                                   file_path, spatial_res, temporal_res)
                 data = load(file_path)
 
-                scenario_data[data_type["parameter"]] = data
+                scenario_data[name] = data
 
         return scenario_data
 
@@ -260,14 +273,27 @@ class SosModelReader(object):
         return region_set_data
 
     def _parse_region_data(self, path):
+        """
 
-        # if not os.path.exists(path):
-        #     paths = glob("{}/regions.*".format(self.model_config_dir))
-        #     if len(paths) == 1:
-        #         path = paths[0]
-        #     else:
-        #         msg = "regions config file not found for {} model"
-        #         raise FileNotFoundError(msg.format(self.model_name))
+        Arguments
+        ---------
+        path: str
+            Path to regions files
+
+        Returns
+        -------
+        data: list
+            A list of Fiona feature collections
+
+        """
+
+        if not os.path.exists(path):
+            paths = glob("{}/regions.*".format(self._config_file_path))
+            if len(paths) == 1:
+                path = paths[0]
+            else:
+                msg = "regions config file not found for {} model"
+                raise FileNotFoundError(msg.format(self.model_name))
 
         with fiona.drivers():
             with fiona.open(path) as src:
