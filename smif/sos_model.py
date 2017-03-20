@@ -218,11 +218,15 @@ class SosModel(object):
             if dependency.from_model == 'scenario':
                 name = dependency.name
                 from_data = self._get_scenario_data(timestep, name)
+                self.logger.debug("Found data: %s", from_data)
+
                 to_spatial_resolution = dependency.spatial_resolution
                 to_temporal_resolution = dependency.temporal_resolution
-                from_spatial_resolution = self.resolution_mapping[name]['spatial_resolution']
-                from_temporal_resolution = self.resolution_mapping[name]['temporal_resolution']
-                self.logger.debug("Found data: %s", from_data)
+                msg = "Converting to spacial resolution '%s' and  temporal resolution '%s'"
+                self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
+                scenario_map = self.resolution_mapping['scenarios']
+                from_spatial_resolution = scenario_map[name]['spatial_resolution']
+                from_temporal_resolution = scenario_map[name]['temporal_resolution']
 
                 if from_spatial_resolution != to_spatial_resolution:
                     converted_data = self.regions.convert(from_data,
@@ -255,6 +259,11 @@ class SosModel(object):
         ----------
         timestep: int
             The year for which to get scenario data
+
+        Returns
+        -------
+        list
+            A list of :class:`SpaceTimeValue`
 
         """
         return self.scenario_data[timestep][name]
@@ -369,6 +378,7 @@ class SosModelBuilder(object):
         self.load_models(model_list)
         self.add_planning(config_data['planning'])
         self.add_scenario_data(config_data['scenario_data'])
+        self.add_resolution_mapping(config_data['resolution_mapping'])
         self.logger.debug(config_data['scenario_data'])
 
     def add_timesteps(self, timesteps):
@@ -422,7 +432,6 @@ class SosModelBuilder(object):
             self.logger.warning(msg)
 
         for name, data in interval_set_definitions:
-            print(name, data)
             self.sos_model.intervals.add_interval_set(data, name)
 
     def load_models(self, model_data_list):

@@ -32,8 +32,9 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             }
         ]
     })
-    builder.add_resolution_mapping({'raininess': {'temporal_resolution': 'annual',
-                                                  'spatial_resolution': 'LSOA'}})
+    builder.add_resolution_mapping({'scenarios': {
+        'raininess': {'temporal_resolution': 'annual',
+                      'spatial_resolution': 'LSOA'}}})
     builder.load_region_sets({'LSOA': setup_region_data['features']})
     interval_data = [{'id': 1,
                       'start': 'P0Y',
@@ -158,7 +159,8 @@ def get_config_data(setup_project_folder, setup_region_data):
         "interval_sets": {'annual': [{'id': 1,
                                       'start': 'P0Y',
                                       'end': 'P1Y'}]
-                          }
+                          },
+        "resolution_mapping": {'scenarios': {}}
              }
 
 

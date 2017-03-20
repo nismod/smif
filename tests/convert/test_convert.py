@@ -1,12 +1,58 @@
 from copy import copy
 
-from pytest import approx, raises
+from pytest import approx, fixture, raises
 from smif import SpaceTimeValue
 from smif.convert import SpaceTimeConvertor
-from smif.convert.area import RegionRegister, RegionSet
+from smif.convert.area import RegionRegister
 from smif.convert.interval import TimeIntervalRegister
 from test_area import regions_half_squares as fixture_regions
-from test_interval import months, seasons
+from test_interval import (months, one_day, remap_months, seasons,
+                           twenty_four_hours)
+
+
+@fixture(scope='function')
+def data_remap():
+    data = [SpaceTimeValue('a', '1', 30+31+31, 'days'),
+            SpaceTimeValue('a', '2', 28+31+30, 'days'),
+            SpaceTimeValue('a', '3', 31+31+30, 'days'),
+            SpaceTimeValue('a', '4', 30+31+31, 'days')]
+    return data
+
+
+@fixture(scope='function')
+def expected_stv_remap():
+    data = [SpaceTimeValue('a', '1_0', 30.666666666, 'days'),
+            SpaceTimeValue('a', '1_1', 29.666666666, 'days'),
+            SpaceTimeValue('a', '1_2', 29.666666666, 'days'),
+            SpaceTimeValue('a', '1_3', 29.666666666, 'days'),
+            SpaceTimeValue('a', '1_4', 30.666666666, 'days'),
+            SpaceTimeValue('a', '1_5', 30.666666666, 'days'),
+            SpaceTimeValue('a', '1_6', 30.666666666, 'days'),
+            SpaceTimeValue('a', '1_7', 30.666666666, 'days'),
+            SpaceTimeValue('a', '1_8', 30.666666666, 'days'),
+            SpaceTimeValue('a', '1_9', 30.666666666, 'days'),
+            SpaceTimeValue('a', '1_10', 30.666666666, 'days'),
+            SpaceTimeValue('a', '1_11', 30.666666666, 'days')]
+    return data
+
+
+@fixture(scope='function')
+def monthly_data():
+    """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    """
+    data = [SpaceTimeValue('a', '1_0', 31, 'days'),
+            SpaceTimeValue('a', '1_1', 28, 'days'),
+            SpaceTimeValue('a', '1_2', 31, 'days'),
+            SpaceTimeValue('a', '1_3', 30, 'days'),
+            SpaceTimeValue('a', '1_4', 31, 'days'),
+            SpaceTimeValue('a', '1_5', 30, 'days'),
+            SpaceTimeValue('a', '1_6', 31, 'days'),
+            SpaceTimeValue('a', '1_7', 31, 'days'),
+            SpaceTimeValue('a', '1_8', 30, 'days'),
+            SpaceTimeValue('a', '1_9', 31, 'days'),
+            SpaceTimeValue('a', '1_10', 30, 'days'),
+            SpaceTimeValue('a', '1_11', 31, 'days')]
+    return data
 
 
 class TestSpaceTimeConvertor:
@@ -199,6 +245,136 @@ class TestSpaceTimeConvertor:
                     SpaceTimeValue('b', 'spring', 31. + 30 + 31 + 3, 'days'),
                     SpaceTimeValue('b', 'summer', 30. + 31 + 31 + 3, 'days'),
                     SpaceTimeValue('b', 'autumn', 30. + 31 + 30 + 3, 'days')]
+
+        for act, exp in zip(actual, expected):
+            assert act.region == exp.region
+            assert act.interval == exp.interval
+            assert act.value == approx(exp.value)
+            assert act.units == exp.units
+
+    def test_one_region_convert_from_hour_to_day(self, fixture_regions,
+                                                 twenty_four_hours, one_day):
+
+        data = [SpaceTimeValue('a', '1_0', 1, 'days'),
+                SpaceTimeValue('a', '1_1', 1, 'days'),
+                SpaceTimeValue('a', '1_2', 1, 'days'),
+                SpaceTimeValue('a', '1_3', 1, 'days'),
+                SpaceTimeValue('a', '1_4', 1, 'days'),
+                SpaceTimeValue('a', '1_5', 1, 'days'),
+                SpaceTimeValue('a', '1_6', 1, 'days'),
+                SpaceTimeValue('a', '1_7', 1, 'days'),
+                SpaceTimeValue('a', '1_8', 1, 'days'),
+                SpaceTimeValue('a', '1_9', 1, 'days'),
+                SpaceTimeValue('a', '1_10', 1, 'days'),
+                SpaceTimeValue('a', '1_11', 1, 'days'),
+                SpaceTimeValue('a', '1_12', 1, 'days'),
+                SpaceTimeValue('a', '1_13', 1, 'days'),
+                SpaceTimeValue('a', '1_14', 1, 'days'),
+                SpaceTimeValue('a', '1_15', 1, 'days'),
+                SpaceTimeValue('a', '1_16', 1, 'days'),
+                SpaceTimeValue('a', '1_17', 1, 'days'),
+                SpaceTimeValue('a', '1_18', 1, 'days'),
+                SpaceTimeValue('a', '1_19', 1, 'days'),
+                SpaceTimeValue('a', '1_20', 1, 'days'),
+                SpaceTimeValue('a', '1_21', 1, 'days'),
+                SpaceTimeValue('a', '1_22', 1, 'days'),
+                SpaceTimeValue('a', '1_23', 1, 'days')]
+
+        regions = RegionRegister()
+        regions.register(fixture_regions)
+
+        intervals = TimeIntervalRegister()
+        intervals.add_interval_set(twenty_four_hours, 'hourly_day')
+        intervals.add_interval_set(one_day, 'one_day')
+
+        convertor = SpaceTimeConvertor(data,
+                                       'half_squares',
+                                       'half_squares',
+                                       'hourly_day',
+                                       'one_day',
+                                       regions,
+                                       intervals)
+
+        assert convertor.data_regions == set(['a'])
+        assert convertor.data_by_region['a'] == data
+
+        actual = convertor.convert()
+
+        expected = [SpaceTimeValue('a', 'one_day', 24, 'days')]
+
+        assert actual == expected
+
+
+class TestRemapConvert:
+
+    def test_remap_timeslices_to_months(self,
+                                        months,
+                                        expected_stv_remap,
+                                        remap_months,
+                                        data_remap,
+                                        fixture_regions):
+        """
+        """
+        timeslice_data = data_remap
+
+        intervals = TimeIntervalRegister()
+        intervals.add_interval_set(months, 'months')
+        intervals.add_interval_set(remap_months, 'remap_months')
+
+        regions = RegionRegister()
+        regions.register(fixture_regions)
+
+        convertor = SpaceTimeConvertor(timeslice_data,
+                                       'half_squares',
+                                       'half_squares',
+                                       'remap_months',
+                                       'months',
+                                       regions,
+                                       intervals)
+
+        assert convertor.data_regions == set(['a'])
+        assert convertor.data_by_region['a'] == timeslice_data
+
+        actual = convertor.convert()
+        expected = expected_stv_remap
+
+        assert len(actual) == len(expected)
+
+        for act, exp in zip(actual, expected):
+            assert act.region == exp.region
+            assert act.interval == exp.interval
+            assert act.value == approx(exp.value)
+            assert act.units == exp.units
+
+    def test_remap_months_to_timeslices(self,
+                                        months,
+                                        monthly_data,
+                                        remap_months,
+                                        data_remap,
+                                        fixture_regions):
+        """
+        """
+        timeslice_data = data_remap
+
+        intervals = TimeIntervalRegister()
+        intervals.add_interval_set(months, 'months')
+        intervals.add_interval_set(remap_months, 'remap_months')
+
+        regions = RegionRegister()
+        regions.register(fixture_regions)
+
+        convertor = SpaceTimeConvertor(timeslice_data,
+                                       'half_squares',
+                                       'half_squares',
+                                       'months',
+                                       'remap_months',
+                                       regions,
+                                       intervals)
+
+        actual = convertor.convert()
+        expected = timeslice_data
+
+        assert len(actual) == len(expected)
 
         for act, exp in zip(actual, expected):
             assert act.region == exp.region
