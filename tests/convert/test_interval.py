@@ -1,8 +1,10 @@
 
 from collections import OrderedDict
+
 import numpy as np
 from numpy.testing import assert_equal
 from pytest import approx, fixture, raises
+from smif import SpaceTimeValue
 from smif.convert.interval import Interval, TimeIntervalRegister, TimeSeries
 
 
@@ -38,27 +40,27 @@ def remap_months():
 
 @fixture(scope='function')
 def data_remap():
-    data = [{'id': '1', 'value': 30+31+31},
-            {'id': '2', 'value': 28+31+30},
-            {'id': '3', 'value': 31+31+30},
-            {'id': '4', 'value': 30+31+31}]
+    data = [SpaceTimeValue('national', 1, 30+31+31, 'days'),
+            SpaceTimeValue('national', 2, 28+31+30, 'days'),
+            SpaceTimeValue('national', 3, 31+31+30, 'days'),
+            SpaceTimeValue('national', 4, 30+31+31, 'days')]
     return data
 
 
 @fixture(scope='function')
 def expected_data_remap():
-    data = [{'id': '1_0', 'value': 30.666666666},
-            {'id': '1_1', 'value': 29.666666666},
-            {'id': '1_2', 'value': 29.666666666},
-            {'id': '1_3', 'value': 29.666666666},
-            {'id': '1_4', 'value': 30.666666666},
-            {'id': '1_5', 'value': 30.666666666},
-            {'id': '1_6', 'value': 30.666666666},
-            {'id': '1_7', 'value': 30.666666666},
-            {'id': '1_8', 'value': 30.666666666},
-            {'id': '1_9', 'value': 30.666666666},
-            {'id': '1_10', 'value': 30.666666666},
-            {'id': '1_11', 'value': 30.666666666}]
+    data = [SpaceTimeValue('national', '1_0', 30.666666666, 'days'),
+            SpaceTimeValue('national', '1_1', 29.666666666, 'days'),
+            SpaceTimeValue('national', '1_2', 29.666666666, 'days'),
+            SpaceTimeValue('national', '1_3', 29.666666666, 'days'),
+            SpaceTimeValue('national', '1_4', 30.666666666, 'days'),
+            SpaceTimeValue('national', '1_5', 30.666666666, 'days'),
+            SpaceTimeValue('national', '1_6', 30.666666666, 'days'),
+            SpaceTimeValue('national', '1_7', 30.666666666, 'days'),
+            SpaceTimeValue('national', '1_8', 30.666666666, 'days'),
+            SpaceTimeValue('national', '1_9', 30.666666666, 'days'),
+            SpaceTimeValue('national', '1_10', 30.666666666, 'days'),
+            SpaceTimeValue('national', '1_11', 30.666666666, 'days')]
     return data
 
 
@@ -83,18 +85,18 @@ def months():
 def monthly_data():
     """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     """
-    data = [{'id': '1_0', 'value': 31},
-            {'id': '1_1', 'value': 28},
-            {'id': '1_2', 'value': 31},
-            {'id': '1_3', 'value': 30},
-            {'id': '1_4', 'value': 31},
-            {'id': '1_5', 'value': 30},
-            {'id': '1_6', 'value': 31},
-            {'id': '1_7', 'value': 31},
-            {'id': '1_8', 'value': 30},
-            {'id': '1_9', 'value': 31},
-            {'id': '1_10', 'value': 30},
-            {'id': '1_11', 'value': 31}]
+    data = [SpaceTimeValue('national', '1_0', 31, 'days'),
+            SpaceTimeValue('national', '1_1', 28, 'days'),
+            SpaceTimeValue('national', '1_2', 31, 'days'),
+            SpaceTimeValue('national', '1_3', 30, 'days'),
+            SpaceTimeValue('national', '1_4', 31, 'days'),
+            SpaceTimeValue('national', '1_5', 30, 'days'),
+            SpaceTimeValue('national', '1_6', 31, 'days'),
+            SpaceTimeValue('national', '1_7', 31, 'days'),
+            SpaceTimeValue('national', '1_8', 30, 'days'),
+            SpaceTimeValue('national', '1_9', 31, 'days'),
+            SpaceTimeValue('national', '1_10', 30, 'days'),
+            SpaceTimeValue('national', '1_11', 31, 'days')]
     return data
 
 
@@ -341,10 +343,10 @@ class TestTimeRegisterConversion:
         timeseries = TimeSeries(data)
 
         actual = register.convert(timeseries, 'months', 'seasons')
-        expected = [{'id': 'winter', 'value': 31. + 31 + 28},
-                    {'id': 'spring', 'value': 31. + 30 + 31},
-                    {'id': 'summer', 'value': 30. + 31 + 31},
-                    {'id': 'autumn', 'value': 30. + 31 + 30}]
+        expected = [SpaceTimeValue('national', 'winter', 31. + 31 + 28, 'days'),
+                    SpaceTimeValue('national', 'spring', 31. + 30 + 31, 'days'),
+                    SpaceTimeValue('national', 'summer', 30. + 31 + 31, 'days'),
+                    SpaceTimeValue('national', 'autumn', 30. + 31 + 30, 'days')]
 
         for act, exp in zip(actual, expected):
             assert act['id'] == exp['id']
@@ -352,30 +354,30 @@ class TestTimeRegisterConversion:
 
     def test_convert_from_hour_to_day(self, twenty_four_hours, one_day):
 
-        data = [{'id': '1_0', 'value': 1},
-                {'id': '1_1', 'value': 1},
-                {'id': '1_2', 'value': 1},
-                {'id': '1_3', 'value': 1},
-                {'id': '1_4', 'value': 1},
-                {'id': '1_5', 'value': 1},
-                {'id': '1_6', 'value': 1},
-                {'id': '1_7', 'value': 1},
-                {'id': '1_8', 'value': 1},
-                {'id': '1_9', 'value': 1},
-                {'id': '1_10', 'value': 1},
-                {'id': '1_11', 'value': 1},
-                {'id': '1_12', 'value': 1},
-                {'id': '1_13', 'value': 1},
-                {'id': '1_14', 'value': 1},
-                {'id': '1_15', 'value': 1},
-                {'id': '1_16', 'value': 1},
-                {'id': '1_17', 'value': 1},
-                {'id': '1_18', 'value': 1},
-                {'id': '1_19', 'value': 1},
-                {'id': '1_20', 'value': 1},
-                {'id': '1_21', 'value': 1},
-                {'id': '1_22', 'value': 1},
-                {'id': '1_23', 'value': 1}]
+        data = [SpaceTimeValue('national', '1_0', 1, 'days'),
+                SpaceTimeValue('national', '1_1', 1, 'days'),
+                SpaceTimeValue('national', '1_2', 1, 'days'),
+                SpaceTimeValue('national', '1_3', 1, 'days'),
+                SpaceTimeValue('national', '1_4', 1, 'days'),
+                SpaceTimeValue('national', '1_5', 1, 'days'),
+                SpaceTimeValue('national', '1_6', 1, 'days'),
+                SpaceTimeValue('national', '1_7', 1, 'days'),
+                SpaceTimeValue('national', '1_8', 1, 'days'),
+                SpaceTimeValue('national', '1_9', 1, 'days'),
+                SpaceTimeValue('national', '1_10', 1, 'days'),
+                SpaceTimeValue('national', '1_11', 1, 'days'),
+                SpaceTimeValue('national', '1_12', 1, 'days'),
+                SpaceTimeValue('national', '1_13', 1, 'days'),
+                SpaceTimeValue('national', '1_14', 1, 'days'),
+                SpaceTimeValue('national', '1_15', 1, 'days'),
+                SpaceTimeValue('national', '1_16', 1, 'days'),
+                SpaceTimeValue('national', '1_17', 1, 'days'),
+                SpaceTimeValue('national', '1_18', 1, 'days'),
+                SpaceTimeValue('national', '1_19', 1, 'days'),
+                SpaceTimeValue('national', '1_20', 1, 'days'),
+                SpaceTimeValue('national', '1_21', 1, 'days'),
+                SpaceTimeValue('national', '1_22', 1, 'days'),
+                SpaceTimeValue('national', '1_23', 1, 'days')]
 
         register = TimeIntervalRegister()
         register.add_interval_set(twenty_four_hours, 'hourly_day')
@@ -384,7 +386,7 @@ class TestTimeRegisterConversion:
         timeseries = TimeSeries(data)
 
         actual = register.convert(timeseries, 'hourly_day', 'one_day')
-        expected = [{'id': 'one_day', 'value': 24}]
+        expected = [SpaceTimeValue('national', 'one_day', 24, 'days')]
 
         assert actual == expected
 
