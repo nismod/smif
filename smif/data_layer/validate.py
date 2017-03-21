@@ -100,12 +100,89 @@ def validate_sector_models_initial_config(sector_models):
 def validate_sector_model_initial_config(sector_model_config):
     """Check a single sector model initial configuration
     """
+    if not isinstance(sector_model_config, dict):
+        fmt = "Expected a sector model config block, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(sector_model_config)))
+        return
+
     required_keys = ["name", "config_dir", "path", "classname"]
     for key in required_keys:
         if key not in sector_model_config:
             fmt = "Expected a value for '{}' in each " + \
                   "sector model in main config file, only received {}"
             VALIDATION_ERRORS.append(ValidationError(fmt.format(key, sector_model_config)))
+
+
+def validate_input_spec(input_spec, model_name):
+    """Check the input specification for a single sector model
+    """
+    if not isinstance(input_spec, dict) \
+            or 'dependencies' not in input_spec:
+        fmt = "Expected a list of dependencies in '{}' model " + \
+              "input specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, input_spec)))
+        return
+
+    deps = input_spec['dependencies']
+    if not isinstance(deps, list):
+        fmt = "Expected a list of dependencies in '{}' model " + \
+              "input specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, deps)))
+        return
+
+    for dep in deps:
+        validate_dependency(dep)
+
+
+def validate_dependency(dep):
+    """Check a dependency specification
+    """
+    if not isinstance(dep, dict):
+        fmt = "Expected a dependency specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(dep)))
+        return
+
+    required_keys = ["name", "spatial_resolution", "temporal_resolution", "from_model"]
+    for key in required_keys:
+        if key not in dep:
+            fmt = "Expected a value for '{}' in each model dependency, only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, dep)))
+
+
+def validate_output_spec(output_spec, model_name):
+    """Check the output specification for a single sector model
+    """
+    if not isinstance(output_spec, dict) \
+            or 'metrics' not in output_spec:
+        fmt = "Expected a list of metrics in '{}' model " + \
+              "output specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, output_spec)))
+        return
+
+    metrics = output_spec['metrics']
+    if not isinstance(metrics, list):
+        fmt = "Expected a list of metrics in '{}' model " + \
+              "output specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, metrics)))
+        return
+
+    for output in metrics:
+        validate_output(output)
+
+
+def validate_output(dep):
+    """Check an output specification
+    """
+    if not isinstance(dep, dict):
+        fmt = "Expected an output specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(dep)))
+        return
+
+    required_keys = ["name", "spatial_resolution", "temporal_resolution"]
+    for key in required_keys:
+        if key not in dep:
+            fmt = "Expected a value for '{}' in each model output, only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, dep)))
 
 
 def validate_planning_config(planning):

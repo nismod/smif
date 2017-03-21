@@ -5,7 +5,8 @@ import logging
 import os
 
 from .load import load
-from .validate import validate_interventions
+from .validate import (validate_input_spec, validate_interventions,
+                       validate_output_spec)
 
 
 class SectorModelReader(object):
@@ -127,6 +128,7 @@ class SectorModelReader(object):
             data = {}
         else:
             data = load(path)
+            validate_input_spec(data, self.model_name)
 
         return data
 
@@ -139,7 +141,10 @@ class SectorModelReader(object):
             msg = "outputs config file not found for {} model"
             raise FileNotFoundError(msg.format(self.model_name))
 
-        return load(path)
+        data = load(path)
+        validate_output_spec(data, self.model_name)
+
+        return data
 
     def load_initial_conditions(self):
         """Inital conditions are located in yaml files

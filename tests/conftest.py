@@ -876,29 +876,20 @@ def water_outputs_contents():
         'metrics': [
             {
                 'name': 'storage_state',
-                'description': 'Storage at end',
-                'file_name': 'results.txt',
-                'row_num': 26,
-                'col_num': 44,
-                'type': 'int'
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
             },
             {
                 'name': 'storage_blobby',
-                'description': 'Storage at end',
-                'file_name': 'results.txt',
-                'row_num': 33,
-                'col_num': 55,
-                'type': 'int'
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
             }
         ],
         'model outputs': [
             {
-                'name': 'unshfl13',
-                'description': 'TOTAL DEMAND 13 Test1',
-                'file_name': 'results.txt',
-                'row_num': 33,
-                'col_num': 44,
-                'type': 'int'
+                'name': 'total_water_demand',
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
             }
         ]
     }
