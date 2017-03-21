@@ -20,11 +20,17 @@ class SpaceTimeConvertor(object):
     data: list
         A list of :class:`smif.SpaceTimeValue`
     from_spatial: str
+        The name of the spatial resolution of the data
     to_spatial: str
+        The name of the required spatial resolution
     from_temporal: str
+        The name of the temporal resolution of the data
     to_temporal: str
+        The name of the required temproal resolution
     region_register: :class:`smif.convert.area.RegionRegister`
+        A fully populated register of the models' regions
     interval_register: :class:`smif.convert.interval.TimeIntervalRegister`
+        A fully populated register of the models' intervals
 
     Notes
     -----
@@ -53,12 +59,14 @@ class SpaceTimeConvertor(object):
         self.regions = region_register
         self.intervals = interval_register
 
-        self.data_by_units = OrderedDict()
+    @property
+    def data_regions(self):
+        data_by_regions = self._regionalise_data(self.data)
+        return set(data_by_regions.keys())
 
-        self.data_by_region = self.regionise_data(data)
-        self.data_by_intervals = self.intervalise_data(data)
-
-        self.data_regions = set(self.data_by_region.keys())
+    @property
+    def data_by_region(self):
+        return self._regionalise_data(self.data)
 
     def _check_uniform_units(self, data):
         units = []
@@ -69,7 +77,7 @@ class SpaceTimeConvertor(object):
             raise NotImplementedError(msg)
 
     @staticmethod
-    def regionise_data(data):
+    def _regionalise_data(data):
         """
 
         Parameters
@@ -93,7 +101,7 @@ class SpaceTimeConvertor(object):
         return data_by_region
 
     @staticmethod
-    def intervalise_data(data):
+    def _intervalise_data(data):
         """
 
         Parameters
@@ -117,8 +125,19 @@ class SpaceTimeConvertor(object):
         return data_by_intervals
 
     def convert(self):
+        """Convert the data according to the parameters passed
+        to the SpaceTimeConvertor
+
+        Returns
+        -------
+        list
+            A list of :class:`smif.SpaceTimeValue`
         """
-        """
+        assert self.from_spatial in self.regions.region_set_names
+        assert self.to_spatial in self.regions.region_set_names
+        assert self.from_temporal in self.intervals.interval_set_names
+        assert self.to_temporal in self.intervals.interval_set_names
+
         if self._convert_intervals_required() and self._convert_regions_required():
             self.logger.debug("Converting intervals and regions")
             interval_data = self._loop_over_regions(self.data)
@@ -139,7 +158,7 @@ class SpaceTimeConvertor(object):
         """
         """
         converted_data = []
-        data_by_region = self.regionise_data(data)
+        data_by_region = self._regionalise_data(data)
         num_regions = len(set(data_by_region.keys()))
         if num_regions > 1:
             for region, region_data in data_by_region.items():
@@ -152,7 +171,7 @@ class SpaceTimeConvertor(object):
         """
         """
         converted_data = []
-        data_by_intervals = self.intervalise_data(data)
+        data_by_intervals = self._intervalise_data(data)
         num_intervals = len(set(data_by_intervals.keys()))
         if num_intervals > 1:
             for interval, interval_data in data_by_intervals.items():
