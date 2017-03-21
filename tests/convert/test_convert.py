@@ -1,11 +1,9 @@
-from copy import copy
-
 from pytest import approx, fixture, raises
 from smif import SpaceTimeValue
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister
 from smif.convert.interval import TimeIntervalRegister
-from test_area import regions_half_squares as fixture_regions
+from test_area import regions_half_squares, regions_rect
 from test_interval import (months, one_day, remap_months, seasons,
                            twenty_four_hours)
 
@@ -90,9 +88,9 @@ class TestSpaceTimeConvertor_Utils:
         assert convertor.data_by_region == expected
 
 
-class TestSpaceTimeConvertor_Main:
+class TestSpaceTimeConvertor_TimeOnly:
 
-    def test_one_region_pass_through_time(self, months, seasons, fixture_regions):
+    def test_one_region_pass_through_time(self, months, seasons, regions_half_squares):
         """Only one region, 12 months, neither space nor time conversion is required
 
         """
@@ -115,7 +113,7 @@ class TestSpaceTimeConvertor_Main:
         intervals.add_interval_set(seasons, 'months')
 
         regions = RegionRegister()
-        regions.register(fixture_regions)
+        regions.register(regions_half_squares)
 
         convertor = SpaceTimeConvertor(data,
                                        'half_squares',
@@ -145,7 +143,7 @@ class TestSpaceTimeConvertor_Main:
 
         assert actual == expected
 
-    def test_one_region_time_aggregation(self, months, seasons, fixture_regions):
+    def test_one_region_time_aggregation(self, months, seasons, regions_half_squares):
         """Only one region, time aggregation is required
         """
 
@@ -167,7 +165,7 @@ class TestSpaceTimeConvertor_Main:
         intervals.add_interval_set(seasons, 'seasons')
 
         regions = RegionRegister()
-        regions.register(fixture_regions)
+        regions.register(regions_half_squares)
 
         convertor = SpaceTimeConvertor(data,
                                        'half_squares',
@@ -185,6 +183,9 @@ class TestSpaceTimeConvertor_Main:
                     SpaceTimeValue('a', 'spring', 31. + 30 + 31, 'days'),
                     SpaceTimeValue('a', 'summer', 30. + 31 + 31, 'days'),
                     SpaceTimeValue('a', 'autumn', 30. + 31 + 30, 'days')]
+        assert isinstance(actual, list)
+        for entry in actual:
+            assert isinstance(entry, SpaceTimeValue)
 
         for act, exp in zip(actual, expected):
             assert act.region == exp.region
@@ -192,44 +193,67 @@ class TestSpaceTimeConvertor_Main:
             assert act.value == approx(exp.value)
             assert act.units == exp.units
 
-    def test_two_region_time_aggregation(self, months, seasons, fixture_regions):
+    def test_two_region_time_aggregation(self, months, seasons, regions_half_squares):
         """Two regions, time aggregation by region is required
         """
 
-        region_a = [SpaceTimeValue('a', '1_0', 31, 'days'),
-                    SpaceTimeValue('a', '1_1', 28, 'days'),
-                    SpaceTimeValue('a', '1_2', 31, 'days'),
-                    SpaceTimeValue('a', '1_3', 30, 'days'),
-                    SpaceTimeValue('a', '1_4', 31, 'days'),
-                    SpaceTimeValue('a', '1_5', 30, 'days'),
-                    SpaceTimeValue('a', '1_6', 31, 'days'),
-                    SpaceTimeValue('a', '1_7', 31, 'days'),
-                    SpaceTimeValue('a', '1_8', 30, 'days'),
-                    SpaceTimeValue('a', '1_9', 31, 'days'),
-                    SpaceTimeValue('a', '1_10', 30, 'days'),
-                    SpaceTimeValue('a', '1_11', 31, 'days')]
-        region_b = [SpaceTimeValue('b', '1_0', 31+1, 'days'),
-                    SpaceTimeValue('b', '1_1', 28+1, 'days'),
-                    SpaceTimeValue('b', '1_2', 31+1, 'days'),
-                    SpaceTimeValue('b', '1_3', 30+1, 'days'),
-                    SpaceTimeValue('b', '1_4', 31+1, 'days'),
-                    SpaceTimeValue('b', '1_5', 30+1, 'days'),
-                    SpaceTimeValue('b', '1_6', 31+1, 'days'),
-                    SpaceTimeValue('b', '1_7', 31+1, 'days'),
-                    SpaceTimeValue('b', '1_8', 30+1, 'days'),
-                    SpaceTimeValue('b', '1_9', 31+1, 'days'),
-                    SpaceTimeValue('b', '1_10', 30+1, 'days'),
-                    SpaceTimeValue('b', '1_11', 31+1, 'days')]
-        data = copy(region_a)
-        data.extend(region_b)
-        assert len(data) == 24
+        data = [SpaceTimeValue('a', '1_0', 31, 'days'),
+                SpaceTimeValue('a', '1_1', 28, 'days'),
+                SpaceTimeValue('a', '1_2', 31, 'days'),
+                SpaceTimeValue('a', '1_3', 30, 'days'),
+                SpaceTimeValue('a', '1_4', 31, 'days'),
+                SpaceTimeValue('a', '1_5', 30, 'days'),
+                SpaceTimeValue('a', '1_6', 31, 'days'),
+                SpaceTimeValue('a', '1_7', 31, 'days'),
+                SpaceTimeValue('a', '1_8', 30, 'days'),
+                SpaceTimeValue('a', '1_9', 31, 'days'),
+                SpaceTimeValue('a', '1_10', 30, 'days'),
+                SpaceTimeValue('a', '1_11', 31, 'days'),
+                SpaceTimeValue('b', '1_0', 31+1, 'days'),
+                SpaceTimeValue('b', '1_1', 28+1, 'days'),
+                SpaceTimeValue('b', '1_2', 31+1, 'days'),
+                SpaceTimeValue('b', '1_3', 30+1, 'days'),
+                SpaceTimeValue('b', '1_4', 31+1, 'days'),
+                SpaceTimeValue('b', '1_5', 30+1, 'days'),
+                SpaceTimeValue('b', '1_6', 31+1, 'days'),
+                SpaceTimeValue('b', '1_7', 31+1, 'days'),
+                SpaceTimeValue('b', '1_8', 30+1, 'days'),
+                SpaceTimeValue('b', '1_9', 31+1, 'days'),
+                SpaceTimeValue('b', '1_10', 30+1, 'days'),
+                SpaceTimeValue('b', '1_11', 31+1, 'days')]
+
+        expected_a = [SpaceTimeValue('a', '1_0', 31, 'days'),
+                      SpaceTimeValue('a', '1_1', 28, 'days'),
+                      SpaceTimeValue('a', '1_2', 31, 'days'),
+                      SpaceTimeValue('a', '1_3', 30, 'days'),
+                      SpaceTimeValue('a', '1_4', 31, 'days'),
+                      SpaceTimeValue('a', '1_5', 30, 'days'),
+                      SpaceTimeValue('a', '1_6', 31, 'days'),
+                      SpaceTimeValue('a', '1_7', 31, 'days'),
+                      SpaceTimeValue('a', '1_8', 30, 'days'),
+                      SpaceTimeValue('a', '1_9', 31, 'days'),
+                      SpaceTimeValue('a', '1_10', 30, 'days'),
+                      SpaceTimeValue('a', '1_11', 31, 'days')]
+
+        expected_b = [SpaceTimeValue('b', '1_0', 31+1, 'days'),
+                      SpaceTimeValue('b', '1_1', 28+1, 'days'),
+                      SpaceTimeValue('b', '1_2', 31+1, 'days'),
+                      SpaceTimeValue('b', '1_3', 30+1, 'days'),
+                      SpaceTimeValue('b', '1_4', 31+1, 'days'),
+                      SpaceTimeValue('b', '1_5', 30+1, 'days'),
+                      SpaceTimeValue('b', '1_6', 31+1, 'days'),
+                      SpaceTimeValue('b', '1_7', 31+1, 'days'),
+                      SpaceTimeValue('b', '1_8', 30+1, 'days'),
+                      SpaceTimeValue('b', '1_9', 31+1, 'days'),
+                      SpaceTimeValue('b', '1_10', 30+1, 'days'),
+                      SpaceTimeValue('b', '1_11', 31+1, 'days')]
 
         intervals = TimeIntervalRegister()
         intervals.add_interval_set(months, 'months')
         intervals.add_interval_set(seasons, 'seasons')
 
         regions = RegionRegister()
-        regions.register(fixture_regions)
+        regions.register(regions_half_squares)
 
         convertor = SpaceTimeConvertor(data,
                                        'half_squares',
@@ -239,8 +263,8 @@ class TestSpaceTimeConvertor_Main:
                                        regions,
                                        intervals)
         assert convertor.data_regions == set(['a', 'b'])
-        assert convertor.data_by_region['a'] == region_a
-        assert convertor.data_by_region['b'] == region_b
+        assert convertor.data_by_region['a'] == expected_a
+        assert convertor.data_by_region['b'] == expected_b
 
         actual = convertor.convert()
 
@@ -259,7 +283,7 @@ class TestSpaceTimeConvertor_Main:
             assert act.value == approx(exp.value)
             assert act.units == exp.units
 
-    def test_one_region_convert_from_hour_to_day(self, fixture_regions,
+    def test_one_region_convert_from_hour_to_day(self, regions_half_squares,
                                                  twenty_four_hours, one_day):
         """One region, time aggregation required
         """
@@ -290,7 +314,7 @@ class TestSpaceTimeConvertor_Main:
                 SpaceTimeValue('a', '1_23', 1, 'days')]
 
         regions = RegionRegister()
-        regions.register(fixture_regions)
+        regions.register(regions_half_squares)
 
         intervals = TimeIntervalRegister()
         intervals.add_interval_set(twenty_four_hours, 'hourly_day')
@@ -313,15 +337,12 @@ class TestSpaceTimeConvertor_Main:
 
         assert actual == expected
 
-
-class TestRemapConvert:
-
     def test_remap_timeslices_to_months(self,
                                         months,
                                         expected_stv_remap,
                                         remap_months,
                                         data_remap,
-                                        fixture_regions):
+                                        regions_half_squares):
         """One region, time remapping required
         """
         timeslice_data = data_remap
@@ -331,7 +352,7 @@ class TestRemapConvert:
         intervals.add_interval_set(remap_months, 'remap_months')
 
         regions = RegionRegister()
-        regions.register(fixture_regions)
+        regions.register(regions_half_squares)
 
         convertor = SpaceTimeConvertor(timeslice_data,
                                        'half_squares',
@@ -360,7 +381,7 @@ class TestRemapConvert:
                                         monthly_data,
                                         remap_months,
                                         data_remap,
-                                        fixture_regions):
+                                        regions_half_squares):
         """One region, time remapping required
         """
         timeslice_data = data_remap
@@ -370,7 +391,7 @@ class TestRemapConvert:
         intervals.add_interval_set(remap_months, 'remap_months')
 
         regions = RegionRegister()
-        regions.register(fixture_regions)
+        regions.register(regions_half_squares)
 
         convertor = SpaceTimeConvertor(timeslice_data,
                                        'half_squares',
@@ -386,6 +407,79 @@ class TestRemapConvert:
         assert len(actual) == len(expected)
 
         for act, exp in zip(actual, expected):
+            assert act.region == exp.region
+            assert act.interval == exp.interval
+            assert act.value == approx(exp.value)
+            assert act.units == exp.units
+
+
+class TestSpaceTimeConvertor_RegionOnly:
+
+    def test_half_to_one_region_pass_through_time(self, months, seasons,
+                                                  regions_half_squares,
+                                                  regions_rect):
+        """Convert from half a region to one region, pass through time
+
+        """
+
+        data = [SpaceTimeValue('a', '1_0', 0.5, 'days'),
+                SpaceTimeValue('a', '1_1', 0.5, 'days'),
+                SpaceTimeValue('a', '1_2', 0.5, 'days'),
+                SpaceTimeValue('a', '1_3', 0.5, 'days'),
+                SpaceTimeValue('a', '1_4', 0.5, 'days'),
+                SpaceTimeValue('a', '1_5', 0.5, 'days'),
+                SpaceTimeValue('a', '1_6', 0.5, 'days'),
+                SpaceTimeValue('a', '1_7', 0.5, 'days'),
+                SpaceTimeValue('a', '1_8', 0.5, 'days'),
+                SpaceTimeValue('a', '1_9', 0.5, 'days'),
+                SpaceTimeValue('a', '1_10', 0.5, 'days'),
+                SpaceTimeValue('a', '1_11', 0.5, 'days'),
+                SpaceTimeValue('b', '1_0', 0.5, 'days'),
+                SpaceTimeValue('b', '1_1', 0.5, 'days'),
+                SpaceTimeValue('b', '1_2', 0.5, 'days'),
+                SpaceTimeValue('b', '1_3', 0.5, 'days'),
+                SpaceTimeValue('b', '1_4', 0.5, 'days'),
+                SpaceTimeValue('b', '1_5', 0.5, 'days'),
+                SpaceTimeValue('b', '1_6', 0.5, 'days'),
+                SpaceTimeValue('b', '1_7', 0.5, 'days'),
+                SpaceTimeValue('b', '1_8', 0.5, 'days'),
+                SpaceTimeValue('b', '1_9', 0.5, 'days'),
+                SpaceTimeValue('b', '1_10', 0.5, 'days'),
+                SpaceTimeValue('b', '1_11', 0.5, 'days')]
+
+        intervals = TimeIntervalRegister()
+        intervals.add_interval_set(months, 'months')
+
+        regions = RegionRegister()
+        regions.register(regions_half_squares)
+        regions.register(regions_rect)
+
+        convertor = SpaceTimeConvertor(data,
+                                       'half_squares',
+                                       'rect',
+                                       'months',
+                                       'months',
+                                       regions,
+                                       intervals)
+
+        actual = convertor.convert()
+        # assert isinstance(actual, list)
+
+        expected = [SpaceTimeValue('zero', '1_0', 1, 'days'),
+                    SpaceTimeValue('zero', '1_1', 1, 'days'),
+                    SpaceTimeValue('zero', '1_2', 1, 'days'),
+                    SpaceTimeValue('zero', '1_3', 1, 'days'),
+                    SpaceTimeValue('zero', '1_4', 1, 'days'),
+                    SpaceTimeValue('zero', '1_5', 1, 'days'),
+                    SpaceTimeValue('zero', '1_6', 1, 'days'),
+                    SpaceTimeValue('zero', '1_7', 1, 'days'),
+                    SpaceTimeValue('zero', '1_8', 1, 'days'),
+                    SpaceTimeValue('zero', '1_9', 1, 'days'),
+                    SpaceTimeValue('zero', '1_10', 1, 'days'),
+                    SpaceTimeValue('zero', '1_11', 1, 'days')]
+
+        for act, exp in zip(actual, expected):
+            print("Actual: {}\nExpected: {}".format(actual, expected))
             assert act.region == exp.region
             assert act.interval == exp.interval
             assert act.value == approx(exp.value)

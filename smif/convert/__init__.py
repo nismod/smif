@@ -8,6 +8,8 @@ The :meth:`~SpaceTimeConvertor.convert` method returns a new list of
 """
 from smif.convert.interval import TimeSeries
 from smif import SpaceTimeValue
+from collections import OrderedDict
+import logging
 
 
 class SpaceTimeConvertor(object):
@@ -24,12 +26,23 @@ class SpaceTimeConvertor(object):
     region_register: :class:`smif.convert.area.RegionRegister`
     interval_register: :class:`smif.convert.interval.TimeIntervalRegister`
 
+    Notes
+    -----
+    Future development requires using a data object which allows multiple views
+    upon the values across the three dimensions of time, space and units. This
+    will then allow more efficient conversion across any one of these dimensions
+    while holding the others constant.  One option could be
+    :class:`collections.ChainMap`.
+
     """
 
     def __init__(self, data,
                  from_spatial, to_spatial,
                  from_temporal, to_temporal,
                  region_register, interval_register):
+        self.logger = logging.getLogger(__name__)
+
+        self._check_uniform_units(data)
         self.data = data
         self.from_spatial = from_spatial
         self.to_spatial = to_spatial
@@ -39,16 +52,12 @@ class SpaceTimeConvertor(object):
         self.regions = region_register
         self.intervals = interval_register
 
-        self.data_by_region = {}
-        self.data_by_units = {}
-        self.data_by_intervals = {}
+        self.data_by_units = OrderedDict()
+
+        self.data_by_region = self.regionise_data(data)
+        self.data_by_intervals = self.intervalise_data(data)
 
         for entry in data:
-            if entry.region not in self.data_by_region:
-                self.data_by_region[entry.region] = [entry]
-            else:
-                self.data_by_region[entry.region].append(entry)
-
             if entry.units not in self.data_by_units:
                 self.data_by_units[entry.units] = [entry]
             else:
@@ -56,28 +65,106 @@ class SpaceTimeConvertor(object):
 
         self.data_regions = set(self.data_by_region.keys())
 
-        if len(set(self.data_by_units.keys())) > 1:
+    def _check_uniform_units(self, data):
+        units = []
+        for entry in data:
+            units.append(entry.units)
+        if len(set(units)) > 1:
             msg = "SpaceTimeConvertor cannot handle multiple units for conversion"
             raise NotImplementedError(msg)
+
+    @staticmethod
+    def regionise_data(data):
+        """
+
+        Parameters
+        ----------
+        data: list
+            A list of :class:`smif.SpaceTimeValue`
+
+        Returns
+        -------
+        :class:`collections.OrderedDict`
+            A dictionary where the key is a region, and the value is a list of
+            :class:`smif.SpaceTimeValue`
+
+        """
+        data_by_region = OrderedDict()
+        for entry in data:
+            if entry.region not in data_by_region:
+                data_by_region[entry.region] = [entry]
+            else:
+                data_by_region[entry.region].append(entry)
+        return data_by_region
+
+    @staticmethod
+    def intervalise_data(data):
+        """
+
+        Parameters
+        ----------
+        data: list
+            A list of :class:`smif.SpaceTimeValue`
+
+        Returns
+        -------
+        :class:`collections.OrderedDict`
+            A dictionary where the key is an interval, and the value is a list of
+            :class:`smif.SpaceTimeValue`
+
+        """
+        data_by_intervals = OrderedDict()
+        for entry in data:
+            if entry.interval not in data_by_intervals:
+                data_by_intervals[entry.interval] = [entry]
+            else:
+                data_by_intervals[entry.interval].append(entry)
+        return data_by_intervals
 
     def convert(self):
         """
         """
-        data = []
-
-        if self._convert_intervals_required():
-            if len(self.data_regions) > 1:
-                for region, region_data in self.data_by_region.items():
-                    data.extend(self._convert_time(region_data))
-            elif len(self.data_regions) == 1:
-                data = self._convert_time(self.data)
+        if self._convert_intervals_required() and self._convert_regions_required():
+            self.logger.debug("Converting intervals and regions")
+            interval_data = self._loop_over_regions(self.data)
+            data = self._loop_over_intervals(interval_data)
+        elif self._convert_intervals_required():
+            self.logger.debug("Converting intervals only")
+            data = self._loop_over_regions(self.data)
+        elif self._convert_regions_required():
+            self.logger.debug("Converting regions only")
+            data = self._loop_over_intervals(self.data)
         else:
+            self.logger.debug("No conversion required, passing data through")
             data = self.data
 
-        if self._convert_regions_required():
-            data = self._convert_space(data)
-
         return data
+
+    def _loop_over_regions(self, data=None):
+        """
+        """
+        converted_data = []
+        data_by_region = self.regionise_data(data)
+        num_regions = len(set(data_by_region.keys()))
+        if num_regions > 1:
+            for region, region_data in data_by_region.items():
+                converted_data.extend(self._convert_time(region_data))
+        elif num_regions == 1:
+            converted_data = self._convert_time(data)
+        return converted_data
+
+    def _loop_over_intervals(self, data=None):
+        """
+        """
+        converted_data = []
+        data_by_intervals = self.intervalise_data(data)
+        num_intervals = len(set(data_by_intervals.keys()))
+        if num_intervals > 1:
+            for interval, interval_data in data_by_intervals.items():
+                converted_data.extend(self._convert_space(interval_data))
+        elif num_intervals == 1:
+            converted_data = self._convert_space(data)
+        return converted_data
 
     def _convert_regions_required(self):
         """Returns True if it is necessary to convert over space
@@ -110,15 +197,46 @@ class SpaceTimeConvertor(object):
             raise ValueError(msg)
 
     def _convert_space(self, data):
+        """Wraps the call to the area conversion
+
+        Parameters
+        ----------
+        data: list
+            A list of :class:`smif.SpaceTimeValue` for one interval
+
+        Returns
+        -------
+        data: list
+            A list of :class:`smif.SpaceTimeValue` for one interval
         """
-        """
-        data = self.regions.convert(data,
-                                    self.from_spatial,
-                                    self.to_spatial)
-        return data
+        timeseries_data = {}
+
+        interval = data[0].interval
+        units = data[0].units
+        msg = "Converting regions for interval %s with units %s"
+        self.logger.debug(msg, interval, units)
+
+        for entry in data:
+            timeseries_data[entry.region] = entry.value
+
+        converted_data = self.regions.convert(timeseries_data,
+                                              self.from_spatial,
+                                              self.to_spatial)
+        return [SpaceTimeValue(region_name, interval, converted_value, units)
+                for region_name, converted_value in converted_data.items()]
 
     def _convert_time(self, data):
-        """
+        """Wraps the call to the interval conversion
+
+        Parameters
+        ----------
+        data: list
+            A list of :class:`smif.SpaceTimeValue` for one region
+
+        Returns
+        -------
+        data: list
+            A list of :class:`smif.SpaceTimeValue` for one region
         """
 
         timeseries_data = []
