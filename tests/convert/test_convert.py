@@ -55,7 +55,7 @@ def monthly_data():
     return data
 
 
-class TestSpaceTimeConvertor:
+class TestSpaceTimeConvertor_Utils:
 
     def test_instantiation(self):
         SpaceTimeConvertor([], None, None, None, None, None, None)
@@ -88,6 +88,9 @@ class TestSpaceTimeConvertor:
                     'b': [SpaceTimeValue('b', '1_1', 28, 'days')]}
 
         assert convertor.data_by_region == expected
+
+
+class TestSpaceTimeConvertor_Main:
 
     def test_one_region_pass_through_time(self, months, seasons, fixture_regions):
         """Only one region, 12 months, neither space nor time conversion is required
@@ -143,6 +146,8 @@ class TestSpaceTimeConvertor:
         assert actual == expected
 
     def test_one_region_time_aggregation(self, months, seasons, fixture_regions):
+        """Only one region, time aggregation is required
+        """
 
         data = [SpaceTimeValue('a', '1_0', 31, 'days'),
                 SpaceTimeValue('a', '1_1', 28, 'days'),
@@ -188,6 +193,8 @@ class TestSpaceTimeConvertor:
             assert act.units == exp.units
 
     def test_two_region_time_aggregation(self, months, seasons, fixture_regions):
+        """Two regions, time aggregation by region is required
+        """
 
         region_a = [SpaceTimeValue('a', '1_0', 31, 'days'),
                     SpaceTimeValue('a', '1_1', 28, 'days'),
@@ -254,6 +261,8 @@ class TestSpaceTimeConvertor:
 
     def test_one_region_convert_from_hour_to_day(self, fixture_regions,
                                                  twenty_four_hours, one_day):
+        """One region, time aggregation required
+        """
 
         data = [SpaceTimeValue('a', '1_0', 1, 'days'),
                 SpaceTimeValue('a', '1_1', 1, 'days'),
@@ -313,7 +322,7 @@ class TestRemapConvert:
                                         remap_months,
                                         data_remap,
                                         fixture_regions):
-        """
+        """One region, time remapping required
         """
         timeslice_data = data_remap
 
@@ -352,7 +361,7 @@ class TestRemapConvert:
                                         remap_months,
                                         data_remap,
                                         fixture_regions):
-        """
+        """One region, time remapping required
         """
         timeslice_data = data_remap
 
