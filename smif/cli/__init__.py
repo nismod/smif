@@ -42,6 +42,7 @@ import sys
 from argparse import ArgumentParser
 
 from smif.sos_model import SosModelBuilder
+from smif.data_layer.load import dump
 from smif.data_layer.sos_model_config import SosModelReader
 from smif.data_layer.sector_model_config import SectorModelReader
 from smif.data_layer.validate import VALIDATION_ERRORS
@@ -162,6 +163,11 @@ def run_model(args):
         model_name = args.model
         sos_model.run_sector_model(model_name)
 
+    output_file = args.output_file
+    LOGGER.info("Writing results to %s", output_file)
+    dump(sos_model.results, output_file)
+    print("Model run complete")
+
 
 def validate_config(args):
     """Validates the model configuration file against the schema
@@ -280,7 +286,7 @@ def parse_arguments():
                                             help=help_msg)
     parser_validate.set_defaults(func=validate_config)
     parser_validate.add_argument('path',
-                                 help="Path to the project folder")
+                                 help="Path to the main config file")
 
     # SETUP
     parser_setup = subparsers.add_parser('setup',
@@ -295,9 +301,12 @@ def parse_arguments():
     parser_run.add_argument('-m', '--model',
                             default='all',
                             help='The name of the model to run')
+    parser_run.add_argument('-o', '--output-file',
+                            default='results.yaml',
+                            help='Output file')
     parser_run.set_defaults(func=run_model)
     parser_run.add_argument('path',
-                            help="Path to the project folder")
+                            help="Path to the main config file")
 
     return parser
 

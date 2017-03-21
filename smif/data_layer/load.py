@@ -14,3 +14,17 @@ def load(file_path):
     """
     with open(file_path, 'r') as file_handle:
         return yaml.load(file_handle)
+
+
+def dump(data, file_path):
+    """Write plain data to a file as yaml
+
+    Parameters
+    ----------
+    file_path : str
+        The path of the configuration file to write
+    data
+        Data to write (should be lists, dicts and simple values)
+    """
+    with open(file_path, 'w') as file_handle:
+        return yaml.dump(data, file_handle)

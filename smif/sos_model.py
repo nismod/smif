@@ -4,9 +4,10 @@ framework.
 
 """
 import logging
-from enum import Enum
+from collections import defaultdict
 
 import networkx
+from enum import Enum
 from smif import SpaceTimeValue
 from smif.convert.area import RegionRegister, RegionSet
 from smif.convert.interval import TimeIntervalRegister, TimeSeries
@@ -49,7 +50,7 @@ class SosModel(object):
 
         self.dependency_graph = None
 
-        self.results = {}
+        self._results = defaultdict(dict)
 
         self.resolution_mapping = {}
 
@@ -64,6 +65,19 @@ class SosModel(object):
             SpaceTimeValue(region, interval, value, unit)``
         """
         return self._scenario_data
+
+    @property
+    def results(self):
+        """Get nested dict of model results
+
+        Returns
+        -------
+        dict
+            Nested dictionary in the format results[int:year][str:model] => list
+            of SpaceTimeValues
+        """
+        # convert from defaultdict to plain dict
+        return dict(self._results)
 
     def run(self):
         """Runs the system-of-system model
@@ -152,7 +166,7 @@ class SosModel(object):
         state = {}
         data = self._get_data(model, model.name, timestep)
         results = model.simulate(decisions, state, data)
-        self.results[timestep] = results
+        self._results[timestep][model.name] = results
         self.logger.debug("Results from %s model:\n %s", model.name, results)
 
     def _get_decisions(self, model, timestep):
