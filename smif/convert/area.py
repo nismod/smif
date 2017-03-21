@@ -84,6 +84,13 @@ class RegionRegister(object):
     def convert(self, data, from_set_name, to_set_name):
         """Convert a list of data points for a given set of regions
         to another set of regions.
+
+        Parameters
+        ----------
+        data: dict
+        from_set_name: str
+        to_set_name: str
+
         """
         converted = defaultdict(float)
         for from_key, from_value in data.items():

@@ -5,12 +5,13 @@ framework.
 """
 import logging
 from collections import defaultdict
+from enum import Enum
 
 import networkx
-from enum import Enum
 from smif import SpaceTimeValue
+from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister, RegionSet
-from smif.convert.interval import TimeIntervalRegister, TimeSeries
+from smif.convert.interval import TimeIntervalRegister
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.sector_model import SectorModelBuilder
@@ -218,27 +219,26 @@ class SosModel(object):
             if dependency.from_model == 'scenario':
                 name = dependency.name
                 from_data = self._get_scenario_data(timestep, name)
-                to_spatial_resolution = dependency.spatial_resolution
-                to_temporal_resolution = dependency.temporal_resolution
-                from_spatial_resolution = self.resolution_mapping[name]['spatial_resolution']
-                from_temporal_resolution = self.resolution_mapping[name]['temporal_resolution']
                 self.logger.debug("Found data: %s", from_data)
 
-                if from_spatial_resolution != to_spatial_resolution:
-                    converted_data = self.regions.convert(from_data,
-                                                          from_spatial_resolution,
-                                                          to_spatial_resolution)
-                else:
-                    converted_data = from_data
+                to_spatial_resolution = dependency.spatial_resolution
+                to_temporal_resolution = dependency.temporal_resolution
+                msg = "Converting to spacial resolution '%s' and  temporal resolution '%s'"
 
-                if from_temporal_resolution != to_temporal_resolution:
-                    timeseries = TimeSeries(converted_data)
-                    converted_data = self.intervals.convert(timeseries,
-                                                            from_temporal_resolution,
-                                                            to_temporal_resolution)
-                    new_data[name] = converted_data
-                else:
-                    new_data[name] = converted_data
+                self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
+                scenario_map = self.resolution_mapping['scenarios']
+
+                from_spatial_resolution = scenario_map[name]['spatial_resolution']
+                from_temporal_resolution = scenario_map[name]['temporal_resolution']
+
+                convertor = SpaceTimeConvertor(from_data,
+                                               from_spatial_resolution,
+                                               to_spatial_resolution,
+                                               from_temporal_resolution,
+                                               to_temporal_resolution,
+                                               self.regions,
+                                               self.intervals)
+                new_data[name] = convertor.convert()
 
             else:
                 msg = "Getting data from dependencies is not yet implemented"
@@ -255,6 +255,11 @@ class SosModel(object):
         ----------
         timestep: int
             The year for which to get scenario data
+
+        Returns
+        -------
+        list
+            A list of :class:`SpaceTimeValue`
 
         """
         return self.scenario_data[timestep][name]
@@ -369,6 +374,7 @@ class SosModelBuilder(object):
         self.load_models(model_list)
         self.add_planning(config_data['planning'])
         self.add_scenario_data(config_data['scenario_data'])
+        self.add_resolution_mapping(config_data['resolution_mapping'])
         self.logger.debug(config_data['scenario_data'])
 
     def add_timesteps(self, timesteps):
@@ -422,7 +428,6 @@ class SosModelBuilder(object):
             self.logger.warning(msg)
 
         for name, data in interval_set_definitions:
-            print(name, data)
             self.sos_model.intervals.add_interval_set(data, name)
 
     def load_models(self, model_data_list):
