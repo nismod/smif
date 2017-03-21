@@ -150,7 +150,36 @@ def validate_dependency(dep):
 def validate_output_spec(output_spec, model_name):
     """Check the output specification for a single sector model
     """
-    pass
+    if not isinstance(output_spec, dict) \
+            or 'metrics' not in output_spec:
+        fmt = "Expected a list of metrics in '{}' model " + \
+              "output specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, output_spec)))
+        return
+
+    metrics = output_spec['metrics']
+    if not isinstance(metrics, list):
+        fmt = "Expected a list of metrics in '{}' model " + \
+              "output specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, metrics)))
+        return
+
+    map(validate_output, metrics)
+
+
+def validate_output(dep):
+    """Check an output specification
+    """
+    if not isinstance(dep, dict):
+        fmt = "Expected an output specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(dep)))
+        return
+
+    required_keys = ["name", "spatial_resolution", "temporal_resolution"]
+    for key in required_keys:
+        if key not in dep:
+            fmt = "Expected a value for '{}' in each model output, only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, dep)))
 
 
 def validate_planning_config(planning):

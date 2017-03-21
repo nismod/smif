@@ -5,6 +5,8 @@ from smif.data_layer.validate import (VALIDATION_ERRORS,
                                       validate_dependency,
                                       validate_input_spec,
                                       validate_interventions,
+                                      validate_output,
+                                      validate_output_spec,
                                       validate_planning_config,
                                       validate_sector_model_initial_config,
                                       validate_sos_model_config,
@@ -321,17 +323,88 @@ def test_dependency_ok(get_dependency):
     assert len(VALIDATION_ERRORS) == n_errors_before
 
 
-def test_dependency_required(get_dependency):
-    """Expect an error if dependency is not a dict
+def test_output_spec_type():
+    """Expect an error if output_spec is not a dict
     """
+    data = None
+    validate_output_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of metrics in 'energy_demand' model output " + \
+          "specification, instead got None"
+    assert msg in str(ex)
 
-    required_keys = ['name', 'spatial_resolution', 'temporal_resolution', 'from_model']
+
+def test_output_spec_deps():
+    """Expect an error if output_spec is missing metrics
+    """
+    data = {}
+    validate_output_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of metrics in 'energy_demand' model output " + \
+          "specification, instead got {}"
+    assert msg in str(ex)
+
+
+def test_output_spec_deps_list():
+    """Expect an error if output_spec metrics is not a list
+    """
+    data = {'metrics': 1.618}
+    validate_output_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of metrics in 'energy_demand' model output " + \
+          "specification, instead got 1.618"
+    assert msg in str(ex)
+
+
+def test_output_spec_deps_list_empty():
+    """Expect no errors for an empty list
+    """
+    data = {'metrics': []}
+    # empty is ok
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_output_spec(data, 'energy_demand')
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_output_spec_deps_list_ok(get_output_spec):
+    """Expect no errors for a list of valid dependencies
+    """
+    data = get_output_spec
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_output_spec(data, 'energy_demand')
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_output_type():
+    """Expect an error if output is not a dict
+    """
+    data = 'single_string'
+    validate_output(data)
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected an output specification, " + \
+          "instead got single_string"
+    assert msg in str(ex)
+
+
+def test_output_ok(get_dependency):
+    """Expect no errors for a valid output
+    """
+    data = get_dependency
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_output(data)
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_output_required(get_dependency):
+    """Expect an error if output is not a dict
+    """
+    required_keys = ['name', 'spatial_resolution', 'temporal_resolution']
     for key in required_keys:
         data = get_dependency
         del data[key]
-        validate_dependency(data)
+        validate_output(data)
         ex = VALIDATION_ERRORS.pop()
-        msg = "Expected a value for '{}' in each model dependency, " + \
+        msg = "Expected a value for '{}' in each model output, " + \
             "only received {}"
         assert msg.format(key, data) in str(ex)
 
