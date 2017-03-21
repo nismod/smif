@@ -100,11 +100,12 @@ def monthly_data():
 
 @fixture(scope='function')
 def seasons():
-    seasons = [{'id': 'winter', 'start': 'P11M', 'end': 'P2M'},
-               {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
-               {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
-               {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'}]
-    return seasons
+    # NB "winter" is split into two pieces around the year end
+    return [{'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
+            {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
+            {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
+            {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'},
+            {'id': 'winter', 'start': 'P11M', 'end': 'P12M'}]
 
 
 @fixture(scope='function')
@@ -153,6 +154,24 @@ class TestInterval:
         with raises(ValueError):
             Interval('test', [])
 
+    def test_equality(self):
+        a = Interval('test', ('PT0H', 'PT1H'))
+        b = Interval('test', ('PT0H', 'PT1H'))
+        c = Interval('another_test', ('PT0H', 'PT1H'))
+        d = Interval('another_test', ('PT1H', 'PT2H'))
+
+        assert a == b
+        assert a != c
+        assert b != c
+        assert c != d
+
+    def test_invalid_set_interval(self):
+        interval = Interval('test', ('PT0H', 'PT1H'))
+        with raises(ValueError) as excinfo:
+            interval.interval = None
+        msg = "A time interval must add either a single tuple or a list of tuples"
+        assert msg in str(excinfo)
+
     def test_empty_interval_tuple(self):
         with raises(ValueError):
             Interval('test', ())
@@ -177,7 +196,7 @@ class TestInterval:
         assert interval.start == ['PT0H', 'PT1H']
         assert interval.end == ['PT1H', 'PT2H']
 
-    def test_add_list_of_interval(sself):
+    def test_add_list_of_interval(self):
 
         interval = Interval('test', ('PT0H', 'PT1H'))
         interval.interval = [('PT1H', 'PT2H')]
@@ -305,7 +324,7 @@ class TestTimeSeries:
         assert actual == expected
 
         register._convert_to_hourly_buckets(timeseries)
-        actual = timeseries._hourly_values
+        actual = timeseries.hourly_values
 
         month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         month_hours = list(map(lambda x: x*24, month_days))
@@ -401,11 +420,11 @@ class TestIntervalRegister:
 
         register = TimeIntervalRegister()
         register.add_interval_set(data, 'energy_supply_hourly')
+        assert register.interval_set_names == ['energy_supply_hourly']
 
         actual = register.get_intervals_in_set('energy_supply_hourly')
 
         element = Interval('1_1', ('PT0H', 'PT1H'), base_year=2010)
-
         expected = OrderedDict()
         expected['1_1'] = element
 
@@ -543,3 +562,13 @@ class TestValidation:
         with raises(ValueError) as excinfo:
             register.add_interval_set(data, 'remap_months')
         assert "Duplicate entry for hour 0 in interval set remap_months." in str(excinfo.value)
+
+    def test_time_interval_start_before_end(get_time_intervals):
+        with raises(ValueError) as excinfo:
+            Interval('backwards', ('P1Y', 'P3M'))
+        assert "A time interval must not end before it starts" in str(excinfo)
+
+        interval = Interval('starts_ok', ('P0Y', 'P1M'))
+        with raises(ValueError) as excinfo:
+            interval.interval = ('P2M', 'P1M')
+        assert "A time interval must not end before it starts" in str(excinfo)

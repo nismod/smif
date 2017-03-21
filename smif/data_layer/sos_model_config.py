@@ -9,7 +9,8 @@ from glob import glob
 import fiona
 
 from .load import load
-from .validate import validate_sos_model_config, validate_timesteps
+from .validate import (validate_sos_model_config, validate_time_intervals,
+                       validate_timesteps)
 
 
 class SosModelReader(object):
@@ -251,6 +252,7 @@ class SosModelReader(object):
                 file_path = self._get_path_from_config(interval_set['file'])
                 self.logger.debug("Loading time interval data from %s", file_path)
                 data = load(file_path)
+                validate_time_intervals(data, file_path)
                 time_interval_data[interval_set["name"]] = data
 
         return time_interval_data

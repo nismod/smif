@@ -1,15 +1,14 @@
 """Test config validation
 """
 from pytest import fixture
-from smif.data_layer.validate import (VALIDATION_ERRORS,
-                                      validate_dependency,
+from smif.data_layer.validate import (VALIDATION_ERRORS, validate_dependency,
                                       validate_input_spec,
-                                      validate_interventions,
-                                      validate_output,
+                                      validate_interventions, validate_output,
                                       validate_output_spec,
                                       validate_planning_config,
                                       validate_sector_model_initial_config,
                                       validate_sos_model_config,
+                                      validate_time_intervals,
                                       validate_timesteps)
 
 
@@ -150,6 +149,24 @@ def get_output_spec():
     }
 
 
+@fixture(scope='function')
+def get_time_intervals():
+    """Return sample time intervals
+    """
+    return [
+        {
+            'id': 'first_half',
+            'start': 'P0M',
+            'end': 'P6M'
+        },
+        {
+            'id': 'second_half',
+            'start': 'P6M',
+            'end': 'P12M'
+        }
+    ]
+
+
 def test_modelrun_config_invalid():
     """Expect an error if not a dict
     """
@@ -198,6 +215,40 @@ def test_invalid_single_timestep():
     ex = VALIDATION_ERRORS.pop()
     msg = "timesteps should be integer years"
     assert msg in str(ex)
+
+
+def test_time_intervals_type():
+    """Expect an error if a set of time_intervals is not a list
+    """
+    data = 'Jiminy Cricket'
+    validate_time_intervals(data, '/path/to/interval_set.yaml')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "expected a list of time intervals"
+    assert msg in str(ex)
+
+
+def test_time_interval_type():
+    """Expect an error if a set of time_intervals is not a list
+    """
+    data = ['Jiminy Cricket']
+    validate_time_intervals(data, '/path/to/interval_set.yaml')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a time interval, instead got Jiminy Cricket"
+    assert msg in str(ex)
+
+
+def test_time_interval_required(get_time_intervals):
+    """Expect an error if a set of time_intervals is not a list
+    """
+    required_keys = ['id', 'start', 'end']
+    for key in required_keys:
+        data = get_time_intervals
+        del data[0][key]
+
+        validate_time_intervals(data, '/path/to/interval_set.yaml')
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Expected a value for '{}' in each time interval".format(key)
+        assert msg in str(ex)
 
 
 def test_missing_sector_models(get_sos_model_config):

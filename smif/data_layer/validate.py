@@ -87,6 +87,33 @@ def validate_timesteps(timesteps, file_path):
                 VALIDATION_ERRORS.append(msg.format(file_path, timestep))
 
 
+def validate_time_intervals(intervals, file_path):
+    """Check time intervals
+    """
+    if not isinstance(intervals, list):
+        msg = "Loading {}: expected a list of time intervals.".format(file_path)
+        VALIDATION_ERRORS.append(ValidationError(msg))
+    else:
+        for interval in intervals:
+            validate_time_interval(interval)
+
+
+def validate_time_interval(interval):
+    """Check a single time interval
+    """
+    if not isinstance(interval, dict):
+        msg = "Expected a time interval, instead got {}.".format(interval)
+        VALIDATION_ERRORS.append(ValidationError(msg))
+        return
+
+    required_keys = ["id", "start", "end"]
+    for key in required_keys:
+        if key not in interval:
+            fmt = "Expected a value for '{}' in each " + \
+                "time interval, only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, interval)))
+
+
 def validate_sector_models_initial_config(sector_models):
     """Check list of sector models initial configuration
     """

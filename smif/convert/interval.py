@@ -192,6 +192,14 @@ class Interval(object):
             msg = "Interval tuple must take form (<start>, <end>)"
             raise ValueError(msg)
 
+        self._validate()
+
+    def _validate(self):
+        for lower, upper in self.to_hours():
+            if lower > upper:
+                msg = "A time interval must not end before it starts - found %d > %d"
+                raise ValueError(msg, lower, upper)
+
     @property
     def name(self):
         return self._name
@@ -243,6 +251,11 @@ class Interval(object):
             for element in value:
                 assert isinstance(element, tuple)
             self._interval.extend(value)
+        else:
+            msg = "A time interval must add either a single tuple or a list of tuples"
+            raise ValueError(msg)
+
+        self._validate()
 
     @property
     def baseyear(self):
@@ -488,7 +501,6 @@ class TimeIntervalRegister:
         results = []
 
         self._check_interval_in_register(from_interval)
-
         self._convert_to_hourly_buckets(timeseries)
 
         target_intervals = self.get_intervals_in_set(to_interval)
@@ -499,16 +511,8 @@ class TimeIntervalRegister:
             total = 0
 
             for lower, upper in interval_tuples:
-
                 self.logger.debug("Range: %s-%s", lower, upper)
-
-                if upper < lower:
-                    # The interval loops around the end/start hours of the year
-                    end_of_year = sum(timeseries.hourly_values[lower:8760])
-                    start_of_year = sum(timeseries.hourly_values[0:upper])
-                    total += end_of_year + start_of_year
-                else:
-                    total += sum(timeseries.hourly_values[lower:upper])
+                total += sum(timeseries.hourly_values[lower:upper])
 
             results.append({'id': name,
                             'value': total})
@@ -530,10 +534,6 @@ class TimeIntervalRegister:
             divisor = len(list_of_intervals)
             for lower, upper in list_of_intervals:
                 self.logger.debug("lower: %s, upper: %s", lower, upper)
-                if lower >= upper:
-                    msg = "Problem in interval definition: interval start after interval end"
-                    raise ValueError(msg)
-
                 number_hours_in_range = upper - lower
                 self.logger.debug("number_hours: %s", number_hours_in_range)
 
@@ -556,7 +556,7 @@ class TimeIntervalRegister:
             if len(duplicate_hours) == 0:
                 self.logger.debug("No duplicate hours in %s", set_name)
             else:
-                for hour in duplicate_hours:
-                    msg = "Duplicate entry for hour {} in interval set {}."
-                    self.logger.warning(msg.format(hour, set_name))
-                    raise ValueError(msg.format(hour, set_name))
+                hour = duplicate_hours[0]
+                msg = "Duplicate entry for hour {} in interval set {}."
+                self.logger.warning(msg.format(hour, set_name))
+                raise ValueError(msg.format(hour, set_name))
