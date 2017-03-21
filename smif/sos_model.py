@@ -5,12 +5,13 @@ framework.
 """
 import logging
 from collections import defaultdict
+from enum import Enum
 
 import networkx
-from enum import Enum
 from smif import SpaceTimeValue
+from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister, RegionSet
-from smif.convert.interval import TimeIntervalRegister, TimeSeries
+from smif.convert.interval import TimeIntervalRegister
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.sector_model import SectorModelBuilder
@@ -223,26 +224,21 @@ class SosModel(object):
                 to_spatial_resolution = dependency.spatial_resolution
                 to_temporal_resolution = dependency.temporal_resolution
                 msg = "Converting to spacial resolution '%s' and  temporal resolution '%s'"
+
                 self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
                 scenario_map = self.resolution_mapping['scenarios']
+
                 from_spatial_resolution = scenario_map[name]['spatial_resolution']
                 from_temporal_resolution = scenario_map[name]['temporal_resolution']
 
-                if from_spatial_resolution != to_spatial_resolution:
-                    converted_data = self.regions.convert(from_data,
-                                                          from_spatial_resolution,
-                                                          to_spatial_resolution)
-                else:
-                    converted_data = from_data
-
-                if from_temporal_resolution != to_temporal_resolution:
-                    timeseries = TimeSeries(converted_data)
-                    converted_data = self.intervals.convert(timeseries,
-                                                            from_temporal_resolution,
-                                                            to_temporal_resolution)
-                    new_data[name] = converted_data
-                else:
-                    new_data[name] = converted_data
+                convertor = SpaceTimeConvertor(from_data,
+                                               from_spatial_resolution,
+                                               to_spatial_resolution,
+                                               from_temporal_resolution,
+                                               to_temporal_resolution,
+                                               self.regions,
+                                               self.intervals)
+                new_data[name] = convertor.convert()
 
             else:
                 msg = "Getting data from dependencies is not yet implemented"
