@@ -530,6 +530,10 @@ class TimeIntervalRegister:
             divisor = len(list_of_intervals)
             for lower, upper in list_of_intervals:
                 self.logger.debug("lower: %s, upper: %s", lower, upper)
+                if lower >= upper:
+                    msg = "Problem in interval definition: interval start after interval end"
+                    raise ValueError(msg)
+
                 number_hours_in_range = upper - lower
                 self.logger.debug("number_hours: %s", number_hours_in_range)
 
