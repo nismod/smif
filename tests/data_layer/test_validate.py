@@ -2,6 +2,8 @@
 """
 from pytest import fixture
 from smif.data_layer.validate import (VALIDATION_ERRORS,
+                                      validate_dependency,
+                                      validate_input_spec,
                                       validate_interventions,
                                       validate_planning_config,
                                       validate_sector_model_initial_config,
@@ -103,6 +105,49 @@ def get_intervention():
     }
 
 
+@fixture(scope='function')
+def get_input_spec():
+    """Return sample input specification
+    """
+    return {
+        'dependencies': [
+            {
+                'name': 'gas_demand',
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual',
+                'from_model': 'scenario'
+            }
+        ]
+    }
+
+
+@fixture(scope='function')
+def get_dependency():
+    """Return sample dependency
+    """
+    return {
+        'name': 'gas_demand',
+        'spatial_resolution': 'national',
+        'temporal_resolution': 'annual',
+        'from_model': 'scenario'
+    }
+
+
+@fixture(scope='function')
+def get_output_spec():
+    """Return sample output specification
+    """
+    return {
+        'metrics': [
+            {
+                'name': 'total_cost',
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
+            }
+        ]
+    }
+
+
 def test_modelrun_config_invalid():
     """Expect an error if not a dict
     """
@@ -190,7 +235,7 @@ def test_sector_models_empty_list(get_sos_model_config):
     assert msg in str(ex)
 
 
-def test_sector_model_missing_required(get_sector_model_initial_config):
+def test_sector_model_required(get_sector_model_initial_config):
     """Expect an error if a sector_model is missing a required key
     """
     required_keys = ['name', 'config_dir', 'path', 'classname']
@@ -202,6 +247,93 @@ def test_sector_model_missing_required(get_sector_model_initial_config):
         ex = VALIDATION_ERRORS.pop()
         msg = "Expected a value for '{}'".format(key)
         assert msg in str(ex)
+
+
+def test_input_spec_type():
+    """Expect an error if input_spec is not a dict
+    """
+    data = None
+    validate_input_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of dependencies in 'energy_demand' model input " + \
+          "specification, instead got None"
+    assert msg in str(ex)
+
+
+def test_input_spec_deps():
+    """Expect an error if input_spec is missing dependencies
+    """
+    data = {}
+    validate_input_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of dependencies in 'energy_demand' model input " + \
+          "specification, instead got {}"
+    assert msg in str(ex)
+
+
+def test_input_spec_deps_list():
+    """Expect an error if input_spec dependencies is not a list
+    """
+    data = {'dependencies': 1.618}
+    validate_input_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of dependencies in 'energy_demand' model input " + \
+          "specification, instead got 1.618"
+    assert msg in str(ex)
+
+
+def test_input_spec_deps_list_empty():
+    """Expect no errors for an empty list
+    """
+    data = {'dependencies': []}
+    # empty is ok
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_input_spec(data, 'energy_demand')
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_input_spec_deps_list_ok(get_input_spec):
+    """Expect no errors for a list of valid dependencies
+    """
+    data = get_input_spec
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_input_spec(data, 'energy_demand')
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_dependency_type(get_input_spec):
+    """Expect an error if dependency is not a dict
+    """
+    data = 'single_string'
+    validate_dependency(data)
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a dependency specification, " + \
+          "instead got single_string"
+    assert msg in str(ex)
+
+
+def test_dependency_ok(get_dependency):
+    """Expect no errors for a valid dependency
+    """
+    data = get_dependency
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_dependency(data)
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_dependency_required(get_dependency):
+    """Expect an error if dependency is not a dict
+    """
+
+    required_keys = ['name', 'spatial_resolution', 'temporal_resolution', 'from_model']
+    for key in required_keys:
+        data = get_dependency
+        del data[key]
+        validate_dependency(data)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Expected a value for '{}' in each model dependency, " + \
+            "only received {}"
+        assert msg.format(key, data) in str(ex)
 
 
 def test_missing_planning(get_sos_model_config):

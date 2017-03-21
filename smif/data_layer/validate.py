@@ -100,12 +100,57 @@ def validate_sector_models_initial_config(sector_models):
 def validate_sector_model_initial_config(sector_model_config):
     """Check a single sector model initial configuration
     """
+    if not isinstance(sector_model_config, dict):
+        fmt = "Expected a sector model config block, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(sector_model_config)))
+
     required_keys = ["name", "config_dir", "path", "classname"]
     for key in required_keys:
         if key not in sector_model_config:
             fmt = "Expected a value for '{}' in each " + \
                   "sector model in main config file, only received {}"
             VALIDATION_ERRORS.append(ValidationError(fmt.format(key, sector_model_config)))
+
+
+def validate_input_spec(input_spec, model_name):
+    """Check the input specification for a single sector model
+    """
+    if not isinstance(input_spec, dict) \
+            or 'dependencies' not in input_spec:
+        fmt = "Expected a list of dependencies in '{}' model " + \
+              "input specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, input_spec)))
+        return
+
+    deps = input_spec['dependencies']
+    if not isinstance(deps, list):
+        fmt = "Expected a list of dependencies in '{}' model " + \
+              "input specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, deps)))
+        return
+
+    map(validate_dependency, deps)
+
+
+def validate_dependency(dep):
+    """Check a dependency specification
+    """
+    if not isinstance(dep, dict):
+        fmt = "Expected a dependency specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(dep)))
+        return
+
+    required_keys = ["name", "spatial_resolution", "temporal_resolution", "from_model"]
+    for key in required_keys:
+        if key not in dep:
+            fmt = "Expected a value for '{}' in each model dependency, only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, dep)))
+
+
+def validate_output_spec(output_spec, model_name):
+    """Check the output specification for a single sector model
+    """
+    pass
 
 
 def validate_planning_config(planning):

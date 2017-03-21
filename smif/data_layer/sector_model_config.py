@@ -5,7 +5,7 @@ import logging
 import os
 
 from .load import load
-from .validate import validate_interventions
+from .validate import validate_input_spec, validate_interventions
 
 
 class SectorModelReader(object):
@@ -127,6 +127,7 @@ class SectorModelReader(object):
             data = {}
         else:
             data = load(path)
+            validate_input_spec(data, self.model_name)
 
         return data
 
