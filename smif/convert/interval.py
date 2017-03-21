@@ -501,7 +501,6 @@ class TimeIntervalRegister:
         results = []
 
         self._check_interval_in_register(from_interval)
-
         self._convert_to_hourly_buckets(timeseries)
 
         target_intervals = self.get_intervals_in_set(to_interval)
@@ -512,16 +511,8 @@ class TimeIntervalRegister:
             total = 0
 
             for lower, upper in interval_tuples:
-
                 self.logger.debug("Range: %s-%s", lower, upper)
-
-                if upper < lower:
-                    # The interval loops around the end/start hours of the year
-                    end_of_year = sum(timeseries.hourly_values[lower:8760])
-                    start_of_year = sum(timeseries.hourly_values[0:upper])
-                    total += end_of_year + start_of_year
-                else:
-                    total += sum(timeseries.hourly_values[lower:upper])
+                total += sum(timeseries.hourly_values[lower:upper])
 
             results.append({'id': name,
                             'value': total})
@@ -565,7 +556,7 @@ class TimeIntervalRegister:
             if len(duplicate_hours) == 0:
                 self.logger.debug("No duplicate hours in %s", set_name)
             else:
-                for hour in duplicate_hours:
-                    msg = "Duplicate entry for hour {} in interval set {}."
-                    self.logger.warning(msg.format(hour, set_name))
-                    raise ValueError(msg.format(hour, set_name))
+                hour = duplicate_hours[0]
+                msg = "Duplicate entry for hour {} in interval set {}."
+                self.logger.warning(msg.format(hour, set_name))
+                raise ValueError(msg.format(hour, set_name))
