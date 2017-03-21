@@ -10,7 +10,7 @@ from .fixtures.water_supply import WaterSupplySectorModel
 
 
 @fixture(scope='function')
-def get_sos_model_only_scenario_dependencies():
+def get_sos_model_only_scenario_dependencies(setup_region_data):
     builder = SosModelBuilder()
     builder.add_timesteps([2010])
     builder.add_scenario_data({
@@ -32,6 +32,13 @@ def get_sos_model_only_scenario_dependencies():
             }
         ]
     })
+    builder.add_resolution_mapping({'raininess': {'temporal_resolution': 'annual',
+                                                  'spatial_resolution': 'LSOA'}})
+    builder.load_region_sets({'LSOA': setup_region_data['features']})
+    interval_data = [{'id': 1,
+                      'start': 'P0Y',
+                      'end': 'P1Y'}]
+    builder.load_interval_sets({'annual': interval_data})
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
@@ -126,6 +133,35 @@ class TestSosModel():
         assert actual == expected
 
 
+@fixture(scope='function')
+def get_config_data(setup_project_folder, setup_region_data):
+    path = setup_project_folder
+    water_supply_wrapper_path = str(
+        path.join(
+            'models', 'water_supply', '__init__.py'
+        )
+    )
+    return {
+        "timesteps": [2010, 2011, 2012],
+        "sector_model_data": [{
+            "name": "water_supply",
+            "path": water_supply_wrapper_path,
+            "classname": "WaterSupplySectorModel",
+            "inputs": {},
+            "outputs": {},
+            "initial_conditions": [],
+            "interventions": []
+        }],
+        "planning": [],
+        "scenario_data": {},
+        "region_sets": {'LSOA': setup_region_data['features']},
+        "interval_sets": {'annual': [{'id': 1,
+                                      'start': 'P0Y',
+                                      'end': 'P1Y'}]
+                          }
+             }
+
+
 class TestSosModelBuilder():
 
     def test_builder(self, setup_project_folder):
@@ -157,31 +193,10 @@ class TestSosModelBuilder():
             "water_asset_c"
         ]
 
-    def get_config_data(self, path):
-        water_supply_wrapper_path = str(
-            path.join(
-                'models', 'water_supply', '__init__.py'
-            )
-        )
-        return {
-            "timesteps": [2010, 2011, 2012],
-            "sector_model_data": [{
-                "name": "water_supply",
-                "path": water_supply_wrapper_path,
-                "classname": "WaterSupplySectorModel",
-                "inputs": {},
-                "outputs": {},
-                "initial_conditions": [],
-                "interventions": []
-            }],
-            "planning": [],
-            "scenario_data": {}
-        }
-
-    def test_construct(self, setup_project_folder):
+    def test_construct(self, get_config_data):
         """Test constructing from single dict config
         """
-        config = self.get_config_data(setup_project_folder)
+        config = get_config_data
         builder = SosModelBuilder()
         builder.construct(config)
         sos_model = builder.finish()
@@ -191,8 +206,8 @@ class TestSosModelBuilder():
         assert isinstance(sos_model.model_list['water_supply'], SectorModel)
         assert sos_model.timesteps == [2010, 2011, 2012]
 
-    def test_missing_planning_asset(self, setup_project_folder):
-        config = self.get_config_data(setup_project_folder)
+    def test_missing_planning_asset(self, get_config_data):
+        config = get_config_data
         config["planning"] = [
             {
                 "name": "test_intervention",
@@ -206,8 +221,8 @@ class TestSosModelBuilder():
             builder.finish()
         assert "Intervention 'test_intervention' in planning file not found" in str(ex.value)
 
-    def test_missing_planning_timeperiod(self, setup_project_folder):
-        config = self.get_config_data(setup_project_folder)
+    def test_missing_planning_timeperiod(self, get_config_data):
+        config = get_config_data
         config["planning"] = [
             {
                 "name": "test_intervention",
@@ -228,22 +243,34 @@ class TestSosModelBuilder():
             builder.finish()
         assert "Timeperiod '2025' in planning file not found" in str(ex.value)
 
-    def test_scenario_dependency(self, setup_project_folder):
+    def test_scenario_dependency(self, get_config_data, setup_region_data):
         """Expect successful build with dependency on scenario data
+
+        Should raise error if no spatial or temporal sets are defined
         """
-        config = self.get_config_data(setup_project_folder)
+        config = get_config_data
         config["sector_model_data"][0]["inputs"] = {
             "dependencies": [
                 {
                     'name': 'population',
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
+                    'spatial_resolution': 'blobby',
+                    'temporal_resolution': 'mega',
                     'from_model': 'scenario'
                 }
             ]
         }
         builder = SosModelBuilder()
         builder.construct(config)
+
+        with raises(ValueError):
+            builder.finish()
+
+        builder.load_region_sets({'blobby': setup_region_data['features']})
+
+        interval_data = [{'id': 'ultra',
+                          'start': 'P0Y',
+                          'end': 'P1Y'}]
+        builder.load_interval_sets({'mega': interval_data})
         builder.finish()
 
     def test_build_valid_dependencies(self, one_dependency):

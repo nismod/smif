@@ -6,14 +6,17 @@ from smif.outputs import ModelOutputs
 
 
 @fixture(scope='function')
-def one_output_metric():
-    """Returns a model input dictionary with a single (unlikely to be met)
-    dependency
+def two_output_metrics():
+    """Returns a model output dictionary with two metrics
     """
     outputs = {
         'metrics': [
-            {'name': 'total_cost'},
-            {'name': 'water_demand'}
+            {'name': 'total_cost',
+             'spatial_resolution': 'LSOA',
+             'temporal_resolution': 'annual'},
+            {'name': 'water_demand',
+             'spatial_resolution': 'watershed',
+             'temporal_resolution': 'daily'}
         ]
     }
     return outputs
@@ -28,9 +31,18 @@ class TestModelOutputs:
 
     """
 
-    def test_model_outputs(self, one_output_metric):
+    def test_model_outputs(self, two_output_metrics):
 
-        outputs = ModelOutputs(one_output_metric)
+        outputs = ModelOutputs(two_output_metrics)
         actual = [x for x in outputs.metrics]
-        expected = ['total_cost', 'water_demand']
-        assert actual == expected
+        names = ['total_cost', 'water_demand']
+        areas = ['LSOA', 'watershed']
+        intervals = ['annual', 'daily']
+
+        for actual, name, area, inter in zip(outputs.metrics,
+                                             names,
+                                             areas,
+                                             intervals):
+            assert actual.name == name
+            assert actual.spatial_resolution == area
+            assert actual.temporal_resolution == inter

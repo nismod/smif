@@ -98,10 +98,10 @@ def test_validation_no_file(error_logger):
 
 
 @patch('builtins.print')
-def test_validation_valid(mock_print, setup_folder_structure, setup_project_folder):
+def test_validation_valid(mock_print, setup_project_folder):
     """Ensure configuration file is valid
     """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
+    config_file = os.path.join(str(setup_project_folder), 'config', 'model.yaml')
     args = get_args(['validate', config_file])
 
     validate_config(args)

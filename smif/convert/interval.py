@@ -149,7 +149,7 @@ class Interval(object):
 
     Parameters
     ----------
-    name: str
+    id: str
         The unique name of the Interval
     list_of_intervals: str
         A list of tuples of valid ISO8601 duration definition
@@ -161,12 +161,12 @@ class Interval(object):
     Example
     -------
 
-            >>> a = Interval('name', ('PT0H', 'PT1H'))
+            >>> a = Interval('id', ('PT0H', 'PT1H'))
             >>> a.interval = ('PT1H', 'PT2H')
             >>> repr(a)
-            "Interval('name', [('PT0H', 'PT1H'), ('PT1H', 'PT2H')], base_year=2010)"
+            "Interval('id', [('PT0H', 'PT1H'), ('PT1H', 'PT2H')], base_year=2010)"
             >>> str(a)
-            "Interval 'name' starts at hour 0 and ends at hour 1"
+            "Interval 'id' starts at hour 0 and ends at hour 1"
 
     """
 
@@ -337,7 +337,7 @@ class TimeSeries(object):
         values = []
         name_list = []
         for row in data:
-            name_list.append(row['name'])
+            name_list.append(row['id'])
             values.append(row['value'])
         self.names = name_list
         self.values = values
@@ -369,6 +369,16 @@ class TimeIntervalRegister:
         self._register = {}
         self.logger = logging.getLogger(__name__)
         self._id_interval_set = {}
+
+    @property
+    def interval_set_names(self):
+        """A list of the interval set names contained in the register
+
+        Returns
+        -------
+        list
+        """
+        return list(self._register.keys())
 
     def get_intervals_in_set(self, set_name):
         """
@@ -425,7 +435,7 @@ class TimeIntervalRegister:
 
         for interval in intervals:
 
-            name = interval['name']
+            name = interval['id']
             self.logger.debug("Adding interval '%s' to set '%s'", name, set_name)
 
             if name in self._id_interval_set:
@@ -500,7 +510,7 @@ class TimeIntervalRegister:
                 else:
                     total += sum(timeseries.hourly_values[lower:upper])
 
-            results.append({'name': name,
+            results.append({'id': name,
                             'value': total})
 
         return results
@@ -532,7 +542,6 @@ class TimeIntervalRegister:
         """
         array = np.zeros(8760, dtype=np.int)
         for interval in self.get_intervals_in_set(set_name).values():
-            print(interval)
             array += interval.to_hourly_array()
         return array
 

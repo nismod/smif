@@ -8,6 +8,8 @@ from enum import Enum
 
 import networkx
 from smif import SpaceTimeValue
+from smif.convert.area import RegionRegister, RegionSet
+from smif.convert.interval import TimeIntervalRegister, TimeSeries
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.sector_model import SectorModelBuilder
@@ -37,6 +39,9 @@ class SosModel(object):
         self._timesteps = []
         self.initial_conditions = []
         self.interventions = InterventionRegister()
+        self.regions = RegionRegister()
+        self.intervals = TimeIntervalRegister()
+
         self.planning = Planning([])
         self._scenario_data = {}
 
@@ -46,6 +51,8 @@ class SosModel(object):
 
         self.results = {}
 
+        self.resolution_mapping = {}
+
     @property
     def scenario_data(self):
         """Get nested dict of scenario data
@@ -53,7 +60,8 @@ class SosModel(object):
         Returns
         -------
         dict
-            Nested dictionary in the format data[year][param][region][interval]
+            Nested dictionary in the format ``data[year][param] =
+            SpaceTimeValue(region, interval, value, unit)``
         """
         return self._scenario_data
 
@@ -190,20 +198,42 @@ class SosModel(object):
         The current timestep is available in ``data['timestep']``.
 
         """
-        data = {}
+        new_data = {}
         for dependency in model.inputs.dependencies:
             self.logger.debug("Finding data for dependency: %s", dependency.name)
             if dependency.from_model == 'scenario':
-                data = self._get_scenario_data(timestep)
-                self.logger.debug("Found data: %s", data)
+                name = dependency.name
+                from_data = self._get_scenario_data(timestep, name)
+                to_spatial_resolution = dependency.spatial_resolution
+                to_temporal_resolution = dependency.temporal_resolution
+                from_spatial_resolution = self.resolution_mapping[name]['spatial_resolution']
+                from_temporal_resolution = self.resolution_mapping[name]['temporal_resolution']
+                self.logger.debug("Found data: %s", from_data)
+
+                if from_spatial_resolution != to_spatial_resolution:
+                    converted_data = self.regions.convert(from_data,
+                                                          from_spatial_resolution,
+                                                          to_spatial_resolution)
+                else:
+                    converted_data = from_data
+
+                if from_temporal_resolution != to_temporal_resolution:
+                    timeseries = TimeSeries(converted_data)
+                    converted_data = self.intervals.convert(timeseries,
+                                                            from_temporal_resolution,
+                                                            to_temporal_resolution)
+                    new_data[name] = converted_data
+                else:
+                    new_data[name] = converted_data
+
             else:
                 msg = "Getting data from dependencies is not yet implemented"
                 raise NotImplementedError(msg)
 
-        data['timestep'] = timestep
-        return data
+        new_data['timestep'] = timestep
+        return new_data
 
-    def _get_scenario_data(self, timestep):
+    def _get_scenario_data(self, timestep, name):
         """Given a model, check required parameters, pick data from scenario
         for the given timestep
 
@@ -213,7 +243,7 @@ class SosModel(object):
             The year for which to get scenario data
 
         """
-        return self.scenario_data[timestep]
+        return self.scenario_data[timestep][name]
 
     def _run_static_optimisation(self):
         """Runs the system-of-systems model in a static optimisation format
@@ -318,6 +348,10 @@ class SosModelBuilder(object):
         model_list = config_data['sector_model_data']
 
         self.add_timesteps(config_data['timesteps'])
+
+        self.load_region_sets(config_data['region_sets'])
+        self.load_interval_sets(config_data['interval_sets'])
+
         self.load_models(model_list)
         self.add_planning(config_data['planning'])
         self.add_scenario_data(config_data['scenario_data'])
@@ -333,6 +367,49 @@ class SosModelBuilder(object):
         """
         self.logger.info("Adding timesteps")
         self.sos_model.timesteps = timesteps
+
+    def add_resolution_mapping(self, resolution_mapping):
+        """
+        """
+        self.sos_model.resolution_mapping = resolution_mapping
+
+    def load_region_sets(self, region_sets):
+        """Loads the region sets into the system-of-system model
+
+        Parameters
+        ----------
+        region_sets: list
+            A dict, where key is the name of the region set, and the value
+            the data
+        """
+        assert isinstance(region_sets, dict)
+
+        region_set_definitions = region_sets.items()
+        if len(region_set_definitions) == 0:
+            msg = "No region sets have been defined"
+            self.logger.warning(msg)
+        for name, data in region_set_definitions:
+            msg = "Region set data is not a list"
+            assert isinstance(data, list), msg
+            self.sos_model.regions.register(RegionSet(name, data))
+
+    def load_interval_sets(self, interval_sets):
+        """Loads the time-interval sets into the system-of-system model
+
+        Parameters
+        ----------
+        interval_sets: list
+            A dict, where key is the name of the interval set, and the value
+            the data
+        """
+        interval_set_definitions = interval_sets.items()
+        if len(interval_set_definitions) == 0:
+            msg = "No interval sets have been defined"
+            self.logger.warning(msg)
+
+        for name, data in interval_set_definitions:
+            print(name, data)
+            self.sos_model.intervals.add_interval_set(data, name)
 
     def load_models(self, model_data_list):
         """Loads the sector models into the system-of-systems model
@@ -444,7 +521,7 @@ class SosModelBuilder(object):
                 entry = SpaceTimeValue(region, interval,
                                        obs['value'], obs['units'])
                 nested[year][param].append(entry)
-        self.logger.debug("Added scenario data: %s", nested)
+        self.logger.info("Added scenario data: %s", nested)
         self.sos_model._scenario_data = nested
 
     def _check_planning_interventions_exist(self):
@@ -472,6 +549,39 @@ class SosModelBuilder(object):
         self._check_planning_interventions_exist()
         self._check_planning_timeperiods_exist()
         self._check_dependencies()
+        self._check_region_interval_sets()
+
+    def _check_region_interval_sets(self):
+        """For each model, check for the interval and region sets referenced
+
+        Each model references interval and region sets in the configuration
+        of inputs and outputs.
+        """
+        available_intervals = self.sos_model.intervals.interval_set_names
+        msg = "Available time interval sets in SosModel: %s"
+        self.logger.debug(msg, available_intervals)
+        available_regions = self.sos_model.regions.region_set_names
+        msg = "Available region sets in SosModel: %s"
+        self.logger.debug(msg, available_regions)
+
+        for model_name, model in self.sos_model.model_list.items():
+            exp_regions = []
+            exp_intervals = []
+            exp_regions.extend(model.inputs.dependencies.spatial_resolutions)
+            exp_regions.extend(model.outputs.spatial_resolutions)
+            exp_intervals.extend(model.inputs.dependencies.temporal_resolutions)
+            exp_intervals.extend(model.outputs.temporal_resolutions)
+
+            for region in exp_regions:
+                if region not in available_regions:
+                    msg = "Region set '%s' not specified but is required " + \
+                          "for model '$s'"
+                    raise ValueError(msg, region, model_name)
+            for interval in exp_intervals:
+                if interval not in available_intervals:
+                    msg = "Interval set '%s' not specified but is required " + \
+                          "for model '$s'"
+                    raise ValueError(msg, interval, model_name)
 
     def _check_dependencies(self):
         """For each model, compare dependency list of from_models

@@ -12,13 +12,14 @@ from __future__ import absolute_import, division, print_function
 import json
 import logging
 
-from pytest import fixture
 import yaml
+from pytest import fixture
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s: %(levelname)-8s %(message)s',
                     filemode='w')
+
 
 @fixture(scope='function')
 def one_dependency():
@@ -63,8 +64,8 @@ def setup_project_folder(setup_runpy_file,
                          setup_timesteps_file,
                          setup_water_inputs,
                          setup_water_outputs,
-                         setup_water_time_intervals,
-                         setup_water_regions,
+                         setup_time_intervals,
+                         setup_regions,
                          setup_initial_conditions_file,
                          setup_pre_specified_planning,
                          setup_water_interventions_abc,
@@ -75,13 +76,11 @@ def setup_project_folder(setup_runpy_file,
         /config/model.yaml
         /config/timesteps.yaml
         /data
+        /data/regions.geojson
+        /data/intervals.yaml
         /data/water_supply/
         /data/water_supply/inputs.yaml
         /data/water_supply/outputs.yaml
-        /data/water_supply/time_intervals.yaml
-        /data/water_supply/regions.geojson
-        /data/water_supply/assets/
-        /data/water_supply/assets/assets_1.yaml
         /data/water_supply/interventions/
         /data/water_supply/interventions/water_asset_abc.yaml
         /data/water_supply/interventions/assets_new.yaml
@@ -122,7 +121,7 @@ def setup_project_missing_model_config(setup_runpy_file,
 
         /data/water_supply/inputs.yaml
         /data/water_supply/outputs.yaml
-        /data/water_supply/time_intervals.yaml
+        /data/intervals.yaml
         /data/water_supply/regions.geojson
 
     """
@@ -375,6 +374,10 @@ def setup_scenario_data(setup_folder_structure):
             }
         ],
         'timesteps': 'timesteps.yaml',
+        "region_sets": [{'name': 'national',
+                         'file': 'regions.geojson'}],
+        "interval_sets": [{'name': 'annual',
+                           'file': 'intervals.yaml'}],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -476,6 +479,10 @@ def setup_config_file(setup_folder_structure):
             }
         ],
         'timesteps': 'timesteps.yaml',
+        "region_sets": [{'name': 'national',
+                         'file': 'regions.geojson'}],
+        "interval_sets": [{'name': 'annual',
+                           'file': 'intervals.yaml'}],
         'planning': {
             'rule_based': {'use': False},
             'optimisation': {'use': False},
@@ -489,6 +496,11 @@ def setup_config_file(setup_folder_structure):
     contents = yaml.dump(file_contents)
     filepath = setup_folder_structure.join('config', 'model.yaml')
     filepath.write(contents)
+
+
+@fixture(scope='function')
+def setup_region_shapefile():
+    'uk_nations_shp/regions.shp'
 
 
 @fixture(scope='function')
@@ -905,14 +917,14 @@ def setup_water_outputs(setup_folder_structure,
 
 
 @fixture(scope='function')
-def setup_water_time_intervals(setup_folder_structure):
+def setup_time_intervals(setup_folder_structure):
     base_folder = setup_folder_structure
-    filename = base_folder.join('data', 'water_supply', 'time_intervals.yaml')
+    filename = base_folder.join('config', 'intervals.yaml')
     contents = [
         {
             "start": "P0Y",
             "end": "P1Y",
-            "name": "whole_year"
+            "id": "whole_year"
         }
     ]
     yaml_contents = yaml.dump(contents)
@@ -921,9 +933,7 @@ def setup_water_time_intervals(setup_folder_structure):
 
 
 @fixture(scope='function')
-def setup_water_regions(setup_folder_structure):
-    base_folder = setup_folder_structure
-    filename = base_folder.join('data', 'water_supply', 'regions.geojson')
+def setup_region_data():
     data = {
         "type": "FeatureCollection",
         "crs": {
@@ -980,6 +990,14 @@ def setup_water_regions(setup_folder_structure):
             },
         ]
     }
+    return data
+
+
+@fixture(scope='function')
+def setup_regions(setup_folder_structure, setup_region_data):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('config', 'regions.geojson')
+    data = setup_region_data
     filename.write(json.dumps(data), ensure=True)
     return filename
 
@@ -1155,6 +1173,3 @@ def setup_water_intervention_d(setup_folder_structure,
 def setup_minimal_water(setup_folder_structure,
                         setup_config_file):
     return str(setup_folder_structure)
-
-
-
