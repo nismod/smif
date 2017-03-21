@@ -130,7 +130,8 @@ def validate_input_spec(input_spec, model_name):
         VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, deps)))
         return
 
-    map(validate_dependency, deps)
+    for dep in deps:
+        validate_dependency(dep)
 
 
 def validate_dependency(dep):

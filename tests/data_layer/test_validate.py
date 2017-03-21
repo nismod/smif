@@ -335,6 +335,20 @@ def test_dependency_ok(get_dependency):
     assert len(VALIDATION_ERRORS) == n_errors_before
 
 
+def test_dependency_required(get_dependency):
+    """Expect an error if dependency is missing required fields
+    """
+    required_keys = ['name', 'spatial_resolution', 'temporal_resolution', 'from_model']
+    for key in required_keys:
+        data = get_dependency
+        del data[key]
+        validate_dependency(data)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Expected a value for '{}' in each model dependency, " + \
+            "only received {}"
+        assert msg.format(key, data) in str(ex)
+
+
 def test_output_spec_type():
     """Expect an error if output_spec is not a dict
     """
