@@ -100,11 +100,12 @@ def monthly_data():
 
 @fixture(scope='function')
 def seasons():
-    seasons = [{'id': 'winter', 'start': 'P11M', 'end': 'P2M'},
-               {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
-               {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
-               {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'}]
-    return seasons
+    # NB "winter" is split into two pieces around the year end
+    return [{'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
+            {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
+            {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
+            {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'},
+            {'id': 'winter', 'start': 'P11M', 'end': 'P12M'}]
 
 
 @fixture(scope='function')
@@ -543,3 +544,13 @@ class TestValidation:
         with raises(ValueError) as excinfo:
             register.add_interval_set(data, 'remap_months')
         assert "Duplicate entry for hour 0 in interval set remap_months." in str(excinfo.value)
+
+    def test_time_interval_start_before_end(get_time_intervals):
+        with raises(ValueError) as excinfo:
+            Interval('backwards', ('P1Y', 'P3M'))
+        assert "A time interval must not end before it starts" in str(excinfo)
+
+        interval = Interval('starts_ok', ('P0Y', 'P1M'))
+        with raises(ValueError) as excinfo:
+            interval.interval = ('P2M', 'P1M')
+        assert "A time interval must not end before it starts" in str(excinfo)

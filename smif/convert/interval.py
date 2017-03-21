@@ -192,6 +192,14 @@ class Interval(object):
             msg = "Interval tuple must take form (<start>, <end>)"
             raise ValueError(msg)
 
+        self._validate()
+
+    def _validate(self):
+        for lower, upper in self.to_hours():
+            if lower > upper:
+                msg = "A time interval must not end before it starts - found %d > %d"
+                raise ValueError(msg, lower, upper)
+
     @property
     def name(self):
         return self._name
@@ -243,6 +251,11 @@ class Interval(object):
             for element in value:
                 assert isinstance(element, tuple)
             self._interval.extend(value)
+        else:
+            msg = "A time interval must add either a single tuple or a list of tuples"
+            raise ValueError(msg)
+
+        self._validate()
 
     @property
     def baseyear(self):
@@ -530,10 +543,6 @@ class TimeIntervalRegister:
             divisor = len(list_of_intervals)
             for lower, upper in list_of_intervals:
                 self.logger.debug("lower: %s, upper: %s", lower, upper)
-                if lower >= upper:
-                    msg = "Problem in interval definition: interval start after interval end"
-                    raise ValueError(msg)
-
                 number_hours_in_range = upper - lower
                 self.logger.debug("number_hours: %s", number_hours_in_range)
 
