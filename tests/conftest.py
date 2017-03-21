@@ -410,6 +410,7 @@ def setup_no_planning(setup_folder_structure):
                 ]
             }
         ],
+        'scenario_data': [],
         'timesteps': 'timesteps.yaml',
         'planning': {
             'rule_based': {'use': False},
@@ -445,6 +446,7 @@ def setup_abs_path_to_timesteps(setup_folder_structure):
                 ]
             }
         ],
+        'scenario_data': [],
         'timesteps': timesteps_abs_path,
         'planning': {
             'rule_based': {'use': False},
@@ -479,6 +481,7 @@ def setup_config_file(setup_folder_structure):
             }
         ],
         'timesteps': 'timesteps.yaml',
+        'scenario_data': [],
         "region_sets": [{'name': 'national',
                          'file': 'regions.geojson'}],
         "interval_sets": [{'name': 'annual',
@@ -549,6 +552,7 @@ def setup_config_conflict_assets(setup_folder_structure,
                 ]
             }
         ],
+        'scenario_data': [],
         'timesteps': 'timesteps.yaml',
         'planning': {
             'rule_based': {'use': False},
@@ -589,6 +593,7 @@ def setup_config_conflict_periods(setup_folder_structure,
                 ]
             }
         ],
+        'scenario_data': [],
         'timesteps': 'timesteps2.yaml',
         'planning': {
             'rule_based': {'use': False},
@@ -766,6 +771,7 @@ def setup_config_file_two(setup_folder_structure, setup_interventions_file_one):
                 ]
             }
         ],
+        'scenario_data': [],
         'timesteps': 'timesteps.yaml',
         'planning': {
             'rule_based': {'use': False},
@@ -802,6 +808,7 @@ def setup_config_file_timesteps_two(setup_folder_structure):
                 ]
             }
         ],
+        'scenario_data': [],
         'timesteps': 'timesteps_2.yaml',
         'planning': {
             'rule_based': {'use': False},

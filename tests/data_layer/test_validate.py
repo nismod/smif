@@ -582,15 +582,25 @@ class TestValidateMissingConfigSections:
         msg = "No 'interval_sets' specified in main config file."
         assert msg == str(ex)
 
+    def test_scenario_data_missing(self, get_sos_model_config):
+        """Expect an error if no scenario data is specified, but referenced in
+        input file
+        """
+        data = get_sos_model_config
+        del data['scenario_data']
+
+        validate_sos_model_config(data)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "No 'scenario_data' specified in main config file."
+        assert msg == str(ex)
+
 
 class TestValidateMissingConfigurationReferences:
     """Check that validation raises validation errors when one part of the
     configuration assumes presence of a file or other configuration that is
     missing
     """
-
-    def test_scenario_data_missing(self, get_sector_model_initial_config):
-        """Expect an error if no scenario data is specified, but referenced in
-        input file
+    def test_scenario_files_missing(self):
+        """Expect an error if scenario data files are missing
         """
         pass

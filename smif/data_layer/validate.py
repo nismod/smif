@@ -35,6 +35,13 @@ def validate_sos_model_config(data):
     else:
         validate_sector_models_initial_config(data["sector_models"])
 
+    # check scenario data
+    if "scenario_data" not in data:
+        VALIDATION_ERRORS.append(
+            ValidationError("No 'scenario_data' specified in main config file."))
+    else:
+        validate_scenario_data_config(data["scenario_data"])
+
     # check planning
     if "planning" not in data:
         VALIDATION_ERRORS.append(
@@ -183,6 +190,34 @@ def validate_output(dep):
         if key not in dep:
             fmt = "Expected a value for '{}' in each model output, only received {}"
             VALIDATION_ERRORS.append(ValidationError(fmt.format(key, dep)))
+
+
+def validate_scenario_data_config(scenario_data):
+    """Check scenario data
+    """
+    if not isinstance(scenario_data, list):
+        fmt = "Expected a list of scenario datasets in main model config, " + \
+              "instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(scenario_data)))
+        return
+
+    for scenario in scenario_data:
+        validate_scenario(scenario)
+
+
+def validate_scenario(scenario):
+    """Check a single scenario specification
+    """
+    if not isinstance(scenario, dict):
+        fmt = "Expected a scenario specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(scenario)))
+        return
+
+    required_keys = ["parameter", "spatial_resolution", "temporal_resolution", "file"]
+    for key in required_keys:
+        if key not in scenario:
+            fmt = "Expected a value for '{}' in each scenario, only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, scenario)))
 
 
 def validate_planning_config(planning):
