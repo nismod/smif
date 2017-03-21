@@ -166,7 +166,8 @@ def validate_output_spec(output_spec, model_name):
         VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, metrics)))
         return
 
-    map(validate_output, metrics)
+    for output in metrics:
+        validate_output(output)
 
 
 def validate_output(dep):

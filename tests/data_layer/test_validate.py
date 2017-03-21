@@ -392,6 +392,23 @@ def test_output_spec_deps_list_empty():
     assert len(VALIDATION_ERRORS) == n_errors_before
 
 
+def test_output_spec_list_str():
+    data = {
+        'metrics': ['these', 'outputs', 'should', 'not', 'be', 'a', 'list']
+    }
+    n_errors_before = len(VALIDATION_ERRORS)
+
+    validate_output_spec(data, 'energy_demand')
+    # should add one error per output spec:
+    assert len(VALIDATION_ERRORS) == n_errors_before + len(data['metrics'])
+
+    # last error, e.g.
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected an output specification, " + \
+          "instead got list"
+    assert msg in str(ex)
+
+
 def test_output_spec_deps_list_ok(get_output_spec):
     """Expect no errors for a list of valid dependencies
     """
