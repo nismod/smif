@@ -237,6 +237,18 @@ def test_sector_models_empty_list(get_sos_model_config):
     assert msg in str(ex)
 
 
+def test_sector_model_type(get_sos_model_config):
+    """Expect an error if sector_model config is not a dict
+    """
+    data = get_sos_model_config
+    data['sector_models'] = [None]
+
+    validate_sos_model_config(data)
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a sector model config block"
+    assert msg in str(ex)
+
+
 def test_sector_model_required(get_sector_model_initial_config):
     """Expect an error if a sector_model is missing a required key
     """

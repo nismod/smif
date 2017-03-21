@@ -103,6 +103,7 @@ def validate_sector_model_initial_config(sector_model_config):
     if not isinstance(sector_model_config, dict):
         fmt = "Expected a sector model config block, instead got {}"
         VALIDATION_ERRORS.append(ValidationError(fmt.format(sector_model_config)))
+        return
 
     required_keys = ["name", "config_dir", "path", "classname"]
     for key in required_keys:
