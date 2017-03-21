@@ -43,6 +43,7 @@ class SpaceTimeConvertor(object):
         self.logger = logging.getLogger(__name__)
 
         self._check_uniform_units(data)
+
         self.data = data
         self.from_spatial = from_spatial
         self.to_spatial = to_spatial
@@ -56,12 +57,6 @@ class SpaceTimeConvertor(object):
 
         self.data_by_region = self.regionise_data(data)
         self.data_by_intervals = self.intervalise_data(data)
-
-        for entry in data:
-            if entry.units not in self.data_by_units:
-                self.data_by_units[entry.units] = [entry]
-            else:
-                self.data_by_units[entry.units].append(entry)
 
         self.data_regions = set(self.data_by_region.keys())
 
