@@ -334,6 +334,36 @@ class SosModel(object):
         """
         return list(self.model_list.keys())
 
+    @property
+    def inputs(self):
+        """A dictionary of model names associated with an inputs
+
+        Returns
+        -------
+        dict
+            Keys are input names, value is a list of sector model names
+        """
+        parameter_model_map = defaultdict(list)
+        for model_name, model_data in self.model_list.items():
+            for dep in model_data.inputs.dependencies:
+                parameter_model_map[dep.name].append(model_name)
+        return parameter_model_map
+
+    @property
+    def outputs(self):
+        """A dictionary of model names associated with a the outputs
+
+        Returns
+        -------
+        dict
+            Keys are input names, value is a list of sector model names
+        """
+        parameter_model_map = defaultdict(list)
+        for model_name, model_data in self.model_list.items():
+            for output in model_data.outputs.metrics:
+                parameter_model_map[output.name].append(model_name)
+        return parameter_model_map
+
 
 class SosModelBuilder(object):
     """Constructs a system-of-systems model

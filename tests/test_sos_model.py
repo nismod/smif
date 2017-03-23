@@ -53,6 +53,13 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             }
         ]
     }
+    ws.outputs = {'metrics': [
+        {
+            'name': 'cost',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]}
     ws.interventions = [
         {"name": "water_asset_a", "location": "oxford"},
         {"name": "water_asset_b", "location": "oxford"},
@@ -442,3 +449,31 @@ class TestSosModelBuilder():
         with raises(ValueError) as ex:
             builder.add_scenario_data(data)
         assert msg in str(ex.value)
+
+    def test_inputs_property(self,
+                             get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
+        actual = sos_model.inputs
+
+        expected = {'raininess': ['water_supply', 'water_supply_2']}
+
+        assert isinstance(actual, dict)
+
+        for key, value in expected.items():
+            assert key in actual.keys()
+            for entry in value:
+                assert entry in actual[key]
+
+    def test_outputs_property(self,
+                              get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
+        actual = sos_model.outputs
+
+        expected = {'cost': ['water_supply']}
+
+        assert isinstance(actual, dict)
+
+        for key, value in expected.items():
+            assert key in actual.keys()
+            for entry in value:
+                assert entry in actual[key]
