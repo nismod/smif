@@ -32,7 +32,7 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             }
         ]
     })
-    builder.add_resolution_mapping({'scenarios': {
+    builder.add_resolution_mapping({'scenario': {
         'raininess': {'temporal_resolution': 'annual',
                       'spatial_resolution': 'LSOA'}}})
     builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -58,6 +58,92 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             'name': 'cost',
             'spatial_resolution': 'LSOA',
             'temporal_resolution': 'annual'
+        },
+        {
+            'name': 'water',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]}
+    ws.interventions = [
+        {"name": "water_asset_a", "location": "oxford"},
+        {"name": "water_asset_b", "location": "oxford"},
+        {"name": "water_asset_c", "location": "oxford"}
+        ]
+
+    builder.add_model(ws)
+
+    ws2 = WaterSupplySectorModel()
+    ws2.name = 'water_supply_2'
+    ws2.inputs = {
+        'dependencies': [
+            {
+                'name': 'raininess',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'from_model': 'scenario'
+            }
+        ]
+    }
+    builder.add_model(ws2)
+
+    return builder.finish()
+
+
+@fixture(scope='function')
+def get_sos_model_with_model_dependency(setup_region_data):
+    builder = SosModelBuilder()
+    builder.add_timesteps([2010])
+    builder.add_scenario_data({
+        "raininess": [
+            {
+                'year': 2010,
+                'value': 3,
+                'units': 'ml'
+            },
+            {
+                'year': 2011,
+                'value': 5,
+                'units': 'ml'
+            },
+            {
+                'year': 2012,
+                'value': 1,
+                'units': 'ml'
+            }
+        ]
+    })
+    builder.add_resolution_mapping({'scenario': {
+        'raininess': {'temporal_resolution': 'annual',
+                      'spatial_resolution': 'LSOA'}}})
+    builder.load_region_sets({'LSOA': setup_region_data['features']})
+    interval_data = [{'id': 1,
+                      'start': 'P0Y',
+                      'end': 'P1Y'}]
+    builder.load_interval_sets({'annual': interval_data})
+
+    ws = WaterSupplySectorModel()
+    ws.name = 'water_supply'
+    ws.inputs = {
+        'dependencies': [
+            {
+                'name': 'raininess',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'from_model': 'scenario'
+            }
+        ]
+    }
+    ws.outputs = {'metrics': [
+        {
+            'name': 'water',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        },
+        {
+            'name': 'cost',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
         }
     ]}
     ws.interventions = [
@@ -72,10 +158,10 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
     ws2.inputs = {
         'dependencies': [
             {
-                'name': 'raininess',
+                'name': 'water',
                 'spatial_resolution': 'LSOA',
                 'temporal_resolution': 'annual',
-                'from_model': 'scenario'
+                'from_model': 'water_supply'
             }
         ]
     }
@@ -133,12 +219,14 @@ class TestSosModel():
         sos_model._run_sector_model_timestep(model, 2010)
         actual = sos_model.results[2010]['water_supply']
         expected = {'cost': 2.528, 'water': 2}
-        assert actual == expected
+        for key, value in expected.items():
+            assert actual[key][0].value == value
 
         sos_model._run_sector_model_timestep(model, 2011)
         actual = sos_model.results[2011]['water_supply']
         expected = {'cost': 2.528, 'water': 2}
-        assert actual == expected
+        for key, value in expected.items():
+            assert actual[key][0].value == value
 
 
 @fixture(scope='function')
@@ -167,7 +255,7 @@ def get_config_data(setup_project_folder, setup_region_data):
                                       'start': 'P0Y',
                                       'end': 'P1Y'}]
                           },
-        "resolution_mapping": {'scenarios': {}}
+        "resolution_mapping": {'scenario': {}}
              }
 
 
@@ -477,3 +565,33 @@ class TestSosModelBuilder():
             assert key in actual.keys()
             for entry in value:
                 assert entry in actual[key]
+
+    def test_single_dependency(self,
+                               get_sos_model_with_model_dependency):
+        """
+        """
+        sos_model = get_sos_model_with_model_dependency
+        outputs = sos_model.outputs
+
+        expected_outputs = {'water': ['water_supply']}
+
+        assert isinstance(outputs, dict)
+
+        for key, value in expected_outputs.items():
+            assert key in outputs.keys()
+            for entry in value:
+                assert entry in outputs[key]
+
+        inputs = sos_model.inputs
+
+        expected_inputs = {'raininess': ['water_supply'],
+                           'water': ['water_supply_2']}
+
+        assert isinstance(inputs, dict)
+
+        for key, value in expected_inputs.items():
+            assert key in inputs.keys()
+            for entry in value:
+                assert entry in inputs[key]
+
+        sos_model.run()
