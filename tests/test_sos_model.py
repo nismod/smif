@@ -49,16 +49,15 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
-    ws.inputs = {
-        'dependencies': [
+    ws.inputs = [
             {
                 'name': 'raininess',
                 'spatial_resolution': 'LSOA',
                 'temporal_resolution': 'annual'
             }
         ]
-    }
-    ws.outputs = {'metrics': [
+
+    ws.outputs = [
         {
             'name': 'cost',
             'spatial_resolution': 'LSOA',
@@ -69,7 +68,7 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             'spatial_resolution': 'LSOA',
             'temporal_resolution': 'annual'
         }
-    ]}
+    ]
     ws.interventions = [
         {"name": "water_asset_a", "location": "oxford"},
         {"name": "water_asset_b", "location": "oxford"},
@@ -80,15 +79,14 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
 
     ws2 = WaterSupplySectorModel()
     ws2.name = 'water_supply_2'
-    ws2.inputs = {
-        'dependencies': [
+    ws2.inputs = [
             {
                 'name': 'raininess',
                 'spatial_resolution': 'LSOA',
                 'temporal_resolution': 'annual'
             }
         ]
-    }
+
     builder.add_model(ws2)
 
     return builder.finish()
@@ -134,16 +132,15 @@ def get_sos_model_with_model_dependency(setup_region_data):
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
-    ws.inputs = {
-        'dependencies': [
+    ws.inputs = [
             {
                 'name': 'raininess',
                 'spatial_resolution': 'LSOA',
                 'temporal_resolution': 'annual'
             }
         ]
-    }
-    ws.outputs = {'metrics': [
+
+    ws.outputs = [
         {
             'name': 'water',
             'spatial_resolution': 'LSOA',
@@ -154,7 +151,7 @@ def get_sos_model_with_model_dependency(setup_region_data):
             'spatial_resolution': 'LSOA',
             'temporal_resolution': 'annual'
         }
-    ]}
+    ]
     ws.interventions = [
         {"name": "water_asset_a", "location": "oxford"},
         {"name": "water_asset_b", "location": "oxford"},
@@ -164,15 +161,14 @@ def get_sos_model_with_model_dependency(setup_region_data):
 
     ws2 = WaterSupplySectorModel()
     ws2.name = 'water_supply_2'
-    ws2.inputs = {
-        'dependencies': [
+    ws2.inputs = [
             {
                 'name': 'water',
                 'spatial_resolution': 'LSOA',
                 'temporal_resolution': 'annual'
             }
         ]
-    }
+
     builder.add_model(ws2)
 
     return builder.finish()
@@ -251,8 +247,8 @@ def get_config_data(setup_project_folder, setup_region_data):
             "name": "water_supply",
             "path": water_supply_wrapper_path,
             "classname": "WaterSupplySectorModel",
-            "inputs": {},
-            "outputs": {},
+            "inputs": [],
+            "outputs": [],
             "initial_conditions": [],
             "interventions": []
         }],
@@ -357,15 +353,14 @@ class TestSosModelBuilder():
         Should raise error if no spatial or temporal sets are defined
         """
         config = get_config_data
-        config["sector_model_data"][0]["inputs"] = {
-            "dependencies": [
+        config["sector_model_data"][0]["inputs"] = [
                 {
                     'name': 'raininess',
                     'spatial_resolution': 'blobby',
                     'temporal_resolution': 'mega'
                 }
             ]
-        }
+
         builder = SosModelBuilder()
         builder.construct(config)
 
@@ -398,42 +393,37 @@ class TestSosModelBuilder():
         assert str(error.value) == msg
 
     def test_cyclic_dependencies(self):
-        a_inputs = {
-            'dependencies': [
+        a_inputs = [
                 {
                     'name': 'b value',
                     'spatial_resolution': 'LSOA',
                     'temporal_resolution': 'annual'
                 }
             ]
-        }
-        a_outputs = {
-            'metrics': [
+
+        a_outputs = [
                 {
                     'name': 'a value',
                     'spatial_resolution': 'LSOA',
                     'temporal_resolution': 'annual'
                 }
             ]
-        }
-        b_inputs = {
-            'dependencies': [
+
+        b_inputs = [
                 {
                     'name': 'a value',
                     'spatial_resolution': 'LSOA',
                     'temporal_resolution': 'annual'
                 }
             ]
-        }
-        b_outputs = {
-            'metrics': [
+
+        b_outputs = [
                 {
                     'name': 'b value',
                     'spatial_resolution': 'LSOA',
                     'temporal_resolution': 'annual'
                 }
             ]
-        }
 
         builder = SosModelBuilder()
         builder.add_timesteps([2010])

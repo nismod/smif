@@ -233,7 +233,7 @@ class SosModel(object):
 
         """
         new_data = {}
-        for dependency in model.inputs.dependencies:
+        for dependency in model.inputs.parameters:
             name = dependency.name
             provider = self.outputs[name]
 
@@ -391,7 +391,7 @@ class SosModel(object):
         """
         parameter_model_map = defaultdict(list)
         for model_name, model_data in self.model_list.items():
-            for dep in model_data.inputs.dependencies:
+            for dep in model_data.inputs.parameters:
                 parameter_model_map[dep.name].append(model_name)
         return parameter_model_map
 
@@ -406,7 +406,7 @@ class SosModel(object):
         """
         parameter_model_map = defaultdict(list)
         for model_name, model_data in self.model_list.items():
-            for output in model_data.outputs.metrics:
+            for output in model_data.outputs.parameters:
                 parameter_model_map[output.name].append(model_name)
 
         for name in self.resolution_mapping['scenario'].keys():
@@ -680,9 +680,9 @@ class SosModelBuilder(object):
         for model_name, model in self.sos_model.model_list.items():
             exp_regions = []
             exp_intervals = []
-            exp_regions.extend(model.inputs.dependencies.spatial_resolutions)
+            exp_regions.extend(model.inputs.parameters.spatial_resolutions)
             exp_regions.extend(model.outputs.spatial_resolutions)
-            exp_intervals.extend(model.inputs.dependencies.temporal_resolutions)
+            exp_intervals.extend(model.inputs.parameters.temporal_resolutions)
             exp_intervals.extend(model.outputs.temporal_resolutions)
 
             for region in exp_regions:
@@ -705,7 +705,7 @@ class SosModelBuilder(object):
         dependency_graph.add_nodes_from(models_available)
 
         for model_name, model in self.sos_model.model_list.items():
-            for dep in model.inputs.dependencies:
+            for dep in model.inputs.parameters:
                 providers = self.sos_model.outputs[dep.name]
                 msg = "Dependency '%s' provided by '%s'"
                 self.logger.debug(msg, dep.name, providers)

@@ -6,17 +6,15 @@ from smif.parameters import ModelParameters
 
 
 class TestModelInputs:
-    """Given a dict of the format::
+    """Given a list of parameter dicts of the format::
 
-    {
-        'dependencies': [
+    [
             {
                 'name': 'macguffins produced',
                 'spatial_resolution': 'LSOA',
                 'temporal_resolution': 'annual'
             }
         ]
-    }
 
     Return a name tuple of dependencies
 
@@ -24,14 +22,14 @@ class TestModelInputs:
     def test_one_dependency(self, one_dependency):
         inputs = ModelParameters(one_dependency)
 
-        actual = inputs.dependencies.names
+        actual = inputs.parameters.names
         expected = ['macguffins produced']
         assert actual == expected
 
-        actual = inputs.dependencies.spatial_resolutions
+        actual = inputs.parameters.spatial_resolutions
         expected = ['LSOA']
         assert actual == expected
-        actual = inputs.dependencies.temporal_resolutions
+        actual = inputs.parameters.temporal_resolutions
         expected = ['annual']
         assert actual == expected
 
@@ -44,16 +42,14 @@ class TestModelInputs:
 def two_output_metrics():
     """Returns a model output dictionary with two metrics
     """
-    outputs = {
-        'metrics': [
-            {'name': 'total_cost',
-             'spatial_resolution': 'LSOA',
-             'temporal_resolution': 'annual'},
-            {'name': 'water_demand',
-             'spatial_resolution': 'watershed',
-             'temporal_resolution': 'daily'}
+    outputs = [
+        {'name': 'total_cost',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'},
+        {'name': 'water_demand',
+            'spatial_resolution': 'watershed',
+            'temporal_resolution': 'daily'}
         ]
-    }
     return outputs
 
 
@@ -69,12 +65,12 @@ class TestModelOutputs:
     def test_model_outputs(self, two_output_metrics):
 
         outputs = ModelParameters(two_output_metrics)
-        actual = [x for x in outputs.metrics]
+        actual = [x for x in outputs.parameters]
         names = ['total_cost', 'water_demand']
         areas = ['LSOA', 'watershed']
         intervals = ['annual', 'daily']
 
-        for actual, name, area, inter in zip(outputs.metrics,
+        for actual, name, area, inter in zip(outputs.parameters,
                                              names,
                                              areas,
                                              intervals):

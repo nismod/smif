@@ -103,29 +103,11 @@ class ModelParameters(object):
         names, followed by nested dictionaries of input attributes
     """
     def __init__(self, parameters):
-        if 'dependencies' not in parameters:
-            parameters['dependencies'] = []
-
-        self._parameters = ParameterList(parameters['dependencies'])
-
-        if 'metrics' not in parameters:
-            parameters['metrics'] = []
-
-        self._metrics = ParameterList(parameters['metrics'])
+        self._parameters = ParameterList(parameters)
         self.logger = logging.getLogger(__name__)
 
     @property
-    def metrics(self):
-        """A list of the model result metrics
-
-        Returns
-        =======
-        :class:`smif.parameters.ParameterList`
-        """
-        return self._metrics
-
-    @property
-    def dependencies(self):
+    def parameters(self):
         """A list of the model parameters
 
         Returns
@@ -135,10 +117,10 @@ class ModelParameters(object):
         return self._parameters
 
     def __len__(self):
-        return len(self.dependencies)
+        return len(self.parameters)
 
     def get_spatial_res(self, name):
-        for metric in self._metrics:
+        for metric in self._parameters:
             if metric.name == name:
                 spatial_resolution = metric.spatial_resolution
                 break
@@ -147,7 +129,7 @@ class ModelParameters(object):
         return spatial_resolution
 
     def get_temporal_res(self, name):
-        for metric in self._metrics:
+        for metric in self._parameters:
             if metric.name == name:
                 temporal_resolution = metric.temporal_resolution
                 break
@@ -157,8 +139,8 @@ class ModelParameters(object):
 
     @property
     def spatial_resolutions(self):
-        return self._metrics.spatial_resolutions
+        return self._parameters.spatial_resolutions
 
     @property
     def temporal_resolutions(self):
-        return self._metrics.temporal_resolutions
+        return self._parameters.temporal_resolutions

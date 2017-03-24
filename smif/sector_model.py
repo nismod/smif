@@ -84,6 +84,18 @@ class SectorModel(ABC):
     def inputs(self):
         """The inputs to the model
 
+        The inputs should be specified in a list.  For example::
+
+                - name: eletricity_price
+                  spatial_resolution: GB
+                  temporal_resolution: annual
+
+        Arguments
+        =========
+        value : list
+            A list of dicts of inputs to the model.
+            These includes parameters, assets and exogenous data
+
         Returns
         =======
         :class:`smif.parameters.ModelInputs`
@@ -93,26 +105,10 @@ class SectorModel(ABC):
 
     @inputs.setter
     def inputs(self, value=None):
-        """The inputs/dependencies to the model
-
-        The inputs should be specified in a dictionary.  For example::
-
-                dependencies:
-                - name: eletricity_price
-                spatial_resolution: GB
-                temporal_resolution: annual
-
-        Arguments
-        =========
-        value : dict
-            A dictionary of inputs to the model. This may include parameters,
-            assets and exogenous data.
-
-        """
         if value is not None:
-            assert isinstance(value, dict)
+            assert isinstance(value, list)
         else:
-            value = {}
+            value = []
 
         self._inputs = ModelParameters(value)
 
@@ -122,19 +118,25 @@ class SectorModel(ABC):
 
         Arguments
         =========
-        value : dict
-            A dictionary of outputs from the model. This may include results
+        value : list
+            A list of dicts of outputs from the model.
+            This may include results
             and metrics
 
         Returns
         =======
-        :class:`smif.parameters.ModelInputs`
+        :class:`smif.parameters.ModelParameters`
 
         """
         return self._outputs
 
     @outputs.setter
     def outputs(self, value):
+        if value is not None:
+            assert isinstance(value, list)
+        else:
+            value = []
+
         self._outputs = ModelParameters(value)
 
     @property

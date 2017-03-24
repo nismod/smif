@@ -26,15 +26,14 @@ def one_dependency():
     """Returns a model input dictionary with a single (unlikely to be met)
     dependency
     """
-    inputs = {
-        'dependencies': [
+    inputs = [
             {
                 'name': 'macguffins produced',
                 'spatial_resolution': 'LSOA',
                 'temporal_resolution': 'annual'
             }
         ]
-    }
+
     return inputs
 
 
