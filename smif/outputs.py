@@ -31,7 +31,22 @@ class OutputList(object):
 
     Parameters
     ----------
-    outputs: dict
+    outputs: list
+        A list of dict containing the name and spatial and temporal resolutions of the outputs
+        For example::
+
+                    [
+                {
+                    'name': 'water',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                },
+                {
+                    'name': 'cost',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                }
+            ]
 
     """
     def __init__(self, outputs):
@@ -64,6 +79,8 @@ class ModelOutputs(object):
         if 'metrics' not in results:
             results['metrics'] = []
         self._metrics = OutputList(results['metrics'])
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug(results)
 
     @property
     def metrics(self):
@@ -71,9 +88,27 @@ class ModelOutputs(object):
 
         Returns
         =======
-        :class:`smif.outputs.MetricList`
+        :class:`smif.outputs.OutputList`
         """
         return self._metrics
+
+    def get_spatial_res(self, name):
+        for metric in self._metrics:
+            if metric.name == name:
+                spatial_resolution = metric.spatial_resolution
+                break
+        else:
+            raise ValueError("No output found for name {}".format(name))
+        return spatial_resolution
+
+    def get_temporal_res(self, name):
+        for metric in self._metrics:
+            if metric.name == name:
+                temporal_resolution = metric.temporal_resolution
+                break
+        else:
+            raise ValueError("No output found for name '{}'".format(name))
+        return temporal_resolution
 
     @property
     def spatial_resolutions(self):

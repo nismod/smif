@@ -46,3 +46,27 @@ class TestModelOutputs:
             assert actual.name == name
             assert actual.spatial_resolution == area
             assert actual.temporal_resolution == inter
+
+    def test_get_spatial_property(self, two_output_metrics):
+
+        outputs = ModelOutputs(two_output_metrics)
+
+        actual = outputs.get_spatial_res('total_cost')
+        expected = 'LSOA'
+        assert actual == expected
+
+        actual = outputs.get_spatial_res('water_demand')
+        expected = 'watershed'
+        assert actual == expected
+
+    def test_get_temporal_property(self, two_output_metrics):
+
+        outputs = ModelOutputs(two_output_metrics)
+
+        actual = outputs.get_temporal_res('total_cost')
+        expected = 'annual'
+        assert actual == expected
+
+        actual = outputs.get_temporal_res('water_demand')
+        expected = 'daily'
+        assert actual == expected
