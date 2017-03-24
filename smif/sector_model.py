@@ -31,7 +31,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 
-from smif.inputs import ModelInputs
+from smif.parameters import ModelParameters
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -48,8 +48,8 @@ class SectorModel(ABC):
 
         self.interventions = []
 
-        self._inputs = ModelInputs({})
-        self._outputs = ModelInputs({})
+        self._inputs = ModelParameters({})
+        self._outputs = ModelParameters({})
 
         self.logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class SectorModel(ABC):
 
         Returns
         =======
-        :class:`smif.inputs.ModelInputs`
+        :class:`smif.parameters.ModelInputs`
 
         """
         return self._inputs
@@ -114,7 +114,7 @@ class SectorModel(ABC):
         else:
             value = {}
 
-        self._inputs = ModelInputs(value)
+        self._inputs = ModelParameters(value)
 
     @property
     def outputs(self):
@@ -128,14 +128,14 @@ class SectorModel(ABC):
 
         Returns
         =======
-        :class:`smif.inputs.ModelInputs`
+        :class:`smif.parameters.ModelInputs`
 
         """
         return self._outputs
 
     @outputs.setter
     def outputs(self, value):
-        self._outputs = ModelInputs(value)
+        self._outputs = ModelParameters(value)
 
     @property
     def intervention_names(self):

@@ -1,7 +1,7 @@
 """Test SectorModel and SectorModelBuilder
 """
 from pytest import raises
-from smif.inputs import ModelInputs
+from smif.parameters import ModelParameters
 from smif.sector_model import SectorModel, SectorModelBuilder
 
 
@@ -56,7 +56,7 @@ class TestSectorModelBuilder():
         builder = SectorModelBuilder('water_supply')
         builder.load_model(model_path, 'WaterSupplySectorModel')
         builder.add_inputs(None)
-        assert isinstance(builder._sector_model.inputs, ModelInputs)
+        assert isinstance(builder._sector_model.inputs, ModelParameters)
         assert len(builder._sector_model.inputs) == 0
 
 

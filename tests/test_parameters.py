@@ -2,7 +2,7 @@
 
 """
 from pytest import fixture
-from smif.inputs import ModelInputs
+from smif.parameters import ModelParameters
 
 
 class TestModelInputs:
@@ -22,7 +22,7 @@ class TestModelInputs:
 
     """
     def test_one_dependency(self, one_dependency):
-        inputs = ModelInputs(one_dependency)
+        inputs = ModelParameters(one_dependency)
 
         actual = inputs.dependencies.names
         expected = ['macguffins produced']
@@ -68,7 +68,7 @@ class TestModelOutputs:
 
     def test_model_outputs(self, two_output_metrics):
 
-        outputs = ModelInputs(two_output_metrics)
+        outputs = ModelParameters(two_output_metrics)
         actual = [x for x in outputs.metrics]
         names = ['total_cost', 'water_demand']
         areas = ['LSOA', 'watershed']
@@ -84,7 +84,7 @@ class TestModelOutputs:
 
     def test_get_spatial_property(self, two_output_metrics):
 
-        outputs = ModelInputs(two_output_metrics)
+        outputs = ModelParameters(two_output_metrics)
 
         actual = outputs.get_spatial_res('total_cost')
         expected = 'LSOA'
@@ -96,7 +96,7 @@ class TestModelOutputs:
 
     def test_get_temporal_property(self, two_output_metrics):
 
-        outputs = ModelInputs(two_output_metrics)
+        outputs = ModelParameters(two_output_metrics)
 
         actual = outputs.get_temporal_res('total_cost')
         expected = 'annual'

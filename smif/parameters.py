@@ -93,7 +93,7 @@ class ParameterList(object):
         return len(self.names)
 
 
-class ModelInputs(object):
+class ModelParameters(object):
     """A container for all the model inputs
 
     Arguments
@@ -120,7 +120,7 @@ class ModelInputs(object):
 
         Returns
         =======
-        :class:`smif.inputs.ParameterList`
+        :class:`smif.parameters.ParameterList`
         """
         return self._metrics
 
@@ -130,7 +130,7 @@ class ModelInputs(object):
 
         Returns
         =======
-        :class:`smif.inputs.ParameterList`
+        :class:`smif.parameters.ParameterList`
         """
         return self._parameters
 
