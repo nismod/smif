@@ -150,21 +150,13 @@ def validate_sector_model_initial_config(sector_model_config):
 def validate_input_spec(input_spec, model_name):
     """Check the input specification for a single sector model
     """
-    if not isinstance(input_spec, dict) \
-            or 'dependencies' not in input_spec:
-        fmt = "Expected a list of dependencies in '{}' model " + \
+    if not isinstance(input_spec, list):
+        fmt = "Expected a list of parameter definitions in '{}' model " + \
               "input specification, instead got {}"
         VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, input_spec)))
         return
 
-    deps = input_spec['dependencies']
-    if not isinstance(deps, list):
-        fmt = "Expected a list of dependencies in '{}' model " + \
-              "input specification, instead got {}"
-        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, deps)))
-        return
-
-    for dep in deps:
+    for dep in input_spec:
         validate_dependency(dep)
 
 
@@ -186,21 +178,13 @@ def validate_dependency(dep):
 def validate_output_spec(output_spec, model_name):
     """Check the output specification for a single sector model
     """
-    if not isinstance(output_spec, dict) \
-            or 'metrics' not in output_spec:
-        fmt = "Expected a list of metrics in '{}' model " + \
+    if not isinstance(output_spec, list):
+        fmt = "Expected a list of parameter definitions in '{}' model " + \
               "output specification, instead got {}"
         VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, output_spec)))
         return
 
-    metrics = output_spec['metrics']
-    if not isinstance(metrics, list):
-        fmt = "Expected a list of metrics in '{}' model " + \
-              "output specification, instead got {}"
-        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, metrics)))
-        return
-
-    for output in metrics:
+    for output in output_spec:
         validate_output(output)
 
 

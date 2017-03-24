@@ -110,15 +110,13 @@ def get_intervention():
 def get_input_spec():
     """Return sample input specification
     """
-    return {
-        'dependencies': [
+    return [
             {
                 'name': 'gas_demand',
                 'spatial_resolution': 'national',
                 'temporal_resolution': 'annual'
             }
         ]
-    }
 
 
 @fixture(scope='function')
@@ -136,15 +134,13 @@ def get_dependency():
 def get_output_spec():
     """Return sample output specification
     """
-    return {
-        'metrics': [
+    return [
             {
                 'name': 'total_cost',
                 'spatial_resolution': 'national',
                 'temporal_resolution': 'annual'
             }
         ]
-    }
 
 
 @fixture(scope='function')
@@ -318,7 +314,7 @@ def test_input_spec_type():
     data = None
     validate_input_spec(data, 'energy_demand')
     ex = VALIDATION_ERRORS.pop()
-    msg = "Expected a list of dependencies in 'energy_demand' model input " + \
+    msg = "Expected a list of parameter definitions in 'energy_demand' model input " + \
           "specification, instead got None"
     assert msg in str(ex)
 
@@ -329,7 +325,7 @@ def test_input_spec_deps():
     data = {}
     validate_input_spec(data, 'energy_demand')
     ex = VALIDATION_ERRORS.pop()
-    msg = "Expected a list of dependencies in 'energy_demand' model input " + \
+    msg = "Expected a list of parameter definitions in 'energy_demand' model input " + \
           "specification, instead got {}"
     assert msg in str(ex)
 
@@ -337,18 +333,18 @@ def test_input_spec_deps():
 def test_input_spec_deps_list():
     """Expect an error if input_spec dependencies is not a list
     """
-    data = {'dependencies': 1.618}
+    data = {1.618}
     validate_input_spec(data, 'energy_demand')
     ex = VALIDATION_ERRORS.pop()
-    msg = "Expected a list of dependencies in 'energy_demand' model input " + \
-          "specification, instead got 1.618"
+    msg = "Expected a list of parameter definitions in 'energy_demand' model input " + \
+          "specification, instead got {1.618}"
     assert msg in str(ex)
 
 
 def test_input_spec_deps_list_empty():
     """Expect no errors for an empty list
     """
-    data = {'dependencies': []}
+    data = []
     # empty is ok
     n_errors_before = len(VALIDATION_ERRORS)
     validate_input_spec(data, 'energy_demand')
@@ -404,7 +400,7 @@ def test_output_spec_type():
     data = None
     validate_output_spec(data, 'energy_demand')
     ex = VALIDATION_ERRORS.pop()
-    msg = "Expected a list of metrics in 'energy_demand' model output " + \
+    msg = "Expected a list of parameter definitions in 'energy_demand' model output " + \
           "specification, instead got None"
     assert msg in str(ex)
 
@@ -415,7 +411,7 @@ def test_output_spec_deps():
     data = {}
     validate_output_spec(data, 'energy_demand')
     ex = VALIDATION_ERRORS.pop()
-    msg = "Expected a list of metrics in 'energy_demand' model output " + \
+    msg = "Expected a list of parameter definitions in 'energy_demand' model output " + \
           "specification, instead got {}"
     assert msg in str(ex)
 
@@ -426,15 +422,15 @@ def test_output_spec_deps_list():
     data = {'metrics': 1.618}
     validate_output_spec(data, 'energy_demand')
     ex = VALIDATION_ERRORS.pop()
-    msg = "Expected a list of metrics in 'energy_demand' model output " + \
-          "specification, instead got 1.618"
+    msg = "Expected a list of parameter definitions in 'energy_demand' model output " + \
+          "specification, instead got {'metrics': 1.618}"
     assert msg in str(ex)
 
 
 def test_output_spec_deps_list_empty():
     """Expect no errors for an empty list
     """
-    data = {'metrics': []}
+    data = []
     # empty is ok
     n_errors_before = len(VALIDATION_ERRORS)
     validate_output_spec(data, 'energy_demand')
@@ -442,14 +438,12 @@ def test_output_spec_deps_list_empty():
 
 
 def test_output_spec_list_str():
-    data = {
-        'metrics': ['these', 'outputs', 'should', 'not', 'be', 'a', 'list']
-    }
+    data = ['these', 'outputs', 'should', 'not', 'be', 'a', 'list']
     n_errors_before = len(VALIDATION_ERRORS)
 
     validate_output_spec(data, 'energy_demand')
     # should add one error per output spec:
-    assert len(VALIDATION_ERRORS) == n_errors_before + len(data['metrics'])
+    assert len(VALIDATION_ERRORS) == n_errors_before + len(data)
 
     # last error, e.g.
     ex = VALIDATION_ERRORS.pop()
