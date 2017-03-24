@@ -849,36 +849,16 @@ class WaterSupplySectorModel(SectorModel):
 def setup_water_inputs(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('data', 'water_supply', 'inputs.yaml')
-    contents = {
-        'decision variables': [
-            {
-                'name': 'reservoir pumpiness',
-                'bounds': (0, 100),
-                'value': 24.583
-            },
-            {
-                'name': 'water treatment capacity',
-                'bounds': (0, 20),
-                'value': 10
-            }
-        ],
-        'parameters': [
-            {
-                'name': 'raininess',
-                'bounds': (0, 5),
-                'value': 3
-            }
-        ],
-        'dependencies': []
-    }
+    contents = [{'name': 'reservoir pumpiness',
+                 'spatial_resolution': 'LSOA',
+                 'temporal_resolution': 'annual'}]
     yaml_contents = yaml.dump(contents)
     filename.write(yaml_contents, ensure=True)
 
 
 @fixture(scope='function')
 def water_outputs_contents():
-    contents = {
-        'metrics': [
+    contents = [
             {
                 'name': 'storage_state',
                 'spatial_resolution': 'national',
@@ -888,16 +868,13 @@ def water_outputs_contents():
                 'name': 'storage_blobby',
                 'spatial_resolution': 'national',
                 'temporal_resolution': 'annual'
-            }
-        ],
-        'model outputs': [
+            },
             {
                 'name': 'total_water_demand',
                 'spatial_resolution': 'national',
                 'temporal_resolution': 'annual'
             }
         ]
-    }
     return contents
 
 
