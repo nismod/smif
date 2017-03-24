@@ -600,8 +600,9 @@ class SosModelBuilder(object):
 
         Add a dictionary of list of :class:`smif.SpaceTimeValue` named
         tuples,
-        for ease of iteration:
-            data[year][param] = SpaceTimeValue(region, interval, value, units)
+        for ease of iteration::
+
+                data[year][param] = SpaceTimeValue(region, interval, value, units)
 
         Default region: "national"
         Default interval: "annual"

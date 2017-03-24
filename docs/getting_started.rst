@@ -42,7 +42,6 @@ particular sector model.  See adding a sector model for more information.::
         /data/<sector_model>/time_intervals.yaml
         /data/<sector_model>/regions.geojson
         /data/<sector_model>/interventions.yaml
-        /data/<sector_model>/assets.yaml
 
 The ``/models/<sector_model/`` contains the executable for a sector model,
 as well as a Python file which implements :class:`smif.sector_model.SectorModel`
@@ -57,36 +56,45 @@ System-of-Systems Model File
 
 The ``model.yaml`` file contains the following::
 
+        timesteps: timesteps.yaml
+        region_sets:
+        - name: energy_regions
+          file: regions.shp
+        interval_sets:
+        - name: energy_timeslices
+          file: time_intervals.yaml
+        - name: annual_interval
+          file: annual_interval.yaml
+        scenario_data:
+        - file: electricity_demand.yaml
+          parameter: electricity_demand
+          spatial_resolution: energy_regions
+          temporal_resolution: annual_interval
+        - file: gas_demand.yaml
+          parameter: gas_demand
+          spatial_resolution: energy_regions
+          temporal_resolution: annual_interval
         sector_models:
         - name: energy_supply
-          path: ../../models/energy_supply/run.py
+          path: ../../../models/energy_supply/run.py
           classname: EnergySupplyWrapper
           config_dir: .
           initial_conditions:
           - initial_conditions.yaml
           interventions:
           - interventions.yaml
-        timesteps: timesteps.yaml
-        scenario_data:
-        - file: electricity_demand.yaml
-          parameter: electricity_demand
-          time_intervals: hourly_intervals.yaml
-        - file: gas_demand.yaml
-          parameter: gas_demand
-          time_intervals: hourly_intervals.yaml
         planning:
           pre_specified:
             use: true
             files:
-            - pre-specified.yaml # The build instructions
+            - pre-specified.yaml
           rule_based:
             use: false
             files: []
           optimisation:
             use: false
             files: []
-        assets:
-        - assets.yaml
+
 
 System-of-Systems Planning Years
 --------------------------------
@@ -132,15 +140,32 @@ Model regions are specified in ``regions.*``.
 The file format must be possible to parse with GDAL, and must contain
 an attribute "name" to use as an identifier for the region.
 
+The sets of geographic regions are specified in the ``model.yaml`` file using
+a ``region_sets`` attributes as shown below::
+
+        region_sets:
+        - name: energy_regions
+          file: regions.shp
+
+This links a name, used elsewhere in the configuration with inputs, outputs and scenarios
+with a file containing the geographic data.
+
 Temporal Resolution
 -------------------
 The attribution of hours in a year to the temporal resolution used
 in the sectoral model.
 
-Within-year time intervals are specified
-in ``time_intervals.yaml``
+Within-year time intervals are specified in yaml files, and as for regions,
+specified in the ``model.yaml`` file with an ``interval_sets`` attribute::
 
-These specify the mapping of model timesteps to durations within a year
+        interval_sets:
+        - name: energy_timeslices
+          file: time_intervals.yaml
+        - name: annual_interval
+          file: annual_interval.yaml
+
+This links a unique name with the definitions of the intervals in a yaml file.
+The data in the file specify the mapping of model timesteps to durations within a year
 (assume modelling 365 days: no extra day in leap years, no leap seconds)
 
 Each time interval must have
@@ -175,52 +200,48 @@ Inputs
 ------
 Define the collection of inputs required from external sources
 to run the model.  For example
-"electricity demand (kWh, <region>, <hour>)".
-Inputs are defined with a spatial and temporal-resolution, a unit
-and a ``from_model``.
+"electricity demand (<region>, <interval>)".
+Inputs are defined with a name, spatial resolution and temporal-resolution.
 
 Only those inputs required as dependencies are defined here, although
 dependencies are activated when configured in the system-of-systems model.
 
 The ``inputs.yaml`` file defines the dependencies of one model upon another.
-Enter a list of dependencies, each with four keys, ``name``,
-``spatial_resolution``, ``temporal_resolution`` and ``from_model``.
+Enter a list of dependencies, each with three keys, ``name``,
+``spatial_resolution`` and ``temporal_resolution``.
 For example, in energy supply::
 
-        dependencies:
-        - name: electricity_demand
-          spatial_resolution: DEFAULT
-          temporal_resolution: DEFAULT
-          from_model: [energy_demand, transport]
-        - name: gas_demand
-          spatial_resolution: DEFAULT
-          temporal_resolution: DEFAULT
-          from_model: energy_demand
+      - name: electricity_demand
+        spatial_resolution: energy_regions
+        temporal_resolution: annual_interval
+      - name: gas_demand
+        spatial_resolution: energy_regions
+        temporal_resolution: annual_interval
 
 The keys ``spatial_resolution`` and ``temporal_resolution`` define the
-resolution at which the data are required.  ``from_model`` defines the model
-from which the dependendency is required.
+resolution at which the data are required.
 
-The entry for the ``from_model`` attribute can be ``scenario``. This allows
-definition of statically defined data for each model year to be specified in
-a ``<name>.yaml`` file, in conjunction with a scenario-specific time-intervals
-file.
 
 Outputs
 -------
-Define the collection of outputs used as metrics,
-for the purpose of optimisation or
-rule-based planning approaches (so normally a cost-function), and those
+Define the collection of outputs model parameters used for the purpose 
+of optimisation or rule-based planning approaches 
+(so normally a cost-function), and those
 outputs required for accounting purposes, such as operational cost and
 emissions, or as a dependency in another model.
 
-The ``outputs.yaml`` file defines the output metrics from the model.
+The ``outputs.yaml`` file defines the output parameters from the model.
 For example::
 
-        metrics:
-          - name: total_cost
-          - name: water_demand
-          - name: total_emissions
+        - name: total_cost
+          spatial_resolution: energy_regions
+          temporal_resolution: annual_interval
+        - name: water_demand
+          spatial_resolution: energy_regions
+          temporal_resolution: annual_interval
+        - name: total_emissions
+          spatial_resolution: energy_regions
+          temporal_resolution: annual_interval
 
 Scenarios
 ---------
@@ -233,17 +254,17 @@ In the case of the example show above, reproduced below::
         scenario_data:
         - file: electricity_demand.yaml
           parameter: electricity_demand
-          time_intervals: hourly_intervals.yaml
+          spatial_resolution: energy_regions
+          temporal_resolution: annual_interval
         - file: gas_demand.yaml
           parameter: gas_demand
-          time_intervals: hourly_intervals.yaml
+          spatial_resolution: energy_regions
+          temporal_resolution: annual_interval
 
 we define two yaml files, one each for the parameters `electricity_demand` and `gas_demand`.
-The ``time_intervals`` attribute allows the use of time intervals in the scenario files which
+The ``temporal_resolution`` attribute allows the use of time intervals in the scenario files which
 are at a different temporal resolution to that expected by the sector model.  In this case,
-both electricity_demand and gas_demand are linked to the same ``hourly_intervals.yaml`` file.
-This is in the same format as the time_intervals.yaml file expected in the ``config_dir`` associated
-with the sector model.
+both electricity_demand and gas_demand are linked to the same ``annual_interval.yaml`` file.
 
 The scenario data should contain entries for (time_interval) ``name``, region, value,
 units and timestep (year).  For example::

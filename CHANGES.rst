@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 0.2
+===========
+
+- Basic conversion of time intervals (aggregation, disaggregation, remapping) and regions (aggregation, disaggregation)
+- Results are written out in a yaml dump with the ``-o`` flag e.g. ``smif run -o results.yaml model.yaml``
+- Single one-way dependencies with spatio-temporal conversion are supported
+- Simplified and harmonised implementation of model inputs and outputs
+
 Version 0.1
 ===========
 

@@ -64,19 +64,9 @@ A simulation model has inputs, and produces outputs, which are a function of
 the inputs.
 The :class:`smif.abstract.SectorModel` is used to wrap an individual simulation
 model, and provides a uniform API to other parts of **smif**.
-A :class:`smif.abstract.SectorModel` takes a collection of
-:class:`smif.abstract.Input`, which correspond to the input data needed to
-run the model.
 
 An input can correspond to:
 
-- model parameters, such as 'raininess' which are derived either from exogenous
-  data sources, such as a look-up table or scenario, or from the outputs from
-  another model (a dependency)
-- model assets, such as 'nuclear power stations', which have a capacity value
-  and other associated attributes (efficiency, lifetime, cost etc.)
-
-The distinction between these two input types is important,
-because :class:`smif.abstract.State` consists of the set of model asset
-attributes (such as `capacity`),
-and potentially a subset of model outputs, such as `reservoir level`.
+- model parameters, whose source is either from a scenario, 
+  or from the outputs from another model (a dependency)
+- model state (not yet implemented)
