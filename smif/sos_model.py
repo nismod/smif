@@ -53,7 +53,25 @@ class SosModel(object):
 
         self._results = defaultdict(dict)
 
-        self.resolution_mapping = {}
+        self._resolution_mapping = {}
+
+    @property
+    def resolution_mapping(self):
+        """Returns the temporal and spatial mapping to an input, output or scenario parameter
+
+        Example
+        -------
+        The data structure follows ``source->parameter->{temporal, spatial}``::
+
+                {'scenario': {
+                 'raininess': {'temporal_resolution': 'annual',
+                               'spatial_resolution': 'LSOA'}}}
+        """
+        return self._resolution_mapping
+
+    @resolution_mapping.setter
+    def resolution_mapping(self, value):
+        self._resolution_mapping = value
 
     @property
     def scenario_data(self):
@@ -218,25 +236,54 @@ class SosModel(object):
         for dependency in model.inputs.dependencies:
             name = dependency.name
             provider = self.outputs[name]
+
+            if len(provider) > 1:
+                msg = "No support for dependency aggregation"
+                raise NotImplementedError(msg)
+
             for source in provider:
+
                 self.logger.debug("Getting dependency data for '%s' from '%s'",
                                   name, source)
-                if source == 'scenario':
-                    new_data[name] = self._get_scenario_data(timestep,
-                                                             dependency)
-                elif source in self.model_list:
-                    new_data[name] = self.results[timestep][source][name]
 
-                    self.logger.debug(new_data)
+                if source == 'scenario':
+                    from_data = self.scenario_data[timestep][name]
+                    scenario_map = self.resolution_mapping['scenario']
+                    from_spatial_resolution = scenario_map[name]['spatial_resolution']
+                    from_temporal_resolution = scenario_map[name]['temporal_resolution']
+                    self.logger.debug("Found data: %s", from_data)
+
+                elif source in self.model_list:
+                    source_model = self.model_list[source]
+                    from_data = self.results[timestep][source][name]
+                    from_spatial_resolution = source_model.outputs.get_spatial_res(name)
+                    from_temporal_resolution = source_model.outputs.get_temporal_res(name)
+                    self.logger.debug("Found data: %s", from_data)
 
                 else:
                     msg = "The data source for dependency %s was not found"
                     raise ValueError(msg, name)
 
+                to_spatial_resolution = dependency.spatial_resolution
+                to_temporal_resolution = dependency.temporal_resolution
+                msg = "Converting from spacial resolution '%s' and  temporal resolution '%s'"
+                self.logger.debug(msg, from_spatial_resolution, from_temporal_resolution)
+                msg = "Converting to spacial resolution '%s' and  temporal resolution '%s'"
+                self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
+                new_data[name] = self._convert_data(timestep,
+                                                    from_data,
+                                                    name,
+                                                    to_spatial_resolution,
+                                                    to_temporal_resolution,
+                                                    from_spatial_resolution,
+                                                    from_temporal_resolution)
+
         new_data['timestep'] = timestep
         return new_data
 
-    def _get_scenario_data(self, timestep, dependency):
+    def _convert_data(self, timestep, data, name, to_spatial_resolution,
+                      to_temporal_resolution, from_spatial_resolution,
+                      from_temporal_resolution):
         """Given a model, check required parameters, pick data from scenario
         for the given timestep
 
@@ -252,21 +299,7 @@ class SosModel(object):
             A list of :class:`SpaceTimeValue`
 
         """
-        name = dependency.name
-        from_data = self.scenario_data[timestep][name]
-        self.logger.debug("Found data: %s", from_data)
-
-        to_spatial_resolution = dependency.spatial_resolution
-        to_temporal_resolution = dependency.temporal_resolution
-        msg = "Converting to spacial resolution '%s' and  temporal resolution '%s'"
-
-        self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
-        scenario_map = self.resolution_mapping['scenario']
-
-        from_spatial_resolution = scenario_map[name]['spatial_resolution']
-        from_temporal_resolution = scenario_map[name]['temporal_resolution']
-
-        convertor = SpaceTimeConvertor(from_data,
+        convertor = SpaceTimeConvertor(data,
                                        from_spatial_resolution,
                                        to_spatial_resolution,
                                        from_temporal_resolution,
@@ -444,6 +477,14 @@ class SosModelBuilder(object):
         resolution_mapping: dict
             A dictionary containing information on the spatial and temporal
             resoultion of scenario data
+
+        Example
+        -------
+        The data structure follows ``source->parameter->{temporal, spatial}``::
+
+                {'scenario': {
+                 'raininess': {'temporal_resolution': 'annual',
+                               'spatial_resolution': 'LSOA'}}}
 
         """
         self.sos_model.resolution_mapping = resolution_mapping

@@ -18,17 +18,23 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             {
                 'year': 2010,
                 'value': 3,
-                'units': 'ml'
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
             },
             {
                 'year': 2011,
                 'value': 5,
-                'units': 'ml'
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
             },
             {
                 'year': 2012,
                 'value': 1,
-                'units': 'ml'
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
             }
         ]
     })
@@ -99,17 +105,23 @@ def get_sos_model_with_model_dependency(setup_region_data):
             {
                 'year': 2010,
                 'value': 3,
-                'units': 'ml'
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
             },
             {
                 'year': 2011,
                 'value': 5,
-                'units': 'ml'
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
             },
             {
                 'year': 2012,
                 'value': 1,
-                'units': 'ml'
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
             }
         ]
     })

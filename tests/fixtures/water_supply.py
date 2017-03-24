@@ -109,13 +109,13 @@ class WaterSupplySectorModel(SectorModel):
 
         if 'raininess' in data:
             scenario_data = data['raininess'][0]
-            assert scenario_data.region == 'national'
-            assert scenario_data.interval == 'annual'
+            assert scenario_data.region == 'oxford'
+            assert scenario_data.interval == 1
             raininess = scenario_data.value
         elif 'water' in data:
             scenario_data = data['water'][0]
-            assert scenario_data.region == 'national'
-            assert scenario_data.interval == 'annual'
+            assert scenario_data.region == 'oxford'
+            assert scenario_data.interval == 1
             raininess = scenario_data.value
         else:
             raise KeyError("Couldn't find parameter in {}".format(data))
@@ -134,12 +134,12 @@ class WaterSupplySectorModel(SectorModel):
         results = instance.simulate()
 
         stv = {}
-        stv['water'] = [SpaceTimeValue('national',
-                                       'annual',
+        stv['water'] = [SpaceTimeValue('oxford',
+                                       1,
                                        results['water'],
                                        'Ml')]
-        stv['cost'] = [SpaceTimeValue('national',
-                                      'annual',
+        stv['cost'] = [SpaceTimeValue('oxford',
+                                      1,
                                       results['cost'],
                                       '£M')]
         return stv
