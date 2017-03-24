@@ -11,8 +11,8 @@ The output definitions are read in from ``outputs.yaml``.  For example::
 import logging
 from collections import namedtuple
 
-__author__ = "Will Usher"
-__copyright__ = "Will Usher"
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell, University of Oxford 2017"
 __license__ = "mit"
 
 

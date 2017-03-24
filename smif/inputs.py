@@ -16,21 +16,11 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-from collections import namedtuple
+from smif import Parameter
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell, University of Oxford 2017"
 __license__ = "mit"
-
-
-Dependency = namedtuple(
-    "Dependency",
-    [
-        "name",
-        "spatial_resolution",
-        "temporal_resolution"
-    ]
-)
 
 
 class DependencyList(object):
@@ -100,7 +90,7 @@ class DependencyList(object):
         - lets the np.arrays raise TypeError or IndexError for incorrect
           or out-of-bounds accesses
         """
-        dependency = Dependency(
+        dependency = Parameter(
             self.names[key],
             self.spatial_resolutions[key],
             self.temporal_resolutions[key]
