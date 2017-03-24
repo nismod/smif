@@ -32,7 +32,6 @@ import os
 from abc import ABC, abstractmethod
 
 from smif.inputs import ModelInputs
-from smif.outputs import ModelOutputs
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -50,7 +49,7 @@ class SectorModel(ABC):
         self.interventions = []
 
         self._inputs = ModelInputs({})
-        self._outputs = ModelOutputs({})
+        self._outputs = ModelInputs({})
 
         self.logger = logging.getLogger(__name__)
 
@@ -129,14 +128,14 @@ class SectorModel(ABC):
 
         Returns
         =======
-        :class:`smif.outputs.ModelOutputs`
+        :class:`smif.inputs.ModelInputs`
 
         """
         return self._outputs
 
     @outputs.setter
     def outputs(self, value):
-        self._outputs = ModelOutputs(value)
+        self._outputs = ModelInputs(value)
 
     @property
     def intervention_names(self):
