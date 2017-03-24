@@ -39,6 +39,7 @@ import logging.config
 import os
 import re
 import sys
+import traceback
 from argparse import ArgumentParser
 
 from smif.sos_model import SosModelBuilder
@@ -152,7 +153,13 @@ def run_model(args):
         builder.construct(model_config)
         sos_model = builder.finish()
     except AssertionError as error:
-        LOGGER.error(error)
+        err_type, err_value, err_traceback = sys.exc_info()
+        traceback.print_exception(err_type, err_value, err_traceback)
+        err_msg = str(error)
+        if len(err_msg) > 0:
+            LOGGER.error("An AssertionError occurred (%s) see details above.", err_msg)
+        else:
+            LOGGER.error("An AssertionError occurred, see details above.")
         exit(-1)
 
     if args.model == 'all':
