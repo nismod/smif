@@ -31,8 +31,7 @@ def one_dependency():
             {
                 'name': 'macguffins produced',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'from_model': 'macguffins_model'
+                'temporal_resolution': 'annual'
             }
         ]
     }

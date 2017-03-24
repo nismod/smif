@@ -54,8 +54,7 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             {
                 'name': 'raininess',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'from_model': 'scenario'
+                'temporal_resolution': 'annual'
             }
         ]
     }
@@ -86,8 +85,7 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             {
                 'name': 'raininess',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'from_model': 'scenario'
+                'temporal_resolution': 'annual'
             }
         ]
     }
@@ -141,8 +139,7 @@ def get_sos_model_with_model_dependency(setup_region_data):
             {
                 'name': 'raininess',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'from_model': 'scenario'
+                'temporal_resolution': 'annual'
             }
         ]
     }
@@ -172,8 +169,7 @@ def get_sos_model_with_model_dependency(setup_region_data):
             {
                 'name': 'water',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'from_model': 'water_supply'
+                'temporal_resolution': 'annual'
             }
         ]
     }
@@ -261,13 +257,16 @@ def get_config_data(setup_project_folder, setup_region_data):
             "interventions": []
         }],
         "planning": [],
-        "scenario_data": {},
+        "scenario_data": {'raininess': [{'year': 2010, 'value': 3, 'units': 'ml',
+                          'region': 'oxford', 'interval': 1}]},
         "region_sets": {'LSOA': setup_region_data['features']},
         "interval_sets": {'annual': [{'id': 1,
                                       'start': 'P0Y',
                                       'end': 'P1Y'}]
                           },
-        "resolution_mapping": {'scenario': {}}
+        "resolution_mapping": {'scenario': {
+                 'raininess': {'temporal_resolution': 'annual',
+                               'spatial_resolution': 'LSOA'}}}
              }
 
 
@@ -361,10 +360,9 @@ class TestSosModelBuilder():
         config["sector_model_data"][0]["inputs"] = {
             "dependencies": [
                 {
-                    'name': 'population',
+                    'name': 'raininess',
                     'spatial_resolution': 'blobby',
-                    'temporal_resolution': 'mega',
-                    'from_model': 'scenario'
+                    'temporal_resolution': 'mega'
                 }
             ]
         }
@@ -382,46 +380,57 @@ class TestSosModelBuilder():
         builder.load_interval_sets({'mega': interval_data})
         builder.finish()
 
-    def test_build_valid_dependencies(self, one_dependency):
+    def test_build_valid_dependencies(self, one_dependency,
+                                      get_config_data, setup_region_data):
         builder = SosModelBuilder()
-        builder.add_timesteps([2010])
-        builder.add_planning([])
+        builder.construct(get_config_data)
 
         ws = WaterSupplySectorModel()
-        ws.name = "water_supply"
+        ws.name = "water_supply_broken"
         ws.inputs = one_dependency
         builder.add_model(ws)
 
         with raises(AssertionError) as error:
             builder.finish()
 
-        msg = "Missing dependency: water_supply depends on macguffins produced " + \
-              "from macguffins_model, which is not supplied."
+        msg = "Missing dependency: water_supply_broken depends on macguffins produced" + \
+              ", which is not supplied."
         assert str(error.value) == msg
 
     def test_cyclic_dependencies(self):
         a_inputs = {
-            'decision variables': [],
-            'parameters': [],
             'dependencies': [
                 {
                     'name': 'b value',
                     'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'from_model': 'b_model'
+                    'temporal_resolution': 'annual'
                 }
             ]
         }
-
+        a_outputs = {
+            'metrics': [
+                {
+                    'name': 'a value',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                }
+            ]
+        }
         b_inputs = {
-            'decision variables': [],
-            'parameters': [],
             'dependencies': [
                 {
                     'name': 'a value',
                     'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'from_model': 'a_model'
+                    'temporal_resolution': 'annual'
+                }
+            ]
+        }
+        b_outputs = {
+            'metrics': [
+                {
+                    'name': 'b value',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
                 }
             ]
         }
@@ -433,11 +442,13 @@ class TestSosModelBuilder():
         a_model = WaterSupplySectorModel()
         a_model.name = "a_model"
         a_model.inputs = a_inputs
+        a_model.outputs = a_outputs
         builder.add_model(a_model)
 
         b_model = WaterSupplySectorModel()
         b_model.name = "b_model"
         b_model.inputs = b_inputs
+        b_model.outputs = b_outputs
         builder.add_model(b_model)
 
         with raises(NotImplementedError):

@@ -53,7 +53,7 @@ class SosModel(object):
 
         self._results = defaultdict(dict)
 
-        self._resolution_mapping = {}
+        self._resolution_mapping = {'scenario': {}}
 
     @property
     def resolution_mapping(self):
@@ -270,9 +270,7 @@ class SosModel(object):
                 self.logger.debug(msg, from_spatial_resolution, from_temporal_resolution)
                 msg = "Converting to spacial resolution '%s' and  temporal resolution '%s'"
                 self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
-                new_data[name] = self._convert_data(timestep,
-                                                    from_data,
-                                                    name,
+                new_data[name] = self._convert_data(from_data,
                                                     to_spatial_resolution,
                                                     to_temporal_resolution,
                                                     from_spatial_resolution,
@@ -281,7 +279,7 @@ class SosModel(object):
         new_data['timestep'] = timestep
         return new_data
 
-    def _convert_data(self, timestep, data, name, to_spatial_resolution,
+    def _convert_data(self, data, to_spatial_resolution,
                       to_temporal_resolution, from_spatial_resolution,
                       from_temporal_resolution):
         """Given a model, check required parameters, pick data from scenario
@@ -708,18 +706,21 @@ class SosModelBuilder(object):
 
         for model_name, model in self.sos_model.model_list.items():
             for dep in model.inputs.dependencies:
+                providers = self.sos_model.outputs[dep.name]
                 msg = "Dependency '%s' provided by '%s'"
-                self.logger.debug(msg, dep.name, dep.from_model)
-                if dep.from_model == "scenario":
-                    continue
+                self.logger.debug(msg, dep.name, providers)
 
-                if dep.from_model not in models_available:
+                if len(providers) == 0:
                     # report missing dependency type
-                    msg = "Missing dependency: {} depends on {} from {}, " + \
-                          "which is not supplied."
-                    raise AssertionError(msg.format(model_name, dep.name, dep.from_model))
+                    msg = "Missing dependency: {} depends on {}, " + \
+                        "which is not supplied."
+                    raise AssertionError(msg.format(model_name, dep.name))
 
-                dependency_graph.add_edge(model_name, dep.from_model)
+                for source in providers:
+                    if source == 'scenario':
+                        continue
+
+                    dependency_graph.add_edge(model_name, source)
 
         if not networkx.is_directed_acyclic_graph(dependency_graph):
             raise NotImplementedError("Graph of dependencies contains a cycle.")

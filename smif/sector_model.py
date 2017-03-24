@@ -102,7 +102,6 @@ class SectorModel(ABC):
                 - name: eletricity_price
                 spatial_resolution: GB
                 temporal_resolution: annual
-                from_model: energy_supply
 
         Arguments
         =========

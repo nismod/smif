@@ -1,13 +1,8 @@
 """Tests the ModelInputs class
 
 """
-import numpy as np
-from pytest import fixture
 from smif.inputs import ModelInputs
 
-class TestDependencyList:
-
-    pass
 
 class TestModelInputs:
     """Given a dict of the format::
@@ -17,8 +12,7 @@ class TestModelInputs:
             {
                 'name': 'macguffins produced',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'from_model': 'macguffins_model'
+                'temporal_resolution': 'annual'
             }
         ]
     }
@@ -26,7 +20,6 @@ class TestModelInputs:
     Return a name tuple of dependencies
 
     """
-
     def test_one_dependency(self, one_dependency):
         inputs = ModelInputs(one_dependency)
 
@@ -34,9 +27,6 @@ class TestModelInputs:
         expected = ['macguffins produced']
         assert actual == expected
 
-        actual = inputs.dependencies.from_models
-        expected = ['macguffins_model']
-        assert actual == expected
         actual = inputs.dependencies.spatial_resolutions
         expected = ['LSOA']
         assert actual == expected
