@@ -9,21 +9,11 @@ The output definitions are read in from ``outputs.yaml``.  For example::
 
 """
 import logging
-from collections import namedtuple
+from smif import Parameter
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell, University of Oxford 2017"
 __license__ = "mit"
-
-
-Output = namedtuple(
-    "Output",
-    [
-        "name",
-        "spatial_resolution",
-        "temporal_resolution"
-    ]
-)
 
 
 class OutputList(object):
@@ -65,9 +55,9 @@ class OutputList(object):
 
     def __getitem__(self, key):
 
-        output = Output(self.names[key],
-                        self.spatial_resolutions[key],
-                        self.temporal_resolutions[key])
+        output = Parameter(self.names[key],
+                           self.spatial_resolutions[key],
+                           self.temporal_resolutions[key])
         return output
 
 
