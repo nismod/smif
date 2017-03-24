@@ -22,14 +22,14 @@ class TestModelInputs:
     def test_one_dependency(self, one_dependency):
         inputs = ModelParameters(one_dependency)
 
-        actual = inputs.parameters.names
+        actual = inputs.names
         expected = ['macguffins produced']
         assert actual == expected
 
-        actual = inputs.parameters.spatial_resolutions
+        actual = inputs.spatial_resolutions
         expected = ['LSOA']
         assert actual == expected
-        actual = inputs.parameters.temporal_resolutions
+        actual = inputs.temporal_resolutions
         expected = ['annual']
         assert actual == expected
 

@@ -680,9 +680,9 @@ class SosModelBuilder(object):
         for model_name, model in self.sos_model.model_list.items():
             exp_regions = []
             exp_intervals = []
-            exp_regions.extend(model.inputs.parameters.spatial_resolutions)
+            exp_regions.extend(model.inputs.spatial_resolutions)
             exp_regions.extend(model.outputs.spatial_resolutions)
-            exp_intervals.extend(model.inputs.parameters.temporal_resolutions)
+            exp_intervals.extend(model.inputs.temporal_resolutions)
             exp_intervals.extend(model.outputs.temporal_resolutions)
 
             for region in exp_regions:

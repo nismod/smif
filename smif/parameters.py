@@ -16,81 +16,21 @@ for example::
 from __future__ import absolute_import, division, print_function
 
 import logging
-from smif import Parameter
+from collections import namedtuple
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell, University of Oxford 2017"
 __license__ = "mit"
 
 
-class ParameterList(object):
-    """Holds model parameters
-
-    Parameters have several attributes: ``name``, ``spatial_resolution``
-    and ``temporal_resolution``.
-
-    The ``name`` entry denotes the unique identifier of a model or scenario
-    parameter.
-    The ``spatial_resolution`` and ``temporal_resolution`` are references to the
-    catalogues held by the :class:`~smif.sector_model.SosModel` which define the
-    available conversion formats.
-
-    Parameters
-    ----------
-    parameters: dict
-        A dictionary of parameters
-
-    """
-
-    def __init__(self, parameters):
-
-        self.logger = logging.getLogger(__name__)
-
-        names = []
-        spatial_resolutions = []
-        temporal_resolutions = []
-
-        for param in parameters:
-            names.append(param['name'])
-            spatial_resolutions.append(param['spatial_resolution'])
-            temporal_resolutions.append(param['temporal_resolution'])
-
-        self.names = names
-        self.spatial_resolutions = spatial_resolutions
-        self.temporal_resolutions = temporal_resolutions
-
-    def __repr__(self):
-        """Return literal string representation of this instance
-        """
-        template = "{{'name': {}, 'spatial_resolution': {}, " + \
-                   "'temporal_resolution': {}}}"
-
-        return template.format(
-            self.names,
-            self.spatial_resolutions,
-            self.temporal_resolutions,
-        )
-
-    def __getitem__(self, key):
-        """Implement __getitem__ to make this class iterable
-
-        Example
-        =======
-        >>> parameter_list = ParameterList()
-        >>> for dep in parameter_list:
-        >>>     # do something with each parameter
-
-        - uses :class:`smif.Parameter` (a namedtuple) to wrap the data
-        """
-        parameter = Parameter(
-            self.names[key],
-            self.spatial_resolutions[key],
-            self.temporal_resolutions[key]
-        )
-        return parameter
-
-    def __len__(self):
-        return len(self.names)
+Parameter = namedtuple(
+    "Parameter",
+    [
+        "name",
+        "spatial_resolution",
+        "temporal_resolution"
+    ]
+)
 
 
 class ModelParameters(object):
@@ -98,12 +38,15 @@ class ModelParameters(object):
 
     Arguments
     =========
-    inputs : dict
-        A dictionary of key: val pairs including a list of input types and
-        names, followed by nested dictionaries of input attributes
+    inputs : list
+        A list of dicts of model parameter name, spatial resolution
+        and temporal resolution
     """
     def __init__(self, parameters):
-        self._parameters = ParameterList(parameters)
+        self._parameters = [Parameter(parameter['name'],
+                                      parameter['spatial_resolution'],
+                                      parameter['temporal_resolution']
+                                      ) for parameter in parameters]
         self.logger = logging.getLogger(__name__)
 
     @property
@@ -120,18 +63,32 @@ class ModelParameters(object):
         return len(self.parameters)
 
     def get_spatial_res(self, name):
-        for metric in self._parameters:
-            if metric.name == name:
-                spatial_resolution = metric.spatial_resolution
+        """The spatial resolution for parameter `name`
+
+        Arguments
+        ---------
+        name: str
+            The name of a model parameter
+        """
+        for parameter in self._parameters:
+            if parameter.name == name:
+                spatial_resolution = parameter.spatial_resolution
                 break
         else:
             raise ValueError("No output found for name {}".format(name))
         return spatial_resolution
 
     def get_temporal_res(self, name):
-        for metric in self._parameters:
-            if metric.name == name:
-                temporal_resolution = metric.temporal_resolution
+        """The temporal resolution for parameter `name`
+
+        Arguments
+        ---------
+        name: str
+            The name of a model parameter
+        """
+        for parameter in self._parameters:
+            if parameter.name == name:
+                temporal_resolution = parameter.temporal_resolution
                 break
         else:
             raise ValueError("No output found for name '{}'".format(name))
@@ -139,8 +96,28 @@ class ModelParameters(object):
 
     @property
     def spatial_resolutions(self):
-        return self._parameters.spatial_resolutions
+        """A list of the spatial resolutions
+
+        Returns
+        -------
+        list
+            A list of the spatial resolutions associated with the model
+            parameters
+        """
+        return [parameter.spatial_resolution for parameter in self._parameters]
 
     @property
     def temporal_resolutions(self):
-        return self._parameters.temporal_resolutions
+        """A list of the temporal resolutions
+
+        Returns
+        -------
+        list
+            A list of the temporal resolutions associated with the model
+            parameters
+        """
+        return [parameter.temporal_resolution for parameter in self._parameters]
+
+    @property
+    def names(self):
+        return [parameter.name for parameter in self._parameters]
