@@ -176,7 +176,7 @@ def validate_dependency(dep):
         VALIDATION_ERRORS.append(ValidationError(fmt.format(dep)))
         return
 
-    required_keys = ["name", "spatial_resolution", "temporal_resolution", "from_model"]
+    required_keys = ["name", "spatial_resolution", "temporal_resolution"]
     for key in required_keys:
         if key not in dep:
             fmt = "Expected a value for '{}' in each model dependency, only received {}"

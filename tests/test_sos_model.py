@@ -18,21 +18,27 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             {
                 'year': 2010,
                 'value': 3,
-                'units': 'ml'
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
             },
             {
                 'year': 2011,
                 'value': 5,
-                'units': 'ml'
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
             },
             {
                 'year': 2012,
                 'value': 1,
-                'units': 'ml'
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
             }
         ]
     })
-    builder.add_resolution_mapping({'scenarios': {
+    builder.add_resolution_mapping({'scenario': {
         'raininess': {'temporal_resolution': 'annual',
                       'spatial_resolution': 'LSOA'}}})
     builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -43,16 +49,109 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
-    ws.inputs = {
-        'dependencies': [
+    ws.inputs = [
             {
                 'name': 'raininess',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'from_model': 'scenario'
+                'temporal_resolution': 'annual'
             }
         ]
-    }
+
+    ws.outputs = [
+        {
+            'name': 'cost',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        },
+        {
+            'name': 'water',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
+    ws.interventions = [
+        {"name": "water_asset_a", "location": "oxford"},
+        {"name": "water_asset_b", "location": "oxford"},
+        {"name": "water_asset_c", "location": "oxford"}
+        ]
+
+    builder.add_model(ws)
+
+    ws2 = WaterSupplySectorModel()
+    ws2.name = 'water_supply_2'
+    ws2.inputs = [
+            {
+                'name': 'raininess',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual'
+            }
+        ]
+
+    builder.add_model(ws2)
+
+    return builder.finish()
+
+
+@fixture(scope='function')
+def get_sos_model_with_model_dependency(setup_region_data):
+    builder = SosModelBuilder()
+    builder.add_timesteps([2010])
+    builder.add_scenario_data({
+        "raininess": [
+            {
+                'year': 2010,
+                'value': 3,
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
+            },
+            {
+                'year': 2011,
+                'value': 5,
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
+            },
+            {
+                'year': 2012,
+                'value': 1,
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
+            }
+        ]
+    })
+    builder.add_resolution_mapping({'scenario': {
+        'raininess': {'temporal_resolution': 'annual',
+                      'spatial_resolution': 'LSOA'}}})
+    builder.load_region_sets({'LSOA': setup_region_data['features']})
+    interval_data = [{'id': 1,
+                      'start': 'P0Y',
+                      'end': 'P1Y'}]
+    builder.load_interval_sets({'annual': interval_data})
+
+    ws = WaterSupplySectorModel()
+    ws.name = 'water_supply'
+    ws.inputs = [
+            {
+                'name': 'raininess',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual'
+            }
+        ]
+
+    ws.outputs = [
+        {
+            'name': 'water',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        },
+        {
+            'name': 'cost',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
     ws.interventions = [
         {"name": "water_asset_a", "location": "oxford"},
         {"name": "water_asset_b", "location": "oxford"},
@@ -62,16 +161,14 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
 
     ws2 = WaterSupplySectorModel()
     ws2.name = 'water_supply_2'
-    ws2.inputs = {
-        'dependencies': [
+    ws2.inputs = [
             {
-                'name': 'raininess',
+                'name': 'water',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'from_model': 'scenario'
+                'temporal_resolution': 'annual'
             }
         ]
-    }
+
     builder.add_model(ws2)
 
     return builder.finish()
@@ -126,12 +223,14 @@ class TestSosModel():
         sos_model._run_sector_model_timestep(model, 2010)
         actual = sos_model.results[2010]['water_supply']
         expected = {'cost': 2.528, 'water': 2}
-        assert actual == expected
+        for key, value in expected.items():
+            assert actual[key][0].value == value
 
         sos_model._run_sector_model_timestep(model, 2011)
         actual = sos_model.results[2011]['water_supply']
         expected = {'cost': 2.528, 'water': 2}
-        assert actual == expected
+        for key, value in expected.items():
+            assert actual[key][0].value == value
 
 
 @fixture(scope='function')
@@ -148,19 +247,22 @@ def get_config_data(setup_project_folder, setup_region_data):
             "name": "water_supply",
             "path": water_supply_wrapper_path,
             "classname": "WaterSupplySectorModel",
-            "inputs": {},
-            "outputs": {},
+            "inputs": [],
+            "outputs": [],
             "initial_conditions": [],
             "interventions": []
         }],
         "planning": [],
-        "scenario_data": {},
+        "scenario_data": {'raininess': [{'year': 2010, 'value': 3, 'units': 'ml',
+                          'region': 'oxford', 'interval': 1}]},
         "region_sets": {'LSOA': setup_region_data['features']},
         "interval_sets": {'annual': [{'id': 1,
                                       'start': 'P0Y',
                                       'end': 'P1Y'}]
                           },
-        "resolution_mapping": {'scenarios': {}}
+        "resolution_mapping": {'scenario': {
+                 'raininess': {'temporal_resolution': 'annual',
+                               'spatial_resolution': 'LSOA'}}}
              }
 
 
@@ -251,16 +353,14 @@ class TestSosModelBuilder():
         Should raise error if no spatial or temporal sets are defined
         """
         config = get_config_data
-        config["sector_model_data"][0]["inputs"] = {
-            "dependencies": [
+        config["sector_model_data"][0]["inputs"] = [
                 {
-                    'name': 'population',
+                    'name': 'raininess',
                     'spatial_resolution': 'blobby',
-                    'temporal_resolution': 'mega',
-                    'from_model': 'scenario'
+                    'temporal_resolution': 'mega'
                 }
             ]
-        }
+
         builder = SosModelBuilder()
         builder.construct(config)
 
@@ -275,49 +375,55 @@ class TestSosModelBuilder():
         builder.load_interval_sets({'mega': interval_data})
         builder.finish()
 
-    def test_build_valid_dependencies(self, one_dependency):
+    def test_build_valid_dependencies(self, one_dependency,
+                                      get_config_data, setup_region_data):
         builder = SosModelBuilder()
-        builder.add_timesteps([2010])
-        builder.add_planning([])
+        builder.construct(get_config_data)
 
         ws = WaterSupplySectorModel()
-        ws.name = "water_supply"
+        ws.name = "water_supply_broken"
         ws.inputs = one_dependency
         builder.add_model(ws)
 
         with raises(AssertionError) as error:
             builder.finish()
 
-        msg = "Missing dependency: water_supply depends on macguffins produced " + \
-              "from macguffins_model, which is not supplied."
+        msg = "Missing dependency: water_supply_broken depends on macguffins produced" + \
+              ", which is not supplied."
         assert str(error.value) == msg
 
     def test_cyclic_dependencies(self):
-        a_inputs = {
-            'decision variables': [],
-            'parameters': [],
-            'dependencies': [
+        a_inputs = [
                 {
                     'name': 'b value',
                     'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'from_model': 'b_model'
+                    'temporal_resolution': 'annual'
                 }
             ]
-        }
 
-        b_inputs = {
-            'decision variables': [],
-            'parameters': [],
-            'dependencies': [
+        a_outputs = [
                 {
                     'name': 'a value',
                     'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'from_model': 'a_model'
+                    'temporal_resolution': 'annual'
                 }
             ]
-        }
+
+        b_inputs = [
+                {
+                    'name': 'a value',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                }
+            ]
+
+        b_outputs = [
+                {
+                    'name': 'b value',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                }
+            ]
 
         builder = SosModelBuilder()
         builder.add_timesteps([2010])
@@ -326,11 +432,13 @@ class TestSosModelBuilder():
         a_model = WaterSupplySectorModel()
         a_model.name = "a_model"
         a_model.inputs = a_inputs
+        a_model.outputs = a_outputs
         builder.add_model(a_model)
 
         b_model = WaterSupplySectorModel()
         b_model.name = "b_model"
         b_model.inputs = b_inputs
+        b_model.outputs = b_outputs
         builder.add_model(b_model)
 
         with raises(NotImplementedError):
@@ -442,3 +550,61 @@ class TestSosModelBuilder():
         with raises(ValueError) as ex:
             builder.add_scenario_data(data)
         assert msg in str(ex.value)
+
+    def test_inputs_property(self,
+                             get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
+        actual = sos_model.inputs
+
+        expected = {'raininess': ['water_supply', 'water_supply_2']}
+
+        assert isinstance(actual, dict)
+
+        for key, value in expected.items():
+            assert key in actual.keys()
+            for entry in value:
+                assert entry in actual[key]
+
+    def test_outputs_property(self,
+                              get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
+        actual = sos_model.outputs
+
+        expected = {'cost': ['water_supply']}
+
+        assert isinstance(actual, dict)
+
+        for key, value in expected.items():
+            assert key in actual.keys()
+            for entry in value:
+                assert entry in actual[key]
+
+    def test_single_dependency(self,
+                               get_sos_model_with_model_dependency):
+        """
+        """
+        sos_model = get_sos_model_with_model_dependency
+        outputs = sos_model.outputs
+
+        expected_outputs = {'water': ['water_supply']}
+
+        assert isinstance(outputs, dict)
+
+        for key, value in expected_outputs.items():
+            assert key in outputs.keys()
+            for entry in value:
+                assert entry in outputs[key]
+
+        inputs = sos_model.inputs
+
+        expected_inputs = {'raininess': ['water_supply'],
+                           'water': ['water_supply_2']}
+
+        assert isinstance(inputs, dict)
+
+        for key, value in expected_inputs.items():
+            assert key in inputs.keys()
+            for entry in value:
+                assert entry in inputs[key]
+
+        sos_model.run()

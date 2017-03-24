@@ -115,8 +115,7 @@ def get_input_spec():
             {
                 'name': 'gas_demand',
                 'spatial_resolution': 'national',
-                'temporal_resolution': 'annual',
-                'from_model': 'scenario'
+                'temporal_resolution': 'annual'
             }
         ]
     }
@@ -129,8 +128,7 @@ def get_dependency():
     return {
         'name': 'gas_demand',
         'spatial_resolution': 'national',
-        'temporal_resolution': 'annual',
-        'from_model': 'scenario'
+        'temporal_resolution': 'annual'
     }
 
 
@@ -389,7 +387,7 @@ def test_dependency_ok(get_dependency):
 def test_dependency_required(get_dependency):
     """Expect an error if dependency is missing required fields
     """
-    required_keys = ['name', 'spatial_resolution', 'temporal_resolution', 'from_model']
+    required_keys = ['name', 'spatial_resolution', 'temporal_resolution']
     for key in required_keys:
         data = get_dependency
         del data[key]

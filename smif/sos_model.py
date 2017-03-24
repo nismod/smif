@@ -53,7 +53,25 @@ class SosModel(object):
 
         self._results = defaultdict(dict)
 
-        self.resolution_mapping = {}
+        self._resolution_mapping = {'scenario': {}}
+
+    @property
+    def resolution_mapping(self):
+        """Returns the temporal and spatial mapping to an input, output or scenario parameter
+
+        Example
+        -------
+        The data structure follows ``source->parameter->{temporal, spatial}``::
+
+                {'scenario': {
+                 'raininess': {'temporal_resolution': 'annual',
+                               'spatial_resolution': 'LSOA'}}}
+        """
+        return self._resolution_mapping
+
+    @resolution_mapping.setter
+    def resolution_mapping(self, value):
+        self._resolution_mapping = value
 
     @property
     def scenario_data(self):
@@ -74,8 +92,9 @@ class SosModel(object):
         Returns
         -------
         dict
-            Nested dictionary in the format results[int:year][str:model] => list
-            of SpaceTimeValues
+            Nested dictionary in the format
+            results[int:year][str:model][str:parameter] => list of
+            SpaceTimeValues
         """
         # convert from defaultdict to plain dict
         return dict(self._results)
@@ -167,8 +186,8 @@ class SosModel(object):
         state = {}
         data = self._get_data(model, model.name, timestep)
         results = model.simulate(decisions, state, data)
-        self._results[timestep][model.name] = results
         self.logger.debug("Results from %s model:\n %s", model.name, results)
+        self._results[timestep][model.name] = results
 
     def _get_decisions(self, model, timestep):
         """Gets the interventions that correspond to the decisions
@@ -214,40 +233,55 @@ class SosModel(object):
 
         """
         new_data = {}
-        for dependency in model.inputs.dependencies:
-            self.logger.debug("Finding data for dependency: %s", dependency.name)
-            if dependency.from_model == 'scenario':
-                name = dependency.name
-                from_data = self._get_scenario_data(timestep, name)
-                self.logger.debug("Found data: %s", from_data)
+        for dependency in model.inputs.parameters:
+            name = dependency.name
+            provider = self.outputs[name]
+
+            if len(provider) > 1:
+                msg = "No support for dependency aggregation"
+                raise NotImplementedError(msg)
+
+            for source in provider:
+
+                self.logger.debug("Getting dependency data for '%s' from '%s'",
+                                  name, source)
+
+                if source == 'scenario':
+                    from_data = self.scenario_data[timestep][name]
+                    scenario_map = self.resolution_mapping['scenario']
+                    from_spatial_resolution = scenario_map[name]['spatial_resolution']
+                    from_temporal_resolution = scenario_map[name]['temporal_resolution']
+                    self.logger.debug("Found data: %s", from_data)
+
+                elif source in self.model_list:
+                    source_model = self.model_list[source]
+                    from_data = self.results[timestep][source][name]
+                    from_spatial_resolution = source_model.outputs.get_spatial_res(name)
+                    from_temporal_resolution = source_model.outputs.get_temporal_res(name)
+                    self.logger.debug("Found data: %s", from_data)
+
+                else:
+                    msg = "The data source for dependency %s was not found"
+                    raise ValueError(msg, name)
 
                 to_spatial_resolution = dependency.spatial_resolution
                 to_temporal_resolution = dependency.temporal_resolution
+                msg = "Converting from spacial resolution '%s' and  temporal resolution '%s'"
+                self.logger.debug(msg, from_spatial_resolution, from_temporal_resolution)
                 msg = "Converting to spacial resolution '%s' and  temporal resolution '%s'"
-
                 self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
-                scenario_map = self.resolution_mapping['scenarios']
-
-                from_spatial_resolution = scenario_map[name]['spatial_resolution']
-                from_temporal_resolution = scenario_map[name]['temporal_resolution']
-
-                convertor = SpaceTimeConvertor(from_data,
-                                               from_spatial_resolution,
-                                               to_spatial_resolution,
-                                               from_temporal_resolution,
-                                               to_temporal_resolution,
-                                               self.regions,
-                                               self.intervals)
-                new_data[name] = convertor.convert()
-
-            else:
-                msg = "Getting data from dependencies is not yet implemented"
-                raise NotImplementedError(msg)
+                new_data[name] = self._convert_data(from_data,
+                                                    to_spatial_resolution,
+                                                    to_temporal_resolution,
+                                                    from_spatial_resolution,
+                                                    from_temporal_resolution)
 
         new_data['timestep'] = timestep
         return new_data
 
-    def _get_scenario_data(self, timestep, name):
+    def _convert_data(self, data, to_spatial_resolution,
+                      to_temporal_resolution, from_spatial_resolution,
+                      from_temporal_resolution):
         """Given a model, check required parameters, pick data from scenario
         for the given timestep
 
@@ -255,6 +289,7 @@ class SosModel(object):
         ----------
         timestep: int
             The year for which to get scenario data
+        dependency: :class:`smif.SpaceTimeValue`
 
         Returns
         -------
@@ -262,7 +297,14 @@ class SosModel(object):
             A list of :class:`SpaceTimeValue`
 
         """
-        return self.scenario_data[timestep][name]
+        convertor = SpaceTimeConvertor(data,
+                                       from_spatial_resolution,
+                                       to_spatial_resolution,
+                                       from_temporal_resolution,
+                                       to_temporal_resolution,
+                                       self.regions,
+                                       self.intervals)
+        return convertor.convert()
 
     def _run_static_optimisation(self):
         """Runs the system-of-systems model in a static optimisation format
@@ -276,7 +318,11 @@ class SosModel(object):
 
     def _get_model_names_in_run_order(self):
         # topological sort gives a single list from directed graph
-        return networkx.topological_sort(self.dependency_graph)
+
+        run_order = networkx.topological_sort(self.dependency_graph,
+                                              reverse=True)
+        self.logger.debug("Running models in order: %s", run_order)
+        return run_order
 
     def determine_running_mode(self):
         """Determines from the config in what mode to run the model
@@ -334,6 +380,39 @@ class SosModel(object):
         """
         return list(self.model_list.keys())
 
+    @property
+    def inputs(self):
+        """A dictionary of model names associated with an inputs
+
+        Returns
+        -------
+        dict
+            Keys are parameter names, value is a list of sector model names
+        """
+        parameter_model_map = defaultdict(list)
+        for model_name, model_data in self.model_list.items():
+            for dep in model_data.inputs.parameters:
+                parameter_model_map[dep.name].append(model_name)
+        return parameter_model_map
+
+    @property
+    def outputs(self):
+        """Model names associated with model outputs & scenarios
+
+        Returns
+        -------
+        dict
+            Keys are parameter names, value is a list of sector model names
+        """
+        parameter_model_map = defaultdict(list)
+        for model_name, model_data in self.model_list.items():
+            for output in model_data.outputs.parameters:
+                parameter_model_map[output.name].append(model_name)
+
+        for name in self.resolution_mapping['scenario'].keys():
+            parameter_model_map[name].append('scenario')
+        return parameter_model_map
+
 
 class SosModelBuilder(object):
     """Constructs a system-of-systems model
@@ -390,6 +469,21 @@ class SosModelBuilder(object):
 
     def add_resolution_mapping(self, resolution_mapping):
         """
+
+        Parameters
+        ----------
+        resolution_mapping: dict
+            A dictionary containing information on the spatial and temporal
+            resoultion of scenario data
+
+        Example
+        -------
+        The data structure follows ``source->parameter->{temporal, spatial}``::
+
+                {'scenario': {
+                 'raininess': {'temporal_resolution': 'annual',
+                               'spatial_resolution': 'LSOA'}}}
+
         """
         self.sos_model.resolution_mapping = resolution_mapping
 
@@ -586,9 +680,9 @@ class SosModelBuilder(object):
         for model_name, model in self.sos_model.model_list.items():
             exp_regions = []
             exp_intervals = []
-            exp_regions.extend(model.inputs.dependencies.spatial_resolutions)
+            exp_regions.extend(model.inputs.spatial_resolutions)
             exp_regions.extend(model.outputs.spatial_resolutions)
-            exp_intervals.extend(model.inputs.dependencies.temporal_resolutions)
+            exp_intervals.extend(model.inputs.temporal_resolutions)
             exp_intervals.extend(model.outputs.temporal_resolutions)
 
             for region in exp_regions:
@@ -611,19 +705,22 @@ class SosModelBuilder(object):
         dependency_graph.add_nodes_from(models_available)
 
         for model_name, model in self.sos_model.model_list.items():
-            for dep in model.inputs.dependencies:
+            for dep in model.inputs.parameters:
+                providers = self.sos_model.outputs[dep.name]
                 msg = "Dependency '%s' provided by '%s'"
-                self.logger.debug(msg, dep.name, dep.from_model)
-                if dep.from_model == "scenario":
-                    continue
+                self.logger.debug(msg, dep.name, providers)
 
-                if dep.from_model not in models_available:
+                if len(providers) == 0:
                     # report missing dependency type
-                    msg = "Missing dependency: {} depends on {} from {}, " + \
-                          "which is not supplied."
-                    raise AssertionError(msg.format(model_name, dep.name, dep.from_model))
+                    msg = "Missing dependency: {} depends on {}, " + \
+                        "which is not supplied."
+                    raise AssertionError(msg.format(model_name, dep.name))
 
-                dependency_graph.add_edge(model_name, dep.from_model)
+                for source in providers:
+                    if source == 'scenario':
+                        continue
+
+                    dependency_graph.add_edge(model_name, source)
 
         if not networkx.is_directed_acyclic_graph(dependency_graph):
             raise NotImplementedError("Graph of dependencies contains a cycle.")
