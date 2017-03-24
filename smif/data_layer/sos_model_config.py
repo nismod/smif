@@ -295,8 +295,8 @@ class SosModelReader(object):
             if len(paths) == 1:
                 path = paths[0]
             else:
-                msg = "regions config file not found for {} model"
-                raise FileNotFoundError(msg.format(self.model_name))
+                msg = "Region set data file not found: {} does not exist."
+                raise FileNotFoundError(msg.format(path))
 
         with fiona.drivers():
             with fiona.open(path) as src:
