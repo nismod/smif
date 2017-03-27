@@ -1,13 +1,18 @@
 """Test config validation
 """
-from smif.data_layer.validate import (VALIDATION_ERRORS,
-                                      validate_interventions,
+from pytest import fixture
+from smif.data_layer.validate import (VALIDATION_ERRORS, validate_dependency,
+                                      validate_input_spec,
+                                      validate_interventions, validate_output,
+                                      validate_output_spec,
                                       validate_planning_config,
                                       validate_sector_model_initial_config,
                                       validate_sos_model_config,
+                                      validate_time_intervals,
                                       validate_timesteps)
 
 
+@fixture(scope='function')
 def get_sos_model_config():
     """Return sample sos_model config
     """
@@ -30,13 +35,21 @@ def get_sos_model_config():
         "scenario_data": [
             {
                 "parameter": "population",
-                "file": "../data/scenario/population.yaml"
+                "file": "../data/scenario/population.yaml",
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
             },
             {
                 "parameter": "raininess",
-                "file": "../data/scenario/raininess.yaml"
+                "file": "../data/scenario/raininess.yaml",
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
             }
         ],
+        "region_sets": [{'name': 'national',
+                         'file': '../data/national.shp'}],
+        "interval_sets": [{'name': 'annual',
+                           'file': '../data/annual_intervals.yaml'}],
         "planning": {
             "pre_specified": {
                 "use": True,
@@ -55,6 +68,7 @@ def get_sos_model_config():
     }
 
 
+@fixture(scope='function')
 def get_sector_model_initial_config():
     """Return sample sector_model initial config
     """
@@ -66,6 +80,7 @@ def get_sector_model_initial_config():
     }
 
 
+@fixture(scope='function')
 def get_intervention():
     """Return sample intervention
     """
@@ -91,11 +106,59 @@ def get_intervention():
     }
 
 
-def test_modelrun_config_validate():
-    """Expect no errors from a complete, valid config
+@fixture(scope='function')
+def get_input_spec():
+    """Return sample input specification
     """
-    data = get_sos_model_config()
-    validate_sos_model_config(data)
+    return [
+            {
+                'name': 'gas_demand',
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
+            }
+        ]
+
+
+@fixture(scope='function')
+def get_dependency():
+    """Return sample dependency
+    """
+    return {
+        'name': 'gas_demand',
+        'spatial_resolution': 'national',
+        'temporal_resolution': 'annual'
+    }
+
+
+@fixture(scope='function')
+def get_output_spec():
+    """Return sample output specification
+    """
+    return [
+            {
+                'name': 'total_cost',
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual'
+            }
+        ]
+
+
+@fixture(scope='function')
+def get_time_intervals():
+    """Return sample time intervals
+    """
+    return [
+        {
+            'id': 'first_half',
+            'start': 'P0M',
+            'end': 'P6M'
+        },
+        {
+            'id': 'second_half',
+            'start': 'P6M',
+            'end': 'P12M'
+        }
+    ]
 
 
 def test_modelrun_config_invalid():
@@ -115,22 +178,11 @@ def test_modelrun_config_invalid():
         assert msg in str(ex)
 
 
-def test_missing_timestep():
-    """Expect an error if missing timesteps
-    """
-    data = get_sos_model_config()
-    del data['timesteps']
+def test_invalid_timesteps_file(get_sos_model_config):
 
-    validate_sos_model_config(data)
-    ex = VALIDATION_ERRORS.pop()
-    msg = "No 'timesteps' file specified in main config"
-    assert msg in str(ex)
-
-
-def test_invalid_timesteps_file():
     """Expect an error if timesteps is not a path to a file
     """
-    data = get_sos_model_config()
+    data = get_sos_model_config
     data['timesteps'] = 3
 
     validate_sos_model_config(data)
@@ -159,10 +211,44 @@ def test_invalid_single_timestep():
     assert msg in str(ex)
 
 
-def test_missing_sector_models():
+def test_time_intervals_type():
+    """Expect an error if a set of time_intervals is not a list
+    """
+    data = 'Jiminy Cricket'
+    validate_time_intervals(data, '/path/to/interval_set.yaml')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "expected a list of time intervals"
+    assert msg in str(ex)
+
+
+def test_time_interval_type():
+    """Expect an error if a set of time_intervals is not a list
+    """
+    data = ['Jiminy Cricket']
+    validate_time_intervals(data, '/path/to/interval_set.yaml')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a time interval, instead got Jiminy Cricket"
+    assert msg in str(ex)
+
+
+def test_time_interval_required(get_time_intervals):
+    """Expect an error if a set of time_intervals is not a list
+    """
+    required_keys = ['id', 'start', 'end']
+    for key in required_keys:
+        data = get_time_intervals
+        del data[0][key]
+
+        validate_time_intervals(data, '/path/to/interval_set.yaml')
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Expected a value for '{}' in each time interval".format(key)
+        assert msg in str(ex)
+
+
+def test_missing_sector_models(get_sos_model_config):
     """Expect an error if missing sector_models
     """
-    data = get_sos_model_config()
+    data = get_sos_model_config
     del data['sector_models']
 
     validate_sos_model_config(data)
@@ -171,10 +257,10 @@ def test_missing_sector_models():
     assert msg in str(ex)
 
 
-def test_sector_models_not_list():
+def test_sector_models_not_list(get_sos_model_config):
     """Expect an error if sector_models is not a list
     """
-    data = get_sos_model_config()
+    data = get_sos_model_config
     data['sector_models'] = 42
 
     validate_sos_model_config(data)
@@ -184,10 +270,10 @@ def test_sector_models_not_list():
     assert msg in str(ex)
 
 
-def test_sector_models_empty_list():
+def test_sector_models_empty_list(get_sos_model_config):
     """Expect an error if sector_models is an empty list
     """
-    data = get_sos_model_config()
+    data = get_sos_model_config
     data['sector_models'] = []
 
     validate_sos_model_config(data)
@@ -196,12 +282,24 @@ def test_sector_models_empty_list():
     assert msg in str(ex)
 
 
-def test_sector_model_missing_required():
+def test_sector_model_type(get_sos_model_config):
+    """Expect an error if sector_model config is not a dict
+    """
+    data = get_sos_model_config
+    data['sector_models'] = [None]
+
+    validate_sos_model_config(data)
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a sector model config block"
+    assert msg in str(ex)
+
+
+def test_sector_model_required(get_sector_model_initial_config):
     """Expect an error if a sector_model is missing a required key
     """
     required_keys = ['name', 'config_dir', 'path', 'classname']
     for key in required_keys:
-        data = get_sector_model_initial_config()
+        data = get_sector_model_initial_config
         del data[key]
 
         validate_sector_model_initial_config(data)
@@ -210,10 +308,197 @@ def test_sector_model_missing_required():
         assert msg in str(ex)
 
 
-def test_missing_planning():
+def test_input_spec_type():
+    """Expect an error if input_spec is not a dict
+    """
+    data = None
+    validate_input_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of parameter definitions in 'energy_demand' model input " + \
+          "specification, instead got None"
+    assert msg in str(ex)
+
+
+def test_input_spec_deps():
+    """Expect an error if input_spec is missing dependencies
+    """
+    data = {}
+    validate_input_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of parameter definitions in 'energy_demand' model input " + \
+          "specification, instead got {}"
+    assert msg in str(ex)
+
+
+def test_input_spec_deps_list():
+    """Expect an error if input_spec dependencies is not a list
+    """
+    data = {1.618}
+    validate_input_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of parameter definitions in 'energy_demand' model input " + \
+          "specification, instead got {1.618}"
+    assert msg in str(ex)
+
+
+def test_input_spec_deps_list_empty():
+    """Expect no errors for an empty list
+    """
+    data = []
+    # empty is ok
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_input_spec(data, 'energy_demand')
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_input_spec_deps_list_ok(get_input_spec):
+    """Expect no errors for a list of valid dependencies
+    """
+    data = get_input_spec
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_input_spec(data, 'energy_demand')
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_dependency_type(get_input_spec):
+    """Expect an error if dependency is not a dict
+    """
+    data = 'single_string'
+    validate_dependency(data)
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a dependency specification, " + \
+          "instead got single_string"
+    assert msg in str(ex)
+
+
+def test_dependency_ok(get_dependency):
+    """Expect no errors for a valid dependency
+    """
+    data = get_dependency
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_dependency(data)
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_dependency_required(get_dependency):
+    """Expect an error if dependency is missing required fields
+    """
+    required_keys = ['name', 'spatial_resolution', 'temporal_resolution']
+    for key in required_keys:
+        data = get_dependency
+        del data[key]
+        validate_dependency(data)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Expected a value for '{}' in each model dependency, " + \
+            "only received {}"
+        assert msg.format(key, data) in str(ex)
+
+
+def test_output_spec_type():
+    """Expect an error if output_spec is not a dict
+    """
+    data = None
+    validate_output_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of parameter definitions in 'energy_demand' model output " + \
+          "specification, instead got None"
+    assert msg in str(ex)
+
+
+def test_output_spec_deps():
+    """Expect an error if output_spec is missing metrics
+    """
+    data = {}
+    validate_output_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of parameter definitions in 'energy_demand' model output " + \
+          "specification, instead got {}"
+    assert msg in str(ex)
+
+
+def test_output_spec_deps_list():
+    """Expect an error if output_spec metrics is not a list
+    """
+    data = {'metrics': 1.618}
+    validate_output_spec(data, 'energy_demand')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of parameter definitions in 'energy_demand' model output " + \
+          "specification, instead got {'metrics': 1.618}"
+    assert msg in str(ex)
+
+
+def test_output_spec_deps_list_empty():
+    """Expect no errors for an empty list
+    """
+    data = []
+    # empty is ok
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_output_spec(data, 'energy_demand')
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_output_spec_list_str():
+    data = ['these', 'outputs', 'should', 'not', 'be', 'a', 'list']
+    n_errors_before = len(VALIDATION_ERRORS)
+
+    validate_output_spec(data, 'energy_demand')
+    # should add one error per output spec:
+    assert len(VALIDATION_ERRORS) == n_errors_before + len(data)
+
+    # last error, e.g.
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected an output specification, " + \
+          "instead got list"
+    assert msg in str(ex)
+
+
+def test_output_spec_deps_list_ok(get_output_spec):
+    """Expect no errors for a list of valid dependencies
+    """
+    data = get_output_spec
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_output_spec(data, 'energy_demand')
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_output_type():
+    """Expect an error if output is not a dict
+    """
+    data = 'single_string'
+    validate_output(data)
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected an output specification, " + \
+          "instead got single_string"
+    assert msg in str(ex)
+
+
+def test_output_ok(get_dependency):
+    """Expect no errors for a valid output
+    """
+    data = get_dependency
+    n_errors_before = len(VALIDATION_ERRORS)
+    validate_output(data)
+    assert len(VALIDATION_ERRORS) == n_errors_before
+
+
+def test_output_required(get_dependency):
+    """Expect an error if output is not a dict
+    """
+    required_keys = ['name', 'spatial_resolution', 'temporal_resolution']
+    for key in required_keys:
+        data = get_dependency
+        del data[key]
+        validate_output(data)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Expected a value for '{}' in each model output, " + \
+            "only received {}"
+        assert msg.format(key, data) in str(ex)
+
+
+def test_missing_planning(get_sos_model_config):
     """Expect an error if missing planning
     """
-    data = get_sos_model_config()
+    data = get_sos_model_config
     del data['planning']
 
     validate_sos_model_config(data)
@@ -222,10 +507,10 @@ def test_missing_planning():
     assert msg in str(ex)
 
 
-def test_used_planning_needs_files():
+def test_used_planning_needs_files(get_sos_model_config):
     """Expect an error if a planning mode is to be used, but has no files
     """
-    data = get_sos_model_config()
+    data = get_sos_model_config
     del data["planning"]["pre_specified"]["files"]
 
     validate_sos_model_config(data)
@@ -234,12 +519,12 @@ def test_used_planning_needs_files():
     assert msg in str(ex)
 
 
-def test_planning_missing_required():
+def test_planning_missing_required(get_sos_model_config):
     """Expect an error if missing a planning mode
     """
     required_keys = ["pre_specified", "rule_based", "optimisation"]
     for key in required_keys:
-        data = get_sos_model_config()["planning"]
+        data = get_sos_model_config["planning"]
         del data[key]
 
         validate_planning_config(data)
@@ -248,10 +533,10 @@ def test_planning_missing_required():
         assert msg in str(ex)
 
 
-def test_planning_missing_use():
+def test_planning_missing_use(get_sos_model_config):
     """Expect an error if a planning mode is missing "use""
     """
-    data = get_sos_model_config()["planning"]
+    data = get_sos_model_config["planning"]
     del data["rule_based"]["use"]
 
     validate_planning_config(data)
@@ -260,14 +545,15 @@ def test_planning_missing_use():
     assert msg in str(ex)
 
 
-def test_interventions_missing_required():
+def test_interventions_missing_required(get_intervention):
     """Expect an error if an intervention is missing required key
     """
-    required_keys = ["name", "location", "capital_cost", "operational_lifetime",
+    required_keys = ["name", "location", "capital_cost",
+                     "operational_lifetime",
                      "economic_lifetime"]
 
     for key in required_keys:
-        intervention = get_intervention()
+        intervention = get_intervention
         del intervention[key]
 
         data = [intervention]
@@ -279,10 +565,10 @@ def test_interventions_missing_required():
         assert msg in str(ex)
 
 
-def test_interventions_checks_for_units():
+def test_interventions_checks_for_units(get_intervention):
     """Expect an error if an intervention's "capacity" has no units
     """
-    intervention = get_intervention()
+    intervention = get_intervention
     intervention["capacity"] = 3
 
     data = [intervention]
@@ -294,3 +580,70 @@ def test_interventions_checks_for_units():
     validate_interventions(data, "/path/to/data.yaml")
     ex = VALIDATION_ERRORS.pop()
     assert msg in str(ex)
+
+
+class TestValidateMissingConfigSections:
+    """Check that validation raises validation errors when whole sections of
+    the configuration data are missing
+
+    """
+    def test_modelrun_config_validate(self, get_sos_model_config):
+        """Expect no errors from a complete, valid config
+        """
+        validate_sos_model_config(get_sos_model_config)
+
+    def test_missing_timestep(self, get_sos_model_config):
+        """Expect an error if missing timesteps
+        """
+        data = get_sos_model_config
+        del data['timesteps']
+
+        validate_sos_model_config(data)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "No 'timesteps' file specified in main config"
+        assert msg in str(ex)
+
+    def test_region_sets_missing(self, get_sos_model_config):
+        """Expect an error if no region sets are specified
+        """
+        data = get_sos_model_config
+        del data['region_sets']
+
+        validate_sos_model_config(data)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "No 'region_sets' specified in main config file."
+        assert msg == str(ex)
+
+    def test_interval_sets_missing(self, get_sos_model_config):
+        """Expect an error if no time interval sets are specified
+        """
+        data = get_sos_model_config
+        del data['interval_sets']
+
+        validate_sos_model_config(data)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "No 'interval_sets' specified in main config file."
+        assert msg == str(ex)
+
+    def test_scenario_data_missing(self, get_sos_model_config):
+        """Expect an error if no scenario data is specified, but referenced in
+        input file
+        """
+        data = get_sos_model_config
+        del data['scenario_data']
+
+        validate_sos_model_config(data)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "No 'scenario_data' specified in main config file."
+        assert msg == str(ex)
+
+
+class TestValidateMissingConfigurationReferences:
+    """Check that validation raises validation errors when one part of the
+    configuration assumes presence of a file or other configuration that is
+    missing
+    """
+    def test_scenario_files_missing(self):
+        """Expect an error if scenario data files are missing
+        """
+        pass

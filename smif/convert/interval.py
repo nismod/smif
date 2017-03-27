@@ -18,6 +18,119 @@ to add an interval definition from a model configuration to the register.
 time interval definition set, and handles conversion from the current time
 interval resolution to a target time interval definition held in the register.
 
+Quantities
+----------
+Quantities are associated with a duration, period or interval.
+For example 120 GWh of electricity generated during each week of February.::
+
+        Week 1: 120 GW
+        Week 2: 120 GW
+        Week 3: 120 GW
+        Week 4: 120 GW
+
+Other examples of quantities:
+
+- greenhouse gas emissions
+- demands for infrastructure services
+- materials use
+- counts of cars past a junction
+- costs of investments, operation and maintenance
+
+Upscale: Divide
+~~~~~~~~~~~~~~~
+
+To convert to a higher temporal resolution, the values need to be apportioned
+across the new time scale. In the above example, the 120 GWh of electricity
+would be divided over the days of February to produce a daily time series
+of generation.  For example::
+
+        1st Feb: 17 GWh
+        2nd Feb: 17 GWh
+        3rd Feb: 17 GWh
+        ...
+
+Downscale: Sum
+~~~~~~~~~~~~~~
+
+To resample weekly values to a lower temporal resolution, the values
+would need to be accumulated.  A monthly total would be::
+
+        Feb: 480 GWh
+
+Remapping
+---------
+
+Remapping quantities, as is required in the conversion from energy
+demand (hourly values over a year) to energy supply (hourly values
+for one week for each of four seasons) requires additional
+averaging operations.  The quantities are averaged over the
+many-to-one relationship of hours to time-slices, so that the
+seasonal-hourly timeslices in the model approximate the hourly
+profiles found across the particular seasons in the year. For example::
+
+        hour 1: 20 GWh
+        hour 2: 15 GWh
+        hour 3: 10 GWh
+        ...
+        hour 8592: 16 GWh
+        hour 8593: 12 GWh
+        hour 8594: 21 GWh
+        ...
+        hour 8760: 43 GWh
+
+To::
+
+        season 1 hour 1: 20+16+.../4 GWh # Denominator number hours in sample
+        season 1 hour 2: 15+12+.../4 GWh
+        season 1 hour 3: 10+21+.../4 GWh
+        ...
+
+Prices
+------
+
+Unlike quantities, prices are associated with a point in time.
+For example a spot price of £870/GWh.  An average price
+can be associated with a duration, but even then,
+we are just assigning a price to any point in time within a
+range of times.
+
+Upscale: Fill
+~~~~~~~~~~~~~
+
+Given a timeseries of monthly spot prices, converting these
+to a daily price can be done by a fill operation.
+E.g. copying the monthly price to each day.
+
+From::
+
+        Feb: £870/GWh
+
+To::
+
+        1st Feb: £870/GWh
+        2nd Feb: £870/GWh
+        ...
+
+Downscale: Average
+~~~~~~~~~~~~~~~~~~
+
+On the other hand, going down scale, such as from daily prices
+to a monthly price requires use of an averaging function. From::
+
+        1st Feb: £870/GWh
+        2nd Feb: £870/GWh
+        ...
+
+To::
+
+        Feb: £870/GWh
+
+Development Notes
+-----------------
+
+- We could use :py:meth:`numpy.convolve` to compare time intervals as hourly arrays
+  before adding them to the set of intervals
+
 """
 import logging
 from collections import OrderedDict
@@ -26,56 +139,168 @@ from datetime import datetime, timedelta
 import numpy as np
 from isodate import parse_duration
 
+"""Used as the reference year for computing time intervals
+"""
+BASE_YEAR = 2010
+
 
 class Interval(object):
     """A time interval
 
     Parameters
     ----------
-    name: str
+    id: str
         The unique name of the Interval
-    start: str
-        A valid ISO8601 duration definition string denoting the time elapsed from
-        the beginning of the year to the beginning of the interval
-    end: str
-        A valid ISO8601 duration definition string denoting the time elapsed from
-        the beginning of the year to the end of the interval
+    list_of_intervals: str
+        A list of tuples of valid ISO8601 duration definition
+        string denoting the time elapsed from the beginning
+        of the year to the (beginning, end) of the interval
     base_year: int, default=2010
         The reference year used for conversion to a datetime tuple
 
+    Example
+    -------
+
+            >>> a = Interval('id', ('PT0H', 'PT1H'))
+            >>> a.interval = ('PT1H', 'PT2H')
+            >>> repr(a)
+            "Interval('id', [('PT0H', 'PT1H'), ('PT1H', 'PT2H')], base_year=2010)"
+            >>> str(a)
+            "Interval 'id' starts at hour 0 and ends at hour 1"
+
     """
 
-    def __init__(self, name, start, end, base_year=2010):
+    def __init__(self, name, list_of_intervals, base_year=BASE_YEAR):
         self._name = name
-        self._start = start
-        self._end = end
         self._baseyear = base_year
 
-    def __repr__(self):
-        msg = "Interval('{}', '{}', '{}', base_year={})"
-        return msg.format(self._name, self._start, self._end, self._baseyear)
+        if len(list_of_intervals) == 0:
+            msg = "Must construct Interval with at least one interval"
+            raise ValueError(msg)
 
-    def __str__(self):
-        msg = "Interval '{}' starts at hour {} and ends at hour {}"
-        start, end = self.to_hours()
-        return msg.format(self._name, start, end)
+        if isinstance(list_of_intervals, list):
+            for interval in list_of_intervals:
+                assert isinstance(interval, tuple), "Interval must be constructed with tuples"
+                if len(interval) != 2:
+                    msg = "Interval tuple must take form (<start>, <end>)"
+                    raise ValueError(msg)
+            self._interval = list_of_intervals
+        elif isinstance(list_of_intervals, tuple):
+            self._interval = []
+            self._interval.append(list_of_intervals)
+        else:
+            msg = "Interval tuple must take form (<start>, <end>)"
+            raise ValueError(msg)
 
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        self._validate()
 
-    def to_hours(self):
-        """Return a tuple of the interval in terms of hours
+    def _validate(self):
+        for lower, upper in self.to_hours():
+            if lower > upper:
+                msg = "A time interval must not end before it starts - found %d > %d"
+                raise ValueError(msg, lower, upper)
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def start(self):
+        """The start hour of the interval(s)
 
         Returns
         -------
-        tuple
-            The start and end hours of the year of the interval
+        list
+            A list of integers, representing the hour from the beginning of the
+            year associated with the start of each of the intervals
+        """
+        if len(self._interval) == 1:
+            return self._interval[0][0]
+        else:
+            return [x[0] for x in self._interval]
+
+    @property
+    def end(self):
+        """The end hour of the interval(s)
+
+        Returns
+        -------
+        list
+            A list of integers, representing the hour from the beginning of the
+            year associated with the end of each of the intervals
+        """
+        if len(self._interval) == 1:
+            return self._interval[0][1]
+        else:
+            return [x[1] for x in self._interval]
+
+    @property
+    def interval(self):
+        """The list of intervals
+
+        Setter appends a tuple or list of intervals to the
+        list of intervals
+        """
+        return sorted(self._interval)
+
+    @interval.setter
+    def interval(self, value):
+        if isinstance(value, tuple):
+            self._interval.append(value)
+        elif isinstance(value, list):
+            for element in value:
+                assert isinstance(element, tuple), "A time interval must be a tuple"
+            self._interval.extend(value)
+        else:
+            msg = "A time interval must add either a single tuple or a list of tuples"
+            raise ValueError(msg)
+
+        self._validate()
+
+    @property
+    def baseyear(self):
+        """The reference year
+        """
+        return self._baseyear
+
+    def __repr__(self):
+        msg = "Interval('{}', {}, base_year={})"
+        return msg.format(self.name, self.interval, self.baseyear)
+
+    def __str__(self):
+        string = "Interval '{}' maps to:\n".format(self.name)
+        for interval in self.to_hours():
+            start = interval[0]
+            end = interval[1]
+            suffix = "  hour {} to hour {}\n".format(start, end)
+            string += suffix
+
+        return string
+
+    def __eq__(self, other):
+        if (self.name == other.name) \
+           and (self.interval == other.interval) \
+           and (self.baseyear == other.baseyear):
+            return True
+        else:
+            return False
+
+    def to_hours(self):
+        """Return a list of tuples of the intervals in terms of hours
+
+        Returns
+        -------
+        list
+            A list of tuples of the start and end hours of the year
+            of the interval
 
         """
-        start = self._convert_to_hours(self._start)
-        end = self._convert_to_hours(self._end)
-
-        return (start, end)
+        hours = []
+        for start_interval, end_interval in self.interval:
+            start = self._convert_to_hours(start_interval)
+            end = self._convert_to_hours(end_interval)
+            hours.append((start, end))
+        return hours
 
     def _convert_to_hours(self, duration):
         """
@@ -101,14 +326,15 @@ class Interval(object):
             hours = time.days * 24 + time.seconds // 3600
         return hours
 
-    def to_datetime_tuple(self):
+    def to_hourly_array(self):
+        """Converts a list of intervals to a boolean array of hours
+
         """
-        """
-        reference = datetime(self._baseyear, 1, 1, 0)
-        start_time = reference + parse_duration(self._start)
-        end_time = reference + parse_duration(self._end)
-        period_tuple = (start_time, end_time)
-        return period_tuple
+        array = np.zeros(8760, dtype=np.int)
+        list_of_tuples = self.to_hours()
+        for lower, upper in list_of_tuples:
+            array[lower:upper] += 1
+        return array
 
 
 class TimeSeries(object):
@@ -124,7 +350,7 @@ class TimeSeries(object):
         values = []
         name_list = []
         for row in data:
-            name_list.append(row['name'])
+            name_list.append(row['id'])
             values.append(row['value'])
         self.names = name_list
         self.values = values
@@ -156,6 +382,16 @@ class TimeIntervalRegister:
         self._register = {}
         self.logger = logging.getLogger(__name__)
         self._id_interval_set = {}
+
+    @property
+    def interval_set_names(self):
+        """A list of the interval set names contained in the register
+
+        Returns
+        -------
+        list
+        """
+        return list(self._register.keys())
 
     def get_intervals_in_set(self, set_name):
         """
@@ -196,6 +432,9 @@ class TimeIntervalRegister:
     def add_interval_set(self, intervals, set_name):
         """Add a time-interval definition to the set of intervals types
 
+        Detects duplicate references to the same annual-hours by performing a
+        convolution of the two one-dimensional arrays of time-intervals.
+
         Parameters
         ----------
         intervals: list
@@ -209,19 +448,31 @@ class TimeIntervalRegister:
 
         for interval in intervals:
 
-            name = interval['name']
+            name = interval['id']
             self.logger.debug("Adding interval '%s' to set '%s'", name, set_name)
 
-            self._id_interval_set[name] = set_name
-
-            self._register[set_name][name] = Interval(name,
-                                                      interval['start'],
-                                                      interval['end'],
-                                                      self._base_year)
+            if name in self._id_interval_set:
+                interval_tuple = (interval['start'], interval['end'])
+                self._register[set_name][name].interval = interval_tuple
+            else:
+                self._id_interval_set[name] = set_name
+                interval_tuple = (interval['start'], interval['end'])
+                self._register[set_name][name] = Interval(name,
+                                                          interval_tuple,
+                                                          self._base_year)
 
         self.logger.info("Adding interval set '%s' to register", set_name)
+        self.validate_intervals()
 
     def _check_interval_in_register(self, interval):
+        """
+
+        Parameters
+        ----------
+        interval: str
+            The name of the interval to look for
+
+        """
         if interval not in self._register:
             msg = "The interval set '{}' is not in the register"
             raise ValueError(msg.format(interval))
@@ -250,25 +501,22 @@ class TimeIntervalRegister:
         results = []
 
         self._check_interval_in_register(from_interval)
-
         self._convert_to_hourly_buckets(timeseries)
 
         target_intervals = self.get_intervals_in_set(to_interval)
         for name, interval in target_intervals.items():
             self.logger.debug("Resampling to %s", name)
-            lower, upper = interval.to_hours()
-            self.logger.debug("Range: %s-%s", lower, upper)
+            interval_tuples = interval.to_hours()
 
-            if upper < lower:
-                # The interval loops around the end/start hours of the year
-                end_of_year = sum(timeseries.hourly_values[lower:8760])
-                start_of_year = sum(timeseries.hourly_values[0:upper])
-                total = end_of_year + start_of_year
-            else:
-                total = sum(timeseries.hourly_values[lower:upper])
+            total = 0
 
-            results.append({'name': name,
+            for lower, upper in interval_tuples:
+                self.logger.debug("Range: %s-%s", lower, upper)
+                total += sum(timeseries.hourly_values[lower:upper])
+
+            results.append({'id': name,
                             'value': total})
+
         return results
 
     def _convert_to_hourly_buckets(self, timeseries):
@@ -282,12 +530,33 @@ class TimeIntervalRegister:
 
         """
         for name, value in zip(timeseries.names, timeseries.values):
-            lower, upper = self.get_interval(name).to_hours()
-            self.logger.debug("lower: %s, upper: %s", lower, upper)
+            list_of_intervals = self.get_interval(name).to_hours()
+            divisor = len(list_of_intervals)
+            for lower, upper in list_of_intervals:
+                self.logger.debug("lower: %s, upper: %s", lower, upper)
+                number_hours_in_range = upper - lower
+                self.logger.debug("number_hours: %s", number_hours_in_range)
 
-            number_hours_in_range = upper - lower
-            self.logger.debug("number_hours: %s", number_hours_in_range)
+                apportioned_value = float(value) / number_hours_in_range
+                self.logger.debug("apportioned_value: %s", apportioned_value)
+                timeseries.hourly_values[lower:upper] = apportioned_value / divisor
 
-            apportioned_value = float(value) / number_hours_in_range
-            self.logger.debug("apportioned_value: %s", apportioned_value)
-            timeseries.hourly_values[lower:upper] = apportioned_value
+    def _get_hourly_array(self, set_name):
+        """
+        """
+        array = np.zeros(8760, dtype=np.int)
+        for interval in self.get_intervals_in_set(set_name).values():
+            array += interval.to_hourly_array()
+        return array
+
+    def validate_intervals(self):
+        for set_name in self._register.keys():
+            array = self._get_hourly_array(set_name)
+            duplicate_hours = np.where(array > 1)[0]
+            if len(duplicate_hours) == 0:
+                self.logger.debug("No duplicate hours in %s", set_name)
+            else:
+                hour = duplicate_hours[0]
+                msg = "Duplicate entry for hour {} in interval set {}."
+                self.logger.warning(msg.format(hour, set_name))
+                raise ValueError(msg.format(hour, set_name))

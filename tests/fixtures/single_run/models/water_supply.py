@@ -11,6 +11,7 @@
 import logging
 from smif.sector_model import SectorModel
 
+
 class WaterSupplySectorModel(SectorModel):
     """Example of a class implementing the SectorModel interface,
     using one of the toy water models below to simulate the water supply
@@ -31,14 +32,11 @@ class WaterSupplySectorModel(SectorModel):
         """
 
         # unpack inputs
-        raininess = data['raininess']['UK']['year']['value']
+        raininess = data['raininess'][0].value
 
         # unpack assets
-        ps_types = ["large_pumping_station", "small_pumping_station"]
-        wtps = [asset for asset in self.assets if asset["name"] in ps_types]
-        number_of_treatment_plants = len(wtps)
+        number_of_treatment_plants = 2
 
-        self.logger.debug(self.assets)
         self.logger.debug(decisions)
         self.logger.debug(state)
         self.logger.debug(data)
@@ -62,9 +60,12 @@ class WaterSupplySectorModel(SectorModel):
         capacity, while the value ``parameters[0]`` in the min term is the
         value of the raininess parameter.
         """
-        constraints = ({'type': 'ineq',
-                        'fun': lambda x: min(x[0], parameters[0]) - 3}
-                      )
+        constraints = (
+            {
+                'type': 'ineq',
+                'fun': lambda x: min(x[0], parameters[0]) - 3
+            }
+        )
         return constraints
 
 
@@ -106,6 +107,7 @@ class ExampleWaterSupplySimulationModel(object):
             "water": water,
             "cost": cost
         }
+
 
 # instantiate model for easy access when imported by smif
 model = WaterSupplySectorModel()

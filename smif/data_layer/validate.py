@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Validate config data for the system-of-systems model
+"""Validate the correct format and presence of the config data
+for the system-of-systems model
 """
-
 
 VALIDATION_ERRORS = []
 
@@ -35,12 +35,33 @@ def validate_sos_model_config(data):
     else:
         validate_sector_models_initial_config(data["sector_models"])
 
+    # check scenario data
+    if "scenario_data" not in data:
+        VALIDATION_ERRORS.append(
+            ValidationError("No 'scenario_data' specified in main config file."))
+    else:
+        validate_scenario_data_config(data["scenario_data"])
+
     # check planning
     if "planning" not in data:
         VALIDATION_ERRORS.append(
             ValidationError("No 'planning' mode specified in main config file."))
     else:
         validate_planning_config(data["planning"])
+
+    # check region_sets
+    if "region_sets" not in data:
+        VALIDATION_ERRORS.append(
+            ValidationError("No 'region_sets' specified in main config file."))
+    else:
+        validate_region_sets_config(data["region_sets"])
+
+    # check interval_sets
+    if "interval_sets" not in data:
+        VALIDATION_ERRORS.append(
+            ValidationError("No 'interval_sets' specified in main config file."))
+    else:
+        validate_interval_sets_config(data["interval_sets"])
 
 
 def validate_path_to_timesteps(timesteps):
@@ -66,6 +87,33 @@ def validate_timesteps(timesteps, file_path):
                 VALIDATION_ERRORS.append(msg.format(file_path, timestep))
 
 
+def validate_time_intervals(intervals, file_path):
+    """Check time intervals
+    """
+    if not isinstance(intervals, list):
+        msg = "Loading {}: expected a list of time intervals.".format(file_path)
+        VALIDATION_ERRORS.append(ValidationError(msg))
+    else:
+        for interval in intervals:
+            validate_time_interval(interval)
+
+
+def validate_time_interval(interval):
+    """Check a single time interval
+    """
+    if not isinstance(interval, dict):
+        msg = "Expected a time interval, instead got {}.".format(interval)
+        VALIDATION_ERRORS.append(ValidationError(msg))
+        return
+
+    required_keys = ["id", "start", "end"]
+    for key in required_keys:
+        if key not in interval:
+            fmt = "Expected a value for '{}' in each " + \
+                "time interval, only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, interval)))
+
+
 def validate_sector_models_initial_config(sector_models):
     """Check list of sector models initial configuration
     """
@@ -86,12 +134,101 @@ def validate_sector_models_initial_config(sector_models):
 def validate_sector_model_initial_config(sector_model_config):
     """Check a single sector model initial configuration
     """
+    if not isinstance(sector_model_config, dict):
+        fmt = "Expected a sector model config block, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(sector_model_config)))
+        return
+
     required_keys = ["name", "config_dir", "path", "classname"]
     for key in required_keys:
         if key not in sector_model_config:
             fmt = "Expected a value for '{}' in each " + \
                   "sector model in main config file, only received {}"
             VALIDATION_ERRORS.append(ValidationError(fmt.format(key, sector_model_config)))
+
+
+def validate_input_spec(input_spec, model_name):
+    """Check the input specification for a single sector model
+    """
+    if not isinstance(input_spec, list):
+        fmt = "Expected a list of parameter definitions in '{}' model " + \
+              "input specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, input_spec)))
+        return
+
+    for dep in input_spec:
+        validate_dependency(dep)
+
+
+def validate_dependency(dep):
+    """Check a dependency specification
+    """
+    if not isinstance(dep, dict):
+        fmt = "Expected a dependency specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(dep)))
+        return
+
+    required_keys = ["name", "spatial_resolution", "temporal_resolution"]
+    for key in required_keys:
+        if key not in dep:
+            fmt = "Expected a value for '{}' in each model dependency, only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, dep)))
+
+
+def validate_output_spec(output_spec, model_name):
+    """Check the output specification for a single sector model
+    """
+    if not isinstance(output_spec, list):
+        fmt = "Expected a list of parameter definitions in '{}' model " + \
+              "output specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, output_spec)))
+        return
+
+    for output in output_spec:
+        validate_output(output)
+
+
+def validate_output(dep):
+    """Check an output specification
+    """
+    if not isinstance(dep, dict):
+        fmt = "Expected an output specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(dep)))
+        return
+
+    required_keys = ["name", "spatial_resolution", "temporal_resolution"]
+    for key in required_keys:
+        if key not in dep:
+            fmt = "Expected a value for '{}' in each model output, only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, dep)))
+
+
+def validate_scenario_data_config(scenario_data):
+    """Check scenario data
+    """
+    if not isinstance(scenario_data, list):
+        fmt = "Expected a list of scenario datasets in main model config, " + \
+              "instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(scenario_data)))
+        return
+
+    for scenario in scenario_data:
+        validate_scenario(scenario)
+
+
+def validate_scenario(scenario):
+    """Check a single scenario specification
+    """
+    if not isinstance(scenario, dict):
+        fmt = "Expected a scenario specification, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(scenario)))
+        return
+
+    required_keys = ["parameter", "spatial_resolution", "temporal_resolution", "file"]
+    for key in required_keys:
+        if key not in scenario:
+            fmt = "Expected a value for '{}' in each scenario, only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, scenario)))
 
 
 def validate_planning_config(planning):
@@ -118,6 +255,30 @@ def validate_planning_config(planning):
                 fmt = "No 'files' provided for the '{}' " + \
                       "planning type in main config file."
                 VALIDATION_ERRORS.append(ValidationError(fmt.format(key)))
+
+
+def validate_region_sets_config(region_sets):
+    """Check regions sets
+    """
+    required_keys = ["name", "file"]
+    for key in required_keys:
+        for region_set in region_sets:
+            if key not in region_set:
+                fmt = "Expected a value for '{}' in each " + \
+                    "region set in main config file, only received {}"
+                VALIDATION_ERRORS.append(ValidationError(fmt.format(key, region_set)))
+
+
+def validate_interval_sets_config(interval_sets):
+    """Check interval sets
+    """
+    required_keys = ["name", "file"]
+    for key in required_keys:
+        for interval_set in interval_sets:
+            if key not in interval_set:
+                fmt = "Expected a value for '{}' in each " + \
+                    "interval set in main config file, only received {}"
+                VALIDATION_ERRORS.append(ValidationError(fmt.format(key, interval_set)))
 
 
 def validate_interventions(data, path):

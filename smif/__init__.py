@@ -18,7 +18,6 @@ try:
 except:
     __version__ = 'unknown'
 
-
 SpaceTimeValue = namedtuple('SpaceTimeValue', ['region', 'interval', 'value', 'units'])
 docs = """A tuple of scenario data
 

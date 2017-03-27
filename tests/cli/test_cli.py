@@ -34,6 +34,24 @@ def test_parse_arguments():
         assert args.func.__name__ == 'setup_configuration'
 
 
+def test_fixture_single_run_valid():
+    """Test validating the filesystem-based single_run fixture
+    """
+    config_file = os.path.join(os.path.dirname(__file__),
+                               '..', 'fixtures', 'single_run', 'config', 'model.yaml')
+    output = subprocess.run(["smif", "validate", config_file], stdout=subprocess.PIPE)
+    assert "The model configuration was valid" in str(output.stdout)
+
+
+def test_fixture_single_run():
+    """Test running the filesystem-based single_run fixture
+    """
+    config_file = os.path.join(os.path.dirname(__file__),
+                               '..', 'fixtures', 'single_run', 'config', 'model.yaml')
+    output = subprocess.run(["smif", "run", config_file], stdout=subprocess.PIPE)
+    assert "Model run complete" in str(output.stdout)
+
+
 def test_setup_project_folder():
     """Test contents of the setup project folder
     """
@@ -98,10 +116,10 @@ def test_validation_no_file(error_logger):
 
 
 @patch('builtins.print')
-def test_validation_valid(mock_print, setup_folder_structure, setup_project_folder):
+def test_validation_valid(mock_print, setup_project_folder):
     """Ensure configuration file is valid
     """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
+    config_file = os.path.join(str(setup_project_folder), 'config', 'model.yaml')
     args = get_args(['validate', config_file])
 
     validate_config(args)

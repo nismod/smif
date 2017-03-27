@@ -46,3 +46,6 @@ cover/*
 MANIFEST
 
 .DS_Store
+
+# smif outputs
+results.yaml

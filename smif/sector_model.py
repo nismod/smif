@@ -31,8 +31,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 
-from smif.inputs import ModelInputs
-from smif.outputs import ModelOutputs
+from smif.parameters import ModelParameters
 
 __author__ = "Will Usher"
 __copyright__ = "Will Usher"
@@ -49,8 +48,8 @@ class SectorModel(ABC):
 
         self.interventions = []
 
-        self._inputs = ModelInputs({})
-        self._outputs = ModelOutputs({})
+        self._inputs = ModelParameters({})
+        self._outputs = ModelParameters({})
 
         self.logger = logging.getLogger(__name__)
 
@@ -85,38 +84,33 @@ class SectorModel(ABC):
     def inputs(self):
         """The inputs to the model
 
+        The inputs should be specified in a list.  For example::
+
+                - name: eletricity_price
+                  spatial_resolution: GB
+                  temporal_resolution: annual
+
+        Arguments
+        =========
+        value : list
+            A list of dicts of inputs to the model.
+            These includes parameters, assets and exogenous data
+
         Returns
         =======
-        :class:`smif.inputs.ModelInputs`
+        :class:`smif.parameters.ModelInputs`
 
         """
         return self._inputs
 
     @inputs.setter
     def inputs(self, value=None):
-        """The inputs/dependencies to the model
-
-        The inputs should be specified in a dictionary.  For example::
-
-                dependencies:
-                - name: eletricity_price
-                spatial_resolution: GB
-                temporal_resolution: annual
-                from_model: energy_supply
-
-        Arguments
-        =========
-        value : dict
-            A dictionary of inputs to the model. This may include parameters,
-            assets and exogenous data.
-
-        """
         if value is not None:
-            assert isinstance(value, dict)
+            assert isinstance(value, list)
         else:
-            value = {}
+            value = []
 
-        self._inputs = ModelInputs(value)
+        self._inputs = ModelParameters(value)
 
     @property
     def outputs(self):
@@ -124,20 +118,26 @@ class SectorModel(ABC):
 
         Arguments
         =========
-        value : dict
-            A dictionary of outputs from the model. This may include results
+        value : list
+            A list of dicts of outputs from the model.
+            This may include results
             and metrics
 
         Returns
         =======
-        :class:`smif.outputs.ModelOutputs`
+        :class:`smif.parameters.ModelParameters`
 
         """
         return self._outputs
 
     @outputs.setter
     def outputs(self, value):
-        self._outputs = ModelOutputs(value)
+        if value is not None:
+            assert isinstance(value, list)
+        else:
+            value = []
+
+        self._outputs = ModelParameters(value)
 
     @property
     def intervention_names(self):

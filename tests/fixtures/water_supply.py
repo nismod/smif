@@ -35,7 +35,7 @@ import logging
 import math
 
 from pytest import fixture
-
+from smif import SpaceTimeValue
 from smif.sector_model import SectorModel
 
 __author__ = "Will Usher"
@@ -98,17 +98,27 @@ class WaterSupplySectorModel(SectorModel):
         ----------
         decisions: list
         state: list
-        data: list
+        data: dict
+            A dict of parameters, as define by inputs.yaml, each entry of which
+            contains a list of :class:`smif.SpaceTimeValue`
 
         """
 
         # unpack inputs
         self.logger.debug(data)
 
-        scenario_data = data['raininess'][0]
-        assert scenario_data.region == 'national'
-        assert scenario_data.interval == 'annual'
-        raininess = scenario_data.value
+        if 'raininess' in data:
+            scenario_data = data['raininess'][0]
+            assert scenario_data.region == 'oxford'
+            assert scenario_data.interval == 1
+            raininess = scenario_data.value
+        elif 'water' in data:
+            scenario_data = data['water'][0]
+            assert scenario_data.region == 'oxford'
+            assert scenario_data.interval == 1
+            raininess = scenario_data.value
+        else:
+            raise KeyError("Couldn't find parameter in {}".format(data))
 
         # unpack decision variables
         if len(decisions) > 0:
@@ -123,7 +133,16 @@ class WaterSupplySectorModel(SectorModel):
                                                               number_of_treatment_plants)
         results = instance.simulate()
 
-        return results
+        stv = {}
+        stv['water'] = [SpaceTimeValue('oxford',
+                                       1,
+                                       results['water'],
+                                       'Ml')]
+        stv['cost'] = [SpaceTimeValue('oxford',
+                                      1,
+                                      results['cost'],
+                                      '£M')]
+        return stv
 
     def extract_obj(self, results):
         return results['cost']

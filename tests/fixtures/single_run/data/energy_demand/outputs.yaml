@@ -1,1 +1,3 @@
-metrics: []
+- name: cost
+  spatial_resolution: national
+  temporal_resolution: annual
