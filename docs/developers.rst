@@ -30,6 +30,45 @@ releasing a first major version, we intend to follow `semantic versioning`_, wit
 major versions for any incompatible changes to the public API.
 
 
+Releases
+--------
+
+`smif`_ is deployed as a package on the Python Package Index, PyPI. A full guide
+to packaging and distributing projects is `available online
+<https://packaging.python.org/distributing/>`
+
+To make a release, first register with `PyPI`_ and contact a project owner
+(currently Will Usher or Tom Russell) to be made a maintainer.
+
+Set up a `.pypirc` file in your home directory with your access details::
+
+    [distutils]
+    index-servers =
+        pypi
+
+    [pypi]
+    repository: https://pypi.python.org/pypi
+    username: <username>
+    password: <password>
+
+Create an annotated tag for release::
+
+    git tag -a v0.2.0       # create annotated tag (will need a message)
+    git describe            # show current commit in relation to tags
+    git push origin v0.2.0  # push the tag to the origin remote repository
+
+Create a source distribution (this creates a gzipped package in `dist`)::
+
+    python setup.py sdist
+    ls dist/
+
+Use twine to upload the distribution::
+
+    pip install twine
+    twine upload dist/smif-0.2.0.tar.gz
+
+
+
 Conventions
 -----------
 
@@ -49,3 +88,5 @@ of the repository using::
 .. _numpydoc: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 .. _readthedocs: http://smif.readthedocs.io/en/latest/
 .. _pre-commit: http://pre-commit.com/
+.. _PyPI: https://pypi.python.org/pypi
+.. _smif: https://pypi.python.org/pypi/smif
