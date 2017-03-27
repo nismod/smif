@@ -39,9 +39,9 @@ class SosModelReader(object):
 
         self.names = None
 
-        self.resolution_mapping = {'scenarios': {},
-                                   'inputs': {},
-                                   'outputs': {}}
+        self.resolution_mapping = {'scenario': {},
+                                   'input': {},
+                                   'output': {}}
 
     def load(self):
         """Load and check all config
@@ -168,7 +168,7 @@ class SosModelReader(object):
                 spatial_res = data_type['spatial_resolution']
                 temporal_res = data_type['temporal_resolution']
 
-                self.resolution_mapping['scenarios'][name] = \
+                self.resolution_mapping['scenario'][name] = \
                     {'spatial_resolution': spatial_res,
                      'temporal_resolution': temporal_res}
 
