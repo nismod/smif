@@ -38,24 +38,33 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             }
         ]
     })
-    builder.add_resolution_mapping({'scenario': {
-        'raininess': {'temporal_resolution': 'annual',
-                      'spatial_resolution': 'LSOA'}}})
+    builder.add_resolution_mapping({
+        'scenario': {
+            'raininess': {
+                'temporal_resolution': 'annual',
+                'spatial_resolution': 'LSOA'
+            }
+        }
+    })
     builder.load_region_sets({'LSOA': setup_region_data['features']})
-    interval_data = [{'id': 1,
-                      'start': 'P0Y',
-                      'end': 'P1Y'}]
+    interval_data = [
+        {
+            'id': 1,
+            'start': 'P0Y',
+            'end': 'P1Y'
+        }
+    ]
     builder.load_interval_sets({'annual': interval_data})
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
     ws.inputs = [
-            {
-                'name': 'raininess',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual'
-            }
-        ]
+        {
+            'name': 'raininess',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
 
     ws.outputs = [
         {
@@ -73,19 +82,19 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
         {"name": "water_asset_a", "location": "oxford"},
         {"name": "water_asset_b", "location": "oxford"},
         {"name": "water_asset_c", "location": "oxford"}
-        ]
+    ]
 
     builder.add_model(ws)
 
     ws2 = WaterSupplySectorModel()
     ws2.name = 'water_supply_2'
     ws2.inputs = [
-            {
-                'name': 'raininess',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual'
-            }
-        ]
+        {
+            'name': 'raininess',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
 
     builder.add_model(ws2)
 
@@ -121,24 +130,24 @@ def get_sos_model_with_model_dependency(setup_region_data):
             }
         ]
     })
-    builder.add_resolution_mapping({'scenario': {
-        'raininess': {'temporal_resolution': 'annual',
-                      'spatial_resolution': 'LSOA'}}})
+    builder.add_resolution_mapping({
+        'scenario': {
+            'raininess': {
+                'temporal_resolution': 'annual',
+                'spatial_resolution': 'LSOA'}}})
     builder.load_region_sets({'LSOA': setup_region_data['features']})
-    interval_data = [{'id': 1,
-                      'start': 'P0Y',
-                      'end': 'P1Y'}]
+    interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
     builder.load_interval_sets({'annual': interval_data})
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
     ws.inputs = [
-            {
-                'name': 'raininess',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual'
-            }
-        ]
+        {
+            'name': 'raininess',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
 
     ws.outputs = [
         {
@@ -156,20 +165,94 @@ def get_sos_model_with_model_dependency(setup_region_data):
         {"name": "water_asset_a", "location": "oxford"},
         {"name": "water_asset_b", "location": "oxford"},
         {"name": "water_asset_c", "location": "oxford"}
-        ]
+    ]
     builder.add_model(ws)
 
     ws2 = WaterSupplySectorModel()
     ws2.name = 'water_supply_2'
     ws2.inputs = [
-            {
-                'name': 'water',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual'
-            }
-        ]
+        {
+            'name': 'water',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
 
     builder.add_model(ws2)
+
+    return builder.finish()
+
+
+@fixture(scope='function')
+def get_sos_model_with_summed_dependency(setup_region_data):
+    builder = SosModelBuilder()
+    builder.add_timesteps([2010])
+    builder.add_scenario_data({
+        "raininess": [
+            {
+                'year': 2010,
+                'value': 3,
+                'units': 'ml',
+                'region': 'oxford',
+                'interval': 1
+            }
+        ]
+    })
+    builder.add_resolution_mapping({
+        'scenario': {
+            'raininess': {
+                'temporal_resolution': 'annual',
+                'spatial_resolution': 'LSOA'}}})
+    builder.load_region_sets({'LSOA': setup_region_data['features']})
+    interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+    builder.load_interval_sets({'annual': interval_data})
+
+    ws = WaterSupplySectorModel()
+    ws.name = 'water_supply'
+    ws.inputs = [
+        {
+            'name': 'raininess',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
+    ws.outputs = [
+        {
+            'name': 'water',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
+    builder.add_model(ws)
+
+    ws2 = WaterSupplySectorModel()
+    ws2.name = 'water_supply_2'
+    ws2.inputs = [
+        {
+            'name': 'raininess',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
+    ws2.outputs = [
+        {
+            'name': 'water',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
+    builder.add_model(ws2)
+
+    ws3 = WaterSupplySectorModel()
+    ws3.inputs = [
+        {
+            'name': 'water',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual'
+        }
+    ]
+    ws3.name = 'water_supply_3'
+    builder.add_model(ws3)
 
     return builder.finish()
 
@@ -206,12 +289,16 @@ class TestSosModel():
 
     def test_run_with_planning(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
-        planning_data = [{'name': 'water_asset_a',
-                          'build_date': 2010,
-                          },
-                         {'name': 'energy_asset_a',
-                          'build_date': 2011,
-                          }]
+        planning_data = [
+            {
+                'name': 'water_asset_a',
+                'build_date': 2010,
+            },
+            {
+                'name': 'energy_asset_a',
+                'build_date': 2011,
+            }
+        ]
         planning = Planning(planning_data)
         sos_model.planning = planning
 
@@ -232,6 +319,36 @@ class TestSosModel():
         for key, value in expected.items():
             assert actual[key][0].value == value
 
+    def test_add_data_series(self):
+        """Expect addition to work on lists of SpaceTimeValues
+        """
+        list_a = [
+            SpaceTimeValue('a', '1', 1, 'days'),
+            SpaceTimeValue('a', '2', 2, 'days'),
+            SpaceTimeValue('b', '1', 3, 'days'),
+            SpaceTimeValue('b', '2', 4, 'days'),
+        ]
+
+        list_b = [
+            SpaceTimeValue('b', '2', 14, 'days'),
+            SpaceTimeValue('b', '1', 13, 'days'),
+            SpaceTimeValue('a', '2', 12, 'days'),
+            SpaceTimeValue('a', '1', 11, 'days'),
+        ]
+
+        expected = [
+            SpaceTimeValue('a', '1', 12, 'days'),
+            SpaceTimeValue('a', '2', 14, 'days'),
+            SpaceTimeValue('b', '1', 16, 'days'),
+            SpaceTimeValue('b', '2', 18, 'days'),
+        ]
+        actual = SosModel.add_data_series(list_a, list_b)
+        assert actual == expected
+
+    def test_dependency_aggregation(self, get_sos_model_with_summed_dependency):
+        sos_model = get_sos_model_with_summed_dependency
+        sos_model.run()
+
 
 @fixture(scope='function')
 def get_config_data(setup_project_folder, setup_region_data):
@@ -243,27 +360,48 @@ def get_config_data(setup_project_folder, setup_region_data):
     )
     return {
         "timesteps": [2010, 2011, 2012],
-        "sector_model_data": [{
-            "name": "water_supply",
-            "path": water_supply_wrapper_path,
-            "classname": "WaterSupplySectorModel",
-            "inputs": [],
-            "outputs": [],
-            "initial_conditions": [],
-            "interventions": []
-        }],
+        "sector_model_data": [
+            {
+                "name": "water_supply",
+                "path": water_supply_wrapper_path,
+                "classname": "WaterSupplySectorModel",
+                "inputs": [],
+                "outputs": [],
+                "initial_conditions": [],
+                "interventions": []
+            }
+        ],
         "planning": [],
-        "scenario_data": {'raininess': [{'year': 2010, 'value': 3, 'units': 'ml',
-                          'region': 'oxford', 'interval': 1}]},
+        "scenario_data": {
+            'raininess': [
+                {
+                    'year': 2010,
+                    'value': 3,
+                    'units': 'ml',
+                    'region': 'oxford',
+                    'interval': 1
+                }
+            ]
+        },
         "region_sets": {'LSOA': setup_region_data['features']},
-        "interval_sets": {'annual': [{'id': 1,
-                                      'start': 'P0Y',
-                                      'end': 'P1Y'}]
-                          },
-        "resolution_mapping": {'scenario': {
-                 'raininess': {'temporal_resolution': 'annual',
-                               'spatial_resolution': 'LSOA'}}}
-             }
+        "interval_sets": {
+            'annual': [
+                {
+                    'id': 1,
+                    'start': 'P0Y',
+                    'end': 'P1Y'
+                }
+            ]
+        },
+        "resolution_mapping": {
+            'scenario': {
+                'raininess': {
+                    'temporal_resolution': 'annual',
+                    'spatial_resolution': 'LSOA'
+                }
+            }
+        }
+    }
 
 
 class TestSosModelBuilder():
@@ -354,12 +492,12 @@ class TestSosModelBuilder():
         """
         config = get_config_data
         config["sector_model_data"][0]["inputs"] = [
-                {
-                    'name': 'raininess',
-                    'spatial_resolution': 'blobby',
-                    'temporal_resolution': 'mega'
-                }
-            ]
+            {
+                'name': 'raininess',
+                'spatial_resolution': 'blobby',
+                'temporal_resolution': 'mega'
+            }
+        ]
 
         builder = SosModelBuilder()
         builder.construct(config)
@@ -369,9 +507,13 @@ class TestSosModelBuilder():
 
         builder.load_region_sets({'blobby': setup_region_data['features']})
 
-        interval_data = [{'id': 'ultra',
-                          'start': 'P0Y',
-                          'end': 'P1Y'}]
+        interval_data = [
+            {
+                'id': 'ultra',
+                'start': 'P0Y',
+                'end': 'P1Y'
+            }
+        ]
         builder.load_interval_sets({'mega': interval_data})
         builder.finish()
 
@@ -394,36 +536,36 @@ class TestSosModelBuilder():
 
     def test_cyclic_dependencies(self):
         a_inputs = [
-                {
-                    'name': 'b value',
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual'
-                }
-            ]
+            {
+                'name': 'b value',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual'
+            }
+        ]
 
         a_outputs = [
-                {
-                    'name': 'a value',
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual'
-                }
-            ]
+            {
+                'name': 'a value',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual'
+            }
+        ]
 
         b_inputs = [
-                {
-                    'name': 'a value',
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual'
-                }
-            ]
+            {
+                'name': 'a value',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual'
+            }
+        ]
 
         b_outputs = [
-                {
-                    'name': 'b value',
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual'
-                }
-            ]
+            {
+                'name': 'b value',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual'
+            }
+        ]
 
         builder = SosModelBuilder()
         builder.add_timesteps([2010])
@@ -484,13 +626,12 @@ class TestSosModelBuilder():
                     SpaceTimeValue('GB', 'spring', 3, 'kg'),
                     SpaceTimeValue('GB', 'summer', 5, 'kg'),
                     SpaceTimeValue('NI', 'spring', 1, 'kg')
-                    ]
-                    },
+                ]
+            },
             2016: {
                 "mass": [
                     SpaceTimeValue('GB', 'spring', 4, 'kg')
-                         ]
-
+                ]
             }
         }
 
@@ -499,10 +640,11 @@ class TestSosModelBuilder():
 
         actual = builder.sos_model._scenario_data
 
-        assert actual[2015]["mass"] == \
-            [SpaceTimeValue("GB", "spring", 3, 'kg'),
-             SpaceTimeValue('GB', 'summer', 5, 'kg'),
-             SpaceTimeValue('NI', 'spring', 1, 'kg')]
+        assert actual[2015]["mass"] == [
+            SpaceTimeValue("GB", "spring", 3, 'kg'),
+            SpaceTimeValue('GB', 'summer', 5, 'kg'),
+            SpaceTimeValue('NI', 'spring', 1, 'kg')
+        ]
         assert actual == expected
 
         expected_value = [3, 5, 1]
@@ -581,8 +723,6 @@ class TestSosModelBuilder():
 
     def test_single_dependency(self,
                                get_sos_model_with_model_dependency):
-        """
-        """
         sos_model = get_sos_model_with_model_dependency
         outputs = sos_model.outputs
 
@@ -597,8 +737,10 @@ class TestSosModelBuilder():
 
         inputs = sos_model.inputs
 
-        expected_inputs = {'raininess': ['water_supply'],
-                           'water': ['water_supply_2']}
+        expected_inputs = {
+            'raininess': ['water_supply'],
+            'water': ['water_supply_2']
+        }
 
         assert isinstance(inputs, dict)
 

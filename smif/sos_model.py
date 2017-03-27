@@ -4,10 +4,11 @@ framework.
 
 """
 import logging
+import operator
 from collections import defaultdict
-from enum import Enum
 
 import networkx
+from enum import Enum
 from smif import SpaceTimeValue
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister, RegionSet
@@ -237,10 +238,6 @@ class SosModel(object):
             name = dependency.name
             provider = self.outputs[name]
 
-            if len(provider) > 1:
-                msg = "No support for dependency aggregation"
-                raise NotImplementedError(msg)
-
             for source in provider:
 
                 self.logger.debug("Getting dependency data for '%s' from '%s'",
@@ -266,15 +263,24 @@ class SosModel(object):
 
                 to_spatial_resolution = dependency.spatial_resolution
                 to_temporal_resolution = dependency.temporal_resolution
-                msg = "Converting from spacial resolution '%s' and  temporal resolution '%s'"
+                msg = "Converting from spatial resolution '%s' and  temporal resolution '%s'"
                 self.logger.debug(msg, from_spatial_resolution, from_temporal_resolution)
-                msg = "Converting to spacial resolution '%s' and  temporal resolution '%s'"
+                msg = "Converting to spatial resolution '%s' and  temporal resolution '%s'"
                 self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
-                new_data[name] = self._convert_data(from_data,
-                                                    to_spatial_resolution,
-                                                    to_temporal_resolution,
-                                                    from_spatial_resolution,
-                                                    from_temporal_resolution)
+
+                if name not in new_data:
+                    new_data[name] = self._convert_data(from_data,
+                                                        to_spatial_resolution,
+                                                        to_temporal_resolution,
+                                                        from_spatial_resolution,
+                                                        from_temporal_resolution)
+                else:
+                    to_add = self._convert_data(from_data,
+                                                to_spatial_resolution,
+                                                to_temporal_resolution,
+                                                from_spatial_resolution,
+                                                from_temporal_resolution)
+                    new_data[name] = SosModel.add_data_series(new_data[name], to_add)
 
         new_data['timestep'] = timestep
         return new_data
@@ -305,6 +311,21 @@ class SosModel(object):
                                        self.regions,
                                        self.intervals)
         return convertor.convert()
+
+    @staticmethod
+    def add_data_series(list_a, list_b):
+        """Given two lists of SpaceTimeValues of identical spatial and temporal
+        resolution, return a single list with matching values added together.
+
+        Notes
+        -----
+        Assumes a data series is not sparse, i.e. has a value for every
+        region/interval combination
+        """
+        list_a.sort(key=operator.attrgetter('region', 'interval'))
+        list_b.sort(key=operator.attrgetter('region', 'interval'))
+
+        return [a + b for a, b in zip(list_a, list_b)]
 
     def _run_static_optimisation(self):
         """Runs the system-of-systems model in a static optimisation format
