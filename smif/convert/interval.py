@@ -180,7 +180,7 @@ class Interval(object):
 
         if isinstance(list_of_intervals, list):
             for interval in list_of_intervals:
-                assert isinstance(interval, tuple)
+                assert isinstance(interval, tuple), "Interval must be constructed with tuples"
                 if len(interval) != 2:
                     msg = "Interval tuple must take form (<start>, <end>)"
                     raise ValueError(msg)
@@ -249,7 +249,7 @@ class Interval(object):
             self._interval.append(value)
         elif isinstance(value, list):
             for element in value:
-                assert isinstance(element, tuple)
+                assert isinstance(element, tuple), "A time interval must be a tuple"
             self._interval.extend(value)
         else:
             msg = "A time interval must add either a single tuple or a list of tuples"
