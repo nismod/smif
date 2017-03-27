@@ -1,6 +1,6 @@
 - name: raininess
-  spatial_resolution: nations
+  spatial_resolution: national
   temporal_resolution: annual
 - name: population
-  spatial_resolution: nations
+  spatial_resolution: national
   temporal_resolution: annual
