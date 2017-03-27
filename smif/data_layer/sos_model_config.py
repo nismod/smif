@@ -61,7 +61,8 @@ class SosModelReader(object):
         Returns
         -------
         dict
-            Returns a dictionary with the following keys
+            Returns a dictionary with the following keys:
+
             timesteps
                 the sequence of years
             sector_model_config: list

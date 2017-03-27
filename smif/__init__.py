@@ -18,15 +18,6 @@ try:
 except:
     __version__ = 'unknown'
 
-Parameter = namedtuple(
-    "Parameter",
-    [
-        "name",
-        "spatial_resolution",
-        "temporal_resolution"
-    ]
-)
-
 SpaceTimeValue = namedtuple('SpaceTimeValue', ['region', 'interval', 'value', 'units'])
 docs = """A tuple of scenario data
 
