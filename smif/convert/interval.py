@@ -381,7 +381,6 @@ class TimeIntervalRegister:
         self._base_year = base_year
         self._register = {}
         self.logger = logging.getLogger(__name__)
-        self._id_interval_set = {}
 
     @property
     def interval_set_names(self):
@@ -411,7 +410,7 @@ class TimeIntervalRegister:
         self._check_interval_in_register(set_name)
         return self._register[set_name]
 
-    def add_interval_set(self, intervals, set_name):
+    def register(self, intervals, set_name):
         """Add a time-interval definition to the set of intervals types
 
         Detects duplicate references to the same annual-hours by performing a
@@ -447,7 +446,7 @@ class TimeIntervalRegister:
                                                           self._base_year)
 
         self.logger.info("Adding interval set '%s' to register", set_name)
-        self.validate_intervals()
+        self._validate_intervals()
 
     def _check_interval_in_register(self, interval):
         """
@@ -538,7 +537,7 @@ class TimeIntervalRegister:
             array += interval.to_hourly_array()
         return array
 
-    def validate_intervals(self):
+    def _validate_intervals(self):
         for set_name in self._register.keys():
             array = self._get_hourly_array(set_name)
             duplicate_hours = np.where(array > 1)[0]

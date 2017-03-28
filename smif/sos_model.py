@@ -522,7 +522,7 @@ class SosModelBuilder(object):
             self.logger.warning(msg)
 
         for name, data in interval_set_definitions:
-            self.sos_model.intervals.add_interval_set(data, name)
+            self.sos_model.intervals.register(data, name)
 
     def load_models(self, model_data_list):
         """Loads the sector models into the system-of-systems model

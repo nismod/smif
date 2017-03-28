@@ -311,7 +311,7 @@ class TestTimeSeries:
                 {'id': '1_11', 'value': 1}]
 
         register = TimeIntervalRegister(2010)
-        register.add_interval_set(months, 'months')
+        register.register(months, 'months')
 
         timeseries = TimeSeries(data)
         actual = timeseries.names
@@ -354,8 +354,8 @@ class TestTimeRegisterConversion:
         data = monthly_data
 
         register = TimeIntervalRegister()
-        register.add_interval_set(months, 'months')
-        register.add_interval_set(seasons, 'seasons')
+        register.register(months, 'months')
+        register.register(seasons, 'seasons')
 
         timeseries = TimeSeries(data)
 
@@ -397,8 +397,8 @@ class TestTimeRegisterConversion:
                 {'id': '1_23', 'value': 1}]
 
         register = TimeIntervalRegister()
-        register.add_interval_set(twenty_four_hours, 'hourly_day')
-        register.add_interval_set(one_day, 'one_day')
+        register.register(twenty_four_hours, 'hourly_day')
+        register.register(one_day, 'one_day')
 
         timeseries = TimeSeries(data)
 
@@ -419,7 +419,7 @@ class TestIntervalRegister:
                  'end': 'PT1H'}]
 
         register = TimeIntervalRegister()
-        register.add_interval_set(data, 'energy_supply_hourly')
+        register.register(data, 'energy_supply_hourly')
         assert register.interval_set_names == ['energy_supply_hourly']
 
         actual = register.get_intervals_in_set('energy_supply_hourly')
@@ -435,8 +435,8 @@ class TestIntervalRegister:
         loaded if they have different interval set names
         """
         register = TimeIntervalRegister()
-        register.add_interval_set(months, 'months_1')
-        register.add_interval_set(months, 'months_2')
+        register.register(months, 'months_1')
+        register.register(months, 'months_2')
         actual = register.get_intervals_in_set('months_1')
         expected = register.get_intervals_in_set('months_2')
         assert actual == expected
@@ -446,16 +446,16 @@ class TestIntervalRegister:
         for an interval set
         """
         register = TimeIntervalRegister()
-        register.add_interval_set(months, 'months_1')
+        register.register(months, 'months_1')
         with raises(ValueError):
-            register.add_interval_set(months, 'months_1')
+            register.register(months, 'months_1')
 
     def test_months_load(self, months):
         """Pass a monthly time-interval definition into the register
 
         """
         register = TimeIntervalRegister()
-        register.add_interval_set(months, 'months')
+        register.register(months, 'months')
 
         actual = register.get_intervals_in_set('months')
 
@@ -481,7 +481,7 @@ class TestIntervalRegister:
 
     def test_remap_interval_load(self, remap_months):
         register = TimeIntervalRegister()
-        register.add_interval_set(remap_months, 'remap_months')
+        register.register(remap_months, 'remap_months')
 
         actual = register.get_intervals_in_set('remap_months')
 
@@ -516,8 +516,8 @@ class TestRemapConvert:
         timeslice_data = data_remap
 
         register = TimeIntervalRegister()
-        register.add_interval_set(months, 'months')
-        register.add_interval_set(remap_months, 'remap_months')
+        register.register(months, 'months')
+        register.register(remap_months, 'remap_months')
 
         timeseries = TimeSeries(timeslice_data)
 
@@ -541,8 +541,8 @@ class TestRemapConvert:
         monthly_data = monthly_data
 
         register = TimeIntervalRegister()
-        register.add_interval_set(months, 'months')
-        register.add_interval_set(remap_months, 'remap_months')
+        register.register(months, 'months')
+        register.register(remap_months, 'remap_months')
 
         timeseries = TimeSeries(monthly_data)
 
@@ -562,7 +562,7 @@ class TestValidation:
 
         data = remap_months
         register = TimeIntervalRegister()
-        register.add_interval_set(data, 'remap_months')
+        register.register(data, 'remap_months')
 
         actual = register._get_hourly_array('remap_months')
         expected = np.ones(8760, dtype=np.int)
@@ -572,7 +572,7 @@ class TestValidation:
 
         data = remap_months
         register = TimeIntervalRegister()
-        register.add_interval_set(data, 'remap_months')
+        register.register(data, 'remap_months')
 
     def test_validate_intervals_fails(self, remap_months):
 
@@ -580,7 +580,7 @@ class TestValidation:
         data.append({'id': '5', 'start': 'PT0H', 'end': 'PT1H'})
         register = TimeIntervalRegister()
         with raises(ValueError) as excinfo:
-            register.add_interval_set(data, 'remap_months')
+            register.register(data, 'remap_months')
         assert "Duplicate entry for hour 0 in interval set remap_months." in str(excinfo.value)
 
     def test_time_interval_start_before_end(get_time_intervals):
