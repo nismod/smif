@@ -516,8 +516,6 @@ class TimeIntervalRegister:
 
         """
         for name, value in zip(timeseries.names, timeseries.values):
-            print(name)
-            print(self._register[interval_set])
             list_of_intervals = self._register[interval_set][name].to_hours()
             divisor = len(list_of_intervals)
             for lower, upper in list_of_intervals:
