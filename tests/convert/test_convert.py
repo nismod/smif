@@ -109,8 +109,7 @@ class TestSpaceTimeConvertor_TimeOnly:
                 SpaceTimeValue('a', '1_11', 31, 'days')]
 
         intervals = TimeIntervalRegister()
-        intervals.add_interval_set(months, 'months')
-        intervals.add_interval_set(seasons, 'months')
+        intervals.register(months, 'months')
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -161,8 +160,8 @@ class TestSpaceTimeConvertor_TimeOnly:
                 SpaceTimeValue('a', '1_11', 31, 'days')]
 
         intervals = TimeIntervalRegister()
-        intervals.add_interval_set(months, 'months')
-        intervals.add_interval_set(seasons, 'seasons')
+        intervals.register(months, 'months')
+        intervals.register(seasons, 'seasons')
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -249,8 +248,8 @@ class TestSpaceTimeConvertor_TimeOnly:
                       SpaceTimeValue('b', '1_11', 31+1, 'days')]
 
         intervals = TimeIntervalRegister()
-        intervals.add_interval_set(months, 'months')
-        intervals.add_interval_set(seasons, 'seasons')
+        intervals.register(months, 'months')
+        intervals.register(seasons, 'seasons')
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -317,8 +316,8 @@ class TestSpaceTimeConvertor_TimeOnly:
         regions.register(regions_half_squares)
 
         intervals = TimeIntervalRegister()
-        intervals.add_interval_set(twenty_four_hours, 'hourly_day')
-        intervals.add_interval_set(one_day, 'one_day')
+        intervals.register(twenty_four_hours, 'hourly_day')
+        intervals.register(one_day, 'one_day')
 
         convertor = SpaceTimeConvertor(data,
                                        'half_squares',
@@ -348,8 +347,8 @@ class TestSpaceTimeConvertor_TimeOnly:
         timeslice_data = data_remap
 
         intervals = TimeIntervalRegister()
-        intervals.add_interval_set(months, 'months')
-        intervals.add_interval_set(remap_months, 'remap_months')
+        intervals.register(months, 'months')
+        intervals.register(remap_months, 'remap_months')
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -384,11 +383,11 @@ class TestSpaceTimeConvertor_TimeOnly:
                                         regions_half_squares):
         """One region, time remapping required
         """
-        timeslice_data = data_remap
+        timeslice_data = monthly_data
 
         intervals = TimeIntervalRegister()
-        intervals.add_interval_set(months, 'months')
-        intervals.add_interval_set(remap_months, 'remap_months')
+        intervals.register(months, 'months')
+        intervals.register(remap_months, 'remap_months')
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -402,7 +401,7 @@ class TestSpaceTimeConvertor_TimeOnly:
                                        intervals)
 
         actual = convertor.convert()
-        expected = timeslice_data
+        expected = data_remap
 
         assert len(actual) == len(expected)
 
@@ -448,7 +447,7 @@ class TestSpaceTimeConvertor_RegionOnly:
                 SpaceTimeValue('b', '1_11', 0.5, 'days')]
 
         intervals = TimeIntervalRegister()
-        intervals.add_interval_set(months, 'months')
+        intervals.register(months, 'months')
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -494,7 +493,7 @@ class TestSpaceTimeConvertor_RegionOnly:
                 SpaceTimeValue('b', 'one_day', 24, 'days')]
 
         intervals = TimeIntervalRegister()
-        intervals.add_interval_set(one_day, 'one_day')
+        intervals.register(one_day, 'one_day')
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -547,8 +546,8 @@ class TestSpaceTimeConvertorBoth:
                 SpaceTimeValue('b', '1_11', 0.5, 'days')]
 
         intervals = TimeIntervalRegister()
-        intervals.add_interval_set(months, 'months')
-        intervals.add_interval_set(seasons, 'seasons')
+        intervals.register(months, 'months')
+        intervals.register(seasons, 'seasons')
 
         regions = RegionRegister()
         regions.register(regions_half_squares)

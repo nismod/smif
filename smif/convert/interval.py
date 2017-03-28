@@ -381,7 +381,6 @@ class TimeIntervalRegister:
         self._base_year = base_year
         self._register = {}
         self.logger = logging.getLogger(__name__)
-        self._id_interval_set = {}
 
     @property
     def interval_set_names(self):
@@ -411,25 +410,7 @@ class TimeIntervalRegister:
         self._check_interval_in_register(set_name)
         return self._register[set_name]
 
-    def get_interval(self, name):
-        """Return the interval definition given the unique name
-
-        Parameters
-        ----------
-        name: str
-            The unique name of the interval
-
-        Returns
-        -------
-        :class:`smif.convert.interval.Interval`
-        """
-
-        set_name = self._id_interval_set[name]
-        interval = self._register[set_name][name]
-
-        return interval
-
-    def add_interval_set(self, intervals, set_name):
+    def register(self, intervals, set_name):
         """Add a time-interval definition to the set of intervals types
 
         Detects duplicate references to the same annual-hours by performing a
@@ -444,6 +425,10 @@ class TimeIntervalRegister:
             A unique identifier for the set of time intervals
 
         """
+        if set_name in self._register:
+            msg = "An interval set named {} has already been loaded"
+            raise ValueError(msg.format(set_name))
+
         self._register[set_name] = OrderedDict()
 
         for interval in intervals:
@@ -451,18 +436,17 @@ class TimeIntervalRegister:
             name = interval['id']
             self.logger.debug("Adding interval '%s' to set '%s'", name, set_name)
 
-            if name in self._id_interval_set:
+            if name in self._register[set_name]:
                 interval_tuple = (interval['start'], interval['end'])
                 self._register[set_name][name].interval = interval_tuple
             else:
-                self._id_interval_set[name] = set_name
                 interval_tuple = (interval['start'], interval['end'])
                 self._register[set_name][name] = Interval(name,
                                                           interval_tuple,
                                                           self._base_year)
 
         self.logger.info("Adding interval set '%s' to register", set_name)
-        self.validate_intervals()
+        self._validate_intervals()
 
     def _check_interval_in_register(self, interval):
         """
@@ -501,7 +485,7 @@ class TimeIntervalRegister:
         results = []
 
         self._check_interval_in_register(from_interval)
-        self._convert_to_hourly_buckets(timeseries)
+        self._convert_to_hourly_buckets(timeseries, from_interval)
 
         target_intervals = self.get_intervals_in_set(to_interval)
         for name, interval in target_intervals.items():
@@ -519,7 +503,7 @@ class TimeIntervalRegister:
 
         return results
 
-    def _convert_to_hourly_buckets(self, timeseries):
+    def _convert_to_hourly_buckets(self, timeseries, interval_set):
         """Iterates through the `timeseries` and assigns values to hourly buckets
 
         Parameters
@@ -527,10 +511,14 @@ class TimeIntervalRegister:
         timeseries: :class:`~smif.convert.interval.TimeSeries`
             The timeseries to convert to hourly buckets ready for further
             operations
+        interval_set: str
+            The name of the interval set associated with the timeseries
 
         """
         for name, value in zip(timeseries.names, timeseries.values):
-            list_of_intervals = self.get_interval(name).to_hours()
+            print(name)
+            print(self._register[interval_set])
+            list_of_intervals = self._register[interval_set][name].to_hours()
             divisor = len(list_of_intervals)
             for lower, upper in list_of_intervals:
                 self.logger.debug("lower: %s, upper: %s", lower, upper)
@@ -549,7 +537,7 @@ class TimeIntervalRegister:
             array += interval.to_hourly_array()
         return array
 
-    def validate_intervals(self):
+    def _validate_intervals(self):
         for set_name in self._register.keys():
             array = self._get_hourly_array(set_name)
             duplicate_hours = np.where(array > 1)[0]
