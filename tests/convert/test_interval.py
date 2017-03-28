@@ -323,7 +323,7 @@ class TestTimeSeries:
         expected = [1] * 12
         assert actual == expected
 
-        register._convert_to_hourly_buckets(timeseries)
+        register._convert_to_hourly_buckets(timeseries, 'months')
         actual = timeseries.hourly_values
 
         month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -429,6 +429,26 @@ class TestIntervalRegister:
         expected['1_1'] = element
 
         assert actual == expected
+
+    def test_interval_load_same_key(self, months):
+        """Tests that interval sets with duplicate interval names can be
+        loaded if they have different interval set names
+        """
+        register = TimeIntervalRegister()
+        register.add_interval_set(months, 'months_1')
+        register.add_interval_set(months, 'months_2')
+        actual = register.get_intervals_in_set('months_1')
+        expected = register.get_intervals_in_set('months_2')
+        assert actual == expected
+
+    def test_interval_load_duplicate_name_raises(self, months):
+        """Tests that error is raised if a duplicate name is used
+        for an interval set
+        """
+        register = TimeIntervalRegister()
+        register.add_interval_set(months, 'months_1')
+        with raises(ValueError):
+            register.add_interval_set(months, 'months_1')
 
     def test_months_load(self, months):
         """Pass a monthly time-interval definition into the register
