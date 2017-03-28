@@ -110,7 +110,6 @@ class TestSpaceTimeConvertor_TimeOnly:
 
         intervals = TimeIntervalRegister()
         intervals.add_interval_set(months, 'months')
-        intervals.add_interval_set(seasons, 'months')
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -384,7 +383,7 @@ class TestSpaceTimeConvertor_TimeOnly:
                                         regions_half_squares):
         """One region, time remapping required
         """
-        timeslice_data = data_remap
+        timeslice_data = monthly_data
 
         intervals = TimeIntervalRegister()
         intervals.add_interval_set(months, 'months')
@@ -402,7 +401,7 @@ class TestSpaceTimeConvertor_TimeOnly:
                                        intervals)
 
         actual = convertor.convert()
-        expected = timeslice_data
+        expected = data_remap
 
         assert len(actual) == len(expected)
 
