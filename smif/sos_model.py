@@ -656,7 +656,6 @@ class SosModelBuilder(object):
                 entry = SpaceTimeValue(region, interval,
                                        obs['value'], obs['units'])
                 nested[year][param].append(entry)
-        self.logger.info("Added scenario data: %s", nested)
         self.sos_model._scenario_data = nested
 
     def _check_planning_interventions_exist(self):
