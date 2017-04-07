@@ -738,6 +738,86 @@ class TestSosModelBuilder():
             builder.add_scenario_data(data)
         assert msg in str(ex.value)
 
+    def test_scenario_data_missing_param_mapping(self):
+        data = {
+            "length": [
+                {
+                    'value': 3.14,
+                    'units': 'm',
+                    'year': 2015
+                }
+            ]
+        }
+
+        builder = SosModelBuilder()
+
+        msg = "Parameter length not registered in resolution mapping"
+        with raises(ValueError) as ex:
+            builder.add_scenario_data(data)
+        assert msg in str(ex.value)
+
+    def test_scenario_data_missing_param_region(self, setup_region_data):
+        data = {
+            "length": [
+                {
+                    'value': 3.14,
+                    'units': 'm',
+                    'region': 'missing',
+                    'interval': 1,
+                    'year': 2015
+                }
+            ]
+        }
+
+        builder = SosModelBuilder()
+        interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+        builder.load_interval_sets({'annual': interval_data})
+        builder.load_region_sets({'LSOA': setup_region_data['features']})
+        builder.add_resolution_mapping({
+            'scenario': {
+                'length': {
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                }
+            }
+        })
+
+        msg = "Region missing not defined in set LSOA for parameter length"
+        with raises(ValueError) as ex:
+            builder.add_scenario_data(data)
+        assert msg in str(ex)
+
+    def test_scenario_data_missing_param_interval(self, setup_region_data):
+        data = {
+            "length": [
+                {
+                    'value': 3.14,
+                    'units': 'm',
+                    'region': 'oxford',
+                    'interval': 'missing',
+                    'year': 2015
+                }
+            ]
+        }
+
+        builder = SosModelBuilder()
+        interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+        builder.load_interval_sets({'annual': interval_data})
+        builder.load_region_sets({'LSOA': setup_region_data['features']})
+        builder.add_resolution_mapping({
+            'scenario': {
+                'length': {
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                }
+            }
+        })
+
+        msg = "Interval missing not defined in set annual for parameter length"
+        with raises(ValueError) as ex:
+            builder.add_scenario_data(data)
+        assert msg in str(ex)
+
     def test_inputs_property(self,
                              get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies

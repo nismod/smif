@@ -648,7 +648,7 @@ class SosModelBuilder(object):
 
             for obs in observations:
                 if 'year' not in obs:
-                    raise ValueError("Scenario data item missing year: %s", str(obs))
+                    raise ValueError("Scenario data item missing year: {}".format(obs))
                 year = obs['year']
                 if year not in nested:
                     nested[year] = {}
@@ -656,18 +656,18 @@ class SosModelBuilder(object):
                 region = obs['region']
                 if region not in region_names:
                     raise ValueError(
-                        "Region %s not defined in set %s for parameter %s",
-                        region,
-                        region_set_name,
-                        param)
+                        "Region {} not defined in set {} for parameter {}".format(
+                            region,
+                            region_set_name,
+                            param))
 
                 interval = obs['interval']
                 if interval not in interval_names:
                     raise ValueError(
-                        "Interval %s not defined in set %s for parameter %s",
-                        interval,
-                        interval_set_name,
-                        param)
+                        "Interval {} not defined in set {} for parameter {}".format(
+                            interval,
+                            interval_set_name,
+                            param))
 
                 entry = SpaceTimeValue(
                     region,
