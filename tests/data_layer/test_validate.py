@@ -6,6 +6,7 @@ from smif.data_layer.validate import (VALIDATION_ERRORS, validate_dependency,
                                       validate_interventions, validate_output,
                                       validate_output_spec,
                                       validate_planning_config,
+                                      validate_scenario_data,
                                       validate_sector_model_initial_config,
                                       validate_sos_model_config,
                                       validate_time_intervals,
@@ -104,6 +105,35 @@ def get_intervention():
             'units': "million £/km"
         }
     }
+
+
+@fixture(scope='function')
+def get_scenario_data():
+    """Return sample scenario data
+    """
+    return [
+        {
+            "region": "England",
+            "interval": 1,
+            "year": 2010,
+            "value": 52000000,
+            "units": "people",
+        },
+        {
+            "region": "Scotland",
+            "interval": 1,
+            "year": 2010,
+            "value": 5100000,
+            "units": "people",
+        },
+        {
+            "region": "Wales",
+            "interval": 1,
+            "year": 2010,
+            "value": 2900000,
+            "units": "people",
+        },
+    ]
 
 
 @fixture(scope='function')
@@ -580,6 +610,23 @@ def test_interventions_checks_for_units(get_intervention):
     validate_interventions(data, "/path/to/data.yaml")
     ex = VALIDATION_ERRORS.pop()
     assert msg in str(ex)
+
+
+def test_scenario_missing_required(get_scenario_data):
+    """Expect an error if a scenario datum is missing required key
+    """
+    required_keys = ["region", "interval", "year", "value", "units"]
+
+    for key in required_keys:
+        data = get_scenario_data
+        for obs in data:
+            del obs[key]
+
+        msg = "Expected a value for '{}' in each data point in a scenario".format(key)
+
+        validate_scenario_data(data, "/path/to/data.yaml")
+        ex = VALIDATION_ERRORS.pop()
+        assert msg in str(ex)
 
 
 class TestValidateMissingConfigSections:

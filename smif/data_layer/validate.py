@@ -231,6 +231,29 @@ def validate_scenario(scenario):
             VALIDATION_ERRORS.append(ValidationError(fmt.format(key, scenario)))
 
 
+def validate_scenario_data(data, file_path):
+    """Check a list of scenario observations
+    """
+    for datum in data:
+        validate_scenario_datum(datum, file_path)
+
+
+def validate_scenario_datum(datum, file_path):
+    """Check a single scenario datum
+    """
+    if not isinstance(datum, dict):
+        fmt = "Expected a scenario data point, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(datum)))
+        return
+
+    required_keys = ["region", "interval", "year", "value", "units"]
+    for key in required_keys:
+        if key not in datum:
+            fmt = "Expected a value for '{}' in each data point in a scenario, " + \
+                  "only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, datum)))
+
+
 def validate_planning_config(planning):
     """Check planning options
     """
