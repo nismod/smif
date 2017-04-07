@@ -3,6 +3,11 @@
 """
 import yaml
 
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+
 
 def load(file_path):
     """Parse yaml config file into plain data (lists, dicts and simple values)
@@ -13,7 +18,7 @@ def load(file_path):
         The path of the configuration file to parse
     """
     with open(file_path, 'r') as file_handle:
-        return yaml.load(file_handle)
+        return yaml.load(file_handle, Loader=Loader)
 
 
 def dump(data, file_path):
@@ -27,4 +32,4 @@ def dump(data, file_path):
         Data to write (should be lists, dicts and simple values)
     """
     with open(file_path, 'w') as file_handle:
-        return yaml.dump(data, file_handle)
+        return yaml.dump(data, file_handle, Dumper=Dumper)
