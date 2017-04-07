@@ -6,9 +6,9 @@ framework.
 import logging
 import operator
 from collections import defaultdict
-from enum import Enum
 
 import networkx
+from enum import Enum
 from smif import SpaceTimeValue
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister, RegionSet
@@ -473,8 +473,8 @@ class SosModelBuilder(object):
 
         self.load_models(model_list)
         self.add_planning(config_data['planning'])
-        self.add_scenario_data(config_data['scenario_data'])
         self.add_resolution_mapping(config_data['resolution_mapping'])
+        self.add_scenario_data(config_data['scenario_data'])
         self.logger.debug(config_data['scenario_data'])
 
     def add_timesteps(self, timesteps):
@@ -616,7 +616,7 @@ class SosModelBuilder(object):
         - timestep
         - value
         - units
-        - region (optional, must use a region id from scenario regions)
+        - region (must use a region id from scenario regions)
         - interval (must use an id from scenario time intervals)
 
         Add a dictionary of list of :class:`smif.SpaceTimeValue` named
@@ -630,32 +630,56 @@ class SosModelBuilder(object):
         """
         self.logger.info("Adding scenario data")
         nested = {}
+
         for param, observations in data.items():
+            if param not in self.sos_model.resolution_mapping['scenario']:
+                raise ValueError("Parameter {} not registered in resolution mapping {}".format(
+                    param,
+                    self.sos_model.resolution_mapping))
+            resolution_sets = self.sos_model.resolution_mapping['scenario'][param]
+
+            interval_set_name = resolution_sets['temporal_resolution']
+            interval_set = self.sos_model.intervals.get_intervals_in_set(interval_set_name)
+            interval_names = [interval.name for key, interval in interval_set.items()]
+
+            region_set_name = resolution_sets['spatial_resolution']
+            region_set = self.sos_model.regions.get_regions_in_set(region_set_name)
+            region_names = [region.name for region in region_set]
+
             for obs in observations:
-                if "year" not in obs:
-                    raise ValueError("Scenario data item missing year: %s", obs)
-                else:
-                    year = obs["year"]
+                if 'year' not in obs:
+                    raise ValueError("Scenario data item missing year: %s", str(obs))
+                year = obs['year']
                 if year not in nested:
                     nested[year] = {}
 
+                region = obs['region']
+                if region not in region_names:
+                    raise ValueError(
+                        "Region %s not defined in set %s for parameter %s",
+                        region,
+                        region_set_name,
+                        param)
+
+                interval = obs['interval']
+                if interval not in interval_names:
+                    raise ValueError(
+                        "Interval %s not defined in set %s for parameter %s",
+                        interval,
+                        interval_set_name,
+                        param)
+
+                entry = SpaceTimeValue(
+                    region,
+                    interval,
+                    obs['value'],
+                    obs['units']
+                )
                 if param not in nested[year]:
-                    nested[year][param] = []
+                    nested[year][param] = [entry]
+                else:
+                    nested[year][param].append(entry)
 
-                if "region" not in obs:
-                    obs["region"] = "national"
-                region = obs["region"]
-
-                if "interval" not in obs:
-                    obs["interval"] = "annual"
-                interval = obs["interval"]
-
-                del obs["year"]
-                del obs["region"]
-                del obs["interval"]
-                entry = SpaceTimeValue(region, interval,
-                                       obs['value'], obs['units'])
-                nested[year][param].append(entry)
         self.sos_model._scenario_data = nested
 
     def _check_planning_interventions_exist(self):
