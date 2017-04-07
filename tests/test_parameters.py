@@ -1,7 +1,7 @@
 """Tests the ModelInputs class
 
 """
-from pytest import fixture
+from pytest import fixture, raises
 from smif.parameters import ModelParameters
 
 
@@ -90,6 +90,10 @@ class TestModelOutputs:
         expected = 'watershed'
         assert actual == expected
 
+        with raises(ValueError) as ex:
+            outputs.get_spatial_res('missing')
+        assert "No output found for name 'missing'" in str(ex.value)
+
     def test_get_temporal_property(self, two_output_metrics):
 
         outputs = ModelParameters(two_output_metrics)
@@ -101,3 +105,7 @@ class TestModelOutputs:
         actual = outputs.get_temporal_res('water_demand')
         expected = 'daily'
         assert actual == expected
+
+        with raises(ValueError) as ex:
+            outputs.get_temporal_res('missing')
+        assert "No output found for name 'missing'" in str(ex.value)
