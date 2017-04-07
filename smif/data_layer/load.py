@@ -2,6 +2,7 @@
 """Parse yaml config files, to construct sector models
 """
 import yaml
+from smif import SpaceTimeValue
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -33,3 +34,10 @@ def dump(data, file_path):
     """
     with open(file_path, 'w') as file_handle:
         return yaml.dump(data, file_handle, Dumper=Dumper)
+
+
+def space_time_value_representer(dumper, data):
+    return dumper.represent_scalar("", str(data))
+
+
+yaml.add_representer(SpaceTimeValue, space_time_value_representer)
