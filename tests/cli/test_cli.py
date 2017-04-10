@@ -6,6 +6,7 @@ import subprocess
 from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
+import smif
 from pytest import raises
 from smif.cli import (confirm, parse_arguments, setup_project_folder,
                       validate_config)
@@ -182,6 +183,13 @@ def test_confirm_repeat_message(mock_print, input):
     confirm()
     input.assert_has_calls([call('Confirm [n]|y: '), call('Confirm [n]|y: ')])
     mock_print.assert_called_with('please enter y or n.')
+
+
+def test_version_display():
+    """Expect version number from `smif -V`
+    """
+    output = subprocess.run(['smif', '-V'], stdout=subprocess.PIPE)
+    assert smif.__version__ in str(output.stdout)
 
 
 def test_verbose_debug():

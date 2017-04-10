@@ -42,6 +42,7 @@ import sys
 import traceback
 from argparse import ArgumentParser
 
+import smif
 from smif.sos_model import SosModelBuilder
 from smif.data_layer.load import dump
 from smif.data_layer.sos_model_config import SosModelReader
@@ -98,7 +99,7 @@ if VERBOSITY is None:
     LOGGING_CONFIG['root']['level'] = logging.WARNING
 elif VERBOSITY == 1:
     LOGGING_CONFIG['root']['level'] = logging.INFO
-elif VERBOSITY >= 2:
+else:
     LOGGING_CONFIG['root']['level'] = logging.DEBUG
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -281,6 +282,10 @@ def parse_arguments():
 
     """
     parser = ArgumentParser(description='Command line tools for smif')
+    parser.add_argument('-V', '--version',
+                        action='version',
+                        version="smif " + smif.__version__,
+                        help='show the current version of smif')
     parser.add_argument('-v', '--verbose',
                         action='count',
                         help='show messages: -v to see messages reporting on progress, ' +
