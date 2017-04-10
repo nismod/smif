@@ -75,7 +75,7 @@ class ModelParameters(object):
                 spatial_resolution = parameter.spatial_resolution
                 break
         else:
-            raise ValueError("No output found for name {}".format(name))
+            raise ValueError("No output found for name '{}'".format(name))
         return spatial_resolution
 
     def get_temporal_res(self, name):

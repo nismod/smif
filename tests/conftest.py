@@ -920,7 +920,7 @@ def setup_region_data():
                 "type": "Feature",
                 "properties": {
                     "name": "oxford"
-                    },
+                },
                 "geometry": {
                     "type": "Polygon",
                     "coordinates": [
@@ -957,6 +957,54 @@ def setup_region_data():
                             [449051, 206042],
                             [448141, 208446],
                             [448180, 209366]
+                        ]
+                    ]
+                }
+            },
+        ]
+    }
+    return data
+
+
+@fixture(scope='function')
+def setup_country_data():
+    data = {
+        "type": "FeatureCollection",
+        "crs": {
+            "type": "name",
+            "properties": {
+                "name": "urn:ogc:def:crs:EPSG::27700"
+            }
+        },
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "name": "GB"
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [0, 1],
+                            [0, 1],
+                            [2, 3]
+                        ]
+                    ]
+                }
+            },
+            {
+                "type": "Feature",
+                "properties": {
+                    "name": "NI"
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [2, 3],
+                            [2, 3],
+                            [4, 5]
                         ]
                     ]
                 }

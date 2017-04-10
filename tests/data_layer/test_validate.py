@@ -6,6 +6,10 @@ from smif.data_layer.validate import (VALIDATION_ERRORS, validate_dependency,
                                       validate_interventions, validate_output,
                                       validate_output_spec,
                                       validate_planning_config,
+                                      validate_scenario,
+                                      validate_scenario_data,
+                                      validate_scenario_data_config,
+                                      validate_scenario_datum,
                                       validate_sector_model_initial_config,
                                       validate_sos_model_config,
                                       validate_time_intervals,
@@ -104,6 +108,35 @@ def get_intervention():
             'units': "million £/km"
         }
     }
+
+
+@fixture(scope='function')
+def get_scenario_data():
+    """Return sample scenario data
+    """
+    return [
+        {
+            "region": "England",
+            "interval": 1,
+            "year": 2010,
+            "value": 52000000,
+            "units": "people",
+        },
+        {
+            "region": "Scotland",
+            "interval": 1,
+            "year": 2010,
+            "value": 5100000,
+            "units": "people",
+        },
+        {
+            "region": "Wales",
+            "interval": 1,
+            "year": 2010,
+            "value": 2900000,
+            "units": "people",
+        },
+    ]
 
 
 @fixture(scope='function')
@@ -578,6 +611,62 @@ def test_interventions_checks_for_units(get_intervention):
           "{'value': 3, 'units': 'm'}"
 
     validate_interventions(data, "/path/to/data.yaml")
+    ex = VALIDATION_ERRORS.pop()
+    assert msg in str(ex)
+
+
+def test_scenario_config_type(get_sos_model_config):
+    """Expect an error scenario data config is not a list of dicts
+    """
+    validate_scenario_data_config(42)
+    msg = "Expected a list of scenario datasets in main model config"
+    ex = VALIDATION_ERRORS.pop()
+    assert msg in str(ex)
+
+    validate_scenario_data_config([42])
+    msg = "Expected a scenario specification"
+    ex = VALIDATION_ERRORS.pop()
+    assert msg in str(ex)
+
+
+def test_scenario_config_missing_required(get_sos_model_config):
+    """Expect an error if a scenario datum is missing required key
+    """
+    required_keys = ["parameter", "spatial_resolution", "temporal_resolution", "file"]
+
+    for key in required_keys:
+        data = get_sos_model_config['scenario_data'][0]
+        del data[key]
+
+        msg = "Expected a value for '{}' in each scenario".format(key)
+
+        validate_scenario(data)
+        ex = VALIDATION_ERRORS.pop()
+        assert msg in str(ex)
+
+
+def test_scenario_missing_required(get_scenario_data):
+    """Expect an error if a scenario datum is missing required key
+    """
+    required_keys = ["region", "interval", "year", "value", "units"]
+
+    for key in required_keys:
+        data = get_scenario_data
+        for obs in data:
+            del obs[key]
+
+        msg = "Expected a value for '{}' in each data point in a scenario".format(key)
+
+        validate_scenario_data(data, "/path/to/data.yaml")
+        ex = VALIDATION_ERRORS.pop()
+        assert msg in str(ex)
+
+
+def test_scenario_data_type():
+    """Expect an error if scenario data is not a dict
+    """
+    validate_scenario_datum([], "/path/to/data.yaml")
+    msg = "Expected a scenario data point, instead got []"
     ex = VALIDATION_ERRORS.pop()
     assert msg in str(ex)
 

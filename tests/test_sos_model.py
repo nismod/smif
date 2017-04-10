@@ -13,6 +13,23 @@ from .fixtures.water_supply import WaterSupplySectorModel
 def get_sos_model_only_scenario_dependencies(setup_region_data):
     builder = SosModelBuilder()
     builder.add_timesteps([2010])
+    builder.load_region_sets({'LSOA': setup_region_data['features']})
+    interval_data = [
+        {
+            'id': 1,
+            'start': 'P0Y',
+            'end': 'P1Y'
+        }
+    ]
+    builder.load_interval_sets({'annual': interval_data})
+    builder.add_resolution_mapping({
+        'scenario': {
+            'raininess': {
+                'temporal_resolution': 'annual',
+                'spatial_resolution': 'LSOA'
+            }
+        }
+    })
     builder.add_scenario_data({
         "raininess": [
             {
@@ -38,23 +55,6 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             }
         ]
     })
-    builder.add_resolution_mapping({
-        'scenario': {
-            'raininess': {
-                'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA'
-            }
-        }
-    })
-    builder.load_region_sets({'LSOA': setup_region_data['features']})
-    interval_data = [
-        {
-            'id': 1,
-            'start': 'P0Y',
-            'end': 'P1Y'
-        }
-    ]
-    builder.load_interval_sets({'annual': interval_data})
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
@@ -105,6 +105,17 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
 def get_sos_model_with_model_dependency(setup_region_data):
     builder = SosModelBuilder()
     builder.add_timesteps([2010])
+    interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+    builder.load_interval_sets({'annual': interval_data})
+    builder.load_region_sets({'LSOA': setup_region_data['features']})
+    builder.add_resolution_mapping({
+        'scenario': {
+            'raininess': {
+                'temporal_resolution': 'annual',
+                'spatial_resolution': 'LSOA'
+            }
+        }
+    })
     builder.add_scenario_data({
         "raininess": [
             {
@@ -130,14 +141,6 @@ def get_sos_model_with_model_dependency(setup_region_data):
             }
         ]
     })
-    builder.add_resolution_mapping({
-        'scenario': {
-            'raininess': {
-                'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA'}}})
-    builder.load_region_sets({'LSOA': setup_region_data['features']})
-    interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
-    builder.load_interval_sets({'annual': interval_data})
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
@@ -187,6 +190,17 @@ def get_sos_model_with_model_dependency(setup_region_data):
 def get_sos_model_with_summed_dependency(setup_region_data):
     builder = SosModelBuilder()
     builder.add_timesteps([2010])
+    builder.load_region_sets({'LSOA': setup_region_data['features']})
+    interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+    builder.load_interval_sets({'annual': interval_data})
+    builder.add_resolution_mapping({
+        'scenario': {
+            'raininess': {
+                'temporal_resolution': 'annual',
+                'spatial_resolution': 'LSOA'
+            }
+        }
+    })
     builder.add_scenario_data({
         "raininess": [
             {
@@ -198,14 +212,6 @@ def get_sos_model_with_summed_dependency(setup_region_data):
             }
         ]
     })
-    builder.add_resolution_mapping({
-        'scenario': {
-            'raininess': {
-                'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA'}}})
-    builder.load_region_sets({'LSOA': setup_region_data['features']})
-    interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
-    builder.load_interval_sets({'annual': interval_data})
 
     ws = WaterSupplySectorModel()
     ws.name = 'water_supply'
@@ -586,7 +592,7 @@ class TestSosModelBuilder():
         with raises(NotImplementedError):
             builder.finish()
 
-    def test_nest_scenario_data(self):
+    def test_nest_scenario_data(self, setup_country_data):
         data = {
             "mass": [
                 {
@@ -636,6 +642,23 @@ class TestSosModelBuilder():
         }
 
         builder = SosModelBuilder()
+        interval_data = [
+            {'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
+            {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
+            {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
+            {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'},
+            {'id': 'winter', 'start': 'P11M', 'end': 'P1Y'},
+        ]
+        builder.load_interval_sets({'annual': interval_data})
+        builder.load_region_sets({'country': setup_country_data['features']})
+        builder.add_resolution_mapping({
+            'scenario': {
+                'mass': {
+                    'spatial_resolution': 'country',
+                    'temporal_resolution': 'annual'
+                }
+            }
+        })
         builder.add_scenario_data(data)
 
         actual = builder.sos_model._scenario_data
@@ -657,26 +680,37 @@ class TestSosModelBuilder():
             assert entry.region == exp_reg
             assert entry.units == 'kg'
 
-    def test_scenario_data_defaults(self):
+    def test_scenario_data_defaults(self, setup_region_data):
         data = {
             "length": [
                 {
                     'year': 2015,
-                    'interval': 'annual',
+                    'interval': 1,
                     'value': 3.14,
                     'units': 'm',
-                    'region': 'national'
+                    'region': 'oxford'
                 }
             ]
         }
 
-        expected = {2015: {"length": [SpaceTimeValue("national", 'annual', 3.14, 'm')]}}
+        expected = {2015: {"length": [SpaceTimeValue("oxford", 1, 3.14, 'm')]}}
 
         builder = SosModelBuilder()
+        interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+        builder.load_interval_sets({'annual': interval_data})
+        builder.load_region_sets({'LSOA': setup_region_data['features']})
+        builder.add_resolution_mapping({
+            'scenario': {
+                'length': {
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                }
+            }
+        })
         builder.add_scenario_data(data)
         assert builder.sos_model._scenario_data == expected
 
-    def test_scenario_data_missing_year(self):
+    def test_scenario_data_missing_year(self, setup_region_data):
         data = {
             "length": [
                 {
@@ -687,11 +721,102 @@ class TestSosModelBuilder():
         }
 
         builder = SosModelBuilder()
+        interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+        builder.load_interval_sets({'annual': interval_data})
+        builder.load_region_sets({'LSOA': setup_region_data['features']})
+        builder.add_resolution_mapping({
+            'scenario': {
+                'length': {
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                }
+            }
+        })
 
         msg = "Scenario data item missing year"
         with raises(ValueError) as ex:
             builder.add_scenario_data(data)
         assert msg in str(ex.value)
+
+    def test_scenario_data_missing_param_mapping(self):
+        data = {
+            "length": [
+                {
+                    'value': 3.14,
+                    'units': 'm',
+                    'year': 2015
+                }
+            ]
+        }
+
+        builder = SosModelBuilder()
+
+        msg = "Parameter length not registered in resolution mapping"
+        with raises(ValueError) as ex:
+            builder.add_scenario_data(data)
+        assert msg in str(ex.value)
+
+    def test_scenario_data_missing_param_region(self, setup_region_data):
+        data = {
+            "length": [
+                {
+                    'value': 3.14,
+                    'units': 'm',
+                    'region': 'missing',
+                    'interval': 1,
+                    'year': 2015
+                }
+            ]
+        }
+
+        builder = SosModelBuilder()
+        interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+        builder.load_interval_sets({'annual': interval_data})
+        builder.load_region_sets({'LSOA': setup_region_data['features']})
+        builder.add_resolution_mapping({
+            'scenario': {
+                'length': {
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                }
+            }
+        })
+
+        msg = "Region missing not defined in set LSOA for parameter length"
+        with raises(ValueError) as ex:
+            builder.add_scenario_data(data)
+        assert msg in str(ex)
+
+    def test_scenario_data_missing_param_interval(self, setup_region_data):
+        data = {
+            "length": [
+                {
+                    'value': 3.14,
+                    'units': 'm',
+                    'region': 'oxford',
+                    'interval': 'missing',
+                    'year': 2015
+                }
+            ]
+        }
+
+        builder = SosModelBuilder()
+        interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+        builder.load_interval_sets({'annual': interval_data})
+        builder.load_region_sets({'LSOA': setup_region_data['features']})
+        builder.add_resolution_mapping({
+            'scenario': {
+                'length': {
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'
+                }
+            }
+        })
+
+        msg = "Interval missing not defined in set annual for parameter length"
+        with raises(ValueError) as ex:
+            builder.add_scenario_data(data)
+        assert msg in str(ex)
 
     def test_inputs_property(self,
                              get_sos_model_only_scenario_dependencies):

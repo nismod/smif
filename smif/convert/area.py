@@ -73,6 +73,14 @@ class RegionRegister(object):
         """
         return list(self._register.keys())
 
+    def get_regions_in_set(self, set_name):
+        """Return regions for a given set
+        """
+        if set_name in self._register:
+            return self._register[set_name]
+        else:
+            raise ValueError("Region set {} not registered".format(set_name))
+
     def register(self, region_set):
         """Register a set of regions as a source/target for conversion
         """

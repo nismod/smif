@@ -9,7 +9,9 @@ from glob import glob
 import fiona
 
 from .load import load
-from .validate import (validate_sos_model_config, validate_time_intervals,
+from .validate import (validate_scenario_data,
+                       validate_sos_model_config,
+                       validate_time_intervals,
                        validate_timesteps)
 
 
@@ -48,11 +50,11 @@ class SosModelReader(object):
         """
         self._config = self.load_sos_config()
         self.timesteps = self.load_timesteps()
+        self.time_intervals = self.load_time_intervals()
+        self.regions = self.load_regions()
         self.scenario_data = self.load_scenario_data()
         self.sector_model_data = self.load_sector_model_data()
         self.planning = self.load_planning()
-        self.time_intervals = self.load_time_intervals()
-        self.regions = self.load_regions()
 
     @property
     def data(self):
@@ -176,6 +178,7 @@ class SosModelReader(object):
                 self.logger.debug("Loading scenario data from %s with %s and %s",
                                   file_path, spatial_res, temporal_res)
                 data = load(file_path)
+                validate_scenario_data(data, file_path)
 
                 scenario_data[name] = data
 
