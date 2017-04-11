@@ -9,7 +9,7 @@ from collections import defaultdict
 
 import networkx
 from enum import Enum
-from smif import SpaceTimeValue
+from smif import SpaceTimeValue, StateData
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister, RegionSet
 from smif.convert.interval import TimeIntervalRegister
@@ -35,26 +35,33 @@ class SosModel(object):
     ==========
     model_list : dict
         This is a dictionary of :class:`smif.SectorModel`
+    initial_conditions : list
+        List of interventions required to set up the initial system, with any
+        state attributes provided here too
 
     """
     def __init__(self):
-        self.model_list = {}
-        self._timesteps = []
-        self.initial_conditions = []
-        self.interventions = InterventionRegister()
-        self.regions = RegionRegister()
-        self.intervals = TimeIntervalRegister()
-
-        self.planning = Planning([])
-        self._scenario_data = {}
-
         self.logger = logging.getLogger(__name__)
 
+        # models
+        self.model_list = {}
         self.dependency_graph = None
 
-        self._results = defaultdict(dict)
-
+        # space and time
+        self._timesteps = []
+        self.regions = RegionRegister()
+        self.intervals = TimeIntervalRegister()
         self._resolution_mapping = {'scenario': {}}
+
+        # systems, interventions and (system) state
+        self.interventions = InterventionRegister()
+        self.initial_conditions = []
+        self.planning = Planning([])
+        self._state = defaultdict(dict)
+
+        # scenario data and results
+        self._scenario_data = {}
+        self._results = defaultdict(dict)
 
     @property
     def resolution_mapping(self):
@@ -64,9 +71,15 @@ class SosModel(object):
         -------
         The data structure follows ``source->parameter->{temporal, spatial}``::
 
-                {'scenario': {
-                 'raininess': {'temporal_resolution': 'annual',
-                               'spatial_resolution': 'LSOA'}}}
+                {
+                    'scenario': {
+                        'raininess': {
+                            'temporal_resolution': 'annual',
+                            'spatial_resolution': 'LSOA'
+                        }
+                    }
+                }
+
         """
         return self._resolution_mapping
 
@@ -184,11 +197,15 @@ class SosModel(object):
 
         """
         decisions = self._get_decisions(model, timestep)
-        state = {}
-        data = self._get_data(model, model.name, timestep)
-        results = model.simulate(decisions, state, data)
+        state = self._get_state(model, timestep)
+        data = self._get_data(model, timestep)
+
+        state, results = model.simulate(decisions, state, data)
+
         self.logger.debug("Results from %s model:\n %s", model.name, results)
-        self._results[timestep][model.name] = results
+
+        self._set_state(model, timestep, state)
+        self._set_data(model, timestep, results)
 
     def _get_decisions(self, model, timestep):
         """Gets the interventions that correspond to the decisions
@@ -217,7 +234,21 @@ class SosModel(object):
 
         return current_decisions
 
-    def _get_data(self, model, model_name, timestep):
+    def _get_state(self, model, timestep):
+        """Gets the state to pass to SectorModel.simulate
+        """
+        if model.name not in self._state[timestep]:
+            self.logger.warning("Found no state for %s in timestep %s", model.name, timestep)
+            return []
+        return self._state[timestep][model.name]
+
+    def _set_state(self, model, from_timestep, state):
+        """Sets state output from model ready for next timestep
+        """
+        for_timestep = self.timestep_after(from_timestep)
+        self._state[for_timestep][model.name] = state
+
+    def _get_data(self, model, timestep):
         """Gets the data in the required format to pass to the simulate method
 
         Returns
@@ -240,8 +271,8 @@ class SosModel(object):
 
             for source in provider:
 
-                self.logger.debug("Getting dependency data for '%s' from '%s'",
-                                  name, source)
+                self.logger.debug("Getting '%s' dependency data for '%s' from '%s'",
+                                  name, model.name, source)
 
                 if source == 'scenario':
                     from_data = self.scenario_data[timestep][name]
@@ -284,6 +315,11 @@ class SosModel(object):
 
         new_data['timestep'] = timestep
         return new_data
+
+    def _set_data(self, model, timestep, results):
+        """Sets results output from model as data available to other/future models
+        """
+        self._results[timestep][model.name] = results
 
     def _convert_data(self, data, to_spatial_resolution,
                       to_temporal_resolution, from_spatial_resolution,
@@ -379,6 +415,24 @@ class SosModel(object):
             A list of timesteps
         """
         return sorted(self._timesteps)
+
+    def timestep_before(self, timestep):
+        """Returns the timestep previous to a given timestep, or None
+        """
+        if timestep not in self.timesteps or timestep == self.timesteps[0]:
+            return None
+        else:
+            index = self.timesteps.index(timestep)
+            return self.timesteps[index - 1]
+
+    def timestep_after(self, timestep):
+        """Returns the timestep after a given timestep, or None
+        """
+        if timestep not in self.timesteps or timestep == self.timesteps[-1]:
+            return None
+        else:
+            index = self.timesteps.index(timestep)
+            return self.timesteps[index + 1]
 
     @property
     def intervention_names(self):
@@ -560,14 +614,15 @@ class SosModelBuilder(object):
         for model_data in model_data_list:
             model = self._build_model(model_data)
             self.add_model(model)
+            self.add_model_data(model, model_data)
 
     @staticmethod
     def _build_model(model_data):
         builder = SectorModelBuilder(model_data['name'])
         builder.load_model(model_data['path'], model_data['classname'])
+        builder.create_initial_system(model_data['initial_conditions'])
         builder.add_inputs(model_data['inputs'])
         builder.add_outputs(model_data['outputs'])
-        builder.add_assets(model_data['initial_conditions'])
         builder.add_interventions(model_data['interventions'])
         return builder.finish()
 
@@ -583,13 +638,49 @@ class SosModelBuilder(object):
         self.logger.info("Loading model: %s", model.name)
         self.sos_model.model_list[model.name] = model
 
-        for intervention in model.interventions:
-            intervention_object = Intervention(sector=model.name,
+    def add_model_data(self, model, model_data):
+        """Adds sector model data to the system-of-systems model which is
+        convenient to have available at the higher level.
+        """
+        self.add_initial_conditions(model.name, model_data['initial_conditions'])
+        self.add_interventions(model.name, model_data['interventions'])
+
+    def add_interventions(self, model_name, interventions):
+        """Adds interventions for a model
+        """
+        for intervention in interventions:
+            intervention_object = Intervention(sector=model_name,
                                                data=intervention)
             msg = "Adding %s from %s to SosModel InterventionRegister"
             identifier = intervention_object.name
-            self.logger.debug(msg, identifier, model.name)
+            self.logger.debug(msg, identifier, model_name)
             self.sos_model.interventions.register(intervention_object)
+
+    def add_initial_conditions(self, model_name, initial_conditions):
+        """Adds initial conditions (state) for a model
+        """
+        timestep = self.sos_model.timesteps[0]
+        state_data = filter(
+            lambda d: len(d.data) > 0,
+            [self.intervention_state_from_data(datum) for datum in initial_conditions]
+        )
+        self.sos_model._state[timestep][model_name] = list(state_data)
+
+    @staticmethod
+    def intervention_state_from_data(intervention_data):
+        """Unpack an intervention from the initial system to extract StateData
+        """
+        target = None
+        data = {}
+        for key, value in intervention_data.items():
+            if key == "name":
+                target = value
+
+            if isinstance(value, dict) and "is_state" in value and value["is_state"]:
+                del value["is_state"]
+                data[key] = value
+
+        return StateData(target, data)
 
     def add_planning(self, planning):
         """Loads the planning logic into the system of systems model

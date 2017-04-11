@@ -9,6 +9,7 @@
 """
 
 import logging
+from smif import SpaceTimeValue, StateData
 from smif.sector_model import SectorModel
 
 
@@ -17,22 +18,29 @@ class WaterSupplySectorModel(SectorModel):
     using one of the toy water models below to simulate the water supply
     system.
     """
+    def initialise(self, initial_conditions):
+        """Set up system here
+        """
+        pass
+
     def simulate(self, decisions, state, data):
         """
 
         Arguments
         =========
         decisions
-            - asset build instructions
+            - asset build instructions, demand-side interventions to apply
         state
-            - existing system (unless implementation means maintaining system in sector model)
+            - existing system/network (unless implementation means maintaining
+              system in sector model)
             - system state, e.g. reservoir level at year start
         data
             - scenario data, e.g. expected level of rainfall
         """
 
         # unpack inputs
-        raininess = data['raininess'][0].value
+        reservoir_level = state[0].data['current_level']['value']
+        raininess = sum([d.value for d in data['raininess']])
 
         # unpack assets
         number_of_treatment_plants = 2
@@ -42,10 +50,29 @@ class WaterSupplySectorModel(SectorModel):
         self.logger.debug(data)
 
         # simulate (wrapping toy model)
-        instance = ExampleWaterSupplySimulationModel(raininess, number_of_treatment_plants)
-        results = instance.run()
+        instance = ExampleWaterSupplySimulationModel()
+        instance.raininess = raininess
+        instance.number_of_treatment_plants = number_of_treatment_plants
+        instance.reservoir_level = reservoir_level
 
-        return results
+        water, cost = instance.run()
+        results = {
+            "water": [
+                SpaceTimeValue('England', 1, water/3, "Ml"),
+                SpaceTimeValue('Scotland', 1, water/3, "Ml"),
+                SpaceTimeValue('Wales', 1, water/3, "Ml"),
+            ],
+            "cost": [
+                SpaceTimeValue('England', 1, cost/3, "Ml"),
+                SpaceTimeValue('Scotland', 1, cost/3, "Ml"),
+                SpaceTimeValue('Wales', 1, cost/3, "Ml"),
+            ]
+        }
+        state = [
+            StateData('Kielder Water', {'current_level': {'value': instance.reservoir_level}}),
+        ]
+
+        return state, results
 
     def extract_obj(self, results):
         return results['cost']
@@ -80,9 +107,13 @@ class ExampleWaterSupplySimulationModel(object):
         The amount of water is a function of the number of treatment plants and
         the amount of raininess
     """
-    def __init__(self, raininess, number_of_treatment_plants):
+    def __init__(self,
+                 raininess=None,
+                 number_of_treatment_plants=None,
+                 reservoir_level=None):
         self.raininess = raininess
         self.number_of_treatment_plants = number_of_treatment_plants
+        self.reservoir_level = reservoir_level
 
     def run(self):
         """Runs the water supply model
@@ -97,23 +128,23 @@ class ExampleWaterSupplySimulationModel(object):
         logger.debug("There are %s plants", self.number_of_treatment_plants)
         logger.debug("It is %s rainy", self.raininess)
 
-        water = min(self.number_of_treatment_plants, self.raininess)
+        logger.debug("Reservoir level was %s", self.reservoir_level)
+        self.reservoir_level += self.raininess
+
+        water = min(self.number_of_treatment_plants, self.reservoir_level)
         logger.debug("The system produces %s water", water)
+
+        self.reservoir_level -= water
+        logger.debug("Reservoir level now %s", self.reservoir_level)
 
         cost = 1.264 * self.number_of_treatment_plants
         logger.debug("The system costs £%s", cost)
 
-        return {
-            "water": water,
-            "cost": cost
-        }
+        return water, cost
 
-
-# instantiate model for easy access when imported by smif
-model = WaterSupplySectorModel()
 
 if __name__ == '__main__':
     """Run core model if this script is run from the command line
     """
-    CORE_MODEL = ExampleWaterSupplySimulationModel(1, 1)
+    CORE_MODEL = ExampleWaterSupplySimulationModel(1, 1, 2)
     CORE_MODEL.run()
