@@ -234,6 +234,11 @@ def validate_scenario(scenario):
 def validate_scenario_data(data, file_path):
     """Check a list of scenario observations
     """
+    if not isinstance(data, list):
+        fmt = "Expected a list of scenario data in {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(file_path)))
+        return
+
     for datum in data:
         validate_scenario_datum(datum, file_path)
 
@@ -250,6 +255,35 @@ def validate_scenario_datum(datum, file_path):
     for key in required_keys:
         if key not in datum:
             fmt = "Expected a value for '{}' in each data point in a scenario, " + \
+                  "only received {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, datum)))
+
+
+def validate_initial_conditions(data, file_path):
+    """Check a list of initial condition observations
+    """
+    if not isinstance(data, list):
+        fmt = "Expected a list of initial conditions in {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(file_path)))
+        return
+
+    for datum in data:
+        validate_initial_condition(datum, file_path)
+
+
+def validate_initial_condition(datum, file_path):
+    """Check a single initial condition datum
+    """
+    if not isinstance(datum, dict):
+        fmt = "Expected a initial condition data point, instead got {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(datum)))
+        return
+
+    required_keys = ["name", "location", "capital_cost", "operational_lifetime",
+                     "economic_lifetime"]
+    for key in required_keys:
+        if key not in datum:
+            fmt = "Expected a value for '{}' in each data point in a initial condition, " + \
                   "only received {}"
             VALIDATION_ERRORS.append(ValidationError(fmt.format(key, datum)))
 
