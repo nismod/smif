@@ -139,6 +139,11 @@ from datetime import datetime, timedelta
 import numpy as np
 from isodate import parse_duration
 
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell"
+__license__ = "mit"
+
+
 """Used as the reference year for computing time intervals
 """
 BASE_YEAR = 2010

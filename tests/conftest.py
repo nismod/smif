@@ -835,6 +835,9 @@ def setup_runpy_file(tmpdir, setup_folder_structure):
 from smif.sector_model import SectorModel
 
 class WaterSupplySectorModel(SectorModel):
+    def initialise(self, initial_conditions):
+        pass
+
     def simulate(self, decisions, state, data):
         pass
 

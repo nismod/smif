@@ -5,8 +5,8 @@ import logging
 import os
 
 from .load import load
-from .validate import (validate_input_spec, validate_interventions,
-                       validate_output_spec)
+from .validate import (validate_initial_conditions, validate_input_spec,
+                       validate_interventions, validate_output_spec)
 
 
 class SectorModelReader(object):
@@ -151,11 +151,10 @@ class SectorModelReader(object):
         specified in sector model blocks in the sos model config
         """
         data = []
-
-        paths = self.initial_conditions_paths
-        for path in paths:
+        for path in self.initial_conditions_paths:
             self.logger.debug("Loading initial conditions from %s", path)
             new_data = load(path)
+            validate_initial_conditions(new_data, path)
             data.extend(new_data)
         return data
 

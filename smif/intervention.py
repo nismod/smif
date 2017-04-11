@@ -57,6 +57,10 @@ intervention:
 import hashlib
 import json
 
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell"
+__license__ = "mit"
+
 
 class InterventionContainer(object):
     """An container for asset types, interventions and assets.

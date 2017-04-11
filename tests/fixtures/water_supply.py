@@ -38,8 +38,8 @@ from pytest import fixture
 from smif import SpaceTimeValue
 from smif.sector_model import SectorModel
 
-__author__ = "Will Usher"
-__copyright__ = "Will Usher"
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 logger = logging.getLogger(__name__)
@@ -90,6 +90,8 @@ class WaterSupplySectorModel(SectorModel):
     using one of the toy water models below to simulate the water supply
     system.
     """
+    def initialise(self, initial_conditions):
+        pass
 
     def simulate(self, decisions, state, data):
         """
@@ -129,20 +131,31 @@ class WaterSupplySectorModel(SectorModel):
             number_of_treatment_plants = 1
 
         # simulate (wrapping toy model)
-        instance = ExampleWaterSupplySimulationModelWithAsset(raininess,
-                                                              number_of_treatment_plants)
-        results = instance.simulate()
-
-        stv = {}
-        stv['water'] = [SpaceTimeValue('oxford',
-                                       1,
-                                       results['water'],
-                                       'Ml')]
-        stv['cost'] = [SpaceTimeValue('oxford',
-                                      1,
-                                      results['cost'],
-                                      '£M')]
-        return stv
+        instance = ExampleWaterSupplySimulationModelWithAsset(
+            raininess,
+            number_of_treatment_plants
+        )
+        instance_results = instance.simulate()
+        state = []
+        results = {
+            'water': [
+                SpaceTimeValue(
+                    'oxford',
+                    1,
+                    instance_results['water'],
+                    'Ml'
+                )
+            ],
+            'cost': [
+                SpaceTimeValue(
+                    'oxford',
+                    1,
+                    instance_results['cost'],
+                    '£M'
+                )
+            ]
+        }
+        return state, results
 
     def extract_obj(self, results):
         return results['cost']

@@ -45,3 +45,21 @@
   capital_cost:
     value: 50
     units: million £/km
+- name: reservoir
+  location: Oxford
+  capacity:
+    value: 500
+    units: ML
+  operational_lifetime:
+    value: 300
+    units: years
+  economic_lifetime:
+    value: 150
+    units: years
+  capital_cost:
+    value: 15
+    units: million £
+  current_level:
+    value: 3
+    units: ML
+    is_state: True

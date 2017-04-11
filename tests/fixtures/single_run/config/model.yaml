@@ -1,20 +1,24 @@
 sector_models:
-  - name: water_supply
-    path: ../models/water_supply.py
-    classname: WaterSupplySectorModel
-    config_dir: ../data/water_supply
-    initial_conditions:
-    - ../data/water_supply/initial_conditions/initial_2015_oxford.yaml
+  - name: water_supply                # model name for internal/logging reference
+    path: ../models/water_supply.py   # path to python file
+    classname: WaterSupplySectorModel # implements smif.SectorModel
+    config_dir: ../data/water_supply  # defines inputs and outputs
     interventions:
-    - ../data/water_supply/interventions/types.yaml
+      # possible interventions that could be made in the system
+      - ../data/water_supply/interventions/types.yaml
+    initial_conditions:
+      # initialise system with interventions in current state
+      - ../data/water_supply/initial_conditions/initial_2015_oxford.yaml
+      - ../data/water_supply/initial_conditions/reservoirs.yaml
   - name: energy_demand
     path: ../models/energy_demand.py
     classname: EDMWrapper
     config_dir: ../data/energy_demand
-    initial_conditions: []
     interventions: []
+    initial_conditions: []
 timesteps: timesteps.yaml
 scenario_data:
+  # given input data, required values for every year of a model run
   - parameter: population
     file: ../data/scenario/population.yaml
     spatial_resolution: national
@@ -24,20 +28,25 @@ scenario_data:
     spatial_resolution: national
     temporal_resolution: annual
 interval_sets:
+  # shared understanding of time intervals within a year
   - name: annual
     file: annual_intervals.yaml
 region_sets:
+  # shared understanding of regions within the modelled area (e.g. GB)
   - name: national
     file: ../../data/uk_nations_shp/regions.shp
   - name: oxfordshire
     file: ../../data/oxfordshire/regions.geojson
 planning:
   pre_specified:
+    # sets of interventions to apply in given timesteps (deterministic)
     use: true
     files:
       - ../planning/expected_to_2020.yaml
       - ../planning/national_infrastructure_pipeline.yaml
   rule_based:
+    # use heuristics to guide application of interventions
     use: false
   optimisation:
+    # use objective function/s to guide application of interventions
     use: false

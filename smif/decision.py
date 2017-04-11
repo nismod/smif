@@ -4,6 +4,10 @@ Currently, only pre-specified planning is implemented.
 
 """
 
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell"
+__license__ = "mit"
+
 
 class Planning:
     """

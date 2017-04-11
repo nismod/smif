@@ -2,9 +2,15 @@
 """
 from smif.sector_model import SectorModel
 
+
 class EDMWrapper(SectorModel):
+    """Null model
+    """
+    def initialise(self, initial_conditions):
+        pass
+
     def simulate(self, decisions, state, data):
-        return []
+        return [], {}
 
     def extract_obj(self, results):
         return 0

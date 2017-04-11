@@ -6,9 +6,11 @@ from smif.sector_model import SectorModel, SectorModelBuilder
 
 
 class EmptySectorModel(SectorModel):
-
-    def simulate(self, static_inputs, decision_variables):
+    def initialise(self, initial_conditions):
         pass
+
+    def simulate(self, decisions, state, data):
+        return state, {}
 
     def extract_obj(self, results):
         return 0

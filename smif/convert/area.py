@@ -6,6 +6,10 @@ from collections import defaultdict, namedtuple
 from rtree import index
 from shapely.geometry import shape
 
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell"
+__license__ = "mit"
+
 
 def proportion_of_a_intersecting_b(shape_a, shape_b):
     """Calculate the proportion of shape a that intersects with shape b

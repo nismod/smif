@@ -6,10 +6,14 @@ and the names of the four source and destination spatio-temporal resolutions.
 The :meth:`~SpaceTimeConvertor.convert` method returns a new list of
 :class:`smif.SpaceTimeValue` namedtuples for passing to a sector model.
 """
-from smif.convert.interval import TimeSeries
-from smif import SpaceTimeValue
 from collections import OrderedDict
 import logging
+from smif.convert.interval import TimeSeries
+from smif import SpaceTimeValue
+
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell"
+__license__ = "mit"
 
 
 class SpaceTimeConvertor(object):

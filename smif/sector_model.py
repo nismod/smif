@@ -26,15 +26,15 @@ The key functions include
   approaches
 
 """
-import importlib
 import logging
 import os
 from abc import ABC, abstractmethod
 
+import importlib
 from smif.parameters import ModelParameters
 
-__author__ = "Will Usher"
-__copyright__ = "Will Usher"
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
@@ -44,9 +44,9 @@ class SectorModel(ABC):
     """
     def __init__(self):
         self._model_name = None
-        self._schema = None
 
         self.interventions = []
+        self.system = []
 
         self._inputs = ModelParameters({})
         self._outputs = ModelParameters({})
@@ -67,12 +67,6 @@ class SectorModel(ABC):
         =======
         str
             The name of the sector model
-
-        Note
-        ====
-        The name corresponds to the name of the folder in which the
-        configuration is expected to be found
-
         """
         return self._model_name
 
@@ -151,35 +145,46 @@ class SectorModel(ABC):
         return [intervention['name'] for intervention in self.interventions]
 
     @abstractmethod
+    def initialise(self, initial_conditions):
+        """Implement this method to set up the model system
+
+        Arguments
+        ---------
+        initial_conditions: list
+            A list of past Interventions, with build dates and locations as
+            necessary to specify the infrastructure system to be modelled.
+        """
+        pass
+
+    @abstractmethod
     def simulate(self, decisions, state, data):
         """Implement this method to run the model
 
         Arguments
         ---------
         decisions: list
+            A list of :py:class:Intervention to apply to the modelled system
         state: list
+            A list of :py:class:StateData to update the state of the modelled system
         data: dict
-            A nested dictionary of the format:
-            ``results[timestep][parameter][region][time_interval] = {value, units}``
+            A dictionary of the format:
+            ``data[parameter] = [SpaceTimeValue(region, interval, value, units), ...]``
         Returns
         -------
         dict
-            A nested dictionary of the format:
-            ``results[timestep][parameter][region][time_interval] = {value, units}``
+            A dictionary of the format:
+            ``results[parameter] = [SpaceTimeValue(region, interval, value, units), ...]``
 
         Notes
         -----
         In the results returned from the :py:meth:`simulate` method:
 
-        ``time_interval``
-            should reference the id from the time_interval
-            specification in the ``time_intervals.yaml`` file
+        ``interval``
+            should reference an id from the interval set corresponding to
+            the output parameter, as specified in model configuration
         ``region``
-            should reference the region name from the ``regions.*`` geographies
-            files specified in the configuration
-        ``timestep``
-            refers to the current year, and can always be derived from
-            ``data['timestep']`` which is passed by `smif` to the :py:meth:`simulate` method.
+            should reference a region name from the region set corresponding to
+            the output parameter, as specified in model configuration
 
         """
         pass
@@ -243,6 +248,14 @@ class SectorModelBuilder(object):
                 model_path, self._sector_model_name)
             raise FileNotFoundError(msg)
 
+    def create_initial_system(self, initial_conditions):
+        """Set up model with initial system
+        """
+        msg = "Sector model must be loaded before creating initial system"
+        assert self._sector_model is not None, msg
+
+        self._sector_model.initialise(initial_conditions)
+
     def add_inputs(self, input_dict):
         """Add inputs to the sector model
         """
@@ -258,19 +271,6 @@ class SectorModelBuilder(object):
         assert self._sector_model is not None, msg
 
         self._sector_model.outputs = output_dict
-
-    def add_assets(self, asset_list):
-        """Add assets to the sector model
-
-        Parameters
-        ----------
-        asset_list : list
-            A list of dicts of assets
-        """
-        msg = "Sector model must be loaded before adding assets"
-        assert self._sector_model is not None, msg
-
-        self._sector_model.assets = asset_list
 
     def add_interventions(self, intervention_list):
         """Add interventions to the sector model

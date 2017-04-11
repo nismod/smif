@@ -65,7 +65,6 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             'temporal_resolution': 'annual'
         }
     ]
-
     ws.outputs = [
         {
             'name': 'cost',
@@ -81,10 +80,18 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
     ws.interventions = [
         {"name": "water_asset_a", "location": "oxford"},
         {"name": "water_asset_b", "location": "oxford"},
-        {"name": "water_asset_c", "location": "oxford"}
+        {"name": "water_asset_c", "location": "oxford"},
     ]
+    ws_data = {
+        'name': ws.name,
+        'initial_conditions': [],
+        'inputs': ws.inputs,
+        'outputs': ws.outputs,
+        'interventions': ws.interventions,
+    }
 
     builder.add_model(ws)
+    builder.add_model_data(ws, ws_data)
 
     ws2 = WaterSupplySectorModel()
     ws2.name = 'water_supply_2'
@@ -277,6 +284,14 @@ class TestSosModel():
             sos_model.run()
         assert "No timesteps" in str(ex.value)
 
+    def test_timestep_before(self):
+        sos_model = SosModel()
+        sos_model.timesteps = [2010, 2011, 2012]
+        assert sos_model.timestep_before(2010) is None
+        assert sos_model.timestep_before(2011) == 2010
+        assert sos_model.timestep_before(2012) == 2011
+        assert sos_model.timestep_before(2013) is None
+
     def test_run_sequential(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
         sos_model.timesteps = [2010, 2011, 2012]
@@ -420,13 +435,20 @@ class TestSosModelBuilder():
 
         model = WaterSupplySectorModel()
         model.name = 'water_supply'
-        model.interventions = [
-            {"name": "water_asset_a", "location": "oxford"},
-            {"name": "water_asset_b", "location": "oxford"},
-            {"name": "water_asset_c", "location": "oxford"}
-        ]
+        model_data = {
+            'name': model.name,
+            'interventions': [
+                {"name": "water_asset_a", "location": "oxford"},
+                {"name": "water_asset_b", "location": "oxford"},
+                {"name": "water_asset_c", "location": "oxford"}
+            ],
+            'initial_conditions': [],
+            'inputs': [],
+            'outputs': [],
+        }
 
         builder.add_model(model)
+        builder.add_model_data(model, model_data)
         assert isinstance(builder.sos_model.model_list['water_supply'],
                           SectorModel)
 
