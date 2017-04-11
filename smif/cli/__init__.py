@@ -231,9 +231,9 @@ def path_to_abs(relative_root, path):
     """Return an absolute path, given a possibly-relative path
     and the relative root"""
     if os.path.isabs(path):
-        return path
+        return os.path.normpath(path)
     else:
-        return os.path.join(relative_root, path)
+        return os.path.normpath(os.path.join(relative_root, path))
 
 
 def read_sector_model_data(config_basepath, config):
