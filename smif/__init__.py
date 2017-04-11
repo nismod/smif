@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
+"""smif
 """
 from __future__ import division, print_function, absolute_import
 
@@ -19,7 +18,7 @@ except:
 
 
 class SpaceTimeValue(object):
-    """A tuple of scenario data
+    """A piece of model input/output data
 
     Parameters
     ----------
@@ -66,3 +65,25 @@ class SpaceTimeValue(object):
                self.interval == other.interval and \
                self.value == other.value and \
                self.units == other.units
+
+
+class StateData(object):
+    """A piece of state data
+
+    Parameters
+    ----------
+    target
+        The id or name of the object described by this state
+    data
+        The state attribute/data to apply - could typically be a dict of
+        attributes
+    """
+    def __init__(self, target, data):
+        self.target = target
+        self.data = data
+
+    def __repr__(self):
+        return "StateData({}, {})".format(
+            repr(self.target),
+            repr(self.data)
+        )
