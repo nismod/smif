@@ -44,9 +44,9 @@ class SectorModel(ABC):
     """
     def __init__(self):
         self._model_name = None
-        self._schema = None
 
         self.interventions = []
+        self.system = []
 
         self._inputs = ModelParameters({})
         self._outputs = ModelParameters({})
@@ -67,12 +67,6 @@ class SectorModel(ABC):
         =======
         str
             The name of the sector model
-
-        Note
-        ====
-        The name corresponds to the name of the folder in which the
-        configuration is expected to be found
-
         """
         return self._model_name
 
@@ -149,6 +143,18 @@ class SectorModel(ABC):
             A list of the names of the interventions
         """
         return [intervention['name'] for intervention in self.interventions]
+
+    @abstractmethod
+    def initialise(self, initial_conditions):
+        """Implement this method to set up the model system
+
+        Arguments
+        ---------
+        initial_conditions: list
+            A list of past Interventions, with build dates and locations as
+            necessary to specify the infrastructure system to be modelled.
+        """
+        pass
 
     @abstractmethod
     def simulate(self, decisions, state, data):
@@ -242,6 +248,14 @@ class SectorModelBuilder(object):
                 model_path, self._sector_model_name)
             raise FileNotFoundError(msg)
 
+    def create_initial_system(self, initial_conditions):
+        """Set up model with initial system
+        """
+        msg = "Sector model must be loaded before creating initial system"
+        assert self._sector_model is not None, msg
+
+        self._sector_model.initialise(initial_conditions)
+
     def add_inputs(self, input_dict):
         """Add inputs to the sector model
         """
@@ -257,19 +271,6 @@ class SectorModelBuilder(object):
         assert self._sector_model is not None, msg
 
         self._sector_model.outputs = output_dict
-
-    def add_assets(self, asset_list):
-        """Add assets to the sector model
-
-        Parameters
-        ----------
-        asset_list : list
-            A list of dicts of assets
-        """
-        msg = "Sector model must be loaded before adding assets"
-        assert self._sector_model is not None, msg
-
-        self._sector_model.assets = asset_list
 
     def add_interventions(self, intervention_list):
         """Add interventions to the sector model
