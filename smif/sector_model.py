@@ -26,11 +26,11 @@ The key functions include
   approaches
 
 """
-import importlib
 import logging
 import os
 from abc import ABC, abstractmethod
 
+import importlib
 from smif.parameters import ModelParameters
 
 __author__ = "Will Usher"
@@ -157,29 +157,28 @@ class SectorModel(ABC):
         Arguments
         ---------
         decisions: list
+            A list of :py:class:Intervention to apply to the modelled system
         state: list
+            A list of :py:class:StateData to update the state of the modelled system
         data: dict
-            A nested dictionary of the format:
-            ``results[timestep][parameter][region][time_interval] = {value, units}``
+            A dictionary of the format:
+            ``data[parameter] = [SpaceTimeValue(region, interval, value, units), ...]``
         Returns
         -------
         dict
-            A nested dictionary of the format:
-            ``results[timestep][parameter][region][time_interval] = {value, units}``
+            A dictionary of the format:
+            ``results[parameter] = [SpaceTimeValue(region, interval, value, units), ...]``
 
         Notes
         -----
         In the results returned from the :py:meth:`simulate` method:
 
-        ``time_interval``
-            should reference the id from the time_interval
-            specification in the ``time_intervals.yaml`` file
+        ``interval``
+            should reference an id from the interval set corresponding to
+            the output parameter, as specified in model configuration
         ``region``
-            should reference the region name from the ``regions.*`` geographies
-            files specified in the configuration
-        ``timestep``
-            refers to the current year, and can always be derived from
-            ``data['timestep']`` which is passed by `smif` to the :py:meth:`simulate` method.
+            should reference a region name from the region set corresponding to
+            the output parameter, as specified in model configuration
 
         """
         pass
