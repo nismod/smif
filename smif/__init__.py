@@ -6,8 +6,8 @@ from __future__ import division, print_function, absolute_import
 
 import pkg_resources
 
-__author__ = "Will Usher"
-__copyright__ = "Will Usher"
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 

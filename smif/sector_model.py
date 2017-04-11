@@ -33,8 +33,8 @@ from abc import ABC, abstractmethod
 import importlib
 from smif.parameters import ModelParameters
 
-__author__ = "Will Usher"
-__copyright__ = "Will Usher"
+__author__ = "Will Usher, Tom Russell"
+__copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
