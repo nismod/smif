@@ -120,29 +120,42 @@ class SectorModelReader(object):
         """Input spec is located in the ``data/<sectormodel>/inputs.yaml`` file
 
         """
-        path = os.path.join(self.model_config_dir, 'inputs.yaml')
-
-        if not os.path.exists(path):
-            msg = "No inputs provided for '{}' model"
-            self.logger.warning(msg.format(self.model_name))
-            data = {}
-        else:
-            data = load(path)
-            validate_input_spec(data, self.model_name)
-
-        return data
+        return self.load_io_metadata('inputs')
 
     def load_outputs(self):
         """Output spec is located in ``data/<sectormodel>/output.yaml`` file
         """
-        path = os.path.join(self.model_config_dir, 'outputs.yaml')
+        return self.load_io_metadata('outputs')
+
+    def load_io_metadata(self, inputs_or_outputs):
+        """Load inputs or outputs, allowing missing or empty file
+        """
+        path = os.path.join(
+            self.model_config_dir,
+            '{}.yaml'.format(inputs_or_outputs))
 
         if not os.path.exists(path):
-            msg = "outputs config file not found for {} model"
-            raise FileNotFoundError(msg.format(self.model_name))
+            msg = "No %s provided for '%s' model: %s not found"
+            self.logger.warning(msg, inputs_or_outputs, self.model_name, path)
+            data = []
 
-        data = load(path)
-        validate_output_spec(data, self.model_name)
+        else:
+            file_contents = load(path)
+
+            if file_contents is None:
+                self.logger.warning(
+                    "No %s provided for '%s' model: %s was empty",
+                    inputs_or_outputs,
+                    self.model_name,
+                    path)
+                data = []
+            else:
+                data = file_contents
+
+        if inputs_or_outputs == 'inputs':
+            validate_input_spec(data, self.model_name)
+        else:
+            validate_output_spec(data, self.model_name)
 
         return data
 

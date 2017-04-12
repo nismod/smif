@@ -2,7 +2,6 @@
 import os
 from unittest.mock import MagicMock
 
-from pytest import raises
 from smif.data_layer.sector_model_config import SectorModelReader
 
 
@@ -51,13 +50,45 @@ class TestSectorModelReader(object):
 
         # expect a warning if loading no inputs
         inputs = reader.load_inputs()
-        reader.logger.warning.assert_called_with("No inputs provided for 'water_supply' model")
-        assert inputs == {}
+        args, kwargs = reader.logger.warning.call_args
 
-        with raises(FileNotFoundError) as ex:
-            reader.load_outputs()
-        msg = "outputs config file not found for water_supply model"
-        assert msg in str(ex.value)
+        assert args[0] == "No %s provided for '%s' model: %s not found"
+        assert args[1] == "inputs"
+        assert args[2] == "water_supply"
+        assert "inputs.yaml" in args[3]
+        assert inputs == []
+
+        outputs = reader.load_outputs()
+        args, kwargs = reader.logger.warning.call_args
+
+        assert args[0] == "No %s provided for '%s' model: %s not found"
+        assert args[1] == "outputs"
+        assert args[2] == "water_supply"
+        assert "outputs.yaml" in args[3]
+        assert outputs == []
+
+    def test_load_empty(self, setup_project_empty_model_io):
+        reader = self._reader(setup_project_empty_model_io)
+        reader.logger.warning = MagicMock()
+
+        # expect a warning if loading no inputs
+        inputs = reader.load_inputs()
+        args, kwargs = reader.logger.warning.call_args
+
+        assert args[0] == "No %s provided for '%s' model: %s was empty"
+        assert args[1] == "inputs"
+        assert args[2] == "water_supply"
+        assert "inputs.yaml" in args[3]
+        assert inputs == []
+
+        outputs = reader.load_outputs()
+        args, kwargs = reader.logger.warning.call_args
+
+        assert args[0] == "No %s provided for '%s' model: %s was empty"
+        assert args[1] == "outputs"
+        assert args[2] == "water_supply"
+        assert "outputs.yaml" in args[3]
+        assert outputs == []
 
     def test_load_interventions(self, setup_project_folder):
 

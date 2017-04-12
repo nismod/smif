@@ -129,6 +129,49 @@ def setup_project_missing_model_config(setup_runpy_file,
 
 
 @fixture(scope='function')
+def setup_project_empty_model_io(setup_runpy_file,
+                                 setup_folder_structure,
+                                 setup_config_file,
+                                 setup_timesteps_file,
+                                 setup_water_inputs,
+                                 setup_water_outputs,
+                                 setup_time_intervals,
+                                 setup_regions,
+                                 setup_initial_conditions_file,
+                                 setup_pre_specified_planning,
+                                 setup_water_interventions_abc,
+                                 setup_interventions_file_one):
+    """Sets up a temporary folder with the required project folder structure
+
+        /config
+        /config/model.yaml
+        /config/timesteps.yaml
+        /data
+        /data/regions.geojson
+        /data/intervals.yaml
+        /data/water_supply/
+        /data/water_supply/inputs.yaml
+        /data/water_supply/outputs.yaml
+        /data/water_supply/interventions/
+        /data/water_supply/interventions/water_asset_abc.yaml
+        /data/water_supply/interventions/assets_new.yaml
+        /data/water_supply/pre-specified.yaml
+        /models
+        /models/water_supply/water_supply.py
+
+    """
+    base_folder = setup_folder_structure
+
+    inputs_filename = base_folder.join('data', 'water_supply', 'inputs.yaml')
+    inputs_filename.write('')
+
+    outputs_filename = base_folder.join('data', 'water_supply', 'outputs.yaml')
+    outputs_filename.write('')
+
+    return base_folder
+
+
+@fixture(scope='function')
 def setup_initial_conditions_file(setup_folder_structure):
     """Assets are associated with sector models, not the integration config
 
@@ -420,6 +463,46 @@ def setup_no_planning(setup_folder_structure):
     contents = yaml.dump(file_contents)
     filepath = setup_folder_structure.join('config', 'model.yaml')
     filepath.write(contents)
+
+
+@fixture(scope='function')
+def setup_planning_missing(setup_folder_structure):
+    file_contents = {
+        'sector_models': [
+            {
+                "name": "water_supply",
+                "path": "../models/water_supply/__init__.py",
+                "classname": "WaterSupplySectorModel",
+                "config_dir": "../data/water_supply",
+                'initial_conditions': [
+                    '../data/water_supply/initial_conditions/assets_1.yaml'
+                ],
+                'interventions': [
+                    '../data/water_supply/interventions/water_asset_abc.yaml'
+                ]
+            }
+        ],
+        'scenario_data': [],
+        'timesteps': 'timesteps.yaml',
+        'planning': {
+            'rule_based': {'use': False},
+            'optimisation': {'use': False},
+            'pre_specified': {
+                'use': True,
+                'files': ['./does_not_exist.yaml']
+            }
+        }
+    }
+
+    contents = yaml.dump(file_contents)
+    filepath = setup_folder_structure.join('config', 'model.yaml')
+    filepath.write(contents)
+
+
+@fixture(scope='function')
+def setup_planning_empty(setup_folder_structure):
+    filepath = setup_folder_structure.join('data', 'water_supply', 'pre-specified.yaml')
+    filepath.write('')
 
 
 @fixture(scope='function')
