@@ -284,6 +284,19 @@ class TestSosModel():
             sos_model.run()
         assert "No timesteps" in str(ex.value)
 
+    def test_set_timesteps(self):
+        sos_model = SosModel()
+        sos_model.timesteps = [2010, 2011, 2012]
+        assert sos_model.timesteps == [2010, 2011, 2012]
+
+        # remove duplicates
+        sos_model.timesteps = [2010, 2011, 2012, 2012, 2012]
+        assert sos_model.timesteps == [2010, 2011, 2012]
+
+        # sort order
+        sos_model.timesteps = [2011, 2012, 2010]
+        assert sos_model.timesteps == [2010, 2011, 2012]
+
     def test_timestep_before(self):
         sos_model = SosModel()
         sos_model.timesteps = [2010, 2011, 2012]
@@ -291,6 +304,14 @@ class TestSosModel():
         assert sos_model.timestep_before(2011) == 2010
         assert sos_model.timestep_before(2012) == 2011
         assert sos_model.timestep_before(2013) is None
+
+    def test_timestep_after(self):
+        sos_model = SosModel()
+        sos_model.timesteps = [2010, 2011, 2012]
+        assert sos_model.timestep_after(2010) == 2011
+        assert sos_model.timestep_after(2011) == 2012
+        assert sos_model.timestep_after(2012) is None
+        assert sos_model.timestep_after(2013) is None
 
     def test_run_sequential(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies

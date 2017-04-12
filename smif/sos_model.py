@@ -418,7 +418,7 @@ class SosModel(object):
 
     @timesteps.setter
     def timesteps(self, value):
-        self._timesteps = sorted(value)
+        self._timesteps = sorted(list(set(value)))
 
     def timestep_before(self, timestep):
         """Returns the timestep previous to a given timestep, or None
