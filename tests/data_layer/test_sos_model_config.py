@@ -110,8 +110,21 @@ class TestSosModelReader():
         """
         reader = self._get_reader(setup_project_folder)
         reader.load()
-        data = reader.data["planning"]
-        assert len(data) == 0
+        assert reader.data["planning"] == []
+
+    def test_planning_missing(self, setup_project_folder, setup_planning_missing):
+        """Expect an empty list and warning if planning file is missing
+        """
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+        assert reader.data["planning"] == []
+
+    def test_planning_empty(self, setup_project_folder, setup_planning_empty):
+        """Expect an empty list and warning if planning file is empty
+        """
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+        assert reader.data["planning"] == []
 
     def test_load_regions_shapefile(self, setup_project_folder):
         reader = self._get_reader(setup_project_folder)

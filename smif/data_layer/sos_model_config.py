@@ -196,17 +196,20 @@ class SosModelReader(object):
             planning_relative_paths = self._config['planning']['pre_specified']['files']
             planning_instructions = []
 
-            for data in self._data_from_relative_paths(planning_relative_paths):
-                planning_instructions.extend(data)
+            for rel_path in planning_relative_paths:
+                file_path = self._get_path_from_config(rel_path)
+                if os.path.exists(file_path):
+                    data = load(file_path)
+                    if isinstance(data, list):
+                        planning_instructions.extend(data)
+                    else:
+                        self.logger.warning("Invalid planning instructions in %s", file_path)
+                else:
+                    self.logger.warning("Planning file %s not found", file_path)
 
             return planning_instructions
         else:
             return []
-
-    def _data_from_relative_paths(self, paths):
-        for rel_path in paths:
-            file_path = self._get_path_from_config(rel_path)
-            yield load(file_path)
 
     def _get_path_from_config(self, path):
         """Return an absolute path, given a path provided from a config file
