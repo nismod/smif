@@ -414,7 +414,11 @@ class SosModel(object):
         list
             A list of timesteps
         """
-        return sorted(self._timesteps)
+        return self._timesteps
+
+    @timesteps.setter
+    def timesteps(self, value):
+        self._timesteps = sorted(value)
 
     def timestep_before(self, timestep):
         """Returns the timestep previous to a given timestep, or None
@@ -439,10 +443,6 @@ class SosModel(object):
         """Names (id-like keys) of all known asset type
         """
         return [intervention.name for intervention in self.interventions]
-
-    @timesteps.setter
-    def timesteps(self, value):
-        self._timesteps = value
 
     @property
     def sector_models(self):
