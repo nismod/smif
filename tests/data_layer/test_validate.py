@@ -1,11 +1,16 @@
 """Test config validation
 """
 from pytest import fixture
-from smif.data_layer.validate import (VALIDATION_ERRORS, validate_dependency,
+from smif.data_layer.validate import (VALIDATION_ERRORS,
+                                      validate_dependency,
+                                      validate_initial_conditions,
                                       validate_input_spec,
-                                      validate_interventions, validate_output,
+                                      validate_interval_sets_config,
+                                      validate_interventions,
+                                      validate_output,
                                       validate_output_spec,
                                       validate_planning_config,
+                                      validate_region_sets_config,
                                       validate_scenario,
                                       validate_scenario_data,
                                       validate_scenario_data_config,
@@ -140,16 +145,39 @@ def get_scenario_data():
 
 
 @fixture(scope='function')
+def get_initial_condition():
+    """Return sample initial condition (pre-existing intervention)
+    """
+    return {
+        "name": "test",
+        "location": "UK",
+        "capital_cost": {
+            "value": 150,
+            "units": "million GBP"
+        },
+        "operational_lifetime": {
+            "value": 150,
+            "units": "years"
+        },
+        "economic_lifetime": {
+            "value": 150,
+            "units": "years"
+        },
+        "build_date": 1975
+    }
+
+
+@fixture(scope='function')
 def get_input_spec():
     """Return sample input specification
     """
     return [
-            {
-                'name': 'gas_demand',
-                'spatial_resolution': 'national',
-                'temporal_resolution': 'annual'
-            }
-        ]
+        {
+            'name': 'gas_demand',
+            'spatial_resolution': 'national',
+            'temporal_resolution': 'annual'
+        }
+    ]
 
 
 @fixture(scope='function')
@@ -168,12 +196,12 @@ def get_output_spec():
     """Return sample output specification
     """
     return [
-            {
-                'name': 'total_cost',
-                'spatial_resolution': 'national',
-                'temporal_resolution': 'annual'
-            }
-        ]
+        {
+            'name': 'total_cost',
+            'spatial_resolution': 'national',
+            'temporal_resolution': 'annual'
+        }
+    ]
 
 
 @fixture(scope='function')
@@ -212,7 +240,6 @@ def test_modelrun_config_invalid():
 
 
 def test_invalid_timesteps_file(get_sos_model_config):
-
     """Expect an error if timesteps is not a path to a file
     """
     data = get_sos_model_config
@@ -242,6 +269,30 @@ def test_invalid_single_timestep():
     ex = VALIDATION_ERRORS.pop()
     msg = "timesteps should be integer years"
     assert msg in str(ex)
+
+
+def test_invalid_initial_conditions(get_initial_condition):
+    """Expect an error if initial conditions is not a list of dicts
+    """
+    validate_initial_conditions(234, 'test.yaml')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a list of initial conditions"
+    assert msg in str(ex)
+
+    validate_initial_conditions(['do', 're', 'mi'], 'test.yaml')
+    ex = VALIDATION_ERRORS.pop()
+    msg = "Expected a initial condition data point"
+    assert msg in str(ex)
+
+    required_keys = ["name", "location", "capital_cost", "operational_lifetime",
+                     "economic_lifetime"]
+    for key in required_keys:
+        datum = get_initial_condition
+        del datum[key]
+        validate_initial_conditions([datum], 'test.yaml')
+        msg = "Expected a value for '{}' in each data point in a initial condition".format(key)
+        ex = VALIDATION_ERRORS.pop()
+        assert msg in str(ex)
 
 
 def test_time_intervals_type():
@@ -663,8 +714,12 @@ def test_scenario_missing_required(get_scenario_data):
 
 
 def test_scenario_data_type():
-    """Expect an error if scenario data is not a dict
+    """Expect an error if scenario data is not a list, or any datum is not a dict
     """
+    validate_scenario_data(None, "/path/to/data.yaml")
+    ex = VALIDATION_ERRORS.pop()
+    assert "Expected a list of scenario data" in str(ex)
+
     validate_scenario_datum([], "/path/to/data.yaml")
     msg = "Expected a scenario data point, instead got []"
     ex = VALIDATION_ERRORS.pop()
@@ -703,6 +758,19 @@ class TestValidateMissingConfigSections:
         msg = "No 'region_sets' specified in main config file."
         assert msg == str(ex)
 
+    def test_region_sets_required(self):
+        missing_name = {'file': 'test.yaml'}
+        validate_region_sets_config(missing_name)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Expected a value for 'name' in each region set in main config file"
+        assert msg in str(ex)
+
+        missing_file = {'name': 'test'}
+        validate_region_sets_config(missing_file)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Expected a value for 'file' in each region set in main config file"
+        assert msg in str(ex)
+
     def test_interval_sets_missing(self, get_sos_model_config):
         """Expect an error if no time interval sets are specified
         """
@@ -713,6 +781,19 @@ class TestValidateMissingConfigSections:
         ex = VALIDATION_ERRORS.pop()
         msg = "No 'interval_sets' specified in main config file."
         assert msg == str(ex)
+
+    def test_interval_sets_required(self):
+        missing_name = {'file': 'test.yaml'}
+        validate_interval_sets_config(missing_name)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Expected a value for 'name' in each interval set in main config file"
+        assert msg in str(ex)
+
+        missing_file = {'name': 'test'}
+        validate_interval_sets_config(missing_file)
+        ex = VALIDATION_ERRORS.pop()
+        msg = "Expected a value for 'file' in each interval set in main config file"
+        assert msg in str(ex)
 
     def test_scenario_data_missing(self, get_sos_model_config):
         """Expect an error if no scenario data is specified, but referenced in
