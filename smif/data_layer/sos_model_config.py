@@ -4,7 +4,6 @@
 
 import logging
 import os
-from glob import glob
 
 import fiona
 
@@ -283,11 +282,12 @@ class SosModelReader(object):
 
     def _parse_region_data(self, path):
         """
+        Read regions from GDAL-readable files
 
         Arguments
         ---------
         path: str
-            Path to regions files
+            Path to regions file
 
         Returns
         -------
@@ -295,15 +295,6 @@ class SosModelReader(object):
             A list of Fiona feature collections
 
         """
-
-        if not os.path.exists(path):
-            paths = glob("{}/regions.*".format(self._config_file_path))
-            if len(paths) == 1:
-                path = paths[0]
-            else:
-                msg = "Region set data file not found: {} does not exist."
-                raise FileNotFoundError(msg.format(path))
-
         with fiona.drivers():
             with fiona.open(path) as src:
                 data = [f for f in src]
