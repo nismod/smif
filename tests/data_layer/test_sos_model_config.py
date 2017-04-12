@@ -105,13 +105,33 @@ class TestSosModelReader():
             'year': 2015
         }
 
+    def test_load_scenario_data_missing(self):
+        """Expect empty dict as default if scenario data missing
+        """
+        reader = SosModelReader('test.yaml')
+        reader.load_scenario_data()
+        assert reader.scenario_data == {}
+
     def test_no_planning(self, setup_project_folder, setup_no_planning):
         """Expect an empty list if planning is not to be used
         """
         reader = self._get_reader(setup_project_folder)
         reader.load()
-        data = reader.data["planning"]
-        assert len(data) == 0
+        assert reader.data["planning"] == []
+
+    def test_planning_missing(self, setup_project_folder, setup_planning_missing):
+        """Expect an empty list and warning if planning file is missing
+        """
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+        assert reader.data["planning"] == []
+
+    def test_planning_empty(self, setup_project_folder, setup_planning_empty):
+        """Expect an empty list and warning if planning file is empty
+        """
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+        assert reader.data["planning"] == []
 
     def test_load_regions_shapefile(self, setup_project_folder):
         reader = self._get_reader(setup_project_folder)

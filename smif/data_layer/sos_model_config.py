@@ -4,7 +4,6 @@
 
 import logging
 import os
-from glob import glob
 
 import fiona
 
@@ -31,19 +30,21 @@ class SosModelReader(object):
         self._config_file_path = config_file_path
         self._config_file_dir = os.path.dirname(config_file_path)
 
-        self._config = None
-        self.timesteps = None
-        self.scenario_data = None
-        self.sector_model_data = None
-        self.planning = None
-        self.time_intervals = None
-        self.regions = None
+        self._config = {}
+        self.timesteps = []
+        self.scenario_data = {}
+        self.sector_model_data = []
+        self.planning = []
+        self.time_intervals = []
+        self.regions = []
 
-        self.names = None
+        self.names = []
 
-        self.resolution_mapping = {'scenario': {},
-                                   'input': {},
-                                   'output': {}}
+        self.resolution_mapping = {
+            'scenario': {},
+            'input': {},
+            'output': {}
+        }
 
     def load(self):
         """Load and check all config
@@ -196,17 +197,20 @@ class SosModelReader(object):
             planning_relative_paths = self._config['planning']['pre_specified']['files']
             planning_instructions = []
 
-            for data in self._data_from_relative_paths(planning_relative_paths):
-                planning_instructions.extend(data)
+            for rel_path in planning_relative_paths:
+                file_path = self._get_path_from_config(rel_path)
+                if os.path.exists(file_path):
+                    data = load(file_path)
+                    if isinstance(data, list):
+                        planning_instructions.extend(data)
+                    else:
+                        self.logger.warning("Invalid planning instructions in %s", file_path)
+                else:
+                    self.logger.warning("Planning file %s not found", file_path)
 
             return planning_instructions
         else:
             return []
-
-    def _data_from_relative_paths(self, paths):
-        for rel_path in paths:
-            file_path = self._get_path_from_config(rel_path)
-            yield load(file_path)
 
     def _get_path_from_config(self, path):
         """Return an absolute path, given a path provided from a config file
@@ -280,11 +284,12 @@ class SosModelReader(object):
 
     def _parse_region_data(self, path):
         """
+        Read regions from GDAL-readable files
 
         Arguments
         ---------
         path: str
-            Path to regions files
+            Path to regions file
 
         Returns
         -------
@@ -292,15 +297,6 @@ class SosModelReader(object):
             A list of Fiona feature collections
 
         """
-
-        if not os.path.exists(path):
-            paths = glob("{}/regions.*".format(self._config_file_path))
-            if len(paths) == 1:
-                path = paths[0]
-            else:
-                msg = "Region set data file not found: {} does not exist."
-                raise FileNotFoundError(msg.format(path))
-
         with fiona.drivers():
             with fiona.open(path) as src:
                 data = [f for f in src]

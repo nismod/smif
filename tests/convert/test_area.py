@@ -1,7 +1,7 @@
 """Test aggregation/disaggregation of data between sets of areas
 """
 from copy import copy
-from pytest import fixture
+from pytest import fixture, raises
 from shapely.geometry import shape
 from smif.convert.area import (RegionRegister, RegionSet,
                                proportion_of_a_intersecting_b)
@@ -175,6 +175,10 @@ class TestRegionRegister():
     def test_create(self):
         rreg = RegionRegister()
         assert rreg.region_set_names == []
+
+        with raises(ValueError) as ex:
+            rreg.get_regions_in_set('nonexistent')
+        assert "Region set nonexistent not registered" in str(ex)
 
     def test_convert_equal(self, regions_rect):
         rreg = RegionRegister()
