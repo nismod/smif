@@ -367,10 +367,6 @@ class TimeSeries(object):
         """
         return self._hourly_values
 
-    @hourly_values.setter
-    def hourly_values(self, value):
-        self._hourly_values = value
-
 
 class TimeIntervalRegister:
     """Holds the set of time-intervals used by the SectorModels
