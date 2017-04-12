@@ -63,9 +63,14 @@ class WaterSupplySectorModel(SectorModel):
                 SpaceTimeValue('Wales', 1, water/3, "Ml"),
             ],
             "cost": [
-                SpaceTimeValue('England', 1, cost/3, "Ml"),
-                SpaceTimeValue('Scotland', 1, cost/3, "Ml"),
-                SpaceTimeValue('Wales', 1, cost/3, "Ml"),
+                SpaceTimeValue('England', 1, cost/3, "million £"),
+                SpaceTimeValue('Scotland', 1, cost/3, "million £"),
+                SpaceTimeValue('Wales', 1, cost/3, "million £"),
+            ],
+            "energy_demand": [
+                SpaceTimeValue('England', 1, 3, "MWh"),
+                SpaceTimeValue('Scotland', 1, 3, "MWh"),
+                SpaceTimeValue('Wales', 1, 3, "MWh")
             ]
         }
         state = [
