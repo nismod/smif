@@ -37,7 +37,31 @@ def dump(data, file_path):
 
 
 def space_time_value_representer(dumper, data):
-    return dumper.represent_scalar("", str(data))
+    """Dump custom yaml representation of SpaceTimeValue
+    """
+    return dumper.represent_sequence(
+        "SpaceTimeValue", [
+            data.region,
+            data.interval,
+            data.value,
+            data.units
+        ]
+    )
 
 
-yaml.add_representer(SpaceTimeValue, space_time_value_representer)
+yaml.add_representer(SpaceTimeValue, space_time_value_representer, Dumper=Dumper)
+
+
+def space_time_value_constructor(loader, node):
+    """Load ustom yaml representation of SpaceTimeValue
+    """
+    value = loader.construct_sequence(node)
+    return SpaceTimeValue(
+        value[0],
+        value[1],
+        value[2],
+        value[3]
+    )
+
+
+yaml.add_constructor("SpaceTimeValue", space_time_value_constructor, Loader=Loader)
