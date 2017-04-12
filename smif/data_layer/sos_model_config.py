@@ -30,19 +30,21 @@ class SosModelReader(object):
         self._config_file_path = config_file_path
         self._config_file_dir = os.path.dirname(config_file_path)
 
-        self._config = None
-        self.timesteps = None
-        self.scenario_data = None
-        self.sector_model_data = None
-        self.planning = None
-        self.time_intervals = None
-        self.regions = None
+        self._config = {}
+        self.timesteps = []
+        self.scenario_data = {}
+        self.sector_model_data = []
+        self.planning = []
+        self.time_intervals = []
+        self.regions = []
 
-        self.names = None
+        self.names = []
 
-        self.resolution_mapping = {'scenario': {},
-                                   'input': {},
-                                   'output': {}}
+        self.resolution_mapping = {
+            'scenario': {},
+            'input': {},
+            'output': {}
+        }
 
     def load(self):
         """Load and check all config

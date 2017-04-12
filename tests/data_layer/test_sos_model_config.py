@@ -105,6 +105,13 @@ class TestSosModelReader():
             'year': 2015
         }
 
+    def test_load_scenario_data_missing(self):
+        """Expect empty dict as default if scenario data missing
+        """
+        reader = SosModelReader('test.yaml')
+        reader.load_scenario_data()
+        assert reader.scenario_data == {}
+
     def test_no_planning(self, setup_project_folder, setup_no_planning):
         """Expect an empty list if planning is not to be used
         """
