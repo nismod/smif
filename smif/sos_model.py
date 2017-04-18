@@ -158,10 +158,20 @@ class SosModel(object):
         run_order = self._get_model_names_in_run_order()
         self.logger.info("Determined run order as %s", run_order)
         for timestep in self.timesteps:
-            for model_name in run_order:
-                logging.debug("Running %s for %d", model_name, timestep)
-                sector_model = self.model_list[model_name]
-                self._run_sector_model_timestep(sector_model, timestep)
+            for model_set in run_order:
+                if len(model_set) == 1:
+                    model_name = list(model_set)[0]
+                    logging.debug("Running %s for %d", model_name, timestep)
+                    sector_model = self.model_list[model_name]
+                    self._run_sector_model_timestep(sector_model, timestep)
+                else:
+                    # TODO:
+                    # - start by running all models in set with best guess
+                    #   - zeroes
+                    #   - last year's inputs
+                    # - keep track of intermediate results (iterations within the timestep)
+                    # - stop iterating according to near-equality condition
+                    raise NotImplementedError("Graph of dependencies contains a cycle.")
 
     def run_sector_model(self, model_name):
         """Runs the sector model
@@ -374,12 +384,34 @@ class SosModel(object):
         raise NotImplementedError
 
     def _get_model_names_in_run_order(self):
-        # topological sort gives a single list from directed graph
+        """Returns a list of sets of model names in a runnable order.
 
-        run_order = networkx.topological_sort(self.dependency_graph,
-                                              reverse=True)
-        self.logger.debug("Running models in order: %s", run_order)
-        return run_order
+        If a set contains more than one model name, there is an interdependency
+        and we should attempt to run the models to convergence.
+        """
+        if networkx.is_directed_acyclic_graph(self.dependency_graph):
+            # topological sort gives a single list from directed graph, currently
+            # ignoring opportunities to run independent models in parallel
+            run_order = networkx.topological_sort(self.dependency_graph, reverse=True)
+
+            # turn into a list of sets for consistency with the below
+            ordered_sets = [{model_name} for model_name in run_order]
+
+        else:
+            # contract the strongly connected components (subgraphs which
+            # contain cycles) into single nodes, producing the 'condensation'
+            # of the graph, where each node maps to one or more sector models
+            condensation = networkx.condensation(self.dependency_graph)
+
+            # topological sort of the condensation gives an ordering of the
+            # contracted nodes, whose 'members' attribute refers back to the
+            # original dependency graph
+            ordered_sets = [
+                condensation.node[node_id]['members']
+                for node_id in networkx.topological_sort(condensation, reverse=True)
+            ]
+
+        return ordered_sets
 
     def determine_running_mode(self):
         """Determines from the config in what mode to run the model
@@ -857,9 +889,6 @@ class SosModelBuilder(object):
                         continue
 
                     dependency_graph.add_edge(model_name, source)
-
-        if not networkx.is_directed_acyclic_graph(dependency_graph):
-            raise NotImplementedError("Graph of dependencies contains a cycle.")
 
         self.sos_model.dependency_graph = dependency_graph
 
