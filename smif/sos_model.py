@@ -160,18 +160,51 @@ class SosModel(object):
         for timestep in self.timesteps:
             for model_set in run_order:
                 if len(model_set) == 1:
+                    # Short-circuit if the set contains a single model - this
+                    # can be run deterministically
                     model_name = list(model_set)[0]
                     logging.debug("Running %s for %d", model_name, timestep)
-                    sector_model = self.model_list[model_name]
-                    self._run_sector_model_timestep(sector_model, timestep)
+                    model = self.model_list[model_name]
+                    self._run_sector_model_timestep(model, timestep)
                 else:
-                    # TODO:
-                    # - start by running all models in set with best guess
-                    #   - zeroes
-                    #   - last year's inputs
+                    # Start by running all models in set with best guess
+                    # - zeroes
+                    # - last year's inputs
+                    for model_name in model_set:
+                        model = self.model_list[model_name]
+                        results = self.guess_results(model, timestep)
+                        self._set_data(model, timestep, results)
+
                     # - keep track of intermediate results (iterations within the timestep)
                     # - stop iterating according to near-equality condition
-                    raise NotImplementedError("Graph of dependencies contains a cycle.")
+                    while not self.converged(model_set, timestep):
+                        for model_name in model_set:
+                            model = self.model_list[model_name]
+                            self._run_sector_model_timestep(model, timestep)
+
+    def guess_results(self, model, timestep):
+        """Dependency-free guess at a model's result set.
+
+        Initially, guess zeroes, or the previous timestep's results.
+        """
+        raise NotImplementedError("Result estimation not implemented")
+
+    def converged(self, model_set, timestep):
+        """Check whether the results of a set of models have converged.
+
+        Returns
+        -------
+        converged: bool
+            True if the results have converged to within a tolerance
+
+        Raises
+        ------
+        DiverganceError
+            If the results appear to be diverging
+        TimeoutError
+            If the number of iterations exceeds a maximum limit
+        """
+        raise NotImplementedError("Convergence checking not implemented")
 
     def run_sector_model(self, model_name):
         """Runs the sector model
@@ -293,7 +326,8 @@ class SosModel(object):
 
                 elif source in self.model_list:
                     source_model = self.model_list[source]
-                    from_data = self.results[timestep][source][name]
+                    # get latest set of results from list
+                    from_data = self.results[timestep][source][-1][name]
                     from_spatial_resolution = source_model.outputs.get_spatial_res(name)
                     from_temporal_resolution = source_model.outputs.get_temporal_res(name)
                     self.logger.debug("Found data: %s", from_data)
@@ -328,8 +362,13 @@ class SosModel(object):
 
     def _set_data(self, model, timestep, results):
         """Sets results output from model as data available to other/future models
+
+        Stores all results from iterations in a list. (Might be better with sliding window)
         """
-        self._results[timestep][model.name] = results
+        if model.name in self._results[timestep]:
+            self._results[timestep][model.name].append(results)
+        else:
+            self._results[timestep][model.name] = [results]
 
     def _convert_data(self, data, to_spatial_resolution,
                       to_temporal_resolution, from_spatial_resolution,
