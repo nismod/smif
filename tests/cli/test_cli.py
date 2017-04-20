@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
 import smif
-from pytest import raises
+from pytest import mark, raises
 from smif.cli import (confirm, parse_arguments, setup_project_folder,
                       validate_config)
 from smif.data_layer.validate import VALIDATION_ERRORS
@@ -44,6 +44,7 @@ def test_fixture_single_run_valid():
     assert "The model configuration was valid" in str(output.stdout)
 
 
+@mark.skip
 def test_fixture_single_run():
     """Test running the filesystem-based single_run fixture
     """

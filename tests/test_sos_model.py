@@ -313,6 +313,21 @@ class TestSosModel():
         assert sos_model.timestep_after(2012) is None
         assert sos_model.timestep_after(2013) is None
 
+    def test_guess_outputs(self, get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
+        ws_model = sos_model.model_list['water_supply']
+
+        results = sos_model.guess_results(ws_model, 2010)
+        expected = {
+            "cost": [
+                SpaceTimeValue("oxford", 1, 0, "unknown")
+            ],
+            "water": [
+                SpaceTimeValue("oxford", 1, 0, "unknown")
+            ]
+        }
+        assert results == expected
+
     def test_run_sequential(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
         sos_model.timesteps = [2010, 2011, 2012]

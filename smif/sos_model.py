@@ -189,7 +189,24 @@ class SosModel(object):
 
         Initially, guess zeroes, or the previous timestep's results.
         """
-        raise NotImplementedError("Result estimation not implemented")
+        results = {}
+        for output in model.outputs.parameters:
+            output_results = []
+            regions = self.regions.get_regions_in_set(output.spatial_resolution)
+            intervals = self.intervals.get_intervals_in_set(output.temporal_resolution)
+            for region in regions:
+                region_name = region.name
+                for interval_name, interval in intervals.items():
+                    output_results.append(
+                        SpaceTimeValue(
+                            region_name,
+                            interval_name,
+                            0,
+                            "unknown"
+                        )
+                    )
+            results[output.name] = output_results
+        return results
 
     def converged(self, model_set, timestep):
         """Check whether the results of a set of models have converged.
