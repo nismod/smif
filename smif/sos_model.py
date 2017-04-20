@@ -146,41 +146,43 @@ class SosModel(object):
         run_order = self._get_model_names_in_run_order()
         timestep = self.timesteps[0]
 
-        for model_name in run_order:
-            logging.debug("Running %s", model_name)
-            sector_model = self.model_list[model_name]
-            self._run_sector_model_timestep(sector_model, timestep)
+        for model_set in run_order:
+            self._run_model_set(model_set, timestep)
 
     def _run_sequential_sos_model(self):
         """Runs the system-of-system model sequentially
-
         """
         run_order = self._get_model_names_in_run_order()
         self.logger.info("Determined run order as %s", run_order)
         for timestep in self.timesteps:
             for model_set in run_order:
-                if len(model_set) == 1:
-                    # Short-circuit if the set contains a single model - this
-                    # can be run deterministically
-                    model_name = list(model_set)[0]
-                    logging.debug("Running %s for %d", model_name, timestep)
+                self._run_model_set(model_set, timestep)
+
+    def _run_model_set(self, model_set, timestep):
+        """Runs a set of one or more models
+        """
+        if len(model_set) == 1:
+            # Short-circuit if the set contains a single model - this
+            # can be run deterministically
+            model_name = list(model_set)[0]
+            logging.debug("Running %s for %d", model_name, timestep)
+            model = self.model_list[model_name]
+            self._run_sector_model_timestep(model, timestep)
+        else:
+            # Start by running all models in set with best guess
+            # - zeroes
+            # - last year's inputs
+            for model_name in model_set:
+                model = self.model_list[model_name]
+                results = self.guess_results(model, timestep)
+                self._set_data(model, timestep, results)
+
+            # - keep track of intermediate results (iterations within the timestep)
+            # - stop iterating according to near-equality condition
+            while not self.converged(model_set, timestep):
+                for model_name in model_set:
                     model = self.model_list[model_name]
                     self._run_sector_model_timestep(model, timestep)
-                else:
-                    # Start by running all models in set with best guess
-                    # - zeroes
-                    # - last year's inputs
-                    for model_name in model_set:
-                        model = self.model_list[model_name]
-                        results = self.guess_results(model, timestep)
-                        self._set_data(model, timestep, results)
-
-                    # - keep track of intermediate results (iterations within the timestep)
-                    # - stop iterating according to near-equality condition
-                    while not self.converged(model_set, timestep):
-                        for model_name in model_set:
-                            model = self.model_list[model_name]
-                            self._run_sector_model_timestep(model, timestep)
 
     def guess_results(self, model, timestep):
         """Dependency-free guess at a model's result set.
