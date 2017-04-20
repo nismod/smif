@@ -353,13 +353,13 @@ class TestSosModel():
         actual = sos_model.results[2010]['water_supply']
         expected = {'cost': 2.528, 'water': 2}
         for key, value in expected.items():
-            assert actual[key][0].value == value
+            assert actual[-1][key][0].value == value
 
         sos_model._run_sector_model_timestep(model, 2011)
         actual = sos_model.results[2011]['water_supply']
         expected = {'cost': 2.528, 'water': 2}
         for key, value in expected.items():
-            assert actual[key][0].value == value
+            assert actual[-1][key][0].value == value
 
     def test_add_data_series(self):
         """Expect addition to work on lists of SpaceTimeValues
