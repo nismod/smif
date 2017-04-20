@@ -41,7 +41,9 @@ class SosModel(object):
 
     """
     def __init__(self):
+        # housekeeping
         self.logger = logging.getLogger(__name__)
+        self.max_iterations = 25
 
         # models
         self.model_list = {}
@@ -179,10 +181,16 @@ class SosModel(object):
 
             # - keep track of intermediate results (iterations within the timestep)
             # - stop iterating according to near-equality condition
-            while not self.converged(model_set, timestep):
-                for model_name in model_set:
-                    model = self.model_list[model_name]
-                    self._run_sector_model_timestep(model, timestep)
+            for i in range(self.max_iterations):
+                if self.converged(model_set, timestep):
+                    break
+                else:
+                    self.logger.debug("Iteration %s, model set %s", i, model_set)
+                    for model_name in model_set:
+                        model = self.model_list[model_name]
+                        self._run_sector_model_timestep(model, timestep)
+            else:
+                raise TimeoutError("Model evaluation exceeded max iterations")
 
     def guess_results(self, model, timestep):
         """Dependency-free guess at a model's result set.
@@ -226,10 +234,18 @@ class SosModel(object):
         ------
         DiverganceError
             If the results appear to be diverging
-        TimeoutError
-            If the number of iterations exceeds a maximum limit
         """
-        raise NotImplementedError("Convergence checking not implemented")
+        model_set_results = [self._results[timestep][model_name] for model_name in model_set]
+
+        if any(map(lambda results: len(results) < 2, model_set_results)):
+            # must have at least two result sets per model to assess convergence
+            return False
+
+        if all(map(lambda results: results[-1] == results[-2], model_set_results)):
+            # if all most recent are exactly equal to penultimate, must have converged
+            return True
+
+        return False
 
     def run_sector_model(self, model_name):
         """Runs the sector model

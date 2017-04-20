@@ -314,6 +314,8 @@ class TestSosModel():
         assert sos_model.timestep_after(2013) is None
 
     def test_guess_outputs_zero(self, get_sos_model_only_scenario_dependencies):
+        """If no previous timestep has results, guess outputs as zero
+        """
         sos_model = get_sos_model_only_scenario_dependencies
         ws_model = sos_model.model_list['water_supply']
 
@@ -329,6 +331,8 @@ class TestSosModel():
         assert results == expected
 
     def test_guess_outputs_last_year(self, get_sos_model_only_scenario_dependencies):
+        """If a previous timestep has results, guess outputs as identical
+        """
         sos_model = get_sos_model_only_scenario_dependencies
         ws_model = sos_model.model_list['water_supply']
         expected = {
@@ -343,6 +347,29 @@ class TestSosModel():
         assert sos_model.timestep_before(2011) == 2010
         results = sos_model.guess_results(ws_model, 2011)
         assert results == expected
+
+    def test_converged_first_iteration(self, get_sos_model_only_scenario_dependencies):
+        """Should not report convergence after a single iteration
+        """
+        sos_model = get_sos_model_only_scenario_dependencies
+        ws_model = sos_model.model_list['water_supply']
+
+        results = sos_model.guess_results(ws_model, 2010)
+        sos_model._set_data(ws_model, 2010, results)
+
+        assert not sos_model.converged({'water_supply'}, 2010)
+
+    def test_converged_two_identical(self, get_sos_model_only_scenario_dependencies):
+        """Should report converged if the last two output sets are identical
+        """
+        sos_model = get_sos_model_only_scenario_dependencies
+        ws_model = sos_model.model_list['water_supply']
+
+        results = sos_model.guess_results(ws_model, 2010)
+        sos_model._set_data(ws_model, 2010, results)
+        sos_model._set_data(ws_model, 2010, results)
+
+        assert sos_model.converged({'water_supply'}, 2010)
 
     def test_run_sequential(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
