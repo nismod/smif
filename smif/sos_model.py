@@ -189,23 +189,29 @@ class SosModel(object):
 
         Initially, guess zeroes, or the previous timestep's results.
         """
-        results = {}
-        for output in model.outputs.parameters:
-            output_results = []
-            regions = self.regions.get_regions_in_set(output.spatial_resolution)
-            intervals = self.intervals.get_intervals_in_set(output.temporal_resolution)
-            for region in regions:
-                region_name = region.name
-                for interval_name, interval in intervals.items():
-                    output_results.append(
-                        SpaceTimeValue(
-                            region_name,
-                            interval_name,
-                            0,
-                            "unknown"
+        timestep_before = self.timestep_before(timestep)
+        if timestep_before is not None:
+            # last iteration of previous timestep results
+            results = self.results[timestep_before][model.name][-1]
+        else:
+            # generate zero-values for each parameter/region/interval combination
+            results = {}
+            for output in model.outputs.parameters:
+                output_results = []
+                regions = self.regions.get_regions_in_set(output.spatial_resolution)
+                intervals = self.intervals.get_intervals_in_set(output.temporal_resolution)
+                for region in regions:
+                    region_name = region.name
+                    for interval_name, interval in intervals.items():
+                        output_results.append(
+                            SpaceTimeValue(
+                                region_name,
+                                interval_name,
+                                0,
+                                "unknown"
+                            )
                         )
-                    )
-            results[output.name] = output_results
+                results[output.name] = output_results
         return results
 
     def converged(self, model_set, timestep):

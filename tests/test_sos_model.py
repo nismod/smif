@@ -12,7 +12,7 @@ from .fixtures.water_supply import WaterSupplySectorModel
 @fixture(scope='function')
 def get_sos_model_only_scenario_dependencies(setup_region_data):
     builder = SosModelBuilder()
-    builder.add_timesteps([2010])
+    builder.add_timesteps([2010, 2011, 2012])
     builder.load_region_sets({'LSOA': setup_region_data['features']})
     interval_data = [
         {
@@ -313,7 +313,7 @@ class TestSosModel():
         assert sos_model.timestep_after(2012) is None
         assert sos_model.timestep_after(2013) is None
 
-    def test_guess_outputs(self, get_sos_model_only_scenario_dependencies):
+    def test_guess_outputs_zero(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
         ws_model = sos_model.model_list['water_supply']
 
@@ -326,6 +326,22 @@ class TestSosModel():
                 SpaceTimeValue("oxford", 1, 0, "unknown")
             ]
         }
+        assert results == expected
+
+    def test_guess_outputs_last_year(self, get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
+        ws_model = sos_model.model_list['water_supply']
+        expected = {
+            "cost": [
+                SpaceTimeValue("oxford", 1, 3.14, "unknown")
+            ],
+            "water": [
+                SpaceTimeValue("oxford", 1, 2.71, "unknown")
+            ]
+        }
+        sos_model._results[2010]['water_supply'] = [expected]
+        assert sos_model.timestep_before(2011) == 2010
+        results = sos_model.guess_results(ws_model, 2011)
         assert results == expected
 
     def test_run_sequential(self, get_sos_model_only_scenario_dependencies):
