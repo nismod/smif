@@ -583,7 +583,7 @@ class TestSosModelBuilder():
               ", which is not supplied."
         assert str(error.value) == msg
 
-    def test_cyclic_dependencies(self):
+    def test_cyclic_dependencies(self, setup_region_data):
         a_inputs = [
             {
                 'name': 'b value',
@@ -619,6 +619,9 @@ class TestSosModelBuilder():
         builder = SosModelBuilder()
         builder.add_timesteps([2010])
         builder.add_planning([])
+        builder.load_region_sets({'LSOA': setup_region_data['features']})
+        interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+        builder.load_interval_sets({'annual': interval_data})
 
         a_model = WaterSupplySectorModel()
         a_model.name = "a_model"
@@ -632,8 +635,7 @@ class TestSosModelBuilder():
         b_model.outputs = b_outputs
         builder.add_model(b_model)
 
-        with raises(NotImplementedError):
-            builder.finish()
+        builder.finish()
 
     def test_nest_scenario_data(self, setup_country_data):
         data = {
