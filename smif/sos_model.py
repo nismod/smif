@@ -6,9 +6,9 @@ framework.
 import logging
 import operator
 from collections import defaultdict
+from enum import Enum
 
 import networkx
-from enum import Enum
 from smif import SpaceTimeValue, StateData
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister, RegionSet
@@ -633,6 +633,7 @@ class SosModelBuilder(object):
         model_list = config_data['sector_model_data']
 
         self.add_timesteps(config_data['timesteps'])
+        self.set_max_iterations(config_data)
 
         self.load_region_sets(config_data['region_sets'])
         self.load_interval_sets(config_data['interval_sets'])
@@ -653,6 +654,10 @@ class SosModelBuilder(object):
         """
         self.logger.info("Adding timesteps")
         self.sos_model.timesteps = timesteps
+
+    def set_max_iterations(self, config_data):
+        if 'max_iterations' in config_data and config_data['max_iterations'] is not None:
+            self.sos_model.max_iterations = config_data['max_iterations']
 
     def add_resolution_mapping(self, resolution_mapping):
         """

@@ -32,6 +32,7 @@ class SosModelReader(object):
 
         self._config = {}
         self.timesteps = []
+        self.max_iterations = 0
         self.scenario_data = {}
         self.sector_model_data = []
         self.planning = []
@@ -51,6 +52,7 @@ class SosModelReader(object):
         """
         self._config = self.load_sos_config()
         self.timesteps = self.load_timesteps()
+        self.max_iterations = self.load_max_iterations()
         self.time_intervals = self.load_time_intervals()
         self.regions = self.load_regions()
         self.scenario_data = self.load_scenario_data()
@@ -68,6 +70,8 @@ class SosModelReader(object):
 
             timesteps
                 the sequence of years
+            max_iterations
+                limit iterations for solving interdependencies
             sector_model_config: list
                 The list of sector model configuration data
             scenario_data: dict
@@ -87,6 +91,7 @@ class SosModelReader(object):
         """
         return {
             "timesteps": self.timesteps,
+            "max_iterations": self.max_iterations,
             "sector_model_config": self.sector_model_data,
             "scenario_data": self.scenario_data,
             "planning": self.planning,
@@ -99,6 +104,7 @@ class SosModelReader(object):
         """Parse model master config
 
         - configures run mode
+        - sets max iterations for solving interdependencies
         - points to timesteps file
         - points to shared data files
         - points to sector models and sector model data files
@@ -120,6 +126,14 @@ class SosModelReader(object):
         validate_timesteps(data, file_path)
 
         return data
+
+    def load_max_iterations(self):
+        """Parse max_iterations setting
+        """
+        if "max_iterations" in self._config \
+                and isinstance(self._config["max_iterations"], int) \
+                and self._config["max_iterations"] > 0:
+            self.max_iterations = self._config["max_iterations"]
 
     def load_sector_model_data(self):
         """Parse list of sector models to run
