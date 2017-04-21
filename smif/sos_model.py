@@ -33,7 +33,7 @@ class SosModel(object):
 
     Attributes
     ==========
-    model_list : dict
+    models : dict
         This is a dictionary of :class:`smif.SectorModel`
     initial_conditions : list
         List of interventions required to set up the initial system, with any
@@ -46,7 +46,7 @@ class SosModel(object):
         self.max_iterations = 25
 
         # models
-        self.model_list = {}
+        self.models = {}
         self.dependency_graph = None
 
         # space and time
@@ -145,107 +145,20 @@ class SosModel(object):
         dependencies, passing in the year for which they need to run.
 
         """
-        run_order = self._get_model_names_in_run_order()
+        run_order = self._get_model_sets_in_run_order()
         timestep = self.timesteps[0]
 
         for model_set in run_order:
-            self._run_model_set(model_set, timestep)
+            model_set.run(timestep)
 
     def _run_sequential_sos_model(self):
         """Runs the system-of-system model sequentially
         """
-        run_order = self._get_model_names_in_run_order()
+        run_order = self._get_model_sets_in_run_order()
         self.logger.info("Determined run order as %s", run_order)
         for timestep in self.timesteps:
             for model_set in run_order:
-                self._run_model_set(model_set, timestep)
-
-    def _run_model_set(self, model_set, timestep):
-        """Runs a set of one or more models
-        """
-        if len(model_set) == 1:
-            # Short-circuit if the set contains a single model - this
-            # can be run deterministically
-            model_name = list(model_set)[0]
-            logging.debug("Running %s for %d", model_name, timestep)
-            model = self.model_list[model_name]
-            self._run_sector_model_timestep(model, timestep)
-        else:
-            # Start by running all models in set with best guess
-            # - zeroes
-            # - last year's inputs
-            for model_name in model_set:
-                model = self.model_list[model_name]
-                results = self.guess_results(model, timestep)
-                self._set_data(model, timestep, results)
-
-            # - keep track of intermediate results (iterations within the timestep)
-            # - stop iterating according to near-equality condition
-            for i in range(self.max_iterations):
-                if self.converged(model_set, timestep):
-                    break
-                else:
-                    self.logger.debug("Iteration %s, model set %s", i, model_set)
-                    for model_name in model_set:
-                        model = self.model_list[model_name]
-                        self._run_sector_model_timestep(model, timestep)
-            else:
-                raise TimeoutError("Model evaluation exceeded max iterations")
-
-    def guess_results(self, model, timestep):
-        """Dependency-free guess at a model's result set.
-
-        Initially, guess zeroes, or the previous timestep's results.
-        """
-        timestep_before = self.timestep_before(timestep)
-        if timestep_before is not None:
-            # last iteration of previous timestep results
-            results = self.results[timestep_before][model.name][-1]
-        else:
-            # generate zero-values for each parameter/region/interval combination
-            results = {}
-            for output in model.outputs.parameters:
-                output_results = []
-                regions = self.regions.get_regions_in_set(output.spatial_resolution)
-                intervals = self.intervals.get_intervals_in_set(output.temporal_resolution)
-                for region in regions:
-                    region_name = region.name
-                    for interval_name, interval in intervals.items():
-                        output_results.append(
-                            SpaceTimeValue(
-                                region_name,
-                                interval_name,
-                                0,
-                                "unknown"
-                            )
-                        )
-                results[output.name] = output_results
-        return results
-
-    def converged(self, model_set, timestep):
-        """Check whether the results of a set of models have converged.
-
-        Returns
-        -------
-        converged: bool
-            True if the results have converged to within a tolerance
-
-        Raises
-        ------
-        DiverganceError
-            If the results appear to be diverging
-        """
-        model_set_results = [self._results[timestep][model_name] for model_name in model_set]
-
-        if any(map(lambda results: len(results) < 2, model_set_results)):
-            # must have at least two result sets per model to assess convergence
-            return False
-
-        if all(map(lambda results: results[-1] == results[-2], model_set_results)):
-            # if all most recent are exactly equal to penultimate, must have converged
-            return True
-
-        return False
+                model_set.run(timestep)
 
     def run_sector_model(self, model_name):
         """Runs the sector model
@@ -257,19 +170,21 @@ class SosModel(object):
             models subfolder of the project folder
         """
         msg = "Model '{}' does not exist. Choose from {}"
-        assert model_name in self.model_list, \
+        assert model_name in self.models, \
             msg.format(model_name, self.sector_models)
 
         msg = "Running the %s sector model"
         self.logger.info(msg, model_name)
 
-        sector_model = self.model_list[model_name]
+        sector_model = self.models[model_name]
 
         # Run a simulation for a single model
         for timestep in self.timesteps:
-            self._run_sector_model_timestep(sector_model, timestep)
+            state, results = self.run_sector_model_timestep(sector_model, timestep)
+            self.set_state(sector_model, timestep, state)
+            self.set_data(sector_model, timestep, results)
 
-    def _run_sector_model_timestep(self, model, timestep):
+    def run_sector_model_timestep(self, model, timestep):
         """Run the sector model for a specific timestep
 
         Parameters
@@ -280,18 +195,15 @@ class SosModel(object):
             The year for which to run the model
 
         """
-        decisions = self._get_decisions(model, timestep)
-        state = self._get_state(model, timestep)
-        data = self._get_data(model, timestep)
+        decisions = self.get_decisions(model, timestep)
+        state = self.get_state(model, timestep)
+        data = self.get_data(model, timestep)
 
         state, results = model.simulate(decisions, state, data)
-
         self.logger.debug("Results from %s model:\n %s", model.name, results)
+        return state, results
 
-        self._set_state(model, timestep, state)
-        self._set_data(model, timestep, results)
-
-    def _get_decisions(self, model, timestep):
+    def get_decisions(self, model, timestep):
         """Gets the interventions that correspond to the decisions
 
         Parameters
@@ -318,7 +230,7 @@ class SosModel(object):
 
         return current_decisions
 
-    def _get_state(self, model, timestep):
+    def get_state(self, model, timestep):
         """Gets the state to pass to SectorModel.simulate
         """
         if model.name not in self._state[timestep]:
@@ -326,13 +238,13 @@ class SosModel(object):
             return []
         return self._state[timestep][model.name]
 
-    def _set_state(self, model, from_timestep, state):
+    def set_state(self, model, from_timestep, state):
         """Sets state output from model ready for next timestep
         """
         for_timestep = self.timestep_after(from_timestep)
         self._state[for_timestep][model.name] = state
 
-    def _get_data(self, model, timestep):
+    def get_data(self, model, timestep):
         """Gets the data in the required format to pass to the simulate method
 
         Returns
@@ -365,10 +277,10 @@ class SosModel(object):
                     from_temporal_resolution = scenario_map[name]['temporal_resolution']
                     self.logger.debug("Found data: %s", from_data)
 
-                elif source in self.model_list:
-                    source_model = self.model_list[source]
+                elif source in self.models:
+                    source_model = self.models[source]
                     # get latest set of results from list
-                    from_data = self.results[timestep][source][-1][name]
+                    from_data = self.results[timestep][source][name]
                     from_spatial_resolution = source_model.outputs.get_spatial_res(name)
                     from_temporal_resolution = source_model.outputs.get_temporal_res(name)
                     self.logger.debug("Found data: %s", from_data)
@@ -401,15 +313,13 @@ class SosModel(object):
         new_data['timestep'] = timestep
         return new_data
 
-    def _set_data(self, model, timestep, results):
+    def set_data(self, model, timestep, results):
         """Sets results output from model as data available to other/future models
 
-        Stores all results from iterations in a list. (Might be better with sliding window)
+        Stores only latest estimated results (i.e. not holding on to iterations
+        here while trying to solve interdependencies)
         """
-        if model.name in self._results[timestep]:
-            self._results[timestep][model.name].append(results)
-        else:
-            self._results[timestep][model.name] = [results]
+        self._results[timestep][model.name] = results
 
     def _convert_data(self, data, to_spatial_resolution,
                       to_temporal_resolution, from_spatial_resolution,
@@ -463,11 +373,11 @@ class SosModel(object):
         """
         raise NotImplementedError
 
-    def _get_model_names_in_run_order(self):
-        """Returns a list of sets of model names in a runnable order.
+    def _get_model_sets_in_run_order(self):
+        """Returns a list of :class:`ModelSet` in a runnable order.
 
-        If a set contains more than one model name, there is an interdependency
-        and we should attempt to run the models to convergence.
+        If a set contains more than one model, there is an interdependency and
+        and we attempt to run the models to convergence.
         """
         if networkx.is_directed_acyclic_graph(self.dependency_graph):
             # topological sort gives a single list from directed graph, currently
@@ -475,7 +385,13 @@ class SosModel(object):
             run_order = networkx.topological_sort(self.dependency_graph, reverse=True)
 
             # turn into a list of sets for consistency with the below
-            ordered_sets = [{model_name} for model_name in run_order]
+            ordered_sets = [
+                ModelSet(
+                    {self.models[model_name]},
+                    self
+                )
+                for model_name in run_order
+            ]
 
         else:
             # contract the strongly connected components (subgraphs which
@@ -487,7 +403,13 @@ class SosModel(object):
             # contracted nodes, whose 'members' attribute refers back to the
             # original dependency graph
             ordered_sets = [
-                condensation.node[node_id]['members']
+                ModelSet(
+                    {
+                        self.models[model_name]
+                        for model_name in condensation.node[node_id]['members']
+                    },
+                    self
+                )
                 for node_id in networkx.topological_sort(condensation, reverse=True)
             ]
 
@@ -565,7 +487,7 @@ class SosModel(object):
         list
             A list of sector model names
         """
-        return list(self.model_list.keys())
+        return list(self.models.keys())
 
     @property
     def inputs(self):
@@ -577,8 +499,8 @@ class SosModel(object):
             Keys are parameter names, value is a list of sector model names
         """
         parameter_model_map = defaultdict(list)
-        for model_name, model_data in self.model_list.items():
-            for dep in model_data.inputs.parameters:
+        for model_name, model in self.models.items():
+            for dep in model.inputs.parameters:
                 parameter_model_map[dep.name].append(model_name)
         return parameter_model_map
 
@@ -592,13 +514,124 @@ class SosModel(object):
             Keys are parameter names, value is a list of sector model names
         """
         parameter_model_map = defaultdict(list)
-        for model_name, model_data in self.model_list.items():
+        for model_name, model_data in self.models.items():
             for output in model_data.outputs.parameters:
                 parameter_model_map[output.name].append(model_name)
 
         for name in self.resolution_mapping['scenario'].keys():
             parameter_model_map[name].append('scenario')
         return parameter_model_map
+
+
+class ModelSet(object):
+    """Wraps a set of interdependent models
+
+    - provides run-to-convergence method
+    - calls back into :class:`SosModel` for state, data, decisions, regions, intervals
+    """
+    def __init__(self, models, sos_model):
+        self.logger = logging.getLogger(__name__)
+        self._models = models
+        self._model_names = {model.name for model in models}
+        self._sos_model = sos_model
+        self.iterated_results = {}
+
+    def run(self, timestep):
+        """Runs a set of one or more models
+        """
+        if len(self._models) == 1:
+            # Short-circuit if the set contains a single model - this
+            # can be run deterministically
+            model = list(self._models)[0]
+            logging.debug("Running %s for %d", model.name, timestep)
+            state, results = self._sos_model.run_sector_model_timestep(model, timestep)
+            self._sos_model.set_state(model, timestep, state)
+            self._sos_model.set_data(model, timestep, results)
+        else:
+            # Start by running all models in set with best guess
+            # - zeroes
+            # - last year's inputs
+            self.iterated_results = {}
+            for model in self._models:
+                results = self.guess_results(model, timestep)
+                self._sos_model.set_data(model, timestep, results)
+                self.iterated_results[model.name] = [results]
+
+            # - keep track of intermediate results (iterations within the timestep)
+            # - stop iterating according to near-equality condition
+            for i in range(self._sos_model.max_iterations):
+                if self.converged(timestep):
+                    break
+                else:
+                    self.logger.debug("Iteration %s, model set %s", i, self._model_names)
+                    for model in self._models:
+                        state, results = self._sos_model.run_sector_model_timestep(
+                            model, timestep)
+                        self._sos_model.set_state(model, timestep, state)
+                        self._sos_model.set_data(model, timestep, results)
+                        self.iterated_results[model.name].append(results)
+            else:
+                raise TimeoutError("Model evaluation exceeded max iterations")
+
+    def guess_results(self, model, timestep):
+        """Dependency-free guess at a model's result set.
+
+        Initially, guess zeroes, or the previous timestep's results.
+        """
+        timestep_before = self._sos_model.timestep_before(timestep)
+        if timestep_before is not None:
+            # last iteration of previous timestep results
+            results = self._sos_model.results[timestep_before][model.name]
+        else:
+            # generate zero-values for each parameter/region/interval combination
+            results = {}
+            for output in model.outputs.parameters:
+                output_results = []
+                regions = self._sos_model.regions.get_regions_in_set(
+                    output.spatial_resolution)
+                intervals = self._sos_model.intervals.get_intervals_in_set(
+                    output.temporal_resolution)
+                for region in regions:
+                    region_name = region.name
+                    for interval_name in intervals.keys():
+                        output_results.append(
+                            SpaceTimeValue(
+                                region_name,
+                                interval_name,
+                                0,
+                                "unknown"
+                            )
+                        )
+                results[output.name] = output_results
+        return results
+
+    def converged(self, timestep):
+        """Check whether the results of a set of models have converged.
+
+        Returns
+        -------
+        converged: bool
+            True if the results have converged to within a tolerance
+
+        Raises
+        ------
+        DiverganceError
+            If the results appear to be diverging
+        """
+        model_set_results = [
+            self.iterated_results[model_name]
+            for model_name in self._model_names
+        ]
+
+        if any([len(results) < 2 for results in model_set_results]):
+            # must have at least two result sets per model to assess convergence
+            return False
+
+        if all([results[-1] == results[-2] for results in model_set_results]):
+            # if all most recent are exactly equal to penultimate, must have converged
+            return True
+
+        return False
 
 
 class SosModelBuilder(object):
@@ -753,7 +786,7 @@ class SosModelBuilder(object):
 
         """
         self.logger.info("Loading model: %s", model.name)
-        self.sos_model.model_list[model.name] = model
+        self.sos_model.models[model.name] = model
 
     def add_model_data(self, model, model_data):
         """Adds sector model data to the system-of-systems model which is
@@ -930,7 +963,7 @@ class SosModelBuilder(object):
         msg = "Available region sets in SosModel: %s"
         self.logger.debug(msg, available_regions)
 
-        for model_name, model in self.sos_model.model_list.items():
+        for model_name, model in self.sos_model.models.items():
             exp_regions = []
             exp_intervals = []
             exp_regions.extend(model.inputs.spatial_resolutions)
@@ -957,7 +990,7 @@ class SosModelBuilder(object):
         models_available = self.sos_model.sector_models
         dependency_graph.add_nodes_from(models_available)
 
-        for model_name, model in self.sos_model.model_list.items():
+        for model_name, model in self.sos_model.models.items():
             for dep in model.inputs.parameters:
                 providers = self.sos_model.outputs[dep.name]
                 msg = "Dependency '%s' provided by '%s'"
