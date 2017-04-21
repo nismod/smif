@@ -524,7 +524,7 @@ class SosModel(object):
         Returns
         =======
         list
-            A list of timesteps
+            A list of timesteps, distinct and sorted in ascending order
         """
         return self._timesteps
 
