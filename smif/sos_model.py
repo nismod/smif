@@ -6,9 +6,9 @@ framework.
 import logging
 import operator
 from collections import defaultdict
-from enum import Enum
 
 import networkx
+from enum import Enum
 from smif import SpaceTimeValue, StateData
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister, RegionSet
@@ -526,8 +526,26 @@ class SosModel(object):
 class ModelSet(object):
     """Wraps a set of interdependent models
 
-    - provides run-to-convergence method
-    - calls back into :class:`SosModel` for state, data, decisions, regions, intervals
+    Given a directed graph of dependencies between models, any cyclic
+    dependencies are contained within the strongly-connected components of the
+    graph.
+
+    A ModelSet corresponds to the set of models within a single strongly-
+    connected component. If this is a set of one model, it can simply be run
+    deterministically. Otherwise, this class provides the machinery necessary
+    to find a solution to each of the interdependent models.
+
+    The current implementation first estimates the outputs for each model in the
+    set, guaranteeing that each model will then be able to run, then begins
+    iterating, running every model in the set at each iteration, monitoring the
+    model outputs over the iterations, and stopping at timeout, divergence or
+    convergence.
+
+    Notes
+    -----
+    This calls back into :class:`SosModel` quite extensively for state, data,
+    decisions, regions and intervals.
+
     """
     def __init__(self, models, sos_model):
         self.logger = logging.getLogger(__name__)
