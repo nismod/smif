@@ -4,7 +4,7 @@ from pytest import fixture, raises
 from smif import SpaceTimeValue
 from smif.decision import Planning
 from smif.sector_model import SectorModel
-from smif.sos_model import SosModel, SosModelBuilder
+from smif.sos_model import ModelSet, SosModel, SosModelBuilder
 
 from .fixtures.water_supply import WaterSupplySectorModel
 
@@ -12,7 +12,7 @@ from .fixtures.water_supply import WaterSupplySectorModel
 @fixture(scope='function')
 def get_sos_model_only_scenario_dependencies(setup_region_data):
     builder = SosModelBuilder()
-    builder.add_timesteps([2010])
+    builder.add_timesteps([2010, 2011, 2012])
     builder.load_region_sets({'LSOA': setup_region_data['features']})
     interval_data = [
         {
@@ -284,6 +284,19 @@ class TestSosModel():
             sos_model.run()
         assert "No timesteps" in str(ex.value)
 
+    def test_set_timesteps(self):
+        sos_model = SosModel()
+        sos_model.timesteps = [2010, 2011, 2012]
+        assert sos_model.timesteps == [2010, 2011, 2012]
+
+        # remove duplicates
+        sos_model.timesteps = [2010, 2011, 2012, 2012, 2012]
+        assert sos_model.timesteps == [2010, 2011, 2012]
+
+        # sort order
+        sos_model.timesteps = [2011, 2012, 2010]
+        assert sos_model.timesteps == [2010, 2011, 2012]
+
     def test_timestep_before(self):
         sos_model = SosModel()
         sos_model.timesteps = [2010, 2011, 2012]
@@ -291,6 +304,94 @@ class TestSosModel():
         assert sos_model.timestep_before(2011) == 2010
         assert sos_model.timestep_before(2012) == 2011
         assert sos_model.timestep_before(2013) is None
+
+    def test_timestep_after(self):
+        sos_model = SosModel()
+        sos_model.timesteps = [2010, 2011, 2012]
+        assert sos_model.timestep_after(2010) == 2011
+        assert sos_model.timestep_after(2011) == 2012
+        assert sos_model.timestep_after(2012) is None
+        assert sos_model.timestep_after(2013) is None
+
+    def test_guess_outputs_zero(self, get_sos_model_only_scenario_dependencies):
+        """If no previous timestep has results, guess outputs as zero
+        """
+        sos_model = get_sos_model_only_scenario_dependencies
+        ws_model = sos_model.models['water_supply']
+        model_set = ModelSet(
+            {ws_model},
+            sos_model
+        )
+
+        results = model_set.guess_results(ws_model, 2010)
+        expected = {
+            "cost": [
+                SpaceTimeValue("oxford", 1, 0, "unknown")
+            ],
+            "water": [
+                SpaceTimeValue("oxford", 1, 0, "unknown")
+            ]
+        }
+        assert results == expected
+
+    def test_guess_outputs_last_year(self, get_sos_model_only_scenario_dependencies):
+        """If a previous timestep has results, guess outputs as identical
+        """
+        sos_model = get_sos_model_only_scenario_dependencies
+        ws_model = sos_model.models['water_supply']
+        model_set = ModelSet(
+            {ws_model},
+            sos_model
+        )
+
+        expected = {
+            "cost": [
+                SpaceTimeValue("oxford", 1, 3.14, "unknown")
+            ],
+            "water": [
+                SpaceTimeValue("oxford", 1, 2.71, "unknown")
+            ]
+        }
+
+        # set up data as though from previous timestep simulation
+        year_before = sos_model.timestep_before(2011)
+        assert year_before == 2010
+        sos_model._results[year_before]['water_supply'] = expected
+
+        results = model_set.guess_results(ws_model, 2011)
+        assert results == expected
+
+    def test_converged_first_iteration(self, get_sos_model_only_scenario_dependencies):
+        """Should not report convergence after a single iteration
+        """
+        sos_model = get_sos_model_only_scenario_dependencies
+        ws_model = sos_model.models['water_supply']
+        model_set = ModelSet(
+            {ws_model},
+            sos_model
+        )
+
+        results = model_set.guess_results(ws_model, 2010)
+        model_set.iterated_results[ws_model.name] = [results]
+
+        assert not model_set.converged(2010)
+
+    def test_converged_two_identical(self, get_sos_model_only_scenario_dependencies):
+        """Should report converged if the last two output sets are identical
+        """
+        sos_model = get_sos_model_only_scenario_dependencies
+        ws_model = sos_model.models['water_supply']
+        model_set = ModelSet(
+            {ws_model},
+            sos_model
+        )
+
+        results = model_set.guess_results(ws_model, 2010)
+        model_set.iterated_results = {
+            "water_supply": [results, results]
+        }
+
+        assert model_set.converged(2010)
 
     def test_run_sequential(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
@@ -323,19 +424,19 @@ class TestSosModel():
         planning = Planning(planning_data)
         sos_model.planning = planning
 
-        model = sos_model.model_list['water_supply']
-        actual = sos_model._get_decisions(model, 2010)
+        model = sos_model.models['water_supply']
+        actual = sos_model.get_decisions(model, 2010)
         assert actual[0].name == 'water_asset_a'
         assert actual[0].location == 'oxford'
 
-        sos_model._run_sector_model_timestep(model, 2010)
-        actual = sos_model.results[2010]['water_supply']
+        _, results = sos_model.run_sector_model_timestep(model, 2010)
+        actual = results
         expected = {'cost': 2.528, 'water': 2}
         for key, value in expected.items():
             assert actual[key][0].value == value
 
-        sos_model._run_sector_model_timestep(model, 2011)
-        actual = sos_model.results[2011]['water_supply']
+        _, results = sos_model.run_sector_model_timestep(model, 2011)
+        actual = results
         expected = {'cost': 2.528, 'water': 2}
         for key, value in expected.items():
             assert actual[key][0].value == value
@@ -449,7 +550,7 @@ class TestSosModelBuilder():
 
         builder.add_model(model)
         builder.add_model_data(model, model_data)
-        assert isinstance(builder.sos_model.model_list['water_supply'],
+        assert isinstance(builder.sos_model.models['water_supply'],
                           SectorModel)
 
         sos_model = builder.finish()
@@ -473,7 +574,7 @@ class TestSosModelBuilder():
 
         assert isinstance(sos_model, SosModel)
         assert sos_model.sector_models == ['water_supply']
-        assert isinstance(sos_model.model_list['water_supply'], SectorModel)
+        assert isinstance(sos_model.models['water_supply'], SectorModel)
         assert sos_model.timesteps == [2010, 2011, 2012]
 
     def test_missing_planning_asset(self, get_config_data):
@@ -562,7 +663,7 @@ class TestSosModelBuilder():
               ", which is not supplied."
         assert str(error.value) == msg
 
-    def test_cyclic_dependencies(self):
+    def test_cyclic_dependencies(self, setup_region_data):
         a_inputs = [
             {
                 'name': 'b value',
@@ -598,6 +699,9 @@ class TestSosModelBuilder():
         builder = SosModelBuilder()
         builder.add_timesteps([2010])
         builder.add_planning([])
+        builder.load_region_sets({'LSOA': setup_region_data['features']})
+        interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+        builder.load_interval_sets({'annual': interval_data})
 
         a_model = WaterSupplySectorModel()
         a_model.name = "a_model"
@@ -611,8 +715,7 @@ class TestSosModelBuilder():
         b_model.outputs = b_outputs
         builder.add_model(b_model)
 
-        with raises(NotImplementedError):
-            builder.finish()
+        builder.finish()
 
     def test_nest_scenario_data(self, setup_country_data):
         data = {
