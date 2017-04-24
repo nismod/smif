@@ -34,18 +34,17 @@ Releases
 --------
 
 `smif`_ is deployed as a package on the Python Package Index, PyPI. A full guide
-to packaging and distributing projects is `available online
-<https://packaging.python.org/distributing/>`.
+to `packaging`_ and distributing projects is available online.
 
 Deployment to PyPI is handled by Travis CI.
 
-To make a release, create an annotated tag, and submit a pull request.
+To make a release, create an annotated tag, and submit a pull request::
 
     git tag -a v0.2.0       # create annotated tag (will need a message)
     git describe            # show current commit in relation to tags
 
 You'll need to specify you tag to push either using the ``--tags`` flag or
-the tag name
+the tag name::
 
     git push upstream master --tags
     git push upstream v0.2.0        # alternatively
@@ -64,6 +63,7 @@ of the repository using::
     pre-commit install
 
 
+.. _packaging: https://packaging.python.org/distributing/
 .. _github.com/nismod/smif: https://github.com/nismod/smif
 .. _pytest: http://doc.pytest.org/en/latest/
 .. _semantic versioning: http://semver.org/
