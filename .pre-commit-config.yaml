@@ -1,5 +1,5 @@
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: c847dd3f2e7260830b6fc66a6a3ed7a837e3bdb1
+    sha: 5bf6c09bfa1297d3692cadd621ef95f1284e33c0
     hooks:
     -   id: trailing-whitespace
     -   id: check-added-large-files
@@ -12,7 +12,7 @@
         args:
         - --exclude=docs/conf.py --ignore F401,F811 tests
 -   repo: git://github.com/FalconSocial/pre-commit-python-sorter
-    sha: 5991d2aea26858d3c3538e0b4e09255b6b99413e
+    sha: b57843b0b874df1d16eb0bef00b868792cb245c2
     hooks:
     -   id: python-import-sorter
         args:
