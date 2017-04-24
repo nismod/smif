@@ -1,32 +1,35 @@
-# Travis configuration file using the build matrix feature
-# Read more under http://docs.travis-ci.com/user/build-configuration/
-# THIS SCRIPT IS SUPPOSED TO BE AN EXAMPLE. MODIFY IT ACCORDING TO YOUR NEEDS!
-
 sudo: false
 language: python
 virtualenv:
   system_site_packages: true
 env:
   matrix:
-    - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
+  - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
 install:
-  - source tests/travis_install.sh
-  - pip install git+https://github.com/behave/behave
-  - pip install -r test-requirements.txt
+- source tests/travis_install.sh
+- pip install git+https://github.com/behave/behave
+- pip install -r test-requirements.txt
 before_script:
-  - git config --global user.email "william.usher@ouce.ox.ac.uk"
-  - git config --global user.name "Will Usher"
+- git config --global user.email "william.usher@ouce.ox.ac.uk"
+- git config --global user.name "Will Usher"
 script:
-  - python setup.py develop
-  - python setup.py test
-  - python setup.py behave_test
+- python setup.py develop
+- python setup.py test
+- python setup.py behave_test
 after_success:
-  - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
+- if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 cache:
-  - apt
+- apt
 notifications:
   email: false
 addons:
   apt:
     packages:
-      - glpk
+    - glpk
+deploy:
+  provider: pypi
+  user: willu47
+  on:
+    tags: true
+  password:
+    secure: QMt3+RxagFHy2yl2AEXuIxF8YzDUIG6VfAET6UhoU5fYyZ0A1+CO9wCOrXdfiv6yq1ToSXRpWdxxGb8Bp7SgvBzG/W/h+ftJYul6Rc4feMgvA5OWk86V3bLpuvyBaGX58JmHKzoBR4mWCr6AO1kl2qaHb/qhDuQfBrrKnabbF17nMFVafRPMPYbscQufUsRn9ehL8cqVE2VbKZRI8ATccuHTEKavgzBJrCVt6gmRksgtP0ho0aSsCBNZgmE2ZGhMSS7TcIfN00OSRoPBIEwEMIEIl8z5zZvTlMmPS79945J65bqlT2OJbmw66Q5bzSc5PfyQsT1ida7KAODCrWkBQRt9BX07S6mivOokEuKKoAH5AW23WilcP0JTA42v16oN3IJNdIbZxexz9uYEkrQCJG2pkgTit+rwAJj3NoC+eiOdd19tuH4nsWvAwjGWHPtk+Qygw3IZxK7kK5dG4XsZPwvkufuBWije26EvLooY49Xj/opAf++VgCTyDegLRu9wDogGVCBaoKcq6A7GyxQEHcB0EfEfcKaBI03tXFgPs6aVdO568pPoHTUa2ZLjdW3iFfyn7PY5dtPAXQqjOvgmnKPCK4e9Ws+DztXA5/uoxmOjDs52MuBma2sv7hxkN2uSMdy9nsG6sL749Nv5BQWNj8kpwjVzRZJda03zCyoBDzI=
