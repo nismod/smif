@@ -35,38 +35,20 @@ Releases
 
 `smif`_ is deployed as a package on the Python Package Index, PyPI. A full guide
 to packaging and distributing projects is `available online
-<https://packaging.python.org/distributing/>`
+<https://packaging.python.org/distributing/>`.
 
-To make a release, first register with `PyPI`_ and contact a project owner
-(currently Will Usher or Tom Russell) to be made a maintainer.
+Deployment to PyPI is handled by Travis CI.
 
-Set up a `.pypirc` file in your home directory with your access details::
-
-    [distutils]
-    index-servers =
-        pypi
-
-    [pypi]
-    repository: https://pypi.python.org/pypi
-    username: <username>
-    password: <password>
-
-Create an annotated tag for release::
+To make a release, create an annotated tag, and submit a pull request.
 
     git tag -a v0.2.0       # create annotated tag (will need a message)
     git describe            # show current commit in relation to tags
-    git push origin v0.2.0  # push the tag to the origin remote repository
 
-Create a source distribution (this creates a gzipped package in `dist`)::
+You'll need to specify you tag to push either using the ``--tags`` flag or
+the tag name
 
-    python setup.py sdist
-    ls dist/
-
-Use twine to upload the distribution::
-
-    pip install twine
-    twine upload dist/smif-0.2.0.tar.gz
-
+    git push upstream master --tags
+    git push upstream v0.2.0        # alternatively
 
 
 Conventions
