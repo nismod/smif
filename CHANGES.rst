@@ -2,6 +2,16 @@
 Changelog
 =========
 
+Version 0.3
+===========
+
+- Fast, more compact YAML
+- Input, output and pre-specified planning files can now be empty
+- State is passed between successive time steps
+- Interdependencies (cycles in dependencies) are now supported, 
+  models are run in cycles stopping at convergence or timeout
+- Non-unique time interval definitions are supported
+
 Version 0.2
 ===========
 
