@@ -118,20 +118,28 @@ which implements :class:`smif.sector_model.SectorModel`.
 
 The key methods which need to be overridden are:
 
+- :py:meth:`smif.sector_model.SectorModel.initialise`
 - :py:meth:`smif.sector_model.SectorModel.simulate`
 - :py:meth:`smif.sector_model.SectorModel.extract_obj`
 
-The path to the location of the ``run.py`` file should be entered in the
+The wrapper should be written in a python file, e.g. ``run.py``.
+The path to the location of this ``run.py`` file should be entered in the
 ``model.yaml`` file under the ``path`` key
 (see System-of-Systems Model File above).
 
 To integrate an infrastructure simulation model within the system-of-systems
-modelling framework, it is also necessary to provide the following configuration
+modelling framework, it is also necessary to provide the configuration
 data.
+This configuration data includes definitions of the spatial and temporal resolutions 
+of the input and output data to and from the models. 
+This enables the framework to convert data from one spatio-temporal resolution 
+to another.
 
 Geographies
 -----------
 Define the set of unique regions which are used within the model as polygons.
+The spatial resolution of the model may be implicit, and even a national model
+needs to have a national region defined.
 Inputs and outputs are assigned a model-specific geography from this list
 allowing automatic conversion from and to these geographies.
 
@@ -181,19 +189,19 @@ use ISO 8601 [1]_ duration format to specify periods::
 For example::
 
     - end: P7225H
-      name: '1_0'
+      id: '1_0'
       start: P7224H
     - end: P7226H
-      name: '1_1'
+      id: '1_1'
       start: P7225H
     - end: P7227H
-      name: '1_2'
+      id: '1_2'
       start: P7226H
     - end: P7228H
-      name: '1_3'
+      id: '1_3'
       start: P7227H
     - end: P7229H
-      name: '1_4'
+      id: '1_4'
       start: P7228H
 
 Inputs
@@ -266,20 +274,20 @@ The ``temporal_resolution`` attribute allows the use of time intervals in the sc
 are at a different temporal resolution to that expected by the sector model.  In this case,
 both electricity_demand and gas_demand are linked to the same ``annual_interval.yaml`` file.
 
-The scenario data should contain entries for (time_interval) ``name``, region, value,
+The scenario data should contain entries for (time_interval) ``id``, region, value,
 units and timestep (year).  For example::
 
-      - name: 1_0
+      - interval: 1_0
         region: "England"
         value: 23.48
         units: GW
         year: 2015
-      - name: 1_1
+      - interval: 1_1
         region: "England"
         value: 17.48
         units: GW
         year: 2015
-        - name: 1_2
+      - interval: 1_2
         region: "England"
         value: 16.48
         units: GW
