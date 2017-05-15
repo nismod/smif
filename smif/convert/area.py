@@ -3,6 +3,7 @@
 import logging
 from collections import defaultdict, namedtuple
 
+import numpy as np
 from rtree import index
 from shapely.geometry import shape
 
@@ -99,16 +100,24 @@ class RegionRegister(object):
 
         Parameters
         ----------
-        data: dict
+        data: numpy.ndarray with dimension regions
         from_set_name: str
         to_set_name: str
 
         """
-        converted = defaultdict(float)
-        for from_key, from_value in data.items():
-            coefficents = self._conversions[from_set_name][to_set_name][from_key]
-            for to_key, coef in coefficents:
-                converted[to_key] += coef*from_value
+        from_set = self._register[from_set_name]
+        from_set_names = [region.name for region in from_set]
+        to_set = self._register[to_set_name]
+        to_set_names = [region.name for region in to_set]
+
+        converted = np.zeros(len(to_set))
+        coefficents = self._conversions[from_set.name][to_set.name]
+
+        for from_region_name, from_value in zip(from_set_names, data):
+            for to_region_name, coef in coefficents[from_region_name]:
+                to_region_idx = to_set_names.index(to_region_name)
+                converted[to_region_idx] += coef*from_value
+
         return converted
 
     def _generate_coefficients(self, set_a, set_b):
@@ -123,8 +132,8 @@ class RegionRegister(object):
         with each given from_region::
 
             {
-                to_region.name: [
-                    (from_region.name, proportion),
+                from_region.name: [
+                    (to_region.name, proportion),
                     # ...
                 ],
                 # ...
