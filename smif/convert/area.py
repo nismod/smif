@@ -1,7 +1,7 @@
 """Handles conversion between the sets of regions used in the `SosModel`
 """
 import logging
-from collections import defaultdict, namedtuple
+from collections import OrderedDict, defaultdict, namedtuple
 
 import numpy as np
 from rtree import index
@@ -64,12 +64,12 @@ class RegionRegister(object):
     between data values relating to compatible sets of regions.
     """
     def __init__(self):
-        self._register = {}
+        self._register = OrderedDict()
         self._conversions = defaultdict(dict)
         self.logger = logging.getLogger(__name__)
 
     @property
-    def region_set_names(self):
+    def names(self):
         """Names of registered region sets
 
         Returns
@@ -89,7 +89,7 @@ class RegionRegister(object):
     def register(self, region_set):
         """Register a set of regions as a source/target for conversion
         """
-        already_registered = self.region_set_names
+        already_registered = self.names
         self._register[region_set.name] = region_set
         for other_set_name in already_registered:
             self._generate_coefficients(region_set, self._register[other_set_name])

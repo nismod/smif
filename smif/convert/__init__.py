@@ -7,6 +7,7 @@ The :meth:`~SpaceTimeConvertor.convert` method returns a new
 :class:`numpy.ndarray` for passing to a sector model.
 """
 import logging
+import numpy as np
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -44,7 +45,7 @@ class SpaceTimeConvertor(object):
         Parameters
         ----------
         data: numpy.ndarray
-            An array of values with dimensions intervals x regions
+            An array of values with dimensions regions x intervals
         from_spatial: str
             The name of the spatial resolution of the data
         to_spatial: str
@@ -52,25 +53,25 @@ class SpaceTimeConvertor(object):
         from_temporal: str
             The name of the temporal resolution of the data
         to_temporal: str
-            The name of the required temproal resolution
+            The name of the required temporal resolution
 
         Returns
         -------
         numpy.ndarray
             An array of data with dimensions regions x intervals
         """
-        assert from_spatial in self.regions.region_set_names, \
+        assert from_spatial in self.regions.names, \
             "Cannot convert from spatial resolution {}".format(from_spatial)
-        assert to_spatial in self.regions.region_set_names, \
+        assert to_spatial in self.regions.names, \
             "Cannot convert to spatial resolution {}".format(to_spatial)
-        assert from_temporal in self.intervals.interval_set_names, \
+        assert from_temporal in self.intervals.names, \
             "Cannot convert from temporal resolution {}".format(from_temporal)
-        assert to_temporal in self.intervals.interval_set_names, \
+        assert to_temporal in self.intervals.names, \
             "Cannot convert to temporal resolution {}".format(to_temporal)
 
         if from_spatial != to_spatial and from_temporal != to_temporal:
-            converted = self.regions.convert(
-                self.intervals.convert(
+            converted = self._convert_regions(
+                self._convert_intervals(
                     data,
                     from_temporal,
                     to_temporal
@@ -79,13 +80,13 @@ class SpaceTimeConvertor(object):
                 to_spatial
             )
         elif from_temporal != to_temporal:
-            converted = self.intervals.convert(
+            converted = self._convert_intervals(
                 data,
                 from_temporal,
                 to_temporal
             )
         elif from_spatial != to_spatial:
-            converted = self.regions.convert(
+            converted = self._convert_regions(
                 data,
                 from_spatial,
                 to_spatial
@@ -93,4 +94,30 @@ class SpaceTimeConvertor(object):
         else:
             converted = data
 
+        return converted
+
+    def _convert_regions(self, data, from_spatial, to_spatial):
+        """Slice, convert and compose regions
+        """
+        num_regions = len(self.regions.get_regions_in_set(to_spatial))
+        num_intervals = data.shape[1]
+        converted = np.empty((num_regions, num_intervals))
+
+        # transpose data and iterate through 2nd dimension
+        for idx, region_slice in enumerate(data.transpose()):
+            converted[:, idx] = self.regions.convert(region_slice, from_spatial, to_spatial)
+        return converted
+
+    def _convert_intervals(self, data, from_temporal, to_temporal):
+        """Slice, convert and compose intervals
+        """
+        num_regions = data.shape[0]
+        num_intervals = len(self.intervals.get_intervals_in_set(to_temporal))
+        converted = np.empty((num_regions, num_intervals))
+
+        for idx, interval_slice in enumerate(data):
+            converted[idx, :] = self.intervals.convert(
+                interval_slice,
+                from_temporal,
+                to_temporal)
         return converted

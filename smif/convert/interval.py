@@ -356,7 +356,7 @@ class TimeIntervalRegister:
 
     def __init__(self, base_year=2010):
         self._base_year = base_year
-        self._register = {}
+        self._register = OrderedDict()
         self.logger = logging.getLogger(__name__)
 
     @property
@@ -409,7 +409,6 @@ class TimeIntervalRegister:
         self._register[set_name] = OrderedDict()
 
         for interval in intervals:
-
             name = interval['id']
             self.logger.debug("Adding interval '%s' to set '%s'", name, set_name)
 

@@ -25,6 +25,27 @@ def months():
 
 
 @fixture(scope='function')
+def monthly_data():
+    """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    """
+    data = np.array([
+        31,
+        28,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ])
+    return data
+
+
+@fixture(scope='function')
 def remap_months():
     """Remapping four representative months to months across the year
 
@@ -55,7 +76,7 @@ def remap_months():
 
 
 @fixture(scope='function')
-def data_remap():
+def remap_month_data():
     return np.array([
         30+31+31,
         28+31+30,
@@ -65,7 +86,7 @@ def data_remap():
 
 
 @fixture(scope='function')
-def expected_data_remap():
+def remap_month_data_as_months():
     data = np.array([
         30.666666666,
         29.666666666,
@@ -84,27 +105,6 @@ def expected_data_remap():
 
 
 @fixture(scope='function')
-def monthly_data():
-    """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    """
-    data = np.array([
-        31,
-        28,
-        31,
-        30,
-        31,
-        30,
-        31,
-        31,
-        30,
-        31,
-        30,
-        31,
-    ])
-    return data
-
-
-@fixture(scope='function')
 def seasons():
     # NB "winter" is split into two pieces around the year end
     return [{'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
@@ -112,6 +112,16 @@ def seasons():
             {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
             {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'},
             {'id': 'winter', 'start': 'P11M', 'end': 'P12M'}]
+
+
+@fixture(scope='function')
+def monthly_data_as_seasons():
+    return np.array([
+        31 + 31 + 28,
+        31 + 30 + 31,
+        30 + 31 + 31,
+        30 + 31 + 30
+    ], dtype=float)
 
 
 @fixture(scope='function')
@@ -306,18 +316,14 @@ class TestTimeRegisterConversion:
     def test_convert_from_month_to_seasons(self,
                                            months,
                                            seasons,
-                                           monthly_data):
+                                           monthly_data,
+                                           monthly_data_as_seasons):
         register = TimeIntervalRegister()
         register.register(months, 'months')
         register.register(seasons, 'seasons')
 
         actual = register.convert(monthly_data, 'months', 'seasons')
-        expected = np.array([
-            31. + 31 + 28,
-            31. + 30 + 31,
-            30. + 31 + 31,
-            30. + 31 + 30
-        ])
+        expected = monthly_data_as_seasons
         assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
 
     def test_convert_from_hour_to_day(self, twenty_four_hours, one_day):
@@ -434,15 +440,15 @@ class TestRemapConvert:
 
     def test_remap_timeslices_to_months(self,
                                         months,
-                                        expected_data_remap,
+                                        remap_month_data_as_months,
                                         remap_months,
-                                        data_remap):
+                                        remap_month_data):
         register = TimeIntervalRegister()
         register.register(months, 'months')
         register.register(remap_months, 'remap_months')
 
-        actual = register.convert(data_remap, 'remap_months', 'months')
-        expected = expected_data_remap
+        actual = register.convert(remap_month_data, 'remap_months', 'months')
+        expected = remap_month_data_as_months
 
         assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
 
@@ -450,13 +456,13 @@ class TestRemapConvert:
                                         months,
                                         monthly_data,
                                         remap_months,
-                                        data_remap):
+                                        remap_month_data):
         register = TimeIntervalRegister()
         register.register(months, 'months')
         register.register(remap_months, 'remap_months')
 
         actual = register.convert(monthly_data, 'months', 'remap_months')
-        expected = data_remap
+        expected = remap_month_data
 
         assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
 

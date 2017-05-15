@@ -1,5 +1,4 @@
 import numpy as np
-from pytest import approx, fixture
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister
 from smif.convert.interval import TimeIntervalRegister
@@ -8,46 +7,12 @@ from test_interval import (months, one_day, remap_months, seasons,
                            twenty_four_hours)
 
 
-@fixture(scope='function')
-def data_remap():
-    data = np.array([
-        [
-            30+31+31,
-            28+31+30,
-            28+31+30,
-            30+31+31,
-        ]
-    ])
-    return data
+class TestSpaceTimeConvertor_TimeOnly:
 
-
-@fixture(scope='function')
-def expected_stv_remap():
-    data = np.array([
-        [
-            30.666666666,
-            29.666666666,
-            29.666666666,
-            29.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-        ]
-    ])
-    return data
-
-
-@fixture(scope='function')
-def monthly_data():
-    """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    """
-    data = np.array([
-        [
+    def test_one_region_pass_through_time(self, months, regions_half_squares):
+        """Only one region, 12 months, neither space nor time conversion is required
+        """
+        data = np.array([[
             31,
             28,
             31,
@@ -59,18 +24,8 @@ def monthly_data():
             30,
             31,
             30,
-            31,
-        ]
-    ])
-    return data
-
-
-class TestSpaceTimeConvertor_TimeOnly:
-
-    def test_one_region_pass_through_time(self, months, seasons, regions_half_squares, monthly_data):
-        """Only one region, 12 months, neither space nor time conversion is required
-        """
-        data = monthly_data
+            31
+        ]], dtype=float)
 
         intervals = TimeIntervalRegister()
         intervals.register(months, 'months')
@@ -87,13 +42,32 @@ class TestSpaceTimeConvertor_TimeOnly:
             'months',
             'months'
         )
-        assert actual == data
+        assert np.allclose(actual, data)
 
-    def test_one_region_time_aggregation(self, months, seasons, regions_half_squares, monthly_data, data_remap):
+    def test_one_region_time_aggregation(self, months, seasons, regions_half_squares):
         """Only one region, time aggregation is required
         """
-        data = monthly_data  # area a, months 1-12
-        expected = data_remap  # area a, seasons 1-4
+        data = np.array([[
+            31,
+            28,
+            31,
+            30,
+            31,
+            30,
+            31,
+            31,
+            30,
+            31,
+            30,
+            31
+        ]], dtype=float)  # area a, months 1-12
+
+        expected = np.array([[
+            31 + 31 + 28,
+            31 + 30 + 31,
+            30 + 31 + 31,
+            30 + 31 + 30
+        ]], dtype=float)  # area a, seasons 1-4
 
         intervals = TimeIntervalRegister()
         intervals.register(months, 'months')
@@ -111,7 +85,7 @@ class TestSpaceTimeConvertor_TimeOnly:
             'months',
             'seasons'
         )
-        assert actual == expected
+        assert np.allclose(actual, expected)
 
     def test_two_region_time_aggregation(self, months, seasons, regions_half_squares):
         """Two regions, time aggregation by region is required
@@ -147,8 +121,7 @@ class TestSpaceTimeConvertor_TimeOnly:
                 30+1,
                 31+1,
             ]
-        ])
-
+        ], dtype=float)
 
         intervals = TimeIntervalRegister()
         intervals.register(months, 'months')
@@ -168,24 +141,20 @@ class TestSpaceTimeConvertor_TimeOnly:
 
         expected = np.array([
             [
-                31. + 31 + 28,
-                31. + 30 + 31,
-                30. + 31 + 31,
-                30. + 31 + 30,
+                31 + 31 + 28,
+                31 + 30 + 31,
+                30 + 31 + 31,
+                30 + 31 + 30,
             ],
             [
-                31. + 31 + 28 + 3,
-                31. + 30 + 31 + 3,
-                30. + 31 + 31 + 3,
-                30. + 31 + 30 + 3,
+                31 + 31 + 28 + 3,
+                31 + 30 + 31 + 3,
+                30 + 31 + 31 + 3,
+                30 + 31 + 30 + 3,
             ]
-        ])
+        ], dtype=float)
 
-        for act, exp in zip(actual, expected):
-            assert act.region == exp.region
-            assert act.interval == exp.interval
-            assert act.value == approx(exp.value)
-            assert act.units == exp.units
+        assert np.allclose(actual, expected)
 
     def test_one_region_convert_from_hour_to_day(self, regions_half_squares,
                                                  twenty_four_hours, one_day):
@@ -210,16 +179,20 @@ class TestSpaceTimeConvertor_TimeOnly:
             'one_day'
         )
         expected = np.array([[24]])  # area a, day 0
-        assert actual == expected
+        assert np.allclose(actual, expected)
 
     def test_remap_timeslices_to_months(self,
                                         months,
-                                        expected_stv_remap,
                                         remap_months,
-                                        data_remap,
                                         regions_half_squares):
         """One region, time remapping required
         """
+        data = np.array([[
+            30+31+31,
+            28+31+30,
+            31+31+30,
+            30+31+31
+        ]], dtype=float)
         intervals = TimeIntervalRegister()
         intervals.register(months, 'months')
         intervals.register(remap_months, 'remap_months')
@@ -229,24 +202,48 @@ class TestSpaceTimeConvertor_TimeOnly:
 
         convertor = SpaceTimeConvertor(regions, intervals)
         actual = convertor.convert(
-            data_remap,
+            data,
             'half_squares',
             'half_squares',
             'remap_months',
             'months',
         )
-        expected = expected_stv_remap
-        assert actual == expected
-
+        expected = np.array([
+            30.666666666,
+            29.666666666,
+            29.666666666,
+            29.666666666,
+            30.666666666,
+            30.666666666,
+            30.666666666,
+            30.666666666,
+            30.666666666,
+            30.666666666,
+            30.666666666,
+            30.666666666
+        ], dtype=float)
+        assert np.allclose(actual, expected)
 
     def test_remap_months_to_timeslices(self,
                                         months,
-                                        monthly_data,
                                         remap_months,
-                                        data_remap,
                                         regions_half_squares):
         """One region, time remapping required
         """
+        data = np.array([[
+            31,
+            28,
+            31,
+            30,
+            31,
+            30,
+            31,
+            31,
+            30,
+            31,
+            30,
+            31
+        ]], dtype=float)
         intervals = TimeIntervalRegister()
         intervals.register(months, 'months')
         intervals.register(remap_months, 'remap_months')
@@ -256,14 +253,19 @@ class TestSpaceTimeConvertor_TimeOnly:
 
         convertor = SpaceTimeConvertor(regions, intervals)
         actual = convertor.convert(
-            monthly_data,
+            data,
             'half_squares',
             'half_squares',
             'months',
             'remap_months'
         )
-        expected = data_remap
-        assert actual == expected
+        expected = np.array([[
+            30+31+31,
+            28+31+30,
+            31+31+30,
+            30+31+31
+        ]], dtype=float)
+        assert np.allclose(actual, expected)
 
 
 class TestSpaceTimeConvertor_RegionOnly:
@@ -294,7 +296,7 @@ class TestSpaceTimeConvertor_RegionOnly:
             'months'
         )
         expected = np.ones((1, 12))  # area zero, months 1-12
-        assert actual == expected
+        assert np.allclose(actual, expected)
 
     def test_one_region_convert_from_hour_to_day(self, regions_half_squares,
                                                  regions_rect,
@@ -320,7 +322,7 @@ class TestSpaceTimeConvertor_RegionOnly:
             'one_day'
         )
         expected = np.array([[48]])  # area zero, single interval
-        assert actual == expected
+        assert np.allclose(actual, expected)
 
 
 class TestSpaceTimeConvertorBoth:
@@ -349,4 +351,4 @@ class TestSpaceTimeConvertorBoth:
             'seasons'
         )
         expected = np.ones((1, 4)) * 3  # area zero, seasons 1-4
-        assert actual == expected
+        assert np.allclose(actual, expected)

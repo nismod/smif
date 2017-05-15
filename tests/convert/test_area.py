@@ -175,7 +175,7 @@ class TestRegionRegister():
     """
     def test_create(self):
         rreg = RegionRegister()
-        assert rreg.region_set_names == []
+        assert rreg.names == []
 
         with raises(ValueError) as ex:
             rreg.get_regions_in_set('nonexistent')
