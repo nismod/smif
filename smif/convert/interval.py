@@ -14,10 +14,6 @@ This class exposes one public method,
 :py:meth:`~TimeIntervalRegister.add_interval_set` which allows the SosModel
 to add an interval definition from a model configuration to the register.
 
-:class:`TimeSeries` is used to encapsulate any data associated with a
-time interval definition set, and handles conversion from the current time
-interval resolution to a target time interval definition held in the register.
-
 Quantities
 ----------
 Quantities are associated with a duration, period or interval.
@@ -174,7 +170,6 @@ class Interval(object):
             "Interval 'id' starts at hour 0 and ends at hour 1"
 
     """
-
     def __init__(self, name, list_of_intervals, base_year=BASE_YEAR):
         self._name = name
         self._baseyear = base_year
@@ -207,6 +202,13 @@ class Interval(object):
 
     @property
     def name(self):
+        """The name (or id) of the interval(s)
+
+        Returns
+        -------
+        str
+            Name or ID
+        """
         return self._name
 
     @property
@@ -230,9 +232,10 @@ class Interval(object):
 
         Returns
         -------
-        list
-            A list of integers, representing the hour from the beginning of the
-            year associated with the end of each of the intervals
+        int or list
+            An integer or list of integers, representing the hour from the
+            beginning of the year associated with the end of each of the
+            intervals
         """
         if len(self._interval) == 1:
             return self._interval[0][1]
@@ -243,8 +246,7 @@ class Interval(object):
     def interval(self):
         """The list of intervals
 
-        Setter appends a tuple or list of intervals to the
-        list of intervals
+        Setter appends a tuple or list of intervals to the list of intervals
         """
         return sorted(self._interval)
 
@@ -342,32 +344,6 @@ class Interval(object):
         return array
 
 
-class TimeSeries(object):
-    """A series of values associated with an interval definition
-
-    Parameters
-    ----------
-    data: list
-        A list of dicts, each entry containing 'name' and 'value' keys
-    """
-    def __init__(self, data):
-        self.logger = logging.getLogger(__name__)
-        values = []
-        name_list = []
-        for row in data:
-            name_list.append(row['id'])
-            values.append(row['value'])
-        self.names = name_list
-        self.values = values
-        self._hourly_values = np.zeros(8760, dtype=np.float64)
-
-    @property
-    def hourly_values(self):
-        """The timeseries resampled to hourly values
-        """
-        return self._hourly_values
-
-
 class TimeIntervalRegister:
     """Holds the set of time-intervals used by the SectorModels
 
@@ -384,7 +360,7 @@ class TimeIntervalRegister:
         self.logger = logging.getLogger(__name__)
 
     @property
-    def interval_set_names(self):
+    def names(self):
         """A list of the interval set names contained in the register
 
         Returns
@@ -462,71 +438,67 @@ class TimeIntervalRegister:
             msg = "The interval set '{}' is not in the register"
             raise ValueError(msg.format(interval))
 
-    def convert(self, timeseries, from_interval, to_interval):
+    def convert(self, data, from_interval_set_name, to_interval_set_name):
         """Convert some data to a time_interval type
 
         Parameters
         ----------
-        timeseries: :class:`~smif.convert.interval.TimeSeries`
+        data: :class:`numpy.ndarray`
             The timeseries to convert from `from_interval` to `to_interval`
-        from_interval: str
+        from_interval_set_name: str
             The unique identifier of a interval type which matches the
             timeseries
-        to_interval: str
+        to_interval_set_name: str
             The unique identifier of a registered interval type
 
         Returns
         -------
-        dict
-            A dictionary with keys `name` and `value`, where the entries
-            for `key` are the name of the target time interval, and the
-            values are the resampled timeseries values.
+        :class:`numpy.ndarray`
+            An array of the resampled timeseries values.
 
         """
-        results = []
+        from_interval_set = self.get_intervals_in_set(from_interval_set_name)
+        to_interval_set = self.get_intervals_in_set(to_interval_set_name)
 
-        self._check_interval_in_register(from_interval)
-        self._convert_to_hourly_buckets(timeseries, from_interval)
+        converted = np.zeros(len(to_interval_set))
+        hourly_values = self._convert_to_hourly_buckets(data, from_interval_set)
 
-        target_intervals = self.get_intervals_in_set(to_interval)
-        for name, interval in target_intervals.items():
-            self.logger.debug("Resampling to %s", name)
+        for idx, interval in enumerate(to_interval_set.values()):
             interval_tuples = interval.to_hours()
-
-            total = 0
 
             for lower, upper in interval_tuples:
                 self.logger.debug("Range: %s-%s", lower, upper)
-                total += sum(timeseries.hourly_values[lower:upper])
+                converted[idx] += sum(hourly_values[lower:upper])
 
-            results.append({'id': name,
-                            'value': total})
-
-        return results
+        return converted
 
     def _convert_to_hourly_buckets(self, timeseries, interval_set):
         """Iterates through the `timeseries` and assigns values to hourly buckets
 
         Parameters
         ----------
-        timeseries: :class:`~smif.convert.interval.TimeSeries`
+        timeseries: :class:`numpy.ndarray`
             The timeseries to convert to hourly buckets ready for further
             operations
-        interval_set: str
-            The name of the interval set associated with the timeseries
+        interval_set: list of :class:`smif.convert.Interval`
+            The interval set associated with the timeseries
 
         """
-        for name, value in zip(timeseries.names, timeseries.values):
-            list_of_intervals = self._register[interval_set][name].to_hours()
+        hourly_values = np.zeros(8760)
+
+        for value, interval in zip(timeseries, interval_set.values()):
+            list_of_intervals = interval.to_hours()
             divisor = len(list_of_intervals)
             for lower, upper in list_of_intervals:
                 self.logger.debug("lower: %s, upper: %s", lower, upper)
                 number_hours_in_range = upper - lower
                 self.logger.debug("number_hours: %s", number_hours_in_range)
 
-                apportioned_value = float(value) / number_hours_in_range
+                apportioned_value = value / number_hours_in_range
                 self.logger.debug("apportioned_value: %s", apportioned_value)
-                timeseries.hourly_values[lower:upper] = apportioned_value / divisor
+                hourly_values[lower:upper] = apportioned_value / divisor
+
+        return hourly_values
 
     def _get_hourly_array(self, set_name):
         """
