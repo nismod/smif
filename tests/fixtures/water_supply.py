@@ -33,9 +33,9 @@ Around each of the above simulation models, subclassed wrappers based on
 
 import logging
 import math
+import numpy as np
 
 from pytest import fixture
-from smif import SpaceTimeValue
 from smif.sector_model import SectorModel
 
 __author__ = "Will Usher, Tom Russell"
@@ -102,7 +102,7 @@ class WaterSupplySectorModel(SectorModel):
         state: list
         data: dict
             A dict of parameters, as define by inputs.yaml, each entry of which
-            contains a list of :class:`smif.SpaceTimeValue`
+            contains a :class:`numpy.ndarray` with dimension regions x intervals
 
         """
 
@@ -110,15 +110,9 @@ class WaterSupplySectorModel(SectorModel):
         self.logger.debug(data)
 
         if 'raininess' in data:
-            scenario_data = data['raininess'][0]
-            assert scenario_data.region == 'oxford'
-            assert scenario_data.interval == 1
-            raininess = scenario_data.value
+            raininess = data['raininess'][0, 0]
         elif 'water' in data:
-            scenario_data = data['water'][0]
-            assert scenario_data.region == 'oxford'
-            assert scenario_data.interval == 1
-            raininess = scenario_data.value
+            raininess = data['water'][0, 0]
         else:
             raise KeyError("Couldn't find parameter in {}".format(data))
 
@@ -138,22 +132,12 @@ class WaterSupplySectorModel(SectorModel):
         instance_results = instance.simulate()
         state = []
         results = {
-            'water': [
-                SpaceTimeValue(
-                    'oxford',
-                    1,
-                    instance_results['water'],
-                    'Ml'
-                )
-            ],
-            'cost': [
-                SpaceTimeValue(
-                    'oxford',
-                    1,
-                    instance_results['cost'],
-                    '£M'
-                )
-            ]
+            'water': np.array([[
+                instance_results['water']
+            ]]),
+            'cost': np.array([[
+                instance_results['cost']
+            ]])
         }
         return state, results
 
