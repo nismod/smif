@@ -265,7 +265,7 @@ class SosModel(object):
         new_data = {}
         timestep_idx = self.timesteps.index(timestep)
 
-        for dependency in model.inputs.parameters:
+        for dependency in model.inputs.metadata:
             name = dependency.name
             provider = self.outputs[name]
 
@@ -494,7 +494,7 @@ class SosModel(object):
         """
         parameter_model_map = defaultdict(list)
         for model_name, model in self.models.items():
-            for dep in model.inputs.parameters:
+            for dep in model.inputs.metadata:
                 parameter_model_map[dep.name].append(model_name)
         return parameter_model_map
 
@@ -509,7 +509,7 @@ class SosModel(object):
         """
         parameter_model_map = defaultdict(list)
         for model_name, model_data in self.models.items():
-            for output in model_data.outputs.parameters:
+            for output in model_data.outputs.metadata:
                 parameter_model_map[output.name].append(model_name)
 
         for name in self.resolution_mapping['scenario'].keys():
@@ -601,7 +601,7 @@ class ModelSet(object):
         else:
             # generate zero-values for each parameter/region/interval combination
             results = {}
-            for output in model.outputs.parameters:
+            for output in model.outputs.metadata:
                 regions = self._sos_model.regions.get_regions_in_set(
                     output.spatial_resolution)
                 intervals = self._sos_model.intervals.get_intervals_in_set(
@@ -660,7 +660,7 @@ class ModelSet(object):
         """
         latest_results = results[-1]
         previous_results = results[-2]
-        param_names = [param.name for param in model.outputs.parameters]
+        param_names = [param.name for param in model.outputs.metadata]
 
         return all(
             np.allclose(
@@ -1090,7 +1090,7 @@ class SosModelBuilder(object):
         dependency_graph.add_nodes_from(models_available)
 
         for model_name, model in self.sos_model.models.items():
-            for dep in model.inputs.parameters:
+            for dep in model.inputs.metadata:
                 providers = self.sos_model.outputs[dep.name]
                 msg = "Dependency '%s' provided by '%s'"
                 self.logger.debug(msg, dep.name, providers)

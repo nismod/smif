@@ -27,12 +27,13 @@ def one_dependency():
     dependency
     """
     inputs = [
-            {
-                'name': 'macguffins produced',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual'
-            }
-        ]
+        {
+            'name': 'macguffins produced',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual',
+            'units': 'count'
+        }
+    ]
 
     return inputs
 
@@ -411,7 +412,8 @@ def setup_scenario_data(setup_folder_structure):
                 'parameter': 'population',
                 'file': '../data/population.yaml',
                 'spatial_resolution': 'national',
-                'temporal_resolution': 'annual'
+                'temporal_resolution': 'annual',
+                'units': 'million people'
             }
         ],
         'timesteps': 'timesteps.yaml',
@@ -938,9 +940,12 @@ class WaterSupplySectorModel(SectorModel):
 def setup_water_inputs(setup_folder_structure):
     base_folder = setup_folder_structure
     filename = base_folder.join('data', 'water_supply', 'inputs.yaml')
-    contents = [{'name': 'reservoir pumpiness',
-                 'spatial_resolution': 'LSOA',
-                 'temporal_resolution': 'annual'}]
+    contents = [{
+        'name': 'reservoir pumpiness',
+        'spatial_resolution': 'LSOA',
+        'temporal_resolution': 'annual',
+        'units': 'magnitude'
+    }]
     yaml_contents = yaml.dump(contents)
     filename.write(yaml_contents, ensure=True)
 
@@ -948,22 +953,25 @@ def setup_water_inputs(setup_folder_structure):
 @fixture(scope='function')
 def water_outputs_contents():
     contents = [
-            {
-                'name': 'storage_state',
-                'spatial_resolution': 'national',
-                'temporal_resolution': 'annual'
-            },
-            {
-                'name': 'storage_blobby',
-                'spatial_resolution': 'national',
-                'temporal_resolution': 'annual'
-            },
-            {
-                'name': 'total_water_demand',
-                'spatial_resolution': 'national',
-                'temporal_resolution': 'annual'
-            }
-        ]
+        {
+            'name': 'storage_state',
+            'spatial_resolution': 'national',
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
+        },
+        {
+            'name': 'storage_blobby',
+            'spatial_resolution': 'national',
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
+        },
+        {
+            'name': 'total_water_demand',
+            'spatial_resolution': 'national',
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
+        }
+    ]
     return contents
 
 
