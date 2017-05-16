@@ -9,7 +9,8 @@
 """
 
 import logging
-from smif import SpaceTimeValue, StateData
+import numpy as np
+from smif import StateData
 from smif.sector_model import SectorModel
 
 
@@ -40,7 +41,7 @@ class WaterSupplySectorModel(SectorModel):
 
         # unpack inputs
         reservoir_level = state[0].data['current_level']['value']
-        raininess = sum([d.value for d in data['raininess']])
+        raininess = np.sum(data['raininess'])
 
         # unpack assets
         number_of_treatment_plants = 2
@@ -57,21 +58,9 @@ class WaterSupplySectorModel(SectorModel):
 
         water, cost = instance.run()
         results = {
-            "water": [
-                SpaceTimeValue('England', 1, water/3, "Ml"),
-                SpaceTimeValue('Scotland', 1, water/3, "Ml"),
-                SpaceTimeValue('Wales', 1, water/3, "Ml"),
-            ],
-            "cost": [
-                SpaceTimeValue('England', 1, cost/3, "million £"),
-                SpaceTimeValue('Scotland', 1, cost/3, "million £"),
-                SpaceTimeValue('Wales', 1, cost/3, "million £"),
-            ],
-            "energy_demand": [
-                SpaceTimeValue('England', 1, 3, "MWh"),
-                SpaceTimeValue('Scotland', 1, 3, "MWh"),
-                SpaceTimeValue('Wales', 1, 3, "MWh")
-            ]
+            "water": np.ones((3, 1)) * water / 3,
+            "cost": np.ones((3, 1)) * cost / 3,
+            "energy_demand": np.ones((3, 1)) * 3
         }
         state = [
             StateData('Kielder Water', {'current_level': {'value': instance.reservoir_level}}),
