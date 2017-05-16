@@ -111,7 +111,7 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
 @fixture(scope='function')
 def get_sos_model_with_model_dependency(setup_region_data):
     builder = SosModelBuilder()
-    builder.add_timesteps([2010])
+    builder.add_timesteps([2010, 2011, 2012])
     interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
     builder.load_interval_sets({'annual': interval_data})
     builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -421,17 +421,15 @@ class TestSosModel():
         assert actual[0].name == 'water_asset_a'
         assert actual[0].location == 'oxford'
 
-        _, results = sos_model.run_sector_model_timestep(model, 2010)
-        actual = results
-        expected = {'cost': 2.528, 'water': 2}
+        _, actual = sos_model.run_sector_model_timestep(model, 2010)
+        expected = {'cost': np.array([[2.528]]), 'water': np.array([[2.0]])}
         for key, value in expected.items():
-            assert actual[key][0].value == value
+            assert np.allclose(actual[key], value)
 
-        _, results = sos_model.run_sector_model_timestep(model, 2011)
-        actual = results
-        expected = {'cost': 2.528, 'water': 2}
+        _, actual = sos_model.run_sector_model_timestep(model, 2011)
+        expected = {'cost': np.array([[2.528]]), 'water': np.array([[2.0]])}
         for key, value in expected.items():
-            assert actual[key][0].value == value
+            assert np.allclose(actual[key], value)
 
     def test_dependency_aggregation(self, get_sos_model_with_summed_dependency):
         sos_model = get_sos_model_with_summed_dependency
@@ -765,6 +763,7 @@ class TestSosModelBuilder():
         }
 
         builder = SosModelBuilder()
+        builder.add_timesteps([2015, 2016])
         interval_data = [
             {'id': 'wet_season', 'start': 'P0M', 'end': 'P5M'},
             {'id': 'dry_season', 'start': 'P5M', 'end': 'P10M'},
@@ -783,7 +782,9 @@ class TestSosModelBuilder():
         builder.add_scenario_data(data)
         actual = builder.sos_model._scenario_data
 
-        assert all(actual == expected)
+        print(actual)
+        print(expected)
+        assert np.allclose(actual["mass"], expected["mass"])
 
     def test_scenario_data_defaults(self, setup_region_data):
         data = {
@@ -801,6 +802,7 @@ class TestSosModelBuilder():
         expected = {"length": np.array([[[3.14]]])}
 
         builder = SosModelBuilder()
+        builder.add_timesteps([2015])
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -875,6 +877,7 @@ class TestSosModelBuilder():
         }
 
         builder = SosModelBuilder()
+        builder.add_timesteps([2015])
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -899,13 +902,21 @@ class TestSosModelBuilder():
                     'value': 3.14,
                     'units': 'm',
                     'region': 'oxford',
-                    'interval': 'missing',
+                    'interval': 1,
+                    'year': 2015
+                },
+                {
+                    'value': 3.14,
+                    'units': 'm',
+                    'region': 'oxford',
+                    'interval': 'extra',
                     'year': 2015
                 }
             ]
         }
 
         builder = SosModelBuilder()
+        builder.add_timesteps([2015])
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -918,7 +929,7 @@ class TestSosModelBuilder():
             }
         })
 
-        msg = "Interval missing not defined in set annual for parameter length"
+        msg = "Interval extra not defined in set annual for parameter length"
         with raises(ValueError) as ex:
             builder.add_scenario_data(data)
         assert msg in str(ex)

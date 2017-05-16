@@ -104,7 +104,7 @@ def test_features_vfa_model():
     model = feature_vfa_model(assets, constraint, costs,
                               feature_coefficients, asset_features)
     results = solve_model(model, state)
-    print(results)
+
     assert results.x['asset_one'].value == 1.0
     assert results.x['asset_two'].value == 0.0
     assert results.OBJ() == 40210
@@ -113,7 +113,6 @@ def test_features_vfa_model():
     model = feature_vfa_model(assets, constraint, costs,
                               feature_coefficients, asset_features)
     results = solve_model(model, state)
-    print(results)
     assert results.x['asset_one'].value == 0.0
     assert results.x['asset_two'].value == 1.0
     assert results.OBJ() == 503200
@@ -175,7 +174,7 @@ def test_passing_asset_register_to_model():
 
     state = ['asset_one']
     results = solve_model(model, state)
-    print(results)
+
     assert results.x['asset_one'].value == 1.0
     assert results.x['asset_two'].value == 0.0
     assert results.OBJ() == 10000000210

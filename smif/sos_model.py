@@ -918,22 +918,24 @@ class SosModelBuilder(object):
     def _data_list_to_array(self, param, observations, timestep_names, resolution_sets):
         """Convert list of observations to :class:`numpy.ndarray`
         """
-        interval_set_name = resolution_sets['temporal_resolution']
-        interval_set = self.sos_model.intervals.get_intervals_in_set(interval_set_name)
-        interval_names = [interval.name for key, interval in interval_set.items()]
+        interval_names, region_names = self._get_dimension_names_for_param(
+            resolution_sets, param)
 
-        region_set_name = resolution_sets['spatial_resolution']
-        region_set = self.sos_model.regions.get_regions_in_set(region_set_name)
-        region_names = [region.name for region in region_set]
+        if len(timestep_names) == 0:
+            self.logger.error("No timesteps found when loading %s", param)
 
         data = np.empty((
             len(timestep_names),
-            len(interval_names),
-            len(region_names)
+            len(region_names),
+            len(interval_names)
         ))
 
-        assert len(observations) == data.size, \
-            "Number of observations must be equal to timesteps x intervals x regions"
+        data.fill(np.nan)
+
+        if len(observations) != data.size:
+            self.logger.warning(
+                "Number of observations is not equal to timesteps x  " +
+                "intervals x regions when loading %s", param)
 
         for obs in observations:
             if 'year' not in obs:
@@ -950,7 +952,7 @@ class SosModelBuilder(object):
                 raise ValueError(
                     "Region {} not defined in set {} for parameter {}".format(
                         region,
-                        region_set_name,
+                        resolution_sets['spatial_resolution'],
                         param))
 
             if 'interval' not in obs:
@@ -960,16 +962,33 @@ class SosModelBuilder(object):
                 raise ValueError(
                     "Interval {} not defined in set {} for parameter {}".format(
                         interval,
-                        interval_set_name,
+                        resolution_sets['temporal_resolution'],
                         param))
 
             timestep_idx = timestep_names.index(year)
             interval_idx = interval_names.index(interval)
             region_idx = region_names.index(region)
 
-            data[timestep_idx, interval_idx, region_idx] = obs['value']
+            data[timestep_idx, region_idx, interval_idx] = obs['value']
 
         return data
+
+    def _get_dimension_names_for_param(self, resolution_sets, param):
+        interval_set_name = resolution_sets['temporal_resolution']
+        interval_set = self.sos_model.intervals.get_intervals_in_set(interval_set_name)
+        interval_names = [interval.name for key, interval in interval_set.items()]
+
+        region_set_name = resolution_sets['spatial_resolution']
+        region_set = self.sos_model.regions.get_regions_in_set(region_set_name)
+        region_names = [region.name for region in region_set]
+
+        if len(interval_names) == 0:
+            self.logger.error("No interval names found when loading %s", param)
+
+        if len(region_names) == 0:
+            self.logger.error("No region names found when loading %s", param)
+
+        return interval_names, region_names
 
     def _check_planning_interventions_exist(self):
         """Check existence of all the interventions in the pre-specifed planning
