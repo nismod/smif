@@ -101,7 +101,7 @@ class SpaceTimeConvertor(object):
         """
         num_regions = len(self.regions.get_regions_in_set(to_spatial))
         num_intervals = data.shape[1]
-        converted = np.empty((num_regions, num_intervals))
+        converted = np.zeros((num_regions, num_intervals))
 
         # transpose data and iterate through 2nd dimension
         for idx, region_slice in enumerate(data.transpose()):
@@ -113,7 +113,7 @@ class SpaceTimeConvertor(object):
         """
         num_regions = data.shape[0]
         num_intervals = len(self.intervals.get_intervals_in_set(to_temporal))
-        converted = np.empty((num_regions, num_intervals))
+        converted = np.zeros((num_regions, num_intervals))
 
         for idx, interval_slice in enumerate(data):
             converted[idx, :] = self.intervals.convert(
