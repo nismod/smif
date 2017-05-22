@@ -899,7 +899,8 @@ class SosModelBuilder(object):
 
         Add a dictionary of :class:`numpy.ndarray`
 
-                data[param] = np.empty((num_timesteps, num_intervals, num_regions))
+                data[param] = np.zeros((num_timesteps, num_intervals, num_regions))
+                data[param].fill(np.nan)
                 # ...initially empty array then filled with data
 
         """
@@ -931,12 +932,11 @@ class SosModelBuilder(object):
         if len(timestep_names) == 0:
             self.logger.error("No timesteps found when loading %s", param)
 
-        data = np.empty((
+        data = np.zeros((
             len(timestep_names),
             len(region_names),
             len(interval_names)
         ))
-
         data.fill(np.nan)
 
         if len(observations) != data.size:
