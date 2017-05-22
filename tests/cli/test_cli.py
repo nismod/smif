@@ -64,7 +64,7 @@ def test_setup_project_folder():
         folder_list = ['data']
         for folder in folder_list:
             folder_path = os.path.join(project_folder, folder)
-            print(folder_path)
+
             assert os.path.exists(folder_path)
 
 

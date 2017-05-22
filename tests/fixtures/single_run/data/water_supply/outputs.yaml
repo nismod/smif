@@ -4,3 +4,6 @@
 - name: energy_demand
   spatial_resolution: national
   temporal_resolution: annual
+- name: water
+  spatial_resolution: national
+  temporal_resolution: annual

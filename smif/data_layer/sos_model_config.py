@@ -32,12 +32,16 @@ class SosModelReader(object):
 
         self._config = {}
         self.timesteps = []
-        self.max_iterations = 0
         self.scenario_data = {}
         self.sector_model_data = []
         self.planning = []
         self.time_intervals = []
         self.regions = []
+
+        # ModelSet convergence settings
+        self.convergence_max_iterations = None
+        self.convergence_absolute_tolerance = None
+        self.convergence_relative_tolerance = None
 
         self.names = []
 
@@ -52,12 +56,15 @@ class SosModelReader(object):
         """
         self._config = self.load_sos_config()
         self.timesteps = self.load_timesteps()
-        self.max_iterations = self.load_max_iterations()
         self.time_intervals = self.load_time_intervals()
         self.regions = self.load_regions()
         self.scenario_data = self.load_scenario_data()
         self.sector_model_data = self.load_sector_model_data()
         self.planning = self.load_planning()
+
+        self.convergence_max_iterations = self.load_convergence_max_iterations()
+        self.convergence_absolute_tolerance = self.load_convergence_absolute_tolerance()
+        self.convergence_relative_tolerance = self.load_convergence_relative_tolerance()
 
     @property
     def data(self):
@@ -91,13 +98,15 @@ class SosModelReader(object):
         """
         return {
             "timesteps": self.timesteps,
-            "max_iterations": self.max_iterations,
             "sector_model_config": self.sector_model_data,
             "scenario_data": self.scenario_data,
             "planning": self.planning,
             "region_sets": self.regions,
             "interval_sets": self.time_intervals,
-            "resolution_mapping": self.resolution_mapping
+            "resolution_mapping": self.resolution_mapping,
+            "convergence_max_iterations": self.convergence_max_iterations,
+            "convergence_absolute_tolerance": self.convergence_absolute_tolerance,
+            "convergence_relative_tolerance": self.convergence_relative_tolerance,
         }
 
     def load_sos_config(self):
@@ -127,13 +136,29 @@ class SosModelReader(object):
 
         return data
 
-    def load_max_iterations(self):
-        """Parse max_iterations setting
+    def load_convergence_max_iterations(self):
+        """Parse convergence_max_iterations setting
         """
-        if "max_iterations" in self._config \
-                and isinstance(self._config["max_iterations"], int) \
-                and self._config["max_iterations"] > 0:
-            self.max_iterations = self._config["max_iterations"]
+        if "convergence_max_iterations" in self._config:
+            max_iterations = int(self._config["convergence_max_iterations"])
+            if max_iterations > 0:
+                return max_iterations
+
+    def load_convergence_absolute_tolerance(self):
+        """Parse convergence_absolute_tolerance setting
+        """
+        if "convergence_absolute_tolerance" in self._config:
+            tolerance = float(self._config["convergence_absolute_tolerance"])
+            if tolerance > 0:
+                return tolerance
+
+    def load_convergence_relative_tolerance(self):
+        """Parse convergence_relative_tolerance setting
+        """
+        if "convergence_relative_tolerance" in self._config:
+            tolerance = float(self._config["convergence_relative_tolerance"])
+            if tolerance > 0:
+                return tolerance
 
     def load_sector_model_data(self):
         """Parse list of sector models to run

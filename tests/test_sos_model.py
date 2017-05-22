@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import numpy as np
 from pytest import fixture, raises
-from smif import SpaceTimeValue
 from smif.decision import Planning
 from smif.sector_model import SectorModel
 from smif.sos_model import ModelSet, SosModel, SosModelBuilder
@@ -111,7 +111,7 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
 @fixture(scope='function')
 def get_sos_model_with_model_dependency(setup_region_data):
     builder = SosModelBuilder()
-    builder.add_timesteps([2010])
+    builder.add_timesteps([2010, 2011, 2012])
     interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
     builder.load_interval_sets({'annual': interval_data})
     builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -325,12 +325,8 @@ class TestSosModel():
 
         results = model_set.guess_results(ws_model, 2010)
         expected = {
-            "cost": [
-                SpaceTimeValue("oxford", 1, 0, "unknown")
-            ],
-            "water": [
-                SpaceTimeValue("oxford", 1, 0, "unknown")
-            ]
+            "cost": np.zeros((1, 1)),
+            "water": np.zeros((1, 1))
         }
         assert results == expected
 
@@ -345,12 +341,8 @@ class TestSosModel():
         )
 
         expected = {
-            "cost": [
-                SpaceTimeValue("oxford", 1, 3.14, "unknown")
-            ],
-            "water": [
-                SpaceTimeValue("oxford", 1, 2.71, "unknown")
-            ]
+            "cost": np.array([[3.14]]),
+            "water": np.array([[2.71]])
         }
 
         # set up data as though from previous timestep simulation
@@ -374,7 +366,7 @@ class TestSosModel():
         results = model_set.guess_results(ws_model, 2010)
         model_set.iterated_results[ws_model.name] = [results]
 
-        assert not model_set.converged(2010)
+        assert not model_set.converged()
 
     def test_converged_two_identical(self, get_sos_model_only_scenario_dependencies):
         """Should report converged if the last two output sets are identical
@@ -391,7 +383,7 @@ class TestSosModel():
             "water_supply": [results, results]
         }
 
-        assert model_set.converged(2010)
+        assert model_set.converged()
 
     def test_run_sequential(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
@@ -429,43 +421,15 @@ class TestSosModel():
         assert actual[0].name == 'water_asset_a'
         assert actual[0].location == 'oxford'
 
-        _, results = sos_model.run_sector_model_timestep(model, 2010)
-        actual = results
-        expected = {'cost': 2.528, 'water': 2}
+        _, actual = sos_model.run_sector_model_timestep(model, 2010)
+        expected = {'cost': np.array([[2.528]]), 'water': np.array([[2.0]])}
         for key, value in expected.items():
-            assert actual[key][0].value == value
+            assert np.allclose(actual[key], value)
 
-        _, results = sos_model.run_sector_model_timestep(model, 2011)
-        actual = results
-        expected = {'cost': 2.528, 'water': 2}
+        _, actual = sos_model.run_sector_model_timestep(model, 2011)
+        expected = {'cost': np.array([[2.528]]), 'water': np.array([[2.0]])}
         for key, value in expected.items():
-            assert actual[key][0].value == value
-
-    def test_add_data_series(self):
-        """Expect addition to work on lists of SpaceTimeValues
-        """
-        list_a = [
-            SpaceTimeValue('a', '1', 1, 'days'),
-            SpaceTimeValue('a', '2', 2, 'days'),
-            SpaceTimeValue('b', '1', 3, 'days'),
-            SpaceTimeValue('b', '2', 4, 'days'),
-        ]
-
-        list_b = [
-            SpaceTimeValue('b', '2', 14, 'days'),
-            SpaceTimeValue('b', '1', 13, 'days'),
-            SpaceTimeValue('a', '2', 12, 'days'),
-            SpaceTimeValue('a', '1', 11, 'days'),
-        ]
-
-        expected = [
-            SpaceTimeValue('a', '1', 12, 'days'),
-            SpaceTimeValue('a', '2', 14, 'days'),
-            SpaceTimeValue('b', '1', 16, 'days'),
-            SpaceTimeValue('b', '2', 18, 'days'),
-        ]
-        actual = SosModel.add_data_series(list_a, list_b)
-        assert actual == expected
+            assert np.allclose(actual[key], value)
 
     def test_dependency_aggregation(self, get_sos_model_with_summed_dependency):
         sos_model = get_sos_model_with_summed_dependency
@@ -576,6 +540,36 @@ class TestSosModelBuilder():
         assert sos_model.sector_models == ['water_supply']
         assert isinstance(sos_model.models['water_supply'], SectorModel)
         assert sos_model.timesteps == [2010, 2011, 2012]
+
+    def test_set_max_iterations(self, get_config_data):
+        """Test constructing from single dict config
+        """
+        config = get_config_data
+        config['max_iterations'] = 125
+        builder = SosModelBuilder()
+        builder.construct(config)
+        sos_model = builder.finish()
+        assert sos_model.max_iterations == 125
+
+    def test_set_convergence_absolute_tolerance(self, get_config_data):
+        """Test constructing from single dict config
+        """
+        config = get_config_data
+        config['convergence_absolute_tolerance'] = 0.0001
+        builder = SosModelBuilder()
+        builder.construct(config)
+        sos_model = builder.finish()
+        assert sos_model.convergence_absolute_tolerance == 0.0001
+
+    def test_set_convergence_relative_tolerance(self, get_config_data):
+        """Test constructing from single dict config
+        """
+        config = get_config_data
+        config['convergence_relative_tolerance'] = 0.1
+        builder = SosModelBuilder()
+        builder.construct(config)
+        sos_model = builder.finish()
+        assert sos_model.convergence_relative_tolerance == 0.1
 
     def test_missing_planning_asset(self, get_config_data):
         config = get_config_data
@@ -723,87 +717,104 @@ class TestSosModelBuilder():
                 {
                     'year': 2015,
                     'region': 'GB',
-                    'interval': 'spring',
+                    'interval': 'wet_season',
                     'value': 3,
                     'units': 'kg'
                 },
                 {
                     'year': 2015,
                     'region': 'GB',
-                    'interval': 'summer',
+                    'interval': 'dry_season',
                     'value': 5,
                     'units': 'kg'
                 },
                 {
                     'year': 2015,
                     'region': 'NI',
-                    'interval': 'spring',
+                    'interval': 'wet_season',
                     'value': 1,
+                    'units': 'kg'
+                },
+                {
+                    'year': 2015,
+                    'region': 'NI',
+                    'interval': 'dry_season',
+                    'value': 2,
                     'units': 'kg'
                 },
                 {
                     'year': 2016,
                     'region': 'GB',
-                    'interval': 'spring',
+                    'interval': 'wet_season',
                     'value': 4,
+                    'units': 'kg'
+                },
+                {
+                    'year': 2016,
+                    'region': 'GB',
+                    'interval': 'dry_season',
+                    'value': 6,
+                    'units': 'kg'
+                },
+                {
+                    'year': 2016,
+                    'region': 'NI',
+                    'interval': 'wet_season',
+                    'value': 1,
+                    'units': 'kg'
+                },
+                {
+                    'year': 2016,
+                    'region': 'NI',
+                    'interval': 'dry_season',
+                    'value': 2.5,
                     'units': 'kg'
                 }
             ]
         }
 
         expected = {
-            2015: {
-                "mass": [
-                    SpaceTimeValue('GB', 'spring', 3, 'kg'),
-                    SpaceTimeValue('GB', 'summer', 5, 'kg'),
-                    SpaceTimeValue('NI', 'spring', 1, 'kg')
+            "mass": np.array([
+                # 2015
+                [
+                    # GB
+                    [3, 5],
+                    # NI
+                    [1, 2]
+                ],
+                # 2016
+                [
+                    # GB
+                    [4, 6],
+                    # NI
+                    [1, 2.5]
                 ]
-            },
-            2016: {
-                "mass": [
-                    SpaceTimeValue('GB', 'spring', 4, 'kg')
-                ]
-            }
+            ], dtype=float)
         }
 
         builder = SosModelBuilder()
+        builder.add_timesteps([2015, 2016])
         interval_data = [
-            {'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
-            {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
-            {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
-            {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'},
-            {'id': 'winter', 'start': 'P11M', 'end': 'P1Y'},
+            {'id': 'wet_season', 'start': 'P0M', 'end': 'P5M'},
+            {'id': 'dry_season', 'start': 'P5M', 'end': 'P10M'},
+            {'id': 'wet_season', 'start': 'P10M', 'end': 'P1Y'},
         ]
-        builder.load_interval_sets({'annual': interval_data})
+        builder.load_interval_sets({'seasonal': interval_data})
         builder.load_region_sets({'country': setup_country_data['features']})
         builder.add_resolution_mapping({
             'scenario': {
                 'mass': {
                     'spatial_resolution': 'country',
-                    'temporal_resolution': 'annual'
+                    'temporal_resolution': 'seasonal'
                 }
             }
         })
         builder.add_scenario_data(data)
-
         actual = builder.sos_model._scenario_data
 
-        assert actual[2015]["mass"] == [
-            SpaceTimeValue("GB", "spring", 3, 'kg'),
-            SpaceTimeValue('GB', 'summer', 5, 'kg'),
-            SpaceTimeValue('NI', 'spring', 1, 'kg')
-        ]
-        assert actual == expected
-
-        expected_value = [3, 5, 1]
-        expected_region = ['GB', 'GB', 'NI']
-
-        for exp_val, exp_reg, entry in zip(expected_value,
-                                           expected_region,
-                                           actual[2015]['mass']):
-            assert entry.value == exp_val
-            assert entry.region == exp_reg
-            assert entry.units == 'kg'
+        print(actual)
+        print(expected)
+        assert np.allclose(actual["mass"], expected["mass"])
 
     def test_scenario_data_defaults(self, setup_region_data):
         data = {
@@ -818,9 +829,10 @@ class TestSosModelBuilder():
             ]
         }
 
-        expected = {2015: {"length": [SpaceTimeValue("oxford", 1, 3.14, 'm')]}}
+        expected = {"length": np.array([[[3.14]]])}
 
         builder = SosModelBuilder()
+        builder.add_timesteps([2015])
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -895,6 +907,7 @@ class TestSosModelBuilder():
         }
 
         builder = SosModelBuilder()
+        builder.add_timesteps([2015])
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -919,13 +932,21 @@ class TestSosModelBuilder():
                     'value': 3.14,
                     'units': 'm',
                     'region': 'oxford',
-                    'interval': 'missing',
+                    'interval': 1,
+                    'year': 2015
+                },
+                {
+                    'value': 3.14,
+                    'units': 'm',
+                    'region': 'oxford',
+                    'interval': 'extra',
                     'year': 2015
                 }
             ]
         }
 
         builder = SosModelBuilder()
+        builder.add_timesteps([2015])
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -938,7 +959,7 @@ class TestSosModelBuilder():
             }
         })
 
-        msg = "Interval missing not defined in set annual for parameter length"
+        msg = "Interval extra not defined in set annual for parameter length"
         with raises(ValueError) as ex:
             builder.add_scenario_data(data)
         assert msg in str(ex)

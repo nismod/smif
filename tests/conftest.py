@@ -574,7 +574,10 @@ def setup_config_file(setup_folder_structure):
                 'use': True,
                 'files': ['../data/water_supply/pre-specified.yaml']
             }
-        }
+        },
+        'convergence_max_iterations': 1000,
+        'convergence_relative_tolerance': 0.0001,
+        'convergence_absolute_tolerance': 0.1,
     }
 
     contents = yaml.dump(file_contents)

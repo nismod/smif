@@ -4,12 +4,12 @@ framework.
 
 """
 import logging
-import operator
 from collections import defaultdict
 
 import networkx
+import numpy as np
 from enum import Enum
-from smif import SpaceTimeValue, StateData
+from smif import StateData
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister, RegionSet
 from smif.convert.interval import TimeIntervalRegister
@@ -44,6 +44,8 @@ class SosModel(object):
         # housekeeping
         self.logger = logging.getLogger(__name__)
         self.max_iterations = 25
+        self.convergence_relative_tolerance = 1e-05
+        self.convergence_absolute_tolerance = 1e-08
 
         # models
         self.models = {}
@@ -261,6 +263,8 @@ class SosModel(object):
 
         """
         new_data = {}
+        timestep_idx = self.timesteps.index(timestep)
+
         for dependency in model.inputs.parameters:
             name = dependency.name
             provider = self.outputs[name]
@@ -271,7 +275,7 @@ class SosModel(object):
                                   name, model.name, source)
 
                 if source == 'scenario':
-                    from_data = self.scenario_data[timestep][name]
+                    from_data = self.scenario_data[name][timestep_idx]
                     scenario_map = self.resolution_mapping['scenario']
                     from_spatial_resolution = scenario_map[name]['spatial_resolution']
                     from_temporal_resolution = scenario_map[name]['temporal_resolution']
@@ -297,18 +301,19 @@ class SosModel(object):
                 self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
 
                 if name not in new_data:
-                    new_data[name] = self._convert_data(from_data,
-                                                        to_spatial_resolution,
-                                                        to_temporal_resolution,
-                                                        from_spatial_resolution,
-                                                        from_temporal_resolution)
+                    new_data[name] = self._convert_data(
+                        from_data,
+                        to_spatial_resolution,
+                        to_temporal_resolution,
+                        from_spatial_resolution,
+                        from_temporal_resolution)
                 else:
-                    to_add = self._convert_data(from_data,
-                                                to_spatial_resolution,
-                                                to_temporal_resolution,
-                                                from_spatial_resolution,
-                                                from_temporal_resolution)
-                    new_data[name] = SosModel.add_data_series(new_data[name], to_add)
+                    new_data[name] += self._convert_data(
+                        from_data,
+                        to_spatial_resolution,
+                        to_temporal_resolution,
+                        from_spatial_resolution,
+                        from_temporal_resolution)
 
         new_data['timestep'] = timestep
         return new_data
@@ -324,44 +329,33 @@ class SosModel(object):
     def _convert_data(self, data, to_spatial_resolution,
                       to_temporal_resolution, from_spatial_resolution,
                       from_temporal_resolution):
-        """Given a model, check required parameters, pick data from scenario
-        for the given timestep
+        """Convert data from one spatial and temporal resolution to another
 
         Parameters
         ----------
-        timestep: int
-            The year for which to get scenario data
-        dependency: :class:`smif.SpaceTimeValue`
+        data : numpy.ndarray
+            The data series for conversion
+        to_spatial_resolution : str
+            ID of the region set to convert to
+        to_temporal_resolution : str
+            ID of the interval set to convert to
+        from_spatial_resolution : str
+            ID of the region set to convert from
+        from_temporal_resolution : str
+            ID of the interval set to convert from
 
         Returns
         -------
-        list
-            A list of :class:`SpaceTimeValue`
+        converted_data : numpy.ndarray
+            The converted data series
 
         """
-        convertor = SpaceTimeConvertor(data,
-                                       from_spatial_resolution,
-                                       to_spatial_resolution,
-                                       from_temporal_resolution,
-                                       to_temporal_resolution,
-                                       self.regions,
-                                       self.intervals)
-        return convertor.convert()
-
-    @staticmethod
-    def add_data_series(list_a, list_b):
-        """Given two lists of SpaceTimeValues of identical spatial and temporal
-        resolution, return a single list with matching values added together.
-
-        Notes
-        -----
-        Assumes a data series is not sparse, i.e. has a value for every
-        region/interval combination
-        """
-        list_a.sort(key=operator.attrgetter('region', 'interval'))
-        list_b.sort(key=operator.attrgetter('region', 'interval'))
-
-        return [a + b for a, b in zip(list_a, list_b)]
+        convertor = SpaceTimeConvertor(self.regions, self.intervals)
+        return convertor.convert(data,
+                                 from_spatial_resolution,
+                                 to_spatial_resolution,
+                                 from_temporal_resolution,
+                                 to_temporal_resolution)
 
     def _run_static_optimisation(self):
         """Runs the system-of-systems model in a static optimisation format
@@ -553,6 +547,10 @@ class ModelSet(object):
         self._model_names = {model.name for model in models}
         self._sos_model = sos_model
         self.iterated_results = {}
+        self.max_iterations = sos_model.max_iterations
+        # tolerance for convergence assessment - see numpy.allclose docs
+        self.relative_tolerance = sos_model.convergence_relative_tolerance
+        self.absolute_tolerance = sos_model.convergence_absolute_tolerance
 
     def run(self, timestep):
         """Runs a set of one or more models
@@ -577,8 +575,8 @@ class ModelSet(object):
 
             # - keep track of intermediate results (iterations within the timestep)
             # - stop iterating according to near-equality condition
-            for i in range(self._sos_model.max_iterations):
-                if self.converged(timestep):
+            for i in range(self.max_iterations):
+                if self.converged():
                     break
                 else:
                     self.logger.debug("Iteration %s, model set %s", i, self._model_names)
@@ -604,26 +602,14 @@ class ModelSet(object):
             # generate zero-values for each parameter/region/interval combination
             results = {}
             for output in model.outputs.parameters:
-                output_results = []
                 regions = self._sos_model.regions.get_regions_in_set(
                     output.spatial_resolution)
                 intervals = self._sos_model.intervals.get_intervals_in_set(
                     output.temporal_resolution)
-                for region in regions:
-                    region_name = region.name
-                    for interval_name in intervals.keys():
-                        output_results.append(
-                            SpaceTimeValue(
-                                region_name,
-                                interval_name,
-                                0,
-                                "unknown"
-                            )
-                        )
-                results[output.name] = output_results
+                results[output.name] = np.zeros((len(regions), len(intervals)))
         return results
 
-    def converged(self, timestep):
+    def converged(self):
         """Check whether the results of a set of models have converged.
 
         Returns
@@ -636,20 +622,55 @@ class ModelSet(object):
         DiverganceError
             If the results appear to be diverging
         """
-        model_set_results = [
-            self.iterated_results[model_name]
-            for model_name in self._model_names
-        ]
-
-        if any([len(results) < 2 for results in model_set_results]):
+        if any([len(results) < 2 for results in self.iterated_results.values()]):
             # must have at least two result sets per model to assess convergence
             return False
 
-        if all([results[-1] == results[-2] for results in model_set_results]):
-            # if all most recent are exactly equal to penultimate, must have converged
+        # iterated_results is a dict with
+        #   str key (model name) =>
+        #       list of data output from models
+        #
+        # each data output is a dict with
+        #   str key (parameter name) =>
+        #       np.ndarray value (regions x intervals)
+        if all(self._model_converged(self._get_model(model_name), results)
+               for model_name, results in self.iterated_results.items()):
+            # if all most recent are almost equal to penultimate, must have converged
             return True
 
+        # TODO check for divergance and raise error
+
         return False
+
+    def _get_model(self, model_name):
+        model = [model for model in self._models if model.name == model_name]
+        return model[0]
+
+    def _model_converged(self, model, results):
+        """Check a single model's output for convergence
+
+        Compare data output for each param over recent iterations.
+
+        Parameters
+        ----------
+        results: list
+            list of data output from models, from first iteration. Each list
+            entry is a dict with str key (parameter name) => np.ndarray value
+            (with dimensions regions x intervals)
+        """
+        latest_results = results[-1]
+        previous_results = results[-2]
+        param_names = [param.name for param in model.outputs.parameters]
+
+        return all(
+            np.allclose(
+                latest_results[param],
+                previous_results[param],
+                rtol=self.relative_tolerance,
+                atol=self.absolute_tolerance
+            )
+            for param in param_names
+        )
 
 
 class SosModelBuilder(object):
@@ -685,6 +706,8 @@ class SosModelBuilder(object):
 
         self.add_timesteps(config_data['timesteps'])
         self.set_max_iterations(config_data)
+        self.set_convergence_abs_tolerance(config_data)
+        self.set_convergence_rel_tolerance(config_data)
 
         self.load_region_sets(config_data['region_sets'])
         self.load_interval_sets(config_data['interval_sets'])
@@ -707,8 +730,29 @@ class SosModelBuilder(object):
         self.sos_model.timesteps = timesteps
 
     def set_max_iterations(self, config_data):
+        """Set the maximum iterations for iterating `class`::smif.ModelSet to
+        convergence
+        """
         if 'max_iterations' in config_data and config_data['max_iterations'] is not None:
             self.sos_model.max_iterations = config_data['max_iterations']
+
+    def set_convergence_abs_tolerance(self, config_data):
+        """Set the absolute tolerance for iterating `class`::smif.ModelSet to
+        convergence
+        """
+        if 'convergence_absolute_tolerance' in config_data and \
+                config_data['convergence_absolute_tolerance'] is not None:
+            self.sos_model.convergence_absolute_tolerance = \
+                config_data['convergence_absolute_tolerance']
+
+    def set_convergence_rel_tolerance(self, config_data):
+        """Set the relative tolerance for iterating `class`::smif.ModelSet to
+        convergence
+        """
+        if 'convergence_relative_tolerance' in config_data and \
+                config_data['convergence_relative_tolerance'] is not None:
+            self.sos_model.convergence_relative_tolerance = \
+                config_data['convergence_relative_tolerance']
 
     def add_resolution_mapping(self, resolution_mapping):
         """
@@ -872,20 +916,18 @@ class SosModelBuilder(object):
         Expect a dictionary, where each key maps a parameter
         name to a list of data, each observation with:
 
-        - timestep
         - value
         - units
+        - timestep (must use a timestep from the SoS model timesteps)
         - region (must use a region id from scenario regions)
         - interval (must use an id from scenario time intervals)
 
-        Add a dictionary of list of :class:`smif.SpaceTimeValue` named
-        tuples,
-        for ease of iteration::
+        Add a dictionary of :class:`numpy.ndarray`
 
-                data[year][param] = SpaceTimeValue(region, interval, value, units)
+                data[param] = np.zeros((num_timesteps, num_intervals, num_regions))
+                data[param].fill(np.nan)
+                # ...initially empty array then filled with data
 
-        Default region: "national"
-        Default interval: "annual"
         """
         self.logger.info("Adding scenario data")
         nested = {}
@@ -897,49 +939,88 @@ class SosModelBuilder(object):
                     self.sos_model.resolution_mapping))
             resolution_sets = self.sos_model.resolution_mapping['scenario'][param]
 
-            interval_set_name = resolution_sets['temporal_resolution']
-            interval_set = self.sos_model.intervals.get_intervals_in_set(interval_set_name)
-            interval_names = [interval.name for key, interval in interval_set.items()]
-
-            region_set_name = resolution_sets['spatial_resolution']
-            region_set = self.sos_model.regions.get_regions_in_set(region_set_name)
-            region_names = [region.name for region in region_set]
-
-            for obs in observations:
-                if 'year' not in obs:
-                    raise ValueError("Scenario data item missing year: {}".format(obs))
-                year = obs['year']
-                if year not in nested:
-                    nested[year] = {}
-
-                region = obs['region']
-                if region not in region_names:
-                    raise ValueError(
-                        "Region {} not defined in set {} for parameter {}".format(
-                            region,
-                            region_set_name,
-                            param))
-
-                interval = obs['interval']
-                if interval not in interval_names:
-                    raise ValueError(
-                        "Interval {} not defined in set {} for parameter {}".format(
-                            interval,
-                            interval_set_name,
-                            param))
-
-                entry = SpaceTimeValue(
-                    region,
-                    interval,
-                    obs['value'],
-                    obs['units']
-                )
-                if param not in nested[year]:
-                    nested[year][param] = [entry]
-                else:
-                    nested[year][param].append(entry)
+            nested[param] = self._data_list_to_array(
+                param,
+                observations,
+                self.sos_model.timesteps,
+                resolution_sets
+            )
 
         self.sos_model._scenario_data = nested
+
+    def _data_list_to_array(self, param, observations, timestep_names, resolution_sets):
+        """Convert list of observations to :class:`numpy.ndarray`
+        """
+        interval_names, region_names = self._get_dimension_names_for_param(
+            resolution_sets, param)
+
+        if len(timestep_names) == 0:
+            self.logger.error("No timesteps found when loading %s", param)
+
+        data = np.zeros((
+            len(timestep_names),
+            len(region_names),
+            len(interval_names)
+        ))
+        data.fill(np.nan)
+
+        if len(observations) != data.size:
+            self.logger.warning(
+                "Number of observations is not equal to timesteps x  " +
+                "intervals x regions when loading %s", param)
+
+        for obs in observations:
+            if 'year' not in obs:
+                raise ValueError("Scenario data item missing year: {}".format(obs))
+            year = obs['year']
+            if year not in timestep_names:
+                raise ValueError(
+                    "Year {} not defined in model timesteps".format(year))
+
+            if 'region' not in obs:
+                raise ValueError("Scenario data item missing region: {}".format(obs))
+            region = obs['region']
+            if region not in region_names:
+                raise ValueError(
+                    "Region {} not defined in set {} for parameter {}".format(
+                        region,
+                        resolution_sets['spatial_resolution'],
+                        param))
+
+            if 'interval' not in obs:
+                raise ValueError("Scenario data item missing interval: {}".format(obs))
+            interval = obs['interval']
+            if interval not in interval_names:
+                raise ValueError(
+                    "Interval {} not defined in set {} for parameter {}".format(
+                        interval,
+                        resolution_sets['temporal_resolution'],
+                        param))
+
+            timestep_idx = timestep_names.index(year)
+            interval_idx = interval_names.index(interval)
+            region_idx = region_names.index(region)
+
+            data[timestep_idx, region_idx, interval_idx] = obs['value']
+
+        return data
+
+    def _get_dimension_names_for_param(self, resolution_sets, param):
+        interval_set_name = resolution_sets['temporal_resolution']
+        interval_set = self.sos_model.intervals.get_intervals_in_set(interval_set_name)
+        interval_names = [interval.name for key, interval in interval_set.items()]
+
+        region_set_name = resolution_sets['spatial_resolution']
+        region_set = self.sos_model.regions.get_regions_in_set(region_set_name)
+        region_names = [region.name for region in region_set]
+
+        if len(interval_names) == 0:
+            self.logger.error("No interval names found when loading %s", param)
+
+        if len(region_names) == 0:
+            self.logger.error("No region names found when loading %s", param)
+
+        return interval_names, region_names
 
     def _check_planning_interventions_exist(self):
         """Check existence of all the interventions in the pre-specifed planning
@@ -974,10 +1055,10 @@ class SosModelBuilder(object):
         Each model references interval and region sets in the configuration
         of inputs and outputs.
         """
-        available_intervals = self.sos_model.intervals.interval_set_names
+        available_intervals = self.sos_model.intervals.names
         msg = "Available time interval sets in SosModel: %s"
         self.logger.debug(msg, available_intervals)
-        available_regions = self.sos_model.regions.region_set_names
+        available_regions = self.sos_model.regions.names
         msg = "Available region sets in SosModel: %s"
         self.logger.debug(msg, available_regions)
 

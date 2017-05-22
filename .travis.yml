@@ -18,14 +18,8 @@ script:
 - python setup.py behave_test
 after_success:
 - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
-cache:
-- apt
 notifications:
   email: false
-addons:
-  apt:
-    packages:
-    - glpk
 deploy:
   provider: pypi
   user: willu47

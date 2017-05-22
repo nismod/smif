@@ -2,8 +2,47 @@
 from collections import OrderedDict
 import numpy as np
 from numpy.testing import assert_equal
-from pytest import approx, fixture, raises
-from smif.convert.interval import Interval, TimeIntervalRegister, TimeSeries
+from pytest import fixture, raises
+from smif.convert.interval import Interval, TimeIntervalRegister
+
+
+@fixture(scope='function')
+def months():
+    return [
+        {'id': '1_0', 'start': 'P0M', 'end': 'P1M'},
+        {'id': '1_1', 'start': 'P1M', 'end': 'P2M'},
+        {'id': '1_2', 'start': 'P2M', 'end': 'P3M'},
+        {'id': '1_3', 'start': 'P3M', 'end': 'P4M'},
+        {'id': '1_4', 'start': 'P4M', 'end': 'P5M'},
+        {'id': '1_5', 'start': 'P5M', 'end': 'P6M'},
+        {'id': '1_6', 'start': 'P6M', 'end': 'P7M'},
+        {'id': '1_7', 'start': 'P7M', 'end': 'P8M'},
+        {'id': '1_8', 'start': 'P8M', 'end': 'P9M'},
+        {'id': '1_9', 'start': 'P9M', 'end': 'P10M'},
+        {'id': '1_10', 'start': 'P10M', 'end': 'P11M'},
+        {'id': '1_11', 'start': 'P11M', 'end': 'P12M'}
+    ]
+
+
+@fixture(scope='function')
+def monthly_data():
+    """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    """
+    data = np.array([
+        31,
+        28,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ])
+    return data
 
 
 @fixture(scope='function')
@@ -37,64 +76,31 @@ def remap_months():
 
 
 @fixture(scope='function')
-def data_remap():
-    data = [{'id': '1', 'value': 30+31+31},
-            {'id': '2', 'value': 28+31+30},
-            {'id': '3', 'value': 31+31+30},
-            {'id': '4', 'value': 30+31+31}]
-    return data
+def remap_month_data():
+    return np.array([
+        30+31+31,
+        28+31+30,
+        31+31+30,
+        30+31+31
+    ], dtype=float)
 
 
 @fixture(scope='function')
-def expected_data_remap():
-    data = [{'id': '1_0', 'value': 30.666666666},
-            {'id': '1_1', 'value': 29.666666666},
-            {'id': '1_2', 'value': 29.666666666},
-            {'id': '1_3', 'value': 29.666666666},
-            {'id': '1_4', 'value': 30.666666666},
-            {'id': '1_5', 'value': 30.666666666},
-            {'id': '1_6', 'value': 30.666666666},
-            {'id': '1_7', 'value': 30.666666666},
-            {'id': '1_8', 'value': 30.666666666},
-            {'id': '1_9', 'value': 30.666666666},
-            {'id': '1_10', 'value': 30.666666666},
-            {'id': '1_11', 'value': 30.666666666}]
-    return data
-
-
-@fixture(scope='function')
-def months():
-    months = [{'id': '1_0', 'start': 'P0M', 'end': 'P1M'},
-              {'id': '1_1', 'start': 'P1M', 'end': 'P2M'},
-              {'id': '1_2', 'start': 'P2M', 'end': 'P3M'},
-              {'id': '1_3', 'start': 'P3M', 'end': 'P4M'},
-              {'id': '1_4', 'start': 'P4M', 'end': 'P5M'},
-              {'id': '1_5', 'start': 'P5M', 'end': 'P6M'},
-              {'id': '1_6', 'start': 'P6M', 'end': 'P7M'},
-              {'id': '1_7', 'start': 'P7M', 'end': 'P8M'},
-              {'id': '1_8', 'start': 'P8M', 'end': 'P9M'},
-              {'id': '1_9', 'start': 'P9M', 'end': 'P10M'},
-              {'id': '1_10', 'start': 'P10M', 'end': 'P11M'},
-              {'id': '1_11', 'start': 'P11M', 'end': 'P12M'}]
-    return months
-
-
-@fixture(scope='function')
-def monthly_data():
-    """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    """
-    data = [{'id': '1_0', 'value': 31},
-            {'id': '1_1', 'value': 28},
-            {'id': '1_2', 'value': 31},
-            {'id': '1_3', 'value': 30},
-            {'id': '1_4', 'value': 31},
-            {'id': '1_5', 'value': 30},
-            {'id': '1_6', 'value': 31},
-            {'id': '1_7', 'value': 31},
-            {'id': '1_8', 'value': 30},
-            {'id': '1_9', 'value': 31},
-            {'id': '1_10', 'value': 30},
-            {'id': '1_11', 'value': 31}]
+def remap_month_data_as_months():
+    data = np.array([
+        30.666666666,
+        29.666666666,
+        29.666666666,
+        29.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666
+    ])
     return data
 
 
@@ -109,42 +115,48 @@ def seasons():
 
 
 @fixture(scope='function')
-def twenty_four_hours():
-    twenty_four_hours = \
-        [{'id': '1_0', 'start': 'PT0H', 'end': 'PT1H'},
-         {'id': '1_1', 'start': 'PT1H', 'end': 'PT2H'},
-         {'id': '1_2', 'start': 'PT2H', 'end': 'PT3H'},
-         {'id': '1_3', 'start': 'PT3H', 'end': 'PT4H'},
-         {'id': '1_4', 'start': 'PT4H', 'end': 'PT5H'},
-         {'id': '1_5', 'start': 'PT5H', 'end': 'PT6H'},
-         {'id': '1_6', 'start': 'PT6H', 'end': 'PT7H'},
-         {'id': '1_7', 'start': 'PT7H', 'end': 'PT8H'},
-         {'id': '1_8', 'start': 'PT8H', 'end': 'PT9H'},
-         {'id': '1_9', 'start': 'PT9H', 'end': 'PT10H'},
-         {'id': '1_10', 'start': 'PT10H', 'end': 'PT11H'},
-         {'id': '1_11', 'start': 'PT11H', 'end': 'PT12H'},
-         {'id': '1_12', 'start': 'PT12H', 'end': 'PT13H'},
-         {'id': '1_13', 'start': 'PT13H', 'end': 'PT14H'},
-         {'id': '1_14', 'start': 'PT14H', 'end': 'PT15H'},
-         {'id': '1_15', 'start': 'PT15H', 'end': 'PT16H'},
-         {'id': '1_16', 'start': 'PT16H', 'end': 'PT17H'},
-         {'id': '1_17', 'start': 'PT17H', 'end': 'PT18H'},
-         {'id': '1_18', 'start': 'PT18H', 'end': 'PT19H'},
-         {'id': '1_19', 'start': 'PT19H', 'end': 'PT20H'},
-         {'id': '1_20', 'start': 'PT20H', 'end': 'PT21H'},
-         {'id': '1_21', 'start': 'PT21H', 'end': 'PT22H'},
-         {'id': '1_22', 'start': 'PT22H', 'end': 'PT23H'},
-         {'id': '1_23', 'start': 'PT23H', 'end': 'PT24H'}]
+def monthly_data_as_seasons():
+    return np.array([
+        31 + 31 + 28,
+        31 + 30 + 31,
+        30 + 31 + 31,
+        30 + 31 + 30
+    ], dtype=float)
 
-    return twenty_four_hours
+
+@fixture(scope='function')
+def twenty_four_hours():
+    return [
+        {'id': '1_0', 'start': 'PT0H', 'end': 'PT1H'},
+        {'id': '1_1', 'start': 'PT1H', 'end': 'PT2H'},
+        {'id': '1_2', 'start': 'PT2H', 'end': 'PT3H'},
+        {'id': '1_3', 'start': 'PT3H', 'end': 'PT4H'},
+        {'id': '1_4', 'start': 'PT4H', 'end': 'PT5H'},
+        {'id': '1_5', 'start': 'PT5H', 'end': 'PT6H'},
+        {'id': '1_6', 'start': 'PT6H', 'end': 'PT7H'},
+        {'id': '1_7', 'start': 'PT7H', 'end': 'PT8H'},
+        {'id': '1_8', 'start': 'PT8H', 'end': 'PT9H'},
+        {'id': '1_9', 'start': 'PT9H', 'end': 'PT10H'},
+        {'id': '1_10', 'start': 'PT10H', 'end': 'PT11H'},
+        {'id': '1_11', 'start': 'PT11H', 'end': 'PT12H'},
+        {'id': '1_12', 'start': 'PT12H', 'end': 'PT13H'},
+        {'id': '1_13', 'start': 'PT13H', 'end': 'PT14H'},
+        {'id': '1_14', 'start': 'PT14H', 'end': 'PT15H'},
+        {'id': '1_15', 'start': 'PT15H', 'end': 'PT16H'},
+        {'id': '1_16', 'start': 'PT16H', 'end': 'PT17H'},
+        {'id': '1_17', 'start': 'PT17H', 'end': 'PT18H'},
+        {'id': '1_18', 'start': 'PT18H', 'end': 'PT19H'},
+        {'id': '1_19', 'start': 'PT19H', 'end': 'PT20H'},
+        {'id': '1_20', 'start': 'PT20H', 'end': 'PT21H'},
+        {'id': '1_21', 'start': 'PT21H', 'end': 'PT22H'},
+        {'id': '1_22', 'start': 'PT22H', 'end': 'PT23H'},
+        {'id': '1_23', 'start': 'PT23H', 'end': 'PT24H'}
+    ]
 
 
 @fixture(scope='function')
 def one_day():
-
-    one_day = [{'id': 'one_day', 'start': 'P0D', 'end': 'P1D'}]
-
-    return one_day
+    return [{'id': 'one_day', 'start': 'P0D', 'end': 'P1D'}]
 
 
 class TestInterval:
@@ -293,51 +305,6 @@ class TestInterval:
         assert actual == [(1416, 2160), (2160, 2880), (2880, 3624)]
 
 
-class TestTimeSeries:
-
-    def test_load_time_series(self, months):
-
-        data = [{'id': '1_0', 'value': 1},
-                {'id': '1_1', 'value': 1},
-                {'id': '1_2', 'value': 1},
-                {'id': '1_3', 'value': 1},
-                {'id': '1_4', 'value': 1},
-                {'id': '1_5', 'value': 1},
-                {'id': '1_6', 'value': 1},
-                {'id': '1_7', 'value': 1},
-                {'id': '1_8', 'value': 1},
-                {'id': '1_9', 'value': 1},
-                {'id': '1_10', 'value': 1},
-                {'id': '1_11', 'value': 1}]
-
-        register = TimeIntervalRegister(2010)
-        register.register(months, 'months')
-
-        timeseries = TimeSeries(data)
-        actual = timeseries.names
-        expected = ['1_0', '1_1', '1_2', '1_3', '1_4', '1_5',
-                    '1_6', '1_7', '1_8', '1_9', '1_10', '1_11']
-        assert actual == expected
-
-        actual = timeseries.values
-        expected = [1] * 12
-        assert actual == expected
-
-        register._convert_to_hourly_buckets(timeseries, 'months')
-        actual = timeseries.hourly_values
-
-        month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        month_hours = list(map(lambda x: x*24, month_days))
-        expected_results = list(map(lambda x: 1/x, month_hours))
-
-        start = 0
-        for hours, expected in zip(month_hours, expected_results):
-            expected_array = np.zeros(hours, dtype=np.float)
-            expected_array.fill(expected)
-            assert_equal(actual[start:start + hours], expected_array)
-            start += hours
-
-
 class TestTimeRegisterConversion:
 
     def test_raises_error_on_no_definition(self):
@@ -349,63 +316,28 @@ class TestTimeRegisterConversion:
     def test_convert_from_month_to_seasons(self,
                                            months,
                                            seasons,
-                                           monthly_data):
-
-        data = monthly_data
-
+                                           monthly_data,
+                                           monthly_data_as_seasons):
         register = TimeIntervalRegister()
         register.register(months, 'months')
         register.register(seasons, 'seasons')
 
-        timeseries = TimeSeries(data)
-
-        actual = register.convert(timeseries, 'months', 'seasons')
-        expected = [{'id': 'winter', 'value': 31. + 31 + 28},
-                    {'id': 'spring', 'value': 31. + 30 + 31},
-                    {'id': 'summer', 'value': 30. + 31 + 31},
-                    {'id': 'autumn', 'value': 30. + 31 + 30}]
-
-        for act, exp in zip(actual, expected):
-            assert act['id'] == exp['id']
-            assert act['value'] == approx(exp['value'])
+        actual = register.convert(monthly_data, 'months', 'seasons')
+        expected = monthly_data_as_seasons
+        assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
 
     def test_convert_from_hour_to_day(self, twenty_four_hours, one_day):
 
-        data = [{'id': '1_0', 'value': 1},
-                {'id': '1_1', 'value': 1},
-                {'id': '1_2', 'value': 1},
-                {'id': '1_3', 'value': 1},
-                {'id': '1_4', 'value': 1},
-                {'id': '1_5', 'value': 1},
-                {'id': '1_6', 'value': 1},
-                {'id': '1_7', 'value': 1},
-                {'id': '1_8', 'value': 1},
-                {'id': '1_9', 'value': 1},
-                {'id': '1_10', 'value': 1},
-                {'id': '1_11', 'value': 1},
-                {'id': '1_12', 'value': 1},
-                {'id': '1_13', 'value': 1},
-                {'id': '1_14', 'value': 1},
-                {'id': '1_15', 'value': 1},
-                {'id': '1_16', 'value': 1},
-                {'id': '1_17', 'value': 1},
-                {'id': '1_18', 'value': 1},
-                {'id': '1_19', 'value': 1},
-                {'id': '1_20', 'value': 1},
-                {'id': '1_21', 'value': 1},
-                {'id': '1_22', 'value': 1},
-                {'id': '1_23', 'value': 1}]
+        data = np.ones(24)
 
         register = TimeIntervalRegister()
         register.register(twenty_four_hours, 'hourly_day')
         register.register(one_day, 'one_day')
 
-        timeseries = TimeSeries(data)
+        actual = register.convert(data, 'hourly_day', 'one_day')
+        expected = np.array([24])
 
-        actual = register.convert(timeseries, 'hourly_day', 'one_day')
-        expected = [{'id': 'one_day', 'value': 24}]
-
-        assert actual == expected
+        assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
 
 
 class TestIntervalRegister:
@@ -420,7 +352,7 @@ class TestIntervalRegister:
 
         register = TimeIntervalRegister()
         register.register(data, 'energy_supply_hourly')
-        assert register.interval_set_names == ['energy_supply_hourly']
+        assert register.names == ['energy_supply_hourly']
 
         actual = register.get_intervals_in_set('energy_supply_hourly')
 
@@ -508,58 +440,36 @@ class TestRemapConvert:
 
     def test_remap_timeslices_to_months(self,
                                         months,
-                                        expected_data_remap,
+                                        remap_month_data_as_months,
                                         remap_months,
-                                        data_remap):
-        """
-        """
-        timeslice_data = data_remap
-
+                                        remap_month_data):
         register = TimeIntervalRegister()
         register.register(months, 'months')
         register.register(remap_months, 'remap_months')
 
-        timeseries = TimeSeries(timeslice_data)
+        actual = register.convert(remap_month_data, 'remap_months', 'months')
+        expected = remap_month_data_as_months
 
-        actual = register.convert(timeseries, 'remap_months', 'months')
-        expected = expected_data_remap
-
-        assert len(actual) == len(expected)
-
-        for act, exp in zip(actual, expected):
-            assert act['id'] == exp['id']
-            assert act['value'] == approx(exp['value'])
+        assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
 
     def test_remap_months_to_timeslices(self,
                                         months,
                                         monthly_data,
                                         remap_months,
-                                        data_remap):
-        """
-        """
-        timeslice_data = data_remap
-        monthly_data = monthly_data
-
+                                        remap_month_data):
         register = TimeIntervalRegister()
         register.register(months, 'months')
         register.register(remap_months, 'remap_months')
 
-        timeseries = TimeSeries(monthly_data)
+        actual = register.convert(monthly_data, 'months', 'remap_months')
+        expected = remap_month_data
 
-        actual = register.convert(timeseries, 'months', 'remap_months')
-        expected = timeslice_data
-
-        assert len(actual) == len(expected)
-
-        for act, exp in zip(actual, expected):
-            assert act['id'] == exp['id']
-            assert act['value'] == approx(exp['value'])
+        assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
 
 
 class TestValidation:
 
     def test_validate_get_hourly_array(self, remap_months):
-
         data = remap_months
         register = TimeIntervalRegister()
         register.register(data, 'remap_months')
@@ -569,13 +479,11 @@ class TestValidation:
         assert_equal(actual, expected)
 
     def test_validate_intervals_passes(self, remap_months):
-
         data = remap_months
         register = TimeIntervalRegister()
         register.register(data, 'remap_months')
 
     def test_validate_intervals_fails(self, remap_months):
-
         data = remap_months
         data.append({'id': '5', 'start': 'PT0H', 'end': 'PT1H'})
         register = TimeIntervalRegister()
