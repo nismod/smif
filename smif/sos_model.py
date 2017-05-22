@@ -573,7 +573,7 @@ class ModelSet(object):
             # - keep track of intermediate results (iterations within the timestep)
             # - stop iterating according to near-equality condition
             for i in range(self._sos_model.max_iterations):
-                if self.converged(timestep):
+                if self.converged():
                     break
                 else:
                     self.logger.debug("Iteration %s, model set %s", i, self._model_names)
@@ -606,7 +606,7 @@ class ModelSet(object):
                 results[output.name] = np.zeros((len(regions), len(intervals)))
         return results
 
-    def converged(self, timestep):
+    def converged(self):
         """Check whether the results of a set of models have converged.
 
         Returns
