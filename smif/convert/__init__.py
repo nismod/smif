@@ -99,25 +99,13 @@ class SpaceTimeConvertor(object):
     def _convert_regions(self, data, from_spatial, to_spatial):
         """Slice, convert and compose regions
         """
-        num_regions = len(self.regions.get_regions_in_set(to_spatial))
-        num_intervals = data.shape[1]
-        converted = np.zeros((num_regions, num_intervals))
-
-        # transpose data and iterate through 2nd dimension
-        for idx, region_slice in enumerate(data.transpose()):
-            converted[:, idx] = self.regions.convert(region_slice, from_spatial, to_spatial)
+        converted = np.apply_along_axis(self.regions.convert, 0, data,
+                                        from_spatial, to_spatial)
         return converted
 
     def _convert_intervals(self, data, from_temporal, to_temporal):
         """Slice, convert and compose intervals
         """
-        num_regions = data.shape[0]
-        num_intervals = len(self.intervals.get_intervals_in_set(to_temporal))
-        converted = np.zeros((num_regions, num_intervals))
-
-        for idx, interval_slice in enumerate(data):
-            converted[idx, :] = self.intervals.convert(
-                interval_slice,
-                from_temporal,
-                to_temporal)
+        converted = np.apply_along_axis(self.intervals.convert, 1, data,
+                                        from_temporal, to_temporal)
         return converted
