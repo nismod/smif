@@ -192,7 +192,7 @@ class TestRegionRegister():
 
         data = np.ones(1)
         converted = rreg.convert(data, 'rect', 'rect_alt')
-        assert all(data == converted)
+        np.testing.assert_equal(data, converted)
 
     def test_convert_to_half(self, regions_rect, regions_half_squares):
         rreg = RegionRegister()
@@ -201,8 +201,8 @@ class TestRegionRegister():
 
         data = np.ones(1)
         converted = rreg.convert(data, 'rect', 'half_squares')
-        expected = np.ones(2) / 2
-        assert all(converted == expected)
+        expected = np.array([0.5, 0.5])
+        np.testing.assert_equal(converted, expected)
 
     def test_convert_from_half(self, regions_rect, regions_half_squares):
         rreg = RegionRegister()
@@ -212,12 +212,12 @@ class TestRegionRegister():
         data = np.ones(2) / 2
         converted = rreg.convert(data, 'half_squares', 'rect')
         expected = np.ones(1)
-        assert all(converted == expected)
+        np.testing.assert_equal(converted, expected)
 
         data = np.array([2, 3])
         converted = rreg.convert(data, 'half_squares', 'rect')
         expected = np.array([5])
-        assert all(converted == expected)
+        np.testing.assert_equal(converted, expected)
 
     def test_convert_to_half_not_covered(self, regions_rect, regions_single_half_square):
         rreg = RegionRegister()
@@ -227,7 +227,7 @@ class TestRegionRegister():
         data = np.array([3])
         converted = rreg.convert(data, 'rect', 'single_half_square')
         expected = np.array([1.5])
-        assert all(converted == expected)
+        np.testing.assert_equal(converted, expected)
 
     def test_convert_from_half_not_covered(self, regions_rect, regions_single_half_square):
         rreg = RegionRegister()
@@ -237,7 +237,7 @@ class TestRegionRegister():
         data = np.array([3])
         converted = rreg.convert(data, 'single_half_square', 'rect')
         expected = np.array([3])
-        assert all(converted == expected)
+        np.testing.assert_equal(converted, expected)
 
     def test_convert_square_to_triangle(self, regions_half_squares, regions_half_triangles):
         rreg = RegionRegister()
@@ -247,12 +247,12 @@ class TestRegionRegister():
         data = np.array([1, 1])
         converted = rreg.convert(data, 'half_squares', 'half_triangles')
         expected = np.array([1, 1])
-        assert all(converted == expected)
+        np.testing.assert_equal(converted, expected)
 
         data = np.array([0, 1])
         converted = rreg.convert(data, 'half_squares', 'half_triangles')
         expected = np.array([0.25, 0.75])
-        assert all(converted == expected)
+        np.testing.assert_equal(converted, expected)
 
     def test_convert_triangle_to_square(self, regions_half_squares, regions_half_triangles):
         rreg = RegionRegister()
@@ -262,9 +262,9 @@ class TestRegionRegister():
         data = np.array([1, 1])
         converted = rreg.convert(data, 'half_triangles', 'half_squares')
         expected = np.array([1, 1])
-        assert all(converted == expected)
+        np.testing.assert_equal(converted, expected)
 
         data = np.array([0.25, 0.75])
         converted = rreg.convert(data, 'half_triangles', 'half_squares')
         expected = np.array([0.375, 0.625])
-        assert all(converted == expected)
+        np.testing.assert_equal(converted, expected)
