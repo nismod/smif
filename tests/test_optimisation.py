@@ -1,12 +1,10 @@
 """Tests the definition and solution of the planning problem optimisation
 """
-import pytest
 from smif.intervention import Intervention, InterventionRegister
 from smif.optimisation import (feature_vfa_model, formulate_model,
                                linear_vfa_model, solve_model, state_vfa_model)
 
 
-@pytest.mark.skip(reason="Fails on Travis due to GLPK/pyomo version incompatibility")
 def test_linear_vfa_model():
 
     assets = ['asset_one', 'asset_two']
