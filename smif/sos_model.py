@@ -327,18 +327,25 @@ class SosModel(object):
     def _convert_data(self, data, to_spatial_resolution,
                       to_temporal_resolution, from_spatial_resolution,
                       from_temporal_resolution):
-        """Given a model, check required parameters, pick data from scenario
-        for the given timestep
+        """Convert data from one spatial and temporal resolution to another
 
         Parameters
         ----------
-        timestep: int
-            The year for which to get scenario data
-        dependency: :class:`smif.SpaceTimeValue`
+        data : numpy.ndarray
+            The data series for conversion
+        to_spatial_resolution : str
+            ID of the region set to convert to
+        to_temporal_resolution : str
+            ID of the interval set to convert to
+        from_spatial_resolution : str
+            ID of the region set to convert from
+        from_temporal_resolution : str
+            ID of the interval set to convert from
 
         Returns
         -------
-        numpy.ndarray
+        converted_data : numpy.ndarray
+            The converted data series
 
         """
         convertor = SpaceTimeConvertor(self.regions, self.intervals)
