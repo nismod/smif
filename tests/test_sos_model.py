@@ -541,6 +541,36 @@ class TestSosModelBuilder():
         assert isinstance(sos_model.models['water_supply'], SectorModel)
         assert sos_model.timesteps == [2010, 2011, 2012]
 
+    def test_set_max_iterations(self, get_config_data):
+        """Test constructing from single dict config
+        """
+        config = get_config_data
+        config['max_iterations'] = 125
+        builder = SosModelBuilder()
+        builder.construct(config)
+        sos_model = builder.finish()
+        assert sos_model.max_iterations == 125
+
+    def test_set_convergence_absolute_tolerance(self, get_config_data):
+        """Test constructing from single dict config
+        """
+        config = get_config_data
+        config['convergence_absolute_tolerance'] = 0.0001
+        builder = SosModelBuilder()
+        builder.construct(config)
+        sos_model = builder.finish()
+        assert sos_model.convergence_absolute_tolerance == 0.0001
+
+    def test_set_convergence_relative_tolerance(self, get_config_data):
+        """Test constructing from single dict config
+        """
+        config = get_config_data
+        config['convergence_relative_tolerance'] = 0.1
+        builder = SosModelBuilder()
+        builder.construct(config)
+        sos_model = builder.finish()
+        assert sos_model.convergence_relative_tolerance == 0.1
+
     def test_missing_planning_asset(self, get_config_data):
         config = get_config_data
         config["planning"] = [

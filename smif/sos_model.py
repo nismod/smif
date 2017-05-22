@@ -44,6 +44,8 @@ class SosModel(object):
         # housekeeping
         self.logger = logging.getLogger(__name__)
         self.max_iterations = 25
+        self.convergence_relative_tolerance = 1e-05
+        self.convergence_absolute_tolerance = 1e-08
 
         # models
         self.models = {}
@@ -545,9 +547,10 @@ class ModelSet(object):
         self._model_names = {model.name for model in models}
         self._sos_model = sos_model
         self.iterated_results = {}
-        # tolerance for convergance assessment - see numpy.allclose docs
-        self.relative_tolerance = 1e-05
-        self.absolute_tolerance = 1e-08
+        self.max_iterations = sos_model.max_iterations
+        # tolerance for convergence assessment - see numpy.allclose docs
+        self.relative_tolerance = sos_model.convergence_relative_tolerance
+        self.absolute_tolerance = sos_model.convergence_absolute_tolerance
 
     def run(self, timestep):
         """Runs a set of one or more models
@@ -572,7 +575,7 @@ class ModelSet(object):
 
             # - keep track of intermediate results (iterations within the timestep)
             # - stop iterating according to near-equality condition
-            for i in range(self._sos_model.max_iterations):
+            for i in range(self.max_iterations):
                 if self.converged():
                     break
                 else:
@@ -645,7 +648,7 @@ class ModelSet(object):
         return model[0]
 
     def _model_converged(self, model, results):
-        """Check a single model's output for convergance
+        """Check a single model's output for convergence
 
         Compare data output for each param over recent iterations.
 
@@ -704,6 +707,8 @@ class SosModelBuilder(object):
 
         self.add_timesteps(config_data['timesteps'])
         self.set_max_iterations(config_data)
+        self.set_convergence_abs_tolerance(config_data)
+        self.set_convergence_rel_tolerance(config_data)
 
         self.load_region_sets(config_data['region_sets'])
         self.load_interval_sets(config_data['interval_sets'])
@@ -726,8 +731,29 @@ class SosModelBuilder(object):
         self.sos_model.timesteps = timesteps
 
     def set_max_iterations(self, config_data):
+        """Set the maximum iterations for iterating `class`::smif.ModelSet to
+        convergence
+        """
         if 'max_iterations' in config_data and config_data['max_iterations'] is not None:
             self.sos_model.max_iterations = config_data['max_iterations']
+
+    def set_convergence_abs_tolerance(self, config_data):
+        """Set the absolute tolerance for iterating `class`::smif.ModelSet to
+        convergence
+        """
+        if 'convergence_absolute_tolerance' in config_data and \
+                config_data['convergence_absolute_tolerance'] is not None:
+            self.sos_model.convergence_absolute_tolerance = \
+                config_data['convergence_absolute_tolerance']
+
+    def set_convergence_rel_tolerance(self, config_data):
+        """Set the relative tolerance for iterating `class`::smif.ModelSet to
+        convergence
+        """
+        if 'convergence_relative_tolerance' in config_data and \
+                config_data['convergence_relative_tolerance'] is not None:
+            self.sos_model.convergence_relative_tolerance = \
+                config_data['convergence_relative_tolerance']
 
     def add_resolution_mapping(self, resolution_mapping):
         """
