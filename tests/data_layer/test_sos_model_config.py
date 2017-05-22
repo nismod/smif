@@ -26,6 +26,14 @@ class TestSosModelReader():
         expected = ['../data/water_supply/pre-specified.yaml']
         assert reader._config['planning']['pre_specified']['files'] == expected
 
+    def test_read_convergence_settings(self, setup_project_folder):
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+
+        assert reader.data["convergence_absolute_tolerance"] == 0.1
+        assert reader.data["convergence_relative_tolerance"] == 0.0001
+        assert reader.data["convergence_max_iterations"] == 1000
+
     def test_model_list(self, setup_project_folder):
 
         reader = self._get_reader(setup_project_folder)
