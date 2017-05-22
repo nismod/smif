@@ -366,7 +366,7 @@ class TestSosModel():
         results = model_set.guess_results(ws_model, 2010)
         model_set.iterated_results[ws_model.name] = [results]
 
-        assert not model_set.converged(2010)
+        assert not model_set.converged()
 
     def test_converged_two_identical(self, get_sos_model_only_scenario_dependencies):
         """Should report converged if the last two output sets are identical
@@ -383,7 +383,7 @@ class TestSosModel():
             "water_supply": [results, results]
         }
 
-        assert model_set.converged(2010)
+        assert model_set.converged()
 
     def test_run_sequential(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
