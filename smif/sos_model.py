@@ -633,9 +633,8 @@ class ModelSet(object):
         # each data output is a dict with
         #   str key (parameter name) =>
         #       np.ndarray value (regions x intervals)
-        if all([
-                self._model_converged(self._get_model(model_name), results)
-                for model_name, results in self.iterated_results.items()]):
+        if all(self._model_converged(self._get_model(model_name), results)
+               for model_name, results in self.iterated_results.items()):
             # if all most recent are almost equal to penultimate, must have converged
             return True
 
@@ -663,7 +662,7 @@ class ModelSet(object):
         previous_results = results[-2]
         param_names = [param.name for param in model.outputs.parameters]
 
-        return all([
+        return all(
             np.allclose(
                 latest_results[param],
                 previous_results[param],
@@ -671,7 +670,7 @@ class ModelSet(object):
                 atol=self.absolute_tolerance
             )
             for param in param_names
-        ])
+        )
 
 
 class SosModelBuilder(object):
