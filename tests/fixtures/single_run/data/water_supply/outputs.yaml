@@ -1,9 +1,12 @@
 - name: cost
   spatial_resolution: national
   temporal_resolution: annual
+  units: million GBP
 - name: energy_demand
   spatial_resolution: national
   temporal_resolution: annual
+  units: kWh
 - name: water
   spatial_resolution: national
   temporal_resolution: annual
+  units: Ml

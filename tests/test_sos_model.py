@@ -26,7 +26,8 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
         'scenario': {
             'raininess': {
                 'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA'
+                'spatial_resolution': 'LSOA',
+                'units': 'ml'
             }
         }
     })
@@ -62,19 +63,22 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
         {
             'name': 'raininess',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'ml'
         }
     ]
     ws.outputs = [
         {
             'name': 'cost',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'million GBP'
         },
         {
             'name': 'water',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         }
     ]
     ws.interventions = [
@@ -99,7 +103,8 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
         {
             'name': 'raininess',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'ml'
         }
     ]
 
@@ -119,7 +124,8 @@ def get_sos_model_with_model_dependency(setup_region_data):
         'scenario': {
             'raininess': {
                 'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA'
+                'spatial_resolution': 'LSOA',
+                'units': 'ml'
             }
         }
     })
@@ -155,7 +161,8 @@ def get_sos_model_with_model_dependency(setup_region_data):
         {
             'name': 'raininess',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         }
     ]
 
@@ -163,12 +170,14 @@ def get_sos_model_with_model_dependency(setup_region_data):
         {
             'name': 'water',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         },
         {
             'name': 'cost',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         }
     ]
     ws.interventions = [
@@ -184,7 +193,8 @@ def get_sos_model_with_model_dependency(setup_region_data):
         {
             'name': 'water',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         }
     ]
 
@@ -204,7 +214,8 @@ def get_sos_model_with_summed_dependency(setup_region_data):
         'scenario': {
             'raininess': {
                 'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA'
+                'spatial_resolution': 'LSOA',
+                'units': 'Ml'
             }
         }
     })
@@ -226,14 +237,16 @@ def get_sos_model_with_summed_dependency(setup_region_data):
         {
             'name': 'raininess',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         }
     ]
     ws.outputs = [
         {
             'name': 'water',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         }
     ]
     builder.add_model(ws)
@@ -244,14 +257,16 @@ def get_sos_model_with_summed_dependency(setup_region_data):
         {
             'name': 'raininess',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         }
     ]
     ws2.outputs = [
         {
             'name': 'water',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         }
     ]
     builder.add_model(ws2)
@@ -261,7 +276,8 @@ def get_sos_model_with_summed_dependency(setup_region_data):
         {
             'name': 'water',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         }
     ]
     ws3.name = 'water_supply_3'
@@ -483,7 +499,8 @@ def get_config_data(setup_project_folder, setup_region_data):
             'scenario': {
                 'raininess': {
                     'temporal_resolution': 'annual',
-                    'spatial_resolution': 'LSOA'
+                    'spatial_resolution': 'LSOA',
+                    'units': 'Ml'
                 }
             }
         }
@@ -618,7 +635,8 @@ class TestSosModelBuilder():
             {
                 'name': 'raininess',
                 'spatial_resolution': 'blobby',
-                'temporal_resolution': 'mega'
+                'temporal_resolution': 'mega',
+                'units': 'Ml'
             }
         ]
 
@@ -662,7 +680,8 @@ class TestSosModelBuilder():
             {
                 'name': 'b value',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual'
+                'temporal_resolution': 'annual',
+                'units': 'count'
             }
         ]
 
@@ -670,7 +689,8 @@ class TestSosModelBuilder():
             {
                 'name': 'a value',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual'
+                'temporal_resolution': 'annual',
+                'units': 'count'
             }
         ]
 
@@ -678,7 +698,8 @@ class TestSosModelBuilder():
             {
                 'name': 'a value',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual'
+                'temporal_resolution': 'annual',
+                'units': 'count'
             }
         ]
 
@@ -686,7 +707,8 @@ class TestSosModelBuilder():
             {
                 'name': 'b value',
                 'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual'
+                'temporal_resolution': 'annual',
+                'units': 'count'
             }
         ]
 

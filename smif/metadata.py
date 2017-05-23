@@ -5,6 +5,7 @@ for example::
         - name: petrol_price
           spatial_resolution: GB
           temporal_resolution: annual
+          units: £/l
         - name: diesel_price
           spatial_resolution: GB
           temporal_resolution: annual
@@ -23,44 +24,57 @@ __copyright__ = "Will Usher, Tom Russell, University of Oxford 2017"
 __license__ = "mit"
 
 
-Parameter = namedtuple(
-    "Parameter",
+Metadata = namedtuple(
+    "Metadata",
     [
         "name",
         "spatial_resolution",
-        "temporal_resolution"
+        "temporal_resolution",
+        "units"
     ]
 )
 
 
-class ModelParameters(object):
-    """A container for all the model inputs
+class ModelMetadata(object):
+    """A container for metadata about model inputs or outputs
 
     Arguments
     =========
-    inputs : list
-        A list of dicts of model parameter name, spatial resolution
-        and temporal resolution
+    metadata: list
+        A list of dicts like ::
+
+                {
+                    "name": "heat_demand"
+                    "spatial_resolution": "household"
+                    "temporal_resolution": "hourly"
+                    "units": "kW"
+                }
     """
-    def __init__(self, parameters):
-        self._parameters = [Parameter(parameter['name'],
-                                      parameter['spatial_resolution'],
-                                      parameter['temporal_resolution']
-                                      ) for parameter in parameters]
+    def __init__(self, metadata_list):
+        self._metadata = [
+            Metadata(
+                metadata_item['name'],
+                metadata_item['spatial_resolution'],
+                metadata_item['temporal_resolution'],
+                metadata_item['units']
+            )
+            for metadata_item in metadata_list
+        ]
         self.logger = logging.getLogger(__name__)
 
     @property
-    def parameters(self):
+    def metadata(self):
         """A list of the model parameters
 
         Returns
         =======
-        :class:`smif.parameters.ParameterList`
+        parameters: list
+            A list of :class:`smif.Metadata`
         """
-        return self._parameters
+        return self._metadata
 
     def __len__(self):
-        return len(self.parameters)
+        return len(self._metadata)
 
     def get_spatial_res(self, name):
         """The spatial resolution for parameter `name`
@@ -70,7 +84,7 @@ class ModelParameters(object):
         name: str
             The name of a model parameter
         """
-        for parameter in self._parameters:
+        for parameter in self._metadata:
             if parameter.name == name:
                 spatial_resolution = parameter.spatial_resolution
                 break
@@ -86,7 +100,7 @@ class ModelParameters(object):
         name: str
             The name of a model parameter
         """
-        for parameter in self._parameters:
+        for parameter in self._metadata:
             if parameter.name == name:
                 temporal_resolution = parameter.temporal_resolution
                 break
@@ -104,7 +118,7 @@ class ModelParameters(object):
             A list of the spatial resolutions associated with the model
             parameters
         """
-        return [parameter.spatial_resolution for parameter in self._parameters]
+        return [parameter.spatial_resolution for parameter in self._metadata]
 
     @property
     def temporal_resolutions(self):
@@ -116,8 +130,8 @@ class ModelParameters(object):
             A list of the temporal resolutions associated with the model
             parameters
         """
-        return [parameter.temporal_resolution for parameter in self._parameters]
+        return [parameter.temporal_resolution for parameter in self._metadata]
 
     @property
     def names(self):
-        return [parameter.name for parameter in self._parameters]
+        return [parameter.name for parameter in self._metadata]

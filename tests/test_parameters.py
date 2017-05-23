@@ -2,17 +2,18 @@
 
 """
 from pytest import fixture, raises
-from smif.parameters import ModelParameters
+from smif.metadata import ModelMetadata
 
 
 class TestModelInputs:
-    """Given a list of parameter dicts of the format::
+    """Given a list of metadata dicts of the format::
 
     [
             {
                 'name': 'macguffins produced',
                 'spatial_resolution': 'LSOA',
                 'temporal_resolution': 'annual'
+                'units': 'count'
             }
         ]
 
@@ -20,7 +21,7 @@ class TestModelInputs:
 
     """
     def test_one_dependency(self, one_dependency):
-        inputs = ModelParameters(one_dependency)
+        inputs = ModelMetadata(one_dependency)
 
         actual = inputs.names
         expected = ['macguffins produced']
@@ -43,13 +44,19 @@ def two_output_metrics():
     """Returns a model output dictionary with two metrics
     """
     outputs = [
-        {'name': 'total_cost',
+        {
+            'name': 'total_cost',
             'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual'},
-        {'name': 'water_demand',
+            'temporal_resolution': 'annual',
+            'units': 'count'
+        },
+        {
+            'name': 'water_demand',
             'spatial_resolution': 'watershed',
-            'temporal_resolution': 'daily'}
-        ]
+            'temporal_resolution': 'daily',
+            'units': 'count'
+        }
+    ]
     return outputs
 
 
@@ -64,13 +71,13 @@ class TestModelOutputs:
 
     def test_model_outputs(self, two_output_metrics):
 
-        outputs = ModelParameters(two_output_metrics)
-        actual = [x for x in outputs.parameters]
+        outputs = ModelMetadata(two_output_metrics)
+        actual = [x for x in outputs.metadata]
         names = ['total_cost', 'water_demand']
         areas = ['LSOA', 'watershed']
         intervals = ['annual', 'daily']
 
-        for actual, name, area, inter in zip(outputs.parameters,
+        for actual, name, area, inter in zip(outputs.metadata,
                                              names,
                                              areas,
                                              intervals):
@@ -80,7 +87,7 @@ class TestModelOutputs:
 
     def test_get_spatial_property(self, two_output_metrics):
 
-        outputs = ModelParameters(two_output_metrics)
+        outputs = ModelMetadata(two_output_metrics)
 
         actual = outputs.get_spatial_res('total_cost')
         expected = 'LSOA'
@@ -96,7 +103,7 @@ class TestModelOutputs:
 
     def test_get_temporal_property(self, two_output_metrics):
 
-        outputs = ModelParameters(two_output_metrics)
+        outputs = ModelMetadata(two_output_metrics)
 
         actual = outputs.get_temporal_res('total_cost')
         expected = 'annual'
