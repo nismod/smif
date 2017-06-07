@@ -15,6 +15,7 @@ from smif.convert.area import RegionRegister, RegionSet
 from smif.convert.interval import TimeIntervalRegister
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
+from smif.metadata import ModelMetadata
 from smif.sector_model import SectorModelBuilder
 
 __author__ = "Will Usher, Tom Russell"
@@ -55,7 +56,7 @@ class SosModel(object):
         self._timesteps = []
         self.regions = RegionRegister()
         self.intervals = TimeIntervalRegister()
-        self._resolution_mapping = {'scenario': {}}
+        self._scenario_metadata = ModelMetadata({})
 
         # systems, interventions and (system) state
         self.interventions = InterventionRegister()
@@ -68,28 +69,14 @@ class SosModel(object):
         self._results = defaultdict(dict)
 
     @property
-    def resolution_mapping(self):
+    def scenario_metadata(self):
         """Returns the temporal and spatial mapping to an input, output or scenario parameter
-
-        Example
-        -------
-        The data structure follows ``source->parameter->{temporal, spatial}``::
-
-                {
-                    'scenario': {
-                        'raininess': {
-                            'temporal_resolution': 'annual',
-                            'spatial_resolution': 'LSOA'
-                        }
-                    }
-                }
-
         """
-        return self._resolution_mapping
+        return self._scenario_metadata
 
-    @resolution_mapping.setter
-    def resolution_mapping(self, value):
-        self._resolution_mapping = value
+    @scenario_metadata.setter
+    def scenario_metadata(self, value):
+        self._scenario_metadata = ModelMetadata(value)
 
     @property
     def scenario_data(self):
@@ -276,10 +263,10 @@ class SosModel(object):
 
                 if source == 'scenario':
                     from_data = self.scenario_data[name][timestep_idx]
-                    scenario_map = self.resolution_mapping['scenario']
-                    from_spatial_resolution = scenario_map[name]['spatial_resolution']
-                    from_temporal_resolution = scenario_map[name]['temporal_resolution']
-                    from_units = scenario_map[name]['units']
+                    scenario_map = self.scenario_metadata
+                    from_spatial_resolution = scenario_map.get_spatial_res(name)
+                    from_temporal_resolution = scenario_map.get_temporal_res(name)
+                    from_units = scenario_map.get_units(name)
                     self.logger.debug("Found data: %s", from_data)
 
                 elif source in self.models:
@@ -492,7 +479,7 @@ class SosModel(object):
 
     @property
     def inputs(self):
-        """A dictionary of model names associated with an inputs
+        """Model names associated with inputs
 
         Returns
         -------
@@ -501,8 +488,8 @@ class SosModel(object):
         """
         parameter_model_map = defaultdict(list)
         for model_name, model in self.models.items():
-            for dep in model.inputs.metadata:
-                parameter_model_map[dep.name].append(model_name)
+            for name in model.inputs.names:
+                parameter_model_map[name].append(model_name)
         return parameter_model_map
 
     @property
@@ -515,11 +502,11 @@ class SosModel(object):
             Keys are parameter names, value is a list of sector model names
         """
         parameter_model_map = defaultdict(list)
-        for model_name, model_data in self.models.items():
-            for output in model_data.outputs.metadata:
-                parameter_model_map[output.name].append(model_name)
+        for model_name, model in self.models.items():
+            for name in model.outputs.names:
+                parameter_model_map[name].append(model_name)
 
-        for name in self.resolution_mapping['scenario'].keys():
+        for name in self.scenario_metadata.names:
             parameter_model_map[name].append('scenario')
         return parameter_model_map
 
@@ -721,7 +708,7 @@ class SosModelBuilder(object):
 
         self.load_models(model_list)
         self.add_planning(config_data['planning'])
-        self.add_resolution_mapping(config_data['resolution_mapping'])
+        self.add_scenario_metadata(config_data['scenario_metadata'])
         self.add_scenario_data(config_data['scenario_data'])
         self.logger.debug(config_data['scenario_data'])
 
@@ -761,31 +748,30 @@ class SosModelBuilder(object):
             self.sos_model.convergence_relative_tolerance = \
                 config_data['convergence_relative_tolerance']
 
-    def add_resolution_mapping(self, resolution_mapping):
+    def add_scenario_metadata(self, scenario_metadata):
         """
 
         Parameters
         ----------
-        resolution_mapping: dict
+        scenario_metadata: list of dicts
             A dictionary containing information on the spatial and temporal
             resoultion of scenario data
 
         Example
         -------
-        The data structure follows ``source->parameter->{temporal, spatial, units}``::
+        The data structure of each list item is as follows::
 
-                {
-                    'scenario': {
-                        'raininess': {
-                            'temporal_resolution': 'annual',
-                            'spatial_resolution': 'LSOA',
-                            'units': 'ml'
-                        }
+                [
+                    {
+                        'name': 'raininess',
+                        'temporal_resolution': 'annual',
+                        'spatial_resolution': 'LSOA',
+                        'units': 'ml'
                     }
-                }
+                ]
 
         """
-        self.sos_model.resolution_mapping = resolution_mapping
+        self.sos_model.scenario_metadata = scenario_metadata
 
     def load_region_sets(self, region_sets):
         """Loads the region sets into the system-of-system model
@@ -946,26 +932,26 @@ class SosModelBuilder(object):
         nested = {}
 
         for param, observations in data.items():
-            if param not in self.sos_model.resolution_mapping['scenario']:
-                raise ValueError("Parameter {} not registered in resolution mapping {}".format(
+            if param not in self.sos_model.scenario_metadata.names:
+                raise ValueError("Parameter {} not registered in scenario metadata {}".format(
                     param,
-                    self.sos_model.resolution_mapping))
-            resolution_sets = self.sos_model.resolution_mapping['scenario'][param]
+                    self.sos_model.scenario_metadata))
+            param_metadata = self.sos_model.scenario_metadata.get_metadata_item(param)
 
             nested[param] = self._data_list_to_array(
                 param,
                 observations,
                 self.sos_model.timesteps,
-                resolution_sets
+                param_metadata
             )
 
         self.sos_model._scenario_data = nested
 
-    def _data_list_to_array(self, param, observations, timestep_names, resolution_sets):
+    def _data_list_to_array(self, param, observations, timestep_names, param_metadata):
         """Convert list of observations to :class:`numpy.ndarray`
         """
         interval_names, region_names = self._get_dimension_names_for_param(
-            resolution_sets, param)
+            param_metadata, param)
 
         if len(timestep_names) == 0:
             self.logger.error("No timesteps found when loading %s", param)
@@ -997,7 +983,7 @@ class SosModelBuilder(object):
                 raise ValueError(
                     "Region {} not defined in set {} for parameter {}".format(
                         region,
-                        resolution_sets['spatial_resolution'],
+                        param_metadata.spatial_resolution,
                         param))
 
             if 'interval' not in obs:
@@ -1007,7 +993,7 @@ class SosModelBuilder(object):
                 raise ValueError(
                     "Interval {} not defined in set {} for parameter {}".format(
                         interval,
-                        resolution_sets['temporal_resolution'],
+                        param_metadata.temporal_resolution,
                         param))
 
             timestep_idx = timestep_names.index(year)
@@ -1018,12 +1004,12 @@ class SosModelBuilder(object):
 
         return data
 
-    def _get_dimension_names_for_param(self, resolution_sets, param):
-        interval_set_name = resolution_sets['temporal_resolution']
+    def _get_dimension_names_for_param(self, metadata, param):
+        interval_set_name = metadata.temporal_resolution
         interval_set = self.sos_model.intervals.get_intervals_in_set(interval_set_name)
         interval_names = [interval.name for key, interval in interval_set.items()]
 
-        region_set_name = resolution_sets['spatial_resolution']
+        region_set_name = metadata.spatial_resolution
         region_set = self.sos_model.regions.get_regions_in_set(region_set_name)
         region_names = [region.name for region in region_set]
 
@@ -1116,11 +1102,41 @@ class SosModelBuilder(object):
 
                 for source in providers:
                     if source == 'scenario':
+                        dep_source = self.sos_model.scenario_metadata. \
+                                     get_metadata_item(dep.name)
+                    else:
+                        dep_source = self.sos_model.models[source]. \
+                                     outputs.get_metadata_item(dep.name)
+                    self.validate_dependency(dep_source, dep)
+
+                    if source == 'scenario':
                         continue
 
                     dependency_graph.add_edge(model_name, source)
 
         self.sos_model.dependency_graph = dependency_graph
+
+    def validate_dependency(self, source, sink):
+        """For a source->sink pair of dependency metadata, validate viability
+        of the conversion
+        """
+        print(source)
+        print(sink)
+        if source.units != sink.units:
+            raise AssertionError("Units %s, %s not compatible, conversion required by %s",
+                                 source.units, sink.units, source.name)
+        if source.spatial_resolution not in self.sos_model.regions.names:
+            raise AssertionError("Region set %s not found, required by %s",
+                                 source.spatial_resolution, source.name)
+        if sink.spatial_resolution not in self.sos_model.regions.names:
+            raise AssertionError("Region set %s not found, required by %s",
+                                 sink.spatial_resolution, sink.name)
+        if source.temporal_resolution not in self.sos_model.intervals.names:
+            raise AssertionError("Interval set %s not found, required by %s",
+                                 source.temporal_resolution, source.name)
+        if sink.temporal_resolution not in self.sos_model.intervals.names:
+            raise AssertionError("Interval set %s not found, required by %s",
+                                 sink.temporal_resolution, sink.name)
 
     def finish(self):
         """Returns a configured system-of-systems model ready for operation

@@ -2,7 +2,9 @@
 
 import numpy as np
 from pytest import fixture, raises
+
 from smif.decision import Planning
+from smif.metadata import Metadata
 from smif.sector_model import SectorModel
 from smif.sos_model import ModelSet, SosModel, SosModelBuilder
 
@@ -22,15 +24,12 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
         }
     ]
     builder.load_interval_sets({'annual': interval_data})
-    builder.add_resolution_mapping({
-        'scenario': {
-            'raininess': {
-                'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA',
-                'units': 'ml'
-            }
-        }
-    })
+    builder.add_scenario_metadata([{
+        'name': 'raininess',
+        'temporal_resolution': 'annual',
+        'spatial_resolution': 'LSOA',
+        'units': 'ml'
+    }])
     builder.add_scenario_data({
         "raininess": [
             {
@@ -117,15 +116,12 @@ def get_sos_model_with_model_dependency(setup_region_data):
     interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
     builder.load_interval_sets({'annual': interval_data})
     builder.load_region_sets({'LSOA': setup_region_data['features']})
-    builder.add_resolution_mapping({
-        'scenario': {
-            'raininess': {
-                'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA',
-                'units': 'ml'
-            }
-        }
-    })
+    builder.add_scenario_metadata([{
+        'name': 'raininess',
+        'temporal_resolution': 'annual',
+        'spatial_resolution': 'LSOA',
+        'units': 'ml'
+    }])
     builder.add_scenario_data({
         "raininess": [
             {
@@ -204,15 +200,12 @@ def get_sos_model_with_summed_dependency(setup_region_data):
     builder.load_region_sets({'LSOA': setup_region_data['features']})
     interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
     builder.load_interval_sets({'annual': interval_data})
-    builder.add_resolution_mapping({
-        'scenario': {
-            'raininess': {
-                'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA',
-                'units': 'ml'
-            }
-        }
-    })
+    builder.add_scenario_metadata([{
+        'name': 'raininess',
+        'temporal_resolution': 'annual',
+        'spatial_resolution': 'LSOA',
+        'units': 'ml'
+    }])
     builder.add_scenario_data({
         "raininess": [
             {
@@ -487,15 +480,14 @@ def get_config_data(setup_project_folder, setup_region_data):
                 }
             ]
         },
-        "resolution_mapping": {
-            'scenario': {
-                'raininess': {
-                    'temporal_resolution': 'annual',
-                    'spatial_resolution': 'LSOA',
-                    'units': 'ml'
-                }
+        "scenario_metadata": [
+            {
+                'name': 'raininess',
+                'temporal_resolution': 'annual',
+                'spatial_resolution': 'LSOA',
+                'units': 'ml'
             }
-        }
+        ]
     }
 
 
@@ -635,7 +627,7 @@ class TestSosModelBuilder():
         builder = SosModelBuilder()
         builder.construct(config)
 
-        with raises(ValueError):
+        with raises(AssertionError):
             builder.finish()
 
         builder.load_region_sets({'blobby': setup_region_data['features']})
@@ -807,14 +799,12 @@ class TestSosModelBuilder():
         ]
         builder.load_interval_sets({'seasonal': interval_data})
         builder.load_region_sets({'country': setup_country_data['features']})
-        builder.add_resolution_mapping({
-            'scenario': {
-                'mass': {
-                    'spatial_resolution': 'country',
-                    'temporal_resolution': 'seasonal'
-                }
-            }
-        })
+        builder.add_scenario_metadata([{
+            'name': 'mass',
+            'spatial_resolution': 'country',
+            'temporal_resolution': 'seasonal',
+            'units': 'kg'
+        }])
         builder.add_scenario_data(data)
         actual = builder.sos_model._scenario_data
 
@@ -841,15 +831,12 @@ class TestSosModelBuilder():
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
-        builder.add_resolution_mapping({
-            'scenario': {
-                'length': {
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'units': 'm'
-                }
-            }
-        })
+        builder.add_scenario_metadata([{
+            'name': 'length',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual',
+            'units': 'm'
+        }])
         builder.add_scenario_data(data)
         assert builder.sos_model._scenario_data == expected
 
@@ -866,15 +853,12 @@ class TestSosModelBuilder():
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
-        builder.add_resolution_mapping({
-            'scenario': {
-                'length': {
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'units': 'm'
-                }
-            }
-        })
+        builder.add_scenario_metadata([{
+            'name': 'length',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual',
+            'units': 'm'
+        }])
 
         msg = "Scenario data item missing year"
         with raises(ValueError) as ex:
@@ -893,7 +877,7 @@ class TestSosModelBuilder():
 
         builder = SosModelBuilder()
 
-        msg = "Parameter length not registered in resolution mapping"
+        msg = "Parameter length not registered in scenario metadata"
         with raises(ValueError) as ex:
             builder.add_scenario_data(data)
         assert msg in str(ex.value)
@@ -915,15 +899,12 @@ class TestSosModelBuilder():
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
-        builder.add_resolution_mapping({
-            'scenario': {
-                'length': {
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'units': 'm'
-                }
-            }
-        })
+        builder.add_scenario_metadata([{
+            'name': 'length',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual',
+            'units': 'm'
+        }])
 
         msg = "Region missing not defined in set LSOA for parameter length"
         with raises(ValueError) as ex:
@@ -953,15 +934,12 @@ class TestSosModelBuilder():
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
-        builder.add_resolution_mapping({
-            'scenario': {
-                'length': {
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'units': 'm'
-                }
-            }
-        })
+        builder.add_scenario_metadata([{
+            'name': 'length',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual',
+            'units': 'm'
+        }])
 
         msg = "Interval extra not defined in set annual for parameter length"
         with raises(ValueError) as ex:
@@ -1028,8 +1006,24 @@ class TestSosModelBuilder():
 
     def test_invalid_units_conversion(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
-        sos_model.resolution_mapping['scenario']['raininess']['units'] = \
-            'incompatible'
+        metadata = []
+
+        for item in sos_model.scenario_metadata.metadata:
+            if item.name == 'raininess':
+                item = Metadata(
+                    item.name,
+                    item.spatial_resolution,
+                    item.temporal_resolution,
+                    'incompatible')
+
+            metadata.append({
+                "name": item.name,
+                "spatial_resolution": item.spatial_resolution,
+                "temporal_resolution": item.temporal_resolution,
+                "units": item.units
+            })
+
+        sos_model.scenario_metadata = metadata
 
         with raises(NotImplementedError) as ex:
             sos_model.get_data(sos_model.models['water_supply'], 2010)
