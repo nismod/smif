@@ -257,21 +257,21 @@ class SectorModelBuilder(object):
 
         self._sector_model.initialise(initial_conditions)
 
-    def add_inputs(self, input_dict):
+    def add_inputs(self, input_dicts):
         """Add inputs to the sector model
         """
         msg = "Sector model must be loaded before adding inputs"
         assert self._sector_model is not None, msg
 
-        self._sector_model.inputs = input_dict
+        self._sector_model.inputs = input_dicts
 
-    def add_outputs(self, output_dict):
+    def add_outputs(self, output_dicts):
         """Add outputs to the sector model
         """
         msg = "Sector model must be loaded before adding outputs"
         assert self._sector_model is not None, msg
 
-        self._sector_model.outputs = output_dict
+        self._sector_model.outputs = output_dicts
 
     def add_interventions(self, intervention_list):
         """Add interventions to the sector model
