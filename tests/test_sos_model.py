@@ -1025,3 +1025,13 @@ class TestSosModelBuilder():
                 assert entry in inputs[key]
 
         sos_model.run()
+
+    def test_invalid_units_conversion(self, get_sos_model_only_scenario_dependencies):
+        sos_model = get_sos_model_only_scenario_dependencies
+        sos_model.resolution_mapping['scenario']['raininess']['units'] = \
+            'incompatible'
+
+        with raises(NotImplementedError) as ex:
+            sos_model.get_data(sos_model.models['water_supply'], 2010)
+
+        assert "Units conversion not implemented" in str(ex.value)

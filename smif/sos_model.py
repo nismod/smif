@@ -279,6 +279,7 @@ class SosModel(object):
                     scenario_map = self.resolution_mapping['scenario']
                     from_spatial_resolution = scenario_map[name]['spatial_resolution']
                     from_temporal_resolution = scenario_map[name]['temporal_resolution']
+                    from_units = scenario_map[name]['units']
                     self.logger.debug("Found data: %s", from_data)
 
                 elif source in self.models:
@@ -287,6 +288,7 @@ class SosModel(object):
                     from_data = self.results[timestep][source][name]
                     from_spatial_resolution = source_model.outputs.get_spatial_res(name)
                     from_temporal_resolution = source_model.outputs.get_temporal_res(name)
+                    from_units = source_model.outputs.get_units(name)
                     self.logger.debug("Found data: %s", from_data)
 
                 else:
@@ -295,10 +297,15 @@ class SosModel(object):
 
                 to_spatial_resolution = dependency.spatial_resolution
                 to_temporal_resolution = dependency.temporal_resolution
+                to_units = dependency.units
                 msg = "Converting from spatial resolution '%s' and  temporal resolution '%s'"
                 self.logger.debug(msg, from_spatial_resolution, from_temporal_resolution)
                 msg = "Converting to spatial resolution '%s' and  temporal resolution '%s'"
                 self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
+
+                if from_units != to_units:
+                    raise NotImplementedError("Units conversion not implemented %s - %s",
+                                              from_units, to_units)
 
                 if name not in new_data:
                     new_data[name] = self._convert_data(
