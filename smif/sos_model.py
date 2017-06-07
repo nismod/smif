@@ -1116,8 +1116,6 @@ class SosModelBuilder(object):
         """For a source->sink pair of dependency metadata, validate viability
         of the conversion
         """
-        print(source)
-        print(sink)
         if source.units != sink.units:
             raise AssertionError("Units %s, %s not compatible, conversion required by %s",
                                  source.units, sink.units, source.name)

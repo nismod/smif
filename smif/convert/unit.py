@@ -6,7 +6,7 @@ import logging
 
 from pint import UndefinedUnitError, UnitRegistry
 
-LOGGER = logging.getLogger(__file__)
+LOGGER = logging.getLogger()
 UNIT_REGISTRY = UnitRegistry()
 
 

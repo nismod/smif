@@ -53,18 +53,18 @@ class ModelMetadata(object):
                 }
     """
     def __init__(self, metadata_list):
+        self.logger = logging.getLogger(__name__)
         self._metadata = {
             metadata_item['name']: Metadata(
                 metadata_item['name'],
                 metadata_item['spatial_resolution'],
                 metadata_item['temporal_resolution'],
-                self.normalise_unit(metadata_item['units'])
+                self.normalise_unit(metadata_item['units'], metadata_item['name'])
             )
             for metadata_item in metadata_list
         }
-        self.logger = logging.getLogger(__name__)
 
-    def normalise_unit(self, unit_string):
+    def normalise_unit(self, unit_string, param_name):
         """Parse unit and return standard string representation
         """
         unit = parse_unit(unit_string)
@@ -74,6 +74,7 @@ class ModelMetadata(object):
         else:
             normalised = unit_string
 
+        self.logger.debug("Using unit for %s: %s", param_name, normalised)
         return normalised
 
     @property
