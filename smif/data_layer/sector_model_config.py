@@ -5,8 +5,8 @@ import logging
 import os
 
 from .load import load
-from .validate import (validate_initial_conditions, validate_input_spec,
-                       validate_interventions, validate_output_spec)
+from .validate import (validate_dependency_spec, validate_initial_conditions,
+                       validate_interventions)
 
 
 class SectorModelReader(object):
@@ -152,10 +152,7 @@ class SectorModelReader(object):
             else:
                 data = file_contents
 
-        if inputs_or_outputs == 'inputs':
-            validate_input_spec(data, self.model_name)
-        else:
-            validate_output_spec(data, self.model_name)
+        validate_dependency_spec(data, self.model_name)
 
         return data
 

@@ -180,15 +180,15 @@ class SosModelReader(object):
             {
                 'parameter': 'parameter_name',
                 'file': 'relative file path',
-                'spatial_resolution': 'national'
-                'temporal_resolution': 'annual'
+                'spatial_resolution': 'national',
+                'temporal_resolution': 'annual',
+                'units': 'kg'
             }
 
         - data in file is list of dicts, each like::
 
             {
                 'value': 100,
-                'units': 'kg',
                 # optional, depending on parameter type:
                 'region': 'UK',
                 'year': 2015
@@ -209,10 +209,13 @@ class SosModelReader(object):
 
                 spatial_res = data_type['spatial_resolution']
                 temporal_res = data_type['temporal_resolution']
+                units = data_type['units']
 
-                self.resolution_mapping['scenario'][name] = \
-                    {'spatial_resolution': spatial_res,
-                     'temporal_resolution': temporal_res}
+                self.resolution_mapping['scenario'][name] = {
+                    'spatial_resolution': spatial_res,
+                    'temporal_resolution': temporal_res,
+                    'units': units
+                }
 
                 file_path = self._get_path_from_config(data_type['file'])
                 self.logger.debug("Loading scenario data from %s with %s and %s",

@@ -23,10 +23,12 @@ scenario_data:
     file: ../data/scenario/population.yaml
     spatial_resolution: national
     temporal_resolution: annual
+    units: million people
   - parameter: raininess
     file: ../data/scenario/raininess.yaml
     spatial_resolution: national
     temporal_resolution: annual
+    units: Ml
 interval_sets:
   # shared understanding of time intervals within a year
   - name: annual
