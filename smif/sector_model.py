@@ -80,9 +80,10 @@ class SectorModel(ABC):
 
         The inputs should be specified in a list.  For example::
 
-                - name: eletricity_price
+                - name: electricity_price
                   spatial_resolution: GB
                   temporal_resolution: annual
+                  units: £/kWh
 
         Arguments
         =========
