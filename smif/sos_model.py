@@ -253,7 +253,7 @@ class SosModel(object):
         -------
         dict
             A nested dictionary of the format:
-            ``data[parameter][region][time_interval] = {value, units}``
+            ``data[parameter] = numpy.ndarray``
 
         Notes
         -----
@@ -765,11 +765,17 @@ class SosModelBuilder(object):
 
         Example
         -------
-        The data structure follows ``source->parameter->{temporal, spatial}``::
+        The data structure follows ``source->parameter->{temporal, spatial, units}``::
 
-                {'scenario': {
-                 'raininess': {'temporal_resolution': 'annual',
-                               'spatial_resolution': 'LSOA'}}}
+                {
+                    'scenario': {
+                        'raininess': {
+                            'temporal_resolution': 'annual',
+                            'spatial_resolution': 'LSOA',
+                            'units': 'ml'
+                        }
+                    }
+                }
 
         """
         self.sos_model.resolution_mapping = resolution_mapping
