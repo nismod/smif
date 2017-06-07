@@ -951,6 +951,19 @@ def setup_water_inputs(setup_folder_structure):
 
 
 @fixture(scope='function')
+def setup_water_inputs_missing_units(setup_folder_structure):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('data', 'water_supply', 'inputs.yaml')
+    contents = [{
+        'name': 'reservoir pumpiness',
+        'spatial_resolution': 'LSOA',
+        'temporal_resolution': 'annual'
+    }]
+    yaml_contents = yaml.dump(contents)
+    filename.write(yaml_contents, ensure=True)
+
+
+@fixture(scope='function')
 def water_outputs_contents():
     contents = [
         {
