@@ -1029,3 +1029,23 @@ class TestSosModelBuilder():
             sos_model.get_data(sos_model.models['water_supply'], 2010)
 
         assert "Units conversion not implemented" in str(ex.value)
+
+    def test_missing_data_source(self):
+
+        builder = SosModelBuilder()
+        builder.add_timesteps([2010])
+        ws = WaterSupplySectorModel()
+        ws.name = 'water_supply'
+        ws.inputs = [
+            {
+                'name': 'raininess',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'units': 'ml'
+            }
+        ]
+        builder.add_model(ws)
+
+        with raises(AssertionError) as ex:
+            builder.finish()
+        assert "Missing dependency" in str(ex.value)

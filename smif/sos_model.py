@@ -269,7 +269,7 @@ class SosModel(object):
                     from_units = scenario_map.get_units(name)
                     self.logger.debug("Found data: %s", from_data)
 
-                elif source in self.models:
+                else:
                     source_model = self.models[source]
                     # get latest set of results from list
                     from_data = self.results[timestep][source][name]
@@ -277,10 +277,6 @@ class SosModel(object):
                     from_temporal_resolution = source_model.outputs.get_temporal_res(name)
                     from_units = source_model.outputs.get_units(name)
                     self.logger.debug("Found data: %s", from_data)
-
-                else:
-                    msg = "The data source for dependency %s was not found"
-                    raise ValueError(msg, name)
 
                 to_spatial_resolution = dependency.spatial_resolution
                 to_temporal_resolution = dependency.temporal_resolution
