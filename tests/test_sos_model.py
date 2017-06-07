@@ -36,21 +36,18 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             {
                 'year': 2010,
                 'value': 3,
-                'units': 'ml',
                 'region': 'oxford',
                 'interval': 1
             },
             {
                 'year': 2011,
                 'value': 5,
-                'units': 'ml',
                 'region': 'oxford',
                 'interval': 1
             },
             {
                 'year': 2012,
                 'value': 1,
-                'units': 'ml',
                 'region': 'oxford',
                 'interval': 1
             }
@@ -134,21 +131,18 @@ def get_sos_model_with_model_dependency(setup_region_data):
             {
                 'year': 2010,
                 'value': 3,
-                'units': 'ml',
                 'region': 'oxford',
                 'interval': 1
             },
             {
                 'year': 2011,
                 'value': 5,
-                'units': 'ml',
                 'region': 'oxford',
                 'interval': 1
             },
             {
                 'year': 2012,
                 'value': 1,
-                'units': 'ml',
                 'region': 'oxford',
                 'interval': 1
             }
@@ -162,7 +156,7 @@ def get_sos_model_with_model_dependency(setup_region_data):
             'name': 'raininess',
             'spatial_resolution': 'LSOA',
             'temporal_resolution': 'annual',
-            'units': 'Ml'
+            'units': 'ml'
         }
     ]
 
@@ -177,7 +171,7 @@ def get_sos_model_with_model_dependency(setup_region_data):
             'name': 'cost',
             'spatial_resolution': 'LSOA',
             'temporal_resolution': 'annual',
-            'units': 'Ml'
+            'units': 'million GBP'
         }
     ]
     ws.interventions = [
@@ -215,7 +209,7 @@ def get_sos_model_with_summed_dependency(setup_region_data):
             'raininess': {
                 'temporal_resolution': 'annual',
                 'spatial_resolution': 'LSOA',
-                'units': 'Ml'
+                'units': 'ml'
             }
         }
     })
@@ -224,7 +218,6 @@ def get_sos_model_with_summed_dependency(setup_region_data):
             {
                 'year': 2010,
                 'value': 3,
-                'units': 'ml',
                 'region': 'oxford',
                 'interval': 1
             }
@@ -238,7 +231,7 @@ def get_sos_model_with_summed_dependency(setup_region_data):
             'name': 'raininess',
             'spatial_resolution': 'LSOA',
             'temporal_resolution': 'annual',
-            'units': 'Ml'
+            'units': 'ml'
         }
     ]
     ws.outputs = [
@@ -258,7 +251,7 @@ def get_sos_model_with_summed_dependency(setup_region_data):
             'name': 'raininess',
             'spatial_resolution': 'LSOA',
             'temporal_resolution': 'annual',
-            'units': 'Ml'
+            'units': 'ml'
         }
     ]
     ws2.outputs = [
@@ -479,7 +472,6 @@ def get_config_data(setup_project_folder, setup_region_data):
                 {
                     'year': 2010,
                     'value': 3,
-                    'units': 'ml',
                     'region': 'oxford',
                     'interval': 1
                 }
@@ -500,7 +492,7 @@ def get_config_data(setup_project_folder, setup_region_data):
                 'raininess': {
                     'temporal_resolution': 'annual',
                     'spatial_resolution': 'LSOA',
-                    'units': 'Ml'
+                    'units': 'ml'
                 }
             }
         }
@@ -636,7 +628,7 @@ class TestSosModelBuilder():
                 'name': 'raininess',
                 'spatial_resolution': 'blobby',
                 'temporal_resolution': 'mega',
-                'units': 'Ml'
+                'units': 'ml'
             }
         ]
 
@@ -740,57 +732,49 @@ class TestSosModelBuilder():
                     'year': 2015,
                     'region': 'GB',
                     'interval': 'wet_season',
-                    'value': 3,
-                    'units': 'kg'
+                    'value': 3
                 },
                 {
                     'year': 2015,
                     'region': 'GB',
                     'interval': 'dry_season',
-                    'value': 5,
-                    'units': 'kg'
+                    'value': 5
                 },
                 {
                     'year': 2015,
                     'region': 'NI',
                     'interval': 'wet_season',
-                    'value': 1,
-                    'units': 'kg'
+                    'value': 1
                 },
                 {
                     'year': 2015,
                     'region': 'NI',
                     'interval': 'dry_season',
-                    'value': 2,
-                    'units': 'kg'
+                    'value': 2
                 },
                 {
                     'year': 2016,
                     'region': 'GB',
                     'interval': 'wet_season',
-                    'value': 4,
-                    'units': 'kg'
+                    'value': 4
                 },
                 {
                     'year': 2016,
                     'region': 'GB',
                     'interval': 'dry_season',
-                    'value': 6,
-                    'units': 'kg'
+                    'value': 6
                 },
                 {
                     'year': 2016,
                     'region': 'NI',
                     'interval': 'wet_season',
-                    'value': 1,
-                    'units': 'kg'
+                    'value': 1
                 },
                 {
                     'year': 2016,
                     'region': 'NI',
                     'interval': 'dry_season',
-                    'value': 2.5,
-                    'units': 'kg'
+                    'value': 2.5
                 }
             ]
         }
@@ -845,7 +829,6 @@ class TestSosModelBuilder():
                     'year': 2015,
                     'interval': 1,
                     'value': 3.14,
-                    'units': 'm',
                     'region': 'oxford'
                 }
             ]
@@ -862,7 +845,8 @@ class TestSosModelBuilder():
             'scenario': {
                 'length': {
                     'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual'
+                    'temporal_resolution': 'annual',
+                    'units': 'm'
                 }
             }
         })
@@ -873,8 +857,7 @@ class TestSosModelBuilder():
         data = {
             "length": [
                 {
-                    'value': 3.14,
-                    'units': 'm'
+                    'value': 3.14
                 }
             ]
         }
@@ -887,7 +870,8 @@ class TestSosModelBuilder():
             'scenario': {
                 'length': {
                     'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual'
+                    'temporal_resolution': 'annual',
+                    'units': 'm'
                 }
             }
         })
@@ -902,7 +886,6 @@ class TestSosModelBuilder():
             "length": [
                 {
                     'value': 3.14,
-                    'units': 'm',
                     'year': 2015
                 }
             ]
@@ -920,7 +903,6 @@ class TestSosModelBuilder():
             "length": [
                 {
                     'value': 3.14,
-                    'units': 'm',
                     'region': 'missing',
                     'interval': 1,
                     'year': 2015
@@ -937,7 +919,8 @@ class TestSosModelBuilder():
             'scenario': {
                 'length': {
                     'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual'
+                    'temporal_resolution': 'annual',
+                    'units': 'm'
                 }
             }
         })
@@ -952,14 +935,12 @@ class TestSosModelBuilder():
             "length": [
                 {
                     'value': 3.14,
-                    'units': 'm',
                     'region': 'oxford',
                     'interval': 1,
                     'year': 2015
                 },
                 {
                     'value': 3.14,
-                    'units': 'm',
                     'region': 'oxford',
                     'interval': 'extra',
                     'year': 2015
@@ -976,7 +957,8 @@ class TestSosModelBuilder():
             'scenario': {
                 'length': {
                     'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual'
+                    'temporal_resolution': 'annual',
+                    'units': 'm'
                 }
             }
         })

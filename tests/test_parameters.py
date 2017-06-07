@@ -99,7 +99,7 @@ class TestModelOutputs:
 
         with raises(ValueError) as ex:
             outputs.get_spatial_res('missing')
-        assert "No output found for name 'missing'" in str(ex.value)
+        assert "No metadata found for name 'missing'" in str(ex.value)
 
     def test_get_temporal_property(self, two_output_metrics):
 
@@ -115,4 +115,4 @@ class TestModelOutputs:
 
         with raises(ValueError) as ex:
             outputs.get_temporal_res('missing')
-        assert "No output found for name 'missing'" in str(ex.value)
+        assert "No metadata found for name 'missing'" in str(ex.value)

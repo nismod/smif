@@ -28,7 +28,7 @@ scenario_data:
     file: ../data/scenario/raininess.yaml
     spatial_resolution: national
     temporal_resolution: annual
-    units: Ml
+    units: ml
 interval_sets:
   # shared understanding of time intervals within a year
   - name: annual
