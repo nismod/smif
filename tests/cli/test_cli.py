@@ -148,6 +148,29 @@ def test_validation_invalid(
     mock_print.assert_called_with('The model configuration was invalid')
 
 
+@patch('smif.cli.LOGGER.error')
+@patch('builtins.print')
+def test_validation_invalid_units(
+        mock_print,
+        error_logger,
+        setup_folder_structure,
+        setup_project_folder,
+        setup_water_inputs_missing_units):
+    """Ensure invalid inputs yaml file raises error
+    """
+    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
+    args = get_args(['validate', config_file])
+
+    with raises(SystemExit):
+        validate_config(args)
+
+    assert len(VALIDATION_ERRORS) > 0
+
+    msg_start = "Expected a value for 'units' in each model dependency"
+    assert msg_start in error_logger.call_args[0][0]
+    mock_print.assert_called_with('The model configuration was invalid')
+
+
 @patch('builtins.input', return_value='y')
 def test_confirm_yes(input):
     assert confirm()

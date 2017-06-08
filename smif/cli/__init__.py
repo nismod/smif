@@ -224,7 +224,7 @@ def log_validation_errors():
     """Log validation errors
     """
     for error in VALIDATION_ERRORS:
-        LOGGER.error(error)
+        LOGGER.error(str(error))
 
 
 def path_to_abs(relative_root, path):
