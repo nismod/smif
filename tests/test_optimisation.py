@@ -45,7 +45,7 @@ def dummy_function(binary_vector):
     return scalar ** 2
 
 
-class TestOptimizationoptimiser:
+class TestOptimizationImplementation:
 
     def test_optimise_function(self):
         """Demonstrates the steps to run the optimization algorithm
@@ -58,3 +58,25 @@ class TestOptimizationoptimiser:
         optimiser.run()
         assert optimiser.results['optimal_decision'] == [0, 0, 0, 0, 0, 0, 0, 0]
         assert optimiser.results['objective_value'] == 0
+
+
+class TestOptimizationTemplate:
+
+    def test_implement_template(self):
+
+        class MyOpt(OptimizerTemplate):
+
+            def run(self):
+                self.results['optimal_decision'] = [1] * self._action_space
+                self.results['objective_value'] = 0
+
+        myopt = MyOpt()
+        myopt.initialize(1)
+        assert myopt._action_space == 1
+
+        myopt.optimization_function = lambda x: x
+
+        myopt.run()
+
+        assert myopt.results == {'optimal_decision': [1],
+                                 'objective_value': 0}

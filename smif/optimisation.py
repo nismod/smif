@@ -4,7 +4,6 @@ This module defines an :class:`OptimizerTemplate` which lays out the fundamental
 steps of any optimization algorithm. To implement your own algorithm, create a
 child class which inherits OptimizerTemplate and implement the methods.
 
-An example implementation which uses scikit-optimization is provided.
 """
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
