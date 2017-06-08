@@ -1,179 +1,82 @@
 """Tests the definition and solution of the planning problem optimisation
 """
-from smif.intervention import Intervention, InterventionRegister
-from smif.optimisation import (feature_vfa_model, formulate_model,
-                               linear_vfa_model, solve_model, state_vfa_model)
+from skopt import dummy_minimize
+from smif.optimisation import OptimizerTemplate
 
 
-def test_linear_vfa_model():
+class Optimizer(OptimizerTemplate):
+    """A simple algorithm which minimizes the optimization function
+    """
 
-    assets = ['asset_one', 'asset_two']
-    constraint = {'asset_one': 1, 'asset_two': 1}
-    costs = {'asset_one': 1200, 'asset_two': 1000}
-    value = {'asset_one': 1300, 'asset_two': 100}
+    def run(self):
 
-    model = linear_vfa_model(assets, constraint, costs, value)
-    results = solve_model(model)
+        dimensions = [(0, 1)] * self._action_space
+        results = dummy_minimize(self.optimization_function,
+                                 dimensions,
+                                 random_state=1,
+                                 n_calls=1000,
+                                 verbose=True
+                                 )
+        self.results['optimal_decision'] = results.x
+        self.results['objective_value'] = results.fun
 
-    assert results.x['asset_one'].value == 0.0
-    assert results.x['asset_two'].value == 0.0
 
+def dummy_function(binary_vector):
+    """A dummy function, representing a system-of-systems model
 
-def test_state_vfa_model():
-    """Do everything, when that's cheaper than doing nothing
+    The function accepts a list of 0-1 intervention decisions and returns
+    a scalar
 
-    States:
-
-    #   a  b
-    1 - 0  0
-    2 - 0  1
-    3 - 1  0
-    4 - 1  1
+    Arguments
+    ---------
+    binary_vector : list
+        A list of 0-1 values
 
     """
 
-    assets = ['asset_one', 'asset_two']
-    constraint = {'asset_one': 1, 'asset_two': 1}
-    costs = {'asset_one': 1200, 'asset_two': 1000}
-    states = {('asset_one', 1): 0,
-              ('asset_one', 2): 0,
-              ('asset_one', 3): 1,
-              ('asset_one', 4): 1,
-              ('asset_two', 1): 0,
-              ('asset_two', 2): 1,
-              ('asset_two', 3): 0,
-              ('asset_two', 4): 1}
+    def binary_to_integer(binary_vector):
+        """Convert list of binary integers to integer scalar
+        """
+        binary_string = "".join(str(x) for x in binary_vector)
+        return float(int('0b{}'.format(binary_string), 2))
 
-    value = {1: 2200, 2: 1200, 3: 1000, 4: -1}
+    scalar = binary_to_integer(binary_vector)
 
-    model = state_vfa_model(assets, constraint, costs, value, states)
-    results = solve_model(model)
-
-    assert results.x['asset_one'].value == 1.0
-    assert results.x['asset_two'].value == 1.0
+    return scalar ** 2
 
 
-def test_state_vfa_model_one():
-    """Take no action when inaction is cheaper than action
+class TestOptimizationImplementation:
 
-    """
+    def test_optimise_function(self):
+        """Demonstrates the steps to run the optimization algorithm
+        """
 
-    assets = ['asset_one', 'asset_two']
-    constraint = {'asset_one': 1, 'asset_two': 1}
-    costs = {'asset_one': 1200, 'asset_two': 1000}
-    states = {('asset_one', 1): 0,
-              ('asset_one', 2): 0,
-              ('asset_one', 3): 1,
-              ('asset_one', 4): 1,
-              ('asset_two', 1): 0,
-              ('asset_two', 2): 1,
-              ('asset_two', 3): 0,
-              ('asset_two', 4): 1}
-
-    value = {1: 0, 2: 0, 3: 0, 4: 0}
-
-    model = state_vfa_model(assets, constraint, costs, value, states)
-    results = solve_model(model)
-
-    assert results.x['asset_one'].value == 0.0
-    assert results.x['asset_two'].value == 0.0
+        optimiser = Optimizer()
+        number_dimensions = 8  # Action space
+        optimiser.initialize(number_dimensions)
+        optimiser.optimization_function = dummy_function
+        optimiser.run()
+        assert optimiser.results['optimal_decision'] == [0, 0, 0, 0, 0, 0, 0, 0]
+        assert optimiser.results['objective_value'] == 0
 
 
-def test_features_vfa_model():
-    """Use basis functions as the value function approximation
+class TestOptimizationTemplate:
 
-    Passes in a state as a list of asset names
+    def test_implement_template(self):
 
-    """
-    assets = ['asset_one', 'asset_two']
-    constraint = {'asset_one': 1, 'asset_two': 1}
-    costs = {'asset_one': 40000, 'asset_two': 500000}
+        class MyOpt(OptimizerTemplate):
 
-    feature_coefficients = {'bigness': 10,
-                            'colourfulness': 200,
-                            'powerfulness': 3000}
-    asset_features = {('bigness', 'asset_one'): 1,
-                      ('colourfulness', 'asset_one'): 1,
-                      ('powerfulness', 'asset_one'): 0,
-                      ('bigness', 'asset_two'): 0,
-                      ('colourfulness', 'asset_two'): 1,
-                      ('powerfulness', 'asset_two'): 1}
+            def run(self):
+                self.results['optimal_decision'] = [1] * self._action_space
+                self.results['objective_value'] = 0
 
-    state = ['asset_one']
-    model = feature_vfa_model(assets, constraint, costs,
-                              feature_coefficients, asset_features)
-    results = solve_model(model, state)
+        myopt = MyOpt()
+        myopt.initialize(1)
+        assert myopt._action_space == 1
 
-    assert results.x['asset_one'].value == 1.0
-    assert results.x['asset_two'].value == 0.0
-    assert results.OBJ() == 40210
+        myopt.optimization_function = lambda x: x
 
-    state = ['asset_two']
-    model = feature_vfa_model(assets, constraint, costs,
-                              feature_coefficients, asset_features)
-    results = solve_model(model, state)
-    assert results.x['asset_one'].value == 0.0
-    assert results.x['asset_two'].value == 1.0
-    assert results.OBJ() == 503200
+        myopt.run()
 
-
-def get_asset_one():
-    name = 'asset_one'
-    data = {
-        'sector': 'water_supply',
-        'capacity': {
-            'units': 'ML/day',
-            'value': 5},
-        'capital cost': {
-            'units': '£',
-            'value': 10e9},
-        'location': 'oxford'
-        }
-    return Intervention(name=name, data=data)
-
-
-def get_asset_two():
-    name = 'asset_two'
-    data = {
-        'sector': 'water_supply',
-        'capacity': {
-            'units': 'ML/day',
-            'value': 4.5},
-        'capital cost': {
-            'units': '£',
-            'value': 12e9},
-        'location': 'oxford'
-        }
-    return Intervention(name=name, data=data)
-
-
-def test_passing_asset_register_to_model():
-    """Tests passing a `smif.asset.InterventionRegister` to formulate the model
-    """
-    asset_one = get_asset_one()
-    asset_two = get_asset_two()
-    register = InterventionRegister()
-    register.register(asset_one)
-    register.register(asset_two)
-
-    constraint = {'asset_one': 1, 'asset_two': 1}
-
-    feature_coefficients = {'bigness': 10,
-                            'colourfulness': 200,
-                            'powerfulness': 3000}
-    asset_features = {('bigness', 'asset_one'): 1,
-                      ('colourfulness', 'asset_one'): 1,
-                      ('powerfulness', 'asset_one'): 0,
-                      ('bigness', 'asset_two'): 0,
-                      ('colourfulness', 'asset_two'): 1,
-                      ('powerfulness', 'asset_two'): 1}
-
-    model = formulate_model(register, constraint, feature_coefficients,
-                            asset_features)
-
-    state = ['asset_one']
-    results = solve_model(model, state)
-
-    assert results.x['asset_one'].value == 1.0
-    assert results.x['asset_two'].value == 0.0
-    assert results.OBJ() == 10000000210
+        assert myopt.results == {'optimal_decision': [1],
+                                 'objective_value': 0}

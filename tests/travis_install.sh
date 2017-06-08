@@ -25,9 +25,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # Configure the conda environment and put it in the path using the
     # provided versions
-    conda create -n testenv --yes python=$PYTHON_VERSION pip scipy numpy pyyaml
+    conda config --add channels conda-forge
+    conda create -n testenv --yes python=$PYTHON_VERSION pip scipy numpy pyyaml matplotlib scikit-learn fiona rtree shapely
     source activate testenv
-    conda install -y -c conda-forge glpk=4.61 pyomo pyomo.extras fiona rtree shapely
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Use standard ubuntu packages in their default version
