@@ -28,12 +28,30 @@ __license__ = "mit"
 
 
 class Metadata(object):
+    """All metadata about a single dataset, typically model input or output
+
+    Arguments
+    =========
+    name: str
+        The dataset name
+    spatial_resolution: str
+        Name of the region set that defines the spatial resolution
+    temporal_resolution: str
+        Name of the interval set that defines the temporal resolution
+    units: str
+        Name of the units for the dataset values
+
+    """
     def __init__(self, name, spatial_resolution, temporal_resolution, units):
         self.logger = logging.getLogger(__name__)
         self.name = name
         self.spatial_resolution = spatial_resolution
         self.temporal_resolution = temporal_resolution
         self.units = self.normalise_unit(units, name)
+
+        # initialise with no registers
+        self.region_register = None
+        self.interval_register = None
 
     def __eq__(self, other):
         return self.name == other.name \
@@ -53,6 +71,26 @@ class Metadata(object):
         self.logger.debug("Using unit for %s: %s", param_name, normalised)
         return normalised
 
+    def get_region_names(self):
+        """Use region register to look up the list of region names for this
+        spatial resolution
+        """
+        if self.region_register is None:
+            return None
+        else:
+            regions = self.region_register.get_regions_in_set(self.spatial_resolution)
+            return [region.name for region in regions]
+
+    def get_interval_names(self):
+        """Use interval register to look up the list of interval names for this
+        temporal resolution
+        """
+        if self.interval_register is None:
+            return None
+        else:
+            intervals = self.interval_register.get_intervals_in_set(self.temporal_resolution)
+            return list(intervals.keys())
+
 
 class MetadataSet(object):
     """A container for metadata about model inputs or outputs
@@ -68,17 +106,25 @@ class MetadataSet(object):
                     "temporal_resolution": "hourly"
                     "units": "kW"
                 }
+
+    region_register: :class:`smif.convert.area.RegionRegister`
+        Register of regions, which spatial_resolution refers to
+    interval_register: :class:`smif.convert.area.TimeIntervalRegister`
+        Register of intervals, which temporal_resolution refers to
     """
-    def __init__(self, metadata_list):
-        self._metadata = {
-            metadata_item['name']: Metadata(
+    def __init__(self, metadata_list, region_register=None, interval_register=None):
+        self._metadata = {}
+
+        for metadata_item in metadata_list:
+            metadata = Metadata(
                 metadata_item['name'],
                 metadata_item['spatial_resolution'],
                 metadata_item['temporal_resolution'],
                 metadata_item['units']
             )
-            for metadata_item in metadata_list
-        }
+            metadata.region_register = region_register
+            metadata.interval_register = interval_register
+            self._metadata[metadata.name] = metadata
 
     @property
     def metadata(self):

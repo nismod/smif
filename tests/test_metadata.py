@@ -3,6 +3,8 @@
 """
 from pytest import fixture, raises
 
+from smif.convert.area import RegionRegister, RegionSet
+from smif.convert.interval import TimeIntervalRegister
 from smif.metadata import Metadata, MetadataSet
 
 
@@ -27,7 +29,57 @@ def two_output_metrics():
     return outputs
 
 
+@fixture(scope='function')
+def region_register_squares():
+    """Return a register with a region set of two square regions::
+
+        |```|```|
+        | a | b |
+        |...|...|
+
+    """
+    rset = RegionSet('half_squares', [
+        {
+            'type': 'Feature',
+            'properties': {'name': 'a'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            }
+        },
+        {
+            'type': 'Feature',
+            'properties': {'name': 'b'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
+            }
+        },
+    ])
+    rreg = RegionRegister()
+    rreg.register(rset)
+    return rreg
+
+
+@fixture(scope='function')
+def interval_register_seasons():
+    """Return a register with an interval set of the four seasons
+    """
+    seasons = [
+        {'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
+        {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
+        {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
+        {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'},
+        {'id': 'winter', 'start': 'P11M', 'end': 'P12M'}
+    ]
+    ireg = TimeIntervalRegister()
+    ireg.register(seasons, 'seasons')
+    return ireg
+
+
 class TestMetadata(object):
+    """Test Metadata objects
+    """
     def test_create_metadata(self):
         """Create Metadata to hold name, spatial and temporal resolution, and units
         """
@@ -56,8 +108,22 @@ class TestMetadata(object):
         metadata = Metadata("total_lane_kilometres", "country", "month", "unparseable")
         assert metadata.units == "unparseable"
 
+    def test_access_region_names_with_register(self, region_register_squares):
+        rreg = region_register_squares
+        metadata = Metadata("total_lane_kilometres", "half_squares", "seasons", "unparseable")
+        metadata.region_register = rreg
+        assert metadata.get_region_names() == ["a", "b"]
+
+    def test_access_interval_names_with_register(self, interval_register_seasons):
+        ireg = interval_register_seasons
+        metadata = Metadata("total_lane_kilometres", "half_squares", "seasons", "unparseable")
+        metadata.interval_register = ireg
+        assert metadata.get_interval_names() == ["winter", "spring", "summer", "autumn"]
+
 
 class TestMetadataSet(object):
+    """Test MetadataSet objects
+    """
     def test_create_metadata_set(self):
         """Create MetadataSet to hold a list of Metadata
         """
