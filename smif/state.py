@@ -2,6 +2,7 @@
 interventions, pre-specified planning and built interventions.
 
 """
+import numpy as np
 
 from .decision import Built
 
@@ -54,11 +55,17 @@ class State(object):
         """Initial action space is the difference between set of all interventions
         and all planned interventions
         """
-        set_of_interventions = set(self._interventions._names)
+        set_of_interventions = self._interventions.names
         # Get the names of ALL planned interventions
         # These should not be available to the optimisation or rule-based approaches
         planned = self._planned.names
-        self._action_space = set_of_interventions.difference(planned)
+        return set_of_interventions.difference(planned)
+
+    @property
+    def action_list(self):
+        """Immutible version of the action space
+        """
+        return sorted(self._action_space)
 
     def update_action_space(self, timeperiod):
         """The action space for the current timeperiod excludes planned
@@ -90,3 +97,34 @@ class State(object):
         """
         assert name in self._action_space
         self._built.add_intervention(name, timeperiod)
+
+    def get_action_dimension(self):
+        """The dimension of the current action space
+        """
+        return len(self._action_space)
+
+    def get_decision_vector(self):
+        """Helper function to generate a numpy array for actions
+        """
+        return np.zeros(self.get_action_dimension())
+
+    def parse_decisions(self, decision_vector):
+        """Returns intervention in list of array element is 1
+
+        Arguments
+        ---------
+        decision_vector : numpy.ndarray
+            A numpy array of length `self.action_space`
+
+        Returns
+        -------
+        list
+            List of Interventions
+        """
+        interventions = []
+
+        indexes = np.where(decision_vector == 1)[0]
+        for index in list(indexes):
+            name = self.action_list[index]
+            interventions.append(self._interventions.get_intervention(name))
+        return interventions

@@ -360,6 +360,17 @@ class InterventionRegister(Register):
         self._names = {}
         self._numeric_keys = []
 
+    @property
+    def names(self):
+        """The set of unique names of the interventions
+
+        Returns
+        -------
+        set
+
+        """
+        return set(self._names.keys())
+
     def get_intervention(self, name):
         """Returns the named asset data
         """
