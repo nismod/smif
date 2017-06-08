@@ -19,6 +19,8 @@ from __future__ import absolute_import, division, print_function
 import logging
 from collections import namedtuple
 
+from smif.convert.unit import parse_unit
+
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell, University of Oxford 2017"
 __license__ = "mit"
@@ -51,16 +53,29 @@ class ModelMetadata(object):
                 }
     """
     def __init__(self, metadata_list):
-        self._metadata = [
-            Metadata(
+        self.logger = logging.getLogger(__name__)
+        self._metadata = {
+            metadata_item['name']: Metadata(
                 metadata_item['name'],
                 metadata_item['spatial_resolution'],
                 metadata_item['temporal_resolution'],
-                metadata_item['units']
+                self.normalise_unit(metadata_item['units'], metadata_item['name'])
             )
             for metadata_item in metadata_list
-        ]
-        self.logger = logging.getLogger(__name__)
+        }
+
+    def normalise_unit(self, unit_string, param_name):
+        """Parse unit and return standard string representation
+        """
+        unit = parse_unit(unit_string)
+        if unit is not None:
+            # if parsed successfully
+            normalised = str(unit)
+        else:
+            normalised = unit_string
+
+        self.logger.debug("Using unit for %s: %s", param_name, normalised)
+        return normalised
 
     @property
     def metadata(self):
@@ -69,12 +84,20 @@ class ModelMetadata(object):
         Returns
         =======
         parameters: list
-            A list of :class:`smif.Metadata`
+            A list of :class:`smif.Metadata`, sorted by name
         """
-        return self._metadata
+        sorted_keys = sorted(list(self._metadata.keys()))
+        return [self._metadata[key] for key in sorted_keys]
 
     def __len__(self):
         return len(self._metadata)
+
+    def get_metadata_item(self, name):
+        if name in self._metadata:
+            metadata_item = self._metadata[name]
+        else:
+            raise ValueError("No metadata found for name '{}'".format(name))
+        return metadata_item
 
     def get_spatial_res(self, name):
         """The spatial resolution for parameter `name`
@@ -84,13 +107,7 @@ class ModelMetadata(object):
         name: str
             The name of a model parameter
         """
-        for parameter in self._metadata:
-            if parameter.name == name:
-                spatial_resolution = parameter.spatial_resolution
-                break
-        else:
-            raise ValueError("No output found for name '{}'".format(name))
-        return spatial_resolution
+        return self.get_metadata_item(name).spatial_resolution
 
     def get_temporal_res(self, name):
         """The temporal resolution for parameter `name`
@@ -100,13 +117,17 @@ class ModelMetadata(object):
         name: str
             The name of a model parameter
         """
-        for parameter in self._metadata:
-            if parameter.name == name:
-                temporal_resolution = parameter.temporal_resolution
-                break
-        else:
-            raise ValueError("No output found for name '{}'".format(name))
-        return temporal_resolution
+        return self.get_metadata_item(name).temporal_resolution
+
+    def get_units(self, name):
+        """The units used for parameter 'name'
+
+        Arguments
+        ---------
+        name: str
+            The name of a model parameter
+        """
+        return self.get_metadata_item(name).units
 
     @property
     def spatial_resolutions(self):
@@ -118,7 +139,7 @@ class ModelMetadata(object):
             A list of the spatial resolutions associated with the model
             parameters
         """
-        return [parameter.spatial_resolution for parameter in self._metadata]
+        return [parameter.spatial_resolution for name, parameter in self._metadata.items()]
 
     @property
     def temporal_resolutions(self):
@@ -130,8 +151,10 @@ class ModelMetadata(object):
             A list of the temporal resolutions associated with the model
             parameters
         """
-        return [parameter.temporal_resolution for parameter in self._metadata]
+        return [parameter.temporal_resolution for name, parameter in self._metadata.items()]
 
     @property
     def names(self):
-        return [parameter.name for parameter in self._metadata]
+        """A list of the parameter names
+        """
+        return list(self._metadata.keys())

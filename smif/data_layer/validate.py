@@ -147,7 +147,7 @@ def validate_sector_model_initial_config(sector_model_config):
             VALIDATION_ERRORS.append(ValidationError(fmt.format(key, sector_model_config)))
 
 
-def validate_input_spec(input_spec, model_name):
+def validate_dependency_spec(input_spec, model_name):
     """Check the input specification for a single sector model
     """
     if not isinstance(input_spec, list):
@@ -168,38 +168,10 @@ def validate_dependency(dep):
         VALIDATION_ERRORS.append(ValidationError(fmt.format(dep)))
         return
 
-    required_keys = ["name", "spatial_resolution", "temporal_resolution"]
+    required_keys = ["name", "spatial_resolution", "temporal_resolution", "units"]
     for key in required_keys:
         if key not in dep:
             fmt = "Expected a value for '{}' in each model dependency, only received {}"
-            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, dep)))
-
-
-def validate_output_spec(output_spec, model_name):
-    """Check the output specification for a single sector model
-    """
-    if not isinstance(output_spec, list):
-        fmt = "Expected a list of parameter definitions in '{}' model " + \
-              "output specification, instead got {}"
-        VALIDATION_ERRORS.append(ValidationError(fmt.format(model_name, output_spec)))
-        return
-
-    for output in output_spec:
-        validate_output(output)
-
-
-def validate_output(dep):
-    """Check an output specification
-    """
-    if not isinstance(dep, dict):
-        fmt = "Expected an output specification, instead got {}"
-        VALIDATION_ERRORS.append(ValidationError(fmt.format(dep)))
-        return
-
-    required_keys = ["name", "spatial_resolution", "temporal_resolution"]
-    for key in required_keys:
-        if key not in dep:
-            fmt = "Expected a value for '{}' in each model output, only received {}"
             VALIDATION_ERRORS.append(ValidationError(fmt.format(key, dep)))
 
 
@@ -224,7 +196,7 @@ def validate_scenario(scenario):
         VALIDATION_ERRORS.append(ValidationError(fmt.format(scenario)))
         return
 
-    required_keys = ["parameter", "spatial_resolution", "temporal_resolution", "file"]
+    required_keys = ["parameter", "spatial_resolution", "temporal_resolution", "units", "file"]
     for key in required_keys:
         if key not in scenario:
             fmt = "Expected a value for '{}' in each scenario, only received {}"
@@ -251,7 +223,7 @@ def validate_scenario_datum(datum, file_path):
         VALIDATION_ERRORS.append(ValidationError(fmt.format(datum)))
         return
 
-    required_keys = ["region", "interval", "year", "value", "units"]
+    required_keys = ["region", "interval", "year", "value"]
     for key in required_keys:
         if key not in datum:
             fmt = "Expected a value for '{}' in each data point in a scenario, " + \
@@ -275,8 +247,8 @@ def validate_initial_condition(datum, file_path):
     """Check a single initial condition datum
     """
     if not isinstance(datum, dict):
-        fmt = "Expected a initial condition data point, instead got {}"
-        VALIDATION_ERRORS.append(ValidationError(fmt.format(datum)))
+        fmt = "Expected a initial condition data point, instead got {} from {}"
+        VALIDATION_ERRORS.append(ValidationError(fmt.format(datum, file_path)))
         return
 
     required_keys = ["name", "location", "capital_cost", "operational_lifetime",
@@ -284,8 +256,8 @@ def validate_initial_condition(datum, file_path):
     for key in required_keys:
         if key not in datum:
             fmt = "Expected a value for '{}' in each data point in a initial condition, " + \
-                  "only received {}"
-            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, datum)))
+                  "only received {} from {}"
+            VALIDATION_ERRORS.append(ValidationError(fmt.format(key, datum, file_path)))
 
 
 def validate_planning_config(planning):

@@ -1,14 +1,11 @@
 """Test config validation
 """
 from pytest import fixture
-from smif.data_layer.validate import (VALIDATION_ERRORS,
-                                      validate_dependency,
+from smif.data_layer.validate import (VALIDATION_ERRORS, validate_dependency,
+                                      validate_dependency_spec,
                                       validate_initial_conditions,
-                                      validate_input_spec,
                                       validate_interval_sets_config,
                                       validate_interventions,
-                                      validate_output,
-                                      validate_output_spec,
                                       validate_planning_config,
                                       validate_region_sets_config,
                                       validate_scenario,
@@ -46,13 +43,15 @@ def get_sos_model_config():
                 "parameter": "population",
                 "file": "../data/scenario/population.yaml",
                 'spatial_resolution': 'national',
-                'temporal_resolution': 'annual'
+                'temporal_resolution': 'annual',
+                'units': 'count'
             },
             {
                 "parameter": "raininess",
                 "file": "../data/scenario/raininess.yaml",
                 'spatial_resolution': 'national',
-                'temporal_resolution': 'annual'
+                'temporal_resolution': 'annual',
+                'units': 'ml'
             }
         ],
         "region_sets": [{'name': 'national',
@@ -168,14 +167,15 @@ def get_initial_condition():
 
 
 @fixture(scope='function')
-def get_input_spec():
+def get_dependency_spec():
     """Return sample input specification
     """
     return [
         {
             'name': 'gas_demand',
             'spatial_resolution': 'national',
-            'temporal_resolution': 'annual'
+            'temporal_resolution': 'annual',
+            'units': 'Ml'
         }
     ]
 
@@ -187,21 +187,9 @@ def get_dependency():
     return {
         'name': 'gas_demand',
         'spatial_resolution': 'national',
-        'temporal_resolution': 'annual'
+        'temporal_resolution': 'annual',
+        'units': 'Ml'
     }
-
-
-@fixture(scope='function')
-def get_output_spec():
-    """Return sample output specification
-    """
-    return [
-        {
-            'name': 'total_cost',
-            'spatial_resolution': 'national',
-            'temporal_resolution': 'annual'
-        }
-    ]
 
 
 @fixture(scope='function')
@@ -396,7 +384,7 @@ def test_input_spec_type():
     """Expect an error if input_spec is not a dict
     """
     data = None
-    validate_input_spec(data, 'energy_demand')
+    validate_dependency_spec(data, 'energy_demand')
     ex = VALIDATION_ERRORS.pop()
     msg = "Expected a list of parameter definitions in 'energy_demand' model input " + \
           "specification, instead got None"
@@ -407,7 +395,7 @@ def test_input_spec_deps():
     """Expect an error if input_spec is missing dependencies
     """
     data = {}
-    validate_input_spec(data, 'energy_demand')
+    validate_dependency_spec(data, 'energy_demand')
     ex = VALIDATION_ERRORS.pop()
     msg = "Expected a list of parameter definitions in 'energy_demand' model input " + \
           "specification, instead got {}"
@@ -418,7 +406,7 @@ def test_input_spec_deps_list():
     """Expect an error if input_spec dependencies is not a list
     """
     data = {1.618}
-    validate_input_spec(data, 'energy_demand')
+    validate_dependency_spec(data, 'energy_demand')
     ex = VALIDATION_ERRORS.pop()
     msg = "Expected a list of parameter definitions in 'energy_demand' model input " + \
           "specification, instead got {1.618}"
@@ -431,20 +419,20 @@ def test_input_spec_deps_list_empty():
     data = []
     # empty is ok
     n_errors_before = len(VALIDATION_ERRORS)
-    validate_input_spec(data, 'energy_demand')
+    validate_dependency_spec(data, 'energy_demand')
     assert len(VALIDATION_ERRORS) == n_errors_before
 
 
-def test_input_spec_deps_list_ok(get_input_spec):
+def test_input_spec_deps_list_ok(get_dependency_spec):
     """Expect no errors for a list of valid dependencies
     """
-    data = get_input_spec
+    data = get_dependency_spec
     n_errors_before = len(VALIDATION_ERRORS)
-    validate_input_spec(data, 'energy_demand')
+    validate_dependency_spec(data, 'energy_demand')
     assert len(VALIDATION_ERRORS) == n_errors_before
 
 
-def test_dependency_type(get_input_spec):
+def test_dependency_type(get_dependency_spec):
     """Expect an error if dependency is not a dict
     """
     data = 'single_string'
@@ -467,114 +455,13 @@ def test_dependency_ok(get_dependency):
 def test_dependency_required(get_dependency):
     """Expect an error if dependency is missing required fields
     """
-    required_keys = ['name', 'spatial_resolution', 'temporal_resolution']
+    required_keys = ['name', 'spatial_resolution', 'temporal_resolution', 'units']
     for key in required_keys:
         data = get_dependency
         del data[key]
         validate_dependency(data)
         ex = VALIDATION_ERRORS.pop()
         msg = "Expected a value for '{}' in each model dependency, " + \
-            "only received {}"
-        assert msg.format(key, data) in str(ex)
-
-
-def test_output_spec_type():
-    """Expect an error if output_spec is not a dict
-    """
-    data = None
-    validate_output_spec(data, 'energy_demand')
-    ex = VALIDATION_ERRORS.pop()
-    msg = "Expected a list of parameter definitions in 'energy_demand' model output " + \
-          "specification, instead got None"
-    assert msg in str(ex)
-
-
-def test_output_spec_deps():
-    """Expect an error if output_spec is missing metrics
-    """
-    data = {}
-    validate_output_spec(data, 'energy_demand')
-    ex = VALIDATION_ERRORS.pop()
-    msg = "Expected a list of parameter definitions in 'energy_demand' model output " + \
-          "specification, instead got {}"
-    assert msg in str(ex)
-
-
-def test_output_spec_deps_list():
-    """Expect an error if output_spec metrics is not a list
-    """
-    data = {'metrics': 1.618}
-    validate_output_spec(data, 'energy_demand')
-    ex = VALIDATION_ERRORS.pop()
-    msg = "Expected a list of parameter definitions in 'energy_demand' model output " + \
-          "specification, instead got {'metrics': 1.618}"
-    assert msg in str(ex)
-
-
-def test_output_spec_deps_list_empty():
-    """Expect no errors for an empty list
-    """
-    data = []
-    # empty is ok
-    n_errors_before = len(VALIDATION_ERRORS)
-    validate_output_spec(data, 'energy_demand')
-    assert len(VALIDATION_ERRORS) == n_errors_before
-
-
-def test_output_spec_list_str():
-    data = ['these', 'outputs', 'should', 'not', 'be', 'a', 'list']
-    n_errors_before = len(VALIDATION_ERRORS)
-
-    validate_output_spec(data, 'energy_demand')
-    # should add one error per output spec:
-    assert len(VALIDATION_ERRORS) == n_errors_before + len(data)
-
-    # last error, e.g.
-    ex = VALIDATION_ERRORS.pop()
-    msg = "Expected an output specification, " + \
-          "instead got list"
-    assert msg in str(ex)
-
-
-def test_output_spec_deps_list_ok(get_output_spec):
-    """Expect no errors for a list of valid dependencies
-    """
-    data = get_output_spec
-    n_errors_before = len(VALIDATION_ERRORS)
-    validate_output_spec(data, 'energy_demand')
-    assert len(VALIDATION_ERRORS) == n_errors_before
-
-
-def test_output_type():
-    """Expect an error if output is not a dict
-    """
-    data = 'single_string'
-    validate_output(data)
-    ex = VALIDATION_ERRORS.pop()
-    msg = "Expected an output specification, " + \
-          "instead got single_string"
-    assert msg in str(ex)
-
-
-def test_output_ok(get_dependency):
-    """Expect no errors for a valid output
-    """
-    data = get_dependency
-    n_errors_before = len(VALIDATION_ERRORS)
-    validate_output(data)
-    assert len(VALIDATION_ERRORS) == n_errors_before
-
-
-def test_output_required(get_dependency):
-    """Expect an error if output is not a dict
-    """
-    required_keys = ['name', 'spatial_resolution', 'temporal_resolution']
-    for key in required_keys:
-        data = get_dependency
-        del data[key]
-        validate_output(data)
-        ex = VALIDATION_ERRORS.pop()
-        msg = "Expected a value for '{}' in each model output, " + \
             "only received {}"
         assert msg.format(key, data) in str(ex)
 
@@ -683,7 +570,7 @@ def test_scenario_config_type(get_sos_model_config):
 def test_scenario_config_missing_required(get_sos_model_config):
     """Expect an error if a scenario datum is missing required key
     """
-    required_keys = ["parameter", "spatial_resolution", "temporal_resolution", "file"]
+    required_keys = ["parameter", "spatial_resolution", "temporal_resolution", "units", "file"]
 
     for key in required_keys:
         data = get_sos_model_config['scenario_data'][0]
@@ -699,7 +586,7 @@ def test_scenario_config_missing_required(get_sos_model_config):
 def test_scenario_missing_required(get_scenario_data):
     """Expect an error if a scenario datum is missing required key
     """
-    required_keys = ["region", "interval", "year", "value", "units"]
+    required_keys = ["region", "interval", "year", "value"]
 
     for key in required_keys:
         data = get_scenario_data

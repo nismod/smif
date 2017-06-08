@@ -2,44 +2,35 @@
   region: England
   interval: 1
   value: 5
-  units: Ml
 - region: England
   interval: 1
   year: 2015
   value: 7
-  units: Ml
 - region: England
   interval: 1
   year: 2020
   value: 6
-  units: Ml
 - year: 2010
   region: Wales
   interval: 1
   value: 5
-  units: Ml
 - region: Wales
   interval: 1
   year: 2015
   value: 7
-  units: Ml
 - region: Wales
   interval: 1
   year: 2020
   value: 6
-  units: Ml
 - year: 2010
   region: Scotland
   interval: 1
   value: 5
-  units: Ml
 - region: Scotland
   interval: 1
   year: 2015
   value: 7
-  units: Ml
 - region: Scotland
   interval: 1
   year: 2020
   value: 6
-  units: Ml

@@ -1,7 +1,7 @@
 - name: raininess
   spatial_resolution: national
   temporal_resolution: annual
-  units: inches
+  units: ml
 - name: population
   spatial_resolution: national
   temporal_resolution: annual
