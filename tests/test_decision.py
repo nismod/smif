@@ -50,5 +50,7 @@ class TestPlanning:
     def test_return_current_interventions_two(self, plan):
         plan = plan
         actual = plan.current_interventions(2045)
-        expected = {'small_pumping_station_oxford'}
+        expected = {'small_pumping_station_oxford',
+                    'small_pumping_station_bicester',
+                    'large_pumping_station_abingdon'}
         assert actual == expected
