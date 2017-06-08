@@ -31,9 +31,11 @@ class Planning:
     Oxford in 2045::
 
             {
-                'name': 'small_pumping_station',
+                'name': 'small_pumping_station_oxford',
                 'build_date': 2045
             }
+
+    Intervention names are assumed to be unique
 
     Attributes
     ----------
@@ -52,11 +54,45 @@ class Planning:
     @property
     def names(self):
         """Returns the set of assets defined in the planned interventions
+
+        Returns
+        -------
+        set
         """
         return {plan['name'] for plan in self.planned_interventions}
 
     @property
     def timeperiods(self):
         """Returns the set of build dates defined in the planned interventions
+
+        Returns
+        -------
+        set
         """
         return {plan['build_date'] for plan in self.planned_interventions}
+
+    def current_interventions(self, timeperiod):
+        """Return the set of planned interventions for the given time period
+
+        Arguments
+        ---------
+        timeperiod : int
+
+        Returns
+        -------
+        set
+        """
+        return {plan['name'] for plan in self.planned_interventions
+                if plan['build_date'] <= timeperiod}
+
+
+class Built(Planning):
+    """Holds a list of built interventions
+    """
+    def add_intervention(self, name, timeperiod):
+        """Add an intervention to the intervention list
+        """
+        assert isinstance(name, str)
+        assert isinstance(timeperiod, int)
+        self.planned_interventions.append({'name': name,
+                                           'build_date': timeperiod})

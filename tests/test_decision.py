@@ -6,31 +6,16 @@ from smif.decision import Planning
 def plan():
     planned_interventions = [
         {
-            'name': 'small_pumping_station',
+            'name': 'small_pumping_station_oxford',
             'build_date': 2045,
-            'location': 'oxford',
-            'capacity': {
-                'value': 500,
-                'units': 'mcm/day'
-            }
         },
         {
-            'name': 'small_pumping_station',
+            'name': 'small_pumping_station_bicester',
             'build_date': 2035,
-            'location': 'bicester',
-            'capacity': {
-                'value': 500,
-                'units': 'mcm/day'
-            }
         },
         {
-            'name': 'large_pumping_station',
+            'name': 'large_pumping_station_abingdon',
             'build_date': 2035,
-            'location': 'abingdon',
-            'capacity': {
-                'value': 1500,
-                'units': 'mcm/day'
-            }
         }
     ]
 
@@ -40,7 +25,9 @@ def plan():
 class TestPlanning:
 
     def test_intervention_names(self, plan):
-        expected = {'small_pumping_station', 'large_pumping_station'}
+        expected = {'small_pumping_station_oxford',
+                    'small_pumping_station_bicester',
+                    'large_pumping_station_abingdon'}
         actual = plan.names
         assert actual == expected
 
@@ -52,3 +39,16 @@ class TestPlanning:
     def test_empty(self):
         plan = Planning()
         assert plan.planned_interventions == []
+
+    def test_return_current_interventions(self, plan):
+        plan = plan
+        actual = plan.current_interventions(2035)
+        expected = {'small_pumping_station_bicester',
+                    'large_pumping_station_abingdon'}
+        assert actual == expected
+
+    def test_return_current_interventions_two(self, plan):
+        plan = plan
+        actual = plan.current_interventions(2045)
+        expected = {'small_pumping_station_oxford'}
+        assert actual == expected
