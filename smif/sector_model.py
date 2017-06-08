@@ -31,7 +31,7 @@ import os
 from abc import ABC, abstractmethod
 
 import importlib
-from smif.metadata import ModelMetadata
+from smif.metadata import MetadataSet
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -48,8 +48,8 @@ class SectorModel(ABC):
         self.interventions = []
         self.system = []
 
-        self._inputs = ModelMetadata({})
-        self._outputs = ModelMetadata({})
+        self._inputs = MetadataSet([])
+        self._outputs = MetadataSet([])
 
         self.logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ class SectorModel(ABC):
         else:
             value = []
 
-        self._inputs = ModelMetadata(value)
+        self._inputs = MetadataSet(value)
 
     @property
     def outputs(self):
@@ -132,7 +132,7 @@ class SectorModel(ABC):
         else:
             value = []
 
-        self._outputs = ModelMetadata(value)
+        self._outputs = MetadataSet(value)
 
     @property
     def intervention_names(self):

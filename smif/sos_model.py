@@ -15,7 +15,7 @@ from smif.convert.area import RegionRegister, RegionSet
 from smif.convert.interval import TimeIntervalRegister
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
-from smif.metadata import ModelMetadata
+from smif.metadata import MetadataSet
 from smif.sector_model import SectorModelBuilder
 
 __author__ = "Will Usher, Tom Russell"
@@ -56,7 +56,7 @@ class SosModel(object):
         self._timesteps = []
         self.regions = RegionRegister()
         self.intervals = TimeIntervalRegister()
-        self._scenario_metadata = ModelMetadata({})
+        self._scenario_metadata = MetadataSet({})
 
         # systems, interventions and (system) state
         self.interventions = InterventionRegister()
@@ -76,7 +76,7 @@ class SosModel(object):
 
     @scenario_metadata.setter
     def scenario_metadata(self, value):
-        self._scenario_metadata = ModelMetadata(value)
+        self._scenario_metadata = MetadataSet(value)
 
     @property
     def scenario_data(self):
@@ -932,7 +932,7 @@ class SosModelBuilder(object):
                 raise ValueError("Parameter {} not registered in scenario metadata {}".format(
                     param,
                     self.sos_model.scenario_metadata))
-            param_metadata = self.sos_model.scenario_metadata.get_metadata_item(param)
+            param_metadata = self.sos_model.scenario_metadata[param]
 
             nested[param] = self._data_list_to_array(
                 param,
@@ -1098,11 +1098,10 @@ class SosModelBuilder(object):
 
                 for source in providers:
                     if source == 'scenario':
-                        dep_source = self.sos_model.scenario_metadata. \
-                                     get_metadata_item(dep.name)
+                        dep_source = self.sos_model.scenario_metadata[dep.name]
                     else:
                         dep_source = self.sos_model.models[source]. \
-                                     outputs.get_metadata_item(dep.name)
+                                     outputs[dep.name]
                     self.validate_dependency(dep_source, dep)
 
                     if source == 'scenario':
