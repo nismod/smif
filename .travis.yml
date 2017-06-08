@@ -14,8 +14,7 @@ before_script:
 - git config --global user.name "Will Usher"
 script:
 - python setup.py develop
-- python setup.py test
-- python setup.py behave_test
+- pytest tests
 after_success:
 - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 notifications:
