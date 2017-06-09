@@ -109,16 +109,27 @@ class TestMetadata(object):
         assert metadata.units == "unparseable"
 
     def test_access_region_names_with_register(self, region_register_squares):
+        """Metadata should expose region names when a register is available
+        """
         rreg = region_register_squares
         metadata = Metadata("total_lane_kilometres", "half_squares", "seasons", "unparseable")
         metadata.region_register = rreg
         assert metadata.get_region_names() == ["a", "b"]
 
     def test_access_interval_names_with_register(self, interval_register_seasons):
+        """Metadata should expose interval names when a register is available
+        """
         ireg = interval_register_seasons
         metadata = Metadata("total_lane_kilometres", "half_squares", "seasons", "unparseable")
         metadata.interval_register = ireg
         assert metadata.get_interval_names() == ["winter", "spring", "summer", "autumn"]
+
+    def test_access_without_registers(self):
+        """Metadata should return None for interval or regions names when no register is available
+        """
+        metadata = Metadata("total_lane_kilometres", "country", "month", "kilometer")
+        assert metadata.get_interval_names() is None
+        assert metadata.get_region_names() is None
 
 
 class TestMetadataSet(object):
@@ -213,3 +224,23 @@ class TestMetadataSet(object):
             Metadata("heat_demand", "household", "hourly", "kilowatt"),
             Metadata("total_lane_kilometres", "country", "month", "kilometer")
         ]
+
+    def test_access_registers(self, region_register_squares, interval_register_seasons):
+        """Individual Metadata in a Set should provide region and interval names
+        when registers are available
+        """
+        rreg = region_register_squares
+        ireg = interval_register_seasons
+        metadata_list = [
+            {
+                "name": "total_lane_kilometres",
+                "spatial_resolution": "half_squares",
+                "temporal_resolution": "seasons",
+                "units": "kilometers"
+            }
+        ]
+        metadata_set = MetadataSet(metadata_list, rreg, ireg)
+        metadata = metadata_set["total_lane_kilometres"]
+
+        assert metadata.get_region_names() == ["a", "b"]
+        assert metadata.get_interval_names() == ["winter", "spring", "summer", "autumn"]
