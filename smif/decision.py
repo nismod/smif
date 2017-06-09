@@ -85,6 +85,28 @@ class Planning:
         return {plan['name'] for plan in self.planned_interventions
                 if plan['build_date'] <= timeperiod}
 
+    def get_build_date(self, name):
+        """Returns the build date of an intervention
+
+        Arguments
+        ---------
+        name : str
+
+        Returns
+        -------
+        int
+            The year in which the intervention is 'built'
+        """
+        build_date = None
+        for plan in self.planned_interventions:
+            if plan['name'] == name:
+                build_date = plan['build_date']
+        if build_date is None:
+            msg = "No planned intervention with name: '{}'"
+            raise ValueError(msg.format(name))
+
+        return build_date
+
 
 class Built(Planning):
     """Holds a list of built interventions

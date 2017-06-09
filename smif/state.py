@@ -5,10 +5,13 @@ interventions, pre-specified planning and built interventions.
 import numpy as np
 
 from .decision import Built
+from .intervention import Asset
 
 
 class State(object):
-    """Builds state and actions from set of interventions, plus planned and built interventions.
+    """Builds state and actions from set of interventions,
+    planned and built interventions
+    and non-intervention information
 
     Arguments
     ---------
@@ -22,6 +25,8 @@ class State(object):
         self._interventions = intervention_register
 
         self._built = Built()
+        self._nonintervention = []
+
         self._state = dict()
         self._action_space = self.get_initial_action_space()
 
@@ -83,14 +88,56 @@ class State(object):
         self._reset_state()
         self._state[timeperiod] = self._planned.current_interventions(timeperiod)
 
+    def get_non_interventions(self, timeperiod):
+        """
+        """
+        return [x for x in self._nonintervention
+                if x['time_period'] == timeperiod]
+
     def get_current_state(self, timeperiod):
-        """The current state is the union of built and planned interventions upto
-        the `timeperiod`
+        """The current state is the union of built and planned
+        interventions upto the `timeperiod`
         """
         built = self._built.current_interventions(timeperiod)
         planned = self._planned.current_interventions(timeperiod)
 
         return built.union(planned)
+
+    def get_all_state(self, timeperiod):
+        """Returns the current state of interventions and data
+
+        All built interventions are returned as a list of
+        `BuildIntervention`
+        """
+        intervention_names = self.get_current_state(timeperiod)
+        built_interventions = []
+        for name in intervention_names:
+            data = self._interventions.get_intervention(name).data
+            if name in self._built.names:
+                data['build_date'] = self._built.get_build_date(name)
+            elif name in self._planned.names:
+                data['build_date'] = self._planned.get_build_date(name)
+            built_interventions.append(Asset(data=data))
+
+        noninterventions = self.get_non_interventions(timeperiod)
+        return noninterventions, built_interventions
+
+    def set_state(self, sector, timeperiod, data):
+        """Sets the state data for non-intervention state
+
+        Arguments
+        ---------
+        sector : str
+            The name of the sector
+        timeperiod : int
+            The time period for which to update the state
+        data : list
+            A list of state data dictionaries
+        """
+        for entry in data:
+            assert entry['sector'] == sector
+            assert entry['time_period'] == timeperiod
+        self._nonintervention.extend(data)
 
     def build(self, name, timeperiod):
         """Adds an intervention available in action space to the built register
@@ -107,6 +154,11 @@ class State(object):
         """Helper function to generate a numpy array for actions
         """
         return np.zeros(self.get_action_dimension())
+
+    def set_initial_data(self, data):
+        """Stores non-intervention state
+        """
+        self._nonintervention = data
 
     def parse_decisions(self, decision_vector):
         """Returns intervention in list of array element is 1

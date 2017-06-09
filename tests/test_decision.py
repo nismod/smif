@@ -1,4 +1,4 @@
-from pytest import fixture
+from pytest import fixture, raises
 from smif.decision import Planning
 
 
@@ -54,3 +54,17 @@ class TestPlanning:
                     'small_pumping_station_bicester',
                     'large_pumping_station_abingdon'}
         assert actual == expected
+
+    def test_return_build_year(self, plan):
+        plan = plan
+        actual = plan.get_build_date('small_pumping_station_oxford')
+        expected = 2045
+        assert actual == expected
+        actual = plan.get_build_date('large_pumping_station_abingdon')
+        expected = 2035
+        assert actual == expected
+
+    def test_raise_error(self, plan):
+        plan = plan
+        with raises(ValueError):
+            plan.get_build_date('does not exist')

@@ -143,11 +143,16 @@ class InterventionContainer(object):
         return hashlib.sha1(str_to_hash).hexdigest()
 
     def __repr__(self):
-        data_str = Asset.deterministic_dict_to_str(self.data)
+        data_str = self.deterministic_dict_to_str(self.data)
         return "Asset(\"{}\", {})".format(self.name, data_str)
 
     def __str__(self):
         return Asset.deterministic_dict_to_str(self.data)
+
+    def __eq__(self, other):
+        """To check equality, compare the data only
+        """
+        return self.data == other.data
 
     @staticmethod
     def deterministic_dict_to_str(data):

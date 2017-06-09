@@ -26,6 +26,7 @@ The key functions include
   approaches
 
 """
+import importlib
 import logging
 import os
 from abc import ABC, abstractmethod
@@ -174,7 +175,9 @@ class SectorModel(ABC):
             ``data[parameter] = [SpaceTimeValue(region, interval, value, units), ...]``
         Returns
         -------
-        dict
+        state : dict
+            A dictionary of numpy arrays of the current state
+        results : dict
             A dictionary of the format:
             ``results[parameter] = [SpaceTimeValue(region, interval, value, units), ...]``
 

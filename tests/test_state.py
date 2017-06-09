@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import numpy as np
 from pytest import fixture
 from smif.decision import Planning
-from smif.intervention import Intervention, InterventionRegister
+from smif.intervention import Asset, Intervention, InterventionRegister
 from smif.state import State
 
 
@@ -59,6 +59,16 @@ def build_register(build_intervention):
     for entry in build_intervention:
         register.register(Intervention(data=entry))
     return register
+
+
+@fixture(scope='function')
+def nonintervention_state():
+    data = [{'name': 'reservoir_level',
+             'time_period': 2010,
+             'value': 500,
+             'unit': 'Ml',
+             'sector': 'water_supply'}]
+    return data
 
 
 @fixture(scope='function')
@@ -174,3 +184,64 @@ class TestDecisionVector:
 
         for x, y in zip(actual, expected):
             assert x.name == y
+
+
+class TestNonInterventionState:
+
+    def test_initialise_state(self, plan, build_register,
+                              nonintervention_state):
+
+        state = State(plan, build_register)
+
+        state.set_initial_data(nonintervention_state)
+
+        actual = state.get_all_state(2010)
+        expected = nonintervention_state
+
+        assert actual[0] == expected
+
+        expected = []
+        assert actual[1] == expected
+
+        actual = state.get_all_state(2035)
+        expected = []
+
+        assert actual[0] == expected
+
+        expected = Asset("large_pumping_station_abingdon",
+                         {"capacity": {"units": "ML/day", "value": 450},
+                          "capital_cost": {"units": "M£", "value": 500},
+                          "location": "POINT(51.1 -1.7)",
+                          "name": "large_pumping_station_abingdon",
+                          "sector": "water_supply",
+                          "build_date": 2035})
+        a = actual[1][0]
+
+        for key in a.data.keys():
+            assert a.data[key] == expected.data[key]
+
+        for key in expected.data.keys():
+            assert a.data[key] == expected.data[key]
+
+        assert actual[1][0] == expected
+
+    def test_set_state(self, plan, build_register, nonintervention_state):
+
+        state = State(plan, build_register)
+        state.set_initial_data(nonintervention_state)
+
+        state_data = [{'name': 'reservoir_level',
+                       'time_period': 2015,
+                       'value': 500,
+                       'unit': 'Ml',
+                       'sector': 'water_supply'}]
+
+        state.set_state('water_supply', 2015, state_data)
+        actual, _ = state.get_all_state(2015)
+        expected = [{'name': 'reservoir_level',
+                     'time_period': 2015,
+                     'value': 500,
+                     'unit': 'Ml',
+                     'sector': 'water_supply'}]
+        for x, y in zip(actual, expected):
+            assert sorted(x) == sorted(y)
