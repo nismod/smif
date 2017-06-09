@@ -378,6 +378,10 @@ class InterventionRegister(Register):
 
     def get_intervention(self, name):
         """Returns the named asset data
+
+        Returns
+        -------
+        :class:`Intervention`
         """
         if name in self._names.keys():
             numeric_key = self._names[name]

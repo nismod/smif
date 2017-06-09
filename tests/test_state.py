@@ -109,6 +109,21 @@ class TestState:
                     'large_pumping_station_abingdon'}
         assert actual == expected
 
+    def test_get_state_conditional(self, plan, build_register):
+        state = State(plan, build_register)
+        _, actual = state.get_all_state(2035, 'water_supply')
+        expected = [Asset("large_pumping_station_abingdon",
+                          {"capacity": {"units": "ML/day", "value": 450},
+                           "capital_cost": {"units": "M£", "value": 500},
+                           "location": "POINT(51.1 -1.7)",
+                           "name": "large_pumping_station_abingdon",
+                           "sector": "water_supply",
+                           "build_date": 2035})]
+        assert actual == expected
+        _, actual = state.get_all_state(2035, 'energy_supply')
+        expected = []
+        assert actual == expected
+
 
 class TestActionSpace:
 
@@ -195,7 +210,7 @@ class TestNonInterventionState:
 
         state.set_initial_data(nonintervention_state)
 
-        actual = state.get_all_state(2010)
+        actual = state.get_all_state(2010, 'water_supply')
         expected = nonintervention_state
 
         assert actual[0] == expected
@@ -203,7 +218,7 @@ class TestNonInterventionState:
         expected = []
         assert actual[1] == expected
 
-        actual = state.get_all_state(2035)
+        actual = state.get_all_state(2035, 'water_supply')
         expected = []
 
         assert actual[0] == expected
@@ -225,7 +240,8 @@ class TestNonInterventionState:
 
         assert actual[1][0] == expected
 
-    def test_set_state(self, plan, build_register, nonintervention_state):
+    def test_set_state(self, plan, build_register,
+                       nonintervention_state):
 
         state = State(plan, build_register)
         state.set_initial_data(nonintervention_state)
@@ -237,7 +253,7 @@ class TestNonInterventionState:
                        'sector': 'water_supply'}]
 
         state.set_state('water_supply', 2015, state_data)
-        actual, _ = state.get_all_state(2015)
+        actual, _ = state.get_all_state(2015, 'water_supply')
         expected = [{'name': 'reservoir_level',
                      'time_period': 2015,
                      'value': 500,

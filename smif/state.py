@@ -11,16 +11,39 @@ from .intervention import Asset
 class State(object):
     """Builds state and actions from set of interventions,
     planned and built interventions
-    and non-intervention information
+    and intervention-attribute stateful information
+
+    The latter is defined in intervention attributes using the `is_state`
+    flag. For example::
+
+        - name: reservoir
+          location: Oxford
+          capacity:
+              value: 500
+              units: ML
+          operational_lifetime:
+              value: 300
+              units: years
+          economic_lifetime:
+              value: 150
+              units: years
+          capital_cost:
+              value: 15
+              units: million £
+          current_level:
+              value: 3
+              units: ML
+              is_state: True
 
     Arguments
     ---------
     planned_interventions : smif.decisions.Planning
         The list of pre-specified planning interventions
-    intervention_register : smif.interventions.InterventionRegister
+    intervention_register : smif.interverntions.InterventionRegister
         The intervention register
     """
-    def __init__(self, planned_interventions, intervention_register):
+    def __init__(self, planned_interventions,
+                 intervention_register):
         self._planned = planned_interventions
         self._interventions = intervention_register
 
@@ -42,6 +65,7 @@ class State(object):
         self._reset_action_space()
         self._reset_state()
         self._reset_built()
+        self.get_initial_action_space()
 
     def _reset_built(self):
         self._built = Built()
@@ -103,24 +127,36 @@ class State(object):
 
         return built.union(planned)
 
-    def get_all_state(self, timeperiod):
-        """Returns the current state of interventions and data
+    def get_all_state(self, timeperiod, sector=None):
+        """Returns all state filtered by sector model
 
-        All built interventions are returned as a list of
-        `BuildIntervention`
         """
         intervention_names = self.get_current_state(timeperiod)
         built_interventions = []
+
         for name in intervention_names:
             data = self._interventions.get_intervention(name).data
-            if name in self._built.names:
-                data['build_date'] = self._built.get_build_date(name)
-            elif name in self._planned.names:
-                data['build_date'] = self._planned.get_build_date(name)
-            built_interventions.append(Asset(data=data))
 
-        noninterventions = self.get_non_interventions(timeperiod)
-        return noninterventions, built_interventions
+            if sector is None:
+
+                if name in self._built.names:
+                    data['build_date'] = self._built.get_build_date(name)
+                    built_interventions.append(Asset(data=data))
+                elif name in self._planned.names:
+                    data['build_date'] = self._planned.get_build_date(name)
+                    built_interventions.append(Asset(data=data))
+
+            else:
+
+                if name in self._built.names and data['sector'] == sector:
+                    data['build_date'] = self._built.get_build_date(name)
+                    built_interventions.append(Asset(data=data))
+                elif name in self._planned.names and data['sector'] == sector:
+                    data['build_date'] = self._planned.get_build_date(name)
+                    built_interventions.append(Asset(data=data))
+
+        state_data = self.get_non_interventions(timeperiod)
+        return state_data, built_interventions
 
     def set_state(self, sector, timeperiod, data):
         """Sets the state data for non-intervention state

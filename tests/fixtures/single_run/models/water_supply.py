@@ -38,6 +38,11 @@ class WaterSupplySectorModel(SectorModel):
         data
             - scenario data, e.g. expected level of rainfall
         """
+        self.logger.debug("Decisions: {}".format(decisions))
+        self.logger.debug(state)
+        self.logger.debug(data)
+
+        print(state)
 
         # unpack inputs
         reservoir_level = state[0].data['current_level']['value']
@@ -45,10 +50,6 @@ class WaterSupplySectorModel(SectorModel):
 
         # unpack assets
         number_of_treatment_plants = 2
-
-        self.logger.debug(decisions)
-        self.logger.debug(state)
-        self.logger.debug(data)
 
         # simulate (wrapping toy model)
         instance = ExampleWaterSupplySimulationModel()
