@@ -50,6 +50,8 @@ class SectorModel(ABC):
 
         self._inputs = MetadataSet([])
         self._outputs = MetadataSet([])
+        self.regions = None
+        self.intervals = None
 
         self.logger = logging.getLogger(__name__)
 
@@ -105,7 +107,7 @@ class SectorModel(ABC):
         else:
             value = []
 
-        self._inputs = MetadataSet(value)
+        self._inputs = MetadataSet(value, self.regions, self.intervals)
 
     @property
     def outputs(self):
@@ -132,7 +134,7 @@ class SectorModel(ABC):
         else:
             value = []
 
-        self._outputs = MetadataSet(value)
+        self._outputs = MetadataSet(value, self.regions, self.intervals)
 
     @property
     def intervention_names(self):
@@ -256,6 +258,16 @@ class SectorModelBuilder(object):
         assert self._sector_model is not None, msg
 
         self._sector_model.initialise(initial_conditions)
+
+    def add_regions(self, regions_register):
+        """Add a RegionsRegister to the SectorModel
+        """
+        self._sector_model.regions = regions_register
+
+    def add_intervals(self, intervals_register):
+        """Add a TimeIntervalsRegister to the SectorModel
+        """
+        self._sector_model.intervals = intervals_register
 
     def add_inputs(self, input_dicts):
         """Add inputs to the sector model

@@ -76,7 +76,7 @@ class SosModel(object):
 
     @scenario_metadata.setter
     def scenario_metadata(self, value):
-        self._scenario_metadata = MetadataSet(value)
+        self._scenario_metadata = MetadataSet(value, self.regions, self.intervals)
 
     @property
     def scenario_data(self):
@@ -819,15 +819,20 @@ class SosModelBuilder(object):
         """
         self.logger.info("Loading models")
         for model_data in model_data_list:
-            model = self._build_model(model_data)
+            model = self._build_model(
+                model_data,
+                self.sos_model.regions,
+                self.sos_model.intervals)
             self.add_model(model)
             self.add_model_data(model, model_data)
 
     @staticmethod
-    def _build_model(model_data):
+    def _build_model(model_data, regions, intervals):
         builder = SectorModelBuilder(model_data['name'])
         builder.load_model(model_data['path'], model_data['classname'])
         builder.create_initial_system(model_data['initial_conditions'])
+        builder.add_regions(regions)
+        builder.add_intervals(intervals)
         builder.add_inputs(model_data['inputs'])
         builder.add_outputs(model_data['outputs'])
         builder.add_interventions(model_data['interventions'])
