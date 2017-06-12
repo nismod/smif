@@ -224,9 +224,9 @@ class SectorModelBuilder(object):
 
     """
 
-    def __init__(self, name):
+    def __init__(self, name, sector_model=None):
         self._sector_model_name = name
-        self._sector_model = None
+        self._sector_model = sector_model
         self.logger = logging.getLogger(__name__)
 
     def load_model(self, model_path, classname):

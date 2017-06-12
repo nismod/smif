@@ -56,8 +56,7 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
     _ws = WaterSupplySectorModel()
     _ws.name = 'water_supply'
 
-    ws_builder = SectorModelBuilder('water_supply')
-    ws_builder._sector_model = _ws
+    ws_builder = SectorModelBuilder('water_supply', _ws)
 
     ws_builder.create_initial_system([])
     ws_builder.add_regions(builder.sos_model.regions)
@@ -103,8 +102,7 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
 
     _ws2 = WaterSupplySectorModel()
     _ws2.name = 'water_supply_2'
-    ws2_builder = SectorModelBuilder('water_supply_2')
-    ws2_builder._sector_model = _ws2
+    ws2_builder = SectorModelBuilder('water_supply_2', _ws2)
 
     ws2_builder.add_inputs([
         {
