@@ -2,7 +2,11 @@
 interventions, pre-specified planning and built interventions.
 
 """
+import logging
+from collections import defaultdict
+
 import numpy as np
+from smif import StateData
 
 from .decision import Built
 from .intervention import Asset
@@ -44,11 +48,14 @@ class State(object):
     """
     def __init__(self, planned_interventions,
                  intervention_register):
+
+        self.logger = logging.getLogger(__name__)
+
         self._planned = planned_interventions
         self._interventions = intervention_register
 
         self._built = Built()
-        self._nonintervention = []
+        self._state_data = defaultdict(dict)
 
         self._state = dict()
         self._action_space = self.get_initial_action_space()
@@ -59,9 +66,16 @@ class State(object):
         """
         return self._action_space
 
+    @property
+    def action_list(self):
+        """Immutible version of the action space
+        """
+        return sorted(self._action_space)
+
     def reset(self):
         """Resets the state ready for a new iteration
         """
+        self.logger.debug("Resetting state instance")
         self._reset_action_space()
         self._reset_state()
         self._reset_built()
@@ -90,16 +104,11 @@ class State(object):
         planned = self._planned.names
         return set_of_interventions.difference(planned)
 
-    @property
-    def action_list(self):
-        """Immutible version of the action space
-        """
-        return sorted(self._action_space)
-
     def update_action_space(self, timeperiod):
         """The action space for the current timeperiod excludes planned
         interventions and interventions built previously
         """
+        self.logger.debug("Updating action space")
         old_action_space = self._action_space
         current_state = self.get_current_state(timeperiod)
         _ = old_action_space.difference(current_state)
@@ -112,12 +121,6 @@ class State(object):
         self._reset_state()
         self._state[timeperiod] = self._planned.current_interventions(timeperiod)
 
-    def get_non_interventions(self, timeperiod):
-        """
-        """
-        return [x for x in self._nonintervention
-                if x['time_period'] == timeperiod]
-
     def get_current_state(self, timeperiod):
         """The current state is the union of built and planned
         interventions upto the `timeperiod`
@@ -129,6 +132,18 @@ class State(object):
 
     def get_all_state(self, timeperiod, sector=None):
         """Returns all state filtered by sector model
+
+        Arguments
+        ---------
+        timeperiod : int
+        sector : str, default=None
+
+        Returns
+        -------
+        state_ data : list
+            A list of :class:`smif.StateData`
+        build_interventions : list
+            A list of :class:`smif.intervention.Asset`
 
         """
         intervention_names = self.get_current_state(timeperiod)
@@ -155,46 +170,89 @@ class State(object):
                     data['build_date'] = self._planned.get_build_date(name)
                     built_interventions.append(Asset(data=data))
 
-        state_data = self.get_non_interventions(timeperiod)
+        self.logger.debug("Current built interventions: %s",
+                          self._built.names)
+
+        if sector:
+            state_data = self.get_state(timeperiod, sector)
+        else:
+            state_data = self.state_data[timeperiod]
+        self.logger.debug("Current state data: %s", state_data)
         return state_data, built_interventions
-
-    def set_state(self, sector, timeperiod, data):
-        """Sets the state data for non-intervention state
-
-        Arguments
-        ---------
-        sector : str
-            The name of the sector
-        timeperiod : int
-            The time period for which to update the state
-        data : list
-            A list of state data dictionaries
-        """
-        for entry in data:
-            assert entry['sector'] == sector
-            assert entry['time_period'] == timeperiod
-        self._nonintervention.extend(data)
 
     def build(self, name, timeperiod):
         """Adds an intervention available in action space to the built register
+
+        Arguments
+        ---------
+        name : str
+            The name ofintervention
+        timeperiod : int
         """
         assert name in self._action_space
         self._built.add_intervention(name, timeperiod)
 
     def get_action_dimension(self):
         """The dimension of the current action space
+
+        Returns
+        -------
+        int
+            The number of dimensions in the action space
         """
         return len(self._action_space)
 
     def get_decision_vector(self):
         """Helper function to generate a numpy array for actions
+
+        Returns
+        -------
+        numpy.ndarray
+            An array of length of the action space
         """
         return np.zeros(self.get_action_dimension())
 
-    def set_initial_data(self, data):
-        """Stores non-intervention state
+    @property
+    def state_data(self):
+        """Returns the state data
+
+        Returns
+        -------
+        dict
+            A nested dictionary of [timestep][model_name] = [:class:`smif.StateData`]
         """
-        self._nonintervention = data
+        return self._state_data
+
+    def get_state(self, timestep, model_name):
+        """Gets the state data
+
+        Arguments
+        ---------
+        timestep : int
+        model_name : str
+
+        Returns
+        -------
+        list
+            A list of :class:`smif.StateData`
+
+        """
+        if model_name not in self.state_data[timestep]:
+            self.logger.warning("Found no state for %s in timestep %s", model_name, timestep)
+            return []
+        return self.state_data[timestep][model_name]
+
+    @state_data.setter
+    def state_data(self, timestep_sector_data_tuple):
+        assert isinstance(timestep_sector_data_tuple, tuple)
+        timestep, sector, data = timestep_sector_data_tuple
+        assert isinstance(sector, str)
+        assert isinstance(timestep, int)
+        assert isinstance(data, list)
+        for entry in data:
+            assert isinstance(entry, StateData)
+        self.logger.debug("Added %s to %s in %s", data, sector, timestep)
+        self._state_data[timestep][sector] = data
 
     def parse_decisions(self, decision_vector):
         """Returns intervention in list of array element is 1

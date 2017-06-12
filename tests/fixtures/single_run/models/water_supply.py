@@ -64,7 +64,9 @@ class WaterSupplySectorModel(SectorModel):
             "energy_demand": np.ones((3, 1)) * 3
         }
         state = [
-            StateData('Kielder Water', {'current_level': {'value': instance.reservoir_level}}),
+            StateData('Kielder Water',
+                      {'current_level': {'value': instance.reservoir_level,
+                                         'units': 'Ml'}}),
         ]
 
         return state, results

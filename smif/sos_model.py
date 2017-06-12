@@ -169,7 +169,10 @@ class SosModel(object):
         # Run a simulation for a single model
         for timestep in self.timesteps:
             state, results = self.run_sector_model_timestep(sector_model, timestep)
-            self.state.set_state(sector_model, timestep, state)
+
+            # Update state in next period to current post-decision state
+            self.set_state(timestep, model_name, state)
+            # Store the results for the current timestep
             self.set_data(sector_model, timestep, results)
 
     def run_sector_model_timestep(self, model, timestep):
@@ -184,18 +187,53 @@ class SosModel(object):
 
         Returns
         -------
-        state :
-
-        results :
+        state : list
+            A list of :class:`smif.StateData`
+        results : dict
 
 
         """
-        state, decisions = self.state.get_all_state(timestep, model.name)
+        self.logger.info("Running model %s for timestep %s",
+                         model.name, timestep)
+        state, decisions = self.get_state(timestep, model.name)
         data = self.get_data(model, timestep)
 
         state, results = model.simulate(decisions, state, data)
         self.logger.debug("Results from %s model:\n %s", model.name, results)
         return state, results
+
+    def get_state(self, model_name, timestep):
+        """Gets the state data and built interventions
+        to pass to SectorModel.simulate
+
+        Arguments
+        ---------
+        model_name : str
+        timestep : int
+
+        Returns
+        -------
+        state_data : list
+            A list of :class:`smif.StateData`
+        decisions : list
+
+        """
+        return self.state.get_all_state(model_name, timestep)
+
+    def set_state(self, from_timestep, model_name, state):
+        """Sets state output from model ready for next timestep
+
+        Updates the state for the next timestep, if not in the final timestep
+
+        Arguments
+        ---------
+        model_name : str
+        timestep : int
+        state : list
+        """
+        for_timestep = self.timestep_after(from_timestep)
+        if for_timestep is not None:
+            self.state.state_data = (for_timestep, model_name, state)
 
     def get_data(self, model, timestep):
         """Gets the data in the required format to pass to the simulate method
@@ -515,7 +553,9 @@ class ModelSet(object):
             model = list(self._models)[0]
             logging.debug("Running %s for %d", model.name, timestep)
             state, results = self._sos_model.run_sector_model_timestep(model, timestep)
-            self._sos_model.state.set_state(model, timestep, state)
+            self._sos_model.set_state(timestep,
+                                      model.name,
+                                      state)
             self._sos_model.set_data(model, timestep, results)
         else:
             # Start by running all models in set with best guess
@@ -535,9 +575,12 @@ class ModelSet(object):
                 else:
                     self.logger.debug("Iteration %s, model set %s", i, self._model_names)
                     for model in self._models:
+
                         state, results = self._sos_model.run_sector_model_timestep(
                             model, timestep)
-                        self._sos_model.state.set_state(model, timestep, state)
+                        self._sos_model.set_state(timestep,
+                                                  model.name,
+                                                  state)
                         self._sos_model.set_data(model, timestep, results)
                         self.iterated_results[model.name].append(results)
             else:
@@ -646,7 +689,7 @@ class SosModelBuilder(object):
 
         self.logger = logging.getLogger(__name__)
 
-        self.state_data = []
+        self.state_data = defaultdict(dict)
         self.interventions = InterventionRegister()
         self.planning = []
 
@@ -826,7 +869,7 @@ class SosModelBuilder(object):
         """Adds sector model data to the system-of-systems model which is
         convenient to have available at the higher level.
         """
-        self.add_state_data(model_data['initial_conditions'])
+        self.add_state_data(model.name, model_data['initial_conditions'])
         self.add_interventions(model.name, model_data['interventions'])
 
     def add_interventions(self, model_name, interventions):
@@ -840,15 +883,33 @@ class SosModelBuilder(object):
             self.logger.debug(msg, identifier, model_name)
             self.interventions.register(intervention_object)
 
-    def add_state_data(self, initial_conditions):
+    def add_state_data(self, model_name, initial_conditions):
         """Add initial conditions to list of state data
+
+        Assumes `is_state` values are associated with the first timeperiod
+
+        Arguments
+        ---------
+        model_name : str
+            The name of the model for which to add state data from initial
+            conditions
+        initial_conditions: list
+            A list of past Interventions, with build dates and locations as
+            necessary to specify the infrastructure system to be modelled.
         """
         # Collect model state data
         state_data = self._get_initial_conditions(initial_conditions)
-        self.state_data.extend(state_data)
+        timestep = self.sos_model.timesteps[0]
+        self.state_data[timestep][model_name] = state_data
 
     def _get_initial_conditions(self, initial_conditions):
         """Gets list of initial conditions
+
+        Arguments
+        ---------
+        initial_conditions: list
+            A list of past Interventions, with build dates and locations as
+            necessary to specify the infrastructure system to be modelled.
 
         Returns
         -------
@@ -898,7 +959,10 @@ class SosModelBuilder(object):
 
         self.sos_model.state = State(self.planning,
                                      self.interventions)
-        self.sos_model.state._state = self.state_data
+
+        for timestep in self.state_data.keys():
+            for model_name, data in self.state_data[timestep].items():
+                self.sos_model.state.state_data = (timestep, model_name, data)
 
     def add_scenario_data(self, data):
         """Load the scenario data into the system of systems model

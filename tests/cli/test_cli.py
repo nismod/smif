@@ -49,7 +49,8 @@ def test_fixture_single_run():
     """
     config_file = os.path.join(os.path.dirname(__file__),
                                '..', 'fixtures', 'single_run', 'config', 'model.yaml')
-    output = subprocess.run(["smif", "run", config_file], stdout=subprocess.PIPE)
+    output = subprocess.run(["smif", "run", config_file],
+                            stdout=subprocess.PIPE)
     assert "Model run complete" in str(output.stdout)
 
 

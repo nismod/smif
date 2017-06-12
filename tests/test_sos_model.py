@@ -542,7 +542,7 @@ class TestSosModelBuilder():
 
         builder.planning = Planning([])
 
-        builder.add_state_data([])
+        builder.add_state_data('water_supply', [])
 
         builder.add_initial_state()
 
