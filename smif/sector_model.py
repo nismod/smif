@@ -31,7 +31,7 @@ import os
 from abc import ABC, abstractmethod
 
 import importlib
-from smif.metadata import ModelMetadata
+from smif.metadata import MetadataSet
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -48,8 +48,10 @@ class SectorModel(ABC):
         self.interventions = []
         self.system = []
 
-        self._inputs = ModelMetadata({})
-        self._outputs = ModelMetadata({})
+        self._inputs = MetadataSet([])
+        self._outputs = MetadataSet([])
+        self.regions = None
+        self.intervals = None
 
         self.logger = logging.getLogger(__name__)
 
@@ -105,7 +107,7 @@ class SectorModel(ABC):
         else:
             value = []
 
-        self._inputs = ModelMetadata(value)
+        self._inputs = MetadataSet(value, self.regions, self.intervals)
 
     @property
     def outputs(self):
@@ -132,7 +134,7 @@ class SectorModel(ABC):
         else:
             value = []
 
-        self._outputs = ModelMetadata(value)
+        self._outputs = MetadataSet(value, self.regions, self.intervals)
 
     @property
     def intervention_names(self):
@@ -222,9 +224,9 @@ class SectorModelBuilder(object):
 
     """
 
-    def __init__(self, name):
+    def __init__(self, name, sector_model=None):
         self._sector_model_name = name
-        self._sector_model = None
+        self._sector_model = sector_model
         self.logger = logging.getLogger(__name__)
 
     def load_model(self, model_path, classname):
@@ -256,6 +258,16 @@ class SectorModelBuilder(object):
         assert self._sector_model is not None, msg
 
         self._sector_model.initialise(initial_conditions)
+
+    def add_regions(self, regions_register):
+        """Add a RegionsRegister to the SectorModel
+        """
+        self._sector_model.regions = regions_register
+
+    def add_intervals(self, intervals_register):
+        """Add a TimeIntervalsRegister to the SectorModel
+        """
+        self._sector_model.intervals = intervals_register
 
     def add_inputs(self, input_dicts):
         """Add inputs to the sector model

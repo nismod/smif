@@ -15,7 +15,7 @@ from smif.convert.area import RegionRegister, RegionSet
 from smif.convert.interval import TimeIntervalRegister
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
-from smif.metadata import ModelMetadata
+from smif.metadata import MetadataSet
 from smif.sector_model import SectorModelBuilder
 
 __author__ = "Will Usher, Tom Russell"
@@ -56,7 +56,7 @@ class SosModel(object):
         self._timesteps = []
         self.regions = RegionRegister()
         self.intervals = TimeIntervalRegister()
-        self._scenario_metadata = ModelMetadata({})
+        self._scenario_metadata = MetadataSet({})
 
         # systems, interventions and (system) state
         self.interventions = InterventionRegister()
@@ -76,7 +76,7 @@ class SosModel(object):
 
     @scenario_metadata.setter
     def scenario_metadata(self, value):
-        self._scenario_metadata = ModelMetadata(value)
+        self._scenario_metadata = MetadataSet(value, self.regions, self.intervals)
 
     @property
     def scenario_data(self):
@@ -592,10 +592,8 @@ class ModelSet(object):
             # generate zero-values for each parameter/region/interval combination
             results = {}
             for output in model.outputs.metadata:
-                regions = self._sos_model.regions.get_regions_in_set(
-                    output.spatial_resolution)
-                intervals = self._sos_model.intervals.get_intervals_in_set(
-                    output.temporal_resolution)
+                regions = output.get_region_names()
+                intervals = output.get_interval_names()
                 results[output.name] = np.zeros((len(regions), len(intervals)))
         return results
 
@@ -819,15 +817,20 @@ class SosModelBuilder(object):
         """
         self.logger.info("Loading models")
         for model_data in model_data_list:
-            model = self._build_model(model_data)
+            model = self._build_model(
+                model_data,
+                self.sos_model.regions,
+                self.sos_model.intervals)
             self.add_model(model)
             self.add_model_data(model, model_data)
 
     @staticmethod
-    def _build_model(model_data):
+    def _build_model(model_data, regions, intervals):
         builder = SectorModelBuilder(model_data['name'])
         builder.load_model(model_data['path'], model_data['classname'])
         builder.create_initial_system(model_data['initial_conditions'])
+        builder.add_regions(regions)
+        builder.add_intervals(intervals)
         builder.add_inputs(model_data['inputs'])
         builder.add_outputs(model_data['outputs'])
         builder.add_interventions(model_data['interventions'])
@@ -843,6 +846,10 @@ class SosModelBuilder(object):
 
         """
         self.logger.info("Loading model: %s", model.name)
+        if model.regions is None:
+            model.regions = self.sos_model.regions
+        if model.intervals is None:
+            model.intervals = self.sos_model.regions
         self.sos_model.models[model.name] = model
 
     def add_model_data(self, model, model_data):
@@ -932,7 +939,7 @@ class SosModelBuilder(object):
                 raise ValueError("Parameter {} not registered in scenario metadata {}".format(
                     param,
                     self.sos_model.scenario_metadata))
-            param_metadata = self.sos_model.scenario_metadata.get_metadata_item(param)
+            param_metadata = self.sos_model.scenario_metadata[param]
 
             nested[param] = self._data_list_to_array(
                 param,
@@ -1098,11 +1105,10 @@ class SosModelBuilder(object):
 
                 for source in providers:
                     if source == 'scenario':
-                        dep_source = self.sos_model.scenario_metadata. \
-                                     get_metadata_item(dep.name)
+                        dep_source = self.sos_model.scenario_metadata[dep.name]
                     else:
                         dep_source = self.sos_model.models[source]. \
-                                     outputs.get_metadata_item(dep.name)
+                                     outputs[dep.name]
                     self.validate_dependency(dep_source, dep)
 
                     if source == 'scenario':
