@@ -63,12 +63,20 @@ class State(object):
     @property
     def action_space(self):
         """The set of available interventions
+
+        Returns
+        -------
+        set
         """
         return self._action_space
 
     @property
     def action_list(self):
         """Immutible version of the action space
+
+        Returns
+        -------
+        list
         """
         return sorted(self._action_space)
 
@@ -97,6 +105,11 @@ class State(object):
     def get_initial_action_space(self):
         """Initial action space is the difference between set of all interventions
         and all planned interventions
+
+        Returns
+        -------
+        set
+
         """
         set_of_interventions = self._interventions.names
         # Get the names of ALL planned interventions
@@ -124,6 +137,11 @@ class State(object):
     def get_current_state(self, timeperiod):
         """The current state is the union of built and planned
         interventions upto the `timeperiod`
+
+        Returns
+        -------
+        set
+            The set of built and planned interventions
         """
         built = self._built.current_interventions(timeperiod)
         planned = self._planned.current_interventions(timeperiod)
