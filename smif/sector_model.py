@@ -31,7 +31,6 @@ import logging
 import os
 from abc import ABC, abstractmethod
 
-import importlib
 from smif.metadata import MetadataSet
 
 __author__ = "Will Usher, Tom Russell"
