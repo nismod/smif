@@ -20,7 +20,7 @@ except:
 class StateData(object):
     """A piece of state data
 
-    Parameters
+    Attributes
     ----------
     target
         The id or name of the object described by this state
@@ -29,11 +29,39 @@ class StateData(object):
         attributes
     """
     def __init__(self, target, data):
-        self.target = target
-        self.data = data
+        self._target = target
+        self._data = data
 
     def __repr__(self):
         return "StateData({}, {})".format(
             repr(self.target),
             repr(self.data)
         )
+
+    def __eq__(self, other):
+        if self._data == other.data and self._target == other.target:
+            return True
+        else:
+            return False
+
+    @property
+    def data(self):
+        """The state data
+        """
+        return self._data
+
+    @data.setter
+    def data(self, value):
+        assert isinstance(value, dict)
+        self._data = value
+
+    @property
+    def target(self):
+        """The intervention name that is associated with the state data
+        """
+        return self._target
+
+    @target.setter
+    def target(self, value):
+        assert isinstance(value, str)
+        self._target = value

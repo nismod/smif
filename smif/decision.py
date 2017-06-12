@@ -31,9 +31,11 @@ class Planning:
     Oxford in 2045::
 
             {
-                'name': 'small_pumping_station',
+                'name': 'small_pumping_station_oxford',
                 'build_date': 2045
             }
+
+    Intervention names are assumed to be unique
 
     Attributes
     ----------
@@ -52,11 +54,67 @@ class Planning:
     @property
     def names(self):
         """Returns the set of assets defined in the planned interventions
+
+        Returns
+        -------
+        set
         """
         return {plan['name'] for plan in self.planned_interventions}
 
     @property
     def timeperiods(self):
         """Returns the set of build dates defined in the planned interventions
+
+        Returns
+        -------
+        set
         """
         return {plan['build_date'] for plan in self.planned_interventions}
+
+    def current_interventions(self, timeperiod):
+        """Return the set of planned interventions for the given time period
+
+        Arguments
+        ---------
+        timeperiod : int
+
+        Returns
+        -------
+        set
+        """
+        return {plan['name'] for plan in self.planned_interventions
+                if plan['build_date'] <= timeperiod}
+
+    def get_build_date(self, name):
+        """Returns the build date of an intervention
+
+        Arguments
+        ---------
+        name : str
+
+        Returns
+        -------
+        int
+            The year in which the intervention is 'built'
+        """
+        build_date = None
+        for plan in self.planned_interventions:
+            if plan['name'] == name:
+                build_date = plan['build_date']
+        if build_date is None:
+            msg = "No planned intervention with name: '{}'"
+            raise ValueError(msg.format(name))
+
+        return build_date
+
+
+class Built(Planning):
+    """Holds a list of built interventions
+    """
+    def add_intervention(self, name, timeperiod):
+        """Add an intervention to the intervention list
+        """
+        assert isinstance(name, str)
+        assert isinstance(timeperiod, int)
+        self.planned_interventions.append({'name': name,
+                                           'build_date': timeperiod})

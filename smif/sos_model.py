@@ -5,10 +5,10 @@ framework.
 """
 import logging
 from collections import defaultdict
+from enum import Enum
 
 import networkx
 import numpy as np
-from enum import Enum
 from smif import StateData
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister, RegionSet
@@ -17,6 +17,7 @@ from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.metadata import MetadataSet
 from smif.sector_model import SectorModelBuilder
+from smif.state import State
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -59,10 +60,8 @@ class SosModel(object):
         self._scenario_metadata = MetadataSet({})
 
         # systems, interventions and (system) state
-        self.interventions = InterventionRegister()
         self.initial_conditions = []
-        self.planning = Planning([])
-        self._state = defaultdict(dict)
+        self.state = None
 
         # scenario data and results
         self._scenario_data = {}
@@ -170,7 +169,10 @@ class SosModel(object):
         # Run a simulation for a single model
         for timestep in self.timesteps:
             state, results = self.run_sector_model_timestep(sector_model, timestep)
-            self.set_state(sector_model, timestep, state)
+
+            # Update state in next period to current post-decision state
+            self.set_state(timestep, model_name, state)
+            # Store the results for the current timestep
             self.set_data(sector_model, timestep, results)
 
     def run_sector_model_timestep(self, model, timestep):
@@ -183,55 +185,55 @@ class SosModel(object):
         timestep: int
             The year for which to run the model
 
+        Returns
+        -------
+        state : list
+            A list of :class:`smif.StateData`
+        results : dict
+
+
         """
-        decisions = self.get_decisions(model, timestep)
-        state = self.get_state(model, timestep)
+        self.logger.info("Running model %s for timestep %s",
+                         model.name, timestep)
+        state, decisions = self.get_state(timestep, model.name)
         data = self.get_data(model, timestep)
 
         state, results = model.simulate(decisions, state, data)
         self.logger.debug("Results from %s model:\n %s", model.name, results)
         return state, results
 
-    def get_decisions(self, model, timestep):
-        """Gets the interventions that correspond to the decisions
+    def get_state(self, model_name, timestep):
+        """Gets the state data and built interventions
+        to pass to SectorModel.simulate
 
-        Parameters
-        ----------
-        model: :class:`smif.sector_model.SectorModel`
-            The instance of the sector model wrapper to run
-        timestep: int
-            The current model year
+        Arguments
+        ---------
+        model_name : str
+        timestep : int
+
+        Returns
+        -------
+        state_data : list
+            A list of :class:`smif.StateData`
+        decisions : list
+
         """
-        self.logger.debug("Finding decisions for %i", timestep)
-        current_decisions = []
-        for decision in self.planning.planned_interventions:
-            if decision['build_date'] <= timestep:
-                name = decision['name']
-                if name in model.intervention_names:
-                    msg = "Adding decision '%s' to instruction list"
-                    self.logger.debug(msg, name)
-                    intervention = self.interventions.get_intervention(name)
-                    current_decisions.append(intervention)
-        # for decision in self.planning.get_rule_based_interventions(timestep):
-        #   current_decisions.append(intervention)
-        # for decision in self.planning.get_optimised_interventions(timestep):
-        #   current_decisions.append(intervention)
+        return self.state.get_all_state(model_name, timestep)
 
-        return current_decisions
-
-    def get_state(self, model, timestep):
-        """Gets the state to pass to SectorModel.simulate
-        """
-        if model.name not in self._state[timestep]:
-            self.logger.warning("Found no state for %s in timestep %s", model.name, timestep)
-            return []
-        return self._state[timestep][model.name]
-
-    def set_state(self, model, from_timestep, state):
+    def set_state(self, from_timestep, model_name, state):
         """Sets state output from model ready for next timestep
+
+        Updates the state for the next timestep, if not in the final timestep
+
+        Arguments
+        ---------
+        model_name : str
+        timestep : int
+        state : list
         """
         for_timestep = self.timestep_after(from_timestep)
-        self._state[for_timestep][model.name] = state
+        if for_timestep is not None:
+            self.state.state_data = (for_timestep, model_name, state)
 
     def get_data(self, model, timestep):
         """Gets the data in the required format to pass to the simulate method
@@ -460,7 +462,7 @@ class SosModel(object):
     def intervention_names(self):
         """Names (id-like keys) of all known asset type
         """
-        return [intervention.name for intervention in self.interventions]
+        return [intervention.name for intervention in self.state._interventions]
 
     @property
     def sector_models(self):
@@ -551,7 +553,9 @@ class ModelSet(object):
             model = list(self._models)[0]
             logging.debug("Running %s for %d", model.name, timestep)
             state, results = self._sos_model.run_sector_model_timestep(model, timestep)
-            self._sos_model.set_state(model, timestep, state)
+            self._sos_model.set_state(timestep,
+                                      model.name,
+                                      state)
             self._sos_model.set_data(model, timestep, results)
         else:
             # Start by running all models in set with best guess
@@ -571,9 +575,12 @@ class ModelSet(object):
                 else:
                     self.logger.debug("Iteration %s, model set %s", i, self._model_names)
                     for model in self._models:
+
                         state, results = self._sos_model.run_sector_model_timestep(
                             model, timestep)
-                        self._sos_model.set_state(model, timestep, state)
+                        self._sos_model.set_state(timestep,
+                                                  model.name,
+                                                  state)
                         self._sos_model.set_data(model, timestep, results)
                         self.iterated_results[model.name].append(results)
             else:
@@ -682,6 +689,10 @@ class SosModelBuilder(object):
 
         self.logger = logging.getLogger(__name__)
 
+        self.state_data = defaultdict(dict)
+        self.interventions = InterventionRegister()
+        self.planning = []
+
     def construct(self, config_data):
         """Set up the whole SosModel
 
@@ -700,8 +711,10 @@ class SosModelBuilder(object):
         self.load_region_sets(config_data['region_sets'])
         self.load_interval_sets(config_data['interval_sets'])
 
-        self.load_models(model_list)
         self.add_planning(config_data['planning'])
+        self.load_models(model_list)
+        self.add_initial_state()
+
         self.add_scenario_metadata(config_data['scenario_metadata'])
         self.add_scenario_data(config_data['scenario_data'])
         self.logger.debug(config_data['scenario_data'])
@@ -856,11 +869,11 @@ class SosModelBuilder(object):
         """Adds sector model data to the system-of-systems model which is
         convenient to have available at the higher level.
         """
-        self.add_initial_conditions(model.name, model_data['initial_conditions'])
-        self.add_interventions(model.name, model_data['interventions'])
+        self._add_state_data(model.name, model_data['initial_conditions'])
+        self._add_interventions(model.name, model_data['interventions'])
 
-    def add_interventions(self, model_name, interventions):
-        """Adds interventions for a model
+    def _add_interventions(self, model_name, interventions):
+        """Adds interventions for a model to `SosModel` register
         """
         for intervention in interventions:
             intervention_object = Intervention(sector=model_name,
@@ -868,20 +881,48 @@ class SosModelBuilder(object):
             msg = "Adding %s from %s to SosModel InterventionRegister"
             identifier = intervention_object.name
             self.logger.debug(msg, identifier, model_name)
-            self.sos_model.interventions.register(intervention_object)
+            self.interventions.register(intervention_object)
 
-    def add_initial_conditions(self, model_name, initial_conditions):
-        """Adds initial conditions (state) for a model
+    def _add_state_data(self, model_name, initial_conditions):
+        """Add initial conditions to list of state data
+
+        Assumes `is_state` values are associated with the first timeperiod
+
+        Arguments
+        ---------
+        model_name : str
+            The name of the model for which to add state data from initial
+            conditions
+        initial_conditions: list
+            A list of past Interventions, with build dates and locations as
+            necessary to specify the infrastructure system to be modelled.
         """
+        # Collect model state data
+        state_data = self._get_initial_conditions(initial_conditions)
         timestep = self.sos_model.timesteps[0]
+        self.state_data[timestep][model_name] = state_data
+
+    def _get_initial_conditions(self, initial_conditions):
+        """Gets list of initial conditions
+
+        Arguments
+        ---------
+        initial_conditions: list
+            A list of past Interventions, with build dates and locations as
+            necessary to specify the infrastructure system to be modelled.
+
+        Returns
+        -------
+        list of :class:`smif.StateData`
+        """
         state_data = filter(
             lambda d: len(d.data) > 0,
-            [self.intervention_state_from_data(datum) for datum in initial_conditions]
+            [self._intervention_state_from_data(datum) for datum in initial_conditions]
         )
-        self.sos_model._state[timestep][model_name] = list(state_data)
+        return list(state_data)
 
     @staticmethod
-    def intervention_state_from_data(intervention_data):
+    def _intervention_state_from_data(intervention_data):
         """Unpack an intervention from the initial system to extract StateData
         """
         target = None
@@ -901,7 +942,7 @@ class SosModelBuilder(object):
 
         Pre-specified planning interventions are defined at the sector-model
         level, read in through the SectorModel class, but populate the
-        intervention register in the controller.
+        Planning register in the `state` attribute in the SosModel.
 
         Parameters
         ----------
@@ -910,7 +951,20 @@ class SosModelBuilder(object):
 
         """
         self.logger.info("Adding planning")
-        self.sos_model.planning = Planning(planning)
+        self.planning = Planning(planning)
+
+    def add_initial_state(self):
+        """Initialises the state class, and loads it into the SosModel
+
+        Requires planning data, interventions and state data to be initialised
+        """
+
+        self.sos_model.state = State(self.planning,
+                                     self.interventions)
+
+        for timestep in self.state_data.keys():
+            for model_name, data in self.state_data[timestep].items():
+                self.sos_model.state.state_data = (timestep, model_name, data)
 
     def add_scenario_data(self, data):
         """Load the scenario data into the system of systems model
@@ -1029,8 +1083,8 @@ class SosModelBuilder(object):
 
         """
         model = self.sos_model
-        names = model.intervention_names
-        for planning_name in model.planning.names:
+        names = model.state._interventions.names
+        for planning_name in model.state._planned.names:
             msg = "Intervention '{}' in planning file not found in interventions"
             assert planning_name in names, msg.format(planning_name)
 
@@ -1039,7 +1093,7 @@ class SosModelBuilder(object):
         """
         model = self.sos_model
         model_timeperiods = model.timesteps
-        for timeperiod in model.planning.timeperiods:
+        for timeperiod in model.state._planned.timeperiods:
             msg = "Timeperiod '{}' in planning file not found model config"
             assert timeperiod in model_timeperiods, msg.format(timeperiod)
 
