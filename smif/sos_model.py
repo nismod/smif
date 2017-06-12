@@ -869,10 +869,10 @@ class SosModelBuilder(object):
         """Adds sector model data to the system-of-systems model which is
         convenient to have available at the higher level.
         """
-        self.add_state_data(model.name, model_data['initial_conditions'])
-        self.add_interventions(model.name, model_data['interventions'])
+        self._add_state_data(model.name, model_data['initial_conditions'])
+        self._add_interventions(model.name, model_data['interventions'])
 
-    def add_interventions(self, model_name, interventions):
+    def _add_interventions(self, model_name, interventions):
         """Adds interventions for a model to `SosModel` register
         """
         for intervention in interventions:
@@ -883,7 +883,7 @@ class SosModelBuilder(object):
             self.logger.debug(msg, identifier, model_name)
             self.interventions.register(intervention_object)
 
-    def add_state_data(self, model_name, initial_conditions):
+    def _add_state_data(self, model_name, initial_conditions):
         """Add initial conditions to list of state data
 
         Assumes `is_state` values are associated with the first timeperiod
@@ -955,6 +955,8 @@ class SosModelBuilder(object):
 
     def add_initial_state(self):
         """Initialises the state class, and loads it into the SosModel
+
+        Requires planning data, interventions and state data to be initialised
         """
 
         self.sos_model.state = State(self.planning,

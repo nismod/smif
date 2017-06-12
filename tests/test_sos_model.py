@@ -54,6 +54,7 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
         ]
     })
 
+    # Add two sector models to the system-of-systems model
     _ws = WaterSupplySectorModel()
     _ws.name = 'water_supply'
 
@@ -84,6 +85,7 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             'units': 'Ml'
         }
     ])
+
     ws_builder.add_interventions([
         {"name": "water_asset_a", "location": "oxford"},
         {"name": "water_asset_b", "location": "oxford"},
@@ -97,10 +99,14 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
         'outputs': _ws.outputs,
         'interventions': _ws.interventions,
     }
-    builder.add_model(_ws)
-    builder.add_model_data(_ws, ws_data)
 
     ws = ws_builder.finish()
+
+    builder.add_model(ws)
+    builder.add_model_data(ws, ws_data)
+
+    builder.add_planning([])
+    builder.add_initial_state()
 
     _ws2 = WaterSupplySectorModel()
     _ws2.name = 'water_supply_2'
@@ -542,7 +548,7 @@ class TestSosModelBuilder():
 
         builder.planning = Planning([])
 
-        builder.add_state_data('water_supply', [])
+        builder._add_state_data('water_supply', [])
 
         builder.add_initial_state()
 
