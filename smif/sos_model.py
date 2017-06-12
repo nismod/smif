@@ -592,10 +592,8 @@ class ModelSet(object):
             # generate zero-values for each parameter/region/interval combination
             results = {}
             for output in model.outputs.metadata:
-                regions = self._sos_model.regions.get_regions_in_set(
-                    output.spatial_resolution)
-                intervals = self._sos_model.intervals.get_intervals_in_set(
-                    output.temporal_resolution)
+                regions = output.get_region_names()
+                intervals = output.get_interval_names()
                 results[output.name] = np.zeros((len(regions), len(intervals)))
         return results
 
@@ -848,6 +846,10 @@ class SosModelBuilder(object):
 
         """
         self.logger.info("Loading model: %s", model.name)
+        if model.regions is None:
+            model.regions = self.sos_model.regions
+        if model.intervals is None:
+            model.intervals = self.sos_model.regions
         self.sos_model.models[model.name] = model
 
     def add_model_data(self, model, model_data):

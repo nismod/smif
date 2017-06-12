@@ -5,7 +5,7 @@ from pytest import fixture, raises
 
 from smif.decision import Planning
 from smif.metadata import Metadata
-from smif.sector_model import SectorModel
+from smif.sector_model import SectorModel, SectorModelBuilder
 from smif.sos_model import ModelSet, SosModel, SosModelBuilder
 
 from .fixtures.water_supply import WaterSupplySectorModel
@@ -53,17 +53,24 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
         ]
     })
 
-    ws = WaterSupplySectorModel()
-    ws.name = 'water_supply'
-    ws.inputs = [
+    _ws = WaterSupplySectorModel()
+    _ws.name = 'water_supply'
+
+    ws_builder = SectorModelBuilder('water_supply')
+    ws_builder._sector_model = _ws
+
+    ws_builder.create_initial_system([])
+    ws_builder.add_regions(builder.sos_model.regions)
+    ws_builder.add_intervals(builder.sos_model.intervals)
+    ws_builder.add_inputs([
         {
             'name': 'raininess',
             'spatial_resolution': 'LSOA',
             'temporal_resolution': 'annual',
             'units': 'ml'
         }
-    ]
-    ws.outputs = [
+    ])
+    ws_builder.add_outputs([
         {
             'name': 'cost',
             'spatial_resolution': 'LSOA',
@@ -76,12 +83,14 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
             'temporal_resolution': 'annual',
             'units': 'Ml'
         }
-    ]
-    ws.interventions = [
+    ])
+    ws_builder.add_interventions([
         {"name": "water_asset_a", "location": "oxford"},
         {"name": "water_asset_b", "location": "oxford"},
         {"name": "water_asset_c", "location": "oxford"},
-    ]
+    ])
+
+    ws = ws_builder.finish()
     ws_data = {
         'name': ws.name,
         'initial_conditions': [],
@@ -89,20 +98,23 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
         'outputs': ws.outputs,
         'interventions': ws.interventions,
     }
-
     builder.add_model(ws)
     builder.add_model_data(ws, ws_data)
 
-    ws2 = WaterSupplySectorModel()
-    ws2.name = 'water_supply_2'
-    ws2.inputs = [
+    _ws2 = WaterSupplySectorModel()
+    _ws2.name = 'water_supply_2'
+    ws2_builder = SectorModelBuilder('water_supply_2')
+    ws2_builder._sector_model = _ws2
+
+    ws2_builder.add_inputs([
         {
             'name': 'raininess',
             'spatial_resolution': 'LSOA',
             'temporal_resolution': 'annual',
             'units': 'ml'
         }
-    ]
+    ])
+    ws2 = ws2_builder.finish()
 
     builder.add_model(ws2)
 
