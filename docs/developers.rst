@@ -63,6 +63,22 @@ of the repository using::
     pre-commit install
 
 
+Module import relationship diagram
+----------------------------------
+
+.. image:: images/packages_smif.png
+    :alt: smif module/submodule diagram
+    :target: _images/packages_smif.png
+
+
+Class diagrams
+--------------
+
+.. image:: images/classes_smif.png
+    :alt: smif class diagram
+    :target: _images/classes_smif.png
+
+
 .. _packaging: https://packaging.python.org/distributing/
 .. _github.com/nismod/smif: https://github.com/nismod/smif
 .. _pytest: http://doc.pytest.org/en/latest/
