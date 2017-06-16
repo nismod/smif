@@ -52,7 +52,7 @@ def setup(app):
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
               'sphinx.ext.inheritance_diagram', 'sphinx.ext.autosummary',
-              'sphinx.ext.pngmath', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
+              'sphinx.ext.imgmath', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
               'sphinx.ext.autosummary', 'sphinx.ext.viewcode',
               'sphinx.ext.coverage', 'sphinx.ext.doctest',
               'sphinx.ext.ifconfig', 'sphinx.ext.graphviz']
