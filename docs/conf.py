@@ -39,6 +39,12 @@ if on_rtd:
 
 # -- General configuration -----------------------------------------------------
 
+
+# Extra styles, found in _static
+def setup(app):
+    app.add_stylesheet('image_fix.css')
+
+
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
 
