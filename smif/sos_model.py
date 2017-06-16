@@ -26,7 +26,7 @@ __license__ = "mit"
 class SosModel(object):
     """Consists of the collection of timesteps and sector models
 
-    This is NISMOD - i.e. the system of system model which brings all of the
+    This is the system of systems model which brings all of the
     sector models together. Sector models may be joined through dependencies.
 
     This class is populated at runtime by the :class:`SosModelBuilder` and
@@ -34,8 +34,8 @@ class SosModel(object):
 
     Attributes
     ==========
-    models : dict
-        This is a dictionary of :class:`smif.SectorModel`
+    models : dict of :class:`smif.SectorModel`
+        The coupled models that simulate the system of systems
     initial_conditions : list
         List of interventions required to set up the initial system, with any
         state attributes provided here too
