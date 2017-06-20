@@ -1,0 +1,113 @@
+@startuml
+skinparam {
+  shadowing false
+  classBackgroundColor white
+  classBorderColor black
+  noteBackgroundColor white
+  noteBorderColor #222
+}
+
+package smif.model_run {
+  class ModelRunner {
+    model_run : ModelRun
+    decision_modules : set of DecisionModule
+    sos_models : set of SosModel
+  }
+
+  class ModelRun {
+    sector_model_config
+    timesteps
+    scenarios
+    decision_config
+  }
+  ModelRunner *-- ModelRun
+}
+
+
+package smif.decision {
+  class DecisionModule {
+    get_decisions_over_timesteps(results, StateData) => dict of list of Decision by timestep
+    is_satisfied() => bool
+  }
+
+  ModelRunner *-- DecisionModule
+
+
+  class Planning {
+    -interventions : dict of list of Decision by timestep
+  }
+  note left: ignores ActionSpace, \nsimply proposes specified \nplanned interventions
+
+  DecisionModule <-- Planning
+
+  class Intervention {
+    name : str
+    location : Region
+    capital_cost : int
+    attrs : dict
+  }
+
+  Decision *-- Intervention
+
+  class Decision {
+    intervention : Intervention
+    timestep : int
+  }
+
+  Planning *-- Decision
+
+  class RuleBased {
+    -rules : list of Rule
+  }
+  note left: evaluates conditions against \nmodel inputs, results, SystemState, \nreturning Decisions up to Constraints
+
+  DecisionModule <-- RuleBased
+
+  class Optimisation {
+    -objective : function
+  }
+  note left: may want to handle multiple parallel \nsimulations, may want to re-evaluate \ndecision at each timestep
+
+  DecisionModule <-- Optimisation
+
+  class ActionSpace {
+    -decision_history : dict of list of Decision by timestep
+    get_available_actions()
+  }
+
+  class PlanningHorizon {
+    simulation_interval : int
+    horizon_length : int
+    horizon_stride : int
+  }
+}
+
+package smif.simulation {
+  class SectorModel {
+    parameters
+    available_interventions
+    area_metadata
+    interval_metadata
+    input_metadata
+    output_metadata
+    initialise(Parameters)
+    simulate(System, Data) => Data, StateData
+  }
+
+  ModelSet *-- SectorModel
+
+  class ModelSet {
+    sector_models : set of SectorModel
+    simulate(System, Data) => Data, StateData
+  }
+
+  SosModel *-- ModelSet
+
+  class SosModel {
+    model_sets : DiGraph of ModelSet
+    simulate(System, Data) => Data, StateData
+  }
+
+  ModelRunner *-- SosModel
+}
+@enduml

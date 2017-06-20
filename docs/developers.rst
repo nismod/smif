@@ -66,7 +66,7 @@ of the repository using::
 Module import relationship diagram
 ----------------------------------
 
-.. image:: images/packages_smif.png
+.. image:: uml/packages_smif.png
     :alt: smif module/submodule diagram
     :target: _images/packages_smif.png
 
@@ -74,9 +74,16 @@ Module import relationship diagram
 Class diagrams
 --------------
 
-.. image:: images/classes_smif.png
+.. image:: uml/classes_smif.png
     :alt: smif class diagram
     :target: _images/classes_smif.png
+
+Decision - simulation class interaction/interface design
+--------------------------------------------------------
+
+.. image:: uml/decision-simulation.png
+    :alt: UML for smif decision and simulation interaction
+    :target: _images/decision-simulation.png
 
 
 .. _packaging: https://packaging.python.org/distributing/
