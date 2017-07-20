@@ -1,0 +1,21 @@
+@startuml
+
+participant aDependency
+participant aModelOutput
+participant aModelInput
+participant aRegionRegister
+participant aIntervalRegister
+
+-> aDependency : convert(data)
+aDependency -> aDependency : get_resolutions()
+aDependency -> aModelOutput : get_spatial_resolution()
+aDependency <-- aModelOutput : aOutputRegionSet
+aDependency -> aModelInput : get_spatial_resolution()
+aDependency <-- aModelInput : aInputRegionSet
+aDependency -> aRegionRegister : convert(data, aOutputRegionSet, aInputRegionSet)
+aRegionRegister -> aRegionRegister : compute_matrix(aOutputRegionSet, aInputRegionSet)
+aRegionRegister -> aRegionRegister : convert(data, aOutputRegionSet, aInputRegionSet)
+<-- aRegionRegister : converted_data
+
+
+@enduml
