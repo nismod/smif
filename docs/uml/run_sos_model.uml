@@ -1,0 +1,16 @@
+@startuml
+
+participant aSosModel
+
+
+--> aSosModel : simulate()
+aSosModel --> aSosModel : get_models()
+create energy_model
+aSosModel --> energy_model : new(config_data)
+aSosModel --> energy_model : simulate(state, data)
+energy_model --> energy_model : get_input_data()
+create electricity_demand
+energy_model --> electricity_demand : new(name, resolution, data)
+
+
+@enduml

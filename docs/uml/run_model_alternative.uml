@@ -1,0 +1,24 @@
+@startuml
+
+participant aModelRun
+participant aModelRunner
+participant aSosModel
+
+-> aModelRun : run()
+aModelRun -> aModelRun : initialise()
+aModelRun -> aModelRunner : run_me(self)
+activate aModelRunner
+aModelRunner -> aSosModel : get_run_order()
+aModelRunner <-- aSosModel : aModelSet
+aModelRunner -> energy_SectorModel : simulate()
+activate energy_SectorModel
+aModelRunner <-- energy_SectorModel : water_demand
+deactivate  energy_SectorModel
+aModelRunner -> water_SectorModel : simulate(water_demand)
+activate water_SectorModel
+aModelRunner <-- water_SectorModel : results
+deactivate water_SectorModel
+aModelRunner --> aModelRun : results
+deactivate aModelRunner
+
+@enduml
