@@ -9,28 +9,42 @@ skinparam {
 
 package smif.model_run {
   class ModelRunner {
-    model_run : ModelRun
-    decision_modules : set of DecisionModule
-    sos_models : set of SosModel
+    - model_run : ModelRun
+    - decision_modules : set of DecisionManager
+    + solve(SosModel, data_sources)
   }
 
+  ModelRunList -- "*" ModelRun
   class ModelRun {
-    sector_model_config
-    timesteps
-    scenarios
-    decision_config
+    - id : int
+    - description : string
+    - sosmodel : SosModel [1]
+    - timesteps
+    - scenarios : ScenarioCombination [*]
+    - narratives : NarrativeCombination [*]
+    - strategy : 
+    -- Building --
+    + set_description(description)
+    + set_sos_model(SosModel)
+    + set_strategy(Strategy)
+    + set_scenario(scenarioset, scenario)
+    + set_narrative(narrativeset, narrative)
+    + set_modelling_horizon(timestep_list)
+    -- Running --
+    + run()
+    
   }
   ModelRunner *-- ModelRun
 }
 
 
 package smif.decision {
-  class DecisionModule {
+  class DecisionManager {
     get_decisions_over_timesteps(results, StateData) => dict of list of Decision by timestep
     is_satisfied() => bool
   }
 
-  ModelRunner *-- DecisionModule
+  ModelRunner *-- DecisionManager
 
 
   class Planning {
@@ -38,7 +52,7 @@ package smif.decision {
   }
   note left: ignores ActionSpace, \nsimply proposes specified \nplanned interventions
 
-  DecisionModule <-- Planning
+  DecisionManager <-- Planning
 
   class Intervention {
     name : str
@@ -61,25 +75,40 @@ package smif.decision {
   }
   note left: evaluates conditions against \nmodel inputs, results, SystemState, \nreturning Decisions up to Constraints
 
-  DecisionModule <-- RuleBased
+  DecisionManager <-- RuleBased
 
   class Optimisation {
     -objective : function
   }
   note left: may want to handle multiple parallel \nsimulations, may want to re-evaluate \ndecision at each timestep
 
-  DecisionModule <-- Optimisation
+  DecisionManager <-- Optimisation
 
   class ActionSpace {
     -decision_history : dict of list of Decision by timestep
     get_available_actions()
   }
 
-  class PlanningHorizon {
-    simulation_interval : int
-    horizon_length : int
-    horizon_stride : int
-  }
+PlanningViews -- ModelHorizon
+class PlanningViews {
+  + window_size : int
+  + get_window(timestep) : TimeStep [*]
+}
+note right of PlanningViews : holds mapping of subset\n of timesteps in each planning year\n as a function of ModelHorizon \n and window_size
+
+Iteration "*" -- "1" PlanningViews
+Iteration -- TimeStep
+Iteration "*" -- "1" DecisionManager
+class Iteration {
+  + {static} count
+  + timestamp
+  + planning_view : PlanningViews [1]
+  + timestep : TimeStep [1]
+  + decisions : Intervention [*]
+  + model_run : ModelRun [1]
+  + write_results(results)
+}
+
 }
 
 package smif.simulation {
