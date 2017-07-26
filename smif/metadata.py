@@ -49,10 +49,6 @@ class Metadata(object):
         self.temporal_resolution = temporal_resolution
         self.units = self.normalise_unit(units, name)
 
-        # initialise with no registers
-        self.region_register = None
-        self.interval_register = None
-
     def __eq__(self, other):
         return self.name == other.name \
             and self.spatial_resolution == other.spatial_resolution \
@@ -72,24 +68,14 @@ class Metadata(object):
         return normalised
 
     def get_region_names(self):
-        """Use region register to look up the list of region names for this
-        spatial resolution
+        """The list of region names for this spatial resolution
         """
-        if self.region_register is None:
-            return None
-        else:
-            regions = self.region_register.get_regions_in_set(self.spatial_resolution)
-            return [region.name for region in regions]
+        return self.spatial_resolution.get_entry_names()
 
     def get_interval_names(self):
-        """Use interval register to look up the list of interval names for this
-        temporal resolution
+        """The list of interval names for this temporal resolution
         """
-        if self.interval_register is None:
-            return None
-        else:
-            intervals = self.interval_register.get_intervals_in_set(self.temporal_resolution)
-            return list(intervals.keys())
+        return self.temporal_resolution.get_entry_names()
 
 
 class MetadataSet(object):
