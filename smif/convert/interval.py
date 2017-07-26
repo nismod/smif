@@ -135,6 +135,8 @@ from datetime import datetime, timedelta
 import numpy as np
 from isodate import parse_duration
 
+from smif.convert import Register
+
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
@@ -344,7 +346,7 @@ class Interval(object):
         return array
 
 
-class TimeIntervalRegister:
+class TimeIntervalRegister(Register):
     """Holds the set of time-intervals used by the SectorModels
 
     Parameters
@@ -386,6 +388,9 @@ class TimeIntervalRegister:
         """
         self._check_interval_in_register(set_name)
         return self._register[set_name]
+
+    def get_entry(self, name):
+        return self.get_intervals_in_set(name)
 
     def register(self, intervals, set_name):
         """Add a time-interval definition to the set of intervals types
