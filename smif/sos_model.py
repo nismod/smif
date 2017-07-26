@@ -5,10 +5,10 @@ framework.
 """
 import logging
 from collections import defaultdict
+from enum import Enum
 
 import networkx
 import numpy as np
-from enum import Enum
 from smif import StateData
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister, RegionSet
@@ -114,31 +114,13 @@ class SosModel(object):
         2. Run each sector model
 
         3. Return success or failure
+
+        TODO: Move to ModelRunner
+
         """
         mode = self.determine_running_mode()
         self.logger.debug("Running in %s mode", mode.name)
-
-        if mode == RunMode.static_simulation:
-            self._run_static_sos_model()
-        elif mode == RunMode.sequential_simulation:
-            self._run_sequential_sos_model()
-        elif mode == RunMode.static_optimisation:
-            self._run_static_optimisation()
-        elif mode == RunMode.dynamic_optimisation:
-            self._run_dynamic_optimisation()
-
-    def _run_static_sos_model(self):
-        """Runs the system-of-system model for one timeperiod
-
-        Calls each of the sector models in the order required by the graph of
-        dependencies, passing in the year for which they need to run.
-
-        """
-        run_order = self._get_model_sets_in_run_order()
-        timestep = self.timesteps[0]
-
-        for model_set in run_order:
-            model_set.run(timestep)
+        self._run_sequential_sos_model()
 
     def _run_sequential_sos_model(self):
         """Runs the system-of-system model sequentially
@@ -201,6 +183,8 @@ class SosModel(object):
             The instance of the sector model wrapper to run
         timestep: int
             The current model year
+
+        TODO: Move into DecisionManager class
         """
         self.logger.debug("Finding decisions for %i", timestep)
         current_decisions = []
@@ -248,6 +232,8 @@ class SosModel(object):
         nested data dictionary.
         The current timestep is available in ``data['timestep']``.
 
+
+        TODO: Move into subclass of smif.composite.Model
         """
         new_data = {}
         timestep_idx = self.timesteps.index(timestep)
