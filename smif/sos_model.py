@@ -11,11 +11,8 @@ import networkx
 import numpy as np
 from smif import StateData
 from smif.convert import SpaceTimeConvertor
-from smif.convert.area import RegionRegister, RegionSet
-from smif.convert.interval import TimeIntervalRegister
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
-from smif.metadata import MetadataSet
 from smif.sector_model import SectorModelBuilder
 
 __author__ = "Will Usher, Tom Russell"
@@ -52,12 +49,6 @@ class SosModel(object):
         self.models = {}
         self.dependency_graph = None
 
-        # space and time
-        self._timesteps = []
-        self.regions = RegionRegister()
-        self.intervals = TimeIntervalRegister()
-        self._scenario_metadata = MetadataSet({})
-
         # systems, interventions and (system) state
         self.interventions = InterventionRegister()
         self.initial_conditions = []
@@ -65,30 +56,7 @@ class SosModel(object):
         self._state = defaultdict(dict)
 
         # scenario data and results
-        self._scenario_data = {}
         self._results = defaultdict(dict)
-
-    @property
-    def scenario_metadata(self):
-        """Returns the temporal and spatial mapping to an input, output or scenario parameter
-        """
-        return self._scenario_metadata
-
-    @scenario_metadata.setter
-    def scenario_metadata(self, value):
-        self._scenario_metadata = MetadataSet(value, self.regions, self.intervals)
-
-    @property
-    def scenario_data(self):
-        """Get nested dict of scenario data
-
-        Returns
-        -------
-        dict
-            Nested dictionary in the format ``data[year][param] =
-            SpaceTimeValue(region, interval, value, unit)``
-        """
-        return self._scenario_data
 
     @property
     def results(self):
@@ -325,16 +293,6 @@ class SosModel(object):
                                  from_temporal_resolution,
                                  to_temporal_resolution)
 
-    def _run_static_optimisation(self):
-        """Runs the system-of-systems model in a static optimisation format
-        """
-        raise NotImplementedError
-
-    def _run_dynamic_optimisation(self):
-        """Runs the system-of-system models in a dynamic optimisation format
-        """
-        raise NotImplementedError
-
     def _get_model_sets_in_run_order(self):
         """Returns a list of :class:`ModelSet` in a runnable order.
 
@@ -400,21 +358,6 @@ class SosModel(object):
             mode = RunMode.static_simulation
 
         return mode
-
-    @property
-    def timesteps(self):
-        """Returns the list of timesteps
-
-        Returns
-        =======
-        list
-            A list of timesteps, distinct and sorted in ascending order
-        """
-        return self._timesteps
-
-    @timesteps.setter
-    def timesteps(self, value):
-        self._timesteps = sorted(list(set(value)))
 
     def timestep_before(self, timestep):
         """Returns the timestep previous to a given timestep, or None
@@ -655,8 +598,9 @@ class SosModelBuilder(object):
     >>> sos_model = builder.finish()
 
     """
-    def __init__(self):
+    def __init__(self, registers):
         self.sos_model = SosModel()
+        self.registers = registers
 
         self.logger = logging.getLogger(__name__)
 
@@ -674,13 +618,8 @@ class SosModelBuilder(object):
         self.set_convergence_abs_tolerance(config_data)
         self.set_convergence_rel_tolerance(config_data)
 
-        self.load_region_sets(config_data['region_sets'])
-        self.load_interval_sets(config_data['interval_sets'])
-
         self.load_models(model_list)
         self.add_planning(config_data['planning'])
-        self.add_scenario_metadata(config_data['scenario_metadata'])
-        self.add_scenario_data(config_data['scenario_data'], timesteps)
         self.logger.debug(config_data['scenario_data'])
 
     def set_max_iterations(self, config_data):
@@ -708,68 +647,6 @@ class SosModelBuilder(object):
             self.sos_model.convergence_relative_tolerance = \
                 config_data['convergence_relative_tolerance']
 
-    def add_scenario_metadata(self, scenario_metadata):
-        """
-
-        Parameters
-        ----------
-        scenario_metadata: list of dicts
-            A dictionary containing information on the spatial and temporal
-            resoultion of scenario data
-
-        Example
-        -------
-        The data structure of each list item is as follows::
-
-                [
-                    {
-                        'name': 'raininess',
-                        'temporal_resolution': 'annual',
-                        'spatial_resolution': 'LSOA',
-                        'units': 'ml'
-                    }
-                ]
-
-        """
-        self.sos_model.scenario_metadata = scenario_metadata
-
-    def load_region_sets(self, region_sets):
-        """Loads the region sets into the system-of-system model
-
-        Parameters
-        ----------
-        region_sets: list
-            A dict, where key is the name of the region set, and the value
-            the data
-        """
-        assert isinstance(region_sets, dict)
-
-        region_set_definitions = region_sets.items()
-        if len(region_set_definitions) == 0:
-            msg = "No region sets have been defined"
-            self.logger.warning(msg)
-        for name, data in region_set_definitions:
-            msg = "Region set data is not a list"
-            assert isinstance(data, list), msg
-            self.sos_model.regions.register(RegionSet(name, data))
-
-    def load_interval_sets(self, interval_sets):
-        """Loads the time-interval sets into the system-of-system model
-
-        Parameters
-        ----------
-        interval_sets: list
-            A dict, where key is the name of the interval set, and the value
-            the data
-        """
-        interval_set_definitions = interval_sets.items()
-        if len(interval_set_definitions) == 0:
-            msg = "No interval sets have been defined"
-            self.logger.warning(msg)
-
-        for name, data in interval_set_definitions:
-            self.sos_model.intervals.register(data, name)
-
     def load_models(self, model_data_list):
         """Loads the sector models into the system-of-systems model
 
@@ -783,24 +660,12 @@ class SosModelBuilder(object):
         """
         self.logger.info("Loading models")
         for model_data in model_data_list:
-            model = self._build_model(
-                model_data,
-                self.sos_model.regions,
-                self.sos_model.intervals)
+            builder = SectorModelBuilder(model_data['name'],
+                                         self.registers)
+            builder.construct(model_data)
+            model = builder.finish()
             self.add_model(model)
             self.add_model_data(model, model_data)
-
-    @staticmethod
-    def _build_model(model_data, regions, intervals):
-        builder = SectorModelBuilder(model_data['name'])
-        builder.load_model(model_data['path'], model_data['classname'])
-        builder.create_initial_system(model_data['initial_conditions'])
-        builder.add_regions(regions)
-        builder.add_intervals(intervals)
-        builder.add_inputs(model_data['inputs'])
-        builder.add_outputs(model_data['outputs'])
-        builder.add_interventions(model_data['interventions'])
-        return builder.finish()
 
     def add_model(self, model):
         """Adds a sector model to the system-of-systems model
@@ -812,10 +677,6 @@ class SosModelBuilder(object):
 
         """
         self.logger.info("Loading model: %s", model.name)
-        if model.regions is None:
-            model.regions = self.sos_model.regions
-        if model.intervals is None:
-            model.intervals = self.sos_model.regions
         self.sos_model.models[model.name] = model
 
     def add_model_data(self, model, model_data):
@@ -877,118 +738,6 @@ class SosModelBuilder(object):
         """
         self.logger.info("Adding planning")
         self.sos_model.planning = Planning(planning)
-
-    def add_scenario_data(self, data, timesteps):
-        """Load the scenario data into the system of systems model
-
-        Expect a dictionary, where each key maps a parameter
-        name to a list of data, each observation with:
-
-        - value
-        - units
-        - timestep (must use a timestep from the SoS model timesteps)
-        - region (must use a region id from scenario regions)
-        - interval (must use an id from scenario time intervals)
-
-        Add a dictionary of :class:`numpy.ndarray`
-
-                data[param] = np.zeros((num_timesteps, num_intervals, num_regions))
-                data[param].fill(np.nan)
-                # ...initially empty array then filled with data
-
-        """
-        self.logger.info("Adding scenario data")
-        nested = {}
-
-        for param, observations in data.items():
-            if param not in self.sos_model.scenario_metadata.names:
-                raise ValueError("Parameter {} not registered in scenario metadata {}".format(
-                    param,
-                    self.sos_model.scenario_metadata))
-            param_metadata = self.sos_model.scenario_metadata[param]
-
-            nested[param] = self._data_list_to_array(
-                param,
-                observations,
-                timesteps,
-                param_metadata
-            )
-
-        self.sos_model._scenario_data = nested
-
-    def _data_list_to_array(self, param, observations, timestep_names, param_metadata):
-        """Convert list of observations to :class:`numpy.ndarray`
-        """
-        interval_names, region_names = self._get_dimension_names_for_param(
-            param_metadata, param)
-
-        if len(timestep_names) == 0:
-            self.logger.error("No timesteps found when loading %s", param)
-
-        data = np.zeros((
-            len(timestep_names),
-            len(region_names),
-            len(interval_names)
-        ))
-        data.fill(np.nan)
-
-        if len(observations) != data.size:
-            self.logger.warning(
-                "Number of observations is not equal to timesteps x  " +
-                "intervals x regions when loading %s", param)
-
-        for obs in observations:
-            if 'year' not in obs:
-                raise ValueError("Scenario data item missing year: {}".format(obs))
-            year = obs['year']
-            if year not in timestep_names:
-                raise ValueError(
-                    "Year {} not defined in model timesteps".format(year))
-
-            if 'region' not in obs:
-                raise ValueError("Scenario data item missing region: {}".format(obs))
-            region = obs['region']
-            if region not in region_names:
-                raise ValueError(
-                    "Region {} not defined in set {} for parameter {}".format(
-                        region,
-                        param_metadata.spatial_resolution,
-                        param))
-
-            if 'interval' not in obs:
-                raise ValueError("Scenario data item missing interval: {}".format(obs))
-            interval = obs['interval']
-            if interval not in interval_names:
-                raise ValueError(
-                    "Interval {} not defined in set {} for parameter {}".format(
-                        interval,
-                        param_metadata.temporal_resolution,
-                        param))
-
-            timestep_idx = timestep_names.index(year)
-            interval_idx = interval_names.index(interval)
-            region_idx = region_names.index(region)
-
-            data[timestep_idx, region_idx, interval_idx] = obs['value']
-
-        return data
-
-    def _get_dimension_names_for_param(self, metadata, param):
-        interval_set_name = metadata.temporal_resolution
-        interval_set = self.sos_model.intervals.get_intervals_in_set(interval_set_name)
-        interval_names = [interval.name for key, interval in interval_set.items()]
-
-        region_set_name = metadata.spatial_resolution
-        region_set = self.sos_model.regions.get_regions_in_set(region_set_name)
-        region_names = [region.name for region in region_set]
-
-        if len(interval_names) == 0:
-            self.logger.error("No interval names found when loading %s", param)
-
-        if len(region_names) == 0:
-            self.logger.error("No region names found when loading %s", param)
-
-        return interval_names, region_names
 
     def _check_planning_interventions_exist(self):
         """Check existence of all the interventions in the pre-specifed planning
