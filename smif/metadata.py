@@ -34,9 +34,9 @@ class Metadata(object):
     =========
     name: str
         The dataset name
-    spatial_resolution: str
+    spatial_resolution: :class:`smif.convert.region.RegionSet`
         Name of the region set that defines the spatial resolution
-    temporal_resolution: str
+    temporal_resolution: :class:`smif.convert.interval.IntervalSet`
         Name of the interval set that defines the temporal resolution
     units: str
         Name of the units for the dataset values
@@ -88,17 +88,13 @@ class MetadataSet(object):
 
                 {
                     "name": "heat_demand"
-                    "spatial_resolution": "household"
-                    "temporal_resolution": "hourly"
+                    "spatial_resolution": smif.convert.ResolutionSet
+                    "temporal_resolution": smif.convert.ResolutionSet
                     "units": "kW"
                 }
 
-    region_register: :class:`smif.convert.area.RegionRegister`
-        Register of regions, which spatial_resolution refers to
-    interval_register: :class:`smif.convert.area.TimeIntervalRegister`
-        Register of intervals, which temporal_resolution refers to
     """
-    def __init__(self, metadata_list, region_register=None, interval_register=None):
+    def __init__(self, metadata_list):
         self._metadata = {}
 
         for metadata_item in metadata_list:
@@ -108,8 +104,6 @@ class MetadataSet(object):
                 metadata_item['temporal_resolution'],
                 metadata_item['units']
             )
-            metadata.region_register = region_register
-            metadata.interval_register = interval_register
             self._metadata[metadata.name] = metadata
 
     @property
