@@ -7,6 +7,8 @@ import numpy as np
 from rtree import index
 from shapely.geometry import shape
 
+from smif.convert import Register
+
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
@@ -59,7 +61,7 @@ class RegionSet(object):
         return len(self._regions)
 
 
-class RegionRegister(object):
+class RegionRegister(Register):
     """Holds the sets of regions used by the SectorModels and provides conversion
     between data values relating to compatible sets of regions.
     """
@@ -85,6 +87,9 @@ class RegionRegister(object):
             return self._register[set_name]
         else:
             raise ValueError("Region set {} not registered".format(set_name))
+
+    def get_entry(self, name):
+        return self.get_regions_in_set(name)
 
     def register(self, region_set):
         """Register a set of regions as a source/target for conversion
