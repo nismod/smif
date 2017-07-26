@@ -8,22 +8,45 @@ The :meth:`~SpaceTimeConvertor.convert` method returns a new
 """
 import logging
 import numpy as np
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-class Register(ABC):
+class Register(metaclass=ABCMeta):
 
     @abstractmethod
     def register(self, resolution_set):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_entry(self, name):
-        pass
+        raise NotImplementedError
+
+
+class ResolutionSet(metaclass=ABCMeta):
+
+    @property
+    @abstractmethod
+    def name(self):
+        raise NotImplementedError
+
+    @name.setter
+    @abstractmethod
+    def name(self, value):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def data(self):
+        raise NotImplementedError
+
+    @data.setter
+    @abstractmethod
+    def data(self, value):
+        raise NotImplementedError
 
 
 class SpaceTimeConvertor(object):
