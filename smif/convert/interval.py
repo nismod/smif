@@ -135,7 +135,7 @@ from datetime import datetime, timedelta
 import numpy as np
 from isodate import parse_duration
 
-from smif.convert import Register
+from smif.convert import Register, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -346,6 +346,39 @@ class Interval(object):
         return array
 
 
+class IntervalSet(ResolutionSet):
+    """A collection of intervals
+
+    Arguments
+    ---------
+    name: str
+        A unique identifier for the set of time intervals
+    data: list
+        Time intervals required as a list of dicts, with required keys
+        ``start``, ``end`` and ``name``
+    """
+
+    def __init__(self, name, data):
+        self._name = name
+        self._data = data
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, value):
+        self._data = value
+
+
 class TimeIntervalRegister(Register):
     """Holds the set of time-intervals used by the SectorModels
 
@@ -392,7 +425,7 @@ class TimeIntervalRegister(Register):
     def get_entry(self, name):
         return self.get_intervals_in_set(name)
 
-    def register(self, intervals, set_name):
+    def register(self, interval_set):
         """Add a time-interval definition to the set of intervals types
 
         Detects duplicate references to the same annual-hours by performing a
@@ -400,13 +433,12 @@ class TimeIntervalRegister(Register):
 
         Parameters
         ----------
-        intervals: list
-            Time intervals required as a list of dicts, with required keys
-            ``start``, ``end`` and ``name``
-        set_name: str
-            A unique identifier for the set of time intervals
-
+        interval_set : :class:`smif.convert.interval.IntervalSet`
+            A collection of intervals
         """
+        set_name = interval_set.name
+        intervals = interval_set.data
+
         if set_name in self._register:
             msg = "An interval set named {} has already been loaded"
             raise ValueError(msg.format(set_name))
@@ -415,7 +447,8 @@ class TimeIntervalRegister(Register):
 
         for interval in intervals:
             name = interval['id']
-            self.logger.debug("Adding interval '%s' to set '%s'", name, set_name)
+            msg = "Adding interval '%s' to set '%s'"
+            self.logger.debug(msg, name, set_name)
 
             if name in self._register[set_name]:
                 interval_tuple = (interval['start'], interval['end'])
