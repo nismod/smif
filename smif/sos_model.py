@@ -104,7 +104,7 @@ class SosModel(object):
         # convert from defaultdict to plain dict
         return dict(self._results)
 
-    def run(self):
+    def run(self, timestep):
         """Runs the system-of-system model
 
         0. Determine run mode
@@ -118,18 +118,10 @@ class SosModel(object):
         TODO: Move to ModelRunner
 
         """
-        mode = self.determine_running_mode()
-        self.logger.debug("Running in %s mode", mode.name)
-        self._run_sequential_sos_model()
-
-    def _run_sequential_sos_model(self):
-        """Runs the system-of-system model sequentially
-        """
         run_order = self._get_model_sets_in_run_order()
         self.logger.info("Determined run order as %s", run_order)
-        for timestep in self.timesteps:
-            for model_set in run_order:
-                model_set.run(timestep)
+        for model_set in run_order:
+            model_set.run(timestep)
 
     def run_sector_model(self, model_name):
         """Runs the sector model
@@ -668,7 +660,7 @@ class SosModelBuilder(object):
 
         self.logger = logging.getLogger(__name__)
 
-    def construct(self, config_data):
+    def construct(self, config_data, timesteps):
         """Set up the whole SosModel
 
         Parameters
@@ -678,7 +670,6 @@ class SosModelBuilder(object):
         """
         model_list = config_data['sector_model_data']
 
-        self.add_timesteps(config_data['timesteps'])
         self.set_max_iterations(config_data)
         self.set_convergence_abs_tolerance(config_data)
         self.set_convergence_rel_tolerance(config_data)
@@ -689,19 +680,8 @@ class SosModelBuilder(object):
         self.load_models(model_list)
         self.add_planning(config_data['planning'])
         self.add_scenario_metadata(config_data['scenario_metadata'])
-        self.add_scenario_data(config_data['scenario_data'])
+        self.add_scenario_data(config_data['scenario_data'], timesteps)
         self.logger.debug(config_data['scenario_data'])
-
-    def add_timesteps(self, timesteps):
-        """Set the timesteps of the system-of-systems model
-
-        Parameters
-        ----------
-        timesteps : list
-            A list of timesteps
-        """
-        self.logger.info("Adding timesteps")
-        self.sos_model.timesteps = timesteps
 
     def set_max_iterations(self, config_data):
         """Set the maximum iterations for iterating `class`::smif.ModelSet to
@@ -898,7 +878,7 @@ class SosModelBuilder(object):
         self.logger.info("Adding planning")
         self.sos_model.planning = Planning(planning)
 
-    def add_scenario_data(self, data):
+    def add_scenario_data(self, data, timesteps):
         """Load the scenario data into the system of systems model
 
         Expect a dictionary, where each key maps a parameter
@@ -930,7 +910,7 @@ class SosModelBuilder(object):
             nested[param] = self._data_list_to_array(
                 param,
                 observations,
-                self.sos_model.timesteps,
+                timesteps,
                 param_metadata
             )
 
