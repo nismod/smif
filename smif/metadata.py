@@ -96,15 +96,8 @@ class MetadataSet(object):
     """
     def __init__(self, metadata_list):
         self._metadata = {}
-
         for metadata_item in metadata_list:
-            metadata = Metadata(
-                metadata_item['name'],
-                metadata_item['spatial_resolution'],
-                metadata_item['temporal_resolution'],
-                metadata_item['units']
-            )
-            self._metadata[metadata.name] = metadata
+            self.add_metadata(metadata_item)
 
     @property
     def metadata(self):
@@ -127,6 +120,21 @@ class MetadataSet(object):
         else:
             raise KeyError("No metadata found for name '{}'".format(name))
         return metadata_item
+
+    def add_metadata(self, metadata_item):
+        """Add an item to the set
+
+        Arguments
+        ---------
+        metadata_item: dict
+            A dictionary with keys 'name', 'spatial resolution', 'temporal
+            resolution' and 'units'
+        """
+        metadata = Metadata(metadata_item['name'],
+                            metadata_item['spatial_resolution'],
+                            metadata_item['temporal_resolution'],
+                            metadata_item['units'])
+        self._metadata[metadata.name] = metadata
 
     def get_spatial_res(self, name):
         """The spatial resolution for parameter `name`
