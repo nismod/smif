@@ -26,11 +26,11 @@ The key functions include
   approaches
 
 """
+import importlib
 import logging
 import os
 from abc import ABC, abstractmethod
 
-import importlib
 from smif.metadata import MetadataSet
 
 __author__ = "Will Usher, Tom Russell"
@@ -54,6 +54,42 @@ class SectorModel(ABC):
         self.intervals = None
 
         self.logger = logging.getLogger(__name__)
+
+    def add_input(self, name, spatial_resolution, temporal_resolution, units):
+        """Add an input to the sector model
+
+        Arguments
+        ---------
+        name: str
+        spatial_resolution: :class:`smif.convert.area.RegionRegister`
+        temporal_resolution: :class:`smif.convert.interval.TimeIntervalRegister`
+        units: str
+
+        """
+        input_metadata = {"name": name,
+                          "spatial_resolution": spatial_resolution,
+                          "temporal_resolution": temporal_resolution,
+                          "units": units}
+
+        self._inputs.add_metadata(input_metadata)
+
+    def add_output(self, name, spatial_resolution, temporal_resolution, units):
+        """Add an output to the sector model
+
+        Arguments
+        ---------
+        name: str
+        spatial_resolution: :class:`smif.convert.area.RegionRegister`
+        temporal_resolution: :class:`smif.convert.interval.TimeIntervalRegister`
+        units: str
+
+        """
+        output_metadata = {"name": name,
+                           "spatial_resolution": spatial_resolution,
+                           "temporal_resolution": temporal_resolution,
+                           "units": units}
+
+        self._outputs.add_metadata(output_metadata)
 
     def validate(self):
         """Validate that this SectorModel has been set up with sufficient data
