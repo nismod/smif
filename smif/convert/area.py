@@ -7,7 +7,7 @@ import numpy as np
 from rtree import index
 from shapely.geometry import shape
 
-from smif.convert import Register
+from smif.convert import Register, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -24,7 +24,7 @@ def proportion_of_a_intersecting_b(shape_a, shape_b):
 NamedShape = namedtuple('NamedShape', ['name', 'shape'])
 
 
-class RegionSet(object):
+class RegionSet(ResolutionSet):
     """Hold a set of regions, spatially indexed for ease of lookup when
     constructing conversion matrices.
 
@@ -39,7 +39,7 @@ class RegionSet(object):
 
     """
     def __init__(self, set_name, fiona_shape_iter):
-        self.name = set_name
+        self._name = set_name
         self._regions = [
             NamedShape(region['properties']['name'], shape(region['geometry']))
             for region in fiona_shape_iter
@@ -48,6 +48,26 @@ class RegionSet(object):
         self._idx = index.Index()
         for pos, region in enumerate(self._regions):
             self._idx.insert(pos, region.shape.bounds)
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    @property
+    def data(self):
+        return self._regions
+
+    @data.setter
+    def data(self, value):
+        self._regions = [
+            NamedShape(region['properties']['name'],
+                       shape(region['geometry']))
+            for region in value
+        ]
 
     def intersection(self, bounds):
         """Return the subset of regions intersecting with a bounding box
