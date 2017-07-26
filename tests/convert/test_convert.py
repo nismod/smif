@@ -1,7 +1,7 @@
 import numpy as np
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import RegionRegister
-from smif.convert.interval import TimeIntervalRegister
+from smif.convert.interval import IntervalSet, TimeIntervalRegister
 from test_area import regions_half_squares, regions_rect
 from test_interval import (months, one_day, remap_months, seasons,
                            twenty_four_hours)
@@ -28,7 +28,8 @@ class TestSpaceTimeConvertor_TimeOnly:
         ]], dtype=float)
 
         intervals = TimeIntervalRegister()
-        intervals.register(months, 'months')
+        intervalset = IntervalSet('months', months)
+        intervals.register(intervalset)
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -70,8 +71,10 @@ class TestSpaceTimeConvertor_TimeOnly:
         ]], dtype=float)  # area a, seasons 1-4
 
         intervals = TimeIntervalRegister()
-        intervals.register(months, 'months')
-        intervals.register(seasons, 'seasons')
+        months_set = IntervalSet('months', months)
+        intervals.register(months_set)
+        season_set = IntervalSet('seasons', seasons)
+        intervals.register(season_set)
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -124,8 +127,11 @@ class TestSpaceTimeConvertor_TimeOnly:
         ], dtype=float)
 
         intervals = TimeIntervalRegister()
-        intervals.register(months, 'months')
-        intervals.register(seasons, 'seasons')
+
+        months_set = IntervalSet('months', months)
+        intervals.register(months_set)
+        season_set = IntervalSet('seasons', seasons)
+        intervals.register(season_set)
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -167,8 +173,12 @@ class TestSpaceTimeConvertor_TimeOnly:
         regions.register(regions_half_squares)
 
         intervals = TimeIntervalRegister()
-        intervals.register(twenty_four_hours, 'hourly_day')
-        intervals.register(one_day, 'one_day')
+        hourly_set = IntervalSet('hourly_day', twenty_four_hours)
+        intervals.register(hourly_set)
+        day_set = IntervalSet('one_day', one_day)
+        intervals.register(day_set)
+
+
 
         convertor = SpaceTimeConvertor(regions, intervals)
         actual = convertor.convert(
@@ -194,8 +204,8 @@ class TestSpaceTimeConvertor_TimeOnly:
             30+31+31
         ]], dtype=float)
         intervals = TimeIntervalRegister()
-        intervals.register(months, 'months')
-        intervals.register(remap_months, 'remap_months')
+        intervals.register(IntervalSet('months', months))
+        intervals.register(IntervalSet('remap_months', remap_months))
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -245,8 +255,8 @@ class TestSpaceTimeConvertor_TimeOnly:
             31
         ]], dtype=float)
         intervals = TimeIntervalRegister()
-        intervals.register(months, 'months')
-        intervals.register(remap_months, 'remap_months')
+        intervals.register(IntervalSet('months', months))
+        intervals.register(IntervalSet('remap_months', remap_months))
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -280,7 +290,7 @@ class TestSpaceTimeConvertor_RegionOnly:
         data = np.ones((2, 12)) / 2  # area a,b, months 1-12
 
         intervals = TimeIntervalRegister()
-        intervals.register(months, 'months')
+        intervals.register(IntervalSet('months', months))
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -307,7 +317,7 @@ class TestSpaceTimeConvertor_RegionOnly:
         data = np.array([[24], [24]])  # area a,b, single interval
 
         intervals = TimeIntervalRegister()
-        intervals.register(one_day, 'one_day')
+        intervals.register(IntervalSet('one_day', one_day))
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
@@ -334,8 +344,8 @@ class TestSpaceTimeConvertorBoth:
         data = np.ones((2, 12)) / 2  # area a,b, months 1-12
 
         intervals = TimeIntervalRegister()
-        intervals.register(months, 'months')
-        intervals.register(seasons, 'seasons')
+        intervals.register(IntervalSet('months', months))
+        intervals.register(IntervalSet('seasons', seasons))
 
         regions = RegionRegister()
         regions.register(regions_half_squares)
