@@ -43,11 +43,12 @@ import traceback
 from argparse import ArgumentParser
 
 import smif
-from smif.sos_model import SosModelBuilder
 from smif.data_layer.load import dump
 from smif.data_layer.sos_model_config import SosModelReader
 from smif.data_layer.sector_model_config import SectorModelReader
 from smif.data_layer.validate import VALIDATION_ERRORS
+
+from smif.modelrun import ModelRun
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -150,9 +151,8 @@ def run_model(args):
     model_config = validate_config(args)
 
     try:
-        builder = SosModelBuilder()
-        builder.construct(model_config)
-        sos_model = builder.finish()
+        modelrun = ModelRun()
+        modelrun.build(model_config)
     except AssertionError as error:
         err_type, err_value, err_traceback = sys.exc_info()
         traceback.print_exception(err_type, err_value, err_traceback)
@@ -164,16 +164,16 @@ def run_model(args):
         exit(-1)
 
     if args.model == 'all':
-        LOGGER.info("Running the system of systems model")
-        sos_model.run()
+        LOGGER.info("Running model run %s", modelrun.id)
+        modelrun.run()
     else:
         LOGGER.info("Running the %s sector model", args.model)
         model_name = args.model
-        sos_model.run_sector_model(model_name)
+        modelrun.sos_model.run_sector_model(model_name)
 
     output_file = args.output_file
     LOGGER.info("Writing results to %s", output_file)
-    dump(sos_model.results, output_file)
+    dump(modelrun.sos_model.results, output_file)
     print("Model run complete")
 
 
