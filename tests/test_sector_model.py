@@ -1,5 +1,7 @@
 """Test SectorModel and SectorModelBuilder
 """
+from unittest.mock import Mock
+
 from pytest import raises
 from smif.metadata import MetadataSet
 from smif.sector_model import SectorModel, SectorModelBuilder
@@ -18,9 +20,44 @@ class EmptySectorModel(SectorModel):
 
 class TestSectorModelBuilder():
 
+    def test_add_inputs(self, setup_project_folder):
+
+        model_path = str(setup_project_folder.join('models', 'water_supply',
+                                                   '__init__.py'))
+
+        region = Mock()
+        region.get_entry = Mock(return_value='a_resolution_set')
+
+        interval = Mock()
+        interval.get_entry = Mock(return_value='a_resolution_set')
+
+        registers = {'regions': region,
+                     'intervals': interval}
+
+        builder = SectorModelBuilder('test', registers)
+        builder.load_model(model_path, 'WaterSupplySectorModel')
+
+        inputs = [{'name': 'an_input',
+                   'spatial_resolution': 'big',
+                   'temporal_resolution': 'short',
+                   'units': 'tonnes'}]
+
+        builder.add_inputs(inputs)
+
+        assert region.get_entry.call_count == 1
+        assert interval.get_entry.call_count == 1
+
     def test_sector_model_builder(self, setup_project_folder):
-        model_path = str(setup_project_folder.join('models', 'water_supply', '__init__.py'))
-        builder = SectorModelBuilder('water_supply')
+        model_path = str(setup_project_folder.join('models', 'water_supply',
+                                                   '__init__.py'))
+
+        register = Mock()
+        register.get_entry = Mock(return_value='a_resolution_set')
+
+        registers = {'regions': register,
+                     'intervals': register}
+
+        builder = SectorModelBuilder('water_supply', registers)
         builder.load_model(model_path, 'WaterSupplySectorModel')
 
         assets = [
@@ -47,7 +84,7 @@ class TestSectorModelBuilder():
         assert model.interventions == assets
 
     def test_path_not_found(self):
-        builder = SectorModelBuilder('water_supply')
+        builder = SectorModelBuilder('water_supply', Mock())
         with raises(FileNotFoundError) as ex:
             builder.load_model('/fictional/path/to/model.py', 'WaterSupplySectorModel')
         msg = "Cannot find '/fictional/path/to/model.py' for the 'water_supply' model"
@@ -55,7 +92,10 @@ class TestSectorModelBuilder():
 
     def test_add_no_inputs(self, setup_project_folder):
         model_path = str(setup_project_folder.join('models', 'water_supply', '__init__.py'))
-        builder = SectorModelBuilder('water_supply')
+        registers = {'regions': Mock(),
+                     'intervals': Mock()}
+
+        builder = SectorModelBuilder('water_supply', registers)
         builder.load_model(model_path, 'WaterSupplySectorModel')
         builder.add_inputs(None)
         assert isinstance(builder._sector_model.inputs, MetadataSet)

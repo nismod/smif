@@ -318,21 +318,26 @@ class SectorModelBuilder(object):
         msg = "Sector model must be loaded before adding inputs"
         assert self._sector_model is not None, msg
 
-        for model_input in input_dicts:
-            name = model_input['name']
+        regions = self.registers['regions']
+        intervals = self.registers['intervals']
 
-            spatial_resolution = model_input['spatial_resolution']
-            region_set = self.registers['regions'].get_entry(spatial_resolution)
+        if input_dicts:
 
-            temporal_resolution = model_input['temporal_resolution']
-            interval_set = self.registers['intervals'].get_entry(temporal_resolution)
+            for model_input in input_dicts:
+                name = model_input['name']
 
-            units = model_input['units']
+                spatial_resolution = model_input['spatial_resolution']
+                region_set = regions.get_entry(spatial_resolution)
 
-            self._sector_model.add_input(name,
-                                         region_set,
-                                         interval_set,
-                                         units)
+                temporal_resolution = model_input['temporal_resolution']
+                interval_set = intervals.get_entry(temporal_resolution)
+
+                units = model_input['units']
+
+                self._sector_model.add_input(name,
+                                             region_set,
+                                             interval_set,
+                                             units)
 
     def add_outputs(self, output_dicts):
         """Add outputs to the sector model
@@ -340,21 +345,26 @@ class SectorModelBuilder(object):
         msg = "Sector model must be loaded before adding outputs"
         assert self._sector_model is not None, msg
 
-        for model_output in output_dicts:
-            name = model_output['name']
+        regions = self.registers['regions']
+        intervals = self.registers['intervals']
 
-            spatial_resolution = model_output['spatial_resolution']
-            region_set = self.registers['regions'].get_entry(spatial_resolution)
+        if output_dicts:
 
-            temporal_resolution = model_output['temporal_resolution']
-            interval_set = self.registers['intervals'].get_entry(temporal_resolution)
+            for model_output in output_dicts:
+                name = model_output['name']
 
-            units = model_output['units']
+                spatial_resolution = model_output['spatial_resolution']
+                region_set = regions.get_entry(spatial_resolution)
 
-            self._sector_model.add_output(name,
-                                          region_set,
-                                          interval_set,
-                                          units)
+                temporal_resolution = model_output['temporal_resolution']
+                interval_set = intervals.get_entry(temporal_resolution)
+
+                units = model_output['units']
+
+                self._sector_model.add_output(name,
+                                              region_set,
+                                              interval_set,
+                                              units)
 
     def add_interventions(self, intervention_list):
         """Add interventions to the sector model
