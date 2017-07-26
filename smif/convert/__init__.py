@@ -48,6 +48,17 @@ class ResolutionSet(metaclass=ABCMeta):
     def data(self, value):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_entry_names(self):
+        """Get the names of the entries in the ResolutionSet
+
+        Returns
+        -------
+        set
+            The set of names which identify each entry in the ResolutionSet
+        """
+        raise NotImplementedError
+
 
 class SpaceTimeConvertor(object):
     """Handles the conversion of time and space for a list of values

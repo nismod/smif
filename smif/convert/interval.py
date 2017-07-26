@@ -378,6 +378,11 @@ class IntervalSet(ResolutionSet):
     def data(self, value):
         self._data = value
 
+    def get_entry_names(self):
+        """Returns the names of the intervals
+        """
+        return (set([interval['id'] for interval in self.data]))
+
 
 class TimeIntervalRegister(Register):
     """Holds the set of time-intervals used by the SectorModels
@@ -419,7 +424,7 @@ class TimeIntervalRegister(Register):
             were defined
 
         """
-        self._check_interval_in_register(set_name)
+        self._check_interval_set_in_register(set_name)
         return self._register[set_name]
 
     def get_entry(self, name):
@@ -462,18 +467,18 @@ class TimeIntervalRegister(Register):
         self.logger.info("Adding interval set '%s' to register", set_name)
         self._validate_intervals()
 
-    def _check_interval_in_register(self, interval):
+    def _check_interval_set_in_register(self, interval_set_name):
         """
 
         Parameters
         ----------
-        interval: str
-            The name of the interval to look for
+        interval_set_name: str
+            The name of the interval set to look for
 
         """
-        if interval not in self._register:
+        if interval_set_name not in self._register:
             msg = "The interval set '{}' is not in the register"
-            raise ValueError(msg.format(interval))
+            raise ValueError(msg.format(interval_set_name))
 
     def convert(self, data, from_interval_set_name, to_interval_set_name):
         """Convert some data to a time_interval type
