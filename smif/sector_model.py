@@ -257,13 +257,30 @@ class SectorModelBuilder(object):
     ----------
     name : str
         The name of the sector model
+    registers : dict
+        A package of spatial, temporal, unit registers
 
     """
 
-    def __init__(self, name, sector_model=None):
+    def __init__(self, name, registers, sector_model=None):
         self._sector_model_name = name
         self._sector_model = sector_model
+        self.registers = registers
         self.logger = logging.getLogger(__name__)
+
+    def construct(self, model_data):
+        """Constructs the sector model
+
+        Arguments
+        ---------
+        model_data : dict
+            The sector model configuration data
+        """
+        self.load_model(model_data['path'], model_data['classname'])
+        self.create_initial_system(model_data['initial_conditions'])
+        self.add_inputs(model_data['inputs'])
+        self.add_outputs(model_data['outputs'])
+        self.add_interventions(model_data['interventions'])
 
     def load_model(self, model_path, classname):
         """Dynamically load model module
@@ -295,23 +312,27 @@ class SectorModelBuilder(object):
 
         self._sector_model.initialise(initial_conditions)
 
-    def add_regions(self, regions_register):
-        """Add a RegionsRegister to the SectorModel
-        """
-        self._sector_model.regions = regions_register
-
-    def add_intervals(self, intervals_register):
-        """Add a TimeIntervalsRegister to the SectorModel
-        """
-        self._sector_model.intervals = intervals_register
-
     def add_inputs(self, input_dicts):
         """Add inputs to the sector model
         """
         msg = "Sector model must be loaded before adding inputs"
         assert self._sector_model is not None, msg
 
-        self._sector_model.inputs = input_dicts
+        for model_input in input_dicts:
+            name = model_input['name']
+
+            spatial_resolution = model_input['spatial_resolution']
+            region_set = self.registers['regions'].get_entry(spatial_resolution)
+
+            temporal_resolution = model_input['temporal_resolution']
+            interval_set = self.registers['intervals'].get_entry(temporal_resolution)
+
+            units = model_input['units']
+
+            self._sector_model.add_input(name,
+                                         region_set,
+                                         interval_set,
+                                         units)
 
     def add_outputs(self, output_dicts):
         """Add outputs to the sector model
@@ -319,7 +340,21 @@ class SectorModelBuilder(object):
         msg = "Sector model must be loaded before adding outputs"
         assert self._sector_model is not None, msg
 
-        self._sector_model.outputs = output_dicts
+        for model_output in output_dicts:
+            name = model_output['name']
+
+            spatial_resolution = model_output['spatial_resolution']
+            region_set = self.registers['regions'].get_entry(spatial_resolution)
+
+            temporal_resolution = model_output['temporal_resolution']
+            interval_set = self.registers['intervals'].get_entry(temporal_resolution)
+
+            units = model_output['units']
+
+            self._sector_model.add_output(name,
+                                          region_set,
+                                          interval_set,
+                                          units)
 
     def add_interventions(self, intervention_list):
         """Add interventions to the sector model
