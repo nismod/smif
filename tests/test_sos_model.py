@@ -14,7 +14,6 @@ from .fixtures.water_supply import WaterSupplySectorModel
 @fixture(scope='function')
 def get_sos_model_only_scenario_dependencies(setup_region_data):
     builder = SosModelBuilder()
-    builder.add_timesteps([2010, 2011, 2012])
     builder.load_region_sets({'LSOA': setup_region_data['features']})
     interval_data = [
         {
@@ -122,7 +121,6 @@ def get_sos_model_only_scenario_dependencies(setup_region_data):
 @fixture(scope='function')
 def get_sos_model_with_model_dependency(setup_region_data):
     builder = SosModelBuilder()
-    builder.add_timesteps([2010, 2011, 2012])
     interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
     builder.load_interval_sets({'annual': interval_data})
     builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -206,7 +204,6 @@ def get_sos_model_with_model_dependency(setup_region_data):
 @fixture(scope='function')
 def get_sos_model_with_summed_dependency(setup_region_data):
     builder = SosModelBuilder()
-    builder.add_timesteps([2010])
     builder.load_region_sets({'LSOA': setup_region_data['features']})
     interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
     builder.load_interval_sets({'annual': interval_data})
@@ -286,15 +283,7 @@ class TestSosModel():
 
     def test_run_static(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
-        sos_model.run()
-
-    def test_run_no_timesteps(self, get_sos_model_only_scenario_dependencies):
-        sos_model = get_sos_model_only_scenario_dependencies
-        sos_model.timesteps = []
-
-        with raises(ValueError) as ex:
-            sos_model.run()
-        assert "No timesteps" in str(ex.value)
+        sos_model.run(2010)
 
     def test_set_timesteps(self):
         sos_model = SosModel()
@@ -400,7 +389,9 @@ class TestSosModel():
     def test_run_sequential(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
         sos_model.timesteps = [2010, 2011, 2012]
-        sos_model.run()
+        sos_model.run(2010)
+        sos_model.run(2011)
+        sos_model.run(2012)
 
     def test_run_single_sector(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
@@ -445,7 +436,7 @@ class TestSosModel():
 
     def test_dependency_aggregation(self, get_sos_model_with_summed_dependency):
         sos_model = get_sos_model_with_summed_dependency
-        sos_model.run()
+        sos_model.run(2010)
 
 
 @fixture(scope='function')
@@ -506,8 +497,6 @@ class TestSosModelBuilder():
     def test_builder(self, setup_project_folder):
 
         builder = SosModelBuilder()
-
-        builder.add_timesteps([2010, 2011, 2012])
 
         model = WaterSupplySectorModel()
         model.name = 'water_supply'
@@ -707,7 +696,6 @@ class TestSosModelBuilder():
         ]
 
         builder = SosModelBuilder()
-        builder.add_timesteps([2010])
         builder.add_planning([])
         builder.load_region_sets({'LSOA': setup_region_data['features']})
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
@@ -801,7 +789,6 @@ class TestSosModelBuilder():
         }
 
         builder = SosModelBuilder()
-        builder.add_timesteps([2015, 2016])
         interval_data = [
             {'id': 'wet_season', 'start': 'P0M', 'end': 'P5M'},
             {'id': 'dry_season', 'start': 'P5M', 'end': 'P10M'},
@@ -837,7 +824,6 @@ class TestSosModelBuilder():
         expected = {"length": np.array([[[3.14]]])}
 
         builder = SosModelBuilder()
-        builder.add_timesteps([2015])
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -905,7 +891,6 @@ class TestSosModelBuilder():
         }
 
         builder = SosModelBuilder()
-        builder.add_timesteps([2015])
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -940,7 +925,6 @@ class TestSosModelBuilder():
         }
 
         builder = SosModelBuilder()
-        builder.add_timesteps([2015])
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -1012,7 +996,7 @@ class TestSosModelBuilder():
             for entry in value:
                 assert entry in inputs[key]
 
-        sos_model.run()
+        sos_model.run(2010)
 
     def test_invalid_units_conversion(self, get_sos_model_only_scenario_dependencies):
         sos_model = get_sos_model_only_scenario_dependencies
@@ -1043,7 +1027,6 @@ class TestSosModelBuilder():
     def test_missing_data_source(self):
 
         builder = SosModelBuilder()
-        builder.add_timesteps([2010])
         ws = WaterSupplySectorModel()
         ws.name = 'water_supply'
         ws.inputs = [

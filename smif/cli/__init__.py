@@ -48,7 +48,7 @@ from smif.data_layer.sos_model_config import SosModelReader
 from smif.data_layer.sector_model_config import SectorModelReader
 from smif.data_layer.validate import VALIDATION_ERRORS
 
-from smif.modelrun import ModelRun
+from smif.modelrun import ModelRunBuilder
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -151,8 +151,9 @@ def run_model(args):
     model_config = validate_config(args)
 
     try:
-        modelrun = ModelRun()
-        modelrun.build(model_config)
+        builder = ModelRunBuilder()
+        builder.construct(model_config)
+        modelrun = builder.finish()
     except AssertionError as error:
         err_type, err_value, err_traceback = sys.exc_info()
         traceback.print_exception(err_type, err_value, err_traceback)
@@ -164,7 +165,7 @@ def run_model(args):
         exit(-1)
 
     if args.model == 'all':
-        LOGGER.info("Running model run %s", modelrun.id)
+        LOGGER.info("Running model run %s", modelrun.name)
         modelrun.run()
     else:
         LOGGER.info("Running the %s sector model", args.model)
