@@ -29,8 +29,9 @@ The key functions include
 import importlib
 import logging
 import os
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
+from smif.composite import Model
 from smif.metadata import MetadataSet
 
 __author__ = "Will Usher, Tom Russell"
@@ -38,12 +39,12 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-class SectorModel(ABC):
+class SectorModel(Model, metaclass=ABCMeta):
     """A representation of the sector model with inputs and outputs
 
     """
     def __init__(self):
-        self._model_name = None
+        super().__init__(None, MetadataSet([]), MetadataSet([]))
 
         self.interventions = []
         self.system = []
@@ -58,6 +59,13 @@ class SectorModel(ABC):
     def add_input(self, name, spatial_resolution, temporal_resolution, units):
         """Add an input to the sector model
 
+        The inputs should be specified in a list.  For example::
+
+                - name: electricity_price
+                  spatial_resolution: GB
+                  temporal_resolution: annual
+                  units: £/kWh
+
         Arguments
         ---------
         name: str
@@ -71,7 +79,7 @@ class SectorModel(ABC):
                           "temporal_resolution": temporal_resolution,
                           "units": units}
 
-        self._inputs.add_metadata(input_metadata)
+        self._model_inputs.add_metadata(input_metadata)
 
     def add_output(self, name, spatial_resolution, temporal_resolution, units):
         """Add an output to the sector model
@@ -89,88 +97,13 @@ class SectorModel(ABC):
                            "temporal_resolution": temporal_resolution,
                            "units": units}
 
-        self._outputs.add_metadata(output_metadata)
+        self._model_outputs.add_metadata(output_metadata)
 
     def validate(self):
         """Validate that this SectorModel has been set up with sufficient data
         to run
         """
         pass
-
-    @property
-    def name(self):
-        """The name of the sector model
-
-        Returns
-        =======
-        str
-            The name of the sector model
-        """
-        return self._model_name
-
-    @name.setter
-    def name(self, value):
-        self._model_name = value
-
-    @property
-    def inputs(self):
-        """The inputs to the model
-
-        The inputs should be specified in a list.  For example::
-
-                - name: electricity_price
-                  spatial_resolution: GB
-                  temporal_resolution: annual
-                  units: £/kWh
-
-        Arguments
-        =========
-        value : list
-            A list of dicts of inputs to the model.
-            These includes parameters, assets and exogenous data
-
-        Returns
-        =======
-        :class:`smif.metadata.ModelMetadata`
-
-        """
-        return self._inputs
-
-    @inputs.setter
-    def inputs(self, value=None):
-        if value is not None:
-            assert isinstance(value, list)
-        else:
-            value = []
-
-        self._inputs = MetadataSet(value, self.regions, self.intervals)
-
-    @property
-    def outputs(self):
-        """The outputs from the model
-
-        Arguments
-        =========
-        value : list
-            A list of dicts of outputs from the model.
-            This may include results
-            and metrics
-
-        Returns
-        =======
-        :class:`smif.metadata.ModelMetadata`
-
-        """
-        return self._outputs
-
-    @outputs.setter
-    def outputs(self, value):
-        if value is not None:
-            assert isinstance(value, list)
-        else:
-            value = []
-
-        self._outputs = MetadataSet(value, self.regions, self.intervals)
 
     @property
     def intervention_names(self):

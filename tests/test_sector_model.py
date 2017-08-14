@@ -3,11 +3,12 @@
 from unittest.mock import Mock
 
 from pytest import raises
-from smif.metadata import MetadataSet
+from smif.metadata import Metadata, MetadataSet
 from smif.sector_model import SectorModel, SectorModelBuilder
 
 
 class EmptySectorModel(SectorModel):
+
     def initialise(self, initial_conditions):
         pass
 
@@ -16,6 +17,39 @@ class EmptySectorModel(SectorModel):
 
     def extract_obj(self, results):
         return 0
+
+
+class TestCompositeSectorModel():
+
+    def test_add_input(self):
+
+        model = EmptySectorModel()
+        model.add_input('input_name', [], [], 'units')
+
+        inputs = model.model_inputs
+
+        assert inputs.names == ['input_name']
+        assert inputs.units == ['units']
+
+        assert inputs['input_name'] == Metadata('input_name', [], [], 'units')
+
+    def test_add_output(self):
+
+        model = EmptySectorModel()
+        model.add_output('output_name', Mock(), Mock(), 'units')
+
+        outputs = model.model_outputs
+
+        assert outputs.names == ['output_name']
+        assert outputs.units == ['units']
+
+    def test_run_sector_model(self):
+
+        model = EmptySectorModel()
+        model.add_input('input_name', [], [], 'units')
+        data = {'input_name': [0]}
+        actual = model.simulate({}, {}, data)
+        assert actual == ({}, {})
 
 
 class TestSectorModelBuilder():
@@ -98,8 +132,8 @@ class TestSectorModelBuilder():
         builder = SectorModelBuilder('water_supply', registers)
         builder.load_model(model_path, 'WaterSupplySectorModel')
         builder.add_inputs(None)
-        assert isinstance(builder._sector_model.inputs, MetadataSet)
-        assert len(builder._sector_model.inputs) == 0
+        assert isinstance(builder._sector_model.model_inputs, MetadataSet)
+        assert len(builder._sector_model.model_inputs) == 0
 
 
 class TestSectorModel(object):
