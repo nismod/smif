@@ -238,12 +238,12 @@ class SectorModel(ABC):
         the objective function by the decision layer
 
         Arguments
-        =========
+        ---------
         results : dict
             A nested dict of the results from the :py:meth:`simulate` method
 
         Returns
-        =======
+        -------
         float
             A scalar component generated from the simulation model results
         """
@@ -259,6 +259,20 @@ class SectorModelBuilder(object):
         The name of the sector model
     registers : dict
         A package of spatial, temporal, unit registers
+
+    Returns
+    -------
+    :class:`~smif.sector_model.SectorModel`
+
+    Examples
+    --------
+    Call :py:meth:`SectorModelBuilder.construct` to populate a
+    :class:`SectorModel` object and :py:meth:`SectorModelBuilder.finish`
+    to return the validated and dependency-checked system-of-systems model.
+
+    >>> builder = SectorModelBuilder(name, registers, secctor_model)
+    >>> builder.construct(config_data)
+    >>> sos_model = builder.finish()
 
     """
 
