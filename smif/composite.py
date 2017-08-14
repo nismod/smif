@@ -50,6 +50,13 @@ from logging import getLogger
 class Model(ABC):
     """Abstract class represents the interface used to implement the composite
     `SosModel` and leaf classes `SectorModel` and `Scenario`.
+
+    Arguments
+    ---------
+    name : str
+    inputs : smif.metadata.MetaDataSet
+    outputs : smif.metadata.MetaDataSet
+
     """
 
     def __init__(self, name, inputs, outputs):
@@ -87,15 +94,15 @@ class Model(ABC):
 
         Arguments
         ---------
-        source_model : `Model`
-            A reference to the source `Model` object
+        source_model : `smif.composite.Model`
+            A reference to the source `~smif.composite.Model` object
         source : string
             The name of the model_output defined in the `source_model`
         sink : string
             The name of a model_input defined in this object
 
         """
-        if sink in self._model_inputs:
+        if sink in self.model_inputs.names:
             self.deps[sink] = Dependency(source_model, source)
             msg = "Added dependency from '%s' to '%s'"
             self.logger.debug(msg, source_model, self.name)
@@ -106,11 +113,18 @@ class Model(ABC):
 
 class ScenarioModel(Model):
     """Represents exogenous scenario data
+
+    Arguments
+    ---------
+    name : string
+        The unique name of this scenario
+    output : list
+        A name for the scenario output parameter
     """
 
-    def __init__(self, name, outputs):
-        assert len(outputs) == 1
-        super().__init__(name, [], outputs)
+    def __init__(self, name, output):
+        assert len(output) == 1
+        super().__init__(name, [], output)
         self._data = []
 
     def add_data(self, data):
@@ -168,6 +182,11 @@ class SosModel(Model):
 
     A container for other subclasses of ``Model`` including ``SectorModel``,
     ``Scenario`` and ``SosModel``.
+
+    Arguments
+    ---------
+    name : string
+        The unique identifier for this system-of-systems model container
     """
 
     def __init__(self, name):
@@ -217,6 +236,17 @@ class SosModel(Model):
 
 
 class Dependency():
+    """
+
+    Arguments
+    ---------
+    source_model : smif.composite.Model
+        The source model object
+    source : string
+        The name of the source parameter (output)
+    function=None : func
+        A conversion function
+    """
 
     def __init__(self, source_model, source, function=None):
         self.source_model = source_model
