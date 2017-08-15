@@ -360,9 +360,9 @@ class IntervalSet(ResolutionSet):
 
     def __init__(self, name, data, base_year=2010):
         self._name = name
+        self._base_year = base_year
         self._data = None
         self.data = data
-        self._base_year = base_year
 
     @property
     def name(self):
@@ -401,17 +401,17 @@ class IntervalSet(ResolutionSet):
         return array
 
     def _validate_intervals(self):
-            array = self._get_hourly_array()
-            duplicate_hours = np.where(array > 1)[0]
-            if duplicate_hours:
-                hour = duplicate_hours[0]
-                msg = "Duplicate entry for hour {} in interval set {}."
-                raise ValueError(msg.format(hour, self.name))
+        array = self._get_hourly_array()
+        duplicate_hours = np.where(array > 1)[0]
+        if len(duplicate_hours) > 0:
+            hour = duplicate_hours[0]
+            msg = "Duplicate entry for hour {} in interval set {}."
+            raise ValueError(msg.format(hour, self.name))
 
     def get_entry_names(self):
         """Returns the names of the intervals
         """
-        return (set([interval['id'] for interval in self.data]))
+        return [interval['id'] for interval in self.data]
 
     def __getitem___(self, key):
         return self._data[key]
@@ -472,7 +472,7 @@ class TimeIntervalRegister(Register):
             msg = "An interval set named {} has already been loaded"
             raise ValueError(msg.format(interval_set.name))
 
-        self._register[interval_set.name] = interval_set.data
+        self._register[interval_set.name] = interval_set
         self.logger.info("Adding interval set '%s' to register", interval_set.name)
 
     def convert(self, data, from_interval_set_name, to_interval_set_name):
@@ -500,7 +500,7 @@ class TimeIntervalRegister(Register):
         converted = np.zeros(len(to_interval_set))
         hourly_values = self._convert_to_hourly_buckets(data, from_interval_set)
 
-        for idx, interval in enumerate(to_interval_set.values()):
+        for idx, interval in enumerate(to_interval_set.data.values()):
             interval_tuples = interval.to_hours()
 
             for lower, upper in interval_tuples:
@@ -523,7 +523,7 @@ class TimeIntervalRegister(Register):
         """
         hourly_values = np.zeros(8760)
 
-        for value, interval in zip(timeseries, interval_set.values()):
+        for value, interval in zip(timeseries, interval_set.data.values()):
             list_of_intervals = interval.to_hours()
             divisor = len(list_of_intervals)
             for lower, upper in list_of_intervals:
