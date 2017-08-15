@@ -11,9 +11,18 @@ from __future__ import absolute_import, division, print_function
 
 import json
 import logging
+from copy import copy
 
 import yaml
 from pytest import fixture
+from smif.convert.area import get_register as get_region_register
+from smif.convert.interval import get_register as get_interval_register
+from smif.convert.interval import IntervalSet
+
+from .convert.test_area import (regions_half_squares, regions_half_triangles,
+                                regions_rect, regions_single_half_square)
+from .convert.test_interval import (months, one_day, remap_months, seasons,
+                                    twenty_four_hours)
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
@@ -1304,3 +1313,27 @@ def setup_water_intervention_d(setup_folder_structure,
 def setup_minimal_water(setup_folder_structure,
                         setup_config_file):
     return str(setup_folder_structure)
+
+
+@fixture(scope="session", autouse=True)
+def setup_registers():
+    """One-time setup: load all the fixture region and interval
+    sets into the module-level registers.
+    """
+    regions = get_region_register()
+    regions.register(regions_half_squares())
+    regions.register(regions_single_half_square())
+    regions.register(regions_half_triangles())
+    regions.register(regions_rect())
+
+    # register alt rect (same area)
+    regions_rect_alt = copy(regions_rect())
+    regions_rect_alt.name = 'rect_alt'
+    regions.register(regions_rect_alt)
+
+    intervals = get_interval_register()
+    intervals.register(IntervalSet('months', months()))
+    intervals.register(IntervalSet('seasons', seasons()))
+    intervals.register(IntervalSet('hourly_day', twenty_four_hours()))
+    intervals.register(IntervalSet('one_day', one_day()))
+    intervals.register(IntervalSet('remap_months', remap_months()))

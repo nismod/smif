@@ -7,7 +7,7 @@ import numpy as np
 from rtree import index
 from shapely.geometry import shape
 
-from smif.convert import Register, ResolutionSet
+from smif.convert.register import Register, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -186,3 +186,12 @@ class RegionRegister(Register):
                 coefficients[from_region.name].append(coefficient_pair)
 
         return coefficients
+
+
+__REGISTER = RegionRegister()
+
+
+def get_register():
+    """Return single copy of RegionRegister
+    """
+    return __REGISTER

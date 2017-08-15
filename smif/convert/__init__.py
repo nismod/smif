@@ -7,64 +7,14 @@ The :meth:`~SpaceTimeConvertor.convert` method returns a new
 :class:`numpy.ndarray` for passing to a sector model.
 """
 import logging
-from abc import ABCMeta, abstractmethod
 import numpy as np
+
+from smif.convert.area import get_register as get_region_register
+from smif.convert.interval import get_register as get_interval_register
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
-
-
-class Register(metaclass=ABCMeta):
-
-    @abstractmethod
-    def register(self, resolution_set):
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_entry(self, name):
-        """Implement to return the smif.convert.ResolutionSet associated with the `name`
-
-        Arguments
-        ---------
-        name : str
-            The unique identifier of the ResolutionSet
-        """
-        raise NotImplementedError
-
-
-class ResolutionSet(metaclass=ABCMeta):
-
-    @property
-    @abstractmethod
-    def name(self):
-        raise NotImplementedError
-
-    @name.setter
-    @abstractmethod
-    def name(self, value):
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def data(self):
-        raise NotImplementedError
-
-    @data.setter
-    @abstractmethod
-    def data(self, value):
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_entry_names(self):
-        """Get the names of the entries in the ResolutionSet
-
-        Returns
-        -------
-        set
-            The set of names which identify each entry in the ResolutionSet
-        """
-        raise NotImplementedError
 
 
 class SpaceTimeConvertor(object):
@@ -87,10 +37,10 @@ class SpaceTimeConvertor(object):
 
     """
 
-    def __init__(self, region_register, interval_register):
+    def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.regions = region_register
-        self.intervals = interval_register
+        self.regions = get_region_register()
+        self.intervals = get_interval_register()
 
     def convert(self, data, from_spatial, to_spatial, from_temporal, to_temporal):
         """Convert the data from set of regions and intervals to another
