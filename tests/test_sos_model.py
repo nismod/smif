@@ -173,10 +173,8 @@ def get_sos_model(setup_project_folder, get_sector_model, build_registers):
 
 @fixture(scope='function')
 def get_sos_model_with_model_dependency(build_registers):
-    builder = SosModelBuilder(build_registers)
-
-    ws = WaterSupplySectorModel()
-    ws.name = 'water_supply'
+    sos_model = SosModel('test_sos_model')
+    ws = WaterSupplySectorModel('water_supply')
     ws.inputs = [
         {
             'name': 'raininess',
@@ -205,10 +203,9 @@ def get_sos_model_with_model_dependency(build_registers):
         {"name": "water_asset_b", "location": "oxford"},
         {"name": "water_asset_c", "location": "oxford"}
     ]
-    builder.add_model(ws)
+    sos_model.add_model(ws)
 
-    ws2 = WaterSupplySectorModel()
-    ws2.name = 'water_supply_2'
+    ws2 = WaterSupplySectorModel('water_supply_2')
     ws2.inputs = [
         {
             'name': 'water',
@@ -218,9 +215,9 @@ def get_sos_model_with_model_dependency(build_registers):
         }
     ]
 
-    builder.add_model(ws2)
+    sos_model.add_model(ws2)
 
-    return builder.finish()
+    return sos_model
 
 
 @fixture(scope='function')
@@ -244,8 +241,7 @@ def get_sos_model_with_summed_dependency(setup_region_data, build_registers):
 
     sos_model = builder.finish()
 
-    ws = WaterSupplySectorModel()
-    ws.name = 'water_supply'
+    ws = WaterSupplySectorModel('water_supply')
     ws.inputs = [
         {
             'name': 'raininess',
@@ -265,8 +261,7 @@ def get_sos_model_with_summed_dependency(setup_region_data, build_registers):
 
     sos_model.add_model(ws)
 
-    ws2 = WaterSupplySectorModel()
-    ws2.name = 'water_supply_2'
+    ws2 = WaterSupplySectorModel('water_supply_2')
     ws2.inputs = [
         {
             'name': 'raininess',
@@ -285,7 +280,7 @@ def get_sos_model_with_summed_dependency(setup_region_data, build_registers):
     ]
     sos_model.add_model(ws2)
 
-    ws3 = WaterSupplySectorModel()
+    ws3 = WaterSupplySectorModel('water_supply_3')
     ws3.inputs = [
         {
             'name': 'water',
@@ -294,7 +289,6 @@ def get_sos_model_with_summed_dependency(setup_region_data, build_registers):
             'units': 'Ml'
         }
     ]
-    ws3.name = 'water_supply_3'
     sos_model.add_model(ws3)
 
     return sos_model
@@ -369,10 +363,10 @@ class TestSosModel():
 
     def test_add_dependency(self):
 
-        sink_model = EmptySectorModel()
+        sink_model = EmptySectorModel('test_model')
         sink_model.add_input('input_name', Mock(), Mock(), 'units')
 
-        source_model = EmptySectorModel()
+        source_model = EmptySectorModel('test_model')
         source_model.add_output('output_name', Mock(), Mock(), 'units')
 
         sink_model.add_dependency(source_model, 'output_name', 'input_name')
@@ -396,6 +390,9 @@ class TestSosModel():
         assert sos_model.timestep_after(2011) == 2012
         assert sos_model.timestep_after(2012) is None
         assert sos_model.timestep_after(2013) is None
+
+
+class TestIterations:
 
     def test_guess_outputs_zero(self, get_sos_model):
         """If no previous timestep has results, guess outputs as zero
