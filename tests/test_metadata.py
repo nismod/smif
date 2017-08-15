@@ -233,3 +233,32 @@ class TestMetadataSet(object):
 
         assert metadata.get_region_names() == {"a", "b"}
         assert metadata.get_interval_names() == {"winter", "spring", "summer", "autumn"}
+
+    def test_iterate_over_empty(self):
+
+        metadata_set = MetadataSet([])
+        assert metadata_set.metadata == []
+
+        assert [x for x in metadata_set] == []
+
+    def test_iterate_over_populated(self):
+        metadata_list = [
+            {
+                "name": "total_lane_kilometres",
+                "spatial_resolution": region_set,
+                "temporal_resolution": interval_set,
+                "units": "kilometers"
+            }
+        ]
+        metadata_set = MetadataSet(metadata_list)
+
+        actual = metadata_set.metadata
+        assert actual == [Metadata("total_lane_kilometres",
+                                   region_set,
+                                   interval_set,
+                                   "kilometers")]
+
+        assert [x for x in metadata_set] == [Metadata("total_lane_kilometres",
+                                                      region_set,
+                                                      interval_set,
+                                                      "kilometers")]
