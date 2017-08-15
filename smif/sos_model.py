@@ -732,12 +732,12 @@ class SosModelBuilder(object):
 
     def _get_dimension_names_for_param(self, metadata, param):
         interval_set_name = metadata['temporal_resolution']
-        interval_set = self.registers['intervals'].get_intervals_in_set(interval_set_name)
-        interval_names = [interval.name for key, interval in interval_set.items()]
+        interval_set = self.registers['intervals'].get_entry(interval_set_name)
+        interval_names = interval_set.get_entry_names()
 
         region_set_name = metadata['spatial_resolution']
-        region_set = self.registers['regions'].get_regions_in_set(region_set_name)
-        region_names = [region.name for region in region_set]
+        region_set = self.registers['regions'].get_entry(region_set_name)
+        region_names = region_set.get_entry_names()
 
         if len(interval_names) == 0:
             self.logger.error("No interval names found when loading %s", param)
@@ -772,40 +772,6 @@ class SosModelBuilder(object):
         self._check_planning_interventions_exist()
         self._check_planning_timeperiods_exist()
         self._check_dependencies()
-        self._check_region_interval_sets()
-
-    def _check_region_interval_sets(self):
-        """For each model, check for the interval and region sets referenced
-
-        Each model references interval and region sets in the configuration
-        of inputs and outputs.
-        """
-        available_intervals = self.registers['intervals'].names
-        msg = "Available time interval sets in SosModel: %s"
-        self.logger.debug(msg, available_intervals)
-        available_regions = self.registers['regions'].names
-        msg = "Available region sets in SosModel: %s"
-        self.logger.debug(msg, available_regions)
-
-        for model_name, model in self.sos_model.models.items():
-            self.logger.debug(model_name)
-            exp_regions = []
-            exp_intervals = []
-            exp_regions.extend(model.model_inputs.spatial_resolutions)
-            exp_regions.extend(model.model_outputs.spatial_resolutions)
-            exp_intervals.extend(model.model_inputs.temporal_resolutions)
-            exp_intervals.extend(model.model_outputs.temporal_resolutions)
-
-            for region in exp_regions:
-                if region not in available_regions:
-                    msg = "Region set '%s' not specified but is required " + \
-                          "for model '$s'"
-                    raise ValueError(msg, region, model_name)
-            for interval in exp_intervals:
-                if interval not in available_intervals:
-                    msg = "Interval set '%s' not specified but is required " + \
-                          "for model '$s'"
-                    raise ValueError(msg, interval, model_name)
 
     def _check_dependencies(self):
         """For each model, compare dependency list of from_models
