@@ -137,10 +137,10 @@ class ScenarioModel(Model):
         """
         self._data = data
 
-    def simulate(self, data=None):
+    def simulate(self, timestep, data=None):
         """Returns the scenario data
         """
-        return self._data
+        return self._data[timestep]
 
 
 class SectorModel(Model):
@@ -166,7 +166,7 @@ class SectorModel(Model):
         """
         self._executable = executable
 
-    def simulate(self, data=None):
+    def simulate(self, timestep, data=None):
         """Simulates the sector model
 
         Arguments
@@ -174,7 +174,7 @@ class SectorModel(Model):
         input_data : dict
         """
         self.logger.debug("Running %s with data: %s", self.name, data)
-        return self._executable(data)
+        return self._executable(timestep, data)
 
 
 class SosModel(Model):
@@ -201,7 +201,7 @@ class SosModel(Model):
         self._models[model.name] = model
         self.logger.debug("Added model '%s' to SosModel", model.name)
 
-    def simulate(self, data=None):
+    def simulate(self, timestep, data=None):
         """Run the simulation for this and any contained ``Model`` objects
 
         Arguments
@@ -230,7 +230,7 @@ class SosModel(Model):
                                           model_input)
                         data[model_input] = dependency.get_data()
 
-            results[model_name] = model.simulate(data)
+            results[model_name] = model.simulate(timestep, data)
 
         return results
 
@@ -256,11 +256,12 @@ class Dependency():
         else:
             self._function = self.convert
 
-    def convert(self, data):
+    @staticmethod
+    def convert(data):
         return data
 
-    def get_data(self):
-        data = self.source_model.simulate()
+    def get_data(self, timestep):
+        data = self.source_model.simulate(timestep)
         return self._function(data[self.source])
 
     def __repr__(self):

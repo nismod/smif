@@ -165,4 +165,5 @@ class TestCompositeIntegration:
         sos_model.add_model(water_model)
         sos_model.add_model(energy_model)
 
-        # sos_model.simulate()
+        with raises(NotImplementedError):
+            sos_model.simulate()
