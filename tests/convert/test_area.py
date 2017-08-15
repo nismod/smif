@@ -178,8 +178,8 @@ class TestRegionRegister():
         assert rreg.names == []
 
         with raises(ValueError) as ex:
-            rreg.get_regions_in_set('nonexistent')
-        assert "Region set nonexistent not registered" in str(ex)
+            rreg.get_entry('nonexistent')
+        assert "Region set 'nonexistent' not registered" in str(ex)
 
     def test_convert_equal(self, regions_rect):
         rreg = RegionRegister()

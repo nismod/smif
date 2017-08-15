@@ -67,7 +67,7 @@ class RegionSet(ResolutionSet):
         ]
 
     def get_entry_names(self):
-        return set([region.name for region in self.data])
+        return [region.name for region in self.data]
 
     def intersection(self, bounds):
         """Return the subset of regions intersecting with a bounding box
