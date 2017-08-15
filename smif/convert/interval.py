@@ -135,7 +135,7 @@ from datetime import datetime, timedelta
 import numpy as np
 from isodate import parse_duration
 
-from smif.convert import Register, ResolutionSet
+from smif.convert.register import Register, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -536,3 +536,12 @@ class TimeIntervalRegister(Register):
                 hourly_values[lower:upper] = apportioned_value / divisor
 
         return hourly_values
+
+
+__REGISTER = TimeIntervalRegister()
+
+
+def get_register():
+    """Return single copy of TimeIntervalRegister
+    """
+    return __REGISTER
