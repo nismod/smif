@@ -129,7 +129,7 @@ Development Notes
 
 """
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -358,9 +358,11 @@ class IntervalSet(ResolutionSet):
         ``start``, ``end`` and ``name``
     """
 
-    def __init__(self, name, data):
+    def __init__(self, name, data, base_year=2010):
         self._name = name
-        self._data = data
+        self._data = None
+        self.data = data
+        self._base_year = base_year
 
     @property
     def name(self):
@@ -375,28 +377,56 @@ class IntervalSet(ResolutionSet):
         return self._data
 
     @data.setter
-    def data(self, value):
-        self._data = value
+    def data(self, interval_data):
+        intervals = OrderedDict()
+
+        for interval in interval_data:
+            name = interval['id']
+
+            if name in intervals:
+                interval_tuple = (interval['start'], interval['end'])
+                intervals[name].interval = interval_tuple
+            else:
+                interval_tuple = (interval['start'], interval['end'])
+                intervals[name] = Interval(name,
+                                           interval_tuple,
+                                           self._base_year)
+        self._data = intervals
+        self._validate_intervals()
+
+    def _get_hourly_array(self):
+        array = np.zeros(8760, dtype=np.int)
+        for interval in self._data.values():
+            array += interval.to_hourly_array()
+        return array
+
+    def _validate_intervals(self):
+            array = self._get_hourly_array()
+            duplicate_hours = np.where(array > 1)[0]
+            if duplicate_hours:
+                hour = duplicate_hours[0]
+                msg = "Duplicate entry for hour {} in interval set {}."
+                raise ValueError(msg.format(hour, self.name))
 
     def get_entry_names(self):
         """Returns the names of the intervals
         """
         return (set([interval['id'] for interval in self.data]))
 
+    def __getitem___(self, key):
+        return self._data[key]
+
+    def __len__(self):
+        return len(self._data)
+
 
 class TimeIntervalRegister(Register):
     """Holds the set of time-intervals used by the SectorModels
-
-    Parameters
-    ----------
-    base_year: int, default=2010
-        Set the year which is used as a reference by all time interval sets
-        and repeated for each future year
     """
 
-    def __init__(self, base_year=2010):
-        self._base_year = base_year
+    def __init__(self):
         self._register = OrderedDict()
+        self._conversions = defaultdict(dict)
         self.logger = logging.getLogger(__name__)
 
     @property
@@ -409,26 +439,23 @@ class TimeIntervalRegister(Register):
         """
         return list(self._register.keys())
 
-    def get_intervals_in_set(self, set_name):
-        """
+    def get_entry(self, name):
+        """Returns the ResolutionSet of `name`
 
-        Parameters
-        ----------
-        set_name: str
-            The unique identifying name of the interval definitions
+        Arguments
+        ---------
+        name : str
+            The unique identifier of a ResolutionSet in the register
 
         Returns
         -------
-        :class:`collections.OrderedDict`
-            Returns a collection of the intervals in the order in which they
-            were defined
+        smif.convert.interval.IntervalSet
 
         """
-        self._check_interval_set_in_register(set_name)
-        return self._register[set_name]
-
-    def get_entry(self, name):
-        return self.get_intervals_in_set(name)
+        if name not in self._register:
+            msg = "Interval set '{}' not registered"
+            raise ValueError(msg.format(name))
+        return self._register[name]
 
     def register(self, interval_set):
         """Add a time-interval definition to the set of intervals types
@@ -441,44 +468,12 @@ class TimeIntervalRegister(Register):
         interval_set : :class:`smif.convert.interval.IntervalSet`
             A collection of intervals
         """
-        set_name = interval_set.name
-        intervals = interval_set.data
-
-        if set_name in self._register:
+        if interval_set.name in self._register:
             msg = "An interval set named {} has already been loaded"
-            raise ValueError(msg.format(set_name))
+            raise ValueError(msg.format(interval_set.name))
 
-        self._register[set_name] = OrderedDict()
-
-        for interval in intervals:
-            name = interval['id']
-            msg = "Adding interval '%s' to set '%s'"
-            self.logger.debug(msg, name, set_name)
-
-            if name in self._register[set_name]:
-                interval_tuple = (interval['start'], interval['end'])
-                self._register[set_name][name].interval = interval_tuple
-            else:
-                interval_tuple = (interval['start'], interval['end'])
-                self._register[set_name][name] = Interval(name,
-                                                          interval_tuple,
-                                                          self._base_year)
-
-        self.logger.info("Adding interval set '%s' to register", set_name)
-        self._validate_intervals()
-
-    def _check_interval_set_in_register(self, interval_set_name):
-        """
-
-        Parameters
-        ----------
-        interval_set_name: str
-            The name of the interval set to look for
-
-        """
-        if interval_set_name not in self._register:
-            msg = "The interval set '{}' is not in the register"
-            raise ValueError(msg.format(interval_set_name))
+        self._register[interval_set.name] = interval_set.data
+        self.logger.info("Adding interval set '%s' to register", interval_set.name)
 
     def convert(self, data, from_interval_set_name, to_interval_set_name):
         """Convert some data to a time_interval type
@@ -499,8 +494,8 @@ class TimeIntervalRegister(Register):
             An array of the resampled timeseries values.
 
         """
-        from_interval_set = self.get_intervals_in_set(from_interval_set_name)
-        to_interval_set = self.get_intervals_in_set(to_interval_set_name)
+        from_interval_set = self.get_entry(from_interval_set_name)
+        to_interval_set = self.get_entry(to_interval_set_name)
 
         converted = np.zeros(len(to_interval_set))
         hourly_values = self._convert_to_hourly_buckets(data, from_interval_set)
@@ -541,23 +536,3 @@ class TimeIntervalRegister(Register):
                 hourly_values[lower:upper] = apportioned_value / divisor
 
         return hourly_values
-
-    def _get_hourly_array(self, set_name):
-        """
-        """
-        array = np.zeros(8760, dtype=np.int)
-        for interval in self.get_intervals_in_set(set_name).values():
-            array += interval.to_hourly_array()
-        return array
-
-    def _validate_intervals(self):
-        for set_name in self._register.keys():
-            array = self._get_hourly_array(set_name)
-            duplicate_hours = np.where(array > 1)[0]
-            if len(duplicate_hours) == 0:
-                self.logger.debug("No duplicate hours in %s", set_name)
-            else:
-                hour = duplicate_hours[0]
-                msg = "Duplicate entry for hour {} in interval set {}."
-                self.logger.warning(msg.format(hour, set_name))
-                raise ValueError(msg.format(hour, set_name))
