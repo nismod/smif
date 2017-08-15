@@ -10,32 +10,25 @@ from enum import Enum
 import networkx
 import numpy as np
 from smif import StateData
+from smif.composite import Model
 from smif.convert import SpaceTimeConvertor
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
-from smif.sector_model import SectorModelBuilder
+from smif.metadata import MetadataSet
+from smif.scenario_model import ScenarioModel
+from smif.sector_model import SectorModel, SectorModelBuilder
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-class SosModel(object):
-    """Consists of the collection of timesteps and sector models
-
-    This is the system of systems model which brings all of the
-    sector models together. Sector models may be joined through dependencies.
+class SosModel(Model):
+    """Consists of the collection of models joined via dependencies
 
     This class is populated at runtime by the :class:`SosModelBuilder` and
-    called from :func:`smif.cli.run_model`.
-
-    Attributes
-    ==========
-    models : dict of :class:`smif.SectorModel`
-        The coupled models that simulate the system of systems
-    initial_conditions : list
-        List of interventions required to set up the initial system, with any
-        state attributes provided here too
+    called from :func:`smif.cli.run_model`.  SosModel inherits from
+    :class:`smif.composite.Model`.
 
     """
     def __init__(self):
@@ -50,6 +43,7 @@ class SosModel(object):
         self.dependency_graph = None
 
         # systems, interventions and (system) state
+        self.timesteps = []
         self.interventions = InterventionRegister()
         self.initial_conditions = []
         self.planning = Planning([])
@@ -57,6 +51,44 @@ class SosModel(object):
 
         # scenario data and results
         self._results = defaultdict(dict)
+        self.scenarios = {}
+        self._scenario_metadata = MetadataSet({})
+        self._scenario_data = {}
+
+    def add_model(self, model):
+        """Adds a sector model to the system-of-systems model
+
+        Parameters
+        ----------
+        model : :class:`smif.sector_model.SectorModel`
+            A sector model wrapper
+
+        """
+        assert isinstance(model, Model)
+        self.logger.info("Loading model: %s", model.name)
+        self.models[model.name] = model
+
+    @property
+    def scenario_metadata(self):
+        """Returns the temporal and spatial mapping to an input, output or scenario parameter
+        """
+        return self._scenario_metadata
+
+    @scenario_metadata.setter
+    def scenario_metadata(self, value):
+        self._scenario_metadata.add_metadata(value)
+
+    @property
+    def scenario_data(self):
+        """Get nested dict of scenario data
+
+        Returns
+        -------
+        dict
+            Nested dictionary in the format ``data[year][param] =
+            SpaceTimeValue(region, interval, value, unit)``
+        """
+        return self._scenario_data
 
     @property
     def results(self):
@@ -72,67 +104,15 @@ class SosModel(object):
         # convert from defaultdict to plain dict
         return dict(self._results)
 
-    def run(self, timestep):
-        """Runs the system-of-system model
-
-        0. Determine run mode
-
-        1. Determine running order
-
-        2. Run each sector model
-
-        3. Return success or failure
-
-        TODO: Move to ModelRunner
+    def simulate(self, timestep, data=None):
+        """Run the SosModel
 
         """
         run_order = self._get_model_sets_in_run_order()
         self.logger.info("Determined run order as %s", run_order)
         for model_set in run_order:
             model_set.run(timestep)
-
-    def run_sector_model(self, model_name):
-        """Runs the sector model
-
-        Parameters
-        ----------
-        model_name : str
-            The name of the model, corresponding to the folder name in the
-            models subfolder of the project folder
-        """
-        msg = "Model '{}' does not exist. Choose from {}"
-        assert model_name in self.models, \
-            msg.format(model_name, self.sector_models)
-
-        msg = "Running the %s sector model"
-        self.logger.info(msg, model_name)
-
-        sector_model = self.models[model_name]
-
-        # Run a simulation for a single model
-        for timestep in self.timesteps:
-            state, results = self.run_sector_model_timestep(sector_model, timestep)
-            self.set_state(sector_model, timestep, state)
-            self.set_data(sector_model, timestep, results)
-
-    def run_sector_model_timestep(self, model, timestep):
-        """Run the sector model for a specific timestep
-
-        Parameters
-        ----------
-        model: :class:`smif.sector_model.SectorModel`
-            The instance of the sector model wrapper to run
-        timestep: int
-            The year for which to run the model
-
-        """
-        decisions = self.get_decisions(model, timestep)
-        state = self.get_state(model, timestep)
-        data = self.get_data(model, timestep)
-
-        state, results = model.simulate(decisions, state, data)
-        self.logger.debug("Results from %s model:\n %s", model.name, results)
-        return state, results
+        return self.results
 
     def get_decisions(self, model, timestep):
         """Gets the interventions that correspond to the decisions
@@ -176,83 +156,6 @@ class SosModel(object):
         """
         for_timestep = self.timestep_after(from_timestep)
         self._state[for_timestep][model.name] = state
-
-    def get_data(self, model, timestep):
-        """Gets the data in the required format to pass to the simulate method
-
-        Returns
-        -------
-        dict
-            A nested dictionary of the format:
-            ``data[parameter] = numpy.ndarray``
-
-        Notes
-        -----
-        Note that the timestep is `not` passed to the SectorModel in the
-        nested data dictionary.
-        The current timestep is available in ``data['timestep']``.
-
-
-        TODO: Move into subclass of smif.composite.Model
-        """
-        new_data = {}
-        timestep_idx = self.timesteps.index(timestep)
-
-        for dependency in model.inputs.metadata:
-            name = dependency.name
-            provider = self.outputs[name]
-
-            for source in provider:
-
-                self.logger.debug("Getting '%s' dependency data for '%s' from '%s'",
-                                  name, model.name, source)
-
-                if source == 'scenario':
-                    from_data = self.scenario_data[name][timestep_idx]
-                    scenario_map = self.scenario_metadata
-                    from_spatial_resolution = scenario_map.get_spatial_res(name)
-                    from_temporal_resolution = scenario_map.get_temporal_res(name)
-                    from_units = scenario_map.get_units(name)
-                    self.logger.debug("Found data: %s", from_data)
-
-                else:
-                    source_model = self.models[source]
-                    # get latest set of results from list
-                    from_data = self.results[timestep][source][name]
-                    from_spatial_resolution = source_model.outputs.get_spatial_res(name)
-                    from_temporal_resolution = source_model.outputs.get_temporal_res(name)
-                    from_units = source_model.outputs.get_units(name)
-                    self.logger.debug("Found data: %s", from_data)
-
-                to_spatial_resolution = dependency.spatial_resolution
-                to_temporal_resolution = dependency.temporal_resolution
-                to_units = dependency.units
-                msg = "Converting from spatial resolution '%s' and  temporal resolution '%s'"
-                self.logger.debug(msg, from_spatial_resolution, from_temporal_resolution)
-                msg = "Converting to spatial resolution '%s' and  temporal resolution '%s'"
-                self.logger.debug(msg, to_spatial_resolution, to_temporal_resolution)
-
-                if from_units != to_units:
-                    raise NotImplementedError("Units conversion not implemented %s - %s",
-                                              from_units, to_units)
-
-                if name not in new_data:
-                    new_data[name] = self._convert_data(
-                        from_data,
-                        to_spatial_resolution,
-                        to_temporal_resolution,
-                        from_spatial_resolution,
-                        from_temporal_resolution)
-                else:
-                    new_data[name] += self._convert_data(
-                        from_data,
-                        to_spatial_resolution,
-                        to_temporal_resolution,
-                        from_spatial_resolution,
-                        from_temporal_resolution)
-
-        new_data['timestep'] = timestep
-        return new_data
 
     def set_data(self, model, timestep, results):
         """Sets results output from model as data available to other/future models
@@ -344,7 +247,7 @@ class SosModel(object):
             The mode in which to run the model
         """
 
-        number_of_timesteps = len(self._timesteps)
+        number_of_timesteps = len(self.timesteps)
 
         if number_of_timesteps > 1:
             # Run a sequential simulation
@@ -392,7 +295,7 @@ class SosModel(object):
         list
             A list of sector model names
         """
-        return list(self.models.keys())
+        return [x for x, y in self.models.items() if isinstance(y, SectorModel)]
 
     @property
     def inputs(self):
@@ -405,7 +308,7 @@ class SosModel(object):
         """
         parameter_model_map = defaultdict(list)
         for model_name, model in self.models.items():
-            for name in model.inputs.names:
+            for name in model.model_inputs.names:
                 parameter_model_map[name].append(model_name)
         return parameter_model_map
 
@@ -420,7 +323,7 @@ class SosModel(object):
         """
         parameter_model_map = defaultdict(list)
         for model_name, model in self.models.items():
-            for name in model.outputs.names:
+            for name in model.model_outputs.names:
                 parameter_model_map[name].append(model_name)
 
         for name in self.scenario_metadata.names:
@@ -471,7 +374,19 @@ class ModelSet(object):
             # can be run deterministically
             model = list(self._models)[0]
             logging.debug("Running %s for %d", model.name, timestep)
-            state, results = self._sos_model.run_sector_model_timestep(model, timestep)
+
+            for model_input in model.model_inputs:
+                data = {}
+                if model_input not in model.deps:
+                    msg = "Dependency not found for '{}'"
+                    raise ValueError(msg.format(model_input))
+                else:
+                    dependency = model.deps[model_input]
+                    self.logger.debug("Found dependency for '%s'",
+                                      model_input)
+                    data[model_input] = dependency.get_data(timestep)
+
+            state, results = model.simulate(timestep, data)
             self._sos_model.set_state(model, timestep, state)
             self._sos_model.set_data(model, timestep, results)
         else:
@@ -492,8 +407,7 @@ class ModelSet(object):
                 else:
                     self.logger.debug("Iteration %s, model set %s", i, self._model_names)
                     for model in self._models:
-                        state, results = self._sos_model.run_sector_model_timestep(
-                            model, timestep)
+                        state, results = model.simulate(timestep, data)
                         self._sos_model.set_state(model, timestep, state)
                         self._sos_model.set_data(model, timestep, results)
                         self.iterated_results[model.name].append(results)
@@ -512,7 +426,7 @@ class ModelSet(object):
         else:
             # generate zero-values for each parameter/region/interval combination
             results = {}
-            for output in model.outputs.metadata:
+            for output in model.model_outputs.metadata:
                 regions = output.get_region_names()
                 intervals = output.get_interval_names()
                 results[output.name] = np.zeros((len(regions), len(intervals)))
@@ -569,7 +483,7 @@ class ModelSet(object):
         """
         latest_results = results[-1]
         previous_results = results[-2]
-        param_names = [param.name for param in model.outputs.metadata]
+        param_names = [param.name for param in model.model_outputs.metadata]
 
         return all(
             np.allclose(
@@ -587,14 +501,19 @@ class SosModelBuilder(object):
 
     Builds a :class:`SosModel`.
 
+    Arguments
+    ---------
+    registers : dict
+        A dictionary containing the registers
+
     Examples
     --------
     Call :py:meth:`SosModelBuilder.construct` to populate
-    a :class:`SosModel` object and :py:meth:`SosModelBuilder.finish`
+    a :py:class:`SosModel` object and :py:meth:`SosModelBuilder.finish`
     to return the validated and dependency-checked system-of-systems model.
 
-    >>> builder = SosModelBuilder()
-    >>> builder.construct(config_data)
+    >>> builder = SosModelBuilder(registers)
+    >>> builder.construct(config_data, timesteps)
     >>> sos_model = builder.finish()
 
     """
@@ -611,6 +530,8 @@ class SosModelBuilder(object):
         ----------
         config_data : dict
             A valid system-of-systems model configuration dictionary
+        timesteps : list
+            A list of timestep integers
         """
         model_list = config_data['sector_model_data']
 
@@ -619,8 +540,10 @@ class SosModelBuilder(object):
         self.set_convergence_rel_tolerance(config_data)
 
         self.load_models(model_list)
+        self.load_scenario_models(config_data['scenario_metadata'],
+                                  config_data['scenario_data'],
+                                  timesteps)
         self.add_planning(config_data['planning'])
-        self.logger.debug(config_data['scenario_data'])
 
     def set_max_iterations(self, config_data):
         """Set the maximum iterations for iterating `class`::smif.ModelSet to
@@ -664,26 +587,36 @@ class SosModelBuilder(object):
                                          self.registers)
             builder.construct(model_data)
             model = builder.finish()
-            self.add_model(model)
+            self.sos_model.add_model(model)
             self.add_model_data(model, model_data)
 
-    def add_model(self, model):
-        """Adds a sector model to the system-of-systems model
-
-        Parameters
-        ----------
-        model : :class:`smif.sector_model.SectorModel`
-            A sector model wrapper
+    def load_scenario_models(self, scenario_list, scenario_data, timesteps):
+        """Loads the scenario models into the system-of-systems model
 
         """
-        self.logger.info("Loading model: %s", model.name)
-        self.sos_model.models[model.name] = model
+        self.logger.info("Loading scenarios")
+        for scenario_meta in scenario_list:
+            scenario_output = MetadataSet([])
+            scenario_output.add_metadata(scenario_meta)
+            name = scenario_meta['name']
+            scenario = ScenarioModel(name,
+                                     scenario_output)
+
+            data = self._data_list_to_array(
+                    name,
+                    scenario_data[name],
+                    timesteps,
+                    scenario_meta
+                )
+
+            scenario.add_data(data)
+            self.sos_model.add_model(scenario)
 
     def add_model_data(self, model, model_data):
         """Adds sector model data to the system-of-systems model which is
         convenient to have available at the higher level.
         """
-        self.add_initial_conditions(model.name, model_data['initial_conditions'])
+        # self.add_initial_conditions(model.name, model_data['initial_conditions'])
         self.add_interventions(model.name, model_data['interventions'])
 
     def add_interventions(self, model_name, interventions):
@@ -739,6 +672,120 @@ class SosModelBuilder(object):
         self.logger.info("Adding planning")
         self.sos_model.planning = Planning(planning)
 
+    def _add_scenario_data(self, data, timesteps):
+            """Load the scenario data into the system of systems model
+
+            Expect a dictionary, where each key maps a parameter
+            name to a list of data, each observation with:
+
+            - value
+            - units
+            - timestep (must use a timestep from the SoS model timesteps)
+            - region (must use a region id from scenario regions)
+            - interval (must use an id from scenario time intervals)
+
+            Add a dictionary of :class:`numpy.ndarray`
+
+                    data[param] = np.zeros((num_timesteps, num_intervals, num_regions))
+                    data[param].fill(np.nan)
+                    # ...initially empty array then filled with data
+
+            """
+            self.logger.info("Adding scenario data")
+            nested = {}
+
+            for param, observations in data.items():
+                if param not in self.model_run.scenario_metadata.names:
+                    msg = "Parameter {} not registered in scenario metadata {}"
+                    raise ValueError(msg.format(
+                        param,
+                        self.model_run.scenario_metadata))
+                param_metadata = self.model_run.scenario_metadata[param]
+
+                nested[param] = self._data_list_to_array(
+                    param,
+                    observations,
+                    timesteps,
+                    param_metadata
+                )
+
+            self.model_run.scenarios = nested
+
+    def _data_list_to_array(self, param, observations, timestep_names,
+                            param_metadata):
+        """Convert list of observations to :class:`numpy.ndarray`
+        """
+        interval_names, region_names = self._get_dimension_names_for_param(
+            param_metadata, param)
+
+        if len(timestep_names) == 0:
+            self.logger.error("No timesteps found when loading %s", param)
+
+        data = np.zeros((
+            len(timestep_names),
+            len(region_names),
+            len(interval_names)
+        ))
+        data.fill(np.nan)
+
+        if len(observations) != data.size:
+            self.logger.warning(
+                "Number of observations is not equal to timesteps x  " +
+                "intervals x regions when loading %s", param)
+
+        for obs in observations:
+            if 'year' not in obs:
+                raise ValueError("Scenario data item missing year: {}".format(obs))
+            year = obs['year']
+            if year not in timestep_names:
+                raise ValueError(
+                    "Year {} not defined in model timesteps".format(year))
+
+            if 'region' not in obs:
+                raise ValueError("Scenario data item missing region: {}".format(obs))
+            region = obs['region']
+            if region not in region_names:
+                raise ValueError(
+                    "Region {} not defined in set {} for parameter {}".format(
+                        region,
+                        param_metadata.spatial_resolution,
+                        param))
+
+            if 'interval' not in obs:
+                raise ValueError("Scenario data item missing interval: {}".format(obs))
+            interval = obs['interval']
+            if interval not in interval_names:
+                raise ValueError(
+                    "Interval {} not defined in set {} for parameter {}".format(
+                        interval,
+                        param_metadata.temporal_resolution,
+                        param))
+
+            timestep_idx = timestep_names.index(year)
+            interval_idx = interval_names.index(interval)
+            region_idx = region_names.index(region)
+
+            data[timestep_idx, region_idx, interval_idx] = obs['value']
+
+        return data
+
+    def _get_dimension_names_for_param(self, metadata, param):
+        interval_set_name = metadata['temporal_resolution']
+        interval_set = self.registers['intervals'].get_intervals_in_set(interval_set_name)
+        interval_names = [interval.name for key, interval in interval_set.items()]
+
+        region_set_name = metadata['spatial_resolution']
+        region_set = self.registers['regions'].get_regions_in_set(region_set_name)
+        region_names = [region.name for region in region_set]
+
+        if len(interval_names) == 0:
+            self.logger.error("No interval names found when loading %s", param)
+
+        if len(region_names) == 0:
+            self.logger.error("No region names found when loading %s", param)
+
+        return interval_names, region_names
+
     def _check_planning_interventions_exist(self):
         """Check existence of all the interventions in the pre-specifed planning
 
@@ -772,20 +819,21 @@ class SosModelBuilder(object):
         Each model references interval and region sets in the configuration
         of inputs and outputs.
         """
-        available_intervals = self.sos_model.intervals.names
+        available_intervals = self.registers['intervals'].names
         msg = "Available time interval sets in SosModel: %s"
         self.logger.debug(msg, available_intervals)
-        available_regions = self.sos_model.regions.names
+        available_regions = self.registers['regions'].names
         msg = "Available region sets in SosModel: %s"
         self.logger.debug(msg, available_regions)
 
         for model_name, model in self.sos_model.models.items():
+            self.logger.debug(model_name)
             exp_regions = []
             exp_intervals = []
-            exp_regions.extend(model.inputs.spatial_resolutions)
-            exp_regions.extend(model.outputs.spatial_resolutions)
-            exp_intervals.extend(model.inputs.temporal_resolutions)
-            exp_intervals.extend(model.outputs.temporal_resolutions)
+            exp_regions.extend(model.model_inputs.spatial_resolutions)
+            exp_regions.extend(model.model_outputs.spatial_resolutions)
+            exp_intervals.extend(model.model_inputs.temporal_resolutions)
+            exp_intervals.extend(model.model_outputs.temporal_resolutions)
 
             for region in exp_regions:
                 if region not in available_regions:
@@ -807,8 +855,8 @@ class SosModelBuilder(object):
         dependency_graph.add_nodes_from(models_available)
 
         for model_name, model in self.sos_model.models.items():
-            for dep in model.inputs.metadata:
-                providers = self.sos_model.outputs[dep.name]
+            for dep in model.deps:
+                providers = self.sos_model.model_outputs[dep.name]
                 msg = "Dependency '%s' provided by '%s'"
                 self.logger.debug(msg, dep.name, providers)
 
@@ -840,16 +888,16 @@ class SosModelBuilder(object):
         if source.units != sink.units:
             raise AssertionError("Units %s, %s not compatible, conversion required by %s",
                                  source.units, sink.units, source.name)
-        if source.spatial_resolution not in self.sos_model.regions.names:
+        if source.spatial_resolution not in self.registers['regions'].names:
             raise AssertionError("Region set %s not found, required by %s",
                                  source.spatial_resolution, source.name)
-        if sink.spatial_resolution not in self.sos_model.regions.names:
+        if sink.spatial_resolution not in self.registers['regions'].names:
             raise AssertionError("Region set %s not found, required by %s",
                                  sink.spatial_resolution, sink.name)
-        if source.temporal_resolution not in self.sos_model.intervals.names:
+        if source.temporal_resolution not in self.registers['intervals'].names:
             raise AssertionError("Interval set %s not found, required by %s",
                                  source.temporal_resolution, source.name)
-        if sink.temporal_resolution not in self.sos_model.intervals.names:
+        if sink.temporal_resolution not in self.registers['intervals'].names:
             raise AssertionError("Interval set %s not found, required by %s",
                                  sink.temporal_resolution, sink.name)
 
