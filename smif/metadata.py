@@ -121,6 +121,9 @@ class MetadataSet(object):
             raise KeyError("No metadata found for name '{}'".format(name))
         return metadata_item
 
+    def __iter__(self):
+        return iter(self.metadata)
+
     def add_metadata(self, metadata_item):
         """Add an item to the set
 
