@@ -243,7 +243,7 @@ class SectorModelBuilder(object):
 
             klass = module.__dict__[classname]
 
-            self._sector_model = klass()
+            self._sector_model = klass(self._sector_model_name)
             self._sector_model.name = self._sector_model_name
 
         else:

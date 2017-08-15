@@ -113,14 +113,14 @@ class TestMetadata(object):
         rreg = region_set
         metadata = Metadata("total_lane_kilometres", region_set, interval_set, "unparseable")
         metadata.region_register = rreg
-        assert metadata.get_region_names() == {"a", "b"}
+        assert metadata.get_region_names() == ["a", "b"]
 
     def test_access_interval_names(self, interval_set, region_set):
         """Metadata should expose interval names when a register is available
         """
         metadata = Metadata("total_lane_kilometres", region_set, interval_set,
                             "unparseable")
-        assert metadata.get_interval_names() == {"winter", "spring", "summer", "autumn"}
+        assert metadata.get_interval_names() == ["winter", "spring", "summer", "autumn"]
 
 
 class TestMetadataSet(object):
@@ -231,8 +231,8 @@ class TestMetadataSet(object):
         metadata_set = MetadataSet(metadata_list)
         metadata = metadata_set["total_lane_kilometres"]
 
-        assert metadata.get_region_names() == {"a", "b"}
-        assert metadata.get_interval_names() == {"winter", "spring", "summer", "autumn"}
+        assert metadata.get_region_names() == ["a", "b"]
+        assert metadata.get_interval_names() == ["winter", "spring", "summer", "autumn"]
 
     def test_iterate_over_empty(self):
 
