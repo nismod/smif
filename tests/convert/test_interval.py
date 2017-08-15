@@ -348,6 +348,18 @@ class TestTimeRegisterConversion:
         assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
 
 
+class TestIntervalSet:
+
+    def test_get_names(self, months):
+
+        expected_names = \
+            ['1_0', '1_1', '1_2', '1_3', '1_4', '1_5',
+             '1_6', '1_7', '1_8', '1_9', '1_10', '1_11']
+        interval_set = IntervalSet('months', months)
+        actual_names = interval_set.get_entry_names()
+        assert expected_names == actual_names
+
+
 class TestIntervalRegister:
 
     def test_interval_loads(self):

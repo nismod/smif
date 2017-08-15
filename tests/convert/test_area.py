@@ -169,6 +169,12 @@ class TestRegionSet():
         assert rset[1].name == 'half'
         assert rset[2].name == 'two'
 
+    def test_get_names(self, regions):
+        rset = RegionSet('test', regions)
+        actual = rset.get_entry_names()
+        expected = ['unit', 'half', 'two']
+        assert actual == expected
+
 
 class TestRegionRegister():
     """Test creating registers, registering region sets, converting data

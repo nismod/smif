@@ -411,7 +411,7 @@ class IntervalSet(ResolutionSet):
     def get_entry_names(self):
         """Returns the names of the intervals
         """
-        return [interval['id'] for interval in self.data]
+        return [interval.name for interval in self.data.values()]
 
     def __getitem___(self, key):
         return self._data[key]
