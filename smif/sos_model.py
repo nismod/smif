@@ -31,14 +31,15 @@ class SosModel(Model):
     :class:`smif.composite.Model`.
 
     """
-    def __init__(self):
+    def __init__(self, name):
         # housekeeping
+        super().__init__(name, MetadataSet([]), MetadataSet([]))
         self.logger = logging.getLogger(__name__)
         self.max_iterations = 25
         self.convergence_relative_tolerance = 1e-05
         self.convergence_absolute_tolerance = 1e-08
 
-        # models
+        # models - includes types of SectorModel and ScenarioModel
         self.models = {}
         self.dependency_graph = None
 
@@ -108,11 +109,41 @@ class SosModel(Model):
         """Run the SosModel
 
         """
+        self._check_dependencies()
         run_order = self._get_model_sets_in_run_order()
-        self.logger.info("Determined run order as %s", run_order)
+        names = [model_set._model_names for model_set in run_order]
+        self.logger.info("Determined run order as %s", names)
         for model_set in run_order:
             model_set.run(timestep)
         return self.results
+
+    def _check_dependencies(self):
+        """For each model, compare dependency list of from_models
+        against list of available models
+        """
+        dependency_graph = networkx.DiGraph()
+        dependency_graph.add_nodes_from(self.models.values())
+
+        for model_name, model in self.models.items():
+            for model_input in model.model_inputs:
+                if model_input.name in model.deps:
+                    dependency = model.deps[model_input.name]
+                    provider = dependency.source_model
+                    msg = "Dependency '%s' provided by '%s'"
+                    self.logger.debug(msg, model_input.name, provider.name)
+
+                    dependency_graph.add_edge(provider,
+                                              model,
+                                              {'source': dependency.source,
+                                               'sink': model_input})
+                else:
+                    # report missing dependency type
+                    msg = "Missing dependency: '{}' depends on '{}', " + \
+                          "which is not supplied."
+                    raise AssertionError(msg.format(model_name,
+                                                    model_input.name))
+
+        self.dependency_graph = dependency_graph
 
     def get_decisions(self, model, timestep):
         """Gets the interventions that correspond to the decisions
@@ -205,15 +236,15 @@ class SosModel(Model):
         if networkx.is_directed_acyclic_graph(self.dependency_graph):
             # topological sort gives a single list from directed graph, currently
             # ignoring opportunities to run independent models in parallel
-            run_order = networkx.topological_sort(self.dependency_graph, reverse=True)
+            run_order = networkx.topological_sort(self.dependency_graph, reverse=False)
 
             # turn into a list of sets for consistency with the below
             ordered_sets = [
                 ModelSet(
-                    {self.models[model_name]},
+                    {model},
                     self
                 )
-                for model_name in run_order
+                for model in run_order
             ]
 
         else:
@@ -228,12 +259,12 @@ class SosModel(Model):
             ordered_sets = [
                 ModelSet(
                     {
-                        self.models[model_name]
-                        for model_name in condensation.node[node_id]['members']
+                        model
+                        for model in condensation.node[node_id]['members']
                     },
                     self
                 )
-                for node_id in networkx.topological_sort(condensation, reverse=True)
+                for node_id in networkx.topological_sort(condensation, reverse=False)
             ]
 
         return ordered_sets
@@ -296,6 +327,19 @@ class SosModel(Model):
             A list of sector model names
         """
         return [x for x, y in self.models.items() if isinstance(y, SectorModel)]
+
+    @property
+    def scenario_models(self):
+        """The list of scenario model names
+
+        Returns
+        -------
+        list
+            A list of scenario model names
+        """
+        return [x for x, y in self.models.items()
+                if isinstance(y, ScenarioModel)
+                ]
 
     @property
     def inputs(self):
@@ -517,8 +561,8 @@ class SosModelBuilder(object):
     >>> sos_model = builder.finish()
 
     """
-    def __init__(self, registers):
-        self.sos_model = SosModel()
+    def __init__(self, registers, name=''):
+        self.sos_model = SosModel(name)
         self.registers = registers
 
         self.logger = logging.getLogger(__name__)
@@ -771,62 +815,6 @@ class SosModelBuilder(object):
         """
         self._check_planning_interventions_exist()
         self._check_planning_timeperiods_exist()
-        self._check_dependencies()
-
-    def _check_dependencies(self):
-        """For each model, compare dependency list of from_models
-        against list of available models
-        """
-        dependency_graph = networkx.DiGraph()
-        models_available = self.sos_model.sector_models
-        dependency_graph.add_nodes_from(models_available)
-
-        for model_name, model in self.sos_model.models.items():
-            for dep in model.deps:
-                providers = self.sos_model.model_outputs[dep.name]
-                msg = "Dependency '%s' provided by '%s'"
-                self.logger.debug(msg, dep.name, providers)
-
-                if len(providers) == 0:
-                    # report missing dependency type
-                    msg = "Missing dependency: {} depends on {}, " + \
-                        "which is not supplied."
-                    raise AssertionError(msg.format(model_name, dep.name))
-
-                for source in providers:
-                    if source == 'scenario':
-                        dep_source = self.sos_model.scenario_metadata[dep.name]
-                    else:
-                        dep_source = self.sos_model.models[source]. \
-                                     outputs[dep.name]
-                    self.validate_dependency(dep_source, dep)
-
-                    if source == 'scenario':
-                        continue
-
-                    dependency_graph.add_edge(model_name, source)
-
-        self.sos_model.dependency_graph = dependency_graph
-
-    def validate_dependency(self, source, sink):
-        """For a source->sink pair of dependency metadata, validate viability
-        of the conversion
-        """
-        if source.units != sink.units:
-            raise AssertionError("Units %s, %s not compatible, conversion required by %s",
-                                 source.units, sink.units, source.name)
-        if source.spatial_resolution not in self.registers['regions'].names:
-            raise AssertionError("Region set %s not found, required by %s",
-                                 source.spatial_resolution, source.name)
-        if sink.spatial_resolution not in self.registers['regions'].names:
-            raise AssertionError("Region set %s not found, required by %s",
-                                 sink.spatial_resolution, sink.name)
-        if source.temporal_resolution not in self.registers['intervals'].names:
-            raise AssertionError("Interval set %s not found, required by %s",
-                                 source.temporal_resolution, source.name)
-        if sink.temporal_resolution not in self.registers['intervals'].names:
-            raise AssertionError("Interval set %s not found, required by %s",
-                                 sink.temporal_resolution, sink.name)
 
     def finish(self):
         """Returns a configured system-of-systems model ready for operation

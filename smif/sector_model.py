@@ -43,8 +43,8 @@ class SectorModel(Model, metaclass=ABCMeta):
     """A representation of the sector model with inputs and outputs
 
     """
-    def __init__(self):
-        super().__init__(None, MetadataSet([]), MetadataSet([]))
+    def __init__(self, name, inputs=MetadataSet([]), outputs=MetadataSet([])):
+        super().__init__(name, inputs, outputs)
 
         self.interventions = []
         self.system = []
@@ -69,8 +69,8 @@ class SectorModel(Model, metaclass=ABCMeta):
         Arguments
         ---------
         name: str
-        spatial_resolution: :class:`smif.convert.area.RegionRegister`
-        temporal_resolution: :class:`smif.convert.interval.TimeIntervalRegister`
+        spatial_resolution: :class:`smif.convert.area.RegionSet`
+        temporal_resolution: :class:`smif.convert.interval.IntervalSet`
         units: str
 
         """
@@ -129,7 +129,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def simulate(self, decisions, state, data):
+    def simulate(self, data):
         """Implement this method to run the model
 
         Arguments
