@@ -23,7 +23,7 @@ class TestCompositeSectorModel():
 
     def test_add_input(self):
 
-        model = EmptySectorModel()
+        model = EmptySectorModel('test_model')
         model.add_input('input_name', [], [], 'units')
 
         inputs = model.model_inputs
@@ -35,7 +35,7 @@ class TestCompositeSectorModel():
 
     def test_add_output(self):
 
-        model = EmptySectorModel()
+        model = EmptySectorModel('test_model')
         model.add_output('output_name', Mock(), Mock(), 'units')
 
         outputs = model.model_outputs
@@ -45,7 +45,7 @@ class TestCompositeSectorModel():
 
     def test_run_sector_model(self):
 
-        model = EmptySectorModel()
+        model = EmptySectorModel('test_model')
         model.add_input('input_name', [], [], 'units')
         data = {'input_name': [0]}
         actual = model.simulate({}, {}, data)
@@ -124,16 +124,21 @@ class TestSectorModelBuilder():
         msg = "Cannot find '/fictional/path/to/model.py' for the 'water_supply' model"
         assert msg in str(ex.value)
 
+
+class TestInputs:
+
     def test_add_no_inputs(self, setup_project_folder):
         model_path = str(setup_project_folder.join('models', 'water_supply', '__init__.py'))
         registers = {'regions': Mock(),
                      'intervals': Mock()}
 
-        builder = SectorModelBuilder('water_supply', registers)
+        builder = SectorModelBuilder('water_supply_test', registers)
         builder.load_model(model_path, 'WaterSupplySectorModel')
         builder.add_inputs(None)
-        assert isinstance(builder._sector_model.model_inputs, MetadataSet)
-        assert len(builder._sector_model.model_inputs) == 0
+        sector_model = builder.finish()
+        assert isinstance(sector_model.model_inputs, MetadataSet)
+        actual_inputs = sector_model.model_inputs
+        assert [x.name for x in actual_inputs.metadata] == 0
 
 
 class TestSectorModel(object):
@@ -144,7 +149,7 @@ class TestSectorModel(object):
             {'name': 'water_asset_b'},
             {'name': 'water_asset_c'}
         ]
-        model = EmptySectorModel()
+        model = EmptySectorModel('test_model')
         model.interventions = assets
 
         intervention_names = model.intervention_names
@@ -171,7 +176,7 @@ class TestSectorModel(object):
                 'capital_cost': 3000,
             }
         ]
-        model = EmptySectorModel()
+        model = EmptySectorModel('test_model')
         model.interventions = interventions
         actual = model.interventions
 
