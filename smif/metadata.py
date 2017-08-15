@@ -35,9 +35,9 @@ class Metadata(object):
     name: str
         The dataset name
     spatial_resolution: :class:`smif.convert.region.RegionSet`
-        Name of the region set that defines the spatial resolution
+        The region set that defines the spatial resolution
     temporal_resolution: :class:`smif.convert.interval.IntervalSet`
-        Name of the interval set that defines the temporal resolution
+       The interval set that defines the temporal resolution
     units: str
         Name of the units for the dataset values
 
