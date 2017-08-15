@@ -1,7 +1,89 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 
+import networkx
 from pytest import raises
-from smif.composite import ScenarioModel, SectorModel, SosModel
+from smif.scenario_model import ScenarioModel
+from smif.sector_model import SectorModel as AbstractSectorModel
+from smif.sos_model import SosModel
+
+
+class SectorModel(AbstractSectorModel):
+
+    def simulate(self, timestep, data=None):
+        return data
+
+    def extract_obj(self):
+        pass
+
+    def initialise(self):
+        pass
+
+
+class TestDependencyGraph:
+
+    def test_simple_graph(self):
+        elec_scenario = ScenarioModel('scenario', [
+                                 'output'])
+        elec_scenario.add_data({'output': 123})
+
+        energy_model = SectorModel('model')
+        energy_model.add_input('input', Mock(), Mock(), 'unit')
+        energy_model.add_dependency(elec_scenario, 'output', 'input')
+
+        sos_model = SosModel('energy_sos_model')
+        sos_model.add_model(energy_model)
+        sos_model.add_model(elec_scenario)
+
+        # Builds the dependency graph
+        sos_model._check_dependencies()
+
+        graph = sos_model.dependency_graph
+
+        assert energy_model in graph
+        assert elec_scenario in graph
+
+        assert graph.edges() == [(elec_scenario, energy_model)]
+
+    def test_get_model_sets(self):
+
+        elec_scenario = ScenarioModel('scenario', [
+                                 'output'])
+        elec_scenario.add_data({'output': 123})
+
+        energy_model = SectorModel('model')
+        energy_model.add_input('input', Mock(), Mock(), 'unit')
+        energy_model.add_dependency(elec_scenario, 'output', 'input')
+
+        sos_model = SosModel('energy_sos_model')
+        sos_model.add_model(energy_model)
+        sos_model.add_model(elec_scenario)
+
+        sos_model._check_dependencies()
+
+        actual = sos_model._get_model_sets_in_run_order()
+        expected = [{'scenario'}, {'model'}]
+
+        for modelset, name in zip(actual, expected):
+            assert modelset._model_names == name
+
+    def test_topological_sort(self):
+        elec_scenario = ScenarioModel('scenario', [
+                                 'output'])
+        elec_scenario.add_data({'output': 123})
+
+        energy_model = SectorModel('model')
+        energy_model.add_input('input', Mock(), Mock(), 'unit')
+        energy_model.add_dependency(elec_scenario, 'output', 'input')
+
+        sos_model = SosModel('energy_sos_model')
+        sos_model.add_model(energy_model)
+        sos_model.add_model(elec_scenario)
+
+        sos_model._check_dependencies()
+
+        graph = sos_model.dependency_graph
+        actual = networkx.topological_sort(graph, reverse=False)
+        assert actual == [elec_scenario, energy_model]
 
 
 class TestSosModel:
@@ -12,23 +94,12 @@ class TestSosModel:
         """
 
         sos_model = SosModel('test')
-        model = SectorModel('test_model', ['input'], ['output'])
+        model = SectorModel('test_model')
+        model.add_input('input', Mock(), Mock(), 'units')
         sos_model.add_model(model)
-        with raises(ValueError):
-            data = {'input_not_here': 0}
-            sos_model.simulate(data)
-
-    def test_simulate_data_not_present_with_mock(self):
-        """Raise a ValueError if an input is defined but no dependency links
-        it to a data source
-        """
-
-        sos_model = SosModel('test')
-        mock_model = MagicMock(model_inputs=['input'])
-        sos_model._models = {'test_model': mock_model}
-        with raises(ValueError):
-            data = {'input_not_here': 0}
-            sos_model.simulate(data)
+        data = {'input_not_here': 0}
+        with raises(AssertionError):
+            sos_model.simulate(2010, data)
 
 
 class TestCompositeIntegration:
@@ -36,12 +107,11 @@ class TestCompositeIntegration:
     def test_simplest_case(self):
         """One scenario only
         """
-        elec_scenario = ScenarioModel('electricity_demand_scenario', [
-                                 'electricity_demand_output'])
+        elec_scenario = ScenarioModel('electricity_demand_scenario', MagicMock())
         elec_scenario.add_data({'electricity_demand_output': 123})
         sos_model = SosModel('simple')
         sos_model.add_model(elec_scenario)
-        actual = sos_model.simulate()
+        actual = sos_model.simulate(2010)
         expected = {'electricity_demand_scenario':
                     {'electricity_demand_output': 123}}
         assert actual == expected
