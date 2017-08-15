@@ -112,7 +112,19 @@ class RegionRegister(Register):
             raise ValueError("Region set {} not registered".format(set_name))
 
     def get_entry(self, name):
-        return self.get_regions_in_set(name)
+        """Returns the ResolutionSet of `name`
+
+        Arguments
+        ---------
+        name : str
+            The unique identifier of a ResolutionSet in the register
+
+        Returns
+        -------
+        smif.convert.area.RegionSet
+
+        """
+        return self._register[name]
 
     def register(self, region_set):
         """Register a set of regions as a source/target for conversion

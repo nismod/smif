@@ -23,6 +23,13 @@ class Register(metaclass=ABCMeta):
 
     @abstractmethod
     def get_entry(self, name):
+        """Implement to return the smif.convert.ResolutionSet associated with the `name`
+
+        Arguments
+        ---------
+        name : str
+            The unique identifier of the ResolutionSet
+        """
         raise NotImplementedError
 
 
