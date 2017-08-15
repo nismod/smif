@@ -672,45 +672,6 @@ class SosModelBuilder(object):
         self.logger.info("Adding planning")
         self.sos_model.planning = Planning(planning)
 
-    def _add_scenario_data(self, data, timesteps):
-            """Load the scenario data into the system of systems model
-
-            Expect a dictionary, where each key maps a parameter
-            name to a list of data, each observation with:
-
-            - value
-            - units
-            - timestep (must use a timestep from the SoS model timesteps)
-            - region (must use a region id from scenario regions)
-            - interval (must use an id from scenario time intervals)
-
-            Add a dictionary of :class:`numpy.ndarray`
-
-                    data[param] = np.zeros((num_timesteps, num_intervals, num_regions))
-                    data[param].fill(np.nan)
-                    # ...initially empty array then filled with data
-
-            """
-            self.logger.info("Adding scenario data")
-            nested = {}
-
-            for param, observations in data.items():
-                if param not in self.model_run.scenario_metadata.names:
-                    msg = "Parameter {} not registered in scenario metadata {}"
-                    raise ValueError(msg.format(
-                        param,
-                        self.model_run.scenario_metadata))
-                param_metadata = self.model_run.scenario_metadata[param]
-
-                nested[param] = self._data_list_to_array(
-                    param,
-                    observations,
-                    timesteps,
-                    param_metadata
-                )
-
-            self.model_run.scenarios = nested
-
     def _data_list_to_array(self, param, observations, timestep_names,
                             param_metadata):
         """Convert list of observations to :class:`numpy.ndarray`
