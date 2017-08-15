@@ -7,8 +7,8 @@ The :meth:`~SpaceTimeConvertor.convert` method returns a new
 :class:`numpy.ndarray` for passing to a sector model.
 """
 import logging
-import numpy as np
 from abc import ABCMeta, abstractmethod
+import numpy as np
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
