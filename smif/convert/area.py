@@ -40,10 +40,7 @@ class RegionSet(ResolutionSet):
     """
     def __init__(self, set_name, fiona_shape_iter):
         self._name = set_name
-        self._regions = [
-            NamedShape(region['properties']['name'], shape(region['geometry']))
-            for region in fiona_shape_iter
-        ]
+        self.data = fiona_shape_iter
 
         self._idx = index.Index()
         for pos, region in enumerate(self._regions):
@@ -103,14 +100,6 @@ class RegionRegister(Register):
         """
         return list(self._register.keys())
 
-    def get_regions_in_set(self, set_name):
-        """Return regions for a given set
-        """
-        if set_name in self._register:
-            return self._register[set_name]
-        else:
-            raise ValueError("Region set {} not registered".format(set_name))
-
     def get_entry(self, name):
         """Returns the ResolutionSet of `name`
 
@@ -124,11 +113,17 @@ class RegionRegister(Register):
         smif.convert.area.RegionSet
 
         """
+        if name not in self._register:
+            raise ValueError("Region set '{}' not registered".format(name))
         return self._register[name]
 
     def register(self, region_set):
         """Register a set of regions as a source/target for conversion
         """
+        if region_set.name in self._register:
+            msg = "A region set named {} has already been loaded"
+            raise ValueError(msg.format(region_set.name))
+
         already_registered = self.names
         self._register[region_set.name] = region_set
         for other_set_name in already_registered:
@@ -145,10 +140,10 @@ class RegionRegister(Register):
         to_set_name: str
 
         """
-        from_set = self._register[from_set_name]
-        from_set_names = [region.name for region in from_set]
-        to_set = self._register[to_set_name]
-        to_set_names = [region.name for region in to_set]
+        from_set = self.get_entry(from_set_name)
+        from_set_names = from_set.get_entry_names()
+        to_set = self.get_entry(to_set_name)
+        to_set_names = to_set.get_entry_names()
 
         converted = np.zeros(len(to_set))
         coefficents = self._conversions[from_set.name][to_set.name]
