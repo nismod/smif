@@ -19,8 +19,10 @@ ModeRun has attributes:
 """
 from logging import getLogger
 
-from smif.convert.area import RegionRegister, RegionSet
-from smif.convert.interval import IntervalSet, TimeIntervalRegister
+from smif.convert.area import get_register as get_region_register
+from smif.convert.area import RegionSet
+from smif.convert.interval import get_register as get_interval_register
+from smif.convert.interval import IntervalSet
 from smif.sos_model import SosModelBuilder
 
 
@@ -42,8 +44,8 @@ class ModelRun(object):
         self.logger = getLogger(__name__)
 
         # space and time
-        self.regions = RegionRegister()
-        self.intervals = TimeIntervalRegister()
+        self.regions = get_region_register()
+        self.intervals = get_interval_register()
 
     @property
     def name(self):
@@ -135,9 +137,7 @@ class ModelRunBuilder(object):
     def _add_sos_model(self, config_data):
         """
         """
-        registers = {'intervals': self.model_run.intervals,
-                     'regions': self.model_run.regions}
-        builder = SosModelBuilder(registers)
+        builder = SosModelBuilder()
         builder.construct(config_data, self.model_run.model_horizon)
         self.model_run.sos_model = builder.finish()
 

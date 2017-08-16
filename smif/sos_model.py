@@ -12,6 +12,8 @@ import numpy as np
 from smif import StateData
 from smif.composite import Model
 from smif.convert import SpaceTimeConvertor
+from smif.convert.area import get_register as get_region_register
+from smif.convert.interval import get_register as get_interval_register
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.metadata import MetadataSet
@@ -547,8 +549,8 @@ class SosModelBuilder(object):
 
     Arguments
     ---------
-    registers : dict
-        A dictionary containing the registers
+    name: str, default=''
+        The unique name of the SosModel
 
     Examples
     --------
@@ -556,14 +558,15 @@ class SosModelBuilder(object):
     a :py:class:`SosModel` object and :py:meth:`SosModelBuilder.finish`
     to return the validated and dependency-checked system-of-systems model.
 
-    >>> builder = SosModelBuilder(registers)
+    >>> builder = SosModelBuilder('test_model')
     >>> builder.construct(config_data, timesteps)
     >>> sos_model = builder.finish()
 
     """
-    def __init__(self, registers, name=''):
+    def __init__(self, name=''):
         self.sos_model = SosModel(name)
-        self.registers = registers
+        self.region_register = get_region_register()
+        self.interval_register = get_interval_register()
 
         self.logger = logging.getLogger(__name__)
 
@@ -627,8 +630,7 @@ class SosModelBuilder(object):
         """
         self.logger.info("Loading models")
         for model_data in model_data_list:
-            builder = SectorModelBuilder(model_data['name'],
-                                         self.registers)
+            builder = SectorModelBuilder(model_data['name'])
             builder.construct(model_data)
             model = builder.finish()
             self.sos_model.add_model(model)
@@ -776,11 +778,11 @@ class SosModelBuilder(object):
 
     def _get_dimension_names_for_param(self, metadata, param):
         interval_set_name = metadata['temporal_resolution']
-        interval_set = self.registers['intervals'].get_entry(interval_set_name)
+        interval_set = self.interval_register.get_entry(interval_set_name)
         interval_names = interval_set.get_entry_names()
 
         region_set_name = metadata['spatial_resolution']
-        region_set = self.registers['regions'].get_entry(region_set_name)
+        region_set = self.region_register.get_entry(region_set_name)
         region_names = region_set.get_entry_names()
 
         if len(interval_names) == 0:
