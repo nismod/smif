@@ -32,6 +32,8 @@ import os
 from abc import ABCMeta, abstractmethod
 
 from smif.composite import Model
+from smif.convert.area import get_register as get_region_register
+from smif.convert.interval import get_register as get_interval_register
 from smif.metadata import MetadataSet
 
 __author__ = "Will Usher, Tom Russell"
@@ -51,8 +53,8 @@ class SectorModel(Model, metaclass=ABCMeta):
 
         self._inputs = MetadataSet([])
         self._outputs = MetadataSet([])
-        self.regions = None
-        self.intervals = None
+        self.regions = get_region_register()
+        self.intervals = get_interval_register()
 
         self.logger = logging.getLogger(__name__)
 
@@ -190,8 +192,6 @@ class SectorModelBuilder(object):
     ----------
     name : str
         The name of the sector model
-    registers : dict
-        A package of spatial, temporal, unit registers
 
     Returns
     -------
@@ -203,16 +203,17 @@ class SectorModelBuilder(object):
     :class:`SectorModel` object and :py:meth:`SectorModelBuilder.finish`
     to return the validated and dependency-checked system-of-systems model.
 
-    >>> builder = SectorModelBuilder(name, registers, secctor_model)
+    >>> builder = SectorModelBuilder(name, secctor_model)
     >>> builder.construct(config_data)
     >>> sos_model = builder.finish()
 
     """
 
-    def __init__(self, name, registers, sector_model=None):
+    def __init__(self, name, sector_model=None):
         self._sector_model_name = name
         self._sector_model = sector_model
-        self.registers = registers
+        self.interval_register = get_interval_register()
+        self.region_register = get_region_register()
         self.logger = logging.getLogger(__name__)
 
     def construct(self, model_data):
@@ -265,19 +266,16 @@ class SectorModelBuilder(object):
         msg = "Sector model must be loaded before adding inputs"
         assert self._sector_model is not None, msg
 
-        regions = self.registers['regions']
-        intervals = self.registers['intervals']
-
         if input_dicts:
 
             for model_input in input_dicts:
                 name = model_input['name']
 
                 spatial_resolution = model_input['spatial_resolution']
-                region_set = regions.get_entry(spatial_resolution)
+                region_set = self.region_register.get_entry(spatial_resolution)
 
                 temporal_resolution = model_input['temporal_resolution']
-                interval_set = intervals.get_entry(temporal_resolution)
+                interval_set = self.interval_register.get_entry(temporal_resolution)
 
                 units = model_input['units']
 
@@ -292,19 +290,16 @@ class SectorModelBuilder(object):
         msg = "Sector model must be loaded before adding outputs"
         assert self._sector_model is not None, msg
 
-        regions = self.registers['regions']
-        intervals = self.registers['intervals']
-
         if output_dicts:
 
             for model_output in output_dicts:
                 name = model_output['name']
 
                 spatial_resolution = model_output['spatial_resolution']
-                region_set = regions.get_entry(spatial_resolution)
+                region_set = self.region_register.get_entry(spatial_resolution)
 
                 temporal_resolution = model_output['temporal_resolution']
-                interval_set = intervals.get_entry(temporal_resolution)
+                interval_set = self.interval_register.get_entry(temporal_resolution)
 
                 units = model_output['units']
 

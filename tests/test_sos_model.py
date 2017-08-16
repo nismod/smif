@@ -4,8 +4,8 @@ from unittest.mock import Mock
 
 import numpy as np
 from pytest import fixture, raises
-from smif.convert.area import RegionRegister, RegionSet
-from smif.convert.interval import IntervalSet, TimeIntervalRegister
+from smif.convert.area import get_register as get_region_register
+from smif.convert.interval import get_register as get_interval_register
 from smif.decision import Planning
 from smif.metadata import Metadata
 from smif.scenario_model import ScenarioModel
@@ -16,23 +16,7 @@ from .fixtures.water_supply import WaterSupplySectorModel
 
 
 @fixture(scope='function')
-def build_registers(setup_region_data):
-    interval_register = TimeIntervalRegister()
-    interval_data = [{'id': 1,
-                      'start': 'P0Y',
-                      'end': 'P1Y'}]
-    interval_register.register(IntervalSet('annual', interval_data))
-
-    region_register = RegionRegister()
-    region_register.register(RegionSet('LSOA',
-                                       setup_region_data['features']))
-    return {'intervals': interval_register,
-            'regions': region_register
-            }
-
-
-@fixture(scope='function')
-def get_sector_model(setup_project_folder, build_registers):
+def get_sector_model(setup_project_folder):
 
     path = setup_project_folder
     water_supply_wrapper_path = str(
@@ -72,7 +56,7 @@ def get_sector_model(setup_project_folder, build_registers):
               ]
               }
 
-    ws_builder = SectorModelBuilder('water_supply', build_registers)
+    ws_builder = SectorModelBuilder('water_supply')
 
     ws_builder.construct(config)
 
@@ -80,9 +64,7 @@ def get_sector_model(setup_project_folder, build_registers):
 
 
 @fixture(scope='function')
-def get_sos_model(setup_project_folder, get_sector_model, build_registers):
-
-    registers = build_registers
+def get_sos_model(setup_project_folder, get_sector_model):
 
     path = setup_project_folder
     water_supply_wrapper_path = str(
@@ -157,14 +139,14 @@ def get_sos_model(setup_project_folder, get_sector_model, build_registers):
         ]
     }
 
-    builder = SosModelBuilder(registers)
+    builder = SosModelBuilder()
     builder.construct(config_data, timesteps)
     sos_model = builder.finish()
 
     sector_model = get_sector_model
     sector_model.add_input('raininess',
-                           registers['regions'].get_entry('LSOA'),
-                           registers['intervals'].get_entry('annual'),
+                           get_region_register().get_entry('LSOA'),
+                           get_interval_register().get_entry('annual'),
                            'ml')
     sos_model.add_model(sector_model)
 
@@ -172,7 +154,7 @@ def get_sos_model(setup_project_folder, get_sector_model, build_registers):
 
 
 @fixture(scope='function')
-def get_sos_model_with_model_dependency(build_registers):
+def get_sos_model_with_model_dependency():
     sos_model = SosModel('test_sos_model')
     ws = WaterSupplySectorModel('water_supply')
     ws.inputs = [
@@ -221,8 +203,8 @@ def get_sos_model_with_model_dependency(build_registers):
 
 
 @fixture(scope='function')
-def get_sos_model_with_summed_dependency(setup_region_data, build_registers):
-    builder = SosModelBuilder(build_registers)
+def get_sos_model_with_summed_dependency(setup_region_data):
+    builder = SosModelBuilder()
     builder.load_scenario_models([{
         'name': 'raininess',
         'temporal_resolution': 'annual',
@@ -521,13 +503,11 @@ class TestIterations:
 
 class TestSosModelBuilder():
 
-    def test_builder(self, setup_project_folder, build_registers):
+    def test_builder(self, setup_project_folder):
 
-        registers = build_registers
-        builder = SosModelBuilder(registers)
+        builder = SosModelBuilder()
 
-        model = WaterSupplySectorModel()
-        model.name = 'water_supply'
+        model = WaterSupplySectorModel('water_supply')
         model_data = {
             'name': model.name,
             'interventions': [
@@ -540,7 +520,7 @@ class TestSosModelBuilder():
             'outputs': [],
         }
 
-        builder.add_model(model)
+        builder.load_models(model)
         builder.add_model_data(model, model_data)
         assert isinstance(builder.sos_model.models['water_supply'],
                           SectorModel)
@@ -555,11 +535,11 @@ class TestSosModelBuilder():
             "water_asset_c"
         ]
 
-    def test_construct(self, get_config_data, build_registers):
+    def test_construct(self, get_config_data):
         """Test constructing from single dict config
         """
         config = get_config_data
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         builder.construct(config, config['timesteps'])
         sos_model = builder.finish()
 
@@ -567,11 +547,11 @@ class TestSosModelBuilder():
         assert sos_model.sector_models == ['water_supply']
         assert isinstance(sos_model.models['water_supply'], SectorModel)
 
-    def test_scenarios(self, get_config_data, build_registers):
+    def test_scenarios(self, get_config_data):
         """Test constructing from single dict config
         """
         config = get_config_data
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         builder.construct(config, [2010, 2011, 2012])
         sos_model = builder.finish()
 
@@ -599,39 +579,37 @@ class TestSosModelBuilder():
                                     ],
                                 ], dtype=float))
 
-    def test_set_max_iterations(self, get_config_data, build_registers):
+    def test_set_max_iterations(self, get_config_data):
         """Test constructing from single dict config
         """
         config = get_config_data
         config['max_iterations'] = 125
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         builder.construct(config, config['timesteps'])
         sos_model = builder.finish()
         assert sos_model.max_iterations == 125
 
-    def test_set_convergence_absolute_tolerance(self, get_config_data,
-                                                build_registers):
+    def test_set_convergence_absolute_tolerance(self, get_config_data):
         """Test constructing from single dict config
         """
         config = get_config_data
         config['convergence_absolute_tolerance'] = 0.0001
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         builder.construct(config)
         sos_model = builder.finish()
         assert sos_model.convergence_absolute_tolerance == 0.0001
 
-    def test_set_convergence_relative_tolerance(self, get_config_data,
-                                                build_registers):
+    def test_set_convergence_relative_tolerance(self, get_config_data):
         """Test constructing from single dict config
         """
         config = get_config_data
         config['convergence_relative_tolerance'] = 0.1
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         builder.construct(config)
         sos_model = builder.finish()
         assert sos_model.convergence_relative_tolerance == 0.1
 
-    def test_missing_planning_asset(self, get_config_data, build_registers):
+    def test_missing_planning_asset(self, get_config_data):
         config = get_config_data
         config["planning"] = [
             {
@@ -639,7 +617,7 @@ class TestSosModelBuilder():
                 "build_date": 2012
             }
         ]
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         builder.construct(config)
 
         with raises(AssertionError) as ex:
@@ -647,8 +625,7 @@ class TestSosModelBuilder():
         assert "Intervention 'test_intervention' in planning file not found" in str(
             ex.value)
 
-    def test_missing_planning_timeperiod(self, get_config_data,
-                                         build_registers):
+    def test_missing_planning_timeperiod(self, get_config_data):
         config = get_config_data
         config["planning"] = [
             {
@@ -663,15 +640,14 @@ class TestSosModelBuilder():
                 "location": "UK"
             }
         ]
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         builder.construct(config)
 
         with raises(AssertionError) as ex:
             builder.finish()
         assert "Timeperiod '2025' in planning file not found" in str(ex.value)
 
-    def test_scenario_dependency(self, get_config_data, setup_region_data,
-                                 build_registers):
+    def test_scenario_dependency(self, get_config_data, setup_region_data):
         """Expect successful build with dependency on scenario data
 
         Should raise error if no spatial or temporal sets are defined
@@ -686,8 +662,8 @@ class TestSosModelBuilder():
             }
         ]
 
-        builder = SosModelBuilder(build_registers)
-        builder.construct(config)
+        builder = SosModelBuilder()
+        builder.construct(config), [2010, 2011, 2012]
 
         with raises(AssertionError):
             builder.finish()
@@ -705,9 +681,8 @@ class TestSosModelBuilder():
         builder.finish()
 
     def test_build_valid_dependencies(self, one_dependency,
-                                      get_config_data, setup_region_data,
-                                      build_registers):
-        builder = SosModelBuilder(build_registers)
+                                      get_config_data, setup_region_data):
+        builder = SosModelBuilder()
         builder.construct(get_config_data)
 
         ws = WaterSupplySectorModel()
@@ -722,7 +697,7 @@ class TestSosModelBuilder():
               ", which is not supplied."
         assert str(error.value) == msg
 
-    def test_cyclic_dependencies(self, setup_region_data, build_registers):
+    def test_cyclic_dependencies(self, setup_region_data):
         a_inputs = [
             {
                 'name': 'b value',
@@ -759,7 +734,7 @@ class TestSosModelBuilder():
             }
         ]
 
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         builder.add_planning([])
         builder.load_region_sets({'LSOA': setup_region_data['features']})
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
@@ -779,7 +754,7 @@ class TestSosModelBuilder():
 
         builder.finish()
 
-    def test_nest_scenario_data(self, setup_country_data, build_registers):
+    def test_nest_scenario_data(self, setup_country_data):
         data = {
             "mass": [
                 {
@@ -852,7 +827,7 @@ class TestSosModelBuilder():
             ], dtype=float)
         }
 
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         interval_data = [
             {'id': 'wet_season', 'start': 'P0M', 'end': 'P5M'},
             {'id': 'dry_season', 'start': 'P5M', 'end': 'P10M'},
@@ -873,7 +848,7 @@ class TestSosModelBuilder():
         print(expected)
         assert np.allclose(actual["mass"], expected["mass"])
 
-    def test_scenario_data_defaults(self, setup_region_data, build_registers):
+    def test_scenario_data_defaults(self, setup_region_data):
         data = {
             "length": [
                 {
@@ -887,7 +862,7 @@ class TestSosModelBuilder():
 
         expected = {"length": np.array([[[3.14]]])}
 
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -901,7 +876,7 @@ class TestSosModelBuilder():
         assert builder.sos_model._scenario_data == expected
 
     def test_scenario_data_missing_year(self, setup_region_data,
-                                        build_registers):
+                                        ):
         data = {
             "length": [
                 {
@@ -910,7 +885,7 @@ class TestSosModelBuilder():
             ]
         }
 
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -926,7 +901,7 @@ class TestSosModelBuilder():
             builder.add_scenario_data(data)
         assert msg in str(ex.value)
 
-    def test_scenario_data_missing_param_mapping(self, build_registers):
+    def test_scenario_data_missing_param_mapping(self):
         data = {
             "length": [
                 {
@@ -936,7 +911,7 @@ class TestSosModelBuilder():
             ]
         }
 
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
 
         msg = "Parameter length not registered in scenario metadata"
         with raises(ValueError) as ex:
@@ -944,7 +919,7 @@ class TestSosModelBuilder():
         assert msg in str(ex.value)
 
     def test_scenario_data_missing_param_region(self, setup_region_data,
-                                                build_registers):
+                                                ):
         data = {
             "length": [
                 {
@@ -956,7 +931,7 @@ class TestSosModelBuilder():
             ]
         }
 
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -973,7 +948,7 @@ class TestSosModelBuilder():
         assert msg in str(ex)
 
     def test_scenario_data_missing_param_interval(self, setup_region_data,
-                                                  build_registers):
+                                                  ):
         data = {
             "length": [
                 {
@@ -991,7 +966,7 @@ class TestSosModelBuilder():
             ]
         }
 
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
         builder.load_interval_sets({'annual': interval_data})
         builder.load_region_sets({'LSOA': setup_region_data['features']})
@@ -1096,12 +1071,12 @@ class TestSosModelBuilder():
 
         assert "Units conversion not implemented" in str(ex.value)
 
-    def test_missing_data_source(self, build_registers):
+    def test_missing_data_source(self):
         """If a dependency is declared, but no source model exists, raise an
         error
         """
 
-        builder = SosModelBuilder(build_registers)
+        builder = SosModelBuilder()
         ws = WaterSupplySectorModel('water_supply')
         ws.inputs = [
             {
