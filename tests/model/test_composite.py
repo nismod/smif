@@ -2,9 +2,9 @@ from unittest.mock import MagicMock, Mock
 
 import networkx
 from pytest import raises
-from smif.scenario_model import ScenarioModel
-from smif.sector_model import SectorModel as AbstractSectorModel
-from smif.sos_model import SosModel
+from smif.model.scenario_model import ScenarioModel
+from smif.model.sector_model import SectorModel as AbstractSectorModel
+from smif.model.sos_model import SosModel
 
 
 class SectorModel(AbstractSectorModel):

@@ -10,15 +10,15 @@ from enum import Enum
 import networkx
 import numpy as np
 from smif import StateData
-from smif.composite import Model
 from smif.convert import SpaceTimeConvertor
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.metadata import MetadataSet
-from smif.scenario_model import ScenarioModel
-from smif.sector_model import SectorModel, SectorModelBuilder
+from smif.model.composite import Model
+from smif.model.scenario_model import ScenarioModel
+from smif.model.sector_model import SectorModel, SectorModelBuilder
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"

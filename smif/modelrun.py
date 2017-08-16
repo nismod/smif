@@ -23,7 +23,7 @@ from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
-from smif.sos_model import SosModelBuilder
+from smif.model.sos_model import SosModelBuilder
 
 
 class ModelRun(object):

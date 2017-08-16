@@ -1,5 +1,5 @@
-from smif.composite import Model
 from smif.metadata import MetadataSet
+from smif.model.composite import Model
 
 
 class ScenarioModel(Model):
