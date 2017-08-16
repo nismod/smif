@@ -16,6 +16,7 @@ from copy import copy
 import yaml
 from pytest import fixture
 from smif.convert.area import get_register as get_region_register
+from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
 
@@ -929,14 +930,14 @@ def setup_runpy_file(tmpdir, setup_folder_structure):
     # Write a file for the water_supply model
     filename = base_folder.join('models', 'water_supply', '__init__.py')
     contents = """
-from smif.sector_model import SectorModel
+from smif.model.sector_model import SectorModel
 
 class WaterSupplySectorModel(SectorModel):
     def initialise(self, initial_conditions):
         pass
 
-    def simulate(self, decisions, state, data):
-        pass
+    def simulate(self, timestep, data=None):
+        return (timestep, data)
 
     def extract_obj(self, results):
         return 0
@@ -1024,7 +1025,7 @@ def setup_time_intervals(setup_folder_structure):
     return filename
 
 
-@fixture(scope='function')
+@fixture(scope='session')
 def setup_region_data():
     data = {
         "type": "FeatureCollection",
@@ -1316,11 +1317,13 @@ def setup_minimal_water(setup_folder_structure,
 
 
 @fixture(scope="session", autouse=True)
-def setup_registers():
+def setup_registers(setup_region_data):
     """One-time setup: load all the fixture region and interval
     sets into the module-level registers.
     """
     regions = get_region_register()
+    lsoa = RegionSet('LSOA', setup_region_data['features'])
+    regions.register(lsoa)
     regions.register(regions_half_squares())
     regions.register(regions_single_half_square())
     regions.register(regions_half_triangles())
@@ -1332,6 +1335,8 @@ def setup_registers():
     regions.register(regions_rect_alt)
 
     intervals = get_interval_register()
+    annual_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+    intervals.register(IntervalSet('annual', annual_data))
     intervals.register(IntervalSet('months', months()))
     intervals.register(IntervalSet('seasons', seasons()))
     intervals.register(IntervalSet('hourly_day', twenty_four_hours()))

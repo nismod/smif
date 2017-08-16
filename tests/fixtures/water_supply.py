@@ -93,7 +93,7 @@ class WaterSupplySectorModel(SectorModel):
     def initialise(self, initial_conditions):
         pass
 
-    def simulate(self, decisions, state, data):
+    def simulate(self, timestep, data):
         """
 
         Parameters
@@ -105,6 +105,7 @@ class WaterSupplySectorModel(SectorModel):
             contains a :class:`numpy.ndarray` with dimension regions x intervals
 
         """
+        decisions = data[timestep]['decisions']
 
         # unpack inputs
         self.logger.debug(data)
@@ -209,7 +210,7 @@ class ExampleWaterSupplySimulationModelWithAsset(ExampleWaterSupplySimulationMod
         self.cost = None
         super().__init__(raininess)
 
-    def simulate(self):
+    def simulate(self, timestep, data=None):
         """Runs the water supply model
 
         Only 1 unit of water is produced per treatment plant,

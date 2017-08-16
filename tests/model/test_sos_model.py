@@ -7,7 +7,7 @@ from pytest import fixture, raises
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.decision import Planning
-from smif.metadata import Metadata
+from smif.metadata import Metadata, MetadataSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
 from smif.model.sos_model import ModelSet, SosModel, SosModelBuilder
@@ -16,7 +16,7 @@ from .. fixtures.water_supply import WaterSupplySectorModel
 
 
 @fixture(scope='function')
-def get_sector_model(setup_project_folder):
+def get_sector_model(setup_project_folder, setup_registers):
 
     path = setup_project_folder
     water_supply_wrapper_path = str(
@@ -149,6 +149,61 @@ def get_sos_model(setup_project_folder, get_sector_model):
                            get_interval_register().get_entry('annual'),
                            'ml')
     sos_model.add_model(sector_model)
+
+    return sos_model
+
+
+@fixture(scope='function')
+def get_scenario_model_object():
+
+    data = {2010: np.array([[3.]], dtype=float),
+            2011: np.array([[5.]], dtype=float),
+            2012: np.array([[1.]], dtype=float)}
+    scenario_model = ScenarioModel('test_scenario_model')
+    scenario_model.add_output('raininess',
+                              get_region_register().get_entry('LSOA'),
+                              get_interval_register().get_entry('annual'),
+                              'ml')
+    scenario_model.add_data(data)
+    return scenario_model
+
+
+@fixture(scope='function')
+def get_sector_model_object(get_empty_sector_model):
+
+    regions = get_region_register()
+    intervals = get_interval_register()
+
+    sector_model = get_empty_sector_model('water_supply')
+
+    sector_model.add_input('raininess',
+                           regions.get_entry('LSOA'),
+                           intervals.get_entry('annual'),
+                           'ml')
+
+    sector_model.add_output('cost',
+                            regions.get_entry('LSOA'),
+                            intervals.get_entry('annual'),
+                            'million GBP')
+
+    sector_model.add_output('water',
+                            regions.get_entry('LSOA'),
+                            intervals.get_entry('annual'),
+                            'Ml')
+
+    return sector_model
+
+
+@fixture(scope='function')
+def get_sos_model_object(get_sector_model_object,
+                         get_scenario_model_object):
+
+    sos_model = SosModel('test_sos_model')
+    sector_model = get_sector_model_object
+    scenario_model = get_scenario_model_object
+    sos_model.add_model(sector_model)
+    sos_model.add_model(scenario_model)
+    sector_model.add_dependency(scenario_model, 'raininess', 'raininess')
 
     return sos_model
 
@@ -329,26 +384,31 @@ def get_config_data(setup_project_folder, setup_region_data):
     }
 
 
-class EmptySectorModel(SectorModel):
+@fixture(scope='function')
+def get_empty_sector_model():
 
-    def initialise(self, initial_conditions):
-        pass
+    class EmptySectorModel(SectorModel):
 
-    def simulate(self, timestep, data=None):
-        return {'output_name': 'some_data'}
+        def initialise(self, initial_conditions):
+            pass
 
-    def extract_obj(self, results):
-        return 0
+        def simulate(self, timestep, data=None):
+            return {'output_name': 'some_data', 'timestep': timestep}
+
+        def extract_obj(self, results):
+            return 0
+
+    return EmptySectorModel
 
 
 class TestSosModel():
 
-    def test_add_dependency(self):
+    def test_add_dependency(self, get_empty_sector_model):
 
-        sink_model = EmptySectorModel('test_model')
+        sink_model = get_empty_sector_model('sink_model')
         sink_model.add_input('input_name', Mock(), Mock(), 'units')
 
-        source_model = EmptySectorModel('test_model')
+        source_model = get_empty_sector_model('source_model')
         source_model.add_output('output_name', Mock(), Mock(), 'units')
 
         sink_model.add_dependency(source_model, 'output_name', 'input_name')
@@ -376,10 +436,10 @@ class TestSosModel():
 
 class TestIterations:
 
-    def test_guess_outputs_zero(self, get_sos_model):
+    def test_guess_outputs_zero(self, get_sos_model_object):
         """If no previous timestep has results, guess outputs as zero
         """
-        sos_model = get_sos_model
+        sos_model = get_sos_model_object
         ws_model = sos_model.models['water_supply']
         model_set = ModelSet(
             {ws_model},
@@ -393,10 +453,10 @@ class TestIterations:
         }
         assert results == expected
 
-    def test_guess_outputs_last_year(self, get_sos_model):
+    def test_guess_outputs_last_year(self, get_sos_model_object):
         """If a previous timestep has results, guess outputs as identical
         """
-        sos_model = get_sos_model
+        sos_model = get_sos_model_object
         ws_model = sos_model.models['water_supply']
         model_set = ModelSet(
             {ws_model},
@@ -416,10 +476,10 @@ class TestIterations:
         results = model_set.guess_results(ws_model, 2011)
         assert results == expected
 
-    def test_converged_first_iteration(self, get_sos_model):
+    def test_converged_first_iteration(self, get_sos_model_object):
         """Should not report convergence after a single iteration
         """
-        sos_model = get_sos_model
+        sos_model = get_sos_model_object
         ws_model = sos_model.models['water_supply']
         model_set = ModelSet(
             {ws_model},
@@ -431,10 +491,10 @@ class TestIterations:
 
         assert not model_set.converged()
 
-    def test_converged_two_identical(self, get_sos_model):
+    def test_converged_two_identical(self, get_sos_model_object):
         """Should report converged if the last two output sets are identical
         """
-        sos_model = get_sos_model
+        sos_model = get_sos_model_object
         ws_model = sos_model.models['water_supply']
         model_set = ModelSet(
             {ws_model},
@@ -448,26 +508,26 @@ class TestIterations:
 
         assert model_set.converged()
 
-    def test_run_sequential(self, get_sos_model):
-        sos_model = get_sos_model
-        sos_model.timesteps = [2010, 2011, 2012]
-        sos_model.run(2010)
-        sos_model.run(2011)
-        sos_model.run(2012)
+    def test_run_sequential(self, get_sos_model_object):
+        sos_model = get_sos_model_object
+        # sos_model.timesteps = [2010, 2011, 2012]
+        sos_model.simulate(2010)
+        sos_model.simulate(2011)
+        sos_model.simulate(2012)
 
-    def test_run_single_sector(self, get_sos_model):
-        sos_model = get_sos_model
+    def test_run_single_sector(self, get_sos_model_object):
+        sos_model = get_sos_model_object
         sos_model.run_sector_model('water_supply')
 
-    def test_run_missing_sector(self, get_sos_model):
-        sos_model = get_sos_model
+    def test_run_missing_sector(self, get_sos_model_object):
+        sos_model = get_sos_model_object
 
         with raises(AssertionError) as ex:
             sos_model.run_sector_model('impossible')
         assert "Model 'impossible' does not exist" in str(ex.value)
 
-    def test_run_with_planning(self, get_sos_model):
-        sos_model = get_sos_model
+    def test_run_with_planning(self, get_sos_model_object):
+        sos_model = get_sos_model_object
         planning_data = [
             {
                 'name': 'water_asset_a',
@@ -1011,13 +1071,13 @@ class TestSosModelBuilder():
                 assert entry in actual[key]
 
     def test_single_dependency(self,
-                               get_sos_model_with_model_dependency):
-        sos_model = get_sos_model_with_model_dependency
-        outputs = sos_model.outputs
+                               get_sos_model_object):
+        sos_model = get_sos_model_object
+        outputs = sos_model.model_outputs
 
         expected_outputs = {'water': ['water_supply']}
 
-        assert isinstance(outputs, dict)
+        assert isinstance(outputs, MetadataSet)
 
         for key, value in expected_outputs.items():
             assert key in outputs.keys()
