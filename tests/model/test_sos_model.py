@@ -8,11 +8,11 @@ from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.decision import Planning
 from smif.metadata import Metadata
-from smif.scenario_model import ScenarioModel
-from smif.sector_model import SectorModel, SectorModelBuilder
-from smif.sos_model import ModelSet, SosModel, SosModelBuilder
+from smif.model.scenario_model import ScenarioModel
+from smif.model.sector_model import SectorModel, SectorModelBuilder
+from smif.model.sos_model import ModelSet, SosModel, SosModelBuilder
 
-from .fixtures.water_supply import WaterSupplySectorModel
+from .. fixtures.water_supply import WaterSupplySectorModel
 
 
 @fixture(scope='function')

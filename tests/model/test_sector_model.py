@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 from pytest import raises
 from smif.metadata import Metadata, MetadataSet
-from smif.sector_model import SectorModel, SectorModelBuilder
+from smif.model.sector_model import SectorModel, SectorModelBuilder
 
 
 class EmptySectorModel(SectorModel):

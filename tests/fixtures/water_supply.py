@@ -36,7 +36,7 @@ import math
 import numpy as np
 
 from pytest import fixture
-from smif.sector_model import SectorModel
+from smif.model.sector_model import SectorModel
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
