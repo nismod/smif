@@ -164,13 +164,8 @@ def run_model(args):
             LOGGER.error("An AssertionError occurred, see details above.")
         exit(-1)
 
-    if args.model == 'all':
-        LOGGER.info("Running model run %s", modelrun.name)
-        modelrun.run()
-    else:
-        LOGGER.info("Running the %s sector model", args.model)
-        model_name = args.model
-        modelrun.sos_model.run_sector_model(model_name)
+    LOGGER.info("Running model run %s", modelrun.name)
+    modelrun.run()
 
     output_file = args.output_file
     LOGGER.info("Writing results to %s", output_file)
@@ -311,9 +306,6 @@ def parse_arguments():
     # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
-    parser_run.add_argument('-m', '--model',
-                            default='all',
-                            help='The name of the model to run')
     parser_run.add_argument('-o', '--output-file',
                             default='results.yaml',
                             help='Output file')
