@@ -60,11 +60,20 @@ class RegionSet(ResolutionSet):
 
     @data.setter
     def data(self, value):
-        self._regions = [
-            NamedShape(region['properties']['name'],
-                       shape(region['geometry']))
-            for region in value
-        ]
+        self._regions = []
+        names = {}
+        for region in value:
+            name = region['properties']['name']
+            if name in names:
+                raise AssertionError(
+                    "Region set must have uniquely named regions - %s duplicated", name)
+            names[name] = True
+            self._regions.append(
+                NamedShape(
+                    name,
+                    shape(region['geometry'])
+                )
+            )
 
     def get_entry_names(self):
         return [region.name for region in self.data]

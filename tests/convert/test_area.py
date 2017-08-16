@@ -174,6 +174,29 @@ class TestRegionSet():
         expected = ['unit', 'half', 'two']
         assert actual == expected
 
+    def test_must_have_unique_names(self):
+        with raises(AssertionError) as ex:
+            RegionSet('test', [
+                {
+                    'type': 'Feature',
+                    'properties': {'name': 'a'},
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+                    }
+                },
+                {
+                    'type': 'Feature',
+                    'properties': {'name': 'a'},
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
+                    }
+                },
+            ])
+
+        assert 'Region set must have uniquely named regions' in str(ex)
+
 
 class TestRegionRegister():
     """Test creating registers, registering region sets, converting data
