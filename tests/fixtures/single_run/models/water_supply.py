@@ -11,7 +11,7 @@
 import logging
 import numpy as np
 from smif import StateData
-from smif.sector_model import SectorModel
+from smif.model.sector_model import SectorModel
 
 
 class WaterSupplySectorModel(SectorModel):

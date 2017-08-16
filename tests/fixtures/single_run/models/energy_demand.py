@@ -1,7 +1,7 @@
 """Energy demand dummy model
 """
 import numpy as np
-from smif.sector_model import SectorModel
+from smif.model.sector_model import SectorModel
 
 
 class EDMWrapper(SectorModel):
