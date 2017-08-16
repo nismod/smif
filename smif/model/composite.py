@@ -86,7 +86,7 @@ class Model(ABC):
         return list(set(self._model_inputs) - set(self.deps.keys()))
 
     @abstractmethod
-    def simulate(self, data):
+    def simulate(self, timestep, data=None):
         pass
 
     def add_dependency(self, source_model, source, sink):
@@ -102,6 +102,9 @@ class Model(ABC):
             The name of a model_input defined in this object
 
         """
+        if source not in source_model.model_outputs.names:
+            msg = "Output '{}' is not defined in '{}' model"
+            raise ValueError(msg.format(source, source_model.name))
         if sink in self.model_inputs.names:
             self.deps[sink] = Dependency(source_model, source)
             msg = "Added dependency from '%s' to '%s'"

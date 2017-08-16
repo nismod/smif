@@ -54,9 +54,6 @@ class SosModel(Model):
 
         # scenario data and results
         self._results = defaultdict(dict)
-        self.scenarios = {}
-        self._scenario_metadata = MetadataSet({})
-        self._scenario_data = {}
 
     def add_model(self, model):
         """Adds a sector model to the system-of-systems model
@@ -70,28 +67,6 @@ class SosModel(Model):
         assert isinstance(model, Model)
         self.logger.info("Loading model: %s", model.name)
         self.models[model.name] = model
-
-    @property
-    def scenario_metadata(self):
-        """Returns the temporal and spatial mapping to an input, output or scenario parameter
-        """
-        return self._scenario_metadata
-
-    @scenario_metadata.setter
-    def scenario_metadata(self, value):
-        self._scenario_metadata.add_metadata(value)
-
-    @property
-    def scenario_data(self):
-        """Get nested dict of scenario data
-
-        Returns
-        -------
-        dict
-            Nested dictionary in the format ``data[year][param] =
-            SpaceTimeValue(region, interval, value, unit)``
-        """
-        return self._scenario_data
 
     @property
     def results(self):
@@ -127,23 +102,25 @@ class SosModel(Model):
         dependency_graph.add_nodes_from(self.models.values())
 
         for model_name, model in self.models.items():
-            for model_input in model.model_inputs:
-                if model_input.name in model.deps:
-                    dependency = model.deps[model_input.name]
-                    provider = dependency.source_model
-                    msg = "Dependency '%s' provided by '%s'"
-                    self.logger.debug(msg, model_input.name, provider.name)
+            if model.model_inputs:
+                for model_input in model.model_inputs:
+                    self.logger.debug(model_input)
+                    if model_input.name in model.deps:
+                        dependency = model.deps[model_input.name]
+                        provider = dependency.source_model
+                        msg = "Dependency '%s' provided by '%s'"
+                        self.logger.debug(msg, model_input.name, provider.name)
 
-                    dependency_graph.add_edge(provider,
-                                              model,
-                                              {'source': dependency.source,
-                                               'sink': model_input})
-                else:
-                    # report missing dependency type
-                    msg = "Missing dependency: '{}' depends on '{}', " + \
-                          "which is not supplied."
-                    raise AssertionError(msg.format(model_name,
-                                                    model_input.name))
+                        dependency_graph.add_edge(provider,
+                                                  model,
+                                                  {'source': dependency.source,
+                                                   'sink': model_input})
+                    else:
+                        # report missing dependency type
+                        msg = "Missing dependency: '{}' depends on '{}', " + \
+                            "which is not supplied."
+                        raise AssertionError(msg.format(model_name,
+                                                        model_input.name))
 
         self.dependency_graph = dependency_graph
 
@@ -343,39 +320,6 @@ class SosModel(Model):
                 if isinstance(y, ScenarioModel)
                 ]
 
-    @property
-    def inputs(self):
-        """Model names associated with inputs
-
-        Returns
-        -------
-        dict
-            Keys are parameter names, value is a list of sector model names
-        """
-        parameter_model_map = defaultdict(list)
-        for model_name, model in self.models.items():
-            for name in model.model_inputs.names:
-                parameter_model_map[name].append(model_name)
-        return parameter_model_map
-
-    @property
-    def outputs(self):
-        """Model names associated with model outputs & scenarios
-
-        Returns
-        -------
-        dict
-            Keys are parameter names, value is a list of sector model names
-        """
-        parameter_model_map = defaultdict(list)
-        for model_name, model in self.models.items():
-            for name in model.model_outputs.names:
-                parameter_model_map[name].append(model_name)
-
-        for name in self.scenario_metadata.names:
-            parameter_model_map[name].append('scenario')
-        return parameter_model_map
-
 
 class ModelSet(object):
     """Wraps a set of interdependent models
@@ -395,6 +339,12 @@ class ModelSet(object):
     model outputs over the iterations, and stopping at timeout, divergence or
     convergence.
 
+    Arguments
+    ---------
+    models : dict
+        A list of smif.model.composite.Model
+    sos_model : smif.model.sos_model.SosModel
+        A SosModel instance containing the models
     Notes
     -----
     This calls back into :class:`SosModel` quite extensively for state, data,
@@ -421,19 +371,21 @@ class ModelSet(object):
             model = list(self._models)[0]
             logging.debug("Running %s for %d", model.name, timestep)
 
-            for model_input in model.model_inputs:
-                data = {}
-                if model_input not in model.deps:
-                    msg = "Dependency not found for '{}'"
-                    raise ValueError(msg.format(model_input))
-                else:
-                    dependency = model.deps[model_input]
-                    self.logger.debug("Found dependency for '%s'",
-                                      model_input)
-                    data[model_input] = dependency.get_data(timestep)
+            data = {}
+            if model.model_inputs:
+                for model_input in model.model_inputs:
+                    self.logger.debug("Seeking dep for %s", model_input.name)
+                    if model_input.name not in model.deps:
+                        msg = "Dependency not found for '{}'"
+                        raise ValueError(msg.format(model_input.name))
+                    else:
+                        dependency = model.deps[model_input.name]
+                        self.logger.debug("Found dependency for '%s'",
+                                          model_input.name)
+                        data[model_input.name] = dependency.get_data(timestep)
 
-            state, results = model.simulate(timestep, data)
-            self._sos_model.set_state(model, timestep, state)
+            results = model.simulate(timestep, data)
+            # self._sos_model.set_state(model, timestep, state)
             self._sos_model.set_data(model, timestep, results)
         else:
             # Start by running all models in set with best guess
@@ -453,8 +405,8 @@ class ModelSet(object):
                 else:
                     self.logger.debug("Iteration %s, model set %s", i, self._model_names)
                     for model in self._models:
-                        state, results = model.simulate(timestep, data)
-                        self._sos_model.set_state(model, timestep, state)
+                        results = model.simulate(timestep, data)
+                        # self._sos_model.set_state(model, timestep, state)
                         self._sos_model.set_data(model, timestep, results)
                         self.iterated_results[model.name].append(results)
             else:
@@ -633,6 +585,7 @@ class SosModelBuilder(object):
             builder = SectorModelBuilder(model_data['name'])
             builder.construct(model_data)
             model = builder.finish()
+            self.sos_model.add_interventions(model_data['name'], )
             self.sos_model.add_model(model)
             self.add_model_data(model, model_data)
 
