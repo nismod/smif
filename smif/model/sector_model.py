@@ -33,7 +33,6 @@ from abc import ABCMeta, abstractmethod
 
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
-from smif.metadata import MetadataSet
 from smif.model.composite import Model
 
 __author__ = "Will Usher, Tom Russell"
@@ -45,14 +44,12 @@ class SectorModel(Model, metaclass=ABCMeta):
     """A representation of the sector model with inputs and outputs
 
     """
-    def __init__(self, name, inputs=MetadataSet([]), outputs=MetadataSet([])):
-        super().__init__(name, inputs, outputs)
+    def __init__(self, name):
+        super().__init__(name)
 
         self.interventions = []
         self.system = []
 
-        self._inputs = MetadataSet([])
-        self._outputs = MetadataSet([])
         self.regions = get_region_register()
         self.intervals = get_interval_register()
 

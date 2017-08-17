@@ -1,30 +1,67 @@
 from unittest.mock import Mock
 
 import networkx
-from pytest import raises
+import pytest
+from pytest import fixture, raises
+from smif.metadata import Metadata, MetadataSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel as AbstractSectorModel
 from smif.model.sos_model import ModelSet, SosModel
 
 
-class SectorModel(AbstractSectorModel):
+@fixture
+def get_sector_model():
+    class SectorModel(AbstractSectorModel):
 
-    def simulate(self, timestep, data=None):
-        return data
+        def simulate(self, timestep, data=None):
+            return data
 
-    def extract_obj(self):
-        pass
+        def extract_obj(self):
+            pass
 
-    def initialise(self):
-        pass
+        def initialise(self):
+            pass
+    return SectorModel
+
+
+@fixture
+def get_water_sector_model():
+    class SectorModel(AbstractSectorModel):
+
+        def simulate(self, timestep, data=None):
+            return data
+
+        def extract_obj(self):
+            pass
+
+        def initialise(self):
+            pass
+    return SectorModel('water_supply_model')
+
+
+@fixture
+def get_energy_sector_model():
+    class SectorModel(AbstractSectorModel):
+
+        def simulate(self, timestep, data=None):
+            return data
+
+        def extract_obj(self):
+            pass
+
+        def initialise(self):
+            pass
+    return SectorModel('energy_sector_model')
 
 
 class TestModelSet:
 
-    def test_model_set(self):
+    def test_model_set(self, get_sector_model):
+        SectorModel = get_sector_model
+
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data({2010: {'output': 123}})
+        elec_scenario.add_data({2010: 123})
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -40,10 +77,11 @@ class TestModelSet:
 
 class TestBasics:
 
-    def test_dependency_not_present(self):
+    def test_dependency_not_present(self, get_sector_model):
+        SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data({'output': 123})
+        elec_scenario.add_data({2010: 123})
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -58,10 +96,11 @@ class TestBasics:
 
 class TestDependencyGraph:
 
-    def test_simple_graph(self):
+    def test_simple_graph(self, get_sector_model):
+        SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data({'output': 123})
+        elec_scenario.add_data({2010: 123})
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -72,7 +111,7 @@ class TestDependencyGraph:
         sos_model.add_model(elec_scenario)
 
         # Builds the dependency graph
-        sos_model._check_dependencies()
+        sos_model.check_dependencies()
 
         graph = sos_model.dependency_graph
 
@@ -81,12 +120,13 @@ class TestDependencyGraph:
 
         assert graph.edges() == [(elec_scenario, energy_model)]
 
-    def test_get_model_sets(self):
+    def test_get_model_sets(self, get_sector_model):
+        SectorModel = get_sector_model
 
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
 
-        elec_scenario.add_data({'output': 123})
+        elec_scenario.add_data({2010: 123})
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -96,7 +136,7 @@ class TestDependencyGraph:
         sos_model.add_model(energy_model)
         sos_model.add_model(elec_scenario)
 
-        sos_model._check_dependencies()
+        sos_model.check_dependencies()
 
         actual = sos_model._get_model_sets_in_run_order()
         expected = [{'scenario'}, {'model'}]
@@ -104,7 +144,8 @@ class TestDependencyGraph:
         for modelset, name in zip(actual, expected):
             assert modelset._model_names == name
 
-    def test_topological_sort(self):
+    def test_topological_sort(self, get_sector_model):
+        SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
 
@@ -118,7 +159,7 @@ class TestDependencyGraph:
         sos_model.add_model(energy_model)
         sos_model.add_model(elec_scenario)
 
-        sos_model._check_dependencies()
+        sos_model.check_dependencies()
 
         graph = sos_model.dependency_graph
         actual = networkx.topological_sort(graph, reverse=False)
@@ -127,8 +168,9 @@ class TestDependencyGraph:
 
 class TestSosModel:
 
-    def test_simulate_data_not_present(self):
-        """Raise a ValueError if an input is defined but no dependency links
+    def test_simulate_data_not_present(self, get_sector_model):
+        SectorModel = get_sector_model
+        """Raise a NotImplementedError if an input is defined but no dependency links
         it to a data source
         """
 
@@ -137,7 +179,7 @@ class TestSosModel:
         model.add_input('input', Mock(), Mock(), 'units')
         sos_model.add_model(model)
         data = {'input_not_here': 0}
-        with raises(AssertionError):
+        with raises(NotImplementedError):
             sos_model.simulate(2010, data)
 
 
@@ -150,7 +192,7 @@ class TestCompositeIntegration:
         elec_scenario.add_output('electricity_demand_output',
                                  Mock(), Mock(), 'unit')
 
-        elec_scenario.add_data({2010: {'electricity_demand_output': 123}})
+        elec_scenario.add_data({2010: 123})
         sos_model = SosModel('simple')
         sos_model.add_model(elec_scenario)
         actual = sos_model.simulate(2010)
@@ -158,19 +200,19 @@ class TestCompositeIntegration:
                     {'electricity_demand_output': 123}}}
         assert actual == expected
 
-    def test_sector_model_null_model(self):
-        no_inputs = SectorModel('energy_sector_model', [], [])
-        # no_inputs.add_executable(lambda x: x)
+    def test_sector_model_null_model(self, get_energy_sector_model):
+        no_inputs = get_energy_sector_model
+        no_inputs.simulate = lambda x: x
         actual = no_inputs.simulate(2010)
-        expected = None
+        expected = 2010
         assert actual == expected
 
-    def test_sector_model_one_input(self):
+    def test_sector_model_one_input(self, get_energy_sector_model):
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data({2010: {'output': 123}})
+        elec_scenario.add_data({2010: 123})
 
-        energy_model = SectorModel('model')
+        energy_model = get_energy_sector_model
         energy_model.add_input('input', Mock(), Mock(), 'unit')
         energy_model.add_dependency(elec_scenario, 'output', 'input')
 
@@ -180,22 +222,128 @@ class TestCompositeIntegration:
 
         actual = sos_model.simulate(2010)
 
-        expected = {2010: {'model': {'input': 123},
+        expected = {2010: {'energy_sector_model': {'input': 123},
                            'scenario': {'output': 123}
                            }
                     }
         assert actual == expected
 
-    def test_composite_nested_sos_model(self):
+
+class TestNestedModels():
+
+    def test_one_free_input(self, get_sector_model):
+        SectorModel = get_sector_model
+        energy_model = SectorModel('energy_sector_model')
+
+        input_metadata = {'name': 'electricity_demand_input',
+                          'spatial_resolution': Mock(),
+                          'temporal_resolution': Mock(),
+                          'units': 'unit'}
+
+        expected = MetadataSet([input_metadata])
+
+        energy_model._model_inputs = expected
+
+        assert energy_model.free_inputs['electricity_demand_input'] == \
+            expected['electricity_demand_input']
+
+    def test_hanging_inputs(self, get_sector_model):
+        """
+        sos_model_high
+            sos_model_lo
+               -> em
+
+        """
+        SectorModel = get_sector_model
+        energy_model = SectorModel('energy_sector_model')
+
+        input_metadata = {'name': 'electricity_demand_input',
+                          'spatial_resolution': Mock(),
+                          'temporal_resolution': Mock(),
+                          'units': 'unit'}
+
+        energy_model._model_inputs = MetadataSet([input_metadata])
+
+        sos_model_lo = SosModel('lower')
+        sos_model_lo.add_model(energy_model)
+
+        input_object = Metadata(input_metadata['name'],
+                                input_metadata['spatial_resolution'],
+                                input_metadata['temporal_resolution'],
+                                input_metadata['units'])
+        expected = MetadataSet([])
+        expected.add_metadata_object(input_object)
+
+        assert energy_model.free_inputs.names == ['electricity_demand_input']
+
+        assert sos_model_lo.free_inputs.names == ['electricity_demand_input']
+
+        sos_model_high = SosModel('higher')
+        sos_model_high.add_model(sos_model_lo)
+
+        assert sos_model_high.free_inputs['electricity_demand_input'] == \
+            input_object
+
+    @pytest.mark.xfail(reason="Nested sosmodels not yet implemented")
+    def test_nested_graph(self, get_sector_model):
+        """If we add a nested model, all Sectormodel and ScenarioModel objects
+        are added as nodes in the graph with edges along dependencies.
+
+        SosModel objects are not included, as they are just containers for the
+        SectorModel and ScenarioModel objects, passing up inputs for deferred
+        linkages to dependencies.
+
+        Not implemented yet:
+        """
+        SectorModel = get_sector_model
+
+        energy_model = SectorModel('energy_sector_model')
+
+        input_metadata = {'name': 'electricity_demand_input',
+                          'spatial_resolution': Mock(),
+                          'temporal_resolution': Mock(),
+                          'units': 'unit'}
+
+        energy_model._model_inputs = MetadataSet([input_metadata])
+
+        sos_model_lo = SosModel('lower')
+        sos_model_lo.add_model(energy_model)
+
+        sos_model_high = SosModel('higher')
+        sos_model_high.add_model(sos_model_lo)
+
+        with raises(NotImplementedError):
+            sos_model_high.check_dependencies()
+        graph = sos_model_high.dependency_graph
+        assert graph.edges() == []
+
+        expected = networkx.DiGraph()
+        expected.add_node(sos_model_lo)
+        expected.add_node(energy_model)
+
+        assert energy_model in graph.nodes()
+
+        scenario = ScenarioModel('electricity_demand')
+        scenario.add_output('elec_demand_output', Mock(), Mock(), 'kWh')
+
+        sos_model_high.add_dependency(scenario, 'elec_demand_output',
+                                      'electricity_demand_input')
+
+        sos_model_high.check_dependencies()
+        assert graph.edges() == [(scenario, sos_model_high)]
+
+    @pytest.mark.xfail(reason="Nested sosmodels not yet implemented")
+    def test_composite_nested_sos_model(self, get_sector_model):
         """System of systems example with two nested SosModels, two Scenarios
         and one SectorModel. One dependency is defined at the SectorModel
         level, another at the lower SosModel level
         """
+        SectorModel = get_sector_model
 
         elec_scenario = ScenarioModel('electricity_demand_scenario')
         elec_scenario.add_output('electricity_demand_output',
                                  Mock(), Mock(), 'unit')
-        elec_scenario.add_data({'electricity_demand_output': 123})
+        elec_scenario.add_data({2010: 123})
 
         energy_model = SectorModel('energy_sector_model')
         energy_model.add_input('electricity_demand_input', Mock(), Mock(), 'unit')
@@ -203,7 +351,7 @@ class TestCompositeIntegration:
         energy_model.add_output('cost', Mock(), Mock(), 'unit')
         energy_model.add_output('fluffyness', Mock(), Mock(), 'unit')
 
-        def energy_function(input_data):
+        def energy_function(timestep, input_data):
             """Mimics the running of a sector model
             """
             results = {}
@@ -213,7 +361,7 @@ class TestCompositeIntegration:
             results['fluffyness'] = fluff * 22
             return results
 
-        energy_model.add_executable(energy_function)
+        energy_model.simulate = energy_function
         energy_model.add_dependency(elec_scenario,
                                     'electricity_demand_output',
                                     'electricity_demand_input')
@@ -222,11 +370,17 @@ class TestCompositeIntegration:
         sos_model_lo.add_model(elec_scenario)
         sos_model_lo.add_model(energy_model)
 
-        fluf_scenario = ScenarioModel('fluffiness_scenario', ['fluffiness'])
-        fluf_scenario.add_data({'fluffiness': 12})
+        fluf_scenario = ScenarioModel('fluffiness_scenario')
+        fluf_scenario.add_output('fluffiness', Mock(), Mock(), 'unit')
+        fluf_scenario.add_data({2010: 12})
+
+        assert sos_model_lo.free_inputs.names == ['fluffiness_input']
+
         sos_model_lo.add_dependency(fluf_scenario,
                                     'fluffiness',
                                     'fluffiness_input')
+
+        assert sos_model_lo.model_inputs.names == []
 
         sos_model_high = SosModel('higher')
         sos_model_high.add_model(sos_model_lo)
@@ -243,14 +397,17 @@ class TestCompositeIntegration:
 
         assert actual == expected
 
-    def test_loop(self):
+
+class TestCircularDependency:
+
+    def test_loop(self, get_energy_sector_model, get_water_sector_model):
         """Fails because no functionality to deal with loops
         """
-        energy_model = SectorModel('energy_sector_model')
+        energy_model = get_energy_sector_model
         energy_model.add_input('electricity_demand_input', Mock(), Mock(), 'unit')
         energy_model.add_output('fluffiness', Mock(), Mock(), 'unit')
 
-        def energy_function(input_data):
+        def energy_function(timestep, input_data):
             """Mimics the running of a sector model
             """
             results = {}
@@ -258,19 +415,19 @@ class TestCompositeIntegration:
             results['fluffiness'] = fluff * 22
             return results
 
-        energy_model.add_executable(energy_function)
+        energy_model.simulate = energy_function
 
-        water_model = SectorModel('water_sector_model', [], [])
+        water_model = get_water_sector_model
         water_model.add_input('fluffyness', Mock(), Mock(), 'unit')
         water_model.add_output('electricity_demand', Mock(), Mock(), 'unit')
 
-        def water_function(input_data):
+        def water_function(timestep, input_data):
             results = {}
             fluff = input_data['fluffyness']
             results['electricity_demand'] = fluff / 1.23
             return results
 
-        water_model.add_executable(water_function)
+        water_model.simulate = water_function
 
         sos_model = SosModel('energy_water_model')
         water_model.add_dependency(energy_model, 'fluffiness', 'fluffyness')
@@ -280,5 +437,18 @@ class TestCompositeIntegration:
         sos_model.add_model(water_model)
         sos_model.add_model(energy_model)
 
-        with raises(NotImplementedError):
-            sos_model.simulate(2010)
+        assert energy_model.model_inputs.names == ['electricity_demand_input']
+        assert water_model.model_inputs.names == ['fluffyness']
+        assert sos_model.model_inputs.names == []
+
+        assert energy_model.free_inputs.names == []
+        assert water_model.free_inputs.names == []
+        assert sos_model.free_inputs.names == []
+
+        sos_model.check_dependencies()
+        graph = sos_model.dependency_graph
+
+        assert (water_model, energy_model) in graph.edges()
+        assert (energy_model, water_model) in graph.edges()
+
+        sos_model.simulate(2010)

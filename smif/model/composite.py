@@ -46,6 +46,8 @@ A more comprehensive example with one scenario and one scenario model:
 from abc import ABC, abstractmethod
 from logging import getLogger
 
+from smif.metadata import MetadataSet
+
 
 class Model(ABC):
     """Abstract class represents the interface used to implement the composite
@@ -59,31 +61,57 @@ class Model(ABC):
 
     """
 
-    def __init__(self, name, inputs, outputs):
+    def __init__(self, name):
         self.name = name
-        self._model_inputs = inputs
-        self._model_outputs = outputs
+        self._model_inputs = MetadataSet([])
+        self._model_outputs = MetadataSet([])
         self.deps = {}
 
         self.logger = getLogger(__name__)
 
     @property
     def model_inputs(self):
+        """All model inputs defined at this layer
+
+        Returns
+        -------
+        smif.metadata.MetadataSet
+        """
         return self._model_inputs
 
     @property
     def model_outputs(self):
+        """All model outputs defined at this layer
+
+        Returns
+        -------
+        smif.metadata.MetadataSet
+
+        """
         return self._model_outputs
 
     @property
     def free_inputs(self):
         """Returns the free inputs not linked to a dependency at this layer
 
+        Free inputs are passed up to higher layers for deferred linkages to
+        dependencies.
+
         Returns
         -------
-        list
+        smif.metadata.MetadataSet
         """
-        return list(set(self._model_inputs) - set(self.deps.keys()))
+        if self._model_inputs.names:
+            model_inputs = set(self._model_inputs.names)
+        else:
+            model_inputs = set()
+
+        self.logger.debug("Model inputs to %s: %s", self.name, model_inputs)
+        self.logger.debug("Dependencies: %s", list(self.deps.keys()))
+        free_input_names = model_inputs - set(self.deps.keys())
+
+        return MetadataSet([self._model_inputs[name]
+                           for name in free_input_names])
 
     @abstractmethod
     def simulate(self, timestep, data=None):
@@ -105,7 +133,7 @@ class Model(ABC):
         if source not in source_model.model_outputs.names:
             msg = "Output '{}' is not defined in '{}' model"
             raise ValueError(msg.format(source, source_model.name))
-        if sink in self.model_inputs.names:
+        if sink in self.free_inputs.names:
             self.deps[sink] = Dependency(source_model, source)
             msg = "Added dependency from '%s' to '%s'"
             self.logger.debug(msg, source_model, self.name)

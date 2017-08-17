@@ -16,12 +16,13 @@ class ScenarioModel(Model):
     def __init__(self, name, output=None):
         if output:
             if isinstance(output, MetadataSet):
-                super().__init__(name, None, output)
+                super().__init__(name)
+                self._model_outputs.add_metadata_object(output)
             else:
                 msg = "output argument should be type smif.metadata.MetadataSet"
                 raise TypeError(msg)
         else:
-            super().__init__(name, None, MetadataSet([]))
+            super().__init__(name)
 
         self._data = {}
 
