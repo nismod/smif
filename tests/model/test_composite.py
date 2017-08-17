@@ -1,6 +1,7 @@
 from unittest.mock import Mock
 
 import networkx
+import numpy as np
 import pytest
 from pytest import fixture, raises
 from smif.metadata import Metadata, MetadataSet
@@ -27,31 +28,68 @@ def get_sector_model():
 @fixture
 def get_water_sector_model():
     class SectorModel(AbstractSectorModel):
+        """
+        fluffyness -> electricity_demand
+        """
 
-        def simulate(self, timestep, data=None):
-            return data
+        def simulate(self, timestep, input_data=None):
+            results = {}
+            x = input_data['fluffyness']
+            results['electricity_demand'] = (
+                x**3) - (6 * x**2) + (0.9 * x) + 0.15
+            return results
 
         def extract_obj(self):
             pass
 
         def initialise(self):
             pass
-    return SectorModel('water_supply_model')
+
+    water_model = SectorModel('water_supply_model')
+    water_model.add_input('fluffyness',
+                          water_model.regions.get_entry('LSOA'),
+                          water_model.intervals.get_entry('annual'),
+                          'unit')
+    water_model.add_output('electricity_demand',
+                           water_model.regions.get_entry('LSOA'),
+                           water_model.intervals.get_entry('annual'),
+                           'unit')
+
+    return water_model
 
 
 @fixture
 def get_energy_sector_model():
     class SectorModel(AbstractSectorModel):
+        """
+        electricity_demand_input -> fluffiness
+        """
 
-        def simulate(self, timestep, data=None):
-            return data
+        def simulate(self, timestep, input_data=None):
+            """Mimics the running of a sector model
+            """
+            results = {}
+            fluff = input_data['electricity_demand_input']
+            results['fluffiness'] = fluff * 0.819
+            return results
 
         def extract_obj(self):
             pass
 
         def initialise(self):
             pass
-    return SectorModel('energy_sector_model')
+
+    energy_model = SectorModel('energy_sector_model')
+    energy_model.add_input('electricity_demand_input',
+                           energy_model.regions.get_entry('LSOA'),
+                           energy_model.intervals.get_entry('annual'),
+                           'unit')
+    energy_model.add_output('fluffiness',
+                            energy_model.regions.get_entry('LSOA'),
+                            energy_model.intervals.get_entry('annual'),
+                            'unit')
+
+    return energy_model
 
 
 class TestModelSet:
@@ -60,11 +98,16 @@ class TestModelSet:
         SectorModel = get_sector_model
 
         elec_scenario = ScenarioModel('scenario')
-        elec_scenario.add_output('output', Mock(), Mock(), 'unit')
+        elec_scenario.add_output('output',
+                                 Mock(get_region_names=['oxford']),
+                                 Mock(get_interval_names=['annual']),
+                                 'unit')
         elec_scenario.add_data({2010: 123})
 
         energy_model = SectorModel('model')
-        energy_model.add_input('input', Mock(), Mock(), 'unit')
+        energy_model.add_input('input',
+                               Mock(get_region_names=['oxford']),
+                               Mock(get_interval_names=['annual']), 'unit')
         energy_model.add_dependency(elec_scenario, 'output', 'input')
 
         sos_model = SosModel('energy_sos_model')
@@ -197,11 +240,12 @@ class TestCompositeIntegration:
         sos_model.add_model(elec_scenario)
         actual = sos_model.simulate(2010)
         expected = {2010: {'electricity_demand_scenario':
-                    {'electricity_demand_output': 123}}}
+                           {'electricity_demand_output': 123}}}
         assert actual == expected
 
     def test_sector_model_null_model(self, get_energy_sector_model):
         no_inputs = get_energy_sector_model
+        no_inputs._model_inputs = MetadataSet([])
         no_inputs.simulate = lambda x: x
         actual = no_inputs.simulate(2010)
         expected = 2010
@@ -213,8 +257,8 @@ class TestCompositeIntegration:
         elec_scenario.add_data({2010: 123})
 
         energy_model = get_energy_sector_model
-        energy_model.add_input('input', Mock(), Mock(), 'unit')
-        energy_model.add_dependency(elec_scenario, 'output', 'input')
+        energy_model.add_dependency(elec_scenario, 'output',
+                                    'electricity_demand_input')
 
         sos_model = SosModel('blobby')
         sos_model.add_model(elec_scenario)
@@ -222,7 +266,8 @@ class TestCompositeIntegration:
 
         actual = sos_model.simulate(2010)
 
-        expected = {2010: {'energy_sector_model': {'input': 123},
+        expected = {2010: {'energy_sector_model':
+                           {'fluffiness': 100.737},
                            'scenario': {'output': 123}
                            }
                     }
@@ -346,7 +391,8 @@ class TestNestedModels():
         elec_scenario.add_data({2010: 123})
 
         energy_model = SectorModel('energy_sector_model')
-        energy_model.add_input('electricity_demand_input', Mock(), Mock(), 'unit')
+        energy_model.add_input(
+            'electricity_demand_input', Mock(), Mock(), 'unit')
         energy_model.add_input('fluffiness_input', Mock(), Mock(), 'unit')
         energy_model.add_output('cost', Mock(), Mock(), 'unit')
         energy_model.add_output('fluffyness', Mock(), Mock(), 'unit')
@@ -404,30 +450,8 @@ class TestCircularDependency:
         """Fails because no functionality to deal with loops
         """
         energy_model = get_energy_sector_model
-        energy_model.add_input('electricity_demand_input', Mock(), Mock(), 'unit')
-        energy_model.add_output('fluffiness', Mock(), Mock(), 'unit')
-
-        def energy_function(timestep, input_data):
-            """Mimics the running of a sector model
-            """
-            results = {}
-            fluff = input_data['electricity_demand_input']
-            results['fluffiness'] = fluff * 22
-            return results
-
-        energy_model.simulate = energy_function
 
         water_model = get_water_sector_model
-        water_model.add_input('fluffyness', Mock(), Mock(), 'unit')
-        water_model.add_output('electricity_demand', Mock(), Mock(), 'unit')
-
-        def water_function(timestep, input_data):
-            results = {}
-            fluff = input_data['fluffyness']
-            results['electricity_demand'] = fluff / 1.23
-            return results
-
-        water_model.simulate = water_function
 
         sos_model = SosModel('energy_water_model')
         water_model.add_dependency(energy_model, 'fluffiness', 'fluffyness')
@@ -451,4 +475,17 @@ class TestCircularDependency:
         assert (water_model, energy_model) in graph.edges()
         assert (energy_model, water_model) in graph.edges()
 
+        modelset = ModelSet([water_model, energy_model], sos_model)
+        actual = modelset.guess_results(water_model, 2010)
+        expected = {'electricity_demand': np.array([1.])}
+        # assert actual == expected
+
+        sos_model.max_iterations = 100
         sos_model.simulate(2010)
+
+        expected = np.array([[0.13488114]], dtype=np.float)
+        actual = sos_model.results[2010]['energy_sector_model']['fluffiness']
+        np.testing.assert_allclose(actual, expected, rtol=1e-5)
+        expected = np.array([[0.16469004]], dtype=np.float)
+        actual = sos_model.results[2010]['water_supply_model']['electricity_demand']
+        np.testing.assert_allclose(actual, expected, rtol=1e-5)

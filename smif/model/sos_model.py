@@ -418,6 +418,7 @@ class ModelSet(object):
             # - last year's inputs
             self.iterated_results = {}
             for model in self._models:
+
                 results = self.guess_results(model, timestep)
                 self._sos_model.set_data(model, timestep, results)
                 self.iterated_results[model.name] = [results]
@@ -428,9 +429,14 @@ class ModelSet(object):
                 if self.converged():
                     break
                 else:
-                    self.logger.debug("Iteration %s, model set %s", i, self._model_names)
                     for model in self._models:
+                        data = {}
+                        for model_input, dep in model.deps.items():
+                            data[model_input] = results[dep.source]
                         results = model.simulate(timestep, data)
+
+                        self.logger.debug("Iteration %s, model %s, results: %s",
+                                          i, model.name, results)
                         # self._sos_model.set_state(model, timestep, state)
                         self._sos_model.set_data(model, timestep, results)
                         self.iterated_results[model.name].append(results)
