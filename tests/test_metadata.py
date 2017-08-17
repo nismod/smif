@@ -262,3 +262,15 @@ class TestMetadataSet(object):
                                                       region_set,
                                                       interval_set,
                                                       "kilometers")]
+
+    def test_add_meta_object(self):
+        metadata = Metadata("total_lane_kilometres", region_set, interval_set,
+                            "kilometer")
+        metadata_set = MetadataSet([])
+        metadata_set.add_metadata_object(metadata)
+
+        # access list of metadata attributes
+        assert metadata_set.names == ["total_lane_kilometres"]
+        assert metadata_set.spatial_resolutions == [region_set]
+        assert metadata_set.temporal_resolutions == [interval_set]
+        assert metadata_set.units == ["kilometer"]

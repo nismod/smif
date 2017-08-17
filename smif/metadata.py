@@ -139,6 +139,18 @@ class MetadataSet(object):
                             metadata_item['units'])
         self._metadata[metadata.name] = metadata
 
+    def add_metadata_object(self, metadata_object):
+        """Add an metadata object to the set
+
+        Arguments
+        ---------
+        metadata_object : Metadata
+            A smif.metadata.Metadata instance
+
+        """
+        assert isinstance(metadata_object, Metadata)
+        self._metadata[metadata_object.name] = metadata_object
+
     def get_spatial_res(self, name):
         """The spatial resolution for parameter `name`
 
