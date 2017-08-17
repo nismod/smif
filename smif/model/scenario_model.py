@@ -9,7 +9,7 @@ class ScenarioModel(Model):
     ---------
     name : string
         The unique name of this scenario
-    output : smif.metadata.MetaDataSet
+    output : smif.metadata.MetaData
         A name for the scenario output parameter
     """
 
@@ -17,7 +17,7 @@ class ScenarioModel(Model):
         if output:
             if isinstance(output, MetadataSet):
                 super().__init__(name)
-                self._model_outputs.add_metadata_object(output)
+                self._model_outputs = output
             else:
                 msg = "output argument should be type smif.metadata.MetadataSet"
                 raise TypeError(msg)
@@ -25,6 +25,7 @@ class ScenarioModel(Model):
             super().__init__(name)
 
         self._data = {}
+        self.timesteps = []
 
     def add_output(self, name, spatial_resolution, temporal_resolution, units):
         """Add an output to the scenario model
@@ -44,7 +45,7 @@ class ScenarioModel(Model):
 
         self._model_outputs.add_metadata(output_metadata)
 
-    def add_data(self, data):
+    def add_data(self, data, timesteps):
         """Add data to the scenario
 
         Arguments
@@ -54,9 +55,11 @@ class ScenarioModel(Model):
             matches the spatial and temporal resolution associated
             with the output
         """
+        self.timesteps = timesteps
         self._data = data
 
     def simulate(self, timestep, data=None):
         """Returns the scenario data
         """
-        return {self.model_outputs.names[0]: self._data[timestep]}
+        time_index = self.timesteps.index[timestep]
+        return {self.model_outputs.names[0]: self._data[time_index]}

@@ -573,6 +573,7 @@ class SosModelBuilder(object):
         self.load_scenario_models(config_data['scenario_metadata'],
                                   config_data['scenario_data'],
                                   timesteps)
+        print(config_data['scenario_data'])
         self.add_planning(config_data['planning'])
 
     def set_max_iterations(self, config_data):
@@ -616,7 +617,8 @@ class SosModelBuilder(object):
             builder = SectorModelBuilder(model_data['name'])
             builder.construct(model_data)
             model = builder.finish()
-            self.sos_model.add_interventions(model_data['name'], )
+            self.add_interventions(model_data['name'],
+                                   model_data['interventions'])
             self.sos_model.add_model(model)
             self.add_model_data(model, model_data)
 
@@ -626,20 +628,22 @@ class SosModelBuilder(object):
         """
         self.logger.info("Loading scenarios")
         for scenario_meta in scenario_list:
-            scenario_output = MetadataSet([])
-            scenario_output.add_metadata(scenario_meta)
             name = scenario_meta['name']
-            scenario = ScenarioModel(name,
-                                     scenario_output)
+            scenario = ScenarioModel(name)
 
-            data = self._data_list_to_array(
-                    name,
-                    scenario_data[name],
-                    timesteps,
-                    scenario_meta
-                )
+            spatial = scenario_meta['spatial_resolution']
+            temporal = scenario_meta['temporal_resolution']
 
-            scenario.add_data(data)
+            scenario.add_output(scenario_meta['name'],
+                                self.region_register.get_entry(spatial),
+                                self.interval_register.get_entry(temporal),
+                                scenario_meta['units'])
+
+            data = self._data_list_to_array(name,
+                                            scenario_data[name],
+                                            timesteps,
+                                            scenario_meta)
+            scenario.add_data(data, timesteps)
             self.sos_model.add_model(scenario)
 
     def add_model_data(self, model, model_data):
@@ -725,6 +729,7 @@ class SosModelBuilder(object):
                 "intervals x regions when loading %s", param)
 
         for obs in observations:
+
             if 'year' not in obs:
                 raise ValueError("Scenario data item missing year: {}".format(obs))
             year = obs['year']
