@@ -35,7 +35,7 @@ class SosModel(Model):
     """
     def __init__(self, name):
         # housekeeping
-        super().__init__(name, MetadataSet([]), MetadataSet([]))
+        super().__init__(name)
         self.logger = logging.getLogger(__name__)
         self.max_iterations = 25
         self.convergence_relative_tolerance = 1e-05
@@ -43,7 +43,7 @@ class SosModel(Model):
 
         # models - includes types of SectorModel and ScenarioModel
         self.models = {}
-        self.dependency_graph = None
+        self.dependency_graph = networkx.DiGraph()
 
         # systems, interventions and (system) state
         self.timesteps = []
@@ -54,6 +54,33 @@ class SosModel(Model):
 
         # scenario data and results
         self._results = defaultdict(dict)
+
+    @property
+    def free_inputs(self):
+        """Returns the free inputs not linked to a dependency at this layer and all contained layers
+
+        Free inputs are passed up to higher layers for deferred linkages to
+        dependencies.
+
+        Returns
+        -------
+        smif.metadata.MetadataSet
+        """
+        # free inputs of all contained models
+        free_inputs = []
+        for model in self.models.values():
+            free_inputs.extend(model.free_inputs)
+
+        # free inputs of current layer
+        my_free_inputs = super().free_inputs
+        free_inputs.extend(my_free_inputs)
+
+        # compose a new MetadataSet containing the free inputs
+        metadataset = MetadataSet([])
+        for meta in free_inputs:
+            metadataset.add_metadata_object(meta)
+
+        return metadataset
 
     def add_model(self, model):
         """Adds a sector model to the system-of-systems model
@@ -86,7 +113,7 @@ class SosModel(Model):
         """Run the SosModel
 
         """
-        self._check_dependencies()
+        self.check_dependencies()
         run_order = self._get_model_sets_in_run_order()
         names = [model_set._model_names for model_set in run_order]
         self.logger.info("Determined run order as %s", names)
@@ -94,35 +121,33 @@ class SosModel(Model):
             model_set.run(timestep)
         return self.results
 
-    def _check_dependencies(self):
-        """For each model, compare dependency list of from_models
-        against list of available models
+    def check_dependencies(self):
+        """For each contained model, compare dependency list against
+        list of available models
         """
-        dependency_graph = networkx.DiGraph()
-        dependency_graph.add_nodes_from(self.models.values())
+        if self.free_inputs.names:
+            msg = "A SosModel must have all inputs linked to dependencies." \
+                  "Define dependencies for %s"
+            raise NotImplementedError(msg, ", ".join(self.free_inputs.names))
 
-        for model_name, model in self.models.items():
-            if model.model_inputs:
-                for model_input in model.model_inputs:
-                    self.logger.debug(model_input)
-                    if model_input.name in model.deps:
-                        dependency = model.deps[model_input.name]
-                        provider = dependency.source_model
-                        msg = "Dependency '%s' provided by '%s'"
-                        self.logger.debug(msg, model_input.name, provider.name)
+        for model in self.models.values():
 
-                        dependency_graph.add_edge(provider,
-                                                  model,
-                                                  {'source': dependency.source,
-                                                   'sink': model_input})
-                    else:
-                        # report missing dependency type
-                        msg = "Missing dependency: '{}' depends on '{}', " + \
-                            "which is not supplied."
-                        raise AssertionError(msg.format(model_name,
-                                                        model_input.name))
+            if isinstance(model, SosModel):
+                msg = "Nesting of SosModels not yet supported"
+                raise NotImplementedError(msg)
+            else:
+                self.dependency_graph.add_node(model,
+                                               name=model.name)
 
-        self.dependency_graph = dependency_graph
+                for sink, dependency in model.deps.items():
+                    provider = dependency.source_model
+                    msg = "Dependency '%s' provided by '%s'"
+                    self.logger.debug(msg, sink, provider.name)
+
+                    self.dependency_graph.add_edge(provider,
+                                                   model,
+                                                   {'source': dependency.source,
+                                                    'sink': sink})
 
     def get_decisions(self, model, timestep):
         """Gets the interventions that correspond to the decisions
