@@ -87,17 +87,27 @@ class MetadataSet(object):
         A list of dicts like ::
 
                 {
-                    "name": "heat_demand"
-                    "spatial_resolution": smif.convert.ResolutionSet
-                    "temporal_resolution": smif.convert.ResolutionSet
-                    "units": "kW"
+                    'name': 'heat_demand'
+                    'spatial_resolution': smif.convert.ResolutionSet
+                    'temporal_resolution': smif.convert.ResolutionSet
+                    'units': 'kW'
                 }
+
+        Or, a list of smif.metadata.Metadata
+
+                Metadata('heat_demand',
+                         smif.convert.area.RegionSet,
+                         smif.convert.interval.IntervalSet,
+                         'kW')
 
     """
     def __init__(self, metadata_list):
         self._metadata = {}
         for metadata_item in metadata_list:
-            self.add_metadata(metadata_item)
+            if isinstance(metadata_item, dict):
+                self.add_metadata(metadata_item)
+            elif isinstance(metadata_item, Metadata):
+                self.add_metadata_object(metadata_item)
 
     @property
     def metadata(self):
