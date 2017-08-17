@@ -360,6 +360,18 @@ def get_config_data(setup_project_folder, setup_region_data):
                     'value': 3,
                     'region': 'oxford',
                     'interval': 1
+                },
+                {
+                    'year': 2011,
+                    'value': 5,
+                    'region': 'oxford',
+                    'interval': 1
+                },
+                {
+                    'year': 2012,
+                    'value': 1,
+                    'region': 'oxford',
+                    'interval': 1
                 }
             ]
         },
@@ -607,6 +619,42 @@ class TestSosModelBuilder():
         assert sos_model.sector_models == ['water_supply']
         assert isinstance(sos_model.models['water_supply'], SectorModel)
 
+    def test_data_list_to_array(self):
+
+        data = [
+                {
+                    'year': 2010,
+                    'value': 3,
+                    'region': 'oxford',
+                    'interval': 1
+                },
+                {
+                    'year': 2011,
+                    'value': 5,
+                    'region': 'oxford',
+                    'interval': 1
+                },
+                {
+                    'year': 2012,
+                    'value': 1,
+                    'region': 'oxford',
+                    'interval': 1
+                }
+            ]
+
+        metadata = {'name': 'raininess',
+                    'temporal_resolution': 'annual',
+                    'spatial_resolution': 'LSOA',
+                    'units': 'ml'}
+
+        builder = SosModelBuilder()
+
+        actual = builder._data_list_to_array('raininess', data,
+                                             [2010, 2011, 2012],
+                                             metadata)
+        expected = np.array([[[3.]], [[5.]], [[1.]]], dtype=float)
+        np.testing.assert_equal(actual, expected)
+
     def test_scenarios(self, get_config_data):
         """Test constructing from single dict config
         """
@@ -620,24 +668,12 @@ class TestSosModelBuilder():
         assert isinstance(sos_model.models['water_supply'], SectorModel)
 
         assert isinstance(sos_model.models['raininess'], ScenarioModel)
-        np.testing.assert_equal(sos_model.models['raininess'].simulate(),
-                                np.array([
-                                    # 2010
-                                    [
-                                        # oxford
-                                        [3.],
-                                    ],
-                                    # 2011
-                                    [
-                                        # oxford
-                                        [5.],
-                                    ],
-                                    # 2012
-                                    [
-                                        # oxford
-                                        [1.],
-                                    ],
-                                ], dtype=float))
+
+        actual = sos_model.models['raininess']._data
+        print(actual)
+
+        np.testing.assert_equal(actual,
+                                np.array([[[3.]], [[5.]], [[1.]]], dtype=float))
 
     def test_set_max_iterations(self, get_config_data):
         """Test constructing from single dict config
