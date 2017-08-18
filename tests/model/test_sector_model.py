@@ -59,27 +59,17 @@ class TestSectorModelBuilder():
         model_path = str(setup_project_folder.join('models', 'water_supply',
                                                    '__init__.py'))
 
-        region = Mock()
-        region.get_entry = Mock(return_value='a_resolution_set')
-
-        interval = Mock()
-        interval.get_entry = Mock(return_value='a_resolution_set')
-
-        registers = {'regions': region,
-                     'intervals': interval}
-
-        builder = SectorModelBuilder('test', registers)
+        builder = SectorModelBuilder('test')
         builder.load_model(model_path, 'WaterSupplySectorModel')
 
         inputs = [{'name': 'an_input',
-                   'spatial_resolution': 'big',
-                   'temporal_resolution': 'short',
+                   'spatial_resolution': 'LSOA',
+                   'temporal_resolution': 'annual',
                    'units': 'tonnes'}]
 
         builder.add_inputs(inputs)
 
-        assert region.get_entry.call_count == 1
-        assert interval.get_entry.call_count == 1
+        assert 'an_input' in builder._sector_model.model_inputs.names
 
     def test_sector_model_builder(self, setup_project_folder):
         model_path = str(setup_project_folder.join('models', 'water_supply',
@@ -137,8 +127,8 @@ class TestInputs:
         builder.add_inputs(None)
         sector_model = builder.finish()
         assert isinstance(sector_model.model_inputs, MetadataSet)
-        actual_inputs = sector_model.model_inputs
-        assert [x.name for x in actual_inputs.metadata] == 0
+        actual_inputs = sector_model.model_inputs.names
+        assert actual_inputs == []
 
 
 class TestSectorModel(object):

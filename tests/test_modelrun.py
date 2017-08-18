@@ -12,6 +12,7 @@ def get_model_runconfig_data(setup_project_folder, setup_region_data):
     )
     return {
         "timesteps": [2010, 2011, 2012],
+        "dependencies": [],
         "sector_model_data": [
             {
                 "name": "water_supply",
@@ -46,9 +47,9 @@ def get_model_runconfig_data(setup_project_folder, setup_region_data):
                 }
             ]
         },
-        "region_sets": {'LSOA': setup_region_data['features']},
+        "region_sets": {'BSOA': setup_region_data['features']},
         "interval_sets": {
-            'annual': [
+            'yearly': [
                 {
                     'id': 1,
                     'start': 'P0Y',
@@ -59,8 +60,8 @@ def get_model_runconfig_data(setup_project_folder, setup_region_data):
         "scenario_metadata": [
             {
                 'name': 'raininess',
-                'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'yearly',
+                'spatial_resolution': 'BSOA',
                 'units': 'ml'
             }
         ]
@@ -86,14 +87,15 @@ def get_model_run(setup_project_folder, setup_region_data):
 
     config_data = {
         'timesteps': [2010, 2011, 2012],
-        'region_sets': {'LSOA': setup_region_data['features']},
-        'interval_sets': {'annual': interval_data},
+        'dependencies': [],
+        'region_sets': {'BSOA': setup_region_data['features']},
+        'interval_sets': {'yearly': interval_data},
         'planning': [],
         'scenario_metadata':
             [{
                 'name': 'raininess',
-                'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'yearly',
+                'spatial_resolution': 'BSOA',
                 'units': 'ml'
             }],
         'scenario_data': {

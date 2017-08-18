@@ -1107,7 +1107,7 @@ def setup_country_data():
                     "coordinates": [
                         [
                             [0, 1],
-                            [0, 1],
+                            [0, 1.1],
                             [2, 3]
                         ]
                     ]
@@ -1123,7 +1123,7 @@ def setup_country_data():
                     "coordinates": [
                         [
                             [2, 3],
-                            [2, 3],
+                            [2, 3.2],
                             [4, 5]
                         ]
                     ]

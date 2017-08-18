@@ -68,28 +68,6 @@ def test_setup_project_folder():
             assert os.path.exists(folder_path)
 
 
-def test_run_sector_model(setup_folder_structure):
-    """Run a sector model in the list
-    """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
-    args = get_args(['run', '--model', 'water_supply', config_file])
-
-    expected = 'water_supply'
-    actual = args.model
-    assert actual == expected
-
-
-def test_dont_run_invalid_sector_model(setup_folder_structure, setup_project_folder):
-    """Don't try to run a sector model which is not in the list
-    """
-    model_name = 'invalid_model_name'
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
-    args = get_args(['run', '-m', model_name, config_file])
-
-    assert args.model == model_name
-    assert args.path == config_file
-
-
 def test_validation_call(setup_folder_structure, setup_project_folder):
     """Ensure validation gets called
     """

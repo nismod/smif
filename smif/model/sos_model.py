@@ -548,8 +548,38 @@ class SosModelBuilder(object):
         self.load_scenario_models(config_data['scenario_metadata'],
                                   config_data['scenario_data'],
                                   timesteps)
-        print(config_data['scenario_data'])
         self.add_planning(config_data['planning'])
+        self.add_dependencies(config_data['dependencies'])
+
+    def add_dependencies(self, dependency_list):
+        """Add dependencies between models
+
+        Arguments
+        ---------
+        dependency_list : list
+            A list of dicts of dependency configuration data
+
+        Examples
+        --------
+        >>> dependencies = [{'source_model': 'raininess',
+                             'source_model_output': 'raininess',
+                             'sink_model': 'water_supply',
+                             'sink_model_input': 'raininess'}]
+        >>> builder.add_dependencies(dependencies)
+        """
+        for dep in dependency_list:
+            sink_model_object = self.sos_model.models[dep['sink_model']]
+            source_model_object = self.sos_model.models[dep['source_model']]
+            source_model_output = dep['source_model_output']
+            sink_model_input = dep['sink_model_input']
+
+            self.logger.debug("Adding dependency linking %s.%s to %s.%s",
+                              source_model_object.name, source_model_output,
+                              sink_model_object.name, sink_model_input)
+
+            sink_model_object.add_dependency(source_model_object,
+                                             source_model_output,
+                                             sink_model_input)
 
     def set_max_iterations(self, config_data):
         """Set the maximum iterations for iterating `class`::smif.ModelSet to
@@ -636,6 +666,11 @@ class SosModelBuilder(object):
         self.logger.info("Loading scenarios")
         for scenario_meta in scenario_list:
             name = scenario_meta['name']
+
+            if name not in scenario_data:
+                msg = "Parameter '{}' in scenario definitions not registered in scenario data"
+                raise ValueError(msg.format(name))
+
             scenario = ScenarioModel(name)
 
             spatial = scenario_meta['spatial_resolution']
