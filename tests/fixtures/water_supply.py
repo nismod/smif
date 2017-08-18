@@ -110,10 +110,10 @@ class WaterSupplySectorModel(SectorModel):
         # unpack inputs
         self.logger.debug(data)
 
-        if 'raininess' in data:
-            raininess = data['raininess'][0, 0]
-        elif 'water' in data:
-            raininess = data['water'][0, 0]
+        if 'raininess' in data[timestep]:
+            raininess = data[timestep]['raininess'][0, 0]
+        elif 'water' in data[timestep]:
+            raininess = data[timestep]['water'][0, 0]
         else:
             raise KeyError("Couldn't find parameter in {}".format(data))
 
@@ -130,7 +130,7 @@ class WaterSupplySectorModel(SectorModel):
             raininess,
             number_of_treatment_plants
         )
-        instance_results = instance.simulate()
+        instance_results = instance.simulate(timestep, data)
         state = []
         results = {
             'water': np.array([[

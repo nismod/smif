@@ -1,3 +1,4 @@
+from numpy import ndarray
 from smif.metadata import MetadataSet
 from smif.model.composite import Model
 
@@ -50,16 +51,15 @@ class ScenarioModel(Model):
 
         Arguments
         ---------
-        data : dict
-            Key of dict should be timestep, and value a numpy array which
-            matches the spatial and temporal resolution associated
-            with the output
+        data : numpy.ndarray
+        timesteps : list
         """
         self.timesteps = timesteps
+        assert isinstance(data, ndarray)
         self._data = data
 
     def simulate(self, timestep, data=None):
         """Returns the scenario data
         """
-        time_index = self.timesteps.index[timestep]
+        time_index = self.timesteps.index(timestep)
         return {self.model_outputs.names[0]: self._data[time_index]}

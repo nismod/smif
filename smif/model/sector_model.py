@@ -128,7 +128,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def simulate(self, data):
+    def simulate(self, timestep, data=None):
         """Implement this method to run the model
 
         Arguments

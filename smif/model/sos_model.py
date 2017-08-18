@@ -118,7 +118,7 @@ class SosModel(Model):
         names = [model_set._model_names for model_set in run_order]
         self.logger.info("Determined run order as %s", names)
         for model_set in run_order:
-            model_set.run(timestep)
+            model_set.run(timestep, data)
         return self.results
 
     def check_dependencies(self):
@@ -224,7 +224,7 @@ class SosModel(Model):
             The converted data series
 
         """
-        convertor = SpaceTimeConvertor(self.regions, self.intervals)
+        convertor = SpaceTimeConvertor()
         return convertor.convert(data,
                                  from_spatial_resolution,
                                  to_spatial_resolution,
@@ -387,16 +387,23 @@ class ModelSet(object):
         self.relative_tolerance = sos_model.convergence_relative_tolerance
         self.absolute_tolerance = sos_model.convergence_absolute_tolerance
 
-    def run(self, timestep):
+    def run(self, timestep, data=None):
         """Runs a set of one or more models
+
+        Arguments
+        ---------
+        timestep : int
+        data : dict, default=None
         """
+        if not data:
+            data = {}
+
         if len(self._models) == 1:
             # Short-circuit if the set contains a single model - this
             # can be run deterministically
             model = list(self._models)[0]
             logging.debug("Running %s for %d", model.name, timestep)
 
-            data = {}
             if model.model_inputs:
                 for model_input in model.model_inputs:
                     self.logger.debug("Seeking dep for %s", model_input.name)
@@ -634,15 +641,19 @@ class SosModelBuilder(object):
             spatial = scenario_meta['spatial_resolution']
             temporal = scenario_meta['temporal_resolution']
 
-            scenario.add_output(scenario_meta['name'],
-                                self.region_register.get_entry(spatial),
-                                self.interval_register.get_entry(temporal),
+            spatial_res = self.region_register.get_entry(spatial)
+            temporal_res = self.interval_register.get_entry(temporal)
+
+            scenario.add_output(name,
+                                spatial_res,
+                                temporal_res,
                                 scenario_meta['units'])
 
             data = self._data_list_to_array(name,
                                             scenario_data[name],
                                             timesteps,
-                                            scenario_meta)
+                                            spatial_res,
+                                            temporal_res)
             scenario.add_data(data, timesteps)
             self.sos_model.add_model(scenario)
 
@@ -707,11 +718,20 @@ class SosModelBuilder(object):
         self.sos_model.planning = Planning(planning)
 
     def _data_list_to_array(self, param, observations, timestep_names,
-                            param_metadata):
+                            spatial_resolution, temporal_resolution):
         """Convert list of observations to :class:`numpy.ndarray`
+
+        Arguments
+        ---------
+        param : str
+        observations : list
+        timestep_names : list
+        spatial_resolution : smif.convert.area.RegionSet
+        temporal_resolution : smif.convert.interval.IntervalSet
+
         """
-        interval_names, region_names = self._get_dimension_names_for_param(
-            param_metadata, param)
+        interval_names = temporal_resolution.get_entry_names()
+        region_names = spatial_resolution.get_entry_names()
 
         if len(timestep_names) == 0:
             self.logger.error("No timesteps found when loading %s", param)
@@ -731,20 +751,20 @@ class SosModelBuilder(object):
         for obs in observations:
 
             if 'year' not in obs:
-                raise ValueError("Scenario data item missing year: {}".format(obs))
+                raise ValueError("Scenario data item missing year: '{}'".format(obs))
             year = obs['year']
             if year not in timestep_names:
                 raise ValueError(
-                    "Year {} not defined in model timesteps".format(year))
+                    "Year '{}' not defined in model timesteps".format(year))
 
             if 'region' not in obs:
-                raise ValueError("Scenario data item missing region: {}".format(obs))
+                raise ValueError("Scenario data item missing region: '{}'".format(obs))
             region = obs['region']
             if region not in region_names:
                 raise ValueError(
-                    "Region {} not defined in set {} for parameter {}".format(
+                    "Region '{}' not defined in set '{}' for parameter '{}'".format(
                         region,
-                        param_metadata.spatial_resolution,
+                        spatial_resolution.name,
                         param))
 
             if 'interval' not in obs:
@@ -752,9 +772,9 @@ class SosModelBuilder(object):
             interval = obs['interval']
             if interval not in interval_names:
                 raise ValueError(
-                    "Interval {} not defined in set {} for parameter {}".format(
+                    "Interval '{}' not defined in set '{}' for parameter '{}'".format(
                         interval,
-                        param_metadata.temporal_resolution,
+                        temporal_resolution.name,
                         param))
 
             timestep_idx = timestep_names.index(year)
@@ -764,23 +784,6 @@ class SosModelBuilder(object):
             data[timestep_idx, region_idx, interval_idx] = obs['value']
 
         return data
-
-    def _get_dimension_names_for_param(self, metadata, param):
-        interval_set_name = metadata['temporal_resolution']
-        interval_set = self.interval_register.get_entry(interval_set_name)
-        interval_names = interval_set.get_entry_names()
-
-        region_set_name = metadata['spatial_resolution']
-        region_set = self.region_register.get_entry(region_set_name)
-        region_names = region_set.get_entry_names()
-
-        if len(interval_names) == 0:
-            self.logger.error("No interval names found when loading %s", param)
-
-        if len(region_names) == 0:
-            self.logger.error("No region names found when loading %s", param)
-
-        return interval_names, region_names
 
     def _check_planning_interventions_exist(self):
         """Check existence of all the interventions in the pre-specifed planning

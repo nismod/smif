@@ -38,7 +38,7 @@ class ModelRun(object):
         self._model_horizon = []
 
         self.narratives = None
-        self.strategy = None
+        self.strategies = None
         self.status = 'Empty'
 
         self.logger = getLogger(__name__)
@@ -132,7 +132,10 @@ class ModelRunBuilder(object):
         """Returns a configured model run ready for operation
 
         """
-        return self.model_run
+        if self.model_run.status == 'Built':
+            return self.model_run
+        else:
+            raise RuntimeError("Run construct() method before finish().")
 
     def _add_sos_model(self, config_data):
         """
