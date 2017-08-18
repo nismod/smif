@@ -11,7 +11,7 @@
 import logging
 import numpy as np
 from smif import StateData
-from smif.sector_model import SectorModel
+from smif.model.sector_model import SectorModel
 
 
 class WaterSupplySectorModel(SectorModel):
@@ -24,7 +24,7 @@ class WaterSupplySectorModel(SectorModel):
         """
         pass
 
-    def simulate(self, decisions, state, data):
+    def simulate(self, timestep, data):
         """
 
         Arguments
@@ -39,9 +39,12 @@ class WaterSupplySectorModel(SectorModel):
             - scenario data, e.g. expected level of rainfall
         """
 
+        state = data[timestep]['state']
+        decisions = data[timestep]['decisions']
+
         # unpack inputs
         reservoir_level = state[0].data['current_level']['value']
-        raininess = np.sum(data['raininess'])
+        raininess = np.sum(data[timestep]['raininess'])
 
         # unpack assets
         number_of_treatment_plants = 2
