@@ -11,6 +11,18 @@ from smif.model.sos_model import ModelSet, SosModel
 
 
 @fixture
+def get_scenario():
+    scenario = ScenarioModel('electricity_demand_scenario')
+    scenario.add_output('electricity_demand_output',
+                        scenario.regions.get_entry('LSOA'),
+                        scenario.intervals.get_entry('annual'),
+                        'unit')
+    scenario.add_data(np.array([[[123]]]), [2010])
+
+    return scenario
+
+
+@fixture
 def get_sector_model():
     class SectorModel(AbstractSectorModel):
 
@@ -102,7 +114,7 @@ class TestModelSet:
                                  Mock(get_region_names=['oxford']),
                                  Mock(get_interval_names=['annual']),
                                  'unit')
-        elec_scenario.add_data({2010: 123})
+        elec_scenario.add_data(np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input',
@@ -124,7 +136,7 @@ class TestBasics:
         SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data({2010: 123})
+        elec_scenario.add_data(np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -143,7 +155,7 @@ class TestDependencyGraph:
         SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data({2010: 123})
+        elec_scenario.add_data(np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -169,7 +181,7 @@ class TestDependencyGraph:
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
 
-        elec_scenario.add_data({2010: 123})
+        elec_scenario.add_data(np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -192,7 +204,7 @@ class TestDependencyGraph:
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
 
-        elec_scenario.add_data({'output': 123})
+        elec_scenario.add_data(np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -228,14 +240,10 @@ class TestSosModel:
 
 class TestCompositeIntegration:
 
-    def test_simplest_case(self):
+    def test_simplest_case(self, get_scenario):
         """One scenario only
         """
-        elec_scenario = ScenarioModel('electricity_demand_scenario')
-        elec_scenario.add_output('electricity_demand_output',
-                                 Mock(), Mock(), 'unit')
-
-        elec_scenario.add_data({2010: 123})
+        elec_scenario = get_scenario
         sos_model = SosModel('simple')
         sos_model.add_model(elec_scenario)
         actual = sos_model.simulate(2010)
@@ -251,13 +259,13 @@ class TestCompositeIntegration:
         expected = 2010
         assert actual == expected
 
-    def test_sector_model_one_input(self, get_energy_sector_model):
-        elec_scenario = ScenarioModel('scenario')
-        elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data({2010: 123})
+    def test_sector_model_one_input(self, get_energy_sector_model,
+                                    get_scenario):
+        elec_scenario = get_scenario
 
         energy_model = get_energy_sector_model
-        energy_model.add_dependency(elec_scenario, 'output',
+        energy_model.add_dependency(elec_scenario,
+                                    'electricity_demand_output',
                                     'electricity_demand_input')
 
         sos_model = SosModel('blobby')
@@ -268,7 +276,7 @@ class TestCompositeIntegration:
 
         expected = {2010: {'energy_sector_model':
                            {'fluffiness': 100.737},
-                           'scenario': {'output': 123}
+                           'electricity_demand_scenario': {'electricity_demand_output': 123}
                            }
                     }
         assert actual == expected
@@ -388,7 +396,7 @@ class TestNestedModels():
         elec_scenario = ScenarioModel('electricity_demand_scenario')
         elec_scenario.add_output('electricity_demand_output',
                                  Mock(), Mock(), 'unit')
-        elec_scenario.add_data({2010: 123})
+        elec_scenario.add_data(np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('energy_sector_model')
         energy_model.add_input(
@@ -418,7 +426,7 @@ class TestNestedModels():
 
         fluf_scenario = ScenarioModel('fluffiness_scenario')
         fluf_scenario.add_output('fluffiness', Mock(), Mock(), 'unit')
-        fluf_scenario.add_data({2010: 12})
+        fluf_scenario.add_data(np.array([[[12]]]), [2010])
 
         assert sos_model_lo.free_inputs.names == ['fluffiness_input']
 

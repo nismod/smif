@@ -53,6 +53,13 @@ class ScenarioModel(Model):
         ---------
         data : numpy.ndarray
         timesteps : list
+
+        Example
+        -------
+        >>> elec_scenario = ScenarioModel('elec_scenario')
+        >>> data = np.array([[[120.23]]])
+        >>> timesteps = [2010]
+        >>> elec_scenario.add_data(data, timesteps)
         """
         self.timesteps = timesteps
         assert isinstance(data, ndarray)

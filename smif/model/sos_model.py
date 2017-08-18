@@ -10,7 +10,6 @@ from enum import Enum
 import networkx
 import numpy as np
 from smif import StateData
-from smif.convert import SpaceTimeConvertor
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.decision import Planning
@@ -200,37 +199,6 @@ class SosModel(Model):
         """
         self._results[timestep][model.name] = results
 
-    def _convert_data(self, data, to_spatial_resolution,
-                      to_temporal_resolution, from_spatial_resolution,
-                      from_temporal_resolution):
-        """Convert data from one spatial and temporal resolution to another
-
-        Parameters
-        ----------
-        data : numpy.ndarray
-            The data series for conversion
-        to_spatial_resolution : str
-            ID of the region set to convert to
-        to_temporal_resolution : str
-            ID of the interval set to convert to
-        from_spatial_resolution : str
-            ID of the region set to convert from
-        from_temporal_resolution : str
-            ID of the interval set to convert from
-
-        Returns
-        -------
-        converted_data : numpy.ndarray
-            The converted data series
-
-        """
-        convertor = SpaceTimeConvertor()
-        return convertor.convert(data,
-                                 from_spatial_resolution,
-                                 to_spatial_resolution,
-                                 from_temporal_resolution,
-                                 to_temporal_resolution)
-
     def _get_model_sets_in_run_order(self):
         """Returns a list of :class:`ModelSet` in a runnable order.
 
@@ -414,7 +382,7 @@ class ModelSet(object):
                         dependency = model.deps[model_input.name]
                         self.logger.debug("Found dependency for '%s'",
                                           model_input.name)
-                        data[model_input.name] = dependency.get_data(timestep)
+                        data[model_input.name] = dependency.get_data(timestep, model_input)
 
             results = model.simulate(timestep, data)
             # self._sos_model.set_state(model, timestep, state)
@@ -439,7 +407,7 @@ class ModelSet(object):
                     for model in self._models:
                         data = {}
                         for model_input, dep in model.deps.items():
-                            data[model_input] = results[dep.source]
+                            data[model_input] = results[dep.source.name]
                         results = model.simulate(timestep, data)
 
                         self.logger.debug("Iteration %s, model %s, results: %s",
@@ -631,6 +599,38 @@ class SosModelBuilder(object):
 
     def load_scenario_models(self, scenario_list, scenario_data, timesteps):
         """Loads the scenario models into the system-of-systems model
+
+        Note that we currently use the same name for the scenario name,
+        and the name of the output of the ScenarioModel.
+
+        Arguments
+        ---------
+        scenario_list : list
+            A list of dicts with keys::
+
+                'name': 'mass',
+                'spatial_resolution': 'country',
+                'temporal_resolution': 'seasonal',
+                'units': 'kg'
+
+        scenario_data : dict
+            A dict-of-list-of-dicts with keys ``param_name``: ``year``,
+            ``region``, ``interval``, ``value``
+        timesteps : list
+
+        Example
+        -------
+        >>> builder = SosModelBuilder('test_sos_model')
+        >>> model_list = [{'name': 'mass',
+                           'spatial_resolution': 'country',
+                           'temporal_resolution': 'seasonal',
+                           'units': 'kg'}]
+        >>> data = {'mass': [{'year': 2015,
+                              'region': 'GB',
+                              'interval': 'wet_season',
+                              'value': 3}]}
+        >>> timesteps = [2015, 2016]
+        >>> builder.load_scenario_models(model_list, data, timesteps)
 
         """
         self.logger.info("Loading scenarios")

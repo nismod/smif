@@ -785,6 +785,9 @@ class TestSosModelBuilder():
 
         builder.finish()
 
+
+class TestScenarioModel:
+
     def test_nest_scenario_data(self, setup_country_data):
         data = {
             "mass": [
@@ -859,20 +862,23 @@ class TestSosModelBuilder():
         }
 
         builder = SosModelBuilder()
+
         interval_data = [
             {'id': 'wet_season', 'start': 'P0M', 'end': 'P5M'},
             {'id': 'dry_season', 'start': 'P5M', 'end': 'P10M'},
             {'id': 'wet_season', 'start': 'P10M', 'end': 'P1Y'},
         ]
-        builder.load_interval_sets({'seasonal': interval_data})
-        builder.load_region_sets({'country': setup_country_data['features']})
-        builder.add_scenario_metadata([{
+        builder.interval_register.register(
+            IntervalSet('seasonal', interval_data))
+        builder.region_register.register(
+            RegionSet('country', setup_country_data['features']))
+
+        builder.load_scenario_models([{
             'name': 'mass',
             'spatial_resolution': 'country',
             'temporal_resolution': 'seasonal',
             'units': 'kg'
-        }])
-        builder.add_scenario_data(data)
+        }], data, [2015, 2016])
         actual = builder.sos_model._scenario_data
 
         print(actual)
@@ -894,16 +900,12 @@ class TestSosModelBuilder():
         expected = {"length": np.array([[[3.14]]])}
 
         builder = SosModelBuilder()
-        interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
-        builder.load_interval_sets({'annual': interval_data})
-        builder.load_region_sets({'LSOA': setup_region_data['features']})
-        builder.add_scenario_metadata([{
+        builder.load_scenario_models([{
             'name': 'length',
             'spatial_resolution': 'LSOA',
             'temporal_resolution': 'annual',
             'units': 'm'
-        }])
-        builder.add_scenario_data(data)
+        }], data, [2015])
         assert builder.sos_model._scenario_data == expected
 
     def test_scenario_data_missing_year(self, setup_region_data,
@@ -917,19 +919,15 @@ class TestSosModelBuilder():
         }
 
         builder = SosModelBuilder()
-        interval_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
-        builder.load_interval_sets({'annual': interval_data})
-        builder.load_region_sets({'LSOA': setup_region_data['features']})
-        builder.add_scenario_metadata([{
-            'name': 'length',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'm'
-        }])
 
         msg = "Scenario data item missing year"
         with raises(ValueError) as ex:
-            builder.add_scenario_data(data)
+            builder.load_scenario_models([{
+                'name': 'length',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'units': 'm'
+            }], data, [2015])
         assert msg in str(ex.value)
 
     def test_scenario_data_missing_param_mapping(self):
@@ -944,13 +942,15 @@ class TestSosModelBuilder():
 
         builder = SosModelBuilder()
 
-        msg = "Parameter length not registered in scenario metadata"
+        msg = "Parameter 'length' not registered in scenario metadata"
         with raises(ValueError) as ex:
-            builder.add_scenario_data(data)
+            builder.load_scenario_models([{
+                'name': 'length',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'units': 'm'}],
+                data, [2015])
         assert msg in str(ex.value)
-
-
-class TestScenarioModel:
 
     def test_scenario_data_missing_param_region(self, setup_region_data,
                                                 ):
