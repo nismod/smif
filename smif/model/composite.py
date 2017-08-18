@@ -113,7 +113,7 @@ class Model(ABC):
             model_inputs = set()
 
         self.logger.debug("Model inputs to %s: %s", self.name, model_inputs)
-        self.logger.debug("Dependencies: %s", list(self.deps.keys()))
+        self.logger.debug("Dependencies: %s", self.deps)
         free_input_names = model_inputs - set(self.deps.keys())
 
         return MetadataSet([self._model_inputs[name]
@@ -123,7 +123,7 @@ class Model(ABC):
     def simulate(self, timestep, data=None):
         pass
 
-    def add_dependency(self, source_model, source, sink):
+    def add_dependency(self, source_model, source, sink, function=None):
         """Adds a dependency to the current `Model` object
 
         Arguments
@@ -141,10 +141,19 @@ class Model(ABC):
             raise ValueError(msg.format(source, source_model.name))
         if sink in self.free_inputs.names:
             source_object = source_model.model_outputs[source]
-            self.deps[sink] = Dependency(source_model, source_object)
+            self.deps[sink] = (Dependency(source_model,
+                                          source_object,
+                                          function))
             msg = "Added dependency from '%s' to '%s'"
-            self.logger.debug(msg, source_model, self.name)
+            self.logger.debug(msg, source_model.name, self.name)
         else:
+            if sink in self.model_inputs.names:
+                raise NotImplementedError("Multiple source dependencies"
+                                          "yet implemented")
+
+            msg = "Inputs: '%s'. Free inputs: '%s'."
+            self.logger.debug(msg, self.model_inputs.names,
+                              self.free_inputs.names)
             msg = "Input '{}' is not defined in '{}' model"
             raise ValueError(msg.format(sink, self.name))
 
@@ -280,13 +289,16 @@ class Dependency():
     ---------
     source_model : smif.composite.Model
         The source model object
-    source : string
-        The name of the source parameter (output)
+    source : smif.metadata.Metadata
+        The source parameter (output) object
     function=None : func
         A conversion function
     """
 
     def __init__(self, source_model, source, function=None):
+
+        self.logger = getLogger(__name__)
+
         self.source_model = source_model
         self.source = source
         if function:
@@ -295,6 +307,15 @@ class Dependency():
             self._function = self.convert
 
     def convert(self, data, model_input):
+
+        from_units = self.source.units
+        to_units = model_input.units
+        self.logger.debug("Unit conversion: %s -> %s", from_units, to_units)
+
+        if from_units != to_units:
+            raise NotImplementedError("Units conversion not implemented %s - %s",
+                                      from_units, to_units)
+
         spatial_resolution = model_input.spatial_resolution.name
         temporal_resolution = model_input.temporal_resolution.name
         return self._convert_data(data,
@@ -331,5 +352,9 @@ class Dependency():
         return self._function(data[self.source.name], model_input)
 
     def __repr__(self):
-        return "Dependency('{}', '{}')".format(self.source_model,
-                                               self.source)
+        return "Dependency('{}', '{}')".format(self.source_model.name,
+                                               self.source.name)
+
+    def __eq__(self, other):
+        return self.source_model == other.source_model \
+            and self.source == other.source
