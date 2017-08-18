@@ -50,9 +50,6 @@ class SectorModel(Model, metaclass=ABCMeta):
         self.interventions = []
         self.system = []
 
-        self.regions = get_region_register()
-        self.intervals = get_interval_register()
-
         self.logger = logging.getLogger(__name__)
 
     def add_input(self, name, spatial_resolution, temporal_resolution, units):

@@ -46,6 +46,9 @@ A more comprehensive example with one scenario and one scenario model:
 from abc import ABC, abstractmethod
 from logging import getLogger
 
+from smif.convert import SpaceTimeConvertor
+from smif.convert.area import get_register as get_region_register
+from smif.convert.interval import get_register as get_interval_register
 from smif.metadata import MetadataSet
 
 
@@ -66,6 +69,9 @@ class Model(ABC):
         self._model_inputs = MetadataSet([])
         self._model_outputs = MetadataSet([])
         self.deps = {}
+
+        self.regions = get_region_register()
+        self.intervals = get_interval_register()
 
         self.logger = getLogger(__name__)
 
@@ -134,7 +140,8 @@ class Model(ABC):
             msg = "Output '{}' is not defined in '{}' model"
             raise ValueError(msg.format(source, source_model.name))
         if sink in self.free_inputs.names:
-            self.deps[sink] = Dependency(source_model, source)
+            source_object = source_model.model_outputs[source]
+            self.deps[sink] = Dependency(source_model, source_object)
             msg = "Added dependency from '%s' to '%s'"
             self.logger.debug(msg, source_model, self.name)
         else:
@@ -287,13 +294,41 @@ class Dependency():
         else:
             self._function = self.convert
 
-    @staticmethod
-    def convert(data):
+    def convert(self, data, model_input):
+        spatial_resolution = model_input.spatial_resolution.name
+        temporal_resolution = model_input.temporal_resolution.name
+        return self._convert_data(data,
+                                  spatial_resolution,
+                                  temporal_resolution)
         return data
 
-    def get_data(self, timestep):
+    def _convert_data(self, data, to_spatial_resolution,
+                      to_temporal_resolution):
+        """Convert data from one spatial and temporal resolution to another
+
+        Parameters
+        ----------
+        data : numpy.ndarray
+            The data series for conversion
+        to_spatial_resolution : smif.convert.register.ResolutionSet
+        to_temporal_resolution : smif.convert.register.ResolutionSet
+
+        Returns
+        -------
+        converted_data : numpy.ndarray
+            The converted data series
+
+        """
+        convertor = SpaceTimeConvertor()
+        return convertor.convert(data,
+                                 self.source.spatial_resolution.name,
+                                 to_spatial_resolution,
+                                 self.source.temporal_resolution.name,
+                                 to_temporal_resolution)
+
+    def get_data(self, timestep, model_input):
         data = self.source_model.simulate(timestep)
-        return self._function(data[self.source])
+        return self._function(data[self.source.name], model_input)
 
     def __repr__(self):
         return "Dependency('{}', '{}')".format(self.source_model,
