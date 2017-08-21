@@ -17,6 +17,11 @@ sector_models:
     interventions: []
     initial_conditions: []
 timesteps: timesteps.yaml
+dependencies:
+  - source_model: raininess
+    source_model_output: raininess
+    sink_model: water_supply
+    sink_model_input: raininess
 scenario_data:
   # given input data, required values for every year of a model run
   - parameter: population

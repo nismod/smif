@@ -573,6 +573,7 @@ def setup_config_file(setup_folder_structure):
                 ]
             }
         ],
+        'dependencies': [],
         'timesteps': 'timesteps.yaml',
         'scenario_data': [],
         "region_sets": [{'name': 'national',
