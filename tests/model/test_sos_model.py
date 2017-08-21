@@ -703,28 +703,6 @@ class TestSosModelBuilder():
         assert "Intervention 'test_intervention' in planning file not found" in str(
             ex.value)
 
-    def test_missing_planning_timeperiod(self, get_sos_model_config):
-        config = get_sos_model_config
-        config["planning"] = [
-            {
-                "name": "test_intervention",
-                "location": "UK",
-                "build_date": 2025
-            }
-        ]
-        config["sector_model_data"][0]["interventions"] = [
-            {
-                "name": "test_intervention",
-                "location": "UK"
-            }
-        ]
-        builder = SosModelBuilder()
-        builder.construct(config, [2010, 2011, 2012])
-
-        with raises(AssertionError) as ex:
-            builder.finish()
-        assert "Timeperiod '2025' in planning file not found" in str(ex.value)
-
     def test_scenario_dependency(self, get_sos_model_config, setup_region_data):
         """Expect successful build with dependency on scenario data
 
