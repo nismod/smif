@@ -39,6 +39,8 @@ class SosModelReader(object):
         self.time_intervals = []
         self.regions = []
 
+        self.dependencies = []
+
         # ModelSet convergence settings
         self.convergence_max_iterations = None
         self.convergence_absolute_tolerance = None
@@ -54,6 +56,7 @@ class SosModelReader(object):
         self.scenario_data = self.load_scenario_data()
         self.sector_model_data = self.load_sector_model_data()
         self.planning = self.load_planning()
+        self.dependencies = self.load_dependencies()
 
         self.convergence_max_iterations = self.load_convergence_max_iterations()
         self.convergence_absolute_tolerance = self.load_convergence_absolute_tolerance()
@@ -99,6 +102,7 @@ class SosModelReader(object):
             "convergence_max_iterations": self.convergence_max_iterations,
             "convergence_absolute_tolerance": self.convergence_absolute_tolerance,
             "convergence_relative_tolerance": self.convergence_relative_tolerance,
+            "dependencies": self.dependencies
         }
 
     def load_sos_config(self):
@@ -127,6 +131,12 @@ class SosModelReader(object):
         validate_timesteps(data, file_path)
 
         return data
+
+    def load_dependencies(self):
+        """Parse dependencies
+        """
+        if "dependencies" in self._config:
+            return self._config['dependencies']
 
     def load_convergence_max_iterations(self):
         """Parse convergence_max_iterations setting
