@@ -5,10 +5,10 @@ framework.
 """
 import logging
 from collections import defaultdict
-from enum import Enum
 
 import networkx
 import numpy as np
+from enum import Enum
 from smif import StateData
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
@@ -830,20 +830,10 @@ class SosModelBuilder(object):
             msg = "Intervention '{}' in planning file not found in interventions"
             assert planning_name in names, msg.format(planning_name)
 
-    def _check_planning_timeperiods_exist(self):
-        """Check existence of all the timeperiods in the pre-specified planning
-        """
-        model = self.sos_model
-        model_timeperiods = model.timesteps
-        for timeperiod in model.planning.timeperiods:
-            msg = "Timeperiod '{}' in planning file not found model config"
-            assert timeperiod in model_timeperiods, msg.format(timeperiod)
-
     def _validate(self):
         """Validates the sos model
         """
         self._check_planning_interventions_exist()
-        self._check_planning_timeperiods_exist()
 
     def finish(self):
         """Returns a configured system-of-systems model ready for operation
