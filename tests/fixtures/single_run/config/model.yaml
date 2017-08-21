@@ -22,6 +22,22 @@ dependencies:
     source_model_output: raininess
     sink_model: water_supply
     sink_model_input: raininess
+  - source_model: population
+    source_model_output: population
+    sink_model: water_supply
+    sink_model_input: population
+  - source_model: water_supply
+    source_model_output: energy_demand
+    sink_model: energy_demand
+    sink_model_input: energy_demand
+  - source_model: population
+    source_model_output: population
+    sink_model: energy_demand
+    sink_model_input: population
+  - source_model: energy_demand
+    source_model_output: water_demand
+    sink_model: water_supply
+    sink_model_input: water_demand
 scenario_data:
   # given input data, required values for every year of a model run
   - parameter: population
