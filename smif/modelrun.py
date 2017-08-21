@@ -32,7 +32,7 @@ class ModelRun(object):
 
     def __init__(self):
 
-        self._name = 0
+        self._name = ""
         self.description = ""
         self.sos_model = None
         self._model_horizon = []

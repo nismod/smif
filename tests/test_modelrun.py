@@ -1,4 +1,5 @@
 from pytest import fixture
+from smif.model.sos_model import SosModel
 from smif.modelrun import ModelRunBuilder
 
 
@@ -77,19 +78,11 @@ def get_model_run(setup_project_folder, setup_region_data):
         )
     )
 
-    interval_data = [
-        {
-            'id': 1,
-            'start': 'P0Y',
-            'end': 'P1Y'
-        }
-    ]
-
     config_data = {
         'timesteps': [2010, 2011, 2012],
         'dependencies': [],
-        'region_sets': {'BSOA': setup_region_data['features']},
-        'interval_sets': {'yearly': interval_data},
+        'region_sets': {},
+        'interval_sets': {},
         'planning': [],
         'scenario_metadata':
             [{
@@ -136,6 +129,26 @@ def get_model_run(setup_project_folder, setup_region_data):
     builder = ModelRunBuilder()
     builder.construct(config_data)
     return builder.finish()
+
+
+class TestModelRunBuilder:
+
+    def test_builder(self, get_model_runconfig_data):
+
+        config_data = get_model_runconfig_data
+
+        builder = ModelRunBuilder()
+        builder.construct(config_data)
+
+        modelrun = builder.finish()
+
+        assert isinstance(modelrun.sos_model, SosModel)
+
+        assert modelrun.name == ''
+        assert modelrun.model_horizon == [2010, 2011, 2012]
+        assert modelrun.status == 'Built'
+        assert modelrun.strategies is None
+        assert modelrun.narratives is None
 
 
 class TestModelRun:
