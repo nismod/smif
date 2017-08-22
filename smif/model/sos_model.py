@@ -117,8 +117,10 @@ class SosModel(Model):
         self.logger.info("Determined run order as %s", run_order)
         results = {}
         for model in run_order:
+            # get data for model
             sim_data = {}
-            for input_, dep in model.deps.items():
+            for input_name, dep in model.deps.items():
+                input_ = model.model_inputs[input_name]
                 if input_ in self.free_inputs:
                     # pick external dependencies from data
                     param_data = data[dep.source_model.name][dep.source.name]
@@ -127,6 +129,7 @@ class SosModel(Model):
                     param_data = results[dep.source_model.name][dep.source.name]
                 param_data_converted = dep.convert(param_data, input_)
                 sim_data[input_.name] = param_data_converted
+
             sim_results = model.simulate(timestep, sim_data)
             for model_name, model_results in sim_results.items():
                 results[model_name] = model_results
