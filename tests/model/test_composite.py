@@ -126,8 +126,8 @@ class TestModelSet:
         sos_model.add_model(energy_model)
         sos_model.add_model(elec_scenario)
 
-        model_set = ModelSet([elec_scenario], sos_model)
-        model_set.run(2010)
+        model_set = ModelSet([elec_scenario])
+        model_set.simulate(2010)
 
 
 class TestBasics:
@@ -484,7 +484,7 @@ class TestCircularDependency:
         assert (energy_model, water_model) in graph.edges()
 
         modelset = ModelSet([water_model, energy_model], sos_model)
-        actual = modelset.guess_results(water_model, 2010)
+        actual = modelset.guess_results(water_model, 2010, {})
         expected = {'electricity_demand': np.array([1.])}
         # assert actual == expected
 

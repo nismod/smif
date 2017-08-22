@@ -117,9 +117,9 @@ class SosModel(Model):
         self.logger.info("Determined run order as %s", run_order)
         results = {}
         for model in run_order:
-            model_results = model.simulate(timestep, data)
-            for model_name, results in model_results.items():
-                results[model_name] = results
+            sim_results = model.simulate(timestep, data)
+            for model_name, model_results in sim_results.items():
+                results[model_name] = model_results
         return results
 
     def check_dependencies(self):
@@ -320,24 +320,19 @@ class ModelSet(Model):
     ---------
     models : list
         A list of smif.model.composite.Model
-    sos_model : smif.model.sos_model.SosModel
-        A SosModel instance containing the models
-    Notes
-    -----
-    This calls back into :class:`SosModel` quite extensively for state, data,
-    decisions, regions and intervals.
 
     """
-    def __init__(self, models, sos_model):
+    def __init__(self, models, max_iterations=25, relative_tolerance=1e-05,
+                 absolute_tolerance=1e-08):
         self.logger = logging.getLogger(__name__)
         self._models = models
         self._model_names = {model.name for model in models}
-        self._sos_model = sos_model
-        self.iterated_results = {}
-        self.max_iterations = sos_model.max_iterations
+        self.timestep = None
+        self.iterated_results = None
+        self.max_iterations = max_iterations
         # tolerance for convergence assessment - see numpy.allclose docs
-        self.relative_tolerance = sos_model.convergence_relative_tolerance
-        self.absolute_tolerance = sos_model.convergence_absolute_tolerance
+        self.relative_tolerance = relative_tolerance
+        self.absolute_tolerance = absolute_tolerance
 
     def simulate(self, timestep, data=None):
         """Runs a set of one or more models
@@ -347,70 +342,68 @@ class ModelSet(Model):
         timestep : int
         data : dict, default=None
         """
-        if not data:
-            data = {}
+        # Start by running all models in set with best guess
+        # - zeroes
+        # - last year's inputs
+        self.iterated_results = [{}]
+        self.timestep = timestep
+        for model in self._models:
+            results = self.guess_results(model, timestep, data)
+            self.iterated_results[-1][model.name] = results
 
-        if len(self._models) == 1:
-            # Short-circuit if the set contains a single model - this
-            # can be run deterministically
-            model = list(self._models)[0]
-            logging.debug("Running %s for %d", model.name, timestep)
-
-            if model.model_inputs:
-                for model_input in model.model_inputs:
-                    self.logger.debug("Seeking dep for %s", model_input.name)
-                    if model_input.name not in model.deps:
-                        msg = "Dependency not found for '{}'"
-                        raise ValueError(msg.format(model_input.name))
-                    else:
-                        dependency = model.deps[model_input.name]
-                        self.logger.debug("Found dependency for '%s'",
-                                          model_input.name)
-                        data[model_input.name] = dependency.get_data(timestep, model_input)
-
-            results = model.simulate(timestep, data)
-            # self._sos_model.set_state(model, timestep, state)
-            self._sos_model.set_data(model, timestep, results)
-        else:
-            # Start by running all models in set with best guess
-            # - zeroes
-            # - last year's inputs
-            self.iterated_results = {}
-            for model in self._models:
-
-                results = self.guess_results(model, timestep)
-                self._sos_model.set_data(model, timestep, results)
-                self.iterated_results[model.name] = [results]
-
-            # - keep track of intermediate results (iterations within the timestep)
-            # - stop iterating according to near-equality condition
-            for i in range(self.max_iterations):
-                if self.converged():
-                    break
-                else:
-                    for model in self._models:
-                        data = {}
-                        for model_input, dep in model.deps.items():
-                            data[model_input] = results[dep.source.name]
-                        results = model.simulate(timestep, data)
-
-                        self.logger.debug("Iteration %s, model %s, results: %s",
-                                          i, model.name, results)
-                        # self._sos_model.set_state(model, timestep, state)
-                        self._sos_model.set_data(model, timestep, results)
-                        self.iterated_results[model.name].append(results)
+        # - keep track of intermediate results (iterations within the timestep)
+        # - stop iterating according to near-equality condition
+        for i in range(self.max_iterations):
+            if self.converged():
+                break
             else:
-                raise TimeoutError("Model evaluation exceeded max iterations")
+                self._run_iteration(i)
+        else:
+            raise TimeoutError("Model evaluation exceeded max iterations")
 
-    def guess_results(self, model, timestep):
+        return self.get_last_iteration_results()
+
+    def _run_iteration(self, i):
+        """Run all models within the set
+        """
+        self.iterated_results.append({})
+        for model in self._models:
+            data = {}
+            for model_input, dep in model.deps.items():
+                # if internal dependency
+                data[model_input] = \
+                    self.iterated_results[-2][dep.source_model][dep.source.name]
+                # else, pull from data provided to this ModelSet
+                # TODO
+            results = model.simulate(self.timestep, data)
+
+            self.logger.debug("Iteration %s, model %s, results: %s",
+                              i, model.name, results)
+            self.iterated_results[-1][model.name] = results
+
+    def get_last_iteration_results(self):
+        """Return results from the last iteration
+
+        Returns
+        -------
+        results : dict
+            Dictionary of Model results, keyed by model name
+        """
+        return self.iterated_results[-1]
+
+    def guess_results(self, model, timestep, data):
         """Dependency-free guess at a model's result set.
 
         Initially, guess zeroes, or the previous timestep's results.
         """
-        timestep_before = self._sos_model.timestep_before(timestep)
+        if data is None:
+            data = {}
+
+        timesteps = sorted(list(data.keys()))
+        timestep_before = element_before(timestep, timesteps)
         if timestep_before is not None:
             # last iteration of previous timestep results
-            results = self._sos_model.results[timestep_before][model.name]
+            results = data[timestep_before][model.name]
         else:
             # generate zero-values for each parameter/region/interval combination
             results = {}
@@ -433,19 +426,23 @@ class ModelSet(Model):
         DiverganceError
             If the results appear to be diverging
         """
-        if any([len(results) < 2 for results in self.iterated_results.values()]):
+        if len(self.iterated_results) < 2:
             # must have at least two result sets per model to assess convergence
             return False
 
-        # iterated_results is a dict with
+        # iterated_results is a list of dicts with
         #   str key (model name) =>
         #       list of data output from models
         #
         # each data output is a dict with
         #   str key (parameter name) =>
         #       np.ndarray value (regions x intervals)
-        if all(self._model_converged(self._get_model(model_name), results)
-               for model_name, results in self.iterated_results.items()):
+        if all(
+                self._model_converged(
+                    model,
+                    self.iterated_results[-1][model.name],
+                    self.iterated_results[-2][model.name])
+                for model in self._models):
             # if all most recent are almost equal to penultimate, must have converged
             return True
 
@@ -457,30 +454,28 @@ class ModelSet(Model):
         model = [model for model in self._models if model.name == model_name]
         return model[0]
 
-    def _model_converged(self, model, results):
+    def _model_converged(self, model, latest_results, previous_results):
         """Check a single model's output for convergence
 
         Compare data output for each param over recent iterations.
 
         Parameters
         ----------
-        results: list
-            list of data output from models, from first iteration. Each list
-            entry is a dict with str key (parameter name) => np.ndarray value
-            (with dimensions regions x intervals)
+        model: Model
+        latest_results: dict
+            dict of data output from model with str key (parameter name) =>
+            np.ndarray value (with dimensions regions x intervals)
+        previous_results: dict
+            dict of data output from the model in the previous iteration
         """
-        latest_results = results[-1]
-        previous_results = results[-2]
-        param_names = [param.name for param in model.model_outputs.metadata]
-
         return all(
             np.allclose(
-                latest_results[param],
-                previous_results[param],
+                latest_results[param.name],
+                previous_results[param.name],
                 rtol=self.relative_tolerance,
                 atol=self.absolute_tolerance
             )
-            for param in param_names
+            for param in model.model_outputs.metadata
         )
 
 
