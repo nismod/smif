@@ -131,16 +131,17 @@ class WaterSupplySectorModel(SectorModel):
             number_of_treatment_plants
         )
         instance_results = instance.simulate(timestep, data)
-        state = []
+
         results = {
             'water': np.array([[
                 instance_results['water']
             ]]),
             'cost': np.array([[
                 instance_results['cost']
-            ]])
+            ]]),
+            'state': []
         }
-        return state, results
+        return {self.name: results}
 
     def extract_obj(self, results):
         return results['cost']

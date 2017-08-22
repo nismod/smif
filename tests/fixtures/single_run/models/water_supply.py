@@ -63,13 +63,13 @@ class WaterSupplySectorModel(SectorModel):
         results = {
             "water": np.ones((3, 1)) * water / 3,
             "cost": np.ones((3, 1)) * cost / 3,
-            "energy_demand": np.ones((3, 1)) * 3
+            "energy_demand": np.ones((3, 1)) * 3,
+            "state": StateData('Kielder Water', {
+                'current_level': {'value': instance.reservoir_level}
+            }),
         }
-        state = [
-            StateData('Kielder Water', {'current_level': {'value': instance.reservoir_level}}),
-        ]
 
-        return state, results
+        return {self.name, results}
 
     def extract_obj(self, results):
         return results['cost']

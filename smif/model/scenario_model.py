@@ -69,4 +69,4 @@ class ScenarioModel(Model):
         """Returns the scenario data
         """
         time_index = self.timesteps.index(timestep)
-        return {self.model_outputs.names[0]: self._data[time_index]}
+        return {self.name: {self.model_outputs.names[0]: self._data[time_index]}}
