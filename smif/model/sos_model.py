@@ -117,7 +117,17 @@ class SosModel(Model):
         self.logger.info("Determined run order as %s", run_order)
         results = {}
         for model in run_order:
-            sim_results = model.simulate(timestep, data)
+            sim_data = {}
+            for input_, dep in model.deps.items():
+                if input_ in self.free_inputs:
+                    # pick external dependencies from data
+                    param_data = data[dep.source_model.name][dep.source.name]
+                else:
+                    # pick internal dependencies from results
+                    param_data = results[dep.source_model.name][dep.source.name]
+                param_data_converted = dep.convert(param_data, input_)
+                sim_data[input_.name] = param_data_converted
+            sim_results = model.simulate(timestep, sim_data)
             for model_name, model_results in sim_results.items():
                 results[model_name] = model_results
         return results
@@ -371,8 +381,8 @@ class ModelSet(Model):
             data = {}
             for model_input, dep in model.deps.items():
                 # if internal dependency
-                data[model_input] = \
-                    self.iterated_results[-2][dep.source_model][dep.source.name]
+                dep_data = self.iterated_results[-2][dep.source_model.name][dep.source.name]
+                data[model_input] = dep.convert(dep_data, model_input)
                 # else, pull from data provided to this ModelSet
                 # TODO
             results = model.simulate(self.timestep, data)
