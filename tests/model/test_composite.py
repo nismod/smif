@@ -247,8 +247,11 @@ class TestCompositeIntegration:
         sos_model = SosModel('simple')
         sos_model.add_model(elec_scenario)
         actual = sos_model.simulate(2010)
-        expected = {2010: {'electricity_demand_scenario':
-                           {'electricity_demand_output': 123}}}
+        expected = {
+            'electricity_demand_scenario': {
+                'electricity_demand_output': np.array([[123]])
+            }
+        }
         assert actual == expected
 
     def test_sector_model_null_model(self, get_energy_sector_model):
@@ -274,11 +277,14 @@ class TestCompositeIntegration:
 
         actual = sos_model.simulate(2010)
 
-        expected = {2010: {'energy_sector_model':
-                           {'fluffiness': 100.737},
-                           'electricity_demand_scenario': {'electricity_demand_output': 123}
-                           }
-                    }
+        expected = {
+            'energy_sector_model': {
+                'fluffiness': np.array([[100.737]])
+            },
+            'electricity_demand_scenario': {
+                'electricity_demand_output': np.array([[123]])
+            }
+        }
         assert actual == expected
 
 
