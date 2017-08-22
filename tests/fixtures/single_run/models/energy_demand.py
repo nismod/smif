@@ -44,7 +44,7 @@ class EDMWrapper(SectorModel):
                         region,
                         dataset[i][j])
 
-        return [], results
+        return {self.name, results}
 
     def extract_obj(self, results):
         return 0

@@ -187,7 +187,7 @@ class ScenarioModel(Model):
     def simulate(self, timestep, data=None):
         """Returns the scenario data
         """
-        return self._data[timestep]
+        return {self.name: self._data[timestep]}
 
 
 class SectorModel(Model):
@@ -221,7 +221,7 @@ class SectorModel(Model):
         input_data : dict
         """
         self.logger.debug("Running %s with data: %s", self.name, data)
-        return self._executable(timestep, data)
+        return {self.name: self._executable(timestep, data)}
 
 
 class SosModel(Model):

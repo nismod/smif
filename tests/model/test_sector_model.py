@@ -12,8 +12,8 @@ class EmptySectorModel(SectorModel):
     def initialise(self, initial_conditions):
         pass
 
-    def simulate(self, decisions, state, data):
-        return state, {}
+    def simulate(self, timestep, data=None):
+        return {}
 
     def extract_obj(self, results):
         return 0
@@ -48,8 +48,8 @@ class TestCompositeSectorModel():
         model = EmptySectorModel('test_model')
         model.add_input('input_name', [], [], 'units')
         data = {'input_name': [0]}
-        actual = model.simulate({}, {}, data)
-        assert actual == ({}, {})
+        actual = model.simulate(2010, data)
+        assert actual == {}
 
 
 class TestSectorModelBuilder():
