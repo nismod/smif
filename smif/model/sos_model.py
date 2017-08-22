@@ -114,11 +114,13 @@ class SosModel(Model):
         """
         self.check_dependencies()
         run_order = self._get_model_sets_in_run_order()
-        names = [model_set._model_names for model_set in run_order]
-        self.logger.info("Determined run order as %s", names)
-        for model_set in run_order:
-            model_set.run(timestep, data)
-        return self.results
+        self.logger.info("Determined run order as %s", run_order)
+        results = {}
+        for model in run_order:
+            model_results = model.simulate(timestep, data)
+            for model_name, results in model_results.items():
+                results[model_name] = results
+        return results
 
     def check_dependencies(self):
         """For each contained model, compare dependency list against
@@ -200,7 +202,7 @@ class SosModel(Model):
         self._results[timestep][model.name] = results
 
     def _get_model_sets_in_run_order(self):
-        """Returns a list of :class:`ModelSet` in a runnable order.
+        """Returns a list of :class:`Model` in a runnable order.
 
         If a set contains more than one model, there is an interdependency and
         and we attempt to run the models to convergence.
@@ -210,14 +212,8 @@ class SosModel(Model):
             # ignoring opportunities to run independent models in parallel
             run_order = networkx.topological_sort(self.dependency_graph, reverse=False)
 
-            # turn into a list of sets for consistency with the below
-            ordered_sets = [
-                ModelSet(
-                    {model},
-                    self
-                )
-                for model in run_order
-            ]
+            # list of Models (typically ScenarioModel and SectorModel)
+            ordered_sets = list(run_order)
 
         else:
             # contract the strongly connected components (subgraphs which
@@ -228,16 +224,13 @@ class SosModel(Model):
             # topological sort of the condensation gives an ordering of the
             # contracted nodes, whose 'members' attribute refers back to the
             # original dependency graph
-            ordered_sets = [
-                ModelSet(
-                    {
-                        model
-                        for model in condensation.node[node_id]['members']
-                    },
-                    self
-                )
-                for node_id in networkx.topological_sort(condensation, reverse=False)
-            ]
+            ordered_sets = []
+            for node_id in networkx.topological_sort(condensation, reverse=False):
+                models = condensation.node[node_id]['members']
+                if len(models) == 1:
+                    ordered_sets.append(models[0])
+                else:
+                    ordered_sets.append(ModelSet(models))
 
         return ordered_sets
 
@@ -306,7 +299,7 @@ class SosModel(Model):
                 ]
 
 
-class ModelSet(object):
+class ModelSet(Model):
     """Wraps a set of interdependent models
 
     Given a directed graph of dependencies between models, any cyclic
@@ -314,8 +307,7 @@ class ModelSet(object):
     graph.
 
     A ModelSet corresponds to the set of models within a single strongly-
-    connected component. If this is a set of one model, it can simply be run
-    deterministically. Otherwise, this class provides the machinery necessary
+    connected component. This class provides the machinery necessary
     to find a solution to each of the interdependent models.
 
     The current implementation first estimates the outputs for each model in the
@@ -326,7 +318,7 @@ class ModelSet(object):
 
     Arguments
     ---------
-    models : dict
+    models : list
         A list of smif.model.composite.Model
     sos_model : smif.model.sos_model.SosModel
         A SosModel instance containing the models
@@ -347,7 +339,7 @@ class ModelSet(object):
         self.relative_tolerance = sos_model.convergence_relative_tolerance
         self.absolute_tolerance = sos_model.convergence_absolute_tolerance
 
-    def run(self, timestep, data=None):
+    def simulate(self, timestep, data=None):
         """Runs a set of one or more models
 
         Arguments
