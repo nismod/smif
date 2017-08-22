@@ -241,7 +241,7 @@ class SosModel(Model):
             for node_id in networkx.topological_sort(condensation, reverse=False):
                 models = condensation.node[node_id]['members']
                 if len(models) == 1:
-                    ordered_sets.append(models[0])
+                    ordered_sets.append(models.pop())
                 else:
                     ordered_sets.append(ModelSet(models))
 
