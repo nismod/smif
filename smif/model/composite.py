@@ -149,7 +149,7 @@ class Model(ABC):
         else:
             if sink in self.model_inputs.names:
                 raise NotImplementedError("Multiple source dependencies"
-                                          "yet implemented")
+                                          " not yet implemented")
 
             msg = "Inputs: '%s'. Free inputs: '%s'."
             self.logger.debug(msg, self.model_inputs.names,
