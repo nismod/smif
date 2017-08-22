@@ -268,20 +268,12 @@ class SosModel(Model):
     def timestep_before(self, timestep):
         """Returns the timestep previous to a given timestep, or None
         """
-        if timestep not in self.timesteps or timestep == self.timesteps[0]:
-            return None
-        else:
-            index = self.timesteps.index(timestep)
-            return self.timesteps[index - 1]
+        return element_before(timestep, self.timesteps)
 
     def timestep_after(self, timestep):
         """Returns the timestep after a given timestep, or None
         """
-        if timestep not in self.timesteps or timestep == self.timesteps[-1]:
-            return None
-        else:
-            index = self.timesteps.index(timestep)
-            return self.timesteps[index + 1]
+        return element_after(timestep, self.timesteps)
 
     @property
     def intervention_names(self):
@@ -851,3 +843,25 @@ class RunMode(Enum):
     sequential_simulation = 1
     static_optimisation = 2
     dynamic_optimisation = 3
+
+
+def element_before(element, list_):
+    """Return the element before a given element in a list, or None if the
+    given element is first or not in the list.
+    """
+    if element not in list_ or element == list_[0]:
+        return None
+    else:
+        index = list_.index(element)
+        return list_[index - 1]
+
+
+def element_after(element, list_):
+    """Return the element after a given element in a list, or None if the
+    given element is last or not in the list.
+    """
+    if element not in list_ or element == list_[-1]:
+        return None
+    else:
+        index = list_.index(element)
+        return list_[index + 1]
