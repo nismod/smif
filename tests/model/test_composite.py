@@ -27,7 +27,7 @@ def get_sector_model():
     class SectorModel(AbstractSectorModel):
 
         def simulate(self, timestep, data=None):
-            return data
+            return {self.name: data}
 
         def extract_obj(self):
             pass
@@ -83,7 +83,7 @@ def get_energy_sector_model():
             results = {}
             fluff = input_data['electricity_demand_input']
             results['fluffiness'] = fluff * 0.819
-            return results
+            return {self.name: results}
 
         def extract_obj(self):
             pass

@@ -938,7 +938,7 @@ class WaterSupplySectorModel(SectorModel):
         pass
 
     def simulate(self, timestep, data=None):
-        return (timestep, data)
+        return {self.name: data}
 
     def extract_obj(self, results):
         return 0
