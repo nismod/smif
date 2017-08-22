@@ -194,10 +194,10 @@ class TestDependencyGraph:
         sos_model.check_dependencies()
 
         actual = sos_model._get_model_sets_in_run_order()
-        expected = [{'scenario'}, {'model'}]
+        expected = ['scenario', 'model']
 
-        for modelset, name in zip(actual, expected):
-            assert modelset._model_names == name
+        for model, name in zip(actual, expected):
+            assert model.name == name
 
     def test_topological_sort(self, get_sector_model):
         SectorModel = get_sector_model
