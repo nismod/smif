@@ -115,7 +115,7 @@ def get_sos_model_with_model_dependency():
             'units': 'Ml'
         }
     ]
-
+    ws2.add_dependency(ws, 'water', 'water')
     sos_model.add_model(ws2)
 
     return sos_model
@@ -123,6 +123,8 @@ def get_sos_model_with_model_dependency():
 
 @fixture(scope='function')
 def get_sos_model_with_summed_dependency(setup_region_data):
+    region_register = get_region_register()
+    interval_register = get_interval_register()
     builder = SosModelBuilder()
     builder.load_scenario_models([{
         'name': 'raininess',
@@ -142,54 +144,44 @@ def get_sos_model_with_summed_dependency(setup_region_data):
 
     sos_model = builder.finish()
 
-    ws = WaterSupplySectorModel('water_supply')
-    ws.inputs = [
-        {
-            'name': 'raininess',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'ml'
-        }
-    ]
-    ws.outputs = [
-        {
-            'name': 'water',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'Ml'
-        }
-    ]
+    raininess_model = sos_model.models['raininess']
 
+    ws = WaterSupplySectorModel('water_supply')
+    ws.add_input(
+        'raininess',
+        region_register.get_entry('LSOA'),
+        interval_register.get_entry('annual'),
+        'ml')
+    ws.add_output(
+        'water',
+        region_register.get_entry('LSOA'),
+        interval_register.get_entry('annual'),
+        'Ml')
+    ws.add_dependency(raininess_model, 'raininess', 'raininess')
     sos_model.add_model(ws)
 
     ws2 = WaterSupplySectorModel('water_supply_2')
-    ws2.inputs = [
-        {
-            'name': 'raininess',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'ml'
-        }
-    ]
-    ws2.outputs = [
-        {
-            'name': 'water',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'Ml'
-        }
-    ]
+    ws2.add_input(
+        'raininess',
+        region_register.get_entry('LSOA'),
+        interval_register.get_entry('annual'),
+        'ml')
+    ws2.add_output(
+        'water',
+        region_register.get_entry('LSOA'),
+        interval_register.get_entry('annual'),
+        'Ml')
+    ws2.add_dependency(raininess_model, 'raininess', 'raininess')
     sos_model.add_model(ws2)
 
     ws3 = WaterSupplySectorModel('water_supply_3')
-    ws3.inputs = [
-        {
-            'name': 'water',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'Ml'
-        }
-    ]
+    ws3.add_input(
+        'water',
+        region_register.get_entry('LSOA'),
+        interval_register.get_entry('annual'),
+        'Ml')
+    ws3.add_dependency(ws, 'water', 'water')
+    ws3.add_dependency(ws2, 'water', 'water')
     sos_model.add_model(ws3)
 
     return sos_model
