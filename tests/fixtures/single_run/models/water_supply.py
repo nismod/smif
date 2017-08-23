@@ -24,27 +24,36 @@ class WaterSupplySectorModel(SectorModel):
         """
         pass
 
-    def simulate(self, timestep, data):
+    def simulate(self, timestep, data=None):
         """
 
         Arguments
         =========
-        decisions
-            - asset build instructions, demand-side interventions to apply
-        state
-            - existing system/network (unless implementation means maintaining
-              system in sector model)
-            - system state, e.g. reservoir level at year start
         data
             - scenario data, e.g. expected level of rainfall
+            - decisions
+                - asset build instructions, demand-side interventions to apply
+            - state
+                - existing system/network (unless implementation means maintaining
+                system in sector model)
+                - system state, e.g. reservoir level at year start
         """
 
-        state = data[timestep]['state']
-        decisions = data[timestep]['decisions']
+        if 'state' in data:
+            state = data['state']
+        else:
+            self.logger.warning("No state supplied to WaterSupplySectorModel.simulate")
+            state = [StateData('Kielder Water', {'current_level': {'value': 10}})]
+
+        if 'decisions' in data:
+            decisions = data['decisions']
+        else:
+            self.logger.warning("No decisions supplied to WaterSupplySectorModel.simulate")
+            decisions = []
 
         # unpack inputs
         reservoir_level = state[0].data['current_level']['value']
-        raininess = np.sum(data[timestep]['raininess'])
+        raininess = np.sum(data['raininess'])
 
         # unpack assets
         number_of_treatment_plants = 2
@@ -69,7 +78,7 @@ class WaterSupplySectorModel(SectorModel):
             }),
         }
 
-        return {self.name, results}
+        return {self.name: results}
 
     def extract_obj(self, results):
         return results['cost']
