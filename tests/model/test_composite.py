@@ -49,7 +49,7 @@ def get_water_sector_model():
             x = input_data['fluffyness']
             results['electricity_demand'] = (
                 x**3) - (6 * x**2) + (0.9 * x) + 0.15
-            return results
+            return {self.name: results}
 
         def extract_obj(self):
             pass
@@ -495,11 +495,11 @@ class TestCircularDependency:
         # assert actual == expected
 
         sos_model.max_iterations = 100
-        sos_model.simulate(2010)
+        results = sos_model.simulate(2010)
 
         expected = np.array([[0.13488114]], dtype=np.float)
-        actual = sos_model.results[2010]['energy_sector_model']['fluffiness']
+        actual = results['energy_sector_model']['fluffiness']
         np.testing.assert_allclose(actual, expected, rtol=1e-5)
         expected = np.array([[0.16469004]], dtype=np.float)
-        actual = sos_model.results[2010]['water_supply_model']['electricity_demand']
+        actual = results['water_supply_model']['electricity_demand']
         np.testing.assert_allclose(actual, expected, rtol=1e-5)

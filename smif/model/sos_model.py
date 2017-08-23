@@ -118,6 +118,7 @@ class SosModel(Model):
         results = {}
         for model in run_order:
             # get data for model
+            # TODO settla and test data dict structure/object between simple/composite models
             sim_data = {}
             for input_name, dep in model.deps.items():
                 input_ = model.model_inputs[input_name]
@@ -243,7 +244,11 @@ class SosModel(Model):
                 if len(models) == 1:
                     ordered_sets.append(models.pop())
                 else:
-                    ordered_sets.append(ModelSet(models))
+                    ordered_sets.append(ModelSet(
+                        models,
+                        max_iterations=self.max_iterations,
+                        relative_tolerance=self.convergence_relative_tolerance,
+                        absolute_tolerance=self.convergence_absolute_tolerance))
 
         return ordered_sets
 
@@ -337,7 +342,8 @@ class ModelSet(Model):
     """
     def __init__(self, models, max_iterations=25, relative_tolerance=1e-05,
                  absolute_tolerance=1e-08):
-        self.logger = logging.getLogger(__name__)
+        name = "-".join(sorted(model.name for model in models))
+        super().__init__(name)
         self._models = models
         self._model_names = {model.name for model in models}
         self.timestep = None
@@ -382,17 +388,19 @@ class ModelSet(Model):
         self.iterated_results.append({})
         for model in self._models:
             data = {}
-            for model_input, dep in model.deps.items():
+            for input_name, dep in model.deps.items():
                 # if internal dependency
+                input_ = model.model_inputs[input_name]
                 dep_data = self.iterated_results[-2][dep.source_model.name][dep.source.name]
-                data[model_input] = dep.convert(dep_data, model_input)
+                data[input_name] = dep.convert(dep_data, input_)
                 # else, pull from data provided to this ModelSet
                 # TODO
             results = model.simulate(self.timestep, data)
 
             self.logger.debug("Iteration %s, model %s, results: %s",
                               i, model.name, results)
-            self.iterated_results[-1][model.name] = results
+            for model_name, model_results in results.items():
+                self.iterated_results[-1][model_name] = model_results
 
     def get_last_iteration_results(self):
         """Return results from the last iteration
