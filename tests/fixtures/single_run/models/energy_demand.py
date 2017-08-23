@@ -10,9 +10,9 @@ class EDMWrapper(SectorModel):
     def initialise(self, initial_conditions):
         pass
 
-    def simulate(self, decisions, state, data):
+    def simulate(self, timestep, data):
         # receive population, energy_demand at annual/national
-        self.logger.info("EDMWrapper received inputs in %s", data['timestep'])
+        self.logger.info("EDMWrapper received inputs in %s", timestep)
         for name in self.model_inputs.names:
             time_intervals = self.model_inputs[name].get_interval_names()
             regions = self.model_inputs[name].get_region_names()
@@ -31,7 +31,7 @@ class EDMWrapper(SectorModel):
             "water_demand": np.ones((3, 1)) * 3
         }
 
-        self.logger.info("EDMWrapper produced outputs in %s", data['timestep'])
+        self.logger.info("EDMWrapper produced outputs in %s", timestep)
         for name in self.model_outputs.names:
             time_intervals = self.model_outputs[name].get_interval_names()
             regions = self.model_outputs[name].get_region_names()
@@ -44,7 +44,7 @@ class EDMWrapper(SectorModel):
                         region,
                         dataset[i][j])
 
-        return {self.name, results}
+        return {self.name: results}
 
     def extract_obj(self, results):
         return 0

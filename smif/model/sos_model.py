@@ -399,18 +399,18 @@ class ModelSet(Model):
         """
         self.iterated_results.append({})
         for model in self._models:
-            data = {}
+            model_data = {}
             for input_name, dep in model.deps.items():
                 input_ = model.model_inputs[input_name]
                 if input_ in self.model_inputs:
                     # if external dependency
-                    dep_data = data[dep.source_model.name][dep.source.name]
+                    dep_data = data[dep.source.name]
                 else:
                     # else, pull from iterated results
                     dep_data = \
                         self.iterated_results[-2][dep.source_model.name][dep.source.name]
-                data[input_name] = dep.convert(dep_data, input_)
-            results = model.simulate(self.timestep, data)
+                model_data[input_name] = dep.convert(dep_data, input_)
+            results = model.simulate(self.timestep, model_data)
 
             self.logger.debug("Iteration %s, model %s, results: %s",
                               i, model.name, results)
