@@ -4,6 +4,7 @@ from copy import copy
 from unittest.mock import Mock
 
 import numpy as np
+import pytest
 from pytest import fixture, raises
 from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
@@ -180,7 +181,8 @@ def get_sos_model_with_summed_dependency(setup_region_data):
         region_register.get_entry('LSOA'),
         interval_register.get_entry('annual'),
         'Ml')
-    ws3.add_dependency(ws, 'water', 'water')
+    # TODO implement summed dependency
+    # ws3.add_dependency(ws, 'water', 'water')
     ws3.add_dependency(ws2, 'water', 'water')
     sos_model.add_model(ws3)
 
@@ -340,6 +342,7 @@ class TestIterations:
         sos_model.simulate(2011)
         sos_model.simulate(2012)
 
+    @pytest.mark.xfail(reason="Summed dependencies not yet implemented")
     def test_dependency_aggregation(self, get_sos_model_with_summed_dependency):
         sos_model = get_sos_model_with_summed_dependency
 
