@@ -111,15 +111,16 @@ class TestModelSet:
 
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output',
-                                 Mock(get_region_names=['oxford']),
-                                 Mock(get_interval_names=['annual']),
+                                 elec_scenario.regions.get_entry('LSOA'),
+                                 elec_scenario.intervals.get_entry('annual'),
                                  'unit')
         elec_scenario.add_data(np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input',
-                               Mock(get_region_names=['oxford']),
-                               Mock(get_interval_names=['annual']), 'unit')
+                               energy_model.regions.get_entry('LSOA'),
+                               energy_model.intervals.get_entry('annual'),
+                               'unit')
         energy_model.add_dependency(elec_scenario, 'output', 'input')
 
         sos_model = SosModel('energy_sos_model')
