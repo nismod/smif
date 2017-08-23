@@ -36,7 +36,7 @@ import math
 import numpy as np
 
 from pytest import fixture
-from smif.sector_model import SectorModel
+from smif.model.sector_model import SectorModel
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -93,7 +93,7 @@ class WaterSupplySectorModel(SectorModel):
     def initialise(self, initial_conditions):
         pass
 
-    def simulate(self, decisions, state, data):
+    def simulate(self, timestep, data):
         """
 
         Parameters
@@ -105,14 +105,15 @@ class WaterSupplySectorModel(SectorModel):
             contains a :class:`numpy.ndarray` with dimension regions x intervals
 
         """
+        decisions = data[timestep]['decisions']
 
         # unpack inputs
         self.logger.debug(data)
 
-        if 'raininess' in data:
-            raininess = data['raininess'][0, 0]
-        elif 'water' in data:
-            raininess = data['water'][0, 0]
+        if 'raininess' in data[timestep]:
+            raininess = data[timestep]['raininess'][0, 0]
+        elif 'water' in data[timestep]:
+            raininess = data[timestep]['water'][0, 0]
         else:
             raise KeyError("Couldn't find parameter in {}".format(data))
 
@@ -129,17 +130,18 @@ class WaterSupplySectorModel(SectorModel):
             raininess,
             number_of_treatment_plants
         )
-        instance_results = instance.simulate()
-        state = []
+        instance_results = instance.simulate(timestep, data)
+
         results = {
             'water': np.array([[
                 instance_results['water']
             ]]),
             'cost': np.array([[
                 instance_results['cost']
-            ]])
+            ]]),
+            'state': []
         }
-        return state, results
+        return {self.name: results}
 
     def extract_obj(self, results):
         return results['cost']
@@ -209,7 +211,7 @@ class ExampleWaterSupplySimulationModelWithAsset(ExampleWaterSupplySimulationMod
         self.cost = None
         super().__init__(raininess)
 
-    def simulate(self):
+    def simulate(self, timestep, data=None):
         """Runs the water supply model
 
         Only 1 unit of water is produced per treatment plant,

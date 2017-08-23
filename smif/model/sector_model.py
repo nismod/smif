@@ -26,59 +26,34 @@ The key functions include
   approaches
 
 """
+import importlib
 import logging
 import os
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
-import importlib
-from smif.metadata import MetadataSet
+from smif.convert.area import get_register as get_region_register
+from smif.convert.interval import get_register as get_interval_register
+from smif.model.composite import Model
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-class SectorModel(ABC):
+class SectorModel(Model, metaclass=ABCMeta):
     """A representation of the sector model with inputs and outputs
 
     """
-    def __init__(self):
-        self._model_name = None
+    def __init__(self, name):
+        super().__init__(name)
 
         self.interventions = []
         self.system = []
 
-        self._inputs = MetadataSet([])
-        self._outputs = MetadataSet([])
-        self.regions = None
-        self.intervals = None
-
         self.logger = logging.getLogger(__name__)
 
-    def validate(self):
-        """Validate that this SectorModel has been set up with sufficient data
-        to run
-        """
-        pass
-
-    @property
-    def name(self):
-        """The name of the sector model
-
-        Returns
-        =======
-        str
-            The name of the sector model
-        """
-        return self._model_name
-
-    @name.setter
-    def name(self, value):
-        self._model_name = value
-
-    @property
-    def inputs(self):
-        """The inputs to the model
+    def add_input(self, name, spatial_resolution, temporal_resolution, units):
+        """Add an input to the sector model
 
         The inputs should be specified in a list.  For example::
 
@@ -88,53 +63,43 @@ class SectorModel(ABC):
                   units: £/kWh
 
         Arguments
-        =========
-        value : list
-            A list of dicts of inputs to the model.
-            These includes parameters, assets and exogenous data
-
-        Returns
-        =======
-        :class:`smif.metadata.ModelMetadata`
+        ---------
+        name: str
+        spatial_resolution: :class:`smif.convert.area.RegionSet`
+        temporal_resolution: :class:`smif.convert.interval.IntervalSet`
+        units: str
 
         """
-        return self._inputs
+        input_metadata = {"name": name,
+                          "spatial_resolution": spatial_resolution,
+                          "temporal_resolution": temporal_resolution,
+                          "units": units}
 
-    @inputs.setter
-    def inputs(self, value=None):
-        if value is not None:
-            assert isinstance(value, list)
-        else:
-            value = []
+        self._model_inputs.add_metadata(input_metadata)
 
-        self._inputs = MetadataSet(value, self.regions, self.intervals)
-
-    @property
-    def outputs(self):
-        """The outputs from the model
+    def add_output(self, name, spatial_resolution, temporal_resolution, units):
+        """Add an output to the sector model
 
         Arguments
-        =========
-        value : list
-            A list of dicts of outputs from the model.
-            This may include results
-            and metrics
-
-        Returns
-        =======
-        :class:`smif.metadata.ModelMetadata`
+        ---------
+        name: str
+        spatial_resolution: :class:`smif.convert.area.RegionRegister`
+        temporal_resolution: :class:`smif.convert.interval.TimeIntervalRegister`
+        units: str
 
         """
-        return self._outputs
+        output_metadata = {"name": name,
+                           "spatial_resolution": spatial_resolution,
+                           "temporal_resolution": temporal_resolution,
+                           "units": units}
 
-    @outputs.setter
-    def outputs(self, value):
-        if value is not None:
-            assert isinstance(value, list)
-        else:
-            value = []
+        self._model_outputs.add_metadata(output_metadata)
 
-        self._outputs = MetadataSet(value, self.regions, self.intervals)
+    def validate(self):
+        """Validate that this SectorModel has been set up with sufficient data
+        to run
+        """
+        pass
 
     @property
     def intervention_names(self):
@@ -160,7 +125,7 @@ class SectorModel(ABC):
         pass
 
     @abstractmethod
-    def simulate(self, decisions, state, data):
+    def simulate(self, timestep, data=None):
         """Implement this method to run the model
 
         Arguments
@@ -202,12 +167,12 @@ class SectorModel(ABC):
         the objective function by the decision layer
 
         Arguments
-        =========
+        ---------
         results : dict
             A nested dict of the results from the :py:meth:`simulate` method
 
         Returns
-        =======
+        -------
         float
             A scalar component generated from the simulation model results
         """
@@ -222,12 +187,42 @@ class SectorModelBuilder(object):
     name : str
         The name of the sector model
 
+    Returns
+    -------
+    :class:`~smif.sector_model.SectorModel`
+
+    Examples
+    --------
+    Call :py:meth:`SectorModelBuilder.construct` to populate a
+    :class:`SectorModel` object and :py:meth:`SectorModelBuilder.finish`
+    to return the validated and dependency-checked system-of-systems model.
+
+    >>> builder = SectorModelBuilder(name, secctor_model)
+    >>> builder.construct(config_data)
+    >>> sos_model = builder.finish()
+
     """
 
     def __init__(self, name, sector_model=None):
         self._sector_model_name = name
         self._sector_model = sector_model
+        self.interval_register = get_interval_register()
+        self.region_register = get_region_register()
         self.logger = logging.getLogger(__name__)
+
+    def construct(self, model_data):
+        """Constructs the sector model
+
+        Arguments
+        ---------
+        model_data : dict
+            The sector model configuration data
+        """
+        self.load_model(model_data['path'], model_data['classname'])
+        self.create_initial_system(model_data['initial_conditions'])
+        self.add_inputs(model_data['inputs'])
+        self.add_outputs(model_data['outputs'])
+        self.add_interventions(model_data['interventions'])
 
     def load_model(self, model_path, classname):
         """Dynamically load model module
@@ -243,7 +238,7 @@ class SectorModelBuilder(object):
 
             klass = module.__dict__[classname]
 
-            self._sector_model = klass()
+            self._sector_model = klass(self._sector_model_name)
             self._sector_model.name = self._sector_model_name
 
         else:
@@ -259,23 +254,29 @@ class SectorModelBuilder(object):
 
         self._sector_model.initialise(initial_conditions)
 
-    def add_regions(self, regions_register):
-        """Add a RegionsRegister to the SectorModel
-        """
-        self._sector_model.regions = regions_register
-
-    def add_intervals(self, intervals_register):
-        """Add a TimeIntervalsRegister to the SectorModel
-        """
-        self._sector_model.intervals = intervals_register
-
     def add_inputs(self, input_dicts):
         """Add inputs to the sector model
         """
         msg = "Sector model must be loaded before adding inputs"
         assert self._sector_model is not None, msg
 
-        self._sector_model.inputs = input_dicts
+        if input_dicts:
+
+            for model_input in input_dicts:
+                name = model_input['name']
+
+                spatial_resolution = model_input['spatial_resolution']
+                region_set = self.region_register.get_entry(spatial_resolution)
+
+                temporal_resolution = model_input['temporal_resolution']
+                interval_set = self.interval_register.get_entry(temporal_resolution)
+
+                units = model_input['units']
+
+                self._sector_model.add_input(name,
+                                             region_set,
+                                             interval_set,
+                                             units)
 
     def add_outputs(self, output_dicts):
         """Add outputs to the sector model
@@ -283,7 +284,23 @@ class SectorModelBuilder(object):
         msg = "Sector model must be loaded before adding outputs"
         assert self._sector_model is not None, msg
 
-        self._sector_model.outputs = output_dicts
+        if output_dicts:
+
+            for model_output in output_dicts:
+                name = model_output['name']
+
+                spatial_resolution = model_output['spatial_resolution']
+                region_set = self.region_register.get_entry(spatial_resolution)
+
+                temporal_resolution = model_output['temporal_resolution']
+                interval_set = self.interval_register.get_entry(temporal_resolution)
+
+                units = model_output['units']
+
+                self._sector_model.add_output(name,
+                                              region_set,
+                                              interval_set,
+                                              units)
 
     def add_interventions(self, intervention_list):
         """Add interventions to the sector model

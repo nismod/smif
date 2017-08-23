@@ -67,6 +67,16 @@ class TestSosModelReader():
         assert reader.timesteps == expected
         assert reader.data["timesteps"] == expected
 
+    def test_dependencies(self, setup_project_folder):
+
+        reader = self._get_reader(setup_project_folder)
+        reader.load()
+
+        expected = []
+
+        assert reader.dependencies == expected
+        assert reader.data["dependencies"] == expected
+
     def test_abs_path_for_timesteps(self, setup_project_folder, setup_abs_path_to_timesteps):
         """Expect absolute paths to work fine
         """

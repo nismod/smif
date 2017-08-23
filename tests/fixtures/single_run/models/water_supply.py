@@ -11,7 +11,7 @@
 import logging
 import numpy as np
 from smif import StateData
-from smif.sector_model import SectorModel
+from smif.model.sector_model import SectorModel
 
 
 class WaterSupplySectorModel(SectorModel):
@@ -24,20 +24,32 @@ class WaterSupplySectorModel(SectorModel):
         """
         pass
 
-    def simulate(self, decisions, state, data):
+    def simulate(self, timestep, data=None):
         """
 
         Arguments
         =========
-        decisions
-            - asset build instructions, demand-side interventions to apply
-        state
-            - existing system/network (unless implementation means maintaining
-              system in sector model)
-            - system state, e.g. reservoir level at year start
         data
             - scenario data, e.g. expected level of rainfall
+            - decisions
+                - asset build instructions, demand-side interventions to apply
+            - state
+                - existing system/network (unless implementation means maintaining
+                system in sector model)
+                - system state, e.g. reservoir level at year start
         """
+
+        if 'state' in data:
+            state = data['state']
+        else:
+            self.logger.warning("No state supplied to WaterSupplySectorModel.simulate")
+            state = [StateData('Kielder Water', {'current_level': {'value': 10}})]
+
+        if 'decisions' in data:
+            decisions = data['decisions']
+        else:
+            self.logger.warning("No decisions supplied to WaterSupplySectorModel.simulate")
+            decisions = []
 
         # unpack inputs
         reservoir_level = state[0].data['current_level']['value']
@@ -60,13 +72,13 @@ class WaterSupplySectorModel(SectorModel):
         results = {
             "water": np.ones((3, 1)) * water / 3,
             "cost": np.ones((3, 1)) * cost / 3,
-            "energy_demand": np.ones((3, 1)) * 3
+            "energy_demand": np.ones((3, 1)) * 3,
+            "state": StateData('Kielder Water', {
+                'current_level': {'value': instance.reservoir_level}
+            }),
         }
-        state = [
-            StateData('Kielder Water', {'current_level': {'value': instance.reservoir_level}}),
-        ]
 
-        return state, results
+        return {self.name: results}
 
     def extract_obj(self, results):
         return results['cost']

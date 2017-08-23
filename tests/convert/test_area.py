@@ -1,10 +1,9 @@
 """Test aggregation/disaggregation of data between sets of areas
 """
-from copy import copy
 import numpy as np
 from pytest import fixture, raises
 from shapely.geometry import shape
-from smif.convert.area import (RegionRegister, RegionSet,
+from smif.convert.area import (RegionRegister, RegionSet, get_register,
                                proportion_of_a_intersecting_b)
 
 
@@ -169,6 +168,35 @@ class TestRegionSet():
         assert rset[1].name == 'half'
         assert rset[2].name == 'two'
 
+    def test_get_names(self, regions):
+        rset = RegionSet('test', regions)
+        actual = rset.get_entry_names()
+        expected = ['unit', 'half', 'two']
+        assert actual == expected
+
+    def test_must_have_unique_names(self):
+        with raises(AssertionError) as ex:
+            RegionSet('test', [
+                {
+                    'type': 'Feature',
+                    'properties': {'name': 'a'},
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+                    }
+                },
+                {
+                    'type': 'Feature',
+                    'properties': {'name': 'a'},
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
+                    }
+                },
+            ])
+
+        assert 'Region set must have uniquely named regions' in str(ex)
+
 
 class TestRegionRegister():
     """Test creating registers, registering region sets, converting data
@@ -178,36 +206,26 @@ class TestRegionRegister():
         assert rreg.names == []
 
         with raises(ValueError) as ex:
-            rreg.get_regions_in_set('nonexistent')
-        assert "Region set nonexistent not registered" in str(ex)
+            rreg.get_entry('nonexistent')
+        assert "Region set 'nonexistent' not registered" in str(ex)
 
-    def test_convert_equal(self, regions_rect):
-        rreg = RegionRegister()
-        # register rect
-        rreg.register(regions_rect)
-        # register alt rect (same area)
-        regions_rect_alt = copy(regions_rect)
-        regions_rect_alt.name = 'rect_alt'
-        rreg.register(regions_rect_alt)
+    def test_convert_equal(self):
+        rreg = get_register()
 
         data = np.ones(1)
         converted = rreg.convert(data, 'rect', 'rect_alt')
         np.testing.assert_equal(data, converted)
 
-    def test_convert_to_half(self, regions_rect, regions_half_squares):
-        rreg = RegionRegister()
-        rreg.register(regions_rect)
-        rreg.register(regions_half_squares)
+    def test_convert_to_half(self):
+        rreg = get_register()
 
         data = np.ones(1)
         converted = rreg.convert(data, 'rect', 'half_squares')
         expected = np.array([0.5, 0.5])
         np.testing.assert_equal(converted, expected)
 
-    def test_convert_from_half(self, regions_rect, regions_half_squares):
-        rreg = RegionRegister()
-        rreg.register(regions_rect)
-        rreg.register(regions_half_squares)
+    def test_convert_from_half(self):
+        rreg = get_register()
 
         data = np.ones(2) / 2
         converted = rreg.convert(data, 'half_squares', 'rect')
@@ -219,30 +237,24 @@ class TestRegionRegister():
         expected = np.array([5])
         np.testing.assert_equal(converted, expected)
 
-    def test_convert_to_half_not_covered(self, regions_rect, regions_single_half_square):
-        rreg = RegionRegister()
-        rreg.register(regions_rect)
-        rreg.register(regions_single_half_square)
+    def test_convert_to_half_not_covered(self):
+        rreg = get_register()
 
         data = np.array([3])
         converted = rreg.convert(data, 'rect', 'single_half_square')
         expected = np.array([1.5])
         np.testing.assert_equal(converted, expected)
 
-    def test_convert_from_half_not_covered(self, regions_rect, regions_single_half_square):
-        rreg = RegionRegister()
-        rreg.register(regions_rect)
-        rreg.register(regions_single_half_square)
+    def test_convert_from_half_not_covered(self):
+        rreg = get_register()
 
         data = np.array([3])
         converted = rreg.convert(data, 'single_half_square', 'rect')
         expected = np.array([3])
         np.testing.assert_equal(converted, expected)
 
-    def test_convert_square_to_triangle(self, regions_half_squares, regions_half_triangles):
-        rreg = RegionRegister()
-        rreg.register(regions_half_squares)
-        rreg.register(regions_half_triangles)
+    def test_convert_square_to_triangle(self):
+        rreg = get_register()
 
         data = np.array([1, 1])
         converted = rreg.convert(data, 'half_squares', 'half_triangles')
@@ -254,10 +266,8 @@ class TestRegionRegister():
         expected = np.array([0.25, 0.75])
         np.testing.assert_equal(converted, expected)
 
-    def test_convert_triangle_to_square(self, regions_half_squares, regions_half_triangles):
-        rreg = RegionRegister()
-        rreg.register(regions_half_squares)
-        rreg.register(regions_half_triangles)
+    def test_convert_triangle_to_square(self):
+        rreg = get_register()
 
         data = np.array([1, 1])
         converted = rreg.convert(data, 'half_triangles', 'half_squares')

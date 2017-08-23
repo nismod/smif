@@ -1,14 +1,15 @@
 
 from collections import OrderedDict
+
 import numpy as np
 from numpy.testing import assert_equal
 from pytest import fixture, raises
-from smif.convert.interval import Interval, TimeIntervalRegister
+from smif.convert.interval import Interval, IntervalSet, TimeIntervalRegister
 
 
 @fixture(scope='function')
 def months():
-    return [
+    data = [
         {'id': '1_0', 'start': 'P0M', 'end': 'P1M'},
         {'id': '1_1', 'start': 'P1M', 'end': 'P2M'},
         {'id': '1_2', 'start': 'P2M', 'end': 'P3M'},
@@ -22,6 +23,8 @@ def months():
         {'id': '1_10', 'start': 'P10M', 'end': 'P11M'},
         {'id': '1_11', 'start': 'P11M', 'end': 'P12M'}
     ]
+
+    return data
 
 
 @fixture(scope='function')
@@ -77,12 +80,14 @@ def remap_months():
 
 @fixture(scope='function')
 def remap_month_data():
-    return np.array([
+    data = np.array([
         30+31+31,
         28+31+30,
         31+31+30,
         30+31+31
     ], dtype=float)
+
+    return data
 
 
 @fixture(scope='function')
@@ -107,11 +112,12 @@ def remap_month_data_as_months():
 @fixture(scope='function')
 def seasons():
     # NB "winter" is split into two pieces around the year end
-    return [{'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
+    data = [{'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
             {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
             {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
             {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'},
             {'id': 'winter', 'start': 'P11M', 'end': 'P12M'}]
+    return data
 
 
 @fixture(scope='function')
@@ -126,7 +132,7 @@ def monthly_data_as_seasons():
 
 @fixture(scope='function')
 def twenty_four_hours():
-    return [
+    data = [
         {'id': '1_0', 'start': 'PT0H', 'end': 'PT1H'},
         {'id': '1_1', 'start': 'PT1H', 'end': 'PT2H'},
         {'id': '1_2', 'start': 'PT2H', 'end': 'PT3H'},
@@ -152,11 +158,13 @@ def twenty_four_hours():
         {'id': '1_22', 'start': 'PT22H', 'end': 'PT23H'},
         {'id': '1_23', 'start': 'PT23H', 'end': 'PT24H'}
     ]
+    return data
 
 
 @fixture(scope='function')
 def one_day():
-    return [{'id': 'one_day', 'start': 'P0D', 'end': 'P1D'}]
+    data = [{'id': 'one_day', 'start': 'P0D', 'end': 'P1D'}]
+    return data
 
 
 class TestInterval:
@@ -311,7 +319,7 @@ class TestTimeRegisterConversion:
 
         register = TimeIntervalRegister()
         with raises(ValueError):
-            register.get_intervals_in_set('blobby')
+            register.get_entry('blobby')
 
     def test_convert_from_month_to_seasons(self,
                                            months,
@@ -319,8 +327,8 @@ class TestTimeRegisterConversion:
                                            monthly_data,
                                            monthly_data_as_seasons):
         register = TimeIntervalRegister()
-        register.register(months, 'months')
-        register.register(seasons, 'seasons')
+        register.register(IntervalSet('months', months))
+        register.register(IntervalSet('seasons', seasons))
 
         actual = register.convert(monthly_data, 'months', 'seasons')
         expected = monthly_data_as_seasons
@@ -331,13 +339,25 @@ class TestTimeRegisterConversion:
         data = np.ones(24)
 
         register = TimeIntervalRegister()
-        register.register(twenty_four_hours, 'hourly_day')
-        register.register(one_day, 'one_day')
+        register.register(IntervalSet('hourly_day', twenty_four_hours))
+        register.register(IntervalSet('one_day', one_day))
 
         actual = register.convert(data, 'hourly_day', 'one_day')
         expected = np.array([24])
 
         assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
+
+
+class TestIntervalSet:
+
+    def test_get_names(self, months):
+
+        expected_names = \
+            ['1_0', '1_1', '1_2', '1_3', '1_4', '1_5',
+             '1_6', '1_7', '1_8', '1_9', '1_10', '1_11']
+        interval_set = IntervalSet('months', months)
+        actual_names = interval_set.get_entry_names()
+        assert expected_names == actual_names
 
 
 class TestIntervalRegister:
@@ -351,45 +371,34 @@ class TestIntervalRegister:
                  'end': 'PT1H'}]
 
         register = TimeIntervalRegister()
-        register.register(data, 'energy_supply_hourly')
+        register.register(IntervalSet('energy_supply_hourly', data))
         assert register.names == ['energy_supply_hourly']
 
-        actual = register.get_intervals_in_set('energy_supply_hourly')
+        actual = register.get_entry('energy_supply_hourly')
 
         element = Interval('1_1', ('PT0H', 'PT1H'), base_year=2010)
         expected = OrderedDict()
         expected['1_1'] = element
 
-        assert actual == expected
-
-    def test_interval_load_same_key(self, months):
-        """Tests that interval sets with duplicate interval names can be
-        loaded if they have different interval set names
-        """
-        register = TimeIntervalRegister()
-        register.register(months, 'months_1')
-        register.register(months, 'months_2')
-        actual = register.get_intervals_in_set('months_1')
-        expected = register.get_intervals_in_set('months_2')
-        assert actual == expected
+        assert actual.data == expected
 
     def test_interval_load_duplicate_name_raises(self, months):
         """Tests that error is raised if a duplicate name is used
         for an interval set
         """
         register = TimeIntervalRegister()
-        register.register(months, 'months_1')
+        register.register(IntervalSet('months', months))
         with raises(ValueError):
-            register.register(months, 'months_1')
+            register.register(IntervalSet('months', months))
 
     def test_months_load(self, months):
         """Pass a monthly time-interval definition into the register
 
         """
         register = TimeIntervalRegister()
-        register.register(months, 'months')
+        register.register(IntervalSet('months', months))
 
-        actual = register.get_intervals_in_set('months')
+        actual = register.get_entry('months')
 
         expected_names = \
             ['1_0', '1_1', '1_2', '1_3', '1_4', '1_5',
@@ -409,31 +418,18 @@ class TestIntervalRegister:
                     Interval('1_11', ('P11M', 'P12M'))]
 
         for name, interval in zip(expected_names, expected):
-            assert actual[name] == interval
+            assert actual.data[name] == interval
 
     def test_remap_interval_load(self, remap_months):
         register = TimeIntervalRegister()
-        register.register(remap_months, 'remap_months')
 
-        actual = register.get_intervals_in_set('remap_months')
+        intervals = IntervalSet('remap_months', remap_months)
 
-        expected_names = ['1', '2', '3', '4']
+        register.register(intervals)
 
-        expected = [Interval('1', [('P10M', 'P11M'),
-                                   ('P11M', 'P12M'),
-                                   ('P0M', 'P1M')]),
-                    Interval('2', [('P1M', 'P2M'),
-                                   ('P2M', 'P3M'),
-                                   ('P3M', 'P4M')]),
-                    Interval('3', [('P4M', 'P5M'),
-                                   ('P5M', 'P6M'),
-                                   ('P6M', 'P7M')]),
-                    Interval('4', [('P7M', 'P8M'),
-                                   ('P8M', 'P9M'),
-                                   ('P9M', 'P10M')])]
+        actual = register.get_entry('remap_months')
 
-        for name, interval in zip(expected_names, expected):
-            assert actual[name] == interval
+        assert actual == intervals
 
 
 class TestRemapConvert:
@@ -444,8 +440,8 @@ class TestRemapConvert:
                                         remap_months,
                                         remap_month_data):
         register = TimeIntervalRegister()
-        register.register(months, 'months')
-        register.register(remap_months, 'remap_months')
+        register.register(IntervalSet('months', months))
+        register.register(IntervalSet('remap_months', remap_months))
 
         actual = register.convert(remap_month_data, 'remap_months', 'months')
         expected = remap_month_data_as_months
@@ -458,8 +454,8 @@ class TestRemapConvert:
                                         remap_months,
                                         remap_month_data):
         register = TimeIntervalRegister()
-        register.register(months, 'months')
-        register.register(remap_months, 'remap_months')
+        register.register(IntervalSet('months', months))
+        register.register(IntervalSet('remap_months', remap_months))
 
         actual = register.convert(monthly_data, 'months', 'remap_months')
         expected = remap_month_data
@@ -470,25 +466,22 @@ class TestRemapConvert:
 class TestValidation:
 
     def test_validate_get_hourly_array(self, remap_months):
-        data = remap_months
-        register = TimeIntervalRegister()
-        register.register(data, 'remap_months')
+        intervals = IntervalSet('remap_months', remap_months)
 
-        actual = register._get_hourly_array('remap_months')
+        actual = intervals._get_hourly_array()
         expected = np.ones(8760, dtype=np.int)
         assert_equal(actual, expected)
 
     def test_validate_intervals_passes(self, remap_months):
-        data = remap_months
+
         register = TimeIntervalRegister()
-        register.register(data, 'remap_months')
+        register.register(IntervalSet('remap_months', remap_months))
 
     def test_validate_intervals_fails(self, remap_months):
         data = remap_months
         data.append({'id': '5', 'start': 'PT0H', 'end': 'PT1H'})
-        register = TimeIntervalRegister()
         with raises(ValueError) as excinfo:
-            register.register(data, 'remap_months')
+            IntervalSet('remap_months', data)
         assert "Duplicate entry for hour 0 in interval set remap_months." in str(excinfo.value)
 
     def test_time_interval_start_before_end(get_time_intervals):

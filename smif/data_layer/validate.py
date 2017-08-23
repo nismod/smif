@@ -21,6 +21,12 @@ def validate_sos_model_config(data):
         VALIDATION_ERRORS.append(err)
         return
 
+    # check dependencies
+    if "dependencies" not in data:
+        VALIDATION_ERRORS.append(
+            ValidationError("No 'dependencies' specified in main config file.")
+        )
+
     # check timesteps
     if "timesteps" not in data:
         VALIDATION_ERRORS.append(

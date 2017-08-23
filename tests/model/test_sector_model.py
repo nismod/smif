@@ -1,26 +1,87 @@
 """Test SectorModel and SectorModelBuilder
 """
+from unittest.mock import Mock
+
 from pytest import raises
-from smif.metadata import MetadataSet
-from smif.sector_model import SectorModel, SectorModelBuilder
+from smif.metadata import Metadata, MetadataSet
+from smif.model.sector_model import SectorModel, SectorModelBuilder
 
 
 class EmptySectorModel(SectorModel):
+
     def initialise(self, initial_conditions):
         pass
 
-    def simulate(self, decisions, state, data):
-        return state, {}
+    def simulate(self, timestep, data=None):
+        return {}
 
     def extract_obj(self, results):
         return 0
 
 
+class TestCompositeSectorModel():
+
+    def test_add_input(self):
+
+        model = EmptySectorModel('test_model')
+        model.add_input('input_name', [], [], 'units')
+
+        inputs = model.model_inputs
+
+        assert inputs.names == ['input_name']
+        assert inputs.units == ['units']
+
+        assert inputs['input_name'] == Metadata('input_name', [], [], 'units')
+
+    def test_add_output(self):
+
+        model = EmptySectorModel('test_model')
+        model.add_output('output_name', Mock(), Mock(), 'units')
+
+        outputs = model.model_outputs
+
+        assert outputs.names == ['output_name']
+        assert outputs.units == ['units']
+
+    def test_run_sector_model(self):
+
+        model = EmptySectorModel('test_model')
+        model.add_input('input_name', [], [], 'units')
+        data = {'input_name': [0]}
+        actual = model.simulate(2010, data)
+        assert actual == {}
+
+
 class TestSectorModelBuilder():
 
+    def test_add_inputs(self, setup_project_folder):
+
+        model_path = str(setup_project_folder.join('models', 'water_supply',
+                                                   '__init__.py'))
+
+        builder = SectorModelBuilder('test')
+        builder.load_model(model_path, 'WaterSupplySectorModel')
+
+        inputs = [{'name': 'an_input',
+                   'spatial_resolution': 'LSOA',
+                   'temporal_resolution': 'annual',
+                   'units': 'tonnes'}]
+
+        builder.add_inputs(inputs)
+
+        assert 'an_input' in builder._sector_model.model_inputs.names
+
     def test_sector_model_builder(self, setup_project_folder):
-        model_path = str(setup_project_folder.join('models', 'water_supply', '__init__.py'))
-        builder = SectorModelBuilder('water_supply')
+        model_path = str(setup_project_folder.join('models', 'water_supply',
+                                                   '__init__.py'))
+
+        register = Mock()
+        register.get_entry = Mock(return_value='a_resolution_set')
+
+        registers = {'regions': register,
+                     'intervals': register}
+
+        builder = SectorModelBuilder('water_supply', registers)
         builder.load_model(model_path, 'WaterSupplySectorModel')
 
         assets = [
@@ -47,19 +108,27 @@ class TestSectorModelBuilder():
         assert model.interventions == assets
 
     def test_path_not_found(self):
-        builder = SectorModelBuilder('water_supply')
+        builder = SectorModelBuilder('water_supply', Mock())
         with raises(FileNotFoundError) as ex:
             builder.load_model('/fictional/path/to/model.py', 'WaterSupplySectorModel')
         msg = "Cannot find '/fictional/path/to/model.py' for the 'water_supply' model"
         assert msg in str(ex.value)
 
+
+class TestInputs:
+
     def test_add_no_inputs(self, setup_project_folder):
         model_path = str(setup_project_folder.join('models', 'water_supply', '__init__.py'))
-        builder = SectorModelBuilder('water_supply')
+        registers = {'regions': Mock(),
+                     'intervals': Mock()}
+
+        builder = SectorModelBuilder('water_supply_test', registers)
         builder.load_model(model_path, 'WaterSupplySectorModel')
         builder.add_inputs(None)
-        assert isinstance(builder._sector_model.inputs, MetadataSet)
-        assert len(builder._sector_model.inputs) == 0
+        sector_model = builder.finish()
+        assert isinstance(sector_model.model_inputs, MetadataSet)
+        actual_inputs = sector_model.model_inputs.names
+        assert actual_inputs == []
 
 
 class TestSectorModel(object):
@@ -70,7 +139,7 @@ class TestSectorModel(object):
             {'name': 'water_asset_b'},
             {'name': 'water_asset_c'}
         ]
-        model = EmptySectorModel()
+        model = EmptySectorModel('test_model')
         model.interventions = assets
 
         intervention_names = model.intervention_names
@@ -97,7 +166,7 @@ class TestSectorModel(object):
                 'capital_cost': 3000,
             }
         ]
-        model = EmptySectorModel()
+        model = EmptySectorModel('test_model')
         model.interventions = interventions
         actual = model.interventions
 

@@ -34,10 +34,10 @@ class Metadata(object):
     =========
     name: str
         The dataset name
-    spatial_resolution: str
-        Name of the region set that defines the spatial resolution
-    temporal_resolution: str
-        Name of the interval set that defines the temporal resolution
+    spatial_resolution: :class:`smif.convert.region.RegionSet`
+        The region set that defines the spatial resolution
+    temporal_resolution: :class:`smif.convert.interval.IntervalSet`
+       The interval set that defines the temporal resolution
     units: str
         Name of the units for the dataset values
 
@@ -48,10 +48,6 @@ class Metadata(object):
         self.spatial_resolution = spatial_resolution
         self.temporal_resolution = temporal_resolution
         self.units = self.normalise_unit(units, name)
-
-        # initialise with no registers
-        self.region_register = None
-        self.interval_register = None
 
     def __eq__(self, other):
         return self.name == other.name \
@@ -72,24 +68,14 @@ class Metadata(object):
         return normalised
 
     def get_region_names(self):
-        """Use region register to look up the list of region names for this
-        spatial resolution
+        """The list of region names for this spatial resolution
         """
-        if self.region_register is None:
-            return None
-        else:
-            regions = self.region_register.get_regions_in_set(self.spatial_resolution)
-            return [region.name for region in regions]
+        return self.spatial_resolution.get_entry_names()
 
     def get_interval_names(self):
-        """Use interval register to look up the list of interval names for this
-        temporal resolution
+        """The list of interval names for this temporal resolution
         """
-        if self.interval_register is None:
-            return None
-        else:
-            intervals = self.interval_register.get_intervals_in_set(self.temporal_resolution)
-            return list(intervals.keys())
+        return self.temporal_resolution.get_entry_names()
 
 
 class MetadataSet(object):
@@ -101,30 +87,27 @@ class MetadataSet(object):
         A list of dicts like ::
 
                 {
-                    "name": "heat_demand"
-                    "spatial_resolution": "household"
-                    "temporal_resolution": "hourly"
-                    "units": "kW"
+                    'name': 'heat_demand'
+                    'spatial_resolution': smif.convert.ResolutionSet
+                    'temporal_resolution': smif.convert.ResolutionSet
+                    'units': 'kW'
                 }
 
-    region_register: :class:`smif.convert.area.RegionRegister`
-        Register of regions, which spatial_resolution refers to
-    interval_register: :class:`smif.convert.area.TimeIntervalRegister`
-        Register of intervals, which temporal_resolution refers to
-    """
-    def __init__(self, metadata_list, region_register=None, interval_register=None):
-        self._metadata = {}
+        Or, a list of smif.metadata.Metadata
 
+                Metadata('heat_demand',
+                         smif.convert.area.RegionSet,
+                         smif.convert.interval.IntervalSet,
+                         'kW')
+
+    """
+    def __init__(self, metadata_list):
+        self._metadata = {}
         for metadata_item in metadata_list:
-            metadata = Metadata(
-                metadata_item['name'],
-                metadata_item['spatial_resolution'],
-                metadata_item['temporal_resolution'],
-                metadata_item['units']
-            )
-            metadata.region_register = region_register
-            metadata.interval_register = interval_register
-            self._metadata[metadata.name] = metadata
+            if isinstance(metadata_item, dict):
+                self.add_metadata(metadata_item)
+            elif isinstance(metadata_item, Metadata):
+                self.add_metadata_object(metadata_item)
 
     @property
     def metadata(self):
@@ -147,6 +130,36 @@ class MetadataSet(object):
         else:
             raise KeyError("No metadata found for name '{}'".format(name))
         return metadata_item
+
+    def __iter__(self):
+        return iter(self.metadata)
+
+    def add_metadata(self, metadata_item):
+        """Add an item to the set
+
+        Arguments
+        ---------
+        metadata_item: dict
+            A dictionary with keys 'name', 'spatial resolution', 'temporal
+            resolution' and 'units'
+        """
+        metadata = Metadata(metadata_item['name'],
+                            metadata_item['spatial_resolution'],
+                            metadata_item['temporal_resolution'],
+                            metadata_item['units'])
+        self._metadata[metadata.name] = metadata
+
+    def add_metadata_object(self, metadata_object):
+        """Add an metadata object to the set
+
+        Arguments
+        ---------
+        metadata_object : Metadata
+            A smif.metadata.Metadata instance
+
+        """
+        assert isinstance(metadata_object, Metadata)
+        self._metadata[metadata_object.name] = metadata_object
 
     def get_spatial_res(self, name):
         """The spatial resolution for parameter `name`

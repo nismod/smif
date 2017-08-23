@@ -11,9 +11,19 @@ from __future__ import absolute_import, division, print_function
 
 import json
 import logging
+from copy import copy
 
 import yaml
 from pytest import fixture
+from smif.convert.area import get_register as get_region_register
+from smif.convert.area import RegionSet
+from smif.convert.interval import get_register as get_interval_register
+from smif.convert.interval import IntervalSet
+
+from .convert.test_area import (regions_half_squares, regions_half_triangles,
+                                regions_rect, regions_single_half_square)
+from .convert.test_interval import (months, one_day, remap_months, seasons,
+                                    twenty_four_hours)
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
@@ -563,6 +573,7 @@ def setup_config_file(setup_folder_structure):
                 ]
             }
         ],
+        'dependencies': [],
         'timesteps': 'timesteps.yaml',
         'scenario_data': [],
         "region_sets": [{'name': 'national',
@@ -920,14 +931,14 @@ def setup_runpy_file(tmpdir, setup_folder_structure):
     # Write a file for the water_supply model
     filename = base_folder.join('models', 'water_supply', '__init__.py')
     contents = """
-from smif.sector_model import SectorModel
+from smif.model.sector_model import SectorModel
 
 class WaterSupplySectorModel(SectorModel):
     def initialise(self, initial_conditions):
         pass
 
-    def simulate(self, decisions, state, data):
-        pass
+    def simulate(self, timestep, data=None):
+        return {self.name: data}
 
     def extract_obj(self, results):
         return 0
@@ -1015,7 +1026,7 @@ def setup_time_intervals(setup_folder_structure):
     return filename
 
 
-@fixture(scope='function')
+@fixture(scope='session')
 def setup_region_data():
     data = {
         "type": "FeatureCollection",
@@ -1097,7 +1108,7 @@ def setup_country_data():
                     "coordinates": [
                         [
                             [0, 1],
-                            [0, 1],
+                            [0, 1.1],
                             [2, 3]
                         ]
                     ]
@@ -1113,7 +1124,7 @@ def setup_country_data():
                     "coordinates": [
                         [
                             [2, 3],
-                            [2, 3],
+                            [2, 3.2],
                             [4, 5]
                         ]
                     ]
@@ -1304,3 +1315,31 @@ def setup_water_intervention_d(setup_folder_structure,
 def setup_minimal_water(setup_folder_structure,
                         setup_config_file):
     return str(setup_folder_structure)
+
+
+@fixture(scope="session", autouse=True)
+def setup_registers(setup_region_data):
+    """One-time setup: load all the fixture region and interval
+    sets into the module-level registers.
+    """
+    regions = get_region_register()
+    lsoa = RegionSet('LSOA', setup_region_data['features'])
+    regions.register(lsoa)
+    regions.register(regions_half_squares())
+    regions.register(regions_single_half_square())
+    regions.register(regions_half_triangles())
+    regions.register(regions_rect())
+
+    # register alt rect (same area)
+    regions_rect_alt = copy(regions_rect())
+    regions_rect_alt.name = 'rect_alt'
+    regions.register(regions_rect_alt)
+
+    intervals = get_interval_register()
+    annual_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
+    intervals.register(IntervalSet('annual', annual_data))
+    intervals.register(IntervalSet('months', months()))
+    intervals.register(IntervalSet('seasons', seasons()))
+    intervals.register(IntervalSet('hourly_day', twenty_four_hours()))
+    intervals.register(IntervalSet('one_day', one_day()))
+    intervals.register(IntervalSet('remap_months', remap_months()))
