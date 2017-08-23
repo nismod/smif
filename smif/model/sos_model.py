@@ -346,12 +346,21 @@ class ModelSet(Model):
         super().__init__(name)
         self._models = models
         self._model_names = {model.name for model in models}
+        self._derive_deps_from_models()
+
         self.timestep = None
         self.iterated_results = None
         self.max_iterations = max_iterations
         # tolerance for convergence assessment - see numpy.allclose docs
         self.relative_tolerance = relative_tolerance
         self.absolute_tolerance = absolute_tolerance
+
+    def _derive_deps_from_models(self):
+        for model in self._models:
+            for sink, dep in model.deps.items():
+                if dep.source_model not in self._models:
+                    self.deps[sink] = dep
+                    self.model_inputs.add_metadata_object(model.model_inputs[sink])
 
     def simulate(self, timestep, data=None):
         """Runs a set of one or more models
@@ -366,6 +375,9 @@ class ModelSet(Model):
         # - last year's inputs
         self.iterated_results = [{}]
         self.timestep = timestep
+        if data is None:
+            data = {}
+
         for model in self._models:
             results = self.guess_results(model, timestep, data)
             self.iterated_results[-1][model.name] = results
@@ -376,25 +388,28 @@ class ModelSet(Model):
             if self.converged():
                 break
             else:
-                self._run_iteration(i)
+                self._run_iteration(i, data)
         else:
             raise TimeoutError("Model evaluation exceeded max iterations")
 
         return self.get_last_iteration_results()
 
-    def _run_iteration(self, i):
+    def _run_iteration(self, i, data):
         """Run all models within the set
         """
         self.iterated_results.append({})
         for model in self._models:
             data = {}
             for input_name, dep in model.deps.items():
-                # if internal dependency
                 input_ = model.model_inputs[input_name]
-                dep_data = self.iterated_results[-2][dep.source_model.name][dep.source.name]
+                if input_ in self.model_inputs:
+                    # if external dependency
+                    dep_data = data[dep.source_model.name][dep.source.name]
+                else:
+                    # else, pull from iterated results
+                    dep_data = \
+                        self.iterated_results[-2][dep.source_model.name][dep.source.name]
                 data[input_name] = dep.convert(dep_data, input_)
-                # else, pull from data provided to this ModelSet
-                # TODO
             results = model.simulate(self.timestep, data)
 
             self.logger.debug("Iteration %s, model %s, results: %s",
@@ -417,9 +432,6 @@ class ModelSet(Model):
 
         Initially, guess zeroes, or the previous timestep's results.
         """
-        if data is None:
-            data = {}
-
         timesteps = sorted(list(data.keys()))
         timestep_before = element_before(timestep, timesteps)
         if timestep_before is not None:

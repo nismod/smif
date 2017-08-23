@@ -106,9 +106,7 @@ def get_energy_sector_model():
 
 class TestModelSet:
 
-    def test_model_set(self, get_sector_model):
-        SectorModel = get_sector_model
-
+    def test_model_set(self):
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output',
                                  elec_scenario.regions.get_entry('LSOA'),
@@ -116,19 +114,37 @@ class TestModelSet:
                                  'unit')
         elec_scenario.add_data(np.array([[[123]]]), [2010])
 
-        energy_model = SectorModel('model')
-        energy_model.add_input('input',
+        model_set = ModelSet([elec_scenario])
+        model_set.simulate(2010)
+
+    def test_model_set_deps(self, get_water_sector_model, get_energy_sector_model):
+        pop_scenario = ScenarioModel('population')
+        pop_scenario.add_output('population',
+                                pop_scenario.regions.get_entry('LSOA'),
+                                pop_scenario.intervals.get_entry('annual'),
+                                'unit')
+        energy_model = get_energy_sector_model
+        energy_model.add_input('population',
                                energy_model.regions.get_entry('LSOA'),
                                energy_model.intervals.get_entry('annual'),
                                'unit')
-        energy_model.add_dependency(elec_scenario, 'output', 'input')
+        water_model = get_water_sector_model
 
-        sos_model = SosModel('energy_sos_model')
-        sos_model.add_model(energy_model)
-        sos_model.add_model(elec_scenario)
+        energy_model.add_dependency(pop_scenario, 'population', 'population')
+        energy_model.add_dependency(water_model, 'electricity_demand',
+                                    'electricity_demand_input')
+        water_model.add_dependency(energy_model, 'fluffiness', 'fluffyness')
 
-        model_set = ModelSet([elec_scenario])
-        model_set.simulate(2010)
+        model_set = ModelSet([energy_model, water_model])
+        # ModelSet should derive inputs as any input to one of its models which
+        # is not met by an internal dependency
+        assert len(model_set.model_inputs) == 1
+        assert 'population' in model_set.model_inputs.names
+
+        # ModelSet should derive dependencies as links to any model which
+        # supplies a dependency not met internally
+        assert len(model_set.deps) == 1
+        assert model_set.deps['population'].source_model is pop_scenario
 
 
 class TestBasics:
