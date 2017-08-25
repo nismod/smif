@@ -1,0 +1,394 @@
+@startuml
+skinparam {
+  shadowing false
+  classBackgroundColor white
+  classBorderColor black
+  noteBackgroundColor white
+  noteBorderColor #222
+}
+
+package control {
+    
+    abstract class SetList {
+
+    }
+
+    SetList <|-- ScenarioSetList
+    class ScenarioSetList {
+    - scenario_sets : ScenarioSet [*]
+    + add_scenario_set(ScenarioSet)
+    + get_scenario_sets()
+    + get_scenario_set(name)
+    }
+
+    SetList <|-- NarrativeSetList
+    class NarrativeSetList {
+    - narrative_sets : NarrativeSet [*]
+    + add_narrative_set(Narrative_Set)
+    + get_narrative_sets()
+    + get_narrative_set(name)
+    }
+
+    NarrativeSetList -- "*" NarrativeSet
+    class NarrativeSet {
+    - name : string
+    - description : string
+    - narratives : Narrative [*]
+    }
+
+    class Narrative {
+    - name : string
+    - data
+    }
+    NarrativeSet "1" -- "*" Narrative
+
+    ScenarioSetList -- "*" ScenarioSet
+    class ScenarioSet {
+    - name : string
+    - description : string
+    - scenarios : Scenario [*]
+    + ScenarioSet(name, description)
+    + add_scenario(Scenario)
+    + get_scenario(name)
+    }
+    note right of ScenarioSet : Holds the scenario category\ne.g. 'Population'
+
+    class Scenario {
+    - name : string
+    - description : string
+    - data
+    - spatial_resolution : RegionSet [1]
+    - temporal_resolution : IntervalSet [1]
+    + set_name(name)
+    + set_description(description)
+    + set_data(data)
+    + set_spatial_resolution(RegionSet)
+    + set_temporal_resolution(IntervalSet)
+    }
+
+    abstract class UniqueCombination {
+    - combinations : dict
+    + {abstract} add_combination(Set, Entity)
+    + {abstract} get_entity(Set) : (Entity)
+    + {abstract} validate()
+    }
+
+    UniqueCombination <|-- ScenarioCombination
+
+    class ScenarioCombination {
+    + add_tuple(ScenarioSet, Scenario)
+    + get_tuple(ScenarioSet)
+    + validate()
+    }
+    note bottom of ScenarioCombination : Holds one Scenario in each ScenarioSet
+
+    NarrativeCombination -- "1" Narrative
+    NarrativeCombination -- "1" NarrativeSet
+    class NarrativeCombination {
+    + add_tuple(NarrativeSet, Narrative)
+    + get_tuple(NarrativeSet)
+    + validate()
+    }
+
+    UniqueCombination <|-- NarrativeCombination
+
+
+
+    ScenarioCombination -- "1" Scenario
+    ScenarioCombination -- "1" ScenarioSet
+    ScenarioSet -- "*" Scenario
+
+}
+
+newpage
+
+skinparam {
+  shadowing false
+  classBackgroundColor white
+  classBorderColor black
+  noteBackgroundColor white
+  noteBorderColor #222
+}
+
+package smif {
+
+  class ModelList {
+    - model_runs : ModelRun [*]
+    + get_model_runs()
+    + add_model_run(ModelRun)
+  }
+
+  ModelList -- "*" ModelRun
+  class ModelRun {
+    - id : int
+    - description : string
+    - sosmodel : SosModel [1]
+    - timesteps
+    - scenarios : ScenarioCombination [*]
+    - narratives : NarrativeCombination [*]
+    - strategy : 
+    -- Building --
+    + set_description(description)
+    + set_sos_model(SosModel)
+    + set_strategy(Strategy)
+    + set_scenario(scenarioset, scenario)
+    + set_narrative(narrativeset, narrative)
+    + set_modelling_horizon(timestep_list)
+    -- Running --
+    + run()
+    
+  }
+  note right of ModelRun : We need to set one\n (and only one) scenario\n for each ScenarioSet defined
+  note right of ModelRun : We need to set one\n (and only one) narrative\n for each NarrativeSet defined
+
+
+  ModelRunner *-- ModelRun
+  ModelRun *-- SosModel
+
+  note top of Model : Implement the Composite\ndesign pattern
+
+  abstract class Model {
+  -- Static Properties --
+  + {static} all_inputs : ModelInput [*]
+  + {static} all_outputs : ModelOutput [*]
+  -- Instance Properties --
+  - name : string
+  - inputs : ModelInput [*]
+  - outputs : ModelOutput [*]
+  -- Instance Methods --
+  + get_inputs() : ModelInput [*]
+  + get_outputs() : ModelOutput [*]
+  + set_name(name)
+  + get_name()
+  -- Running --
+  - get_input_data(name)
+  + {abstract} validate()
+  + {abstract} simulate(System, Data) : Data, StateData
+  }
+
+
+  class SosModel {
+  - models : Model [1..*] 
+  - dependencies : Dependency [*]
+
+  -- Building --
+  + add_model(Model)
+  + add_dependency(data_source, model_input)
+  + validate()
+  -- Running --
+  - get_RunOrder(sector_models, dependencies) : ModelSet [1..*]
+  + simulate(System, Data) : Data, StateData
+  }
+
+  class SectorModel {
+  - parameters
+  - interventions : Intervention [*]
+  - wrapper_path : string
+  - wrapper_class : string
+  -- Building --
+  + add_input(ModelInput)
+  + add_output(ModelOutput)
+  + add_intervention(Intervention)
+  + add_wrapper(path, classname)
+  + validate()
+  -- Running --
+  + initialise(Parameters)
+  + simulate(System, Data) : Data, StateData
+  }
+
+  class ScenarioModel {
+  - name : string
+  - output : ModelOutput [1]
+  - scenario_set : ScenarioSet [1]
+  -- Building --
+  + ScenarioModel(name, ModelOutput, ScenarioSet)
+  + validate()
+  -- Running --
+  + simulate(System, Data) : Data, StateData
+  }
+  note bottom of ScenarioModel : simulate() method returns\n scenario data only
+
+  Model <|-- SosModel
+  Model <|-- SectorModel
+  Model <|-- ScenarioModel
+
+  Model *-- SosModel
+
+  class ModelSet {
+    sector_models : set of SectorModel
+    simulate(System, Data) => Data, StateData
+  }
+
+  SosModel *- ModelSet
+
+
+
+  abstract class ModelInputOutput {
+    - name : string
+    - spatial_resolution : RegionSet [1]
+    - temporal_resolution : IntervalSet [1]
+    + validate()
+    + get_spatial_resolution()
+    + get_temporal_resolution()
+  }
+
+  ModelInputOutput <|-- ModelInput 
+  ModelInputOutput <|-- ModelOutput
+
+  class ModelInput {
+    - scenario_set : ScenarioSet [1]
+    + ModelInput(name, region_set, interval_set)
+    + set_scenario_set(name)
+  }
+
+  class ModelOutput {
+  + ModelOutput(name, region_set, interval_set)
+  }
+
+  class Dependency {
+    - source_model : Model [1]
+    - source : ModelOutput [1]
+    - sink_model : Model [1]
+    - sink : ModelInput [1]
+    - conversion_function : func = AreaWeighted
+    + Dependency(source_model, source, sink_model, sink)
+    + Dependency(source, sink, conversion_function)
+    + convert()
+  }
+
+  SosModel "1" *-- "*" Dependency
+
+  ModelRunner -- SosModel
+
+  class Intervention {
+  + {static} names
+  + {static} attributes 
+  - name : string
+  - attributes : dict
+  + Intervention(name)
+  + set_attribute(key, value)
+  + get_attribute(key)
+  + validate()
+  }
+
+}
+
+newpage
+
+skinparam {
+  shadowing false
+  classBackgroundColor white
+  classBorderColor black
+  noteBackgroundColor white
+  noteBorderColor #222
+}
+
+package datalayer {
+
+  abstract class DataReader {
+    + {abstract} read_model_run(id)
+    + {abstract} read_sos_model(name)
+    + {abstract} read_sector_model(name)
+    + {abstract} read_scenario_model(name)
+    + {abstract} read_dependency(sos_model, name)
+  }
+
+  abstract class DataWriter {
+    + {abstract} write_model_run(data)
+    + {abstract} write_sos_model(data)
+    + {abstract} write_sector_model(data)
+    + {abstract} write_scenario_model(data)
+    + {abstract} write_dependency(data)
+  }
+
+DataReader <|-- YamlReader
+class YamlReader {
+    - filepath : string
+    + read_model_run(id)
+    + read_sos_model(name)
+    + read_sector_model(name)
+    + read_scenario_model(name)
+    + read_dependency(sos_model, name)
+}
+
+}
+
+newpage
+
+skinparam {
+  shadowing false
+  classBackgroundColor white
+  classBorderColor black
+  noteBackgroundColor white
+  noteBorderColor #222
+}
+
+package convertor {
+
+    abstract class Register {
+    - entries : ResolutionSet [*]
+    - {abstract} compute_matrix(from_set, to_set)
+    + register(resolution_set)
+    + get_entry(name)
+    }
+
+    Register <|-- RegionRegister
+    class RegionRegister {
+    - entries : RegionSet [*]
+    + compute_matrix(from_set, to_set)
+    }
+
+    Register <|-- IntervalRegister
+    class IntervalRegister {
+    - entries : IntervalSet [*]
+    + compute_matrix(from_set, to_set)
+    }
+
+    class Convertor {
+    - conversion_matrix_mapping : array
+    - region_register : RegionRegister [1]
+    - interval_register : IntervalRegister [1]
+    + convert(data, from_space, to_space, from_time, to_time)
+    + add_region_set(RegionSet)
+    + add_interval_set(IntervalSet)
+    }
+
+
+    abstract class ResolutionSet {
+    - name : String
+    - {abstract} data
+    + get_name() : String
+    + set_data()
+    + get_data()
+
+    }
+
+    ResolutionSet <|-- RegionSet
+    ResolutionSet <|-- IntervalSet
+
+    class RegionSet {
+    - data : Area [*]
+    }
+
+    RegionSet -- "*" Area
+
+    class IntervalSet {
+    - data : Interval [*]
+    }
+
+    IntervalSet -- "*" Interval
+
+    class Interval {
+    - name : string
+    - start : int
+    - end : int
+    }
+
+    class Area {
+    - name : string
+    - area : Polygon
+    }
+
+}
+
+@enduml

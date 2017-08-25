@@ -1,0 +1,142 @@
+@startuml
+skinparam {
+  shadowing false
+  classBackgroundColor white
+  classBorderColor black
+  noteBackgroundColor white
+  noteBorderColor #222
+}
+
+package smif.model_run {
+  class ModelRunner {
+    - model_run : ModelRun
+    - decision_modules : set of DecisionManager
+    + solve(SosModel, data_sources)
+  }
+
+  ModelRunList -- "*" ModelRun
+  class ModelRun {
+    - id : int
+    - description : string
+    - sosmodel : SosModel [1]
+    - timesteps
+    - scenarios : ScenarioCombination [*]
+    - narratives : NarrativeCombination [*]
+    - strategy : 
+    -- Building --
+    + set_description(description)
+    + set_sos_model(SosModel)
+    + set_strategy(Strategy)
+    + set_scenario(scenarioset, scenario)
+    + set_narrative(narrativeset, narrative)
+    + set_modelling_horizon(timestep_list)
+    -- Running --
+    + run()
+    
+  }
+  ModelRunner *-- ModelRun
+}
+
+
+package smif.decision {
+  class DecisionManager {
+    get_decisions_over_timesteps(results, StateData) => dict of list of Decision by timestep
+    is_satisfied() => bool
+  }
+
+  ModelRunner *-- DecisionManager
+
+
+  class Planning {
+    -interventions : dict of list of Decision by timestep
+  }
+  note left: ignores ActionSpace, \nsimply proposes specified \nplanned interventions
+
+  DecisionManager <-- Planning
+
+  class Intervention {
+    name : str
+    location : Region
+    capital_cost : int
+    attrs : dict
+  }
+
+  Decision *-- Intervention
+
+  class Decision {
+    intervention : Intervention
+    timestep : int
+  }
+
+  Planning *-- Decision
+
+  class RuleBased {
+    -rules : list of Rule
+  }
+  note left: evaluates conditions against \nmodel inputs, results, SystemState, \nreturning Decisions up to Constraints
+
+  DecisionManager <-- RuleBased
+
+  class Optimisation {
+    -objective : function
+  }
+  note left: may want to handle multiple parallel \nsimulations, may want to re-evaluate \ndecision at each timestep
+
+  DecisionManager <-- Optimisation
+
+  class ActionSpace {
+    -decision_history : dict of list of Decision by timestep
+    get_available_actions()
+  }
+
+PlanningViews -- ModelHorizon
+class PlanningViews {
+  + window_size : int
+  + get_window(timestep) : TimeStep [*]
+}
+note right of PlanningViews : holds mapping of subset\n of timesteps in each planning year\n as a function of ModelHorizon \n and window_size
+
+Iteration "*" -- "1" PlanningViews
+Iteration -- TimeStep
+Iteration "*" -- "1" DecisionManager
+class Iteration {
+  + {static} count
+  + timestamp
+  + planning_view : PlanningViews [1]
+  + timestep : TimeStep [1]
+  + decisions : Intervention [*]
+  + model_run : ModelRun [1]
+  + write_results(results)
+}
+
+}
+
+package smif.simulation {
+  class SectorModel {
+    parameters
+    available_interventions
+    area_metadata
+    interval_metadata
+    input_metadata
+    output_metadata
+    initialise(Parameters)
+    simulate(System, Data) => Data, StateData
+  }
+
+  ModelSet *-- SectorModel
+
+  class ModelSet {
+    sector_models : set of SectorModel
+    simulate(System, Data) => Data, StateData
+  }
+
+  SosModel *-- ModelSet
+
+  class SosModel {
+    model_sets : DiGraph of ModelSet
+    simulate(System, Data) => Data, StateData
+  }
+
+  ModelRunner *-- SosModel
+}
+@enduml

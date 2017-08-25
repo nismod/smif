@@ -3,7 +3,7 @@ numpy
 scipy
 pre-commit
 pyyaml>=3.12
-networkx
+networkx~=1.0
 isodate
 fiona>=1.7
 shapely>=1.3

@@ -1,0 +1,210 @@
+@startuml
+skinparam {
+  shadowing false
+  classBackgroundColor white
+  classBorderColor black
+  noteBackgroundColor white
+  noteBorderColor #222
+}
+
+class ModelRunner {
+  model_run : ModelRun
+  decision_modules : set of DecisionModule
+  sos_models : set of SosModel
+}
+
+class ScenarioSet {
+- name : string
+- description : string
+- scenarios : list
++ ScenarioSet(name, description)
++ add_scenario(Scenario)
+}
+
+class Scenario {
+- data
+- spatial_resolution
+- temporal_resolution
++ set_data(data)
++ set_spatial_resolution(SpaceRes)
++ set_temporal_resolution(TimeRes)
+}
+
+abstract class UniqueCombination {
+- combinations : list
++ add_tuple(Set, Entity)
++ get_tuple() : (Set, Entity)
++ validate()
+}
+
+UniqueCombination <|-- ScenarioCombination
+
+class ScenarioCombination {
+}
+note bottom of ScenarioCombination : Holds one Scenario in each ScenarioSet
+
+UniqueCombination <|-- NarrativeCombination
+
+class NarrativeSet {
+
+}
+
+class Narrative {
+
+}
+
+
+ScenarioCombination -- Scenario
+ScenarioSet -- "*" Scenario
+ModelInput -- "1" ScenarioSet
+
+class ModelRun {
+  sosmodel : SosModel
+  timesteps
+  scenario
+  narrative
+  decision_config
+  -- Building --
+  + set_sos_model(SosModel)
+  + set_strategy(Strategy)
+  + set_scenario(scenarioset, scenario)
+  + set_narrative(narrativeset, narrative)
+  + set_modelling_horizon(timestep_list)
+  -- Running --
+  + run()
+  
+}
+note right of ModelRun : We need to set one\n (and only one) scenario\n for each ScenarioSet defined
+note right of ModelRun : We need to set one\n (and only one) narrative\n for each NarrativeSet defined
+
+
+ModelRunner *-- ModelRun
+ModelRun *-- SosModel
+
+
+abstract class Model {
++ get_inputs() : list
++ get_outputs() : list
+-- Building --
++ {abstract} add_element()
+-- Running --
++ validate()
++ {abstract} simulate(System, Data) : Data, StateData
+}
+
+
+class SosModel {
+  - sector_models : list 
+  - dependencies : list
+
+  -- Building --
+  + add_sector_model(SectorModel)
+  + add_scenario(ScenarioData)
+  + add_dependency(data_source, model_input)
+  -- Running --
+  - get_RunOrder(sector_models, dependencies) : DiGraph of ModelSet
+
+
+}
+
+class SectorModel {
+  - parameters
+  - interventions : list
+  - model_inputs : list
+  - model_outputs : list
+  -- Building --
+  + add_input(ModelInput)
+  + add_output(ModelOutput)
+  + add_intervention(Intervention)
+  -- Running --
+  + initialise(Parameters)
+
+}
+
+class ScenarioData {
+
+}
+
+SosModel --|> Model
+SectorModel --|> Model
+
+SectorModel *-> ModelInput
+SectorModel *-> ModelOutput
+
+SosModel *-- SectorModel
+
+class ModelSet {
+  sector_models : set of SectorModel
+  simulate(System, Data) => Data, StateData
+}
+
+SosModel *- ModelSet
+
+
+
+abstract class ModelInputOutput {
+  - name : String
+  - spatial_resolution : SpaceRes
+  - temporal_resolution : TimeRes
+  + validate()
+  + get_spatial_resolution()
+  + get_temporal_resolution()
+}
+
+ModelInputOutput <|-- ModelInput 
+ModelInputOutput <|-- ModelOutput
+ModelInputOutput -- SpaceRes
+ModelInputOutput -- TimeRes
+
+class ModelInput {
+  - scenario_set
+  + ModelInput(name, spatial_resolution, temporal_resolution)
+  + set_scenario_set(name)
+}
+
+class ModelOutput {
+ + ModelOutput(name, spatial_resolution, temporal_resolution)
+}
+
+abstract class Resolution {
+- name : String
+{abstract} data
++ get_name() : String
+}
+
+Resolution <|-- SpaceRes
+Resolution <|-- TimeRes
+
+class SpaceRes {
+
+}
+
+class TimeRes {
+
+}
+
+class Dependency {
+  - source : ModelOutput
+  - sink : ModelInput
+  - conversion_function : func = AreaWeighted
+  + Dependency(source, sink)
+  + Dependency(source, sink, conversion_function)
+}
+SosModel "1" *- "*" Dependency
+
+
+ModelRunner -- SosModel
+
+SectorModel *-- "*" Intervention
+class Intervention {
++ {static} names
++ {static} attributes 
+- name : string
+- attributes : dict
++ Intervention(name)
++ set_attribute(key, value)
++ get_attribute(key)
++ validate()
+}
+
+@enduml

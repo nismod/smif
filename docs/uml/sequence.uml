@@ -1,0 +1,16 @@
+@startuml
+
+participant Reader
+participant Builder
+participant ResolutionManager
+participant SectorModel
+
+Builder --> Reader : get_model_inputs()
+Reader --> Builder : model_inputs
+loop for (name, spatial_name, temporal_name) in model_inputs
+    Builder --> ResolutionManager : get_spatial_resolution(spatial_name)
+    Builder --> ResolutionManager : get_temporal_resultion(temporal_name)
+    ResolutionManager --> Builder : spatial_temporal_resolution
+    Builder --> SectorModel : add_model_input(ModelInput)
+end
+@enduml
