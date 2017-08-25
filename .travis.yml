@@ -23,6 +23,4 @@ deploy:
     secure: MNNitxCYMRYG/AFTL+t3bAeR8z6Zda8ujUQEi1Nyvkug+Tl5rOX7Oz96GKr7XPfmTdVxSA2kBPBEjNmsAl8btSCl+5KyybqnBy00TpwzwLfmNZZvhLa54joOhli91a11g0pI8nrGXakSdzaeJhpoG2xb1hhEJ0i/18RUDH0JcjHLUW83f9AnY23lP/wnduto8ekwn9YtGWnc8QopFbA1VJK01ZBCHYsbAs/BhLXZrTI/KhFcnLQu4mLdSF7aONLlNaYUlKdLBRR6X7gczBiFQvy/05WHjohP5y8LbjnKGg9bEGtQzw+oNAa4FTrWClTBRvzWcZM+IDR5j87+FopBBnmuL2skLRV/uImyshtR+LC0bs6/M4ULSpe7jr5e4+bV6ptHtdJt6HcN5p3F4WnEusHCojx0l17ThtfF+vV16lHStfZUkqBu/MqqqW8CqbXDf8hZcCOXV11ImTHEQ8u0FEaIj85l95pG6ol+6ng1CuuTwHnIC3ZfMmqx/jnSyqsBib3QaSeNMxvIzgGyHD3ofMaunCF65yU1cRsiVVoHOe2gRs9hyjZKfPSA3jhPeCGMSLR9Pq2aSDiPH+Ri48/7XrqlRDh5o2V9nZ6vkkotSE24m9QXiGbRIct5q4UUQ4wPULTCNpVOxVOIClJeyexHDIZb0Z/vl/hjnrrl5csu0ZQ=
   on:
     tags: true
-    branch: master
-  overwrite: true
-  skip_upload_docs: true
+    all_branches: true
