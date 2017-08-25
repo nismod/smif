@@ -111,8 +111,6 @@ class Model(ABC):
         else:
             model_inputs = set()
 
-        self.logger.debug("Model inputs to %s: %s", self.name, model_inputs)
-        self.logger.debug("Dependencies: %s", self.deps)
         free_input_names = model_inputs - set(self.deps.keys())
 
         return MetadataSet([self._model_inputs[name]

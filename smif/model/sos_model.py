@@ -122,7 +122,7 @@ class SosModel(Model):
         """
         self.check_dependencies()
         run_order = self._get_model_sets_in_run_order()
-        self.logger.info("Determined run order as %s", run_order)
+        self.logger.info("Determined run order as %s", [x.name for x in run_order])
         results = {}
         for model in run_order:
             # get data for model
