@@ -1,3 +1,20 @@
+"""Wrap and solve a set of interdependent models
+
+Given a directed graph of dependencies between models, any cyclic
+dependencies are contained within the strongly-connected components of the
+graph.
+
+A ModelSet corresponds to the set of models within a single strongly-
+connected component. This class provides the machinery necessary
+to find a solution to each of the interdependent models.
+
+The current implementation first estimates the outputs for each model in the
+set, guaranteeing that each model will then be able to run, then begins
+iterating, running every model in the set at each iteration, monitoring the
+model outputs over the iterations, and stopping at timeout, divergence or
+convergence.
+"""
+
 import numpy as np
 from smif.model import element_before
 from smif.model.composite import Model
@@ -5,20 +22,6 @@ from smif.model.composite import Model
 
 class ModelSet(Model):
     """Wraps a set of interdependent models
-
-    Given a directed graph of dependencies between models, any cyclic
-    dependencies are contained within the strongly-connected components of the
-    graph.
-
-    A ModelSet corresponds to the set of models within a single strongly-
-    connected component. This class provides the machinery necessary
-    to find a solution to each of the interdependent models.
-
-    The current implementation first estimates the outputs for each model in the
-    set, guaranteeing that each model will then be able to run, then begins
-    iterating, running every model in the set at each iteration, monitoring the
-    model outputs over the iterations, and stopping at timeout, divergence or
-    convergence.
 
     Arguments
     ---------
