@@ -33,7 +33,7 @@ from abc import ABCMeta, abstractmethod
 
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
-from smif.model.composite import Model
+from smif.model import Model
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"

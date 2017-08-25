@@ -48,7 +48,7 @@ from logging import getLogger
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.metadata import MetadataSet
-from smif.model.composite import Dependency
+from smif.model.dependency import Dependency
 
 
 class Model(ABC):

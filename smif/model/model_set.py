@@ -16,8 +16,7 @@ convergence.
 """
 
 import numpy as np
-from smif.model import element_before
-from smif.model.composite import Model
+from smif.model import Model, element_before
 
 
 class ModelSet(Model):

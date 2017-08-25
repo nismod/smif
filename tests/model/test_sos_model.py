@@ -11,7 +11,7 @@ from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
 from smif.metadata import MetadataSet
-from smif.model.composite import Dependency
+from smif.model.dependency import Dependency
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel
 from smif.model.sos_model import ModelSet, SosModel, SosModelBuilder

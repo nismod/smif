@@ -1,6 +1,6 @@
 from numpy import ndarray
 from smif.metadata import MetadataSet
-from smif.model.composite import Model
+from smif.model import Model
 
 
 class ScenarioModel(Model):

@@ -15,8 +15,7 @@ from smif.convert.interval import get_register as get_interval_register
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
 from smif.metadata import MetadataSet
-from smif.model import element_after, element_before
-from smif.model.composite import Model
+from smif.model import Model, element_after, element_before
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
