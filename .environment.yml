@@ -4,7 +4,7 @@
 # 2. to import/create a copy of the environment:
 #    conda env create -f .environment.yml
 name: smif
-channels: !!python/tuple
+channels:
 - conda-forge
 - defaults
 dependencies:
@@ -49,6 +49,7 @@ dependencies:
 - conda-forge::pandas=0.19.2=np111py35_1
 - conda-forge::pcre=8.39
 - conda-forge::pickleshare=0.7.3=py35_0
+- conda-forge::pint=0.8.1=py35_0
 - conda-forge::pip=9.0.1=py35_0
 - conda-forge::ply=3.9=py35_0
 - conda-forge::proj4=4.9.3
