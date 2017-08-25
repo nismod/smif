@@ -5,10 +5,10 @@ framework.
 """
 import logging
 from collections import defaultdict
+from enum import Enum
 
 import networkx
 import numpy as np
-from enum import Enum
 from smif import StateData
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
@@ -30,6 +30,11 @@ class SosModel(Model):
     This class is populated at runtime by the :class:`SosModelBuilder` and
     called from :func:`smif.cli.run_model`.  SosModel inherits from
     :class:`smif.composite.Model`.
+
+    Arguments
+    ---------
+    name : str
+        The unique name of the SosModel
 
     """
     def __init__(self, name):
@@ -56,7 +61,10 @@ class SosModel(Model):
 
     @property
     def free_inputs(self):
-        """Returns the free inputs not linked to a dependency at this layer and all contained layers
+        """Returns the free inputs not linked to a dependency at this layer
+
+        For this composite :class:`~smif.model.composite.Model` this includes
+        the free_inputs from all contained Model objects
 
         Free inputs are passed up to higher layers for deferred linkages to
         dependencies.
@@ -84,8 +92,8 @@ class SosModel(Model):
     def add_model(self, model):
         """Adds a sector model to the system-of-systems model
 
-        Parameters
-        ----------
+        Arguments
+        ---------
         model : :class:`smif.sector_model.SectorModel`
             A sector model wrapper
 
@@ -102,8 +110,7 @@ class SosModel(Model):
         -------
         dict
             Nested dictionary in the format
-            results[int:year][str:model][str:parameter] => list of
-            SpaceTimeValues
+            results[str:model][str:parameter]
         """
         # convert from defaultdict to plain dict
         return dict(self._results)
@@ -118,7 +125,7 @@ class SosModel(Model):
         results = {}
         for model in run_order:
             # get data for model
-            # TODO settla and test data dict structure/object between simple/composite models
+            # TODO settle and test data dict structure/object between simple/composite models
             sim_data = {}
             for input_name, dep in model.deps.items():
                 input_ = model.model_inputs[input_name]
@@ -138,7 +145,7 @@ class SosModel(Model):
 
     def check_dependencies(self):
         """For each contained model, compare dependency list against
-        list of available models
+        list of available models and build the dependency graph
         """
         if self.free_inputs.names:
             msg = "A SosModel must have all inputs linked to dependencies." \
@@ -278,11 +285,28 @@ class SosModel(Model):
 
     def timestep_before(self, timestep):
         """Returns the timestep previous to a given timestep, or None
+
+        Arguments
+        ---------
+        timestep : str
+
+        Returns
+        -------
+        str
+
         """
         return element_before(timestep, self.timesteps)
 
     def timestep_after(self, timestep):
         """Returns the timestep after a given timestep, or None
+
+        Arguments
+        ---------
+        timestep : str
+
+        Returns
+        -------
+        str
         """
         return element_after(timestep, self.timesteps)
 
@@ -338,7 +362,13 @@ class ModelSet(Model):
     ---------
     models : list
         A list of smif.model.composite.Model
-
+    max_iterations : int, default=25
+        The maximum number of iterations that the model set will run before
+        returning results
+    relative_tolerance : float, default=1e-05
+        Used to calculate when the model interations have converged
+    absolute_tolerance : float, default=1e-08
+        Used to calculate when the model interations have converged
     """
     def __init__(self, models, max_iterations=25, relative_tolerance=1e-05,
                  absolute_tolerance=1e-08):
@@ -396,6 +426,13 @@ class ModelSet(Model):
 
     def _run_iteration(self, i, data):
         """Run all models within the set
+
+        Arguments
+        ---------
+        i : int
+            Iteration counter
+        data : dict
+            The data passed into the model within the set
         """
         self.iterated_results.append({})
         for model in self._models:
@@ -431,6 +468,16 @@ class ModelSet(Model):
         """Dependency-free guess at a model's result set.
 
         Initially, guess zeroes, or the previous timestep's results.
+
+        Arguments
+        ---------
+        model : smif.model.composite.Model
+        timestep : int
+        data : dict
+
+        Returns
+        -------
+        results : dict
         """
         timesteps = sorted(list(data.keys()))
         timestep_before = element_before(timestep, timesteps)
@@ -483,10 +530,6 @@ class ModelSet(Model):
 
         return False
 
-    def _get_model(self, model_name):
-        model = [model for model in self._models if model.name == model_name]
-        return model[0]
-
     def _model_converged(self, model, latest_results, previous_results):
         """Check a single model's output for convergence
 
@@ -500,6 +543,11 @@ class ModelSet(Model):
             np.ndarray value (with dimensions regions x intervals)
         previous_results: dict
             dict of data output from the model in the previous iteration
+
+        Returns
+        -------
+        bool
+            True if convergedm otherwise, False
         """
         return all(
             np.allclose(
@@ -708,7 +756,7 @@ class SosModelBuilder(object):
         """Adds sector model data to the system-of-systems model which is
         convenient to have available at the higher level.
         """
-        # self.add_initial_conditions(model.name, model_data['initial_conditions'])
+        # TODO self.add_initial_conditions(model.name, model_data['initial_conditions'])
         self.add_interventions(model.name, model_data['interventions'])
 
     def add_interventions(self, model_name, interventions):

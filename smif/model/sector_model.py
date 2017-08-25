@@ -43,6 +43,11 @@ __license__ = "mit"
 class SectorModel(Model, metaclass=ABCMeta):
     """A representation of the sector model with inputs and outputs
 
+    Arguments
+    ---------
+    name : str
+        The unique name of the sector model
+
     """
     def __init__(self, name):
         super().__init__(name)
@@ -83,8 +88,8 @@ class SectorModel(Model, metaclass=ABCMeta):
         Arguments
         ---------
         name: str
-        spatial_resolution: :class:`smif.convert.area.RegionRegister`
-        temporal_resolution: :class:`smif.convert.interval.TimeIntervalRegister`
+        spatial_resolution: :class:`smif.convert.area.RegionSet`
+        temporal_resolution: :class:`smif.convert.interval.IntervalSet`
         units: str
 
         """
@@ -130,18 +135,13 @@ class SectorModel(Model, metaclass=ABCMeta):
 
         Arguments
         ---------
-        decisions: list
-            A list of :py:class:Intervention to apply to the modelled system
-        state: list
-            A list of :py:class:StateData to update the state of the modelled system
+        timestep : int
+            The timestep for which to run the SectorModel
         data: dict
-            A dictionary of the format:
-            ``data[parameter] = [SpaceTimeValue(region, interval, value, units), ...]``
         Returns
         -------
-        dict
-            A dictionary of the format:
-            ``results[parameter] = [SpaceTimeValue(region, interval, value, units), ...]``
+        results : dict
+            This method should return a results dictionary
 
         Notes
         -----
@@ -186,6 +186,8 @@ class SectorModelBuilder(object):
     ----------
     name : str
         The name of the sector model
+    sector_model : smif.model.SectorModel, default=None
+        The sector model object
 
     Returns
     -------
@@ -226,6 +228,14 @@ class SectorModelBuilder(object):
 
     def load_model(self, model_path, classname):
         """Dynamically load model module
+
+        Arguments
+        ---------
+        model_path : str
+            The path to the python module which contains the SectorModel
+            implementation
+        classname : str
+            The name of the class of the SectorModel implementation
 
         """
         if os.path.exists(model_path):
