@@ -10,7 +10,11 @@ install:
 - pip install git+https://github.com/behave/behave
 - pip install -r test-requirements.txt -r requirements.txt
 script:
+- SKIP_GENERATE_AUTHORS=1
+- SKIP_WRITE_GIT_CHANGELOG=1
+- python setup.py develop
 - python setup.py test
+- git status
 after_success:
 - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 notifications:
