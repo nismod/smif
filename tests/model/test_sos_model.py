@@ -15,6 +15,7 @@ from smif.model.dependency import Dependency
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel
 from smif.model.sos_model import ModelSet, SosModel, SosModelBuilder
+from smif.parameters import ParameterList
 
 from ..fixtures.water_supply import WaterSupplySectorModel
 
@@ -230,6 +231,34 @@ class TestSosModelProperties():
 
 
 class TestSosModel():
+
+    def test_add_parameters(self, get_empty_sector_model):
+
+        sos_model = SosModel('test')
+        sos_model.add_parameter({'name': 'sos_model_param',
+            'description': 'A global parameter passed to all contained models',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'})
+
+        assert sos_model.parameters == []
+        assert sos_model.parameters.names == ['sos_model_param']
+
+        sector_model = get_empty_sector_model('source_model')
+        sector_model.add_parameter({'name': 'sector_model_param',
+            'description': 'Required for the sectormodel',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'})
+
+
+        sos_model.add_model(sector_model)
+
+        assert sos_model.parameters.names == ['sos_model_param',
+                                              'sector_model_param']
+
 
     def test_add_dependency(self, get_empty_sector_model):
 

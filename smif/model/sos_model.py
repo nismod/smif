@@ -19,6 +19,7 @@ from smif.model import Model, element_after, element_before
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
+from smif.parameters import ParameterList
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -89,6 +90,15 @@ class SosModel(Model):
             metadataset.add_metadata_object(meta)
 
         return metadataset
+
+    @property
+    def parameters(self):
+        """Returns all the contained parameters as a ParamaterList
+        """
+        contained_parameters = ParameterList()
+        for model in self.models.values():
+            contained_parameters.update(model.parameters)
+        return contained_parameters
 
     def add_model(self, model):
         """Adds a sector model to the system-of-systems model

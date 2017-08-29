@@ -13,7 +13,7 @@ def get_config_list():
 
     config_list = [{'name': 'smart_meter_savings',
                     'description': 'The savings from smart meters',
-                    'range': (0, 100),
+                    'absolute_range': (0, 100),
                     'suggested_range': (3, 10),
                     'default_value': 3,
                     'units': '%',
