@@ -49,6 +49,7 @@ from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.metadata import MetadataSet
 from smif.model.dependency import Dependency
+from smif.parameters import ParameterList
 
 
 class Model(ABC):
@@ -68,6 +69,8 @@ class Model(ABC):
         self._model_inputs = MetadataSet([])
         self._model_outputs = MetadataSet([])
         self.deps = {}
+
+        self._parameters = ParameterList()
 
         self.regions = get_region_register()
         self.intervals = get_interval_register()
@@ -153,6 +156,35 @@ class Model(ABC):
                               self.free_inputs.names)
             msg = "Input '{}' is not defined in '{}' model"
             raise ValueError(msg.format(sink, self.name))
+
+    def add_parameter(self, parameter_dict):
+        """Add a parameter to the model
+
+        Arguments
+        ---------
+        parameter_dict : dict
+            Contains the keys ``name``, ``description``,  ``absolute_range``,
+            ``suggested_range``, ``default_value``, ``units``
+        """
+        name = parameter_dict['name']
+        description = parameter_dict['description']
+        absolute_range = parameter_dict['absolute_range']
+        suggested_range = parameter_dict['suggested_range']
+        default_value = parameter_dict['default_value']
+        units = parameter_dict['units']
+        parent = self
+
+        self._parameters.add_parameter(name,
+                                       description,
+                                       absolute_range,
+                                       suggested_range,
+                                       default_value,
+                                       units,
+                                       parent)
+
+    @property
+    def parameters(self):
+        return self._parameters
 
 
 def element_before(element, list_):
