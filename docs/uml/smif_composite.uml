@@ -127,6 +127,7 @@ package smif {
     - scenarios : ScenarioCombination [*]
     - narratives : NarrativeCombination [*]
     - strategy : 
+    - global_parameters : ParameterList[1]
     -- Building --
     + set_description(description)
     + set_sos_model(SosModel)
@@ -134,6 +135,7 @@ package smif {
     + set_scenario(scenarioset, scenario)
     + set_narrative(narrativeset, narrative)
     + set_modelling_horizon(timestep_list)
+    + add_global_parameters(ModelParameter)
     -- Running --
     + run()
     
@@ -149,21 +151,26 @@ package smif {
 
   abstract class Model {
   -- Static Properties --
-  + {static} all_inputs : ModelInput [*]
-  + {static} all_outputs : ModelOutput [*]
+  + {static} all_inputs : MetadataList
+  + {static} all_outputs : MetadataList
   -- Instance Properties --
   - name : string
-  - inputs : ModelInput [*]
-  - outputs : ModelOutput [*]
+  - model_inputs : MetadataList
+  - model_outputs : MetadataList
   -- Instance Methods --
-  + get_inputs() : ModelInput [*]
-  + get_outputs() : ModelOutput [*]
+  + get_inputs() : MetadataList
+  + get_outputs() : MetadataList
   + set_name(name)
   + get_name()
   -- Running --
   - get_input_data(name)
   + {abstract} validate()
   + {abstract} simulate(System, Data) : Data, StateData
+  }
+
+  class MetadataList {
+    - in_out_puts : ModelInputOutput [*]
+    + add_in_out(ModelInputOutput)
   }
 
 
@@ -181,13 +188,14 @@ package smif {
   }
 
   class SectorModel {
-  - parameters
+  - parameter_list : ParameterList
   - interventions : Intervention [*]
   - wrapper_path : string
   - wrapper_class : string
   -- Building --
   + add_input(ModelInput)
   + add_output(ModelOutput)
+  + add_parameter(ModelParameter)
   + add_intervention(Intervention)
   + add_wrapper(path, classname)
   + validate()
@@ -195,6 +203,44 @@ package smif {
   + initialise(Parameters)
   + simulate(System, Data) : Data, StateData
   }
+
+  class ParameterList {
+    - parameters : ModelParameter [*]
+    + add_parameter(ModelParameter)
+    + linked_model : Model [1]
+  }
+
+  abstract class ModelParameter {
+  + name : str
+  + description : str
+  + range : tuple
+  + suggested_range : tuple
+  + default_value : list
+  + units : str
+  + parent : str
+  + static create_parameter(type)
+  }
+
+  class BooleanModelParameter {
+
+  }
+
+  class FloatModelParameter {
+
+  }
+
+  class TupleModelParameter {
+
+  }
+
+  class DiscreteModelParameter {
+
+  }
+
+  ModelParameter <|-- BooleanModelParameter
+  ModelParameter <|-- FloatModelParameter
+  ModelParameter <|-- TupleModelParameter
+  ModelParameter <|-- DiscreteModelParameter
 
   class ScenarioModel {
   - name : string
