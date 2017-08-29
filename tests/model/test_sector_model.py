@@ -5,6 +5,7 @@ from unittest.mock import Mock
 from pytest import raises
 from smif.metadata import Metadata, MetadataSet
 from smif.model.sector_model import SectorModel, SectorModelBuilder
+from smif.parameters import ParameterList
 
 
 class EmptySectorModel(SectorModel):
@@ -177,3 +178,28 @@ class TestSectorModel(object):
             'water_asset_b',
             'water_asset_c'
         ]
+
+
+
+class TestParameters():
+
+    def test_add_parameter(self):
+        """Adding a parameter adds a reference to the parameter list entry to
+        the model that contains it.
+        """
+
+        model = EmptySectorModel('test_model')
+
+        param_config = {'name': 'smart_meter_savings',
+                             'description': 'The savings from smart meters',
+                             'absolute_range': (0, 100),
+                             'suggested_range': (3, 10),
+                             'default_value': 3,
+                             'units': '%'}
+        model.add_parameter(param_config)
+
+        assert isinstance(model.parameters, ParameterList)
+
+        param_config['parent'] = model
+
+        assert model.parameters['smart_meter_savings'] == param_config
