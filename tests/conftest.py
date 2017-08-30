@@ -78,7 +78,8 @@ def setup_project_folder(setup_runpy_file,
                          setup_initial_conditions_file,
                          setup_pre_specified_planning,
                          setup_water_interventions_abc,
-                         setup_interventions_file_one):
+                         setup_interventions_file_one,
+                         setup_parameters):
     """Sets up a temporary folder with the required project folder structure
 
         /config
@@ -94,6 +95,7 @@ def setup_project_folder(setup_runpy_file,
         /data/water_supply/interventions/water_asset_abc.yaml
         /data/water_supply/interventions/assets_new.yaml
         /data/water_supply/pre-specified.yaml
+        /data/water_supply/parameters.yaml
         /models
         /models/water_supply/water_supply.py
 
@@ -151,7 +153,8 @@ def setup_project_empty_model_io(setup_runpy_file,
                                  setup_initial_conditions_file,
                                  setup_pre_specified_planning,
                                  setup_water_interventions_abc,
-                                 setup_interventions_file_one):
+                                 setup_interventions_file_one,
+                                 setup_parameters):
     """Sets up a temporary folder with the required project folder structure
 
         /config
@@ -375,6 +378,24 @@ def setup_interventions_file_two(setup_folder_structure):
     filename.write(contents, ensure=True)
 
 
+@fixture
+def setup_parameters(setup_folder_structure):
+    base_folder = setup_folder_structure
+    filename = base_folder.join('data',
+                                'water_supply',
+                                'parameters.yaml')
+    parameter_contents = [
+        {'name': 'smart_meter_savings',
+         'description': 'The savings from smart meters',
+         'absolute_range': (0, 100),
+         'suggested_range': (3, 10),
+         'default_value': 3,
+         'units': '%'}
+         ]
+    contents = yaml.dump(parameter_contents)
+    filename.write(contents, ensure=True)
+
+
 @fixture(scope='function')
 def setup_scenario_data(setup_folder_structure):
     file_contents = [
@@ -414,6 +435,9 @@ def setup_scenario_data(setup_folder_structure):
                 ],
                 'interventions': [
                     '../data/water_supply/interventions/water_asset_abc.yaml'
+                ],
+                "parameters": [
+                    '../data/water_supply/parameters.yaml'
                 ]
             }
         ],
@@ -460,6 +484,9 @@ def setup_no_planning(setup_folder_structure):
                 ],
                 'interventions': [
                     '../data/water_supply/interventions/water_asset_abc.yaml'
+                ],
+                'parameters': [
+                    '../data/water_supply/parameters.yaml'
                 ]
             }
         ],
@@ -491,6 +518,9 @@ def setup_planning_missing(setup_folder_structure):
                 ],
                 'interventions': [
                     '../data/water_supply/interventions/water_asset_abc.yaml'
+                ],
+                'parameters': [
+                    '../data/water_supply/parameters.yaml'
                 ]
             }
         ],
@@ -536,6 +566,9 @@ def setup_abs_path_to_timesteps(setup_folder_structure):
                 ],
                 'interventions': [
                     '../data/water_supply/interventions/water_asset_abc.yaml'
+                ],
+                'parameters': [
+                    '../data/water_supply/parameters.yaml'
                 ]
             }
         ],
@@ -570,6 +603,9 @@ def setup_config_file(setup_folder_structure):
                 ],
                 'interventions': [
                     '../data/water_supply/interventions/water_asset_abc.yaml'
+                ],
+                'parameters': [
+                    '../data/water_supply/parameters.yaml'
                 ]
             }
         ],
@@ -646,6 +682,9 @@ def setup_config_conflict_assets(setup_folder_structure,
                 ],
                 'interventions': [
                     '../data/water_supply/interventions/assets1.yaml'
+                ],
+                'parameters': [
+                    '../data/water_supply/parameters.yaml'
                 ]
             }
         ],
@@ -687,6 +726,9 @@ def setup_config_conflict_periods(setup_folder_structure,
                 ],
                 'interventions': [
                     '../data/water_supply/interventions/assets1.yaml'
+                ],
+                'parameters': [
+                    '../data/water_supply/parameters.yaml'
                 ]
             }
         ],
@@ -865,6 +907,9 @@ def setup_config_file_two(setup_folder_structure, setup_interventions_file_one):
                 'interventions': [
                     '../data/water_supply/interventions/assets_1.yaml',
                     '../data/water_supply/interventions/assets_2.yaml'
+                ],
+                'parameters': [
+                    '../data/water_supply/parameters.yaml'
                 ]
             }
         ],
@@ -902,6 +947,9 @@ def setup_config_file_timesteps_two(setup_folder_structure):
                 ],
                 'interventions': [
                     '../data/water_supply/assets/assets_1.yaml'
+                ],
+                'parameters': [
+                    '../data/water_supply/parameters.yaml'
                 ]
             }
         ],

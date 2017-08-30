@@ -10,12 +10,16 @@ sector_models:
       # initialise system with interventions in current state
       - ../data/water_supply/initial_conditions/initial_2015_oxford.yaml
       - ../data/water_supply/initial_conditions/reservoirs.yaml
+    parameters:
+    - parameters.yaml
   - name: energy_demand
     path: ../models/energy_demand.py
     classname: EDMWrapper
     config_dir: ../data/energy_demand
     interventions: []
     initial_conditions: []
+    parameters:
+    - parameters.yaml
 timesteps: timesteps.yaml
 dependencies:
   - source_model: raininess

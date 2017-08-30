@@ -104,7 +104,7 @@ class ModelRunner(object):
         model_run : :class:`smif.modelrun.ModelRun`
         """
         data = self._get_parameter_data(model_run)
-        self.logger.debug("Passing global parameter data %s into %s",
+        self.logger.debug("Passing parameter data %s into %s",
                           data, model_run.sos_model.name)
 
         for timestep in model_run.model_horizon:

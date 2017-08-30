@@ -181,24 +181,18 @@ class Model(ABC):
             Contains the keys ``name``, ``description``,  ``absolute_range``,
             ``suggested_range``, ``default_value``, ``units``
         """
-        name = parameter_dict['name']
-        description = parameter_dict['description']
-        absolute_range = parameter_dict['absolute_range']
-        suggested_range = parameter_dict['suggested_range']
-        default_value = parameter_dict['default_value']
-        units = parameter_dict['units']
-        parent = self
+        parameter_dict['parent'] = self
 
-        self._parameters.add_parameter(name,
-                                       description,
-                                       absolute_range,
-                                       suggested_range,
-                                       default_value,
-                                       units,
-                                       parent)
+        self._parameters.add_parameters_from_list([parameter_dict])
 
     @property
     def parameters(self):
+        """A list of parameters
+
+        Returns
+        -------
+        smif.parameters.ParameterList
+        """
         return self._parameters
 
 
