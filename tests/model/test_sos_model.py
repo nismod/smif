@@ -15,7 +15,6 @@ from smif.model.dependency import Dependency
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel
 from smif.model.sos_model import ModelSet, SosModel, SosModelBuilder
-from smif.parameters import ParameterList
 
 from ..fixtures.water_supply import WaterSupplySectorModel
 
@@ -234,31 +233,39 @@ class TestSosModel():
 
     def test_add_parameters(self, get_empty_sector_model):
 
-        sos_model = SosModel('test')
-        sos_model.add_parameter({'name': 'sos_model_param',
+        sos_model_param = {
+            'name': 'sos_model_param',
             'description': 'A global parameter passed to all contained models',
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
             'default_value': 3,
-            'units': '%'})
+            'units': '%'}
 
-        assert sos_model.parameters == []
-        assert sos_model.parameters.names == ['sos_model_param']
+        sos_model = SosModel('test')
+        sos_model.add_parameter(sos_model_param)
+
+        expected = dict(sos_model_param, **{'parent': sos_model})
+
+        assert sos_model.parameters == {'test': {'sos_model_param': expected}}
+        assert sos_model.parameters['test'].names == ['sos_model_param']
 
         sector_model = get_empty_sector_model('source_model')
         sector_model.add_parameter({'name': 'sector_model_param',
-            'description': 'Required for the sectormodel',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%'})
-
+                                    'description': 'Required for the sectormodel',
+                                    'absolute_range': (0, 100),
+                                    'suggested_range': (3, 10),
+                                    'default_value': 3,
+                                    'units': '%'})
 
         sos_model.add_model(sector_model)
 
-        assert sos_model.parameters.names == ['sos_model_param',
-                                              'sector_model_param']
-
+        # SosModel contains ParameterList objects in a nested dict by model name
+        assert 'test' in sos_model.parameters
+        assert 'sos_model_param' in sos_model.parameters['test'].names
+        # SectorModel has a ParameterList, gettable by param name
+        assert 'sector_model_param' in sector_model.parameters.names
+        assert 'source_model' in sos_model.parameters
+        assert 'sector_model_param' in sos_model.parameters['source_model']
 
     def test_add_dependency(self, get_empty_sector_model):
 

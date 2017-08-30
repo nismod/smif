@@ -19,7 +19,6 @@ from smif.model import Model, element_after, element_before
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
-from smif.parameters import ParameterList
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -65,8 +64,8 @@ class SosModel(Model):
     def free_inputs(self):
         """Returns the free inputs not linked to a dependency at this layer
 
-        For this composite :class:`~smif.model.composite.Model` this includes
-        the free_inputs from all contained Model objects
+        For this composite :class:`~smif.model.sos_model.SosModel` this includes
+        the free_inputs from all contained smif.model.Model objects
 
         Free inputs are passed up to higher layers for deferred linkages to
         dependencies.
@@ -93,11 +92,19 @@ class SosModel(Model):
 
     @property
     def parameters(self):
-        """Returns all the contained parameters as a ParamaterList
+        """Returns all the contained parameters as {model name: ParameterList}
+
+        Returns
+        -------
+        smif.parameters.ParameterList
+            A combined collection of parameters for all the contained models
         """
-        contained_parameters = ParameterList()
+        my_parameters = super().parameters
+
+        contained_parameters = {self.name: my_parameters}
+
         for model in self.models.values():
-            contained_parameters.update(model.parameters)
+            contained_parameters[model.name] = model.parameters
         return contained_parameters
 
     def add_model(self, model):
@@ -129,6 +136,11 @@ class SosModel(Model):
     def simulate(self, timestep, data=None):
         """Run the SosModel
 
+        Returns
+        -------
+        results : dict
+            Nested dict keyed by model name, parameter name
+
         """
         self.check_dependencies()
         run_order = self._get_model_sets_in_run_order()
@@ -148,6 +160,10 @@ class SosModel(Model):
                     param_data = results[dep.source_model.name][dep.source.name]
                 param_data_converted = dep.convert(param_data, input_)
                 sim_data[input_.name] = param_data_converted
+
+            # Pass in parameters to contained model
+            if data and model.name in data:
+                sim_data.update(data[model.name])
 
             sim_results = model.simulate(timestep, sim_data)
             for model_name, model_results in sim_results.items():
