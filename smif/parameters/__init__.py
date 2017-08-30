@@ -3,7 +3,10 @@
 from collections import UserDict
 from logging import getLogger
 
+
 class ParameterList(UserDict):
+    """A nested dict of parameters accessed by model name, parameter name
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -16,8 +19,15 @@ class ParameterList(UserDict):
     def add_parameters_from_list(self, config_list):
 
         for parameter in config_list:
-            name = parameter['name']
-            self.data[name] = parameter
+            model_name = parameter['parent'].name
+            param_name = parameter['name']
+            if model_name in self.data:
+                if param_name in self.data[model_name]:
+                    raise ValueError("Duplicate parameter name")
+                else:
+                    self.data[model_name][param_name] = parameter
+            else:
+                self.data[model_name] = {param_name: parameter}
 
     def add_parameter(self, name,
                       description,
@@ -39,16 +49,24 @@ class ParameterList(UserDict):
         parent : `smif.model.Model`
         """
 
-        if name in self.data:
+        parameter = {
+                'name': name,
+                'description': description,
+                'absolute_range': absolute_range,
+                'suggested_range': suggested_range,
+                'default_value': default_value,
+                'units': units,
+                'parent': parent
+                }
+
+        if parent.name not in self.data:
+
+            self.data[parent.name] = {name: parameter}
+        elif name in self.data[parent.name]:
             raise ValueError("Parameter already defined")
 
-        self.data[name] = {'name': name,
-                           'description': description,
-                           'absolute_range': absolute_range,
-                           'suggested_range': suggested_range,
-                           'default_value': default_value,
-                           'units': units,
-                           'parent': parent}
+        else:
+            self.data[parent.name].update({name: parameter})
 
         msg = "Added parameter '%s' to '%s'"
         self.logger.debug(msg, name, parent.name)
@@ -57,8 +75,18 @@ class ParameterList(UserDict):
     def names(self):
         """Returns the names of all the contained parameters
         """
-        return list(self.data.keys())
+        names = {}
+        for model_name, parameters in self.data.items():
+            names[model_name] = list(parameters.keys())
 
-    def __getitem__(self, key):
+        return names
 
-        return self.parameters[key]
+    def __getitem__(self, model_name):
+        """
+
+        Arguments
+        ---------
+        model_name : str
+            The name of a model
+        """
+        return self.parameters[model_name]
