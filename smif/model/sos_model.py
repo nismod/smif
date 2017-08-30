@@ -162,8 +162,10 @@ class SosModel(Model):
                 sim_data[input_.name] = param_data_converted
 
             # Pass in parameters to contained model
+            default_data = model.parameters.defaults
             if data and model.name in data:
-                sim_data.update(data[model.name])
+                param_data = dict(default_data, **data[model.name])
+                sim_data.update(param_data)
 
             sim_results = model.simulate(timestep, sim_data)
             for model_name, model_results in sim_results.items():

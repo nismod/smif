@@ -77,6 +77,15 @@ class TestInstantiateObjectsFromConfig():
 
         assert parameters['smart_meter_savings'] == expected
 
+    def test_defaults(self, get_config_list):
+        config_list = get_config_list
+        parameters = ParameterList()
+        parameters.add_parameters_from_list(config_list)
+
+        expected = {'smart_meter_savings': 3}
+
+        assert parameters.defaults == expected
+
     def test_add_duplicate_parameter(self, get_config_list):
 
         config_list = get_config_list
