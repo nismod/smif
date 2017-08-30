@@ -22,7 +22,8 @@ def get_model_runconfig_data(setup_project_folder, setup_region_data):
                 "inputs": [],
                 "outputs": [],
                 "initial_conditions": [],
-                "interventions": []
+                "interventions": [],
+                "parameters": []
             }
         ],
         "planning": [],
@@ -121,7 +122,8 @@ def get_model_run(setup_project_folder, setup_region_data):
                 "inputs": [],
                 "outputs": [],
                 "initial_conditions": [],
-                "interventions": []
+                "interventions": [],
+                "parameters": []
             }
         ]
         }

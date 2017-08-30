@@ -40,6 +40,9 @@ class SectorModelReader(object):
             "interventions"
                 List of files containing interventions
 
+            "parameters"
+                List of files containing parameter configuration
+
     """
     def __init__(self, initial_config=None):
         self.logger = logging.getLogger(__name__)
@@ -51,6 +54,7 @@ class SectorModelReader(object):
             self.model_config_dir = initial_config["model_config_dir"]
             self.initial_conditions_paths = initial_config["initial_conditions"]
             self.interventions_paths = initial_config["interventions"]
+            self.parameter_paths = initial_config['parameters']
         else:
             self.model_name = None
             self.model_path = None
@@ -58,11 +62,13 @@ class SectorModelReader(object):
             self.model_config_dir = None
             self.initial_conditions_paths = None
             self.interventions_paths = None
+            self.parameter_paths = None
 
         self.inputs = None
         self.outputs = None
         self.initial_conditions = None
         self.interventions = None
+        self.parameters = None
 
     def load(self):
         """Load and check all config
@@ -71,6 +77,7 @@ class SectorModelReader(object):
         self.outputs = self.load_outputs()
         self.initial_conditions = self.load_initial_conditions()
         self.interventions = self.load_interventions()
+        self.parameters = self.load_parameters()
 
     @property
     def data(self):
@@ -105,6 +112,8 @@ class SectorModelReader(object):
                 "interventions": A list of possible interventions that could be made
                 in the modelled system
 
+                "parameters": A list of model parameters
+
         """
         return {
             "name": self.model_name,
@@ -113,7 +122,8 @@ class SectorModelReader(object):
             "inputs": self.inputs,
             "outputs": self.outputs,
             "initial_conditions": self.initial_conditions,
-            "interventions": self.interventions
+            "interventions": self.interventions,
+            "parameters": self.parameters
         }
 
     def load_inputs(self):
@@ -178,5 +188,17 @@ class SectorModelReader(object):
             self.logger.debug("Loading interventions from %s", path)
             new_data = load(path)
             validate_interventions(new_data, path)
+            data.extend(new_data)
+        return data
+
+    def load_parameters(self):
+        """Parameter configurations are located in yaml files
+        specified in sector model blocks in the sos model config
+        """
+        data = []
+        paths = self.parameter_paths
+        for path in paths:
+            self.logger.debug("Loading parameter config from %s", path)
+            new_data = load(path)
             data.extend(new_data)
         return data

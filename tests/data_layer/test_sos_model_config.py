@@ -50,7 +50,12 @@ class TestSosModelReader():
                 ],
                 "interventions": [
                     "../data/water_supply/interventions/water_asset_abc.yaml"
+                ],
+                "parameters": [
+                    "../data/water_supply/parameters.yaml"
+
                 ]
+
             }
         ]
 

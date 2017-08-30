@@ -226,6 +226,7 @@ class SectorModelBuilder(object):
         self.add_inputs(model_data['inputs'])
         self.add_outputs(model_data['outputs'])
         self.add_interventions(model_data['interventions'])
+        self.add_parameters(model_data['parameters'])
 
     def load_model(self, model_path, classname):
         """Dynamically load model module
@@ -264,6 +265,20 @@ class SectorModelBuilder(object):
         assert self._sector_model is not None, msg
 
         self._sector_model.initialise(initial_conditions)
+
+    def add_parameters(self, parameter_config):
+        """Add parameter configuration to sector model
+
+        Arguments
+        ---------
+        parameter_config : list
+            A list of dicts with keys ``name``, ``description``,
+            ``absolute_range``, ``suggested_range``, ``default_value``,
+            ``units``, ``parent``
+        """
+
+        for parameter in parameter_config:
+            self._sector_model.add_parameter(parameter)
 
     def add_inputs(self, input_dicts):
         """Add inputs to the sector model

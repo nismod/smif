@@ -506,6 +506,7 @@ def get_sos_model_config(setup_project_folder):
                     }
                 ],
                 "initial_conditions": [],
+                "parameters": [],
                 "interventions": [
                     {"name": "water_asset_a", "location": "oxford"},
                     {"name": "water_asset_b", "location": "oxford"},

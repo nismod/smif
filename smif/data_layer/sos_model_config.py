@@ -8,10 +8,8 @@ import os
 import fiona
 
 from .load import load
-from .validate import (validate_scenario_data,
-                       validate_sos_model_config,
-                       validate_time_intervals,
-                       validate_timesteps)
+from .validate import (validate_scenario_data, validate_sos_model_config,
+                       validate_time_intervals, validate_timesteps)
 
 
 class SosModelReader(object):
@@ -102,7 +100,7 @@ class SosModelReader(object):
             "convergence_max_iterations": self.convergence_max_iterations,
             "convergence_absolute_tolerance": self.convergence_absolute_tolerance,
             "convergence_relative_tolerance": self.convergence_relative_tolerance,
-            "dependencies": self.dependencies
+            "dependencies": self.dependencies,
         }
 
     def load_sos_config(self):
