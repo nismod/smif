@@ -17,6 +17,7 @@ ModeRun has attributes:
 - status
 
 """
+from collections import defaultdict
 from logging import getLogger
 
 from smif.convert.area import get_register as get_region_register
@@ -46,6 +47,8 @@ class ModelRun(object):
         # space and time
         self.regions = get_region_register()
         self.intervals = get_interval_register()
+
+        self.results = {}
 
     @property
     def name(self):
@@ -91,6 +94,7 @@ class ModelRunner(object):
 
     def __init__(self):
         self.logger = getLogger(__name__)
+        self.results = {}
 
     def solve_model(self, model_run):
         """Solve a ModelRun
@@ -99,9 +103,28 @@ class ModelRunner(object):
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
         """
+        data = self._get_parameter_data(model_run)
+        self.logger.debug("Passing global parameter data %s into %s",
+                          data, model_run.sos_model.name)
+
         for timestep in model_run.model_horizon:
             self.logger.debug('Running model for timestep %s', timestep)
-            model_run.sos_model.simulate(timestep)
+            self.results[timestep] = model_run.sos_model.simulate(timestep, data)
+        return self.results
+
+    def _get_parameter_data(self, model_run):
+        data = defaultdict(dict)
+        # global parameters
+        for model_name, parameters in model_run.sos_model.parameters.items():
+            for name, param in parameters.items():
+                # if name in model_run.policies:
+                #     data[name] = model_run.policies[name]['value']
+                # else:
+                data[name] = param['default_value']
+
+                self.logger.debug("Parameter '%s required for model '%s'",
+                                  name, model_name)
+        return data
 
 
 class ModelRunBuilder(object):
