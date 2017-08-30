@@ -3,6 +3,7 @@
 from collections import UserDict
 from logging import getLogger
 
+
 class ParameterList(UserDict):
 
     def __init__(self, **kwargs):
@@ -12,6 +13,11 @@ class ParameterList(UserDict):
     @property
     def parameters(self):
         return self.data
+
+    @property
+    def defaults(self):
+        return {name: param['default_value']
+                for name, param in self.data.items()}
 
     def add_parameters_from_list(self, config_list):
 
