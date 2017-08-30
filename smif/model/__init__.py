@@ -121,6 +121,21 @@ class Model(ABC):
 
     @abstractmethod
     def simulate(self, timestep, data=None):
+        """Override to implement the generation of model results
+
+        Generate ``results`` for ``timestep`` using ``data``
+
+        Arguments
+        ---------
+        timestep : int
+            The timestep for which to run the Model
+        data: dict, default=None
+            A collection of state, parameter values, dependency inputs
+
+        Returns
+        -------
+        results : dict
+        """
         pass
 
     def add_dependency(self, source_model, source, sink, function=None):

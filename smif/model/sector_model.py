@@ -137,7 +137,8 @@ class SectorModel(Model, metaclass=ABCMeta):
         ---------
         timestep : int
             The timestep for which to run the SectorModel
-        data: dict
+        data: dict, default=None
+            A collection of state, parameter values, dependency inputs
         Returns
         -------
         results : dict
