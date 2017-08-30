@@ -1,5 +1,6 @@
 """Test SectorModel and SectorModelBuilder
 """
+from copy import copy
 from unittest.mock import Mock
 
 from pytest import raises
@@ -180,7 +181,6 @@ class TestSectorModel(object):
         ]
 
 
-
 class TestParameters():
 
     def test_add_parameter(self):
@@ -188,14 +188,15 @@ class TestParameters():
         the model that contains it.
         """
 
-        model = EmptySectorModel('test_model')
+        model = copy(EmptySectorModel('test_model'))
+        model.simulate = lambda x, y: {'savings': y['smart_meter_savings']}
 
         param_config = {'name': 'smart_meter_savings',
-                             'description': 'The savings from smart meters',
-                             'absolute_range': (0, 100),
-                             'suggested_range': (3, 10),
-                             'default_value': 3,
-                             'units': '%'}
+                        'description': 'The savings from smart meters',
+                        'absolute_range': (0, 100),
+                        'suggested_range': (3, 10),
+                        'default_value': 3,
+                        'units': '%'}
         model.add_parameter(param_config)
 
         assert isinstance(model.parameters, ParameterList)
@@ -203,3 +204,7 @@ class TestParameters():
         param_config['parent'] = model
 
         assert model.parameters['smart_meter_savings'] == param_config
+
+        actual = model.simulate(2010, {'smart_meter_savings': 3})
+        expected = {'savings': 3}
+        assert actual == expected
