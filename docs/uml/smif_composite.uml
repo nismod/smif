@@ -218,7 +218,7 @@ package smif {
   + default_value : list
   + units : str
   + parent : str
-  + static create_parameter(type)
+  + static create_parameter(type): ModelParameter
   }
 
   class BooleanModelParameter {
