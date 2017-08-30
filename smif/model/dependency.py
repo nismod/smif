@@ -4,7 +4,7 @@ from smif.convert import SpaceTimeConvertor
 
 
 class Dependency():
-    """
+    """Link a model input to a data source
 
     Arguments
     ---------
@@ -28,6 +28,14 @@ class Dependency():
             self._function = self.convert
 
     def convert(self, data, model_input):
+        """Convert dependency data to the resolution of ``model_input``
+
+        Arguments
+        ---------
+        data : numpy.ndarray
+            The data series for conversion
+        model_input : smif.metadata.MetadataSet
+        """
 
         from_units = self.source.units
         to_units = model_input.units
@@ -42,7 +50,6 @@ class Dependency():
         return self._convert_data(data,
                                   spatial_resolution,
                                   temporal_resolution)
-        return data
 
     def _convert_data(self, data, to_spatial_resolution,
                       to_temporal_resolution):
