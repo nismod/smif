@@ -27,6 +27,9 @@ class TestSectorModelReader(object):
             ],
             "interventions": [
                 os.path.join(config_dir, "interventions/water_asset_abc.yaml")
+            ],
+            "parameters": [
+                os.path.join(config_dir, "parameters.yaml")
             ]
         })
 
@@ -101,7 +104,8 @@ class TestSectorModelReader(object):
 
     def test_load_interventions_two_files(self, setup_project_folder,
                                           setup_config_file_two,
-                                          setup_water_intervention_d):
+                                          setup_water_intervention_d,
+                                          setup_parameters):
 
         model_name = 'water_supply'
         model_path = self._model_path(setup_project_folder)
@@ -118,6 +122,9 @@ class TestSectorModelReader(object):
             "interventions": [
                 os.path.join(config_dir, "interventions/water_asset_abc.yaml"),
                 os.path.join(config_dir, "interventions/water_asset_d.yaml")
+            ],
+            "parameters": [
+                os.path.join(config_dir, "parameters.yaml")
             ]
         })
 

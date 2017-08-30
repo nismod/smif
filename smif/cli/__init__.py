@@ -249,6 +249,10 @@ def read_sector_model_data(config_basepath, config):
             lambda path: path_to_abs(config_basepath, path),
             model_config['interventions']
         ))
+        parameter_paths = list(map(
+            lambda path: path_to_abs(config_basepath, path),
+            model_config['parameters']
+        ))
 
         # read each sector model config+data
         reader = SectorModelReader({
@@ -257,7 +261,8 @@ def read_sector_model_data(config_basepath, config):
             "model_classname": model_config['classname'],
             "model_config_dir": config_dir,
             "initial_conditions": initial_conditions_paths,
-            "interventions": interventions_paths
+            "interventions": interventions_paths,
+            "parameters": parameter_paths
         })
         try:
             reader.load()

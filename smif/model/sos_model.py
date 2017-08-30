@@ -391,7 +391,7 @@ class SosModelBuilder(object):
     >>> sos_model = builder.finish()
 
     """
-    def __init__(self, name=''):
+    def __init__(self, name='global'):
         self.sos_model = SosModel(name)
         self.region_register = get_region_register()
         self.interval_register = get_interval_register()
