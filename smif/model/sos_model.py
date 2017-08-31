@@ -166,6 +166,8 @@ class SosModel(Model):
             if data and model.name in data:
                 param_data = dict(default_data, **data[model.name])
                 sim_data.update(param_data)
+            else:
+                sim_data.update(default_data)
 
             sim_results = model.simulate(timestep, sim_data)
             for model_name, model_results in sim_results.items():
