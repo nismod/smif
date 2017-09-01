@@ -298,80 +298,6 @@ class TestSosModel():
         assert sos_model.timestep_after(2012) is None
         assert sos_model.timestep_after(2013) is None
 
-
-class TestIterations:
-
-    def test_guess_outputs_zero(self, get_sos_model_object):
-        """If no previous timestep has results, guess outputs as zero
-        """
-        sos_model = get_sos_model_object
-        assert sos_model.timesteps == [2010, 2011, 2012]
-        ws_model = sos_model.models['water_supply']
-        model_set = ModelSet([ws_model])
-
-        results = model_set.guess_results(ws_model, 2010, {})
-        expected = {
-            "cost": np.zeros((1, 1)),
-            "water": np.zeros((1, 1))
-        }
-        assert results == expected
-
-    def test_guess_outputs_last_year(self, get_sos_model_object):
-        """If a previous timestep has results, guess outputs as identical
-        """
-        sos_model = get_sos_model_object
-        ws_model = sos_model.models['water_supply']
-        model_set = ModelSet([ws_model])
-
-        expected = {
-            "cost": np.array([[3.14]]),
-            "water": np.array([[2.71]])
-        }
-
-        # set up data as though from previous timestep simulation
-        year_before = sos_model.timestep_before(2011)
-        assert year_before == 2010
-        data = {
-            2010: {
-                'water_supply': expected
-            },
-            2011: {}
-        }
-
-        results = model_set.guess_results(ws_model, 2011, data)
-        assert results == expected
-
-    def test_converged_first_iteration(self, get_sos_model_object):
-        """Should not report convergence after a single iteration
-        """
-        sos_model = get_sos_model_object
-        ws_model = sos_model.models['water_supply']
-        model_set = ModelSet([ws_model])
-
-        results = model_set.guess_results(ws_model, 2010, {})
-        model_set.iterated_results = [{ws_model.name: results}]
-
-        assert not model_set.converged()
-
-    def test_converged_two_identical(self, get_sos_model_object):
-        """Should report converged if the last two output sets are identical
-        """
-        sos_model = get_sos_model_object
-        ws_model = sos_model.models['water_supply']
-        model_set = ModelSet([ws_model])
-
-        results = model_set.guess_results(ws_model, 2010, {})
-        model_set.iterated_results = [
-            {
-                "water_supply": results
-            },
-            {
-                "water_supply": results
-            }
-        ]
-
-        assert model_set.converged()
-
     def test_run_sequential(self, get_sos_model_object):
         sos_model = get_sos_model_object
         sos_model.simulate(2010)
@@ -389,6 +315,73 @@ class TestIterations:
                 }
 
         sos_model.simulate(2010, data)
+
+
+class TestIterations:
+
+    def test_guess_outputs_zero(self, get_sector_model_object):
+        """If no previous timestep has results, guess outputs as zero
+        """
+        ws_model = get_sector_model_object
+        model_set = ModelSet([ws_model])
+
+        results = model_set.guess_results(ws_model, 2010, {})
+        expected = {
+            "cost": np.zeros((1, 1)),
+            "water": np.zeros((1, 1))
+        }
+        assert results == expected
+
+    def test_guess_outputs_last_year(self, get_sector_model_object):
+        """If a previous timestep has results, guess outputs as identical
+        """
+        ws_model = get_sector_model_object
+        model_set = ModelSet([ws_model])
+
+        expected = {
+            "cost": np.array([[3.14]]),
+            "water": np.array([[2.71]])
+        }
+
+        # set up data as though from previous timestep simulation
+        data = {
+            2010: {
+                'water_supply': expected
+            },
+            2011: {}
+        }
+
+        results = model_set.guess_results(ws_model, 2011, data)
+        assert results == expected
+
+    def test_converged_first_iteration(self, get_sector_model_object):
+        """Should not report convergence after a single iteration
+        """
+        ws_model = get_sector_model_object
+        model_set = ModelSet([ws_model])
+
+        results = model_set.guess_results(ws_model, 2010, {})
+        model_set.iterated_results = [{ws_model.name: results}]
+
+        assert not model_set.converged()
+
+    def test_converged_two_identical(self, get_sector_model_object):
+        """Should report converged if the last two output sets are identical
+        """
+        ws_model = get_sector_model_object
+        model_set = ModelSet([ws_model])
+
+        results = model_set.guess_results(ws_model, 2010, {})
+        model_set.iterated_results = [
+            {
+                "water_supply": results
+            },
+            {
+                "water_supply": results
+            }
+        ]
+
+        assert model_set.converged()
 
 
 @fixture(scope='function')
