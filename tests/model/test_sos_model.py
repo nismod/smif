@@ -240,13 +240,13 @@ class TestSosModel():
             'default_value': 3,
             'units': '%'}
 
-        sos_model = SosModel('test')
+        sos_model = SosModel('global')
         sos_model.add_parameter(sos_model_param)
 
         expected = dict(sos_model_param, **{'parent': sos_model})
 
-        assert sos_model.parameters == {'test': {'sos_model_param': expected}}
-        assert sos_model.parameters['test'].names == ['sos_model_param']
+        assert sos_model.parameters == {'global': {'sos_model_param': expected}}
+        assert sos_model.parameters['global'].names == ['sos_model_param']
 
         sector_model = get_empty_sector_model('source_model')
         sector_model.add_parameter({'name': 'sector_model_param',
@@ -259,12 +259,95 @@ class TestSosModel():
         sos_model.add_model(sector_model)
 
         # SosModel contains ParameterList objects in a nested dict by model name
-        assert 'test' in sos_model.parameters
-        assert 'sos_model_param' in sos_model.parameters['test'].names
+        assert 'global' in sos_model.parameters
+        assert 'sos_model_param' in sos_model.parameters['global'].names
+        # SosModel parameter attribute holds references to contained
+        # model parameters keyed by model name
+        assert 'source_model' in sos_model.parameters
+        assert 'sector_model_param' in sos_model.parameters['source_model']
         # SectorModel has a ParameterList, gettable by param name
         assert 'sector_model_param' in sector_model.parameters.names
         assert 'source_model' in sos_model.parameters
         assert 'sector_model_param' in sos_model.parameters['source_model']
+
+    def test_default_parameter_passing_(self, get_empty_sector_model):
+        """Tests that default values for global parameters are passed to all
+        models, and others default values only passed into the intended models.
+        """
+
+        sos_model_param = {
+            'name': 'sos_model_param',
+            'description': 'A global parameter passed to all contained models',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'}
+
+        sos_model = SosModel('global')
+        sos_model.add_parameter(sos_model_param)
+
+        sector_model = get_empty_sector_model('source_model')
+
+        # Patch the sector model so that it returns the calling arguments
+        sector_model.simulate = lambda _, y: {'sm1': y}
+        sos_model.add_model(sector_model)
+        assert sos_model.simulate(2010) == {'sm1': {'sos_model_param': 3}}
+
+        sector_model.add_parameter({'name': 'sector_model_param',
+                                    'description': 'Some meaningful text',
+                                    'absolute_range': (0, 100),
+                                    'suggested_range': (3, 10),
+                                    'default_value': 3,
+                                    'units': '%'})
+
+        assert sos_model.simulate(2010) == {'sm1': {'sector_model_param': 3,
+                                            'sos_model_param': 3}}
+
+        sector_model_2 = get_empty_sector_model('another')
+        sector_model_2.simulate = lambda _, y: {'sm2': y}
+        sos_model.add_model(sector_model_2)
+
+        assert sos_model.simulate(2010) == {'sm1': {'sector_model_param': 3,
+                                            'sos_model_param': 3},
+                                            'sm2': {'sos_model_param': 3}}
+
+    def test_parameter_passing_into_models(self, get_empty_sector_model):
+        """Tests that policy values for global parameters are passed to all
+        models, and policy values only passed into the intended models.
+        """
+
+        sos_model_param = {
+            'name': 'sos_model_param',
+            'description': 'A global parameter passed to all contained models',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'}
+
+        sos_model = SosModel('global')
+        sos_model.add_parameter(sos_model_param)
+
+        sector_model = get_empty_sector_model('source_model')
+
+        # Patch the sector model so that it returns the calling arguments
+        sector_model.simulate = lambda _, y: {'sm1': y}
+        sos_model.add_model(sector_model)
+        sector_model.add_parameter({'name': 'sector_model_param',
+                                    'description': 'Some meaningful text',
+                                    'absolute_range': (0, 100),
+                                    'suggested_range': (3, 10),
+                                    'default_value': 3,
+                                    'units': '%'})
+        sector_model_2 = get_empty_sector_model('another')
+        sector_model_2.simulate = lambda _, y: {'sm2': y}
+        sos_model.add_model(sector_model_2)
+
+        data = {'global': {'sos_model_param': 999},
+                'source_model': {'sector_model_param': 123}}
+
+        assert sos_model.simulate(2010, data) == \
+            {'sm1': {'sector_model_param': 123, 'sos_model_param': 999},
+             'sm2': {'sos_model_param': 999}}
 
     def test_add_dependency(self, get_empty_sector_model):
 

@@ -103,13 +103,15 @@ class ModelRunner(object):
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
         """
-        data = self._get_parameter_data(model_run)
-        self.logger.debug("Passing parameter data %s into %s",
-                          data, model_run.sos_model.name)
-
         for timestep in model_run.model_horizon:
             self.logger.debug('Running model for timestep %s', timestep)
-            self.results[timestep] = model_run.sos_model.simulate(timestep, data)
+            data = {}
+            data = self._get_parameter_data(model_run)
+            self.logger.debug("Passing parameter data %s into '%s'",
+                              data, model_run.sos_model.name)
+
+            self.results[timestep] = model_run.sos_model.simulate(timestep,
+                                                                  data)
         return self.results
 
     def _get_parameter_data(self, model_run):
@@ -120,7 +122,7 @@ class ModelRunner(object):
                 # if name in model_run.policies:
                 #     data[name] = model_run.policies[name]['value']
                 # else:
-                data[name] = param['default_value']
+                data[model_name] = {name: param['default_value']}
 
                 self.logger.debug("Parameter '%s required for model '%s'",
                                   name, model_name)
