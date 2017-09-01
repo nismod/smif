@@ -42,7 +42,7 @@ A more comprehensive example with one scenario and one scenario model:
 {'model': {'input': 123}, 'scenario': {'output': 123}}
 
 """
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
 from smif.convert.area import get_register as get_region_register
@@ -52,7 +52,7 @@ from smif.model.dependency import Dependency
 from smif.parameters import ParameterList
 
 
-class Model(ABC):
+class Model(metaclass=ABCMeta):
     """Abstract class represents the interface used to implement the composite
     `SosModel` and leaf classes `SectorModel` and `Scenario`.
 
@@ -130,7 +130,7 @@ class Model(ABC):
         timestep : int
             The timestep for which to run the Model
         data: dict, default=None
-            A collection of state, parameter values, dependency inputs
+            A collection of state, parameter values, dependency inputs.
 
         Returns
         -------
@@ -194,6 +194,108 @@ class Model(ABC):
         smif.parameters.ParameterList
         """
         return self._parameters
+
+
+class CompositeModel(Model, metaclass=ABCMeta):
+    """Override to implement models which contain models.
+
+    Inherited by `smif.model.sos_model.SosModel` and
+    `smif.model.model_set.ModelSet`
+    """
+
+    def __init__(self, name):
+        super().__init__(name)
+        self.models = {}
+
+    @property
+    def parameters(self):
+        """Returns all the contained parameters as {model name: ParameterList}
+
+        Returns
+        -------
+        smif.parameters.ParameterList
+            A combined collection of parameters for all the contained models
+        """
+        my_parameters = super().parameters
+
+        contained_parameters = {self.name: my_parameters}
+
+        for model in self.models.values():
+            contained_parameters[model.name] = model.parameters
+        return contained_parameters
+
+    def _get_parameter_values(self, model, sim_data, data):
+        """Gets default or passed in parameter values for a contained model
+
+        If the `model` is composite, then data is passed in directly, otherwise
+        default parameter values are first generated, and then overwritten by
+        passed in items.
+
+        Arguments
+        ---------
+        model : smif.model.Model
+            A contained model
+        sim_data : dict
+            An existing data dictionary into which parameter values will be
+            merged
+        data : dict
+            A dictionary of parameter values passed into this object
+        """
+        # Pass in parameters to contained composite model if they exist
+        if isinstance(model, CompositeModel):
+            if data:
+                sim_data.update(data)
+        else:
+            # Get default values from own and contained parameters
+            self.logger.debug("Data passed in: %s", data)
+            default_data = model.parameters.defaults
+            self.logger.debug("Default parameter data: %s", default_data)
+
+            # If model parameters exist in data, override default values
+            if data and model.name in data.keys():
+                param_data = dict(default_data, **data[model.name])
+                self.logger.debug("Overriden parameter data: %s", param_data)
+                sim_data.update(param_data)
+                self.logger.debug("Updated sim data: %s", sim_data)
+            else:
+                sim_data.update(default_data)
+
+            # Always pass in global data to contained models
+            sim_data.update(self._parameters.defaults)
+            if data and self.name in data:
+                sim_data.update(data[self.name])
+
+        return sim_data
+
+    @property
+    def free_inputs(self):
+        """Returns the free inputs not linked to a dependency at this layer
+
+        For this composite :class:`~smif.model.CompositeModel` this includes
+        the free_inputs from all contained smif.model.Model objects
+
+        Free inputs are passed up to higher layers for deferred linkages to
+        dependencies.
+
+        Returns
+        -------
+        smif.metadata.MetadataSet
+        """
+        # free inputs of all contained models
+        free_inputs = []
+        for model in self.models.values():
+            free_inputs.extend(model.free_inputs)
+
+        # free inputs of current layer
+        my_free_inputs = super().free_inputs
+        free_inputs.extend(my_free_inputs)
+
+        # compose a new MetadataSet containing the free inputs
+        metadataset = MetadataSet([])
+        for meta in free_inputs:
+            metadataset.add_metadata_object(meta)
+
+        return metadataset
 
 
 def element_before(element, list_):

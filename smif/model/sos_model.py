@@ -14,8 +14,7 @@ from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
-from smif.metadata import MetadataSet
-from smif.model import Model, element_after, element_before
+from smif.model import CompositeModel, Model, element_after, element_before
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
@@ -25,7 +24,7 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-class SosModel(Model):
+class SosModel(CompositeModel):
     """Consists of the collection of models joined via dependencies
 
     This class is populated at runtime by the :class:`SosModelBuilder` and
@@ -47,7 +46,6 @@ class SosModel(Model):
         self.convergence_absolute_tolerance = 1e-08
 
         # models - includes types of SectorModel and ScenarioModel
-        self.models = {}
         self.dependency_graph = networkx.DiGraph()
 
         # systems, interventions and (system) state
@@ -59,53 +57,6 @@ class SosModel(Model):
 
         # scenario data and results
         self._results = defaultdict(dict)
-
-    @property
-    def free_inputs(self):
-        """Returns the free inputs not linked to a dependency at this layer
-
-        For this composite :class:`~smif.model.sos_model.SosModel` this includes
-        the free_inputs from all contained smif.model.Model objects
-
-        Free inputs are passed up to higher layers for deferred linkages to
-        dependencies.
-
-        Returns
-        -------
-        smif.metadata.MetadataSet
-        """
-        # free inputs of all contained models
-        free_inputs = []
-        for model in self.models.values():
-            free_inputs.extend(model.free_inputs)
-
-        # free inputs of current layer
-        my_free_inputs = super().free_inputs
-        free_inputs.extend(my_free_inputs)
-
-        # compose a new MetadataSet containing the free inputs
-        metadataset = MetadataSet([])
-        for meta in free_inputs:
-            metadataset.add_metadata_object(meta)
-
-        return metadataset
-
-    @property
-    def parameters(self):
-        """Returns all the contained parameters as {model name: ParameterList}
-
-        Returns
-        -------
-        smif.parameters.ParameterList
-            A combined collection of parameters for all the contained models
-        """
-        my_parameters = super().parameters
-
-        contained_parameters = {self.name: my_parameters}
-
-        for model in self.models.values():
-            contained_parameters[model.name] = model.parameters
-        return contained_parameters
 
     def add_model(self, model):
         """Adds a sector model to the system-of-systems model
@@ -161,13 +112,7 @@ class SosModel(Model):
                 param_data_converted = dep.convert(param_data, input_)
                 sim_data[input_.name] = param_data_converted
 
-            # Pass in parameters to contained model
-            default_data = model.parameters.defaults
-            if data and model.name in data:
-                param_data = dict(default_data, **data[model.name])
-                sim_data.update(param_data)
-            else:
-                sim_data.update(default_data)
+            sim_data = self._get_parameter_values(model, sim_data, data)
 
             sim_results = model.simulate(timestep, sim_data)
             for model_name, model_results in sim_results.items():
@@ -258,6 +203,11 @@ class SosModel(Model):
 
         If a set contains more than one model, there is an interdependency and
         and we attempt to run the models to convergence.
+
+        Returns
+        -------
+        list
+            A list of `smif.model.Model` objects
         """
         if networkx.is_directed_acyclic_graph(self.dependency_graph):
             # topological sort gives a single list from directed graph, currently
