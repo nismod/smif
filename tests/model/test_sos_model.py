@@ -6,9 +6,7 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 from pytest import fixture, raises
-from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
-from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
 from smif.metadata import MetadataSet
 from smif.model.dependency import Dependency
@@ -25,8 +23,8 @@ def get_scenario_model_object():
     data = np.array([[[3.]], [[5.]], [[1.]]], dtype=float)
     scenario_model = ScenarioModel('test_scenario_model')
     scenario_model.add_output('raininess',
-                              get_region_register().get_entry('LSOA'),
-                              get_interval_register().get_entry('annual'),
+                              scenario_model.regions.get_entry('LSOA'),
+                              scenario_model.intervals.get_entry('annual'),
                               'ml')
     scenario_model.add_data(data, [2010, 2011, 2012])
     return scenario_model
@@ -35,10 +33,10 @@ def get_scenario_model_object():
 @fixture(scope='function')
 def get_sector_model_object(get_empty_sector_model):
 
-    regions = get_region_register()
-    intervals = get_interval_register()
-
     sector_model = get_empty_sector_model('water_supply')
+
+    regions = sector_model.regions
+    intervals = sector_model.intervals
 
     sector_model.add_input('raininess',
                            regions.get_entry('LSOA'),
@@ -124,8 +122,6 @@ def get_sos_model_with_model_dependency():
 
 @fixture(scope='function')
 def get_sos_model_with_summed_dependency(setup_region_data):
-    region_register = get_region_register()
-    interval_register = get_interval_register()
     builder = SosModelBuilder()
     builder.load_scenario_models([{
         'name': 'raininess',
@@ -144,6 +140,9 @@ def get_sos_model_with_summed_dependency(setup_region_data):
     }, [2010, 2011, 2012])
 
     sos_model = builder.finish()
+
+    region_register = sos_model.regions
+    interval_register = sos_model.intervals
 
     raininess_model = sos_model.models['raininess']
 
