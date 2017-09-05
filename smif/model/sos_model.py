@@ -632,7 +632,7 @@ class SosModelBuilder(object):
             if 'year' not in obs:
                 raise ValueError("Scenario data item missing year: '{}'".format(obs))
             year = obs['year']
-            
+
             if year not in timestep_names:
                 # Don't add data if year is not in timestep list
                 skipped_years.add(year)

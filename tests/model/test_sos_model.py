@@ -580,8 +580,16 @@ class TestSosModelBuilderComponents():
     def test_load_models(self):
         pass
 
-    def test_load_scenario_models(self):
-        pass
+    def test_load_scenario_models(self, get_sos_model_config):
+        config = get_sos_model_config
+        builder = SosModelBuilder()
+        builder.construct(config, [2010])
+        sos_model = builder.finish()
+        scenario = sos_model.models['raininess']
+
+        expected = {'raininess': {'raininess': np.array([[3.]])}}
+
+        assert scenario.simulate(2010) == expected
 
     def test_add_planning(self):
         pass
