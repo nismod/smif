@@ -625,14 +625,18 @@ class SosModelBuilder(object):
                 "Number of observations is not equal to timesteps x  " +
                 "intervals x regions when loading %s", param)
 
+        skipped_years = set()
+
         for obs in observations:
 
             if 'year' not in obs:
                 raise ValueError("Scenario data item missing year: '{}'".format(obs))
             year = obs['year']
+            
             if year not in timestep_names:
-                raise ValueError(
-                    "Year '{}' not defined in model timesteps".format(year))
+                # Don't add data if year is not in timestep list
+                skipped_years.add(year)
+                continue
 
             if 'region' not in obs:
                 raise ValueError("Scenario data item missing region: '{}'".format(obs))
@@ -659,6 +663,10 @@ class SosModelBuilder(object):
             region_idx = region_names.index(region)
 
             data[timestep_idx, region_idx, interval_idx] = obs['value']
+
+        for year in skipped_years:
+            msg = "Year '%s' not defined in model timesteps so skipping"
+            self.logger.warning(msg, year)
 
         return data
 
