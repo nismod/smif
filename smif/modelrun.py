@@ -102,10 +102,11 @@ class ModelRunner(object):
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
         """
+        # Initialise each of the sector models
         for model in model_run.sos_model.sector_models:
-
             model_run.sos_model.models[model].before_model_run()
 
+        # Solve the models over all timesteps
         for timestep in model_run.model_horizon:
             self.logger.debug('Running model for timestep %s', timestep)
             data = {}

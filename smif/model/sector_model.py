@@ -199,6 +199,21 @@ class SectorModel(Model, metaclass=ABCMeta):
         """
         pass
 
+    def get_scenario_data(self, input_name):
+        """Returns all scenario dependency data as a numpy array
+
+        Returns
+        -------
+        dict
+            A dict of ``{parameter_name: numpy.ndarray}`` where the numpy array
+            has the dimensions regions-by-intervals
+        """
+        if input_name not in self.deps:
+            raise ValueError("Scenario data for %s not available for this input",
+                             input_name)
+
+        return self.deps[input_name].source_model._data
+
 
 class SectorModelBuilder(object):
     """Build the components that make up a sectormodel from the configuration
