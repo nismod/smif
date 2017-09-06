@@ -204,9 +204,8 @@ class SectorModel(Model, metaclass=ABCMeta):
 
         Returns
         -------
-        dict
-            A dict of ``{parameter_name: numpy.ndarray}`` where the numpy array
-            has the dimensions regions-by-intervals
+        numpy.ndarray
+            A numpy.ndarray which has the dimensions regions-by-intervals
         """
         if input_name not in self.deps:
             raise ValueError("Scenario data for %s not available for this input",
