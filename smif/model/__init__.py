@@ -242,12 +242,14 @@ class CompositeModel(Model, metaclass=ABCMeta):
             A dictionary of parameter values passed into this object
         """
         # Pass in parameters to contained composite model if they exist
+        if data:
+            self.logger.debug("Data passed in: %s", list(data.keys()))
+
         if isinstance(model, CompositeModel):
             if data:
                 sim_data.update(data)
         else:
             # Get default values from own and contained parameters
-            self.logger.debug("Data passed in: %s", data)
             default_data = model.parameters.defaults
             self.logger.debug("Default parameter data: %s", default_data)
 
@@ -256,7 +258,7 @@ class CompositeModel(Model, metaclass=ABCMeta):
                 param_data = dict(default_data, **data[model.name])
                 self.logger.debug("Overriden parameter data: %s", param_data)
                 sim_data.update(param_data)
-                self.logger.debug("Updated sim data: %s", sim_data)
+                self.logger.debug("Updated sim data: %s", list(sim_data.keys()))
             else:
                 sim_data.update(default_data)
 

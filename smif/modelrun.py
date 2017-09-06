@@ -17,7 +17,6 @@ ModeRun has attributes:
 - status
 
 """
-from collections import defaultdict
 from logging import getLogger
 
 from smif.convert.area import get_register as get_region_register
@@ -103,6 +102,10 @@ class ModelRunner(object):
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
         """
+        for model in model_run.sos_model.sector_models:
+
+            model_run.sos_model.models[model].before_model_run()
+
         for timestep in model_run.model_horizon:
             self.logger.debug('Running model for timestep %s', timestep)
             data = {}
@@ -115,17 +118,10 @@ class ModelRunner(object):
         return self.results
 
     def _get_parameter_data(self, model_run):
-        data = defaultdict(dict)
-        # global parameters
-        for model_name, parameters in model_run.sos_model.parameters.items():
-            for name, param in parameters.items():
-                # if name in model_run.policies:
-                #     data[name] = model_run.policies[name]['value']
-                # else:
-                data[model_name] = {name: param['default_value']}
+        """Loads overridden parameter values from narrative/policy files
+        """
+        data = {}
 
-                self.logger.debug("Parameter '%s required for model '%s'",
-                                  name, model_name)
         return data
 
 

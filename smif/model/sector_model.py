@@ -54,8 +54,20 @@ class SectorModel(Model, metaclass=ABCMeta):
 
         self.interventions = []
         self.system = []
+        self._user_data = {}
 
         self.logger = logging.getLogger(__name__)
+
+    @property
+    def user_data(self):
+        """A utility dictionary provided for use by the model wrapper
+        """
+        return self._user_data
+
+    @user_data.setter
+    def user_data(self, value):
+        self.logger.debug("Adding %s to user data for %s", value, self.name)
+        self._user_data = value
 
     def add_input(self, name, spatial_resolution, temporal_resolution, units):
         """Add an input to the sector model
@@ -121,11 +133,19 @@ class SectorModel(Model, metaclass=ABCMeta):
     def initialise(self, initial_conditions):
         """Implement this method to set up the model system
 
+        This method is called as the SectorModel is constructed, and prior to
+        establishment of dependencies and other data links.
+
         Arguments
         ---------
         initial_conditions: list
             A list of past Interventions, with build dates and locations as
             necessary to specify the infrastructure system to be modelled.
+        """
+        pass
+
+    def before_model_run(self):
+        """Implement this method to conduct pre-model run tasks
         """
         pass
 
