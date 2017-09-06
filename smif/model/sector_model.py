@@ -5,6 +5,18 @@ The :class:`SectorModel` exposes several key methods for running wrapped
 sector models.  To add a sector model to an instance of the framework,
 first implement :class:`SectorModel`.
 
+Utility Methods
+===============
+A number of utility methods are included to ease the integration of a
+SectorModel wrapper within a System of Systems model.  These include::
+
+get_scenario_data(input_name)
+    Get an array of scenario data (timestep-by-region-by-interval)
+get_region_names(region_set_name)
+    Get a list of region names
+get_interval_names(interval_set_name)
+    Get a list of interval names
+
 Key Functions
 =============
 This class performs several key functions which ease the integration of sector
@@ -205,13 +217,33 @@ class SectorModel(Model, metaclass=ABCMeta):
         Returns
         -------
         numpy.ndarray
-            A numpy.ndarray which has the dimensions regions-by-intervals
+            A numpy.ndarray which has the dimensions timestep-by-regions-by-intervals
         """
         if input_name not in self.deps:
             raise ValueError("Scenario data for %s not available for this input",
                              input_name)
 
         return self.deps[input_name].source_model._data
+
+    def get_region_names(self, region_set_name):
+        """Get the list of region names for ``region_set_name``
+
+        Returns
+        -------
+        list
+            A list of region names
+        """
+        return self.regions.get_entry(region_set_name).get_entry_names()
+
+    def get_interval_names(self, interval_set_name):
+        """Get the list of interval names for ``interval_set_name``
+
+        Returns
+        -------
+        list
+            A list of interval names
+        """
+        return self.intervals.get_entry(interval_set_name).get_entry_names()
 
 
 class SectorModelBuilder(object):
