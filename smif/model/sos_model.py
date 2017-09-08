@@ -366,7 +366,7 @@ class SosModelBuilder(object):
         self.set_convergence_abs_tolerance(config_data)
         self.set_convergence_rel_tolerance(config_data)
 
-        self.load_models(model_list)
+        self.load_models(model_list, timesteps)
         self.load_scenario_models(config_data['scenario_metadata'],
                                   config_data['scenario_data'],
                                   timesteps)
@@ -428,20 +428,21 @@ class SosModelBuilder(object):
             self.sos_model.convergence_relative_tolerance = \
                 config_data['convergence_relative_tolerance']
 
-    def load_models(self, model_data_list):
+    def load_models(self, model_data_list, timesteps):
         """Loads the sector models into the system-of-systems model
 
         Parameters
         ----------
         model_data_list : list
             A list of sector model config/data
-        assets : list
-            A list of assets to pass to the sector model
+        timesteps : list
+            A list of timesteps to pass to the sector model
 
         """
         self.logger.info("Loading models")
         for model_data in model_data_list:
             builder = SectorModelBuilder(model_data['name'])
+            model_data['timesteps'] = timesteps
             builder.construct(model_data)
             model = builder.finish()
             self.add_interventions(model_data['name'],

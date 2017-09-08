@@ -65,6 +65,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         super().__init__(name)
 
         self.interventions = []
+        self.timesteps = []
         self.system = []
         self._user_data = {}
 
@@ -293,6 +294,7 @@ class SectorModelBuilder(object):
         self.add_outputs(model_data['outputs'])
         self.add_interventions(model_data['interventions'])
         self.add_parameters(model_data['parameters'])
+        self._sector_model.timesteps = model_data['timesteps']
 
     def load_model(self, model_path, classname):
         """Dynamically load model module
