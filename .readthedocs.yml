@@ -8,7 +8,7 @@ python:
 
 # build a PDF
 formats:
-  - pdf
+  - none
 
 # use a conda environment file
 # - https://conda.io/docs/using/envs.html#share-an-environment
