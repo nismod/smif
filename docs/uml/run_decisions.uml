@@ -1,0 +1,16 @@
+@startuml
+
+actor Modeller
+participant aModelRunner
+participant aSosModel
+participant aDecisionManager
+
+Modeller -> aModelRunner : solve()
+aModelRunner -> aDecisionManager : get_decisions(interventions)
+aModelRunner -> aSosModel : simulate(timestep, data, decisions)
+activate aSosModel
+aSosModel --> aModelRunner : results
+deactivate aSosModel
+aModelRunner -> aDecisionManager : evaluate(results)
+
+@enduml

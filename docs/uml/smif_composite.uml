@@ -8,50 +8,44 @@ skinparam {
 }
 
 package control {
-    
-    abstract class SetList {
 
-    }
-
-    SetList <|-- ScenarioSetList
-    class ScenarioSetList {
-    - scenario_sets : ScenarioSet [*]
-    + add_scenario_set(ScenarioSet)
+    class ScenarioList {
+    - scenario_sets : Scenario [*]
+    + add_scenario_set(Scenario)
     + get_scenario_sets()
     + get_scenario_set(name)
     }
 
-    SetList <|-- NarrativeSetList
-    class NarrativeSetList {
-    - narrative_sets : NarrativeSet [*]
+    class NarrativeList {
+    - narrative_sets : Narrative [*]
     + add_narrative_set(Narrative_Set)
     + get_narrative_sets()
     + get_narrative_set(name)
     }
 
-    NarrativeSetList -- "*" NarrativeSet
-    class NarrativeSet {
+    NarrativeList -- "*" Narrative
+    class Narrative {
     - name : string
     - description : string
     - narratives : Narrative [*]
     }
 
-    class Narrative {
+    class NarrativeData {
     - name : string
     - data
     }
-    NarrativeSet "1" -- "*" Narrative
+    Narrative "1" -- "*" NarrativeData
 
-    ScenarioSetList -- "*" ScenarioSet
-    class ScenarioSet {
+    ScenarioList -- "*" Scenario
+    class Scenario {
     - name : string
     - description : string
     - scenarios : ScenarioData [*]
-    + ScenarioSet(name, description)
+    + Scenario(name, description)
     + add_data(ScenarioData)
     + get_scenario(name)
     }
-    note right of ScenarioSet : Holds the scenario category\ne.g. 'Population'
+    note right of Scenario : Holds the scenario category\ne.g. 'Population'
 
     class ScenarioData {
     - name : string
@@ -76,17 +70,17 @@ package control {
     UniqueCombination <|-- ScenarioCombination
 
     class ScenarioCombination {
-    + add_tuple(ScenarioSet, ScenarioData)
-    + get_tuple(ScenarioSet)
+    + add_tuple(Scenario, ScenarioData)
+    + get_tuple(Scenario)
     + validate()
     }
-    note bottom of ScenarioCombination : Holds one ScenarioData in each ScenarioSet
+    note bottom of ScenarioCombination : Holds one ScenarioData in each Scenario
 
     NarrativeCombination -- "1" Narrative
-    NarrativeCombination -- "1" NarrativeSet
+    NarrativeCombination -- "1" NarrativeData
     class NarrativeCombination {
-    + add_tuple(NarrativeSet, Narrative)
-    + get_tuple(NarrativeSet)
+    + add_tuple(Narrative, Narrative)
+    + get_tuple(Narrative)
     + validate()
     }
 
@@ -95,8 +89,8 @@ package control {
 
 
     ScenarioCombination -- "1" ScenarioData
-    ScenarioCombination -- "1" ScenarioSet
-    ScenarioSet -- "*" ScenarioData
+    ScenarioCombination -- "1" Scenario
+    Scenario -- "*" ScenarioData
 
 }
 
@@ -156,8 +150,8 @@ package smif.project {
 
   class Project {
     + model_run_list : ModelRunList [1]
-    + scenarios : ScenarioSetList [1]
-    + narratives : NarrativeSetList [1]
+    + scenarios : ScenarioList [1]
+    + narratives : NarrativeList [1]
     + region_register : RegionRegister [1]
     + interval_register : IntervalRegister [1]
     + view_model_runs()
@@ -168,6 +162,8 @@ package smif.project {
   }
 
 }
+
+newpage
 
 package smif.model {
 
@@ -186,22 +182,31 @@ package smif.model {
     - scenarios : ScenarioCombination [*]
     - narratives : NarrativeCombination [*]
     - strategy : 
-    - global_parameters : ParameterList[1]
     -- Building --
     + set_description(description)
     + set_sos_model(SosModel)
     + set_strategy(Strategy)
-    + set_scenario(scenarioset, scenario)
-    + set_narrative(narrativeset, narrative)
+    + set_scenario(Scenario, scenario)
+    + set_narrative(Narrative, narrative)
     + set_modelling_horizon(timestep_list)
-    + add_global_parameters(ModelParameter)
     -- Running --
     + run()
     
   }
-  note right of ModelRun : We need to set one\n (and only one) scenario\n for each ScenarioSet defined
-  note right of ModelRun : We need to set one\n (and only one) narrative\n for each NarrativeSet defined
+  note right of ModelRun : We need to set one\n (and only one) scenario\n for each Scenario defined
+  note right of ModelRun : We need to set one\n (and only one) narrative\n for each Narrative defined
 
+  ModelRun -- "*" Results
+  class Results {
+    - model_run_id : int
+    + data
+  }
+
+  class ModelRunner {
+    - modelrun : ModelRun[1]
+    + ModelRunner(modelrun)
+    + solve() 
+  }
 
   ModelRunner *-- ModelRun
   ModelRun *-- SosModel
@@ -217,11 +222,13 @@ package smif.model {
   - model_inputs : MetadataList
   - model_outputs : MetadataList
   - parameters : ParameterList
+  - dependencies : Dependency [*]
   -- Instance Methods --
   + get_inputs() : MetadataList
   + get_outputs() : MetadataList
   + set_name(name)
   + get_name()
+  + add_dependency(data_source, model_input)
   + add_parameter(ModelParameter)
   -- Running --
   - get_input_data(name)
@@ -237,11 +244,9 @@ package smif.model {
 
   class SosModel {
   - models : Model [1..*] 
-  - dependencies : Dependency [*]
   - parameters : ParameterList [1]
   -- Building --
   + add_model(Model)
-  + add_dependency(data_source, model_input)
   + validate()
   -- Running --
   - get_RunOrder(sector_models, dependencies) : ModelSet [1..*]
@@ -268,9 +273,9 @@ package smif.model {
   class ScenarioModel {
   - name : string
   - output : ModelOutput [1]
-  - scenario_set : ScenarioSet [1]
+  - scenario : Scenario [1]
   -- Building --
-  + ScenarioModel(name, ModelOutput, ScenarioSet)
+  + ScenarioModel(name, ModelOutput, Scenario)
   + validate()
   -- Running --
   + simulate(System, Data) : Data, StateData
@@ -280,17 +285,16 @@ package smif.model {
   Model <|-- SosModel
   Model <|-- SectorModel
   Model <|-- ScenarioModel
+  Model <|-- ModelSet
 
   Model *-- SosModel
+  SosModel *- ModelSet
+
 
   class ModelSet {
     sector_models : set of SectorModel
     simulate(System, Data) => Data, StateData
   }
-
-  SosModel *- ModelSet
-
-
 
   abstract class ModelInputOutput {
     - name : string
@@ -305,7 +309,7 @@ package smif.model {
   ModelInputOutput <|-- ModelOutput
 
   class ModelInput {
-    - scenario_set : ScenarioSet [1]
+    - scenario_set : Scenario [1]
     + ModelInput(name, region_set, interval_set)
     + set_scenario_set(name)
   }
@@ -317,17 +321,13 @@ package smif.model {
   class Dependency {
     - source_model : Model [1]
     - source : ModelOutput [1]
-    - sink_model : Model [1]
-    - sink : ModelInput [1]
     - conversion_function : func = AreaWeighted
-    + Dependency(source_model, source, sink_model, sink)
-    + Dependency(source, sink, conversion_function)
-    + convert()
+    + Dependency(source_model, source)
+    + Dependency(source_model, source, conversion_function)
+    + convert(data, model_input)
   }
 
-  SosModel "1" *-- "*" Dependency
-
-  ModelRunner -- SosModel
+  SectorModel "1" *-- "*" Dependency
 
   class Intervention {
   + {static} names
