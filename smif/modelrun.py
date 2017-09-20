@@ -47,6 +47,8 @@ class ModelRun(object):
         self.regions = get_region_register()
         self.intervals = get_interval_register()
 
+        self.results = {}
+
     @property
     def name(self):
         """Unique identifier of the ModelRun
@@ -91,6 +93,7 @@ class ModelRunner(object):
 
     def __init__(self):
         self.logger = getLogger(__name__)
+        self.results = {}
 
     def solve_model(self, model_run):
         """Solve a ModelRun
@@ -99,9 +102,28 @@ class ModelRunner(object):
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
         """
+        # Initialise each of the sector models
+        for model in model_run.sos_model.sector_models:
+            model_run.sos_model.models[model].before_model_run()
+
+        # Solve the models over all timesteps
         for timestep in model_run.model_horizon:
             self.logger.debug('Running model for timestep %s', timestep)
-            model_run.sos_model.simulate(timestep)
+            data = {}
+            data = self._get_parameter_data(model_run)
+            self.logger.debug("Passing parameter data %s into '%s'",
+                              data, model_run.sos_model.name)
+
+            self.results[timestep] = model_run.sos_model.simulate(timestep,
+                                                                  data)
+        return self.results
+
+    def _get_parameter_data(self, model_run):
+        """Loads overridden parameter values from narrative/policy files
+        """
+        data = {}
+
+        return data
 
 
 class ModelRunBuilder(object):

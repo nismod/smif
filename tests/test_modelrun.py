@@ -22,7 +22,8 @@ def get_model_runconfig_data(setup_project_folder, setup_region_data):
                 "inputs": [],
                 "outputs": [],
                 "initial_conditions": [],
-                "interventions": []
+                "interventions": [],
+                "parameters": []
             }
         ],
         "planning": [],
@@ -121,7 +122,8 @@ def get_model_run(setup_project_folder, setup_region_data):
                 "inputs": [],
                 "outputs": [],
                 "initial_conditions": [],
-                "interventions": []
+                "interventions": [],
+                "parameters": []
             }
         ]
         }
@@ -156,3 +158,54 @@ class TestModelRun:
     def test_run_static(self, get_model_run):
         model_run = get_model_run
         model_run.run()
+
+    def test_run_with_global_parameters(self, get_model_run):
+        model_run = get_model_run
+
+        sos_model = model_run.sos_model
+        sos_model.name = 'test_sos_model'
+
+        sos_model_param = {
+            'name': 'sos_model_param',
+            'description': 'A global parameter passed to all contained models',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'}
+
+        sos_model.add_parameter(sos_model_param)
+
+        sos_model.models['water_supply'].simulate = lambda x, y: y
+
+        model_run.run()
+
+        assert model_run.results == {}
+        assert sos_model.results == {}
+
+        assert 'sos_model_param' in sos_model.parameters['test_sos_model']
+
+    def test_run_with_sector_parameters(self, get_model_run):
+
+        model_run = get_model_run
+
+        sos_model = model_run.sos_model
+        sos_model.name = 'test_sos_model'
+
+        sector_model = sos_model.models['water_supply']
+
+        sector_model_param = {
+            'name': 'sector_model_param',
+            'description': 'A model parameter passed to a specific model',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'}
+
+        sector_model.add_parameter(sector_model_param)
+
+        assert 'sector_model_param' in sos_model.parameters['water_supply']
+
+        model_run.run()
+
+        assert model_run.results == {}
+        assert sos_model.results == {}

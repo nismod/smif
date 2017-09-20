@@ -1,0 +1,78 @@
+@startuml
+start
+:Name and Create Project Folder;
+    fork
+        :Add Scenario Sets;
+    fork again
+        :Add Narrative Sets;
+    fork again
+:Add Region, Interval, Units Set Data;
+    end fork
+partition "Add SectorModel" {
+:Add model name, description;
+repeat
+    :Select pathwrapper;
+repeat while (not valid python class)
+:Select wrapper classname;
+    fork
+    partition "Manage Inputs/Outputs" {
+        :Add name;
+        fork
+            if (spatial resolution exist) then (yes)
+            else (no)
+                :Manage Spatial Resolutions;
+            endif
+            :Select spatial resolution;
+        fork again
+            if (temporal resolution exist) then (yes)
+            else (no)
+                :Manage Temporal Resolutions;
+            endif
+            :Select temporal resolution;
+        fork again
+        :Select unit;
+        end fork
+    }
+    fork again
+    :Manage Parameters;
+    fork again
+    :Manage Interventions;
+    :Manage System;
+    :Manage Intial Conditions;
+    end fork
+}
+partition "Add SosModel" {
+:Add model name, description;
+    fork
+        :Select SectorModel;
+    fork again
+        :Select ScenarioSet;
+    end fork
+partition "Manage Dependencies" {
+while (hanging inputs remain?) is (yes)
+    :Select hanging input;
+    :Select model output;
+    :Define spatio-temporal conversion;
+endwhile (no)
+}
+}
+partition "Add ModelRun" {
+    fork
+        :Add Timesteps;
+    fork again
+        :Add SosModel Configuration;
+        while (unfulfilled scenario sets?) is (yes)
+            :Select scenario data;
+        end while (no)
+    fork again
+        while (unfulfulled narrative sets?) is (yes)
+            :Select narrative data;
+        end while (no)
+    fork again
+        :Select decision module;
+    end fork
+}
+end
+@enduml
+
+

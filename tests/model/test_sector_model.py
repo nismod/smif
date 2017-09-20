@@ -1,10 +1,14 @@
 """Test SectorModel and SectorModelBuilder
 """
+from copy import copy
 from unittest.mock import Mock
 
+import numpy as np
 from pytest import raises
 from smif.metadata import Metadata, MetadataSet
+from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
+from smif.parameters import ParameterList
 
 
 class EmptySectorModel(SectorModel):
@@ -50,6 +54,21 @@ class TestCompositeSectorModel():
         data = {'input_name': [0]}
         actual = model.simulate(2010, data)
         assert actual == {}
+
+    def test_scenario_dependencies(self):
+
+        scenario_model = ScenarioModel('test_scenario')
+        scenario_model.add_output('scenario_output', Mock(), Mock(), 'units')
+        data = np.array([[[120.23]]])
+        timesteps = [2010]
+        scenario_model.add_data(data, timesteps)
+
+        model = EmptySectorModel('test_model')
+        model.add_input('input_name', Mock(), Mock(), 'units')
+        model.add_dependency(scenario_model, 'scenario_output', 'input_name')
+
+        assert 'input_name' in model.deps
+        assert model.get_scenario_data('input_name') == data
 
 
 class TestSectorModelBuilder():
@@ -177,3 +196,32 @@ class TestSectorModel(object):
             'water_asset_b',
             'water_asset_c'
         ]
+
+
+class TestParameters():
+
+    def test_add_parameter(self):
+        """Adding a parameter adds a reference to the parameter list entry to
+        the model that contains it.
+        """
+
+        model = copy(EmptySectorModel('test_model'))
+        model.simulate = lambda x, y: {'savings': y['smart_meter_savings']}
+
+        param_config = {'name': 'smart_meter_savings',
+                        'description': 'The savings from smart meters',
+                        'absolute_range': (0, 100),
+                        'suggested_range': (3, 10),
+                        'default_value': 3,
+                        'units': '%'}
+        model.add_parameter(param_config)
+
+        assert isinstance(model.parameters, ParameterList)
+
+        param_config['parent'] = model
+
+        assert model.parameters['smart_meter_savings'] == param_config
+
+        actual = model.simulate(2010, {'smart_meter_savings': 3})
+        expected = {'savings': 3}
+        assert actual == expected

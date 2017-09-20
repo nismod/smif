@@ -10,11 +10,11 @@ pyreverse smif -p smif -o png
 #
 # Requires plantuml jar from http://plantuml.com/download to provide plantuml
 # command. E.g. create bash function:
-#   plantuml()
-#   {
-#     java -jar ~/bin/plantuml-jar-mit-1.2017.14/plantuml.jar $1
-#   }
-#   export -f plantuml
+  run_plantuml()
+  {
+    java -jar ../../../plantuml.jar $1
+  }
+  export -f run_plantuml
 #
 # Depends on GraphViz from http://www.graphviz.org/Download..php to create
 # diagrams. E.g. set environment variable

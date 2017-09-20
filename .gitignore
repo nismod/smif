@@ -49,3 +49,6 @@ MANIFEST
 
 # smif outputs
 results.yaml
+
+# data file
+energy_demand_data/*

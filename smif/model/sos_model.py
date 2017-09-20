@@ -14,8 +14,7 @@ from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.decision import Planning
 from smif.intervention import Intervention, InterventionRegister
-from smif.metadata import MetadataSet
-from smif.model import Model, element_after, element_before
+from smif.model import CompositeModel, Model, element_after, element_before
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
@@ -25,7 +24,7 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-class SosModel(Model):
+class SosModel(CompositeModel):
     """Consists of the collection of models joined via dependencies
 
     This class is populated at runtime by the :class:`SosModelBuilder` and
@@ -47,7 +46,6 @@ class SosModel(Model):
         self.convergence_absolute_tolerance = 1e-08
 
         # models - includes types of SectorModel and ScenarioModel
-        self.models = {}
         self.dependency_graph = networkx.DiGraph()
 
         # systems, interventions and (system) state
@@ -59,36 +57,6 @@ class SosModel(Model):
 
         # scenario data and results
         self._results = defaultdict(dict)
-
-    @property
-    def free_inputs(self):
-        """Returns the free inputs not linked to a dependency at this layer
-
-        For this composite :class:`~smif.model.composite.Model` this includes
-        the free_inputs from all contained Model objects
-
-        Free inputs are passed up to higher layers for deferred linkages to
-        dependencies.
-
-        Returns
-        -------
-        smif.metadata.MetadataSet
-        """
-        # free inputs of all contained models
-        free_inputs = []
-        for model in self.models.values():
-            free_inputs.extend(model.free_inputs)
-
-        # free inputs of current layer
-        my_free_inputs = super().free_inputs
-        free_inputs.extend(my_free_inputs)
-
-        # compose a new MetadataSet containing the free inputs
-        metadataset = MetadataSet([])
-        for meta in free_inputs:
-            metadataset.add_metadata_object(meta)
-
-        return metadataset
 
     def add_model(self, model):
         """Adds a sector model to the system-of-systems model
@@ -119,6 +87,11 @@ class SosModel(Model):
     def simulate(self, timestep, data=None):
         """Run the SosModel
 
+        Returns
+        -------
+        results : dict
+            Nested dict keyed by model name, parameter name
+
         """
         self.check_dependencies()
         run_order = self._get_model_sets_in_run_order()
@@ -138,6 +111,8 @@ class SosModel(Model):
                     param_data = results[dep.source_model.name][dep.source.name]
                 param_data_converted = dep.convert(param_data, input_)
                 sim_data[input_.name] = param_data_converted
+
+            sim_data = self._get_parameter_values(model, sim_data, data)
 
             sim_results = model.simulate(timestep, sim_data)
             for model_name, model_results in sim_results.items():
@@ -228,6 +203,11 @@ class SosModel(Model):
 
         If a set contains more than one model, there is an interdependency and
         and we attempt to run the models to convergence.
+
+        Returns
+        -------
+        list
+            A list of `smif.model.Model` objects
         """
         if networkx.is_directed_acyclic_graph(self.dependency_graph):
             # topological sort gives a single list from directed graph, currently
@@ -363,7 +343,7 @@ class SosModelBuilder(object):
     >>> sos_model = builder.finish()
 
     """
-    def __init__(self, name=''):
+    def __init__(self, name='global'):
         self.sos_model = SosModel(name)
         self.region_register = get_region_register()
         self.interval_register = get_interval_register()
@@ -386,7 +366,7 @@ class SosModelBuilder(object):
         self.set_convergence_abs_tolerance(config_data)
         self.set_convergence_rel_tolerance(config_data)
 
-        self.load_models(model_list)
+        self.load_models(model_list, timesteps)
         self.load_scenario_models(config_data['scenario_metadata'],
                                   config_data['scenario_data'],
                                   timesteps)
@@ -448,20 +428,21 @@ class SosModelBuilder(object):
             self.sos_model.convergence_relative_tolerance = \
                 config_data['convergence_relative_tolerance']
 
-    def load_models(self, model_data_list):
+    def load_models(self, model_data_list, timesteps):
         """Loads the sector models into the system-of-systems model
 
         Parameters
         ----------
         model_data_list : list
             A list of sector model config/data
-        assets : list
-            A list of assets to pass to the sector model
+        timesteps : list
+            A list of timesteps to pass to the sector model
 
         """
         self.logger.info("Loading models")
         for model_data in model_data_list:
             builder = SectorModelBuilder(model_data['name'])
+            model_data['timesteps'] = timesteps
             builder.construct(model_data)
             model = builder.finish()
             self.add_interventions(model_data['name'],

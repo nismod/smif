@@ -28,6 +28,10 @@ class ScenarioModel(Model):
         self._data = {}
         self.timesteps = []
 
+    @property
+    def data(self):
+        return self._data
+
     def add_output(self, name, spatial_resolution, temporal_resolution, units):
         """Add an output to the scenario model
 

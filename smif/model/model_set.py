@@ -16,10 +16,10 @@ convergence.
 """
 
 import numpy as np
-from smif.model import Model, element_before
+from smif.model import CompositeModel, element_before
 
 
-class ModelSet(Model):
+class ModelSet(CompositeModel):
     """Wraps a set of interdependent models
 
     Arguments
@@ -38,7 +38,7 @@ class ModelSet(Model):
                  absolute_tolerance=1e-08):
         name = "-".join(sorted(model.name for model in models))
         super().__init__(name)
-        self._models = models
+        self.models = models
         self._model_names = {model.name for model in models}
         self._derive_deps_from_models()
 
@@ -50,9 +50,9 @@ class ModelSet(Model):
         self.absolute_tolerance = absolute_tolerance
 
     def _derive_deps_from_models(self):
-        for model in self._models:
+        for model in self.models:
             for sink, dep in model.deps.items():
-                if dep.source_model not in self._models:
+                if dep.source_model not in self.models:
                     self.deps[sink] = dep
                     self.model_inputs.add_metadata_object(model.model_inputs[sink])
 
@@ -72,8 +72,11 @@ class ModelSet(Model):
         if data is None:
             data = {}
 
-        for model in self._models:
-            results = self.guess_results(model, timestep, data)
+        for model in self.models:
+            sim_data = {}
+            sim_data = self._get_parameter_values(model, sim_data, data)
+
+            results = self.guess_results(model, timestep, sim_data)
             self.iterated_results[-1][model.name] = results
 
         # - keep track of intermediate results (iterations within the timestep)
@@ -99,7 +102,7 @@ class ModelSet(Model):
             The data passed into the model within the set
         """
         self.iterated_results.append({})
-        for model in self._models:
+        for model in self.models:
             model_data = {}
             for input_name, dep in model.deps.items():
                 input_ = model.model_inputs[input_name]
@@ -186,7 +189,7 @@ class ModelSet(Model):
                     model,
                     self.iterated_results[-1][model.name],
                     self.iterated_results[-2][model.name])
-                for model in self._models):
+                for model in self.models):
             # if all most recent are almost equal to penultimate, must have converged
             return True
 

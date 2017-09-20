@@ -5,6 +5,18 @@ The :class:`SectorModel` exposes several key methods for running wrapped
 sector models.  To add a sector model to an instance of the framework,
 first implement :class:`SectorModel`.
 
+Utility Methods
+===============
+A number of utility methods are included to ease the integration of a
+SectorModel wrapper within a System of Systems model.  These include::
+
+get_scenario_data(input_name)
+    Get an array of scenario data (timestep-by-region-by-interval)
+get_region_names(region_set_name)
+    Get a list of region names
+get_interval_names(interval_set_name)
+    Get a list of interval names
+
 Key Functions
 =============
 This class performs several key functions which ease the integration of sector
@@ -53,9 +65,22 @@ class SectorModel(Model, metaclass=ABCMeta):
         super().__init__(name)
 
         self.interventions = []
+        self.timesteps = []
         self.system = []
+        self._user_data = {}
 
         self.logger = logging.getLogger(__name__)
+
+    @property
+    def user_data(self):
+        """A utility dictionary provided for use by the model wrapper
+        """
+        return self._user_data
+
+    @user_data.setter
+    def user_data(self, value):
+        self.logger.debug("Adding %s to user data for %s", value, self.name)
+        self._user_data = value
 
     def add_input(self, name, spatial_resolution, temporal_resolution, units):
         """Add an input to the sector model
@@ -121,11 +146,19 @@ class SectorModel(Model, metaclass=ABCMeta):
     def initialise(self, initial_conditions):
         """Implement this method to set up the model system
 
+        This method is called as the SectorModel is constructed, and prior to
+        establishment of dependencies and other data links.
+
         Arguments
         ---------
         initial_conditions: list
             A list of past Interventions, with build dates and locations as
             necessary to specify the infrastructure system to be modelled.
+        """
+        pass
+
+    def before_model_run(self):
+        """Implement this method to conduct pre-model run tasks
         """
         pass
 
@@ -137,7 +170,8 @@ class SectorModel(Model, metaclass=ABCMeta):
         ---------
         timestep : int
             The timestep for which to run the SectorModel
-        data: dict
+        data: dict, default=None
+            A collection of state, parameter values, dependency inputs
         Returns
         -------
         results : dict
@@ -177,6 +211,40 @@ class SectorModel(Model, metaclass=ABCMeta):
             A scalar component generated from the simulation model results
         """
         pass
+
+    def get_scenario_data(self, input_name):
+        """Returns all scenario dependency data as a numpy array
+
+        Returns
+        -------
+        numpy.ndarray
+            A numpy.ndarray which has the dimensions timestep-by-regions-by-intervals
+        """
+        if input_name not in self.deps:
+            raise ValueError("Scenario data for %s not available for this input",
+                             input_name)
+
+        return self.deps[input_name].source_model._data
+
+    def get_region_names(self, region_set_name):
+        """Get the list of region names for ``region_set_name``
+
+        Returns
+        -------
+        list
+            A list of region names
+        """
+        return self.regions.get_entry(region_set_name).get_entry_names()
+
+    def get_interval_names(self, interval_set_name):
+        """Get the list of interval names for ``interval_set_name``
+
+        Returns
+        -------
+        list
+            A list of interval names
+        """
+        return self.intervals.get_entry(interval_set_name).get_entry_names()
 
 
 class SectorModelBuilder(object):
@@ -225,6 +293,8 @@ class SectorModelBuilder(object):
         self.add_inputs(model_data['inputs'])
         self.add_outputs(model_data['outputs'])
         self.add_interventions(model_data['interventions'])
+        self.add_parameters(model_data['parameters'])
+        self._sector_model.timesteps = model_data['timesteps']
 
     def load_model(self, model_path, classname):
         """Dynamically load model module
@@ -263,6 +333,20 @@ class SectorModelBuilder(object):
         assert self._sector_model is not None, msg
 
         self._sector_model.initialise(initial_conditions)
+
+    def add_parameters(self, parameter_config):
+        """Add parameter configuration to sector model
+
+        Arguments
+        ---------
+        parameter_config : list
+            A list of dicts with keys ``name``, ``description``,
+            ``absolute_range``, ``suggested_range``, ``default_value``,
+            ``units``, ``parent``
+        """
+
+        for parameter in parameter_config:
+            self._sector_model.add_parameter(parameter)
 
     def add_inputs(self, input_dicts):
         """Add inputs to the sector model
