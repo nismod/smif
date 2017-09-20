@@ -48,6 +48,11 @@ from smif.data_layer.sos_model_config import SosModelReader
 from smif.data_layer.sector_model_config import SectorModelReader
 from smif.data_layer.validate import VALIDATION_ERRORS
 
+from smif.convert.area import get_register as get_region_register
+from smif.convert.area import RegionSet
+from smif.convert.interval import get_register as get_interval_register
+from smif.convert.interval import IntervalSet
+
 from smif.modelrun import ModelRunBuilder
 
 __author__ = "Will Usher, Tom Russell"
@@ -107,6 +112,9 @@ logging.config.dictConfig(LOGGING_CONFIG)
 LOGGER = logging.getLogger(__name__)
 LOGGER.debug('Debug logging enabled.')
 
+REGIONS = get_region_register()
+INTERVALS = get_interval_register()
+
 
 def setup_project_folder(project_path):
     """Creates folder structure in the target directory
@@ -144,11 +152,54 @@ def setup_configuration(args):
     LOGGER.info(msg)
 
 
+def load_region_sets(region_sets):
+    """Loads the region sets into the system-of-system model
+
+    Parameters
+    ----------
+    region_sets: list
+        A dict, where key is the name of the region set, and the value
+        the data
+    """
+    assert isinstance(region_sets, dict)
+
+    region_set_definitions = region_sets.items()
+    if len(region_set_definitions) == 0:
+        msg = "No region sets have been defined"
+        LOGGER.warning(msg)
+    for name, data in region_set_definitions:
+        msg = "Region set data is not a list"
+        assert isinstance(data, list), msg
+        REGIONS.register(RegionSet(name, data))
+
+
+def load_interval_sets(interval_sets):
+    """Loads the time-interval sets into the system-of-system model
+
+    Parameters
+    ----------
+    interval_sets: list
+        A dict, where key is the name of the interval set, and the value
+        the data
+    """
+    interval_set_definitions = interval_sets.items()
+    if len(interval_set_definitions) == 0:
+        msg = "No interval sets have been defined"
+        LOGGER.warning(msg)
+
+    for name, data in interval_set_definitions:
+        interval_set = IntervalSet(name, data)
+        INTERVALS.register(interval_set)
+
+
 def run_model(args):
     """Runs the model specified in the args.model argument
 
     """
     model_config = validate_config(args)
+
+    load_region_sets(model_config['region_sets'])
+    load_interval_sets(model_config['interval_sets'])
 
     try:
         builder = ModelRunBuilder()

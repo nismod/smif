@@ -19,12 +19,6 @@ ModeRun has attributes:
 """
 from logging import getLogger
 
-from smif.convert.area import get_register as get_region_register
-from smif.convert.area import RegionSet
-from smif.convert.interval import get_register as get_interval_register
-from smif.convert.interval import IntervalSet
-from smif.model.sos_model import SosModelBuilder
-
 
 class ModelRun(object):
     """
@@ -32,28 +26,20 @@ class ModelRun(object):
 
     def __init__(self):
 
-        self._name = ""
+        self.name = ""
+        self.timestamp = None
         self.description = ""
         self.sos_model = None
         self._model_horizon = []
 
-        self.narratives = None
+        self.scenarios = {}
+        self.narratives = {}
         self.strategies = None
         self.status = 'Empty'
 
         self.logger = getLogger(__name__)
 
-        # space and time
-        self.regions = get_region_register()
-        self.intervals = get_interval_register()
-
         self.results = {}
-
-    @property
-    def name(self):
-        """Unique identifier of the ModelRun
-        """
-        return self._name
 
     @property
     def model_horizon(self):
@@ -83,6 +69,7 @@ class ModelRun(object):
             modelrunner = ModelRunner()
             modelrunner.solve_model(self)
             self.status = 'Successful'
+            return modelrunner.results
         else:
             raise ValueError("Model is not yet built.")
 
@@ -109,7 +96,6 @@ class ModelRunner(object):
         # Solve the models over all timesteps
         for timestep in model_run.model_horizon:
             self.logger.debug('Running model for timestep %s', timestep)
-            data = {}
             data = self._get_parameter_data(model_run)
             self.logger.debug("Passing parameter data %s into '%s'",
                               data, model_run.sos_model.name)
@@ -133,20 +119,20 @@ class ModelRunBuilder(object):
         self.model_run = ModelRun()
         self.logger = getLogger(__name__)
 
-    def construct(self, config_data):
+    def construct(self, model_run_config):
         """Set up the whole ModelRun
 
-        Parameters
-        ----------
-        config_data : dict
-            A valid system-of-systems model configuration dictionary
+        Arguments
+        ---------
+        model_run_config : dict
+            A valid model run configuration dictionary
         """
-        self._add_timesteps(config_data['timesteps'])
-
-        self.load_region_sets(config_data['region_sets'])
-        self.load_interval_sets(config_data['interval_sets'])
-
-        self._add_sos_model(config_data)
+        self.model_run.name = model_run_config['name']
+        self.model_run.timestamp = model_run_config['stamp']
+        self._add_timesteps(model_run_config['timesteps'])
+        self._add_sos_model(model_run_config['sos_model'])
+        self._add_scenarios(model_run_config['scenarios'])
+        self._add_narratives(model_run_config['narratives'])
 
         self.model_run.status = 'Built'
 
@@ -159,58 +145,42 @@ class ModelRunBuilder(object):
         else:
             raise RuntimeError("Run construct() method before finish().")
 
-    def _add_sos_model(self, config_data):
+    def _add_sos_model(self, sos_model_object):
         """
+
+        Arguments
+        ---------
+        sos_model_object : smif.model.sos_model.SosModel
         """
-        builder = SosModelBuilder()
-        builder.construct(config_data, self.model_run.model_horizon)
-        self.model_run.sos_model = builder.finish()
+        self.model_run.sos_model = sos_model_object
 
     def _add_timesteps(self, timesteps):
         """Set the timesteps of the system-of-systems model
 
-        Parameters
-        ----------
+        Arguments
+        ---------
         timesteps : list
             A list of timesteps
         """
         self.logger.info("Adding timesteps to model run")
         self.model_run.model_horizon = timesteps
 
-    def load_region_sets(self, region_sets):
-        """Loads the region sets into the system-of-system model
-
-        Parameters
-        ----------
-        region_sets: list
-            A dict, where key is the name of the region set, and the value
-            the data
+    def _add_scenarios(self, scenarios):
         """
-        assert isinstance(region_sets, dict)
 
-        region_set_definitions = region_sets.items()
-        if len(region_set_definitions) == 0:
-            msg = "No region sets have been defined"
-            self.logger.warning(msg)
-        for name, data in region_set_definitions:
-            msg = "Region set data is not a list"
-            assert isinstance(data, list), msg
-            self.model_run.regions.register(RegionSet(name, data))
-
-    def load_interval_sets(self, interval_sets):
-        """Loads the time-interval sets into the system-of-system model
-
-        Parameters
-        ----------
-        interval_sets: list
-            A dict, where key is the name of the interval set, and the value
-            the data
+        Arguments
+        ---------
+        scenarios : dict
+            A dictionary of {scenario set: scenario name}, one for each scenario set
         """
-        interval_set_definitions = interval_sets.items()
-        if len(interval_set_definitions) == 0:
-            msg = "No interval sets have been defined"
-            self.logger.warning(msg)
+        self.model_run.scenarios = scenarios
 
-        for name, data in interval_set_definitions:
-            interval_set = IntervalSet(name, data)
-            self.model_run.intervals.register(interval_set)
+    def _add_narratives(self, narratives):
+        """
+
+        Arguments
+        ---------
+        narratives : dict
+            A dictionary of {narrative set: narrative name}, one for each narrative set
+        """
+        self.model_run.narratives = narratives

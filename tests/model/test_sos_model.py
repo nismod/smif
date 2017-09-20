@@ -230,6 +230,44 @@ class TestSosModelProperties():
 
 class TestSosModel():
 
+    def test_run_with_global_parameters(self, get_sos_model_object):
+
+        sos_model = get_sos_model_object
+        sos_model.name = 'test_sos_model'
+
+        sos_model_param = {
+            'name': 'sos_model_param',
+            'description': 'A global parameter passed to all contained models',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'}
+
+        sos_model.add_parameter(sos_model_param)
+
+        sos_model.models['water_supply'].simulate = lambda x, y: y
+
+        assert 'sos_model_param' in sos_model.parameters['test_sos_model']
+
+    def test_run_with_sector_parameters(self, get_sos_model_object):
+
+        sos_model = get_sos_model_object
+        sos_model.name = 'test_sos_model'
+
+        sector_model = sos_model.models['water_supply']
+
+        sector_model_param = {
+            'name': 'sector_model_param',
+            'description': 'A model parameter passed to a specific model',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'}
+
+        sector_model.add_parameter(sector_model_param)
+
+        assert 'sector_model_param' in sos_model.parameters['water_supply']
+
     def test_add_parameters(self, get_empty_sector_model):
 
         sos_model_param = {
