@@ -6,8 +6,6 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 from pytest import fixture, raises
-from smif.convert.area import RegionSet
-from smif.convert.interval import IntervalSet
 from smif.metadata import MetadataSet
 from smif.model.dependency import Dependency
 from smif.model.scenario_model import ScenarioModel
@@ -65,7 +63,6 @@ def get_sos_model_object(get_sector_model_object,
     scenario_model = get_scenario_model_object
     sos_model.add_model(sector_model)
     sos_model.add_model(scenario_model)
-    sos_model.timesteps = scenario_model.timesteps
     sector_model.add_dependency(scenario_model, 'raininess', 'raininess')
 
     return sos_model
@@ -122,22 +119,10 @@ def get_sos_model_with_model_dependency():
 
 @fixture(scope='function')
 def get_sos_model_with_summed_dependency(setup_region_data):
+    scenario_model = get_scenario_model_object
+
     builder = SosModelBuilder()
-    builder.load_scenario_models([{
-        'name': 'raininess',
-        'temporal_resolution': 'annual',
-        'spatial_resolution': 'LSOA',
-        'units': 'ml'
-    }], {
-        "raininess": [
-            {
-                'year': 2010,
-                'value': 3,
-                'region': 'oxford',
-                'interval': 1
-            }
-        ]
-    }, [2010, 2011, 2012])
+    builder.load_scenario_models([scenario_model])
 
     sos_model = builder.finish()
 
@@ -438,128 +423,17 @@ class TestSosModel():
 
 
 @fixture(scope='function')
-def get_sector_model_config(setup_project_folder, setup_registers):
+def get_sos_model_config(get_scenario_model_object,
+                         get_sector_model_object):
 
-    path = setup_project_folder
-    water_supply_wrapper_path = str(
-        path.join(
-            'models', 'water_supply', '__init__.py'
-        )
-    )
-
-    config = {"name": "water_supply",
-              "path": water_supply_wrapper_path,
-              "classname": "WaterSupplySectorModel",
-              "inputs": [{'name': 'raininess',
-                          'spatial_resolution': 'LSOA',
-                          'temporal_resolution': 'annual',
-                          'units': 'ml'
-                          }
-                         ],
-              "outputs": [
-                  {
-                      'name': 'cost',
-                      'spatial_resolution': 'LSOA',
-                      'temporal_resolution': 'annual',
-                      'units': 'million GBP'
-                  },
-                  {
-                      'name': 'water',
-                      'spatial_resolution': 'LSOA',
-                      'temporal_resolution': 'annual',
-                      'units': 'Ml'
-                  }
-              ],
-              "initial_conditions": [],
-              "interventions": [
-                  {"name": "water_asset_a", "location": "oxford"},
-                  {"name": "water_asset_b", "location": "oxford"},
-                  {"name": "water_asset_c", "location": "oxford"},
-              ]
-              }
-
-    return config
-
-
-@fixture(scope='function')
-def get_sos_model_config(setup_project_folder):
-
-    path = setup_project_folder
-    water_supply_wrapper_path = str(
-        path.join(
-            'models', 'water_supply', '__init__.py'
-        )
-    )
-
+    scenario_model = get_scenario_model_object
+    sector_model = get_sector_model_object
     config_data = {
-        'timesteps': [2010, 2011, 2012],
-        'planning': [],
-        'dependencies': [],
-        'scenario_metadata':
-            [{
-                'name': 'raininess',
-                'temporal_resolution': 'annual',
-                'spatial_resolution': 'LSOA',
-                'units': 'ml'
-            }],
-        'scenario_data': {
-            'raininess': [
-                {
-                    'year': 2010,
-                    'value': 3,
-                    'region': 'oxford',
-                    'interval': 1
-                },
-                {
-                    'year': 2011,
-                    'value': 5,
-                    'region': 'oxford',
-                    'interval': 1
-                },
-                {
-                    'year': 2012,
-                    'value': 1,
-                    'region': 'oxford',
-                    'interval': 1
-                }
-            ]
-        },
-        "sector_model_data": [
-            {
-                "name": "water_supply",
-                "path": water_supply_wrapper_path,
-                "classname": "WaterSupplySectorModel",
-                "inputs": [
-                    {
-                        'name': 'raininess',
-                        'spatial_resolution': 'LSOA',
-                        'temporal_resolution': 'annual',
-                        'units': 'ml'
-                    }
-                ],
-                "outputs": [
-                    {
-                        'name': 'cost',
-                        'spatial_resolution': 'LSOA',
-                        'temporal_resolution': 'annual',
-                        'units': 'million GBP'
-                    },
-                    {
-                        'name': 'water',
-                        'spatial_resolution': 'LSOA',
-                        'temporal_resolution': 'annual',
-                        'units': 'Ml'
-                    }
-                ],
-                "initial_conditions": [],
-                "parameters": [],
-                "interventions": [
-                    {"name": "water_asset_a", "location": "oxford"},
-                    {"name": "water_asset_b", "location": "oxford"},
-                    {"name": "water_asset_c", "location": "oxford"}
-                ]
-            }
-        ]
+        'name': 'energy_sos_model',
+        'description': 'description of a sos model',
+        'scenario_sets': [scenario_model],
+        'sector_models': [sector_model],
+        'dependencies': []
     }
 
     return config_data
@@ -568,7 +442,7 @@ def get_sos_model_config(setup_project_folder):
 @fixture
 def get_sos_model_config_with_dep(get_sos_model_config):
 
-    dependency_config = [{'source_model': 'raininess',
+    dependency_config = [{'source_model': 'test_scenario_model',
                           'source_model_output': 'raininess',
                           'sink_model': 'water_supply',
                           'sink_model_input': 'raininess'}]
@@ -584,17 +458,19 @@ def get_sos_model_config_with_summed_dependency(get_sos_model_config):
 
     config = get_sos_model_config
 
-    water_model_two = copy(config['sector_model_data'][0])
-    water_model_two['name'] = 'water_supply_two'
+    water_model_two = copy(config['sector_models'][0])
+    water_model_two.name = 'water_supply_two'
 
-    water_model_three = copy(config['sector_model_data'][0])
-    water_model_three['name'] = 'water_supply_three'
-    water_model_three['inputs'] = [{'name': 'water',
-                                    'spatial_resolution': 'LSOA',
-                                    'temporal_resolution': 'annual',
-                                    'units': 'Ml'}]
-    water_model_three['outputs'] = []
+    regions = water_model_two.regions
+    intervals = water_model_two.intervals
 
+    water_model_three = copy(config['sector_models'][0])
+    water_model_three.name = 'water_supply_three'
+
+    water_model_three.add_input('water',
+                                regions.get_entry('LSOA'),
+                                intervals.get_entry('annual'),
+                                'Ml')
     config['dependencies'] = [{'source_model': 'water_supply',
                                'source_model_output': 'water',
                                'sink_model': 'water_supply_three',
@@ -603,16 +479,16 @@ def get_sos_model_config_with_summed_dependency(get_sos_model_config):
                                'source_model_output': 'water',
                                'sink_model': 'water_supply_three',
                                'sink_model_input': 'water'},
-                              {'source_model': 'raininess',
+                              {'source_model': 'test_scenario_model',
                                'source_model_output': 'raininess',
                                'sink_model': 'water_supply',
                                'sink_model_input': 'raininess'},
-                              {'source_model': 'raininess',
+                              {'source_model': 'test_scenario_model',
                                'source_model_output': 'raininess',
                                'sink_model': 'water_supply_two',
                                'sink_model_input': 'raininess'}]
-    config['sector_model_data'].append(water_model_two)
-    config['sector_model_data'].append(water_model_three)
+    config['sector_models'].append(water_model_two)
+    config['sector_models'].append(water_model_three)
     return config
 
 
@@ -623,7 +499,7 @@ class TestSosModelBuilderComponents():
         """
         config = get_sos_model_config
         builder = SosModelBuilder()
-        builder.construct(config, config['timesteps'])
+        builder.construct(config)
         sos_model = builder.finish()
 
         assert isinstance(sos_model, SosModel)
@@ -636,7 +512,7 @@ class TestSosModelBuilderComponents():
         config = get_sos_model_config
         config['max_iterations'] = 125
         builder = SosModelBuilder()
-        builder.construct(config, config['timesteps'])
+        builder.construct(config)
         sos_model = builder.finish()
         assert sos_model.max_iterations == 125
 
@@ -646,7 +522,7 @@ class TestSosModelBuilderComponents():
         config = get_sos_model_config
         config['convergence_absolute_tolerance'] = 0.0001
         builder = SosModelBuilder()
-        builder.construct(config, [2010, 2011, 2012])
+        builder.construct(config)
         sos_model = builder.finish()
         assert sos_model.convergence_absolute_tolerance == 0.0001
 
@@ -656,7 +532,7 @@ class TestSosModelBuilderComponents():
         config = get_sos_model_config
         config['convergence_relative_tolerance'] = 0.1
         builder = SosModelBuilder()
-        builder.construct(config, [2010, 2011, 2012])
+        builder.construct(config)
         sos_model = builder.finish()
         assert sos_model.convergence_relative_tolerance == 0.1
 
@@ -666,70 +542,23 @@ class TestSosModelBuilderComponents():
     def test_load_scenario_models(self, get_sos_model_config):
         config = get_sos_model_config
         builder = SosModelBuilder()
-        builder.construct(config, [2010])
+        builder.construct(config)
         sos_model = builder.finish()
-        scenario = sos_model.models['raininess']
+        scenario = sos_model.models['test_scenario_model']
 
-        expected = {'raininess': {'raininess': np.array([[3.]])}}
+        expected = {'test_scenario_model': {'raininess': np.array([[3.]])}}
 
         assert scenario.simulate(2010) == expected
-
-    def test_add_planning(self):
-        pass
-
-    def test_data_list_to_array(self):
-
-        data = [
-                {
-                    'year': 2010,
-                    'value': 3,
-                    'region': 'oxford',
-                    'interval': 1
-                },
-                {
-                    'year': 2011,
-                    'value': 5,
-                    'region': 'oxford',
-                    'interval': 1
-                },
-                {
-                    'year': 2012,
-                    'value': 1,
-                    'region': 'oxford',
-                    'interval': 1
-                }
-            ]
-
-        builder = SosModelBuilder()
-
-        spatial = builder.region_register.get_entry('LSOA')
-        temporal = builder.interval_register.get_entry('annual')
-
-        actual = builder._data_list_to_array('raininess', data,
-                                             [2010, 2011, 2012],
-                                             spatial, temporal)
-        expected = np.array([[[3.]], [[5.]], [[1.]]], dtype=float)
-        np.testing.assert_equal(actual, expected)
 
 
 class TestSosModelBuilder():
     """Tests that the correct SosModel structure is created from a configuration
     dictionary
 
-    {'sector_model_data': [{'name':,
-                            'path':,
-                            'classname':
-                            'initial_conditions':
-                            'inputs'
-                            'outputs'
-                            'interventions':,
-                            }],
-     'scenario_metadata': [{'name':,
-                           'spatial_resolution':,
-                           'temporal_resolution':,
-                           'units':}],
-     'scenario_data': {},
-     'planning': [],
+    {'name': 'sos_model_name',
+     'description': 'friendly description of the sos model',
+     'sector_models': [sector_model_object],
+     'scenario_sets': [scenario_model_object],
      'max_iterations': ,
      'convergence_absolute_tolerance': ,
      'convergence_relative_tolerance': ,
@@ -739,97 +568,35 @@ class TestSosModelBuilder():
                        'sink_model_output': }]}
 
     """
-
-    def test_builder_interventions(self, get_sos_model_config):
-
-        builder = SosModelBuilder()
-        config_data = get_sos_model_config
-        builder.construct(config_data, config_data['timesteps'])
-        sos_model = builder.finish()
-
-        assert sos_model.sector_models == ['water_supply']
-        assert sos_model.intervention_names == [
-            "water_asset_a",
-            "water_asset_b",
-            "water_asset_c"
-        ]
-
     def test_scenarios(self, get_sos_model_config):
         """Test constructing from single dict config
         """
         config = get_sos_model_config
         builder = SosModelBuilder()
-        builder.construct(config, [2010, 2011, 2012])
+        builder.construct(config)
         sos_model = builder.finish()
 
         assert isinstance(sos_model, SosModel)
         assert sos_model.sector_models == ['water_supply']
         assert isinstance(sos_model.models['water_supply'], SectorModel)
-        assert isinstance(sos_model.models['raininess'], ScenarioModel)
+        assert isinstance(sos_model.models['test_scenario_model'], ScenarioModel)
 
-        actual = sos_model.models['raininess']._data
+        actual = sos_model.models['test_scenario_model']._data
         np.testing.assert_equal(actual,
                                 np.array([[[3.]], [[5.]], [[1.]]], dtype=float))
-
-    def test_missing_planning_asset(self, get_sos_model_config):
-        config = get_sos_model_config
-        config["planning"] = [
-            {
-                "name": "test_intervention",
-                "build_date": 2012
-            }
-        ]
-        builder = SosModelBuilder()
-        builder.construct(config, [2010, 2011, 2012])
-
-        with raises(AssertionError) as ex:
-            builder.finish()
-        assert "Intervention 'test_intervention' in planning file not found" in str(
-            ex.value)
-
-    def test_scenario_dependency(self, get_sos_model_config, setup_region_data):
-        """Expect successful build with dependency on scenario data
-
-        Should raise error if no spatial or temporal sets are defined
-        """
-        config = get_sos_model_config
-        config["sector_model_data"][0]["inputs"] = [
-            {
-                'name': 'raininess',
-                'spatial_resolution': 'blobby',
-                'temporal_resolution': 'annual',
-                'units': 'ml'
-            }
-        ]
-
-        builder = SosModelBuilder()
-        with raises(ValueError):
-            builder.construct(config, [2010, 2011, 2012])
-
-        builder.region_register.register(RegionSet('blobby', setup_region_data['features']))
-
-        interval_data = [
-            {
-                'id': 'ultra',
-                'start': 'P0Y',
-                'end': 'P1Y'
-            }
-        ]
-        builder.interval_register.register(IntervalSet('mega', interval_data))
-        builder.construct(config, [2010, 2011, 2012])
 
     def test_simple_dependency(self, get_sos_model_config_with_dep):
 
         config_data = get_sos_model_config_with_dep
 
         builder = SosModelBuilder()
-        builder.construct(config_data, config_data['timesteps'])
+        builder.construct(config_data)
         sos_model = builder.finish()
 
         sos_model.check_dependencies()
         graph = sos_model.dependency_graph
 
-        scenario = sos_model.models['raininess']
+        scenario = sos_model.models['test_scenario_model']
 
         assert 'water_supply' in sos_model.models
         assert sos_model.models['water_supply'] in graph.nodes()
@@ -838,8 +605,8 @@ class TestSosModelBuilder():
         expected = Dependency(scenario, scenario.model_outputs['raininess'])
         assert deps['raininess'] == expected
 
-        assert 'raininess' in sos_model.models
-        assert sos_model.models['raininess'] in graph.nodes()
+        assert 'test_scenario_model' in sos_model.models
+        assert sos_model.models['test_scenario_model'] in graph.nodes()
 
     def test_cyclic_dependencies(self, get_sos_model_config_with_summed_dependency):
         config_data = get_sos_model_config_with_summed_dependency
@@ -847,7 +614,7 @@ class TestSosModelBuilder():
         builder = SosModelBuilder()
 
         with raises(NotImplementedError):
-            builder.construct(config_data, config_data['timesteps'])
+            builder.construct(config_data)
         # sos_model = builder.finish()
         # sos_model.check_dependencies()
         # graph = sos_model.dependency_graph
@@ -863,238 +630,3 @@ class TestSosModelBuilder():
         # assert (scenario, water_two) in graph.edges()
         # assert (water_one, water_three) in graph.edges()
         # assert (water_two, water_three) in graph.edges()
-
-
-class TestScenarioModel:
-
-    def test_nest_scenario_data(self, setup_country_data):
-        data = {
-            "mass": [
-                {
-                    'year': 2015,
-                    'region': 'GB',
-                    'interval': 'wet_season',
-                    'value': 3
-                },
-                {
-                    'year': 2015,
-                    'region': 'GB',
-                    'interval': 'dry_season',
-                    'value': 5
-                },
-                {
-                    'year': 2015,
-                    'region': 'NI',
-                    'interval': 'wet_season',
-                    'value': 1
-                },
-                {
-                    'year': 2015,
-                    'region': 'NI',
-                    'interval': 'dry_season',
-                    'value': 2
-                },
-                {
-                    'year': 2016,
-                    'region': 'GB',
-                    'interval': 'wet_season',
-                    'value': 4
-                },
-                {
-                    'year': 2016,
-                    'region': 'GB',
-                    'interval': 'dry_season',
-                    'value': 6
-                },
-                {
-                    'year': 2016,
-                    'region': 'NI',
-                    'interval': 'wet_season',
-                    'value': 1
-                },
-                {
-                    'year': 2016,
-                    'region': 'NI',
-                    'interval': 'dry_season',
-                    'value': 2.5
-                }
-            ]
-        }
-
-        expected = np.array([
-                # 2015
-                [
-                    # GB
-                    [3, 5],
-                    # NI
-                    [1, 2]
-                ],
-                # 2016
-                [
-                    # GB
-                    [4, 6],
-                    # NI
-                    [1, 2.5]
-                ]
-            ], dtype=float)
-
-        builder = SosModelBuilder()
-
-        interval_data = [
-            {'id': 'wet_season', 'start': 'P0M', 'end': 'P5M'},
-            {'id': 'dry_season', 'start': 'P5M', 'end': 'P10M'},
-            {'id': 'wet_season', 'start': 'P10M', 'end': 'P1Y'},
-        ]
-        builder.interval_register.register(
-            IntervalSet('seasonal', interval_data))
-        builder.region_register.register(
-            RegionSet('country', setup_country_data['features']))
-
-        builder.load_scenario_models([{
-            'name': 'mass',
-            'spatial_resolution': 'country',
-            'temporal_resolution': 'seasonal',
-            'units': 'kg'
-        }], data, [2015, 2016])
-        actual = builder.sos_model.models['mass']._data
-
-        print(actual)
-        print(expected)
-        assert np.allclose(actual, expected)
-
-    def test_scenario_data_defaults(self, setup_region_data):
-        data = {
-            "length": [
-                {
-                    'year': 2015,
-                    'interval': 1,
-                    'value': 3.14,
-                    'region': 'oxford'
-                }
-            ]
-        }
-
-        expected = np.array([[[3.14]]])
-
-        builder = SosModelBuilder()
-        builder.load_scenario_models([{
-            'name': 'length',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'm'
-        }], data, [2015])
-        assert builder.sos_model.models['length']._data == expected
-
-    def test_scenario_data_missing_year(self, setup_region_data,
-                                        ):
-        data = {
-            "length": [
-                {
-                    'value': 3.14
-                }
-            ]
-        }
-
-        builder = SosModelBuilder()
-
-        msg = "Scenario data item missing year"
-        with raises(ValueError) as ex:
-            builder.load_scenario_models([{
-                'name': 'length',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'm'
-            }], data, [2015])
-        assert msg in str(ex.value)
-
-    def test_scenario_data_missing_param_mapping(self):
-        data = {
-            "length": [
-                {
-                    'value': 3.14,
-                    'year': 2015
-                }
-            ]
-        }
-
-        builder = SosModelBuilder()
-
-        msg = "Parameter 'bla_length' in scenario definitions not registered in scenario data"
-        with raises(ValueError) as ex:
-            builder.load_scenario_models([{
-                'name': 'bla_length',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'm'}],
-                data, [2015])
-        assert msg in str(ex.value)
-
-    def test_scenario_data_missing_param_region(self, setup_region_data,
-                                                ):
-        data = {
-            "length": [
-                {
-                    'value': 3.14,
-                    'region': 'missing',
-                    'interval': 1,
-                    'year': 2015
-                }
-            ]
-        }
-
-        builder = SosModelBuilder()
-
-        msg = "Region 'missing' not defined in set 'LSOA' for parameter 'length'"
-        with raises(ValueError) as ex:
-            builder.load_scenario_models([{
-                'name': 'length',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'm'
-            }], data, [2015])
-        assert msg in str(ex)
-
-    def test_scenario_data_missing_param_interval(self, setup_region_data,
-                                                  ):
-        data = {
-            "length": [
-                {
-                    'value': 3.14,
-                    'region': 'oxford',
-                    'interval': 1,
-                    'year': 2015
-                },
-                {
-                    'value': 3.14,
-                    'region': 'oxford',
-                    'interval': 'extra',
-                    'year': 2015
-                }
-            ]
-        }
-
-        builder = SosModelBuilder()
-        msg = "Interval 'extra' not defined in set 'annual' for parameter 'length'"
-        with raises(ValueError) as ex:
-            builder.load_scenario_models([{
-                'name': 'length',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'm'
-            }], data, [2015])
-        assert msg in str(ex)
-
-    def test_invalid_units_conversion(self, get_sos_model_object):
-        sos_model = get_sos_model_object
-
-        scenario_models = sos_model.scenario_models
-        assert scenario_models == ['test_scenario_model']
-
-        scenario = sos_model.models['test_scenario_model']
-
-        scenario.model_outputs['raininess'].units = 'incompatible'
-
-        with raises(NotImplementedError) as ex:
-            sos_model.simulate(2010)
-
-        assert "Units conversion not implemented" in str(ex.value)
