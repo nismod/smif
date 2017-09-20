@@ -69,55 +69,6 @@ def get_sos_model_object(get_sector_model_object,
 
 
 @fixture(scope='function')
-def get_sos_model_with_model_dependency():
-    sos_model = SosModel('test_sos_model')
-    ws = WaterSupplySectorModel('water_supply')
-    ws.inputs = [
-        {
-            'name': 'raininess',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'ml'
-        }
-    ]
-
-    ws.outputs = [
-        {
-            'name': 'water',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'Ml'
-        },
-        {
-            'name': 'cost',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'million GBP'
-        }
-    ]
-    ws.interventions = [
-        {"name": "water_asset_a", "location": "oxford"},
-        {"name": "water_asset_b", "location": "oxford"},
-        {"name": "water_asset_c", "location": "oxford"}
-    ]
-    sos_model.add_model(ws)
-
-    ws2 = WaterSupplySectorModel('water_supply_2')
-    ws2.inputs = [
-        {
-            'name': 'water',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'Ml'
-        }
-    ]
-    ws2.add_dependency(ws, 'water', 'water')
-    sos_model.add_model(ws2)
-
-    return sos_model
-
-
-@fixture(scope='function')
 def get_sos_model_with_summed_dependency(setup_region_data):
     scenario_model = get_scenario_model_object
 
@@ -607,6 +558,18 @@ class TestSosModelBuilder():
 
         assert 'test_scenario_model' in sos_model.models
         assert sos_model.models['test_scenario_model'] in graph.nodes()
+
+    def test_invalid_unit_conversion(self, get_sos_model_object):
+
+        sos_model = get_sos_model_object
+        scenario = sos_model.models['test_scenario_model']
+
+        scenario.model_outputs['raininess'].units = 'incompatible'
+
+        with raises(NotImplementedError) as ex:
+            sos_model.simulate(2010)
+
+        assert "Units conversion not implemented" in str(ex.value)
 
     def test_cyclic_dependencies(self, get_sos_model_config_with_summed_dependency):
         config_data = get_sos_model_config_with_summed_dependency
