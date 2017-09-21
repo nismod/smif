@@ -22,12 +22,13 @@ def get_sector_model_config(setup_project_folder, setup_registers):
     )
 
     config = {"name": "water_supply",
+              "description": 'a description',
               "path": water_supply_wrapper_path,
               "classname": "WaterSupplySectorModel",
               "inputs": [{'name': 'raininess',
                           'spatial_resolution': 'LSOA',
                           'temporal_resolution': 'annual',
-                          'units': 'ml'
+                          'units': 'milliliter'
                           }
                          ],
               "outputs": [
@@ -41,7 +42,7 @@ def get_sector_model_config(setup_project_folder, setup_registers):
                       'name': 'water',
                       'spatial_resolution': 'LSOA',
                       'temporal_resolution': 'annual',
-                      'units': 'Ml'
+                      'units': 'megaliter'
                   }
               ],
               "initial_conditions": [],
@@ -177,6 +178,21 @@ class TestSectorModelBuilder():
             builder.load_model('/fictional/path/to/model.py', 'WaterSupplySectorModel')
         msg = "Cannot find '/fictional/path/to/model.py' for the 'water_supply' model"
         assert msg in str(ex.value)
+
+    def test_build_from_config(self, get_sector_model_config):
+        config = get_sector_model_config
+        builder = SectorModelBuilder('test_sector_model')
+        builder.construct(config)
+        sector_model = builder.finish()
+        assert sector_model.name == 'water_supply'
+
+        actual = sector_model.as_dict()
+
+        assert actual == config
+
+        assert actual['name'] == config['name']
+        assert actual['description'] == config['description']
+        assert actual['path'] == config['path']
 
 
 class TestInputs:
