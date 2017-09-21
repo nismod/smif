@@ -55,6 +55,36 @@ class SosModel(CompositeModel):
         # scenario data and results
         self._results = defaultdict(dict)
 
+    def as_dict(self):
+        """Serialize the SosModel object
+
+        Returns
+        -------
+        dict
+        """
+
+        dependencies = []
+        for model in self.models.values():
+            for name, dep in model.deps.items():
+                dep_config = {'source_model': dep.source_model.name,
+                              'source_model_output': dep.source.name,
+                              'sink_model': model.name,
+                              'sink_model_input': name}
+                dependencies.append(dep_config)
+
+        config = {
+            'name': self.name,
+            'description': self.description,
+            'scenario_sets': self.scenario_models,
+            'sector_models': self.sector_models,
+            'dependencies': dependencies,
+            'max_iterations': self.max_iterations,
+            'convergence_absolute_tolerance': self.convergence_absolute_tolerance,
+            'convergence_relative_tolerance': self.convergence_relative_tolerance
+        }
+
+        return config
+
     def add_model(self, model):
         """Adds a sector model to the system-of-systems model
 

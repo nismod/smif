@@ -166,6 +166,29 @@ class TestSosModelProperties():
 
 class TestSosModel():
 
+    def test_serialise_configuration(self, get_sos_model_object):
+        """Tests that as_dict function correctly returns configuration
+        as a dictionary
+        """
+        sos_model = get_sos_model_object
+        actual = sos_model.as_dict()
+        expected = {
+            'name': 'test_sos_model',
+            'description': '',
+            'scenario_sets': ['test_scenario_model'],
+            'sector_models': ['water_supply'],
+            'dependencies': [{
+                'source_model': 'test_scenario_model',
+                'source_model_output': 'raininess',
+                'sink_model': 'water_supply',
+                'sink_model_input': 'raininess'
+            }],
+            'max_iterations': 25,
+            'convergence_absolute_tolerance': 1e-8,
+            'convergence_relative_tolerance': 1e-5
+        }
+        assert actual == expected
+
     def test_run_with_global_parameters(self, get_sos_model_object):
 
         sos_model = get_sos_model_object

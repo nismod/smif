@@ -66,6 +66,7 @@ class Model(metaclass=ABCMeta):
 
     def __init__(self, name):
         self.name = name
+        self.description = ''
         self._model_inputs = MetadataSet([])
         self._model_outputs = MetadataSet([])
         self.deps = {}
