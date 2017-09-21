@@ -5,10 +5,11 @@ from abc import ABCMeta, abstractmethod
 import yaml
 import os
 
+
 class DataInterface(metaclass=ABCMeta):
 
     @abstractmethod
-    def read_sos_model_runs(self): 
+    def read_sos_model_runs(self):
         raise NotImplementedError()
 
     @abstractmethod
@@ -115,13 +116,14 @@ class DataInterface(metaclass=ABCMeta):
     def write_narrative_data(self, narrative_set_name, data):
         raise NotImplementedError()
 
+
 class YamlInterface(DataInterface):
     """ Read and write interface to YAML configuration files
     """
     def __init__(self, config_path):
         self.config_path = config_path
 
-    def read_sos_model_runs(self): 
+    def read_sos_model_runs(self):
         raise NotImplementedError()
 
     def write_sos_model_run(self, sos_model_run):
@@ -133,7 +135,9 @@ class YamlInterface(DataInterface):
         name : sos_model_run
             Dictionary containing sos_model_run configuration
         """
-        with open(self.config_path + '/model_runs' + '/' + sos_model_run['name'] + '.yml', 'w') as outfile:
+        filename = sos_model_run['name'] + '.yml'
+        filepath = str(self.config_path.join('sos_model_runs'))
+        with open(os.path.join(filepath, filename), 'w') as outfile:
             yaml.dump(sos_model_run, outfile, default_flow_style=False)
 
     def read_sos_models(self):
@@ -146,9 +150,11 @@ class YamlInterface(DataInterface):
         Arguments
         ---------
         name : sos_model
-            Dictionary containing sos_model configuration         
+            Dictionary containing sos_model configuration
         """
-        with open(self.config_path + '/sos_models' + '/' + sos_model['name'] + '.yml', 'w') as outfile:
+        filename = sos_model['name'] + '.yml'
+        filepath = str(self.config_path.join('sos_models'))
+        with open(os.path.join(filepath, filename), 'w') as outfile:
             yaml.dump(sos_model, outfile, default_flow_style=False)
 
     def read_sector_models(self):
@@ -166,7 +172,9 @@ class YamlInterface(DataInterface):
         name : sector_model
             Dictionary containing sector_model configuration
         """
-        with open(self.config_path + '/sector_model' + '/' + sector_model['name'] + '.yml', 'w') as outfile:
+        filename = sector_model['name'] + '.yml'
+        filepath = str(self.config_path.join('sector_models'))
+        with open(os.path.join(filepath, filename), 'w') as outfile:
             yaml.dump(sector_model, outfile, default_flow_style=False)
 
     def read_region_sets(self):
