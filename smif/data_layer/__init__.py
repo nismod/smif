@@ -2,8 +2,8 @@
 """Data access modules for loading system-of-systems model configuration
 """
 from abc import ABCMeta, abstractmethod
-import yaml
 import os
+import yaml
 
 
 class DataInterface(metaclass=ABCMeta):
@@ -13,11 +13,19 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_sos_model_run(self, model_run):
+    def read_sos_model_run(self, sos_model_run_name):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_sos_model_run(self, sos_model_run):
         raise NotImplementedError()
 
     @abstractmethod
     def read_sos_models(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read_sos_model(self, sos_model_name):
         raise NotImplementedError()
 
     @abstractmethod
@@ -121,10 +129,31 @@ class YamlInterface(DataInterface):
     """ Read and write interface to YAML configuration files
     """
     def __init__(self, config_path):
-        self.config_path = config_path
+        """Initialize file paths
+        """
+        config_path = str(config_path)
+        self.filepath = {
+            'sos_model_runs': os.path.join(config_path, 'sos_model_runs'),
+            'sos_models': os.path.join(config_path, 'sos_models'),
+            'sector_models': os.path.join(config_path, 'sector_models')
+        }
 
     def read_sos_model_runs(self):
-        raise NotImplementedError()
+        """Returns a list of excisting sos_model_runs
+        """
+        return self.__read_yaml_files(self.filepath['sos_model_runs'])
+
+    def read_sos_model_run(self, sos_model_run_name):
+        """Read a sos_model_run dictionary from a Yaml file
+        raises an exception when the file does not excists
+
+        Arguments
+        ---------
+        name : sos_model_run_name
+            String containing sos_model_run['name']
+        """
+        return self.__read_yaml_file(self.filepath['sos_model_runs'],
+                                     sos_model_run_name)
 
     def write_sos_model_run(self, sos_model_run):
         """Write sos_model_run dictionary to Yaml file
@@ -133,15 +162,26 @@ class YamlInterface(DataInterface):
         Arguments
         ---------
         name : sos_model_run
-            Dictionary containing sos_model_run configuration
+            Dictionary containing sos_model_run
         """
-        filename = sos_model_run['name'] + '.yml'
-        filepath = str(self.config_path.join('sos_model_runs'))
-        with open(os.path.join(filepath, filename), 'w') as outfile:
-            yaml.dump(sos_model_run, outfile, default_flow_style=False)
+        self.__write_yaml_file(self.filepath['sos_model_runs'],
+                               sos_model_run['name'], sos_model_run)
 
     def read_sos_models(self):
-        raise NotImplementedError()
+        """Returns a list of excisting sos_models
+        """
+        return self.__read_yaml_files(self.filepath['sos_models'])
+
+    def read_sos_model(self, sos_model_name):
+        """Read a sos_model dictionary from a Yaml file
+        raises an exception when the file does not excists
+
+        Arguments
+        ---------
+        name : sos_model_name
+            String containing sos_model['name']
+        """
+        return self.__read_yaml_file(self.filepath['sos_models'], sos_model_name)
 
     def write_sos_model(self, sos_model):
         """Write sos_model dictionary to Yaml file
@@ -150,18 +190,25 @@ class YamlInterface(DataInterface):
         Arguments
         ---------
         name : sos_model
-            Dictionary containing sos_model configuration
+            Dictionary containing sos_model
         """
-        filename = sos_model['name'] + '.yml'
-        filepath = str(self.config_path.join('sos_models'))
-        with open(os.path.join(filepath, filename), 'w') as outfile:
-            yaml.dump(sos_model, outfile, default_flow_style=False)
+        self.__write_yaml_file(self.filepath['sos_models'], sos_model['name'], sos_model)
 
     def read_sector_models(self):
-        raise NotImplementedError()
+        """Returns a list of excisting sector_models
+        """
+        return self.__read_yaml_files(self.filepath['sector_models'])
 
     def read_sector_model(self, sector_model_name):
-        raise NotImplementedError()
+        """Read a sector_model dictionary from a Yaml file
+        raises an exception when the file does not excists
+
+        Arguments
+        ---------
+        name : sector_model_name
+            String containing sector_model['name']
+        """
+        return self.__read_yaml_file(self.filepath['sector_models'], sector_model_name)
 
     def write_sector_model(self, sector_model):
         """Write sos_model dictionary to Yaml file
@@ -170,12 +217,10 @@ class YamlInterface(DataInterface):
         Arguments
         ---------
         name : sector_model
-            Dictionary containing sector_model configuration
+            Dictionary containing sector_model
         """
-        filename = sector_model['name'] + '.yml'
-        filepath = str(self.config_path.join('sector_models'))
-        with open(os.path.join(filepath, filename), 'w') as outfile:
-            yaml.dump(sector_model, outfile, default_flow_style=False)
+        self.__write_yaml_file(self.filepath['sector_models'], sector_model['name'],
+                               sector_model)
 
     def read_region_sets(self):
         raise NotImplementedError()
@@ -236,3 +281,20 @@ class YamlInterface(DataInterface):
 
     def write_narrative_data(self, narrative_set_name, data):
         raise NotImplementedError()
+
+    def __read_yaml_files(self, path):
+        files = list()
+        for file in os.listdir(path):
+            if file.endswith('.yml'):
+                files.append(os.path.splitext(file)[0])
+        return files
+
+    def __read_yaml_file(self, path, filename):
+        filename = filename + '.yml'
+        with open(os.path.join(path, filename), 'r') as stream:
+            return yaml.load(stream)
+
+    def __write_yaml_file(self, path, filename, contents):
+        filename = filename + '.yml'
+        with open(os.path.join(path, filename), 'w') as outfile:
+            yaml.dump(contents, outfile, default_flow_style=False)

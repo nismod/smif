@@ -113,31 +113,43 @@ def get_sector_model():
     }
 
 
-def test_yaml_write_sos_model_run(get_sos_model_run, setup_folder_structure):
-    """ Test to write a sos_model_run configuration to a Yaml file
+def test_yaml_sos_model_run(get_sos_model_run, setup_folder_structure):
+    """ Test to write a sos_model_run configuration to a Yaml file, then
+    read the Yaml file and compare that the result is equal.
+    Finally check if the name shows up the the readlist.
     """
     sos_model_run = get_sos_model_run
     basefolder = setup_folder_structure
+    config_handler = YamlInterface(basefolder.join('config'))
 
-    config_file_handle = YamlInterface(basefolder.join('config'))
-    config_file_handle.write_sos_model_run(sos_model_run)
+    config_handler.write_sos_model_run(sos_model_run)
+    assert sos_model_run == config_handler.read_sos_model_run(sos_model_run['name'])
+    assert sos_model_run['name'] in config_handler.read_sos_model_runs()
 
 
-def test_yaml_write_sos_model(get_sos_model, setup_folder_structure):
+def test_yaml_sos_model(get_sos_model, setup_folder_structure):
     """ Test to write a sos_model configuration to a Yaml file
+    read the Yaml file and compare that the result is equal.
+    Finally check if the name shows up the the readlist.
     """
     sos_model = get_sos_model
     basefolder = setup_folder_structure
 
-    config_file_handle = YamlInterface(basefolder.join('config'))
-    config_file_handle.write_sos_model(sos_model)
+    config_handler = YamlInterface(basefolder.join('config'))
+    config_handler.write_sos_model(sos_model)
+    assert sos_model == config_handler.read_sos_model(sos_model['name'])
+    assert sos_model['name'] in config_handler.read_sos_models()
 
 
-def test_yaml_write_sector_model(get_sector_model, setup_folder_structure):
+def test_yaml_sector_model(get_sector_model, setup_folder_structure):
     """ Test to write a sector_model configuration to a Yaml file
+    read the Yaml file and compare that the result is equal.
+    Finally check if the name shows up the the readlist.
     """
     sector_model = get_sector_model
     basefolder = setup_folder_structure
 
-    config_file_handle = YamlInterface(basefolder.join('config'))
-    config_file_handle.write_sector_model(sector_model)
+    config_handler = YamlInterface(basefolder.join('config'))
+    config_handler.write_sector_model(sector_model)
+    assert sector_model == config_handler.read_sector_model(sector_model['name'])
+    assert sector_model['name'] in config_handler.read_sector_models()
