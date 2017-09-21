@@ -4,11 +4,56 @@ from copy import copy
 from unittest.mock import Mock
 
 import numpy as np
-from pytest import raises
+from pytest import fixture, raises
 from smif.metadata import Metadata, MetadataSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
 from smif.parameters import ParameterList
+
+
+@fixture(scope='function')
+def get_sector_model_config(setup_project_folder, setup_registers):
+
+    path = setup_project_folder
+    water_supply_wrapper_path = str(
+        path.join(
+            'models', 'water_supply', '__init__.py'
+        )
+    )
+
+    config = {"name": "water_supply",
+              "path": water_supply_wrapper_path,
+              "classname": "WaterSupplySectorModel",
+              "inputs": [{'name': 'raininess',
+                          'spatial_resolution': 'LSOA',
+                          'temporal_resolution': 'annual',
+                          'units': 'ml'
+                          }
+                         ],
+              "outputs": [
+                  {
+                      'name': 'cost',
+                      'spatial_resolution': 'LSOA',
+                      'temporal_resolution': 'annual',
+                      'units': 'million GBP'
+                  },
+                  {
+                      'name': 'water',
+                      'spatial_resolution': 'LSOA',
+                      'temporal_resolution': 'annual',
+                      'units': 'Ml'
+                  }
+              ],
+              "initial_conditions": [],
+              "interventions": [
+                  {"name": "water_asset_a", "location": "oxford"},
+                  {"name": "water_asset_b", "location": "oxford"},
+                  {"name": "water_asset_c", "location": "oxford"},
+              ],
+              "parameters": []
+              }
+
+    return config
 
 
 class EmptySectorModel(SectorModel):

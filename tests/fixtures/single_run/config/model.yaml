@@ -1,3 +1,6 @@
+name: a test modelrun
+description: a description
+stamp: '2017-09-20T12:53:23+00:00'
 sector_models:
   - name: water_supply                # model name for internal/logging reference
     path: ../models/water_supply.py   # path to python file
