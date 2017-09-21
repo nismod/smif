@@ -157,14 +157,14 @@ def load_region_sets(region_sets):
 
     Parameters
     ----------
-    region_sets: list
+    region_sets: dict
         A dict, where key is the name of the region set, and the value
         the data
     """
     assert isinstance(region_sets, dict)
 
     region_set_definitions = region_sets.items()
-    if len(region_set_definitions) == 0:
+    if not region_set_definitions:
         msg = "No region sets have been defined"
         LOGGER.warning(msg)
     for name, data in region_set_definitions:
@@ -178,12 +178,12 @@ def load_interval_sets(interval_sets):
 
     Parameters
     ----------
-    interval_sets: list
+    interval_sets: dict
         A dict, where key is the name of the interval set, and the value
         the data
     """
     interval_set_definitions = interval_sets.items()
-    if len(interval_set_definitions) == 0:
+    if not interval_set_definitions:
         msg = "No interval sets have been defined"
         LOGGER.warning(msg)
 

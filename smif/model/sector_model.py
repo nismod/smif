@@ -415,10 +415,9 @@ class SectorModelBuilder(object):
     def add_initial_conditions(self, initial_conditions):
         """Adds initial conditions (state) for a model
         """
-        state_data = filter(
-            lambda d: len(d.data) > 0,
-            [self.intervention_state_from_data(datum) for datum in initial_conditions]
-        )
+        state_data = [self.intervention_state_from_data(datum)
+                      for datum in initial_conditions
+                      if datum.data]
         self._sector_model._initial_state = list(state_data)
 
     @staticmethod
