@@ -55,6 +55,15 @@ class Metadata(object):
             and self.temporal_resolution == other.temporal_resolution \
             and self.units == other.units
 
+    def as_dict(self):
+        config = {
+            'name': self.name,
+            'spatial_resolution': self.spatial_resolution.name,
+            'temporal_resolution': self.temporal_resolution.name,
+            'units': self.units
+        }
+        return config
+
     def normalise_unit(self, unit_string, param_name):
         """Parse unit and return standard string representation
         """
