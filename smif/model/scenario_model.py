@@ -100,18 +100,21 @@ class ScenarioModelBuilder(object):
         data : list
         timesteps : list
         """
-        name = scenario_config['name']
-
         spatial = scenario_config['spatial_resolution']
         temporal = scenario_config['temporal_resolution']
 
         spatial_res = self.region_register.get_entry(spatial)
         temporal_res = self.interval_register.get_entry(temporal)
 
-        self.scenario.add_output(name,
+        self.scenario.scenario_set = scenario_config['scenario_set']
+        name = scenario_config['name']
+        self.scenario.name = name
+        self.scenario.add_output(scenario_config['parameter'],
                                  spatial_res,
                                  temporal_res,
                                  scenario_config['units'])
+
+        self.scenario.filename = scenario_config['filename']
 
         array_data = self._data_list_to_array(name, data,
                                               timesteps,
