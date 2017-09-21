@@ -11,6 +11,7 @@ def get_model_run_config_data():
         'name': 'unique_model_run_name',
         'stamp': '2017-09-20T12:53:23+00:00',
         'description': 'a description of what the model run contains',
+        'decision_module': None,
         'timesteps': [2010, 2011, 2012],
         'sos_model': Mock(sector_models=[]),
         'scenarios':
@@ -57,3 +58,14 @@ class TestModelRun:
     def test_run_static(self, get_model_run):
         model_run = get_model_run
         model_run.run()
+
+    def test_serialize(self, get_model_run_config_data):
+        builder = ModelRunBuilder()
+
+        config = get_model_run_config_data
+
+        builder.construct(config)
+        model_run = builder.finish()
+
+        config = model_run.as_dict()
+        assert config == config

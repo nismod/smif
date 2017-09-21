@@ -21,11 +21,10 @@ from logging import getLogger
 
 
 class ModelRun(object):
-    """
+    """Collects timesteps, scenarios , narratives and a SosModel together
     """
 
     def __init__(self):
-
         self.name = ""
         self.timestamp = None
         self.description = ""
@@ -40,6 +39,29 @@ class ModelRun(object):
         self.logger = getLogger(__name__)
 
         self.results = {}
+
+    def as_dict(self):
+        """Serialises ModelRun
+
+        Returns a dictionary definition of a ModelRun which is
+        equivalent to that required by :class:`smif.modelrun.ModelRunBuilder`
+        to construct a new model run
+
+        Returns
+        -------
+        dict
+        """
+        config = {
+            'name': self.name,
+            'description': self.description,
+            'stamp': self.timestamp,
+            'timesteps': self._model_horizon,
+            'sos_model': self.sos_model.name,
+            'decision_module': None,
+            'scenarios': self.scenarios,
+            'narratives': self.narratives,
+            }
+        return config
 
     @property
     def model_horizon(self):
@@ -128,6 +150,7 @@ class ModelRunBuilder(object):
             A valid model run configuration dictionary
         """
         self.model_run.name = model_run_config['name']
+        self.model_run.description = model_run_config['description']
         self.model_run.timestamp = model_run_config['stamp']
         self._add_timesteps(model_run_config['timesteps'])
         self._add_sos_model(model_run_config['sos_model'])
