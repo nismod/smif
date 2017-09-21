@@ -141,7 +141,7 @@ class YamlInterface(DataInterface):
     def read_sos_model_runs(self):
         """Returns a list of excisting sos_model_runs
         """
-        return self.__read_yaml_files(self.filepath['sos_model_runs'])
+        return self._read_yaml_files(self.filepath['sos_model_runs'])
 
     def read_sos_model_run(self, sos_model_run_name):
         """Read a sos_model_run dictionary from a Yaml file
@@ -152,8 +152,8 @@ class YamlInterface(DataInterface):
         name : sos_model_run_name
             String containing sos_model_run['name']
         """
-        return self.__read_yaml_file(self.filepath['sos_model_runs'],
-                                     sos_model_run_name)
+        return self._read_yaml_file(self.filepath['sos_model_runs'],
+                                    sos_model_run_name)
 
     def write_sos_model_run(self, sos_model_run):
         """Write sos_model_run dictionary to Yaml file
@@ -164,13 +164,13 @@ class YamlInterface(DataInterface):
         name : sos_model_run
             Dictionary containing sos_model_run
         """
-        self.__write_yaml_file(self.filepath['sos_model_runs'],
-                               sos_model_run['name'], sos_model_run)
+        self._write_yaml_file(self.filepath['sos_model_runs'],
+                              sos_model_run['name'], sos_model_run)
 
     def read_sos_models(self):
         """Returns a list of excisting sos_models
         """
-        return self.__read_yaml_files(self.filepath['sos_models'])
+        return self._read_yaml_files(self.filepath['sos_models'])
 
     def read_sos_model(self, sos_model_name):
         """Read a sos_model dictionary from a Yaml file
@@ -181,7 +181,7 @@ class YamlInterface(DataInterface):
         name : sos_model_name
             String containing sos_model['name']
         """
-        return self.__read_yaml_file(self.filepath['sos_models'], sos_model_name)
+        return self._read_yaml_file(self.filepath['sos_models'], sos_model_name)
 
     def write_sos_model(self, sos_model):
         """Write sos_model dictionary to Yaml file
@@ -192,12 +192,12 @@ class YamlInterface(DataInterface):
         name : sos_model
             Dictionary containing sos_model
         """
-        self.__write_yaml_file(self.filepath['sos_models'], sos_model['name'], sos_model)
+        self._write_yaml_file(self.filepath['sos_models'], sos_model['name'], sos_model)
 
     def read_sector_models(self):
         """Returns a list of excisting sector_models
         """
-        return self.__read_yaml_files(self.filepath['sector_models'])
+        return self._read_yaml_files(self.filepath['sector_models'])
 
     def read_sector_model(self, sector_model_name):
         """Read a sector_model dictionary from a Yaml file
@@ -208,7 +208,7 @@ class YamlInterface(DataInterface):
         name : sector_model_name
             String containing sector_model['name']
         """
-        return self.__read_yaml_file(self.filepath['sector_models'], sector_model_name)
+        return self._read_yaml_file(self.filepath['sector_models'], sector_model_name)
 
     def write_sector_model(self, sector_model):
         """Write sos_model dictionary to Yaml file
@@ -219,8 +219,8 @@ class YamlInterface(DataInterface):
         name : sector_model
             Dictionary containing sector_model
         """
-        self.__write_yaml_file(self.filepath['sector_models'], sector_model['name'],
-                               sector_model)
+        self._write_yaml_file(self.filepath['sector_models'], sector_model['name'],
+                              sector_model)
 
     def read_region_sets(self):
         raise NotImplementedError()
@@ -282,19 +282,46 @@ class YamlInterface(DataInterface):
     def write_narrative_data(self, narrative_set_name, data):
         raise NotImplementedError()
 
-    def __read_yaml_files(self, path):
+    def _read_yaml_files(self, path):
+        """Returns the name of the Yaml files in a certain directory
+
+        Arguments
+        ---------
+        path : string
+            Path to directory
+        """
         files = list()
         for file in os.listdir(path):
             if file.endswith('.yml'):
                 files.append(os.path.splitext(file)[0])
         return files
 
-    def __read_yaml_file(self, path, filename):
+    def _read_yaml_file(self, path, filename):
+        """Returns the contents of a Yaml file in a Dict
+
+        Arguments
+        ---------
+        path : string
+            Path to directory
+        name : string
+            Name of file
+        """
         filename = filename + '.yml'
         with open(os.path.join(path, filename), 'r') as stream:
             return yaml.load(stream)
 
-    def __write_yaml_file(self, path, filename, contents):
+    def _write_yaml_file(self, path, filename, contents):
+        """Writes a Dict to a Yaml file
+
+        Arguments
+        ---------
+        path : string
+            Path to directory
+        name : string
+            Name of file
+        contents: dics
+            Contents to be written to the file
+        """
         filename = filename + '.yml'
         with open(os.path.join(path, filename), 'w') as outfile:
             yaml.dump(contents, outfile, default_flow_style=False)
