@@ -13,19 +13,11 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_sos_model_run(self, sos_model_run_name):
-        raise NotImplementedError()
-
-    @abstractmethod
     def write_sos_model_run(self, sos_model_run):
         raise NotImplementedError()
 
     @abstractmethod
     def read_sos_models(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_sos_model(self, sos_model_name):
         raise NotImplementedError()
 
     @abstractmethod
@@ -125,8 +117,8 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
 
-class YamlInterface(DataInterface):
-    """ Read and write interface to YAML configuration files
+class DatafileInterface(DataInterface):
+    """ Read and write interface to YAML / CSV configuration files
     """
     def __init__(self, config_path):
         """Initialize file paths
@@ -139,21 +131,16 @@ class YamlInterface(DataInterface):
         }
 
     def read_sos_model_runs(self):
-        """Returns a list of excisting sos_model_runs
+        """Returns a list of sos_model_run dictionaries
         """
-        return self._read_yaml_files(self.filepath['sos_model_runs'])
+        sos_model_runs = list()
 
-    def read_sos_model_run(self, sos_model_run_name):
-        """Read a sos_model_run dictionary from a Yaml file
-        raises an exception when the file does not excists
+        sos_model_run_names = self._read_yaml_filenames_in_dir(self.filepath['sos_model_runs'])
+        for sos_model_run_name in sos_model_run_names:
+            sos_model_runs.append(self._read_yaml_file(self.filepath['sos_model_runs'],
+                                                       sos_model_run_name))
 
-        Arguments
-        ---------
-        name : sos_model_run_name
-            String containing sos_model_run['name']
-        """
-        return self._read_yaml_file(self.filepath['sos_model_runs'],
-                                    sos_model_run_name)
+        return sos_model_runs
 
     def write_sos_model_run(self, sos_model_run):
         """Write sos_model_run dictionary to Yaml file
@@ -168,20 +155,16 @@ class YamlInterface(DataInterface):
                               sos_model_run['name'], sos_model_run)
 
     def read_sos_models(self):
-        """Returns a list of excisting sos_models
+        """Returns a list of sos_model dictionaries
         """
-        return self._read_yaml_files(self.filepath['sos_models'])
+        sos_models = list()
 
-    def read_sos_model(self, sos_model_name):
-        """Read a sos_model dictionary from a Yaml file
-        raises an exception when the file does not excists
+        sos_model_names = self._read_yaml_filenames_in_dir(self.filepath['sos_models'])
+        for sos_model_name in sos_model_names:
+            sos_models.append(self._read_yaml_file(self.filepath['sos_models'],
+                                                   sos_model_name))
 
-        Arguments
-        ---------
-        name : sos_model_name
-            String containing sos_model['name']
-        """
-        return self._read_yaml_file(self.filepath['sos_models'], sos_model_name)
+        return sos_models
 
     def write_sos_model(self, sos_model):
         """Write sos_model dictionary to Yaml file
@@ -197,7 +180,7 @@ class YamlInterface(DataInterface):
     def read_sector_models(self):
         """Returns a list of excisting sector_models
         """
-        return self._read_yaml_files(self.filepath['sector_models'])
+        return self._read_yaml_filenames_in_dir(self.filepath['sector_models'])
 
     def read_sector_model(self, sector_model_name):
         """Read a sector_model dictionary from a Yaml file
@@ -282,7 +265,7 @@ class YamlInterface(DataInterface):
     def write_narrative_data(self, narrative_set_name, data):
         raise NotImplementedError()
 
-    def _read_yaml_files(self, path):
+    def _read_yaml_filenames_in_dir(self, path):
         """Returns the name of the Yaml files in a certain directory
 
         Arguments
@@ -325,3 +308,91 @@ class YamlInterface(DataInterface):
         filename = filename + '.yml'
         with open(os.path.join(path, filename), 'w') as outfile:
             yaml.dump(contents, outfile, default_flow_style=False)
+
+
+class DatabaseInterface(DataInterface):
+    """ Read and write interface to Database
+    """
+    def __init__(self, config_path):
+        raise NotImplementedError()
+
+    def read_sos_model_runs(self):
+        raise NotImplementedError()
+
+    def write_sos_model_run(self, sos_model_run):
+        raise NotImplementedError()
+
+    def read_sos_models(self):
+        raise NotImplementedError()
+
+    def write_sos_model(self, sos_model):
+        raise NotImplementedError()
+
+    def read_sector_models(self):
+        raise NotImplementedError()
+
+    def read_sector_model(self, sector_model_name):
+        raise NotImplementedError()
+
+    def write_sector_model(self, sector_model):
+        raise NotImplementedError()
+
+    def read_region_sets(self):
+        raise NotImplementedError()
+
+    def read_region_set_data(self, region_set_name):
+        raise NotImplementedError()
+
+    def read_interval_sets(self):
+        raise NotImplementedError()
+
+    def read_interval_set_data(self, interval_set_name):
+        raise NotImplementedError()
+
+    def read_units(self):
+        raise NotImplementedError()
+
+    def write_region_set(self, data):
+        raise NotImplementedError()
+
+    def write_interval_set(self, data):
+        raise NotImplementedError()
+
+    def write_units(self, data):
+        raise NotImplementedError()
+
+    def read_scenario_sets(self):
+        raise NotImplementedError()
+
+    def read_scenarios(self, scenario_set_name):
+        raise NotImplementedError()
+
+    def read_scenario_data(self, scenario_name):
+        raise NotImplementedError()
+
+    def write_scenario_set(self, scenario_set):
+        raise NotImplementedError()
+
+    def write_scenario(self, scenario):
+        raise NotImplementedError()
+
+    def write_scenario_data(self, scenario_name, data):
+        raise NotImplementedError()
+
+    def read_narrative_sets(self):
+        raise NotImplementedError()
+
+    def read_narratives(self, narrative_set_name):
+        raise NotImplementedError()
+
+    def read_narrative_data(self, narrative_name):
+        raise NotImplementedError()
+
+    def write_narrative_set(self, narrative_set):
+        raise NotImplementedError()
+
+    def write_narrative(self, narrative):
+        raise NotImplementedError()
+
+    def write_narrative_data(self, narrative_set_name, data):
+        raise NotImplementedError()
