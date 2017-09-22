@@ -118,12 +118,14 @@ class DataInterface(metaclass=ABCMeta):
 
 
 class DatafileInterface(DataInterface):
-    """ Read and write interface to YAML / CSV configuration files
+    """Read and write interface to YAML / CSV configuration files
+
+    Arguments
+    ---------
+    config_path : str
+        The path to the configuration folder
     """
     def __init__(self, config_path):
-        """Initialize file paths
-        """
-        config_path = str(config_path)
         self.filepath = {
             'sos_model_runs': os.path.join(config_path, 'sos_model_runs'),
             'sos_models': os.path.join(config_path, 'sos_models'),
@@ -131,9 +133,14 @@ class DatafileInterface(DataInterface):
         }
 
     def read_sos_model_runs(self):
-        """Returns a list of sos_model_run dictionaries
+        """Read all system-of-system model runs from Yaml files
+
+        Returns
+        -------
+        list
+            A list of sos_model_run dicts
         """
-        sos_model_runs = list()
+        sos_model_runs = []
 
         sos_model_run_names = self._read_yaml_filenames_in_dir(self.filepath['sos_model_runs'])
         for sos_model_run_name in sos_model_run_names:
@@ -143,64 +150,77 @@ class DatafileInterface(DataInterface):
         return sos_model_runs
 
     def write_sos_model_run(self, sos_model_run):
-        """Write sos_model_run dictionary to Yaml file
+        """Write system-of-system model run to Yaml file
+
         Existing configuration will be overwritten without warning
 
         Arguments
         ---------
-        name : sos_model_run
-            Dictionary containing sos_model_run
+        sos_model_run : dict
+            A sos_model_run dictionary
         """
         self._write_yaml_file(self.filepath['sos_model_runs'],
                               sos_model_run['name'], sos_model_run)
 
     def read_sos_models(self):
-        """Returns a list of sos_model dictionaries
+        """Read all system-of-system models from Yaml files
+
+        Returns
+        -------
+        list
+            A list of sos_models dicts
         """
-        sos_models = list()
+        sos_models = []
 
         sos_model_names = self._read_yaml_filenames_in_dir(self.filepath['sos_models'])
         for sos_model_name in sos_model_names:
             sos_models.append(self._read_yaml_file(self.filepath['sos_models'],
                                                    sos_model_name))
-
         return sos_models
 
     def write_sos_model(self, sos_model):
-        """Write sos_model dictionary to Yaml file
+        """Write system-of-system model to Yaml file
+
         Existing configuration will be overwritten without warning
 
         Arguments
         ---------
-        name : sos_model
-            Dictionary containing sos_model
+        sos_model : dict
+            A sos_model dictionary
         """
         self._write_yaml_file(self.filepath['sos_models'], sos_model['name'], sos_model)
 
     def read_sector_models(self):
-        """Returns a list of excisting sector_models
+        """Read all sector models from Yaml files
+
+        Returns
+        -------
+        list
+            A list of sector_model dicts
         """
         return self._read_yaml_filenames_in_dir(self.filepath['sector_models'])
 
     def read_sector_model(self, sector_model_name):
-        """Read a sector_model dictionary from a Yaml file
-        raises an exception when the file does not excists
+        """Read a sector model from a Yaml file
+
+        Raises an exception when the file does not exists
 
         Arguments
         ---------
-        name : sector_model_name
-            String containing sector_model['name']
+        sector_model_name : str
+            Name of the sector_model (sector_model['name'])
         """
         return self._read_yaml_file(self.filepath['sector_models'], sector_model_name)
 
     def write_sector_model(self, sector_model):
-        """Write sos_model dictionary to Yaml file
+        """Write sector model to a Yaml file
+
         Existing configuration will be overwritten without warning
 
         Arguments
         ---------
-        name : sector_model
-            Dictionary containing sector_model
+        sector_model : dict
+            A sector_model dictionary
         """
         self._write_yaml_file(self.filepath['sector_models'], sector_model['name'],
                               sector_model)
@@ -270,24 +290,33 @@ class DatafileInterface(DataInterface):
 
         Arguments
         ---------
-        path : string
+        path : str
             Path to directory
+
+        Returns
+        -------
+        list
+            The list of Yaml files in `path`
         """
-        files = list()
-        for file in os.listdir(path):
-            if file.endswith('.yml'):
-                files.append(os.path.splitext(file)[0])
+        files = []
+        for filename in os.listdir(path):
+            if filename.endswith('.yml'):
+                files.append(os.path.splitext(filename)[0])
         return files
 
     def _read_yaml_file(self, path, filename):
-        """Returns the contents of a Yaml file in a Dict
-
+        """
         Arguments
         ---------
-        path : string
+        path : str
             Path to directory
-        name : string
+        name : str
             Name of file
+
+        Returns
+        -------
+        dict
+            The contents of the Yaml file `name` in `path`
         """
         filename = filename + '.yml'
         with open(os.path.join(path, filename), 'r') as stream:
@@ -298,11 +327,11 @@ class DatafileInterface(DataInterface):
 
         Arguments
         ---------
-        path : string
+        path : str
             Path to directory
-        name : string
+        name : str
             Name of file
-        contents: dics
+        contents: dict
             Contents to be written to the file
         """
         filename = filename + '.yml'

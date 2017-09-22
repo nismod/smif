@@ -118,7 +118,7 @@ def test_yaml_sos_model_run(get_sos_model_run, setup_folder_structure):
     read the Yaml files and compare that the result is equal.
     """
     basefolder = setup_folder_structure
-    config_handler = DatafileInterface(basefolder.join('config'))
+    config_handler = DatafileInterface(str(basefolder.join('config')))
 
     sos_model_run1 = get_sos_model_run
     sos_model_run1['name'] = 'sos_model_run1'
@@ -139,7 +139,7 @@ def test_yaml_sos_model(get_sos_model, setup_folder_structure):
     read the Yaml files and compare that the result is equal.
     """
     basefolder = setup_folder_structure
-    config_handler = DatafileInterface(basefolder.join('config'))
+    config_handler = DatafileInterface(str(basefolder.join('config')))
 
     sos_model1 = get_sos_model
     sos_model1['name'] = 'sos_model_1'
@@ -163,7 +163,7 @@ def test_yaml_sector_model(get_sector_model, setup_folder_structure):
     sector_model = get_sector_model
     basefolder = setup_folder_structure
 
-    config_handler = DatafileInterface(basefolder.join('config'))
+    config_handler = DatafileInterface(str(basefolder.join('config')))
     config_handler.write_sector_model(sector_model)
     assert sector_model == config_handler.read_sector_model(sector_model['name'])
     assert sector_model['name'] in config_handler.read_sector_models()
