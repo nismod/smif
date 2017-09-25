@@ -51,7 +51,14 @@ def get_sector_model_config(setup_project_folder, setup_registers):
                   {"name": "water_asset_b", "location": "oxford"},
                   {"name": "water_asset_c", "location": "oxford"},
               ],
-              "parameters": []
+              "parameters": [{
+                  'name': 'assump_diff_floorarea_pp',
+                  'description': 'Difference in floor area per person \
+                                 in end year compared to base year',
+                  'absolute_range': (0.5, 2),
+                  'suggested_range': (0.5, 2),
+                  'default_value': 1,
+                  'units': '%'}]
               }
 
     return config
@@ -193,6 +200,7 @@ class TestSectorModelBuilder():
         assert actual['name'] == config['name']
         assert actual['description'] == config['description']
         assert actual['path'] == config['path']
+        assert actual['parameters'] == config['parameters']
 
 
 class TestInputs:
