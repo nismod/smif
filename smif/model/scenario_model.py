@@ -3,7 +3,6 @@ from logging import getLogger
 import numpy as np
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
-from smif.metadata import MetadataSet
 from smif.model import Model
 
 
@@ -14,20 +13,10 @@ class ScenarioModel(Model):
     ---------
     name : string
         The unique name of this scenario
-    output : smif.metadata.MetaData
-        A name for the scenario output parameter
     """
 
-    def __init__(self, name, output=None):
-        if output:
-            if isinstance(output, MetadataSet):
-                super().__init__(name)
-                self._model_outputs = output
-            else:
-                msg = "output argument should be type smif.metadata.MetadataSet"
-                raise TypeError(msg)
-        else:
-            super().__init__(name)
+    def __init__(self, name):
+        super().__init__(name)
 
         self._data = {}
         self.timesteps = []
@@ -79,6 +68,7 @@ class ScenarioModel(Model):
         -------
         str
         """
+        self._check_output(output)
         return self._filename[output]
 
     def get_data(self, output):
@@ -90,6 +80,7 @@ class ScenarioModel(Model):
             The name of the output for which to retrieve data
 
         """
+        self._check_output(output)
         return self._data[output]
 
     def add_output(self, name, spatial_resolution, temporal_resolution, units):
@@ -127,12 +118,15 @@ class ScenarioModel(Model):
         >>> timesteps = [2010]
         >>> elec_scenario.add_data(data, timesteps)
         """
-        if output not in self.model_outputs.names:
-            raise KeyError("Output {} not recognised".format(output))
+        self._check_output(output)
 
         self.timesteps = timesteps
         assert isinstance(data, np.ndarray)
         self._data[output] = data
+
+    def _check_output(self, output):
+        if output not in self.model_outputs.names:
+            raise KeyError("'{}' not in scenario outputs".format(output))
 
     def simulate(self, timestep, data=None):
         """Returns the scenario data
