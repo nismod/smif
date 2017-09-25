@@ -24,7 +24,8 @@ def get_scenario_model_object():
                               scenario_model.regions.get_entry('LSOA'),
                               scenario_model.intervals.get_entry('annual'),
                               'ml')
-    scenario_model.add_data(data, [2010, 2011, 2012])
+    scenario_model.add_data('raininess', data, [2010, 2011, 2012])
+    scenario_model.scenario_set = 'raininess'
     return scenario_model
 
 
@@ -175,7 +176,7 @@ class TestSosModel():
         expected = {
             'name': 'test_sos_model',
             'description': '',
-            'scenario_sets': ['test_scenario_model'],
+            'scenario_sets': ['raininess'],
             'sector_models': ['water_supply'],
             'dependencies': [{
                 'source_model': 'test_scenario_model',
@@ -477,7 +478,7 @@ class TestSosModelBuilderComponents():
         sos_model = builder.finish()
 
         assert isinstance(sos_model, SosModel)
-        assert sos_model.sector_models == ['water_supply']
+        assert list(sos_model.sector_models.keys()) == ['water_supply']
         assert isinstance(sos_model.models['water_supply'], SectorModel)
 
     def test_set_max_iterations(self, get_sos_model_config):
@@ -551,13 +552,14 @@ class TestSosModelBuilder():
         sos_model = builder.finish()
 
         assert isinstance(sos_model, SosModel)
-        assert sos_model.sector_models == ['water_supply']
+        assert list(sos_model.sector_models.keys()) == ['water_supply']
         assert isinstance(sos_model.models['water_supply'], SectorModel)
         assert isinstance(sos_model.models['test_scenario_model'], ScenarioModel)
 
         actual = sos_model.models['test_scenario_model']._data
+        expected = {'raininess': np.array([[[3.]], [[5.]], [[1.]]], dtype=float)}
         np.testing.assert_equal(actual,
-                                np.array([[[3.]], [[5.]], [[1.]]], dtype=float))
+                                expected)
 
     def test_simple_dependency(self, get_sos_model_config_with_dep):
 

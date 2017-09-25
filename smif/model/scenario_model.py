@@ -32,9 +32,65 @@ class ScenarioModel(Model):
         self._data = {}
         self.timesteps = []
 
-    @property
-    def data(self):
-        return self._data
+        "The scenario set to which this scenario belongs"
+        self.scenario_set = None
+        self._filename = {}
+
+    def as_dict(self):
+
+        config = {
+            'name': self.name,
+            'description': self.description,
+            'scenario_set': self.scenario_set}
+
+        parameters = []
+        for output in self.model_outputs:
+
+            parameters.append({
+                'name': output.name,
+                'filename': self.get_filename(output.name),
+                'spatial_resolution': output.spatial_resolution.name,
+                'temporal_resolution': output.temporal_resolution.name,
+                'units': output.units
+                })
+
+        config['parameters'] = parameters
+
+        return config
+
+    def set_filename(self, output, filename):
+        """Store the name of the data file associate with `output`
+
+        Arguments
+        ---------
+        output : str
+        filename : str
+        """
+        self._filename[output] = filename
+
+    def get_filename(self, output):
+        """Get the name of the datafile associated with `output`
+
+        Arguments
+        ---------
+        output : str
+
+        Returns
+        -------
+        str
+        """
+        return self._filename[output]
+
+    def get_data(self, output):
+        """Get data associated with `output`
+
+        Arguments
+        ---------
+        output : str
+            The name of the output for which to retrieve data
+
+        """
+        return self._data[output]
 
     def add_output(self, name, spatial_resolution, temporal_resolution, units):
         """Add an output to the scenario model
@@ -54,11 +110,13 @@ class ScenarioModel(Model):
 
         self._model_outputs.add_metadata(output_metadata)
 
-    def add_data(self, data, timesteps):
+    def add_data(self, output, data, timesteps):
         """Add data to the scenario
 
         Arguments
         ---------
+        output : str
+            The name of the output to which to add data
         data : numpy.ndarray
         timesteps : list
 
@@ -69,15 +127,22 @@ class ScenarioModel(Model):
         >>> timesteps = [2010]
         >>> elec_scenario.add_data(data, timesteps)
         """
+        if output not in self.model_outputs.names:
+            raise KeyError("Output {} not recognised".format(output))
+
         self.timesteps = timesteps
         assert isinstance(data, np.ndarray)
-        self._data = data
+        self._data[output] = data
 
     def simulate(self, timestep, data=None):
         """Returns the scenario data
         """
         time_index = self.timesteps.index(timestep)
-        return {self.name: {self.model_outputs.names[0]: self._data[time_index]}}
+
+        all_data = {output.name: self._data[output.name][time_index]
+                    for output in self.model_outputs}
+
+        return {self.name: all_data}
 
 
 class ScenarioModelBuilder(object):
@@ -100,28 +165,32 @@ class ScenarioModelBuilder(object):
         data : list
         timesteps : list
         """
-        spatial = scenario_config['spatial_resolution']
-        temporal = scenario_config['temporal_resolution']
-
-        spatial_res = self.region_register.get_entry(spatial)
-        temporal_res = self.interval_register.get_entry(temporal)
 
         self.scenario.scenario_set = scenario_config['scenario_set']
-        name = scenario_config['name']
-        self.scenario.name = name
-        self.scenario.add_output(scenario_config['parameter'],
-                                 spatial_res,
-                                 temporal_res,
-                                 scenario_config['units'])
+        self.scenario.name = scenario_config['name']
+        parameters = scenario_config['parameters']
 
-        self.scenario.filename = scenario_config['filename']
+        for parameter in parameters:
+            spatial = parameter['spatial_resolution']
+            temporal = parameter['temporal_resolution']
 
-        array_data = self._data_list_to_array(name, data,
-                                              timesteps,
-                                              spatial_res,
-                                              temporal_res)
+            spatial_res = self.region_register.get_entry(spatial)
+            temporal_res = self.interval_register.get_entry(temporal)
 
-        self.scenario.add_data(array_data, timesteps)
+            name = parameter['name']
+            self.scenario.add_output(name,
+                                     spatial_res,
+                                     temporal_res,
+                                     parameter['units'])
+
+            self.scenario.set_filename(name, parameter['filename'])
+
+            array_data = self._data_list_to_array(name, data,
+                                                  timesteps,
+                                                  spatial_res,
+                                                  temporal_res)
+
+            self.scenario.add_data(name, array_data, timesteps)
 
     def finish(self):
         """Return the built ScenarioModel

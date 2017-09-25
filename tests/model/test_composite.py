@@ -17,7 +17,8 @@ def get_scenario():
                         scenario.regions.get_entry('LSOA'),
                         scenario.intervals.get_entry('annual'),
                         'unit')
-    scenario.add_data(np.array([[[123]]]), [2010])
+    scenario.add_data('electricity_demand_output',
+                      np.array([[[123]]]), [2010])
 
     return scenario
 
@@ -112,7 +113,7 @@ class TestModelSet:
                                  elec_scenario.regions.get_entry('LSOA'),
                                  elec_scenario.intervals.get_entry('annual'),
                                  'unit')
-        elec_scenario.add_data(np.array([[[123]]]), [2010])
+        elec_scenario.add_data('output', np.array([[[123]]]), [2010])
 
         model_set = ModelSet([elec_scenario])
         model_set.simulate(2010)
@@ -153,7 +154,7 @@ class TestBasics:
         SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data(np.array([[[123]]]), [2010])
+        elec_scenario.add_data('output', np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -172,7 +173,7 @@ class TestDependencyGraph:
         SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data(np.array([[[123]]]), [2010])
+        elec_scenario.add_data('output', np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -198,7 +199,7 @@ class TestDependencyGraph:
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
 
-        elec_scenario.add_data(np.array([[[123]]]), [2010])
+        elec_scenario.add_data('output', np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -221,7 +222,7 @@ class TestDependencyGraph:
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
 
-        elec_scenario.add_data(np.array([[[123]]]), [2010])
+        elec_scenario.add_data('output', np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')

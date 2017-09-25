@@ -2,6 +2,9 @@
 """This module coordinates the software components that make up the integration
 framework.
 
+A system of systems model contains simulation and scenario models,
+and the dependencies between the models.
+
 """
 import logging
 from collections import defaultdict
@@ -72,11 +75,13 @@ class SosModel(CompositeModel):
                               'sink_model_input': name}
                 dependencies.append(dep_config)
 
+
         config = {
             'name': self.name,
             'description': self.description,
-            'scenario_sets': self.scenario_models,
-            'sector_models': self.sector_models,
+            'scenario_sets': [scenario.scenario_set
+                              for scenario in self.scenario_models.values()],
+            'sector_models': list(self.sector_models.keys()),
             'dependencies': dependencies,
             'max_iterations': self.max_iterations,
             'convergence_absolute_tolerance': self.convergence_absolute_tolerance,
@@ -299,34 +304,33 @@ class SosModel(CompositeModel):
         """Names (id-like keys) of all known asset type
         """
         interventions = []
-        for sector in self.sector_models:
-            model = self.models[sector]
+        for model in self.sector_models.values():
             interventions.extend(model.interventions)
         return [intervention.name for intervention in interventions]
 
     @property
     def sector_models(self):
-        """The list of sector model names
+        """Sector model objects contained in the SosModel
 
         Returns
         =======
-        list
-            A list of sector model names
+        dict
+            A dict of sector model objects
         """
-        return [x for x, y in self.models.items() if isinstance(y, SectorModel)]
+        return {x: y for x, y in self.models.items()
+                if isinstance(y, SectorModel)}
 
     @property
     def scenario_models(self):
-        """The list of scenario model names
+        """Scenario model objects contained in the SosModel
 
         Returns
         -------
-        list
-            A list of scenario model names
+        dict
+            A dict of scenario model objects
         """
-        return [x for x, y in self.models.items()
-                if isinstance(y, ScenarioModel)
-                ]
+        return {x: y for x, y in self.models.items()
+                if isinstance(y, ScenarioModel)}
 
 
 class SosModelBuilder(object):

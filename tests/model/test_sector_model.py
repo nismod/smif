@@ -107,14 +107,14 @@ class TestCompositeSectorModel():
         scenario_model.add_output('scenario_output', Mock(), Mock(), 'units')
         data = np.array([[[120.23]]])
         timesteps = [2010]
-        scenario_model.add_data(data, timesteps)
+        scenario_model.add_data('scenario_output', data, timesteps)
 
         model = EmptySectorModel('test_model')
         model.add_input('input_name', Mock(), Mock(), 'units')
         model.add_dependency(scenario_model, 'scenario_output', 'input_name')
 
         assert 'input_name' in model.deps
-        assert model.get_scenario_data('input_name') == data
+        assert model.get_scenario_data('input_name') == {'scenario_output': data}
 
 
 class TestSectorModelBuilder():
