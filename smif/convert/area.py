@@ -6,7 +6,6 @@ from collections import OrderedDict, defaultdict, namedtuple
 import numpy as np
 from rtree import index
 from shapely.geometry import shape
-
 from smif.convert.register import Register, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
@@ -40,6 +39,9 @@ class RegionSet(ResolutionSet):
     """
     def __init__(self, set_name, fiona_shape_iter):
         self._name = set_name
+        self._description = ''
+        self._filename = ''
+
         self.data = fiona_shape_iter
 
         self._idx = index.Index()
@@ -53,6 +55,22 @@ class RegionSet(ResolutionSet):
     @name.setter
     def name(self, value):
         self._name = value
+
+    @property
+    def filename(self):
+        return self._filename
+
+    @filename.setter
+    def filename(self, value):
+        self._filename = value
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, value):
+        self._description = value
 
     @property
     def data(self):

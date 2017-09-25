@@ -23,6 +23,12 @@ class Register(metaclass=ABCMeta):
 
 
 class ResolutionSet(metaclass=ABCMeta):
+
+    def as_dict(self):
+        return {'name': self.name,
+                'filename': self.filename,
+                'description': self.description}
+
     @property
     @abstractmethod
     def name(self):
@@ -31,6 +37,26 @@ class ResolutionSet(metaclass=ABCMeta):
     @name.setter
     @abstractmethod
     def name(self, value):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def description(self):
+        raise NotImplementedError
+
+    @description.setter
+    @abstractmethod
+    def description(self, value):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def filename(self):
+        raise NotImplementedError
+
+    @filename.setter
+    @abstractmethod
+    def filename(self, value):
         raise NotImplementedError
 
     @property
