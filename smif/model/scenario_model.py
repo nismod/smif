@@ -23,7 +23,6 @@ class ScenarioModel(Model):
 
         "The scenario set to which this scenario belongs"
         self.scenario_set = None
-        self._filename = {}
 
     def as_dict(self):
 
@@ -37,7 +36,6 @@ class ScenarioModel(Model):
 
             parameters.append({
                 'name': output.name,
-                'filename': self.get_filename(output.name),
                 'spatial_resolution': output.spatial_resolution.name,
                 'temporal_resolution': output.temporal_resolution.name,
                 'units': output.units
@@ -46,30 +44,6 @@ class ScenarioModel(Model):
         config['parameters'] = parameters
 
         return config
-
-    def set_filename(self, output, filename):
-        """Store the name of the data file associate with `output`
-
-        Arguments
-        ---------
-        output : str
-        filename : str
-        """
-        self._filename[output] = filename
-
-    def get_filename(self, output):
-        """Get the name of the datafile associated with `output`
-
-        Arguments
-        ---------
-        output : str
-
-        Returns
-        -------
-        str
-        """
-        self._check_output(output)
-        return self._filename[output]
 
     def get_data(self, output):
         """Get data associated with `output`
@@ -176,8 +150,6 @@ class ScenarioModelBuilder(object):
                                      spatial_res,
                                      temporal_res,
                                      parameter['units'])
-
-            self.scenario.set_filename(name, parameter['filename'])
 
             array_data = self._data_list_to_array(name, data,
                                                   timesteps,

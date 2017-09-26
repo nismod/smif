@@ -26,7 +26,6 @@ class TestScenarioObject:
                                   scenario_model.regions.get_entry('LSOA'),
                                   scenario_model.intervals.get_entry('annual'),
                                   'people')
-        scenario_model.set_filename('population_count', 'population_high.csv')
         scenario_model.description = 'The High ONS Forecast for UK population out to 2050'
         scenario_model.scenario_set = 'population'
         actual = scenario_model.as_dict()
@@ -35,7 +34,6 @@ class TestScenarioObject:
                     'scenario_set': 'population',
                     'parameters': [{
                         'name': 'population_count',
-                        'filename': 'population_high.csv',
                         'spatial_resolution': 'LSOA',
                         'temporal_resolution': 'annual',
                         'units': 'people'}]
@@ -52,9 +50,6 @@ class TestScenarioObject:
                                   scenario_model.regions.get_entry('LSOA'),
                                   scenario_model.intervals.get_entry('annual'),
                                   'people/km^2')
-        scenario_model.set_filename('population_count', 'population_high.csv')
-        scenario_model.set_filename(
-            'population_density', 'population_high_dens.csv')
         scenario_model.description = 'The High ONS Forecast for UK population out to 2050'
         scenario_model.scenario_set = 'population'
         actual = scenario_model.as_dict()
@@ -63,12 +58,10 @@ class TestScenarioObject:
                     'scenario_set': 'population',
                     'parameters': [{
                         'name': 'population_count',
-                        'filename': 'population_high.csv',
                         'spatial_resolution': 'LSOA',
                         'temporal_resolution': 'annual',
                         'units': 'people'},
                         {'name': 'population_density',
-                         'filename': 'population_high_dens.csv',
                          'spatial_resolution': 'LSOA',
                          'temporal_resolution': 'annual',
                          'units': 'people/km^2'}
@@ -170,8 +163,8 @@ class TestScenarioModelData:
                       'spatial_resolution': 'country',
                       'temporal_resolution': 'seasonal',
                       'units': 'kg',
-                      'name': 'length',
-                      'filename': 'test_filename.csv'}]}
+                      'name': 'length'
+                      }]}
         builder.construct(config, data, [2015, 2016])
         scenario = builder.finish()
 
@@ -198,8 +191,8 @@ class TestScenarioModelData:
                 'spatial_resolution': 'LSOA',
                 'temporal_resolution': 'annual',
                 'units': 'm',
-                'name': 'length',
-                'filename': 'test_filename.csv'}]
+                'name': 'length'
+                }]
         }, data, [2015])
         scenario = builder.finish()
         assert scenario.get_data('length') == expected
@@ -223,8 +216,8 @@ class TestScenarioModelData:
                     'spatial_resolution': 'LSOA',
                     'temporal_resolution': 'annual',
                     'units': 'm',
-                    'name': 'length',
-                    'filename': 'test_filename.csv'}]
+                    'name': 'length'
+                    }]
             }, data, [2015])
         assert msg in str(ex.value)
 
@@ -250,8 +243,8 @@ class TestScenarioModelData:
                     'spatial_resolution': 'LSOA',
                     'temporal_resolution': 'annual',
                     'units': 'm',
-                    'name': 'length',
-                    'filename': 'test_filename.csv'}]
+                    'name': 'length'
+                    }]
             }, data, [2015])
         assert msg in str(ex)
 
@@ -280,7 +273,6 @@ class TestScenarioModelData:
                 'scenario_set': '',
                 'parameters': [{
                     'name': 'length',
-                    'filename': 'test_filename.csv',
                     'units': 'm',
                     'spatial_resolution': 'LSOA',
                     'temporal_resolution': 'annual'}]},
