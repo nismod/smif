@@ -10,13 +10,16 @@ narrative_sets:
 region_sets:
 # shared understanding of regions within the modelled area (e.g. GB)
 - name: national
-  file: uk_nations_shp/regions.shp
+  description: ''
+  filename: uk_nations_shp/regions.shp
 - name: oxfordshire
-  file: oxfordshire/regions.geojson
+  description: ''
+  filename: oxfordshire/regions.geojson
 interval_sets:
 # shared understanding of time intervals within a year
 - name: annual
-  file: annual_intervals.yaml
+  description: ''
+  filename: annual_intervals.yaml
 units:
 scenario_data:
 # given input data, required values for every year of a model run
@@ -25,7 +28,7 @@ scenario_data:
   scenario_set: population
   parameters:
   - name: population
-    file: population.yaml
+    filename: population.yaml
     spatial_resolution: national
     temporal_resolution: annual
     units: million people
@@ -34,7 +37,7 @@ scenario_data:
   scenario_set: rainfall
   parameters:
   - name: rainfall
-    file: raininess.yaml
+    filename: raininess.yaml
     spatial_resolution: national
     temporal_resolution: annual
     units: ml
