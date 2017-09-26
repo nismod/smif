@@ -24,50 +24,17 @@ class Register(metaclass=ABCMeta):
 
 class ResolutionSet(metaclass=ABCMeta):
 
+    def __init__(self):
+
+        self.name = ''
+        self.description = ''
+        self.data = []
+
     def as_dict(self):
+        """
+        """
         return {'name': self.name,
-                'filename': self.filename,
                 'description': self.description}
-
-    @property
-    @abstractmethod
-    def name(self):
-        raise NotImplementedError
-
-    @name.setter
-    @abstractmethod
-    def name(self, value):
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def description(self):
-        raise NotImplementedError
-
-    @description.setter
-    @abstractmethod
-    def description(self, value):
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def filename(self):
-        raise NotImplementedError
-
-    @filename.setter
-    @abstractmethod
-    def filename(self, value):
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def data(self):
-        raise NotImplementedError
-
-    @data.setter
-    @abstractmethod
-    def data(self, value):
-        raise NotImplementedError
 
     @abstractmethod
     def get_entry_names(self):

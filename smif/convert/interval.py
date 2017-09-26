@@ -358,39 +358,20 @@ class IntervalSet(ResolutionSet):
     """
 
     def __init__(self, name, data, base_year=2010):
-        self._name = name
-        self._filename = ''
-        self._description = ''
+        super().__init__()
+        self.name = name
         self._base_year = base_year
         self._data = None
         self.data = data
 
     @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    @property
-    def filename(self):
-        return self._filename
-
-    @filename.setter
-    def filename(self, value):
-        self._filename = value
-
-    @property
-    def description(self):
-        return self._description
-
-    @description.setter
-    def description(self, value):
-        self._description = value
-
-    @property
     def data(self):
+        """Returns the intervals as an ordered dict
+
+        Returns
+        -------
+        OrderedDict
+        """
         return self._data
 
     @data.setter
