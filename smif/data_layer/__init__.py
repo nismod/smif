@@ -3,7 +3,7 @@
 """
 from abc import ABCMeta, abstractmethod
 import os
-import yaml
+from smif.data_layer.load import load, dump
 
 
 class DataInterface(metaclass=ABCMeta):
@@ -319,8 +319,8 @@ class DatafileInterface(DataInterface):
             The contents of the Yaml file `name` in `path`
         """
         filename = filename + '.yml'
-        with open(os.path.join(path, filename), 'r') as stream:
-            return yaml.load(stream)
+        filepath = os.path.join(path, filename)
+        return load(filepath)
 
     def _write_yaml_file(self, path, filename, contents):
         """Writes a Dict to a Yaml file
@@ -335,8 +335,8 @@ class DatafileInterface(DataInterface):
             Contents to be written to the file
         """
         filename = filename + '.yml'
-        with open(os.path.join(path, filename), 'w') as outfile:
-            yaml.dump(contents, outfile, default_flow_style=False)
+        filepath = os.path.join(path, filename)
+        dump(contents, filepath)
 
 
 class DatabaseInterface(DataInterface):
