@@ -36,4 +36,9 @@ initial_conditions:
   - ../data/water_supply/initial_conditions/initial_2015_oxford.yaml
   - ../data/water_supply/initial_conditions/reservoirs.yaml
 parameters:
-- parameters.yaml
+- name: clever_water_meter_savings
+  description: The savings from smart water meters
+  absolute_range: (0, 100)
+  suggested_range: (3, 10)
+  default_value: 3
+  units: '%'
