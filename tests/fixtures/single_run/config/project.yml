@@ -1,72 +1,41 @@
-name: a test modelrun
-description: a description
-stamp: '2017-09-20T12:53:23+00:00'
-sector_models:
-  - name: water_supply                # model name for internal/logging reference
-    path: ../models/water_supply.py   # path to python file
-    classname: WaterSupplySectorModel # implements smif.SectorModel
-    config_dir: ../data/water_supply  # defines inputs and outputs
-    interventions:
-      # possible interventions that could be made in the system
-      - ../data/water_supply/interventions/types.yaml
-    initial_conditions:
-      # initialise system with interventions in current state
-      - ../data/water_supply/initial_conditions/initial_2015_oxford.yaml
-      - ../data/water_supply/initial_conditions/reservoirs.yaml
-    parameters:
-    - parameters.yaml
-  - name: energy_demand
-    path: ../models/energy_demand.py
-    classname: EDMWrapper
-    config_dir: ../data/energy_demand
-    interventions: []
-    initial_conditions: []
-    parameters:
-    - parameters.yaml
-timesteps: timesteps.yaml
-dependencies:
-  - source_model: raininess
-    source_model_output: raininess
-    sink_model: water_supply
-    sink_model_input: raininess
-  - source_model: population
-    source_model_output: population
-    sink_model: water_supply
-    sink_model_input: population
-  - source_model: water_supply
-    source_model_output: energy_demand
-    sink_model: energy_demand
-    sink_model_input: energy_demand
-  - source_model: population
-    source_model_output: population
-    sink_model: energy_demand
-    sink_model_input: population
-  - source_model: energy_demand
-    source_model_output: water_demand
-    sink_model: water_supply
-    sink_model_input: water_demand
-scenario_data:
-  # given input data, required values for every year of a model run
-  - parameter: population
-    file: ../data/scenario/population.yaml
-    spatial_resolution: national
-    temporal_resolution: annual
-    units: million people
-  - parameter: raininess
-    file: ../data/scenario/raininess.yaml
-    spatial_resolution: national
-    temporal_resolution: annual
-    units: ml
-interval_sets:
-  # shared understanding of time intervals within a year
-  - name: annual
-    file: annual_intervals.yaml
+name: "Test Project"
+scenario_sets:
+- name: raininess
+  description: 'UK precipitation'
+- name: population
+  description: 'Growth in UK population'
+narrative_sets:
 region_sets:
   # shared understanding of regions within the modelled area (e.g. GB)
   - name: national
     file: ../../data/uk_nations_shp/regions.shp
   - name: oxfordshire
     file: ../../data/oxfordshire/regions.geojson
+interval_sets:
+  # shared understanding of time intervals within a year
+  - name: annual
+    file: annual_intervals.yaml
+units:
+scenario_data:
+  # given input data, required values for every year of a model run
+  - name: 'Central Population'
+    description: 'Central Population for the UK'
+    scenario_set: population
+    parameters:
+    - name: population
+      file: ../data/scenario/population.yaml
+      spatial_resolution: national
+      temporal_resolution: annual
+      units: million people
+  - name: 'Central Rainfall'
+    description: 'Central Rainfall Scenario for the UK'
+    scenario_set: rainfall
+    parameters:
+    - name: rainfall
+      file: ../data/scenario/raininess.yaml
+      spatial_resolution: national
+      temporal_resolution: annual
+      units: ml
 planning:
   pre_specified:
     # sets of interventions to apply in given timesteps (deterministic)

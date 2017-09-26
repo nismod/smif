@@ -1,0 +1,13 @@
+name: water_supply                # model name for internal/logging reference
+path: ../models/water_supply.py   # path to python file
+classname: WaterSupplySectorModel # implements smif.SectorModel
+config_dir: ../data/water_supply  # defines inputs and outputs
+interventions:
+  # possible interventions that could be made in the system
+  - ../data/water_supply/interventions/types.yaml
+initial_conditions:
+  # initialise system with interventions in current state
+  - ../data/water_supply/initial_conditions/initial_2015_oxford.yaml
+  - ../data/water_supply/initial_conditions/reservoirs.yaml
+parameters:
+- parameters.yaml
