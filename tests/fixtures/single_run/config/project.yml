@@ -6,46 +6,33 @@ scenario_sets:
   description: 'Growth in UK population'
 narrative_sets:
 region_sets:
-  # shared understanding of regions within the modelled area (e.g. GB)
-  - name: national
-    file: ../../data/uk_nations_shp/regions.shp
-  - name: oxfordshire
-    file: ../../data/oxfordshire/regions.geojson
+# shared understanding of regions within the modelled area (e.g. GB)
+- name: national
+  file: ../../data/uk_nations_shp/regions.shp
+- name: oxfordshire
+  file: oxfordshire/regions.geojson
 interval_sets:
-  # shared understanding of time intervals within a year
-  - name: annual
-    file: annual_intervals.yaml
+# shared understanding of time intervals within a year
+- name: annual
+  file: annual_intervals.yaml
 units:
 scenario_data:
-  # given input data, required values for every year of a model run
-  - name: 'Central Population'
-    description: 'Central Population for the UK'
-    scenario_set: population
-    parameters:
-    - name: population
-      file: ../data/scenario/population.yaml
-      spatial_resolution: national
-      temporal_resolution: annual
-      units: million people
-  - name: 'Central Rainfall'
-    description: 'Central Rainfall Scenario for the UK'
-    scenario_set: rainfall
-    parameters:
-    - name: rainfall
-      file: ../data/scenario/raininess.yaml
-      spatial_resolution: national
-      temporal_resolution: annual
-      units: ml
-planning:
-  pre_specified:
-    # sets of interventions to apply in given timesteps (deterministic)
-    use: true
-    files:
-      - ../planning/expected_to_2020.yaml
-      - ../planning/national_infrastructure_pipeline.yaml
-  rule_based:
-    # use heuristics to guide application of interventions
-    use: false
-  optimisation:
-    # use objective function/s to guide application of interventions
-    use: false
+# given input data, required values for every year of a model run
+- name: 'Central Population'
+  description: 'Central Population for the UK'
+  scenario_set: population
+  parameters:
+  - name: population
+    file: ../data/scenario/population.yaml
+    spatial_resolution: national
+    temporal_resolution: annual
+    units: million people
+- name: 'Central Rainfall'
+  description: 'Central Rainfall Scenario for the UK'
+  scenario_set: rainfall
+  parameters:
+  - name: rainfall
+    file: ../data/scenario/raininess.yaml
+    spatial_resolution: national
+    temporal_resolution: annual
+    units: ml
