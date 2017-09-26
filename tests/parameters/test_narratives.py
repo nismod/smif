@@ -1,36 +1,34 @@
 """Tests for the narratives
 
-Narratives hold collections of overridden parameter data. During model setup,
-a user compiles a narrative file which contains a list of parameter names and
-values
+NarrativeSet hold collections of overridden parameter data. During model setup,
+a user compiles a number of narrative files which contains a list of parameter
+names and values. These are assigned to a narrative set during a model run
+and the NarrativeSet object holds this information at runtime.
 """
 from pytest import fixture, raises
-from smif.parameters.narrative import NarrativeData
+from smif.parameters.narrative import NarrativeSet
 
 
 @fixture
 def get_narrative():
 
-    narrative = NarrativeData('Energy Demand - High Tech',
-                              'A description',
-                              'energy_demand_high_tech.yml',
-                              'technology')
+    narrative = NarrativeSet('Energy Demand - High Tech',
+                             'A description',
+                             'technology')
     return narrative
 
 
-class TestNarrativeData:
+class TestNarrativeSet:
 
     def test_narrative_data_initialise(self):
 
-        narrative = NarrativeData('Energy Demand - High Tech',
-                                  'A description',
-                                  'energy_demand_high_tech.yml',
-                                  'technology')
+        narrative = NarrativeSet('Energy Demand - High Tech',
+                                 'A description',
+                                 'technology')
 
         actual = narrative.as_dict()
         expected = {'name': 'Energy Demand - High Tech',
                     'description': 'A description',
-                    'filename': 'energy_demand_high_tech.yml',
                     'narrative_set': 'technology'}
         assert actual == expected
 
@@ -42,7 +40,7 @@ class TestNarrativeData:
                                          {'model_parameter_two': 'value'}
                                          ]
                           }
-        narrative.add_data(narrative_data)
+        narrative.data = narrative_data
         actual = narrative.data
 
         expected = {'global': [{'global_parameter': 'value'}],
@@ -55,4 +53,4 @@ class TestNarrativeData:
     def test_load_wrong_type(self, get_narrative):
         narrative = get_narrative
         with raises(TypeError):
-            narrative.add_data(list(['should', 'b', 'a', 'dict']))
+            narrative.data = list(['should', 'b', 'a', 'dict'])
