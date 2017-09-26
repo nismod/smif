@@ -1,0 +1,44 @@
+name: water_supply   # model name for internal/logging reference
+description: 'Simulates the optimal operation of the UK water supply system'
+path: ../models/water_supply.py   # path to python file
+classname: WaterSupplySectorModel # implements smif.SectorModel
+inputs:
+- name: raininess
+  spatial_resolution: national
+  temporal_resolution: annual
+  units: ml
+- name: population
+  spatial_resolution: national
+  temporal_resolution: annual
+  units: million people
+- name: water_demand
+  spatial_resolution: national
+  temporal_resolution: annual
+  units: Ml
+outputs:
+- name: cost
+  spatial_resolution: national
+  temporal_resolution: annual
+  units: million GBP
+- name: energy_demand
+  spatial_resolution: national
+  temporal_resolution: annual
+  units: kWh
+- name: water
+  spatial_resolution: national
+  temporal_resolution: annual
+  units: Ml
+interventions:
+  # possible interventions that could be made in the system
+  - water_supply.yml
+initial_conditions:
+  # initialise system with interventions in current state
+  - water_supply_oxford.yml
+  - reservoirs.yml
+parameters:
+- name: clever_water_meter_savings
+  description: The savings from smart water meters
+  absolute_range: (0, 100)
+  suggested_range: (3, 10)
+  default_value: 3
+  units: '%'
