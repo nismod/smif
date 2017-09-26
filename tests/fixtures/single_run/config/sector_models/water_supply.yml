@@ -30,7 +30,7 @@ outputs:
   units: Ml
 interventions:
   # possible interventions that could be made in the system
-  - ../data/water_supply/interventions/types.yaml
+  - water_supply.yml
 initial_conditions:
   # initialise system with interventions in current state
   - ../data/water_supply/initial_conditions/initial_2015_oxford.yaml
