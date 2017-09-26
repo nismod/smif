@@ -33,8 +33,8 @@ interventions:
   - water_supply.yml
 initial_conditions:
   # initialise system with interventions in current state
-  - ../data/water_supply/initial_conditions/initial_2015_oxford.yaml
-  - ../data/water_supply/initial_conditions/reservoirs.yaml
+  - water_supply_oxford.yml
+  - .reservoirs.yml
 parameters:
 - name: clever_water_meter_savings
   description: The savings from smart water meters
