@@ -22,12 +22,13 @@ def get_sector_model_config(setup_project_folder, setup_registers):
     )
 
     config = {"name": "water_supply",
+              "description": 'a description',
               "path": water_supply_wrapper_path,
               "classname": "WaterSupplySectorModel",
               "inputs": [{'name': 'raininess',
                           'spatial_resolution': 'LSOA',
                           'temporal_resolution': 'annual',
-                          'units': 'ml'
+                          'units': 'milliliter'
                           }
                          ],
               "outputs": [
@@ -41,7 +42,7 @@ def get_sector_model_config(setup_project_folder, setup_registers):
                       'name': 'water',
                       'spatial_resolution': 'LSOA',
                       'temporal_resolution': 'annual',
-                      'units': 'Ml'
+                      'units': 'megaliter'
                   }
               ],
               "initial_conditions": [],
@@ -50,7 +51,14 @@ def get_sector_model_config(setup_project_folder, setup_registers):
                   {"name": "water_asset_b", "location": "oxford"},
                   {"name": "water_asset_c", "location": "oxford"},
               ],
-              "parameters": []
+              "parameters": [{
+                  'name': 'assump_diff_floorarea_pp',
+                  'description': 'Difference in floor area per person \
+                                 in end year compared to base year',
+                  'absolute_range': (0.5, 2),
+                  'suggested_range': (0.5, 2),
+                  'default_value': 1,
+                  'units': '%'}]
               }
 
     return config
@@ -106,14 +114,14 @@ class TestCompositeSectorModel():
         scenario_model.add_output('scenario_output', Mock(), Mock(), 'units')
         data = np.array([[[120.23]]])
         timesteps = [2010]
-        scenario_model.add_data(data, timesteps)
+        scenario_model.add_data('scenario_output', data, timesteps)
 
         model = EmptySectorModel('test_model')
         model.add_input('input_name', Mock(), Mock(), 'units')
         model.add_dependency(scenario_model, 'scenario_output', 'input_name')
 
         assert 'input_name' in model.deps
-        assert model.get_scenario_data('input_name') == data
+        assert model.get_scenario_data('input_name') == {'scenario_output': data}
 
 
 class TestSectorModelBuilder():
@@ -177,6 +185,22 @@ class TestSectorModelBuilder():
             builder.load_model('/fictional/path/to/model.py', 'WaterSupplySectorModel')
         msg = "Cannot find '/fictional/path/to/model.py' for the 'water_supply' model"
         assert msg in str(ex.value)
+
+    def test_build_from_config(self, get_sector_model_config):
+        config = get_sector_model_config
+        builder = SectorModelBuilder('test_sector_model')
+        builder.construct(config)
+        sector_model = builder.finish()
+        assert sector_model.name == 'water_supply'
+
+        actual = sector_model.as_dict()
+
+        assert actual == config
+
+        assert actual['name'] == config['name']
+        assert actual['description'] == config['description']
+        assert actual['path'] == config['path']
+        assert actual['parameters'] == config['parameters']
 
 
 class TestInputs:

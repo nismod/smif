@@ -14,11 +14,63 @@ def get_scenario_model_object():
                               scenario_model.regions.get_entry('LSOA'),
                               scenario_model.intervals.get_entry('annual'),
                               'ml')
-    scenario_model.add_data(data, [2010, 2011, 2012])
+    scenario_model.add_data('raininess', data, [2010, 2011, 2012])
     return scenario_model
 
 
-class TestScenarioModel:
+class TestScenarioObject:
+
+    def test_serialise_scenario(self):
+        scenario_model = ScenarioModel('High Population (ONS)')
+        scenario_model.add_output('population_count',
+                                  scenario_model.regions.get_entry('LSOA'),
+                                  scenario_model.intervals.get_entry('annual'),
+                                  'people')
+        scenario_model.description = 'The High ONS Forecast for UK population out to 2050'
+        scenario_model.scenario_set = 'population'
+        actual = scenario_model.as_dict()
+        expected = {'name': 'High Population (ONS)',
+                    'description': 'The High ONS Forecast for UK population out to 2050',
+                    'scenario_set': 'population',
+                    'parameters': [{
+                        'name': 'population_count',
+                        'spatial_resolution': 'LSOA',
+                        'temporal_resolution': 'annual',
+                        'units': 'people'}]
+                    }
+        assert actual == expected
+
+    def test_serialise_scenario_two_outputs(self):
+        scenario_model = ScenarioModel('High Population (ONS)')
+        scenario_model.add_output('population_count',
+                                  scenario_model.regions.get_entry('LSOA'),
+                                  scenario_model.intervals.get_entry('annual'),
+                                  'people')
+        scenario_model.add_output('population_density',
+                                  scenario_model.regions.get_entry('LSOA'),
+                                  scenario_model.intervals.get_entry('annual'),
+                                  'people/km^2')
+        scenario_model.description = 'The High ONS Forecast for UK population out to 2050'
+        scenario_model.scenario_set = 'population'
+        actual = scenario_model.as_dict()
+        expected = {'name': 'High Population (ONS)',
+                    'description': 'The High ONS Forecast for UK population out to 2050',
+                    'scenario_set': 'population',
+                    'parameters': [{
+                        'name': 'population_count',
+                        'spatial_resolution': 'LSOA',
+                        'temporal_resolution': 'annual',
+                        'units': 'people'},
+                        {'name': 'population_density',
+                         'spatial_resolution': 'LSOA',
+                         'temporal_resolution': 'annual',
+                         'units': 'people/km^2'}
+                    ]
+                    }
+        assert actual == expected
+
+
+class TestScenarioModelData:
 
     def test_nest_scenario_data(self,
                                 setup_country_data,
@@ -106,13 +158,17 @@ class TestScenarioModel:
             RegionSet('country', setup_country_data['features']))
 
         config = {'name': 'mass',
-                  'spatial_resolution': 'country',
-                  'temporal_resolution': 'seasonal',
-                  'units': 'kg'}
+                  'scenario_set': '',
+                  'parameters': [{
+                      'spatial_resolution': 'country',
+                      'temporal_resolution': 'seasonal',
+                      'units': 'kg',
+                      'name': 'length'
+                      }]}
         builder.construct(config, data, [2015, 2016])
         scenario = builder.finish()
 
-        actual = scenario.data
+        actual = scenario.get_data('length')
         assert np.allclose(actual, expected)
 
     def test_scenario_data_defaults(self, setup_region_data):
@@ -130,12 +186,16 @@ class TestScenarioModel:
         builder = ScenarioModelBuilder('length')
         builder.construct({
             'name': 'length',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'm'
+            'scenario_set': '',
+            'parameters': [{
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'units': 'm',
+                'name': 'length'
+                }]
         }, data, [2015])
         scenario = builder.finish()
-        assert scenario.data == expected
+        assert scenario.get_data('length') == expected
 
     def test_scenario_data_missing_year(self, setup_region_data,
                                         ):
@@ -151,9 +211,13 @@ class TestScenarioModel:
         with raises(ValueError) as ex:
             builder.construct({
                 'name': 'length',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'm'
+                'scenario_set': '',
+                'parameters': [{
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'units': 'm',
+                    'name': 'length'
+                    }]
             }, data, [2015])
         assert msg in str(ex.value)
 
@@ -174,9 +238,13 @@ class TestScenarioModel:
         with raises(ValueError) as ex:
             builder.construct({
                 'name': 'length',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'm'
+                'scenario_set': '',
+                'parameters': [{
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'units': 'm',
+                    'name': 'length'
+                    }]
             }, data, [2015])
         assert msg in str(ex)
 
@@ -202,10 +270,13 @@ class TestScenarioModel:
         with raises(ValueError) as ex:
             builder.construct({
                 'name': 'length',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'm'
-            }, data, [2015])
+                'scenario_set': '',
+                'parameters': [{
+                    'name': 'length',
+                    'units': 'm',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual'}]},
+                data, [2015])
         assert msg in str(ex)
 
     def test_data_list_to_array(self):

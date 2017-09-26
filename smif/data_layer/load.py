@@ -32,4 +32,5 @@ def dump(data, file_path):
         Data to write (should be lists, dicts and simple values)
     """
     with open(file_path, 'w') as file_handle:
-        return yaml.dump(data, file_handle, Dumper=Dumper)
+        return yaml.dump(data, file_handle, Dumper=Dumper,
+                         default_flow_style=False)

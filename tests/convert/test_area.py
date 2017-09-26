@@ -160,6 +160,16 @@ def test_proportion(regions):
 class TestRegionSet():
     """Test creating, looking up, retrieving region sets
     """
+
+    def test_serialise(self, regions):
+        rset = RegionSet('test', regions)
+        rset.description = 'my description'
+        actual = rset.as_dict()
+        expected = {'name': 'test',
+                    'description': 'my description'}
+
+        assert actual == expected
+
     def test_create(self, regions):
         rset = RegionSet('test', regions)
         assert rset.name == 'test'
