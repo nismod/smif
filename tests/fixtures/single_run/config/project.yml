@@ -5,10 +5,12 @@ scenario_sets:
 - name: population
   description: 'Growth in UK population'
 narrative_sets:
+- name: technology
+  description: 'Describes the evolution of technology'
 region_sets:
 # shared understanding of regions within the modelled area (e.g. GB)
 - name: national
-  file: ../../data/uk_nations_shp/regions.shp
+  file: uk_nations_shp/regions.shp
 - name: oxfordshire
   file: oxfordshire/regions.geojson
 interval_sets:
@@ -23,7 +25,7 @@ scenario_data:
   scenario_set: population
   parameters:
   - name: population
-    file: ../data/scenario/population.yaml
+    file: population.yaml
     spatial_resolution: national
     temporal_resolution: annual
     units: million people
@@ -32,7 +34,12 @@ scenario_data:
   scenario_set: rainfall
   parameters:
   - name: rainfall
-    file: ../data/scenario/raininess.yaml
+    file: raininess.yaml
     spatial_resolution: national
     temporal_resolution: annual
     units: ml
+narrative_data:
+- name: 'High Tech Demand Side Management'
+  description: 'High penetration of SMART technology on the demand side'
+  filename: high_tech_dsm.yml
+  narrative_set: technology

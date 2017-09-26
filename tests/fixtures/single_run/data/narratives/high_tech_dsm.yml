@@ -1,0 +1,6 @@
+energy_demand:
+- name: smart_meter_savings
+  value: 8
+water_supply:
+- name: clever_water_meter_savings
+  value: 8
