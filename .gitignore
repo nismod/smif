@@ -44,6 +44,7 @@ docs/api/*
 docs/_build/*
 cover/*
 MANIFEST
+node_modules
 
 .DS_Store
 
