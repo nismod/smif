@@ -1,36 +1,10 @@
-- year: 2010
-  region: England
-  interval: 1
-  value: 5
-- region: England
-  interval: 1
-  year: 2015
-  value: 7
-- region: England
-  interval: 1
-  year: 2020
-  value: 6
-- year: 2010
-  region: Wales
-  interval: 1
-  value: 5
-- region: Wales
-  interval: 1
-  year: 2015
-  value: 7
-- region: Wales
-  interval: 1
-  year: 2020
-  value: 6
-- year: 2010
-  region: Scotland
-  interval: 1
-  value: 5
-- region: Scotland
-  interval: 1
-  year: 2015
-  value: 7
-- region: Scotland
-  interval: 1
-  year: 2020
-  value: 6
+timestep,region,interval,value
+2010,England,1,5
+2015,England,1,7
+2020,England,1,6
+2010,Wales,1,5
+2015,Wales,1,7
+2020,Wales,1,6
+2010,Scotland,1,5
+2015,Scotland,1,7
+2020,Scotland,1,6
