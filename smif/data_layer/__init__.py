@@ -153,7 +153,8 @@ class DatafileInterface(DataInterface):
         """
         sos_model_runs = []
 
-        sos_model_run_names = self._read_yaml_filenames_in_dir(self.filepath['sos_model_runs'])
+        sos_model_run_names = self._read_filenames_in_dir(self.filepath['sos_model_runs'],
+                                                          '.yml')
         for sos_model_run_name in sos_model_run_names:
             sos_model_runs.append(self._read_yaml_file(self.filepath['sos_model_runs'],
                                                        sos_model_run_name))
@@ -183,7 +184,7 @@ class DatafileInterface(DataInterface):
         """
         sos_models = []
 
-        sos_model_names = self._read_yaml_filenames_in_dir(self.filepath['sos_models'])
+        sos_model_names = self._read_filenames_in_dir(self.filepath['sos_models'], '.yml')
         for sos_model_name in sos_model_names:
             sos_models.append(self._read_yaml_file(self.filepath['sos_models'],
                                                    sos_model_name))
@@ -209,7 +210,7 @@ class DatafileInterface(DataInterface):
         list
             A list of sector_model dicts
         """
-        return self._read_yaml_filenames_in_dir(self.filepath['sector_models'])
+        return self._read_filenames_in_dir(self.filepath['sector_models'], '.yml')
 
     def read_sector_model(self, sector_model_name):
         """Read a sector model from a Yaml file
@@ -296,22 +297,24 @@ class DatafileInterface(DataInterface):
     def write_narrative_data(self, narrative_set_name, data):
         raise NotImplementedError()
 
-    def _read_yaml_filenames_in_dir(self, path):
+    def _read_filenames_in_dir(self, path, extension):
         """Returns the name of the Yaml files in a certain directory
 
         Arguments
         ---------
         path : str
             Path to directory
+        extension : str
+            Extension of files (such as: '.yml' or '.csv')
 
         Returns
         -------
         list
-            The list of Yaml files in `path`
+            The list of files in `path` with extension
         """
         files = []
         for filename in os.listdir(path):
-            if filename.endswith('.yml'):
+            if filename.endswith(extension):
                 files.append(os.path.splitext(filename)[0])
         return files
 
