@@ -122,15 +122,26 @@ class DatafileInterface(DataInterface):
 
     Arguments
     ---------
-    config_path : str
-        The path to the configuration folder
+    base_folder : str
+        The path to the configuration and data files
     """
-    def __init__(self, config_path):
-        self.filepath = {
-            'sos_model_runs': os.path.join(config_path, 'sos_model_runs'),
-            'sos_models': os.path.join(config_path, 'sos_models'),
-            'sector_models': os.path.join(config_path, 'sector_models')
+    def __init__(self, base_folder):
+        config_folders = {
+            'sos_model_runs': 'config',
+            'sos_models': 'config',
+            'sector_models': 'config',
+            'initial_conditions': 'data',
+            'intervals': 'data',
+            'interventions': 'data',
+            'narratives': 'data',
+            'regions': 'data',
+            'scenarios': 'data'
         }
+
+        self.filepath = {}
+        for config_file in config_folders:
+            self.filepath[config_file] = os.path.join(base_folder, config_folders[config_file],
+                                                      config_file)
 
     def read_sos_model_runs(self):
         """Read all system-of-system model runs from Yaml files
