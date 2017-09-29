@@ -3,6 +3,7 @@
 """
 from abc import ABCMeta, abstractmethod
 import os
+import fiona
 from smif.data_layer.load import load, dump
 
 
@@ -41,7 +42,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_region_set_data(self, region_set_name):
+    def read_region_set_data(self, region_set_data_file):
         raise NotImplementedError()
 
     @abstractmethod
@@ -49,7 +50,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_interval_set_data(self, interval_set_name):
+    def read_interval_set_data(self, interval_set_data_file):
         raise NotImplementedError()
 
     @abstractmethod
@@ -122,7 +123,7 @@ class DatafileInterface(DataInterface):
 
     Arguments
     ---------
-    base_folder : str
+    base_folder: str
         The path to the configuration and data files
     """
     def __init__(self, base_folder):
@@ -138,9 +139,9 @@ class DatafileInterface(DataInterface):
             'scenarios': 'data'
         }
 
-        self.filepath = {}
+        self.file_dir = {}
         for config_file in config_folders:
-            self.filepath[config_file] = os.path.join(base_folder, config_folders[config_file],
+            self.file_dir[config_file] = os.path.join(base_folder, config_folders[config_file],
                                                       config_file)
 
     def read_sos_model_runs(self):
@@ -153,10 +154,10 @@ class DatafileInterface(DataInterface):
         """
         sos_model_runs = []
 
-        sos_model_run_names = self._read_filenames_in_dir(self.filepath['sos_model_runs'],
+        sos_model_run_names = self._read_filenames_in_dir(self.file_dir['sos_model_runs'],
                                                           '.yml')
         for sos_model_run_name in sos_model_run_names:
-            sos_model_runs.append(self._read_yaml_file(self.filepath['sos_model_runs'],
+            sos_model_runs.append(self._read_yaml_file(self.file_dir['sos_model_runs'],
                                                        sos_model_run_name))
 
         return sos_model_runs
@@ -168,10 +169,10 @@ class DatafileInterface(DataInterface):
 
         Arguments
         ---------
-        sos_model_run : dict
+        sos_model_run: dict
             A sos_model_run dictionary
         """
-        self._write_yaml_file(self.filepath['sos_model_runs'],
+        self._write_yaml_file(self.file_dir['sos_model_runs'],
                               sos_model_run['name'], sos_model_run)
 
     def read_sos_models(self):
@@ -184,9 +185,9 @@ class DatafileInterface(DataInterface):
         """
         sos_models = []
 
-        sos_model_names = self._read_filenames_in_dir(self.filepath['sos_models'], '.yml')
+        sos_model_names = self._read_filenames_in_dir(self.file_dir['sos_models'], '.yml')
         for sos_model_name in sos_model_names:
-            sos_models.append(self._read_yaml_file(self.filepath['sos_models'],
+            sos_models.append(self._read_yaml_file(self.file_dir['sos_models'],
                                                    sos_model_name))
         return sos_models
 
@@ -197,10 +198,10 @@ class DatafileInterface(DataInterface):
 
         Arguments
         ---------
-        sos_model : dict
+        sos_model: dict
             A sos_model dictionary
         """
-        self._write_yaml_file(self.filepath['sos_models'], sos_model['name'], sos_model)
+        self._write_yaml_file(self.file_dir['sos_models'], sos_model['name'], sos_model)
 
     def read_sector_models(self):
         """Read all sector models from Yaml files
@@ -210,7 +211,7 @@ class DatafileInterface(DataInterface):
         list
             A list of sector_model dicts
         """
-        return self._read_filenames_in_dir(self.filepath['sector_models'], '.yml')
+        return self._read_filenames_in_dir(self.file_dir['sector_models'], '.yml')
 
     def read_sector_model(self, sector_model_name):
         """Read a sector model from a Yaml file
@@ -219,10 +220,10 @@ class DatafileInterface(DataInterface):
 
         Arguments
         ---------
-        sector_model_name : str
+        sector_model_name: str
             Name of the sector_model (sector_model['name'])
         """
-        return self._read_yaml_file(self.filepath['sector_models'], sector_model_name)
+        return self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
 
     def write_sector_model(self, sector_model):
         """Write sector model to a Yaml file
@@ -231,22 +232,43 @@ class DatafileInterface(DataInterface):
 
         Arguments
         ---------
-        sector_model : dict
+        sector_model: dict
             A sector_model dictionary
         """
-        self._write_yaml_file(self.filepath['sector_models'], sector_model['name'],
+        self._write_yaml_file(self.file_dir['sector_models'], sector_model['name'],
                               sector_model)
 
     def read_region_sets(self):
         raise NotImplementedError()
 
-    def read_region_set_data(self, region_set_name):
-        raise NotImplementedError()
+    def read_region_set_data(self, region_set_data_file):
+        """Read region_set_data file into a Fiona feature collection
+
+        The file format must be possible to parse with GDAL, and must contain
+        an attribute "name" to use as an identifier for the region.
+
+        Arguments
+        ---------
+        region_set_data_file: str
+            Filename of a GDAL-readable region file
+
+        Returns
+        -------
+        list
+            A list of data from the specified file in a fiona formatted dict
+        """
+        filepath = os.path.join(self.file_dir['regions'], region_set_data_file)
+
+        with fiona.drivers():
+            with fiona.open(filepath) as src:
+                data = [f for f in src]
+
+        return data
 
     def read_interval_sets(self):
         raise NotImplementedError()
 
-    def read_interval_set_data(self, interval_set_name):
+    def read_interval_set_data(self, interval_set_data_file):
         raise NotImplementedError()
 
     def read_units(self):
@@ -302,9 +324,9 @@ class DatafileInterface(DataInterface):
 
         Arguments
         ---------
-        path : str
+        path: str
             Path to directory
-        extension : str
+        extension: str
             Extension of files (such as: '.yml' or '.csv')
 
         Returns
@@ -320,37 +342,39 @@ class DatafileInterface(DataInterface):
 
     def _read_yaml_file(self, path, filename):
         """
+        Read a Data dict from a Yaml file
+
         Arguments
         ---------
-        path : str
+        path: str
             Path to directory
-        name : str
+        name: str
             Name of file
 
         Returns
         -------
         dict
-            The contents of the Yaml file `name` in `path`
+            The data of the Yaml file `name` in `path`
         """
         filename = filename + '.yml'
         filepath = os.path.join(path, filename)
         return load(filepath)
 
-    def _write_yaml_file(self, path, filename, contents):
-        """Writes a Dict to a Yaml file
+    def _write_yaml_file(self, path, filename, data):
+        """Write a data dict to a Yaml file
 
         Arguments
         ---------
-        path : str
+        path: str
             Path to directory
-        name : str
+        name: str
             Name of file
-        contents: dict
-            Contents to be written to the file
+        data: dict
+            Data to be written to the file
         """
         filename = filename + '.yml'
         filepath = os.path.join(path, filename)
-        dump(contents, filepath)
+        dump(data, filepath)
 
 
 class DatabaseInterface(DataInterface):
@@ -383,13 +407,13 @@ class DatabaseInterface(DataInterface):
     def read_region_sets(self):
         raise NotImplementedError()
 
-    def read_region_set_data(self, region_set_name):
+    def read_region_set_data(self, region_set_data_file):
         raise NotImplementedError()
 
     def read_interval_sets(self):
         raise NotImplementedError()
 
-    def read_interval_set_data(self, interval_set_name):
+    def read_interval_set_data(self, interval_set_data_file):
         raise NotImplementedError()
 
     def read_units(self):
