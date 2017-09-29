@@ -62,7 +62,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_interval_set(self, data):
+    def write_interval_sets(self, data):
         raise NotImplementedError()
 
     @abstractmethod
@@ -246,7 +246,7 @@ class DatafileInterface(DataInterface):
                               sector_model)
 
     def read_region_sets(self):
-        """Read region sets that are configured to this project
+        """Read region sets from project configuration
 
         Returns
         -------
@@ -281,7 +281,15 @@ class DatafileInterface(DataInterface):
         return data
 
     def read_interval_sets(self):
-        raise NotImplementedError()
+        """Read interval sets from project configuration
+
+        Returns
+        -------
+        list
+            A list of interval set dicts
+        """
+        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        return project_config['interval_sets']
 
     def read_interval_set_data(self, interval_set_data_file):
         raise NotImplementedError()
@@ -301,8 +309,17 @@ class DatafileInterface(DataInterface):
         project_config['region_sets'] = data
         self._write_project_config(project_config)
 
-    def write_interval_set(self, data):
-        raise NotImplementedError()
+    def write_interval_sets(self, data):
+        """Write interval sets to project configuration
+
+        Arguments
+        ---------
+        data: list
+            A list of interval set dicts
+        """
+        project_config = self._read_project_config()
+        project_config['interval_sets'] = data
+        self._write_project_config(project_config)
 
     def write_units(self, data):
         raise NotImplementedError()
@@ -466,7 +483,7 @@ class DatabaseInterface(DataInterface):
     def write_region_sets(self, data):
         raise NotImplementedError()
 
-    def write_interval_set(self, data):
+    def write_interval_sets(self, data):
         raise NotImplementedError()
 
     def write_units(self, data):
