@@ -1,7 +1,8 @@
 """Test data interface
 """
+import json
+import os
 from datetime import datetime
-
 from pytest import fixture
 from smif.data_layer import DatafileInterface
 
@@ -167,3 +168,21 @@ def test_yaml_sector_model(get_sector_model, setup_folder_structure):
     config_handler.write_sector_model(sector_model)
     assert sector_model == config_handler.read_sector_model(sector_model['name'])
     assert sector_model['name'] in config_handler.read_sector_models()
+
+
+def test_region_set(setup_region_data, setup_folder_structure):
+    """ Test to dump a GeoJSON file and then read the file
+    using the datafile interface. Finally check if the name
+    shows up the the returned dictionary.
+    """
+    basefolder = setup_folder_structure
+    region_data = setup_region_data
+
+    with open(os.path.join(str(basefolder), 'data', 'regions',
+                           'test_region.json'), 'w+') as region_file:
+        json.dump(region_data, region_file)
+
+    config_handler = DatafileInterface(str(basefolder))
+    test_region = config_handler.read_region_set_data('test_region.json')
+
+    assert test_region[0]['properties']['name'] == 'oxford'
