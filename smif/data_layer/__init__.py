@@ -58,7 +58,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_region_set(self, data):
+    def write_region_sets(self, data):
         raise NotImplementedError()
 
     @abstractmethod
@@ -121,12 +121,18 @@ class DataInterface(metaclass=ABCMeta):
 class DatafileInterface(DataInterface):
     """Read and write interface to YAML / CSV configuration files
 
+    Project.yml
+
     Arguments
     ---------
     base_folder: str
         The path to the configuration and data files
     """
     def __init__(self, base_folder):
+        self.base_folder = base_folder
+        self.file_dir = {}
+        self.file_dir['project'] = os.path.join(base_folder, 'config')
+
         config_folders = {
             'sos_model_runs': 'config',
             'sos_models': 'config',
@@ -139,13 +145,14 @@ class DatafileInterface(DataInterface):
             'scenarios': 'data'
         }
 
-        self.file_dir = {}
         for config_file in config_folders:
             self.file_dir[config_file] = os.path.join(base_folder, config_folders[config_file],
                                                       config_file)
 
     def read_sos_model_runs(self):
         """Read all system-of-system model runs from Yaml files
+
+        sos_model_runs.yml
 
         Returns
         -------
@@ -239,7 +246,15 @@ class DatafileInterface(DataInterface):
                               sector_model)
 
     def read_region_sets(self):
-        raise NotImplementedError()
+        """Read region sets that are configured to this project
+
+        Returns
+        -------
+        list
+            A list of region set dicts
+        """
+        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        return project_config['region_sets']
 
     def read_region_set_data(self, region_set_data_file):
         """Read region_set_data file into a Fiona feature collection
@@ -274,8 +289,17 @@ class DatafileInterface(DataInterface):
     def read_units(self):
         raise NotImplementedError()
 
-    def write_region_set(self, data):
-        raise NotImplementedError()
+    def write_region_sets(self, data):
+        """Write region sets to project configuration
+
+        Arguments
+        ---------
+        data: list
+            A list of region set dicts
+        """
+        project_config = self._read_project_config()
+        project_config['region_sets'] = data
+        self._write_project_config(project_config)
 
     def write_interval_set(self, data):
         raise NotImplementedError()
@@ -319,6 +343,27 @@ class DatafileInterface(DataInterface):
     def write_narrative_data(self, narrative_set_name, data):
         raise NotImplementedError()
 
+    def _read_project_config(self):
+        """Read the project configuration
+
+        Returns
+        -------
+        dict
+            The project configuration
+        """
+
+        return self._read_yaml_file(self.file_dir['project'], 'project')
+
+    def _write_project_config(self, data):
+        """Write the project configuration
+
+        Argument
+        --------
+        data: dict
+            The project configuration
+        """
+        self._write_yaml_file(self.file_dir['project'], 'project', data)
+
     def _read_filenames_in_dir(self, path, extension):
         """Returns the name of the Yaml files in a certain directory
 
@@ -341,8 +386,7 @@ class DatafileInterface(DataInterface):
         return files
 
     def _read_yaml_file(self, path, filename):
-        """
-        Read a Data dict from a Yaml file
+        """Read a Data dict from a Yaml file
 
         Arguments
         ---------
@@ -419,7 +463,7 @@ class DatabaseInterface(DataInterface):
     def read_units(self):
         raise NotImplementedError()
 
-    def write_region_set(self, data):
+    def write_region_sets(self, data):
         raise NotImplementedError()
 
     def write_interval_set(self, data):
