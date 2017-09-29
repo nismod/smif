@@ -312,3 +312,18 @@ def test_fileinterface_project_data(setup_folder_structure, get_project_config):
     region_sets = config_handler.read_region_sets()
     assert len(region_sets) == 2
 
+    # Interval sets
+    interval_sets = config_handler.read_interval_sets()
+    assert interval_sets[0]['name'] == 'hourly'
+    assert len(interval_sets) == 2
+
+    interval_sets.append(
+        {
+            'name': 'monthly',
+            'description': 'The 12 months of the year',
+            'filename': 'monthly.csv'
+        }
+    )
+    config_handler.write_interval_sets(interval_sets)
+    interval_sets = config_handler.read_interval_sets()
+    assert len(interval_sets) == 3
