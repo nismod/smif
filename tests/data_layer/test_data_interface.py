@@ -205,7 +205,7 @@ def get_sector_model():
     }
 
 
-def test_yaml_sos_model_run(get_sos_model_run, setup_folder_structure):
+def test_datafileinterface_sos_model_run(get_sos_model_run, setup_folder_structure):
     """ Test to write two sos_model_run configurations to Yaml files, then
     read the Yaml files and compare that the result is equal.
     """
@@ -228,7 +228,7 @@ def test_yaml_sos_model_run(get_sos_model_run, setup_folder_structure):
     assert sos_model_runs.count(sos_model_run2) == 1
 
 
-def test_yaml_sos_model(get_sos_model, setup_folder_structure):
+def test_datafileinterface_sos_model(get_sos_model, setup_folder_structure):
     """ Test to write two soS_model configurations to Yaml files, then
     read the Yaml files and compare that the result is equal.
     """
@@ -251,7 +251,8 @@ def test_yaml_sos_model(get_sos_model, setup_folder_structure):
     assert sos_models.count(sos_model2) == 1
 
 
-def test_yaml_sector_model(setup_folder_structure, get_project_config, get_sector_model):
+def test_datafileinterface_sector_model(setup_folder_structure, get_project_config,
+                                        get_sector_model):
     """ Test to write a sector_model configuration to a Yaml file
     read the Yaml file and compare that the result is equal.
     Finally check if the name shows up the the readlist.
@@ -267,7 +268,8 @@ def test_yaml_sector_model(setup_folder_structure, get_project_config, get_secto
     assert sector_model['name'] in config_handler.read_sector_models()
 
 
-def test_region_set(setup_folder_structure, get_project_config, setup_region_data):
+def test_datafileinterface_region_set(setup_folder_structure, get_project_config,
+                                      setup_region_data):
     """ Test to dump a GeoJSON file and then read the file
     using the datafile interface. Finally check if the name
     shows up the the returned dictionary.
@@ -287,7 +289,7 @@ def test_region_set(setup_folder_structure, get_project_config, setup_region_dat
     assert test_region[0]['properties']['name'] == 'oxford'
 
 
-def test_fileinterface_project_data(setup_folder_structure, get_project_config):
+def test_datafileinterface_project(setup_folder_structure, get_project_config):
     """ Test to read and write the project configuration
     """
     basefolder = setup_folder_structure
