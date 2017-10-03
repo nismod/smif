@@ -296,34 +296,72 @@ def test_fileinterface_project_data(setup_folder_structure, get_project_config):
 
     config_handler = DatafileInterface(str(basefolder))
 
-    # Region sets
+    # Region sets / read existing (from fixture)
     region_sets = config_handler.read_region_sets()
     assert region_sets[0]['name'] == 'lad'
     assert len(region_sets) == 1
 
-    region_sets.append(
-        {
-            'name': 'lad_NL',
-            'description': 'Local authority districts for the Netherlands',
-            'filename': 'lad_NL.csv'
-        }
-    )
-    config_handler.write_region_sets(region_sets)
+    # Region sets / add
+    region_set = {
+        'name': 'lad_NL',
+        'description': 'Local authority districts for the Netherlands',
+        'filename': 'lad_NL.csv'
+    }
+    config_handler.write_region_set(region_set)
     region_sets = config_handler.read_region_sets()
     assert len(region_sets) == 2
 
-    # Interval sets
+    # Region sets / modify
+    region_set = {
+        'name': 'lad_NL',
+        'description': 'Local authority districts for the Netherlands',
+        'filename': 'lad_NL_V2.csv'
+    }
+    config_handler.write_region_set(region_set)
+    region_sets = config_handler.read_region_sets()
+    assert len(region_sets) == 2
+    for region_set in region_sets:
+        if region_set['name'] == 'lad_NL':
+            assert region_set['filename'] == 'lad_NL_V2.csv'
+
+    # Interval sets / read existing (from fixture)
     interval_sets = config_handler.read_interval_sets()
     assert interval_sets[0]['name'] == 'hourly'
     assert len(interval_sets) == 2
 
-    interval_sets.append(
-        {
-            'name': 'monthly',
-            'description': 'The 12 months of the year',
-            'filename': 'monthly.csv'
-        }
-    )
-    config_handler.write_interval_sets(interval_sets)
+    # Interval sets / add
+    interval_set = {
+        'name': 'monthly',
+        'description': 'The 12 months of the year',
+        'filename': 'monthly.csv'
+    }
+    config_handler.write_interval_set(interval_set)
     interval_sets = config_handler.read_interval_sets()
     assert len(interval_sets) == 3
+
+    # Interval sets / modify
+    interval_set = {
+        'name': 'monthly',
+        'description': 'The 12 months of the year',
+        'filename': 'monthly_V2.csv'
+    }
+    config_handler.write_interval_set(interval_set)
+    interval_sets = config_handler.read_interval_sets()
+    assert len(interval_sets) == 3
+    for interval_set in interval_sets:
+        if interval_set['name'] == 'monthly':
+            assert interval_set['filename'] == 'monthly_V2.csv'
+
+    # Scenario data
+    scenario_sets = config_handler.read_scenario_sets()
+    assert scenario_sets[0]['name'] == 'population'
+    assert len(scenario_sets) == 1
+
+    scenario_set = {
+        'name': 'temperature',
+        'description': 'The annual change in temperature',
+    }
+
+    config_handler.write_interval_set(scenario_set)
+    scenario_sets = config_handler.read_scenario_sets()
+    assert len(scenario_sets) == 2

@@ -42,7 +42,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_region_set_data(self, region_set_data_file):
+    def read_region_set_data(self, region_set_name):
         raise NotImplementedError()
 
     @abstractmethod
@@ -50,7 +50,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_interval_set_data(self, interval_set_data_file):
+    def read_interval_set_data(self, interval_set_name):
         raise NotImplementedError()
 
     @abstractmethod
@@ -58,15 +58,15 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_region_sets(self, data):
+    def write_region_set(self, region_set):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_interval_sets(self, data):
+    def write_interval_set(self, interval_set):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_units(self, data):
+    def write_units(self, unit):
         raise NotImplementedError()
 
     @abstractmethod
@@ -256,7 +256,7 @@ class DatafileInterface(DataInterface):
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
         return project_config['region_sets']
 
-    def read_region_set_data(self, region_set_data_file):
+    def read_region_set_data(self, region_set_name):
         """Read region_set_data file into a Fiona feature collection
 
         The file format must be possible to parse with GDAL, and must contain
@@ -272,7 +272,7 @@ class DatafileInterface(DataInterface):
         list
             A list of data from the specified file in a fiona formatted dict
         """
-        filepath = os.path.join(self.file_dir['regions'], region_set_data_file)
+        filepath = os.path.join(self.file_dir['regions'], region_set_name)
 
         with fiona.drivers():
             with fiona.open(filepath) as src:
@@ -291,37 +291,77 @@ class DatafileInterface(DataInterface):
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
         return project_config['interval_sets']
 
-    def read_interval_set_data(self, interval_set_data_file):
+    def read_interval_set_data(self, interval_set_name):
         raise NotImplementedError()
 
     def read_units(self):
         raise NotImplementedError()
 
-    def write_region_sets(self, data):
-        """Write region sets to project configuration
+    def write_region_set(self, region_set):
+        """Write region set to project configuration
+
+        Region set configuration will be modified or appended
+        Unique identifier is the region_set['name']
+        Replaces existing entries without warning
 
         Arguments
         ---------
-        data: list
-            A list of region set dicts
+        region_set: dict
+            A region set dict
         """
         project_config = self._read_project_config()
-        project_config['region_sets'] = data
+
+        new_region_sets = []
+        region_set_modified = False
+
+        # modify region set if existing in project configuration
+        for existing_region_set in project_config['region_sets']:
+            if existing_region_set['name'] == region_set['name']:
+                new_region_sets.append(region_set)
+                region_set_modified = True
+            else:
+                new_region_sets.append(existing_region_set)
+
+        # add region set if non-existing
+        if not region_set_modified:
+            new_region_sets.append(region_set)
+
+        project_config['region_sets'] = new_region_sets
         self._write_project_config(project_config)
 
-    def write_interval_sets(self, data):
-        """Write interval sets to project configuration
+    def write_interval_set(self, interval_set):
+        """Write interval set to project configuration
+
+        Interval set configuration will be modified or appended
+        Unique identifier is the interval_set['name']
+        Replaces existing entries without warning
 
         Arguments
         ---------
-        data: list
-            A list of interval set dicts
+        interval_set: dict
+            A interval set dict
         """
         project_config = self._read_project_config()
-        project_config['interval_sets'] = data
+
+        new_interval_sets = []
+        interval_set_modified = False
+
+        # modify interval set if existing in project configuration
+        for existing_interval_set in project_config['interval_sets']:
+            if existing_interval_set['name'] == interval_set['name']:
+                new_interval_sets.append(interval_set)
+                interval_set_modified = True
+            else:
+                new_interval_sets.append(existing_interval_set)
+
+        # add interval set if non-existing
+        if not interval_set_modified:
+            new_interval_sets.append(interval_set)
+
+        project_config['interval_sets'] = new_interval_sets
         self._write_project_config(project_config)
 
-    def write_units(self, data):
+    def write_units(self, unit):
         raise NotImplementedError()
 
     def read_scenario_sets(self):
@@ -468,13 +508,13 @@ class DatabaseInterface(DataInterface):
     def read_region_sets(self):
         raise NotImplementedError()
 
-    def read_region_set_data(self, region_set_data_file):
+    def read_region_set_data(self, region_set_name):
         raise NotImplementedError()
 
     def read_interval_sets(self):
         raise NotImplementedError()
 
-    def read_interval_set_data(self, interval_set_data_file):
+    def read_interval_set_data(self, interval_set_name):
         raise NotImplementedError()
 
     def read_units(self):
@@ -486,7 +526,7 @@ class DatabaseInterface(DataInterface):
     def write_interval_sets(self, data):
         raise NotImplementedError()
 
-    def write_units(self, data):
+    def write_units(self, unit):
         raise NotImplementedError()
 
     def read_scenario_sets(self):
