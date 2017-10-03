@@ -427,3 +427,27 @@ def test_datafileinterface_project(setup_folder_structure, get_project_config):
     for scenario_set in scenario_sets:
         if scenario_set['name'] == 'mortality':
             assert scenario_set['description'] == 'The annual mortality rate in NL population'
+
+    # Scenarios / read existing (from fixture)
+    scenarios = config_handler.read_scenarios('population')
+    assert scenarios[0]['name'] == 'High Population (ONS)'
+    assert len(scenarios) == 2
+
+    # Scenarios / add
+    scenario = {
+        'description': 'The Medium ONS Forecast for UK population out to 2050',
+        'filename': 'population_medium.csv',
+        'name': 'Medium Population (ONS)',
+        'parameters': [
+            {
+                'name': 'population_count',
+                'spatial_resolution': 'lad',
+                'temporal_resolution': 'annual',
+                'units': 'people',
+            }
+        ],
+        'scenario_set': 'population',
+    }
+    config_handler.write_scenario(scenario)
+    scenarios = config_handler.read_scenarios('population')
+    assert len(scenarios) == 3

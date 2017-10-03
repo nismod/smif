@@ -395,7 +395,7 @@ class DatafileInterface(DataInterface):
         filtered_scenario_data = []
         for scenario_data in project_config['scenario_data']:
             if scenario_data['scenario_set'] == scenario_set_name:
-                filtered_scenario_data.append(scenario_data['scenario_set'])
+                filtered_scenario_data.append(scenario_data)
 
         return filtered_scenario_data
 
@@ -463,7 +463,36 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def write_scenario(self, scenario):
-        raise NotImplementedError()
+        """Write scenario to project configuration
+
+        Scenario configuration will be modified or appended
+        Unique identifier is the scenario['name']
+        Replaces existing entries without warning
+
+        Arguments
+        ---------
+        scenario: dict
+            A scenario dict
+        """
+        project_config = self._read_project_config()
+
+        new_scenarios = []
+        scenario_modified = False
+
+        # modify region set if existing in project configuration
+        for existing_scenario in project_config['scenario_data']:
+            if existing_scenario['name'] == scenario['name']:
+                new_scenarios.append(scenario)
+                scenario_modified = True
+            else:
+                new_scenarios.append(existing_scenario)
+
+        # add region set if non-existing
+        if not scenario_modified:
+            new_scenarios.append(scenario)
+
+        project_config['scenario_data'] = new_scenarios
+        self._write_project_config(project_config)
 
     def write_scenario_data(self, scenario_name, data):
         raise NotImplementedError()
