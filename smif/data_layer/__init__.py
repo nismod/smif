@@ -2,6 +2,7 @@
 """Data access modules for loading system-of-systems model configuration
 """
 from abc import ABCMeta, abstractmethod
+import csv
 import os
 import fiona
 from smif.data_layer.load import load, dump
@@ -265,7 +266,7 @@ class DatafileInterface(DataInterface):
         Arguments
         ---------
         region_set_data_file: str
-            Filename of a GDAL-readable region file
+            Filename of a GDAL-readable region including file extension
 
         Returns
         -------
@@ -365,16 +366,101 @@ class DatafileInterface(DataInterface):
         raise NotImplementedError()
 
     def read_scenario_sets(self):
-        raise NotImplementedError()
+        """Read scenario sets from project configuration
+
+        Returns
+        -------
+        list
+            A list of scenario set dicts
+        """
+        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        return project_config['scenario_sets']
 
     def read_scenarios(self, scenario_set_name):
-        raise NotImplementedError()
+        """Read all scenarios from a certain set
+
+        Arguments
+        ---------
+        scenario_set_name: str
+            Name of the scenario_set
+
+        Returns
+        -------
+        list
+            A list of scenarios within the specified 'scenario_set_name'
+        """
+        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+
+        # Filter only the scenarios of the selected scenario_set_name
+        filtered_scenario_data = []
+        for scenario_data in project_config['scenario_data']:
+            if scenario_data['scenario_set'] == scenario_set_name:
+                filtered_scenario_data.append(scenario_data['scenario_set'])
+
+        return filtered_scenario_data
 
     def read_scenario_data(self, scenario_name):
-        raise NotImplementedError()
+        """Read scenario data file
+
+        Arguments
+        ---------
+        scenario_name: str
+            Name of the scenario
+
+        Returns
+        -------
+        list
+            A list with dictionaries containing the contents of 'scenario_name' data file
+        """
+        # Find filename for this scenario
+        filename = ''
+        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        for scenario_data in project_config['scenario_data']:
+            if scenario_data['name'] == scenario_name:
+                filename = scenario_data['filename']
+                break
+
+        # Read the scenario data from file
+        filepath = os.path.join(self.file_dir['scenarios'], filename)
+        reader = csv.DictReader(open(filepath))
+
+        scenario_data = []
+        for row in reader:
+            scenario_data.append(row)
+
+        return scenario_data
 
     def write_scenario_set(self, scenario_set):
-        raise NotImplementedError()
+        """Write scenario set to project configuration
+
+        Scenario set configuration will be modified or appended
+        Unique identifier is the scenario_set['name']
+        Replaces existing entries without warning
+
+        Arguments
+        ---------
+        scenario_set: dict
+            A scenario set dict
+        """
+        project_config = self._read_project_config()
+
+        new_scenario_sets = []
+        scenario_set_modified = False
+
+        # modify scenario set if existing in project configuration
+        for existing_scenario_set in project_config['scenario_sets']:
+            if existing_scenario_set['name'] == scenario_set['name']:
+                new_scenario_sets.append(scenario_set)
+                scenario_set_modified = True
+            else:
+                new_scenario_sets.append(existing_scenario_set)
+
+        # add scenario set if non-existing
+        if not scenario_set_modified:
+            new_scenario_sets.append(scenario_set)
+
+        project_config['scenario_sets'] = new_scenario_sets
+        self._write_project_config(project_config)
 
     def write_scenario(self, scenario):
         raise NotImplementedError()
@@ -455,7 +541,7 @@ class DatafileInterface(DataInterface):
         Returns
         -------
         dict
-            The data of the Yaml file `name` in `path`
+            The data of the Yaml file `filename` in `path`
         """
         filename = filename + '.yml'
         filepath = os.path.join(path, filename)
