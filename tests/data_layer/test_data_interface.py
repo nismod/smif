@@ -1,5 +1,6 @@
 """Test data interface
 """
+import csv
 import json
 import os
 from datetime import datetime
@@ -205,6 +206,32 @@ def get_sector_model():
     }
 
 
+@fixture(scope='function')
+def get_scenario_data():
+    """Return sample scenario_data
+    """
+    return [
+        {
+            'value': 100,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2015
+        },
+        {
+            'value': 150,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2016
+        },
+        {
+            'value': 200,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2017
+        }
+    ]
+
+
 def test_datafileinterface_sos_model_run(get_sos_model_run, setup_folder_structure):
     """ Test to write two sos_model_run configurations to Yaml files, then
     read the Yaml files and compare that the result is equal.
@@ -289,6 +316,27 @@ def test_datafileinterface_region_set(setup_folder_structure, get_project_config
     assert test_region[0]['properties']['name'] == 'oxford'
 
 
+def test_datafileinterface_scenario_data(setup_folder_structure, get_project_config,
+                                         get_scenario_data):
+    basefolder = setup_folder_structure
+    project_config_path = os.path.join(str(basefolder), 'config', 'project.yml')
+    dump(get_project_config, project_config_path)
+    scenario_data = get_scenario_data
+
+    keys = scenario_data[0].keys()
+    with open(os.path.join(str(basefolder), 'data', 'scenarios',
+                           'population_high.csv'), 'w+') as output_file:
+        dict_writer = csv.DictWriter(output_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(scenario_data)
+
+    config_handler = DatafileInterface(str(basefolder))
+    test_scenario = config_handler.read_scenario_data('High Population (ONS)')
+
+    assert len(test_scenario) == 3
+    assert test_scenario[0]['region'] == 'GB'
+
+
 def test_datafileinterface_project(setup_folder_structure, get_project_config):
     """ Test to read and write the project configuration
     """
@@ -354,16 +402,28 @@ def test_datafileinterface_project(setup_folder_structure, get_project_config):
         if interval_set['name'] == 'monthly':
             assert interval_set['filename'] == 'monthly_V2.csv'
 
-    # Scenario data
+    # Scenario sets / read existing (from fixture)
     scenario_sets = config_handler.read_scenario_sets()
     assert scenario_sets[0]['name'] == 'population'
     assert len(scenario_sets) == 1
 
+    # Scenario sets / add
     scenario_set = {
-        'name': 'temperature',
-        'description': 'The annual change in temperature',
+        'description': 'The annual mortality rate in UK population',
+        'name': 'mortality'
     }
-
-    config_handler.write_interval_set(scenario_set)
+    config_handler.write_scenario_set(scenario_set)
     scenario_sets = config_handler.read_scenario_sets()
     assert len(scenario_sets) == 2
+
+    # Scenario sets / modify
+    scenario_set = {
+        'description': 'The annual mortality rate in NL population',
+        'name': 'mortality'
+    }
+    config_handler.write_scenario_set(scenario_set)
+    scenario_sets = config_handler.read_scenario_sets()
+    assert len(scenario_sets) == 2
+    for scenario_set in scenario_sets:
+        if scenario_set['name'] == 'mortality':
+            assert scenario_set['description'] == 'The annual mortality rate in NL population'
