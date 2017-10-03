@@ -451,3 +451,9 @@ def test_datafileinterface_project(setup_folder_structure, get_project_config):
     config_handler.write_scenario(scenario)
     scenarios = config_handler.read_scenarios('population')
     assert len(scenarios) == 3
+
+    # Scenarios / modify
+    scenario['scenario_set'] = 'mortality'
+    config_handler.write_scenario(scenario)
+    scenarios = config_handler.read_scenarios('population')
+    assert len(scenarios) == 2
