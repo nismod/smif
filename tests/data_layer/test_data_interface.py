@@ -311,7 +311,7 @@ def test_datafileinterface_region_set_data(setup_folder_structure, get_project_c
         json.dump(region_data, region_file)
 
     config_handler = DatafileInterface(str(basefolder))
-    test_region = config_handler.read_region_set_data('test_region.json')
+    test_region = config_handler.read_region_data('test_region.json')
 
     assert test_region[0]['properties']['name'] == 'oxford'
 
@@ -351,35 +351,35 @@ def test_datafileinterface_project_regions(setup_folder_structure, get_project_c
     config_handler = DatafileInterface(str(basefolder))
 
     # Region sets / read existing (from fixture)
-    region_sets = config_handler.read_region_sets()
-    assert region_sets[0]['name'] == 'lad'
-    assert len(region_sets) == 1
+    regions = config_handler.read_regions()
+    assert regions[0]['name'] == 'lad'
+    assert len(regions) == 1
 
     # Region sets / add
-    region_set = {
+    region = {
         'name': 'lad_NL',
         'description': 'Local authority districts for the Netherlands',
         'filename': 'lad_NL.csv'
     }
-    config_handler.write_region_set(region_set)
-    region_sets = config_handler.read_region_sets()
-    assert len(region_sets) == 2
-    for region_set in region_sets:
-        if region_set['name'] == 'lad_NL':
-            assert region_set['filename'] == 'lad_NL.csv'
+    config_handler.write_region(region)
+    regions = config_handler.read_regions()
+    assert len(regions) == 2
+    for region in regions:
+        if region['name'] == 'lad_NL':
+            assert region['filename'] == 'lad_NL.csv'
 
     # Region sets / modify
-    region_set = {
+    region = {
         'name': 'lad_NL',
         'description': 'Local authority districts for the Netherlands',
         'filename': 'lad_NL_V2.csv'
     }
-    config_handler.write_region_set(region_set)
-    region_sets = config_handler.read_region_sets()
-    assert len(region_sets) == 2
-    for region_set in region_sets:
-        if region_set['name'] == 'lad_NL':
-            assert region_set['filename'] == 'lad_NL_V2.csv'
+    config_handler.write_region(region)
+    regions = config_handler.read_regions()
+    assert len(regions) == 2
+    for region in regions:
+        if region['name'] == 'lad_NL':
+            assert region['filename'] == 'lad_NL_V2.csv'
 
 
 def test_datafileinterface_project_intervals(setup_folder_structure, get_project_config):
@@ -391,36 +391,36 @@ def test_datafileinterface_project_intervals(setup_folder_structure, get_project
 
     config_handler = DatafileInterface(str(basefolder))
 
-    # Interval sets / read existing (from fixture)
-    interval_sets = config_handler.read_interval_sets()
-    assert interval_sets[0]['name'] == 'hourly'
-    assert len(interval_sets) == 2
+    # Intervals / read existing (from fixture)
+    intervals = config_handler.read_intervals()
+    assert intervals[0]['name'] == 'hourly'
+    assert len(intervals) == 2
 
     # Interval sets / add
-    interval_set = {
+    interval = {
         'name': 'monthly',
         'description': 'The 12 months of the year',
         'filename': 'monthly.csv'
     }
-    config_handler.write_interval_set(interval_set)
-    interval_sets = config_handler.read_interval_sets()
-    assert len(interval_sets) == 3
-    for interval_set in interval_sets:
-        if interval_set['name'] == 'monthly':
-            assert interval_set['filename'] == 'monthly.csv'
+    config_handler.write_interval(interval)
+    intervals = config_handler.read_intervals()
+    assert len(intervals) == 3
+    for interval in intervals:
+        if interval['name'] == 'monthly':
+            assert interval['filename'] == 'monthly.csv'
 
     # Interval sets / modify
-    interval_set = {
+    interval = {
         'name': 'monthly',
         'description': 'The 12 months of the year',
         'filename': 'monthly_V2.csv'
     }
-    config_handler.write_interval_set(interval_set)
-    interval_sets = config_handler.read_interval_sets()
-    assert len(interval_sets) == 3
-    for interval_set in interval_sets:
-        if interval_set['name'] == 'monthly':
-            assert interval_set['filename'] == 'monthly_V2.csv'
+    config_handler.write_interval(interval)
+    intervals = config_handler.read_intervals()
+    assert len(intervals) == 3
+    for interval in intervals:
+        if interval['name'] == 'monthly':
+            assert interval['filename'] == 'monthly_V2.csv'
 
 
 def test_datafileinterface_project_scenarios(setup_folder_structure, get_project_config):
@@ -462,7 +462,7 @@ def test_datafileinterface_project_scenarios(setup_folder_structure, get_project
             assert scenario_set['description'] == 'The annual mortality rate in NL population'
 
     # Scenarios / read existing (from fixture)
-    scenarios = config_handler.read_scenarios('population')
+    scenarios = config_handler.read_scenario_set('population')
     assert scenarios[0]['name'] == 'High Population (ONS)'
     assert len(scenarios) == 2
 
@@ -482,7 +482,7 @@ def test_datafileinterface_project_scenarios(setup_folder_structure, get_project
         'scenario_set': 'population',
     }
     config_handler.write_scenario(scenario)
-    scenarios = config_handler.read_scenarios('population')
+    scenarios = config_handler.read_scenario_set('population')
     assert len(scenarios) == 3
     for scenario in scenarios:
         if scenario['name'] == 'Medium Population (ONS)':
@@ -504,7 +504,7 @@ def test_datafileinterface_project_scenarios(setup_folder_structure, get_project
         'scenario_set': 'population',
     }
     config_handler.write_scenario(scenario)
-    scenarios = config_handler.read_scenarios('population')
+    scenarios = config_handler.read_scenario_set('population')
     assert len(scenarios) == 3
     for scenario in scenarios:
         if scenario['name'] == 'Medium Population (ONS)':
@@ -550,7 +550,7 @@ def test_datafileinterface_project_narratives(setup_folder_structure, get_projec
             assert narrative_set['description'] == 'New narrative set description'
 
     # Narratives / read existing (from fixture)
-    narratives = config_handler.read_narratives('technology')
+    narratives = config_handler.read_narrative_set('technology')
     assert narratives[0]['name'] == 'Energy Demand - High Tech'
     assert len(narratives) == 1
 
@@ -562,7 +562,7 @@ def test_datafileinterface_project_narratives(setup_folder_structure, get_projec
         'narrative_set': 'technology',
     }
     config_handler.write_narrative(narrative)
-    narratives = config_handler.read_narratives('technology')
+    narratives = config_handler.read_narrative_set('technology')
     assert len(narratives) == 2
     for narrative in narratives:
         if narrative['name'] == 'Energy Demand - Low Tech':
@@ -576,7 +576,7 @@ def test_datafileinterface_project_narratives(setup_folder_structure, get_projec
         'narrative_set': 'technology',
     }
     config_handler.write_narrative(narrative)
-    narratives = config_handler.read_narratives('technology')
+    narratives = config_handler.read_narrative_set('technology')
     assert len(narratives) == 2
     for narrative in narratives:
         if narrative['name'] == 'Energy Demand - Low Tech':

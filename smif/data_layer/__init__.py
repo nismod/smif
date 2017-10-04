@@ -39,35 +39,35 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_region_sets(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_region_set_data(self, region_set_name):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_interval_sets(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_interval_set_data(self, interval_set_name):
-        raise NotImplementedError()
-
-    @abstractmethod
     def read_units(self):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_region_set(self, region_set):
+    def write_unit(self, unit):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_interval_set(self, interval_set):
+    def read_regions(self):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_units(self, unit):
+    def read_region_data(self, region_name):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_region(self, region):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read_intervals(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read_interval_data(self, interval_name):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_interval(self, interval):
         raise NotImplementedError()
 
     @abstractmethod
@@ -75,7 +75,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_scenarios(self, scenario_set_name):
+    def read_scenario_set(self, scenario_set_name):
         raise NotImplementedError()
 
     @abstractmethod
@@ -91,15 +91,11 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_scenario_data(self, scenario_name, data):
-        raise NotImplementedError()
-
-    @abstractmethod
     def read_narrative_sets(self):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_narratives(self, narrative_set_name):
+    def read_narrative_set(self, narrative_set_name):
         raise NotImplementedError()
 
     @abstractmethod
@@ -112,10 +108,6 @@ class DataInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def write_narrative(self, narrative):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def write_narrative_data(self, narrative_set_name, data):
         raise NotImplementedError()
 
 
@@ -246,7 +238,13 @@ class DatafileInterface(DataInterface):
         self._write_yaml_file(self.file_dir['sector_models'], sector_model['name'],
                               sector_model)
 
-    def read_region_sets(self):
+    def read_units(self):
+        raise NotImplementedError()
+
+    def write_unit(self, unit):
+        raise NotImplementedError()
+
+    def read_regions(self):
         """Read region sets from project configuration
 
         Returns
@@ -257,23 +255,23 @@ class DatafileInterface(DataInterface):
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
         return project_config['region_sets']
 
-    def read_region_set_data(self, region_set_name):
-        """Read region_set_data file into a Fiona feature collection
+    def read_region_data(self, region_name):
+        """Read region data file into a Fiona feature collection
 
         The file format must be possible to parse with GDAL, and must contain
         an attribute "name" to use as an identifier for the region.
 
         Arguments
         ---------
-        region_set_data_file: str
-            Filename of a GDAL-readable region including file extension
+        region_name: str
+            Name of the region
 
         Returns
         -------
         list
             A list of data from the specified file in a fiona formatted dict
         """
-        filepath = os.path.join(self.file_dir['regions'], region_set_name)
+        filepath = os.path.join(self.file_dir['regions'], region_name)
 
         with fiona.drivers():
             with fiona.open(filepath) as src:
@@ -281,25 +279,8 @@ class DatafileInterface(DataInterface):
 
         return data
 
-    def read_interval_sets(self):
-        """Read interval sets from project configuration
-
-        Returns
-        -------
-        list
-            A list of interval set dicts
-        """
-        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
-        return project_config['interval_sets']
-
-    def read_interval_set_data(self, interval_set_name):
-        raise NotImplementedError()
-
-    def read_units(self):
-        raise NotImplementedError()
-
-    def write_region_set(self, region_set):
-        """Write region set to project configuration
+    def write_region(self, region):
+        """Write region to project configuration
 
         Region set configuration will be modified or appended
         Unique identifier is the region_set['name']
@@ -312,58 +293,69 @@ class DatafileInterface(DataInterface):
         """
         project_config = self._read_project_config()
 
-        new_region_sets = []
-        region_set_modified = False
+        new_regions = []
+        regions_modified = False
 
         # modify region set if existing in project configuration
-        for existing_region_set in project_config['region_sets']:
-            if existing_region_set['name'] == region_set['name']:
-                new_region_sets.append(region_set)
-                region_set_modified = True
+        for existing_regions in project_config['region_sets']:
+            if existing_regions['name'] == region['name']:
+                new_regions.append(region)
+                regions_modified = True
             else:
-                new_region_sets.append(existing_region_set)
+                new_regions.append(existing_regions)
 
         # add region set if non-existing
-        if not region_set_modified:
-            new_region_sets.append(region_set)
+        if not regions_modified:
+            new_regions.append(region)
 
-        project_config['region_sets'] = new_region_sets
+        project_config['region_sets'] = new_regions
         self._write_project_config(project_config)
 
-    def write_interval_set(self, interval_set):
-        """Write interval set to project configuration
+    def read_intervals(self):
+        """Read interval sets from project configuration
 
-        Interval set configuration will be modified or appended
-        Unique identifier is the interval_set['name']
+        Returns
+        -------
+        list
+            A list of interval set dicts
+        """
+        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        return project_config['interval_sets']
+
+    def read_interval_data(self, interval_name):
+        raise NotImplementedError()
+
+    def write_interval(self, interval):
+        """Write interval to project configuration
+
+        Interval configuration will be modified or appended
+        Unique identifier is the interval['name']
         Replaces existing entries without warning
 
         Arguments
         ---------
-        interval_set: dict
-            A interval set dict
+        interval: dict
+            An interval dict
         """
         project_config = self._read_project_config()
 
-        new_interval_sets = []
-        interval_set_modified = False
+        new_intervals = []
+        intervals_modified = False
 
         # modify interval set if existing in project configuration
-        for existing_interval_set in project_config['interval_sets']:
-            if existing_interval_set['name'] == interval_set['name']:
-                new_interval_sets.append(interval_set)
-                interval_set_modified = True
+        for existing_intervals in project_config['interval_sets']:
+            if existing_intervals['name'] == interval['name']:
+                new_intervals.append(interval)
+                intervals_modified = True
             else:
-                new_interval_sets.append(existing_interval_set)
+                new_intervals.append(existing_intervals)
 
         # add interval set if non-existing
-        if not interval_set_modified:
-            new_interval_sets.append(interval_set)
+        if not intervals_modified:
+            new_intervals.append(interval)
 
-        project_config['interval_sets'] = new_interval_sets
+        project_config['interval_sets'] = new_intervals
         self._write_project_config(project_config)
-
-    def write_units(self, unit):
-        raise NotImplementedError()
 
     def read_scenario_sets(self):
         """Read scenario sets from project configuration
@@ -376,7 +368,7 @@ class DatafileInterface(DataInterface):
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
         return project_config['scenario_sets']
 
-    def read_scenarios(self, scenario_set_name):
+    def read_scenario_set(self, scenario_set_name):
         """Read all scenarios from a certain scenario_set
 
         Arguments
@@ -494,9 +486,6 @@ class DatafileInterface(DataInterface):
         project_config['scenario_data'] = new_scenarios
         self._write_project_config(project_config)
 
-    def write_scenario_data(self, scenario_name, data):
-        raise NotImplementedError()
-
     def read_narrative_sets(self):
         """Read narrative sets from project configuration
 
@@ -508,7 +497,7 @@ class DatafileInterface(DataInterface):
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
         return project_config['narrative_sets']
 
-    def read_narratives(self, narrative_set_name):
+    def read_narrative_set(self, narrative_set_name):
         """Read all narratives from a certain narrative_set
 
         Arguments
@@ -597,9 +586,6 @@ class DatafileInterface(DataInterface):
 
         project_config['narrative_data'] = new_narratives
         self._write_project_config(project_config)
-
-    def write_narrative_data(self, narrative_set_name, data):
-        raise NotImplementedError()
 
     def _read_project_config(self):
         """Read the project configuration
@@ -706,34 +692,34 @@ class DatabaseInterface(DataInterface):
     def write_sector_model(self, sector_model):
         raise NotImplementedError()
 
-    def read_region_sets(self):
-        raise NotImplementedError()
-
-    def read_region_set_data(self, region_set_name):
-        raise NotImplementedError()
-
-    def read_interval_sets(self):
-        raise NotImplementedError()
-
-    def read_interval_set_data(self, interval_set_name):
-        raise NotImplementedError()
-
     def read_units(self):
         raise NotImplementedError()
 
-    def write_region_sets(self, data):
+    def write_unit(self, unit):
         raise NotImplementedError()
 
-    def write_interval_sets(self, data):
+    def read_regions(self):
         raise NotImplementedError()
 
-    def write_units(self, unit):
+    def read_region_data(self, region_name):
+        raise NotImplementedError()
+
+    def write_region(self, region):
+        raise NotImplementedError()
+
+    def read_intervals(self):
+        raise NotImplementedError()
+
+    def read_interval_data(self, interval_name):
+        raise NotImplementedError()
+
+    def write_interval(self, interval):
         raise NotImplementedError()
 
     def read_scenario_sets(self):
         raise NotImplementedError()
 
-    def read_scenarios(self, scenario_set_name):
+    def read_scenario_set(self, scenario_set_name):
         raise NotImplementedError()
 
     def read_scenario_data(self, scenario_name):
@@ -745,13 +731,10 @@ class DatabaseInterface(DataInterface):
     def write_scenario(self, scenario):
         raise NotImplementedError()
 
-    def write_scenario_data(self, scenario_name, data):
-        raise NotImplementedError()
-
     def read_narrative_sets(self):
         raise NotImplementedError()
 
-    def read_narratives(self, narrative_set_name):
+    def read_narrative_set(self, narrative_set_name):
         raise NotImplementedError()
 
     def read_narrative_data(self, narrative_name):
@@ -761,7 +744,4 @@ class DatabaseInterface(DataInterface):
         raise NotImplementedError()
 
     def write_narrative(self, narrative):
-        raise NotImplementedError()
-
-    def write_narrative_data(self, narrative_set_name, data):
         raise NotImplementedError()
