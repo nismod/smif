@@ -32,14 +32,14 @@ def get_project_config():
                 'name': 'governance'
             }
         ],
-        'region_sets': [
+        'regions': [
             {
                 'description': 'Local authority districts for the UK',
                 'filename': 'test_region.json',
                 'name': 'lad'
             }
         ],
-        'interval_sets': [
+        'intervals': [
             {
                 'description': 'The 8760 hours in the year named by hour',
                 'filename': 'hourly.csv', 'name': 'hourly'
@@ -50,7 +50,7 @@ def get_project_config():
             }
         ],
         'units': 'user_units.txt',
-        'scenario_data':
+        'scenarios':
         [
             {
                 'description': 'The High ONS Forecast for UK population out to 2050',
@@ -81,7 +81,7 @@ def get_project_config():
                 'scenario_set': 'population',
             }
         ],
-        'narrative_data': [
+        'narratives': [
             {
                 'description': 'High penetration of SMART technology on the demand side',
                 'filename': 'energy_demand_high_tech.yml',
@@ -232,6 +232,28 @@ def get_scenario_data():
     ]
 
 
+@fixture(scope='function')
+def get_narrative_data():
+    """Return sample narrative_data
+    """
+    return [
+        {
+            'energy_demand': [
+                {
+                    'name': 'smart_meter_savings',
+                    'value': 8
+                }
+            ],
+            'water_supply': [
+                {
+                    'name': 'clever_water_meter_savings',
+                    'value': 8
+                }
+            ]
+        }
+    ]
+
+
 def test_datafileinterface_sos_model_run(get_sos_model_run, setup_folder_structure):
     """ Test to write two sos_model_run configurations to Yaml files, then
     read the Yaml files and compare that the result is equal.
@@ -339,6 +361,27 @@ def test_datafileinterface_scenario_data(setup_folder_structure, get_project_con
 
     assert len(test_scenario) == 3
     assert test_scenario[0]['region'] == 'GB'
+
+
+def test_datafileinterface_narrative_data(setup_folder_structure, get_project_config,
+                                          get_narrative_data):
+    """ Test to dump a scenario (CSV) data-file and then read the file
+    using the datafile interface. Finally check the data shows up in the
+    returned dictionary.
+    """
+    basefolder = setup_folder_structure
+    project_config_path = os.path.join(str(basefolder), 'config', 'project.yml')
+    dump(get_project_config, project_config_path)
+
+    basefolder = setup_folder_structure
+    narrative_data_path = os.path.join(str(basefolder), 'data', 'narratives',
+                                       'central_planning.yml')
+    dump(get_narrative_data, narrative_data_path)
+
+    config_handler = DatafileInterface(str(basefolder))
+    test_narrative = config_handler.read_narrative_data('Central Planning')
+
+    assert test_narrative[0]['energy_demand'][0]['name'] == 'smart_meter_savings'
 
 
 def test_datafileinterface_project_regions(setup_folder_structure, get_project_config):

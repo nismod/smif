@@ -253,7 +253,7 @@ class DatafileInterface(DataInterface):
             A list of region set dicts
         """
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
-        return project_config['region_sets']
+        return project_config['regions']
 
     def read_region_data(self, region_name):
         """Read region data file into a Fiona feature collection
@@ -274,7 +274,7 @@ class DatafileInterface(DataInterface):
         # Find filename for this region_name
         filename = ''
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
-        for region in project_config['region_sets']:
+        for region in project_config['regions']:
             if region['name'] == region_name:
                 filename = region['filename']
                 break
@@ -305,7 +305,7 @@ class DatafileInterface(DataInterface):
         regions_modified = False
 
         # modify region set if existing in project configuration
-        for existing_regions in project_config['region_sets']:
+        for existing_regions in project_config['regions']:
             if existing_regions['name'] == region['name']:
                 new_regions.append(region)
                 regions_modified = True
@@ -316,7 +316,7 @@ class DatafileInterface(DataInterface):
         if not regions_modified:
             new_regions.append(region)
 
-        project_config['region_sets'] = new_regions
+        project_config['regions'] = new_regions
         self._write_project_config(project_config)
 
     def read_intervals(self):
@@ -328,7 +328,7 @@ class DatafileInterface(DataInterface):
             A list of interval set dicts
         """
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
-        return project_config['interval_sets']
+        return project_config['intervals']
 
     def read_interval_data(self, interval_name):
         raise NotImplementedError()
@@ -351,7 +351,7 @@ class DatafileInterface(DataInterface):
         intervals_modified = False
 
         # modify interval set if existing in project configuration
-        for existing_intervals in project_config['interval_sets']:
+        for existing_intervals in project_config['intervals']:
             if existing_intervals['name'] == interval['name']:
                 new_intervals.append(interval)
                 intervals_modified = True
@@ -362,7 +362,7 @@ class DatafileInterface(DataInterface):
         if not intervals_modified:
             new_intervals.append(interval)
 
-        project_config['interval_sets'] = new_intervals
+        project_config['intervals'] = new_intervals
         self._write_project_config(project_config)
 
     def read_scenario_sets(self):
@@ -393,7 +393,7 @@ class DatafileInterface(DataInterface):
 
         # Filter only the scenarios of the selected scenario_set_name
         filtered_scenario_data = []
-        for scenario_data in project_config['scenario_data']:
+        for scenario_data in project_config['scenarios']:
             if scenario_data['scenario_set'] == scenario_set_name:
                 filtered_scenario_data.append(scenario_data)
 
@@ -415,7 +415,7 @@ class DatafileInterface(DataInterface):
         # Find filename for this scenario
         filename = ''
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
-        for scenario_data in project_config['scenario_data']:
+        for scenario_data in project_config['scenarios']:
             if scenario_data['name'] == scenario_name:
                 filename = scenario_data['filename']
                 break
@@ -480,7 +480,7 @@ class DatafileInterface(DataInterface):
         scenario_modified = False
 
         # modify region set if existing in project configuration
-        for existing_scenario in project_config['scenario_data']:
+        for existing_scenario in project_config['scenarios']:
             if existing_scenario['name'] == scenario['name']:
                 new_scenarios.append(scenario)
                 scenario_modified = True
@@ -491,7 +491,7 @@ class DatafileInterface(DataInterface):
         if not scenario_modified:
             new_scenarios.append(scenario)
 
-        project_config['scenario_data'] = new_scenarios
+        project_config['scenarios'] = new_scenarios
         self._write_project_config(project_config)
 
     def read_narrative_sets(self):
@@ -522,14 +522,35 @@ class DatafileInterface(DataInterface):
 
         # Filter only the narratives of the selected narrative_set_name
         filtered_narrative_data = []
-        for narrative_data in project_config['narrative_data']:
+        for narrative_data in project_config['narratives']:
             if narrative_data['narrative_set'] == narrative_set_name:
                 filtered_narrative_data.append(narrative_data)
 
         return filtered_narrative_data
 
     def read_narrative_data(self, narrative_name):
-        raise NotImplementedError()
+        """Read narrative data file
+
+        Arguments
+        ---------
+        narrative_name: str
+            Name of the narrative
+
+        Returns
+        -------
+        list
+            A list with dictionaries containing the contents of 'narrative_name' data file
+        """
+        # Find filename for this narrative
+        filename = ''
+        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        for narrative in project_config['narratives']:
+            if narrative['name'] == narrative_name:
+                filename = narrative['filename']
+                break
+
+        # Read the narrative data from file
+        return load(os.path.join(self.file_dir['narratives'], filename))
 
     def write_narrative_set(self, narrative_set):
         """Write narrative set to project configuration
@@ -581,7 +602,7 @@ class DatafileInterface(DataInterface):
         narrative_modified = False
 
         # modify region set if existing in project configuration
-        for existing_narrative in project_config['narrative_data']:
+        for existing_narrative in project_config['narratives']:
             if existing_narrative['name'] == narrative['name']:
                 new_narratives.append(narrative)
                 narrative_modified = True
@@ -592,7 +613,7 @@ class DatafileInterface(DataInterface):
         if not narrative_modified:
             new_narratives.append(narrative)
 
-        project_config['narrative_data'] = new_narratives
+        project_config['narratives'] = new_narratives
         self._write_project_config(project_config)
 
     def _read_project_config(self):
