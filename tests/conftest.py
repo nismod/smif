@@ -64,6 +64,12 @@ def setup_folder_structure(tmpdir_factory):
         os.path.join('config', 'sos_models'),
         os.path.join('config', 'sector_models'),
         'data',
+        os.path.join('data', 'initial_conditions'),
+        os.path.join('data', 'interval_definitions'),
+        os.path.join('data', 'interventions'),
+        os.path.join('data', 'narratives'),
+        os.path.join('data', 'region_definitions'),
+        os.path.join('data', 'scenarios'),
         'models'
     ]
 
