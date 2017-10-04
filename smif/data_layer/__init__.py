@@ -19,7 +19,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def update_sos_model_run(self, sos_model_run):
+    def update_sos_model_run(self, sos_model_run_name, sos_model_run):
         raise NotImplementedError()
 
     @abstractmethod
@@ -31,7 +31,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def update_sos_model(self, sos_model):
+    def update_sos_model(self, sos_model_name, sos_model):
         raise NotImplementedError()
 
     @abstractmethod
@@ -47,7 +47,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def update_sector_model(self, sector_model):
+    def update_sector_model(self, sector_model_name, sector_model):
         raise NotImplementedError()
 
     @abstractmethod
@@ -193,8 +193,6 @@ class DatafileInterface(DataInterface):
     def write_sos_model_run(self, sos_model_run):
         """Write system-of-system model run to Yaml file
 
-        Existing configuration will be overwritten without warning
-
         Arguments
         ---------
         sos_model_run: dict
@@ -203,8 +201,20 @@ class DatafileInterface(DataInterface):
         self._write_yaml_file(self.file_dir['sos_model_runs'],
                               sos_model_run['name'], sos_model_run)
 
-    def update_sos_model_run(self, sos_model_run):
-        raise NotImplementedError()
+    def update_sos_model_run(self, sos_model_run_name, sos_model_run):
+        """Update system-of-system model run in Yaml file
+
+        Arguments
+        ---------
+        sos_model_run_name: str
+            A sos_model_run name
+        sos_model_run: dict
+            A sos_model_run dictionary
+        """
+        if sos_model_run_name != sos_model_run['name']:
+            os.remove(os.path.join(self.file_dir['sos_model_runs'],
+                                   sos_model_run_name + '.yml'))
+        self.write_sos_model_run(sos_model_run)
 
     def read_sos_models(self):
         """Read all system-of-system models from Yaml files
@@ -234,8 +244,20 @@ class DatafileInterface(DataInterface):
         """
         self._write_yaml_file(self.file_dir['sos_models'], sos_model['name'], sos_model)
 
-    def update_sos_model(self, sos_model):
-        raise NotImplementedError()
+    def update_sos_model(self, sos_model_name, sos_model):
+        """Update system-of-system model in Yaml file
+
+        Arguments
+        ---------
+        sos_model_name: str
+            A sos_model name
+        sos_model: dict
+            A sos_model dictionary
+        """
+        if sos_model_name != sos_model['name']:
+            os.remove(os.path.join(self.file_dir['sos_models'],
+                                   sos_model_name + '.yml'))
+        self.write_sos_model(sos_model)
 
     def read_sector_models(self):
         """Read all sector models from Yaml files
@@ -272,8 +294,20 @@ class DatafileInterface(DataInterface):
         self._write_yaml_file(self.file_dir['sector_models'], sector_model['name'],
                               sector_model)
 
-    def update_sector_model(self, sector_model):
-        raise NotImplementedError()
+    def update_sector_model(self, sector_model_name, sector_model):
+        """Update sector model in Yaml file
+
+        Arguments
+        ---------
+        sector_model_name: str
+            A sector_model name
+        sector_model: dict
+            A sector_model dictionary
+        """
+        if sector_model_name != sector_model['name']:
+            os.remove(os.path.join(self.file_dir['sector_models'],
+                                   sector_model_name + '.yml'))
+        self.write_sector_model(sector_model)
 
     def read_region_definitions(self):
         """Read region_definitions from project configuration
