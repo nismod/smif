@@ -295,11 +295,11 @@ def test_datafileinterface_sector_model(setup_folder_structure, get_project_conf
     assert sector_model['name'] in config_handler.read_sector_models()
 
 
-def test_datafileinterface_region_set(setup_folder_structure, get_project_config,
-                                      setup_region_data):
-    """ Test to dump a GeoJSON file and then read the file
-    using the datafile interface. Finally check if the name
-    shows up the the returned dictionary.
+def test_datafileinterface_region_set_data(setup_folder_structure, get_project_config,
+                                           setup_region_data):
+    """ Test to dump a region_set (GeoJSON) data-file and then read the data
+    using the datafile interface. Finally check if the data shows up in the
+    returned dictionary.
     """
     basefolder = setup_folder_structure
     project_config_path = os.path.join(str(basefolder), 'config', 'project.yml')
@@ -318,6 +318,10 @@ def test_datafileinterface_region_set(setup_folder_structure, get_project_config
 
 def test_datafileinterface_scenario_data(setup_folder_structure, get_project_config,
                                          get_scenario_data):
+    """ Test to dump a scenario (CSV) data-file and then read the file
+    using the datafile interface. Finally check the data shows up in the
+    returned dictionary.
+    """
     basefolder = setup_folder_structure
     project_config_path = os.path.join(str(basefolder), 'config', 'project.yml')
     dump(get_project_config, project_config_path)
