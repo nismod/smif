@@ -19,11 +19,19 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
+    def update_sos_model_run(self, sos_model_run):
+        raise NotImplementedError()
+
+    @abstractmethod
     def read_sos_models(self):
         raise NotImplementedError()
 
     @abstractmethod
     def write_sos_model(self, sos_model):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def update_sos_model(self, sos_model):
         raise NotImplementedError()
 
     @abstractmethod
@@ -39,35 +47,39 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_units(self):
+    def update_sector_model(self, sector_model):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_unit(self, unit):
+    def read_region_definitions(self):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_regions(self):
+    def read_region_definition_data(self, region_definition_name):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_region_data(self, region_name):
+    def write_region_definition(self, region_definition):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_region(self, region):
+    def update_region_definition(self, region_definition):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_intervals(self):
+    def read_interval_definitions(self):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_interval_data(self, interval_name):
+    def read_interval_definition_data(self, interval_definition_name):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_interval(self, interval):
+    def write_interval_definition(self, interval_definition):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def update_interval_definition(self, interval_definition):
         raise NotImplementedError()
 
     @abstractmethod
@@ -87,7 +99,15 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
+    def update_scenario_set(self, scenario_set):
+        raise NotImplementedError()
+
+    @abstractmethod
     def write_scenario(self, scenario):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def update_scenario(self, scenario):
         raise NotImplementedError()
 
     @abstractmethod
@@ -107,7 +127,15 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
+    def update_narrative_set(self, narrative_set):
+        raise NotImplementedError()
+
+    @abstractmethod
     def write_narrative(self, narrative):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def update_narrative(self, narrative):
         raise NotImplementedError()
 
 
@@ -131,10 +159,10 @@ class DatafileInterface(DataInterface):
             'sos_models': 'config',
             'sector_models': 'config',
             'initial_conditions': 'data',
-            'intervals': 'data',
+            'interval_definitions': 'data',
             'interventions': 'data',
             'narratives': 'data',
-            'regions': 'data',
+            'region_definitions': 'data',
             'scenarios': 'data'
         }
 
@@ -175,6 +203,9 @@ class DatafileInterface(DataInterface):
         self._write_yaml_file(self.file_dir['sos_model_runs'],
                               sos_model_run['name'], sos_model_run)
 
+    def update_sos_model_run(self, sos_model_run):
+        raise NotImplementedError()
+
     def read_sos_models(self):
         """Read all system-of-system models from Yaml files
 
@@ -202,6 +233,9 @@ class DatafileInterface(DataInterface):
             A sos_model dictionary
         """
         self._write_yaml_file(self.file_dir['sos_models'], sos_model['name'], sos_model)
+
+    def update_sos_model(self, sos_model):
+        raise NotImplementedError()
 
     def read_sector_models(self):
         """Read all sector models from Yaml files
@@ -238,131 +272,134 @@ class DatafileInterface(DataInterface):
         self._write_yaml_file(self.file_dir['sector_models'], sector_model['name'],
                               sector_model)
 
-    def read_units(self):
+    def update_sector_model(self, sector_model):
         raise NotImplementedError()
 
-    def write_unit(self, unit):
-        raise NotImplementedError()
-
-    def read_regions(self):
-        """Read region sets from project configuration
+    def read_region_definitions(self):
+        """Read region_definitions from project configuration
 
         Returns
         -------
         list
-            A list of region set dicts
+            A list of region_definition dicts
         """
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
-        return project_config['regions']
+        return project_config['region_definitions']
 
-    def read_region_data(self, region_name):
-        """Read region data file into a Fiona feature collection
+    def read_region_definition_data(self, region_definition_name):
+        """Read region_definition data file into a Fiona feature collection
 
         The file format must be possible to parse with GDAL, and must contain
-        an attribute "name" to use as an identifier for the region.
+        an attribute "name" to use as an identifier for the region_definition.
 
         Arguments
         ---------
-        region_name: str
-            Name of the region
+        region_definition_name: str
+            Name of the region_definition
 
         Returns
         -------
         list
             A list of data from the specified file in a fiona formatted dict
         """
-        # Find filename for this region_name
+        # Find filename for this region_definition_name
         filename = ''
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
-        for region in project_config['regions']:
-            if region['name'] == region_name:
-                filename = region['filename']
+        for region_definition in project_config['region_definitions']:
+            if region_definition['name'] == region_definition_name:
+                filename = region_definition['filename']
                 break
 
         # Read the region data from file
-        filepath = os.path.join(self.file_dir['regions'], filename)
+        filepath = os.path.join(self.file_dir['region_definitions'], filename)
         with fiona.drivers():
             with fiona.open(filepath) as src:
                 data = [f for f in src]
 
         return data
 
-    def write_region(self, region):
-        """Write region to project configuration
-
-        Region set configuration will be modified or appended
-        Unique identifier is the region_set['name']
-        Replaces existing entries without warning
+    def write_region_definition(self, region_definition):
+        """Write region_definition to project configuration
 
         Arguments
         ---------
-        region_set: dict
-            A region set dict
+        region_definition: dict
+            A region_definition dict
         """
         project_config = self._read_project_config()
 
-        new_regions = []
-        regions_modified = False
-
-        # modify region set if existing in project configuration
-        for existing_regions in project_config['regions']:
-            if existing_regions['name'] == region['name']:
-                new_regions.append(region)
-                regions_modified = True
-            else:
-                new_regions.append(existing_regions)
-
-        # add region set if non-existing
-        if not regions_modified:
-            new_regions.append(region)
-
-        project_config['regions'] = new_regions
+        project_config['region_definitions'].append(region_definition)
         self._write_project_config(project_config)
 
-    def read_intervals(self):
-        """Read interval sets from project configuration
+    def update_region_definition(self, region_definition_name, region_definition):
+        """Update region_definition to project configuration
+
+        Arguments
+        ---------
+        region_definition_name: str
+            Name of the (original) entry
+        region_definition: dict
+            The updated region_definition dict
+        """
+        project_config = self._read_project_config()
+
+        # Create updated list
+        project_config['region_definitions'] = [
+            entry for entry in project_config['region_definitions']
+            if (entry['name'] != region_definition['name'] and
+                entry['name'] != region_definition_name)
+        ]
+        project_config['region_definitions'].append(region_definition)
+
+        self._write_project_config(project_config)
+
+    def read_interval_definitions(self):
+        """Read interval_definition sets from project configuration
 
         Returns
         -------
         list
-            A list of interval set dicts
+            A list of interval_definition set dicts
         """
         project_config = self._read_yaml_file(self.file_dir['project'], 'project')
-        return project_config['intervals']
+        return project_config['interval_definitions']
 
-    def read_interval_data(self, interval_name):
+    def read_interval_definition_data(self, interval_definition_name):
         raise NotImplementedError()
 
-    def write_interval(self, interval):
-        """Write interval to project configuration
-
-        Interval configuration will be modified or appended
-        Unique identifier is the interval['name']
-        Replaces existing entries without warning
+    def write_interval_definition(self, interval_definition):
+        """Write interval_definition to project configuration
 
         Arguments
         ---------
-        interval: dict
-            An interval dict
+        interval_definition: dict
+            A interval_definition dict
         """
         project_config = self._read_project_config()
 
-        new_intervals = []
-        intervals_modified = False
+        project_config['interval_definitions'].append(interval_definition)
+        self._write_project_config(project_config)
 
-        # modify interval set if existing in project configuration
-        for existing_intervals in project_config['intervals']:
-            if existing_intervals['name'] == interval['name']:
-                new_intervals.append(interval)
-                intervals_modified = True
-            else:
-                new_intervals.append(existing_intervals)
+    def update_interval_definition(self, interval_definition_name, interval_definition):
+        """Update interval_definition to project configuration
 
-        # add interval set if non-existing
-        if not intervals_modified:
-            new_intervals.append(interval)
+        Arguments
+        ---------
+        interval_definition_name: str
+            Name of the (original) entry
+        interval_definition: dict
+            The updated interval_definition dict
+        """
+        project_config = self._read_project_config()
 
-        project_config['intervals'] = new_intervals
+        # Create updated list
+        project_config['interval_definitions'] = [
+            entry for entry in project_config['interval_definitions']
+            if (entry['name'] != interval_definition['name'] and
+                entry['name'] != interval_definition_name)
+        ]
+        project_config['interval_definitions'].append(interval_definition)
+
         self._write_project_config(project_config)
 
     def read_scenario_sets(self):
@@ -431,43 +468,42 @@ class DatafileInterface(DataInterface):
         return scenario_data
 
     def write_scenario_set(self, scenario_set):
-        """Write scenario set to project configuration
-
-        Scenario set configuration will be modified or appended
-        Unique identifier is the scenario_set['name']
-        Replaces existing entries without warning
+        """Write scenario_set to project configuration
 
         Arguments
         ---------
         scenario_set: dict
-            A scenario set dict
+            A scenario_set dict
         """
         project_config = self._read_project_config()
 
-        new_scenario_sets = []
-        scenario_set_modified = False
+        project_config['scenario_sets'].append(scenario_set)
+        self._write_project_config(project_config)
 
-        # modify scenario set if existing in project configuration
-        for existing_scenario_set in project_config['scenario_sets']:
-            if existing_scenario_set['name'] == scenario_set['name']:
-                new_scenario_sets.append(scenario_set)
-                scenario_set_modified = True
-            else:
-                new_scenario_sets.append(existing_scenario_set)
+    def update_scenario_set(self, scenario_set_name, scenario_set):
+        """Update scenario_set to project configuration
 
-        # add scenario set if non-existing
-        if not scenario_set_modified:
-            new_scenario_sets.append(scenario_set)
+        Arguments
+        ---------
+        scenario_set_name: str
+            Name of the (original) entry
+        scenario_set: dict
+            The updated scenario_set dict
+        """
+        project_config = self._read_project_config()
 
-        project_config['scenario_sets'] = new_scenario_sets
+        # Create updated list
+        project_config['scenario_sets'] = [
+            entry for entry in project_config['scenario_sets']
+            if (entry['name'] != scenario_set['name'] and
+                entry['name'] != scenario_set_name)
+        ]
+        project_config['scenario_sets'].append(scenario_set)
+
         self._write_project_config(project_config)
 
     def write_scenario(self, scenario):
         """Write scenario to project configuration
-
-        Scenario configuration will be modified or appended
-        Unique identifier is the scenario['name']
-        Replaces existing entries without warning
 
         Arguments
         ---------
@@ -476,22 +512,29 @@ class DatafileInterface(DataInterface):
         """
         project_config = self._read_project_config()
 
-        new_scenarios = []
-        scenario_modified = False
+        project_config['scenarios'].append(scenario)
+        self._write_project_config(project_config)
 
-        # modify region set if existing in project configuration
-        for existing_scenario in project_config['scenarios']:
-            if existing_scenario['name'] == scenario['name']:
-                new_scenarios.append(scenario)
-                scenario_modified = True
-            else:
-                new_scenarios.append(existing_scenario)
+    def update_scenario(self, scenario_name, scenario):
+        """Update scenario to project configuration
 
-        # add region set if non-existing
-        if not scenario_modified:
-            new_scenarios.append(scenario)
+        Arguments
+        ---------
+        scenario_name: str
+            Name of the (original) entry
+        scenario: dict
+            The updated scenario dict
+        """
+        project_config = self._read_project_config()
 
-        project_config['scenarios'] = new_scenarios
+        # Create updated list
+        project_config['scenarios'] = [
+            entry for entry in project_config['scenarios']
+            if (entry['name'] != scenario['name'] and
+                entry['name'] != scenario_name)
+        ]
+        project_config['scenarios'].append(scenario)
+
         self._write_project_config(project_config)
 
     def read_narrative_sets(self):
@@ -553,43 +596,42 @@ class DatafileInterface(DataInterface):
         return load(os.path.join(self.file_dir['narratives'], filename))
 
     def write_narrative_set(self, narrative_set):
-        """Write narrative set to project configuration
-
-        Narrative set configuration will be modified or appended
-        Unique identifier is the narrative_set['name']
-        Replaces existing entries without warning
+        """Write narrative_set to project configuration
 
         Arguments
         ---------
         narrative_set: dict
-            A narrative set dict
+            A narrative_set dict
         """
         project_config = self._read_project_config()
 
-        new_narrative_sets = []
-        narrative_set_modified = False
+        project_config['narrative_sets'].append(narrative_set)
+        self._write_project_config(project_config)
 
-        # modify narrative set if existing in project configuration
-        for existing_narrative_set in project_config['narrative_sets']:
-            if existing_narrative_set['name'] == narrative_set['name']:
-                new_narrative_sets.append(narrative_set)
-                narrative_set_modified = True
-            else:
-                new_narrative_sets.append(existing_narrative_set)
+    def update_narrative_set(self, narrative_set_name, narrative_set):
+        """Update narrative_set to project configuration
 
-        # add narrative set if non-existing
-        if not narrative_set_modified:
-            new_narrative_sets.append(narrative_set)
+        Arguments
+        ---------
+        narrative_set_name: str
+            Name of the (original) entry
+        narrative_set: dict
+            The updated narrative_set dict
+        """
+        project_config = self._read_project_config()
 
-        project_config['narrative_sets'] = new_narrative_sets
+        # Create updated list
+        project_config['narrative_sets'] = [
+            entry for entry in project_config['narrative_sets']
+            if (entry['name'] != narrative_set['name'] and
+                entry['name'] != narrative_set_name)
+        ]
+        project_config['narrative_sets'].append(narrative_set)
+
         self._write_project_config(project_config)
 
     def write_narrative(self, narrative):
         """Write narrative to project configuration
-
-        Narrative configuration will be modified or appended
-        Unique identifier is the narrative['name']
-        Replaces existing entries without warning
 
         Arguments
         ---------
@@ -598,22 +640,29 @@ class DatafileInterface(DataInterface):
         """
         project_config = self._read_project_config()
 
-        new_narratives = []
-        narrative_modified = False
+        project_config['narratives'].append(narrative)
+        self._write_project_config(project_config)
 
-        # modify region set if existing in project configuration
-        for existing_narrative in project_config['narratives']:
-            if existing_narrative['name'] == narrative['name']:
-                new_narratives.append(narrative)
-                narrative_modified = True
-            else:
-                new_narratives.append(existing_narrative)
+    def update_narrative(self, narrative_name, narrative):
+        """Update narrative to project configuration
 
-        # add region set if non-existing
-        if not narrative_modified:
-            new_narratives.append(narrative)
+        Arguments
+        ---------
+        narrative_name: str
+            Name of the (original) entry
+        narrative: dict
+            The updated narrative dict
+        """
+        project_config = self._read_project_config()
 
-        project_config['narratives'] = new_narratives
+        # Create updated list
+        project_config['narratives'] = [
+            entry for entry in project_config['narratives']
+            if (entry['name'] != narrative['name'] and
+                entry['name'] != narrative_name)
+        ]
+        project_config['narratives'].append(narrative)
+
         self._write_project_config(project_config)
 
     def _read_project_config(self):
