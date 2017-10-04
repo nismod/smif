@@ -35,7 +35,7 @@ def get_project_config():
         'region_sets': [
             {
                 'description': 'Local authority districts for the UK',
-                'filename': 'lad.csv',
+                'filename': 'test_region.json',
                 'name': 'lad'
             }
         ],
@@ -311,7 +311,7 @@ def test_datafileinterface_region_set_data(setup_folder_structure, get_project_c
         json.dump(region_data, region_file)
 
     config_handler = DatafileInterface(str(basefolder))
-    test_region = config_handler.read_region_data('test_region.json')
+    test_region = config_handler.read_region_data('lad')
 
     assert test_region[0]['properties']['name'] == 'oxford'
 

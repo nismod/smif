@@ -271,8 +271,16 @@ class DatafileInterface(DataInterface):
         list
             A list of data from the specified file in a fiona formatted dict
         """
-        filepath = os.path.join(self.file_dir['regions'], region_name)
+        # Find filename for this region_name
+        filename = ''
+        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        for region in project_config['region_sets']:
+            if region['name'] == region_name:
+                filename = region['filename']
+                break
 
+        # Read the region data from file
+        filepath = os.path.join(self.file_dir['regions'], filename)
         with fiona.drivers():
             with fiona.open(filepath) as src:
                 data = [f for f in src]
