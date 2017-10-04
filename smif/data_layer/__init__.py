@@ -377,7 +377,7 @@ class DatafileInterface(DataInterface):
         return project_config['scenario_sets']
 
     def read_scenarios(self, scenario_set_name):
-        """Read all scenarios from a certain set
+        """Read all scenarios from a certain scenario_set
 
         Arguments
         ---------
@@ -498,19 +498,105 @@ class DatafileInterface(DataInterface):
         raise NotImplementedError()
 
     def read_narrative_sets(self):
-        raise NotImplementedError()
+        """Read narrative sets from project configuration
+
+        Returns
+        -------
+        list
+            A list of narrative set dicts
+        """
+        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        return project_config['narrative_sets']
 
     def read_narratives(self, narrative_set_name):
-        raise NotImplementedError()
+        """Read all narratives from a certain narrative_set
+
+        Arguments
+        ---------
+        narrative_set_name: str
+            Name of the narrative_set
+
+        Returns
+        -------
+        list
+            A list of narratives within the specified 'narrative_set_name'
+        """
+        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+
+        # Filter only the narratives of the selected narrative_set_name
+        filtered_narrative_data = []
+        for narrative_data in project_config['narrative_data']:
+            if narrative_data['narrative_set'] == narrative_set_name:
+                filtered_narrative_data.append(narrative_data)
+
+        return filtered_narrative_data
 
     def read_narrative_data(self, narrative_name):
         raise NotImplementedError()
 
     def write_narrative_set(self, narrative_set):
-        raise NotImplementedError()
+        """Write narrative set to project configuration
+
+        Narrative set configuration will be modified or appended
+        Unique identifier is the narrative_set['name']
+        Replaces existing entries without warning
+
+        Arguments
+        ---------
+        narrative_set: dict
+            A narrative set dict
+        """
+        project_config = self._read_project_config()
+
+        new_narrative_sets = []
+        narrative_set_modified = False
+
+        # modify narrative set if existing in project configuration
+        for existing_narrative_set in project_config['narrative_sets']:
+            if existing_narrative_set['name'] == narrative_set['name']:
+                new_narrative_sets.append(narrative_set)
+                narrative_set_modified = True
+            else:
+                new_narrative_sets.append(existing_narrative_set)
+
+        # add narrative set if non-existing
+        if not narrative_set_modified:
+            new_narrative_sets.append(narrative_set)
+
+        project_config['narrative_sets'] = new_narrative_sets
+        self._write_project_config(project_config)
 
     def write_narrative(self, narrative):
-        raise NotImplementedError()
+        """Write narrative to project configuration
+
+        Narrative configuration will be modified or appended
+        Unique identifier is the narrative['name']
+        Replaces existing entries without warning
+
+        Arguments
+        ---------
+        narrative: dict
+            A narrative dict
+        """
+        project_config = self._read_project_config()
+
+        new_narratives = []
+        narrative_modified = False
+
+        # modify region set if existing in project configuration
+        for existing_narrative in project_config['narrative_data']:
+            if existing_narrative['name'] == narrative['name']:
+                new_narratives.append(narrative)
+                narrative_modified = True
+            else:
+                new_narratives.append(existing_narrative)
+
+        # add region set if non-existing
+        if not narrative_modified:
+            new_narratives.append(narrative)
+
+        project_config['narrative_data'] = new_narratives
+        self._write_project_config(project_config)
 
     def write_narrative_data(self, narrative_set_name, data):
         raise NotImplementedError()

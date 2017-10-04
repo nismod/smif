@@ -341,7 +341,7 @@ def test_datafileinterface_scenario_data(setup_folder_structure, get_project_con
     assert test_scenario[0]['region'] == 'GB'
 
 
-def test_datafileinterface_project(setup_folder_structure, get_project_config):
+def test_datafileinterface_project_regions(setup_folder_structure, get_project_config):
     """ Test to read and write the project configuration
     """
     basefolder = setup_folder_structure
@@ -364,6 +364,9 @@ def test_datafileinterface_project(setup_folder_structure, get_project_config):
     config_handler.write_region_set(region_set)
     region_sets = config_handler.read_region_sets()
     assert len(region_sets) == 2
+    for region_set in region_sets:
+        if region_set['name'] == 'lad_NL':
+            assert region_set['filename'] == 'lad_NL.csv'
 
     # Region sets / modify
     region_set = {
@@ -377,6 +380,16 @@ def test_datafileinterface_project(setup_folder_structure, get_project_config):
     for region_set in region_sets:
         if region_set['name'] == 'lad_NL':
             assert region_set['filename'] == 'lad_NL_V2.csv'
+
+
+def test_datafileinterface_project_intervals(setup_folder_structure, get_project_config):
+    """ Test to read and write the project configuration
+    """
+    basefolder = setup_folder_structure
+    project_config_path = os.path.join(str(basefolder), 'config', 'project.yml')
+    dump(get_project_config, project_config_path)
+
+    config_handler = DatafileInterface(str(basefolder))
 
     # Interval sets / read existing (from fixture)
     interval_sets = config_handler.read_interval_sets()
@@ -392,6 +405,9 @@ def test_datafileinterface_project(setup_folder_structure, get_project_config):
     config_handler.write_interval_set(interval_set)
     interval_sets = config_handler.read_interval_sets()
     assert len(interval_sets) == 3
+    for interval_set in interval_sets:
+        if interval_set['name'] == 'monthly':
+            assert interval_set['filename'] == 'monthly.csv'
 
     # Interval sets / modify
     interval_set = {
@@ -406,6 +422,16 @@ def test_datafileinterface_project(setup_folder_structure, get_project_config):
         if interval_set['name'] == 'monthly':
             assert interval_set['filename'] == 'monthly_V2.csv'
 
+
+def test_datafileinterface_project_scenarios(setup_folder_structure, get_project_config):
+    """ Test to read and write the project configuration
+    """
+    basefolder = setup_folder_structure
+    project_config_path = os.path.join(str(basefolder), 'config', 'project.yml')
+    dump(get_project_config, project_config_path)
+
+    config_handler = DatafileInterface(str(basefolder))
+
     # Scenario sets / read existing (from fixture)
     scenario_sets = config_handler.read_scenario_sets()
     assert scenario_sets[0]['name'] == 'population'
@@ -419,6 +445,9 @@ def test_datafileinterface_project(setup_folder_structure, get_project_config):
     config_handler.write_scenario_set(scenario_set)
     scenario_sets = config_handler.read_scenario_sets()
     assert len(scenario_sets) == 2
+    for scenario_set in scenario_sets:
+        if scenario_set['name'] == 'mortality':
+            assert scenario_set['description'] == 'The annual mortality rate in UK population'
 
     # Scenario sets / modify
     scenario_set = {
@@ -455,9 +484,100 @@ def test_datafileinterface_project(setup_folder_structure, get_project_config):
     config_handler.write_scenario(scenario)
     scenarios = config_handler.read_scenarios('population')
     assert len(scenarios) == 3
+    for scenario in scenarios:
+        if scenario['name'] == 'Medium Population (ONS)':
+            assert scenario['filename'] == 'population_medium.csv'
 
     # Scenarios / modify
-    scenario['scenario_set'] = 'mortality'
+    scenario = {
+        'description': 'The Medium ONS Forecast for UK population out to 2050',
+        'filename': 'population_med.csv',
+        'name': 'Medium Population (ONS)',
+        'parameters': [
+            {
+                'name': 'population_count',
+                'spatial_resolution': 'lad',
+                'temporal_resolution': 'annual',
+                'units': 'people',
+            }
+        ],
+        'scenario_set': 'population',
+    }
     config_handler.write_scenario(scenario)
     scenarios = config_handler.read_scenarios('population')
-    assert len(scenarios) == 2
+    assert len(scenarios) == 3
+    for scenario in scenarios:
+        if scenario['name'] == 'Medium Population (ONS)':
+            assert scenario['filename'] == 'population_med.csv'
+
+
+def test_datafileinterface_project_narratives(setup_folder_structure, get_project_config):
+    """ Test to read and write the project configuration
+    """
+    basefolder = setup_folder_structure
+    project_config_path = os.path.join(str(basefolder), 'config', 'project.yml')
+    dump(get_project_config, project_config_path)
+
+    config_handler = DatafileInterface(str(basefolder))
+
+    # Narrative sets / read existing (from fixture)
+    narrative_sets = config_handler.read_narrative_sets()
+    assert narrative_sets[0]['name'] == 'technology'
+    assert len(narrative_sets) == 2
+
+    # Narrative sets / add
+    narrative_set = {
+        'description': 'New narrative set',
+        'name': 'new_narrative_set'
+    }
+    config_handler.write_narrative_set(narrative_set)
+    narrative_sets = config_handler.read_narrative_sets()
+    assert len(narrative_sets) == 3
+    for narrative_set in narrative_sets:
+        if narrative_set['name'] == 'new_narrative_set':
+            assert narrative_set['description'] == 'New narrative set'
+
+    # Narrative sets / modify
+    narrative_set = {
+        'description': 'New narrative set description',
+        'name': 'new_narrative_set'
+    }
+    config_handler.write_narrative_set(narrative_set)
+    narrative_sets = config_handler.read_narrative_sets()
+    assert len(narrative_sets) == 3
+    for narrative_set in narrative_sets:
+        if narrative_set['name'] == 'new_narrative_set':
+            assert narrative_set['description'] == 'New narrative set description'
+
+    # Narratives / read existing (from fixture)
+    narratives = config_handler.read_narratives('technology')
+    assert narratives[0]['name'] == 'Energy Demand - High Tech'
+    assert len(narratives) == 1
+
+    # narratives / add
+    narrative = {
+        'description': 'Low penetration of SMART technology on the demand side',
+        'filename': 'energy_demand_low_tech.yml',
+        'name': 'Energy Demand - Low Tech',
+        'narrative_set': 'technology',
+    }
+    config_handler.write_narrative(narrative)
+    narratives = config_handler.read_narratives('technology')
+    assert len(narratives) == 2
+    for narrative in narratives:
+        if narrative['name'] == 'Energy Demand - Low Tech':
+            assert narrative['filename'] == 'energy_demand_low_tech.yml'
+
+    # narratives / modify
+    narrative = {
+        'description': 'Low penetration of SMART technology on the demand side',
+        'filename': 'energy_demand_low_tech_v2.yml',
+        'name': 'Energy Demand - Low Tech',
+        'narrative_set': 'technology',
+    }
+    config_handler.write_narrative(narrative)
+    narratives = config_handler.read_narratives('technology')
+    assert len(narratives) == 2
+    for narrative in narratives:
+        if narrative['name'] == 'Energy Demand - Low Tech':
+            assert narrative['filename'] == 'energy_demand_low_tech_v2.yml'
