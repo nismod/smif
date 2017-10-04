@@ -272,9 +272,18 @@ def test_datafileinterface_sos_model_run(get_sos_model_run, setup_folder_structu
     config_handler.write_sos_model_run(sos_model_run2)
 
     sos_model_runs = config_handler.read_sos_model_runs()
+    assert sos_model_runs[0]['name'] == 'sos_model_run1'
+    assert sos_model_runs[1]['name'] == 'sos_model_run2'
 
-    assert sos_model_runs.count(sos_model_run1) == 1
-    assert sos_model_runs.count(sos_model_run2) == 1
+    sos_model_run3 = get_sos_model_run
+    sos_model_run3['name'] = 'sos_model_run3'
+    config_handler.update_sos_model_run('sos_model_run2', sos_model_run3)
+
+    sos_model_runs = config_handler.read_sos_model_runs()
+    print(sos_model_runs)
+
+    assert sos_model_runs[0]['name'] == 'sos_model_run1'
+    assert sos_model_runs[1]['name'] == 'sos_model_run3'
 
 
 def test_datafileinterface_sos_model(get_sos_model, setup_folder_structure):
@@ -295,9 +304,16 @@ def test_datafileinterface_sos_model(get_sos_model, setup_folder_structure):
     config_handler.write_sos_model(sos_model2)
 
     sos_models = config_handler.read_sos_models()
+    assert sos_models[0]['name'] == 'sos_model_1'
+    assert sos_models[1]['name'] == 'sos_model_2'
 
-    assert sos_models.count(sos_model1) == 1
-    assert sos_models.count(sos_model2) == 1
+    sos_model3 = get_sos_model
+    sos_model3['name'] = 'sos_model_3'
+    config_handler.update_sos_model('sos_model_2', sos_model3)
+
+    sos_models = config_handler.read_sos_models()
+    assert sos_models[0]['name'] == 'sos_model_1'
+    assert sos_models[1]['name'] == 'sos_model_3'
 
 
 def test_datafileinterface_sector_model(setup_folder_structure, get_project_config,
@@ -311,10 +327,29 @@ def test_datafileinterface_sector_model(setup_folder_structure, get_project_conf
     dump(get_project_config, project_config_path)
     config_handler = DatafileInterface(str(basefolder))
 
-    sector_model = get_sector_model
-    config_handler.write_sector_model(sector_model)
-    assert sector_model == config_handler.read_sector_model(sector_model['name'])
-    assert sector_model['name'] in config_handler.read_sector_models()
+    sector_model1 = get_sector_model
+    sector_model1['name'] = 'sector_model_1'
+    config_handler.write_sector_model(sector_model1)
+
+    sector_model2 = get_sector_model
+    sector_model2['name'] = 'sector_model_2'
+    config_handler.write_sector_model(sector_model2)
+
+    sector_models = config_handler.read_sector_models()
+
+    assert sector_models.count(sector_model1['name']) == 1
+    assert sector_models.count(sector_model2['name']) == 1
+
+    sector_model1_read = config_handler.read_sector_model(sector_model1['name'])
+    assert sector_model1_read == sector_model1
+
+    sector_model3 = get_sector_model
+    sector_model3['name'] = 'sector_model_3'
+    config_handler.update_sector_model('sector_model_2', sector_model3)
+
+    sector_models = config_handler.read_sector_models()
+    assert sector_models.count(sector_model2['name']) == 1
+    assert sector_models.count(sector_model3['name']) == 1
 
 
 def test_datafileinterface_region_definition_data(setup_folder_structure, get_project_config,
