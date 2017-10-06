@@ -1,6 +1,7 @@
 name: water_supply   # model name for internal/logging reference
-description: 'Simulates the optimal operation of the UK water supply system'
-path: ../models/water_supply.py   # path to python file
+description: 'Simulates the optimal operation of the UK water
+supply system'
+path: models/water_supply.py   # path to python file
 classname: WaterSupplySectorModel # implements smif.SectorModel
 inputs:
 - name: raininess
@@ -29,10 +30,8 @@ outputs:
   temporal_resolution: annual
   units: Ml
 interventions:
-  # possible interventions that could be made in the system
   - water_supply.yml
 initial_conditions:
-  # initialise system with interventions in current state
   - water_supply_oxford.yml
   - reservoirs.yml
 parameters:
