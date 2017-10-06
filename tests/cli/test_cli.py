@@ -7,10 +7,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
 import smif
-from pytest import raises
-from smif.cli import (confirm, parse_arguments, setup_project_folder,
-                      validate_config)
-from smif.data_layer.validate import VALIDATION_ERRORS
+from smif.cli import confirm, parse_arguments, setup_project_folder
 
 
 def get_args(args):
@@ -48,7 +45,7 @@ def test_fixture_single_run():
     """Test running the filesystem-based single_run fixture
     """
     config_file = os.path.join(os.path.dirname(__file__),
-                               '..', 'fixtures', 'single_run', 'config', 'model.yaml')
+                               '..', 'fixtures', 'single_run')
     output = subprocess.run(["smif", "run", config_file], stdout=subprocess.PIPE)
     assert "Model run complete" in str(output.stdout)
 
@@ -66,87 +63,6 @@ def test_setup_project_folder():
             folder_path = os.path.join(project_folder, folder)
 
             assert os.path.exists(folder_path)
-
-
-def test_validation_call(setup_folder_structure, setup_project_folder):
-    """Ensure validation gets called
-    """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
-    args = get_args(['validate', config_file])
-
-    expected = config_file
-    actual = args.path
-    assert actual == expected
-    assert args.func.__name__ == 'validate_config'
-
-
-@patch('smif.cli.LOGGER.error')
-def test_validation_no_file(error_logger):
-    """Expect error and quit if model config is missing
-    """
-    args = get_args(['validate', '/path/to/missing_file.yaml'])
-
-    with raises(SystemExit):
-        validate_config(args)
-
-    path = os.path.abspath('/path/to/missing_file.yaml')
-    msg = "The model configuration file '%s' was not found"
-    error_logger.assert_called_with(msg, path)
-
-
-@patch('builtins.print')
-def test_validation_valid(mock_print, setup_project_folder):
-    """Ensure configuration file is valid
-    """
-    config_file = os.path.join(str(setup_project_folder), 'config', 'model.yaml')
-    args = get_args(['validate', config_file])
-
-    validate_config(args)
-    mock_print.assert_called_with('The model configuration was valid')
-
-
-@patch('smif.cli.LOGGER.error')
-@patch('builtins.print')
-def test_validation_invalid(
-        mock_print,
-        error_logger,
-        setup_folder_structure,
-        setup_project_folder,
-        setup_timesteps_file_invalid):
-    """Ensure invalid configuration file raises error
-    """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
-    args = get_args(['validate', config_file])
-
-    with raises(SystemExit):
-        validate_config(args)
-
-    assert len(VALIDATION_ERRORS) > 0
-    assert error_logger.called
-    mock_print.assert_called_with('The model configuration was invalid')
-
-
-@patch('smif.cli.LOGGER.error')
-@patch('builtins.print')
-def test_validation_invalid_units(
-        mock_print,
-        error_logger,
-        setup_folder_structure,
-        setup_project_folder,
-        setup_water_inputs_missing_units):
-    """Ensure invalid inputs yaml file raises error
-    """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
-    args = get_args(['validate', config_file])
-
-    with raises(SystemExit):
-        validate_config(args)
-
-    assert len(VALIDATION_ERRORS) > 0
-
-    msg_start = "Expected a value for 'units' in each model dependency"
-    assert msg_start in error_logger.call_args[0][0]
-    mock_print.assert_called_with('The model configuration was invalid')
 
 
 @patch('builtins.input', return_value='y')
