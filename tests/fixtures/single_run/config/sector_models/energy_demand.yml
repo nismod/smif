@@ -1,6 +1,6 @@
 name: energy_demand
 description: ''
-path: ../models/energy_demand.py
+path: models/energy_demand.py
 classname: EDMWrapper
 inputs:
 - name: population
