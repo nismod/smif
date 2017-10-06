@@ -123,6 +123,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         units: str
 
         """
+        self.logger.debug("Adding input %s to %s", name, self.name)
         input_metadata = {"name": name,
                           "spatial_resolution": spatial_resolution,
                           "temporal_resolution": temporal_resolution,

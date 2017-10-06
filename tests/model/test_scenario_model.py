@@ -75,7 +75,7 @@ class TestScenarioModelData:
     def test_nest_scenario_data(self,
                                 setup_country_data,
                                 get_scenario_model_object):
-        data = [
+        data = {'length': [
             {
                 'year': 2015,
                 'region': 'GB',
@@ -124,7 +124,7 @@ class TestScenarioModelData:
                 'interval': 'dry_season',
                 'value': 2.5
             }
-        ]
+        ]}
 
         expected = np.array([
             # 2015
@@ -172,14 +172,14 @@ class TestScenarioModelData:
         assert np.allclose(actual, expected)
 
     def test_scenario_data_defaults(self, setup_region_data):
-        data = [
+        data = {'length': [
             {
                 'year': 2015,
                 'interval': 1,
                 'value': 3.14,
                 'region': 'oxford'
             }
-        ]
+        ]}
 
         expected = np.array([[[3.14]]])
 
@@ -199,11 +199,11 @@ class TestScenarioModelData:
 
     def test_scenario_data_missing_year(self, setup_region_data,
                                         ):
-        data = [
+        data = {'length': [
             {
                 'value': 3.14
             }
-        ]
+        ]}
 
         builder = ScenarioModelBuilder('length')
 
@@ -223,14 +223,14 @@ class TestScenarioModelData:
 
     def test_scenario_data_missing_param_region(self, setup_region_data,
                                                 ):
-        data = [
+        data = {'length': [
             {
                 'value': 3.14,
                 'region': 'missing',
                 'interval': 1,
                 'year': 2015
             }
-        ]
+        ]}
 
         builder = ScenarioModelBuilder('length')
 
@@ -250,7 +250,7 @@ class TestScenarioModelData:
 
     def test_scenario_data_missing_param_interval(self, setup_region_data,
                                                   ):
-        data = [
+        data = {'length': [
             {
                 'value': 3.14,
                 'region': 'oxford',
@@ -263,7 +263,7 @@ class TestScenarioModelData:
                 'interval': 'extra',
                 'year': 2015
             }
-        ]
+        ]}
 
         builder = ScenarioModelBuilder('length')
         msg = "Interval 'extra' not defined in set 'annual' for parameter 'length'"
