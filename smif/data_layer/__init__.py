@@ -6,6 +6,7 @@ import csv
 import os
 import fiona
 from smif.data_layer.load import load, dump
+from csv import DictReader
 
 
 class DataInterface(metaclass=ABCMeta):
@@ -166,9 +167,9 @@ class DatafileInterface(DataInterface):
             'scenarios': 'data'
         }
 
-        for config_file in config_folders:
-            self.file_dir[config_file] = os.path.join(base_folder, config_folders[config_file],
-                                                      config_file)
+        for category, folder in config_folders.items():
+            self.file_dir[category] = os.path.join(base_folder, folder,
+                                                   category)
 
     def read_sos_model_runs(self):
         """Read all system-of-system model runs from Yaml files
@@ -232,6 +233,17 @@ class DatafileInterface(DataInterface):
                                                    sos_model_name))
         return sos_models
 
+    def read_sos_model(self, sos_model_name):
+        """Read a specific system-of-system model
+
+        Returns
+        -------
+        dict
+            A sos model configuration dictionary
+        """
+        filename = sos_model_name
+        return self._read_yaml_file(self.file_dir['sos_models'], filename)
+
     def write_sos_model(self, sos_model):
         """Write system-of-system model to Yaml file
 
@@ -279,7 +291,10 @@ class DatafileInterface(DataInterface):
         sector_model_name: str
             Name of the sector_model (sector_model['name'])
         """
-        return self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+        sector_model_config = self._read_yaml_file(
+            self.file_dir['sector_models'], sector_model_name)
+
+        return sector_model_config
 
     def write_sector_model(self, sector_model):
         """Write sector model to a Yaml file
@@ -309,6 +324,28 @@ class DatafileInterface(DataInterface):
                                    sector_model_name + '.yml'))
         self.write_sector_model(sector_model)
 
+    def read_interventions(self, filename):
+        """Read the interventions from filename
+
+        Arguments
+        ---------
+        filename: str
+            The name of the intervention yml file to read in
+        """
+        filepath = self.file_dir['interventions']
+        return self._read_yaml_file(filepath, filename, extension='')
+
+    def read_initial_conditions(self, filename):
+        """Read the initial conditions from filename
+
+        Arguments
+        ---------
+        filename: str
+            The name of the initial conditions yml file to read in
+        """
+        filepath = self.file_dir['initial_conditions']
+        return self._read_yaml_file(filepath, filename, extension='')
+
     def read_region_definitions(self):
         """Read region_definitions from project configuration
 
@@ -317,7 +354,7 @@ class DatafileInterface(DataInterface):
         list
             A list of region_definition dicts
         """
-        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        project_config = self._read_project_config()
         return project_config['region_definitions']
 
     def read_region_definition_data(self, region_definition_name):
@@ -338,8 +375,7 @@ class DatafileInterface(DataInterface):
         """
         # Find filename for this region_definition_name
         filename = ''
-        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
-        for region_definition in project_config['region_definitions']:
+        for region_definition in self.read_region_definitions():
             if region_definition['name'] == region_definition_name:
                 filename = region_definition['filename']
                 break
@@ -395,11 +431,24 @@ class DatafileInterface(DataInterface):
         list
             A list of interval_definition set dicts
         """
-        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        project_config = self._read_project_config()
         return project_config['interval_definitions']
 
     def read_interval_definition_data(self, interval_definition_name):
-        raise NotImplementedError()
+        interval_defs = self.read_interval_definitions()
+        filename = None
+        while not filename:
+            for interval_def in interval_defs:
+                if interval_def['name'] == interval_definition_name:
+                    filename = interval_def['filename']
+
+        filepath = os.path.join(self.file_dir['interval_definitions'], filename)
+        with open(filepath, 'r') as csvfile:
+            reader = DictReader(csvfile)
+            data = []
+            for row in reader:
+                data.append(row)
+        return data
 
     def write_interval_definition(self, interval_definition):
         """Write interval_definition to project configuration
@@ -444,7 +493,7 @@ class DatafileInterface(DataInterface):
         list
             A list of scenario set dicts
         """
-        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        project_config = self._read_project_config()
         return project_config['scenario_sets']
 
     def read_scenario_set(self, scenario_set_name):
@@ -460,7 +509,7 @@ class DatafileInterface(DataInterface):
         list
             A list of scenarios within the specified 'scenario_set_name'
         """
-        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        project_config = self._read_project_config()
 
         # Filter only the scenarios of the selected scenario_set_name
         filtered_scenario_data = []
@@ -469,6 +518,24 @@ class DatafileInterface(DataInterface):
                 filtered_scenario_data.append(scenario_data)
 
         return filtered_scenario_data
+
+    def read_scenario_config(self, scenario_name):
+        """Read scenario configuration data
+
+        Arguments
+        ---------
+        scenario_name: str
+            Name of the scenario
+
+        Returns
+        -------
+        dict
+            The scenario config
+        """
+        project_config = self._read_project_config()
+        for scenario_data in project_config['scenarios']:
+            if scenario_data['name'] == scenario_name:
+                return scenario_data
 
     def read_scenario_data(self, scenario_name):
         """Read scenario data file
@@ -480,25 +547,33 @@ class DatafileInterface(DataInterface):
 
         Returns
         -------
-        list
-            A list with dictionaries containing the contents of 'scenario_name' data file
+        dict
+            A dict of lists of dicts containing the contents of `scenario_name`
+            data file(s) associated with the scenario parameters. The keys of
+            the dict are the parameter names
         """
-        # Find filename for this scenario
-        filename = ''
-        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        data = {}
+        # Find filenames for this scenario
+        filename = None
+        project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
             if scenario_data['name'] == scenario_name:
-                filename = scenario_data['filename']
-                break
+                for param in scenario_data['parameters']:
+                    filename = param['filename']
+                    # Read the scenario data from file
+                    filepath = os.path.join(self.file_dir['scenarios'], filename)
+                    data[param['name']] = self._get_data_from_csv(filepath)
 
-        # Read the scenario data from file
-        filepath = os.path.join(self.file_dir['scenarios'], filename)
-        reader = csv.DictReader(open(filepath))
+        return data
 
+    def _get_data_from_csv(self, filepath):
         scenario_data = []
-        for row in reader:
-            scenario_data.append(row)
+        with open(filepath, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
 
+            scenario_data = []
+            for row in reader:
+                scenario_data.append(row)
         return scenario_data
 
     def write_scenario_set(self, scenario_set):
@@ -579,7 +654,7 @@ class DatafileInterface(DataInterface):
         list
             A list of narrative set dicts
         """
-        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        project_config = self._read_project_config()
         return project_config['narrative_sets']
 
     def read_narrative_set(self, narrative_set_name):
@@ -595,7 +670,7 @@ class DatafileInterface(DataInterface):
         list
             A list of narratives within the specified 'narrative_set_name'
         """
-        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        project_config = self._read_project_config()
 
         # Filter only the narratives of the selected narrative_set_name
         filtered_narrative_data = []
@@ -620,7 +695,7 @@ class DatafileInterface(DataInterface):
         """
         # Find filename for this narrative
         filename = ''
-        project_config = self._read_yaml_file(self.file_dir['project'], 'project')
+        project_config = self._read_project_config()
         for narrative in project_config['narratives']:
             if narrative['name'] == narrative_name:
                 filename = narrative['filename']
@@ -707,7 +782,6 @@ class DatafileInterface(DataInterface):
         dict
             The project configuration
         """
-
         return self._read_yaml_file(self.file_dir['project'], 'project')
 
     def _write_project_config(self, data):
@@ -741,7 +815,7 @@ class DatafileInterface(DataInterface):
                 files.append(os.path.splitext(filename)[0])
         return files
 
-    def _read_yaml_file(self, path, filename):
+    def _read_yaml_file(self, path, filename, extension='.yml'):
         """Read a Data dict from a Yaml file
 
         Arguments
@@ -750,17 +824,19 @@ class DatafileInterface(DataInterface):
             Path to directory
         name: str
             Name of file
+        extension: str, default='.yml'
+            The file extension
 
         Returns
         -------
         dict
             The data of the Yaml file `filename` in `path`
         """
-        filename = filename + '.yml'
+        filename = filename + extension
         filepath = os.path.join(path, filename)
         return load(filepath)
 
-    def _write_yaml_file(self, path, filename, data):
+    def _write_yaml_file(self, path, filename, data, extension='.yml'):
         """Write a data dict to a Yaml file
 
         Arguments
@@ -771,8 +847,10 @@ class DatafileInterface(DataInterface):
             Name of file
         data: dict
             Data to be written to the file
+        extension: str, default='.yml'
+            The file extension
         """
-        filename = filename + '.yml'
+        filename = filename + extension
         filepath = os.path.join(path, filename)
         dump(data, filepath)
 
