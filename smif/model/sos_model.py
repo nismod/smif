@@ -396,6 +396,7 @@ class SosModelBuilder(object):
                              'sink_model_input': 'raininess'}]
         >>> builder.add_dependencies(dependencies)
         """
+        self.logger.debug("Available models: %s", self.sos_model.models.keys())
         for dep in dependency_list:
             sink_model_object = self.sos_model.models[dep['sink_model']]
             source_model_object = self.sos_model.models[dep['source_model']]

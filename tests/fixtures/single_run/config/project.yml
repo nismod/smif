@@ -21,7 +21,7 @@ interval_definitions:
   description: ''
   filename: annual_intervals.csv
 units:
-scenario_data:
+scenarios:
 # given input data, required values for every year of a model run
 - name: 'Central Population'
   description: 'Central Population for the UK'
