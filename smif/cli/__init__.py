@@ -288,7 +288,9 @@ def execute_model_run(args):
     Arguments
     ---------
     """
+    LOGGER.info("Getting model run definition")
     model_run_config = get_model_run_definition(args)
+    LOGGER.info("Build model run from configuration data")
     modelrun = build_model_run(model_run_config)
 
     LOGGER.info("Running model run %s", modelrun.name)

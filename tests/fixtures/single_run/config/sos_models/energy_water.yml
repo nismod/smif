@@ -27,6 +27,6 @@ dependencies:
   source_model_output: water_demand
   sink_model: water_supply
   sink_model_input: water_demand
-max_iterations: 20
-convergence_absolute_tolerance: 1e-5
-convergence_relative_tolerance: 1e-5
+max_iterations: 100
+convergence_absolute_tolerance: 1e-05
+convergence_relative_tolerance: 1e-05
