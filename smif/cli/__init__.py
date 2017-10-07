@@ -154,75 +154,60 @@ def setup_configuration(args):
     LOGGER.info(msg)
 
 
-def load_region_sets(region_sets):
-    """Loads the region sets into the system-of-system model
+def load_region_sets(handler):
+    """Loads the region sets into the project registries
 
     Parameters
     ----------
-    region_sets: dict
-        A dict, where key is the name of the region set, and the value
-        the data
+    handler: :class:`smif.data_layer.DataInterface`
+
     """
-    assert isinstance(region_sets, dict)
-
-    region_set_definitions = region_sets.items()
-    if not region_set_definitions:
-        msg = "No region sets have been defined"
-        LOGGER.warning(msg)
-    for name, data in region_set_definitions:
-        msg = "Region set data is not a list"
-        assert isinstance(data, list), msg
-        REGIONS.register(RegionSet(name, data))
+    region_definitions = handler.read_region_definitions()
+    for region_def in region_definitions:
+        region_name = region_def['name']
+        region_data = handler.read_region_definition_data(region_name)
+        region_set = RegionSet(region_name, region_data)
+        REGIONS.register(region_set)
 
 
-def load_interval_sets(interval_sets):
-    """Loads the time-interval sets into the system-of-system model
+def load_interval_sets(handler):
+    """Loads the time-interval sets into the project registries
 
     Parameters
     ----------
-    interval_sets: dict
-        A dict, where key is the name of the interval set, and the value
-        the data
-    """
-    interval_set_definitions = interval_sets.items()
-    if not interval_set_definitions:
-        msg = "No interval sets have been defined"
-        LOGGER.warning(msg)
+    handler: :class:`smif.data_layer.DataInterface`
 
-    for name, data in interval_set_definitions:
-        interval_set = IntervalSet(name, data)
+    """
+    interval_definitions = handler.read_interval_definitions()
+    for interval_def in interval_definitions:
+        interval_name = interval_def['name']
+        interval_data = handler.read_interval_definition_data(interval_name)
+        interval_set = IntervalSet(interval_name, interval_data)
         INTERVALS.register(interval_set)
 
 
-def run_model(args):
-    """Runs the model specified in the args.model argument
+def get_model_run_definition(args):
+    """Builds the model run
+
+    Returns
+    -------
+    dict
+        The complete sos_model_run configuration dictionary with contained
+        ScenarioModel, SosModel and SectorModel objects
 
     """
-    project_config = DatafileInterface(args.path)
-
-    region_definitions = project_config.read_region_definitions()
-    region_sets = {}
-    for region_def in region_definitions:
-        region_data = project_config.read_region_definition_data(region_def['name'])
-        region_sets[region_def['name']] = region_data
-    load_region_sets(region_sets)
-
-    interval_definitions = project_config.read_interval_definitions()
-    interval_sets = {}
-    for interval_def in interval_definitions:
-        interval_data = project_config.read_interval_definition_data(interval_def['name'])
-        interval_sets[interval_def['name']] = interval_data
-
-    load_interval_sets(interval_sets)
+    handler = DatafileInterface(args.path)
+    load_region_sets(handler)
+    load_interval_sets(handler)
 
     # HARDCODE selet the first model run only
-    model_run_config = project_config.read_sos_model_runs()[0]
+    model_run_config = handler.read_sos_model_runs()[0]
     LOGGER.debug("Model Run: %s", model_run_config)
-    sos_model_config = project_config.read_sos_model(model_run_config['sos_model'])
+    sos_model_config = handler.read_sos_model(model_run_config['sos_model'])
 
     sector_model_objects = []
     for sector_model in sos_model_config['sector_models']:
-        sector_model_config = project_config.read_sector_model(sector_model)
+        sector_model_config = handler.read_sector_model(sector_model)
 
         absolute_path = os.path.join(args.path,
                                      sector_model_config['path'])
@@ -231,14 +216,14 @@ def run_model(args):
         intervention_files = sector_model_config['interventions']
         intervention_list = []
         for intervention_file in intervention_files:
-            interventions = project_config.read_interventions(intervention_file)
+            interventions = handler.read_interventions(intervention_file)
             intervention_list.extend(interventions)
         sector_model_config['interventions'] = intervention_list
 
         initial_condition_files = sector_model_config['initial_conditions']
         initial_condition_list = []
         for initial_condition_file in initial_condition_files:
-            initial_conditions = project_config.read_initial_conditions(initial_condition_file)
+            initial_conditions = handler.read_initial_conditions(initial_condition_file)
             initial_condition_list.extend(initial_conditions)
         sector_model_config['initial_conditions'] = initial_condition_list
 
@@ -256,8 +241,8 @@ def run_model(args):
     scenario_objects = []
     for scenario in model_run_config['scenarios']:
         LOGGER.debug("Finding data for '%s'", scenario[1])
-        scenario_config = project_config.read_scenario_config(scenario[1])
-        scenario_data = project_config.read_scenario_data(scenario[1])
+        scenario_config = handler.read_scenario_config(scenario[1])
+        scenario_data = handler.read_scenario_data(scenario[1])
         scenario_model_builder = ScenarioModelBuilder(scenario_config['scenario_set'])
         scenario_model_builder.construct(scenario_config, scenario_data,
                                          model_run_config['timesteps'])
@@ -274,6 +259,11 @@ def run_model(args):
 
     model_run_config['sos_model'] = sos_model_object
 
+    return model_run_config
+
+
+def build_model_run(model_run_config):
+
     try:
         builder = ModelRunBuilder()
         builder.construct(model_run_config)
@@ -287,6 +277,18 @@ def run_model(args):
         else:
             LOGGER.error("An AssertionError occurred, see details above.")
         exit(-1)
+
+    return modelrun
+
+
+def execute_model_run(args):
+    """Runs the model run
+
+    Arguments
+    ---------
+    """
+    model_run_config = get_model_run_definition(args)
+    modelrun = build_model_run(model_run_config)
 
     LOGGER.info("Running model run %s", modelrun.name)
     modelrun.run()
@@ -329,7 +331,7 @@ def parse_arguments():
     parser_run.add_argument('-o', '--output-file',
                             default='results.yaml',
                             help='Output file')
-    parser_run.set_defaults(func=run_model)
+    parser_run.set_defaults(func=execute_model_run)
     parser_run.add_argument('path',
                             help="Path to the main config file")
 
