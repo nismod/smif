@@ -241,10 +241,11 @@ def get_model_run_definition(args):
     scenario_objects = []
     for scenario in model_run_config['scenarios']:
         LOGGER.debug("Finding data for '%s'", scenario[1])
-        scenario_config = handler.read_scenario_config(scenario[1])
+        scenario_definition = handler.read_scenario_definition(scenario[1])
         scenario_data = handler.read_scenario_data(scenario[1])
-        scenario_model_builder = ScenarioModelBuilder(scenario_config['scenario_set'])
-        scenario_model_builder.construct(scenario_config, scenario_data,
+        scenario_set = scenario_definition['scenario_set']
+        scenario_model_builder = ScenarioModelBuilder(scenario_set)
+        scenario_model_builder.construct(scenario_definition, scenario_data,
                                          model_run_config['timesteps'])
         scenario_objects.append(scenario_model_builder.finish())
 
