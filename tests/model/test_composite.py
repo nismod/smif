@@ -420,7 +420,8 @@ class TestNestedModels():
         elec_scenario = ScenarioModel('electricity_demand_scenario')
         elec_scenario.add_output('electricity_demand_output',
                                  Mock(), Mock(), 'unit')
-        elec_scenario.add_data(np.array([[[123]]]), [2010])
+        elec_scenario.add_data('electricity_demand_output',
+                               np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('energy_sector_model')
         energy_model.add_input(
@@ -450,7 +451,7 @@ class TestNestedModels():
 
         fluf_scenario = ScenarioModel('fluffiness_scenario')
         fluf_scenario.add_output('fluffiness', Mock(), Mock(), 'unit')
-        fluf_scenario.add_data(np.array([[[12]]]), [2010])
+        fluf_scenario.add_data('fluffiness', np.array([[[12]]]), [2010])
 
         assert sos_model_lo.free_inputs.names == ['fluffiness_input']
 
@@ -507,7 +508,7 @@ class TestCircularDependency:
         assert (water_model, energy_model) in graph.edges()
         assert (energy_model, water_model) in graph.edges()
 
-        modelset = ModelSet([water_model, energy_model], sos_model)
+        modelset = ModelSet([water_model, energy_model])
         actual = modelset.guess_results(water_model, 2010, {})
         expected = {'electricity_demand': np.array([1.])}
         # assert actual == expected
