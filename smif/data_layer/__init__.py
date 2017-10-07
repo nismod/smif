@@ -254,7 +254,9 @@ class DatafileInterface(DataInterface):
         sos_model: dict
             A sos_model dictionary
         """
-        self._write_yaml_file(self.file_dir['sos_models'], sos_model['name'], sos_model)
+        self._write_yaml_file(self.file_dir['sos_models'],
+                              sos_model['name'],
+                              sos_model)
 
     def update_sos_model(self, sos_model_name, sos_model):
         """Update system-of-system model in Yaml file
@@ -435,6 +437,21 @@ class DatafileInterface(DataInterface):
         return project_config['interval_definitions']
 
     def read_interval_definition_data(self, interval_definition_name):
+        """
+
+        Arguments
+        ---------
+        interval_definition_name: str
+
+        Returns
+        -------
+        dict
+            Interval definition data
+
+        Notes
+        -----
+        Expects csv file to contain headings of `year`, `start`, `end`
+        """
         interval_defs = self.read_interval_definitions()
         filename = None
         while not filename:
@@ -519,8 +536,8 @@ class DatafileInterface(DataInterface):
 
         return filtered_scenario_data
 
-    def read_scenario_config(self, scenario_name):
-        """Read scenario configuration data
+    def read_scenario_definition(self, scenario_name):
+        """Read scenario definition data
 
         Arguments
         ---------
@@ -530,7 +547,7 @@ class DatafileInterface(DataInterface):
         Returns
         -------
         dict
-            The scenario config
+            The scenario definition
         """
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
@@ -565,16 +582,6 @@ class DatafileInterface(DataInterface):
                     data[param['name']] = self._get_data_from_csv(filepath)
 
         return data
-
-    def _get_data_from_csv(self, filepath):
-        scenario_data = []
-        with open(filepath, 'r') as csvfile:
-            reader = csv.DictReader(csvfile)
-
-            scenario_data = []
-            for row in reader:
-                scenario_data.append(row)
-        return scenario_data
 
     def write_scenario_set(self, scenario_set):
         """Write scenario_set to project configuration
@@ -814,6 +821,16 @@ class DatafileInterface(DataInterface):
             if filename.endswith(extension):
                 files.append(os.path.splitext(filename)[0])
         return files
+
+    def _get_data_from_csv(self, filepath):
+        scenario_data = []
+        with open(filepath, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+
+            scenario_data = []
+            for row in reader:
+                scenario_data.append(row)
+        return scenario_data
 
     def _read_yaml_file(self, path, filename, extension='.yml'):
         """Read a Data dict from a Yaml file
