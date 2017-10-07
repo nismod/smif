@@ -32,15 +32,6 @@ def test_parse_arguments():
         assert args.func.__name__ == 'setup_configuration'
 
 
-def test_fixture_single_run_valid():
-    """Test validating the filesystem-based single_run fixture
-    """
-    config_file = os.path.join(os.path.dirname(__file__),
-                               '..', 'fixtures', 'single_run', 'config', 'model.yaml')
-    output = subprocess.run(["smif", "validate", config_file], stdout=subprocess.PIPE)
-    assert "The model configuration was valid" in str(output.stdout)
-
-
 def test_fixture_single_run():
     """Test running the filesystem-based single_run fixture
     """
@@ -126,6 +117,6 @@ def test_verbose_debug_alt():
 def test_verbose_info(setup_folder_structure, setup_project_folder):
     """Expect info message from `smif -v validate <config_file>`
     """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
-    output = subprocess.run(['smif', '-v', 'validate', config_file], stderr=subprocess.PIPE)
+    config_file = os.path.join(str(setup_folder_structure))
+    output = subprocess.run(['smif', '-v', 'run', config_file], stderr=subprocess.PIPE)
     assert 'INFO' in str(output.stderr)
