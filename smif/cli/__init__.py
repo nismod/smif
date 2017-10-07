@@ -44,9 +44,8 @@ from argparse import ArgumentParser
 
 import smif
 from smif.data_layer.load import dump
-from smif.data_layer.sos_model_config import SosModelReader
-from smif.data_layer.sector_model_config import SectorModelReader
-from smif.data_layer.validate import VALIDATION_ERRORS
+
+from smif.data_layer import DatafileInterface
 
 from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
@@ -54,6 +53,9 @@ from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
 
 from smif.modelrun import ModelRunBuilder
+from smif.model.sos_model import SosModelBuilder
+from smif.model.sector_model import SectorModelBuilder
+from smif.model.scenario_model import ScenarioModelBuilder
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -152,68 +154,144 @@ def setup_configuration(args):
     LOGGER.info(msg)
 
 
-def load_region_sets(region_sets):
-    """Loads the region sets into the system-of-system model
+def load_region_sets(handler):
+    """Loads the region sets into the project registries
 
     Parameters
     ----------
-    region_sets: dict
-        A dict, where key is the name of the region set, and the value
-        the data
+    handler: :class:`smif.data_layer.DataInterface`
+
     """
-    assert isinstance(region_sets, dict)
-
-    region_set_definitions = region_sets.items()
-    if not region_set_definitions:
-        msg = "No region sets have been defined"
-        LOGGER.warning(msg)
-    for name, data in region_set_definitions:
-        msg = "Region set data is not a list"
-        assert isinstance(data, list), msg
-        REGIONS.register(RegionSet(name, data))
+    region_definitions = handler.read_region_definitions()
+    for region_def in region_definitions:
+        region_name = region_def['name']
+        region_data = handler.read_region_definition_data(region_name)
+        region_set = RegionSet(region_name, region_data)
+        REGIONS.register(region_set)
 
 
-def load_interval_sets(interval_sets):
-    """Loads the time-interval sets into the system-of-system model
+def load_interval_sets(handler):
+    """Loads the time-interval sets into the project registries
 
     Parameters
     ----------
-    interval_sets: dict
-        A dict, where key is the name of the interval set, and the value
-        the data
-    """
-    interval_set_definitions = interval_sets.items()
-    if not interval_set_definitions:
-        msg = "No interval sets have been defined"
-        LOGGER.warning(msg)
+    handler: :class:`smif.data_layer.DataInterface`
 
-    for name, data in interval_set_definitions:
-        interval_set = IntervalSet(name, data)
+    """
+    interval_definitions = handler.read_interval_definitions()
+    for interval_def in interval_definitions:
+        interval_name = interval_def['name']
+        interval_data = handler.read_interval_definition_data(interval_name)
+        interval_set = IntervalSet(interval_name, interval_data)
         INTERVALS.register(interval_set)
 
 
-def run_model(args):
-    """Runs the model specified in the args.model argument
+def get_model_run_definition(args):
+    """Builds the model run
+
+    Returns
+    -------
+    dict
+        The complete sos_model_run configuration dictionary with contained
+        ScenarioModel, SosModel and SectorModel objects
 
     """
-    model_config = validate_config(args)
+    handler = DatafileInterface(args.path)
+    load_region_sets(handler)
+    load_interval_sets(handler)
 
-    load_region_sets(model_config['region_sets'])
-    load_interval_sets(model_config['interval_sets'])
+    # HARDCODE selet the first model run only
+    model_run_config = handler.read_sos_model_runs()[0]
+    LOGGER.debug("Model Run: %s", model_run_config)
+    sos_model_config = handler.read_sos_model(model_run_config['sos_model'])
+
+    sector_model_objects = []
+    for sector_model in sos_model_config['sector_models']:
+        sector_model_config = handler.read_sector_model(sector_model)
+
+        absolute_path = os.path.join(args.path,
+                                     sector_model_config['path'])
+        sector_model_config['path'] = absolute_path
+
+        intervention_files = sector_model_config['interventions']
+        intervention_list = []
+        for intervention_file in intervention_files:
+            interventions = handler.read_interventions(intervention_file)
+            intervention_list.extend(interventions)
+        sector_model_config['interventions'] = intervention_list
+
+        initial_condition_files = sector_model_config['initial_conditions']
+        initial_condition_list = []
+        for initial_condition_file in initial_condition_files:
+            initial_conditions = handler.read_initial_conditions(initial_condition_file)
+            initial_condition_list.extend(initial_conditions)
+        sector_model_config['initial_conditions'] = initial_condition_list
+
+        sector_model_builder = SectorModelBuilder(sector_model_config['name'])
+        LOGGER.debug("Sector model config: %s", sector_model_config)
+        sector_model_builder.construct(sector_model_config)
+        sector_model_object = sector_model_builder.finish()
+
+        sector_model_objects.append(sector_model_object)
+        LOGGER.debug("Model inputs: %s", sector_model_object.model_inputs.names)
+
+    LOGGER.debug("Sector models: %s", sector_model_objects)
+    sos_model_config['sector_models'] = sector_model_objects
+
+    scenario_objects = []
+    for scenario in model_run_config['scenarios']:
+        LOGGER.debug("Finding data for '%s'", scenario[1])
+        scenario_definition = handler.read_scenario_definition(scenario[1])
+        scenario_data = handler.read_scenario_data(scenario[1])
+        scenario_set = scenario_definition['scenario_set']
+        scenario_model_builder = ScenarioModelBuilder(scenario_set)
+        scenario_model_builder.construct(scenario_definition, scenario_data,
+                                         model_run_config['timesteps'])
+        scenario_objects.append(scenario_model_builder.finish())
+
+    LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
+    sos_model_config['scenario_sets'] = scenario_objects
+
+    sos_model_builder = SosModelBuilder()
+    sos_model_builder.construct(sos_model_config)
+    sos_model_object = sos_model_builder.finish()
+
+    LOGGER.debug("Model list: %s", list(sos_model_object.models.keys()))
+
+    model_run_config['sos_model'] = sos_model_object
+
+    return model_run_config
+
+
+def build_model_run(model_run_config):
 
     try:
         builder = ModelRunBuilder()
-        builder.construct(model_config)
+        builder.construct(model_run_config)
         modelrun = builder.finish()
     except AssertionError as error:
         err_type, err_value, err_traceback = sys.exc_info()
         traceback.print_exception(err_type, err_value, err_traceback)
         err_msg = str(error)
-        if len(err_msg) > 0:
+        if err_msg:
             LOGGER.error("An AssertionError occurred (%s) see details above.", err_msg)
         else:
             LOGGER.error("An AssertionError occurred, see details above.")
         exit(-1)
+
+    return modelrun
+
+
+def execute_model_run(args):
+    """Runs the model run
+
+    Arguments
+    ---------
+    """
+    LOGGER.info("Getting model run definition")
+    model_run_config = get_model_run_definition(args)
+    LOGGER.info("Build model run from configuration data")
+    modelrun = build_model_run(model_run_config)
 
     LOGGER.info("Running model run %s", modelrun.name)
     modelrun.run()
@@ -222,107 +300,6 @@ def run_model(args):
     LOGGER.info("Writing results to %s", output_file)
     dump(modelrun.sos_model.results, output_file)
     print("Model run complete")
-
-
-def validate_config(args):
-    """Validates the model configuration file against the schema
-
-    Arguments
-    =========
-    args :
-        Parser arguments
-
-    """
-    config_path = os.path.abspath(args.path)
-
-    if not os.path.exists(config_path):
-        LOGGER.error("The model configuration file '%s' was not found", config_path)
-        exit(-1)
-    else:
-        try:
-            # read system-of-systems config
-            reader = SosModelReader(config_path)
-            reader.load()
-
-            model_config = reader.data
-            config_basepath = os.path.dirname(config_path)
-
-            # read sector model data+config
-            model_config['sector_model_data'] = read_sector_model_data(
-                config_basepath,
-                model_config['sector_model_config'])
-        except Exception as error:
-            # should not raise error, so exit
-            log_validation_errors()
-            LOGGER.exception("Unexpected error validating config: %s", error)
-            exit(-1)
-
-        log_validation_errors()
-        if len(VALIDATION_ERRORS) > 0:
-            print("The model configuration was invalid")
-            exit(-1)
-        else:
-            print("The model configuration was valid")
-
-        return model_config
-
-
-def log_validation_errors():
-    """Log validation errors
-    """
-    for error in VALIDATION_ERRORS:
-        LOGGER.error(str(error))
-
-
-def path_to_abs(relative_root, path):
-    """Return an absolute path, given a possibly-relative path
-    and the relative root"""
-    if os.path.isabs(path):
-        return os.path.normpath(path)
-    else:
-        return os.path.normpath(os.path.join(relative_root, path))
-
-
-def read_sector_model_data(config_basepath, config):
-    """Read sector-specific data from the sector config folders
-    """
-    data = []
-
-    for model_config in config:
-        # read from dir relative to main model config file
-        config_dir = path_to_abs(config_basepath, model_config['config_dir'])
-        path = path_to_abs(config_basepath, model_config['path'])
-        initial_conditions_paths = list(map(
-            lambda path: path_to_abs(config_basepath, path),
-            model_config['initial_conditions']
-        ))
-        interventions_paths = list(map(
-            lambda path: path_to_abs(config_basepath, path),
-            model_config['interventions']
-        ))
-        parameter_paths = list(map(
-            lambda path: path_to_abs(config_basepath, path),
-            model_config['parameters']
-        ))
-
-        # read each sector model config+data
-        reader = SectorModelReader({
-            "model_name": model_config['name'],
-            "model_path": path,
-            "model_classname": model_config['classname'],
-            "model_config_dir": config_dir,
-            "initial_conditions": initial_conditions_paths,
-            "interventions": interventions_paths,
-            "parameters": parameter_paths
-        })
-        try:
-            reader.load()
-            data.append(reader.data)
-        except FileNotFoundError as error:
-            LOGGER.error("%s: %s", model_config['name'], error)
-            raise ValueError("missing sector model configuration")
-
-    return data
 
 
 def parse_arguments():
@@ -342,15 +319,7 @@ def parse_arguments():
                         action='count',
                         help='show messages: -v to see messages reporting on progress, ' +
                         '-vv to see debug messages.')
-    subparsers = parser.add_subparsers()
-
-    # VALIDATE
-    help_msg = 'Validate the model configuration file'
-    parser_validate = subparsers.add_parser('validate',
-                                            help=help_msg)
-    parser_validate.set_defaults(func=validate_config)
-    parser_validate.add_argument('path',
-                                 help="Path to the main config file")
+    subparsers = parser.add_subparsers(help='available commands')
 
     # SETUP
     parser_setup = subparsers.add_parser('setup',
@@ -365,7 +334,7 @@ def parse_arguments():
     parser_run.add_argument('-o', '--output-file',
                             default='results.yaml',
                             help='Output file')
-    parser_run.set_defaults(func=run_model)
+    parser_run.set_defaults(func=execute_model_run)
     parser_run.add_argument('path',
                             help="Path to the main config file")
 

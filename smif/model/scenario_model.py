@@ -129,13 +129,16 @@ class ScenarioModelBuilder(object):
 
         Arguments
         ---------
-        scenario_config : dict
-        data : list
-        timesteps : list
+        scenario_config: dict
+        data: dict
+            A dictionary of scenario data, with keys scenario parameter names
+        timesteps: list
+            A list of integer years e.g. ``[2010, 2011, 2013]``
         """
 
         self.scenario.scenario_set = scenario_config['scenario_set']
-        self.scenario.name = scenario_config['name']
+        # Scenarios need to be known by the scenario set name
+        self.scenario.name = scenario_config['scenario_set']
         parameters = scenario_config['parameters']
 
         for parameter in parameters:
@@ -151,7 +154,8 @@ class ScenarioModelBuilder(object):
                                      temporal_res,
                                      parameter['units'])
 
-            array_data = self._data_list_to_array(name, data,
+            array_data = self._data_list_to_array(name,
+                                                  data[name],
                                                   timesteps,
                                                   spatial_res,
                                                   temporal_res)
@@ -201,7 +205,7 @@ class ScenarioModelBuilder(object):
             if 'year' not in obs:
                 raise ValueError(
                     "Scenario data item missing year: '{}'".format(obs))
-            year = obs['year']
+            year = int(obs['year'])
 
             if year not in timestep_names:
                 # Don't add data if year is not in timestep list
