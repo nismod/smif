@@ -35,7 +35,7 @@ module.exports = {
         new HtmlWebpackPlugin({
             title: 'smif',
             hash: true,
-            template: 'src/index.ejs'
+            template: 'src/index.html'
         }),
         new ExtractTextPlugin('styles.css'),
         new CleanWebpackPlugin(['dist'])
