@@ -22,7 +22,7 @@ install:
 - nvm use 6.11.4
 - cd $TRAVIS_BUILD_DIR/smif/app && npm install
 script:
-- python setup.py develop
+- cd $TRAVIS_BUILD_DIR && python setup.py develop
 - python setup.py test
 - cd $TRAVIS_BUILD_DIR/smif/app && npm test
 after_success:
