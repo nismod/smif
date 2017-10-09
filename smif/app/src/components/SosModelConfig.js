@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 const SosModelConfig = () => (
     <div>
@@ -6,13 +6,10 @@ const SosModelConfig = () => (
             <h2>Create System-of-systems Model</h2>
 
             <p>Name</p>
-            <input name="sos_model_name" type="text"/><br />
+            <input name="sos_model_name" type="text"/>
 
             <p>Description</p>
-            <textarea name="sos_model_description" rows="10" cols="30"/><br />
-
-            <table>
-            </table>
+            <textarea name="sos_model_description" rows="10" cols="30"/>
 
             <p>Scenario Sets</p>
 
@@ -23,8 +20,8 @@ const SosModelConfig = () => (
             <button type="submit">
                 Submit
             </button>
-    </form>
-  </div>
-)
+        </form>
+    </div>
+);
 
-export default SosModelConfig
+export default SosModelConfig;
