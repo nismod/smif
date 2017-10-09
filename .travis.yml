@@ -6,7 +6,6 @@ cache:
   pip: true
   directories:
     - smif/app/node_modules
-    - $HOME/miniconda
 before_cache:
   - rm -f $HOME/.cache/pip/log/debug.log
 env:
