@@ -44,3 +44,13 @@ layer provided by Redux, which will involve 'actions' (which signal events) and
 
 See the [Redux docs](http://redux.js.org/docs/introduction/Examples.html)
 for examples of increasing complexity.
+
+### Pattern library
+
+The elements and components of the application should be included in the
+pattern library, for ease of reference while designing the look and feel of the
+app.
+
+When running a local development server (`npm start`), visit
+http://localhost:8080/pattern-library.html or after building the application,
+(`npm run build`), open `./dist/pattern-library.html`.
