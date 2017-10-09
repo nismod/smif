@@ -19,7 +19,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # itself
     wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh \
         -O miniconda.sh
-    chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda
+    chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda -f
     export PATH=$HOME/miniconda/bin:$PATH
     rm miniconda.sh -f
     conda update --yes conda
