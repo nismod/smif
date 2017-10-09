@@ -72,8 +72,8 @@ module.exports = {
             title: 'smif - Pattern library',
             filename: './pattern-library.html',
             hash: true,
-            template: 'src/index.ejs',
-            chunks: ['common', 'patternLibrary']
+            chunks: ['common', 'patternLibrary'],
+            template: 'src/index.html'
         }),
 
         // Register ExtractTextPlugin to process CSS
