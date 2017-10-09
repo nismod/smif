@@ -11,13 +11,13 @@ const SosModelRunConfig = () => (
             <p>Description</p>
             <textarea name="sos_model_description" rows="10" cols="30"/>
 
-            <p>Scenario Sets</p>
+            <p>System-of-systems Model</p>
 
-            <p>Scenario Sets</p>
+            <p>Decisions Module</p>
 
-            <p>Sector Models</p>
+            <p>Scenarios</p>
 
-            <p>Dependencies</p>
+            <p>Narratives</p>
 
             <button type="submit">
                 Submit

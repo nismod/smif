@@ -3,7 +3,7 @@ import React from 'react';
 const SosModelConfig = () => (
     <div>
         <form>
-            <h2>Create System-of-systems Model</h2>
+            <h2>Create System-of-systems Configuration</h2>
 
             <p>Name</p>
             <input name="sos_model_name" type="text"/>
