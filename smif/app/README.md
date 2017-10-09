@@ -16,6 +16,12 @@ npm run build  # runs build script specified in package.json
 npm start      # runs build, watches for changes, and opens in browser
 ```
 
+Run tests with:
+
+```bash
+npm run test
+```
+
 ## Getting started links
 
 - [React](https://facebook.github.io/react/docs/hello-world.html) view layer
@@ -54,3 +60,9 @@ app.
 When running a local development server (`npm start`), visit
 http://localhost:8080/pattern-library.html or after building the application,
 (`npm run build`), open `./dist/pattern-library.html`.
+
+### Testing
+
+Tests are run using the [mocha](https://mochajs.org/) test framework, with
+[chai](http://chaijs.com/) for assertions and [enzyme](http://airbnb.io/enzyme/)
+to wrap React components.
