@@ -3,9 +3,9 @@ import React from 'react';
 const ProjectConfig = () => (
     <div>
         <form>
-            <h2>Project Configuration</h2>
+            <h2>Create Project Configuration</h2>
 
-            <p>Project name</p>
+            <p>Name</p>
             <input name="project_name" type="text"/>
 
             <p>Scenario Sets</p>
