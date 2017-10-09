@@ -26,6 +26,7 @@ script:
 - python setup.py test
 - cd $TRAVIS_BUILD_DIR/smif/app && npm test
 after_success:
+- cd $TRAVIS_BUILD_DIR
 - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 notifications:
   email: false
