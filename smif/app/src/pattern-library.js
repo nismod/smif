@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import App from './hello/app.jsx';
 import 'normalize.css';
 import '../static/css/main.css';
+import './pattern-library.css';
 
 class StyleGuide extends React.Component {
     // 'Hello World' render to style guide page
@@ -12,11 +13,17 @@ class StyleGuide extends React.Component {
     // - TODO add light-touch style-guide-specific styles
     render() {
         return (
-            <div className="content-wrapper">
-                <h1>smif &ndash; Pattern library</h1>
-                <h2>Components</h2>
-                <App heading="Example Heading" />
-            </div>);
+            <article>
+                <header className="guide-header">
+                    <h1>smif &ndash; Pattern library</h1>
+                </header>
+                <div className="guide-content">
+                    <h2>Components</h2>
+                    <div className="sample-container">
+                        <App heading="Example Heading" />
+                    </div>
+                </div>
+            </article>);
     }
 }
 
