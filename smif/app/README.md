@@ -29,3 +29,18 @@ Recommend installing [eslint](https://eslint.org/) (`npm install --global eslint
 which is configured on a project level by `.eslintrc.json`. There is also a [VS Code
 extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint).
 
+### Code structure
+
+We're using [React](https://facebook.github.io/react/docs/hello-world.html)
+components, which live in `./src/components`, to provide the low-level building
+block of the user interface. Components are 'pure' in that they render their
+data, and provide and respond to events without knowledge of their context in
+the rest of the application.
+
+Components are combined in containers in `./src/containers`, which group
+sections of the interface by related functionality, and are aware of the data
+layer provided by Redux, which will involve 'actions' (which signal events) and
+'reducers' (which respond by changing the app state).
+
+See the [Redux docs](http://redux.js.org/docs/introduction/Examples.html)
+for examples of increasing complexity.
