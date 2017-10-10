@@ -17,9 +17,10 @@ def get_model_run_config_data():
         'scenarios':
             {'raininess': 'high_raininess'},
         'narratives':
-            {'technology': 'high tech',
-             'governance': 'central plan'}
-        }
+            [Mock(data={'model_name': {'parameter_name': 0}}),
+             Mock(data={'model_name': {'parameter_name': 0}})
+             ]
+    }
     return config
 
 
@@ -49,8 +50,7 @@ class TestModelRunBuilder:
         assert modelrun.model_horizon == [2010, 2011, 2012]
         assert modelrun.status == 'Built'
         assert modelrun.scenarios == {'raininess': 'high_raininess'}
-        assert modelrun.narratives == {'technology': 'high tech',
-                                       'governance': 'central plan'}
+        assert modelrun.narratives == config_data['narratives']
 
 
 class TestModelRun:

@@ -22,6 +22,25 @@ from logging import getLogger
 
 class ModelRun(object):
     """Collects timesteps, scenarios , narratives and a SosModel together
+
+    Attributes
+    ----------
+    name: str
+        The unique name of the model run
+    timestamp: :class:`datetime.datetime`
+        An ISO8601 compatible timestamp of model run creation time
+    description: str
+        A friendly description of the model run
+    sos_model: :class:`smif.model.sos_model.SosModel`
+        The contained SosModel
+    scenarios: dict
+        For each scenario set, a mapping to a valid scenario within that set
+    narratives: list
+        A list of :class:`smif.parameters.narrative.Narrative` objects
+    strategies: dict
+    status: str
+    logger: logging.Logger
+    results: dict
     """
 
     def __init__(self):
@@ -32,7 +51,7 @@ class ModelRun(object):
         self._model_horizon = []
 
         self.scenarios = {}
-        self.narratives = {}
+        self.narratives = []
         self.strategies = None
         self.status = 'Empty'
 
@@ -41,7 +60,7 @@ class ModelRun(object):
         self.results = {}
 
     def as_dict(self):
-        """Serialises ModelRun
+        """Serialises :class:`smif.modelrun.ModelRun`
 
         Returns a dictionary definition of a ModelRun which is
         equivalent to that required by :class:`smif.modelrun.ModelRunBuilder`
@@ -130,6 +149,9 @@ class ModelRunner(object):
         """Loads overridden parameter values from narrative/policy files
         """
         data = {}
+        for narrative in model_run.narratives:
+            self.logger.debug("Loading narratives: %s", narrative.data)
+            data.update(narrative.data)
 
         return data
 
@@ -203,7 +225,7 @@ class ModelRunBuilder(object):
 
         Arguments
         ---------
-        narratives : dict
-            A dictionary of {narrative set: narrative name}, one for each narrative set
+        narratives : list
+            A list of smif.parameters.Narrative objects
         """
         self.model_run.narratives = narratives

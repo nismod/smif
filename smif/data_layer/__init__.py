@@ -711,6 +711,26 @@ class DatafileInterface(DataInterface):
         # Read the narrative data from file
         return load(os.path.join(self.file_dir['narratives'], filename))
 
+    def read_narrative_definition(self, narrative_name):
+        """Read the narrative definition
+
+        Arguments
+        ---------
+        narrative_name: str
+            Name of the narrative
+
+        Returns
+        -------
+        dict
+
+        """
+        definition = None
+        project_config = self._read_project_config()
+        for narrative in project_config['narratives']:
+            if narrative['name'] == narrative_name:
+                definition = narrative
+        return definition
+
     def write_narrative_set(self, narrative_set):
         """Write narrative_set to project configuration
 

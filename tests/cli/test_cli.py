@@ -7,7 +7,10 @@ from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
 import smif
-from smif.cli import confirm, parse_arguments, setup_project_folder
+from smif.cli import (confirm, get_narratives, parse_arguments,
+                      setup_project_folder)
+from smif.data_layer import DatafileInterface
+from smif.parameters.narrative import Narrative
 
 
 def get_args(args):
@@ -120,3 +123,26 @@ def test_verbose_info(setup_folder_structure, setup_project_folder):
     config_file = os.path.join(str(setup_folder_structure))
     output = subprocess.run(['smif', '-v', 'run', config_file], stderr=subprocess.PIPE)
     assert 'INFO' in str(output.stderr)
+
+
+class TestRunSosModelRunComponents():
+
+    def test_narratives(self):
+        config_file = os.path.join(os.path.dirname(__file__),
+                                   '..', 'fixtures', 'single_run')
+
+        handler = DatafileInterface(config_file)
+        narratives = [{'technology': ['High Tech Demand Side Management']}]
+        actual = get_narratives(handler, narratives)
+
+        data = {'energy_demand': {'smart_meter_savings': 8},
+                'water_supply': {'clever_water_meter_savings': 8}
+                }
+        name = 'High Tech Demand Side Management'
+        description = 'High penetration of SMART technology on the demand side'
+        narrative_set = 'technology'
+
+        narrative_object = Narrative(name, description, narrative_set)
+        narrative_object.data = data
+
+        assert actual == [narrative_object]
