@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './hello/app.jsx';
+import App from './components/App.js';
 import 'normalize.css';
 import '../static/css/main.css';
 import './pattern-library.css';

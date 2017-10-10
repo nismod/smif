@@ -63,7 +63,7 @@ module.exports = {
             title: 'smif',
             filename: './index.html',
             hash: true,
-            template: 'src/index.ejs',
+            template: 'src/index.html',
             chunks: ['common', 'main']
         }),
 
