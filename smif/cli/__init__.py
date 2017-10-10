@@ -52,6 +52,8 @@ from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
 
+from smif.parameters.narrative import Narrative
+
 from smif.modelrun import ModelRunBuilder
 from smif.model.sos_model import SosModelBuilder
 from smif.model.sector_model import SectorModelBuilder
@@ -259,12 +261,60 @@ def get_model_run_definition(args):
     LOGGER.debug("Model list: %s", list(sos_model_object.models.keys()))
 
     model_run_config['sos_model'] = sos_model_object
+    narrative_objects = get_narratives(handler,
+                                       model_run_config['narratives'])
+    model_run_config['narratives'] = narrative_objects
 
     return model_run_config
 
 
-def build_model_run(model_run_config):
+def get_narratives(handler, narratives):
+    """Load the narrative data from the sos model run configuration
 
+    Arguments
+    ---------
+    handler: :class:`smif.data_layer.DataInterface`
+    narratives: list
+        A list of narrative_set, narrative_list/narrative pairs
+
+    Returns
+    -------
+    list
+        A list of :class:`smif.parameter.Narrative` objects populated with
+        data
+
+    """
+    narrative_objects = []
+    for narrative in narratives:
+        LOGGER.debug(narrative)
+        for narrative_set, narrative_list in narrative.items():
+            LOGGER.info("Loading narrative data for narrative set '%s'",
+                        narrative_set)
+            for narrative_entry in narrative_list:
+                LOGGER.debug("Adding narrative entry '%s'",
+                             narrative_entry)
+                definition = handler.read_narrative_definition(narrative_entry)
+                data = handler.read_narrative_data(narrative_entry)
+                narr_object = Narrative(narrative_entry,
+                                        definition['description'],
+                                        narrative_set)
+                narr_object.data = data
+                narrative_objects.append(narr_object)
+    return narrative_objects
+
+
+def build_model_run(model_run_config):
+    """Builds the model run
+
+    Arguments
+    ---------
+    model_run_config: dict
+        A valid model run configuration dict with objects
+
+    Returns
+    -------
+    `smif.modelrun.ModelRun`
+    """
     try:
         builder = ModelRunBuilder()
         builder.construct(model_run_config)
@@ -287,6 +337,7 @@ def execute_model_run(args):
 
     Arguments
     ---------
+    args
     """
     LOGGER.info("Getting model run definition")
     model_run_config = get_model_run_definition(args)

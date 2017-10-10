@@ -1,13 +1,13 @@
 """Contains classes and methods relating to narratives.
 
-NarrativeSet hold collections of overridden parameter data. During model setup,
+Narrative hold collections of overridden parameter data. During model setup,
 a user compiles a number of narrative files which contains a list of parameter
 names and values. These are assigned to a narrative set during a model run
-and the NarrativeSet object holds this information at runtime.
+and the Narrative object holds this information at runtime.
 """
 
 
-class NarrativeSet(object):
+class Narrative(object):
     """Holds information relating to parameters from a collection of narrative policies
 
     Arguments
@@ -18,7 +18,7 @@ class NarrativeSet(object):
 
     Example
     --------
-    >>> narrative = NarrativeSet('Energy Demand - High Tech',
+    >>> narrative = Narrative('Energy Demand - High Tech',
                                   'A description',
                                   'technology')
     """
@@ -48,7 +48,7 @@ class NarrativeSet(object):
 
     @data.setter
     def data(self, data):
-        """Add data to the NarrativeSet object
+        """Add data to the Narrative object
 
         Arguments
         ---------
@@ -59,7 +59,7 @@ class NarrativeSet(object):
         -------
         >>> narrative_data = {'global': [{'name': 'parameter_name',
                                           'value': 42}]}
-        >>> narrative = NarrativeSet('Energy Demand - High Tech',
+        >>> narrative = Narrative('Energy Demand - High Tech',
                                       'A description',
                                       'technology')
         >>> narrative.add_data(narrative_data)
@@ -86,3 +86,7 @@ class NarrativeSet(object):
                   'description': self._description,
                   'narrative_set': self._narrative_set}
         return config
+
+    def __eq__(self, other):
+        return self.as_dict() == other.as_dict() and \
+            self.data == other.data

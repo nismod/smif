@@ -6,15 +6,15 @@ names and values. These are assigned to a narrative set during a model run
 and the NarrativeSet object holds this information at runtime.
 """
 from pytest import fixture, raises
-from smif.parameters.narrative import NarrativeSet
+from smif.parameters.narrative import Narrative
 
 
 @fixture
 def get_narrative():
 
-    narrative = NarrativeSet('Energy Demand - High Tech',
-                             'A description',
-                             'technology')
+    narrative = Narrative('Energy Demand - High Tech',
+                          'A description',
+                          'technology')
     return narrative
 
 
@@ -22,9 +22,9 @@ class TestNarrativeSet:
 
     def test_narrative_data_initialise(self):
 
-        narrative = NarrativeSet('Energy Demand - High Tech',
-                                 'A description',
-                                 'technology')
+        narrative = Narrative('Energy Demand - High Tech',
+                              'A description',
+                              'technology')
 
         actual = narrative.as_dict()
         expected = {'name': 'Energy Demand - High Tech',
