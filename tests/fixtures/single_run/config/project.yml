@@ -41,7 +41,7 @@ scenarios:
     spatial_resolution: national
     temporal_resolution: annual
     units: ml
-narrative_data:
+narratives:
 - name: 'High Tech Demand Side Management'
   description: 'High penetration of SMART technology on the demand side'
   filename: high_tech_dsm.yml
