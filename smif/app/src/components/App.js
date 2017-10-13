@@ -8,9 +8,6 @@ const App = () => (
     <div>
         <h1>Welcome to Smif!</h1>
         <ProjectConfig />
-        <SectorModelConfig />
-        <SosModelConfig />
-        <SosModelRunConfig />
     </div>
 );
 

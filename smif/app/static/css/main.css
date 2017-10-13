@@ -70,3 +70,21 @@ h4 {
     max-width: 100%;
     height: auto;
 }
+button,
+input,
+select,
+textarea {
+	width: 100%;
+}
+input[type=button], input[type=submit], input[type=reset] {
+    background-color: #666;
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    text-decoration: none;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+textarea {
+    resize: none;
+}
