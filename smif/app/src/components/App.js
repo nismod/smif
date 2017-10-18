@@ -1,13 +1,15 @@
 import React from 'react';
-import ProjectConfig from './ProjectConfig';
-import SectorModelConfig from './SectorModelConfig';
-import SosModelConfig from './SosModelConfig';
+import Welcome from './Welcome.js'
+import ProjectOverview from './ProjectOverview';
 import SosModelRunConfig from './SosModelRunConfig';
+import SosModelConfig from './SosModelConfig';
+import SimulationModelConfig from './SimulationModelConfig';
+
+import '../../static/css/main.css';
 
 const App = () => (
     <div>
-        <h1>Welcome to Smif!</h1>
-        <ProjectConfig />
+        <ProjectOverview />        
     </div>
 );
 

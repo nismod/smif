@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import FaTrash from 'react-icons/lib/fa/trash';
+
 import 'normalize.css';
 import '../../../static/css/main.css';
 import './pattern-library.css';
@@ -67,6 +69,10 @@ export default class PatternLibrary extends React.Component {
                     <div className="sample-container">
                         <a href="#attr-pattern-lib">Link to the header of this page</a> 
                     </div>
+                    <h3>Fieldset</h3>
+                    <fieldset>
+                        <legend>Fieldset</legend>
+                    </fieldset>
 
                     <h2>Input elements</h2>
                     <h3>Button</h3>
@@ -75,7 +81,10 @@ export default class PatternLibrary extends React.Component {
                     </div>
                     <h3>Checkbox</h3>
                     <div className="sample-container">
-                        <input type="checkbox" />
+                        <label>
+                            <input type="checkbox" />
+                            Subscribe to newsletter?
+                        </label>
                     </div>
                     <h3>Date</h3>
                     <div className="sample-container">
@@ -95,7 +104,10 @@ export default class PatternLibrary extends React.Component {
                     </div>
                     <h3>Radio Button</h3>
                     <div className="sample-container">
+                        <label>
                         <input type="radio" />
+                            Subscribe to newsletter?
+                        </label>
                     </div>
                     <h3>Range</h3>
                     <div className="sample-container">
@@ -109,14 +121,62 @@ export default class PatternLibrary extends React.Component {
                     <div className="sample-container">
                         <textarea name="textarea" rows="10" cols="50">Write something here</textarea>
                     </div>
-                    <h3>Select Menu</h3>
+                    <h3>Droplist</h3>
                     <div className="sample-container">
                         <select>
+                            <option value="" disabled="disabled" selected="selected">Please select a name</option>
+                            <option value="1">One</option>
+                            <option value="2">Two</option>
+                        </select>
+                    </div>
+                    <h3>Datalist</h3>
+                    <div className="sample-container">
+                        <label>Choose a model:
+                        <input type="text" list="models" name="myModels" /></label>
+                        <datalist id="models">
+                            <option value="Water">Water</option>
+                            <option value="Energy-Demand">Energy Demand</option>
+                            <option value="Energy-Supply">Energy Supply</option>
+                            <option value="Solid-Waste">Solid Waste</option>
+                        </datalist>
+                    </div>
+                    <h3>Select Menu</h3>
+                    <div className="sample-container">
+                        <select size="3">
                           <option value="Water">Water</option>
                           <option value="Energy-Demand">Energy Demand</option>
                           <option value="Energy-Supply">Energy Supply</option>
                           <option value="Solid-Waste">Solid Waste</option>
                         </select>
+                    </div>
+
+                    <h2>Display elements</h2>
+                    <h3>Table</h3>
+                    <div className="sample-container">
+                        <table>
+                            <tr>
+                                <th>Firstname</th>
+                                <th>Lastname</th>
+                            </tr>
+                            <tr>
+                                <td>Roald</td>
+                                <td>Lemmen</td>
+                            </tr>
+                            <tr>
+                                <td>Will</td>
+                                <td>Usher</td>
+                            </tr>
+                            <tr>
+                                <td>Tom</td>
+                                <td>Russell</td>
+                            </tr>
+                        </table> 
+                    </div>
+
+                    <h2>Icons</h2>
+                    <h3>Delete</h3>
+                    <div className="sample-container">
+                        <FaTrash />
                     </div>
                 </div>                
 

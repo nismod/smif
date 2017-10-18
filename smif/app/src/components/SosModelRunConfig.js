@@ -1,28 +1,106 @@
 import React from 'react';
+import '../../static/css/main.css';
 
 const SosModelRunConfig = () => (
-    <div>
-        <form>
-            <h2>Create System-of-systems Model-Run Configuration</h2>
+    <div className="content-wrapper">
+        <h2>ModelRun Configuration</h2>
 
-            <p>Name</p>
-            <input name="project_name" type="text"/>
+        <h3>General</h3>
+        <label>Name:</label>
+        <input type="text" name="modelrun_name"  value="unique_model_run_name"/>
+        <label>Description:</label>
+        <div className="textarea-container">
+            <textarea name="textarea" rows="5" value="a description of what the model run contains."/>
+        </div>        
+        <label>Datestamp:</label>
+        <input type="datetime-local" value="2017-09-20T12:53:23" disabled="disabled"/>
 
-            <p>Description</p>
-            <textarea name="sos_model_description" rows="10" cols="30"/>
+        <h3>Model</h3>
+        <label>System-of-systems model:</label>
+        <div className="select-container">
+            <select>
+                <option value="" disabled="disabled" selected="selected">Please select a system-of-systems model</option>
+                <option value="energy">energy</option>
+                <option value="water">water</option>
+                <option value="energy-supply-demand">energy-supply-demand</option>
+                <option value="energy-water">energy-water</option>
+            </select>
+        </div>
+        <label>Scenarios:</label> 
+        <fieldset>
+            <legend>Population (ONS)</legend>
+            <label>
+                <input type="radio" />
+                Low
+                <input type="radio" />
+                Medium
+                <input type="radio" />
+                High
+            </label>
+        </fieldset>
 
-            <p>System-of-systems Model</p>
+        <label>Narratives:</label>
+        <fieldset>
+            <legend>Technology</legend>
+            <label>
+                <input type="checkbox" />
+                Energy Demand - High Tech
+                <br/>
+                <input type="checkbox" />
+                Solid Waste - High recycling
+                <br/>
+                <input type="checkbox" />
+                Transport - Autonomous driving
+                <br/>
+            </label>
+        </fieldset>
+        <fieldset disabled="disabled">
+            <legend>Governance</legend>
+            <label>
+                <input type="checkbox" />
+                Central Planning
+                <br/>
+                <input type="checkbox" />
+                Hard Brexit
+                <br/>
+                <input type="checkbox" />
+                Soft Brexit
+                <br/>
+            </label>
+        </fieldset>
 
-            <p>Decisions Module</p>
+        <h3>Timesteps</h3>
+        <label>Base year:</label>
+        <div className="select-container">
+            <select>
+                <option value="" disabled="disabled" selected="selected">Please select a base year</option>
+                <option value="2015">2015</option>
+                <option value="2016">2016</option>
+                <option value="2017">2017</option>
+                <option value="2018">2018</option>
+                <option value="2019">2019</option>
+                <option value="2020">2020</option>
+            </select>
+        </div>
+        <label>End year:</label>
+        <div className="select-container">
+            <select>
+                <option value="" disabled="disabled" selected="selected">Please select an end year</option>
+                <option value="2015">2015</option>
+                <option value="2016">2016</option>
+                <option value="2017">2017</option>
+                <option value="2018">2018</option>
+                <option value="2019">2019</option>
+                <option value="2020">2020</option>
+            </select>
+        </div>
+        <label>Resolution:</label>
+        <input type="number" />
 
-            <p>Scenarios</p>
-
-            <p>Narratives</p>
-
-            <button type="submit">
-                Submit
-            </button>
-        </form>
+        <br/>
+        <br/>
+        <input type="button" value="Save Model Run Configuration" />
+        <input type="button" value="Cancel" />
     </div>
 );
 

@@ -40,21 +40,18 @@ body {
 h1 {
     font-size: 1.75em;
     line-height: 1.25;
-    margin-top: 0.5em;
     margin-bottom: 0.5em;
     color: #006e79;
 }
 h2 {
     font-size: 1.5em;
     line-height: 1.4;
-    margin-top: 1em;
     margin-bottom: 0.5em;
     color: #006e79;
 }
 h3 {
     font-size: 1em;
     line-height: 1.4;
-    margin-top: 0em;
     margin-bottom: 0.4em;
     color: #006e79;
 }
@@ -62,29 +59,106 @@ h4 {
     text-transform: uppercase;
     color: #666;
     font-size: 0.75em;
-    margin: 1em 0 0;
+    margin-bottom: 0.4em;
 }
+details {
+    font-size: 1em;
+    line-height: 1.4;
+    margin-bottom: 0.4em;
+    color: #006e79;
+}
+label {
+    font-size: 1em;
+    line-height: 1.4;
+    color: #666;
+    display: block;
+    width: 100%;
+    margin-bottom: 0.4em;
+}
+
 .content-image {
     display: block;
     margin: 1em auto;
     max-width: 100%;
     height: auto;
 }
-button,
-input,
-select,
-textarea {
-	width: 100%;
+input[type=text],
+input[type=number],
+input[type=date],
+input[type=datetime-local],
+input[type=button]{
+    width: 100%; 
+    border-radius: 0px;
+    border-style: solid;
+    margin-bottom: 0.4em;
+    padding: 0.4em 0.4em;
 }
-input[type=button], input[type=submit], input[type=reset] {
+input[type=button]{
+    border-radius: 5px;
+    display: inline-block;
     background-color: #666;
     border: none;
     color: white;
-    padding: 16px 32px;
+    padding: 10px 32px;
     text-decoration: none;
-    margin: 4px 2px;
     cursor: pointer;
 }
+input[type=range]{
+    width: 100%; 
+    margin-bottom: 0.4em;
+}
+input[type=checkbox],
+input[type=radio]{
+    margin-bottom: 0.4em;
+    margin-top: 0.4em;
+    margin-right: 0.4em;
+    margin-left: 0.4em;
+}
 textarea {
+    width: 100%;
+    border-radius: 0px;
+    border-style: solid;
     resize: none;
+    padding: 0.4em 0.4em;
+}
+Fieldset {
+    width: 100%;
+    margin-bottom: 0.4em;
+    border-radius: 0px;
+    border-style: solid;
+    resize: none;
+}
+.textarea-container {
+    margin-bottom: 0.4em;
+}
+select{
+    width: 100%; 
+}
+.select-container {
+    margin-bottom: 0.4em;
+}
+.table-container {
+    margin-bottom: 0.4em;
+    margin-left: 0.4em;
+
+}
+table {
+    width:100%;
+}
+table th {
+    text-align: center;
+    background-color: #666;
+    color: white;
+}
+table, th, td {
+    border: 1px solid #666;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 5px;
+    text-align: left;
+}
+summary{
+    outline: 0;
+    cursor: pointer;
 }
