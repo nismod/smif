@@ -122,43 +122,190 @@ narrative files
 A Simulation Model File
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. literalinclude:: ../tests/fixtures/single_run/config/sector_models/energy_demand.yml
+.. literalinclude:: ../tests/fixtures/single_run/config/sector_models/water_supply.yml
    :language: yaml
    :linenos:
 
 Inputs
 ^^^^^^
+
 Define the collection of inputs required from external sources
 to run the model.  
 Inputs are defined with a name, spatial resolution, 
 temporal-resolution and units.
 
-.. literalinclude:: ../tests/fixtures/single_run/config/sector_models/energy_demand.yml
+.. literalinclude:: ../tests/fixtures/single_run/config/sector_models/water_supply.yml
    :language: yaml
-   :lines: 5-13
+   :lines: 6-14
+
+.. csv-table:: Input Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   name, string, "A unique name within the input defintions"
+   spatial_resolution, string, "References an entry in the region definitions"
+   temporal_resolution, string, "References an entry in the interval definitions"
+   units, string, "References an entry in the unit definitions"
+
 
 Outputs
 ^^^^^^^
+
 Define the collection of output model parameters used for the purpose 
 of metrics, for accounting purposes, such as operational cost and
 emissions, or as the source of a dependency in another model.
 
-.. literalinclude:: ../tests/fixtures/single_run/config/sector_models/energy_demand.yml
+.. literalinclude:: ../tests/fixtures/single_run/config/sector_models/water_supply.yml
    :language: yaml
-   :lines: 14-22
+   :lines: 19-27
 
+.. csv-table:: Output Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   name, string, "A unique name within the output definitions"
+   spatial_resolution, string, "References an entry in the region definitions"
+   temporal_resolution, string, "References an entry in the interval definitions"
+   units, string, "References an entry in the unit definitions"
+
+Parameters
+^^^^^^^^^^
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sector_models/water_supply.yml
+   :language: yaml
+   :lines: 37-43
+
+
+.. csv-table:: Parameter Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   name,	string,	 ""
+   description,	string,	""
+   absolute_range,tuple, ""	 
+   suggested_range,	tuple, ""	 
+   default_value,	float, ""	 
+   units,	string,	""
 
 A System-of-System Model File
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+A system-of-systems model collects together scenario sets and simulation models.
+Users define dependencies between scenario and simulation models.
+
 .. literalinclude:: ../tests/fixtures/single_run/config/sos_models/energy_water.yml
    :language: yaml
+   :linenos:
+
+Scenario Sets
+^^^^^^^^^^^^^
+
+Scenario sets are the categories in which scenario data are organised.
+Choosing a scenario set at this points allows different scenario data 
+to be chosen in model runs which share the same system-of-systems model
+configuration defintion.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sos_models/energy_water.yml
+   :language: yaml
+   :lines: 3-5
+
+.. csv-table:: Scenario Sets Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   names,	list,	 "A list of scenario set names"
+
+Simulation Models
+^^^^^^^^^^^^^^^^^
+
+This section contains a list of pre-configured simulation models which exist in
+the current project.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sos_models/energy_water.yml
+   :language: yaml
+   :lines: 6-8
+
+.. csv-table:: Simulation Models Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   names,	list,	 "A list of simulation model names"
+
+Dependencies
+^^^^^^^^^^^^
+
+In this section, dependencies are defined between sources and sinks.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sos_models/energy_water.yml
+   :language: yaml
+   :lines: 9-17
+
+.. csv-table:: Dependency Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   source_model,	string,	 "The source model of the data"
+   source_model_output,	string,	 "The output in the source model"
+   sink_model,	string,	 "The model which depends on the source"
+   sink_model_input,	string,	 "The input which should receive the data"
 
 A Model Run File
 ~~~~~~~~~~~~~~~~
 
+A model run brings together a system-of-systems model definition with timesteps
+over which planning takes place, and a choice of scenarios and narratives to
+population the placeholder scenario sets in the system-of-systems model.
+
 .. literalinclude:: ../tests/fixtures/single_run/config/sos_model_runs/20170918_energy_water.yml
    :language: yaml
+   :linenos:
+
+Timesteps
+^^^^^^^^^
+
+A list of timesteps define the years in which planning takes place, 
+and the simulation models are executed.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sos_model_runs/20170918_energy_water.yml
+   :language: yaml
+   :lines: 4-7
+
+.. csv-table:: Timestep Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   timesteps,	list,	 "A list of integer years"
+
+Scenarios
+^^^^^^^^^
+
+For each scenario set available in the contained system-of-systems model,
+one scenario should be chosen.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sos_model_runs/20170918_energy_water.yml
+   :language: yaml
+   :lines: 10-12
+
+.. csv-table:: Model Run Scenario Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   scenarios,	list,	 "A list of tuples of scenario sets and scenarios"
+
+Narratives
+^^^^^^^^^^
+
+For each narrative set available in the project, zero or more available 
+narratives should be chosen.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sos_model_runs/20170918_energy_water.yml
+   :language: yaml
+   :lines: 13-15
+
+Note that narrative files override the values of parameters in specific
+simulation models. 
+Selecting a narrative file which overrides parameters in an absent simulation
+model will have no effect.
 
 Data Folder
 -----------
