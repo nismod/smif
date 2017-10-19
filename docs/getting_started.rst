@@ -124,6 +124,28 @@ A Simulation Model File
 
 .. literalinclude:: ../tests/fixtures/single_run/config/sector_models/energy_demand.yml
    :language: yaml
+   :linenos:
+
+Inputs
+^^^^^^
+Define the collection of inputs required from external sources
+to run the model.  
+Inputs are defined with a name, spatial resolution, 
+temporal-resolution and units.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sector_models/energy_demand.yml
+   :language: yaml
+   :lines: 5-13
+
+Outputs
+^^^^^^^
+Define the collection of output model parameters used for the purpose 
+of metrics, for accounting purposes, such as operational cost and
+emissions, or as the source of a dependency in another model.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sector_models/energy_demand.yml
+   :language: yaml
+   :lines: 14-22
 
 
 A System-of-System Model File
@@ -195,7 +217,8 @@ in the same or different spatial and temporal resolutions.
 | scenario_set | string | `population` | |
 | parameters | list | [see below](./smif-prerequisites.html#scenario-parameters) | |
 
-#### Scenario Parameters
+Scenario Parameters
+^^^^^^^^^^^^^^^^^^^
 
 For each entry in the scenario parameters list, the following metadata
 is required:
@@ -412,52 +435,7 @@ For example::
       id: '1_4'
       start: P7228H
 
-Inputs
-------
-Define the collection of inputs required from external sources
-to run the model.  For example
-"electricity demand (<region>, <interval>)".
-Inputs are defined with a name, spatial resolution and temporal-resolution.
 
-Only those inputs required as dependencies are defined here, although
-dependencies are activated when configured in the system-of-systems model.
-
-The ``inputs.yaml`` file defines the dependencies of one model upon another.
-Enter a list of dependencies, each with three keys, ``name``,
-``spatial_resolution`` and ``temporal_resolution``.
-For example, in energy supply::
-
-      - name: electricity_demand
-        spatial_resolution: energy_regions
-        temporal_resolution: annual_interval
-      - name: gas_demand
-        spatial_resolution: energy_regions
-        temporal_resolution: annual_interval
-
-The keys ``spatial_resolution`` and ``temporal_resolution`` define the
-resolution at which the data are required.
-
-
-Outputs
--------
-Define the collection of outputs model parameters used for the purpose 
-of optimisation or rule-based planning approaches 
-(so normally a cost-function), and those
-outputs required for accounting purposes, such as operational cost and
-emissions, or as a dependency in another model.
-
-The ``outputs.yaml`` file defines the output parameters from the model.
-For example::
-
-        - name: total_cost
-          spatial_resolution: energy_regions
-          temporal_resolution: annual_interval
-        - name: water_demand
-          spatial_resolution: energy_regions
-          temporal_resolution: annual_interval
-        - name: total_emissions
-          spatial_resolution: energy_regions
-          temporal_resolution: annual_interval
 
 Scenarios
 ---------
