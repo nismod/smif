@@ -113,6 +113,47 @@ To install from the source code in development mode::
         python setup.py develop
 
 
+Running `smif` from the command line
+====================================
+
+Follow the `getting started guide
+<http://smif.readthedocs.io/en/latest/getting_started.html>`_ to help set up the
+necessary configuration.
+
+To list available model runs:
+
+        $ smif list
+        demo_model_run.yml
+        ...
+
+To run a system-of-systems model run:
+
+        $ smif run demo_model_run.yml
+        ...
+        Model run complete
+
+By default, all results will be saved to `results.yaml`
+
+To see all options and flags:
+
+        $ smif --help
+        usage: smif [-h] [-V] [-v] {setup,list,run} ...
+
+        Command line tools for smif
+
+        positional arguments:
+        {setup,list,run}  available commands
+            setup           Setup the project folder
+            list            List available model runs
+            run             Run a model
+
+        optional arguments:
+        -h, --help        show this help message and exit
+        -V, --version     show the current version of smif
+        -v, --verbose     show messages: -v to see messages reporting on progress,
+                            -vv to see debug messages.
+
+
 A word from our sponsors
 ========================
 

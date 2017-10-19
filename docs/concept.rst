@@ -9,8 +9,9 @@ The section outlines the underlying principles of **smif**.
 Running a System-of-Systems Model
 ---------------------------------
 
-Once **smif** has been used to configure a system-of-systems model, all that is
-needed to run the model is the command ``smif run``.
+Once **smif** has been used to configure a system-of-systems model and model
+run, all that is needed to run the model is the command ``smif run
+<model_run_name>``.
 
 **smif** handles the loading of input data, spinning up the simulation
 models, extracting a graph of dependencies from the network of inputs and
@@ -67,6 +68,6 @@ model, and provides a uniform API to other parts of **smif**.
 
 An input can correspond to:
 
-- model parameters, whose source is either from a scenario, 
+- model parameters, whose source is either from a scenario,
   or from the outputs from another model (a dependency)
 - model state (not yet implemented)

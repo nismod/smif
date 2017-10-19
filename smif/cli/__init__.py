@@ -144,7 +144,7 @@ def setup_configuration(args):
     """Sets up the configuration files into the defined project folder
 
     """
-    project_path = os.path.abspath(args.path)
+    project_path = os.path.abspath(args.directory)
     msg = "Set up the project folders in {}?".format(project_path)
     response = confirm(msg,
                        response=False)
@@ -198,12 +198,20 @@ def get_model_run_definition(args):
         ScenarioModel, SosModel and SectorModel objects
 
     """
-    handler = DatafileInterface(args.path)
+    handler = DatafileInterface(args.directory)
     load_region_sets(handler)
     load_interval_sets(handler)
 
     # HARDCODE selet the first model run only
-    model_run_config = handler.read_sos_model_runs()[0]
+    try:
+        model_run_config = next(config for config in handler.read_sos_model_runs()
+                                if config['name'] == args.modelrun)
+    except StopIteration:
+        LOGGER.error("Model run %s not found. Run 'smif list' to see available model runs.",
+                     args.modelrun)
+        exit(-1)
+
+    LOGGER.info("Running %s", model_run_config['name'])
     LOGGER.debug("Model Run: %s", model_run_config)
     sos_model_config = handler.read_sos_model(model_run_config['sos_model'])
 
@@ -211,7 +219,7 @@ def get_model_run_definition(args):
     for sector_model in sos_model_config['sector_models']:
         sector_model_config = handler.read_sector_model(sector_model)
 
-        absolute_path = os.path.join(args.path,
+        absolute_path = os.path.join(args.directory,
                                      sector_model_config['path'])
         sector_model_config['path'] = absolute_path
 
@@ -303,6 +311,15 @@ def get_narratives(handler, narratives):
     return narrative_objects
 
 
+def list_model_runs(args):
+    """List the model runs defined in the config
+    """
+    handler = DatafileInterface(args.directory)
+    model_run_configs = handler.read_sos_model_runs()
+    for run in model_run_configs:
+        print(run['name'])
+
+
 def build_model_run(model_run_config):
     """Builds the model run
 
@@ -379,6 +396,14 @@ def parse_arguments():
     parser_setup.add_argument('path',
                               help="Path to the project folder")
 
+    # LIST
+    parser_list = subparsers.add_parser('list',
+                                        help='List available model runs')
+    parser_list.set_defaults(func=list_model_runs)
+    parser_list.add_argument('-d', '--directory',
+                             default='.',
+                             help="Path to the project directory")
+
     # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
@@ -386,8 +411,11 @@ def parse_arguments():
                             default='results.yaml',
                             help='Output file')
     parser_run.set_defaults(func=execute_model_run)
-    parser_run.add_argument('path',
-                            help="Path to the main config file")
+    parser_run.add_argument('-d', '--directory',
+                            default='.',
+                            help="Path to the project directory")
+    parser_run.add_argument('modelrun',
+                            help="Name of the model run to run")
 
     return parser
 

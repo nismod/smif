@@ -38,10 +38,23 @@ def test_parse_arguments():
 def test_fixture_single_run():
     """Test running the filesystem-based single_run fixture
     """
-    config_file = os.path.join(os.path.dirname(__file__),
-                               '..', 'fixtures', 'single_run')
-    output = subprocess.run(["smif", "run", config_file], stdout=subprocess.PIPE)
+    config_dir = os.path.join(os.path.dirname(__file__),
+                              '..', 'fixtures', 'single_run')
+    output = subprocess.run(["smif", "-v", "run", "-d", config_dir,
+                             "20170918_energy_water_short.yml"],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert "Running 20170918_energy_water_short.yml" in str(output.stderr)
     assert "Model run complete" in str(output.stdout)
+
+
+def test_fixture_list_runs():
+    """Test running the filesystem-based single_run fixture
+    """
+    config_dir = os.path.join(os.path.dirname(__file__),
+                              '..', 'fixtures', 'single_run')
+    output = subprocess.run(["smif", "list", "-d", config_dir], stdout=subprocess.PIPE)
+    assert "20170918_energy_water.yml" in str(output.stdout)
+    assert "20170918_energy_water_short.yml" in str(output.stdout)
 
 
 def test_setup_project_folder():
