@@ -120,13 +120,13 @@ Follow the `getting started guide
 <http://smif.readthedocs.io/en/latest/getting_started.html>`_ to help set up the
 necessary configuration.
 
-To list available model runs:
+To list available model runs::
 
         $ smif list
         demo_model_run.yml
         ...
 
-To run a system-of-systems model run:
+To run a system-of-systems model run::
 
         $ smif run demo_model_run.yml
         ...
@@ -134,7 +134,7 @@ To run a system-of-systems model run:
 
 By default, all results will be saved to `results.yaml`
 
-To see all options and flags:
+To see all options and flags::
 
         $ smif --help
         usage: smif [-h] [-V] [-v] {setup,list,run} ...
