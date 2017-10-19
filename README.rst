@@ -23,10 +23,10 @@ Description
 models.  The framework handles inputs and outputs, dependencies between models,
 persistence of data and the communication of state across years.
 
-This early version of the framework handles simple models that simulate the
-operation of a system.
-**smif** will eventually implement optimisation routines which will allow,
-for example, the solution of capacity expansion problems.
+This early version of the framework handles simulation models that simulate the
+operation of a system within a year.
+**smif** exposes an interface to a planning module which will allows different
+algorithms to be used against a common API.
 
 Setup and Configuration
 =======================
