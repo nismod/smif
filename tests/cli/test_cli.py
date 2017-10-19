@@ -44,6 +44,16 @@ def test_fixture_single_run():
     assert "Model run complete" in str(output.stdout)
 
 
+def test_fixture_list_runs():
+    """Test running the filesystem-based single_run fixture
+    """
+    config_dir = os.path.join(os.path.dirname(__file__),
+                              '..', 'fixtures', 'single_run')
+    output = subprocess.run(["smif", "list", "-d", config_dir], stdout=subprocess.PIPE)
+    assert "20170918_energy_water.yml" in str(output.stdout)
+    assert "20170918_energy_water_short.yml" in str(output.stdout)
+
+
 def test_setup_project_folder():
     """Test contents of the setup project folder
     """

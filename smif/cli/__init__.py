@@ -144,7 +144,7 @@ def setup_configuration(args):
     """Sets up the configuration files into the defined project folder
 
     """
-    project_path = os.path.abspath(args.path)
+    project_path = os.path.abspath(args.directory)
     msg = "Set up the project folders in {}?".format(project_path)
     response = confirm(msg,
                        response=False)
@@ -198,7 +198,7 @@ def get_model_run_definition(args):
         ScenarioModel, SosModel and SectorModel objects
 
     """
-    handler = DatafileInterface(args.path)
+    handler = DatafileInterface(args.directory)
     load_region_sets(handler)
     load_interval_sets(handler)
 
@@ -211,7 +211,7 @@ def get_model_run_definition(args):
     for sector_model in sos_model_config['sector_models']:
         sector_model_config = handler.read_sector_model(sector_model)
 
-        absolute_path = os.path.join(args.path,
+        absolute_path = os.path.join(args.directory,
                                      sector_model_config['path'])
         sector_model_config['path'] = absolute_path
 
@@ -303,6 +303,15 @@ def get_narratives(handler, narratives):
     return narrative_objects
 
 
+def list_model_runs(args):
+    """List the model runs defined in the config
+    """
+    handler = DatafileInterface(args.directory)
+    model_run_configs = handler.read_sos_model_runs()
+    for run in model_run_configs:
+        print(run['name'])
+
+
 def build_model_run(model_run_config):
     """Builds the model run
 
@@ -378,6 +387,14 @@ def parse_arguments():
     parser_setup.set_defaults(func=setup_configuration)
     parser_setup.add_argument('path',
                               help="Path to the project folder")
+
+    # LIST
+    parser_list = subparsers.add_parser('list',
+                                        help='List available model runs')
+    parser_list.set_defaults(func=list_model_runs)
+    parser_list.add_argument('-d', '--directory',
+                             default='.',
+                             help="Path to the project directory")
 
     # RUN
     parser_run = subparsers.add_parser('run',
