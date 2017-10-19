@@ -58,8 +58,7 @@ This file holds all the project configuration.
 .. literalinclude:: ../tests/fixtures/single_run/config/project.yml
    :caption: project.yml
    :language: yaml
-   :linenos:
-
+   
 We'll step through this configuration file section by section.
 
 The first line gives the project name, a unique identifier for this project.
@@ -122,10 +121,16 @@ narrative files
 A Simulation Model File
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+A simulation model file contains all the configuration data necessary for smif
+to run the model, and link the model to data sources and sinks. 
+This file also contains a list of parameters, the 'knobs and dials' 
+the user wishes to expose to smif which can be adjusted in narratives.
+Intervention files and initial condition files contain the collections of data
+that are needed to expose the model to smif's decision making functionality.
+
 .. literalinclude:: ../tests/fixtures/single_run/config/sector_models/water_supply.yml
    :language: yaml
-   :linenos:
-
+   
 Inputs
 ^^^^^^
 
@@ -146,7 +151,6 @@ temporal-resolution and units.
    spatial_resolution, string, "References an entry in the region definitions"
    temporal_resolution, string, "References an entry in the interval definitions"
    units, string, "References an entry in the unit definitions"
-
 
 Outputs
 ^^^^^^^
@@ -180,11 +184,11 @@ Parameters
    :header: "Attribute", "Type", "Notes"
    :widths: 15, 10, 30
 
-   name,	string,	 ""
-   description,	string,	""
-   absolute_range,tuple, ""	 
-   suggested_range,	tuple, ""	 
-   default_value,	float, ""	 
+   name,	string,	 "A unique name within the simulation model"
+   description,	string,	"Include sources of assumptions around default value"
+   absolute_range,tuple, "Raises an error if bounds exceeded"	 
+   suggested_range,	tuple, "Provides a hint to a user as to sensible ranges"	 
+   default_value,	float, "The default value for the parameter"	 
    units,	string,	""
 
 A System-of-System Model File
@@ -195,8 +199,7 @@ Users define dependencies between scenario and simulation models.
 
 .. literalinclude:: ../tests/fixtures/single_run/config/sos_models/energy_water.yml
    :language: yaml
-   :linenos:
-
+   
 Scenario Sets
 ^^^^^^^^^^^^^
 
@@ -258,8 +261,7 @@ population the placeholder scenario sets in the system-of-systems model.
 
 .. literalinclude:: ../tests/fixtures/single_run/config/sos_model_runs/20170918_energy_water.yml
    :language: yaml
-   :linenos:
-
+   
 Timesteps
 ^^^^^^^^^
 
@@ -307,6 +309,12 @@ simulation models.
 Selecting a narrative file which overrides parameters in an absent simulation
 model will have no effect.
 
+.. csv-table:: Model Run Narrative Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   scenarios,	list,	 "A list of mappings between narrative sets and list of narrative files"
+
 Data Folder
 -----------
 
@@ -323,19 +331,87 @@ Initial Conditions
 Interval definitions
 ~~~~~~~~~~~~~~~~~~~~
 
-.. literalinclude:: ../tests/fixtures/single_run/data/interval_definitions/annual_intervals.yml
+The attribution of hours in a year to the temporal resolution used
+in the sectoral model.
+
+Within-year time intervals are specified in yaml files, and as for regions,
+specified in the ``*.yml`` file in the ``project/data/intervals`` folder.
+
+This links a unique name with the definitions of the intervals in a yaml file.
+The data in the file specify the mapping of model timesteps to durations within a year
+(assume modelling 365 days: no extra day in leap years, no leap seconds)
+
+Use ISO 8601 [1]_ duration format to specify periods::
+
+    P[n]Y[n]M[n]DT[n]H[n]M[n]S
+
+For example:
+
+.. literalinclude:: ../tests/fixtures/single_run/data/interval_definitions/annual_intervals.csv
    :language: csv
+
+In this example, the interval with id ``1`` begins in the first hour of the year
+and ends in the last hour of the year. This represents one, year-long interval.
+
+.. csv-table:: Interval Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   id, string, "The unique identifier used by the simulation model"
+   start_hour, string, "Period since beginning of year"
+   end_hour, string, "Period since beginning of year"
 
 Region definitions
 ~~~~~~~~~~~~~~~~~~
 
-Cannot view shape files.
+Define the set of unique regions which are used within the model as polygons.
+The spatial resolution of the model may be implicit, and even a national model
+needs to have a national region defined.
+Inputs and outputs are assigned a model-specific geography from this list
+allowing automatic conversion from and to these geographies.
+
+Model region files are stored in ``project/data/region_defintions``.
+
+The file format must be possible to parse with GDAL, and must contain
+an attribute "name" to use as an identifier for the region.
+
+The sets of geographic regions are specified in the project configuration file 
+using a ``region_definitions`` attributes as shown below:
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :language: yaml
+   :lines: 10,12-17
+
+This links a name, used elsewhere in the configuration with inputs, outputs and scenarios
+with a file containing the geographic data.
 
 Interventions
 ~~~~~~~~~~~~~
 
+An Intervention is an investment which has a name (or name),
+other attributes (such as capital cost and economic lifetime), and location,
+but no build date.
+
+An intervention is a possible investment, normally an infrastructure asset,
+the timing of which can be decided by the logic-layer.
+
+An exhaustive list of the interventions (often infrastructure assets)
+should be defined.
+These are represented internally in the system-of-systems model,
+collected into a gazateer and allow the framework to reason on
+infrastructure assets across all sectors.
+Interventions are instances of :class:`~smif.intervention.Intervention` and are
+held in :class:`~smif.intervention.InterventionRegister`.
+Interventions include investments in assets,
+supply side efficiency improvements, but not demand side management (these
+are incorporated in the strategies).
+
+Define all possible interventions in an ``*.yml`` file 
+in the ``project/data/interventions`` For example:
+
 .. literalinclude:: ../tests/fixtures/single_run/data/interventions/water_supply.yml
    :language: yaml
+   :lines: 6-19
 
 Narratives
 ~~~~~~~~~~
@@ -346,9 +422,18 @@ Narratives
 Scenarios
 ~~~~~~~~~
 
-.. literalinclude:: ../tests/fixtures/single_run/data/scenarios/population.csv
-   :language: csv
+The ``scenarios:`` section of the project configuration file allows
+you to define static sources for simulation model dependencies.
 
+In the case of the example project file shown earlier, 
+the ``scenarios`` section lists the scenarios and corresponding collections of
+data associated with the scenario sets:
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :language: yaml
+   :lines: 24,26-43
+
+The data files are stored in the ``project/data/scenarios` folder.
 
 The metadata required to define a particular scenario are shown in the table
 below.
@@ -357,135 +442,37 @@ the same scenario, so that, for example, choosing the `High Population`
 scenario allows users to access both population count and density data
 in the same or different spatial and temporal resolutions.
 
-| Attribute | Type | Example | Notes |
-| --- | --- | --- | --- |
-| name | string | `High Population (ONS)` | |
-| description | string | `The High ONS Forecast for UK population out to 2050` ||
-| scenario_set | string | `population` | |
-| parameters | list | [see below](./smif-prerequisites.html#scenario-parameters) | |
+.. csv-table:: Scenario Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
+
+   name, string , 
+   description, string , 
+   scenario_set, string ,  
+   parameters, list , 
 
 Scenario Parameters
 ^^^^^^^^^^^^^^^^^^^
 
+The filename in the ``parameters`` section within the scenario definition
+points to a comma-seperated-values file stored in the ``project/data/scenarios`
+folder. For example:
+
+.. literalinclude:: ../tests/fixtures/single_run/data/scenarios/population.csv
+   :language: csv
+
 For each entry in the scenario parameters list, the following metadata
 is required:
 
-| Attribute | Type | Example | Notes |
-| --- | --- | --- | --- |
-| name | string | `density` ||
-| spatial_resolution | string | `lad` ||
-| temporal_resolution |string | `annual` ||
-| units | string | `people/km^2` ||
-| filename | string | `population_density_high.csv` | Name of the file in the `project/data/scenarios` folder |
+.. csv-table:: Scenario Parameter Attributes
+   :header: "Attribute", "Type", "Notes"
+   :widths: 15, 10, 30
 
-
-
-
-To specify a system-of-systems model, you must configure one or more simulation
-models, outlined in the section below, and configure a system-of-systems
-model, as outlined immediately below.
-
-First, setup a new system-of-systems modelling project with the following
-folder structure::
-
-        /config
-        /planning
-        /data
-        /models
-
-This folder structure is optional, but helps organise the configuration files,
-which can be important as the number and complexity of simulation models
-increases.
-
-The ``config`` folder contains the configuration for the system-of-systems
-model::
-
-        /config/model.yaml
-        /config/timesteps.yaml
-
-The ``planning`` folder contains one file for each ::
-
-        /planning/pre-specified.yaml
-
-The ``data`` folder contains a subfolder for each sector model::
-
-        /data/<sector_model_1>
-        /data/<sector_model_2>
-
-The ``/data/<sector_model>`` folder contains all the configuration files for a
-particular sector model.  See adding a sector model for more information.::
-
-        /data/<sector_model>/inputs.yaml
-        /data/<sector_model>/outputs.yaml
-        /data/<sector_model>/time_intervals.yaml
-        /data/<sector_model>/regions.geojson
-        /data/<sector_model>/interventions.yaml
-
-The ``/models/<sector_model/`` contains the executable for a sector model,
-as well as a Python file which implements :class:`smif.sector_model.SectorModel`
-and provides a way for `smif` to run the model, and access model outputs.
-See adding a sector model for more information.::
-
-       /models/<sector_model>/run.py
-       /models/<sector_model>/<executable or library>
-
-System-of-Systems Model File
-----------------------------
-
-The ``model.yaml`` file contains the following::
-
-        timesteps: timesteps.yaml
-        region_sets:
-        - name: energy_regions
-          file: regions.shp
-        interval_sets:
-        - name: energy_timeslices
-          file: time_intervals.yaml
-        - name: annual_interval
-          file: annual_interval.yaml
-        scenario_data:
-        - file: electricity_demand.yaml
-          parameter: electricity_demand
-          spatial_resolution: energy_regions
-          temporal_resolution: annual_interval
-        - file: gas_demand.yaml
-          parameter: gas_demand
-          spatial_resolution: energy_regions
-          temporal_resolution: annual_interval
-        sector_models:
-        - name: energy_supply
-          path: ../../../models/energy_supply/run.py
-          classname: EnergySupplyWrapper
-          config_dir: .
-          initial_conditions:
-          - initial_conditions.yaml
-          interventions:
-          - interventions.yaml
-        planning:
-          pre_specified:
-            use: true
-            files:
-            - pre-specified.yaml
-          rule_based:
-            use: false
-            files: []
-          optimisation:
-            use: false
-            files: []
-
-
-System-of-Systems Planning Years
---------------------------------
-
-The ``timesteps.yaml`` should contain a list of planning years::
-
-        - 2010
-        - 2011
-        - 2012
-
-This is a list of planning years over which the system of systems model will
-run. Each of the simulation models will be run once for each
-planning year.
+   name, string, 
+   spatial_resolution, string,
+   temporal_resolution, string,
+   units, string,
+   filename, string,
 
 Wrapping a Sector Model
 -----------------------
@@ -513,244 +500,6 @@ of the input and output data to and from the models.
 This enables the framework to convert data from one spatio-temporal resolution 
 to another.
 
-Geographies
------------
-Define the set of unique regions which are used within the model as polygons.
-The spatial resolution of the model may be implicit, and even a national model
-needs to have a national region defined.
-Inputs and outputs are assigned a model-specific geography from this list
-allowing automatic conversion from and to these geographies.
-
-Model regions are specified in ``regions.*``.
-
-The file format must be possible to parse with GDAL, and must contain
-an attribute "name" to use as an identifier for the region.
-
-The sets of geographic regions are specified in the ``model.yaml`` file using
-a ``region_sets`` attributes as shown below::
-
-        region_sets:
-        - name: energy_regions
-          file: regions.shp
-
-This links a name, used elsewhere in the configuration with inputs, outputs and scenarios
-with a file containing the geographic data.
-
-Temporal Resolution
--------------------
-The attribution of hours in a year to the temporal resolution used
-in the sectoral model.
-
-Within-year time intervals are specified in yaml files, and as for regions,
-specified in the ``model.yaml`` file with an ``interval_sets`` attribute::
-
-        interval_sets:
-        - name: energy_timeslices
-          file: time_intervals.yaml
-        - name: annual_interval
-          file: annual_interval.yaml
-
-This links a unique name with the definitions of the intervals in a yaml file.
-The data in the file specify the mapping of model timesteps to durations within a year
-(assume modelling 365 days: no extra day in leap years, no leap seconds)
-
-Each time interval must have
-
-- start (period since beginning of year)
-- end (period since beginning of year)
-- id (label to use when passing between integration layer and sector model)
-
-use ISO 8601 [1]_ duration format to specify periods::
-
-    P[n]Y[n]M[n]DT[n]H[n]M[n]S
-
-For example::
-
-    - end: P7225H
-      id: '1_0'
-      start: P7224H
-    - end: P7226H
-      id: '1_1'
-      start: P7225H
-    - end: P7227H
-      id: '1_2'
-      start: P7226H
-    - end: P7228H
-      id: '1_3'
-      start: P7227H
-    - end: P7229H
-      id: '1_4'
-      start: P7228H
-
-
-
-Scenarios
----------
-
-The ``scenario_date:`` section of the system-of-systems configuration file allows
-you to define static sources for simulation model dependencies.
-
-In the case of the example show above, reproduced below::
-
-        scenario_data:
-        - file: electricity_demand.yaml
-          parameter: electricity_demand
-          spatial_resolution: energy_regions
-          temporal_resolution: annual_interval
-        - file: gas_demand.yaml
-          parameter: gas_demand
-          spatial_resolution: energy_regions
-          temporal_resolution: annual_interval
-
-we define two yaml files, one each for the parameters `electricity_demand` and `gas_demand`.
-The ``temporal_resolution`` attribute allows the use of time intervals in the scenario files which
-are at a different temporal resolution to that expected by the sector model.  In this case,
-both electricity_demand and gas_demand are linked to the same ``annual_interval.yaml`` file.
-
-The scenario data should contain entries for (time_interval) ``id``, region, value,
-units and timestep (year).  For example::
-
-      - interval: 1_0
-        region: "England"
-        value: 23.48
-        units: GW
-        year: 2015
-      - interval: 1_1
-        region: "England"
-        value: 17.48
-        units: GW
-        year: 2015
-      - interval: 1_2
-        region: "England"
-        value: 16.48
-        units: GW
-        year: 2015
-
-
-State Parameters
-----------------
-Some simulation models require that state is passed between years, 
-for example reservoir level in the water-supply model.
-These are treated as self-dependencies with a temporal offset. For example,
-the sector model depends on the result of running the model for a previous
-timeperiod.
-
-Interventions
--------------
-
-An Intervention is an investment which has a name (or name),
-other attributes (such as capital cost and economic lifetime), and location,
-but no build date.
-
-An Intervention is a possible investment, normally an infrastructure asset,
-the timing of which can be decided by the logic-layer.
-
-An exhaustive list of the Interventions (normally infrastructure assets)
-should be defined.
-These are represented internally in the system-of-systems model,
-collected into a gazateer and allow the framework to reason on
-infrastructure assets across all sectors.
-Interventions are instances of :class:`~smif.intervention.Intervention` and are
-held in :class:`~smif.intervention.InterventionRegister`.
-Interventions include investments in assets,
-supply side efficiency improvements, but not demand side management (these
-are incorporated in the strategies).
-
-Define all possible interventions in an ``interventions.yaml`` file.
-For example::
-
-        - name: nuclear_power_station_england
-          capital_cost:
-            value: 3.5
-            units: £(million)/MW
-          economic_lifetime:
-            value: 30
-            units: years
-          operational_life:
-            value: 40
-            units: years
-          operational_Year:
-            value: 2030
-            units: year
-          capacity:
-            value: 1000
-            units: MW
-          location:
-            value: England
-            units: string
-          power_generation_type:
-            value: 4
-            units: number
-        - name: IOG_gas_terminal_expansion
-          capital_cost:
-            value: 10
-            units: £(million)/mcm
-          economic_lifetime:
-            value: 25
-            units: years
-          operational_life:
-            value: 30
-            units: years
-          operational_Year:
-            value: 2020
-            units: year
-          capacity:
-            value: 10
-            units: mcm
-          location:
-            value: England
-            units: string
-          gas_terminal_number:
-            value: 8
-            units: number
-
-
-Planning
---------
-
-Existing Infrastructure
-~~~~~~~~~~~~~~~~~~~~~~~
-Existing infrastructure is specified in a
-``*.yaml`` file.  This uses the following format::
-
-    - name: CCGT
-      description: Existing roll out of gas-fired power stations
-      timeperiod: 1990 # 2010 is the first year in the model horizon
-      location: "oxford"
-      new_capacity:
-        value: 6
-        unit: GW
-      lifetime:
-        value: 20
-        unit: years
-
-Pre-Specified Planning
-~~~~~~~~~~~~~~~~~~~~~~
-
-A fixed pipeline of investments can be specified using the same format as for
-existing infrastructure, in the ``*.yaml`` files.
-
-The only difference is that pre-specified planning investments occur in the
-future (in comparison to the initial modelling date), whereas existing
-infrastructure occur in the past. This difference is semantic at best, but a
-warning is raised if future investments are included in the existing
-infrastructure files in the situation where the initial model timeperiod is
-altered.
-
-Define a pipeline of interventions in a ``pre-specified.yaml`` file::
-
-        - name: nuclear_power_station_england
-          build_date: 2017
-
-Rule Based Planning
-~~~~~~~~~~~~~~~~~~~
-
-This feature is not yet implemented
-
-Optimisation
-~~~~~~~~~~~~
-
-This feature is not yet implemented
 
 References
 ----------
