@@ -3,6 +3,214 @@
 Getting Started
 ===============
 
+There are three layers of configuration in order to use the simulation modelling
+integration framework to conduct system-of-system modelling.
+
+A project is the highest level container which holds all the elements required 
+to run models, configure simulation models and define system-of-system models.
+
+Project Configuration
+---------------------
+
+The basic folder structure looks like this::
+
+  project.yml
+    /config
+      /sector_models
+        energy_demand.yml
+        energy_supply.yml
+      /sos_models
+        energy.yml
+      /model_runs
+        20170918_energy.yml
+    /data
+      /initial_conditions
+        energy_demand_existing.yml
+        energy_supply_existing.yml
+      /intervals
+        hourly.csv
+        annual.csv
+      /interventions
+        energy_demand.yml
+      /narratives
+        energy_demand_high_tech.yml
+        central_planning.yml
+      /regions
+        lad.shp
+      /scenarios
+        population_high.csv
+      units.yml
+
+The folder structure is divided into a ``config`` subfolder and a ``data``
+subfolder.
+
+The Configuration Folder
+------------------------
+
+This folder holds configuration and metadata on simulation models, 
+system-of-system models and model runs.
+
+The Project File
+~~~~~~~~~~~~~~~~
+
+This file holds all the project configuration.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :caption: project.yml
+   :language: yaml
+   :linenos:
+
+We'll step through this configuration file section by section.
+
+The first line gives the project name, a unique identifier for this project.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :language: yaml
+   :lines: 1
+
+The next section lists the scenario sets. These give the categories into which
+scenarios are collected.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :language: yaml
+   :lines: 2-6
+
+Narrative sets collect together the categories into which narrative files are
+collected.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :language: yaml
+   :lines: 7-9
+  
+Region definitions list the collection of region files and the mapping to a 
+unique name which can be used in scenarios and sector models.
+Region definitions define the spatial resolution of data.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :language: yaml
+   :lines: 10,12-17
+
+Interval definitions list the collection of interval files and the mapping to a 
+unique name which can be used in scenarios and sector models.
+Interval definitions define the temporal resolution of data.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :language: yaml
+   :lines: 18,20-22
+
+Unit definitions references a file containing custom units, not included in
+the Pint library default unit register (e.g. non-SI units).
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :language: yaml
+   :lines: 23
+
+The ``scenarios`` section lists the scenarios and corresponding collections of
+data associated with scenarios.
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :language: yaml
+   :lines: 24,26-43
+
+The ``narratives`` section lists the narratives and mapping to one or more
+narrative files
+
+.. literalinclude:: ../tests/fixtures/single_run/config/project.yml
+   :language: yaml
+   :lines: 44-48
+
+A Simulation Model File
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sector_models/energy_demand.yml
+   :language: yaml
+
+
+A System-of-System Model File
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sos_models/energy_water.yml
+   :language: yaml
+
+A Model Run File
+~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../tests/fixtures/single_run/config/sos_model_runs/20170918_energy_water.yml
+   :language: yaml
+
+Data Folder
+-----------
+
+This folder holds data like information to define the spatial and 
+temporal resolution of data, 
+as well as exogenous environmental data held in scenarios.
+
+Initial Conditions
+~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../tests/fixtures/single_run/data/initial_conditions/reservoirs.yml
+   :language: yaml
+
+Interval definitions
+~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../tests/fixtures/single_run/data/interval_definitions/annual_intervals.yml
+   :language: csv
+
+Region definitions
+~~~~~~~~~~~~~~~~~~
+
+Cannot view shape files.
+
+Interventions
+~~~~~~~~~~~~~
+
+.. literalinclude:: ../tests/fixtures/single_run/data/interventions/water_supply.yml
+   :language: yaml
+
+Narratives
+~~~~~~~~~~
+
+.. literalinclude:: ../tests/fixtures/single_run/data/narratives/high_tech_dsm.yml
+   :language: yaml
+
+Scenarios
+~~~~~~~~~
+
+.. literalinclude:: ../tests/fixtures/single_run/data/scenarios/population.csv
+   :language: csv
+
+
+The metadata required to define a particular scenario are shown in the table
+below.
+It is possible to associate a number of different data sets with
+the same scenario, so that, for example, choosing the `High Population`
+scenario allows users to access both population count and density data
+in the same or different spatial and temporal resolutions.
+
+| Attribute | Type | Example | Notes |
+| --- | --- | --- | --- |
+| name | string | `High Population (ONS)` | |
+| description | string | `The High ONS Forecast for UK population out to 2050` ||
+| scenario_set | string | `population` | |
+| parameters | list | [see below](./smif-prerequisites.html#scenario-parameters) | |
+
+#### Scenario Parameters
+
+For each entry in the scenario parameters list, the following metadata
+is required:
+
+| Attribute | Type | Example | Notes |
+| --- | --- | --- | --- |
+| name | string | `density` ||
+| spatial_resolution | string | `lad` ||
+| temporal_resolution |string | `annual` ||
+| units | string | `people/km^2` ||
+| filename | string | `population_density_high.csv` | Name of the file in the `project/data/scenarios` folder |
+
+
+
+
 To specify a system-of-systems model, you must configure one or more simulation
 models, outlined in the section below, and configure a system-of-systems
 model, as outlined immediately below.
