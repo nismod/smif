@@ -203,7 +203,15 @@ def get_model_run_definition(args):
     load_interval_sets(handler)
 
     # HARDCODE selet the first model run only
-    model_run_config = handler.read_sos_model_runs()[0]
+    try:
+        model_run_config = next(config for config in handler.read_sos_model_runs()
+                                if config['name'] == args.modelrun)
+    except StopIteration:
+        LOGGER.error("Model run %s not found. Run 'smif list' to see available model runs.",
+                     args.modelrun)
+        exit(-1)
+
+    LOGGER.info("Running %s", model_run_config['name'])
     LOGGER.debug("Model Run: %s", model_run_config)
     sos_model_config = handler.read_sos_model(model_run_config['sos_model'])
 
@@ -403,8 +411,11 @@ def parse_arguments():
                             default='results.yaml',
                             help='Output file')
     parser_run.set_defaults(func=execute_model_run)
-    parser_run.add_argument('path',
-                            help="Path to the main config file")
+    parser_run.add_argument('-d', '--directory',
+                            default='.',
+                            help="Path to the project directory")
+    parser_run.add_argument('modelrun',
+                            help="Name of the model run to run")
 
     return parser
 
