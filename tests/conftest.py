@@ -11,6 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 import json
 import logging
+import os
 from copy import copy
 
 import yaml
@@ -57,7 +58,21 @@ def setup_folder_structure(tmpdir_factory):
     :class:`LocalPath`
         Path to the temporary folder
     """
-    folder_list = ['config', 'data', 'models']
+    folder_list = [
+        'config',
+        os.path.join('config', 'sos_model_runs'),
+        os.path.join('config', 'sos_models'),
+        os.path.join('config', 'sector_models'),
+        'data',
+        os.path.join('data', 'initial_conditions'),
+        os.path.join('data', 'interval_definitions'),
+        os.path.join('data', 'interventions'),
+        os.path.join('data', 'narratives'),
+        os.path.join('data', 'region_definitions'),
+        os.path.join('data', 'scenarios'),
+        'models'
+    ]
+
     test_folder = tmpdir_factory.mktemp("smif")
 
     for folder in folder_list:

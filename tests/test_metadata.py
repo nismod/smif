@@ -86,6 +86,18 @@ class TestMetadata(object):
         assert metadata.temporal_resolution == interval_set
         assert metadata.units == "kilometer"
 
+    def test_serialise_metadata(self, interval_set, region_set):
+        """Create Metadata to hold name, spatial and temporal resolution, and units
+        """
+        metadata = Metadata("total_lane_kilometres", region_set, interval_set,
+                            "kilometer")
+        actual = metadata.as_dict()
+        expected = {'name': 'total_lane_kilometres',
+                    'spatial_resolution': 'half_squares',
+                    'temporal_resolution': 'seasons',
+                    'units': 'kilometer'}
+        assert actual == expected
+
     def test_metadata_equality(self):
         """Metadata with same attributes should compare equal
         """

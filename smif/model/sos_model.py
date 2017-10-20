@@ -2,22 +2,22 @@
 """This module coordinates the software components that make up the integration
 framework.
 
+A system of systems model contains simulation and scenario models,
+and the dependencies between the models.
+
 """
 import logging
 from collections import defaultdict
-from enum import Enum
 
 import networkx
-import numpy as np
-from smif import StateData
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.decision import Planning
-from smif.intervention import Intervention, InterventionRegister
+from smif.intervention import InterventionRegister
 from smif.model import CompositeModel, Model, element_after, element_before
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
-from smif.model.sector_model import SectorModel, SectorModelBuilder
+from smif.model.sector_model import SectorModel
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -57,6 +57,38 @@ class SosModel(CompositeModel):
 
         # scenario data and results
         self._results = defaultdict(dict)
+
+    def as_dict(self):
+        """Serialize the SosModel object
+
+        Returns
+        -------
+        dict
+        """
+
+        dependencies = []
+        for model in self.models.values():
+            for name, dep in model.deps.items():
+                dep_config = {'source_model': dep.source_model.name,
+                              'source_model_output': dep.source.name,
+                              'sink_model': model.name,
+                              'sink_model_input': name}
+                dependencies.append(dep_config)
+
+
+        config = {
+            'name': self.name,
+            'description': self.description,
+            'scenario_sets': [scenario.scenario_set
+                              for scenario in self.scenario_models.values()],
+            'sector_models': list(self.sector_models.keys()),
+            'dependencies': dependencies,
+            'max_iterations': self.max_iterations,
+            'convergence_absolute_tolerance': self.convergence_absolute_tolerance,
+            'convergence_relative_tolerance': self.convergence_relative_tolerance
+        }
+
+        return config
 
     def add_model(self, model):
         """Adds a sector model to the system-of-systems model
@@ -240,30 +272,6 @@ class SosModel(CompositeModel):
 
         return ordered_sets
 
-    def determine_running_mode(self):
-        """Determines from the config in what mode to run the model
-
-        Returns
-        =======
-        :class:`RunMode`
-            The mode in which to run the model
-        """
-
-        number_of_timesteps = len(self.timesteps)
-
-        if number_of_timesteps > 1:
-            # Run a sequential simulation
-            mode = RunMode.sequential_simulation
-
-        elif number_of_timesteps == 0:
-            raise ValueError("No timesteps have been specified")
-
-        else:
-            # Run a single simulation
-            mode = RunMode.static_simulation
-
-        return mode
-
     def timestep_before(self, timestep):
         """Returns the timestep previous to a given timestep, or None
 
@@ -295,31 +303,34 @@ class SosModel(CompositeModel):
     def intervention_names(self):
         """Names (id-like keys) of all known asset type
         """
-        return [intervention.name for intervention in self.interventions]
+        interventions = []
+        for model in self.sector_models.values():
+            interventions.extend(model.interventions)
+        return [intervention.name for intervention in interventions]
 
     @property
     def sector_models(self):
-        """The list of sector model names
+        """Sector model objects contained in the SosModel
 
         Returns
         =======
-        list
-            A list of sector model names
+        dict
+            A dict of sector model objects
         """
-        return [x for x, y in self.models.items() if isinstance(y, SectorModel)]
+        return {x: y for x, y in self.models.items()
+                if isinstance(y, SectorModel)}
 
     @property
     def scenario_models(self):
-        """The list of scenario model names
+        """Scenario model objects contained in the SosModel
 
         Returns
         -------
-        list
-            A list of scenario model names
+        dict
+            A dict of scenario model objects
         """
-        return [x for x, y in self.models.items()
-                if isinstance(y, ScenarioModel)
-                ]
+        return {x: y for x, y in self.models.items()
+                if isinstance(y, ScenarioModel)}
 
 
 class SosModelBuilder(object):
@@ -350,28 +361,24 @@ class SosModelBuilder(object):
 
         self.logger = logging.getLogger(__name__)
 
-    def construct(self, config_data, timesteps):
+    def construct(self, sos_model_config):
         """Set up the whole SosModel
 
         Parameters
         ----------
-        config_data : dict
+        sos_model_config : dict
             A valid system-of-systems model configuration dictionary
-        timesteps : list
-            A list of timestep integers
         """
-        model_list = config_data['sector_model_data']
+        self.sos_model.name = sos_model_config['name']
+        self.sos_model.description = sos_model_config['description']
+        self.set_max_iterations(sos_model_config)
+        self.set_convergence_abs_tolerance(sos_model_config)
+        self.set_convergence_rel_tolerance(sos_model_config)
 
-        self.set_max_iterations(config_data)
-        self.set_convergence_abs_tolerance(config_data)
-        self.set_convergence_rel_tolerance(config_data)
+        self.load_models(sos_model_config['sector_models'])
+        self.load_scenario_models(sos_model_config['scenario_sets'])
 
-        self.load_models(model_list, timesteps)
-        self.load_scenario_models(config_data['scenario_metadata'],
-                                  config_data['scenario_data'],
-                                  timesteps)
-        self.add_planning(config_data['planning'])
-        self.add_dependencies(config_data['dependencies'])
+        self.add_dependencies(sos_model_config['dependencies'])
 
     def add_dependencies(self, dependency_list):
         """Add dependencies between models
@@ -389,6 +396,7 @@ class SosModelBuilder(object):
                              'sink_model_input': 'raininess'}]
         >>> builder.add_dependencies(dependencies)
         """
+        self.logger.debug("Available models: %s", self.sos_model.models.keys())
         for dep in dependency_list:
             sink_model_object = self.sos_model.models[dep['sink_model']]
             source_model_object = self.sos_model.models[dep['source_model']]
@@ -428,257 +436,34 @@ class SosModelBuilder(object):
             self.sos_model.convergence_relative_tolerance = \
                 config_data['convergence_relative_tolerance']
 
-    def load_models(self, model_data_list, timesteps):
+    def load_models(self, model_list):
         """Loads the sector models into the system-of-systems model
 
         Parameters
         ----------
-        model_data_list : list
-            A list of sector model config/data
-        timesteps : list
-            A list of timesteps to pass to the sector model
-
+        model_list : list
+            A list of SectorModel objects
         """
         self.logger.info("Loading models")
-        for model_data in model_data_list:
-            builder = SectorModelBuilder(model_data['name'])
-            model_data['timesteps'] = timesteps
-            builder.construct(model_data)
-            model = builder.finish()
-            self.add_interventions(model_data['name'],
-                                   model_data['interventions'])
+        for model in model_list:
             self.sos_model.add_model(model)
-            self.add_model_data(model, model_data)
 
-    def load_scenario_models(self, scenario_list, scenario_data, timesteps):
+    def load_scenario_models(self, scenario_list):
         """Loads the scenario models into the system-of-systems model
-
-        Note that we currently use the same name for the scenario name,
-        and the name of the output of the ScenarioModel.
-
-        Arguments
-        ---------
-        scenario_list : list
-            A list of dicts with keys::
-
-                'name': 'mass',
-                'spatial_resolution': 'country',
-                'temporal_resolution': 'seasonal',
-                'units': 'kg'
-
-        scenario_data : dict
-            A dict-of-list-of-dicts with keys ``param_name``: ``year``,
-            ``region``, ``interval``, ``value``
-        timesteps : list
-
-        Example
-        -------
-        >>> builder = SosModelBuilder('test_sos_model')
-        >>> model_list = [{'name': 'mass',
-                           'spatial_resolution': 'country',
-                           'temporal_resolution': 'seasonal',
-                           'units': 'kg'}]
-        >>> data = {'mass': [{'year': 2015,
-                              'region': 'GB',
-                              'interval': 'wet_season',
-                              'value': 3}]}
-        >>> timesteps = [2015, 2016]
-        >>> builder.load_scenario_models(model_list, data, timesteps)
-
-        """
-        self.logger.info("Loading scenarios")
-        for scenario_meta in scenario_list:
-            name = scenario_meta['name']
-
-            if name not in scenario_data:
-                msg = "Parameter '{}' in scenario definitions not registered in scenario data"
-                raise ValueError(msg.format(name))
-
-            scenario = ScenarioModel(name)
-
-            spatial = scenario_meta['spatial_resolution']
-            temporal = scenario_meta['temporal_resolution']
-
-            spatial_res = self.region_register.get_entry(spatial)
-            temporal_res = self.interval_register.get_entry(temporal)
-
-            scenario.add_output(name,
-                                spatial_res,
-                                temporal_res,
-                                scenario_meta['units'])
-
-            data = self._data_list_to_array(name,
-                                            scenario_data[name],
-                                            timesteps,
-                                            spatial_res,
-                                            temporal_res)
-            scenario.add_data(data, timesteps)
-            self.sos_model.add_model(scenario)
-
-    def add_model_data(self, model, model_data):
-        """Adds sector model data to the system-of-systems model which is
-        convenient to have available at the higher level.
-        """
-        # TODO self.add_initial_conditions(model.name, model_data['initial_conditions'])
-        self.add_interventions(model.name, model_data['interventions'])
-
-    def add_interventions(self, model_name, interventions):
-        """Adds interventions for a model
-        """
-        for intervention in interventions:
-            intervention_object = Intervention(sector=model_name,
-                                               data=intervention)
-            msg = "Adding %s from %s to SosModel InterventionRegister"
-            identifier = intervention_object.name
-            self.logger.debug(msg, identifier, model_name)
-            self.sos_model.interventions.register(intervention_object)
-
-    def add_initial_conditions(self, model_name, initial_conditions):
-        """Adds initial conditions (state) for a model
-        """
-        timestep = self.sos_model.timesteps[0]
-        state_data = filter(
-            lambda d: len(d.data) > 0,
-            [self.intervention_state_from_data(datum) for datum in initial_conditions]
-        )
-        self.sos_model._state[timestep][model_name] = list(state_data)
-
-    @staticmethod
-    def intervention_state_from_data(intervention_data):
-        """Unpack an intervention from the initial system to extract StateData
-        """
-        target = None
-        data = {}
-        for key, value in intervention_data.items():
-            if key == "name":
-                target = value
-
-            if isinstance(value, dict) and "is_state" in value and value["is_state"]:
-                del value["is_state"]
-                data[key] = value
-
-        return StateData(target, data)
-
-    def add_planning(self, planning):
-        """Loads the planning logic into the system of systems model
-
-        Pre-specified planning interventions are defined at the sector-model
-        level, read in through the SectorModel class, but populate the
-        intervention register in the controller.
 
         Parameters
         ----------
-        planning : list
-            A list of planning instructions
+        scenario_list : list
+            A list of ScenarioModel objects
 
         """
-        self.logger.info("Adding planning")
-        self.sos_model.planning = Planning(planning)
-
-    def _data_list_to_array(self, param, observations, timestep_names,
-                            spatial_resolution, temporal_resolution):
-        """Convert list of observations to :class:`numpy.ndarray`
-
-        Arguments
-        ---------
-        param : str
-        observations : list
-        timestep_names : list
-        spatial_resolution : smif.convert.area.RegionSet
-        temporal_resolution : smif.convert.interval.IntervalSet
-
-        """
-        interval_names = temporal_resolution.get_entry_names()
-        region_names = spatial_resolution.get_entry_names()
-
-        if len(timestep_names) == 0:
-            self.logger.error("No timesteps found when loading %s", param)
-
-        data = np.zeros((
-            len(timestep_names),
-            len(region_names),
-            len(interval_names)
-        ))
-        data.fill(np.nan)
-
-        if len(observations) != data.size:
-            self.logger.warning(
-                "Number of observations is not equal to timesteps x  " +
-                "intervals x regions when loading %s", param)
-
-        skipped_years = set()
-
-        for obs in observations:
-
-            if 'year' not in obs:
-                raise ValueError("Scenario data item missing year: '{}'".format(obs))
-            year = obs['year']
-
-            if year not in timestep_names:
-                # Don't add data if year is not in timestep list
-                skipped_years.add(year)
-                continue
-
-            if 'region' not in obs:
-                raise ValueError("Scenario data item missing region: '{}'".format(obs))
-            region = obs['region']
-            if region not in region_names:
-                raise ValueError(
-                    "Region '{}' not defined in set '{}' for parameter '{}'".format(
-                        region,
-                        spatial_resolution.name,
-                        param))
-
-            if 'interval' not in obs:
-                raise ValueError("Scenario data item missing interval: {}".format(obs))
-            interval = obs['interval']
-            if interval not in interval_names:
-                raise ValueError(
-                    "Interval '{}' not defined in set '{}' for parameter '{}'".format(
-                        interval,
-                        temporal_resolution.name,
-                        param))
-
-            timestep_idx = timestep_names.index(year)
-            interval_idx = interval_names.index(interval)
-            region_idx = region_names.index(region)
-
-            data[timestep_idx, region_idx, interval_idx] = obs['value']
-
-        for year in skipped_years:
-            msg = "Year '%s' not defined in model timesteps so skipping"
-            self.logger.warning(msg, year)
-
-        return data
-
-    def _check_planning_interventions_exist(self):
-        """Check existence of all the interventions in the pre-specifed planning
-
-        """
-        model = self.sos_model
-        names = model.intervention_names
-        for planning_name in model.planning.names:
-            msg = "Intervention '{}' in planning file not found in interventions"
-            assert planning_name in names, msg.format(planning_name)
-
-    def _validate(self):
-        """Validates the sos model
-        """
-        self._check_planning_interventions_exist()
+        self.logger.info("Loading scenarios")
+        for scenario in scenario_list:
+            self.sos_model.add_model(scenario)
 
     def finish(self):
         """Returns a configured system-of-systems model ready for operation
 
         Includes validation steps, e.g. to check dependencies
         """
-        self._validate()
         return self.sos_model
-
-
-class RunMode(Enum):
-    """Enumerates the operating modes of a SoS model
-    """
-    static_simulation = 0
-    sequential_simulation = 1
-    static_optimisation = 2
-    dynamic_optimisation = 3

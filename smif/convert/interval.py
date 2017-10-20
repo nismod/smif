@@ -134,7 +134,6 @@ from datetime import datetime, timedelta
 
 import numpy as np
 from isodate import parse_duration
-
 from smif.convert.register import Register, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
@@ -176,7 +175,7 @@ class Interval(object):
         self._name = name
         self._baseyear = base_year
 
-        if len(list_of_intervals) == 0:
+        if not list_of_intervals:
             msg = "Must construct Interval with at least one interval"
             raise ValueError(msg)
 
@@ -359,21 +358,20 @@ class IntervalSet(ResolutionSet):
     """
 
     def __init__(self, name, data, base_year=2010):
-        self._name = name
+        super().__init__()
+        self.name = name
         self._base_year = base_year
         self._data = None
         self.data = data
 
     @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    @property
     def data(self):
+        """Returns the intervals as an ordered dict
+
+        Returns
+        -------
+        OrderedDict
+        """
         return self._data
 
     @data.setter
@@ -403,7 +401,7 @@ class IntervalSet(ResolutionSet):
     def _validate_intervals(self):
         array = self._get_hourly_array()
         duplicate_hours = np.where(array > 1)[0]
-        if len(duplicate_hours) > 0:
+        if len(duplicate_hours):
             hour = duplicate_hours[0]
             msg = "Duplicate entry for hour {} in interval set {}."
             raise ValueError(msg.format(hour, self.name))
