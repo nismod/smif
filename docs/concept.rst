@@ -6,8 +6,8 @@ Concept
 The section outlines the underlying principles of **smif**.
 
 
-Running a System-of-Systems Model
----------------------------------
+Running a System-of-Systems Model Run
+-------------------------------------
 
 Once **smif** has been used to configure a system-of-systems model and model
 run, all that is needed to run the model is the command ``smif run
@@ -19,40 +19,22 @@ outputs, running the models in the order defined by this graph and finally
 persisting state and results from the simulation models to a data store.
 
 
-Operational Simulation and Capacity Expansion
----------------------------------------------
+Operational Simulation and Planning of Interventions
+----------------------------------------------------
 
 Fundamental to the design of **smif** is the distinction between the
 simulation of the operation of a particular system,
-and the long-term expansion of the capacity which underpin this operation.
+and the long-term planning of interventions which change the structure of these
+systems.
 
 The former is the domain of the simulation models,
 while the latter is handled by **smif**.
-**smif** provides the architecture to handle the capacity expansion problem
-using one of three approaches: a fully specified approach,
+**smif** provides the architecture to handle the planning of interventions
+using one of three approaches: a fully specified approach (a planning pipeline),
 a rule based approach and an optimisation approach.
 
-In each of these three approaches, decisions regarding the increase or
-decrease in the capacity of an asset are propagated into the model inputs via
-a *state transition function*.
-
-
-State
------
-
-`State` refers to the information which must be persisted over time.  Normally,
-this will refer to the capacity of an asset (e.g. number of wind turbines),
-the level of storage (e.g. the volume of water stored in a reservoir).
-Other information, including metrics, such as CO\ :sub:`2` emissions,
-or cumulative costs, may also be relevant.
-
-**smif** handles `State` for the management of the capacity expansion.
-The process of passing state from one time-period to another is managed by
-**smif**.  In this respect, note the distinction between time-steps for
-the capacity expansion problem, which will normally be measured in years
-or decades, versus the time-steps for each instance of a simulation model,
-which will run within a year or decade.
-
+In each of these three approaches, decisions regarding which interventions to
+choose are propagated into the model by **smif**.
 
 Wrapping Simulation Models
 --------------------------
@@ -65,9 +47,3 @@ A simulation model has inputs, and produces outputs, which are a function of
 the inputs.
 The :class:`smif.abstract.SectorModel` is used to wrap an individual simulation
 model, and provides a uniform API to other parts of **smif**.
-
-An input can correspond to:
-
-- model parameters, whose source is either from a scenario,
-  or from the outputs from another model (a dependency)
-- model state (not yet implemented)

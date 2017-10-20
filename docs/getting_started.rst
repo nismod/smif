@@ -3,14 +3,33 @@
 Getting Started
 ===============
 
+Once you have installed **smif**, the quickest way to get started is to use the
+included test project. You can find the test project in the development version
+of the package, in the ``tests/fixtures/single_run`` folder.
+
+On the command line, type the following command to list the available model 
+runs::
+
+  $ smif list -d smif/tests/fixtures/single_run
+  20170918_energy_water_short.yml
+  20170918_energy_water.yml
+
+To run a model run, type the following command::
+
+  $ smif run 20170918_energy_water.yml -d smif/tests/fixtures/single_run
+  Model run complete
+
+Note that the ``-d`` directory flag should point to the single_run folder, so
+check you are pointing to the correct directory if this doesn't work first time.
+
+Project Configuration
+---------------------
+
 There are three layers of configuration in order to use the simulation modelling
 integration framework to conduct system-of-system modelling.
 
 A project is the highest level container which holds all the elements required 
 to run models, configure simulation models and define system-of-system models.
-
-Project Configuration
----------------------
 
 The basic folder structure looks like this::
 

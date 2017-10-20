@@ -7,14 +7,19 @@ Version 0.5
 
 - Complete reconfiguration of project folder structure
 - Implemented a datalayer
+
   - Datafileinterface provides read and write methods to file system
   - Databaseinterface will provides read and write methods to database
+
 - Model parameters are passed into a simulation model from narratives
 - Added a code of conduct
 - Reconfigured builders expect contained objects to be constructed
 - Scenario data filtered on available timesteps at runtime
 - Updated documentation
 - Added prototype (template) smif GUI using web app (in progress)
+- Updated command line interface with new commands ``list`` and ``run``
+- Introduced concepts of simulation model, scenario model, 
+  system-of-systems model, narratives and model run.
 
 Version 0.4
 ===========
