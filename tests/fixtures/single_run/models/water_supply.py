@@ -9,6 +9,7 @@
 """
 
 import logging
+
 import numpy as np
 from smif import StateData
 from smif.model.sector_model import SectorModel
@@ -52,7 +53,8 @@ class WaterSupplySectorModel(SectorModel):
             decisions = []
 
         # unpack inputs
-        reservoir_level = state[0].data['current_level']['value']
+        water_demand = data['water_demand']
+        reservoir_level = state[0].data['current_level']['value'] - water_demand[2]
         raininess = np.sum(data['raininess'])
 
         # unpack assets

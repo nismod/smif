@@ -359,6 +359,15 @@ class TestIntervalSet:
         actual_names = interval_set.get_entry_names()
         assert expected_names == actual_names
 
+    def test_attributes(self, months):
+        interval_set = IntervalSet('months', months)
+        interval_set.description = 'a descriptions'
+
+        actual = interval_set.as_dict()
+        expected = {'name': 'months',
+                    'description': 'a descriptions'}
+        assert actual == expected
+
 
 class TestIntervalRegister:
 

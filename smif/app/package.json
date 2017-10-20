@@ -1,0 +1,46 @@
+{
+  "name": "smif.app",
+  "version": "0.0.1",
+  "description": "HTML client frontend to smif",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nismod/smif.git"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "test": "mocha --require babel-polyfill --compilers js:babel-register --require ./test/helpers.js",
+    "build": "webpack",
+    "watch": "webpack --progress --watch",
+    "start": "webpack-dev-server --open"
+  },
+  "author": "Tom Russell",
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "normalize.css": "^7.0.0",
+    "react": "^15.6.2",
+    "react-dom": "^15.6.2",
+    "react-redux": "^5.0.6",
+    "redux": "^3.7.2"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-react": "^6.24.1",
+    "chai": "^4.1.2",
+    "clean-webpack-plugin": "^0.1.16",
+    "css-loader": "^0.28.7",
+    "enzyme": "^3.0.0",
+    "enzyme-adapter-react-15": "^1.0.0",
+    "extract-text-webpack-plugin": "^3.0.0",
+    "html-webpack-plugin": "^2.30.1",
+    "mocha": "^3.5.3",
+    "react-test-renderer": "^15.6.2",
+    "redux-devtools": "^3.4.0",
+    "style-loader": "^0.18.2",
+    "webpack": "^3.6.0",
+    "webpack-dev-server": "^2.8.2"
+  }
+}

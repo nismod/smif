@@ -42,7 +42,9 @@ import importlib
 import logging
 import os
 from abc import ABCMeta, abstractmethod
+from collections import defaultdict
 
+from smif import StateData
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.model import Model
@@ -64,12 +66,33 @@ class SectorModel(Model, metaclass=ABCMeta):
     def __init__(self, name):
         super().__init__(name)
 
+        self.path = ''
+        self._initial_state = defaultdict(dict)
         self.interventions = []
-        self.timesteps = []
         self.system = []
         self._user_data = {}
 
         self.logger = logging.getLogger(__name__)
+
+    def as_dict(self):
+        """Serialize the SectorModel object as a dictionary
+
+        Returns
+        -------
+        dict
+        """
+        config = {
+            'name': self.name,
+            'description': self.description,
+            'path': self.path,
+            'classname': self.__class__.__name__,
+            'inputs': [inp.as_dict() for inp in self.model_inputs],
+            'outputs': [out.as_dict() for out in self.model_outputs],
+            'parameters': self.parameters.as_dict(),
+            'interventions': self.interventions,
+            'initial_conditions': self._initial_state
+        }
+        return config
 
     @property
     def user_data(self):
@@ -100,6 +123,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         units: str
 
         """
+        self.logger.debug("Adding input %s to %s", name, self.name)
         input_metadata = {"name": name,
                           "spatial_resolution": spatial_resolution,
                           "temporal_resolution": temporal_resolution,
@@ -280,21 +304,24 @@ class SectorModelBuilder(object):
         self.region_register = get_region_register()
         self.logger = logging.getLogger(__name__)
 
-    def construct(self, model_data):
+    def construct(self, sector_model_config):
         """Constructs the sector model
 
         Arguments
         ---------
-        model_data : dict
+        sector_model_config : dict
             The sector model configuration data
         """
-        self.load_model(model_data['path'], model_data['classname'])
-        self.create_initial_system(model_data['initial_conditions'])
-        self.add_inputs(model_data['inputs'])
-        self.add_outputs(model_data['outputs'])
-        self.add_interventions(model_data['interventions'])
-        self.add_parameters(model_data['parameters'])
-        self._sector_model.timesteps = model_data['timesteps']
+        self.load_model(sector_model_config['path'], sector_model_config['classname'])
+        self._sector_model.name = sector_model_config['name']
+        self._sector_model.description = sector_model_config['description']
+
+        self.add_inputs(sector_model_config['inputs'])
+        self.add_outputs(sector_model_config['outputs'])
+        self.add_interventions(sector_model_config['interventions'])
+        self.create_initial_system(sector_model_config['initial_conditions'])
+        self.add_initial_conditions(sector_model_config['initial_conditions'])
+        self.add_parameters(sector_model_config['parameters'])
 
     def load_model(self, model_path, classname):
         """Dynamically load model module
@@ -320,11 +347,21 @@ class SectorModelBuilder(object):
 
             self._sector_model = klass(self._sector_model_name)
             self._sector_model.name = self._sector_model_name
+            self._sector_model.path = model_path
 
         else:
             msg = "Cannot find '{}' for the '{}' model".format(
                 model_path, self._sector_model_name)
             raise FileNotFoundError(msg)
+
+    def add_initial_conditions(self, initial_conditions):
+        """Adds initial conditions (state) for a model
+        """
+        state_data = filter(
+            lambda d: len(d.data) > 0,
+            [self.intervention_state_from_data(datum) for datum in initial_conditions]
+        )
+        self._sector_model._initial_state = list(state_data)
 
     def create_initial_system(self, initial_conditions):
         """Set up model with initial system
@@ -409,6 +446,22 @@ class SectorModelBuilder(object):
         assert self._sector_model is not None, msg
 
         self._sector_model.interventions = intervention_list
+
+    @staticmethod
+    def intervention_state_from_data(intervention_data):
+        """Unpack an intervention from the initial system to extract StateData
+        """
+        target = None
+        data = {}
+        for key, value in intervention_data.items():
+            if key == "name":
+                target = value
+
+            if isinstance(value, dict) and "is_state" in value and value["is_state"]:
+                del value["is_state"]
+                data[key] = value
+
+        return StateData(target, data)
 
     def validate(self):
         """Check and/or assert that the sector model is correctly set up

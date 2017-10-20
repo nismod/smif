@@ -1,0 +1,21 @@
+.guide-header > h1,
+.guide-content > h2,
+.guide-nav > h3 {
+    color: #777;
+    font-weight: 500;
+}
+.guide-header,
+.guide-content {
+    padding: 0 1em;
+    max-width: 45em;
+    margin: 0 auto;
+}
+.sample-container {
+    padding: 0 1em;
+    margin: 0 0 1em;
+}
+.sample-container::after {
+    display: block;
+    content: "";
+    clear: both;
+}

@@ -2,6 +2,12 @@ sudo: false
 language: python
 virtualenv:
   system_site_packages: true
+cache:
+  pip: true
+  directories:
+    - smif/app/node_modules
+before_cache:
+  - rm -f $HOME/.cache/pip/log/debug.log
 env:
   global:
   - SKIP_GENERATE_AUTHORS=1
@@ -12,10 +18,15 @@ install:
 - source tests/travis_install.sh
 - pip install git+https://github.com/behave/behave
 - pip install -r test-requirements.txt -r requirements.txt
+- nvm install 6.11.4
+- nvm use 6.11.4
+- cd $TRAVIS_BUILD_DIR/smif/app && npm install
 script:
-- python setup.py develop
+- cd $TRAVIS_BUILD_DIR && python setup.py develop
 - python setup.py test
+- cd $TRAVIS_BUILD_DIR/smif/app && npm test
 after_success:
+- cd $TRAVIS_BUILD_DIR
 - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 notifications:
   email: false

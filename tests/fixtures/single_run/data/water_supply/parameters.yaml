@@ -1,6 +1,0 @@
-- name: clever_water_meter_savings
-  description: The savings from smart water meters
-  absolute_range: (0, 100)
-  suggested_range: (3, 10)
-  default_value: 3
-  units: '%'

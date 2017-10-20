@@ -1,0 +1,32 @@
+name: energy_water
+description: 'The future supply and demand of energy and water for the UK'
+scenario_sets: # Select 0 or more of the scenario sets
+- population
+- rainfall
+sector_models: # Select 1 or more of the sector models
+- water_supply
+- energy_demand
+dependencies:
+- source_model: rainfall
+  source_model_output: raininess
+  sink_model: water_supply
+  sink_model_input: raininess
+- source_model: population
+  source_model_output: population
+  sink_model: water_supply
+  sink_model_input: population
+- source_model: water_supply
+  source_model_output: energy_demand
+  sink_model: energy_demand
+  sink_model_input: energy_demand
+- source_model: population
+  source_model_output: population
+  sink_model: energy_demand
+  sink_model_input: population
+- source_model: energy_demand
+  source_model_output: water_demand
+  sink_model: water_supply
+  sink_model_input: water_demand
+max_iterations: 100
+convergence_absolute_tolerance: 1e-05
+convergence_relative_tolerance: 1e-05

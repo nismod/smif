@@ -22,10 +22,10 @@ from smif.model import CompositeModel, element_before
 class ModelSet(CompositeModel):
     """Wraps a set of interdependent models
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     models : list
-        A list of smif.model.composite.Model
+        A list of :class:`smif.model.Model`
     max_iterations : int, default=25
         The maximum number of iterations that the model set will run before
         returning results
@@ -33,10 +33,20 @@ class ModelSet(CompositeModel):
         Used to calculate when the model interations have converged
     absolute_tolerance : float, default=1e-08
         Used to calculate when the model interations have converged
+
+    Attributes
+    ----------
+    timestep: int
+    iterated_results: dict
+        Holds results for each iteration upto `max_iterations`
+    max_iterations: int
+        The maximum number of iterations
+    models: list
+        The list of :class:`smif.model.Model` subclasses
     """
     def __init__(self, models, max_iterations=25, relative_tolerance=1e-05,
                  absolute_tolerance=1e-08):
-        name = "-".join(sorted(model.name for model in models))
+        name = "<->".join(sorted(model.name for model in models))
         super().__init__(name)
         self.models = models
         self._model_names = {model.name for model in models}
@@ -44,10 +54,10 @@ class ModelSet(CompositeModel):
 
         self.timestep = None
         self.iterated_results = None
-        self.max_iterations = max_iterations
+        self.max_iterations = int(max_iterations)
         # tolerance for convergence assessment - see numpy.allclose docs
-        self.relative_tolerance = relative_tolerance
-        self.absolute_tolerance = absolute_tolerance
+        self.relative_tolerance = float(relative_tolerance)
+        self.absolute_tolerance = float(absolute_tolerance)
 
     def _derive_deps_from_models(self):
         for model in self.models:
@@ -67,6 +77,7 @@ class ModelSet(CompositeModel):
         # Start by running all models in set with best guess
         # - zeroes
         # - last year's inputs
+        self.logger.info("Simulating %s", self.name)
         self.iterated_results = [{}]
         self.timestep = timestep
         if data is None:
@@ -103,6 +114,7 @@ class ModelSet(CompositeModel):
         """
         self.iterated_results.append({})
         for model in self.models:
+            self.logger.info("Simulating %s", model.name)
             model_data = {}
             for input_name, dep in model.deps.items():
                 input_ = model.model_inputs[input_name]
@@ -204,7 +216,7 @@ class ModelSet(CompositeModel):
 
         Parameters
         ----------
-        model: Model
+        model: :class:`smif.model.Model`
         latest_results: dict
             dict of data output from model with str key (parameter name) =>
             np.ndarray value (with dimensions regions x intervals)
@@ -214,7 +226,7 @@ class ModelSet(CompositeModel):
         Returns
         -------
         bool
-            True if convergedm otherwise, False
+            True if converged otherwise, False
         """
         return all(
             np.allclose(

@@ -7,10 +7,10 @@ from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
 import smif
-from pytest import raises
-from smif.cli import (confirm, parse_arguments, setup_project_folder,
-                      validate_config)
-from smif.data_layer.validate import VALIDATION_ERRORS
+from smif.cli import (confirm, get_narratives, parse_arguments,
+                      setup_project_folder)
+from smif.data_layer import DatafileInterface
+from smif.parameters.narrative import Narrative
 
 
 def get_args(args):
@@ -35,22 +35,26 @@ def test_parse_arguments():
         assert args.func.__name__ == 'setup_configuration'
 
 
-def test_fixture_single_run_valid():
-    """Test validating the filesystem-based single_run fixture
-    """
-    config_file = os.path.join(os.path.dirname(__file__),
-                               '..', 'fixtures', 'single_run', 'config', 'model.yaml')
-    output = subprocess.run(["smif", "validate", config_file], stdout=subprocess.PIPE)
-    assert "The model configuration was valid" in str(output.stdout)
-
-
 def test_fixture_single_run():
     """Test running the filesystem-based single_run fixture
     """
-    config_file = os.path.join(os.path.dirname(__file__),
-                               '..', 'fixtures', 'single_run', 'config', 'model.yaml')
-    output = subprocess.run(["smif", "run", config_file], stdout=subprocess.PIPE)
+    config_dir = os.path.join(os.path.dirname(__file__),
+                              '..', 'fixtures', 'single_run')
+    output = subprocess.run(["smif", "-v", "run", "-d", config_dir,
+                             "20170918_energy_water_short.yml"],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert "Running 20170918_energy_water_short.yml" in str(output.stderr)
     assert "Model run complete" in str(output.stdout)
+
+
+def test_fixture_list_runs():
+    """Test running the filesystem-based single_run fixture
+    """
+    config_dir = os.path.join(os.path.dirname(__file__),
+                              '..', 'fixtures', 'single_run')
+    output = subprocess.run(["smif", "list", "-d", config_dir], stdout=subprocess.PIPE)
+    assert "20170918_energy_water.yml" in str(output.stdout)
+    assert "20170918_energy_water_short.yml" in str(output.stdout)
 
 
 def test_setup_project_folder():
@@ -66,87 +70,6 @@ def test_setup_project_folder():
             folder_path = os.path.join(project_folder, folder)
 
             assert os.path.exists(folder_path)
-
-
-def test_validation_call(setup_folder_structure, setup_project_folder):
-    """Ensure validation gets called
-    """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
-    args = get_args(['validate', config_file])
-
-    expected = config_file
-    actual = args.path
-    assert actual == expected
-    assert args.func.__name__ == 'validate_config'
-
-
-@patch('smif.cli.LOGGER.error')
-def test_validation_no_file(error_logger):
-    """Expect error and quit if model config is missing
-    """
-    args = get_args(['validate', '/path/to/missing_file.yaml'])
-
-    with raises(SystemExit):
-        validate_config(args)
-
-    path = os.path.abspath('/path/to/missing_file.yaml')
-    msg = "The model configuration file '%s' was not found"
-    error_logger.assert_called_with(msg, path)
-
-
-@patch('builtins.print')
-def test_validation_valid(mock_print, setup_project_folder):
-    """Ensure configuration file is valid
-    """
-    config_file = os.path.join(str(setup_project_folder), 'config', 'model.yaml')
-    args = get_args(['validate', config_file])
-
-    validate_config(args)
-    mock_print.assert_called_with('The model configuration was valid')
-
-
-@patch('smif.cli.LOGGER.error')
-@patch('builtins.print')
-def test_validation_invalid(
-        mock_print,
-        error_logger,
-        setup_folder_structure,
-        setup_project_folder,
-        setup_timesteps_file_invalid):
-    """Ensure invalid configuration file raises error
-    """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
-    args = get_args(['validate', config_file])
-
-    with raises(SystemExit):
-        validate_config(args)
-
-    assert len(VALIDATION_ERRORS) > 0
-    assert error_logger.called
-    mock_print.assert_called_with('The model configuration was invalid')
-
-
-@patch('smif.cli.LOGGER.error')
-@patch('builtins.print')
-def test_validation_invalid_units(
-        mock_print,
-        error_logger,
-        setup_folder_structure,
-        setup_project_folder,
-        setup_water_inputs_missing_units):
-    """Ensure invalid inputs yaml file raises error
-    """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
-    args = get_args(['validate', config_file])
-
-    with raises(SystemExit):
-        validate_config(args)
-
-    assert len(VALIDATION_ERRORS) > 0
-
-    msg_start = "Expected a value for 'units' in each model dependency"
-    assert msg_start in error_logger.call_args[0][0]
-    mock_print.assert_called_with('The model configuration was invalid')
 
 
 @patch('builtins.input', return_value='y')
@@ -210,6 +133,29 @@ def test_verbose_debug_alt():
 def test_verbose_info(setup_folder_structure, setup_project_folder):
     """Expect info message from `smif -v validate <config_file>`
     """
-    config_file = os.path.join(str(setup_folder_structure), 'config', 'model.yaml')
-    output = subprocess.run(['smif', '-v', 'validate', config_file], stderr=subprocess.PIPE)
+    config_file = os.path.join(str(setup_folder_structure))
+    output = subprocess.run(['smif', '-v', 'run', config_file], stderr=subprocess.PIPE)
     assert 'INFO' in str(output.stderr)
+
+
+class TestRunSosModelRunComponents():
+
+    def test_narratives(self):
+        config_file = os.path.join(os.path.dirname(__file__),
+                                   '..', 'fixtures', 'single_run')
+
+        handler = DatafileInterface(config_file)
+        narratives = [{'technology': ['High Tech Demand Side Management']}]
+        actual = get_narratives(handler, narratives)
+
+        data = {'energy_demand': {'smart_meter_savings': 8},
+                'water_supply': {'clever_water_meter_savings': 8}
+                }
+        name = 'High Tech Demand Side Management'
+        description = 'High penetration of SMART technology on the demand side'
+        narrative_set = 'technology'
+
+        narrative_object = Narrative(name, description, narrative_set)
+        narrative_object.data = data
+
+        assert actual == [narrative_object]

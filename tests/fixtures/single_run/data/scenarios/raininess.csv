@@ -1,0 +1,10 @@
+year,region,interval,value
+2010,England,1,5
+2015,England,1,7
+2020,England,1,6
+2010,Wales,1,5
+2015,Wales,1,7
+2020,Wales,1,6
+2010,Scotland,1,5
+2015,Scotland,1,7
+2020,Scotland,1,6

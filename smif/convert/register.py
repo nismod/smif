@@ -23,25 +23,18 @@ class Register(metaclass=ABCMeta):
 
 
 class ResolutionSet(metaclass=ABCMeta):
-    @property
-    @abstractmethod
-    def name(self):
-        raise NotImplementedError
 
-    @name.setter
-    @abstractmethod
-    def name(self, value):
-        raise NotImplementedError
+    def __init__(self):
 
-    @property
-    @abstractmethod
-    def data(self):
-        raise NotImplementedError
+        self.name = ''
+        self.description = ''
+        self.data = []
 
-    @data.setter
-    @abstractmethod
-    def data(self, value):
-        raise NotImplementedError
+    def as_dict(self):
+        """
+        """
+        return {'name': self.name,
+                'description': self.description}
 
     @abstractmethod
     def get_entry_names(self):
