@@ -6,7 +6,7 @@ import os
 from copy import copy
 from datetime import datetime
 
-from pytest import fixture
+from pytest import fixture, raises
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
 
@@ -266,7 +266,7 @@ def get_handler(setup_folder_structure, get_project_config):
 
 class TestDatafileInterface():
 
-    def test_sos_model_run(self, get_sos_model_run, get_handler):
+    def test_sos_model_run_read_all(self, get_sos_model_run, get_handler):
         """ Test to write two sos_model_run configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
@@ -283,16 +283,97 @@ class TestDatafileInterface():
         sos_model_runs = config_handler.read_sos_model_runs()
         assert sos_model_runs[0]['name'] == 'sos_model_run1'
         assert sos_model_runs[1]['name'] == 'sos_model_run2'
+        assert len(sos_model_runs) == 2
 
-        sos_model_run3 = get_sos_model_run
-        sos_model_run3['name'] = 'sos_model_run3'
-        config_handler.update_sos_model_run('sos_model_run2', sos_model_run3)
+    def test_sos_model_run_write_twice(self, get_sos_model_run, get_handler):
+        """ Test that writing a sos_model_run should fail (not overwrite).
+        """
+        config_handler = get_handler
 
-        sos_model_runs = config_handler.read_sos_model_runs()
-        print(sos_model_runs)
+        sos_model_run1 = get_sos_model_run
+        sos_model_run1['name'] = 'unique'
+        config_handler.write_sos_model_run(sos_model_run1)
 
-        assert sos_model_runs[0]['name'] == 'sos_model_run1'
-        assert sos_model_runs[1]['name'] == 'sos_model_run3'
+        with raises(FileExistsError) as ex:
+            config_handler.write_sos_model_run(sos_model_run1)
+        assert "sos_model_run 'unique' already exists" in str(ex)
+
+    def test_sos_model_run_read_one(self, get_sos_model_run, get_handler):
+        """ Test reading a single sos_model_run.
+        """
+        config_handler = get_handler
+
+        sos_model_run1 = get_sos_model_run
+        sos_model_run1['name'] = 'sos_model_run1'
+        config_handler.write_sos_model_run(sos_model_run1)
+
+        sos_model_run2 = get_sos_model_run
+        sos_model_run2['name'] = 'sos_model_run2'
+        config_handler.write_sos_model_run(sos_model_run2)
+
+        sos_model_run = config_handler.read_sos_model_run('sos_model_run2')
+        assert sos_model_run['name'] == 'sos_model_run2'
+
+    def test_sos_model_run_update(self, get_sos_model_run, get_handler):
+        """Test updating a sos_model_run description
+        """
+        config_handler = get_handler
+        sos_model_run = get_sos_model_run
+        sos_model_run['name'] = 'to_update'
+        sos_model_run['description'] = 'before'
+
+        config_handler.write_sos_model_run(sos_model_run)
+
+        sos_model_run['description'] = 'after'
+        config_handler.update_sos_model_run('to_update', sos_model_run)
+
+        actual = config_handler.read_sos_model_run('to_update')
+        assert actual['description'] == 'after'
+
+    def test_sos_model_run_update_mismatch(self, get_sos_model_run, get_handler):
+        """Test that updating a sos_model_run with mismatched name should fail
+        """
+        config_handler = get_handler
+        sos_model_run = get_sos_model_run
+
+        sos_model_run['name'] = 'sos_model_run'
+        with raises(AttributeError) as ex:
+            config_handler.update_sos_model_run('sos_model_run2', sos_model_run)
+        assert "name 'sos_model_run2' must match 'sos_model_run'" in str(ex)
+
+    def test_sos_model_run_update_missing(self, get_sos_model_run, get_handler):
+        """Test that updating a nonexistent sos_model_run should fail
+        """
+        config_handler = get_handler
+        sos_model_run = get_sos_model_run
+        sos_model_run['name'] = 'missing_name'
+
+        with raises(FileNotFoundError) as ex:
+            config_handler.update_sos_model_run('missing_name', sos_model_run)
+        assert "sos_model_run 'missing_name' does not exist" in str(ex)
+
+    def test_sos_model_run_delete(self, get_sos_model_run, get_handler):
+        """Test that updating a nonexistent sos_model_run should fail
+        """
+        config_handler = get_handler
+        sos_model_run = get_sos_model_run
+        sos_model_run['name'] = 'to_delete'
+
+        config_handler.write_sos_model_run(sos_model_run)
+        before_delete = config_handler.read_sos_model_runs()
+        assert len(before_delete) == 1
+
+        config_handler.delete_sos_model_run('to_delete')
+        after_delete = config_handler.read_sos_model_runs()
+        assert len(after_delete) == 0
+
+    def test_sos_model_run_delete_missing(self, get_sos_model_run, get_handler):
+        """Test that updating a nonexistent sos_model_run should fail
+        """
+        config_handler = get_handler
+        with raises(FileNotFoundError) as ex:
+            config_handler.delete_sos_model_run('missing_name')
+        assert "sos_model_run 'missing_name' does not exist" in str(ex)
 
     def test_sos_model(self, get_sos_model, get_handler):
         """ Test to write two soS_model configurations to Yaml files, then

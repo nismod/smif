@@ -16,11 +16,19 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
+    def read_sos_model_run(self, sos_model_run_name):
+        raise NotImplementedError()
+
+    @abstractmethod
     def write_sos_model_run(self, sos_model_run):
         raise NotImplementedError()
 
     @abstractmethod
     def update_sos_model_run(self, sos_model_run_name, sos_model_run):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def delete_sos_model_run(self, sos_model_run):
         raise NotImplementedError()
 
     @abstractmethod
@@ -191,6 +199,25 @@ class DatafileInterface(DataInterface):
 
         return sos_model_runs
 
+    def read_sos_model_run(self, sos_model_run_name):
+        """Read a system-of-system model run
+
+        Arguments
+        ---------
+        sos_model_run_name: str
+            A sos_model_run name
+
+        Returns
+        -------
+        sos_model_run: dict
+            A sos_model_run dictionary
+        """
+        return self._read_yaml_file(self.file_dir['sos_model_runs'], sos_model_run_name)
+
+    def _sos_model_run_exists(self, name):
+        return os.path.exists(
+            os.path.join(self.file_dir['sos_model_runs'], name + '.yml'))
+
     def write_sos_model_run(self, sos_model_run):
         """Write system-of-system model run to Yaml file
 
@@ -199,8 +226,11 @@ class DatafileInterface(DataInterface):
         sos_model_run: dict
             A sos_model_run dictionary
         """
-        self._write_yaml_file(self.file_dir['sos_model_runs'],
-                              sos_model_run['name'], sos_model_run)
+        if self._sos_model_run_exists(sos_model_run['name']):
+            raise FileExistsError("sos_model_run '%s' already exists" % sos_model_run['name'])
+        else:
+            self._write_yaml_file(self.file_dir['sos_model_runs'],
+                                  sos_model_run['name'], sos_model_run)
 
     def update_sos_model_run(self, sos_model_run_name, sos_model_run):
         """Update system-of-system model run in Yaml file
@@ -213,9 +243,28 @@ class DatafileInterface(DataInterface):
             A sos_model_run dictionary
         """
         if sos_model_run_name != sos_model_run['name']:
-            os.remove(os.path.join(self.file_dir['sos_model_runs'],
-                                   sos_model_run_name + '.yml'))
-        self.write_sos_model_run(sos_model_run)
+            raise AttributeError(
+                "sos_model_run name '{}' must match '{}'".format(
+                    sos_model_run_name,
+                    sos_model_run['name']))
+
+        if not self._sos_model_run_exists(sos_model_run_name):
+            raise FileNotFoundError("sos_model_run '%s' does not exist" % sos_model_run_name)
+        self._write_yaml_file(self.file_dir['sos_model_runs'],
+                              sos_model_run['name'], sos_model_run)
+
+    def delete_sos_model_run(self, sos_model_run_name):
+        """Delete a system-of-system model run
+
+        Arguments
+        ---------
+        sos_model_run_name: str
+            A sos_model_run name
+        """
+        if not self._sos_model_run_exists(sos_model_run_name):
+            raise FileNotFoundError("sos_model_run '%s' does not exist" % sos_model_run_name)
+
+        os.remove(os.path.join(self.file_dir['sos_model_runs'], sos_model_run_name + '.yml'))
 
     def read_sos_models(self):
         """Read all system-of-system models from Yaml files
