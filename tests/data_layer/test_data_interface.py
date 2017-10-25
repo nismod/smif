@@ -7,7 +7,12 @@ from copy import copy
 from datetime import datetime
 
 from pytest import fixture, raises
-from smif.data_layer import DatafileInterface
+from smif.data_layer import (
+    DataExistsError,
+    DatafileInterface,
+    DataMismatchError,
+    DataNotFoundError
+)
 from smif.data_layer.load import dump
 
 
@@ -294,7 +299,7 @@ class TestDatafileInterface():
         sos_model_run1['name'] = 'unique'
         config_handler.write_sos_model_run(sos_model_run1)
 
-        with raises(FileExistsError) as ex:
+        with raises(DataExistsError) as ex:
             config_handler.write_sos_model_run(sos_model_run1)
         assert "sos_model_run 'unique' already exists" in str(ex)
 
@@ -337,7 +342,7 @@ class TestDatafileInterface():
         sos_model_run = get_sos_model_run
 
         sos_model_run['name'] = 'sos_model_run'
-        with raises(AttributeError) as ex:
+        with raises(DataMismatchError) as ex:
             config_handler.update_sos_model_run('sos_model_run2', sos_model_run)
         assert "name 'sos_model_run2' must match 'sos_model_run'" in str(ex)
 
@@ -348,7 +353,7 @@ class TestDatafileInterface():
         sos_model_run = get_sos_model_run
         sos_model_run['name'] = 'missing_name'
 
-        with raises(FileNotFoundError) as ex:
+        with raises(DataNotFoundError) as ex:
             config_handler.update_sos_model_run('missing_name', sos_model_run)
         assert "sos_model_run 'missing_name' does not exist" in str(ex)
 
@@ -371,7 +376,7 @@ class TestDatafileInterface():
         """Test that updating a nonexistent sos_model_run should fail
         """
         config_handler = get_handler
-        with raises(FileNotFoundError) as ex:
+        with raises(DataNotFoundError) as ex:
             config_handler.delete_sos_model_run('missing_name')
         assert "sos_model_run 'missing_name' does not exist" in str(ex)
 

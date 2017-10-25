@@ -142,3 +142,24 @@ class DataInterface(metaclass=ABCMeta):
     @abstractmethod
     def update_narrative(self, narrative):
         raise NotImplementedError()
+
+
+class DataNotFoundError(Exception):
+    """Raise when some data is not found
+    """
+    pass
+
+
+class DataExistsError(Exception):
+    """Raise when some data is found unexpectedly
+    """
+    pass
+
+
+class DataMismatchError(Exception):
+    """Raise when some data doesn't match the context
+
+    E.g. when updating an object by id, the updated object's id must match
+    the id provided separately.
+    """
+    pass

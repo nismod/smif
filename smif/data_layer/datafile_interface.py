@@ -8,7 +8,12 @@ from csv import DictReader
 
 import fiona
 
-from smif.data_layer.data_interface import DataInterface
+from smif.data_layer.data_interface import (
+    DataExistsError,
+    DataInterface,
+    DataMismatchError,
+    DataNotFoundError
+)
 from smif.data_layer.load import dump, load
 
 
@@ -91,7 +96,7 @@ class DatafileInterface(DataInterface):
             A sos_model_run dictionary
         """
         if self._sos_model_run_exists(sos_model_run['name']):
-            raise FileExistsError("sos_model_run '%s' already exists" % sos_model_run['name'])
+            raise DataExistsError("sos_model_run '%s' already exists" % sos_model_run['name'])
         else:
             self._write_yaml_file(self.file_dir['sos_model_runs'],
                                   sos_model_run['name'], sos_model_run)
@@ -107,13 +112,13 @@ class DatafileInterface(DataInterface):
             A sos_model_run dictionary
         """
         if sos_model_run_name != sos_model_run['name']:
-            raise AttributeError(
+            raise DataMismatchError(
                 "sos_model_run name '{}' must match '{}'".format(
                     sos_model_run_name,
                     sos_model_run['name']))
 
         if not self._sos_model_run_exists(sos_model_run_name):
-            raise FileNotFoundError("sos_model_run '%s' does not exist" % sos_model_run_name)
+            raise DataNotFoundError("sos_model_run '%s' does not exist" % sos_model_run_name)
         self._write_yaml_file(self.file_dir['sos_model_runs'],
                               sos_model_run['name'], sos_model_run)
 
@@ -126,7 +131,7 @@ class DatafileInterface(DataInterface):
             A sos_model_run name
         """
         if not self._sos_model_run_exists(sos_model_run_name):
-            raise FileNotFoundError("sos_model_run '%s' does not exist" % sos_model_run_name)
+            raise DataNotFoundError("sos_model_run '%s' does not exist" % sos_model_run_name)
 
         os.remove(os.path.join(self.file_dir['sos_model_runs'], sos_model_run_name + '.yml'))
 
