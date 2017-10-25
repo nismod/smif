@@ -255,17 +255,22 @@ def get_narrative_data():
     ]
 
 
+@fixture(scope='function')
+def get_handler(setup_folder_structure, get_project_config):
+    basefolder = setup_folder_structure
+    project_config_path = os.path.join(
+        str(basefolder), 'config', 'project.yml')
+    dump(get_project_config, project_config_path)
+    return DatafileInterface(str(basefolder))
+
+
 class TestDatafileInterface():
 
-    def test_sos_model_run(self, get_sos_model_run, setup_folder_structure):
+    def test_sos_model_run(self, get_sos_model_run, get_handler):
         """ Test to write two sos_model_run configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         sos_model_run1 = get_sos_model_run
         sos_model_run1['name'] = 'sos_model_run1'
@@ -289,15 +294,11 @@ class TestDatafileInterface():
         assert sos_model_runs[0]['name'] == 'sos_model_run1'
         assert sos_model_runs[1]['name'] == 'sos_model_run3'
 
-    def test_sos_model(self, get_sos_model, setup_folder_structure):
+    def test_sos_model(self, get_sos_model, get_handler):
         """ Test to write two soS_model configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         sos_model1 = get_sos_model
         sos_model1['name'] = 'sos_model_1'
@@ -320,17 +321,12 @@ class TestDatafileInterface():
         assert sos_model2 not in sos_models
         assert sos_model3 in sos_models
 
-    def test_sector_model(self, setup_folder_structure, get_project_config,
-                          get_sector_model):
+    def test_sector_model(self, get_sector_model, get_handler):
         """ Test to write a sector_model configuration to a Yaml file
         read the Yaml file and compare that the result is equal.
         Finally check if the name shows up the the readlist.
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         sector_model1 = copy(get_sector_model)
         sector_model1['name'] = 'sector_model_1'
@@ -357,38 +353,32 @@ class TestDatafileInterface():
         assert sector_models.count(sector_model2['name']) == 0
         assert sector_models.count(sector_model3['name']) == 1
 
-    def test_region_definition_data(self, setup_folder_structure, get_project_config,
-                                    setup_region_data):
+    def test_region_definition_data(self, setup_folder_structure, setup_region_data,
+                                    get_handler):
         """ Test to dump a region_definition_set (GeoJSON) data-file and then read the data
         using the datafile interface. Finally check if the data shows up in the
         returned dictionary.
         """
         basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
         region_definition_data = setup_region_data
 
         with open(os.path.join(str(basefolder), 'data', 'region_definitions',
                                'test_region.json'), 'w+') as region_definition_file:
             json.dump(region_definition_data, region_definition_file)
 
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
         test_region_definition = config_handler.read_region_definition_data(
             'lad')
 
         assert test_region_definition[0]['properties']['name'] == 'oxford'
 
-    def test_scenario_data(self, setup_folder_structure, get_project_config,
+    def test_scenario_data(self, setup_folder_structure, get_handler,
                            get_scenario_data):
         """ Test to dump a scenario (CSV) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
         returned dictionary.
         """
         basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
         scenario_data = get_scenario_data
 
         keys = scenario_data[0].keys()
@@ -398,7 +388,7 @@ class TestDatafileInterface():
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
 
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
         test_scenario = config_handler.read_scenario_data(
             'High Population (ONS)')
 
@@ -406,37 +396,25 @@ class TestDatafileInterface():
         assert 'population_count' in test_scenario
         assert test_scenario['population_count'][0]['region'] == 'GB'
 
-    def test_narrative_data(self, setup_folder_structure, get_project_config,
-                            get_narrative_data):
+    def test_narrative_data(self, setup_folder_structure, get_handler, get_narrative_data):
         """ Test to dump a narrative (yml) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
         returned dictionary.
         """
         basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        basefolder = setup_folder_structure
         narrative_data_path = os.path.join(str(basefolder), 'data', 'narratives',
                                            'central_planning.yml')
         dump(get_narrative_data, narrative_data_path)
 
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
         test_narrative = config_handler.read_narrative_data('Central Planning')
 
         assert test_narrative[0]['energy_demand'][0]['name'] == 'smart_meter_savings'
 
-    def test_project_region_definitions(self, setup_folder_structure,
-                                        get_project_config):
+    def test_project_region_definitions(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # region_definition sets / read existing (from fixture)
         region_definitions = config_handler.read_region_definitions()
@@ -478,16 +456,10 @@ class TestDatafileInterface():
             if region_definition['name'] == 'name_change':
                 assert region_definition['filename'] == 'lad_NL_V2.csv'
 
-    def test_project_interval_definitions(self, setup_folder_structure,
-                                          get_project_config):
+    def test_project_interval_definitions(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # interval_definitions / read existing (from fixture)
         interval_definitions = config_handler.read_interval_definitions()
@@ -531,15 +503,10 @@ class TestDatafileInterface():
             if interval_definition['name'] == 'name_change':
                 assert interval_definition['filename'] == 'monthly_V2.csv'
 
-    def test_project_scenario_sets(self, setup_folder_structure, get_project_config):
+    def test_project_scenario_sets(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # Scenario sets / read existing (from fixture)
         scenario_sets = config_handler.read_scenario_sets()
@@ -582,15 +549,10 @@ class TestDatafileInterface():
                 expected = 'The annual mortality rate in NL population'
                 assert scenario_set['description'] == expected
 
-    def test_project_scenarios(self, setup_folder_structure, get_project_config):
+    def test_project_scenarios(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # Scenarios / read existing (from fixture)
         scenarios = config_handler.read_scenario_set('population')
@@ -637,15 +599,10 @@ class TestDatafileInterface():
             if scenario['name'] == 'name_change':
                 assert scenario['filename'] == 'population_med.csv'
 
-    def test_project_narrative_sets(self, setup_folder_structure, get_project_config):
+    def test_project_narrative_sets(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # Narrative sets / read existing (from fixture)
         narrative_sets = config_handler.read_narrative_sets()
@@ -686,15 +643,10 @@ class TestDatafileInterface():
             if narrative_set['name'] == 'name_change':
                 assert narrative_set['description'] == 'New narrative set description'
 
-    def test_project_narratives(self, setup_folder_structure, get_project_config):
+    def test_project_narratives(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # Narratives / read existing (from fixture)
         narratives = config_handler.read_narrative_set('technology')
