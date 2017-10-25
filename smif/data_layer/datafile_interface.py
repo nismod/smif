@@ -1,6 +1,5 @@
 """File-backed data interface
 """
-
 import csv
 import os
 
@@ -81,6 +80,8 @@ class DatafileInterface(DataInterface):
         sos_model_run: dict
             A sos_model_run dictionary
         """
+        if not self._sos_model_run_exists(sos_model_run_name):
+            raise DataNotFoundError("sos_model_run '%s' not found" % sos_model_run_name)
         return self._read_yaml_file(self.file_dir['sos_model_runs'], sos_model_run_name)
 
     def _sos_model_run_exists(self, name):
@@ -118,7 +119,7 @@ class DatafileInterface(DataInterface):
                     sos_model_run['name']))
 
         if not self._sos_model_run_exists(sos_model_run_name):
-            raise DataNotFoundError("sos_model_run '%s' does not exist" % sos_model_run_name)
+            raise DataNotFoundError("sos_model_run '%s' not found" % sos_model_run_name)
         self._write_yaml_file(self.file_dir['sos_model_runs'],
                               sos_model_run['name'], sos_model_run)
 
@@ -131,7 +132,7 @@ class DatafileInterface(DataInterface):
             A sos_model_run name
         """
         if not self._sos_model_run_exists(sos_model_run_name):
-            raise DataNotFoundError("sos_model_run '%s' does not exist" % sos_model_run_name)
+            raise DataNotFoundError("sos_model_run '%s' not found" % sos_model_run_name)
 
         os.remove(os.path.join(self.file_dir['sos_model_runs'], sos_model_run_name + '.yml'))
 

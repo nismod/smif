@@ -272,7 +272,7 @@ def get_handler(setup_folder_structure, get_project_config):
 class TestDatafileInterface():
 
     def test_sos_model_run_read_all(self, get_sos_model_run, get_handler):
-        """ Test to write two sos_model_run configurations to Yaml files, then
+        """Test to write two sos_model_run configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
         config_handler = get_handler
@@ -291,7 +291,7 @@ class TestDatafileInterface():
         assert len(sos_model_runs) == 2
 
     def test_sos_model_run_write_twice(self, get_sos_model_run, get_handler):
-        """ Test that writing a sos_model_run should fail (not overwrite).
+        """Test that writing a sos_model_run should fail (not overwrite).
         """
         config_handler = get_handler
 
@@ -304,7 +304,7 @@ class TestDatafileInterface():
         assert "sos_model_run 'unique' already exists" in str(ex)
 
     def test_sos_model_run_read_one(self, get_sos_model_run, get_handler):
-        """ Test reading a single sos_model_run.
+        """Test reading a single sos_model_run.
         """
         config_handler = get_handler
 
@@ -318,6 +318,14 @@ class TestDatafileInterface():
 
         sos_model_run = config_handler.read_sos_model_run('sos_model_run2')
         assert sos_model_run['name'] == 'sos_model_run2'
+
+    def test_sos_model_run_read_missing(self, get_handler):
+        """Test that reading a missing sos_model_run fails.
+        """
+        config_handler = get_handler
+        with raises(DataNotFoundError) as ex:
+            config_handler.read_sos_model_run('missing_name')
+        assert "sos_model_run 'missing_name' not found" in str(ex)
 
     def test_sos_model_run_update(self, get_sos_model_run, get_handler):
         """Test updating a sos_model_run description
@@ -355,7 +363,7 @@ class TestDatafileInterface():
 
         with raises(DataNotFoundError) as ex:
             config_handler.update_sos_model_run('missing_name', sos_model_run)
-        assert "sos_model_run 'missing_name' does not exist" in str(ex)
+        assert "sos_model_run 'missing_name' not found" in str(ex)
 
     def test_sos_model_run_delete(self, get_sos_model_run, get_handler):
         """Test that updating a nonexistent sos_model_run should fail
@@ -378,7 +386,7 @@ class TestDatafileInterface():
         config_handler = get_handler
         with raises(DataNotFoundError) as ex:
             config_handler.delete_sos_model_run('missing_name')
-        assert "sos_model_run 'missing_name' does not exist" in str(ex)
+        assert "sos_model_run 'missing_name' not found" in str(ex)
 
     def test_sos_model(self, get_sos_model, get_handler):
         """ Test to write two soS_model configurations to Yaml files, then
