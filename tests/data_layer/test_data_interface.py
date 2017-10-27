@@ -3,16 +3,14 @@
 import csv
 import json
 import os
-from copy import copy
+from copy import copy, deepcopy
 from datetime import datetime
 
+from dateutil.tz import tzutc
 from pytest import fixture, raises
-from smif.data_layer import (
-    DataExistsError,
-    DatafileInterface,
-    DataMismatchError,
-    DataNotFoundError
-)
+from smif.data_layer import (DataExistsError, DatafileInterface,
+                             DataMismatchError, DataNotFoundError)
+from smif.data_layer.datafile_interface import transform_leaves
 from smif.data_layer.load import dump
 
 
@@ -112,7 +110,7 @@ def get_sos_model_run():
     return {
         'name': 'unique_model_run_name',
         'description': 'a description of what the model run contains',
-        'stamp': datetime(2017, 9, 20, 12, 53, 23),
+        'stamp': datetime(2017, 9, 20, 12, 53, 23, tzinfo=tzutc()),
         'timesteps': [
             2015,
             2020,
@@ -778,3 +776,49 @@ class TestDatafileInterface():
         for narrative in narratives:
             if narrative['name'] == 'name_change':
                 assert narrative['filename'] == 'energy_demand_low_tech_v2.yml'
+
+
+def test_transform_leaves_empty():
+    tree = []
+    actual = transform_leaves(tree, replace_e)
+    assert id(tree) != id(actual)
+    assert actual == []
+
+
+def test_transform_leaves_non_tree():
+    tree = "not a tree"
+    actual = transform_leaves(tree, replace_e)
+    assert actual == tree
+
+
+def test_transform_list():
+    tree = ['a', 'b', 'c', 'd', 'e']
+    defensive_copy = deepcopy(tree)
+    actual = transform_leaves(tree, replace_e)
+    expected = ['a', 'b', 'c', 'd', 'XXX']
+    assert actual == expected
+    assert tree == defensive_copy
+
+
+def test_transform_dict():
+    tree = {'a': 'e', 'b': ['c', 'e']}
+    defensive_copy = deepcopy(tree)
+    actual = transform_leaves(tree, replace_e)
+    expected = {'a': 'XXX', 'b': ['c', 'XXX']}
+    assert actual == expected
+    assert tree == defensive_copy
+
+
+def test_transform_circular():
+    tree = {'b': 'e'}
+    tree['a'] = tree
+    with raises(ValueError) as ex:
+        transform_leaves(tree, replace_e)
+    assert 'Circular reference detected' in str(ex)
+
+
+def replace_e(obj, path):
+    if obj == 'e':
+        return 'XXX'
+    else:
+        return obj
