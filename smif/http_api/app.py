@@ -12,8 +12,8 @@ from smif.data_layer import DatafileInterface
 from smif.http_api import create_app
 
 
-def get_connection():
-    """Return a data_layer connection
+def get_data_interface():
+    """Return a data_layer.DataInterface
     """
     return DatafileInterface(
         os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'fixtures', 'single_run')
@@ -23,5 +23,5 @@ def get_connection():
 APP = create_app(
     static_folder=os.path.join(os.path.dirname(__file__), '..', 'app', 'dist'),
     template_folder=os.path.join(os.path.dirname(__file__), '..', 'app', 'dist'),
-    get_connection=get_connection
+    get_data_interface=get_data_interface
 )

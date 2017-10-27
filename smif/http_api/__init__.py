@@ -10,7 +10,7 @@ from smif.data_layer import (
 )
 
 
-def create_app(static_folder='static', template_folder='templates', get_connection=None):
+def create_app(static_folder='static', template_folder='templates', get_data_interface=None):
     """Create Flask app object
     """
     app = Flask(
@@ -19,9 +19,9 @@ def create_app(static_folder='static', template_folder='templates', get_connecti
         static_folder=static_folder,
         template_folder=template_folder
     )
-    # Pass get_connection method which must return an instance of a class
+    # Pass get_data_interface method which must return an instance of a class
     # implementing DataInterface. There may be a better way!
-    app.config.get_connection = get_connection
+    app.config.get_data_interface = get_data_interface
 
     register_routes(app)
     register_api_endpoints(app)
@@ -84,12 +84,12 @@ class SosModelRunAPI(MethodView):
         one: GET /api/vi/sos_model_runs/name
         """
         # return str(current_app.config)
-        data_layer = current_app.config.get_connection()
+        data_interface = current_app.config.get_data_interface()
         if sos_model_run_name is None:
-            data = data_layer.read_sos_model_runs()
+            data = data_interface.read_sos_model_runs()
             response = jsonify(data)
         else:
-            data = data_layer.read_sos_model_run(sos_model_run_name)
+            data = data_interface.read_sos_model_run(sos_model_run_name)
             response = jsonify(data)
 
         return response
@@ -98,8 +98,8 @@ class SosModelRunAPI(MethodView):
         """Create a sos_model_run:
         POST /api/v1/sos_model_runs
         """
-        data_layer = current_app.config.get_connection()
-        data_layer.write_sos_model_run(request.form)
+        data_interface = current_app.config.get_data_interface()
+        data_interface.write_sos_model_run(request.form)
         response = jsonify({})
         response.status_code = 201
         return response
@@ -108,8 +108,8 @@ class SosModelRunAPI(MethodView):
         """Update a sos_model_run:
         PUT /api/v1/sos_model_runs
         """
-        data_layer = current_app.config.get_connection()
-        data_layer.update_sos_model_run(sos_model_run_name, request.form)
+        data_interface = current_app.config.get_data_interface()
+        data_interface.update_sos_model_run(sos_model_run_name, request.form)
         response = jsonify({})
         return response
 
@@ -117,8 +117,8 @@ class SosModelRunAPI(MethodView):
         """Delete a sos_model_run:
         DELETE /api/v1/sos_model_runs
         """
-        data_layer = current_app.config.get_connection()
-        data_layer.delete_sos_model_run(sos_model_run_name)
+        data_interface = current_app.config.get_data_interface()
+        data_interface.delete_sos_model_run(sos_model_run_name)
         response = jsonify({})
         return response
 
