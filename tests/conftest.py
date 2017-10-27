@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-    Dummy conftest.py for smif.
+    conftest.py for smif.
 
-    If you don't know what this is for, just leave it empty.
     Read more about conftest.py under:
     https://pytest.org/latest/plugins.html
 """
@@ -13,13 +12,17 @@ import json
 import logging
 import os
 from copy import copy
+from datetime import datetime
 
 import yaml
+from dateutil.tz import tzutc
 from pytest import fixture
 from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
+from smif.data_layer import DatafileInterface
+from smif.data_layer.load import dump
 
 from .convert.test_area import (regions_half_squares, regions_half_triangles,
                                 regions_rect, regions_single_half_square)
@@ -706,3 +709,256 @@ def setup_registers(setup_region_data):
     intervals.register(IntervalSet('hourly_day', twenty_four_hours()))
     intervals.register(IntervalSet('one_day', one_day()))
     intervals.register(IntervalSet('remap_months', remap_months()))
+
+
+@fixture(scope='function')
+def get_project_config():
+    """Return sample project configuration
+    """
+    return {
+        'project_name': 'NISMOD v2.0',
+        'scenario_sets': [
+            {
+                'description': 'The annual change in UK population',
+                'name': 'population'
+            }
+        ],
+        'narrative_sets': [
+            {
+                'description': 'Defines the rate and nature of technological change',
+                'name': 'technology'
+            },
+            {
+                'description': 'Defines the nature of governance and influence upon decisions',
+                'name': 'governance'
+            }
+        ],
+        'region_definitions': [
+            {
+                'description': 'Local authority districts for the UK',
+                'filename': 'test_region.json',
+                'name': 'lad'
+            }
+        ],
+        'interval_definitions': [
+            {
+                'description': 'The 8760 hours in the year named by hour',
+                'filename': 'hourly.csv', 'name': 'hourly'
+            },
+            {
+                'description': 'One annual timestep, used for aggregate yearly data',
+                'filename': 'annual.csv', 'name': 'annual'
+            }
+        ],
+        'units': 'user_units.txt',
+        'scenarios':
+        [
+            {
+                'description': 'The High ONS Forecast for UK population out to 2050',
+                'name': 'High Population (ONS)',
+                'parameters': [
+                    {
+                        'name': 'population_count',
+                        'filename': 'population_high.csv',
+                        'spatial_resolution': 'lad',
+                        'temporal_resolution': 'annual',
+                        'units': 'people',
+                    }
+                ],
+                'scenario_set': 'population',
+            },
+            {
+                'description': 'The Low ONS Forecast for UK population out to 2050',
+                'name': 'Low Population (ONS)',
+                'parameters': [
+                    {
+                        'name': 'population_count',
+                        'filename': 'population_low.csv',
+                        'spatial_resolution': 'lad',
+                        'temporal_resolution': 'annual',
+                        'units': 'people',
+                    }
+                ],
+                'scenario_set': 'population',
+            }
+        ],
+        'narratives': [
+            {
+                'description': 'High penetration of SMART technology on the demand side',
+                'filename': 'energy_demand_high_tech.yml',
+                'name': 'Energy Demand - High Tech',
+                'narrative_set': 'technology',
+            },
+            {
+                'description': 'Stronger role for central government in planning and ' +
+                               'regulation, less emphasis on market-based solutions',
+                'filename': 'central_planning.yml',
+                'name': 'Central Planning',
+                'narrative_set': 'governance',
+            }
+        ]
+    }
+
+
+@fixture(scope='function')
+def get_sos_model_run():
+    """Return sample sos_model_run
+    """
+    return {
+        'name': 'unique_model_run_name',
+        'description': 'a description of what the model run contains',
+        'stamp': datetime(2017, 9, 20, 12, 53, 23, tzinfo=tzutc()),
+        'timesteps': [
+            2015,
+            2020,
+            2025
+        ],
+        'sos_model': 'energy',
+        'decision_module': 'energy_moea.py',
+        'scenarios': [
+            {
+                'population': 'High Population (ONS)'
+            }
+        ],
+        'narratives': [
+            {
+                'technology': [
+                    'Energy Demand - High Tech'
+                ]
+            },
+            {
+                'governance': 'Central Planning'
+            }
+        ]
+    }
+
+
+@fixture(scope='function')
+def get_sos_model():
+    """Return sample sos_model
+    """
+    return {
+        'name': 'energy',
+        'description': "A system of systems model which encapsulates "
+                       "the future supply and demand of energy for the UK",
+        'scenario_sets': [
+            'population'
+        ],
+        'sector_models': [
+            'energy_demand',
+            'energy_supply'
+        ],
+        'dependencies': [
+            {
+                'source_model': 'population',
+                'source_model_output': 'count',
+                'sink_model': 'energy_demand',
+                'sink_model_input': 'population'
+            },
+            {
+                'source_model': 'energy_demand',
+                'source_model_output': 'gas_demand',
+                'sink_model': 'energy_supply',
+                'sink_model_input': 'natural_gas_demand'
+            }
+        ]
+    }
+
+
+@fixture(scope='function')
+def get_sector_model():
+    """Return sample sector_model
+    """
+    return {
+        'name': 'energy_demand',
+        'description': "Computes the energy demand of the"
+                       "UK population for each timestep",
+        'classname': 'EnergyDemandWrapper',
+        'path': '../../models/energy_demand/run.py',
+        'inputs': [
+            {
+                'name': 'population',
+                'spatial_resolution': 'lad',
+                'temporal_resolution': 'annual',
+                'units': 'people'
+            }
+        ],
+        'outputs': [
+            {
+                'name': 'gas_demand',
+                'spatial_resolution': 'lad',
+                'temporal_resolution': 'hourly',
+                'units': 'GWh'
+            }
+        ],
+        'parameters': [
+            {
+                'absolute_range': '(0.5, 2)',
+                'default_value': 1,
+                'description': "Difference in floor area per person"
+                               "in end year compared to base year",
+                'name': 'assump_diff_floorarea_pp',
+                'suggested_range': '(0.5, 2)',
+                'units': 'percentage'
+            }
+        ],
+        'interventions': ['energy_demand.yml'],
+        'initial_conditions': ['energy_demand_init.yml']
+    }
+
+
+@fixture(scope='function')
+def get_scenario_data():
+    """Return sample scenario_data
+    """
+    return [
+        {
+            'value': 100,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2015
+        },
+        {
+            'value': 150,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2016
+        },
+        {
+            'value': 200,
+            'units': 'people',
+            'region': 'GB',
+            'year': 2017
+        }
+    ]
+
+
+@fixture(scope='function')
+def get_narrative_data():
+    """Return sample narrative_data
+    """
+    return [
+        {
+            'energy_demand': [
+                {
+                    'name': 'smart_meter_savings',
+                    'value': 8
+                }
+            ],
+            'water_supply': [
+                {
+                    'name': 'clever_water_meter_savings',
+                    'value': 8
+                }
+            ]
+        }
+    ]
+
+
+@fixture(scope='function')
+def get_handler(setup_folder_structure, get_project_config):
+    basefolder = setup_folder_structure
+    project_config_path = os.path.join(
+        str(basefolder), 'config', 'project.yml')
+    dump(get_project_config, project_config_path)
+    return DatafileInterface(str(basefolder))
