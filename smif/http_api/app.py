@@ -1,9 +1,10 @@
 """Provide APP constant for the purposes of manually running the flask app
 
-For example, set up environment variables then run the app::
-        export FLASK_APP=smif.http_api.app
-        export FLASK_DEBUG=1
-        flask run
+For example, build the front end, then run the app with environment variables::
+        cd smif/app/
+        npm run build
+        cd ../http_api/
+        FLASK_APP=smif.http_api.app FLASK_DEBUG=1 flask run
 """
 import os
 
