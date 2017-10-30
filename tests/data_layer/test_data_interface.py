@@ -3,269 +3,21 @@
 import csv
 import json
 import os
-from copy import copy
-from datetime import datetime
+from copy import copy, deepcopy
+from pytest import raises
 
-from pytest import fixture
-from smif.data_layer import DatafileInterface
+from smif.data_layer import (DataExistsError, DataMismatchError, DataNotFoundError)
+from smif.data_layer.datafile_interface import transform_leaves
 from smif.data_layer.load import dump
-
-
-@fixture(scope='function')
-def get_project_config():
-    """Return sample project configuration
-    """
-    return {
-        'project_name': 'NISMOD v2.0',
-        'scenario_sets': [
-            {
-                'description': 'The annual change in UK population',
-                'name': 'population'
-            }
-        ],
-        'narrative_sets': [
-            {
-                'description': 'Defines the rate and nature of technological change',
-                'name': 'technology'
-            },
-            {
-                'description': 'Defines the nature of governance and influence upon decisions',
-                'name': 'governance'
-            }
-        ],
-        'region_definitions': [
-            {
-                'description': 'Local authority districts for the UK',
-                'filename': 'test_region.json',
-                'name': 'lad'
-            }
-        ],
-        'interval_definitions': [
-            {
-                'description': 'The 8760 hours in the year named by hour',
-                'filename': 'hourly.csv', 'name': 'hourly'
-            },
-            {
-                'description': 'One annual timestep, used for aggregate yearly data',
-                'filename': 'annual.csv', 'name': 'annual'
-            }
-        ],
-        'units': 'user_units.txt',
-        'scenarios':
-        [
-            {
-                'description': 'The High ONS Forecast for UK population out to 2050',
-                'name': 'High Population (ONS)',
-                'parameters': [
-                    {
-                        'name': 'population_count',
-                        'filename': 'population_high.csv',
-                        'spatial_resolution': 'lad',
-                        'temporal_resolution': 'annual',
-                        'units': 'people',
-                    }
-                ],
-                'scenario_set': 'population',
-            },
-            {
-                'description': 'The Low ONS Forecast for UK population out to 2050',
-                'name': 'Low Population (ONS)',
-                'parameters': [
-                    {
-                        'name': 'population_count',
-                        'filename': 'population_low.csv',
-                        'spatial_resolution': 'lad',
-                        'temporal_resolution': 'annual',
-                        'units': 'people',
-                    }
-                ],
-                'scenario_set': 'population',
-            }
-        ],
-        'narratives': [
-            {
-                'description': 'High penetration of SMART technology on the demand side',
-                'filename': 'energy_demand_high_tech.yml',
-                'name': 'Energy Demand - High Tech',
-                'narrative_set': 'technology',
-            },
-            {
-                'description': 'Stronger role for central government in planning and ' +
-                               'regulation, less emphasis on market-based solutions',
-                'filename': 'central_planning.yml',
-                'name': 'Central Planning',
-                'narrative_set': 'governance',
-            }
-        ]
-    }
-
-
-@fixture(scope='function')
-def get_sos_model_run():
-    """Return sample sos_model_run
-    """
-    return {
-        'name': 'unique_model_run_name',
-        'description': 'a description of what the model run contains',
-        'stamp': datetime(2017, 9, 20, 12, 53, 23),
-        'timesteps': [
-            2015,
-            2020,
-            2025
-        ],
-        'sos_model': 'energy',
-        'decision_module': 'energy_moea.py',
-        'scenarios': [
-            {
-                'population': 'High Population (ONS)'
-            }
-        ],
-        'narratives': [
-            {
-                'technology': [
-                    'Energy Demand - High Tech'
-                ]
-            },
-            {
-                'governance': 'Central Planning'
-            }
-        ]
-    }
-
-
-@fixture(scope='function')
-def get_sos_model():
-    """Return sample sos_model
-    """
-    return {
-        'name': 'energy',
-        'description': "A system of systems model which encapsulates "
-                       "the future supply and demand of energy for the UK",
-        'scenario_sets': [
-            'population'
-        ],
-        'sector_models': [
-            'energy_demand',
-            'energy_supply'
-        ],
-        'dependencies': [
-            {
-                'source_model': 'population',
-                'source_model_output': 'count',
-                'sink_model': 'energy_demand',
-                'sink_model_input': 'population'
-            },
-            {
-                'source_model': 'energy_demand',
-                'source_model_output': 'gas_demand',
-                'sink_model': 'energy_supply',
-                'sink_model_input': 'natural_gas_demand'
-            }
-        ]
-    }
-
-
-@fixture(scope='function')
-def get_sector_model():
-    """Return sample sector_model
-    """
-    return {
-        'name': 'energy_demand',
-        'description': "Computes the energy demand of the"
-                       "UK population for each timestep",
-        'classname': 'EnergyDemandWrapper',
-        'path': '../../models/energy_demand/run.py',
-        'inputs': [
-            {
-                'name': 'population',
-                'spatial_resolution': 'lad',
-                'temporal_resolution': 'annual',
-                'units': 'people'
-            }
-        ],
-        'outputs': [
-            {
-                'name': 'gas_demand',
-                'spatial_resolution': 'lad',
-                'temporal_resolution': 'hourly',
-                'units': 'GWh'
-            }
-        ],
-        'parameters': [
-            {
-                'absolute_range': '(0.5, 2)',
-                'default_value': 1,
-                'description': "Difference in floor area per person"
-                               "in end year compared to base year",
-                'name': 'assump_diff_floorarea_pp',
-                'suggested_range': '(0.5, 2)',
-                'units': 'percentage'
-            }
-        ],
-        'interventions': ['energy_demand.yml'],
-        'initial_conditions': ['energy_demand_init.yml']
-    }
-
-
-@fixture(scope='function')
-def get_scenario_data():
-    """Return sample scenario_data
-    """
-    return [
-        {
-            'value': 100,
-            'units': 'people',
-            'region': 'GB',
-            'year': 2015
-        },
-        {
-            'value': 150,
-            'units': 'people',
-            'region': 'GB',
-            'year': 2016
-        },
-        {
-            'value': 200,
-            'units': 'people',
-            'region': 'GB',
-            'year': 2017
-        }
-    ]
-
-
-@fixture(scope='function')
-def get_narrative_data():
-    """Return sample narrative_data
-    """
-    return [
-        {
-            'energy_demand': [
-                {
-                    'name': 'smart_meter_savings',
-                    'value': 8
-                }
-            ],
-            'water_supply': [
-                {
-                    'name': 'clever_water_meter_savings',
-                    'value': 8
-                }
-            ]
-        }
-    ]
 
 
 class TestDatafileInterface():
 
-    def test_sos_model_run(self, get_sos_model_run, setup_folder_structure):
-        """ Test to write two sos_model_run configurations to Yaml files, then
+    def test_sos_model_run_read_all(self, get_sos_model_run, get_handler):
+        """Test to write two sos_model_run configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         sos_model_run1 = get_sos_model_run
         sos_model_run1['name'] = 'sos_model_run1'
@@ -278,26 +30,111 @@ class TestDatafileInterface():
         sos_model_runs = config_handler.read_sos_model_runs()
         assert sos_model_runs[0]['name'] == 'sos_model_run1'
         assert sos_model_runs[1]['name'] == 'sos_model_run2'
+        assert len(sos_model_runs) == 2
 
-        sos_model_run3 = get_sos_model_run
-        sos_model_run3['name'] = 'sos_model_run3'
-        config_handler.update_sos_model_run('sos_model_run2', sos_model_run3)
+    def test_sos_model_run_write_twice(self, get_sos_model_run, get_handler):
+        """Test that writing a sos_model_run should fail (not overwrite).
+        """
+        config_handler = get_handler
 
-        sos_model_runs = config_handler.read_sos_model_runs()
-        print(sos_model_runs)
+        sos_model_run1 = get_sos_model_run
+        sos_model_run1['name'] = 'unique'
+        config_handler.write_sos_model_run(sos_model_run1)
 
-        assert sos_model_runs[0]['name'] == 'sos_model_run1'
-        assert sos_model_runs[1]['name'] == 'sos_model_run3'
+        with raises(DataExistsError) as ex:
+            config_handler.write_sos_model_run(sos_model_run1)
+        assert "sos_model_run 'unique' already exists" in str(ex)
 
-    def test_sos_model(self, get_sos_model, setup_folder_structure):
+    def test_sos_model_run_read_one(self, get_sos_model_run, get_handler):
+        """Test reading a single sos_model_run.
+        """
+        config_handler = get_handler
+
+        sos_model_run1 = get_sos_model_run
+        sos_model_run1['name'] = 'sos_model_run1'
+        config_handler.write_sos_model_run(sos_model_run1)
+
+        sos_model_run2 = get_sos_model_run
+        sos_model_run2['name'] = 'sos_model_run2'
+        config_handler.write_sos_model_run(sos_model_run2)
+
+        sos_model_run = config_handler.read_sos_model_run('sos_model_run2')
+        assert sos_model_run['name'] == 'sos_model_run2'
+
+    def test_sos_model_run_read_missing(self, get_handler):
+        """Test that reading a missing sos_model_run fails.
+        """
+        config_handler = get_handler
+        with raises(DataNotFoundError) as ex:
+            config_handler.read_sos_model_run('missing_name')
+        assert "sos_model_run 'missing_name' not found" in str(ex)
+
+    def test_sos_model_run_update(self, get_sos_model_run, get_handler):
+        """Test updating a sos_model_run description
+        """
+        config_handler = get_handler
+        sos_model_run = get_sos_model_run
+        sos_model_run['name'] = 'to_update'
+        sos_model_run['description'] = 'before'
+
+        config_handler.write_sos_model_run(sos_model_run)
+
+        sos_model_run['description'] = 'after'
+        config_handler.update_sos_model_run('to_update', sos_model_run)
+
+        actual = config_handler.read_sos_model_run('to_update')
+        assert actual['description'] == 'after'
+
+    def test_sos_model_run_update_mismatch(self, get_sos_model_run, get_handler):
+        """Test that updating a sos_model_run with mismatched name should fail
+        """
+        config_handler = get_handler
+        sos_model_run = get_sos_model_run
+
+        sos_model_run['name'] = 'sos_model_run'
+        with raises(DataMismatchError) as ex:
+            config_handler.update_sos_model_run('sos_model_run2', sos_model_run)
+        assert "name 'sos_model_run2' must match 'sos_model_run'" in str(ex)
+
+    def test_sos_model_run_update_missing(self, get_sos_model_run, get_handler):
+        """Test that updating a nonexistent sos_model_run should fail
+        """
+        config_handler = get_handler
+        sos_model_run = get_sos_model_run
+        sos_model_run['name'] = 'missing_name'
+
+        with raises(DataNotFoundError) as ex:
+            config_handler.update_sos_model_run('missing_name', sos_model_run)
+        assert "sos_model_run 'missing_name' not found" in str(ex)
+
+    def test_sos_model_run_delete(self, get_sos_model_run, get_handler):
+        """Test that updating a nonexistent sos_model_run should fail
+        """
+        config_handler = get_handler
+        sos_model_run = get_sos_model_run
+        sos_model_run['name'] = 'to_delete'
+
+        config_handler.write_sos_model_run(sos_model_run)
+        before_delete = config_handler.read_sos_model_runs()
+        assert len(before_delete) == 1
+
+        config_handler.delete_sos_model_run('to_delete')
+        after_delete = config_handler.read_sos_model_runs()
+        assert len(after_delete) == 0
+
+    def test_sos_model_run_delete_missing(self, get_sos_model_run, get_handler):
+        """Test that updating a nonexistent sos_model_run should fail
+        """
+        config_handler = get_handler
+        with raises(DataNotFoundError) as ex:
+            config_handler.delete_sos_model_run('missing_name')
+        assert "sos_model_run 'missing_name' not found" in str(ex)
+
+    def test_sos_model(self, get_sos_model, get_handler):
         """ Test to write two soS_model configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         sos_model1 = get_sos_model
         sos_model1['name'] = 'sos_model_1'
@@ -320,17 +157,12 @@ class TestDatafileInterface():
         assert sos_model2 not in sos_models
         assert sos_model3 in sos_models
 
-    def test_sector_model(self, setup_folder_structure, get_project_config,
-                          get_sector_model):
+    def test_sector_model(self, get_sector_model, get_handler):
         """ Test to write a sector_model configuration to a Yaml file
         read the Yaml file and compare that the result is equal.
         Finally check if the name shows up the the readlist.
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         sector_model1 = copy(get_sector_model)
         sector_model1['name'] = 'sector_model_1'
@@ -357,38 +189,32 @@ class TestDatafileInterface():
         assert sector_models.count(sector_model2['name']) == 0
         assert sector_models.count(sector_model3['name']) == 1
 
-    def test_region_definition_data(self, setup_folder_structure, get_project_config,
-                                    setup_region_data):
+    def test_region_definition_data(self, setup_folder_structure, setup_region_data,
+                                    get_handler):
         """ Test to dump a region_definition_set (GeoJSON) data-file and then read the data
         using the datafile interface. Finally check if the data shows up in the
         returned dictionary.
         """
         basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
         region_definition_data = setup_region_data
 
         with open(os.path.join(str(basefolder), 'data', 'region_definitions',
                                'test_region.json'), 'w+') as region_definition_file:
             json.dump(region_definition_data, region_definition_file)
 
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
         test_region_definition = config_handler.read_region_definition_data(
             'lad')
 
         assert test_region_definition[0]['properties']['name'] == 'oxford'
 
-    def test_scenario_data(self, setup_folder_structure, get_project_config,
+    def test_scenario_data(self, setup_folder_structure, get_handler,
                            get_scenario_data):
         """ Test to dump a scenario (CSV) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
         returned dictionary.
         """
         basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
         scenario_data = get_scenario_data
 
         keys = scenario_data[0].keys()
@@ -398,7 +224,7 @@ class TestDatafileInterface():
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
 
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
         test_scenario = config_handler.read_scenario_data(
             'High Population (ONS)')
 
@@ -406,37 +232,25 @@ class TestDatafileInterface():
         assert 'population_count' in test_scenario
         assert test_scenario['population_count'][0]['region'] == 'GB'
 
-    def test_narrative_data(self, setup_folder_structure, get_project_config,
-                            get_narrative_data):
+    def test_narrative_data(self, setup_folder_structure, get_handler, get_narrative_data):
         """ Test to dump a narrative (yml) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
         returned dictionary.
         """
         basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        basefolder = setup_folder_structure
         narrative_data_path = os.path.join(str(basefolder), 'data', 'narratives',
                                            'central_planning.yml')
         dump(get_narrative_data, narrative_data_path)
 
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
         test_narrative = config_handler.read_narrative_data('Central Planning')
 
         assert test_narrative[0]['energy_demand'][0]['name'] == 'smart_meter_savings'
 
-    def test_project_region_definitions(self, setup_folder_structure,
-                                        get_project_config):
+    def test_project_region_definitions(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # region_definition sets / read existing (from fixture)
         region_definitions = config_handler.read_region_definitions()
@@ -478,16 +292,10 @@ class TestDatafileInterface():
             if region_definition['name'] == 'name_change':
                 assert region_definition['filename'] == 'lad_NL_V2.csv'
 
-    def test_project_interval_definitions(self, setup_folder_structure,
-                                          get_project_config):
+    def test_project_interval_definitions(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # interval_definitions / read existing (from fixture)
         interval_definitions = config_handler.read_interval_definitions()
@@ -531,15 +339,10 @@ class TestDatafileInterface():
             if interval_definition['name'] == 'name_change':
                 assert interval_definition['filename'] == 'monthly_V2.csv'
 
-    def test_project_scenario_sets(self, setup_folder_structure, get_project_config):
+    def test_project_scenario_sets(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # Scenario sets / read existing (from fixture)
         scenario_sets = config_handler.read_scenario_sets()
@@ -582,15 +385,10 @@ class TestDatafileInterface():
                 expected = 'The annual mortality rate in NL population'
                 assert scenario_set['description'] == expected
 
-    def test_project_scenarios(self, setup_folder_structure, get_project_config):
+    def test_project_scenarios(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # Scenarios / read existing (from fixture)
         scenarios = config_handler.read_scenario_set('population')
@@ -637,15 +435,10 @@ class TestDatafileInterface():
             if scenario['name'] == 'name_change':
                 assert scenario['filename'] == 'population_med.csv'
 
-    def test_project_narrative_sets(self, setup_folder_structure, get_project_config):
+    def test_project_narrative_sets(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # Narrative sets / read existing (from fixture)
         narrative_sets = config_handler.read_narrative_sets()
@@ -686,15 +479,10 @@ class TestDatafileInterface():
             if narrative_set['name'] == 'name_change':
                 assert narrative_set['description'] == 'New narrative set description'
 
-    def test_project_narratives(self, setup_folder_structure, get_project_config):
+    def test_project_narratives(self, get_handler):
         """ Test to read and write the project configuration
         """
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(get_project_config, project_config_path)
-
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = get_handler
 
         # Narratives / read existing (from fixture)
         narratives = config_handler.read_narrative_set('technology')
@@ -732,3 +520,49 @@ class TestDatafileInterface():
         for narrative in narratives:
             if narrative['name'] == 'name_change':
                 assert narrative['filename'] == 'energy_demand_low_tech_v2.yml'
+
+
+def test_transform_leaves_empty():
+    tree = []
+    actual = transform_leaves(tree, replace_e)
+    assert id(tree) != id(actual)
+    assert actual == []
+
+
+def test_transform_leaves_non_tree():
+    tree = "not a tree"
+    actual = transform_leaves(tree, replace_e)
+    assert actual == tree
+
+
+def test_transform_list():
+    tree = ['a', 'b', 'c', 'd', 'e']
+    defensive_copy = deepcopy(tree)
+    actual = transform_leaves(tree, replace_e)
+    expected = ['a', 'b', 'c', 'd', 'XXX']
+    assert actual == expected
+    assert tree == defensive_copy
+
+
+def test_transform_dict():
+    tree = {'a': 'e', 'b': ['c', 'e']}
+    defensive_copy = deepcopy(tree)
+    actual = transform_leaves(tree, replace_e)
+    expected = {'a': 'XXX', 'b': ['c', 'XXX']}
+    assert actual == expected
+    assert tree == defensive_copy
+
+
+def test_transform_circular():
+    tree = {'b': 'e'}
+    tree['a'] = tree
+    with raises(ValueError) as ex:
+        transform_leaves(tree, replace_e)
+    assert 'Circular reference detected' in str(ex)
+
+
+def replace_e(obj, path):
+    if obj == 'e':
+        return 'XXX'
+    else:
+        return obj
