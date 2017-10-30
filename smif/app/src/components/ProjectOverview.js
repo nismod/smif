@@ -1,10 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import '../../static/css/main.css';
-
 const ProjectOverview = () => (
-
     <div className="content-wrapper" >
         <div>
             <h2>Project Overview</h2>
@@ -14,17 +11,17 @@ const ProjectOverview = () => (
             <h3>Loading...</h3>
         </div>
 
-        <div>
+        <div hidden>
             <h3>Error</h3>
         </div>
 
-        <div hidden>
+        <div>
             <label>Projectname:</label>
-            <input name="project_name" type="text" value="NISMOD v2.0"/>
+            <input name="project_name" type="text" defaultValue="NISMOD v2.0"/>
             <details>
                 <summary>Model Runs</summary>
                 <div className="select-container">
-                    <select size="10">
+                    <select>
                         <option>Modelrun 1</option>
                         <option>Modelrun 2</option>
                         <option>Modelrun 3</option>
@@ -68,7 +65,7 @@ const ProjectOverview = () => (
             <details>
                 <summary>Simulation Models</summary>
                 <div className="select-container">
-                    <select size="5">
+                    <select>
                         <option>Energy Demand</option>
                         <option>Energy Supply</option>
                         <option>Water</option>
@@ -88,7 +85,6 @@ const ProjectOverview = () => (
                 <input type="button" value="Create a Narrative" />
             </details>
 
-            <br/>
             <input type="button" value="Save Project Configuration" />
             <input type="button" value="Cancel" />
         </div>

@@ -3,8 +3,6 @@ import ReactDOM from 'react-dom';
 
 import FaTrash from 'react-icons/lib/fa/trash';
 
-import 'normalize.css';
-import '../../../static/css/main.css';
 import './pattern-library.css';
 
 export default class PatternLibrary extends React.Component {
@@ -31,12 +29,14 @@ export default class PatternLibrary extends React.Component {
                         <h3>Heading Level 3</h3>
                     </div>
                     <div className="sample-container">
-                        <p>ITRC is a consortium of seven leading UK universities, 
-                            investigating ways to improve the performance of infrastructure 
-                            systems in the UK and around the world. Our research is helping 
-                            businesses and policymakers to explore the risk of infrastructure 
-                            failure and the long term benefits of investments and policies 
-                            to improve infrastructure systems.</p>
+                        <p>
+                            ITRC is a consortium of seven leading UK universities,
+                            investigating ways to improve the performance of infrastructure
+                            systems in the UK and around the world. Our research is helping
+                            businesses and policymakers to explore the risk of infrastructure
+                            failure and the long term benefits of investments and policies
+                            to improve infrastructure systems.
+                        </p>
                     </div>
                     <div className="sample-container">
                         <i>Italic</i>
@@ -53,21 +53,21 @@ export default class PatternLibrary extends React.Component {
                     <h3>Code</h3>
                     <div className="sample-container">
                         <code>var i = 0;</code>
-                    </div>      
+                    </div>
                     <h3>Details</h3>
                     <div className="sample-container">
                         <details>
-                            <summary>Some details</summary> 
-                            <p>More info about the details.</p> 
+                            <summary>Some details</summary>
+                            <p>More info about the details.</p>
                         </details>
-                    </div>              
+                    </div>
                     <h3>External link</h3>
                     <div className="sample-container">
                         <a href="https://www.itrc.org.uk/">Link to the ITRC homepage</a>
                     </div>
                     <h3>Same-page link</h3>
                     <div className="sample-container">
-                        <a href="#attr-pattern-lib">Link to the header of this page</a> 
+                        <a href="#attr-pattern-lib">Link to the header of this page</a>
                     </div>
                     <h3>Fieldset</h3>
                     <fieldset>
@@ -105,7 +105,7 @@ export default class PatternLibrary extends React.Component {
                     <h3>Radio Button</h3>
                     <div className="sample-container">
                         <label>
-                        <input type="radio" />
+                            <input type="radio" />
                             Subscribe to newsletter?
                         </label>
                     </div>
@@ -132,7 +132,8 @@ export default class PatternLibrary extends React.Component {
                     <h3>Datalist</h3>
                     <div className="sample-container">
                         <label>Choose a model:
-                        <input type="text" list="models" name="myModels" /></label>
+                            <input type="text" list="models" name="myModels" />
+                        </label>
                         <datalist id="models">
                             <option value="Water">Water</option>
                             <option value="Energy-Demand">Energy Demand</option>
@@ -143,10 +144,10 @@ export default class PatternLibrary extends React.Component {
                     <h3>Select Menu</h3>
                     <div className="sample-container">
                         <select size="3">
-                          <option value="Water">Water</option>
-                          <option value="Energy-Demand">Energy Demand</option>
-                          <option value="Energy-Supply">Energy Supply</option>
-                          <option value="Solid-Waste">Solid Waste</option>
+                            <option value="Water">Water</option>
+                            <option value="Energy-Demand">Energy Demand</option>
+                            <option value="Energy-Supply">Energy Supply</option>
+                            <option value="Solid-Waste">Solid Waste</option>
                         </select>
                     </div>
 
@@ -170,7 +171,7 @@ export default class PatternLibrary extends React.Component {
                                 <td>Tom</td>
                                 <td>Russell</td>
                             </tr>
-                        </table> 
+                        </table>
                     </div>
 
                     <h2>Icons</h2>
@@ -178,8 +179,9 @@ export default class PatternLibrary extends React.Component {
                     <div className="sample-container">
                         <FaTrash />
                     </div>
-                </div>                
+                </div>
 
-            </article>);
+            </article>
+        );
     }
 }

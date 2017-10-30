@@ -1,5 +1,4 @@
 import React from 'react';
-import '../../static/css/main.css';
 
 const SosModelRunConfig = () => (
     <div className="content-wrapper">
@@ -20,7 +19,7 @@ const SosModelRunConfig = () => (
             <label>Description:</label>
             <div className="textarea-container">
                 <textarea name="textarea" rows="5" value="a description of what the model run contains."/>
-            </div>        
+            </div>
             <label>Datestamp:</label>
             <input type="datetime-local" value="2017-09-20T12:53:23" disabled="disabled"/>
 
@@ -35,15 +34,19 @@ const SosModelRunConfig = () => (
                     <option value="energy-water">energy-water</option>
                 </select>
             </div>
-            <label>Scenarios:</label> 
+            <label>Scenarios:</label>
             <fieldset>
                 <legend>Population (ONS)</legend>
                 <label>
-                    <input type="radio" />
+                    <input type="radio" name="scenario-population" value="low" />
                     Low
-                    <input type="radio" />
+                </label>
+                <label>
+                    <input type="radio" name="scenario-population" value="medium" />
                     Medium
-                    <input type="radio" />
+                </label>
+                <label>
+                    <input type="radio" name="scenario-population" value="high" />
                     High
                 </label>
             </fieldset>
@@ -54,13 +57,14 @@ const SosModelRunConfig = () => (
                 <label>
                     <input type="checkbox" />
                     Energy Demand - High Tech
-                    <br/>
+                </label>
+                <label>
                     <input type="checkbox" />
                     Solid Waste - High recycling
-                    <br/>
+                </label>
+                <label>
                     <input type="checkbox" />
                     Transport - Autonomous driving
-                    <br/>
                 </label>
             </fieldset>
             <fieldset disabled="disabled">
@@ -68,13 +72,14 @@ const SosModelRunConfig = () => (
                 <label>
                     <input type="checkbox" />
                     Central Planning
-                    <br/>
+                </label>
+                <label>
                     <input type="checkbox" />
                     Hard Brexit
-                    <br/>
+                </label>
+                <label>
                     <input type="checkbox" />
                     Soft Brexit
-                    <br/>
                 </label>
             </fieldset>
 
@@ -106,8 +111,6 @@ const SosModelRunConfig = () => (
             <label>Resolution:</label>
             <input type="number" />
 
-            <br/>
-            <br/>
             <input type="button" value="Save Model Run Configuration" />
             <input type="button" value="Cancel" />
         </div>

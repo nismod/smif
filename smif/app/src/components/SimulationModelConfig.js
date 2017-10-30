@@ -2,8 +2,6 @@ import React from 'react';
 
 import FaTrash from 'react-icons/lib/fa/trash';
 
-import '../../static/css/main.css';
-
 const SimulationModelConfig = () => (
     <div className="content-wrapper">
         <h2>Simulation Model Configuration</h2>
@@ -30,7 +28,7 @@ const SimulationModelConfig = () => (
                     <th>Spatial Resolution</th>
                     <th>Temporal Resolution</th>
                     <th>Units</th>
-                    <th width="10px"></th>
+                    <th>Actions</th>
                 </tr>
                 <tr>
                     <td>Energy Demand per household</td>
@@ -57,7 +55,7 @@ const SimulationModelConfig = () => (
         </div>
         <fieldset>
             <label>Name:</label>
-                <input type="text" />
+            <input type="text" />
             <label>Spatial Resolution:</label>
             <div className="select-container">
                 <select>
@@ -98,7 +96,7 @@ const SimulationModelConfig = () => (
                     <th>Spatial Resolution</th>
                     <th>Temporal Resolution</th>
                     <th>Units</th>
-                    <th width="10px"></th>
+                    <th>Actions</th>
                 </tr>
                 <tr>
                     <td>Energy Demand per household</td>
@@ -125,7 +123,7 @@ const SimulationModelConfig = () => (
         </div>
         <fieldset>
             <label>Name:</label>
-                <input type="text" />
+            <input type="text" />
             <label>Spatial Resolution:</label>
             <div className="select-container">
                 <select>
@@ -167,7 +165,7 @@ const SimulationModelConfig = () => (
                     <th colSpan="2">Suggested Range</th>
                     <th></th>
                     <th></th>
-                    <th width="10px"></th>
+                    <th>Actions</th>
                 </tr>
                 <tr>
                     <th>Name</th>
@@ -198,18 +196,18 @@ const SimulationModelConfig = () => (
             <input type="text" />
             <label>Absolute Range:</label>
             <fieldset>
-                <i>Minimal</i>
+                <i>Minimum</i>
                 <input type="number" />
                 <i>Maximum</i>
                 <input type="number" />
             </fieldset>
             <label>Suggested Range:</label>
             <fieldset>
-                <i>Minimal</i>
+                <i>Minimum</i>
                 <input type="number" />
                 <i>Maximum</i>
                 <input type="number" />
-                </fieldset>
+            </fieldset>
             <label>Default:</label>
             <input type="number" />
             <label>Units:</label>
@@ -239,7 +237,7 @@ const SimulationModelConfig = () => (
         </div>
         <fieldset>
             <label>Filename:</label>
-                <input type="text" />
+            <input type="text" />
             <input type="button" value="Add Intervention" />
         </fieldset>
 
@@ -247,8 +245,6 @@ const SimulationModelConfig = () => (
         <label>Filename:</label>
         <input type="text" />
 
-        <br/>
-        <br/>
         <input type="button" value="Save Model Configuration" />
         <input type="button" value="Cancel" />
     </div>

@@ -21,10 +21,10 @@ const SosModelConfig = () => (
             <label>
                 <input type="checkbox" />
                 Population
-                <br/>
+            </label>
+            <label>
                 <input type="checkbox" />
                 Economy
-                <br/>
             </label>
         </fieldset>
         <fieldset>
@@ -32,16 +32,18 @@ const SosModelConfig = () => (
             <label>
                 <input type="checkbox" />
                 Energy Demand
-                <br/>
+            </label>
+            <label>
                 <input type="checkbox" />
                 Energy Supply
-                <br/>
+            </label>
+            <label>
                 <input type="checkbox" />
                 Transport
-                <br/>
+            </label>
+            <label>
                 <input type="checkbox" />
                 Solid Waste
-                <br/>
             </label>
         </fieldset>
 
@@ -51,7 +53,7 @@ const SosModelConfig = () => (
                 <tr>
                     <th colSpan="2">Source</th>
                     <th colSpan="2">Sink</th>
-                    <th width="10px"></th>
+                    <th colSpan="1"></th>
                 </tr>
                 <tr>
                     <th>Model</th>
@@ -119,9 +121,6 @@ const SosModelConfig = () => (
             <input type="button" value="Add Dependency" />
         </fieldset>
 
-
-        <br/>
-        <br/>
         <input type="button" value="Save SoS Model Configuration" />
         <input type="button" value="Cancel" />
     </div>
