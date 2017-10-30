@@ -1,4 +1,5 @@
 import React from 'react';
+
 import FaEdit from 'react-icons/lib/fa/edit';
 import FaTrash from 'react-icons/lib/fa/trash';
 

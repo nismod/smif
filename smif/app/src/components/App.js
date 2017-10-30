@@ -1,16 +1,32 @@
-import React from 'react';
-import Welcome from './Welcome.js'
-import ProjectOverview from './ProjectOverview';
-import SosModelRunConfig from './SosModelRunConfig';
-import SosModelConfig from './SosModelConfig';
-import SimulationModelConfig from './SimulationModelConfig';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
 
-import '../../static/css/main.css';
+import { fetchProjects } from '../actions';
 
-const App = () => (
-    <div>
-        <ProjectOverview />        
-    </div>
-);
+import Welcome from './Welcome'
+import ProjectListContainer from './ProjectList'
 
-export default App;
+export class App extends Component {
+
+  	render() {
+    	return (
+      		<div>
+				<ProjectListContainer />
+	      	</div>
+    	);
+  	}
+}
+
+// AppContainer.js
+const mapStateToProps = (state, ownProps) => ({
+});
+
+const mapDispatchToProps = {
+};
+
+const AppContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(App);
+
+export default AppContainer;

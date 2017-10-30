@@ -1,7 +1,8 @@
 import React from 'react';
-import '../../static/css/main.css';
 
 import FaTrash from 'react-icons/lib/fa/trash';
+
+import '../../static/css/main.css';
 
 const SimulationModelConfig = () => (
     <div className="content-wrapper">
