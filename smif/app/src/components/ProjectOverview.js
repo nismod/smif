@@ -1,5 +1,5 @@
 import React from 'react';
-import {Link} from 'react-router';
+import { Link } from 'react-router-dom';
 
 import '../../static/css/main.css';
 
@@ -23,7 +23,7 @@ const ProjectOverview = () => (
             <input name="project_name" type="text" value="NISMOD v2.0"/>
             <details>
                 <summary>Model Runs</summary>
-                <div className="select-container"> 
+                <div className="select-container">
                     <select size="10">
                         <option>Modelrun 1</option>
                         <option>Modelrun 2</option>
@@ -52,7 +52,7 @@ const ProjectOverview = () => (
             </details>
             <details>
                 <summary>System-of-Systems Models</summary>
-                <div className="select-container"> 
+                <div className="select-container">
                     <select size="5">
                         <option>Energy / Water</option>
                         <option>Population / Solid Waste</option>
@@ -80,11 +80,11 @@ const ProjectOverview = () => (
                 <input type="button" value="Create a new Simulation Model Configuration" />
             </details>
             <details>
-                <summary>Scenarios</summary> 
+                <summary>Scenarios</summary>
                 <input type="button" value="Create a Scenario" />
             </details>
             <details>
-                <summary>Narratives</summary> 
+                <summary>Narratives</summary>
                 <input type="button" value="Create a Narrative" />
             </details>
 

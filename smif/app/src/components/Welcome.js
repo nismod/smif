@@ -1,14 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router';
-
-import '../../static/css/main.css';
+import { Link } from 'react-router-dom';
 
 const Welcome = () => (
     <div className="content-wrapper">
-        <div>
-            <h1>Welcome to Smif!</h1>
-            <li><Link to="/configure" activeClassName="active">Open Configurator</Link></li>
-        </div>
+        <h1>Welcome to Smif!</h1>
+        <Link to="/configure">Open Configurator</Link>
     </div>
 );
 
