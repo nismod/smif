@@ -1,65 +1,12 @@
 /**
  * Top-level and utility
  */
-html {
-  box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-}
-*, *::before, *::after {
-  box-sizing: inherit;
-}
-html,
-body {
-    margin: 0;
-    color: #666;
-    min-width: 760px;
-}
-.clearfix:after {
-    /* use on containers whose children are floated, to let them contribute
-     * to the implicit height
-     * - see https://css-tricks.com/snippets/css/clear-fix/
-     */
-    content: "";
-    display: table;
-    clear: both;
-}
-.main-wrapper {
-    display: flex;
-    align-items: stretch;
-
-    position: absolute;
-    top: 92px; /* height of .page-header including padding */
-    bottom: 0;
-    left: 0;
-    right: 0;
-}
 .content-wrapper {
     padding: 0 1em;
     max-width: 45em;
 }
-h1 {
-    font-size: 1.75em;
-    line-height: 1.25;
-    margin-bottom: 0.5em;
-    color: #006e79;
-}
-h2 {
-    font-size: 1.5em;
-    line-height: 1.4;
-    margin-bottom: 0.5em;
-    color: #006e79;
-}
-h3 {
-    font-size: 1em;
-    line-height: 1.4;
-    margin-bottom: 0.4em;
-    color: #006e79;
-}
-h4 {
-    text-transform: uppercase;
-    color: #666;
-    font-size: 0.75em;
-    margin-bottom: 0.4em;
+.jumbotron {
+    margin-top: 1em;
 }
 details {
     font-size: 1em;
@@ -67,15 +14,6 @@ details {
     margin-bottom: 0.4em;
     color: #006e79;
 }
-label {
-    font-size: 1em;
-    line-height: 1.4;
-    color: #666;
-    display: block;
-    width: 100%;
-    margin-bottom: 0.4em;
-}
-
 .content-image {
     display: block;
     margin: 1em auto;
@@ -87,7 +25,7 @@ input[type=number],
 input[type=date],
 input[type=datetime-local],
 input[type=button]{
-    width: 100%; 
+    width: 100%;
     border-radius: 0px;
     border-style: solid;
     margin-bottom: 0.4em;
@@ -104,7 +42,7 @@ input[type=button]{
     cursor: pointer;
 }
 input[type=range]{
-    width: 100%; 
+    width: 100%;
     margin-bottom: 0.4em;
 }
 input[type=checkbox],
@@ -132,7 +70,7 @@ Fieldset {
     margin-bottom: 0.4em;
 }
 select{
-    width: 100%; 
+    width: 100%;
 }
 .select-container {
     margin-bottom: 0.4em;
