@@ -75,28 +75,7 @@ select{
 .select-container {
     margin-bottom: 0.4em;
 }
-.table-container {
-    margin-bottom: 0.4em;
-    margin-left: 0.4em;
-
-}
-table {
-    width:100%;
-}
-table th {
-    text-align: center;
-    background-color: #666;
-    color: white;
-}
-table, th, td {
-    border: 1px solid #666;
-    border-collapse: collapse;
-}
-th, td {
-    padding: 5px;
-    text-align: left;
-}
-summary{
+summary {
     outline: 0;
     cursor: pointer;
 }

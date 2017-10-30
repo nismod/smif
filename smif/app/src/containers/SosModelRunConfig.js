@@ -8,11 +8,11 @@ const SosModelRunConfig = () => (
             <h3>Loading...</h3>
         </div>
 
-        <div>
+        <div hidden>
             <h3>Error</h3>
         </div>
 
-        <div hidden>
+        <div>
             <h3>General</h3>
             <label>Name:</label>
             <input type="text" name="modelrun_name"  value="unique_model_run_name"/>

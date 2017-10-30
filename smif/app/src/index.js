@@ -5,9 +5,9 @@ import { Route, HashRouter as Router } from 'react-router-dom';
 
 import Nav from './components/Nav';
 import Welcome from './components/Welcome';
-import ProjectOverview from './components/ProjectOverview';
-import SosModelRunConfig from './components/SosModelRunConfig';
-import SosModelConfig from './components/SosModelConfig';
+import ProjectOverview from './containers/ProjectOverview';
+import SosModelRunConfig from './containers/SosModelRunConfig';
+import SosModelConfig from './containers/SosModelConfig';
 
 import { store } from './store';
 
@@ -22,8 +22,8 @@ render(
                 <Nav />
                 <Route exact path="/" component={Welcome}/>
                 <Route exact path="/configure" component={ProjectOverview}/>
-                <Route path="/configure/sos-modelrun" component={SosModelRunConfig}/>
-                <Route path="/configure/sos-model" component={SosModelConfig}/>
+                <Route path="/configure/sos-model-run/:name" component={SosModelRunConfig}/>
+                <Route path="/configure/sos-model/:name" component={SosModelConfig}/>
             </div>
         </Router>
     </Provider>,

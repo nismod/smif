@@ -1,6 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import SosModelRunItem from '../components/SosModelRunItem.js';
+
+/* mock data for prototyping */
+let sos_model_runs = [
+    { name: 'Test', description: 'A test description.' },
+    { name: 'ew1', description: 'First energy-water run.' }
+];
+
 const ProjectOverview = () => (
     <div>
         <h1>Project Overview</h1>
@@ -20,31 +28,22 @@ const ProjectOverview = () => (
             </label>
 
             <h2>Model Runs</h2>
-            <div className="select-container">
-                <select>
-                    <option>Modelrun 1</option>
-                    <option>Modelrun 2</option>
-                    <option>Modelrun 3</option>
-                    <option>Modelrun 4</option>
-                    <option>Modelrun 5</option>
-                    <option>Modelrun 6</option>
-                    <option>Modelrun 7</option>
-                    <option>Modelrun 8</option>
-                    <option>Modelrun 9</option>
-                    <option>Modelrun 10</option>
-                    <option>Modelrun 11</option>
-                    <option>Modelrun 12</option>
-                    <option>Modelrun 13</option>
-                    <option>Modelrun 14</option>
-                    <option>Modelrun 15</option>
-                    <option>Modelrun 16</option>
-                    <option>Modelrun 17</option>
-                    <option>Modelrun 18</option>
-                    <option>Modelrun 19</option>
-                    <option>Modelrun 20</option>
-                </select>
-            </div>
-            <input type="button" value="Edit/View Model Run" />
+            <table className="table table-sm">
+                <thead className="thead-light">
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        sos_model_runs.map((sos_model_run) => (
+                            <SosModelRunItem key={sos_model_run.name}
+                                {...sos_model_run} />
+                        ))
+                    }
+                </tbody>
+            </table>
             <input type="button" value="Create a new Model Run" />
 
             <h2>System-of-Systems Models</h2>
