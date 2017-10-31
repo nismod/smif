@@ -1,5 +1,6 @@
 .guide-header > h1,
 .guide-content > h2,
+.guide-content > h3,
 .guide-nav > h3 {
     color: #777;
     font-weight: 500;

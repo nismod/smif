@@ -16,6 +16,14 @@ npm run build  # runs build script specified in package.json
 npm start      # runs build, watches for changes, and opens in browser
 ```
 
+To develop against the python HTTP API, run the API server against test fixtures
+in another terminal with:
+
+```bash
+cd ../http_api/
+FLASK_APP=smif.http_api.app FLASK_DEBUG=1 flask run
+```
+
 Run tests with:
 
 ```bash
