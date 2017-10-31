@@ -1,7 +1,8 @@
+import 'babel-polyfill';
 import React from 'react';
 import { render } from 'react-dom';
 import { Provider } from 'react-redux';
-import { Route, HashRouter as Router } from 'react-router-dom';
+import { Route, BrowserRouter as Router } from 'react-router-dom';
 
 import Nav from './components/Nav';
 import Welcome from './components/Welcome';
@@ -9,7 +10,7 @@ import ProjectOverview from './containers/ProjectOverview';
 import SosModelRunConfig from './containers/SosModelRunConfig';
 import SosModelConfig from './containers/SosModelConfig';
 
-import { store } from './store';
+import store from './store/store.js';
 
 import 'normalize.css';
 import 'bootstrap/dist/css/bootstrap.min.css';

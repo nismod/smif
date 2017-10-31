@@ -1,5 +1,5 @@
 const path = require('path');
-const webpack = require('webpack')
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
@@ -16,7 +16,17 @@ module.exports = {
         patternLibrary: './src/pattern-library.js'
     },
     devServer: {
-        contentBase: '.'
+        contentBase: '.',
+        // serve 'index.html' for other routes, so that live reload works even
+        // with other routes
+        historyApiFallback: true,
+        // proxy API requests to another local server (assuming the python
+        // flask app is running to serve API requests)
+        proxy: {
+            '/api/*': {
+                target: 'http://localhost:5000'
+            }
+        }
     },
     output: {
         // Output javascript files to the 'dist' directory
