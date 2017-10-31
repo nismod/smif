@@ -49,6 +49,8 @@ def register_api_endpoints(app):
                  key='sos_model_run_name', key_type='string')
     register_api(app, SosModelAPI, 'sos_model_api', '/api/v1/sos_models/',
                  key='sos_model_name', key_type='string')
+    register_api(app, SectorModelAPI, 'sector_model_api', '/api/v1/sector_models/',
+                 key='sector_model_name', key_type='string')
 
 
 def register_error_handlers(app):
@@ -179,6 +181,58 @@ class SosModelAPI(MethodView):
         """
         data_interface = current_app.config.get_data_interface()
         data_interface.delete_sos_model(sos_model_name)
+        response = jsonify({})
+        return response
+
+class SectorModelAPI(MethodView):
+    """Implement CRUD operations for sector_model configuration data
+    """
+    def get(self, sector_model_name):
+        """Get sector_models
+        all: GET /api/v1/sector_models/
+        one: GET /api/vi/sector_models/name
+        """
+        # return str(current_app.config)
+        data_interface = current_app.config.get_data_interface()
+        if sector_model_name is None:
+            data = data_interface.read_sector_models()
+            response = jsonify(data)
+        else:
+            data = data_interface.read_sector_model(sector_model_name)
+            response = jsonify(data)
+
+        return response
+
+    def post(self):
+        """Create a sector_model:
+        POST /api/v1/sector_models
+        """
+        data_interface = current_app.config.get_data_interface()
+        data = request.get_json() or request.form
+        data = check_timestamp(data)
+
+        data_interface.write_sector_model(data)
+        response = jsonify({"message": "success"})
+        response.status_code = 201
+        return response
+
+    def put(self, sector_model_name):
+        """Update a sector_model:
+        PUT /api/v1/sector_models
+        """
+        data_interface = current_app.config.get_data_interface()
+        data = request.get_json() or request.form
+        data = check_timestamp(data)
+        data_interface.update_sector_model(sector_model_name, data)
+        response = jsonify({})
+        return response
+
+    def delete(self, sector_model_name):
+        """Delete a sector_model:
+        DELETE /api/v1/sector_models
+        """
+        data_interface = current_app.config.get_data_interface()
+        data_interface.delete_sector_model(sector_model_name)
         response = jsonify({})
         return response
 
