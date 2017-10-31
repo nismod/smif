@@ -153,27 +153,38 @@ class DatafileInterface(DataInterface):
     def read_sos_model(self, sos_model_name):
         """Read a specific system-of-system model
 
+        Arguments
+        ---------
+        sos_model_name: str
+            A sos_model name
+
         Returns
         -------
-        dict
-            A sos model configuration dictionary
+        sos_model: dict
+            A sos_model dictionary
         """
-        filename = sos_model_name
-        return self._read_yaml_file(self.file_dir['sos_models'], filename)
+        if not self._sos_model_exists(sos_model_name):
+            raise DataNotFoundError("sos_model '%s' not found" % sos_model_name)
+        return self._read_yaml_file(self.file_dir['sos_models'], sos_model_name)
+
+    def _sos_model_exists(self, name):
+        return os.path.exists(
+            os.path.join(self.file_dir['sos_models'], name + '.yml'))
 
     def write_sos_model(self, sos_model):
         """Write system-of-system model to Yaml file
-
-        Existing configuration will be overwritten without warning
 
         Arguments
         ---------
         sos_model: dict
             A sos_model dictionary
         """
-        self._write_yaml_file(self.file_dir['sos_models'],
-                              sos_model['name'],
-                              sos_model)
+        if self._sos_model_exists(sos_model['name']):
+            raise DataExistsError("sos_model '%s' already exists" % sos_model['name'])
+        else:
+            self._write_yaml_file(self.file_dir['sos_models'],
+                sos_model['name'],
+                sos_model)
 
     def update_sos_model(self, sos_model_name, sos_model):
         """Update system-of-system model in Yaml file
@@ -186,9 +197,28 @@ class DatafileInterface(DataInterface):
             A sos_model dictionary
         """
         if sos_model_name != sos_model['name']:
-            os.remove(os.path.join(self.file_dir['sos_models'],
-                                   sos_model_name + '.yml'))
-        self.write_sos_model(sos_model)
+            raise DataMismatchError(
+                "sos_model name '{}' must match '{}'".format(
+                    sos_model_name,
+                    sos_model['name']))
+
+        if not self._sos_model_exists(sos_model_name):
+            raise DataNotFoundError("sos_model '%s' not found" % sos_model_name)
+        self._write_yaml_file(self.file_dir['sos_models'],
+                              sos_model['name'], sos_model)
+
+    def delete_sos_model(self, sos_model_name):
+        """Delete a system-of-system model run
+
+        Arguments
+        ---------
+        sos_model_name: str
+            A sos_model name
+        """
+        if not self._sos_model_exists(sos_model_name):
+            raise DataNotFoundError("sos_model '%s' not found" % sos_model_name)
+
+        os.remove(os.path.join(self.file_dir['sos_models'], sos_model_name + '.yml'))
 
     def read_sector_models(self):
         """Read all sector models from Yaml files
