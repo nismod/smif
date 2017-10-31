@@ -28,8 +28,10 @@ class TestDatafileInterface():
         config_handler.write_sos_model_run(sos_model_run2)
 
         sos_model_runs = config_handler.read_sos_model_runs()
-        assert sos_model_runs[0]['name'] == 'sos_model_run1'
-        assert sos_model_runs[1]['name'] == 'sos_model_run2'
+        sos_model_run_names = list(sos_model_run['name'] for sos_model_run in sos_model_runs)
+
+        assert 'sos_model_run1' in sos_model_run_names
+        assert 'sos_model_run2' in sos_model_run_names
         assert len(sos_model_runs) == 2
 
     def test_sos_model_run_write_twice(self, get_sos_model_run, get_handler):
@@ -145,8 +147,10 @@ class TestDatafileInterface():
         config_handler.write_sos_model(sos_model2)
 
         sos_models = config_handler.read_sos_models()
-        assert sos_models[0]['name'] == 'sos_model1'
-        assert sos_models[1]['name'] == 'sos_model2'
+        sos_model_names = list(sos_model['name'] for sos_model in sos_models)
+
+        assert 'sos_model1' in sos_model_names
+        assert 'sos_model2' in sos_model_names
         assert len(sos_models) == 2
 
     def test_sos_model_write_twice(self, get_sos_model, get_handler):
