@@ -251,37 +251,124 @@ class TestDatafileInterface():
             config_handler.delete_sos_model('missing_name')
         assert "sos_model 'missing_name' not found" in str(ex)
 
-    def test_sector_model(self, get_sector_model, get_handler):
-        """ Test to write a sector_model configuration to a Yaml file
-        read the Yaml file and compare that the result is equal.
-        Finally check if the name shows up the the readlist.
+    def test_sector_model_read_all(self, get_sector_model, get_handler):
+        """Test to write two sector_model configurations to Yaml files, then
+        read the Yaml files and compare that the result is equal.
         """
         config_handler = get_handler
 
-        sector_model1 = copy(get_sector_model)
-        sector_model1['name'] = 'sector_model_1'
+        sector_model1 = get_sector_model
+        sector_model1['name'] = 'sector_model1'
         config_handler.write_sector_model(sector_model1)
 
-        sector_model2 = copy(get_sector_model)
-        sector_model2['name'] = 'sector_model_2'
+        sector_model2 = get_sector_model
+        sector_model2['name'] = 'sector_model2'
         config_handler.write_sector_model(sector_model2)
 
         sector_models = config_handler.read_sector_models()
+        sector_model_names = list(sector_model['name'] for sector_model in sector_models)
 
-        assert sector_models.count(sector_model1['name']) == 1
-        assert sector_models.count(sector_model2['name']) == 1
+        assert 'sector_model1' in sector_model_names
+        assert 'sector_model2' in sector_model_names
+        assert len(sector_models) == 2
 
-        sector_model1_read = config_handler.read_sector_model(
-            sector_model1['name'])
-        assert sector_model1_read == sector_model1
+    def test_sector_model_write_twice(self, get_sector_model, get_handler):
+        """Test that writing a sector_model should fail (not overwrite).
+        """
+        config_handler = get_handler
 
-        sector_model3 = get_sector_model
-        sector_model3['name'] = 'sector_model_3'
-        config_handler.update_sector_model('sector_model_2', sector_model3)
+        sector_model1 = get_sector_model
+        sector_model1['name'] = 'unique'
+        config_handler.write_sector_model(sector_model1)
 
-        sector_models = config_handler.read_sector_models()
-        assert sector_models.count(sector_model2['name']) == 0
-        assert sector_models.count(sector_model3['name']) == 1
+        with raises(DataExistsError) as ex:
+            config_handler.write_sector_model(sector_model1)
+        assert "sector_model 'unique' already exists" in str(ex)
+
+    def test_sector_model_read_one(self, get_sector_model, get_handler):
+        """Test reading a single sector_model.
+        """
+        config_handler = get_handler
+
+        sector_model1 = get_sector_model
+        sector_model1['name'] = 'sector_model1'
+        config_handler.write_sector_model(sector_model1)
+
+        sector_model2 = get_sector_model
+        sector_model2['name'] = 'sector_model2'
+        config_handler.write_sector_model(sector_model2)
+
+        sector_model = config_handler.read_sector_model('sector_model2')
+        assert sector_model['name'] == 'sector_model2'
+
+    def test_sector_model_read_missing(self, get_handler):
+        """Test that reading a missing sector_model fails.
+        """
+        config_handler = get_handler
+        with raises(DataNotFoundError) as ex:
+            config_handler.read_sector_model('missing_name')
+        assert "sector_model 'missing_name' not found" in str(ex)
+
+    def test_sector_model_update(self, get_sector_model, get_handler):
+        """Test updating a sector_model description
+        """
+        config_handler = get_handler
+        sector_model = get_sector_model
+        sector_model['name'] = 'to_update'
+        sector_model['description'] = 'before'
+
+        config_handler.write_sector_model(sector_model)
+
+        sector_model['description'] = 'after'
+        config_handler.update_sector_model('to_update', sector_model)
+
+        actual = config_handler.read_sector_model('to_update')
+        assert actual['description'] == 'after'
+
+    def test_sector_model_update_mismatch(self, get_sector_model, get_handler):
+        """Test that updating a sector_model with mismatched name should fail
+        """
+        config_handler = get_handler
+        sector_model = get_sector_model
+
+        sector_model['name'] = 'sector_model'
+        with raises(DataMismatchError) as ex:
+            config_handler.update_sector_model('sector_model2', sector_model)
+        assert "name 'sector_model2' must match 'sector_model'" in str(ex)
+
+    def test_sector_model_update_missing(self, get_sector_model, get_handler):
+        """Test that updating a nonexistent sector_model should fail
+        """
+        config_handler = get_handler
+        sector_model = get_sector_model
+        sector_model['name'] = 'missing_name'
+
+        with raises(DataNotFoundError) as ex:
+            config_handler.update_sector_model('missing_name', sector_model)
+        assert "sector_model 'missing_name' not found" in str(ex)
+
+    def test_sector_model_delete(self, get_sector_model, get_handler):
+        """Test that updating a nonexistent sector_model should fail
+        """
+        config_handler = get_handler
+        sector_model = get_sector_model
+        sector_model['name'] = 'to_delete'
+
+        config_handler.write_sector_model(sector_model)
+        before_delete = config_handler.read_sector_models()
+        assert len(before_delete) == 1
+
+        config_handler.delete_sector_model('to_delete')
+        after_delete = config_handler.read_sector_models()
+        assert len(after_delete) == 0
+
+    def test_sector_model_delete_missing(self, get_sector_model, get_handler):
+        """Test that updating a nonexistent sector_model should fail
+        """
+        config_handler = get_handler
+        with raises(DataNotFoundError) as ex:
+            config_handler.delete_sector_model('missing_name')
+        assert "sector_model 'missing_name' not found" in str(ex)
 
     def test_region_definition_data(self, setup_folder_structure, setup_region_data,
                                     get_handler):

@@ -223,40 +223,57 @@ class DatafileInterface(DataInterface):
     def read_sector_models(self):
         """Read all sector models from Yaml files
 
+        sector_models.yml
+
         Returns
         -------
         list
             A list of sector_model dicts
         """
-        return self._read_filenames_in_dir(self.file_dir['sector_models'], '.yml')
+        sector_models = []
+
+        sector_model_names = self._read_filenames_in_dir(self.file_dir['sector_models'],
+                                                          '.yml')
+        for sector_model_name in sector_model_names:
+            sector_models.append(self._read_yaml_file(self.file_dir['sector_models'],
+                                                       sector_model_name))
+
+        return sector_models
 
     def read_sector_model(self, sector_model_name):
-        """Read a sector model from a Yaml file
-
-        Raises an exception when the file does not exists
+        """Read a sector model
 
         Arguments
         ---------
         sector_model_name: str
-            Name of the sector_model (sector_model['name'])
-        """
-        sector_model_config = self._read_yaml_file(
-            self.file_dir['sector_models'], sector_model_name)
+            A sector_model name
 
-        return sector_model_config
+        Returns
+        -------
+        sector_model: dict
+            A sector_model dictionary
+        """
+        if not self._sector_model_exists(sector_model_name):
+            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+        return self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+
+    def _sector_model_exists(self, name):
+        return os.path.exists(
+            os.path.join(self.file_dir['sector_models'], name + '.yml'))
 
     def write_sector_model(self, sector_model):
-        """Write sector model to a Yaml file
-
-        Existing configuration will be overwritten without warning
+        """Write sector model to Yaml file
 
         Arguments
         ---------
         sector_model: dict
             A sector_model dictionary
         """
-        self._write_yaml_file(self.file_dir['sector_models'], sector_model['name'],
-                              sector_model)
+        if self._sector_model_exists(sector_model['name']):
+            raise DataExistsError("sector_model '%s' already exists" % sector_model['name'])
+        else:
+            self._write_yaml_file(self.file_dir['sector_models'],
+                                  sector_model['name'], sector_model)
 
     def update_sector_model(self, sector_model_name, sector_model):
         """Update sector model in Yaml file
@@ -269,9 +286,28 @@ class DatafileInterface(DataInterface):
             A sector_model dictionary
         """
         if sector_model_name != sector_model['name']:
-            os.remove(os.path.join(self.file_dir['sector_models'],
-                                   sector_model_name + '.yml'))
-        self.write_sector_model(sector_model)
+            raise DataMismatchError(
+                "sector_model name '{}' must match '{}'".format(
+                    sector_model_name,
+                    sector_model['name']))
+
+        if not self._sector_model_exists(sector_model_name):
+            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+        self._write_yaml_file(self.file_dir['sector_models'],
+                              sector_model['name'], sector_model)
+
+    def delete_sector_model(self, sector_model_name):
+        """Delete a sector model
+
+        Arguments
+        ---------
+        sector_model_name: str
+            A sector_model name
+        """
+        if not self._sector_model_exists(sector_model_name):
+            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+
+        os.remove(os.path.join(self.file_dir['sector_models'], sector_model_name + '.yml'))
 
     def read_interventions(self, filename):
         """Read the interventions from filename
