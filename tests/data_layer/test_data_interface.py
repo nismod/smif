@@ -130,32 +130,122 @@ class TestDatafileInterface():
             config_handler.delete_sos_model_run('missing_name')
         assert "sos_model_run 'missing_name' not found" in str(ex)
 
-    def test_sos_model(self, get_sos_model, get_handler):
-        """ Test to write two soS_model configurations to Yaml files, then
+    def test_sos_model_read_all(self, get_sos_model, get_handler):
+        """Test to write two sos_model configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
         config_handler = get_handler
 
         sos_model1 = get_sos_model
-        sos_model1['name'] = 'sos_model_1'
+        sos_model1['name'] = 'sos_model1'
         config_handler.write_sos_model(sos_model1)
 
-        sos_model2 = copy(get_sos_model)
-        sos_model2['name'] = 'sos_model_2'
+        sos_model2 = get_sos_model
+        sos_model2['name'] = 'sos_model2'
         config_handler.write_sos_model(sos_model2)
 
         sos_models = config_handler.read_sos_models()
-        assert sos_model1 in sos_models
-        assert sos_model2 in sos_models
+        assert sos_models[0]['name'] == 'sos_model1'
+        assert sos_models[1]['name'] == 'sos_model2'
+        assert len(sos_models) == 2
 
-        sos_model3 = copy(get_sos_model)
-        sos_model3['name'] = 'sos_model_3'
-        config_handler.update_sos_model('sos_model_2', sos_model3)
+    def test_sos_model_write_twice(self, get_sos_model, get_handler):
+        """Test that writing a sos_model should fail (not overwrite).
+        """
+        config_handler = get_handler
 
-        sos_models = config_handler.read_sos_models()
-        assert sos_model1 in sos_models
-        assert sos_model2 not in sos_models
-        assert sos_model3 in sos_models
+        sos_model1 = get_sos_model
+        sos_model1['name'] = 'unique'
+        config_handler.write_sos_model(sos_model1)
+
+        with raises(DataExistsError) as ex:
+            config_handler.write_sos_model(sos_model1)
+        assert "sos_model 'unique' already exists" in str(ex)
+
+    def test_sos_model_read_one(self, get_sos_model, get_handler):
+        """Test reading a single sos_model.
+        """
+        config_handler = get_handler
+
+        sos_model1 = get_sos_model
+        sos_model1['name'] = 'sos_model1'
+        config_handler.write_sos_model(sos_model1)
+
+        sos_model2 = get_sos_model
+        sos_model2['name'] = 'sos_model2'
+        config_handler.write_sos_model(sos_model2)
+
+        sos_model = config_handler.read_sos_model('sos_model2')
+        assert sos_model['name'] == 'sos_model2'
+
+    def test_sos_model_read_missing(self, get_handler):
+        """Test that reading a missing sos_model fails.
+        """
+        config_handler = get_handler
+        with raises(DataNotFoundError) as ex:
+            config_handler.read_sos_model('missing_name')
+        assert "sos_model 'missing_name' not found" in str(ex)
+
+    def test_sos_model_update(self, get_sos_model, get_handler):
+        """Test updating a sos_model description
+        """
+        config_handler = get_handler
+        sos_model = get_sos_model
+        sos_model['name'] = 'to_update'
+        sos_model['description'] = 'before'
+
+        config_handler.write_sos_model(sos_model)
+
+        sos_model['description'] = 'after'
+        config_handler.update_sos_model('to_update', sos_model)
+
+        actual = config_handler.read_sos_model('to_update')
+        assert actual['description'] == 'after'
+
+    def test_sos_model_update_mismatch(self, get_sos_model, get_handler):
+        """Test that updating a sos_model with mismatched name should fail
+        """
+        config_handler = get_handler
+        sos_model = get_sos_model
+
+        sos_model['name'] = 'sos_model'
+        with raises(DataMismatchError) as ex:
+            config_handler.update_sos_model('sos_model2', sos_model)
+        assert "name 'sos_model2' must match 'sos_model'" in str(ex)
+
+    def test_sos_model_update_missing(self, get_sos_model, get_handler):
+        """Test that updating a nonexistent sos_model should fail
+        """
+        config_handler = get_handler
+        sos_model = get_sos_model
+        sos_model['name'] = 'missing_name'
+
+        with raises(DataNotFoundError) as ex:
+            config_handler.update_sos_model('missing_name', sos_model)
+        assert "sos_model 'missing_name' not found" in str(ex)
+
+    def test_sos_model_delete(self, get_sos_model, get_handler):
+        """Test that updating a nonexistent sos_model should fail
+        """
+        config_handler = get_handler
+        sos_model = get_sos_model
+        sos_model['name'] = 'to_delete'
+
+        config_handler.write_sos_model(sos_model)
+        before_delete = config_handler.read_sos_models()
+        assert len(before_delete) == 1
+
+        config_handler.delete_sos_model('to_delete')
+        after_delete = config_handler.read_sos_models()
+        assert len(after_delete) == 0
+
+    def test_sos_model_delete_missing(self, get_sos_model, get_handler):
+        """Test that updating a nonexistent sos_model should fail
+        """
+        config_handler = get_handler
+        with raises(DataNotFoundError) as ex:
+            config_handler.delete_sos_model('missing_name')
+        assert "sos_model 'missing_name' not found" in str(ex)
 
     def test_sector_model(self, get_sector_model, get_handler):
         """ Test to write a sector_model configuration to a Yaml file
