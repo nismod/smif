@@ -126,3 +126,107 @@ def test_create_sos_model_run(client, get_handler, get_sos_model_run):
 
     actual = get_handler.read_sos_model_run(name)
     assert actual == get_sos_model_run
+
+
+def test_get_sos_models(client, get_handler, get_sos_model):
+    """GET all system-of-systems models
+    """
+    response = client.get('/api/v1/sos_models/')
+    data = parse_json(response)
+    assert len(data) == 0
+
+    get_handler.write_sos_model(get_sos_model)
+    response = client.get('/api/v1/sos_models/')
+    data = parse_json(response)
+    assert len(data) == 1
+    assert data == [get_sos_model]
+
+
+def test_get_sos_model(client, get_handler, get_sos_model):
+    """GET single system-of-systems model
+    """
+    name = get_sos_model['name']
+    get_handler.write_sos_model(get_sos_model)
+
+    response = client.get('/api/v1/sos_models/{}'.format(name))
+    data = parse_json(response)
+    assert data == get_sos_model
+
+
+def test_get_sos_model_missing(client):
+    """GET missing system-of-systems model
+    """
+    response = client.get('/api/v1/sos_models/does_not_exist')
+    assert response.status_code == 404
+    data = parse_json(response)
+    assert data['message'] == "sos_model 'does_not_exist' not found"
+
+
+def test_create_sos_model(client, get_handler, get_sos_model):
+    """POST system-of-systems model
+    """
+    name = 'test_create_sos_model'
+    get_sos_model['name'] = name
+    send = serialise_json(get_sos_model)
+    response = client.post(
+        '/api/v1/sos_models/',
+        data=send,
+        content_type='application/json')
+    data = parse_json(response)
+    assert response.status_code == 201
+    assert data['message'] == 'success'
+
+    actual = get_handler.read_sos_model(name)
+    assert actual == get_sos_model
+
+
+def test_get_sector_models(client, get_handler, get_sector_model):
+    """GET all model runs
+    """
+    response = client.get('/api/v1/sector_models/')
+    data = parse_json(response)
+    assert len(data) == 0
+
+    get_handler.write_sector_model(get_sector_model)
+    response = client.get('/api/v1/sector_models/')
+    data = parse_json(response)
+    assert len(data) == 1
+    assert data == [get_sector_model]
+
+
+def test_get_sector_model(client, get_handler, get_sector_model):
+    """GET single model run
+    """
+    name = get_sector_model['name']
+    get_handler.write_sector_model(get_sector_model)
+
+    response = client.get('/api/v1/sector_models/{}'.format(name))
+    data = parse_json(response)
+    assert data == get_sector_model
+
+
+def test_get_sector_model_missing(client):
+    """GET missing model run
+    """
+    response = client.get('/api/v1/sector_models/does_not_exist')
+    assert response.status_code == 404
+    data = parse_json(response)
+    assert data['message'] == "sector_model 'does_not_exist' not found"
+
+
+def test_create_sector_model(client, get_handler, get_sector_model):
+    """POST model run
+    """
+    name = 'test_create_sector_model'
+    get_sector_model['name'] = name
+    send = serialise_json(get_sector_model)
+    response = client.post(
+        '/api/v1/sector_models/',
+        data=send,
+        content_type='application/json')
+    data = parse_json(response)
+    assert response.status_code == 201
+    assert data['message'] == 'success'
+
+    actual = get_handler.read_sector_model(name)
+    assert actual == get_sector_model
