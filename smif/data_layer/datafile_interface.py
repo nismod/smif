@@ -55,15 +55,16 @@ class DatafileInterface(DataInterface):
         list
             A list of sos_model_run dicts
         """
-        sos_model_runs = []
+        sos_model_run_name_desc = []
 
         sos_model_run_names = self._read_filenames_in_dir(self.file_dir['sos_model_runs'],
                                                           '.yml')
         for sos_model_run_name in sos_model_run_names:
-            sos_model_runs.append(self._read_yaml_file(self.file_dir['sos_model_runs'],
+            sos_model_run = (self._read_yaml_file(self.file_dir['sos_model_runs'],
                                                        sos_model_run_name))
+            sos_model_run_name_desc.append({'name': sos_model_run['name'], 'description': sos_model_run['description']})
 
-        return sos_model_runs
+        return sos_model_run_name_desc
 
     def read_sos_model_run(self, sos_model_run_name):
         """Read a system-of-system model run
