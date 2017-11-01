@@ -1,20 +1,14 @@
 import { combineReducers } from 'redux';
 import {
-    FETCH_PROJECTS,
     REQUEST_SOS_MODEL_RUNS,
     RECEIVE_SOS_MODEL_RUNS,
     REQUEST_SOS_MODEL_RUN,
-    RECEIVE_SOS_MODEL_RUN
+    RECEIVE_SOS_MODEL_RUN,
+    REQUEST_SOS_MODELS,
+    RECEIVE_SOS_MODELS,
+    REQUEST_SOS_MODEL,
+    RECEIVE_SOS_MODEL,
 } from '../actions/actions.js';
-
-function projects(state = {}, action) {
-    switch (action.type) {
-    case FETCH_PROJECTS:
-        return ['Project1', 'Project2', 'Project3'];
-    default:
-        return state;
-    }
-};
 
 function sos_model_runs(
     state = {
@@ -42,7 +36,7 @@ function sos_model_runs(
 function sos_model_run(
     state = {
         isFetching: false,
-        item: []
+        item: {}
     },
     action
 ) {
@@ -62,10 +56,33 @@ function sos_model_run(
     }
 }
 
+function sos_models(
+    state = {
+        isFetching: false,
+        items: []
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_SOS_MODELS:
+        return Object.assign({}, state, {
+            isFetching: true
+        });
+    case RECEIVE_SOS_MODELS:
+        return Object.assign({}, state, {
+            isFetching: false,
+            items: action.sos_models,
+            lastUpdated: action.receivedAt
+        });
+    default:
+        return state;
+    }
+}
+
 const rootReducer = combineReducers({
     sos_model_runs,
     sos_model_run,
-    projects
+    sos_models
 });
 
 export default rootReducer;

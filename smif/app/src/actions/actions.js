@@ -65,3 +65,36 @@ export function fetchSosModelRun(modelrunid){
             );
     };
 }
+
+export const REQUEST_SOS_MODELS = 'REQUEST_SOS_MODELS';
+function requestSosModels(){
+    return {
+        type: REQUEST_SOS_MODELS
+    };
+}
+
+export const RECEIVE_SOS_MODELS = 'RECEIVE_SOS_MODELS';
+function receiveSosModels(json) {
+    return {
+        type: RECEIVE_SOS_MODELS,
+        sos_models: json,
+        receivedAt: Date.now()
+    };
+}
+
+export function fetchSosModels(){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestSosModels());
+
+        // make API request, returning a promise
+        return fetch('/api/v1/sos_models/')
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                json => dispatch(receiveSosModels(json))
+            );
+    };
+}
