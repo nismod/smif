@@ -87,7 +87,7 @@ def test_get_sos_model_runs(client, get_handler, get_sos_model_run):
     response = client.get('/api/v1/sos_model_runs/')
     data = parse_json(response)
     assert len(data) == 1
-    assert data == [get_sos_model_run]
+    assert data[0]['name'] == get_sos_model_run['name']
 
 
 def test_get_sos_model_run(client, get_handler, get_sos_model_run):
