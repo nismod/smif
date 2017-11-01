@@ -4,20 +4,27 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { fetchSosModelRun } from '../actions/actions.js';
-import SosModelRunConfiguration from '../components/SosModelRunConfiguration.js';
+import { fetchSosModels } from '../actions/actions.js';
+import { fetchSosModel } from '../actions/actions.js';
+
+import SosModelRunConfigForm from '../components/SosModelRunConfigForm.js';
 
 class SosModelRunConfig extends Component {
     componentDidMount() {
         const { dispatch } = this.props;
         dispatch(fetchSosModelRun(this.props.match.params.name));
+        dispatch(fetchSosModels());        
     }
 
     render () {
-        const {sos_model_run, isFetching} = this.props;
+        const {sos_model_run, sos_models, isFetching} = this.props;
         let config = null;
 
-        if (sos_model_run && sos_model_run.name){
-            config = <SosModelRunConfiguration sos_model_run={sos_model_run} />;
+        if ((sos_model_run && sos_model_run.name) && (sos_models[0] && sos_models[0].name)){
+            config = <SosModelRunConfigForm 
+                sos_model_run={sos_model_run} 
+                sos_models={sos_models} 
+            />;
         }
         
         return (
@@ -32,12 +39,9 @@ class SosModelRunConfig extends Component {
                     Error
                 </div>
 
-                <div hidden={ isFetching }>            
+                <div hidden={ isFetching }>           
 
                     {config}             
-
-
-
 
                     <label>Scenarios:</label>
                     <fieldset>
@@ -92,7 +96,7 @@ class SosModelRunConfig extends Component {
                     <label>Base year:</label>
                     <div className="select-container">
                         <select>
-                            <option value="" disabled="disabled" selected="selected">Please select a base year</option>
+                            <option value="" disabled="disabled" defaultValue="selected">Please select a base year</option>
                             <option value="2015">2015</option>
                             <option value="2016">2016</option>
                             <option value="2017">2017</option>
@@ -104,7 +108,7 @@ class SosModelRunConfig extends Component {
                     <label>End year:</label>
                     <div className="select-container">
                         <select>
-                            <option value="" disabled="disabled" selected="selected">Please select an end year</option>
+                            <option value="" disabled="disabled" defaultValue="selected">Please select an end year</option>
                             <option value="2015">2015</option>
                             <option value="2016">2016</option>
                             <option value="2017">2017</option>
@@ -129,15 +133,15 @@ class SosModelRunConfig extends Component {
 
 SosModelRunConfig.propTypes = {
     sos_model_run: PropTypes.object.isRequired,
+    sos_models: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
 };
 
 function mapStateToProps(state) {
-    const { sos_model_run } = state;
-
     return {
         sos_model_run: state.sos_model_run.item,
+        sos_models: state.sos_models.items,
         isFetching: state.sos_model_run.isFetching
     };
 }
