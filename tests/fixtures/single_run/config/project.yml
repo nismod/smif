@@ -1,6 +1,6 @@
 name: "Test Project"
 scenario_sets:
-- name: raininess
+- name: rainfall
   description: 'UK precipitation'
 - name: population
   description: 'Growth in UK population'
@@ -23,12 +23,30 @@ interval_definitions:
 units:
 scenarios:
 # given input data, required values for every year of a model run
-- name: 'Central Population'
-  description: 'Central Population for the UK'
+- name: 'Central Population (Low)'
+  description: 'Central Population for the UK (Low)'
   scenario_set: population
   parameters:
-  - name: population
-    filename: population.csv
+  - name: population_low
+    filename: population_low.csv
+    spatial_resolution: national
+    temporal_resolution: annual
+    units: million people
+- name: 'Central Population (Medium)'
+  description: 'Central Population for the UK (Medium)'
+  scenario_set: population
+  parameters:
+  - name: population_med
+    filename: population_med.csv
+    spatial_resolution: national
+    temporal_resolution: annual
+    units: million people
+- name: 'Central Population (High)'
+  description: 'Central Population for the UK (High)'
+  scenario_set: population
+  parameters:
+  - name: population_low
+    filename: population_low.csv
     spatial_resolution: national
     temporal_resolution: annual
     units: million people
