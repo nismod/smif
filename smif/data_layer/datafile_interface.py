@@ -508,20 +508,72 @@ class DatafileInterface(DataInterface):
         Returns
         -------
         list
-            A list of scenarios within the specified 'scenario_set_name'
+            A scenario_set dictionary
         """
         project_config = self._read_project_config()
+        for scenario_data in project_config['scenario_sets']:
+            if scenario_data['name'] == scenario_set_name:
+                return scenario_data
+        raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
 
-        # Filter only the scenarios of the selected scenario_set_name
-        filtered_scenario_data = []
-        for scenario_data in project_config['scenarios']:
-            if scenario_data['scenario_set'] == scenario_set_name:
-                filtered_scenario_data.append(scenario_data)
+    def _scenario_set_exists(self, scenario_set_name):
+        project_config = self._read_project_config()
+        for scenario_set in project_config['scenario_sets']:
+            if scenario_set['name'] == scenario_set_name:
+                return scenario_set
 
-        return filtered_scenario_data
+    def write_scenario_set(self, scenario_set):
+        """Write scenario_set to project configuration
 
-    def read_scenario_definition(self, scenario_name):
-        """Read scenario definition data
+        Arguments
+        ---------
+        scenario_set: dict
+            A scenario_set dict
+        """
+        if self._scenario_set_exists(scenario_set['name']):
+            raise DataExistsError("scenario_set '%s' already exists" % scenario_set['name'])
+        else:
+            project_config = self._read_project_config()
+            project_config['scenario_sets'].append(scenario_set)
+            self._write_project_config(project_config)
+
+    def update_scenario_set(self, scenario_set_name, scenario_set):
+        """Update scenario_set to project configuration
+
+        Arguments
+        ---------
+        scenario_set_name: str
+            Name of the (original) entry
+        scenario_set: dict
+            The updated scenario_set dict
+        """
+        if not self._scenario_set_exists(scenario_set_name):
+            raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
+
+        project_config = self._read_project_config()
+
+        project_config['scenario_sets'] = [
+            entry for entry in project_config['scenario_sets']
+            if (entry['name'] != scenario_set['name'] and
+                entry['name'] != scenario_set_name)
+        ]
+        project_config['scenario_sets'].append(scenario_set)
+
+        self._write_project_config(project_config)
+
+    def read_scenarios(self):
+        """Read scenario sets from project configuration
+
+        Returns
+        -------
+        list
+            A list of scenario set dicts
+        """
+        project_config = self._read_project_config()
+        return project_config['scenarios']
+
+    def read_scenario(self, scenario_name):
+        """Read all scenarios from a certain scenario
 
         Arguments
         ---------
@@ -530,13 +582,59 @@ class DatafileInterface(DataInterface):
 
         Returns
         -------
-        dict
-            The scenario definition
+        list
+            A scenario dictionary
         """
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
             if scenario_data['name'] == scenario_name:
                 return scenario_data
+        raise DataNotFoundError("scenario '%s' not found" % scenario_name)
+
+    def _scenario_exists(self, scenario_name):
+        project_config = self._read_project_config()
+        for scenario in project_config['scenarios']:
+            if scenario['name'] == scenario_name:
+                return scenario
+
+    def write_scenario(self, scenario):
+        """Write scenario to project configuration
+
+        Arguments
+        ---------
+        scenario: dict
+            A scenario dict
+        """
+        if self._scenario_exists(scenario['name']):
+            raise DataExistsError("scenario '%s' already exists" % scenario['name'])
+        else:
+            project_config = self._read_project_config()
+            project_config['scenarios'].append(scenario)
+            self._write_project_config(project_config)
+
+    def update_scenario(self, scenario_name, scenario):
+        """Update scenario to project configuration
+
+        Arguments
+        ---------
+        scenario_name: str
+            Name of the (original) entry
+        scenario: dict
+            The updated scenario dict
+        """
+        if not self._scenario_exists(scenario_name):
+            raise DataNotFoundError("scenario '%s' not found" % scenario_name)
+
+        project_config = self._read_project_config()
+
+        project_config['scenarios'] = [
+            entry for entry in project_config['scenarios']
+            if (entry['name'] != scenario['name'] and
+                entry['name'] != scenario_name)
+        ]
+        project_config['scenarios'].append(scenario)
+
+        self._write_project_config(project_config)
 
     def read_scenario_data(self, scenario_name):
         """Read scenario data file
@@ -567,75 +665,6 @@ class DatafileInterface(DataInterface):
 
         return data
 
-    def write_scenario_set(self, scenario_set):
-        """Write scenario_set to project configuration
-
-        Arguments
-        ---------
-        scenario_set: dict
-            A scenario_set dict
-        """
-        project_config = self._read_project_config()
-
-        project_config['scenario_sets'].append(scenario_set)
-        self._write_project_config(project_config)
-
-    def update_scenario_set(self, scenario_set_name, scenario_set):
-        """Update scenario_set to project configuration
-
-        Arguments
-        ---------
-        scenario_set_name: str
-            Name of the (original) entry
-        scenario_set: dict
-            The updated scenario_set dict
-        """
-        project_config = self._read_project_config()
-
-        # Create updated list
-        project_config['scenario_sets'] = [
-            entry for entry in project_config['scenario_sets']
-            if (entry['name'] != scenario_set['name'] and
-                entry['name'] != scenario_set_name)
-        ]
-        project_config['scenario_sets'].append(scenario_set)
-
-        self._write_project_config(project_config)
-
-    def write_scenario(self, scenario):
-        """Write scenario to project configuration
-
-        Arguments
-        ---------
-        scenario: dict
-            A scenario dict
-        """
-        project_config = self._read_project_config()
-
-        project_config['scenarios'].append(scenario)
-        self._write_project_config(project_config)
-
-    def update_scenario(self, scenario_name, scenario):
-        """Update scenario to project configuration
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the (original) entry
-        scenario: dict
-            The updated scenario dict
-        """
-        project_config = self._read_project_config()
-
-        # Create updated list
-        project_config['scenarios'] = [
-            entry for entry in project_config['scenarios']
-            if (entry['name'] != scenario['name'] and
-                entry['name'] != scenario_name)
-        ]
-        project_config['scenarios'].append(scenario)
-
-        self._write_project_config(project_config)
 
     def read_narrative_sets(self):
         """Read narrative sets from project configuration

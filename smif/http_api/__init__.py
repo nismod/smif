@@ -53,6 +53,8 @@ def register_api_endpoints(app):
                  key='sector_model_name', key_type='string')
     register_api(app, ScenarioSetAPI, 'scenario_set_api', '/api/v1/scenario_sets/',
                  key='scenario_set_name', key_type='string')
+    register_api(app, ScenarioAPI, 'scenario_api', '/api/v1/scenarios/',
+                 key='scenario_name', key_type='string')
 
                  
 
@@ -289,6 +291,58 @@ class ScenarioSetAPI(MethodView):
         """
         data_interface = current_app.config.get_data_interface()
         data_interface.delete_scenario_set(scenario_set_name)
+        response = jsonify({})
+        return response
+
+class ScenarioAPI(MethodView):
+    """Implement CRUD operations for scenarios configuration data
+    """
+    def get(self, scenario_name):
+        """Get scenarios
+        all: GET /api/v1/scenarios/
+        one: GET /api/vi/scenarios/name
+        """
+        # return str(current_app.config)
+        data_interface = current_app.config.get_data_interface()
+        if scenario_name is None:
+            data = data_interface.read_scenarios()
+            response = jsonify(data)
+        else:
+            data = data_interface.read_scenario(scenario_name)
+            response = jsonify(data)
+
+        return response
+
+    def post(self):
+        """Create a scenario:
+        POST /api/v1/scenarios
+        """
+        data_interface = current_app.config.get_data_interface()
+        data = request.get_json() or request.form
+        data = check_timestamp(data)
+
+        data_interface.write_scenario(data)
+        response = jsonify({"message": "success"})
+        response.status_code = 201
+        return response
+
+    def put(self, scenario_name):
+        """Update a scenario:
+        PUT /api/v1/scenarios
+        """
+        data_interface = current_app.config.get_data_interface()
+        data = request.get_json() or request.form
+        data = check_timestamp(data)
+        data_interface.update_scenario(scenario_name, data)
+        response = jsonify({})
+        return response
+
+    def delete(self, scenario_name):
+        """Delete a scenario:
+        DELETE /api/v1/scenarios
+        """
+        data_interface = current_app.config.get_data_interface()
+        data_interface.delete_scenario(scenario_name)
         response = jsonify({})
         return response
 
