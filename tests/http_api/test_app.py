@@ -243,4 +243,94 @@ def test_get_scenario_sets(client, get_handler, get_scenario_set):
     response = client.get('/api/v1/scenario_sets/')
     data = parse_json(response)
     assert len(data) == 2
-    assert data == [get_scenario_set]
+    assert get_scenario_set in data
+
+
+def test_get_scenario_set(client, get_handler, get_scenario_set):
+    """GET single system-of-systems model
+    """
+    name = get_scenario_set['name']
+    get_handler.write_scenario_set(get_scenario_set)
+
+    response = client.get('/api/v1/scenario_sets/{}'.format(name))
+    data = parse_json(response)
+    assert data == get_scenario_set
+
+
+def test_get_scenario_set_missing(client):
+    """GET missing system-of-systems model
+    """
+    response = client.get('/api/v1/scenario_sets/does_not_exist')
+    assert response.status_code == 404
+    data = parse_json(response)
+    assert data['message'] == "scenario_set 'does_not_exist' not found"
+
+
+def test_create_scenario_set(client, get_handler, get_scenario_set):
+    """POST system-of-systems model
+    """
+    name = 'test_create_scenario_set'
+    get_scenario_set['name'] = name
+    send = serialise_json(get_scenario_set)
+    response = client.post(
+        '/api/v1/scenario_sets/',
+        data=send,
+        content_type='application/json')
+    data = parse_json(response)
+    assert response.status_code == 201
+    assert data['message'] == 'success'
+
+    actual = get_handler.read_scenario_set(name)
+    assert actual == get_scenario_set
+
+
+def test_get_scenarios(client, get_handler, get_scenario):
+    """GET all scenarios
+    """
+    response = client.get('/api/v1/scenarios/')
+    data = parse_json(response)
+    assert len(data) == 2
+
+    get_handler.write_scenario(get_scenario)
+    response = client.get('/api/v1/scenarios/')
+    data = parse_json(response)
+    assert len(data) == 3
+    assert get_scenario in data
+
+
+def test_get_scenario(client, get_handler, get_scenario):
+    """GET single system-of-systems model
+    """
+    name = get_scenario['name']
+    get_handler.write_scenario(get_scenario)
+
+    response = client.get('/api/v1/scenarios/{}'.format(name))
+    data = parse_json(response)
+    assert data == get_scenario
+
+
+def test_get_scenario_missing(client):
+    """GET missing system-of-systems model
+    """
+    response = client.get('/api/v1/scenarios/does_not_exist')
+    assert response.status_code == 404
+    data = parse_json(response)
+    assert data['message'] == "scenario 'does_not_exist' not found"
+
+
+def test_create_scenario(client, get_handler, get_scenario):
+    """POST system-of-systems model
+    """
+    name = 'test_create_scenario'
+    get_scenario['name'] = name
+    send = serialise_json(get_scenario)
+    response = client.post(
+        '/api/v1/scenarios/',
+        data=send,
+        content_type='application/json')
+    data = parse_json(response)
+    assert response.status_code == 201
+    assert data['message'] == 'success'
+
+    actual = get_handler.read_scenario(name)
+    assert actual == get_scenario

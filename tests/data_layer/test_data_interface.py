@@ -572,8 +572,7 @@ class TestDatafileInterface():
         config_handler = get_handler
 
         # Scenarios / read existing (from fixture)
-        scenarios = config_handler.read_scenario_set('population')
-        assert scenarios[0]['name'] == 'High Population (ONS)'
+        scenarios = config_handler.read_scenarios()
         assert len(scenarios) == 2
 
         # Scenarios / add
@@ -592,7 +591,7 @@ class TestDatafileInterface():
             'scenario_set': 'population',
         }
         config_handler.write_scenario(scenario)
-        scenarios = config_handler.read_scenario_set('population')
+        scenarios = config_handler.read_scenarios()
         assert len(scenarios) == 3
         for scenario in scenarios:
             if scenario['name'] == 'Medium Population (ONS)':
@@ -601,7 +600,7 @@ class TestDatafileInterface():
         # Scenarios / modify
         scenario['filename'] = 'population_med.csv'
         config_handler.update_scenario(scenario['name'], scenario)
-        scenarios = config_handler.read_scenario_set('population')
+        scenarios = config_handler.read_scenarios()
         assert len(scenarios) == 3
         for scenario in scenarios:
             if scenario['name'] == 'Medium Population (ONS)':
@@ -610,7 +609,7 @@ class TestDatafileInterface():
         # Scenarios / modify unique identifier (name)
         scenario['name'] = 'name_change'
         config_handler.update_scenario('Medium Population (ONS)', scenario)
-        scenarios = config_handler.read_scenario_set('population')
+        scenarios = config_handler.read_scenarios()
         assert len(scenarios) == 3
         for scenario in scenarios:
             if scenario['name'] == 'name_change':
