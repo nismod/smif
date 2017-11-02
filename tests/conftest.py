@@ -908,6 +908,36 @@ def get_sector_model():
 
 
 @fixture(scope='function')
+def get_scenario_set():
+    """Return sample scenario_set
+    """
+    return {
+        "description": "Growth in UK economy", 
+        "name": "economy"
+    }
+
+
+@fixture(scope='function')
+def get_scenario():
+    """Return sample scenario
+    """
+    return {
+        "description": "Central Economy for the UK (High)", 
+        "name": "Central Economy (High)", 
+        "parameters": [
+            {
+                "filename": "economy_low.csv", 
+                "name": "economy_low", 
+                "spatial_resolution": "national", 
+                "temporal_resolution": "annual", 
+                "units": "million people"
+            }
+        ], 
+        "scenario_set": "economy"
+    }
+
+
+@fixture(scope='function')
 def get_scenario_data():
     """Return sample scenario_data
     """

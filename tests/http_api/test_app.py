@@ -230,3 +230,17 @@ def test_create_sector_model(client, get_handler, get_sector_model):
 
     actual = get_handler.read_sector_model(name)
     assert actual == get_sector_model
+
+
+def test_get_scenario_sets(client, get_handler, get_scenario_set):
+    """GET all scenario_sets
+    """
+    response = client.get('/api/v1/scenario_sets/')
+    data = parse_json(response)
+    assert len(data) == 1
+
+    get_handler.write_scenario_set(get_scenario_set)
+    response = client.get('/api/v1/scenario_sets/')
+    data = parse_json(response)
+    assert len(data) == 2
+    assert data == [get_scenario_set]
