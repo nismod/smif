@@ -3,6 +3,8 @@ description: 'The future supply and demand of energy and water for the UK'
 scenario_sets: # Select 0 or more of the scenario sets
 - population
 - rainfall
+narrative_sets: # Select 0 or more of the narrative sets
+- technology
 sector_models: # Select 1 or more of the sector models
 - water_supply
 - energy_demand

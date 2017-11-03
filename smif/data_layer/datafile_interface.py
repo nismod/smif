@@ -665,7 +665,6 @@ class DatafileInterface(DataInterface):
 
         return data
 
-
     def read_narrative_sets(self):
         """Read narrative sets from project configuration
 
@@ -688,17 +687,134 @@ class DatafileInterface(DataInterface):
         Returns
         -------
         list
-            A list of narratives within the specified 'narrative_set_name'
+            A narrative_set dictionary
         """
         project_config = self._read_project_config()
+        for narrative_data in project_config['narrative_sets']:
+            if narrative_data['name'] == narrative_set_name:
+                return narrative_data
+        raise DataNotFoundError("narrative_set '%s' not found" % narrative_set_name)
 
-        # Filter only the narratives of the selected narrative_set_name
-        filtered_narrative_data = []
+    def _narrative_set_exists(self, narrative_set_name):
+        project_config = self._read_project_config()
+        for narrative_set in project_config['narrative_sets']:
+            if narrative_set['name'] == narrative_set_name:
+                return narrative_set
+
+    def write_narrative_set(self, narrative_set):
+        """Write narrative_set to project configuration
+
+        Arguments
+        ---------
+        narrative_set: dict
+            A narrative_set dict
+        """
+        if self._narrative_set_exists(narrative_set['name']):
+            raise DataExistsError("narrative_set '%s' already exists" % narrative_set['name'])
+        else:
+            project_config = self._read_project_config()
+            project_config['narrative_sets'].append(narrative_set)
+            self._write_project_config(project_config)
+
+    def update_narrative_set(self, narrative_set_name, narrative_set):
+        """Update narrative_set to project configuration
+
+        Arguments
+        ---------
+        narrative_set_name: str
+            Name of the (original) entry
+        narrative_set: dict
+            The updated narrative_set dict
+        """
+        if not self._narrative_set_exists(narrative_set_name):
+            raise DataNotFoundError("narrative_set '%s' not found" % narrative_set_name)
+
+        project_config = self._read_project_config()
+
+        project_config['narrative_sets'] = [
+            entry for entry in project_config['narrative_sets']
+            if (entry['name'] != narrative_set['name'] and
+                entry['name'] != narrative_set_name)
+        ]
+        project_config['narrative_sets'].append(narrative_set)
+
+        self._write_project_config(project_config)
+
+    def read_narratives(self):
+        """Read narrative sets from project configuration
+
+        Returns
+        -------
+        list
+            A list of narrative set dicts
+        """
+        project_config = self._read_project_config()
+        return project_config['narratives']
+
+    def read_narrative(self, narrative_name):
+        """Read all narratives from a certain narrative
+
+        Arguments
+        ---------
+        narrative_name: str
+            Name of the narrative
+
+        Returns
+        -------
+        list
+            A narrative dictionary
+        """
+        project_config = self._read_project_config()
         for narrative_data in project_config['narratives']:
-            if narrative_data['narrative_set'] == narrative_set_name:
-                filtered_narrative_data.append(narrative_data)
+            if narrative_data['name'] == narrative_name:
+                return narrative_data
+        raise DataNotFoundError("narrative '%s' not found" % narrative_name)
 
-        return filtered_narrative_data
+    def _narrative_exists(self, narrative_name):
+        project_config = self._read_project_config()
+        for narrative in project_config['narratives']:
+            if narrative['name'] == narrative_name:
+                return narrative
+
+    def write_narrative(self, narrative):
+        """Write narrative to project configuration
+
+        Arguments
+        ---------
+        narrative: dict
+            A narrative dict
+        """
+        if self._narrative_exists(narrative['name']):
+            raise DataExistsError("narrative '%s' already exists" % narrative['name'])
+        else:
+            project_config = self._read_project_config()
+            project_config['narratives'].append(narrative)
+            self._write_project_config(project_config)
+
+    def update_narrative(self, narrative_name, narrative):
+        """Update narrative to project configuration
+
+        Arguments
+        ---------
+        narrative_name: str
+            Name of the (original) entry
+        narrative: dict
+            The updated narrative dict
+        """
+        if not self._narrative_exists(narrative_name):
+            raise DataNotFoundError("narrative '%s' not found" % narrative_name)
+
+        project_config = self._read_project_config()
+
+        project_config['narratives'] = [
+            entry for entry in project_config['narratives']
+            if (entry['name'] != narrative['name'] and
+                entry['name'] != narrative_name)
+        ]
+        project_config['narratives'].append(narrative)
+
+        self._write_project_config(project_config)
+
 
     def read_narrative_data(self, narrative_name):
         """Read narrative data file
@@ -743,76 +859,6 @@ class DatafileInterface(DataInterface):
             if narrative['name'] == narrative_name:
                 definition = narrative
         return definition
-
-    def write_narrative_set(self, narrative_set):
-        """Write narrative_set to project configuration
-
-        Arguments
-        ---------
-        narrative_set: dict
-            A narrative_set dict
-        """
-        project_config = self._read_project_config()
-
-        project_config['narrative_sets'].append(narrative_set)
-        self._write_project_config(project_config)
-
-    def update_narrative_set(self, narrative_set_name, narrative_set):
-        """Update narrative_set to project configuration
-
-        Arguments
-        ---------
-        narrative_set_name: str
-            Name of the (original) entry
-        narrative_set: dict
-            The updated narrative_set dict
-        """
-        project_config = self._read_project_config()
-
-        # Create updated list
-        project_config['narrative_sets'] = [
-            entry for entry in project_config['narrative_sets']
-            if (entry['name'] != narrative_set['name'] and
-                entry['name'] != narrative_set_name)
-        ]
-        project_config['narrative_sets'].append(narrative_set)
-
-        self._write_project_config(project_config)
-
-    def write_narrative(self, narrative):
-        """Write narrative to project configuration
-
-        Arguments
-        ---------
-        narrative: dict
-            A narrative dict
-        """
-        project_config = self._read_project_config()
-
-        project_config['narratives'].append(narrative)
-        self._write_project_config(project_config)
-
-    def update_narrative(self, narrative_name, narrative):
-        """Update narrative to project configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the (original) entry
-        narrative: dict
-            The updated narrative dict
-        """
-        project_config = self._read_project_config()
-
-        # Create updated list
-        project_config['narratives'] = [
-            entry for entry in project_config['narratives']
-            if (entry['name'] != narrative['name'] and
-                entry['name'] != narrative_name)
-        ]
-        project_config['narratives'].append(narrative)
-
-        self._write_project_config(project_config)
 
     def _read_project_config(self):
         """Read the project configuration

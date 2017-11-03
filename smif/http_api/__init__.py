@@ -55,8 +55,10 @@ def register_api_endpoints(app):
                  key='scenario_set_name', key_type='string')
     register_api(app, ScenarioAPI, 'scenario_api', '/api/v1/scenarios/',
                  key='scenario_name', key_type='string')
-
-                 
+    register_api(app, NarrativeSetAPI, 'narrative_set_api', '/api/v1/narrative_sets/',
+                 key='narrative_set_name', key_type='string')
+    register_api(app, NarrativeAPI, 'narrative_api', '/api/v1/narratives/',
+                 key='narrative_name', key_type='string')
 
 
 def register_error_handlers(app):
@@ -346,6 +348,110 @@ class ScenarioAPI(MethodView):
         response = jsonify({})
         return response
 
+
+class NarrativeSetAPI(MethodView):
+    """Implement CRUD operations for narrative_sets configuration data
+    """
+    def get(self, narrative_set_name):
+        """Get narrative_sets
+        all: GET /api/v1/narrative_sets/
+        one: GET /api/vi/narrative_sets/name
+        """
+        # return str(current_app.config)
+        data_interface = current_app.config.get_data_interface()
+        if narrative_set_name is None:
+            data = data_interface.read_narrative_sets()
+            response = jsonify(data)
+        else:
+            data = data_interface.read_narrative_set(narrative_set_name)
+            response = jsonify(data)
+
+        return response
+
+    def post(self):
+        """Create a narrative_set:
+        POST /api/v1/narrative_sets
+        """
+        data_interface = current_app.config.get_data_interface()
+        data = request.get_json() or request.form
+        data = check_timestamp(data)
+
+        data_interface.write_narrative_set(data)
+        response = jsonify({"message": "success"})
+        response.status_code = 201
+        return response
+
+    def put(self, narrative_set_name):
+        """Update a narrative_set:
+        PUT /api/v1/narrative_sets
+        """
+        data_interface = current_app.config.get_data_interface()
+        data = request.get_json() or request.form
+        data = check_timestamp(data)
+        data_interface.update_narrative_set(narrative_set_name, data)
+        response = jsonify({})
+        return response
+
+    def delete(self, narrative_set_name):
+        """Delete a narrative_set:
+        DELETE /api/v1/narrative_sets
+        """
+        data_interface = current_app.config.get_data_interface()
+        data_interface.delete_narrative_set(narrative_set_name)
+        response = jsonify({})
+        return response
+
+class NarrativeAPI(MethodView):
+    """Implement CRUD operations for narratives configuration data
+    """
+    def get(self, narrative_name):
+        """Get narratives
+        all: GET /api/v1/narratives/
+        one: GET /api/vi/narratives/name
+        """
+        # return str(current_app.config)
+        data_interface = current_app.config.get_data_interface()
+        if narrative_name is None:
+            data = data_interface.read_narratives()
+            response = jsonify(data)
+        else:
+            data = data_interface.read_narrative(narrative_name)
+            response = jsonify(data)
+
+        return response
+
+    def post(self):
+        """Create a narrative:
+        POST /api/v1/narratives
+        """
+        data_interface = current_app.config.get_data_interface()
+        data = request.get_json() or request.form
+        data = check_timestamp(data)
+
+        data_interface.write_narrative(data)
+        response = jsonify({"message": "success"})
+        response.status_code = 201
+        return response
+
+    def put(self, narrative_name):
+        """Update a narrative:
+        PUT /api/v1/narratives
+        """
+        data_interface = current_app.config.get_data_interface()
+        data = request.get_json() or request.form
+        data = check_timestamp(data)
+        data_interface.update_narrative(narrative_name, data)
+        response = jsonify({})
+        return response
+
+    def delete(self, narrative_name):
+        """Delete a narrative:
+        DELETE /api/v1/narratives
+        """
+        data_interface = current_app.config.get_data_interface()
+        data_interface.delete_narrative(narrative_name)
+        response = jsonify({})
+        return response
 
 def register_api(app, view, endpoint, url, key='id', key_type='int'):
     """Register a MethodView as an endpoint with CRUD operations at a URL

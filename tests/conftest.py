@@ -844,6 +844,9 @@ def get_sos_model():
         'scenario_sets': [
             'population'
         ],
+        'narrative_sets': [
+            'technology'
+        ],
         'sector_models': [
             'energy_demand',
             'energy_supply'

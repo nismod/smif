@@ -334,3 +334,107 @@ def test_create_scenario(client, get_handler, get_scenario):
 
     actual = get_handler.read_scenario(name)
     assert actual == get_scenario
+
+
+def test_get_narrative_sets(client, get_handler, get_narrative_set):
+    """GET all narrative_sets
+    """
+    response = client.get('/api/v1/narrative_sets/')
+    data = parse_json(response)
+    assert len(data) == 1
+
+    get_handler.write_narrative_set(get_narrative_set)
+    response = client.get('/api/v1/narrative_sets/')
+    data = parse_json(response)
+    assert len(data) == 2
+    assert get_narrative_set in data
+
+
+def test_get_narrative_set(client, get_handler, get_narrative_set):
+    """GET single system-of-systems model
+    """
+    name = get_narrative_set['name']
+    get_handler.write_narrative_set(get_narrative_set)
+
+    response = client.get('/api/v1/narrative_sets/{}'.format(name))
+    data = parse_json(response)
+    assert data == get_narrative_set
+
+
+def test_get_narrative_set_missing(client):
+    """GET missing system-of-systems model
+    """
+    response = client.get('/api/v1/narrative_sets/does_not_exist')
+    assert response.status_code == 404
+    data = parse_json(response)
+    assert data['message'] == "narrative_set 'does_not_exist' not found"
+
+
+def test_create_narrative_set(client, get_handler, get_narrative_set):
+    """POST system-of-systems model
+    """
+    name = 'test_create_narrative_set'
+    get_narrative_set['name'] = name
+    send = serialise_json(get_narrative_set)
+    response = client.post(
+        '/api/v1/narrative_sets/',
+        data=send,
+        content_type='application/json')
+    data = parse_json(response)
+    assert response.status_code == 201
+    assert data['message'] == 'success'
+
+    actual = get_handler.read_narrative_set(name)
+    assert actual == get_narrative_set
+
+
+def test_get_narratives(client, get_handler, get_narrative):
+    """GET all narratives
+    """
+    response = client.get('/api/v1/narratives/')
+    data = parse_json(response)
+    assert len(data) == 2
+
+    get_handler.write_narrative(get_narrative)
+    response = client.get('/api/v1/narratives/')
+    data = parse_json(response)
+    assert len(data) == 3
+    assert get_narrative in data
+
+
+def test_get_narrative(client, get_handler, get_narrative):
+    """GET single system-of-systems model
+    """
+    name = get_narrative['name']
+    get_handler.write_narrative(get_narrative)
+
+    response = client.get('/api/v1/narratives/{}'.format(name))
+    data = parse_json(response)
+    assert data == get_narrative
+
+
+def test_get_narrative_missing(client):
+    """GET missing system-of-systems model
+    """
+    response = client.get('/api/v1/narratives/does_not_exist')
+    assert response.status_code == 404
+    data = parse_json(response)
+    assert data['message'] == "narrative 'does_not_exist' not found"
+
+
+def test_create_narrative(client, get_handler, get_narrative):
+    """POST system-of-systems model
+    """
+    name = 'test_create_narrative'
+    get_narrative['name'] = name
+    send = serialise_json(get_narrative)
+    response = client.post(
+        '/api/v1/narratives/',
+        data=send,
+        content_type='application/json')
+    data = parse_json(response)
+    assert response.status_code == 201
+    assert data['message'] == 'success'
+
+    actual = get_handler.read_narrative(name)
+    assert actual == get_narrative
