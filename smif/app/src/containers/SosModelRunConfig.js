@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 import { fetchSosModelRun } from '../actions/actions.js';
 import { fetchSosModels } from '../actions/actions.js';
-import { fetchSosModel } from '../actions/actions.js';
+import { fetchScenarios } from '../actions/actions.js';
 
 import SosModelRunConfigForm from '../components/SosModelRunConfigForm.js';
 
@@ -14,16 +14,19 @@ class SosModelRunConfig extends Component {
         const { dispatch } = this.props;
         dispatch(fetchSosModelRun(this.props.match.params.name));
         dispatch(fetchSosModels());        
+        dispatch(fetchScenarios());
     }
 
     render () {
-        const {sos_model_run, sos_models, isFetching} = this.props;
+        const {sos_model_run, sos_models, scenarios, isFetching} = this.props;
         let config = null;
 
-        if ((sos_model_run && sos_model_run.name) && (sos_models[0] && sos_models[0].name)){
+        if ((sos_model_run && sos_model_run.name) && (sos_models.length > 0) && (scenarios.length > 0)){
+            
             config = <SosModelRunConfigForm 
                 sos_model_run={sos_model_run} 
-                sos_models={sos_models} 
+                sos_models={sos_models}
+                scenarios={scenarios} 
             />;
         }
         
@@ -134,6 +137,7 @@ class SosModelRunConfig extends Component {
 SosModelRunConfig.propTypes = {
     sos_model_run: PropTypes.object.isRequired,
     sos_models: PropTypes.array.isRequired,
+    scenarios: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
 };
@@ -142,6 +146,7 @@ function mapStateToProps(state) {
     return {
         sos_model_run: state.sos_model_run.item,
         sos_models: state.sos_models.items,
+        scenarios: state.scenarios.items,
         isFetching: state.sos_model_run.isFetching
     };
 }

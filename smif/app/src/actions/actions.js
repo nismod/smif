@@ -98,3 +98,36 @@ export function fetchSosModels(){
             );
     };
 }
+
+export const REQUEST_SCENARIOS = 'REQUEST_SCENARIOS';
+function requestScenarios(){
+    return {
+        type: REQUEST_SCENARIOS
+    };
+}
+
+export const RECEIVE_SCENARIOS = 'RECEIVE_SCENARIOS';
+function receiveScenarios(json) {
+    return {
+        type: RECEIVE_SCENARIOS,
+        scenarios: json,
+        receivedAt: Date.now()
+    };
+}
+
+export function fetchScenarios(){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestScenarios());
+
+        // make API request, returning a promise
+        return fetch('/api/v1/scenarios/')
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                json => dispatch(receiveScenarios(json))
+            );
+    };
+}

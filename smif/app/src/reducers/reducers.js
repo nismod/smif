@@ -6,8 +6,8 @@ import {
     RECEIVE_SOS_MODEL_RUN,
     REQUEST_SOS_MODELS,
     RECEIVE_SOS_MODELS,
-    REQUEST_SOS_MODEL,
-    RECEIVE_SOS_MODEL,
+    REQUEST_SCENARIOS,
+    RECEIVE_SCENARIOS,
 } from '../actions/actions.js';
 
 function sos_model_runs(
@@ -79,10 +79,34 @@ function sos_models(
     }
 }
 
+function scenarios(
+    state = {
+        isFetching: false,
+        items: []
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_SCENARIOS:
+        return Object.assign({}, state, {
+            isFetching: true
+        });
+    case RECEIVE_SCENARIOS:
+        return Object.assign({}, state, {
+            isFetching: false,
+            items: action.scenarios,
+            lastUpdated: action.receivedAt
+        });
+    default:
+        return state;
+    }
+}
+
 const rootReducer = combineReducers({
     sos_model_runs,
     sos_model_run,
-    sos_models
+    sos_models,
+    scenarios
 });
 
 export default rootReducer;
