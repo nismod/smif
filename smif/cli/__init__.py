@@ -426,6 +426,12 @@ def run_app(args):
     args
     """
     print("Opening smif application")
+
+    # avoid one of two error messages from 'forrtl error(200)' when running
+    # on windows cmd - seems related to scipy's underlying Fortran
+    os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = 'T'
+
+    # Create backend server process
     server = Process(target=_run_server, args=(args,))
 
     try:
