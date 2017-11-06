@@ -61,11 +61,12 @@ def test_setup_project_folder():
     """Test contents of the setup project folder
     """
     with TemporaryDirectory() as project_folder:
-        setup_project_folder(project_folder)
+        args = get_args(['setup', '-d', project_folder])
+        setup_project_folder(args)
 
         assert os.path.exists(project_folder)
 
-        folder_list = ['data']
+        folder_list = ['config', 'data', 'models', 'planning']
         for folder in folder_list:
             folder_path = os.path.join(project_folder, folder)
 
