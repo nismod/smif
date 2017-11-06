@@ -3,34 +3,64 @@
 
 This command line interface implements a number of methods.
 
-- `setup` creates a new project folder structure in a location
-- `run` performs a simulation of an individual sector model, or the whole
-        system of systems model
+- `setup` creates an example project with the recommended folder structure
+- `run` performs a simulation of an individual sector model, or the whole system
+        of systems model
 - `validate` performs a validation check of the configuration file
+- `app` runs the graphical user interface, opening in a web browser
 
 Folder structure
 ----------------
 
-When configuring a system-of-systems model for the CLI, the folder structure
-below should be used.  In this example, there is one sector model, called
-``water_supply``::
+When configuring a project for the CLI, the folder structure below should be
+used.  In this example, there is one system-of-systems model, combining a water
+supply and an energy demand model::
 
-    /main_config.yaml
-    /timesteps.yaml
-    /water_supply.yaml
-    /data/all/inputs.yaml
-    /data/water_supply/
-    /data/water_supply/inputs.yaml
-    /data/water_supply/outputs.yaml
-    /data/water_supply/assets/assets1.yaml
-    /data/water_supply/planning/
-    /data/water_supply/planning/pre-specified.yaml
+    /config
+        project.yaml
+        /sector_models
+            energy_demand.yml
+            water_supply.yml
+        /sos_models
+            energy_water.yml
+        /sos_model_runs
+            run_to_2050.yml
+            short_test_run.yml
+            ...
+    /data
+        /initial_conditions
+            reservoirs.yml
+        /interval_definitions
+            annual_intervals.csv
+        /interventions
+            water_supply.yml
+        /narratives
+            high_tech_dsm.yml
+        /region_definitions
+            /oxfordshire
+                regions.geojson
+            /uk_nations_shp
+                regions.shp
+        /scenarios
+            population.csv
+            raininess.csv
+        /water_supply
+            /initial_system
+    /models
+        energy_demand.py
+        water_supply.py
+    /planning
+        expected_to_2020.yaml
+        national_infrastructure_pipeline.yml
 
-The ``data`` folder contains one subfolder for each sector model.
+The sector model implementations can be installed independently of the model run
+configuration. The paths to python wrapper classes (implementing SectorModel)
+should be specified in each sector_model/*.yml configuration.
 
-The sector model implementations can be installed independently of the model
-run configuration. The main_config.yaml file specifies which sector models
-should run, while each set of sector model config
+The project.yaml file specifies the metadata shared by all elements of the
+project; ``sos_models`` specify the combinations of ``sector_models`` and
+``scenarios`` while individual ``model_runs`` specify the scenario, strategy
+and narrative combinations to be used in each run of the models.
 
 """
 from __future__ import print_function
@@ -38,22 +68,24 @@ import logging
 import logging.config
 import os
 import re
+import shutil
 import sys
+import time
 import traceback
+import webbrowser
 from argparse import ArgumentParser
+from multiprocessing import Process
+from threading import Timer
 
 import smif
 from smif.data_layer.load import dump
-
 from smif.data_layer import DatafileInterface
-
 from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
-
+from smif.http_api import create_app
 from smif.parameters.narrative import Narrative
-
 from smif.modelrun import ModelRunBuilder
 from smif.model.sos_model import SosModelBuilder
 from smif.model.sector_model import SectorModelBuilder
@@ -120,40 +152,29 @@ REGIONS = get_region_register()
 INTERVALS = get_interval_register()
 
 
-def setup_project_folder(project_path):
+def setup_project_folder(args):
     """Creates folder structure in the target directory
 
     Arguments
     =========
-    project_path : str
-        Absolute path to an empty folder
-
+    args
     """
-    folder_list = ['data']
-    for folder in folder_list:
-        folder_path = os.path.join(project_path, folder)
-        if os.path.exists(folder_path):
-            msg = "{} already exists, skipping...".format(folder_path)
-        else:
-            msg = "Creating {} folder in {}".format(folder, project_path)
-            os.mkdir(folder_path)
-        LOGGER.info(msg)
+    # setup.cfg data_files installs to path relative to sys.prefix
+    example_path = os.path.join(sys.prefix, 'smif', 'example')
+    # copy without deleting any files present
+    _recursive_overwrite(example_path, args.directory)
 
 
-def setup_configuration(args):
-    """Sets up the configuration files into the defined project folder
-
-    """
-    project_path = os.path.abspath(args.directory)
-    msg = "Set up the project folders in {}?".format(project_path)
-    response = confirm(msg,
-                       response=False)
-    if response:
-        msg = "Setting up the project folders in {}".format(project_path)
-        setup_project_folder(project_path)
+def _recursive_overwrite(src, dest):
+    if os.path.isdir(src):
+        if not os.path.isdir(dest):
+            os.makedirs(dest)
+        files = os.listdir(src)
+        for f in files:
+            _recursive_overwrite(os.path.join(src, f),
+                                 os.path.join(dest, f))
     else:
-        msg = "Setup cancelled."
-    LOGGER.info(msg)
+        shutil.copyfile(src, dest)
 
 
 def load_region_sets(handler):
@@ -371,6 +392,54 @@ def execute_model_run(args):
     print("Model run complete")
 
 
+def make_get_data_interface(args):
+    """Use args to make a function returning a suitable DataInterface
+    """
+    def getter():
+        """Return a DataInterface
+        """
+        return DatafileInterface(args.directory)
+    return getter
+
+
+def _open_browser():
+    print(" * Opening page in browser...")
+    webbrowser.open("http://localhost:5000/")
+
+
+def _run_server(args):
+    app_folder = os.path.join(sys.prefix, 'smif', 'app')
+    get_data_interface = make_get_data_interface(args)
+    app = create_app(
+        static_folder=app_folder,
+        template_folder=app_folder,
+        get_data_interface=get_data_interface
+    )
+    app.run()
+
+
+def run_app(args):
+    """Run the client/server application
+
+    Arguments
+    ---------
+    args
+    """
+    print("Opening smif application")
+    server = Process(target=_run_server, args=(args,))
+
+    try:
+        print(" * Type CTRL-C to stop")
+        server.start()
+        Timer(2, _open_browser).start()
+        while True:
+            time.sleep(0.2)
+    except KeyboardInterrupt:
+        print(" * Stopping...")
+        server.terminate()
+        server.join()
+
+
 def parse_arguments():
     """Parse command line arguments
 
@@ -393,9 +462,10 @@ def parse_arguments():
     # SETUP
     parser_setup = subparsers.add_parser('setup',
                                          help='Setup the project folder')
-    parser_setup.set_defaults(func=setup_configuration)
-    parser_setup.add_argument('path',
-                              help="Path to the project folder")
+    parser_setup.set_defaults(func=setup_project_folder)
+    parser_setup.add_argument('-d', '--directory',
+                              default='.',
+                              help="Path to the project directory")
 
     # LIST
     parser_list = subparsers.add_parser('list',
@@ -404,6 +474,14 @@ def parse_arguments():
     parser_list.add_argument('-d', '--directory',
                              default='.',
                              help="Path to the project directory")
+
+    # APP
+    parser_app = subparsers.add_parser('app',
+                                       help='Open smif app')
+    parser_app.set_defaults(func=run_app)
+    parser_app.add_argument('-d', '--directory',
+                            default='.',
+                            help="Path to the project directory")
 
     # RUN
     parser_run = subparsers.add_parser('run',
