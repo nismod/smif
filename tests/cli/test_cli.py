@@ -24,15 +24,15 @@ def test_parse_arguments():
     """Setup a project folder argument parsing
     """
     with TemporaryDirectory() as project_folder:
-        args = get_args(['setup', project_folder])
+        args = get_args(['setup', '-d', project_folder])
 
         expected = project_folder
-        actual = args.path
+        actual = args.directory
         assert actual == expected
 
-        # Ensure that the `setup_configuration` function is called when `setup`
+        # Ensure that the `setup_project_folder` function is called when `setup`
         # command is passed to the cli
-        assert args.func.__name__ == 'setup_configuration'
+        assert args.func.__name__ == 'setup_project_folder'
 
 
 def test_fixture_single_run():
