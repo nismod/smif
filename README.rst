@@ -60,7 +60,7 @@ Add the conda-forge channel, which has shapely and fiona available::
 
 Install python packages, along with library dependencies::
 
-    conda install numpy pyyaml fiona rtree shapely
+    conda install numpy pyyaml fiona rtree shapely scikit-optimize
 
 Finally install ``smif``::
 
