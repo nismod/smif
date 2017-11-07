@@ -239,7 +239,8 @@ def get_model_run_definition(args):
 
         sector_model_builder = SectorModelBuilder(sector_model_config['name'])
         LOGGER.debug("Sector model config: %s", sector_model_config)
-        sector_model_builder.construct(sector_model_config)
+        sector_model_builder.construct(sector_model_config,
+                                       model_run_config['timesteps'])
         sector_model_object = sector_model_builder.finish()
 
         sector_model_objects.append(sector_model_object)

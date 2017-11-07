@@ -75,6 +75,7 @@ class Model(metaclass=ABCMeta):
 
         self.regions = get_region_register()
         self.intervals = get_interval_register()
+        self.timesteps = []
 
         self.logger = getLogger(__name__)
 
