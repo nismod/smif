@@ -34,6 +34,39 @@ Setup and Configuration
 **smif** is written in Python (Python>=3.5) and has a number of dependencies.
 See `requirements.txt` for a full list.
 
+
+Using conda
+-----------
+
+The recommended installation method is to use `conda
+<http://conda.pydata.org/miniconda.html>`_, which handles packages and virtual
+environments, along with the `conda-forge` channel which has a host of pre-built
+libraries and packages.
+
+Create a conda environment::
+
+    conda create --name smif_env python=3.6
+
+Activate it (run each time you switch projects)::
+
+    activate smif_env
+
+Note that you ``source activate smif`` on OSX and Linux (or e.g. Git Bash on
+Windows).
+
+Add the conda-forge channel, which has shapely and fiona available::
+
+    conda config --add channels conda-forge
+
+Install python packages, along with library dependencies::
+
+    conda install numpy pyyaml fiona rtree shapely scikit-optimize
+
+Finally install ``smif``::
+
+    pip install smif
+
+
 GLPK
 ----
 
@@ -63,33 +96,6 @@ install the python packages as usual using::
     brew install spatialindex
     brew install geos
 
-    pip install -r requirements.txt
-
-On Windows, the simplest approach seems to be using
-`conda <http://conda.pydata.org/miniconda.html>`_, which handles packages and
-virtual environments, along with the `conda-forge` channel which has a host of
-pre-built libraries and packages.
-
-Create a conda environment::
-
-    conda create --name smif python=3.5 numpy scipy
-
-Activate it (run each time you switch projects)::
-
-    activate smif
-
-Note that you ``source activate smif`` on OSX and Linux.
-
-Add the conda-forge channel, which has shapely and fiona available::
-
-    conda config --add channels conda-forge
-
-
-Install python packages, along with GDAL and dependencies::
-
-    conda install fiona shapely rtree
-    pip install -r requirements.txt
-
 
 Installing `smif`
 =================
@@ -101,10 +107,7 @@ a normal installation of `smif` can be achieved using pip on the command line::
 
 Versions under development can be installed from github using pip too::
 
-        pip install git+http://github.com/nismod/smif#egg=v0.2
-
-The suffix ``#egg=v0.2`` refers to a specific version of the source code.
-Omitting the suffix installs the latest version of the library.
+        pip install git+http://github.com/nismod/smif
 
 To install from the source code in development mode::
 
