@@ -17,7 +17,6 @@ env:
   - DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="true"
 install:
 - source tests/travis_install.sh
-- pip install git+https://github.com/behave/behave
 - pip install -r test-requirements.txt -r requirements.txt
 - python setup.py install
 - nvm install 6.11.4
