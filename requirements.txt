@@ -2,6 +2,7 @@
 numpy
 pyyaml>=3.12
 networkx~=1.11
+python-dateutil==2.6.0
 isodate
 fiona>=1.7
 shapely>=1.3
