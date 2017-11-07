@@ -38,12 +38,12 @@ The key functions include
   approaches
 
 """
-import importlib
 import logging
 import os
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
+import importlib
 from smif import StateData
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
@@ -304,7 +304,7 @@ class SectorModelBuilder(object):
         self.region_register = get_region_register()
         self.logger = logging.getLogger(__name__)
 
-    def construct(self, sector_model_config):
+    def construct(self, sector_model_config, timesteps):
         """Constructs the sector model
 
         Arguments
@@ -315,6 +315,7 @@ class SectorModelBuilder(object):
         self.load_model(sector_model_config['path'], sector_model_config['classname'])
         self._sector_model.name = sector_model_config['name']
         self._sector_model.description = sector_model_config['description']
+        self._sector_model.timesteps = timesteps
 
         self.add_inputs(sector_model_config['inputs'])
         self.add_outputs(sector_model_config['outputs'])

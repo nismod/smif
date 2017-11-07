@@ -189,9 +189,11 @@ class TestSectorModelBuilder():
     def test_build_from_config(self, get_sector_model_config):
         config = get_sector_model_config
         builder = SectorModelBuilder('test_sector_model')
-        builder.construct(config)
+        timesteps = [2015, 2020]
+        builder.construct(config, timesteps)
         sector_model = builder.finish()
         assert sector_model.name == 'water_supply'
+        assert sector_model.timesteps == timesteps
 
         actual = sector_model.as_dict()
 
