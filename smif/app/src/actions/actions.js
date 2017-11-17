@@ -49,11 +49,17 @@ function receiveSosModelRun(json) {
     };
 }
 
+export const RESET_SOS_MODEL_RUN = 'RESET_SOS_MODEL_RUN';
+export function resetSosModelRun() {
+    return {
+        type: RESET_SOS_MODEL_RUN
+    };
+}
+
 export function fetchSosModelRun(modelrunid){
     return function (dispatch) {
         // inform the app that the API request is starting
         dispatch(requestSosModelRun());
-
         // make API request, returning a promise
         return fetch('/api/v1/sos_model_runs/' + modelrunid)
             .then(

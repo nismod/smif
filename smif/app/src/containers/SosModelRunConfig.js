@@ -8,6 +8,8 @@ import { fetchSosModels } from '../actions/actions.js';
 import { fetchScenarios } from '../actions/actions.js';
 import { fetchNarratives } from '../actions/actions.js';
 
+import { resetSosModelRun } from '../actions/actions.js';
+
 import SosModelRunConfigForm from '../components/SosModelRunConfigForm.js';
 
 class SosModelRunConfig extends Component {
@@ -17,7 +19,11 @@ class SosModelRunConfig extends Component {
         dispatch(fetchSosModels());        
         dispatch(fetchScenarios());
         dispatch(fetchNarratives());
-        console.log('SosModelRunConfigForm did mount');
+    }
+
+    componentWillUnmount() {
+        const { dispatch } = this.props;
+        dispatch(resetSosModelRun());
     }
 
     render () {

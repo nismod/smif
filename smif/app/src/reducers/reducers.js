@@ -4,6 +4,7 @@ import {
     RECEIVE_SOS_MODEL_RUNS,
     REQUEST_SOS_MODEL_RUN,
     RECEIVE_SOS_MODEL_RUN,
+    RESET_SOS_MODEL_RUN,
     REQUEST_SOS_MODELS,
     RECEIVE_SOS_MODELS,
     REQUEST_SCENARIOS,
@@ -51,6 +52,12 @@ function sos_model_run(
         return Object.assign({}, state, {
             isFetching: false,
             item: action.sos_model_run,
+            lastUpdated: action.receivedAt
+        });
+    case RESET_SOS_MODEL_RUN:
+        return Object.assign({}, state, {
+            isFetching: false,
+            item: {},
             lastUpdated: action.receivedAt
         });
     default:
