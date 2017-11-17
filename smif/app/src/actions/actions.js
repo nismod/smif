@@ -131,3 +131,36 @@ export function fetchScenarios(){
             );
     };
 }
+
+export const REQUEST_NARRATIVES = 'REQUEST_NARRATIVES';
+function requestNarratives(){
+    return {
+        type: REQUEST_NARRATIVES
+    };
+}
+
+export const RECEIVE_NARRATIVES = 'RECEIVE_NARRATIVES';
+function receiveNarratives(json) {
+    return {
+        type: RECEIVE_NARRATIVES,
+        narratives: json,
+        receivedAt: Date.now()
+    };
+}
+
+export function fetchNarratives(){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestNarratives());
+
+        // make API request, returning a promise
+        return fetch('/api/v1/narratives/')
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                json => dispatch(receiveNarratives(json))
+            );
+    };
+}
