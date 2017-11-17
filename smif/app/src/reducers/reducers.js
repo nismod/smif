@@ -8,6 +8,8 @@ import {
     RECEIVE_SOS_MODELS,
     REQUEST_SCENARIOS,
     RECEIVE_SCENARIOS,
+    REQUEST_NARRATIVES,
+    RECEIVE_NARRATIVES,
 } from '../actions/actions.js';
 
 function sos_model_runs(
@@ -102,11 +104,35 @@ function scenarios(
     }
 }
 
+function narratives(
+    state = {
+        isFetching: false,
+        items: []
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_NARRATIVES:
+        return Object.assign({}, state, {
+            isFetching: true
+        });
+    case RECEIVE_NARRATIVES:
+        return Object.assign({}, state, {
+            isFetching: false,
+            items: action.narratives,
+            lastUpdated: action.receivedAt
+        });
+    default:
+        return state;
+    }
+}
+
 const rootReducer = combineReducers({
     sos_model_runs,
     sos_model_run,
     sos_models,
-    scenarios
+    scenarios,
+    narratives
 });
 
 export default rootReducer;

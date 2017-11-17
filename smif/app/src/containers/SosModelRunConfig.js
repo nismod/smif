@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { fetchSosModelRun } from '../actions/actions.js';
 import { fetchSosModels } from '../actions/actions.js';
 import { fetchScenarios } from '../actions/actions.js';
+import { fetchNarratives } from '../actions/actions.js';
 
 import SosModelRunConfigForm from '../components/SosModelRunConfigForm.js';
 
@@ -15,18 +16,21 @@ class SosModelRunConfig extends Component {
         dispatch(fetchSosModelRun(this.props.match.params.name));
         dispatch(fetchSosModels());        
         dispatch(fetchScenarios());
+        dispatch(fetchNarratives());
+        console.log('SosModelRunConfigForm did mount');
     }
 
     render () {
-        const {sos_model_run, sos_models, scenarios, isFetching} = this.props;
+        const {sos_model_run, sos_models, scenarios, narratives, isFetching} = this.props;
         let config = null;
 
-        if ((sos_model_run && sos_model_run.name) && (sos_models.length > 0) && (scenarios.length > 0)){
+        if ((sos_model_run && sos_model_run.name) && (sos_models.length > 0) && (scenarios.length > 0) && (narratives.length > 0)){
             
             config = <SosModelRunConfigForm 
                 sos_model_run={sos_model_run} 
                 sos_models={sos_models}
                 scenarios={scenarios} 
+                narratives={narratives}
             />;
         }
         
@@ -45,55 +49,6 @@ class SosModelRunConfig extends Component {
                 <div hidden={ isFetching }>           
 
                     {config}             
-
-                    <label>Scenarios:</label>
-                    <fieldset>
-                        <legend>Population (ONS)</legend>
-                        <label>
-                            <input type="radio" name="scenario-population" value="low" />
-                            Low
-                        </label>
-                        <label>
-                            <input type="radio" name="scenario-population" value="medium" />
-                            Medium
-                        </label>
-                        <label>
-                            <input type="radio" name="scenario-population" value="high" />
-                            High
-                        </label>
-                    </fieldset>
-
-                    <label>Narratives:</label>
-                    <fieldset>
-                        <legend>Technology</legend>
-                        <label>
-                            <input type="checkbox" />
-                            Energy Demand - High Tech
-                        </label>
-                        <label>
-                            <input type="checkbox" />
-                            Solid Waste - High recycling
-                        </label>
-                        <label>
-                            <input type="checkbox" />
-                            Transport - Autonomous driving
-                        </label>
-                    </fieldset>
-                    <fieldset disabled="disabled">
-                        <legend>Governance</legend>
-                        <label>
-                            <input type="checkbox" />
-                            Central Planning
-                        </label>
-                        <label>
-                            <input type="checkbox" />
-                            Hard Brexit
-                        </label>
-                        <label>
-                            <input type="checkbox" />
-                            Soft Brexit
-                        </label>
-                    </fieldset>
 
                     <h3>Timesteps</h3>
                     <label>Base year:</label>
@@ -138,6 +93,7 @@ SosModelRunConfig.propTypes = {
     sos_model_run: PropTypes.object.isRequired,
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
+    narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
 };
@@ -147,6 +103,7 @@ function mapStateToProps(state) {
         sos_model_run: state.sos_model_run.item,
         sos_models: state.sos_models.items,
         scenarios: state.scenarios.items,
+        narratives: state.narratives.items,
         isFetching: state.sos_model_run.isFetching
     };
 }
