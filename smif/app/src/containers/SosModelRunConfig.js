@@ -56,32 +56,7 @@ class SosModelRunConfig extends Component {
 
                     {config}             
 
-                    <h3>Timesteps</h3>
-                    <label>Base year:</label>
-                    <div className="select-container">
-                        <select>
-                            <option value="" disabled="disabled" defaultValue="selected">Please select a base year</option>
-                            <option value="2015">2015</option>
-                            <option value="2016">2016</option>
-                            <option value="2017">2017</option>
-                            <option value="2018">2018</option>
-                            <option value="2019">2019</option>
-                            <option value="2020">2020</option>
-                        </select>
-                    </div>
-                    <label>End year:</label>
-                    <div className="select-container">
-                        <select>
-                            <option value="" disabled="disabled" defaultValue="selected">Please select an end year</option>
-                            <option value="2015">2015</option>
-                            <option value="2016">2016</option>
-                            <option value="2017">2017</option>
-                            <option value="2018">2018</option>
-                            <option value="2019">2019</option>
-                            <option value="2020">2020</option>
-                        </select>
-                    </div>
-                    <label>Resolution:</label>
+
                     <input type="number" />
 
                     <input type="button" value="Save Model Run Configuration" />

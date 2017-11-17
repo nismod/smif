@@ -83,11 +83,40 @@ class SosModelRunConfigForm extends Component {
         this.setState({selectedNarratives: narratives});
     }
 
+    createBaseyearSelectItems() {
+        let years = [];
+        for (let i = 2000; i <= 2100; i++) {
+            if (i == this.props.sos_model_run.timesteps[0]) {
+                years.push(<option key={'baseyear_' + i} selected="selected" value={i}>{i}</option>);
+            }
+            else {
+                years.push(<option key={'baseyear_' + i} value={i}>{i}</option>);
+            }
+        }
+        return years;
+    }
+
+    createEndyearSelectItems() {
+        let years = [];
+        for (let i = 2000; i <= 2100; i++) {
+            if (i == this.props.sos_model_run.timesteps[this.props.sos_model_run.timesteps.length - 1]) {
+                years.push(<option key={'endyear_' + i} selected="selected" value={i}>{i}</option>);
+            }
+            else {
+                years.push(<option key={'endyear_' + i} value={i}>{i}</option>);
+            }
+        }
+        return years;
+    }
+
     render() {
         const { sos_model_run, sos_models, scenarios, narratives } = this.props;
 
+        console.log(sos_model_run);
+
         return (
             <div>
+
                 <h3>General</h3>
                 <label>Name:</label>
                 <input type="text" name="modelrun_name"  defaultValue={sos_model_run.name}/>
@@ -97,11 +126,7 @@ class SosModelRunConfigForm extends Component {
                 </div>
 
                 <label>Datestamp:</label>
-                <input type="datetime-local" defaultValue={sos_model_run.stamp} disabled="disabled"/>
-
-                {/* {
-                    console.log(this.state.selectedSosModel)
-                } */}
+                <input type="datetime-local" defaultValue=""/>
 
                 <h3>Model</h3>
                 <label>System-of-systems model:</label>
@@ -115,13 +140,6 @@ class SosModelRunConfigForm extends Component {
                         }
                     </select>
                 </div>
-                
-                {/* {
-                    console.log(this.state.selectedScenarios)
-                }
-                {
-                    console.log(this.state.selectedNarratives)
-                } */}
 
                 <h3>Scenarios</h3>
                 <fieldset>            
@@ -140,6 +158,23 @@ class SosModelRunConfigForm extends Component {
                         )
                     }
                 </fieldset>
+
+                <h3>Timesteps</h3>
+                <label>Base year:</label>
+                <div className="select-container">
+                    <select>
+                        <option value="" disabled="disabled">Please select a base year</option>
+                        {this.createBaseyearSelectItems()}
+                    </select>
+                </div>
+                <label>End year:</label>
+                <div className="select-container">
+                    <select>
+                        <option value="" disabled="disabled">Please select an end year</option>
+                        {this.createEndyearSelectItems()}
+                    </select>
+                </div>
+                <label>Resolution:</label>
             </div>
         );
     }
