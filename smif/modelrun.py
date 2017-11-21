@@ -131,18 +131,17 @@ class ModelRunner(object):
         model_run : :class:`smif.modelrun.ModelRun`
         """
         # Initialise each of the sector models
-        for model in model_run.sos_model.sector_models:
-            model_run.sos_model.models[model].before_model_run()
+        param_data = self._get_parameter_data(model_run)
+        model_run.sos_model.before_model_run(param_data)
 
         # Solve the models over all timesteps
         for timestep in model_run.model_horizon:
             self.logger.debug('Running model for timestep %s', timestep)
-            data = self._get_parameter_data(model_run)
             self.logger.debug("Passing parameter data %s into '%s'",
-                              data, model_run.sos_model.name)
+                              param_data, model_run.sos_model.name)
 
             self.results[timestep] = model_run.sos_model.simulate(timestep,
-                                                                  data)
+                                                                  param_data)
         return self.results
 
     def _get_parameter_data(self, model_run):
