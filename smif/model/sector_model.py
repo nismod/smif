@@ -260,6 +260,27 @@ class SectorModel(Model, metaclass=ABCMeta):
         """
         return self.regions.get_entry(region_set_name).get_entry_names()
 
+    def get_regions(self, region_set_name):
+        """Get the list of regions for ``region_set_name``
+
+        Returns
+        -------
+        list
+            A list of GeoJSON-style dicts
+        """
+        return self.regions.get_entry(region_set_name).as_features()
+
+    def get_region_centroids(self, region_set_name):
+        """Get the list of region centroids for ``region_set_name``
+
+        Returns
+        -------
+        list
+            A list of GeoJSON-style dicts, with Point features corresponding to
+            region centroids
+        """
+        return self.regions.get_entry(region_set_name).centroids_as_features()
+
     def get_interval_names(self, interval_set_name):
         """Get the list of interval names for ``interval_set_name``
 

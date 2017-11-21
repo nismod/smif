@@ -5,7 +5,7 @@ from collections import OrderedDict, defaultdict, namedtuple
 
 import numpy as np
 from rtree import index
-from shapely.geometry import shape
+from shapely.geometry import mapping, shape
 from smif.convert.register import Register, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
@@ -68,6 +68,45 @@ class RegionSet(ResolutionSet):
 
     def get_entry_names(self):
         return [region.name for region in self.data]
+
+    def as_features(self):
+        """Get the regions as a list of feature dictionaries
+
+        Returns
+        -------
+        list
+            A list of GeoJSON-style dicts
+        """
+        return [
+            {
+                'type': 'Feature',
+                'geometry': mapping(region.shape),
+                'properties': {
+                    'name': region.name
+                }
+            }
+            for region in self._regions
+        ]
+
+    def centroids_as_features(self):
+        """Get the region centroids as a list of feature dictionaries
+
+        Returns
+        -------
+        list
+            A list of GeoJSON-style dicts, with Point features corresponding to
+            region centroids
+        """
+        return [
+            {
+                'type': 'Feature',
+                'geometry': mapping(region.shape.centroid),
+                'properties': {
+                    'name': region.name
+                }
+            }
+            for region in self._regions
+        ]
 
     def intersection(self, bounds):
         """Return the subset of regions intersecting with a bounding box
