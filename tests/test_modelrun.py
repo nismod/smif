@@ -1,7 +1,7 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 from pytest import fixture
-from smif.modelrun import ModelRunBuilder
+from smif.modelrun import ModelRunBuilder, ModelRunner
 
 
 @fixture(scope='function')
@@ -69,3 +69,30 @@ class TestModelRun:
 
         config = model_run.as_dict()
         assert config == config
+
+
+class TestModelRunner():
+
+    def test_call_before_model_run(self):
+        runner = ModelRunner()
+        modelrun = Mock()
+        modelrun.narratives = []
+        modelrun.model_horizon = [1, 2]
+
+        runner.solve_model(modelrun)
+
+        modelrun.sos_model.before_model_run.assert_called_once_with({})
+
+    def test_call_simulate(self):
+        runner = ModelRunner()
+        modelrun = Mock()
+        modelrun.narratives = []
+        modelrun.model_horizon = [1, 2]
+
+        runner.solve_model(modelrun)
+
+        calls = [
+            call(1, {}),
+            call(2, {})
+        ]
+        modelrun.sos_model.simulate.assert_has_calls(calls)

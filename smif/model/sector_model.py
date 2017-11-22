@@ -181,7 +181,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         """
         pass
 
-    def before_model_run(self):
+    def before_model_run(self, param_data=None):
         """Implement this method to conduct pre-model run tasks
         """
         pass

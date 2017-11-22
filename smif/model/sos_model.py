@@ -75,7 +75,6 @@ class SosModel(CompositeModel):
                               'sink_model_input': name}
                 dependencies.append(dep_config)
 
-
         config = {
             'name': self.name,
             'description': self.description,
@@ -115,6 +114,13 @@ class SosModel(CompositeModel):
         """
         # convert from defaultdict to plain dict
         return dict(self._results)
+
+    def before_model_run(self, data):
+        """Initialise each model (passing in parameter data only)
+        """
+        for model in self.sector_models:
+            param_data = self._get_parameter_values(self.models[model], {}, data)
+            self.models[model].before_model_run(param_data)
 
     def simulate(self, timestep, data=None):
         """Run the SosModel
