@@ -248,7 +248,10 @@ class SectorModel(Model, metaclass=ABCMeta):
             raise ValueError("Scenario data for %s not available for this input",
                              input_name)
 
-        return self.deps[input_name].source_model._data
+        source_model = self.deps[input_name].source_model
+        output_name = self.deps[input_name].source.name
+
+        return source_model.get_data(output_name)
 
     def get_region_names(self, region_set_name):
         """Get the list of region names for ``region_set_name``

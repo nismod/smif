@@ -122,7 +122,7 @@ class TestCompositeSectorModel():
         model.add_dependency(scenario_model, 'scenario_output', 'input_name')
 
         assert 'input_name' in model.deps
-        assert model.get_scenario_data('input_name') == {'scenario_output': data}
+        assert model.get_scenario_data('input_name') == data
 
 
 class TestSectorModelBuilder():
