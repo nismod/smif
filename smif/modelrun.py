@@ -126,6 +126,11 @@ class ModelRunner(object):
     def solve_model(self, model_run):
         """Solve a ModelRun
 
+        This method first calls :func:`smif.model.SosModel.before_model_run`
+        with parameter data, then steps through the model horizon, calling
+        :func:`smif.model.SosModel.simulate` with parameter data at each
+        timestep.
+
         Arguments
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
