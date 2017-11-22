@@ -184,6 +184,56 @@ class TestRegionSet():
         expected = ['unit', 'half', 'two']
         assert actual == expected
 
+    def test_as_features(self, regions_half_squares):
+        """Retrieve regions as feature dicts
+        """
+        actual = regions_half_squares.as_features()
+        expected = [
+            {
+                'type': 'Feature',
+                'properties': {'name': 'a'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': (((0.0, 0.0), (0.0, 1.0), (1.0, 1.0),
+                                     (1.0, 0.0), (0.0, 0.0),),)
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {'name': 'b'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': (((0.0, 1.0), (0.0, 2.0), (1.0, 2.0),
+                                     (1.0, 1.0), (0.0, 1.0),),)
+                }
+            },
+        ]
+        assert actual == expected
+
+    def test_centroids_as_features(self, regions_half_squares):
+        """Retrieve centroids
+        """
+        actual = regions_half_squares.centroids_as_features()
+        expected = [
+            {
+                'type': 'Feature',
+                'properties': {'name': 'a'},
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': (0.5, 0.5)
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {'name': 'b'},
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': (0.5, 1.5)
+                }
+            },
+        ]
+        assert actual == expected
+
     def test_must_have_unique_names(self):
         with raises(AssertionError) as ex:
             RegionSet('test', [

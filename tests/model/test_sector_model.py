@@ -5,6 +5,7 @@ from unittest.mock import Mock
 
 import numpy as np
 from pytest import fixture, raises
+from smif.convert.area import get_register
 from smif.metadata import Metadata, MetadataSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
@@ -295,4 +296,73 @@ class TestParameters():
 
         actual = model.simulate(2010, {'smart_meter_savings': 3})
         expected = {'savings': 3}
+        assert actual == expected
+
+
+class TestSectorModelRegions():
+    """SectorModels should have access to regions (name, geometry and centroid)
+    """
+    def get_model(self):
+        """Get a model with region register as setup in conftest
+        """
+        rreg = get_register()
+        model = EmptySectorModel('region_test')
+        model.regions = rreg
+        return model
+
+    def test_access_region_names(self):
+        """Access names
+        """
+        model = self.get_model()
+        region_names = model.get_region_names('half_squares')
+        assert sorted(region_names) == ['a', 'b']
+
+    def test_access_region_geometries(self):
+        model = self.get_model()
+        actual = model.get_regions('half_squares')
+
+        expected = [
+            {
+                'type': 'Feature',
+                'properties': {'name': 'a'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': (((0.0, 0.0), (0.0, 1.0), (1.0, 1.0),
+                                     (1.0, 0.0), (0.0, 0.0),),)
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {'name': 'b'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': (((0.0, 1.0), (0.0, 2.0), (1.0, 2.0),
+                                     (1.0, 1.0), (0.0, 1.0),),)
+                }
+            },
+        ]
+        assert actual == expected
+
+    def test_access_region_centroids(self):
+        model = self.get_model()
+        actual = model.get_region_centroids('half_squares')
+
+        expected = [
+            {
+                'type': 'Feature',
+                'properties': {'name': 'a'},
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': (0.5, 0.5)
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {'name': 'b'},
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': (0.5, 1.5)
+                }
+            },
+        ]
         assert actual == expected
