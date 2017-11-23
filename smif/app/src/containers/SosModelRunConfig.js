@@ -1,43 +1,64 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
 
-import { fetchSosModelRun } from '../actions/actions.js';
-import { fetchSosModels } from '../actions/actions.js';
-import { fetchScenarios } from '../actions/actions.js';
-import { fetchNarratives } from '../actions/actions.js';
+import { connect } from 'react-redux'
+import { Link, Router } from 'react-router-dom'
 
-import { resetSosModelRun } from '../actions/actions.js';
+import { fetchSosModelRun } from '../actions/actions.js'
+import { fetchSosModels } from '../actions/actions.js'
+import { fetchScenarios } from '../actions/actions.js'
+import { fetchNarratives } from '../actions/actions.js'
 
-import SosModelRunConfigForm from '../components/SosModelRunConfigForm.js';
+import { resetSosModelRun } from '../actions/actions.js'
+import { saveSosModelRun } from '../actions/actions.js'
+
+import SosModelRunConfigForm from '../components/SosModelRunConfigForm.js'
 
 class SosModelRunConfig extends Component {
     componentDidMount() {
-        const { dispatch } = this.props;
-        dispatch(fetchSosModelRun(this.props.match.params.name));
-        dispatch(fetchSosModels());        
-        dispatch(fetchScenarios());
-        dispatch(fetchNarratives());
+        const { dispatch } = this.props
+        dispatch(fetchSosModelRun(this.props.match.params.name))
+        dispatch(fetchSosModels())
+        dispatch(fetchScenarios())
+        dispatch(fetchNarratives())
+
+        this.saveSosModelRun = this.saveSosModelRun.bind(this)
+        this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
     }
 
     componentWillUnmount() {
-        const { dispatch } = this.props;
-        dispatch(resetSosModelRun());
+        const { dispatch } = this.props
+        dispatch(resetSosModelRun())
+    }
+
+    saveSosModelRun(sosModelRun) {
+        const { dispatch } = this.props
+        dispatch(saveSosModelRun(sosModelRun))
+        this.returnToPreviousPage()
+    }
+
+    returnToPreviousPage() {
+        history.back()
     }
 
     render () {
-        const {sos_model_run, sos_models, scenarios, narratives, isFetching} = this.props;
-        let config = null;
+        const {sos_model_run, sos_models, scenarios, narratives, isFetching} = this.props
+        let config_form = null
+        let buttons = null;
 
         if ((sos_model_run && sos_model_run.name) && (sos_models.length > 0) && (scenarios.length > 0) && (narratives.length > 0)){
             
-            config = <SosModelRunConfigForm 
+            config_form = <SosModelRunConfigForm 
                 sos_model_run={sos_model_run} 
                 sos_models={sos_models}
                 scenarios={scenarios} 
                 narratives={narratives}
+                save_model_run={this.saveSosModelRun}
             />;
+
+            buttons = <div>
+                <input type="button" value="Cancel" onClick={this.returnToPreviousPage} /> 
+            </div>
         }
         
         return (
@@ -54,16 +75,9 @@ class SosModelRunConfig extends Component {
 
                 <div hidden={ isFetching }>           
 
-                    {config}             
+                    {config_form}            
+                    {buttons}
 
-
-                    <input type="number" />
-
-                    <input type="button" value="Save Model Run Configuration" />
-                    <input type="button" value="Cancel" />
-                    <Link to="/configure" className="button">
-                        Cancel
-                    </Link>
                 </div>
             </div>
         );

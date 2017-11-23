@@ -60,6 +60,7 @@ export function fetchSosModelRun(modelrunid){
     return function (dispatch) {
         // inform the app that the API request is starting
         dispatch(requestSosModelRun());
+        
         // make API request, returning a promise
         return fetch('/api/v1/sos_model_runs/' + modelrunid)
             .then(
@@ -69,6 +70,29 @@ export function fetchSosModelRun(modelrunid){
             .then(
                 json => dispatch(receiveSosModelRun(json))
             );
+    };
+}
+
+export function saveSosModelRun(modelrun){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+
+        // make API request, returning a promise
+        return fetch('/api/v1/sos_model_runs/' + modelrun.name, {
+            method: 'put',
+            body: JSON.stringify(modelrun),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(
+            response => response.json(),
+            error => console.log('An error occurred.', error)
+        )
+        .then(
+            //json => dispatch(receiveSosModelRun(json))
+        );
     };
 }
 
