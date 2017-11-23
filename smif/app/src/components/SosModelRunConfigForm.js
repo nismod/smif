@@ -8,6 +8,7 @@ import { saveSosModelRun } from '../actions/actions.js';
 
 import ScenarioSelector from '../components/ScenarioSelector.js'
 import NarrativeSelector from '../components/NarrativeSelector.js'
+import TimestepSelector from '../components/TimestepSelector.js'
 
 class SosModelRunConfigForm extends Component {
     constructor(props) {
@@ -17,6 +18,7 @@ class SosModelRunConfigForm extends Component {
         this.pickSosModelByName = this.pickSosModelByName.bind(this)
         this.handleScenariosChange = this.handleScenariosChange.bind(this)
         this.handleNarrativeChange = this.handleNarrativeChange.bind(this)
+        this.handleTimestepChange = this.handleTimestepChange.bind(this)
         this.handleInputChange = this.handleInputChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
 
@@ -75,11 +77,14 @@ class SosModelRunConfigForm extends Component {
             for (var k = 0; k < scenarios_in_sets[scenario_set[i]].length; k++) {
 
                 scenarios_in_sets[scenario_set[i]][k].active = false
-                this.props.sos_model_run.scenarios.forEach(function(element) {
-                    if (scenarios_in_sets[scenario_set[i]][k].name == element[scenarios_in_sets[scenario_set[i]][k].scenario_set]) {
-                        scenarios_in_sets[scenario_set[i]][k].active = true
-                    }
-                })              
+
+                if (this.props.sos_model_run.scenarios != null) {
+                    this.props.sos_model_run.scenarios.forEach(function(element) {
+                        if (scenarios_in_sets[scenario_set[i]][k].name == element[scenarios_in_sets[scenario_set[i]][k].scenario_set]) {
+                            scenarios_in_sets[scenario_set[i]][k].active = true
+                        }
+                    })
+                }              
             }
         }
         return scenarios_in_sets;
@@ -97,8 +102,6 @@ class SosModelRunConfigForm extends Component {
             for (var k = 0; k < narratives_in_sets[narrative_set[i]].length; k++) {
 
                 narratives_in_sets[narrative_set[i]][k].active = false
-                
-                console.log(this.props.sos_model_run)
 
                 if (this.props.sos_model_run.narratives != null) {
                     this.props.sos_model_run.narratives.forEach(function(narratives) {
@@ -127,32 +130,6 @@ class SosModelRunConfigForm extends Component {
         this.setState({selectedNarratives: narratives})
     }
 
-    createBaseyearSelectItems() {
-        let years = []
-        for (let i = 2000; i <= 2100; i++) {
-            if (i == this.props.sos_model_run.timesteps[0]) {
-                years.push(<option key={'baseyear_' + i} selected="selected" value={i}>{i}</option>)
-            }
-            else {
-                years.push(<option key={'baseyear_' + i} value={i}>{i}</option>)
-            }
-        }
-        return years
-    }
-
-    createEndyearSelectItems() {
-        let years = []
-        for (let i = 2000; i <= 2100; i++) {
-            if (i == this.props.sos_model_run.timesteps[this.props.sos_model_run.timesteps.length - 1]) {
-                years.push(<option key={'endyear_' + i} selected="selected" value={i}>{i}</option>)
-            }
-            else {
-                years.push(<option key={'endyear_' + i} value={i}>{i}</option>)
-            }
-        }
-        return years;
-    }
-
     handleScenariosChange(scenario_set, scenario) {
     /**
      * Set a scenario change in the local selectedSosModelRun state representation
@@ -166,9 +143,22 @@ class SosModelRunConfigForm extends Component {
      */
         const { scenarios } = this.state.selectedSosModelRun
         
-        for (let i = 0; i < scenarios.length; i++) {
-            if (scenarios[i][scenario_set] != null) {
-                scenarios[i][scenario_set] = scenario
+        if (scenarios === undefined) {
+            // there are no scenarios defined
+            // Initialize array
+            // Add scenario_set and scenario
+            let obj = {}
+            obj[scenario_set] = [scenario]
+
+            this.setState({
+                selectedSosModelRun: update(this.state.selectedSosModelRun, {scenarios: {$set: [obj]}})
+            })
+        }
+        else {
+            for (let i = 0; i < scenarios.length; i++) {
+                if (scenarios[i][scenario_set] != null) {
+                    scenarios[i][scenario_set] = scenario
+                }
             }
         }
     }
@@ -244,11 +234,14 @@ class SosModelRunConfigForm extends Component {
                 }
             }
         }
+    }
 
-        // Remove narrative sets that are not in use
+    handleTimestepChange(timesteps) {
+        console.log(timesteps)
 
-
-        console.log(this.state)
+        this.setState({
+            selectedSosModelRun: update(this.state.selectedSosModelRun, {timesteps: {$set: timesteps}})
+        })
     }
 
     handleInputChange(event) {
@@ -316,22 +309,7 @@ class SosModelRunConfigForm extends Component {
                 </fieldset>
 
                 <h3>Timesteps</h3>
-                <label>Base year:</label>
-                <div className="select-container">
-                    <select>
-                        <option value="" disabled="disabled">Please select a base year</option>
-                        {this.createBaseyearSelectItems()}
-                    </select>
-                </div>
-                <label>End year:</label>
-                <div className="select-container">
-                    <select>
-                        <option value="" disabled="disabled">Please select an end year</option>
-                        {this.createEndyearSelectItems()}
-                    </select>
-                </div>
-                <label>Resolution:</label>
-                <input type="number" defaultValue={(sos_model_run.timesteps[sos_model_run.timesteps.length - 1] - sos_model_run.timesteps[0]) / (sos_model_run.timesteps.length - 1)}/>
+                <TimestepSelector defaultValue={sos_model_run.timesteps} onChange={this.handleTimestepChange}/>
 
                 <input type="button" value="Save Model Run Configuration" onClick={this.handleSave} />
             </div>
