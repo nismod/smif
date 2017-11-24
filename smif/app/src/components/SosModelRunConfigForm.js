@@ -25,6 +25,7 @@ class SosModelRunConfigForm extends Component {
         this.state = {}
         this.state.selectedSosModelRun = this.props.sos_model_run
         this.state.selectedSosModel = this.pickSosModelByName(this.props.sos_model_run.sos_model)
+
         this.state.selectedScenarios = this.pickScenariosBySet(this.state.selectedSosModel.scenario_sets)
         this.state.selectedNarratives = this.pickNarrativesBySet(this.state.selectedSosModel.narrative_sets)
     }
@@ -44,9 +45,15 @@ class SosModelRunConfigForm extends Component {
          *     All sos_model parameters that belong to the given sos_model_name
          */
 
-        return this.props.sos_models.filter(
+        let sos_model = this.props.sos_models.filter(
             (sos_model) => sos_model.name === sos_model_name
         )[0]
+
+        if (typeof sos_model === 'undefined') {
+            sos_model = this.props.sos_models[0]
+        }
+        
+        return sos_model
     }
     
     pickScenariosBySet(scenario_set) {

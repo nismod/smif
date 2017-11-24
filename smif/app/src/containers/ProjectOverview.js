@@ -1,14 +1,83 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+
 import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
+
+import Modal from 'react-modal';
 
 import { fetchSosModelRuns } from '../actions/actions.js';
+import { createSosModelRun } from '../actions/actions.js'
+import { deleteSosModelRun } from '../actions/actions.js'
+
 import SosModelRunItem from '../components/SosModelRunItem.js';
 
+const customStyles = {
+    content : {
+        top                   : '50%',
+        left                  : '50%',
+        right                 : 'auto',
+        bottom                : 'auto',
+        marginRight           : '-50%',
+        transform             : 'translate(-50%, -50%)'
+    }
+};
+
 class ProjectOverview extends Component {
+    constructor() {
+        super();
+
+        this.createSosModelRun = this.createSosModelRun.bind(this)
+        this.deleteSosModelRun = this.deleteSosModelRun.bind(this)
+
+        this.state = {
+            CreateSosModelRunpopupIsOpen: false
+        };
+    
+        this.openCreateSosModelRunPopup = this.openCreateSosModelRunPopup.bind(this);
+        this.closeCreateSosModelRunPopup = this.closeCreateSosModelRunPopup.bind(this);
+        this.handleInputChange = this.handleInputChange.bind(this)
+    }
+
     componentDidMount() {
         const { dispatch } = this.props;
         dispatch(fetchSosModelRuns());
+    }
+
+    handleInputChange(event) {
+        
+        const target = event.target
+        const value = target.type === 'checkbox' ? target.checked : target.value
+        const name = target.name
+        
+        this.setState({
+            [name]: value
+        });
+    }
+
+    createSosModelRun() {
+        const { dispatch } = this.props
+        
+        this.closeCreateSosModelRunPopup()
+
+        dispatch(createSosModelRun(this.state.newSosModelRun_name))
+        dispatch(fetchSosModelRuns())
+        
+    }
+
+    openCreateSosModelRunPopup() {
+        this.setState({CreateSosModelRunpopupIsOpen: true});
+    }
+    
+    closeCreateSosModelRunPopup() {
+        console.log('hello')
+        this.setState({CreateSosModelRunpopupIsOpen: false});
+    }
+
+    deleteSosModelRun(sosModelRunName) {
+        const { dispatch } = this.props;
+        dispatch(deleteSosModelRun(sosModelRunName))
+        dispatch(fetchSosModelRuns())
     }
 
     render () {
@@ -44,13 +113,23 @@ class ProjectOverview extends Component {
                         <tbody>
                             {
                                 sos_model_runs.map((sos_model_run) => (
-                                    <SosModelRunItem key={sos_model_run.name}
+                                    <SosModelRunItem key={sos_model_run.name} onDelete={this.deleteSosModelRun}
                                         {...sos_model_run} />
                                 ))
                             }
                         </tbody>
                     </table>
-                    <input type="button" value="Create a new Model Run" />
+                    <input type="button" value="Create a new Model Run" onClick={this.openCreateSosModelRunPopup}/>
+                    <Modal isOpen={this.state.CreateSosModelRunpopupIsOpen} onRequestClose={this.closeCreateSosModelRunPopup} style={customStyles} contentLabel="Example CreateSosModelRunPopup">   
+                        <div>
+                            <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.createSosModelRun();}}>
+                                <h2 ref={subtitle => this.subtitle = subtitle}>Create a new Model Run</h2>
+                                <input name="newSosModelRun_name" type="text" onChange={this.handleInputChange}/>
+                                <input type="submit" value="Create"/>
+                            </form>
+                            <input type="button" value="Cancel" onClick={this.closeCreateSosModelRunPopup}/>
+                        </div>
+                    </Modal>
 
                     <h2>System-of-Systems Models</h2>
                     <div className="select-container">
