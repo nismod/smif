@@ -24,14 +24,16 @@ input[type=text],
 input[type=number],
 input[type=date],
 input[type=datetime-local],
-input[type=button]{
+input[type=button],
+input[type=submit]{
     width: 100%;
     border-radius: 0px;
     border-style: solid;
     margin-bottom: 0.4em;
     padding: 0.4em 0.4em;
 }
-input[type=button]{
+input[type=button],
+input[type=submit]{
     border-radius: 5px;
     display: inline-block;
     background-color: #666;
