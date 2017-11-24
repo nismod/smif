@@ -23,8 +23,8 @@ class SosModelRunConfigForm extends Component {
         this.handleSave = this.handleSave.bind(this)
 
         this.state = {}
-        this.state.selectedSosModelRun = this.props.sos_model_run
-        this.state.selectedSosModel = this.pickSosModelByName(this.props.sos_model_run.sos_model)
+        this.state.selectedSosModelRun = this.props.sosModelRun
+        this.state.selectedSosModel = this.pickSosModelByName(this.props.sosModelRun.sos_model)
         this.state.selectedNarratives = this.pickNarrativesBySet(this.state.selectedSosModel.narrative_sets)
     }
 
@@ -43,12 +43,12 @@ class SosModelRunConfigForm extends Component {
          *     All sos_model parameters that belong to the given sos_model_name
          */
 
-        let sos_model = this.props.sos_models.filter(
+        let sos_model = this.props.sosModels.filter(
             (sos_model) => sos_model.name === sos_model_name
         )[0]
 
         if (typeof sos_model === 'undefined') {
-            sos_model = this.props.sos_models[0]
+            sos_model = this.props.sosModels[0]
         }
         
         return sos_model
@@ -67,8 +67,8 @@ class SosModelRunConfigForm extends Component {
 
                 narratives_in_sets[narrative_set[i]][k].active = false
 
-                if (this.props.sos_model_run.narratives != null) {
-                    this.props.sos_model_run.narratives.forEach(function(narratives) {
+                if (this.props.sosModelRun.narratives != null) {
+                    this.props.sosModelRun.narratives.forEach(function(narratives) {
                         if (narratives[narratives_in_sets[narrative_set[i]][k].narrative_set] != null) {
                             narratives[narratives_in_sets[narrative_set[i]][k].narrative_set].forEach(function(narrative) {
                                 if (narratives_in_sets[narrative_set[i]][k].name == narrative) {
@@ -224,18 +224,18 @@ class SosModelRunConfigForm extends Component {
     }
 
     render() {
-        const { sos_model_run, sos_models, scenarios, narratives } = this.props
+        const { sosModelRun, sosModels, scenarios, narratives } = this.props
 
         return (
             <div>
 
                 <h3>General</h3>
                 <label>Name:</label>
-                <input name="name" type="text" defaultValue={sos_model_run.name} onChange={this.handleInputChange}/>
+                <input name="name" type="text" defaultValue={sosModelRun.name} onChange={this.handleInputChange}/>
 
                 <label>Description:</label>
                 <div className="textarea-container">
-                    <textarea name="description" rows="5" defaultValue={sos_model_run.description} onChange={this.handleInputChange}/>
+                    <textarea name="description" rows="5" defaultValue={sosModelRun.description} onChange={this.handleInputChange}/>
                 </div>
 
                 <label>Datestamp:</label>
@@ -247,15 +247,15 @@ class SosModelRunConfigForm extends Component {
                     <select name="sos_model" type="select" value={this.state.selectedSosModel.name} onChange={(event) => {this.selectSosModel(event); this.handleInputChange(event);}}>
                         <option disabled="disabled" >Please select a system-of-systems model</option>
                         {
-                            sos_models.map((sos_model) => (
-                                <option key={sos_model.name} value={sos_model.name}>{sos_model.name}</option>
+                            sosModels.map((sosModel) => (
+                                <option key={sosModel.name} value={sosModel.name}>{sosModel.name}</option>
                             ))
                         }
                     </select>
                 </div>
 
                 <h3>Scenarios</h3>
-                <ScenarioSelector sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} onChange={this.handleScenariosChange} />
+                <ScenarioSelector sosModelRun={sosModelRun} sosModels={sosModels} scenarios={scenarios} onChange={this.handleScenariosChange} />
 
                 <h3>Narratives</h3>
                 <fieldset>            
@@ -267,7 +267,7 @@ class SosModelRunConfigForm extends Component {
                 </fieldset>
 
                 <h3>Timesteps</h3>
-                <TimestepSelector defaultValue={sos_model_run.timesteps} onChange={this.handleTimestepChange}/>
+                <TimestepSelector defaultValue={sosModelRun.timesteps} onChange={this.handleTimestepChange}/>
 
                 <input type="button" value="Save Model Run Configuration" onClick={this.handleSave} />
             </div>
@@ -276,11 +276,11 @@ class SosModelRunConfigForm extends Component {
 }
 
 SosModelRunConfigForm.propTypes = {
-    sos_model_run: PropTypes.object.isRequired,
-    sos_models: PropTypes.array.isRequired,
+    sosModelRun: PropTypes.object.isRequired,
+    sosModels: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
-    save_model_run: PropTypes.func.isRequired
+    saveModelRun: PropTypes.func.isRequired
 };
 
 export default SosModelRunConfigForm;
