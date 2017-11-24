@@ -17,14 +17,13 @@ env:
   - DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="true"
 install:
 - source tests/travis_install.sh
-- pip install git+https://github.com/behave/behave
 - pip install -r test-requirements.txt -r requirements.txt
+- python setup.py install
 - nvm install 6.11.4
 - nvm use 6.11.4
 - cd $TRAVIS_BUILD_DIR/smif/app && npm install
 script:
-- cd $TRAVIS_BUILD_DIR && python setup.py develop
-- python setup.py test
+- cd $TRAVIS_BUILD_DIR && python setup.py test
 - cd $TRAVIS_BUILD_DIR/smif/app && npm test
 after_success:
 - cd $TRAVIS_BUILD_DIR
