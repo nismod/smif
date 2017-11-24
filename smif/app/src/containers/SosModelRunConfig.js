@@ -49,11 +49,11 @@ class SosModelRunConfig extends Component {
         if ((sos_model_run && sos_model_run.name) && (sos_models.length > 0) && (scenarios.length > 0) && (narratives.length > 0)){
             
             config_form = <SosModelRunConfigForm 
-                sos_model_run={sos_model_run} 
-                sos_models={sos_models}
+                sosModelRun={sos_model_run} 
+                sosModels={sos_models}
                 scenarios={scenarios} 
                 narratives={narratives}
-                save_model_run={this.saveSosModelRun}
+                saveModelRun={this.saveSosModelRun}
             />;
 
             buttons = <div>
