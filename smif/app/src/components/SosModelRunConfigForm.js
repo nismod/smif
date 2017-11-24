@@ -25,8 +25,6 @@ class SosModelRunConfigForm extends Component {
         this.state = {}
         this.state.selectedSosModelRun = this.props.sos_model_run
         this.state.selectedSosModel = this.pickSosModelByName(this.props.sos_model_run.sos_model)
-
-        this.state.selectedScenarios = this.pickScenariosBySet(this.state.selectedSosModel.scenario_sets)
         this.state.selectedNarratives = this.pickNarrativesBySet(this.state.selectedSosModel.narrative_sets)
     }
 
@@ -54,47 +52,6 @@ class SosModelRunConfigForm extends Component {
         }
         
         return sos_model
-    }
-    
-    pickScenariosBySet(scenario_set) {
-        /** 
-         * Get all the scenarios, that belong to a given scenario_set
-         * and set an 'active' flag for those that are configured in the
-         * SosModelRun
-         * 
-         * Arguments
-         * ---------
-         * scenario_set: str
-         *     Name identifier of the scenario_set
-         * 
-         * Returns
-         * -------
-         * Object
-         *     All scenarios that belong to the given scenario_set
-         */ 
-
-        let scenarios_in_sets = new Object()
-
-        for (var i = 0; i < scenario_set.length; i++) {
-
-            // Get all scenarios that belong to this scenario set
-            scenarios_in_sets[scenario_set[i]] = this.props.scenarios.filter(scenario => scenario.scenario_set === scenario_set[i])
-
-            // Flag the ones that are active in the modelrun configuration
-            for (var k = 0; k < scenarios_in_sets[scenario_set[i]].length; k++) {
-
-                scenarios_in_sets[scenario_set[i]][k].active = false
-
-                if (this.props.sos_model_run.scenarios != null) {
-                    this.props.sos_model_run.scenarios.forEach(function(element) {
-                        if (scenarios_in_sets[scenario_set[i]][k].name == element[scenarios_in_sets[scenario_set[i]][k].scenario_set]) {
-                            scenarios_in_sets[scenario_set[i]][k].active = true
-                        }
-                    })
-                }              
-            }
-        }
-        return scenarios_in_sets;
     }
 
     pickNarrativesBySet(narrative_set) {
@@ -130,9 +87,6 @@ class SosModelRunConfigForm extends Component {
         let sos_model = this.pickSosModelByName(event.target.value)
         this.setState({selectedSosModel: sos_model})
 
-        let scenarios = this.pickScenariosBySet(sos_model.scenario_sets)
-        this.setState({selectedScenarios: scenarios})
-
         let narratives = this.pickNarrativesBySet(sos_model.narrative_sets)
         this.setState({selectedNarratives: narratives})
     }
@@ -149,7 +103,9 @@ class SosModelRunConfigForm extends Component {
      *     The the scenario that has been selected
      */
         const { scenarios } = this.state.selectedSosModelRun
-        
+        console.log(scenario_set)
+        console.log(scenario)
+
         if (scenarios === undefined) {
             // there are no scenarios defined
             // Initialize array
@@ -263,7 +219,8 @@ class SosModelRunConfigForm extends Component {
     }
 
     handleSave(event) {
-        this.props.save_model_run(this.state.selectedSosModelRun)
+        //this.props.save_model_run(this.state.selectedSosModelRun)
+        console.log(this.state)
     }
 
     render() {
@@ -298,13 +255,7 @@ class SosModelRunConfigForm extends Component {
                 </div>
 
                 <h3>Scenarios</h3>
-                <fieldset>            
-                    {         
-                        Object.keys(this.state.selectedScenarios).map((item, i) =>
-                            <ScenarioSelector key={i} scenarioSet={item} scenarios={this.state.selectedScenarios[item]} change_scenario={this.handleScenariosChange} />
-                        )
-                    }
-                </fieldset>
+                <ScenarioSelector sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} onChange={this.handleScenariosChange} />
 
                 <h3>Narratives</h3>
                 <fieldset>            

@@ -27,16 +27,16 @@ class ProjectOverview extends Component {
     constructor() {
         super();
 
+        this.handleInputChange = this.handleInputChange.bind(this)
         this.createSosModelRun = this.createSosModelRun.bind(this)
         this.deleteSosModelRun = this.deleteSosModelRun.bind(this)
 
         this.state = {
             CreateSosModelRunpopupIsOpen: false
-        };
+        }
     
-        this.openCreateSosModelRunPopup = this.openCreateSosModelRunPopup.bind(this);
-        this.closeCreateSosModelRunPopup = this.closeCreateSosModelRunPopup.bind(this);
-        this.handleInputChange = this.handleInputChange.bind(this)
+        this.openCreateSosModelRunPopup = this.openCreateSosModelRunPopup.bind(this)
+        this.closeCreateSosModelRunPopup = this.closeCreateSosModelRunPopup.bind(this)
     }
 
     componentDidMount() {
@@ -55,6 +55,16 @@ class ProjectOverview extends Component {
         });
     }
 
+    
+    openCreateSosModelRunPopup() {
+        this.setState({CreateSosModelRunpopupIsOpen: true});
+    }
+    
+    closeCreateSosModelRunPopup() {
+        console.log('hello')
+        this.setState({CreateSosModelRunpopupIsOpen: false});
+    }
+    
     createSosModelRun() {
         const { dispatch } = this.props
         
@@ -64,16 +74,7 @@ class ProjectOverview extends Component {
         dispatch(fetchSosModelRuns())
         
     }
-
-    openCreateSosModelRunPopup() {
-        this.setState({CreateSosModelRunpopupIsOpen: true});
-    }
     
-    closeCreateSosModelRunPopup() {
-        console.log('hello')
-        this.setState({CreateSosModelRunpopupIsOpen: false});
-    }
-
     deleteSosModelRun(sosModelRunName) {
         const { dispatch } = this.props;
         dispatch(deleteSosModelRun(sosModelRunName))
