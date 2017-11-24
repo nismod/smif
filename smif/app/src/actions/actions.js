@@ -96,6 +96,62 @@ export function saveSosModelRun(modelrun){
     };
 }
 
+export function createSosModelRun(sosModelRunName){
+    return function (dispatch) {
+        // prepare the new modelrun
+        let newModelRun = {
+            "name": sosModelRunName, 
+            "description": "", 
+            "stamp": "Mon, 18 Sep 2017 12:53:23 GMT",  
+            "sos_model": "",
+            "scenarios": [],
+            "narratives": [],
+            "decision_module": "", 
+            "timesteps": []
+        }
+        
+        console.log(newModelRun)
+
+        // make API request, returning a promise
+        return fetch('/api/v1/sos_model_runs/', {
+            method: 'post',
+            body: JSON.stringify(newModelRun),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(
+            response => response.json(),
+            error => console.log('An error occurred.', error)
+        )
+        .then(
+            //json => dispatch(receiveSosModelRun(json))
+        );
+    };
+}
+
+export function deleteSosModelRun(sosModelRunName){
+    return function (dispatch) {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/sos_model_runs/' + sosModelRunName, {
+            method: 'delete',
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(
+            response => response.json(),
+            error => console.log('An error occurred.', error)
+        )
+        .then(
+            //json => dispatch(receiveSosModelRun(json))
+        );
+    };
+}
+
 export const REQUEST_SOS_MODELS = 'REQUEST_SOS_MODELS';
 function requestSosModels(){
     return {
