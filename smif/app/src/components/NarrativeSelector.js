@@ -109,22 +109,8 @@ class NarrativeSelector extends Component {
         onChange(target.name, narrative_name, target.checked)
     }
 
-    render() {
-
-        const {sosModelRun, sosModels, narratives} = this.props
-        
-        let selectedSosModel = null
-        let selectedNarratives = null
-
-        if ((sosModelRun && sosModelRun.name) && (sosModels.length > 0) && (narratives.length > 0)) {
-
-            selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)
-            selectedNarratives = this.pickNarrativesBySets(selectedSosModel.narrative_sets, narratives)
-            selectedNarratives = this.flagActiveNarratives(selectedNarratives, sosModelRun)               
-        }        
-
-        return (
-
+    renderNarrativeSelector(selectedNarratives) {
+        return (    
             <div>
                 {
                     Object.keys(selectedNarratives).map((narrativeSet) => (
@@ -143,6 +129,41 @@ class NarrativeSelector extends Component {
                 }
             </div>
         )
+    }
+
+    renderWarning(message) {
+        return (
+            <div>
+                <font color="red">{message}</font>
+            </div>
+        )
+    }
+
+    render() {
+        const {sosModelRun, sosModels, narratives} = this.props
+        
+        let selectedSosModel = null
+        let selectedNarratives = null
+
+        if (sosModelRun == null) {
+            return this.renderWarning('There is no SosModelRun selected')
+        } else if (sosModels == null) {
+            return this.renderWarning('There are no SosModels configured')
+        } else if (narratives == null) {
+            return this.renderWarning('There are no Narratives configured')       
+        } else if (sosModelRun.sos_model == "") {
+            return this.renderWarning('There is no SosModel configured in the SosModelRun')
+        } else {
+            selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)
+            if (selectedSosModel.narrative_sets == null) {
+                return this.renderWarning('There are no NarrativeSets configured in the SosModel')
+            }
+
+            selectedNarratives = this.pickNarrativesBySets(selectedSosModel.narrative_sets, narratives)
+            selectedNarratives = this.flagActiveNarratives(selectedNarratives, sosModelRun)               
+
+            return this.renderNarrativeSelector(selectedNarratives)
+        }        
     }
 }
 

@@ -103,21 +103,8 @@ class ScenarioSelector extends Component {
         onChange(target.name, target.value)
     }
 
-    render() {
-        const {sosModelRun, sosModels, scenarios} = this.props
-
-        let selectedSosModel = null
-        let selectedScenarios = null
-
-        if ((sosModelRun && sosModelRun.scenarios) && (sosModels.length > 0) && (scenarios.length > 0)) {
-
-            selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)
-            selectedScenarios = this.pickScenariosBySets(selectedSosModel.scenario_sets, scenarios)
-            selectedScenarios = this.flagActiveScenarios(selectedScenarios, sosModelRun)                
-        }
-
-        return (
-
+    renderScenarioSelector(selectedScenarios) {
+        return (     
             <div>
                 {
                     Object.keys(selectedScenarios).map((scenarioSet) => (
@@ -136,6 +123,42 @@ class ScenarioSelector extends Component {
                 }
             </div>
         )
+
+    }
+
+    renderWarning(message) {
+        return (
+            <div>
+                <font color="red">{message}</font>
+            </div>
+        )
+    }
+
+    render() {
+        const {sosModelRun, sosModels, scenarios} = this.props
+
+        let selectedScenarios = null
+        let selectedSosModel = null
+
+        if (sosModelRun == null) {
+            return this.renderWarning('There is no SosModelRun selected')
+        } else if (sosModels == null) {
+            return this.renderWarning('There are no SosModels configured')
+        } else if (scenarios == null) {
+            return this.renderWarning('There are no Scenarios configured')       
+        } else if (sosModelRun.sos_model == "") {
+            return this.renderWarning('There is no SosModel configured in the SosModelRun')
+        } else {
+            selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)
+            if (selectedSosModel.scenario_sets == null) {
+                return this.renderWarning('There are no ScenarioSets configured in the SosModel')
+            }
+
+            selectedScenarios = this.pickScenariosBySets(selectedSosModel.scenario_sets, scenarios)
+            selectedScenarios = this.flagActiveScenarios(selectedScenarios, sosModelRun)
+            
+            return this.renderScenarioSelector(selectedScenarios)
+        }
     }
 }
 
