@@ -99,10 +99,12 @@ export function saveSosModelRun(modelrun){
 export function createSosModelRun(sosModelRunName){
     return function (dispatch) {
         // prepare the new modelrun
+        let datetime = new Date()
+
         let newModelRun = {
             "name": sosModelRunName, 
             "description": "", 
-            "stamp": "Mon, 18 Sep 2017 12:53:23 GMT",  
+            "stamp": datetime.toISOString(),  
             "sos_model": "",
             "scenarios": [],
             "narratives": [],
