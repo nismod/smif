@@ -46,7 +46,7 @@ class SosModelRunConfig extends Component {
         let config_form = null
         let buttons = null;
 
-        if ((sos_model_run && sos_model_run.name) && (sos_models.length > 0) && (scenarios.length > 0) && (narratives.length > 0)){
+        if ((sos_model_run && sos_model_run.name) && (sos_models.length > 0) && (narratives.length > 0)){
             
             config_form = <SosModelRunConfigForm 
                 sosModelRun={sos_model_run} 

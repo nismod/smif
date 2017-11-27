@@ -160,8 +160,7 @@ class SosModelRunConfigForm extends Component {
     }
 
     handleSave(event) {
-        //this.props.saveModelRun(this.state.selectedSosModelRun)
-        console.log(this.state)
+        this.props.saveModelRun(this.state.selectedSosModelRun)
     }
 
     render() {
