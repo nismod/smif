@@ -25,7 +25,6 @@ class SosModelRunConfigForm extends Component {
         this.state = {}
         this.state.selectedSosModelRun = this.props.sosModelRun
         this.state.selectedSosModel = this.pickSosModelByName(this.props.sosModelRun.sos_model)
-        this.state.selectedNarratives = this.pickNarrativesBySet(this.state.selectedSosModel.narrative_sets)
     }
 
     pickSosModelByName(sos_model_name) {
@@ -54,41 +53,9 @@ class SosModelRunConfigForm extends Component {
         return sos_model
     }
 
-    pickNarrativesBySet(narrative_set) {
-        let narratives_in_sets = new Object()
-
-        for (var i = 0; i < narrative_set.length; i++) {
-
-            // Get all narratives that belong to this narrative set
-            narratives_in_sets[narrative_set[i]] = this.props.narratives.filter(narrative => narrative.narrative_set === narrative_set[i])
-
-            // Flag the ones that are active in the modelrun configuration
-            for (var k = 0; k < narratives_in_sets[narrative_set[i]].length; k++) {
-
-                narratives_in_sets[narrative_set[i]][k].active = false
-
-                if (this.props.sosModelRun.narratives != null) {
-                    this.props.sosModelRun.narratives.forEach(function(narratives) {
-                        if (narratives[narratives_in_sets[narrative_set[i]][k].narrative_set] != null) {
-                            narratives[narratives_in_sets[narrative_set[i]][k].narrative_set].forEach(function(narrative) {
-                                if (narratives_in_sets[narrative_set[i]][k].name == narrative) {
-                                    narratives_in_sets[narrative_set[i]][k].active = true
-                                }
-                            })
-                        }
-                    })
-                }
-            }           
-        }
-        return narratives_in_sets
-    }
-
     selectSosModel(event) {
         let sos_model = this.pickSosModelByName(event.target.value)
         this.setState({selectedSosModel: sos_model})
-
-        let narratives = this.pickNarrativesBySet(sos_model.narrative_sets)
-        this.setState({selectedNarratives: narratives})
     }
 
     handleScenariosChange(scenario_set, scenario) {
@@ -139,6 +106,7 @@ class SosModelRunConfigForm extends Component {
      * active:
      *     The new state of this narrative
      */
+
         const {narratives} = this.state.selectedSosModelRun
 
         if (narratives === undefined) {
@@ -219,7 +187,7 @@ class SosModelRunConfigForm extends Component {
     }
 
     handleSave(event) {
-        //this.props.save_model_run(this.state.selectedSosModelRun)
+        this.props.saveModelRun(this.state.selectedSosModelRun)
         console.log(this.state)
     }
 
@@ -258,13 +226,7 @@ class SosModelRunConfigForm extends Component {
                 <ScenarioSelector sosModelRun={sosModelRun} sosModels={sosModels} scenarios={scenarios} onChange={this.handleScenariosChange} />
 
                 <h3>Narratives</h3>
-                <fieldset>            
-                    {         
-                        Object.keys(this.state.selectedNarratives).map((item, i) =>
-                            <NarrativeSelector key={i} narrativeSet={item} narratives={this.state.selectedNarratives[item]} change_narrative={this.handleNarrativeChange}/>
-                        )
-                    }
-                </fieldset>
+                <NarrativeSelector sosModelRun={sosModelRun} sosModels={sosModels} narratives={narratives} onChange={this.handleNarrativeChange} />
 
                 <h3>Timesteps</h3>
                 <TimestepSelector defaultValue={sosModelRun.timesteps} onChange={this.handleTimestepChange}/>
