@@ -6,6 +6,7 @@ import update from 'react-addons-update';
 
 import { saveSosModelRun } from '../actions/actions.js';
 
+import SosModelSelector from '../components/SosModelSelector.js'
 import ScenarioSelector from '../components/ScenarioSelector.js'
 import NarrativeSelector from '../components/NarrativeSelector.js'
 import TimestepSelector from '../components/TimestepSelector.js'
@@ -14,8 +15,7 @@ class SosModelRunConfigForm extends Component {
     constructor(props) {
         super(props)
 
-        this.selectSosModel = this.selectSosModel.bind(this)
-        this.pickSosModelByName = this.pickSosModelByName.bind(this)
+        this.handleSosModelChange = this.handleSosModelChange.bind(this)
         this.handleScenariosChange = this.handleScenariosChange.bind(this)
         this.handleNarrativeChange = this.handleNarrativeChange.bind(this)
         this.handleTimestepChange = this.handleTimestepChange.bind(this)
@@ -24,38 +24,12 @@ class SosModelRunConfigForm extends Component {
 
         this.state = {}
         this.state.selectedSosModelRun = this.props.sosModelRun
-        this.state.selectedSosModel = this.pickSosModelByName(this.props.sosModelRun.sos_model)
     }
 
-    pickSosModelByName(sos_model_name) {
-        /**
-         * Get SosModel parameters, that belong to a given sos_model_name
-         * 
-         * Arguments
-         * ---------
-         * sos_model_name: str
-         *     Name identifier of the sos_model
-         * 
-         * Returns
-         * -------
-         * Object
-         *     All sos_model parameters that belong to the given sos_model_name
-         */
-
-        let sos_model = this.props.sosModels.filter(
-            (sos_model) => sos_model.name === sos_model_name
-        )[0]
-
-        if (typeof sos_model === 'undefined') {
-            sos_model = this.props.sosModels[0]
-        }
-        
-        return sos_model
-    }
-
-    selectSosModel(event) {
-        let sos_model = this.pickSosModelByName(event.target.value)
-        this.setState({selectedSosModel: sos_model})
+    handleSosModelChange(sos_model) {
+        this.setState({
+            selectedSosModelRun: update(this.state.selectedSosModelRun, {sos_model: {$set: sos_model}})
+        })
     }
 
     handleScenariosChange(scenario_set, scenario) {
@@ -146,6 +120,7 @@ class SosModelRunConfigForm extends Component {
                             }
                             break;
                         }
+                        
                         if (typeof narratives[i][narrative_set][k] === 'undefined') {
                             // Add narrative to set
                             narratives[i][narrative_set].push(narrative)
@@ -168,8 +143,6 @@ class SosModelRunConfigForm extends Component {
     }
 
     handleTimestepChange(timesteps) {
-        console.log(timesteps)
-
         this.setState({
             selectedSosModelRun: update(this.state.selectedSosModelRun, {timesteps: {$set: timesteps}})
         })
@@ -187,23 +160,25 @@ class SosModelRunConfigForm extends Component {
     }
 
     handleSave(event) {
-        this.props.saveModelRun(this.state.selectedSosModelRun)
+        //this.props.saveModelRun(this.state.selectedSosModelRun)
         console.log(this.state)
     }
 
     render() {
-        const { sosModelRun, sosModels, scenarios, narratives } = this.props
+        const {sosModels, scenarios, narratives} = this.props
+        const {selectedSosModelRun} = this.state
+
 
         return (
             <div>
 
                 <h3>General</h3>
                 <label>Name:</label>
-                <input name="name" type="text" defaultValue={sosModelRun.name} onChange={this.handleInputChange}/>
+                <input name="name" type="text" defaultValue={selectedSosModelRun.name} onChange={this.handleInputChange}/>
 
                 <label>Description:</label>
                 <div className="textarea-container">
-                    <textarea name="description" rows="5" defaultValue={sosModelRun.description} onChange={this.handleInputChange}/>
+                    <textarea name="description" rows="5" defaultValue={selectedSosModelRun.description} onChange={this.handleInputChange}/>
                 </div>
 
                 <label>Datestamp:</label>
@@ -211,25 +186,16 @@ class SosModelRunConfigForm extends Component {
 
                 <h3>Model</h3>
                 <label>System-of-systems model:</label>
-                <div className="select-container">
-                    <select name="sos_model" type="select" value={this.state.selectedSosModel.name} onChange={(event) => {this.selectSosModel(event); this.handleInputChange(event);}}>
-                        <option disabled="disabled" >Please select a system-of-systems model</option>
-                        {
-                            sosModels.map((sosModel) => (
-                                <option key={sosModel.name} value={sosModel.name}>{sosModel.name}</option>
-                            ))
-                        }
-                    </select>
-                </div>
+                <SosModelSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} onChange={this.handleSosModelChange} />
 
                 <h3>Scenarios</h3>
-                <ScenarioSelector sosModelRun={sosModelRun} sosModels={sosModels} scenarios={scenarios} onChange={this.handleScenariosChange} />
+                <ScenarioSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} scenarios={scenarios} onChange={this.handleScenariosChange} />
 
                 <h3>Narratives</h3>
-                <NarrativeSelector sosModelRun={sosModelRun} sosModels={sosModels} narratives={narratives} onChange={this.handleNarrativeChange} />
+                <NarrativeSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} narratives={narratives} onChange={this.handleNarrativeChange} />
 
                 <h3>Timesteps</h3>
-                <TimestepSelector defaultValue={sosModelRun.timesteps} onChange={this.handleTimestepChange}/>
+                <TimestepSelector defaultValue={selectedSosModelRun.timesteps} onChange={this.handleTimestepChange}/>
 
                 <input type="button" value="Save Model Run Configuration" onClick={this.handleSave} />
             </div>
