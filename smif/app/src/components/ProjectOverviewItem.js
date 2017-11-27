@@ -26,16 +26,13 @@ class SosModelRunItem extends Component {
         return (
             <div>
                 <table className="table table-sm fixed">
-                    <col width="20%" />
-                    <col width="66%" />
-                    <col width="7%" />
-                    <col width="7%" />
                     <thead className="thead-light">
+                    
                         <tr>
-                            <th scope="col">Name</th>
-                            <th scope="col">Description</th>
-                            <th scope="col"></th>
-                            <th scope="col"></th>
+                            <th width="20%" scope="col">Name</th>
+                            <th width="66%" scope="col">Description</th>
+                            <th width="7%" scope="col"></th>
+                            <th width="7%" scope="col"></th>
                         </tr>
                     </thead>
                     <tbody>
