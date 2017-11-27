@@ -167,21 +167,19 @@ class SosModelRunConfigForm extends Component {
         const {sosModels, scenarios, narratives} = this.props
         const {selectedSosModelRun} = this.state
 
-
         return (
             <div>
-
                 <h3>General</h3>
                 <label>Name:</label>
-                <input name="name" type="text" defaultValue={selectedSosModelRun.name} onChange={this.handleInputChange}/>
+                <input name="name" type="text" disabled="true" defaultValue={selectedSosModelRun.name} onChange={this.handleInputChange}/>
 
                 <label>Description:</label>
                 <div className="textarea-container">
                     <textarea name="description" rows="5" defaultValue={selectedSosModelRun.description} onChange={this.handleInputChange}/>
                 </div>
 
-                <label>Datestamp:</label>
-                <input type="datetime-local" defaultValue=""/>
+                <label>Created: {selectedSosModelRun.stamp}</label>
+                
 
                 <h3>Model</h3>
                 <label>System-of-systems model:</label>
