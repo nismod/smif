@@ -6,10 +6,10 @@ import update from 'react-addons-update';
 
 import { saveSosModelRun } from '../actions/actions.js';
 
-import SosModelSelector from '../components/SosModelSelector.js'
-import ScenarioSelector from '../components/ScenarioSelector.js'
-import NarrativeSelector from '../components/NarrativeSelector.js'
-import TimestepSelector from '../components/TimestepSelector.js'
+import SosModelSelector from '../components/SosModelRunConfigForm/SosModelSelector.js'
+import ScenarioSelector from '../components/SosModelRunConfigForm/ScenarioSelector.js'
+import NarrativeSelector from '../components/SosModelRunConfigForm/NarrativeSelector.js'
+import TimestepSelector from '../components/SosModelRunConfigForm/TimestepSelector.js'
 
 class SosModelRunConfigForm extends Component {
     constructor(props) {
