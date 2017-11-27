@@ -10,7 +10,7 @@ import { fetchSosModelRuns } from '../actions/actions.js';
 import { createSosModelRun } from '../actions/actions.js'
 import { deleteSosModelRun } from '../actions/actions.js'
 
-import SosModelRunItem from '../components/SosModelRunItem.js';
+import ProjectOverviewItem from '../components/ProjectOverviewItem.js';
 
 const customStyles = {
     content : {
@@ -102,24 +102,9 @@ class ProjectOverview extends Component {
                     </label>
 
                     <h2>Model Runs</h2>
-                    <table className="table table-sm">
-                        <thead className="thead-light">
-                            <tr>
-                                <th scope="col">Name</th>
-                                <th scope="col">Description</th>
-                                <th scope="col"></th>
-                                <th scope="col"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {
-                                sos_model_runs.map((sos_model_run) => (
-                                    <SosModelRunItem key={sos_model_run.name} onDelete={this.deleteSosModelRun}
-                                        {...sos_model_run} />
-                                ))
-                            }
-                        </tbody>
-                    </table>
+                    <ProjectOverviewItem items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.deleteSosModelRun} />
+
+
                     <input type="button" value="Create a new Model Run" onClick={this.openCreateSosModelRunPopup}/>
                     <Modal isOpen={this.state.CreateSosModelRunpopupIsOpen} onRequestClose={this.closeCreateSosModelRunPopup} style={customStyles} contentLabel="Example CreateSosModelRunPopup">   
                         <div>

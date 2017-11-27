@@ -81,3 +81,9 @@ summary {
     outline: 0;
     cursor: pointer;
 }
+table.fixed {
+    table-layout: fixed;
+}
+table.fixed td {
+    overflow: hidden;
+}
