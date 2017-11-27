@@ -61,7 +61,6 @@ dependencies:
 - sqlite=3.13.0
 - tornado=4.5.2=py35_0
 - wheel=0.30.0=py_1
-- wincertstore=0.2=py35_0
 - xerces-c=3.2.0
 - yaml=0.1.6
 - zlib=1.2.11
