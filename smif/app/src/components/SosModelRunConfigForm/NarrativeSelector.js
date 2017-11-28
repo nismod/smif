@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import Component from 'react'
 import PropTypes from 'prop-types'
 
 class NarrativeSelector extends Component {
@@ -133,8 +133,8 @@ class NarrativeSelector extends Component {
 
     renderWarning(message) {
         return (
-            <div>
-                <font color="red">{message}</font>
+            <div className="alert alert-danger">
+                {message}
             </div>
         )
     }
@@ -172,6 +172,6 @@ NarrativeSelector.propTypes = {
     sosModels: PropTypes.array,
     narratives: PropTypes.array,
     onChange: PropTypes.func
-};
+}
 
-export default NarrativeSelector;
+export default NarrativeSelector
