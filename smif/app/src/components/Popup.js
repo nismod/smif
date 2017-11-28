@@ -37,9 +37,6 @@ class Popup extends Component {
     render() {
         const {onRequestOpen, onRequestClose} = this.props
 
-        console.log('onRequestOpen', onRequestOpen)
-        console.log('onRequestClose', onRequestClose)
-
         return (
             <div>
                 <Modal isOpen={onRequestOpen} style={customStyles} contentLabel="Example CreateSosModelRunPopup">   

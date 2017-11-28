@@ -1,4 +1,4 @@
-import Component from 'react'
+import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 class NarrativeSelector extends Component {
@@ -119,8 +119,10 @@ class NarrativeSelector extends Component {
                             {
                                 selectedNarratives[narrativeSet].map((narrative) => (
                                     <div key={narrative.name}>
-                                        <input type="checkbox" name={narrativeSet} key={narrative.name} value={narrative.name} defaultChecked={narrative.active} onClick={(event) => {this.handleChange(event, narrative.name);}}></input>
-                                        <label>{narrative.name}</label>
+                                        <label>
+                                            <input type="checkbox" name={narrativeSet} key={narrative.name} value={narrative.name} defaultChecked={narrative.active} onClick={(event) => {this.handleChange(event, narrative.name);}}></input>
+                                            {narrative.name}
+                                        </label>
                                     </div>
                                 ))
                             }

@@ -2,9 +2,9 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { Link } from 'react-router-dom'
-import update from 'react-addons-update';
+import update from 'react-addons-update'
 
-import { saveSosModelRun } from '../actions/actions.js';
+import { saveSosModelRun } from '../actions/actions.js'
 
 import SosModelSelector from '../components/SosModelRunConfigForm/SosModelSelector.js'
 import ScenarioSelector from '../components/SosModelRunConfigForm/ScenarioSelector.js'
@@ -47,21 +47,20 @@ class SosModelRunConfigForm extends Component {
         console.log(scenario_set)
         console.log(scenario)
 
-        if (scenarios === undefined) {
+        if (scenarios === undefined || scenarios[0] === undefined) {
             // there are no scenarios defined
             // Initialize array
             // Add scenario_set and scenario
-            let obj = {}
-            obj[scenario_set] = [scenario]
-
-            this.setState({
-                selectedSosModelRun: update(this.state.selectedSosModelRun, {scenarios: {$set: [obj]}})
-            })
+            scenarios.push({[scenario_set]: scenario})
         }
         else {
             for (let i = 0; i < scenarios.length; i++) {
                 if (scenarios[i][scenario_set] != null) {
                     scenarios[i][scenario_set] = scenario
+                    break
+                } else if (i == (scenarios.length - 1)) {
+                    scenarios.push({[scenario_set]: scenario})
+                    break
                 }
             }
         }
@@ -112,22 +111,21 @@ class SosModelRunConfigForm extends Component {
                             }
 
                             // If there are no narrative sets left, remove the narratives
-                            console.log(narratives.length)
                             if (narratives.length == 0) {
                                 this.setState({
                                     selectedSosModelRun: update(this.state.selectedSosModelRun, {narratives: {$set: undefined }})
                                 })
                             }
-                            break;
+                            break
                         }
                         
                         if (typeof narratives[i][narrative_set][k] === 'undefined') {
                             // Add narrative to set
                             narratives[i][narrative_set].push(narrative)
-                            break;
+                            break
                         }
                     }
-                    break;
+                    break
                 }
                 if (i == (narratives.length - 1)) {
                     // Narrative set does not exist in ModelrunConfig
@@ -136,7 +134,7 @@ class SosModelRunConfigForm extends Component {
                     obj[narrative_set] = [narrative]
 
                     narratives.push(obj)
-                    break;
+                    break
                 }
             }
         }
@@ -159,7 +157,8 @@ class SosModelRunConfigForm extends Component {
         })
     }
 
-    handleSave(event) {
+    handleSave() {
+        console.log(this.state)
         this.props.saveModelRun(this.state.selectedSosModelRun)
     }
 
@@ -196,7 +195,7 @@ class SosModelRunConfigForm extends Component {
 
                 <input type="button" value="Save Model Run Configuration" onClick={this.handleSave} />
             </div>
-        );
+        )
     }
 }
 
@@ -206,6 +205,6 @@ SosModelRunConfigForm.propTypes = {
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
     saveModelRun: PropTypes.func.isRequired
-};
+}
 
-export default SosModelRunConfigForm;
+export default SosModelRunConfigForm

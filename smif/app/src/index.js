@@ -24,7 +24,7 @@ render(
                 <Route exact path="/" component={Welcome}/>
                 <Route exact path="/configure" component={ProjectOverview}/>
                 <Route path="/configure/sos-model-run/:name" component={SosModelRunConfig}/>
-                <Route path="/configure/sos-model/:name" component={SosModelConfig}/>
+                <Route path="/configure/sos-models/:name" component={SosModelConfig}/>
             </div>
         </Router>
     </Provider>,

@@ -44,7 +44,7 @@ class SosModelRunConfig extends Component {
     render () {
         const {sos_model_run, sos_models, scenarios, narratives, isFetching} = this.props
         let config_form = null
-        let buttons = null;
+        let buttons = null
 
         if ((sos_model_run && sos_model_run.name) && (sos_models.length > 0) && (narratives.length > 0)){
             
@@ -54,7 +54,7 @@ class SosModelRunConfig extends Component {
                 scenarios={scenarios} 
                 narratives={narratives}
                 saveModelRun={this.saveSosModelRun}
-            />;
+            />
 
             buttons = <div>
                 <input type="button" value="Cancel" onClick={this.returnToPreviousPage} /> 
@@ -80,7 +80,7 @@ class SosModelRunConfig extends Component {
 
                 </div>
             </div>
-        );
+        )
     }
 }
 
