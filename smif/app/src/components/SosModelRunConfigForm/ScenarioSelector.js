@@ -108,19 +108,22 @@ class ScenarioSelector extends Component {
             <div>
                 {
                     Object.keys(selectedScenarios).map((scenarioSet) => (
-                        <fieldset key={scenarioSet}>
-                            <legend>{scenarioSet}</legend>
-                            {
-                                selectedScenarios[scenarioSet].map((scenario) => (
-                                    <div key={scenario.name}>
-                                        <label>
-                                            <input type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} defaultChecked={scenario.active} onClick={this.handleChange}/>
-                                            {scenario.name}
-                                        </label>
-                                    </div>
-                                ))
-                            }
-                        </fieldset>
+                        <div key={scenarioSet}>
+                            <div className="card">
+                                <h6 className="card-header">{scenarioSet}</h6>
+                                {
+                                    selectedScenarios[scenarioSet].map((scenario) => (
+                                        <div key={scenario.name}>
+                                            <label>
+                                                <input type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} defaultChecked={scenario.active} onClick={this.handleChange}/>
+                                                {scenario.name}
+                                            </label>
+                                        </div>
+                                    ))
+                                }
+                            </div>
+                            <br/>
+                        </div>
                     ))
                 }
             </div>

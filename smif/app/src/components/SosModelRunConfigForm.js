@@ -168,30 +168,52 @@ class SosModelRunConfigForm extends Component {
 
         return (
             <div>
-                <h3>General</h3>
-                <label>Name:</label>
-                <input name="name" type="text" disabled="true" defaultValue={selectedSosModelRun.name} onChange={this.handleInputChange}/>
+                <div className="card">
+                    <div className="card-header">General</div>
+                    <div className="card-body">
+                        <h5 className="card-title">Name</h5>
+                        <input name="name" type="text" disabled="true" defaultValue={selectedSosModelRun.name} onChange={this.handleInputChange}/>
 
-                <label>Description:</label>
-                <div className="textarea-container">
-                    <textarea name="description" rows="5" defaultValue={selectedSosModelRun.description} onChange={this.handleInputChange}/>
+                        <h5 className="card-title">Description</h5>
+                        <div className="textarea-container">
+                            <textarea name="description" rows="5" defaultValue={selectedSosModelRun.description} onChange={this.handleInputChange}/>
+                        </div>
+                        Created: {selectedSosModelRun.stamp}
+                    </div>
                 </div>
 
-                <label>Created: {selectedSosModelRun.stamp}</label>
+                <br/>
                 
+                <div className="card">
+                    <div className="card-header">Model</div>
+                    <div className="card-body">
+                        <h5 className="card-title">System-of-systems model</h5>
+                        <SosModelSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} onChange={this.handleSosModelChange} />
+                    </div>
+                </div>
 
-                <h3>Model</h3>
-                <label>System-of-systems model:</label>
-                <SosModelSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} onChange={this.handleSosModelChange} />
+                <br/>
 
-                <h3>Scenarios</h3>
-                <ScenarioSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} scenarios={scenarios} onChange={this.handleScenariosChange} />
+                <div className="card">
+                    <div className="card-header">Settings</div>
+                    <div className="card-body">
+                        <h5 className="card-title">Scenarios</h5>
+                        <ScenarioSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} scenarios={scenarios} onChange={this.handleScenariosChange} />
+                        <h5 className="card-title">Narratives</h5>
+                        <NarrativeSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} narratives={narratives} onChange={this.handleNarrativeChange} />
+                    </div>
+                </div>
 
-                <h3>Narratives</h3>
-                <NarrativeSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} narratives={narratives} onChange={this.handleNarrativeChange} />
+                <br/>
 
-                <h3>Timesteps</h3>
-                <TimestepSelector defaultValue={selectedSosModelRun.timesteps} onChange={this.handleTimestepChange}/>
+                <div className="card">
+                    <div className="card-header">Timesteps</div>
+                    <div className="card-body">
+                        <TimestepSelector defaultValue={selectedSosModelRun.timesteps} onChange={this.handleTimestepChange}/>
+                    </div>
+                </div>
+
+                <br/>
 
                 <input type="button" value="Save Model Run Configuration" onClick={this.handleSave} />
             </div>

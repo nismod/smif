@@ -114,19 +114,22 @@ class NarrativeSelector extends Component {
             <div>
                 {
                     Object.keys(selectedNarratives).map((narrativeSet) => (
-                        <fieldset key={narrativeSet}>
-                            <legend>{narrativeSet}</legend>
-                            {
-                                selectedNarratives[narrativeSet].map((narrative) => (
-                                    <div key={narrative.name}>
-                                        <label>
-                                            <input type="checkbox" name={narrativeSet} key={narrative.name} value={narrative.name} defaultChecked={narrative.active} onClick={(event) => {this.handleChange(event, narrative.name);}}></input>
-                                            {narrative.name}
-                                        </label>
-                                    </div>
-                                ))
-                            }
-                        </fieldset>
+                        <div key={narrativeSet}>
+                            <div className="card" >
+                                <h6 className="card-header">{narrativeSet}</h6>
+                                {
+                                    selectedNarratives[narrativeSet].map((narrative) => (
+                                        <div key={narrative.name}>
+                                            <label>
+                                                <input type="checkbox" name={narrativeSet} key={narrative.name} value={narrative.name} defaultChecked={narrative.active} onClick={(event) => {this.handleChange(event, narrative.name);}}></input>
+                                                {narrative.name}
+                                            </label>
+                                        </div>
+                                    ))
+                                }
+                            </div>
+                            <br/>
+                        </div>
                     ))
                 }
             </div>
