@@ -209,7 +209,7 @@ class SosModelRunConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Timesteps</div>
                     <div className="card-body">
-                        <TimestepSelector defaultValue={selectedSosModelRun.timesteps} onChange={this.handleTimestepChange}/>
+                        <TimestepSelector timeSteps={selectedSosModelRun.timesteps} onChange={this.handleTimestepChange}/>
                     </div>
                 </div>
 

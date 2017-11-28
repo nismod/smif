@@ -17,25 +17,35 @@ import FaEdit from 'react-icons/lib/fa/edit';
 import FaTrash from 'react-icons/lib/fa/trash';
 
 class SosModelConfig extends Component {
+    componentDidMount() {
+        const {dispatch } = this.props
 
+        dispatch(fetchSosModel(this.props.match.params.name))
+        dispatch(fetchScenarios())
+        dispatch(fetchNarratives())
+
+        this.saveSosModel = this.saveSosModel.bind(this)
+        this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
+    }
+
+    componentWillUnmount() {
+        const { dispatch } = this.props
+        dispatch(resetSosModel())
+    }
+
+    saveSosModelRun(sosModel) {
+        const { dispatch } = this.props
+        dispatch(saveSosModel(sosModel))
+        this.returnToPreviousPage()
+    }
+
+    returnToPreviousPage() {
+        history.back()
+    }
 
     render() {
         const {sos_model_run, sos_models, scenarios, narratives, isFetching} = this.props
 
-        if ((sos_model_run && sos_model_run.name) && (sos_models.length > 0) && (narratives.length > 0)){
-            
-            config_form = <SosModelConfigForm 
-                sosModelRun={sos_model_run} 
-                sosModels={sos_models}
-                scenarios={scenarios} 
-                narratives={narratives}
-                saveModelRun={this.saveSosModelRun}
-            />;
-
-            buttons = <div>
-                <input type="button" value="Cancel" onClick={this.returnToPreviousPage} /> 
-            </div>
-        }
 
         return (
     
@@ -189,7 +199,7 @@ SosModelConfig.propTypes = {
     narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
-};
+}
 
 function mapStateToProps(state) {
     return {
@@ -198,7 +208,7 @@ function mapStateToProps(state) {
         scenarios: state.scenarios.items,
         narratives: state.narratives.items,
         isFetching: state.sos_model_run.isFetching
-    };
+    }
 }
 
-export default connect(mapStateToProps)(SosModelConfig);
+export default connect(mapStateToProps)(SosModelConfig)

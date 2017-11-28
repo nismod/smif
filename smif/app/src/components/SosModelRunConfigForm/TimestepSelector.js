@@ -5,98 +5,126 @@ class TimestepSelector extends Component {
     constructor(props) {
         super(props)
 
-        this.timestepSelectHandler = this.timestepSelectHandler.bind(this)
         this.onChangeHandler = this.onChangeHandler.bind(this)
 
         this.state = {}
-        this.state.timesteps = this.props.defaultValue
-        this.state.baseyear = this.state.timesteps[0]
-        this.state.endyear = this.state.timesteps[this.state.timesteps.length - 1]
-        this.state.resolution = ((this.state.endyear - this.state.baseyear) / (this.state.timesteps.length - 1))
+        this.state.baseYear = null
+        this.state.endYear = null
+        this.state.resolution = null
+    }
+    
+    componentWillMount(){
+        const {timeSteps} = this.props
+
+        if (timeSteps != null ){
+            this.setState({baseYear: timeSteps[0]})
+            this.setState({endYear: timeSteps[timeSteps.length - 1]})
+            this.setState({resolution: ((timeSteps[timeSteps.length - 1] - timeSteps[0]) / (timeSteps.length - 1))})
+        }
     }
 
     createBaseyearSelectItems() {
-        const {timesteps} = this.state
         let years = []
             
         for (let i = 2000; i <= 2100; i++) {
-            if (i == timesteps[0]) {
-                years.push(<option key={'baseyear_' + i} selected="selected" value={i}>{i}</option>)
-            }
-            else {
-                years.push(<option key={'baseyear_' + i} value={i}>{i}</option>)
-            }
+            years.push(<option key={'baseyear_' + i} value={i}>{i}</option>)
         }
 
         return years
     }
 
-    createEndyearSelectItems() {
-        const {timesteps} = this.state
-
+    createEndyearSelectItems(baseYear, resolution) {
         let years = []
-        for (let i = this.state.baseyear; i <= this.state.baseyear + 100; i = i + this.state.resolution) {
-            if (i == timesteps[timesteps.length - 1]) {
-                years.push(<option key={'endyear_' + i} selected="selected" value={i}>{i}</option>)
-            }
-            else {
-                years.push(<option key={'endyear_' + i} value={i}>{i}</option>)
-            }
+
+        for (let i = baseYear; i <= baseYear + 100; i = i + resolution) {
+            years.push(<option key={'endyear_' + i} value={i}>{i}</option>)
         }
-        return years;
+        return years
     }
 
-    timestepSelectHandler(event) {
+    onChangeHandler(event) {
+        const {onChange} = this.props
+        let {baseYear, endYear, resolution} = this.state
+
         const target = event.target
         const value = target.type === 'checkbox' ? target.checked : target.value
         const name = target.name
 
-        this.state[name] = parseInt(value)
-        this.onChangeHandler()
-    }
-
-    onChangeHandler() {
-        const {onChange} = this.props
-        const {baseyear, endyear, resolution} = this.state
+        if (name == 'baseyear') {
+            baseYear = parseInt(value)
+            this.setState({baseYear: parseInt(value)})
+            this.setState({endYear: parseInt(value)})
+        } else if (name == 'endyear') {
+            endYear = parseInt(value)
+            this.setState({endYear: parseInt(value)})
+        } else if (name == 'resolution') {
+            resolution = parseInt(value)
+            this.setState({resolution: parseInt(value)})
+            this.setState({endYear: baseYear})
+        }
 
         let timesteps = []
-
-        for (let i = baseyear; i <= endyear; i+=resolution)
-        {
-            timesteps.push(i)
+        if (endYear > baseYear) {
+            // Calculate new timesteps
+            for (let i = baseYear; i <= endYear; i+=resolution)
+            {
+                timesteps.push(i)
+            }
+        } else {
+            timesteps = [baseYear]
         }
+
         onChange(timesteps)
     }
 
-    render() {
-        const {defaultValue} = this.props
-
+    renderTimestepSelector(baseYear, endYear, resolution) {
         return (
             <div>
+                <label>Resolution:</label>
+                <input name="resolution" type="number" min="1" defaultValue={resolution} onChange={this.onChangeHandler}/>
                 <label>Base year:</label>
                 <div className="select-container">
-                    <select name="baseyear" onChange={this.timestepSelectHandler}>
-                        <option value="" disabled="disabled">Please select a base year</option>
+                    <select value={baseYear} name="baseyear" onChange={this.onChangeHandler}>
+                        <option disabled="disabled">Please select a base year</option>
                         {this.createBaseyearSelectItems()}
                     </select>
                 </div>
                 <label>End year:</label>
                 <div className="select-container">
-                    <select name="endyear" onChange={this.timestepSelectHandler}>
+                    <select value={endYear} name="endyear" onChange={this.onChangeHandler}>
                         <option value="" disabled="disabled">Please select an end year</option>
-                        {this.createEndyearSelectItems()}
+                        {this.createEndyearSelectItems(baseYear, resolution)}
                     </select>
                 </div>
-                <label>Resolution:</label>
-                <input name="resolution" type="number" min="1" defaultValue={this.state.resolution} onChange={this.timestepSelectHandler}/>
             </div>
         )
+    }
+
+    renderWarning(message) {
+        return (
+            <div className="alert alert-danger">
+                {message}
+            </div>
+        )
+    }
+
+    render() {
+        const {timeSteps} = this.props
+        const {baseYear, endYear, resolution} = this.state
+
+        if (timeSteps == null || timeSteps == undefined || Object.keys(timeSteps).length === 0) {
+            return this.renderWarning('There is no defaultValue configured')
+        } else if (baseYear == null) {
+            return this.renderWarning('Loading defaultValues')
+        } else {
+            return this.renderTimestepSelector(baseYear, endYear, resolution)
+        }
     }
 }
 
 TimestepSelector.propTypes = {
-    defaultValue: PropTypes.array.isRequired,
-    onChange: PropTypes.func.isRequired
-};
+    timeSteps: PropTypes.array,
+    onChange: PropTypes.func
+}
 
-export default TimestepSelector;
+export default TimestepSelector

@@ -116,7 +116,7 @@ class NarrativeSelector extends Component {
                     Object.keys(selectedNarratives).map((narrativeSet) => (
                         <div key={narrativeSet}>
                             <div className="card" >
-                                <h6 className="card-header">{narrativeSet}</h6>
+                                <h6 className="card-title">{narrativeSet}</h6>
                                 {
                                     selectedNarratives[narrativeSet].map((narrative) => (
                                         <div key={narrative.name}>
