@@ -82,7 +82,7 @@ class SosModelRunConfigForm extends Component {
 
         const {narratives} = this.state.selectedSosModelRun
 
-        if (narratives === undefined) {
+        if (narratives === undefined || narratives[0] === undefined) {
             // there are no narratives defined
             // Initialize array
             // Add narrative_set and narrative
@@ -158,7 +158,7 @@ class SosModelRunConfigForm extends Component {
     }
 
     handleSave() {
-        console.log(this.state)
+        //console.log(this.state)
         this.props.saveModelRun(this.state.selectedSosModelRun)
     }
 
