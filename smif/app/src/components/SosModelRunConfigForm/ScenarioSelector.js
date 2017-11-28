@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import Component from 'react'
 import PropTypes from 'prop-types'
 
 class ScenarioSelector extends Component {
@@ -113,8 +113,11 @@ class ScenarioSelector extends Component {
                             {
                                 selectedScenarios[scenarioSet].map((scenario) => (
                                     <div key={scenario.name}>
-                                        <input type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} defaultChecked={scenario.active} onClick={this.handleChange}></input>
-                                        <label>{scenario.name}</label>
+                                        
+                                        <label>{scenario.name}
+                                            <input type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} defaultChecked={scenario.active} onClick={this.handleChange}/>
+                                        </label>
+
                                     </div>
                                 ))
                             }
@@ -128,8 +131,8 @@ class ScenarioSelector extends Component {
 
     renderWarning(message) {
         return (
-            <div>
-                <font color="red">{message}</font>
+            <div className="alert alert-danger">
+                {message}
             </div>
         )
     }
@@ -167,6 +170,6 @@ ScenarioSelector.propTypes = {
     sosModels: PropTypes.array,
     scenarios: PropTypes.array,
     onChange: PropTypes.func
-};
+}
 
-export default ScenarioSelector;
+export default ScenarioSelector
