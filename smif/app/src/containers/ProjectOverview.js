@@ -7,6 +7,8 @@ import { Link } from 'react-router-dom';
 // import Modal from 'react-modal';
 
 import { fetchSosModelRuns } from '../actions/actions.js';
+import { fetchSosModels } from '../actions/actions.js';
+
 import { createSosModelRun } from '../actions/actions.js'
 import { deleteSosModelRun } from '../actions/actions.js'
 
@@ -34,9 +36,10 @@ class ProjectOverview extends Component {
         this.openCreateSosModelPopup = this.openCreateSosModelPopup.bind(this)
     }
 
-    componentDidMount() {
+    componentWillMount () {
         const { dispatch } = this.props;
         dispatch(fetchSosModelRuns());
+        dispatch(fetchSosModels());
     }
 
     handleInputChange(event) {
@@ -137,8 +140,6 @@ class ProjectOverview extends Component {
                         </form>
                         <input type="button" value="Cancel" onClick={this.closeCreateSosModelPopup}/>
                     </Popup>
-
-                    
 
                     <h2>Simulation Models</h2>
                     <div className="select-container">

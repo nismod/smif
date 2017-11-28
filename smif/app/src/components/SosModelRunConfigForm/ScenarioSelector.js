@@ -1,4 +1,4 @@
-import Component from 'react'
+import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 class ScenarioSelector extends Component {
@@ -113,11 +113,10 @@ class ScenarioSelector extends Component {
                             {
                                 selectedScenarios[scenarioSet].map((scenario) => (
                                     <div key={scenario.name}>
-                                        
-                                        <label>{scenario.name}
+                                        <label>
                                             <input type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} defaultChecked={scenario.active} onClick={this.handleChange}/>
+                                            {scenario.name}
                                         </label>
-
                                     </div>
                                 ))
                             }
