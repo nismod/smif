@@ -173,16 +173,16 @@ ProjectOverview.propTypes = {
     sos_models: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
-};
+}
 
 function mapStateToProps(state) {
-    const { sos_model_runs, sos_models } = state;
+    const { sos_model_runs, sos_models } = state
 
     return {
         sos_model_runs: sos_model_runs.items,
         sos_models: sos_models.items,
         isFetching: (sos_models.isFetching && sos_model_runs.isFetching)
-    };
+    }
 }
 
-export default connect(mapStateToProps)(ProjectOverview);
+export default connect(mapStateToProps)(ProjectOverview)

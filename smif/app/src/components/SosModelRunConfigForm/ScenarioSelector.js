@@ -110,7 +110,7 @@ class ScenarioSelector extends Component {
                     Object.keys(selectedScenarios).map((scenarioSet) => (
                         <div key={scenarioSet}>
                             <div className="card">
-                                <h6 className="card-header">{scenarioSet}</h6>
+                                <h6 className="card-title">{scenarioSet}</h6>
                                 {
                                     selectedScenarios[scenarioSet].map((scenario) => (
                                         <div key={scenario.name}>

@@ -15,20 +15,25 @@ import { saveSosModelRun } from '../actions/actions.js'
 import SosModelRunConfigForm from '../components/SosModelRunConfigForm.js'
 
 class SosModelRunConfig extends Component {
-    componentDidMount() {
-        const { dispatch } = this.props
-        dispatch(fetchSosModelRun(this.props.match.params.name))
-        dispatch(fetchSosModels())
-        dispatch(fetchScenarios())
-        dispatch(fetchNarratives())
+    constructor(props) {
+        super(props)
 
         this.saveSosModelRun = this.saveSosModelRun.bind(this)
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
     }
 
-    componentWillUnmount() {
+    componentDidMount() {
         const { dispatch } = this.props
-        dispatch(resetSosModelRun())
+        
+        dispatch(fetchSosModelRun(this.props.match.params.name))
+        dispatch(fetchSosModels())
+        dispatch(fetchScenarios())
+        dispatch(fetchNarratives()) 
+    }
+
+    componentWillReceiveProps(props) {
+        console.log(props)
+        this.forceUpdate()
     }
 
     saveSosModelRun(sosModelRun) {
@@ -41,46 +46,44 @@ class SosModelRunConfig extends Component {
         history.back()
     }
 
-    render () {
-        const {sos_model_run, sos_models, scenarios, narratives, isFetching} = this.props
-        let config_form = null
-        let buttons = null
-
-        if ((sos_model_run && sos_model_run.name) && (sos_models.length > 0) && (narratives.length > 0)){
-            
-            config_form = <SosModelRunConfigForm 
-                sosModelRun={sos_model_run} 
-                sosModels={sos_models}
-                scenarios={scenarios} 
-                narratives={narratives}
-                saveModelRun={this.saveSosModelRun}
-            />
-
-            buttons = <div>
-                <input type="button" value="Cancel" onClick={this.returnToPreviousPage} /> 
-            </div>
-        }
-        
+    renderLoading() {
         return (
-            <div>
-                <h1>ModelRun Configuration</h1>
-
-                <div hidden={ !isFetching } className="alert alert-primary">
-                    Loading...
-                </div>
-
-                <div hidden className="alert alert-danger">
-                    Error
-                </div>
-
-                <div hidden={ isFetching }>           
-
-                    {config_form}            
-                    {buttons}
-
-                </div>
+            <div className="alert alert-primary">
+                Loading...
             </div>
         )
+    }
+
+    renderError() {
+        return (
+            <div className="alert alert-danger">
+                Error
+            </div>
+        )
+    }
+
+    renderSosModelConfig(sos_model_run, sos_models, scenarios, narratives) {
+        return (
+            <div>
+                <h1>ModelRun Configuration</h1>         
+                <SosModelRunConfigForm sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} narratives={narratives} saveModelRun={this.saveSosModelRun}/>           
+                <input type="button" value="Cancel" onClick={this.returnToPreviousPage} /> 
+            </div>
+        )
+    }
+
+    render () {
+        const {sos_model_run, sos_models, scenarios, narratives, isFetching} = this.props
+
+        console.log(isFetching)
+
+        if (isFetching) {
+            return this.renderLoading()
+        } else {
+            console.log(sos_model_run)
+            return this.renderSosModelConfig(sos_model_run, sos_models, scenarios, narratives)
+            //return this.renderError()
+        }
     }
 }
 
@@ -89,9 +92,8 @@ SosModelRunConfig.propTypes = {
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
-    isFetching: PropTypes.bool.isRequired,
-    dispatch: PropTypes.func.isRequired
-};
+    isFetching: PropTypes.bool.isRequired
+}
 
 function mapStateToProps(state) {
     return {
@@ -99,8 +101,8 @@ function mapStateToProps(state) {
         sos_models: state.sos_models.items,
         scenarios: state.scenarios.items,
         narratives: state.narratives.items,
-        isFetching: state.sos_model_run.isFetching
-    };
+        isFetching: (state.sos_model_run.isFetching || state.sos_models.isFetching || state.scenarios.isFetching || state.narratives.isFetching)
+    }
 }
 
-export default connect(mapStateToProps)(SosModelRunConfig);
+export default connect(mapStateToProps)(SosModelRunConfig)
