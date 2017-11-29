@@ -110,17 +110,19 @@ class ScenarioSelector extends Component {
                     Object.keys(selectedScenarios).map((scenarioSet) => (
                         <div key={scenarioSet}>
                             <div className="card">
-                                <h6 className="card-title">{scenarioSet}</h6>
-                                {
-                                    selectedScenarios[scenarioSet].map((scenario) => (
-                                        <div key={scenario.name}>
-                                            <label>
-                                                <input type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} defaultChecked={scenario.active} onClick={this.handleChange}/>
-                                                {scenario.name}
-                                            </label>
-                                        </div>
-                                    ))
-                                }
+                                <div className="card-body">
+                                    <label className="card-title">{scenarioSet}</label>
+                                    {
+                                        selectedScenarios[scenarioSet].map((scenario) => (
+                                            <div className="form-check" key={scenario.name}>
+                                                <label className="form-check-label">
+                                                    <input className="form-check-input" type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} defaultChecked={scenario.active} onClick={this.handleChange}/>
+                                                    {scenario.name}
+                                                </label>
+                                            </div>
+                                        ))
+                                    }
+                                </div>
                             </div>
                             <br/>
                         </div>
@@ -128,7 +130,6 @@ class ScenarioSelector extends Component {
                 }
             </div>
         )
-
     }
 
     renderWarning(message) {
@@ -145,12 +146,12 @@ class ScenarioSelector extends Component {
         let selectedScenarios = null
         let selectedSosModel = null
 
-        if (sosModelRun == null) {
+        if (sosModelRun == null || sosModelRun == undefined || sosModelRun.sos_model == undefined) {
             return this.renderWarning('There is no SosModelRun selected')
-        } else if (sosModels == null) {
+        } else if (sosModels == null || sosModels == undefined) {
             return this.renderWarning('There are no SosModels configured')
-        } else if (scenarios == null) {
-            return this.renderWarning('There are no Scenarios configured')       
+        } else if (scenarios == null || scenarios == undefined) {
+            return this.renderWarning('There are no Scenarios configured')    
         } else if (sosModelRun.sos_model == "") {
             return this.renderWarning('There is no SosModel configured in the SosModelRun')
         } else {

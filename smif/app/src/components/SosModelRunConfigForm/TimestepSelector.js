@@ -80,21 +80,32 @@ class TimestepSelector extends Component {
     renderTimestepSelector(baseYear, endYear, resolution) {
         return (
             <div>
-                <label>Resolution:</label>
-                <input name="resolution" type="number" min="1" defaultValue={resolution} onChange={this.onChangeHandler}/>
-                <label>Base year:</label>
-                <div className="select-container">
-                    <select value={baseYear} name="baseyear" onChange={this.onChangeHandler}>
-                        <option disabled="disabled">Please select a base year</option>
-                        {this.createBaseyearSelectItems()}
-                    </select>
+
+                <div className="form-group row">
+                    <label className="col-sm-2 col-form-label">Resolution</label>
+                    <div className="col-sm-10">
+                        <input className="form-control" name="resolution" type="number" min="1" defaultValue={resolution} onChange={this.onChangeHandler}/>
+                    </div>
                 </div>
-                <label>End year:</label>
-                <div className="select-container">
-                    <select value={endYear} name="endyear" onChange={this.onChangeHandler}>
-                        <option value="" disabled="disabled">Please select an end year</option>
-                        {this.createEndyearSelectItems(baseYear, resolution)}
-                    </select>
+
+                <div className="form-group row">
+                    <label className="col-sm-2 col-form-label">Base year</label>
+                    <div className="col-sm-10">
+                        <select className="form-control" value={baseYear} name="baseyear" onChange={this.onChangeHandler}>
+                            <option disabled="disabled">Please select a base year</option>
+                            {this.createBaseyearSelectItems()}
+                        </select>
+                    </div>
+                </div>
+
+                <div className="form-group row">
+                    <label className="col-sm-2 col-form-label">End year</label>
+                    <div className="col-sm-10">
+                        <select className="form-control" value={endYear} name="endyear" onChange={this.onChangeHandler}>
+                            <option value="" disabled="disabled">Please select an end year</option>
+                            {this.createEndyearSelectItems(baseYear, resolution)}
+                        </select>
+                    </div>
                 </div>
             </div>
         )

@@ -1,20 +1,20 @@
-import 'babel-polyfill';
-import React from 'react';
-import { render } from 'react-dom';
-import { Provider } from 'react-redux';
-import { Route, BrowserRouter as Router } from 'react-router-dom';
+import 'babel-polyfill'
+import React from 'react'
+import { render } from 'react-dom'
+import { Provider } from 'react-redux'
+import { Route, BrowserRouter as Router } from 'react-router-dom'
 
-import Nav from './components/Nav';
-import Welcome from './components/Welcome';
-import ProjectOverview from './containers/ProjectOverview';
-import SosModelRunConfig from './containers/SosModelRunConfig';
-import SosModelConfig from './containers/SosModelConfig';
+import Nav from './components/Nav'
+import Welcome from './components/Welcome'
+import ProjectOverview from './containers/ProjectOverview'
+import SosModelRunConfig from './containers/SosModelRunConfig'
+import SosModelConfig from './containers/SosModelConfig'
 
-import store from './store/store.js';
+import store from './store/store.js'
 
-import 'normalize.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import '../static/css/main.css';
+import 'normalize.css'
+import 'bootstrap/dist/css/bootstrap.min.css'
+//import '../static/css/main.css'
 
 render(
     <Provider store={store}>
@@ -29,4 +29,4 @@ render(
         </Router>
     </Provider>,
     document.getElementById('root')
-);
+)

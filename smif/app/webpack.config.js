@@ -31,7 +31,8 @@ module.exports = {
     output: {
         // Output javascript files to the 'dist' directory
         filename: '[name].js',
-        path: path.resolve(__dirname, 'dist')
+        path: path.resolve(__dirname, 'dist'),
+        publicPath:'/'
     },
     module: {
         rules: [
