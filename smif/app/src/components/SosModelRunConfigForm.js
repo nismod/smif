@@ -21,6 +21,7 @@ class SosModelRunConfigForm extends Component {
         this.handleTimestepChange = this.handleTimestepChange.bind(this)
         this.handleInputChange = this.handleInputChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
+        this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {}
         this.state.selectedSosModelRun = this.props.sosModelRun
@@ -111,7 +112,7 @@ class SosModelRunConfigForm extends Component {
                             }
 
                             // If there are no narrative sets left, remove the narratives
-                            if (narratives.length == 0) {
+                            if (narratives.length == 0) {        //console.log(this.state)
                                 this.setState({
                                     selectedSosModelRun: update(this.state.selectedSosModelRun, {narratives: {$set: undefined }})
                                 })
@@ -158,8 +159,11 @@ class SosModelRunConfigForm extends Component {
     }
 
     handleSave() {
-        //console.log(this.state)
         this.props.saveModelRun(this.state.selectedSosModelRun)
+    }
+
+    handleCancel() {
+        this.props.cancelModelRun()
     }
 
     render() {
@@ -171,14 +175,27 @@ class SosModelRunConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">General</div>
                     <div className="card-body">
-                        <h5 className="card-title">Name</h5>
-                        <input name="name" type="text" disabled="true" defaultValue={selectedSosModelRun.name} onChange={this.handleInputChange}/>
 
-                        <h5 className="card-title">Description</h5>
-                        <div className="textarea-container">
-                            <textarea name="description" rows="5" defaultValue={selectedSosModelRun.description} onChange={this.handleInputChange}/>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Name</label>
+                            <div className="col-sm-10">
+                                <input className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModelRun.name} onChange={this.handleInputChange}/>
+                            </div>
                         </div>
-                        Created: {selectedSosModelRun.stamp}
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Description</label>
+                            <div className="col-sm-10">
+                                <textarea className="form-control" name="description" rows="5" defaultValue={selectedSosModelRun.description} onChange={this.handleInputChange}/>
+                            </div>
+                        </div>
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Created</label>
+                            <div className="col-sm-10"> 
+                                <label className="form-control">{selectedSosModelRun.stamp}</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -187,8 +204,14 @@ class SosModelRunConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Model</div>
                     <div className="card-body">
-                        <h5 className="card-title">System-of-systems model</h5>
-                        <SosModelSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} onChange={this.handleSosModelChange} />
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">System-of-systems model</label>
+                            <div className="col-sm-10">
+                                <SosModelSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} onChange={this.handleSosModelChange} />
+                            </div>
+                        </div>
+                        
                     </div>
                 </div>
 
@@ -197,10 +220,20 @@ class SosModelRunConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Settings</div>
                     <div className="card-body">
-                        <h5 className="card-title">Scenarios</h5>
-                        <ScenarioSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} scenarios={scenarios} onChange={this.handleScenariosChange} />
-                        <h5 className="card-title">Narratives</h5>
-                        <NarrativeSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} narratives={narratives} onChange={this.handleNarrativeChange} />
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Scenarios</label>
+                            <div className="col-sm-10">
+                                <ScenarioSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} scenarios={scenarios} onChange={this.handleScenariosChange} />
+                            </div>
+                        </div>
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Narratives</label>
+                            <div className="col-sm-10">
+                                <NarrativeSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} narratives={narratives} onChange={this.handleNarrativeChange} />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -215,7 +248,8 @@ class SosModelRunConfigForm extends Component {
 
                 <br/>
 
-                <input type="button" value="Save Model Run Configuration" onClick={this.handleSave} />
+                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save Model Run Configuration" onClick={this.handleSave} />
+                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} /> 
             </div>
         )
     }
@@ -226,7 +260,8 @@ SosModelRunConfigForm.propTypes = {
     sosModels: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
-    saveModelRun: PropTypes.func.isRequired
+    saveModelRun: PropTypes.func.isRequired,
+    cancelModelRun: PropTypes.func.isRequired
 }
 
 export default SosModelRunConfigForm

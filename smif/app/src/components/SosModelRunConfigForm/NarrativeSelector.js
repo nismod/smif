@@ -116,17 +116,19 @@ class NarrativeSelector extends Component {
                     Object.keys(selectedNarratives).map((narrativeSet) => (
                         <div key={narrativeSet}>
                             <div className="card" >
-                                <h6 className="card-title">{narrativeSet}</h6>
-                                {
-                                    selectedNarratives[narrativeSet].map((narrative) => (
-                                        <div key={narrative.name}>
-                                            <label>
-                                                <input type="checkbox" name={narrativeSet} key={narrative.name} value={narrative.name} defaultChecked={narrative.active} onClick={(event) => {this.handleChange(event, narrative.name);}}></input>
-                                                {narrative.name}
-                                            </label>
-                                        </div>
-                                    ))
-                                }
+                                <div className="card-body">
+                                    <h6 className="card-title">{narrativeSet}</h6>
+                                    {
+                                        selectedNarratives[narrativeSet].map((narrative) => (
+                                            <div className="form-check" key={narrative.name}>
+                                                <label className="form-check-label">
+                                                    <input className="form-check-input" type="checkbox" name={narrativeSet} key={narrative.name} value={narrative.name} defaultChecked={narrative.active} onClick={(event) => {this.handleChange(event, narrative.name);}}></input>
+                                                    {narrative.name}
+                                                </label>
+                                            </div>
+                                        ))
+                                    }
+                                </div>
                             </div>
                             <br/>
                         </div>
@@ -150,17 +152,17 @@ class NarrativeSelector extends Component {
         let selectedSosModel = null
         let selectedNarratives = null
 
-        if (sosModelRun == null) {
+        if (sosModelRun == null || sosModelRun == undefined) {
             return this.renderWarning('There is no SosModelRun selected')
-        } else if (sosModels == null) {
+        } else if (sosModels == null || sosModels == undefined) {
             return this.renderWarning('There are no SosModels configured')
-        } else if (narratives == null) {
+        } else if (narratives == null || narratives == undefined) {
             return this.renderWarning('There are no Narratives configured')       
-        } else if (sosModelRun.sos_model == "") {
+        } else if (sosModelRun.sos_model == "" || sosModelRun.sos_model == null || sosModelRun.sos_model == undefined) {
             return this.renderWarning('There is no SosModel configured in the SosModelRun')
         } else {
             selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)
-            if (selectedSosModel.narrative_sets == null) {
+            if (selectedSosModel.narrative_sets == null || selectedSosModel.narrative_sets == undefined) {
                 return this.renderWarning('There are no NarrativeSets configured in the SosModel')
             }
 

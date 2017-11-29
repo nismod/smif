@@ -9,7 +9,6 @@ import { fetchSosModels } from '../actions/actions.js'
 import { fetchScenarios } from '../actions/actions.js'
 import { fetchNarratives } from '../actions/actions.js'
 
-import { resetSosModelRun } from '../actions/actions.js'
 import { saveSosModelRun } from '../actions/actions.js'
 
 import SosModelRunConfigForm from '../components/SosModelRunConfigForm.js'
@@ -31,8 +30,7 @@ class SosModelRunConfig extends Component {
         dispatch(fetchNarratives()) 
     }
 
-    componentWillReceiveProps(props) {
-        console.log(props)
+    componentWillReceiveProps() {
         this.forceUpdate()
     }
 
@@ -66,8 +64,7 @@ class SosModelRunConfig extends Component {
         return (
             <div>
                 <h1>ModelRun Configuration</h1>         
-                <SosModelRunConfigForm sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} narratives={narratives} saveModelRun={this.saveSosModelRun}/>           
-                <input type="button" value="Cancel" onClick={this.returnToPreviousPage} /> 
+                <SosModelRunConfigForm sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} narratives={narratives} saveModelRun={this.saveSosModelRun} cancelModelRun={this.returnToPreviousPage}/>           
             </div>
         )
     }
@@ -75,14 +72,10 @@ class SosModelRunConfig extends Component {
     render () {
         const {sos_model_run, sos_models, scenarios, narratives, isFetching} = this.props
 
-        console.log(isFetching)
-
         if (isFetching) {
             return this.renderLoading()
         } else {
-            console.log(sos_model_run)
             return this.renderSosModelConfig(sos_model_run, sos_models, scenarios, narratives)
-            //return this.renderError()
         }
     }
 }

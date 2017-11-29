@@ -1,10 +1,10 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
 
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'
 
-import FaPencil from 'react-icons/lib/fa/pencil';
-import FaTrash from 'react-icons/lib/fa/trash';
+import FaPencil from 'react-icons/lib/fa/pencil'
+import FaTrash from 'react-icons/lib/fa/trash'
 
 class SosModelRunItem extends Component {
     constructor(props) {
@@ -42,11 +42,11 @@ class SosModelRunItem extends Component {
                                     <td>{item.name}</td>
                                     <td>{item.description}</td>
                                     <td>
-                                    <Link to={itemLink + item.name }>
-                                        <button name={item.name}>
-                                            <FaPencil/>
-                                        </button>
-                                    </Link>
+                                        <Link to={itemLink + item.name }>
+                                            <button name={item.name}>
+                                                <FaPencil/>
+                                            </button>
+                                        </Link>
                                     </td> 
                                     <td>
                                         <button name={item.name} onClick={this.onDeleteHandler}>
