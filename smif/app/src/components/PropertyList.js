@@ -143,11 +143,11 @@ class PropertyList extends Component {
 }
 
 PropertyList.propTypes = {
-    name: PropTypes.string.isRequired,
-    items: PropTypes.array.isRequired,
-    columns: PropTypes.array.isRequired,
-    editButton: PropTypes.bool.isRequired,
-    deleteButton: PropTypes.bool.isRequired,
+    name: PropTypes.string,
+    items: PropTypes.array,
+    columns: PropTypes.array,
+    editButton: PropTypes.bool,
+    deleteButton: PropTypes.bool,
     onEdit: PropTypes.func,
     onDelete: PropTypes.func,
 }

@@ -34,7 +34,6 @@ class SosModelConfigForm extends Component {
     }
 
     handleSave() {
-        //console.log(this.state)
         this.props.saveSosModel(this.state.selectedSosModel)
     }
 
