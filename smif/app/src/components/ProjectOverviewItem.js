@@ -43,13 +43,13 @@ class SosModelRunItem extends Component {
                                     <td>{item.description}</td>
                                     <td>
                                         <Link to={itemLink + item.name }>
-                                            <button name={item.name}>
+                                            <button type="button" className="btn btn-outline-dark" name={item.name}>
                                                 <FaPencil/>
                                             </button>
                                         </Link>
                                     </td> 
                                     <td>
-                                        <button name={item.name} onClick={this.onDeleteHandler}>
+                                        <button type="button" className="btn btn-outline-dark" name={item.name} onClick={this.onDeleteHandler}>
                                             <FaTrash/>
                                         </button>
                                     </td> 

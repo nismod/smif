@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
+import update from 'react-addons-update'
 
 import Popup from '../Popup.js'
 
@@ -12,24 +13,95 @@ class DependencySelector extends Component {
         this.state = {
             CreateDependencypopupIsOpen: false
         }
+
+        this.state.inputs = {
+            SourceModelClass: 'form-control',
+            SourceModel: '',
+            SourceOutputClass:  'form-control',
+            SourceOutput: '',
+            SinkModelClass: 'form-control',
+            SinkModel: '',
+            SinkInputClass:  'form-control',
+            SinkInput: ''
+        }
+
         this.closeCreateDependencyPopup = this.closeCreateDependencyPopup.bind(this)
         this.openCreateDependencyPopup = this.openCreateDependencyPopup.bind(this)
 
         this.handleChange = this.handleChange.bind(this)
         this.handleAddDependency = this.handleAddDependency.bind(this)
+        this.handleDeleteDependency = this.handleDeleteDependency.bind(this)
     }
 
     handleChange(event) {
-        this.setState({[event.target.name]: event.target.value})
+        this.setState({
+            inputs: update(this.state.inputs, {[event.target.name]: {$set: event.target.value}})
+        })
     }
 
     handleAddDependency() {
-        const {onChange} = this.props
+        const {onAdd} = this.props
+        const {SourceModel, SourceOutput, SinkModel, SinkInput} = this.state.inputs
 
-        console.log(target.name)
-        console.log(target.checked)
+        // Input checking
+        let inputOk = true
 
-        //onChange(target.name, narrative_name, target.checked)
+        if (SourceModel == '') {
+            this.state.inputs.SourceModelClass = 'form-control is-invalid'
+            inputOk = false
+        } else {
+            this.state.inputs.SourceModelClass = 'form-control is-valid'
+        }
+
+        if (SourceOutput == '') {
+            this.state.inputs.SourceOutputClass = 'form-control is-invalid'
+            inputOk = false
+        } else {
+            this.state.inputs.SourceOutputClass = 'form-control is-valid'
+        }
+
+        if (SinkModel == '') {
+            this.state.inputs.SinkModelClass = 'form-control is-invalid'
+            inputOk = false
+        } else {
+            this.state.inputs.SinkModelClass = 'form-control is-valid'
+        }
+
+        if (SinkInput == '') {
+            this.state.inputs.SinkInputClass = 'form-control is-invalid'
+            inputOk = false
+        } else {
+            this.state.inputs.SinkInputClass = 'form-control is-valid'
+        }
+
+        // Submit change if all input are ok
+        if (inputOk) {
+            onAdd(SourceModel, SourceOutput, SinkModel, SinkInput)
+
+            this.state.inputs = {
+                SourceModelClass: 'form-control',
+                SourceModel: '',
+                SourceOutputClass:  'form-control',
+                SourceOutput: '',
+                SinkModelClass: 'form-control',
+                SinkModel: '',
+                SinkInputClass:  'form-control',
+                SinkInput: ''
+            }
+            this.closeCreateDependencyPopup()
+        }
+
+        this.forceUpdate()        
+    }
+
+    handleDeleteDependency(event) {
+        const {onDelete} = this.props
+        
+        const target = event.currentTarget
+        const name = target.name
+        
+        console.log(name)
+        // onDelete(name)
     }
 
     openCreateDependencyPopup() {
@@ -41,8 +113,6 @@ class DependencySelector extends Component {
     }
 
     renderDependencySelector(dependencies, sectorModels) {
-        
-        console.log(this.state)
 
         return (    
             <div>
@@ -66,7 +136,7 @@ class DependencySelector extends Component {
                                     <td>{dependency.sink_model}</td>
                                     <td>{dependency.sink_model_input}</td>
                                     <td>
-                                        <button name={i} onClick={this.onDeleteHandler}>
+                                        <button type="button" className="btn btn-outline-dark" name={i} onClick={this.handleDeleteDependency}>
                                             <FaTrash/>
                                         </button>
                                     </td> 
@@ -78,41 +148,61 @@ class DependencySelector extends Component {
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Dependency" onClick={this.openCreateDependencyPopup} />
 
                 <Popup onRequestOpen={this.state.CreateDependencypopupIsOpen}>
-                    <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleChange()}}>
+                    <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleAddDependency()}}>
                         <h2 ref={subtitle => this.subtitle = subtitle}>Add a new Dependency</h2>
                         <div className="container">
                             <div className="row">
                                 <div className="col">
-                                    <div className="form-group">
-                                        <label>Source</label>
-                                        <select className="form-control" name="source_model" onChange={this.handleChange} required>
-                                            {
-                                                sectorModels.map((sectorModel, i) => (
-                                                    <option key={i} value={sectorModel.name}>{sectorModel.name}</option>
-                                                ))
-                                            }
-                                        </select>
-                                        <input type="text" className="form-control" name="source_output" placeholder="Source Output" onChange={this.handleChange} required/>
-                                    </div>
+                                    <label>Source</label>
+                                    <select className={this.state.inputs.SourceModelClass} name="SourceModel" defaultValue="none" onChange={this.handleChange}>
+                                        <option disabled="disabled" value="none">Please select a source</option>
+                                        {
+                                            sectorModels.map((sectorModel, i) => (
+                                                <option key={i} value={sectorModel.name}>{sectorModel.name}</option>
+                                            ))
+                                        }
+                                    </select>
+                                    <div className="invalid-feedback">
+                                            Please provide a valid input.
+                                    </div> 
+                                </div>
+                                <div className="col">      
+                                    <label>Sink</label>
+                                    <select className={this.state.inputs.SinkModelClass} name="SinkModel" defaultValue="none" onChange={this.handleChange}>
+                                        <option disabled="disabled" value="none">Please select a sink</option>
+                                        {
+                                            sectorModels.map((sectorModel, i) => (
+                                                <option key={i} value={sectorModel.name}>{sectorModel.name}</option>
+                                            ))
+                                        }
+                                    </select>
+                                    <div className="invalid-feedback">
+                                            Please provide a valid input.
+                                    </div>   
+                                </div>
+                            </div>
+                            <div className="row">    
+                                <div className="col">
+                                    <input ref="" type="text" className={this.state.inputs.SourceOutputClass} name="SourceOutput" placeholder="Source Output" onChange={this.handleChange}/>
+                                    <div className="invalid-feedback">
+                                            Please provide a valid input.
+                                    </div>  
                                 </div>
                                 <div className="col">
-                                    <div className="form-group">
-                                        <label>Sink</label>
-                                        <select className="form-control" name="sink_model" onChange={this.handleChange} required>
-                                            {
-                                                sectorModels.map((sectorModel, i) => (
-                                                    <option key={i} value={sectorModel.name}>{sectorModel.name}</option>
-                                                ))
-                                            }
-                                        </select>
-                                        <input type="text" className="form-control" name="sink_input" placeholder="Sink Input" onChange={this.handleChange} required/>
+                                    <input type="text" className={this.state.inputs.SinkInputClass} name="SinkInput" placeholder="Sink Input" onChange={this.handleChange}/>
+                                    <div className="invalid-feedback">
+                                            Please provide a valid input.
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <br/>
+
+                        <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Add"/>
+                        <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreateDependencyPopup}/>
                     </form>
-                    <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Add" onClick={this.handleAddDependency}/>
-                    <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreateDependencyPopup}/>
+
                 </Popup>
 
             </div>
@@ -145,7 +235,8 @@ class DependencySelector extends Component {
 DependencySelector.propTypes = {
     sosModel: PropTypes.object,
     sectorModels: PropTypes.array,
-    onChange: PropTypes.func
+    onAdd: PropTypes.func,
+    onDelete: PropTypes.func
 }
 
 export default DependencySelector

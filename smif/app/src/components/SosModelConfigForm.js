@@ -32,8 +32,12 @@ class SosModelConfigForm extends Component {
         console.log(narrativeSet, newState)
     }
 
-    handleDependencySetChange(dependencies, newState) {
-        console.log(dependencies, newState)
+    handleAddDependency(source_model, source_output, sink_model, sink_output) {
+        console.log('Add Dependency', source_model, source_output, sink_model, sink_output)
+    }
+
+    handleDeleteDependency(id) {
+        console.log('Delete Dependency', id)
     }
 
     handleSave() {
@@ -105,7 +109,7 @@ class SosModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Dependencies</div>
                         <div className="card-body">
-                            <DependencySelector sosModel={selectedSosModel} sectorModels={sectorModels} onChange={this.handleDependencyChange}/>
+                            <DependencySelector sosModel={selectedSosModel} sectorModels={sectorModels} onAdd={this.handleAddDependency}/>
                         </div>
                     </div>
 

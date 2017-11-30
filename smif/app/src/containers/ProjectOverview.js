@@ -186,7 +186,7 @@ class ProjectOverview extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="newSosModelRun_name" type="text" onChange={this.handleInputChange}/>
+                                    <input className="form-control" name="newSosModelRun_name" type="text" onChange={this.handleInputChange} required/>
                                 </div>
                             </div>
                             
@@ -204,7 +204,7 @@ class ProjectOverview extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="newSosModel_name" type="text" onChange={this.handleInputChange}/>
+                                    <input className="form-control" name="newSosModel_name" type="text" onChange={this.handleInputChange} required/>
                                 </div>
                             </div>
                             
