@@ -30,7 +30,7 @@ class DependencySelector extends Component {
 
         this.handleChange = this.handleChange.bind(this)
         this.handleAddDependency = this.handleAddDependency.bind(this)
-        this.handleDeleteDependency = this.handleDeleteDependency.bind(this)
+
     }
 
     handleChange(event) {
@@ -40,7 +40,7 @@ class DependencySelector extends Component {
     }
 
     handleAddDependency() {
-        const {onAdd} = this.props
+        const {onChange, dependencies} = this.props
         const {SourceModel, SourceOutput, SinkModel, SinkInput} = this.state.inputs
 
         // Input checking
@@ -76,8 +76,25 @@ class DependencySelector extends Component {
 
         // Submit change if all input are ok
         if (inputOk) {
-            onAdd(SourceModel, SourceOutput, SinkModel, SinkInput)
+            let newDependencies = dependencies
 
+            newDependencies.push({
+                source_model: SourceModel, 
+                source_model_output: SourceOutput,
+                sink_model: SinkModel,
+                sink_model_input: SinkInput
+            })
+
+            onChange(
+                {
+                    target: {
+                        name: 'dependencies',
+                        value: newDependencies,
+                        type: 'array'
+                    }
+                }
+            )
+            
             this.state.inputs = {
                 SourceModelClass: 'form-control',
                 SourceModel: '',
@@ -94,16 +111,6 @@ class DependencySelector extends Component {
         this.forceUpdate()        
     }
 
-    handleDeleteDependency(event) {
-        const {onDelete} = this.props
-        
-        const target = event.currentTarget
-        const name = target.name
-        
-        console.log(name)
-        // onDelete(name)
-    }
-
     openCreateDependencyPopup() {
         this.setState({CreateDependencypopupIsOpen: true})
     }
@@ -116,35 +123,6 @@ class DependencySelector extends Component {
 
         return (    
             <div>
-                <table className="table table-sm fixed">
-                    <thead className="thead-light">
-                    
-                        <tr>
-                            <th width="23%" scope="col">Source Model</th>
-                            <th width="23%" scope="col">Output</th>
-                            <th width="23%" scope="col">Sink Model</th>
-                            <th width="23%" scope="col">Input</th>
-                            <th width="8%" scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            dependencies.map((dependency, i) => (
-                                <tr key={i}>
-                                    <td>{dependency.source_model}</td>
-                                    <td>{dependency.source_model_output}</td>
-                                    <td>{dependency.sink_model}</td>
-                                    <td>{dependency.sink_model_input}</td>
-                                    <td>
-                                        <button type="button" className="btn btn-outline-dark" name={i} onClick={this.handleDeleteDependency}>
-                                            <FaTrash/>
-                                        </button>
-                                    </td> 
-                                </tr>
-                            ))
-                        }
-                    </tbody>
-                </table>
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Dependency" onClick={this.openCreateDependencyPopup} />
 
                 <Popup onRequestOpen={this.state.CreateDependencypopupIsOpen}>
@@ -218,24 +196,22 @@ class DependencySelector extends Component {
     }
 
     render() {
-        const {sosModel, sectorModels} = this.props
-        
-        if (sosModel == null) {
-            return this.renderWarning('There is no sosModel selected')
-        } else if (sosModel.dependencies == undefined) {
+        const {dependencies, sectorModels} = this.props
+
+        if (dependencies == undefined) {
             return this.renderWarning('Dependencies are undefined')
         } else if (sectorModels == null) {
             return this.renderWarning('There are no sectorModels configured')
         } else {           
-            return this.renderDependencySelector(sosModel.dependencies, sectorModels)
+            return this.renderDependencySelector(dependencies, sectorModels)
         }        
     }
 }
 
 DependencySelector.propTypes = {
-    sosModel: PropTypes.object,
+    dependencies: PropTypes.array,
     sectorModels: PropTypes.array,
-    onAdd: PropTypes.func,
+    onChange: PropTypes.func,
     onDelete: PropTypes.func
 }
 
