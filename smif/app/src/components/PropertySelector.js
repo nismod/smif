@@ -9,11 +9,12 @@ class PropertySelector extends Component {
     }
 
     flagActiveSectorModels(activeProperties, availableProperties) {
+
         for (let i = 0; i < availableProperties.length; i++) {
             availableProperties[i].active = false
-            
+
             if (activeProperties != null) {
-                for (let k = 0; i < activeProperties.length; k++) {
+                for (let k = 0; k < activeProperties.length; k++) {
                     if (activeProperties[k] == availableProperties[i].name) {
                         availableProperties[i].active = true
                         break
@@ -27,9 +28,38 @@ class PropertySelector extends Component {
 
     handleChange(event) {
         const target = event.target
-        const {onChange} = this.props
+        const {name, onChange} = this.props
 
-        onChange(target.name, target.checked)
+        let newProperties = this.props.activeProperties
+
+        // initialize properties if not already done
+        if (newProperties == null && newProperties == undefined) {
+            newProperties = []
+        }
+
+        // add or remove the property
+        if (target.checked) {
+            newProperties.push(target.name)
+        } else {
+            for (let i = 0; i < newProperties.length; i++) {
+                if (newProperties[i]== target.name) {
+                    newProperties.splice(i, 1)
+                    break
+                }
+            }
+        }
+
+        // create an event structure
+        let returnEvent = {
+            target: {
+                name: name,
+                value: newProperties, 
+                type: 'array'
+            }
+        }
+
+        // send event
+        onChange(returnEvent)
     }
 
     renderProperySelector(selectedProperties) {
@@ -67,7 +97,7 @@ class PropertySelector extends Component {
 
         if (availableProperties == null || availableProperties.length == 0) {
             return this.renderWarning('There are no ' + name + ' properties available')
-        } else {         
+        } else {
             let selectedProperties = this.flagActiveSectorModels(activeProperties, availableProperties)
             return this.renderProperySelector(selectedProperties)
         }        

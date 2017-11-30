@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { Link } from 'react-router-dom'
-import update from 'react-addons-update'
+import update from 'immutability-helper'
 
 import { saveSosModel } from '../actions/actions.js'
 
@@ -18,21 +18,23 @@ class SosModelConfigForm extends Component {
 
         this.state = {}
         this.state.selectedSosModel = this.props.sosModel
+        
+        this.handleChange = this.handleChange.bind(this)
     }
+
     handleChange(event) {
         console.log(event)
-    }
 
-    handleSectorModelChange(sectorModel, newState) {
-        console.log(sectorModel, newState)
-    }
+        const target = event.target
+        const value = target.type === 'checkbox' ? target.checked : target.value
+        const name = target.name
 
-    handleScenarioSetChange(scenarioSet, newState) {
-        console.log(scenarioSet, newState)
-    }
+        console.log(name)
+        console.log(value)
 
-    handleNarrativeSetChange(narrativeSet, newState) {
-        console.log(narrativeSet, newState)
+        this.setState({
+            selectedSosModel: update(this.state.selectedSosModel, {[name]: {$set: value}})
+        })
     }
 
     handleAddDependency(source_model, source_output, sink_model, sink_output) {
@@ -68,14 +70,14 @@ class SosModelConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModel.name} onChange={this.handleInputChange}/>
+                                    <input className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModel.name} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Description</label>
                                 <div className="col-sm-10">
-                                    <textarea className="form-control" name="description" rows="5" defaultValue={selectedSosModel.description} onChange={this.handleInputChange}/>
+                                    <textarea className="form-control" name="description" rows="5" defaultValue={selectedSosModel.description} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -91,21 +93,21 @@ class SosModelConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Sector Models</label>
                                 <div className="col-sm-10">
-                                    <PropertySelector name="Sector Model" activeProperties={selectedSosModel.sector_models} availableProperties={sectorModels} onChange={this.handleSectorModelChange} />
+                                    <PropertySelector name="sector_models" activeProperties={selectedSosModel.sector_models} availableProperties={sectorModels} onChange={this.handleChange} />
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Scenario Sets</label>
                                 <div className="col-sm-10">
-                                    <PropertySelector name="Scenario Sets" activeProperties={selectedSosModel.scenario_sets} availableProperties={scenarioSets} onChange={this.handleScenarioSetChange} />
+                                    <PropertySelector name="scenario_sets" activeProperties={selectedSosModel.scenario_sets} availableProperties={scenarioSets} onChange={this.handleChange} />
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Narrative Sets</label>
                                 <div className="col-sm-10">
-                                    <PropertySelector name="Narrative Sets" activeProperties={selectedSosModel.narrative_sets} availableProperties={narrativeSets} onChange={this.handleNarrativeSetChange} />
+                                    <PropertySelector name="narrative_sets" activeProperties={selectedSosModel.narrative_sets} availableProperties={narrativeSets} onChange={this.handleChange} />
                                 </div>
                             </div>
 
@@ -114,7 +116,7 @@ class SosModelConfigForm extends Component {
                                 <div className="col-sm-10">
                                     <div className="input-group">
                                         <span className="input-group-addon">Maximum</span>
-                                        <input className="form-control" name="max_iterations" type="number" min="1" defaultValue={selectedSosModel.max_iterations} onChange={this.onChangeHandler}/>
+                                        <input className="form-control" name="max_iterations" type="number" min="1" defaultValue={selectedSosModel.max_iterations} onChange={this.handleChange}/>
                                     </div>
                                 </div>
                             </div>
@@ -138,13 +140,13 @@ class SosModelConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Absolute</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="convergence_absolute_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_absolute_tolerance} onChange={this.onChangeHandler}/>
+                                    <input className="form-control" name="convergence_absolute_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_absolute_tolerance} onChange={this.handleChange}/>
                                 </div>
                             </div>
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Relative</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="convergence_relative_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_relative_tolerance} onChange={this.onChangeHandler}/>
+                                    <input className="form-control" name="convergence_relative_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_relative_tolerance} onChange={this.handleChange}/>
 
                                 </div>
                             </div>
