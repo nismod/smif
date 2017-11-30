@@ -19,6 +19,9 @@ class SosModelConfigForm extends Component {
         this.state = {}
         this.state.selectedSosModel = this.props.sosModel
     }
+    handleChange(event) {
+        console.log(event)
+    }
 
     handleSectorModelChange(sectorModel, newState) {
         console.log(sectorModel, newState)
@@ -53,6 +56,8 @@ class SosModelConfigForm extends Component {
         const {sosModel, sectorModels, scenarioSets, scenarios, narrativeSets, narratives} = this.props
         const {selectedSosModel} = this.state
 
+        console.log(selectedSosModel)
+
         return (
             <div>
                 <form>
@@ -80,27 +85,39 @@ class SosModelConfigForm extends Component {
                     <br/>
 
                     <div className="card">
-                        <div className="card-header">Sector Models</div>
+                        <div className="card-header">Settings</div>
                         <div className="card-body">
-                            <PropertySelector name="Sector Model" activeProperties={selectedSosModel.sector_models} availableProperties={sectorModels} onChange={this.handleSectorModelChange} />
-                        </div>
-                    </div>
 
-                    <br/>
+                            <div className="form-group row">
+                                <label className="col-sm-2 col-form-label">Sector Models</label>
+                                <div className="col-sm-10">
+                                    <PropertySelector name="Sector Model" activeProperties={selectedSosModel.sector_models} availableProperties={sectorModels} onChange={this.handleSectorModelChange} />
+                                </div>
+                            </div>
 
-                    <div className="card">
-                        <div className="card-header">Scenario Sets</div>
-                        <div className="card-body">
-                            <PropertySelector name="Scenario Sets" activeProperties={selectedSosModel.scenario_sets} availableProperties={scenarioSets} onChange={this.handleScenarioSetChange} />
-                        </div>
-                    </div>
+                            <div className="form-group row">
+                                <label className="col-sm-2 col-form-label">Scenario Sets</label>
+                                <div className="col-sm-10">
+                                    <PropertySelector name="Scenario Sets" activeProperties={selectedSosModel.scenario_sets} availableProperties={scenarioSets} onChange={this.handleScenarioSetChange} />
+                                </div>
+                            </div>
 
-                    <br/>
+                            <div className="form-group row">
+                                <label className="col-sm-2 col-form-label">Narrative Sets</label>
+                                <div className="col-sm-10">
+                                    <PropertySelector name="Narrative Sets" activeProperties={selectedSosModel.narrative_sets} availableProperties={narrativeSets} onChange={this.handleNarrativeSetChange} />
+                                </div>
+                            </div>
 
-                    <div className="card">
-                        <div className="card-header">Narrative Sets</div>
-                        <div className="card-body">
-                            <PropertySelector name="Narrative Sets" activeProperties={selectedSosModel.narrative_sets} availableProperties={narrativeSets} onChange={this.handleNarrativeSetChange} />
+                            <div className="form-group row">
+                                <label className="col-sm-2 col-form-label">Iterations</label>
+                                <div className="col-sm-10">
+                                    <div className="input-group">
+                                        <span className="input-group-addon">Maximum</span>
+                                        <input className="form-control" name="max_iterations" type="number" min="1" defaultValue={selectedSosModel.max_iterations} onChange={this.onChangeHandler}/>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -115,10 +132,32 @@ class SosModelConfigForm extends Component {
 
                     <br/>
 
+                    <div className="card">
+                        <div className="card-header">Convergence Tolerance</div>
+                        <div className="card-body">
+                            <div className="form-group row">
+                                <label className="col-sm-2 col-form-label">Absolute</label>
+                                <div className="col-sm-10">
+                                    <input className="form-control" name="convergence_absolute_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_absolute_tolerance} onChange={this.onChangeHandler}/>
+                                </div>
+                            </div>
+                            <div className="form-group row">
+                                <label className="col-sm-2 col-form-label">Relative</label>
+                                <div className="col-sm-10">
+                                    <input className="form-control" name="convergence_relative_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_relative_tolerance} onChange={this.onChangeHandler}/>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <br/>
                 </form>
 
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save System-of-systems Model Configuration" onClick={this.handleSave} />
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+
+                <br/>
             </div>
         )
     }
@@ -139,110 +178,110 @@ export default SosModelConfigForm
             
         
 
-            //     <h3>Dependencies</h3>
-            //     <div className="table-container">
-            //         <table>
-            //             <tr>
-            //                 <th colSpan="2">Source</th>
-            //                 <th colSpan="2">Sink</th>
-            //                 <th colSpan="1"></th>
-            //             </tr>
-            //             <tr>
-            //                 <th>Model</th>
-            //                 <th>Output</th>
-            //                 <th>Model</th>
-            //                 <th>Input</th>
-            //                 <th></th>
-            //             </tr>
-            //             <tr>
-            //                 <td>population</td>
-            //                 <td>count</td>
-            //                 <td>energy_demand</td>
-            //                 <td>population</td>
-            //                 <td><FaTrash /></td>
-            //             </tr>
-            //             <tr>
-            //                 <td>energy_demand</td>
-            //                 <td>gas_demand</td>
-            //                 <td>energy_supply</td>
-            //                 <td>natural_gas_demand</td>
-            //                 <td><FaTrash /></td>
-            //             </tr>
-            //         </table>
-            //     </div>
+//     <h3>Dependencies</h3>
+//     <div className="table-container">
+//         <table>
+//             <tr>
+//                 <th colSpan="2">Source</th>
+//                 <th colSpan="2">Sink</th>
+//                 <th colSpan="1"></th>
+//             </tr>
+//             <tr>
+//                 <th>Model</th>
+//                 <th>Output</th>
+//                 <th>Model</th>
+//                 <th>Input</th>
+//                 <th></th>
+//             </tr>
+//             <tr>
+//                 <td>population</td>
+//                 <td>count</td>
+//                 <td>energy_demand</td>
+//                 <td>population</td>
+//                 <td><FaTrash /></td>
+//             </tr>
+//             <tr>
+//                 <td>energy_demand</td>
+//                 <td>gas_demand</td>
+//                 <td>energy_supply</td>
+//                 <td>natural_gas_demand</td>
+//                 <td><FaTrash /></td>
+//             </tr>
+//         </table>
+//     </div>
 
-            //     <fieldset>
-            //         <label>Source Model:</label>
-            //         <div className="select-container">
-            //             <select>
-            //                 <option value="" disabled="disabled" selected="selected">Select a source model</option>
-            //                 <option value="Energy_Demand">Energy Demand</option>
-            //                 <option value="Energy_Supply">Energy Supply</option>
-            //                 <option value="Transport">Transport</option>
-            //                 <option value="Solid_Waste">Solid Waste</option>
-            //             </select>
-            //         </div>
-            //         <label>Source Model Output:</label>
-            //         <div className="select-container">
-            //             <select>
-            //                 <option value="" disabled="disabled" selected="selected">Select a source model output</option>
-            //                 <option value="population">Popula            //     <h3>Model</h3>
-            //     <fieldset>
-            //         <legend>Scenario Sets</legend>
-            //         <label>
-            //             <input type="checkbox" />
-            //             Population
-            //         </label>
-            //         <label>
-            //             <input type="checkbox" />
-            //             Economy
-            //         </label>
-            //     </fieldset>
-            //     <fieldset>
-            //         <legend>Sector Models</legend>
-            //         <label>
-            //             <input type="checkbox" />
-            //             Energy Dethis.handleSave = this.handleSave.bind(this)mand
-            //         </label>
-            //         <label>
-            //             <input type="checkbox" />
-            //             Energy Supply
-            //         </label>
-            //         <label>
-            //             <input type="checkbox" />
-            //             Transport
-            //         </label>
-            //         <label>
-            //             <input type="checkbox" />
-            //             Solid Waste
-            //         </label>
-            //     </fieldset>tion</option>
-            //                 <option value="total_costs">Total costs</option>
-            //                 <option value="fuel_price">Fuel price</option>
-            //             </select>
-            //         </div>
-            //         <label>Sink Model:</label>
-            //         <div className="select-container">
-            //             <select>
-            //                 <option value="" disabled="disabled" selected="selected">Select a sink model</option>
-            //                 <option value="Energy_Demand">Energy Demand</option>
-            //                 <option value="Energy_Supply">Energy Supply</option>
-            //                 <option value="Transport">Transport</option>
-            //                 <option value="Solid_Waste">Solid Waste</option>
-            //             </select>
-            //         </div>
-            //         <label>Sink Model Input:</label>
-            //         <div className="select-container">
-            //             <select>
-            //                 <option value="" disabled="disabled" selected="selected">Select a sink model input</option>
-            //                 <option value="population">Population</option>
-            //                 <option value="total_costs">Total costs</option>
-            //                 <option value="fuel_price">Fuel price</option>
-            //             </select>
-            //         </div>
-            //         <input type="button" value="Add Dependency" />
-            //     </fieldset>
+//     <fieldset>
+//         <label>Source Model:</label>
+//         <div className="select-container">
+//             <select>
+//                 <option value="" disabled="disabled" selected="selected">Select a source model</option>
+//                 <option value="Energy_Demand">Energy Demand</option>
+//                 <option value="Energy_Supply">Energy Supply</option>
+//                 <option value="Transport">Transport</option>
+//                 <option value="Solid_Waste">Solid Waste</option>
+//             </select>
+//         </div>
+//         <label>Source Model Output:</label>
+//         <div className="select-container">
+//             <select>
+//                 <option value="" disabled="disabled" selected="selected">Select a source model output</option>
+//                 <option value="population">Popula            //     <h3>Model</h3>
+//     <fieldset>
+//         <legend>Scenario Sets</legend>
+//         <label>
+//             <input type="checkbox" />
+//             Population
+//         </label>
+//         <label>
+//             <input type="checkbox" />
+//             Economy
+//         </label>
+//     </fieldset>
+//     <fieldset>
+//         <legend>Sector Models</legend>
+//         <label>
+//             <input type="checkbox" />
+//             Energy Dethis.handleSave = this.handleSave.bind(this)mand
+//         </label>
+//         <label>
+//             <input type="checkbox" />
+//             Energy Supply
+//         </label>
+//         <label>
+//             <input type="checkbox" />
+//             Transport
+//         </label>
+//         <label>
+//             <input type="checkbox" />
+//             Solid Waste
+//         </label>
+//     </fieldset>tion</option>
+//                 <option value="total_costs">Total costs</option>
+//                 <option value="fuel_price">Fuel price</option>
+//             </select>
+//         </div>
+//         <label>Sink Model:</label>
+//         <div className="select-container">
+//             <select>
+//                 <option value="" disabled="disabled" selected="selected">Select a sink model</option>
+//                 <option value="Energy_Demand">Energy Demand</option>
+//                 <option value="Energy_Supply">Energy Supply</option>
+//                 <option value="Transport">Transport</option>
+//                 <option value="Solid_Waste">Solid Waste</option>
+//             </select>
+//         </div>
+//         <label>Sink Model Input:</label>
+//         <div className="select-container">
+//             <select>
+//                 <option value="" disabled="disabled" selected="selected">Select a sink model input</option>
+//                 <option value="population">Population</option>
+//                 <option value="total_costs">Total costs</option>
+//                 <option value="fuel_price">Fuel price</option>
+//             </select>
+//         </div>
+//         <input type="button" value="Add Dependency" />
+//     </fieldset>
 
-            //     <input type="button" value="Save SoS Model Configuration" />
-            //     <input type="button" value="Cancel" />
-            // </div>
+//     <input type="button" value="Save SoS Model Configuration" />
+//     <input type="button" value="Cancel" />
+// </div>

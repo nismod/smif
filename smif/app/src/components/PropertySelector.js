@@ -35,16 +35,21 @@ class PropertySelector extends Component {
     renderProperySelector(selectedProperties) {
         return (    
             <div>
-                {
-                    Object.keys(selectedProperties).map((i) => (
-                        <div className="form-check" key={i}>
-                            <label className="form-check-label">
-                                <input className="form-check-input" type="checkbox" name={selectedProperties[i].name} key={selectedProperties[i].name} value={selectedProperties[i].name} defaultChecked={selectedProperties[i].active} onClick={this.handleChange}></input>
-                                {selectedProperties[i].name}
-                            </label>
-                        </div>                        
-                    ))
-                }
+                <div className="card">
+                    <div className="card-body">
+           
+                        {
+                            Object.keys(selectedProperties).map((i) => (
+                                <div className="form-check" key={i}>
+                                    <label className="form-check-label">
+                                        <input className="form-check-input" type="checkbox" name={selectedProperties[i].name} key={selectedProperties[i].name} value={selectedProperties[i].name} defaultChecked={selectedProperties[i].active} onClick={this.handleChange}></input>
+                                        {selectedProperties[i].name}
+                                    </label>
+                                </div>                        
+                            ))
+                        }
+                    </div>
+                </div>
             </div>
         )
     }
