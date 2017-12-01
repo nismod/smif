@@ -10,6 +10,8 @@ import {
     RECEIVE_SOS_MODEL,
     REQUEST_SECTOR_MODELS,
     RECEIVE_SECTOR_MODELS,
+    REQUEST_SECTOR_MODEL,
+    RECEIVE_SECTOR_MODEL,
     REQUEST_SCENARIO_SETS,
     RECEIVE_SCENARIO_SETS,
     REQUEST_SCENARIOS,
@@ -135,6 +137,29 @@ function sector_models(
     }
 }
 
+function sector_model(
+    state = {
+        isFetching: false,
+        item: {}
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_SECTOR_MODEL:
+        return Object.assign({}, state, {
+            isFetching: true
+        })
+    case RECEIVE_SECTOR_MODEL:
+        return Object.assign({}, state, {
+            isFetching: false,
+            item: action.sector_model,
+            lastUpdated: action.receivedAt
+        })
+    default:
+        return state
+    }
+}
+
 function scenario_sets(
     state = {
         isFetching: false,
@@ -233,6 +258,7 @@ const rootReducer = combineReducers({
     sos_models,
     sos_model,
     sector_models,
+    sector_model,
     scenario_sets,
     scenarios,
     narrative_sets,

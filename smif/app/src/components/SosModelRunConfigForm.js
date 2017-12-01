@@ -45,8 +45,6 @@ class SosModelRunConfigForm extends Component {
      *     The the scenario that has been selected
      */
         const { scenarios } = this.state.selectedSosModelRun
-        console.log(scenario_set)
-        console.log(scenario)
 
         if (scenarios === undefined || scenarios[0] === undefined) {
             // there are no scenarios defined
