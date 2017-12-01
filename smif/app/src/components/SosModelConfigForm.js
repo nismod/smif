@@ -45,8 +45,6 @@ class SosModelConfigForm extends Component {
         const {sosModel, sectorModels, scenarioSets, scenarios, narrativeSets, narratives} = this.props
         const {selectedSosModel} = this.state
 
-        console.log(selectedSosModel)
-
         return (
             <div>
                 <form>
@@ -115,7 +113,7 @@ class SosModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Dependencies</div>
                         <div className="card-body">
-                            <PropertyList itemsName="dependencies" items={selectedSosModel.dependencies} columns={['Source Model', 'Output', 'Sink Model', 'Input']} editButton={false} deleteButton={true} onEdit="" onDelete={this.handleChange} />
+                            <PropertyList itemsName="dependencies" items={selectedSosModel.dependencies} columns={{source_model: 'Source Model', source_model_output: 'Output', sink_model: 'Sink Model', sink_model_input: 'Input'}} editButton={false} deleteButton={true} onEdit="" onDelete={this.handleChange} />
                             <DependencySelector dependencies={selectedSosModel.dependencies} sectorModels={sectorModels} onChange={this.handleChange}/>
                         </div>
                     </div>

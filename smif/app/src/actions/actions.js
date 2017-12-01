@@ -197,7 +197,6 @@ function receiveSosModel(json) {
 }
 
 export function fetchSosModel(modelid){
-    console.log('alive?')
     return function (dispatch) {
         // inform the app that the API request is starting
         dispatch(requestSosModel())
@@ -324,6 +323,113 @@ export function fetchSectorModels(){
             )
             .then(
                 json => dispatch(receiveSectorModels(json))
+            )
+    }
+}
+
+export const REQUEST_SECTOR_MODEL = 'REQUEST_SECTOR_MODEL'
+function requestSectorModel(){
+    return {
+        type: REQUEST_SECTOR_MODEL
+    }
+}
+
+export const RECEIVE_SECTOR_MODEL = 'RECEIVE_SECTOR_MODEL'
+function receiveSectorModel(json) {
+    return {
+        type: RECEIVE_SECTOR_MODEL,
+        sector_model: json,
+        receivedAt: Date.now()
+    }
+}
+
+export function fetchSectorModel(modelid){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestSectorModel())
+        
+        // make API request, returning a promise
+        return fetch('/api/v1/sector_models/' + modelid)
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                json => dispatch(receiveSectorModel(json))
+            )
+    }
+}
+
+export function saveSectorModel(model){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+
+        // make API request, returning a promise
+        return fetch('/api/v1/sector_models/' + model.name, {
+            method: 'put',
+            body: JSON.stringify(model),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }}
+        )
+            .then (
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                //json => dispatch(receiveSosModelRun(json))
+            )
+    }
+}
+
+export function createSectorModel(sectorModelName){
+    return function (dispatch) {
+        // prepare the new modelrun
+        let datetime = new Date()
+
+        let newModel = {
+            'name': sectorModelName, 
+        }
+        
+        console.log(newModel)
+
+        // make API request, returning a promise
+        return fetch('/api/v1/sos_models/', {
+            method: 'post',
+            body: JSON.stringify(newModel),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+            //json => dispatch(receiveSosModelRun(json))
+            )
+    }
+}
+
+export function deleteSectorModel(sectorModelName){
+    return function (dispatch) {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/sos_models/' + sectorModelName, {
+            method: 'delete',
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+            //json => dispatch(receiveSosModelRun(json))
             )
     }
 }

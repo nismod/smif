@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom'
 
 import { fetchSosModelRuns } from '../actions/actions.js'
 import { fetchSosModels } from '../actions/actions.js'
+import { fetchSectorModels } from '../actions/actions.js'
 
 import { createSosModelRun } from '../actions/actions.js'
 import { deleteSosModelRun } from '../actions/actions.js'
@@ -40,6 +41,7 @@ class ProjectOverview extends Component {
         const { dispatch } = this.props
         dispatch(fetchSosModelRuns())
         dispatch(fetchSosModels())
+        dispatch(fetchSectorModels())
     }
 
     handleInputChange(event) {
@@ -97,7 +99,7 @@ class ProjectOverview extends Component {
     }
 
     render () {
-        const { sos_model_runs, sos_models, isFetching } = this.props
+        const { sos_model_runs, sos_models, sector_models, isFetching } = this.props
 
         return (
             <div>
@@ -155,15 +157,7 @@ class ProjectOverview extends Component {
                             Simulation Model
                         </div>
                         <div className="card-body">
-                            <div className="select-container">
-                                <select>
-                                    <option>Energy Demand</option>
-                                    <option>Energy Supply</option>
-                                    <option>Water</option>
-                                    <option>Transport</option>
-                                    <option>Solid Waste</option>
-                                </select>
-                            </div>
+                            <ProjectOverviewItem items={sector_models} itemLink="/configure/sector-models/" onDelete={this.deleteSosModel} />
                             <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a new Simulation Model Configuration" />
                         </div>
                     </div>
@@ -222,16 +216,18 @@ class ProjectOverview extends Component {
 ProjectOverview.propTypes = {
     sos_model_runs: PropTypes.array.isRequired,
     sos_models: PropTypes.array.isRequired,
+    sector_models: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
 }
 
 function mapStateToProps(state) {
-    const { sos_model_runs, sos_models } = state
+    const { sos_model_runs, sos_models, sector_models } = state
 
     return {
         sos_model_runs: sos_model_runs.items,
         sos_models: sos_models.items,
+        sector_models: sector_models.items,
         isFetching: (sos_models.isFetching && sos_model_runs.isFetching)
     }
 }

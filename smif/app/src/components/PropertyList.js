@@ -37,13 +37,13 @@ class PropertyList extends Component {
         }
     }
 
-    getColumnSize(items, editButton, deleteButton) {
+    getColumnSize(columns, editButton, deleteButton) {
         let totalWidth = 100
 
         editButton ? totalWidth -= 8 : null
         deleteButton ? totalWidth -= 8 : null
 
-        return ((totalWidth / items.length).toString() + '%')
+        return ((totalWidth / Object.keys(columns).length).toString() + '%')
     }
 
     getButtonColumn(active) {
@@ -57,7 +57,7 @@ class PropertyList extends Component {
     getEditButton(active, itemNumber) {
         if (active) {
             return (
-                <td>
+                <td width='8%' >
                     <button type="button" className="btn btn-outline-dark" key={itemNumber} value={itemNumber} name='edit' onClick={this.handleChange}>
                         <FaPencil/>
                     </button>
@@ -70,7 +70,7 @@ class PropertyList extends Component {
     getDeleteButton(active, itemNumber) {
         if (active) {
             return (
-                <td>
+                <td width='8%'>
                     <button type="button" className="btn btn-outline-dark" key={itemNumber} value={itemNumber} name='delete' onClick={this.handleChange}>
                         <FaTrash/>
                     </button>
@@ -81,17 +81,19 @@ class PropertyList extends Component {
     }
 
     renderPropertyList(name, items, columns, editButton, deleteButton) {
-
+        //
         return (    
             <div>
-                <table className="table table-sm fixed">
-                    <thead className="thead-light">
+                <table className="table table-hover">
                     
+                    <thead className="thead-light">
+
                         <tr>
                             {
-                                columns.map((column, i) => (
-                                    <th key={i} width={this.getColumnSize(items, editButton, deleteButton)} scope="col">
-                                        {column}
+                                Object.keys(columns).map((column, i) => (
+                                    
+                                    <th width={this.getColumnSize(columns, editButton, deleteButton)} key={i} scope="col">
+                                        {columns[column]}
                                     </th>
                                 ))
                             }
@@ -107,8 +109,11 @@ class PropertyList extends Component {
 
                                 <tr key={i}>
                                     {
-                                        Object.keys(items[item]).map((row, k) => (
-                                            <td key={k}>{items[item][row]}</td>
+                                        Object.keys(columns).map((column, k) => (
+                                            <td width={this.getColumnSize(columns, editButton, deleteButton)} key={k}>
+                                                {items[item][column]}
+                                            </td>
+                                            
                                         ))
                                     }
                                     {this.getEditButton(editButton, item)}
@@ -132,18 +137,21 @@ class PropertyList extends Component {
     }
 
     render() {
-        const {name, items, columns, editButton, deleteButton} = this.props
+        const {itemsName, items, columns, editButton, deleteButton} = this.props
         
-        if (items == null) {
-            return this.renderWarning('There are no ' + name + ' available')
+        if (items == null || items == undefined) {
+            return this.renderWarning('The items property is not initialised')
+        }
+        else if (items.length == 0) {
+            return this.renderWarning('There are no ' + itemsName + ' configured')
         } else {           
-            return this.renderPropertyList(name, items, columns, editButton, deleteButton)
+            return this.renderPropertyList(itemsName, items, columns, editButton, deleteButton)
         }        
     }
 }
 
 PropertyList.propTypes = {
-    name: PropTypes.string,
+    itemsName: PropTypes.string,
     items: PropTypes.array,
     columns: PropTypes.array,
     editButton: PropTypes.bool,
