@@ -10,16 +10,7 @@ class ParameterList(UserDict):
         super().__init__(**kwargs)
         self.logger = getLogger(__name__)
 
-    def as_dict(self):
-
-        config = []
-        for param in self.data.values():
-            config.append({'name': param['name'],
-                           'description': param['description'],
-                           'default_value': param['default_value'],
-                           'absolute_range': param['absolute_range'],
-                           'suggested_range': param['suggested_range']})
-
+    def as_list(self):
         return list(self.data.values())
 
     @property
@@ -78,5 +69,4 @@ class ParameterList(UserDict):
         return list(self.data.keys())
 
     def __getitem__(self, key):
-
         return self.parameters[key]

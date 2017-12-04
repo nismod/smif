@@ -108,3 +108,12 @@ class TestInstantiateObjectsFromConfig():
                                      config['default_value'],
                                      config['units'],
                                      config['parent'])
+
+    def test_as_list(self, get_config_list):
+        """as_list should return list of dict suitable for input or
+        ParameterList creation
+        """
+        config_list = get_config_list
+        parameters = ParameterList()
+        parameters.add_parameters_from_list(config_list)
+        assert parameters.as_list() == config_list
