@@ -20,26 +20,35 @@ Example
 -------
 A very simple example with just one scenario:
 
->>> elec_scenario = ScenarioModel('scenario', ['demand'])
->>> elec_scenario.add_data({'demand': 123})
+>>> elec_scenario = ScenarioModel('scenario')
+>>> elec_scenario.add_output('demand', 'national', 'annual', 'GWh')
+>>> elec_scenario.add_data('demand', np.array([[[123]]]), [2010])
 >>> sos_model = SosModel('simple')
 >>> sos_model.add_model(elec_scenario)
->>> sos_model.simulate()
-{'scenario': {'demand': 123}}
+>>> sos_model.simulate(2010)
+{'scenario': {'demand': array([123])}}
 
 A more comprehensive example with one scenario and one scenario model:
 
->>>  elec_scenario = ScenarioModel('scenario', ['output'])
->>>  elec_scenario.add_data({'output': 123})
->>>  energy_model = SectorModel('model', [], [])
->>>  energy_model.add_input('input')
->>>  energy_model.add_dependency(elec_scenario, 'output', 'input')
->>>  energy_model.add_executable(lambda x: x)
->>>  sos_model = SosModel('blobby')
->>>  sos_model.add_model(elec_scenario)
->>>  sos_model.add_model(energy_model)
->>>  sos_model.simulate()
-{'model': {'input': 123}, 'scenario': {'output': 123}}
+>>> elec_scenario = ScenarioModel('scenario')
+>>> elec_scenario.add_output('demand', 'national', 'annual', 'GWh')
+>>> elec_scenario.add_data('demand', np.array([[[123]]]), [2010])
+>>> class EnergyModel(SectorModel):
+...   def extract_obj(self):
+...     pass
+...   def initialise(self):
+...     pass
+...   def simulate(self, timestep, data):
+...     return {self.name: {'cost': data['input'] * 2}}
+...
+>>> energy_model = EnergyModel('model')
+>>> energy_model.add_input('input', 'national', 'annual', 'GWh')
+>>> energy_model.add_dependency(elec_scenario, 'demand', 'input', lambda x: x)
+>>> sos_model = SosModel('sos')
+>>> sos_model.add_model(elec_scenario)
+>>> sos_model.add_model(energy_model)
+>>> sos_model.simulate(2010)
+{'model': {'cost': array([[246]])}, 'scenario': {'demand': array([[123]])}}
 
 """
 from abc import ABCMeta, abstractmethod
@@ -140,39 +149,44 @@ class Model(metaclass=ABCMeta):
         """
         pass
 
-    def add_dependency(self, source_model, source, sink, function=None):
+    def add_dependency(self, source_model, source_name, sink_name, function=None):
         """Adds a dependency to the current `Model` object
 
         Arguments
         ---------
         source_model : `smif.composite.Model`
             A reference to the source `~smif.composite.Model` object
-        source : string
+        source_name : string
             The name of the model_output defined in the `source_model`
-        sink : string
+        sink_name : string
             The name of a model_input defined in this object
 
         """
-        if source not in source_model.model_outputs.names:
+        if source_name not in source_model.model_outputs.names:
             msg = "Output '{}' is not defined in '{}' model"
-            raise ValueError(msg.format(source, source_model.name))
-        if sink in self.free_inputs.names:
-            source_object = source_model.model_outputs[source]
-            self.deps[sink] = (Dependency(source_model,
-                                          source_object,
-                                          function))
-            msg = "Added dependency from '%s' to '%s'"
-            self.logger.debug(msg, source_model.name, self.name)
+            raise ValueError(msg.format(source_name, source_model.name))
+
+        if sink_name in self.free_inputs.names:
+            source = source_model.model_outputs[source_name]
+            sink = self.model_inputs[sink_name]
+            self.deps[sink_name] = Dependency(
+                source_model,
+                source,
+                sink,
+                function
+            )
+            msg = "Added dependency from '%s:%s' to '%s:%s'"
+            self.logger.debug(msg, source_model.name, source_name, self.name, sink_name)
+
         else:
-            if sink in self.model_inputs.names:
+            if sink_name in self.model_inputs.names:
                 raise NotImplementedError("Multiple source dependencies"
                                           " not yet implemented")
 
             msg = "Inputs: '%s'. Free inputs: '%s'."
-            self.logger.debug(msg, self.model_inputs.names,
-                              self.free_inputs.names)
+            self.logger.debug(msg, self.model_inputs.names, self.free_inputs.names)
             msg = "Input '{}' is not defined in '{}' model"
-            raise ValueError(msg.format(sink, self.name))
+            raise ValueError(msg.format(sink_name, self.name))
 
     def add_parameter(self, parameter_dict):
         """Add a parameter to the model

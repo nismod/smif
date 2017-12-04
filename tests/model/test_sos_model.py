@@ -134,7 +134,7 @@ def get_empty_sector_model():
             pass
 
         def simulate(self, timestep, data=None):
-            return {'output_name': 'some_data', 'timestep': timestep}
+            return {self.name: {'output_name': 'some_data', 'timestep': timestep}}
 
         def extract_obj(self, results):
             return 0
@@ -350,15 +350,19 @@ class TestSosModel():
     def test_add_dependency(self, get_empty_sector_model):
 
         sink_model = get_empty_sector_model('sink_model')
+        sink_model.simulate = lambda _, data: {'sink_model': data}
         sink_model.add_input('input_name', Mock(), Mock(), 'units')
 
         source_model = get_empty_sector_model('source_model')
         source_model.add_output('output_name', Mock(), Mock(), 'units')
 
-        sink_model.add_dependency(source_model, 'output_name', 'input_name', lambda x, y: x)
+        sink_model.add_dependency(source_model, 'output_name', 'input_name', lambda x: x)
 
-        model_input = sink_model.model_inputs['input_name']
-        actual = sink_model.deps['input_name'].get_data(2010, model_input)
+        sos_model = SosModel('test')
+        sos_model.add_model(source_model)
+        sos_model.add_model(sink_model)
+        results = sos_model.simulate(2010)
+        actual = results['sink_model']['input_name']
         expected = 'some_data'
         assert actual == expected
 
@@ -388,11 +392,13 @@ class TestSosModel():
     def test_dependency_aggregation(self, get_sos_model_with_summed_dependency):
         sos_model = get_sos_model_with_summed_dependency
 
-        data = {2010: {'decisions': [],
-                       'raininess': np.array([[1, 1]]),
-                       'water': np.array([2, 2])
-                       }
-                }
+        data = {
+            2010: {
+                'decisions': [],
+                'raininess': np.array([[1, 1]]),
+                'water': np.array([2, 2])
+            }
+        }
 
         sos_model.simulate(2010, data)
 
@@ -573,12 +579,17 @@ class TestSosModelBuilder():
         graph = sos_model.dependency_graph
 
         scenario = sos_model.models['test_scenario_model']
+        model = sos_model.models['water_supply']
 
         assert 'water_supply' in sos_model.models
         assert sos_model.models['water_supply'] in graph.nodes()
         deps = sos_model.models['water_supply'].deps
         assert 'raininess' in deps.keys()
-        expected = Dependency(scenario, scenario.model_outputs['raininess'])
+        expected = Dependency(
+            scenario,
+            scenario.model_outputs['raininess'],
+            model.model_inputs['raininess']
+        )
         assert deps['raininess'] == expected
 
         assert 'test_scenario_model' in sos_model.models

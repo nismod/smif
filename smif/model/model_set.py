@@ -125,7 +125,7 @@ class ModelSet(CompositeModel):
                     # else, pull from iterated results
                     dep_data = \
                         self.iterated_results[-2][dep.source_model.name][dep.source.name]
-                model_data[input_name] = dep.convert(dep_data, input_)
+                model_data[input_name] = dep.convert(dep_data)
             results = model.simulate(self.timestep, model_data)
 
             self.logger.debug("Iteration %s, model %s, results: %s",

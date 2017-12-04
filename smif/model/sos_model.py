@@ -119,16 +119,15 @@ class SosModel(CompositeModel):
             # get data for model
             # TODO settle and test data dict structure/object between simple/composite models
             sim_data = {}
-            for input_name, dep in model.deps.items():
-                input_ = model.model_inputs[input_name]
-                if input_ in self.free_inputs:
+            for dep in model.deps.values():
+                if dep.sink in self.free_inputs:
                     # pick external dependencies from data
                     param_data = data[dep.source_model.name][dep.source.name]
                 else:
                     # pick internal dependencies from results
                     param_data = results[dep.source_model.name][dep.source.name]
-                param_data_converted = dep.convert(param_data, input_)
-                sim_data[input_.name] = param_data_converted
+                param_data_converted = dep.convert(param_data)
+                sim_data[dep.sink.name] = param_data_converted
 
             sim_data = self._get_parameter_values(model, sim_data, data)
 
@@ -152,19 +151,21 @@ class SosModel(CompositeModel):
                 raise NotImplementedError(msg)
             else:
                 self.dependency_graph.add_node(model, name=model.name)
-                for sink, dependency in model.deps.items():
-                    provider = dependency.source_model
-                    msg = "Dependency '%s' provided by '%s'"
-                    self.logger.debug(msg, sink, provider.name)
 
-                    self.dependency_graph.add_edge(
-                        provider,
-                        model,
-                        {
-                            'source': dependency.source,
-                            'sink': sink
-                        }
-                    )
+        for sink_model in self.models.values():
+            for dependency in sink_model.deps.values():
+                source_model = dependency.source_model
+                msg = "Dependency '%s' provided by '%s'"
+                self.logger.debug(msg, dependency.sink.name, sink_model.name)
+
+                self.dependency_graph.add_edge(
+                    source_model,
+                    sink_model,
+                    {
+                        'source': dependency.source,
+                        'sink': dependency.sink
+                    }
+                )
 
     def _get_model_sets_in_run_order(self):
         """Returns a list of :class:`Model` in a runnable order.
