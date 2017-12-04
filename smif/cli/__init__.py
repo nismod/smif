@@ -78,7 +78,6 @@ from multiprocessing import Process
 from threading import Timer
 
 import smif
-from smif.data_layer.load import dump
 from smif.data_layer import DatafileInterface, DataNotFoundError
 from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
@@ -384,9 +383,6 @@ def execute_model_run(args):
     LOGGER.info("Running model run %s", modelrun.name)
     modelrun.run()
 
-    output_file = args.output_file
-    LOGGER.info("Writing results to %s", output_file)
-    dump(modelrun.sos_model.results, output_file)
     print("Model run complete")
 
 
@@ -490,9 +486,6 @@ def parse_arguments():
     # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
-    parser_run.add_argument('-o', '--output-file',
-                            default='results.yaml',
-                            help='Output file')
     parser_run.set_defaults(func=execute_model_run)
     parser_run.add_argument('-d', '--directory',
                             default='.',
