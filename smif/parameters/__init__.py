@@ -19,8 +19,26 @@ class ParameterList(UserDict):
 
     @property
     def defaults(self):
-        return {name: param['default_value']
-                for name, param in self.data.items()}
+        """Default parameter values
+        """
+        return {
+            parameter['name']: parameter['default_value']
+            for parameter in self.data.values()
+        }
+
+    def overridden(self, new_values):
+        """Override parameter values, falling back to defaults
+
+        Parameters
+        ----------
+        new_values : dict
+            Dict with keys matching parameter names, values to override the
+            defaults
+        """
+        return {
+            parameter_name: new_values.get(parameter_name, default_value)
+            for parameter_name, default_value in self.defaults.items()
+        }
 
     def add_parameters_from_list(self, config_list):
 

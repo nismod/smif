@@ -86,6 +86,20 @@ class TestInstantiateObjectsFromConfig():
 
         assert parameters.defaults == expected
 
+    def test_overridden(self, get_config_list):
+        """should override with configured values, without affecting defaults
+        """
+        config_list = get_config_list
+        parameters = ParameterList()
+        parameters.add_parameters_from_list(config_list)
+
+        defaults = {'smart_meter_savings': 3}
+        expected = {'smart_meter_savings': 5}
+        actual = parameters.overridden(expected)
+
+        assert parameters.defaults == defaults
+        assert actual == expected
+
     def test_add_duplicate_parameter(self, get_config_list):
 
         config_list = get_config_list
