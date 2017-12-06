@@ -154,8 +154,8 @@ INTERVALS = get_interval_register()
 def setup_project_folder(args):
     """Creates folder structure in the target directory
 
-    Arguments
-    =========
+    Parameters
+    ----------
     args
     """
     # setup.cfg data_files installs to path relative to sys.prefix
@@ -371,12 +371,13 @@ def build_model_run(model_run_config):
 def execute_model_run(args):
     """Runs the model run
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     args
     """
     LOGGER.info("Getting model run definition")
     model_run_config = get_model_run_definition(args)
+
     LOGGER.info("Build model run from configuration data")
     modelrun = build_model_run(model_run_config)
 
@@ -415,8 +416,8 @@ def _run_server(args):
 def run_app(args):
     """Run the client/server application
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     args
     """
     print("Opening smif application")
