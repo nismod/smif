@@ -183,15 +183,17 @@ class ScenarioModelBuilder(object):
         interval_names = temporal_resolution.get_entry_names()
         region_names = spatial_resolution.get_entry_names()
 
+        self._validate_observations(param, observations, region_names, spatial_resolution.name,
+                                    interval_names, temporal_resolution.name)
+
         if len(timestep_names) == 0:
             self.logger.error("No timesteps found when loading %s", param)
 
-        data = np.zeros((
+        data = np.full((
             len(timestep_names),
             len(region_names),
             len(interval_names)
-        ))
-        data.fill(np.nan)
+        ), np.nan)
 
         if len(observations) != data.size:
             self.logger.warning(
@@ -201,38 +203,14 @@ class ScenarioModelBuilder(object):
         skipped_years = set()
 
         for obs in observations:
-
-            if 'year' not in obs:
-                raise ValueError(
-                    "Scenario data item missing year: '{}'".format(obs))
             year = int(obs['year'])
+            region = obs['region']
+            interval = obs['interval']
 
             if year not in timestep_names:
                 # Don't add data if year is not in timestep list
                 skipped_years.add(year)
                 continue
-
-            if 'region' not in obs:
-                raise ValueError(
-                    "Scenario data item missing region: '{}'".format(obs))
-            region = obs['region']
-            if region not in region_names:
-                raise ValueError(
-                    "Region '{}' not defined in set '{}' for parameter '{}'".format(
-                        region,
-                        spatial_resolution.name,
-                        param))
-
-            if 'interval' not in obs:
-                raise ValueError(
-                    "Scenario data item missing interval: {}".format(obs))
-            interval = obs['interval']
-            if interval not in interval_names:
-                raise ValueError(
-                    "Interval '{}' not defined in set '{}' for parameter '{}'".format(
-                        interval,
-                        temporal_resolution.name,
-                        param))
 
             timestep_idx = timestep_names.index(year)
             interval_idx = interval_names.index(interval)
@@ -245,3 +223,34 @@ class ScenarioModelBuilder(object):
             self.logger.warning(msg, year)
 
         return data
+
+    @staticmethod
+    def _validate_observations(param, observations, region_names, region_set_name,
+                               interval_names, interval_set_name):
+        for obs in observations:
+            if 'year' not in obs:
+                raise ValueError(
+                    "Scenario data item missing year: '{}'".format(obs))
+            if 'region' not in obs:
+                raise ValueError(
+                    "Scenario data item missing region: '{}'".format(obs))
+            if 'interval' not in obs:
+                raise ValueError(
+                    "Scenario data item missing interval: {}".format(obs))
+            if 'value' not in obs:
+                raise ValueError(
+                    "Scenario data item missing value: {}".format(obs))
+
+            if obs['region'] not in region_names:
+                raise ValueError(
+                    "Region '{}' not defined in set '{}' for parameter '{}'".format(
+                        obs['region'],
+                        region_set_name,
+                        param))
+
+            if obs['interval'] not in interval_names:
+                raise ValueError(
+                    "Interval '{}' not defined in set '{}' for parameter '{}'".format(
+                        obs['interval'],
+                        interval_set_name,
+                        param))
