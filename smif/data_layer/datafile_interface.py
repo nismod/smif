@@ -28,6 +28,7 @@ class DatafileInterface(DataInterface):
         self.base_folder = base_folder
         self.file_dir = {}
         self.file_dir['project'] = os.path.join(base_folder, 'config')
+        self.file_dir['results'] = os.path.join(base_folder, 'results')
 
         config_folders = {
             'sos_model_runs': 'config',
@@ -189,7 +190,8 @@ class DatafileInterface(DataInterface):
             self._write_yaml_file(
                 self.file_dir['sos_models'],
                 sos_model['name'],
-                sos_model)
+                sos_model
+            )
 
     def update_sos_model(self, sos_model_name, sos_model):
         """Update system-of-system model in Yaml file
@@ -242,7 +244,10 @@ class DatafileInterface(DataInterface):
         for sector_model_name in sector_model_names:
             sector_models.append(
                 self._read_yaml_file(
-                    self.file_dir['sector_models'], sector_model_name))
+                    self.file_dir['sector_models'],
+                    sector_model_name
+                )
+            )
 
         return sector_models
 
@@ -945,6 +950,55 @@ class DatafileInterface(DataInterface):
                 definition = narrative
         return definition
 
+    def read_results(self, modelrun_id, model_name, output_name):
+        """Return path to text file for a given output
+
+        Parameters
+        ----------
+        modelrun_id : str
+        model_name : str
+        output_name : str
+        """
+        results_path = self._get_results_path(modelrun_id, model_name, output_name)
+        return self._get_data_from_csv(results_path)
+
+    def write_results(self, modelrun_id, model_name, output_name, data, timestep=None):
+        """Return path to text file for a given output
+
+        Parameters
+        ----------
+        modelrun_id : str
+        model_name : str
+        output_name : str
+        data : numpy.ndarray
+        """
+        results_path = self._get_results_path(modelrun_id, model_name, output_name)
+        if data.ndims == 3:
+            self._write_data_to_csv(results_path, data)
+        elif data.ndims == 2:
+            self._write_data_to_csv(results_path, data, timestep)
+        else:
+            DataMismatchError(
+                "Expected to write either timestep x region x interval or " +
+                "region x interval data"
+            )
+
+    def _get_results_path(self, modelrun_id, model_name, output_name):
+        """Return path to text file for a given output
+
+        Parameters
+        ----------
+        modelrun_id : str
+        model_name : str
+        output_name : str
+        """
+        results_dir = self.file_dir['results']
+        return os.path.join(
+            results_dir,
+            modelrun_id,
+            "{}_{}.csv".format(model_name, output_name)
+        )
+
     def _read_project_config(self):
         """Read the project configuration
 
@@ -965,7 +1019,8 @@ class DatafileInterface(DataInterface):
         """
         self._write_yaml_file(self.file_dir['project'], 'project', data)
 
-    def _read_filenames_in_dir(self, path, extension):
+    @staticmethod
+    def _read_filenames_in_dir(path, extension):
         """Returns the name of the Yaml files in a certain directory
 
         Arguments
@@ -986,7 +1041,8 @@ class DatafileInterface(DataInterface):
                 files.append(os.path.splitext(filename)[0])
         return files
 
-    def _get_data_from_csv(self, filepath):
+    @staticmethod
+    def _get_data_from_csv(filepath):
         scenario_data = []
         with open(filepath, 'r') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -996,7 +1052,33 @@ class DatafileInterface(DataInterface):
                 scenario_data.append(row)
         return scenario_data
 
-    def _read_yaml_file(self, path, filename, extension='.yml'):
+    @staticmethod
+    def _write_data_to_csv(filepath, data, timestep=None):
+        if timestep is None:
+            with open(filepath, 'w') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=(
+                    'timestep',
+                    'region',
+                    'interval',
+                    'value'
+                ))
+                writer.writeheader()
+                for row in data:
+                    writer.writerow(row)
+        else:
+            with open(filepath, 'a') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=(
+                    'timestep',
+                    'region',
+                    'interval',
+                    'value'
+                ))
+                for row in data:
+                    row['timestep'] = timestep
+                    writer.writerow(row)
+
+    @staticmethod
+    def _read_yaml_file(path, filename, extension='.yml'):
         """Read a Data dict from a Yaml file
 
         Arguments
@@ -1018,7 +1100,8 @@ class DatafileInterface(DataInterface):
         data = load(filepath)
         return transform_leaves(data, _str_to_datetime)
 
-    def _write_yaml_file(self, path, filename, data, extension='.yml'):
+    @staticmethod
+    def _write_yaml_file(path, filename, data, extension='.yml'):
         """Write a data dict to a Yaml file
 
         Arguments
