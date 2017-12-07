@@ -143,6 +143,32 @@ class DataInterface(metaclass=ABCMeta):
     def update_narrative(self, narrative):
         raise NotImplementedError()
 
+    def read_parameters(self, modelrun_name, model_name):
+        """Read global and model-specific parameter values for a given modelrun
+        and model.
+        """
+        modelrun_config = self.read_sos_model_run(modelrun_name)
+        params = {}
+        for narratives in modelrun_config['narratives'].values():
+            for narrative in narratives:
+                for data in self.read_narrative_data(narrative):
+                    for model_or_global, narrative_params in data.items():
+                        if model_or_global in ('global', model_name):
+                            params.update(narrative_params)
+        return params
+
+    @abstractmethod
+    def read_results(self, modelrun_name, model_name, output_name, spatial_resolution,
+                     temporal_resolution, timestep=None, modelset_iteration=None,
+                     decision_iteration=None):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_results(self, modelrun_name, model_name, output_name, data, spatial_resolution,
+                      temporal_resolution, timestep=None, modelset_iteration=None,
+                      decision_iteration=None):
+        raise NotImplementedError()
+
 
 class DataNotFoundError(Exception):
     """Raise when some data is not found

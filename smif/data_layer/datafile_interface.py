@@ -955,7 +955,9 @@ class DatafileInterface(DataInterface):
                 definition = narrative
         return definition
 
-    def read_results(self, modelrun_id, model_name, output_name):
+    def read_results(self, modelrun_id, model_name, output_name, spatial_resolution,
+                     temporal_resolution, timestep=None, modelset_iteration=None,
+                     decision_iteration=None):
         """Return path to text file for a given output
 
         Parameters
@@ -963,11 +965,18 @@ class DatafileInterface(DataInterface):
         modelrun_id : str
         model_name : str
         output_name : str
+        spatial_resolution : str
+        temporal_resolution : str
+        timestep : int, optional
+        modelset_iteration : int, optional
+        decision_iteration : int, optional
         """
         results_path = self._get_results_path(modelrun_id, model_name, output_name)
         return self._get_data_from_csv(results_path)
 
-    def write_results(self, modelrun_id, model_name, output_name, data, timestep=None):
+    def write_results(self, modelrun_id, model_name, output_name, data, spatial_resolution,
+                      temporal_resolution, timestep=None, modelset_iteration=None,
+                      decision_iteration=None):
         """Return path to text file for a given output
 
         Parameters
@@ -976,6 +985,11 @@ class DatafileInterface(DataInterface):
         model_name : str
         output_name : str
         data : numpy.ndarray
+        spatial_resolution : str
+        temporal_resolution : str
+        timestep : int, optional
+        modelset_iteration : int, optional
+        decision_iteration : int, optional
         """
         results_path = self._get_results_path(modelrun_id, model_name, output_name)
         if data.ndims == 3:

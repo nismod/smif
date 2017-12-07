@@ -722,6 +722,33 @@ class TestDatafileInterface():
             if narrative['name'] == 'name_change':
                 assert narrative['filename'] == 'population_med.csv'
 
+    def test_read_parameters(self, setup_folder_structure, get_handler, get_sos_model_run,
+                             narrative_data):
+        """ Test to read a modelrun's parameters
+        """
+        sos_model_run = get_sos_model_run
+        get_handler.write_sos_model_run(sos_model_run)
+        central_narrative_path = os.path.join(
+            str(setup_folder_structure),
+            'data',
+            'narratives',
+            'central_planning.yml'
+        )
+        dump(narrative_data, central_narrative_path)
+        high_tech_narrative_path = os.path.join(
+            str(setup_folder_structure),
+            'data',
+            'narratives',
+            'energy_demand_high_tech.yml'
+        )
+        dump(narrative_data, high_tech_narrative_path)
+
+        expected = {
+            'smart_meter_savings': 8
+        }
+        actual = get_handler.read_parameters('unique_model_run_name', 'energy_demand')
+        assert actual == expected
+
 
 def test_transform_leaves_empty():
     tree = []
