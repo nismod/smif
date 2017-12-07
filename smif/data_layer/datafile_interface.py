@@ -370,11 +370,16 @@ class DatafileInterface(DataInterface):
             A list of data from the specified file in a fiona formatted dict
         """
         # Find filename for this region_definition_name
-        filename = ''
-        for region_definition in self.read_region_definitions():
-            if region_definition['name'] == region_definition_name:
-                filename = region_definition['filename']
-                break
+        region_definitions = self.read_region_definitions()
+        try:
+            filename = next(
+                rdef['filename']
+                for rdef in region_definitions
+                if rdef['name'] == region_definition_name
+            )
+        except StopIteration:
+            raise KeyError(
+                "Region definition '{}' not found".format(region_definition_name))
 
         # Read the region data from file
         filepath = os.path.join(self.file_dir['region_definitions'], filename)

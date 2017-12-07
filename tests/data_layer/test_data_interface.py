@@ -370,14 +370,14 @@ class TestDatafileInterface():
             config_handler.delete_sector_model('missing_name')
         assert "sector_model 'missing_name' not found" in str(ex)
 
-    def test_region_definition_data(self, setup_folder_structure, setup_region_data,
+    def test_region_definition_data(self, setup_folder_structure, oxford_region,
                                     get_handler):
         """ Test to dump a region_definition_set (GeoJSON) data-file and then read the data
         using the datafile interface. Finally check if the data shows up in the
         returned dictionary.
         """
         basefolder = setup_folder_structure
-        region_definition_data = setup_region_data
+        region_definition_data = oxford_region
 
         with open(os.path.join(str(basefolder), 'data', 'region_definitions',
                                'test_region.json'), 'w+') as region_definition_file:
@@ -388,6 +388,13 @@ class TestDatafileInterface():
             'lad')
 
         assert test_region_definition[0]['properties']['name'] == 'oxford'
+
+    def test_missing_region_definition_data(self, setup_folder_structure, get_handler):
+        """Should raise error if region definition not found
+        """
+        with raises(KeyError) as ex:
+            get_handler.read_region_definition_data('missing')
+        assert "Region definition 'missing' not found" in str(ex)
 
     def test_scenario_data(self, setup_folder_structure, get_handler,
                            get_scenario_data):

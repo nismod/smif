@@ -70,7 +70,7 @@ def get_sos_model_object(get_sector_model_object,
 
 
 @fixture(scope='function')
-def get_sos_model_with_summed_dependency(setup_region_data):
+def get_sos_model_with_summed_dependency(oxford_region):
     scenario_model = get_scenario_model_object
 
     builder = SosModelBuilder()

@@ -84,9 +84,7 @@ class TestScenarioObject:
 
 class TestScenarioModelData:
 
-    def test_nest_scenario_data(self,
-                                setup_country_data,
-                                get_scenario_model_object):
+    def test_nest_scenario_data(self, gb_ni_regions):
         data = {'length': [
             {
                 'year': 2015,
@@ -167,23 +165,27 @@ class TestScenarioModelData:
         hack.intervals.register(
             IntervalSet('seasonal', interval_data))
         hack.regions.register(
-            RegionSet('country', setup_country_data['features']))
+            RegionSet('country', gb_ni_regions['features']))
 
-        config = {'name': 'mass',
-                  'scenario_set': '',
-                  'parameters': [{
-                      'spatial_resolution': 'country',
-                      'temporal_resolution': 'seasonal',
-                      'units': 'kg',
-                      'name': 'length'
-                      }]}
+        config = {
+            'name': 'mass',
+            'scenario_set': '',
+            'parameters': [
+                {
+                    'spatial_resolution': 'country',
+                    'temporal_resolution': 'seasonal',
+                    'units': 'kg',
+                    'name': 'length'
+                }
+            ]
+        }
         builder.construct(config, data, [2015, 2016])
         scenario = builder.finish()
 
         actual = scenario.get_data('length')
         assert np.allclose(actual, expected)
 
-    def test_scenario_data_defaults(self, setup_region_data):
+    def test_scenario_data_defaults(self, oxford_region):
         data = {'length': [
             {
                 'year': 2015,
@@ -209,8 +211,7 @@ class TestScenarioModelData:
         scenario = builder.finish()
         assert scenario.get_data('length') == expected
 
-    def test_scenario_data_missing_year(self, setup_region_data,
-                                        ):
+    def test_scenario_data_missing_year(self, oxford_region):
         data = {'length': [
             {
                 'value': 3.14
@@ -233,8 +234,7 @@ class TestScenarioModelData:
             }, data, [2015])
         assert msg in str(ex.value)
 
-    def test_scenario_data_missing_param_region(self, setup_region_data,
-                                                ):
+    def test_scenario_data_missing_param_region(self, oxford_region):
         data = {'length': [
             {
                 'value': 3.14,
@@ -260,8 +260,7 @@ class TestScenarioModelData:
             }, data, [2015])
         assert msg in str(ex)
 
-    def test_scenario_data_missing_param_interval(self, setup_region_data,
-                                                  ):
+    def test_scenario_data_missing_param_interval(self, oxford_region):
         data = {'length': [
             {
                 'value': 3.14,

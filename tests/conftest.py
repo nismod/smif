@@ -8,13 +8,11 @@
 """
 from __future__ import absolute_import, division, print_function
 
-import json
 import logging
 import os
 from copy import copy
 from datetime import datetime
 
-import yaml
 from dateutil.tz import tzutc
 from pytest import fixture
 from smif.convert.area import get_register as get_region_register
@@ -69,55 +67,35 @@ def setup_folder_structure(tmpdir_factory):
 
 
 @fixture(scope='function')
-def setup_project_folder(setup_runpy_file,
-                         setup_folder_structure,
-                         setup_config_file,
-                         setup_timesteps_file,
-                         setup_water_inputs,
-                         setup_water_outputs,
-                         setup_time_intervals,
-                         setup_regions,
-                         setup_initial_conditions_file,
-                         setup_pre_specified_planning,
-                         setup_water_interventions_abc,
-                         setup_interventions_file_one,
-                         setup_parameters):
-    """Sets up a temporary folder with the required project folder structure
-
-        /config
-        /config/model.yaml
-        /config/timesteps.yaml
-        /data
-        /data/regions.geojson
-        /data/intervals.yaml
-        /data/water_supply/
-        /data/water_supply/inputs.yaml
-        /data/water_supply/outputs.yaml
-        /data/water_supply/interventions/
-        /data/water_supply/interventions/water_asset_abc.yaml
-        /data/water_supply/interventions/assets_new.yaml
-        /data/water_supply/pre-specified.yaml
-        /data/water_supply/parameters.yaml
-        /models
-        /models/water_supply/water_supply.py
-
+def setup_runpy_file(setup_folder_structure):
+    """The python script should contain an instance of SectorModel which wraps
+    the sector model and allows it to be run.
     """
     base_folder = setup_folder_structure
+    # Write a file for the water_supply model
+    filename = base_folder.join('models', 'water_supply', '__init__.py')
+    contents = """
+from smif.model.sector_model import SectorModel
 
-    return base_folder
+class WaterSupplySectorModel(SectorModel):
+    def initialise(self, initial_conditions):
+        pass
+
+    def simulate(self, timestep, data=None):
+        return {self.name: data}
+
+    def extract_obj(self, results):
+        return 0
+
+"""
+    filename.write(contents, ensure=True)
 
 
 @fixture(scope='function')
-def setup_initial_conditions_file(setup_folder_structure):
-    """Assets are associated with sector models, not the integration config
-
+def initial_system():
+    """Initial system (interventions with build_date)
     """
-    base_folder = setup_folder_structure
-    filename = base_folder.join('data',
-                                'water_supply',
-                                'initial_conditions',
-                                'assets_1.yaml')
-    assets_contents = [
+    return [
         {
             'name': 'water_asset_a',
             'capacity': {
@@ -182,23 +160,13 @@ def setup_initial_conditions_file(setup_folder_structure):
             'build_date': 2017
         }
     ]
-    contents = yaml.dump(assets_contents)
-    filename.write(contents, ensure=True)
 
 
 @fixture(scope='function')
-def setup_interventions_file_one(setup_folder_structure):
-    """Interventions are associated with sector models,
-    not the integration config
-
-    Defines an interventions file
+def initial_system_bis():
+    """An extra intervention for the initial system
     """
-    base_folder = setup_folder_structure
-    filename = base_folder.join('data',
-                                'water_supply',
-                                'interventions',
-                                'assets_1.yaml')
-    assets_contents = [
+    return [
         {
             'name': 'water_asset_d',
             'capacity': {
@@ -220,83 +188,27 @@ def setup_interventions_file_one(setup_folder_structure):
             'location': 'oxford'
         }
     ]
-    contents = yaml.dump(assets_contents)
-    filename.write(contents, ensure=True)
 
 
 @fixture
-def setup_parameters(setup_folder_structure):
-    base_folder = setup_folder_structure
-    filename = base_folder.join('data',
-                                'water_supply',
-                                'parameters.yaml')
-    parameter_contents = [
-        {'name': 'smart_meter_savings',
-         'description': 'The savings from smart meters',
-         'absolute_range': (0, 100),
-         'suggested_range': (3, 10),
-         'default_value': 3,
-         'units': '%'}
-         ]
-    contents = yaml.dump(parameter_contents)
-    filename.write(contents, ensure=True)
+def parameters():
+    return [
+        {
+            'name': 'smart_meter_savings',
+            'description': 'The savings from smart meters',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'
+        }
+    ]
 
 
 @fixture(scope='function')
-def setup_config_file(setup_folder_structure):
-    """Configuration file contains entries for sector models, timesteps and
-    planning
+def planned_interventions():
+    """Return pre-specified planning intervention data
     """
-    file_contents = {
-        'sector_models': [
-            {
-                "name": "water_supply",
-                "path": "../models/water_supply/__init__.py",
-                "classname": "WaterSupplySectorModel",
-                "config_dir": "../data/water_supply",
-                'initial_conditions': [
-                    '../data/water_supply/initial_conditions/assets_1.yaml'
-                ],
-                'interventions': [
-                    '../data/water_supply/interventions/water_asset_abc.yaml'
-                ],
-                'parameters': [
-                    '../data/water_supply/parameters.yaml'
-                ]
-            }
-        ],
-        'dependencies': [],
-        'timesteps': 'timesteps.yaml',
-        'scenario_data': [],
-        "region_sets": [{'name': 'national',
-                         'file': 'regions.geojson'}],
-        "interval_sets": [{'name': 'annual',
-                           'file': 'intervals.yaml'}],
-        'planning': {
-            'rule_based': {'use': False},
-            'optimisation': {'use': False},
-            'pre_specified': {
-                'use': True,
-                'files': ['../data/water_supply/pre-specified.yaml']
-            }
-        },
-        'convergence_max_iterations': 1000,
-        'convergence_relative_tolerance': 0.0001,
-        'convergence_absolute_tolerance': 0.1,
-    }
-
-    contents = yaml.dump(file_contents)
-    filepath = setup_folder_structure.join('config', 'model.yaml')
-    filepath.write(contents)
-
-
-@fixture(scope='function')
-def setup_pre_specified_planning(setup_folder_structure):
-    """Sets up a configuration file for pre-specified planning
-
-    """
-    file_name = 'pre-specified.yaml'
-    file_contents = [
+    return [
         {
             'name': 'water_asset_a',
             'build_date': 2010,
@@ -352,98 +264,23 @@ def setup_pre_specified_planning(setup_folder_structure):
             ]
         }
     ]
-    contents = yaml.dump(file_contents)
-    filepath = setup_folder_structure.join('data',
-                                           'water_supply',
-                                           file_name)
-    filepath.write(contents, ensure=True)
 
 
 @fixture(scope='function')
-def setup_config_file_two(setup_folder_structure, setup_interventions_file_one):
-    """Configuration file contains entries for sector models, timesteps and
-    planning
-
-    Contains two asset files
-    """
-    file_contents = {
-        'sector_models': [
-            {
-                "name": "water_supply",
-                "path": "../models/water_supply/__init__.py",
-                "classname": "WaterSupplySectorModel",
-                "config_dir": "../data/water_supply",
-                'initial_conditions': [
-                    '../data/water_supply/initial_conditions/initial_2015_oxford.yaml'
-                ],
-                'interventions': [
-                    '../data/water_supply/interventions/assets_1.yaml',
-                    '../data/water_supply/interventions/assets_2.yaml'
-                ],
-                'parameters': [
-                    '../data/water_supply/parameters.yaml'
-                ]
-            }
-        ],
-        'scenario_data': [],
-        'timesteps': 'timesteps.yaml',
-        'planning': {
-            'rule_based': {'use': False},
-            'optimisation': {'use': False},
-            'pre_specified': {
-                'use': True,
-                'files': ['../data/water_supply/pre-specified.yaml']
-            }
+def water_inputs():
+    return [
+        {
+            'name': 'reservoir pumpiness',
+            'spatial_resolution': 'LSOA',
+            'temporal_resolution': 'annual',
+            'units': 'magnitude'
         }
-    }
-
-    contents = yaml.dump(file_contents)
-    filepath = setup_folder_structure.join('config', 'model.yaml')
-    filepath.write(contents)
+    ]
 
 
 @fixture(scope='function')
-def setup_runpy_file(tmpdir, setup_folder_structure):
-    """The python script should contain an instance of SectorModel which wraps
-    the sector model and allows it to be run.
-    """
-    base_folder = setup_folder_structure
-    # Write a file for the water_supply model
-    filename = base_folder.join('models', 'water_supply', '__init__.py')
-    contents = """
-from smif.model.sector_model import SectorModel
-
-class WaterSupplySectorModel(SectorModel):
-    def initialise(self, initial_conditions):
-        pass
-
-    def simulate(self, timestep, data=None):
-        return {self.name: data}
-
-    def extract_obj(self, results):
-        return 0
-
-"""
-    filename.write(contents, ensure=True)
-
-
-@fixture(scope='function')
-def setup_water_inputs(setup_folder_structure):
-    base_folder = setup_folder_structure
-    filename = base_folder.join('data', 'water_supply', 'inputs.yaml')
-    contents = [{
-        'name': 'reservoir pumpiness',
-        'spatial_resolution': 'LSOA',
-        'temporal_resolution': 'annual',
-        'units': 'magnitude'
-    }]
-    yaml_contents = yaml.dump(contents)
-    filename.write(yaml_contents, ensure=True)
-
-
-@fixture(scope='function')
-def water_outputs_contents():
-    contents = [
+def water_outputs():
+    return [
         {
             'name': 'storage_state',
             'spatial_resolution': 'national',
@@ -463,38 +300,21 @@ def water_outputs_contents():
             'units': 'Ml'
         }
     ]
-    return contents
-
-
-@fixture(scope='function')
-def setup_water_outputs(setup_folder_structure,
-                        water_outputs_contents):
-    base_folder = setup_folder_structure
-    filename = base_folder.join('data', 'water_supply', 'outputs.yaml')
-    contents = water_outputs_contents
-    yaml_contents = yaml.dump(contents)
-    filename.write(yaml_contents, ensure=True)
-    return filename
-
-
-@fixture(scope='function')
-def setup_time_intervals(setup_folder_structure):
-    base_folder = setup_folder_structure
-    filename = base_folder.join('config', 'intervals.yaml')
-    contents = [
-        {
-            "start": "P0Y",
-            "end": "P1Y",
-            "id": "whole_year"
-        }
-    ]
-    yaml_contents = yaml.dump(contents)
-    filename.write(yaml_contents, ensure=True)
-    return filename
 
 
 @fixture(scope='session')
-def setup_region_data():
+def annual_intervals():
+    return [
+        {
+            "start": "P0Y",
+            "end": "P1Y",
+            "id": 1
+        }
+    ]
+
+
+@fixture(scope='session')
+def oxford_region():
     data = {
         "type": "FeatureCollection",
         "crs": {
@@ -555,7 +375,7 @@ def setup_region_data():
 
 
 @fixture(scope='function')
-def setup_country_data():
+def gb_ni_regions():
     data = {
         "type": "FeatureCollection",
         "crs": {
@@ -603,26 +423,8 @@ def setup_country_data():
 
 
 @fixture(scope='function')
-def setup_regions(setup_folder_structure, setup_region_data):
-    base_folder = setup_folder_structure
-    filename = base_folder.join('config', 'regions.geojson')
-    data = setup_region_data
-    filename.write(json.dumps(data), ensure=True)
-    return filename
-
-
-@fixture(scope='function')
-def setup_timesteps_file(setup_folder_structure):
-    base_folder = setup_folder_structure
-    filename = base_folder.join('config', 'timesteps.yaml')
-    timesteps_contents = [2010, 2011, 2012]
-    contents = yaml.dump(timesteps_contents)
-    filename.write(contents, ensure=True)
-
-
-@fixture(scope='function')
-def setup_water_interventions_abc(setup_folder_structure):
-    data = [
+def water_interventions_abc():
+    return [
         {
             "name": "water_asset_a",
             "location": "oxford",
@@ -671,26 +473,16 @@ def setup_water_interventions_abc(setup_folder_structure):
                 "value": 25
             }
         }
-
     ]
-    content = yaml.dump(data)
-
-    filename = setup_folder_structure.join('data',
-                                           'water_supply',
-                                           'interventions',
-                                           'water_asset_abc.yaml')
-    filename.write(content, ensure=True)
-
-    return filename
 
 
 @fixture(scope="session", autouse=True)
-def setup_registers(setup_region_data):
+def setup_registers(oxford_region, annual_intervals):
     """One-time setup: load all the fixture region and interval
     sets into the module-level registers.
     """
     regions = get_region_register()
-    lsoa = RegionSet('LSOA', setup_region_data['features'])
+    lsoa = RegionSet('LSOA', oxford_region['features'])
     regions.register(lsoa)
     regions.register(regions_half_squares())
     regions.register(regions_single_half_square())
@@ -703,8 +495,7 @@ def setup_registers(setup_region_data):
     regions.register(regions_rect_alt)
 
     intervals = get_interval_register()
-    annual_data = [{'id': 1, 'start': 'P0Y', 'end': 'P1Y'}]
-    intervals.register(IntervalSet('annual', annual_data))
+    intervals.register(IntervalSet('annual', annual_intervals))
     intervals.register(IntervalSet('months', months()))
     intervals.register(IntervalSet('seasons', seasons()))
     intervals.register(IntervalSet('hourly_day', twenty_four_hours()))
@@ -713,7 +504,7 @@ def setup_registers(setup_region_data):
 
 
 @fixture(scope='function')
-def get_project_config():
+def project_config():
     """Return sample project configuration
     """
     return {
@@ -816,21 +607,17 @@ def get_sos_model_run():
         ],
         'sos_model': 'energy',
         'decision_module': 'energy_moea.py',
-        'scenarios': [
-            {
-                'population': 'High Population (ONS)'
-            }
-        ],
-        'narratives': [
-            {
-                'technology': [
-                    'Energy Demand - High Tech'
-                ]
-            },
-            {
-                'governance': 'Central Planning'
-            }
-        ]
+        'scenarios': {
+            'population': 'High Population (ONS)'
+        },
+        'narratives': {
+            'technology': [
+                'Energy Demand - High Tech'
+            ],
+            'governance': [
+                'Central Planning'
+            ]
+        }
     }
 
 
@@ -968,33 +755,27 @@ def get_scenario_data():
 
 
 @fixture(scope='function')
-def get_narrative_data():
+def narrative_data():
     """Return sample narrative_data
     """
     return [
         {
-            'energy_demand': [
-                {
-                    'name': 'smart_meter_savings',
-                    'value': 8
-                }
-            ],
-            'water_supply': [
-                {
-                    'name': 'clever_water_meter_savings',
-                    'value': 8
-                }
-            ]
+            'energy_demand': {
+                'smart_meter_savings': 8
+            },
+            'water_supply': {
+                'clever_water_meter_savings': 8
+            }
         }
     ]
 
 
 @fixture(scope='function')
-def get_handler(setup_folder_structure, get_project_config):
+def get_handler(setup_folder_structure, project_config):
     basefolder = setup_folder_structure
     project_config_path = os.path.join(
         str(basefolder), 'config', 'project.yml')
-    dump(get_project_config, project_config_path)
+    dump(project_config, project_config_path)
     return DatafileInterface(str(basefolder))
 
 

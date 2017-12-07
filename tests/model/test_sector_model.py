@@ -13,54 +13,60 @@ from smif.parameters import ParameterList
 
 
 @fixture(scope='function')
-def get_sector_model_config(setup_project_folder, setup_registers):
+def get_sector_model_config(setup_folder_structure, setup_runpy_file, setup_registers):
 
-    path = setup_project_folder
+    path = setup_folder_structure
     water_supply_wrapper_path = str(
         path.join(
             'models', 'water_supply', '__init__.py'
         )
     )
 
-    config = {"name": "water_supply",
-              "description": 'a description',
-              "path": water_supply_wrapper_path,
-              "classname": "WaterSupplySectorModel",
-              "inputs": [{'name': 'raininess',
-                          'spatial_resolution': 'LSOA',
-                          'temporal_resolution': 'annual',
-                          'units': 'milliliter'
-                          }
-                         ],
-              "outputs": [
-                  {
-                      'name': 'cost',
-                      'spatial_resolution': 'LSOA',
-                      'temporal_resolution': 'annual',
-                      'units': 'million GBP'
-                  },
-                  {
-                      'name': 'water',
-                      'spatial_resolution': 'LSOA',
-                      'temporal_resolution': 'annual',
-                      'units': 'megaliter'
-                  }
-              ],
-              "initial_conditions": [],
-              "interventions": [
-                  {"name": "water_asset_a", "location": "oxford"},
-                  {"name": "water_asset_b", "location": "oxford"},
-                  {"name": "water_asset_c", "location": "oxford"},
-              ],
-              "parameters": [{
-                  'name': 'assump_diff_floorarea_pp',
-                  'description': 'Difference in floor area per person \
-                                 in end year compared to base year',
-                  'absolute_range': (0.5, 2),
-                  'suggested_range': (0.5, 2),
-                  'default_value': 1,
-                  'units': '%'}]
-              }
+    config = {
+        "name": "water_supply",
+        "description": 'a description',
+        "path": water_supply_wrapper_path,
+        "classname": "WaterSupplySectorModel",
+        "inputs": [
+            {
+                'name': 'raininess',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'units': 'milliliter'
+            }
+        ],
+        "outputs": [
+            {
+                'name': 'cost',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'units': 'million GBP'
+            },
+            {
+                'name': 'water',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'units': 'megaliter'
+            }
+        ],
+        "initial_conditions": [],
+        "interventions": [
+            {"name": "water_asset_a", "location": "oxford"},
+            {"name": "water_asset_b", "location": "oxford"},
+            {"name": "water_asset_c", "location": "oxford"},
+        ],
+        "parameters": [
+            {
+                'name': 'assump_diff_floorarea_pp',
+                'description': 'Difference in floor area per person \
+                                in end year compared to base year',
+                'absolute_range': (0.5, 2),
+                'suggested_range': (0.5, 2),
+                'default_value': 1,
+                'units': '%'
+            }
+        ]
+    }
 
     return config
 
@@ -127,10 +133,10 @@ class TestCompositeSectorModel():
 
 class TestSectorModelBuilder():
 
-    def test_add_inputs(self, setup_project_folder):
+    def test_add_inputs(self, setup_folder_structure, setup_runpy_file):
 
-        model_path = str(setup_project_folder.join('models', 'water_supply',
-                                                   '__init__.py'))
+        model_path = str(setup_folder_structure.join('models', 'water_supply',
+                                                     '__init__.py'))
 
         builder = SectorModelBuilder('test')
         builder.load_model(model_path, 'WaterSupplySectorModel')
@@ -144,9 +150,9 @@ class TestSectorModelBuilder():
 
         assert 'an_input' in builder._sector_model.inputs.names
 
-    def test_sector_model_builder(self, setup_project_folder):
-        model_path = str(setup_project_folder.join('models', 'water_supply',
-                                                   '__init__.py'))
+    def test_sector_model_builder(self, setup_folder_structure, setup_runpy_file):
+        model_path = str(setup_folder_structure.join('models', 'water_supply',
+                                                     '__init__.py'))
 
         register = Mock()
         register.get_entry = Mock(return_value='a_resolution_set')
@@ -205,8 +211,8 @@ class TestSectorModelBuilder():
 
 class TestInputs:
 
-    def test_add_no_inputs(self, setup_project_folder):
-        model_path = str(setup_project_folder.join('models', 'water_supply', '__init__.py'))
+    def test_add_no_inputs(self, setup_folder_structure, setup_runpy_file):
+        model_path = str(setup_folder_structure.join('models', 'water_supply', '__init__.py'))
         registers = {'regions': Mock(),
                      'intervals': Mock()}
 

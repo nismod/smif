@@ -131,7 +131,7 @@ def test_verbose_debug_alt():
     assert 'DEBUG' in str(output.stderr)
 
 
-def test_verbose_info(setup_folder_structure, setup_project_folder):
+def test_verbose_info(setup_folder_structure):
     """Expect info message from `smif -v validate <config_file>`
     """
     config_file = os.path.join(str(setup_folder_structure))
