@@ -121,7 +121,7 @@ class Model(metaclass=ABCMeta):
         smif.metadata.MetadataSet
         """
         all_input_names = set(self._model_inputs.names)
-        dep_input_names = set(dep['sink'] for dep in self.deps.values())
+        dep_input_names = set(dep.sink.name for dep in self.deps.values())
         free_input_names = all_input_names - dep_input_names
 
         return MetadataSet(self._model_inputs[name] for name in free_input_names)
