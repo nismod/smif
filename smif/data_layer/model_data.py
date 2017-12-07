@@ -39,8 +39,8 @@ class DataHandle(object):
         self._decision_iteration = decision_iteration
 
         self._model_name = model.name
-        self._inputs = model.model_inputs
-        self._outputs = model.model_outputs
+        self._inputs = model.inputs
+        self._outputs = model.outputs
         self._dependencies = model.deps
 
         configured_parameters = self._store.read_parameters(

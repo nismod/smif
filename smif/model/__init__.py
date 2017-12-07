@@ -76,8 +76,8 @@ class Model(metaclass=ABCMeta):
     def __init__(self, name):
         self.name = name
         self.description = ''
-        self._model_inputs = MetadataSet([])
-        self._model_outputs = MetadataSet([])
+        self._inputs = MetadataSet([])
+        self._outputs = MetadataSet([])
         self.deps = {}
 
         self._parameters = ParameterList()
@@ -89,17 +89,17 @@ class Model(metaclass=ABCMeta):
         self.logger = getLogger(__name__)
 
     @property
-    def model_inputs(self):
+    def inputs(self):
         """All model inputs defined at this layer
 
         Returns
         -------
         smif.metadata.MetadataSet
         """
-        return self._model_inputs
+        return self._inputs
 
     @property
-    def model_outputs(self):
+    def outputs(self):
         """All model outputs defined at this layer
 
         Returns
@@ -107,7 +107,7 @@ class Model(metaclass=ABCMeta):
         smif.metadata.MetadataSet
 
         """
-        return self._model_outputs
+        return self._outputs
 
     @property
     def free_inputs(self):
@@ -120,11 +120,11 @@ class Model(metaclass=ABCMeta):
         -------
         smif.metadata.MetadataSet
         """
-        all_input_names = set(self._model_inputs.names)
+        all_input_names = set(self.inputs.names)
         dep_input_names = set(dep.sink.name for dep in self.deps.values())
         free_input_names = all_input_names - dep_input_names
 
-        return MetadataSet(self._model_inputs[name] for name in free_input_names)
+        return MetadataSet(self.inputs[name] for name in free_input_names)
 
     @abstractmethod
     def simulate(self, timestep, data=None):
@@ -158,13 +158,13 @@ class Model(metaclass=ABCMeta):
             The name of a model_input defined in this object
 
         """
-        if source_name not in source_model.model_outputs.names:
+        if source_name not in source_model.outputs.names:
             msg = "Output '{}' is not defined in '{}' model"
             raise ValueError(msg.format(source_name, source_model.name))
 
         if sink_name in self.free_inputs.names:
-            source = source_model.model_outputs[source_name]
-            sink = self.model_inputs[sink_name]
+            source = source_model.outputs[source_name]
+            sink = self.inputs[sink_name]
             self.deps[sink_name] = Dependency(
                 source_model,
                 source,
@@ -175,12 +175,12 @@ class Model(metaclass=ABCMeta):
             self.logger.debug(msg, source_model.name, source_name, self.name, sink_name)
 
         else:
-            if sink_name in self.model_inputs.names:
+            if sink_name in self.inputs.names:
                 raise NotImplementedError("Multiple source dependencies"
                                           " not yet implemented")
 
             msg = "Inputs: '%s'. Free inputs: '%s'."
-            self.logger.debug(msg, self.model_inputs.names, self.free_inputs.names)
+            self.logger.debug(msg, self.inputs.names, self.free_inputs.names)
             msg = "Input '{}' is not defined in '{}' model"
             raise ValueError(msg.format(sink_name, self.name))
 

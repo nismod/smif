@@ -64,7 +64,7 @@ class ModelSet(CompositeModel):
             for sink, dep in model.deps.items():
                 if dep.source_model not in self.models:
                     self.deps[sink] = dep
-                    self.model_inputs.add_metadata(model.model_inputs[sink])
+                    self.inputs.add_metadata(model.inputs[sink])
 
     def simulate(self, timestep, data=None):
         """Runs a set of one or more models
@@ -117,7 +117,7 @@ class ModelSet(CompositeModel):
             self.logger.info("Simulating %s", model.name)
             model_data = {}
             for input_name, dep in model.deps.items():
-                if input_name in self.model_inputs:
+                if input_name in self.inputs:
                     # if external dependency
                     dep_data = data[dep.source.name]
                 else:
@@ -165,7 +165,7 @@ class ModelSet(CompositeModel):
         else:
             # generate zero-values for each parameter/region/interval combination
             results = {}
-            for output in model.model_outputs.metadata:
+            for output in model.outputs.metadata:
                 regions = output.get_region_names()
                 intervals = output.get_interval_names()
                 results[output.name] = np.zeros((len(regions), len(intervals)))
@@ -234,5 +234,5 @@ class ModelSet(CompositeModel):
                 rtol=self.relative_tolerance,
                 atol=self.absolute_tolerance
             )
-            for param in model.model_outputs.metadata
+            for param in model.outputs.metadata
         )

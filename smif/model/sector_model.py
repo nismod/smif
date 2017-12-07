@@ -86,8 +86,8 @@ class SectorModel(Model, metaclass=ABCMeta):
             'description': self.description,
             'path': self.path,
             'classname': self.__class__.__name__,
-            'inputs': [inp.as_dict() for inp in self.model_inputs.values()],
-            'outputs': [out.as_dict() for out in self.model_outputs.values()],
+            'inputs': [inp.as_dict() for inp in self.inputs.values()],
+            'outputs': [out.as_dict() for out in self.outputs.values()],
             'parameters': self.parameters.as_list(),
             'interventions': self.interventions,
             'initial_conditions': self._initial_state
@@ -129,7 +129,7 @@ class SectorModel(Model, metaclass=ABCMeta):
                           "temporal_resolution": temporal_resolution,
                           "units": units}
 
-        self._model_inputs.add_metadata(input_metadata)
+        self.inputs.add_metadata(input_metadata)
 
     def add_output(self, name, spatial_resolution, temporal_resolution, units):
         """Add an output to the sector model
@@ -147,7 +147,7 @@ class SectorModel(Model, metaclass=ABCMeta):
                            "temporal_resolution": temporal_resolution,
                            "units": units}
 
-        self._model_outputs.add_metadata(output_metadata)
+        self.outputs.add_metadata(output_metadata)
 
     def validate(self):
         """Validate that this SectorModel has been set up with sufficient data

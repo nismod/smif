@@ -38,7 +38,7 @@ class ScenarioModel(Model):
             'scenario_set': self.scenario_set
         }
 
-        parameters = [output.as_dict() for output in self.model_outputs.values()]
+        parameters = [output.as_dict() for output in self.outputs.values()]
         config['parameters'] = parameters
 
         return config
@@ -72,7 +72,7 @@ class ScenarioModel(Model):
             "temporal_resolution": temporal_resolution,
             "units": units
         }
-        self._model_outputs.add_metadata(output_metadata)
+        self.outputs.add_metadata(output_metadata)
 
     def add_data(self, output, data, timesteps):
         """Add data to the scenario
@@ -98,7 +98,7 @@ class ScenarioModel(Model):
         self._data[output] = data
 
     def _check_output(self, output):
-        if output not in self.model_outputs.names:
+        if output not in self.outputs.names:
             raise KeyError("'{}' not in scenario outputs".format(output))
 
     def simulate(self, timestep, data=None):
@@ -108,7 +108,7 @@ class ScenarioModel(Model):
 
         all_data = {
             output_name: self._data[output_name][time_index]
-            for output_name in self.model_outputs
+            for output_name in self.outputs
         }
 
         return {

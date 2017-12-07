@@ -262,7 +262,7 @@ def get_model_run_definition(args):
         sector_model_object = sector_model_builder.finish()
 
         sector_model_objects.append(sector_model_object)
-        LOGGER.debug("Model inputs: %s", sector_model_object.model_inputs.names)
+        LOGGER.debug("Model inputs: %s", sector_model_object.inputs.names)
 
     LOGGER.debug("Sector models: %s", sector_model_objects)
     sos_model_config['sector_models'] = sector_model_objects

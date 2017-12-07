@@ -150,9 +150,9 @@ class TestSosModelProperties():
         expected = {'raininess': 'water_supply'}
 
         for key, value in expected.items():
-            model_inputs = sos_model.models[value].model_inputs
-            assert isinstance(model_inputs, MetadataSet)
-            assert key in model_inputs.names
+            inputs = sos_model.models[value].inputs
+            assert isinstance(inputs, MetadataSet)
+            assert key in inputs.names
 
     def test_model_outputs_property(self, get_sos_model_object):
         sos_model = get_sos_model_object
@@ -160,9 +160,9 @@ class TestSosModelProperties():
         expected = {'cost': 'water_supply'}
 
         for key, value in expected.items():
-            model_outputs = sos_model.models[value].model_outputs
-            assert isinstance(model_outputs, MetadataSet)
-            assert key in model_outputs.names
+            outputs = sos_model.models[value].outputs
+            assert isinstance(outputs, MetadataSet)
+            assert key in outputs.names
 
 
 class TestSosModel():
@@ -593,8 +593,8 @@ class TestSosModelBuilder():
         assert 'raininess' in deps.keys()
         expected = Dependency(
             scenario,
-            scenario.model_outputs['raininess'],
-            model.model_inputs['raininess']
+            scenario.outputs['raininess'],
+            model.inputs['raininess']
         )
         assert deps['raininess'] == expected
 
@@ -606,7 +606,7 @@ class TestSosModelBuilder():
         sos_model = get_sos_model_object
         scenario = sos_model.models['test_scenario_model']
 
-        scenario.model_outputs['raininess'].units = 'incompatible'
+        scenario.outputs['raininess'].units = 'incompatible'
 
         with raises(NotImplementedError) as ex:
             sos_model.simulate(2010)

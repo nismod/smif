@@ -84,7 +84,7 @@ class TestCompositeSectorModel():
         model = EmptySectorModel('test_model')
         model.add_input('input_name', [], [], 'units')
 
-        inputs = model.model_inputs
+        inputs = model.inputs
 
         assert inputs.names == ['input_name']
         assert inputs.units == ['units']
@@ -96,7 +96,7 @@ class TestCompositeSectorModel():
         model = EmptySectorModel('test_model')
         model.add_output('output_name', Mock(), Mock(), 'units')
 
-        outputs = model.model_outputs
+        outputs = model.outputs
 
         assert outputs.names == ['output_name']
         assert outputs.units == ['units']
@@ -142,7 +142,7 @@ class TestSectorModelBuilder():
 
         builder.add_inputs(inputs)
 
-        assert 'an_input' in builder._sector_model.model_inputs.names
+        assert 'an_input' in builder._sector_model.inputs.names
 
     def test_sector_model_builder(self, setup_project_folder):
         model_path = str(setup_project_folder.join('models', 'water_supply',
@@ -214,8 +214,8 @@ class TestInputs:
         builder.load_model(model_path, 'WaterSupplySectorModel')
         builder.add_inputs(None)
         sector_model = builder.finish()
-        assert isinstance(sector_model.model_inputs, MetadataSet)
-        actual_inputs = sector_model.model_inputs.names
+        assert isinstance(sector_model.inputs, MetadataSet)
+        actual_inputs = sector_model.inputs.names
         assert actual_inputs == []
 
 

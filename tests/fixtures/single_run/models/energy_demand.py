@@ -13,9 +13,9 @@ class EDMWrapper(SectorModel):
     def simulate(self, timestep, data):
         # receive population, energy_demand at annual/national
         self.logger.info("EDMWrapper received inputs in %s", timestep)
-        for name in self.model_inputs.names:
-            time_intervals = self.model_inputs[name].get_interval_names()
-            regions = self.model_inputs[name].get_region_names()
+        for name in self.inputs.names:
+            time_intervals = self.inputs[name].get_interval_names()
+            regions = self.inputs[name].get_region_names()
             dataset = data[name]
             for i, region in enumerate(regions):
                 for j, interval in enumerate(time_intervals):
@@ -32,9 +32,9 @@ class EDMWrapper(SectorModel):
         }
 
         self.logger.info("EDMWrapper produced outputs in %s", timestep)
-        for name in self.model_outputs.names:
-            time_intervals = self.model_outputs[name].get_interval_names()
-            regions = self.model_outputs[name].get_region_names()
+        for name in self.outputs.names:
+            time_intervals = self.outputs[name].get_interval_names()
+            regions = self.outputs[name].get_region_names()
             dataset = results[name]
             for i, region in enumerate(regions):
                 for j, interval in enumerate(time_intervals):

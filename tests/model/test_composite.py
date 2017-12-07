@@ -139,8 +139,8 @@ class TestModelSet:
         model_set = ModelSet([energy_model, water_model])
         # ModelSet should derive inputs as any input to one of its models which
         # is not met by an internal dependency
-        assert len(model_set.model_inputs) == 1
-        assert 'population' in model_set.model_inputs.names
+        assert len(model_set.inputs) == 1
+        assert 'population' in model_set.inputs.names
 
         # ModelSet should derive dependencies as links to any model which
         # supplies a dependency not met internally
@@ -274,7 +274,7 @@ class TestCompositeIntegration:
 
     def test_sector_model_null_model(self, get_energy_sector_model):
         no_inputs = get_energy_sector_model
-        no_inputs._model_inputs = MetadataSet([])
+        no_inputs._inputs = MetadataSet([])
         no_inputs.simulate = lambda x: x
         actual = no_inputs.simulate(2010)
         expected = 2010
@@ -311,18 +311,11 @@ class TestNestedModels():
     def test_one_free_input(self, get_sector_model):
         SectorModel = get_sector_model
         energy_model = SectorModel('energy_sector_model')
+        expected = Metadata('electricity_demand_input', Mock(), Mock(), 'unit')
+        energy_model._inputs = MetadataSet([expected])
 
-        input_metadata = {'name': 'electricity_demand_input',
-                          'spatial_resolution': Mock(),
-                          'temporal_resolution': Mock(),
-                          'units': 'unit'}
-
-        expected = MetadataSet([input_metadata])
-
-        energy_model._model_inputs = expected
-
-        assert energy_model.free_inputs['electricity_demand_input'] == \
-            expected['electricity_demand_input']
+        actual = energy_model.free_inputs['electricity_demand_input']
+        assert actual == expected
 
     def test_hanging_inputs(self, get_sector_model):
         """
@@ -333,13 +326,14 @@ class TestNestedModels():
         """
         SectorModel = get_sector_model
         energy_model = SectorModel('energy_sector_model')
+        input_metadata = {
+            'name': 'electricity_demand_input',
+            'spatial_resolution': Mock(),
+            'temporal_resolution': Mock(),
+            'units': 'unit'
+        }
 
-        input_metadata = {'name': 'electricity_demand_input',
-                          'spatial_resolution': Mock(),
-                          'temporal_resolution': Mock(),
-                          'units': 'unit'}
-
-        energy_model._model_inputs = MetadataSet([input_metadata])
+        energy_model._inputs = MetadataSet([input_metadata])
 
         sos_model_lo = SosModel('lower')
         sos_model_lo.add_model(energy_model)
@@ -378,7 +372,7 @@ class TestNestedModels():
                           'temporal_resolution': Mock(),
                           'units': 'unit'}
 
-        energy_model._model_inputs = MetadataSet([input_metadata])
+        energy_model._inputs = MetadataSet([input_metadata])
 
         sos_model_lo = SosModel('lower')
         sos_model_lo.add_model(energy_model)
@@ -456,7 +450,7 @@ class TestNestedModels():
                                     'fluffiness',
                                     'fluffiness_input')
 
-        assert sos_model_lo.model_inputs.names == []
+        assert sos_model_lo.inputs.names == []
 
         sos_model_high = SosModel('higher')
         sos_model_high.add_model(sos_model_lo)
@@ -491,9 +485,9 @@ class TestCircularDependency:
         sos_model.add_model(water_model)
         sos_model.add_model(energy_model)
 
-        assert energy_model.model_inputs.names == ['electricity_demand_input']
-        assert water_model.model_inputs.names == ['fluffyness']
-        assert sos_model.model_inputs.names == []
+        assert energy_model.inputs.names == ['electricity_demand_input']
+        assert water_model.inputs.names == ['fluffyness']
+        assert sos_model.inputs.names == []
 
         assert energy_model.free_inputs.names == []
         assert water_model.free_inputs.names == []

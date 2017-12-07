@@ -33,10 +33,10 @@ def mock_model():
             'parent': None
         }
     ])
-    model.model_inputs = MetadataSet([
+    model.inputs = MetadataSet([
         Metadata('test', 'test_regions', 'test_intervals', 'test_unit')
     ])
-    model.model_outputs = MetadataSet([
+    model.outputs = MetadataSet([
         Metadata('test', 'test_regions', 'test_intervals', 'test_unit')
     ])
     source_model = Mock()
