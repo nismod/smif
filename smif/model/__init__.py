@@ -120,15 +120,11 @@ class Model(metaclass=ABCMeta):
         -------
         smif.metadata.MetadataSet
         """
-        if self._model_inputs.names:
-            model_inputs = set(self._model_inputs.names)
-        else:
-            model_inputs = set()
+        all_input_names = set(self._model_inputs.names)
+        dep_input_names = set(dep['sink'] for dep in self.deps.values())
+        free_input_names = all_input_names - dep_input_names
 
-        free_input_names = model_inputs - set(self.deps.keys())
-
-        return MetadataSet([self._model_inputs[name]
-                           for name in free_input_names])
+        return MetadataSet(self._model_inputs[name] for name in free_input_names)
 
     @abstractmethod
     def simulate(self, timestep, data=None):
@@ -299,19 +295,15 @@ class CompositeModel(Model, metaclass=ABCMeta):
         -------
         smif.metadata.MetadataSet
         """
-        # free inputs of all contained models
-        free_inputs = []
-        for model in self.models.values():
-            free_inputs.extend(model.free_inputs)
-
         # free inputs of current layer
-        my_free_inputs = super().free_inputs
-        free_inputs.extend(my_free_inputs)
+        free_inputs = super().free_inputs.metadata
+
+        # free inputs of all contained models
+        for model in self.models.values():
+            free_inputs.extend(model.free_inputs.metadata)
 
         # compose a new MetadataSet containing the free inputs
-        metadataset = MetadataSet([])
-        for meta in free_inputs:
-            metadataset.add_metadata_object(meta)
+        metadataset = MetadataSet(free_inputs)
 
         return metadataset
 

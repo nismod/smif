@@ -344,22 +344,19 @@ class TestNestedModels():
         sos_model_lo = SosModel('lower')
         sos_model_lo.add_model(energy_model)
 
-        input_object = Metadata(input_metadata['name'],
-                                input_metadata['spatial_resolution'],
-                                input_metadata['temporal_resolution'],
-                                input_metadata['units'])
-        expected = MetadataSet([])
-        expected.add_metadata_object(input_object)
+        expected = Metadata(input_metadata['name'],
+                            input_metadata['spatial_resolution'],
+                            input_metadata['temporal_resolution'],
+                            input_metadata['units'])
 
         assert energy_model.free_inputs.names == ['electricity_demand_input']
-
         assert sos_model_lo.free_inputs.names == ['electricity_demand_input']
 
         sos_model_high = SosModel('higher')
         sos_model_high.add_model(sos_model_lo)
+        actual = sos_model_high.free_inputs['electricity_demand_input']
 
-        assert sos_model_high.free_inputs['electricity_demand_input'] == \
-            input_object
+        assert actual == expected
 
     @pytest.mark.xfail(reason="Nested sosmodels not yet implemented")
     def test_nested_graph(self, get_sector_model):

@@ -197,13 +197,10 @@ class TestSectorModelBuilder():
         assert sector_model.timesteps == timesteps
 
         actual = sector_model.as_dict()
-
+        # sort to match expected output
+        actual['inputs'].sort(key=lambda m: m['name'])
+        actual['outputs'].sort(key=lambda m: m['name'])
         assert actual == config
-
-        assert actual['name'] == config['name']
-        assert actual['description'] == config['description']
-        assert actual['path'] == config['path']
-        assert actual['parameters'] == config['parameters']
 
 
 class TestInputs:

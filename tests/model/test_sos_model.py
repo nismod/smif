@@ -536,17 +536,23 @@ class TestSosModelBuilder():
     """Tests that the correct SosModel structure is created from a configuration
     dictionary
 
-    {'name': 'sos_model_name',
-     'description': 'friendly description of the sos model',
-     'sector_models': [sector_model_object],
-     'scenario_sets': [scenario_model_object],
-     'max_iterations': ,
-     'convergence_absolute_tolerance': ,
-     'convergence_relative_tolerance': ,
-     'dependencies': [{'source_model': ,
-                       'source_model_output':,
-                       'sink_model':,
-                       'sink_model_output': }]}
+    {
+        'name': 'sos_model_name',
+        'description': 'friendly description of the sos model',
+        'sector_models': list of Model,
+        'scenario_sets': list of ScenarioModel,
+        'max_iterations': int,
+        'convergence_absolute_tolerance': float,
+        'convergence_relative_tolerance': float,
+        'dependencies': [
+            {
+                'source_model': str (Model.name),
+                'source_model_output': str (Metadata.name),
+                'sink_model': str (Model.name),
+                'sink_model_output': str (Metadata.name)
+            }
+        ]
+    }
 
     """
     def test_scenarios(self, get_sos_model_config):

@@ -120,7 +120,7 @@ class SosModel(CompositeModel):
             # TODO settle and test data dict structure/object between simple/composite models
             sim_data = {}
             for dep in model.deps.values():
-                if dep.sink in self.free_inputs:
+                if dep.sink.name in self.free_inputs:
                     # pick external dependencies from data
                     param_data = data[dep.source_model.name][dep.source.name]
                 else:

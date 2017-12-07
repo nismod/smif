@@ -29,15 +29,19 @@ class TestScenarioObject:
         scenario_model.description = 'The High ONS Forecast for UK population out to 2050'
         scenario_model.scenario_set = 'population'
         actual = scenario_model.as_dict()
-        expected = {'name': 'High Population (ONS)',
-                    'description': 'The High ONS Forecast for UK population out to 2050',
-                    'scenario_set': 'population',
-                    'parameters': [{
-                        'name': 'population_count',
-                        'spatial_resolution': 'LSOA',
-                        'temporal_resolution': 'annual',
-                        'units': 'people'}]
-                    }
+        expected = {
+            'name': 'High Population (ONS)',
+            'description': 'The High ONS Forecast for UK population out to 2050',
+            'scenario_set': 'population',
+            'parameters': [
+                {
+                    'name': 'population_count',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'units': 'people'
+                }
+            ]
+        }
         assert actual == expected
 
     def test_serialise_scenario_two_outputs(self):
@@ -53,20 +57,28 @@ class TestScenarioObject:
         scenario_model.description = 'The High ONS Forecast for UK population out to 2050'
         scenario_model.scenario_set = 'population'
         actual = scenario_model.as_dict()
-        expected = {'name': 'High Population (ONS)',
-                    'description': 'The High ONS Forecast for UK population out to 2050',
-                    'scenario_set': 'population',
-                    'parameters': [{
-                        'name': 'population_count',
-                        'spatial_resolution': 'LSOA',
-                        'temporal_resolution': 'annual',
-                        'units': 'people'},
-                        {'name': 'population_density',
-                         'spatial_resolution': 'LSOA',
-                         'temporal_resolution': 'annual',
-                         'units': 'people/km^2'}
-                    ]
-                    }
+        # sort to match expected output
+        actual['parameters'].sort(key=lambda p: p['name'])
+
+        expected = {
+            'name': 'High Population (ONS)',
+            'description': 'The High ONS Forecast for UK population out to 2050',
+            'scenario_set': 'population',
+            'parameters': [
+                {
+                    'name': 'population_count',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'units': 'people'
+                },
+                {
+                    'name': 'population_density',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'units': 'people/km^2'
+                }
+            ]
+        }
         assert actual == expected
 
 

@@ -11,8 +11,17 @@ class ScenarioModel(Model):
 
     Arguments
     ---------
-    name : string
+    name : str
         The unique name of this scenario
+
+    Attributes
+    ----------
+    name : str
+        Name of this scenario
+    timesteps : list
+        List of timesteps for which the scenario holds data
+    scenario_set : str
+        Scenario set to which this scenario belongs
     """
 
     def __init__(self, name):
@@ -20,27 +29,16 @@ class ScenarioModel(Model):
 
         self._data = {}
         self.timesteps = []
-
-        "The scenario set to which this scenario belongs"
         self.scenario_set = None
 
     def as_dict(self):
-
         config = {
             'name': self.name,
             'description': self.description,
-            'scenario_set': self.scenario_set}
+            'scenario_set': self.scenario_set
+        }
 
-        parameters = []
-        for output in self.model_outputs:
-
-            parameters.append({
-                'name': output.name,
-                'spatial_resolution': output.spatial_resolution.name,
-                'temporal_resolution': output.temporal_resolution.name,
-                'units': output.units
-                })
-
+        parameters = [output.as_dict() for output in self.model_outputs.values()]
         config['parameters'] = parameters
 
         return config
@@ -68,11 +66,12 @@ class ScenarioModel(Model):
         units: str
 
         """
-        output_metadata = {"name": name,
-                           "spatial_resolution": spatial_resolution,
-                           "temporal_resolution": temporal_resolution,
-                           "units": units}
-
+        output_metadata = {
+            "name": name,
+            "spatial_resolution": spatial_resolution,
+            "temporal_resolution": temporal_resolution,
+            "units": units
+        }
         self._model_outputs.add_metadata(output_metadata)
 
     def add_data(self, output, data, timesteps):
@@ -107,10 +106,14 @@ class ScenarioModel(Model):
         """
         time_index = self.timesteps.index(timestep)
 
-        all_data = {output.name: self._data[output.name][time_index]
-                    for output in self.model_outputs}
+        all_data = {
+            output_name: self._data[output_name][time_index]
+            for output_name in self.model_outputs
+        }
 
-        return {self.name: all_data}
+        return {
+            self.name: all_data
+        }
 
 
 class ScenarioModelBuilder(object):
@@ -135,7 +138,6 @@ class ScenarioModelBuilder(object):
         timesteps: list
             A list of integer years e.g. ``[2010, 2011, 2013]``
         """
-
         self.scenario.scenario_set = scenario_config['scenario_set']
         # Scenarios need to be known by the scenario set name
         self.scenario.name = scenario_config['scenario_set']
@@ -169,6 +171,7 @@ class ScenarioModelBuilder(object):
 
     def _data_list_to_array(self, param, observations, timestep_names,
                             spatial_resolution, temporal_resolution):
+        # TODO push down into data_layer
         """Convert list of observations to :class:`numpy.ndarray`
 
         Arguments

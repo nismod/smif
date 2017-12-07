@@ -86,8 +86,8 @@ class SectorModel(Model, metaclass=ABCMeta):
             'description': self.description,
             'path': self.path,
             'classname': self.__class__.__name__,
-            'inputs': [inp.as_dict() for inp in self.model_inputs],
-            'outputs': [out.as_dict() for out in self.model_outputs],
+            'inputs': [inp.as_dict() for inp in self.model_inputs.values()],
+            'outputs': [out.as_dict() for out in self.model_outputs.values()],
             'parameters': self.parameters.as_list(),
             'interventions': self.interventions,
             'initial_conditions': self._initial_state

@@ -64,7 +64,7 @@ class ModelSet(CompositeModel):
             for sink, dep in model.deps.items():
                 if dep.source_model not in self.models:
                     self.deps[sink] = dep
-                    self.model_inputs.add_metadata_object(model.model_inputs[sink])
+                    self.model_inputs.add_metadata(model.model_inputs[sink])
 
     def simulate(self, timestep, data=None):
         """Runs a set of one or more models
@@ -117,8 +117,7 @@ class ModelSet(CompositeModel):
             self.logger.info("Simulating %s", model.name)
             model_data = {}
             for input_name, dep in model.deps.items():
-                input_ = model.model_inputs[input_name]
-                if input_ in self.model_inputs:
+                if input_name in self.model_inputs:
                     # if external dependency
                     dep_data = data[dep.source.name]
                 else:
