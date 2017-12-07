@@ -1,5 +1,5 @@
-name: '20170918_energy_water_short'
-description: 'Combined energy and water under central scenario, only to 2015'
+name: 20170918_energy_water_short
+description: Combined energy and water under central scenario, only to 2015
 stamp: "2017-09-18T12:53:23+00:00"
 timesteps:
 - 2010
@@ -7,8 +7,8 @@ timesteps:
 sos_model: energy_water
 decision_module: ''
 scenarios:
-- ['population', 'Central Population (Medium)']
-- ['rainfall', 'Central Rainfall']
+  population: Central Population
+  rainfall: Central Rainfall
 narratives:
-- technology:
+  technology:
   - 'High Tech Demand Side Management'

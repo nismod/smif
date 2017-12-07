@@ -413,7 +413,7 @@ class TestDatafileInterface():
         assert 'population_count' in test_scenario
         assert test_scenario['population_count'][0]['region'] == 'GB'
 
-    def test_narrative_data(self, setup_folder_structure, get_handler, get_narrative_data):
+    def test_narrative_data(self, setup_folder_structure, get_handler, narrative_data):
         """ Test to dump a narrative (yml) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
         returned dictionary.
@@ -421,12 +421,17 @@ class TestDatafileInterface():
         basefolder = setup_folder_structure
         narrative_data_path = os.path.join(str(basefolder), 'data', 'narratives',
                                            'central_planning.yml')
-        dump(get_narrative_data, narrative_data_path)
+        dump(narrative_data, narrative_data_path)
 
         config_handler = get_handler
         test_narrative = config_handler.read_narrative_data('Central Planning')
 
-        assert test_narrative[0]['energy_demand'][0]['name'] == 'smart_meter_savings'
+        assert test_narrative[0]['energy_demand'] == {'smart_meter_savings': 8}
+
+    def test_read_interventions(self, setup_folder_structure, get_handler):
+        pass
+        # actual = get_handler.read_interventions('reservoirs.yml')
+        # assert actual == expected
 
     def test_project_region_definitions(self, get_handler):
         """ Test to read and write the project configuration

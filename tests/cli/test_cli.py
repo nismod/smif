@@ -146,7 +146,7 @@ class TestRunSosModelRunComponents():
                                    '..', 'fixtures', 'single_run')
 
         handler = DatafileInterface(config_file)
-        narratives = [{'technology': ['High Tech Demand Side Management']}]
+        narratives = {'technology': ['High Tech Demand Side Management']}
         actual = get_narratives(handler, narratives)
 
         data = {'energy_demand': {'smart_meter_savings': 8},

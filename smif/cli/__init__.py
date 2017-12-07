@@ -268,11 +268,13 @@ def get_model_run_definition(args):
     sos_model_config['sector_models'] = sector_model_objects
 
     scenario_objects = []
-    for scenario in model_run_config['scenarios']:
-        LOGGER.debug("Finding data for '%s'", scenario[1])
-        scenario_definition = handler.read_scenario(scenario[1])
-        scenario_data = handler.read_scenario_data(scenario[1])
-        scenario_set = scenario_definition['scenario_set']
+    for scenario_set, scenario_name in model_run_config['scenarios'].items():
+        scenario_definition = handler.read_scenario_definition(scenario_name)
+        LOGGER.debug("Scenario definition: %s", scenario_definition)
+
+        scenario_data = handler.read_scenario_data(scenario_name)
+        LOGGER.debug("Scenario data for {}: {}".format(scenario_name, scenario_data))
+
         scenario_model_builder = ScenarioModelBuilder(scenario_set)
         scenario_model_builder.construct(scenario_definition, scenario_data,
                                          model_run_config['timesteps'])
@@ -295,14 +297,14 @@ def get_model_run_definition(args):
     return model_run_config
 
 
-def get_narratives(handler, narratives):
+def get_narratives(handler, narrative_config):
     """Load the narrative data from the sos model run configuration
 
     Arguments
     ---------
     handler: :class:`smif.data_layer.DataInterface`
-    narratives: list
-        A list of narrative_set, narrative_list/narrative pairs
+    narrative_config: dict
+        A dict with keys as narrative_set names and values as narrative names
 
     Returns
     -------
@@ -312,21 +314,19 @@ def get_narratives(handler, narratives):
 
     """
     narrative_objects = []
-    for narrative in narratives:
-        LOGGER.debug(narrative)
-        for narrative_set, narrative_list in narrative.items():
-            LOGGER.info("Loading narrative data for narrative set '%s'",
-                        narrative_set)
-            for narrative_entry in narrative_list:
-                LOGGER.debug("Adding narrative entry '%s'",
-                             narrative_entry)
-                definition = handler.read_narrative_definition(narrative_entry)
-                data = handler.read_narrative_data(narrative_entry)
-                narr_object = Narrative(narrative_entry,
-                                        definition['description'],
-                                        narrative_set)
-                narr_object.data = data
-                narrative_objects.append(narr_object)
+    for narrative_set, narrative_names in narrative_config.items():
+        LOGGER.info("Loading narrative data for narrative set '%s'",
+                    narrative_set)
+        for narrative_name in narrative_names:
+            LOGGER.debug("Adding narrative entry '%s'", narrative_name)
+            definition = handler.read_narrative_definition(narrative_name)
+            narrative = Narrative(
+                narrative_name,
+                definition['description'],
+                narrative_set
+            )
+            narrative.data = handler.read_narrative_data(narrative_name)
+            narrative_objects.append(narrative)
     return narrative_objects
 
 
