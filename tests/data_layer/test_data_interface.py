@@ -66,9 +66,8 @@ class TestDatafileInterface():
     def test_sos_model_run_read_missing(self, get_handler):
         """Test that reading a missing sos_model_run fails.
         """
-        config_handler = get_handler
         with raises(DataNotFoundError) as ex:
-            config_handler.read_sos_model_run('missing_name')
+            get_handler.read_sos_model_run('missing_name')
         assert "sos_model_run 'missing_name' not found" in str(ex)
 
     def test_sos_model_run_update(self, get_sos_model_run, get_handler):
@@ -392,9 +391,24 @@ class TestDatafileInterface():
     def test_missing_region_definition_data(self, setup_folder_structure, get_handler):
         """Should raise error if region definition not found
         """
-        with raises(KeyError) as ex:
+        with raises(DataNotFoundError) as ex:
             get_handler.read_region_definition_data('missing')
         assert "Region definition 'missing' not found" in str(ex)
+
+    def test_read_scenario_definition(self, setup_folder_structure, get_handler,
+                                      project_config):
+        """Should read a scenario definition
+        """
+        expected = project_config['scenarios'][1]
+        actual = get_handler.read_scenario_definition(project_config['scenarios'][1]['name'])
+        assert actual == expected
+
+    def test_missing_scenario_definition(self, setup_folder_structure, get_handler):
+        """Should raise a DataNotFoundError if scenario definition not found
+        """
+        with raises(DataNotFoundError) as ex:
+            get_handler.read_scenario_definition('missing')
+        assert "Scenario definition 'missing' not found" in str(ex)
 
     def test_scenario_data(self, setup_folder_structure, get_handler,
                            get_scenario_data):
@@ -435,10 +449,53 @@ class TestDatafileInterface():
 
         assert test_narrative[0]['energy_demand'] == {'smart_meter_savings': 8}
 
-    def test_read_interventions(self, setup_folder_structure, get_handler):
-        pass
-        # actual = get_handler.read_interventions('reservoirs.yml')
-        # assert actual == expected
+    def test_narrative_data_missing(self, get_handler):
+        """Should raise a DataNotFoundError if narrative has no data
+        """
+        with raises(DataNotFoundError) as ex:
+            get_handler.read_narrative_data('missing')
+        assert "Narrative 'missing' has no data defined" in str(ex)
+
+    def test_read_narrative_definition(self, setup_folder_structure, get_handler,
+                                       project_config):
+        expected = project_config['narratives'][0]
+        actual = get_handler.read_narrative_definition(expected['name'])
+        assert actual == expected
+
+    def test_read_narrative_definition_missing(self, get_handler):
+        """Should raise a DataNotFoundError if narrative not defined
+        """
+        with raises(DataNotFoundError) as ex:
+            get_handler.read_narrative_definition('missing')
+        assert "Narrative 'missing' not found" in str(ex)
+
+    def test_read_interventions(self, setup_folder_structure, water_interventions_abc,
+                                get_handler):
+        path = os.path.join(str(setup_folder_structure), 'data', 'interventions',
+                            'reservoirs.yml')
+        dump(water_interventions_abc, path)
+        actual = get_handler.read_interventions('reservoirs.yml')
+        assert actual == water_interventions_abc
+
+    def test_read_initial_conditions(self, setup_folder_structure, initial_system,
+                                     get_handler):
+        path = os.path.join(str(setup_folder_structure), 'data', 'initial_conditions',
+                            'system.yml')
+        dump(initial_system, path)
+        actual = get_handler.read_initial_conditions('system.yml')
+        assert actual == initial_system
+
+    def test_read_interval_definition_data(self, setup_folder_structure, annual_intervals,
+                                           get_handler):
+        path = os.path.join(str(setup_folder_structure), 'data', 'interval_definitions',
+                            'annual.csv')
+        with open(path, 'w') as fh:
+            w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
+            w.writeheader()
+            w.writerows(annual_intervals)
+
+        actual = get_handler.read_interval_definition_data('annual')
+        assert actual == annual_intervals
 
     def test_project_region_definitions(self, get_handler):
         """ Test to read and write the project configuration
@@ -577,6 +634,13 @@ class TestDatafileInterface():
             if scenario_set['name'] == 'name_change':
                 expected = 'The annual mortality rate in NL population'
                 assert scenario_set['description'] == expected
+
+    def test_read_scenario_set_missing(self, get_handler):
+        """Should raise a DataNotFoundError if scenario set not found
+        """
+        with raises(DataNotFoundError) as ex:
+            get_handler.read_scenario_set('missing')
+        assert "Scenario set 'missing' has no scenarios defined" in str(ex)
 
     def test_project_scenarios(self, get_handler):
         """ Test to read and write the project configuration

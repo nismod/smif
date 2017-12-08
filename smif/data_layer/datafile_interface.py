@@ -378,7 +378,7 @@ class DatafileInterface(DataInterface):
                 if rdef['name'] == region_definition_name
             )
         except StopIteration:
-            raise KeyError(
+            raise DataNotFoundError(
                 "Region definition '{}' not found".format(region_definition_name))
 
         # Read the region data from file
@@ -523,13 +523,45 @@ class DatafileInterface(DataInterface):
         Returns
         -------
         list
-            A scenario_set dictionary
+            A list of scenarios within the specified 'scenario_set_name'
         """
         project_config = self._read_project_config()
-        for scenario_data in project_config['scenario_sets']:
-            if scenario_data['name'] == scenario_set_name:
-                return scenario_data
-        raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
+
+        # Filter only the scenarios of the selected scenario_set_name
+        filtered_scenario_data = [
+            data for data in project_config['scenarios']
+            if data['scenario_set'] == scenario_set_name
+        ]
+
+        if not filtered_scenario_data:
+            raise DataNotFoundError(
+                "Scenario set '{}' has no scenarios defined".format(scenario_set_name))
+
+        return filtered_scenario_data
+
+    def read_scenario_definition(self, scenario_name):
+        """Read scenario definition data
+
+        Arguments
+        ---------
+        scenario_name: str
+            Name of the scenario
+
+        Returns
+        -------
+        dict
+            The scenario definition
+        """
+        project_config = self._read_project_config()
+        try:
+            return next(
+                sdef
+                for sdef in project_config['scenarios']
+                if sdef['name'] == scenario_name
+            )
+        except StopIteration:
+            raise DataNotFoundError(
+                "Scenario definition '{}' not found".format(scenario_name))
 
     def _scenario_set_exists(self, scenario_set_name):
         project_config = self._read_project_config()
@@ -729,6 +761,7 @@ class DatafileInterface(DataInterface):
         list
             A list of narrative set dicts
         """
+        # Find filename for this narrative
         project_config = self._read_project_config()
         return project_config['narrative_sets']
 
