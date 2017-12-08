@@ -636,6 +636,26 @@ class DatafileInterface(DataInterface):
 
         self._write_project_config(project_config)
 
+    def delete_scenario(self, scenario_name):
+        """Delete scenario from project configuration
+
+        Arguments
+        ---------
+        scenario_name: str
+            A scenario name
+        """
+        if not self._scenario_exists(scenario_name):
+            raise DataNotFoundError("scenario '%s' not found" % scenario_name)
+
+        project_config = self._read_project_config()
+
+        project_config['scenarios'] = [
+            entry for entry in project_config['scenarios']
+            if (entry['name'] != scenario_name)
+        ]
+
+        self._write_project_config(project_config)
+
     def read_scenario_data(self, scenario_name):
         """Read scenario data file
 
@@ -815,6 +835,40 @@ class DatafileInterface(DataInterface):
 
         self._write_project_config(project_config)
 
+    def write_narrative(self, narrative):
+        """Write narrative to project configuration
+
+        Arguments
+        ---------
+        narrative: dict
+            A narrative dict
+        """
+        if self._narrative_exists(narrative['name']):
+            raise DataExistsError("narrative '%s' already exists" % narrative['name'])
+        else:
+            project_config = self._read_project_config()
+            project_config['narratives'].append(narrative)
+            self._write_project_config(project_config)
+
+    def delete_narrative(self, narrative_name):
+        """Delete narrative from project configuration
+
+        Arguments
+        ---------
+        narrative_name: str
+            A narrative name
+        """
+        if not self._narrative_exists(narrative_name):
+            raise DataNotFoundError("narrative '%s' not found" % narrative_name)
+
+        project_config = self._read_project_config()
+
+        project_config['narratives'] = [
+            entry for entry in project_config['narratives']
+            if (entry['name'] != narrative_name)
+        ]
+
+        self._write_project_config(project_config)
 
     def read_narrative_data(self, narrative_name):
         """Read narrative data file
