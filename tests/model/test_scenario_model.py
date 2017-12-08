@@ -189,7 +189,7 @@ class TestScenarioModelData:
         data = {'length': [
             {
                 'year': 2015,
-                'interval': 1,
+                'interval': '1',
                 'value': 3.14,
                 'region': 'oxford'
             }
@@ -239,7 +239,7 @@ class TestScenarioModelData:
             {
                 'value': 3.14,
                 'region': 'missing',
-                'interval': 1,
+                'interval': '1',
                 'year': 2015
             }
         ]}
@@ -265,7 +265,7 @@ class TestScenarioModelData:
             {
                 'value': 3.14,
                 'region': 'oxford',
-                'interval': 1,
+                'interval': '1',
                 'year': 2015
             },
             {
@@ -297,19 +297,19 @@ class TestScenarioModelData:
                 'year': 2010,
                 'value': 3,
                 'region': 'oxford',
-                'interval': 1
+                'interval': '1'
             },
             {
                 'year': 2011,
                 'value': 5,
                 'region': 'oxford',
-                'interval': 1
+                'interval': '1'
             },
             {
                 'year': 2012,
                 'value': 1,
                 'region': 'oxford',
-                'interval': 1
+                'interval': '1'
             }
         ]
 

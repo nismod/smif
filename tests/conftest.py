@@ -308,7 +308,7 @@ def annual_intervals():
         {
             "start": "P0Y",
             "end": "P1Y",
-            "id": 1
+            "id": '1'
         }
     ]
 
