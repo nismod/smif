@@ -4,12 +4,12 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-import { fetchSosModelRuns, fetchSosModels,  fetchSectorModels,  fetchScenarios, fetchNarratives } from '../actions/actions.js'
-import { createSosModelRun, createSosModel, createSectorModel, createScenario, createNarrative } from '../actions/actions.js'
-import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenario, deleteNarrative } from '../actions/actions.js'
+import { fetchSosModelRuns, fetchSosModels,  fetchSectorModels,  fetchScenarios, fetchNarratives } from '../../actions/actions.js'
+import { createSosModelRun, createSosModel, createSectorModel, createScenario, createNarrative } from '../../actions/actions.js'
+import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenario, deleteNarrative } from '../../actions/actions.js'
 
-import Popup from '../components/Popup.js'
-import ProjectOverviewItem from '../components/ProjectOverviewItem.js'
+import Popup from '../../components/ConfigForm/General/Popup.js'
+import ProjectOverviewItem from '../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
 
 class ProjectOverview extends Component {
     constructor() {

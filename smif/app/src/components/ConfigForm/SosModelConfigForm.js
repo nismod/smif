@@ -4,11 +4,11 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import update from 'immutability-helper'
 
-import { saveSosModel } from '../actions/actions.js'
+import { saveSosModel } from '../../actions/actions.js'
 
-import PropertySelector from '../components/PropertySelector.js'
-import DependencySelector from '../components/SosModelConfigForm/DependencySelector.js'
-import PropertyList from '../components/PropertyList.js'
+import PropertySelector from './General/PropertySelector.js'
+import DependencySelector from './SosModel/DependencySelector.js'
+import PropertyList from './General/PropertyList.js'
 
 class SosModelConfigForm extends Component {
     constructor(props) {

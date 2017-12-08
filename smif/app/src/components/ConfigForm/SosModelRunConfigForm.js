@@ -4,12 +4,12 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import update from 'react-addons-update'
 
-import { saveSosModelRun } from '../actions/actions.js'
+import { saveSosModelRun } from '../../actions/actions.js'
 
-import SosModelSelector from '../components/SosModelRunConfigForm/SosModelSelector.js'
-import ScenarioSelector from '../components/SosModelRunConfigForm/ScenarioSelector.js'
-import NarrativeSelector from '../components/SosModelRunConfigForm/NarrativeSelector.js'
-import TimestepSelector from '../components/SosModelRunConfigForm/TimestepSelector.js'
+import SosModelSelector from './SosModelRun/SosModelSelector.js'
+import ScenarioSelector from './SosModelRun/ScenarioSelector.js'
+import NarrativeSelector from './SosModelRun/NarrativeSelector.js'
+import TimestepSelector from './SosModelRun/TimestepSelector.js'
 
 class SosModelRunConfigForm extends Component {
     constructor(props) {

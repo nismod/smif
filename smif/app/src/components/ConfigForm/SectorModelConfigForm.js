@@ -2,10 +2,10 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import PropertySelector from '../components/PropertySelector.js'
-import InputsOutputsForm from '../components/SectorModelConfigForm/InputsOutputsForm.js'
-import ParameterSelector from '../components/SectorModelConfigForm/ParameterSelector.js'
-import PropertyList from '../components/PropertyList.js'
+import PropertySelector from './General/PropertySelector.js'
+import InputsOutputsForm from './SectorModel/InputsOutputsForm.js'
+import ParameterSelector from './SectorModel/ParameterSelector.js'
+import PropertyList from './General/PropertyList.js'
 
 class SectorModelConfigForm extends Component {
     constructor(props) {

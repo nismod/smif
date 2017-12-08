@@ -2,9 +2,9 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'react-addons-update'
 
-import Popup from '../Popup.js'
+import Popup from '../General/Popup.js'
 
-class InputsOutputsForm extends Component {
+class DependencySelector extends Component {
     constructor(props) {
         super(props)
 
@@ -13,17 +13,17 @@ class InputsOutputsForm extends Component {
         }
 
         this.state.inputs = {
-            name: '',
-            units: '',
-            spatial_resolution: '',
-            temporal_resolution: ''
+            SourceModel: '',
+            SourceOutput: '',
+            SinkModel: '',
+            SinkInput: ''
         }
 
         this.state.className = {
-            name: 'form-control',
-            units:  'form-control',
-            spatial_resolution: 'form-control',
-            temporal_resolution:  'form-control'
+            SourceModel: 'form-control',
+            SourceOutput:  'form-control',
+            SinkModel: 'form-control',
+            SinkInput:  'form-control'
         }
 
         this.closeCreateDependencyPopup = this.closeCreateDependencyPopup.bind(this)
@@ -40,8 +40,9 @@ class InputsOutputsForm extends Component {
     }
 
     handleSubmit() {
-        const {onChange, items, isInputs, isOutputs} = this.props
+        const {onChange, dependencies} = this.props
         const {inputs, className} = this.state
+        const {SourceModel, SourceOutput, SinkModel, SinkInput} = this.state.inputs
 
         let inputOk = true
 
@@ -57,33 +58,24 @@ class InputsOutputsForm extends Component {
 
         // Submit change
         if (inputOk) {
-            let newItems = items
+            let newDependencies = dependencies
 
-            newItems.push(
-                inputs
+            newDependencies.push({
+                source_model: SourceModel, 
+                source_model_output: SourceOutput,
+                sink_model: SinkModel,
+                sink_model_input: SinkInput
+            })
+
+            onChange(
+                {
+                    target: {
+                        name: 'dependencies',
+                        value: newDependencies,
+                        type: 'array'
+                    }
+                }
             )
-
-            if (isInputs) {
-                onChange(
-                    {
-                        target: {
-                            name: 'inputs',
-                            value: newItems,
-                            type: 'array'
-                        }
-                    }
-                )
-            } else if (isOutputs) {
-                onChange(
-                    {
-                        target: {
-                            name: 'outputs',
-                            value: newItems,
-                            type: 'array'
-                        }
-                    }
-                )
-            }
 
             this.closeCreateDependencyPopup()
         }
@@ -107,27 +99,41 @@ class InputsOutputsForm extends Component {
         })
     }
 
-    renderInputForm(type) {
+    renderDependencySelector(dependencies, sectorModels) {
 
         return (    
             <div>
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value={'Add ' + type} onClick={this.openCreateDependencyPopup} />
+                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Dependency" onClick={this.openCreateDependencyPopup} />
 
                 <Popup onRequestOpen={this.state.CreateDependencypopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit()}}>
-                        <h2 ref={subtitle => this.subtitle = subtitle}>{'Add a new ' + type}</h2>
+                        <h2 ref={subtitle => this.subtitle = subtitle}>Add a new Dependency</h2>
                         <div className="container">
                             <div className="row">
                                 <div className="col">
-                                    <label>Name</label>
-                                    <input ref="" type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
+                                    <label>Source</label>
+                                    <select className={this.state.className.SourceModel} name="SourceModel" defaultValue="none" onChange={this.handleChange}>
+                                        <option disabled="disabled" value="none">Please select a source</option>
+                                        {
+                                            sectorModels.map((sectorModel, i) => (
+                                                <option key={i} value={sectorModel.name}>{sectorModel.name}</option>
+                                            ))
+                                        }
+                                    </select>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div> 
                                 </div>
                                 <div className="col">      
-                                    <label>Units</label>
-                                    <input ref="" type="text" className={this.state.className.units} name="units" onChange={this.handleChange}/>
+                                    <label>Sink</label>
+                                    <select className={this.state.className.SinkModel} name="SinkModel" defaultValue="none" onChange={this.handleChange}>
+                                        <option disabled="disabled" value="none">Please select a sink</option>
+                                        {
+                                            sectorModels.map((sectorModel, i) => (
+                                                <option key={i} value={sectorModel.name}>{sectorModel.name}</option>
+                                            ))
+                                        }
+                                    </select>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>   
@@ -135,15 +141,13 @@ class InputsOutputsForm extends Component {
                             </div>
                             <div className="row">    
                                 <div className="col">
-                                    <label>Spatial Resolution</label>
-                                    <input ref="" type="text" className={this.state.className.spatial_resolution} name="spatial_resolution" onChange={this.handleChange}/>
+                                    <input ref="" type="text" className={this.state.className.SourceOutput} name="SourceOutput" placeholder="Source Output" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>  
                                 </div>
                                 <div className="col">
-                                    <label>Temporal Resolution</label>
-                                    <input type="text" className={this.state.className.temporal_resolution} name="temporal_resolution" onChange={this.handleChange}/>
+                                    <input type="text" className={this.state.className.SinkInput} name="SinkInput" placeholder="Sink Input" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
@@ -172,30 +176,23 @@ class InputsOutputsForm extends Component {
     }
 
     render() {
-        const {items, isInputs, isOutputs} = this.props
+        const {dependencies, sectorModels} = this.props
 
-        if (items == undefined || items == null)
-        {
-            if (isInputs) {
-                return this.renderWarning('Inputs are undefined')
-            } else if (isOutputs) {
-                return this.renderWarning('Outputs are undefined')
-            }
-        } else if ((isInputs && isOutputs) || (!isInputs && !isOutputs)) {
-            return this.renderWarning('Item type is not selected')
-        } else if (isInputs) {
-            return this.renderInputForm('input')
-        } else if (isOutputs) {
-            return this.renderInputForm('output')
+        if (dependencies == undefined) {
+            return this.renderWarning('Dependencies are undefined')
+        } else if (sectorModels == null) {
+            return this.renderWarning('There are no sectorModels configured')
+        } else {           
+            return this.renderDependencySelector(dependencies, sectorModels)
         }        
     }
 }
 
-InputsOutputsForm.propTypes = {
-    items: PropTypes.array,
-    isInputs: PropTypes.bool,
-    isOutputs: PropTypes.bool,
-    onChange: PropTypes.func
+DependencySelector.propTypes = {
+    dependencies: PropTypes.array,
+    sectorModels: PropTypes.array,
+    onChange: PropTypes.func,
+    onDelete: PropTypes.func
 }
 
-export default InputsOutputsForm
+export default DependencySelector
