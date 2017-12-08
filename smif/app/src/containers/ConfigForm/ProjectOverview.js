@@ -77,17 +77,14 @@ class ProjectOverview extends Component {
         case 'createSosModelRun':
             dispatch(createSosModelRun(createPopupName))
             dispatch(fetchSosModelRuns())
-            console.log('createSosModelRun', createPopupName)
             break
         case 'createSosModel':
             dispatch(createSosModel(createPopupName))
             dispatch(fetchSosModels())
-            console.log('createSosModel', createPopupName)
             break
         case 'createSectorModel':
             dispatch(createSectorModel(createPopupName))
             dispatch(fetchSectorModels())
-            console.log('createSectorModel', createPopupName)
             break
         case 'createScenario':
             dispatch(createScenario(createPopupName))
@@ -105,8 +102,6 @@ class ProjectOverview extends Component {
     }
 
     openDeletePopup(event) {
-        console.log(event)
-        
         this.setState({
             deletePopupIsOpen: true,
             deletePopupHeader: event.target.value,
@@ -147,14 +142,6 @@ class ProjectOverview extends Component {
         
     closeDeletePopup() {
         this.setState({deletePopupIsOpen: false})
-    }
-
-    handleProjectSave() {
-        console.log(this.props)
-    }
-
-    handleCancel() {
-        console.log(this.state)
     }
 
     render () {
@@ -246,9 +233,6 @@ class ProjectOverview extends Component {
                     </div>
 
                     <br/>
-
-                    <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save Project Configuration" onClick={this.handleProjectSave} />
-                    <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
 
                     {/* Popup for Create */}
                     <Popup onRequestOpen={this.state.createPopupIsOpen}>

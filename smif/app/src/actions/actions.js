@@ -104,8 +104,6 @@ export function createSosModelRun(sosModelRunName){
             'decision_module': '', 
             'timesteps': [2017]
         }
-        
-        console.log(newModelRun)
 
         // make API request, returning a promise
         return fetch('/api/v1/sos_model_runs/', {
@@ -248,8 +246,6 @@ export function createSosModel(sosModelName){
             'decision_module': '', 
             'timesteps': []
         }
-        
-        console.log(newModel)
 
         // make API request, returning a promise
         return fetch('/api/v1/sos_models/', {
@@ -378,8 +374,6 @@ export function createSectorModel(sectorModelName){
     return function (dispatch) {
         // prepare the new modelrun
 
-        console.log('CreateSectorModel', sectorModelName)
-
         let datetime = new Date()
 
         let newSectorModel = {
@@ -393,8 +387,6 @@ export function createSectorModel(sectorModelName){
             'interventions': [],
             'initial_conditions': []
         }
-        
-        console.log(newSectorModel)
 
         // make API request, returning a promise
         return fetch('/api/v1/sector_models/', {

@@ -106,7 +106,7 @@ class SosModelRunConfigForm extends Component {
                             }
 
                             // If there are no narrative sets left, remove the narratives
-                            if (narratives.length == 0) {        //console.log(this.state)
+                            if (narratives.length == 0) {
                                 this.setState({
                                     selectedSosModelRun: update(this.state.selectedSosModelRun, {narratives: {$set: undefined }})
                                 })
