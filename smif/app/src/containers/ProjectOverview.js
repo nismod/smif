@@ -4,40 +4,37 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-// import Modal from 'react-modal';
-
-import { fetchSosModelRuns } from '../actions/actions.js'
-import { fetchSosModels } from '../actions/actions.js'
-import { fetchSectorModels } from '../actions/actions.js'
-import { fetchScenarios } from '../actions/actions.js'
-import { fetchNarratives } from '../actions/actions.js'
-
-import { createSosModelRun } from '../actions/actions.js'
-import { deleteSosModelRun } from '../actions/actions.js'
+import { fetchSosModelRuns, fetchSosModels,  fetchSectorModels,  fetchScenarios, fetchNarratives } from '../actions/actions.js'
+import { createSosModelRun, createSosModel, createSectorModel, createScenario, createNarrative } from '../actions/actions.js'
+import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenario, deleteNarrative } from '../actions/actions.js'
 
 import Popup from '../components/Popup.js'
 import ProjectOverviewItem from '../components/ProjectOverviewItem.js'
-import PropertyList from '../components/PropertyList.js'
 
 class ProjectOverview extends Component {
     constructor() {
         super()
 
-        this.handleInputChange = this.handleInputChange.bind(this)
-        this.createSosModelRun = this.createSosModelRun.bind(this)
-        this.deleteSosModelRun = this.deleteSosModelRun.bind(this)
+        this.state = {
+            createPopupIsOpen: false,
+            createPopupHeader: 'none',
+            createPopupType: 'none',
+            deletePopupIsOpen: false,
+            deletePopupHeader: 'none',
+            deletePopupType: 'none'
+        }
 
+        this.closeCreatePopup = this.closeCreatePopup.bind(this)
+        this.openCreatePopup = this.openCreatePopup.bind(this)
+        this.createPopupSubmit = this.createPopupSubmit.bind(this)
+
+        this.closeDeletePopup = this.closeDeletePopup.bind(this)
+        this.openDeletePopup = this.openDeletePopup.bind(this)
+        this.deletePopupSubmit = this.deletePopupSubmit.bind(this)
+
+        this.handleInputChange = this.handleInputChange.bind(this)
         this.handleProjectSave = this.handleProjectSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
-
-        this.state = {
-            CreateSosModelRunpopupIsOpen: false,
-            CreateSosModelpopupIsOpen: false
-        }
-        this.closeCreateSosModelRunPopup = this.closeCreateSosModelRunPopup.bind(this)
-        this.openCreateSosModelRunPopup = this.openCreateSosModelRunPopup.bind(this)
-        this.closeCreateSosModelPopup = this.closeCreateSosModelPopup.bind(this)
-        this.openCreateSosModelPopup = this.openCreateSosModelPopup.bind(this)
     }
 
     componentWillMount () {
@@ -60,51 +57,96 @@ class ProjectOverview extends Component {
         })
     }
 
-    openCreateSosModelRunPopup() {
-        this.setState({CreateSosModelRunpopupIsOpen: true})
-    }
-    
-    closeCreateSosModelRunPopup() {
-        this.setState({CreateSosModelRunpopupIsOpen: false})
-    }
+    openCreatePopup(event) {
 
-    openCreateSosModelPopup() {
-        this.setState({CreateSosModelpopupIsOpen: true})
+        this.setState({
+            createPopupIsOpen: true,
+            createPopupHeader: event.target.value,
+            createPopupType: event.target.name
+        })
     }
     
-    closeCreateSosModelPopup() {
-        this.setState({CreateSosModelpopupIsOpen: false})
-    }
-    
-    createSosModelRun() {
+    createPopupSubmit() {
+
+        const {createPopupType, createPopupName} = this.state
         const { dispatch } = this.props
         
-        this.closeCreateSosModelRunPopup()
+        this.closeCreatePopup(createPopupType)
 
-        dispatch(createSosModelRun(this.state.newSosModelRun_name))
-        dispatch(fetchSosModelRuns())
+        switch(createPopupType) {
+        case 'createSosModelRun':
+            dispatch(createSosModelRun(createPopupName))
+            dispatch(fetchSosModelRuns())
+            console.log('createSosModelRun', createPopupName)
+            break
+        case 'createSosModel':
+            dispatch(createSosModel(createPopupName))
+            dispatch(fetchSosModels())
+            console.log('createSosModel', createPopupName)
+            break
+        case 'createSectorModel':
+            dispatch(createSectorModel(createPopupName))
+            dispatch(fetchSectorModels())
+            console.log('createSectorModel', createPopupName)
+            break
+        case 'createScenario':
+            dispatch(createScenario(createPopupName))
+            dispatch(fetchScenarios())
+            break
+        case 'createNarrative':
+            dispatch(createNarrative(createPopupName))
+            dispatch(fetchNarratives())
+            break
+        }
     }
-    
-    deleteSosModelRun(sosModelRunName) {
+
+    closeCreatePopup() {
+        this.setState({createPopupIsOpen: false})
+    }
+
+    openDeletePopup(event) {
+        console.log(event)
+        
+        this.setState({
+            deletePopupIsOpen: true,
+            deletePopupHeader: event.target.value,
+            deletePopupType: event.target.name
+        })
+    }
+            
+    deletePopupSubmit() {
+        
+        const {deletePopupType, deletePopupHeader} = this.state
         const { dispatch } = this.props
-        dispatch(deleteSosModelRun(sosModelRunName))
-        dispatch(fetchSosModelRuns())
-    }
+                
+        this.closeDeletePopup(deletePopupType)
 
-    deleteSosModel(sosModelName) {
-        return null
+        switch(deletePopupType) {
+        case 'deleteSosModelRun':
+            dispatch(deleteSosModelRun(deletePopupHeader))
+            dispatch(fetchSosModelRuns())
+            break
+        case 'deleteSosModel':
+            dispatch(deleteSosModel(deletePopupHeader))
+            dispatch(fetchSosModels())
+            break
+        case 'deleteSectorModel':
+            dispatch(deleteSectorModel(deletePopupHeader))
+            dispatch(fetchSectorModels())
+            break
+        case 'deleteScenario':
+            dispatch(deleteScenario(deletePopupHeader))
+            dispatch(fetchScenarios())
+            break
+        case 'deleteNarrative':
+            dispatch(deleteNarrative(deletePopupHeader))
+            dispatch(fetchNarratives())
+            break
+        }
     }
-
-    deleteSectorModel(sectorModelName) {
-        return null
-    }
-
-    deleteScenario(scenarioName) {
-        return null
-    }
-
-    deleteNarrative(narrativeName) {
-        return null
+        
+    closeDeletePopup() {
+        this.setState({deletePopupIsOpen: false})
     }
 
     handleProjectSave() {
@@ -150,8 +192,8 @@ class ProjectOverview extends Component {
                             Model Runs
                         </div>
                         <div className="card-body">
-                            <ProjectOverviewItem items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.deleteSosModelRun} />                            
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a new Model Run" onClick={this.openCreateSosModelRunPopup}/>
+                            <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.openDeletePopup} />                            
+                            <input className="btn btn-secondary btn-lg btn-block" name="createSosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -162,8 +204,8 @@ class ProjectOverview extends Component {
                             System-of-Systems Models
                         </div>
                         <div className="card-body">
-                            <ProjectOverviewItem items={sos_models} itemLink="/configure/sos-models/" onDelete={this.deleteSosModel} />
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a new System-of-Systems Configuration" onClick={this.openCreateSosModelPopup}/>
+                            <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
+                            <input className="btn btn-secondary btn-lg btn-block" name="createSosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -174,8 +216,8 @@ class ProjectOverview extends Component {
                             Simulation Model
                         </div>
                         <div className="card-body">
-                            <ProjectOverviewItem items={sector_models} itemLink="/configure/sector-models/" onDelete={this.deleteSosModel} />
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a new Simulation Model Configuration" />
+                            <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
+                            <input className="btn btn-secondary btn-lg btn-block" name="createSectorModel" type="button" value="Create a new Simulation Model" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -186,8 +228,8 @@ class ProjectOverview extends Component {
                             Scenarios
                         </div>
                         <div className="card-body">
-                            <ProjectOverviewItem items={scenarios} itemLink="/configure/scenarios/" onDelete={this.deleteScenario} />
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a new Scenario" />
+                            <ProjectOverviewItem itemname="Scenario" items={scenarios} itemLink="/configure/scenarios/" onDelete={this.openDeletePopup} />
+                            <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Create a new Scenario" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -198,8 +240,8 @@ class ProjectOverview extends Component {
                             Narratives
                         </div>
                         <div className="card-body">
-                            <ProjectOverviewItem items={narratives} itemLink="/configure/narratives/" onDelete={this.deleteNarrative} />
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a new Narrative" />
+                            <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/narratives/" onDelete={this.openDeletePopup} />
+                            <input className="btn btn-secondary btn-lg btn-block" name="createNarrative" type="button" value="Create a new Narrative" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -208,37 +250,31 @@ class ProjectOverview extends Component {
                     <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save Project Configuration" onClick={this.handleProjectSave} />
                     <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
 
-                    <Popup onRequestOpen={this.state.CreateSosModelRunpopupIsOpen}>
-                        <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.createSosModelRun()}}>
-                            <h2 ref={subtitle => this.subtitle = subtitle}>Create a new Model Run</h2>
+                    {/* Popup for Create */}
+                    <Popup onRequestOpen={this.state.createPopupIsOpen}>
+                        <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.createPopupSubmit()}}>
+                            <h2 ref={subtitle => this.subtitle = subtitle}>{this.state.createPopupHeader}</h2>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="newSosModelRun_name" type="text" onChange={this.handleInputChange} required/>
+                                    <input className="form-control" name="createPopupName" type="text" onChange={this.handleInputChange} required/>
                                 </div>
                             </div>
                             
                             <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Create"/>
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreateSosModelRunPopup}/> 
+                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreatePopup}/> 
                         </form>
-                        
                     </Popup>
 
-                    <Popup onRequestOpen={this.state.CreateSosModelpopupIsOpen}>
-                        <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.createSosModel()}}>
-
-                            <h2 ref={subtitle => this.subtitle = subtitle}>Create a new Model</h2>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Name</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" name="newSosModel_name" type="text" onChange={this.handleInputChange} required/>
-                                </div>
-                            </div>
-                            
-                            <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Create"/>
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreateSosModelPopup}/>
+                    {/* Popup for Delete */}
+                    <Popup onRequestOpen={this.state.deletePopupIsOpen}>
+                        <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.deletePopupSubmit()}}>
+                            <h2 ref={subtitle => this.subtitle = subtitle}>Confirm delete</h2>
+                            Are you sure you would like to delete {this.state.deletePopupHeader}?
+                            <br/>
+                            <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Delete"/>
+                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeDeletePopup}/> 
                         </form>
                     </Popup>
 
@@ -267,7 +303,7 @@ function mapStateToProps(state) {
         sector_models: sector_models.items,
         scenarios: scenarios.items,
         narratives: narratives.items,
-        isFetching: (sos_models.isFetching || sos_model_runs.isFetching || sector_models.isFetching || scenarios.isFetching || narratives.isFetching )
+        isFetching: false
     }
 }
 

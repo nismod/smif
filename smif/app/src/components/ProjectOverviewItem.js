@@ -19,10 +19,18 @@ class SosModelRunItem extends Component {
         const target = event.currentTarget
         const name = target.name
 
-        onDelete(name)
+        onDelete(
+            {
+                target: {
+                    name: target.value,
+                    value: name,
+                    type: 'action'
+                }
+            }
+        )
     }
 
-    renderItems(items, itemLink) {
+    renderItems(itemname, items, itemLink) {
         return (
             <div>
                 <table className="table table-sm fixed">
@@ -49,7 +57,7 @@ class SosModelRunItem extends Component {
                                         </Link>
                                     </td> 
                                     <td>
-                                        <button type="button" className="btn btn-outline-dark" name={item.name} onClick={this.onDeleteHandler}>
+                                        <button type="button" className="btn btn-outline-dark" value={'delete' + itemname} name={item.name} onClick={this.onDeleteHandler}>
                                             <FaTrash/>
                                         </button>
                                     </td> 
@@ -71,16 +79,17 @@ class SosModelRunItem extends Component {
     }
 
     render() {
-        const {items, itemLink} = this.props
+        const {itemname, items, itemLink} = this.props
 
-        return this.renderItems(items, itemLink)
+        return this.renderItems(itemname, items, itemLink)
     }    
 }
 
 SosModelRunItem.propTypes = {
+    itemname: PropTypes.string.isRequired,
     items: PropTypes.array.isRequired,
     itemLink: PropTypes.string.isRequired,
     onDelete: PropTypes.func.isRequired
-};
+}
 
-export default SosModelRunItem;
+export default SosModelRunItem
