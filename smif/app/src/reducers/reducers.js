@@ -16,10 +16,14 @@ import {
     RECEIVE_SCENARIO_SETS,
     REQUEST_SCENARIOS,
     RECEIVE_SCENARIOS,
+    REQUEST_SCENARIO,
+    RECEIVE_SCENARIO,
     REQUEST_NARRATIVE_SETS,
     RECEIVE_NARRATIVE_SETS,
     REQUEST_NARRATIVES,
     RECEIVE_NARRATIVES,
+    REQUEST_NARRATIVE,
+    RECEIVE_NARRATIVE,
 } from '../actions/actions.js'
 
 function sos_model_runs(
@@ -206,6 +210,29 @@ function scenarios(
     }
 }
 
+function scenario(
+    state = {
+        isFetching: false,
+        item: {}
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_SCENARIO:
+        return Object.assign({}, state, {
+            isFetching: true
+        })
+    case RECEIVE_SCENARIO:
+        return Object.assign({}, state, {
+            isFetching: false,
+            item: action.scenario,
+            lastUpdated: action.receivedAt
+        })
+    default:
+        return state
+    }
+}
+
 function narrative_sets(
     state = {
         isFetching: false,
@@ -252,6 +279,29 @@ function narratives(
     }
 }
 
+function narrative(
+    state = {
+        isFetching: false,
+        item: {}
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_NARRATIVE:
+        return Object.assign({}, state, {
+            isFetching: true
+        })
+    case RECEIVE_NARRATIVE:
+        return Object.assign({}, state, {
+            isFetching: false,
+            item: action.narrative,
+            lastUpdated: action.receivedAt
+        })
+    default:
+        return state
+    }
+}
+
 const rootReducer = combineReducers({
     sos_model_runs,
     sos_model_run,
@@ -261,8 +311,10 @@ const rootReducer = combineReducers({
     sector_model,
     scenario_sets,
     scenarios,
+    scenario,
     narrative_sets,
-    narratives
+    narratives,
+    narrative
 })
 
 export default rootReducer

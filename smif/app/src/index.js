@@ -10,6 +10,8 @@ import ProjectOverview from './containers/ProjectOverview'
 import SosModelRunConfig from './containers/SosModelRunConfig'
 import SosModelConfig from './containers/SosModelConfig'
 import SectorModelConfig from './containers/SectorModelConfig'
+import ScenarioConfig from './containers/ScenarioConfig'
+import NarrativeConfig from './containers/NarrativeConfig'
 
 import store from './store/store.js'
 
@@ -27,6 +29,8 @@ render(
                 <Route path="/configure/sos-model-run/:name" component={SosModelRunConfig}/>
                 <Route path="/configure/sos-models/:name" component={SosModelConfig}/>
                 <Route path="/configure/sector-models/:name" component={SectorModelConfig}/>
+                <Route path="/configure/scenarios/:name" component={ScenarioConfig}/>
+                <Route path="/configure/narratives/:name" component={NarrativeConfig}/>
             </div>
         </Router>
     </Provider>,

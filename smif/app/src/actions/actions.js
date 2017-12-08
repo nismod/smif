@@ -500,6 +500,114 @@ export function fetchScenarios(){
     }
 }
 
+export const REQUEST_SCENARIO = 'REQUEST_SCENARIO'
+function requestScenario(){
+    return {
+        type: REQUEST_SCENARIO
+    }
+}
+
+export const RECEIVE_SCENARIO = 'RECEIVE_SCENARIO'
+function receiveScenario(json) {
+    return {
+        type: RECEIVE_SCENARIO,
+        scenario: json,
+        receivedAt: Date.now()
+    }
+}
+
+export function fetchScenario(scenarioid){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestScenario())
+        
+        // make API request, returning a promise
+        return fetch('/api/v1/scenarios/' + scenarioid)
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                json => dispatch(receiveScenario(json))
+            )
+    }
+}
+
+export function saveScenario(scenario){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+
+        // make API request, returning a promise
+        return fetch('/api/v1/scenarios/' + scenario.name, {
+            method: 'put',
+            body: JSON.stringify(scenario),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }}
+        )
+            .then (
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                //json => dispatch(receiveSosModelRun(json))
+            )
+    }
+}
+
+export function createScenario(scenarioName){
+    return function (dispatch) {
+        // prepare the new modelrun
+        let datetime = new Date()
+
+        let newScenario = {
+            'name': scenarioName, 
+            'description': '', 
+        }
+        
+        console.log(newScenario)
+
+        // make API request, returning a promise
+        return fetch('/api/v1/scenarios/', {
+            method: 'post',
+            body: JSON.stringify(newScenario),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+            //json => dispatch(receiveSosModelRun(json))
+            )
+    }
+}
+
+export function deleteScenario(scenarioName){
+    return function (dispatch) {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/scenarios/' + scenarioName, {
+            method: 'delete',
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+            //json => dispatch(receiveSosModelRun(json))
+            )
+    }
+}
+
 export const REQUEST_NARRATIVE_SETS = 'REQUEST_NARRATIVE_SETS'
 function requestNarrativeSets(){
     return {
@@ -562,6 +670,114 @@ export function fetchNarratives(){
             )
             .then(
                 json => dispatch(receiveNarratives(json))
+            )
+    }
+}
+
+export const REQUEST_NARRATIVE = 'REQUEST_NARRATIVE'
+function requestNarrative(){
+    return {
+        type: REQUEST_NARRATIVE
+    }
+}
+
+export const RECEIVE_NARRATIVE = 'RECEIVE_NARRATIVE'
+function receiveNarrative(json) {
+    return {
+        type: RECEIVE_NARRATIVE,
+        narrative: json,
+        receivedAt: Date.now()
+    }
+}
+
+export function fetchNarrative(narrativeid){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestNarrative())
+        
+        // make API request, returning a promise
+        return fetch('/api/v1/narratives/' + narrativeid)
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                json => dispatch(receiveNarrative(json))
+            )
+    }
+}
+
+export function saveNarrative(narrative){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+
+        // make API request, returning a promise
+        return fetch('/api/v1/narratives/' + narrative.name, {
+            method: 'put',
+            body: JSON.stringify(narrative),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }}
+        )
+            .then (
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                //json => dispatch(receiveSosModelRun(json))
+            )
+    }
+}
+
+export function createNarrative(narrativeName){
+    return function (dispatch) {
+        // prepare the new modelrun
+        let datetime = new Date()
+
+        let newNarrative = {
+            'name': narrativeName, 
+            'description': '', 
+        }
+        
+        console.log(narrativeName)
+
+        // make API request, returning a promise
+        return fetch('/api/v1/narratives/', {
+            method: 'post',
+            body: JSON.stringify(narrativeName),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+            //json => dispatch(receiveSosModelRun(json))
+            )
+    }
+}
+
+export function deleteNarrative(narrativeName){
+    return function (dispatch) {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/narratives/' + narrativeName, {
+            method: 'delete',
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+            //json => dispatch(receiveSosModelRun(json))
             )
     }
 }
