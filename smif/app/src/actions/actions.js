@@ -141,9 +141,6 @@ export function deleteSosModelRun(sosModelRunName){
                 response => response.json(),
                 error => console.log('An error occurred.', error)
             )
-            .then(
-            //json => dispatch(receiveSosModelRun(json))
-            )
     }
 }
 
@@ -267,9 +264,6 @@ export function createSosModel(sosModelName){
                 response => response.json(),
                 error => console.log('An error occurred.', error)
             )
-            .then(
-            //json => dispatch(receiveSosModelRun(json))
-            )
     }
 }
 
@@ -287,9 +281,6 @@ export function deleteSosModel(sosModelName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
-            )
-            .then(
-            //json => dispatch(receiveSosModelRun(json))
             )
     }
 }
@@ -386,18 +377,29 @@ export function saveSectorModel(model){
 export function createSectorModel(sectorModelName){
     return function (dispatch) {
         // prepare the new modelrun
+
+        console.log('CreateSectorModel', sectorModelName)
+
         let datetime = new Date()
 
-        let newModel = {
-            'name': sectorModelName, 
+        let newSectorModel = {
+            'name':  sectorModelName,
+            'description': '',
+            'classname': '',
+            'path': '',
+            'inputs': [],
+            'outputs': [],
+            'parameters': [],
+            'interventions': [],
+            'initial_conditions': []
         }
         
-        console.log(newModel)
+        console.log(newSectorModel)
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_models/', {
+        return fetch('/api/v1/sector_models/', {
             method: 'post',
-            body: JSON.stringify(newModel),
+            body: JSON.stringify(newSectorModel),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -407,9 +409,6 @@ export function createSectorModel(sectorModelName){
                 response => response.json(),
                 error => console.log('An error occurred.', error)
             )
-            .then(
-            //json => dispatch(receiveSosModelRun(json))
-            )
     }
 }
 
@@ -417,7 +416,7 @@ export function deleteSectorModel(sectorModelName){
     return function (dispatch) {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_models/' + sectorModelName, {
+        return fetch('/api/v1/sector_models/' + sectorModelName, {
             method: 'delete',
 
             headers: {
@@ -427,9 +426,6 @@ export function deleteSectorModel(sectorModelName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
-            )
-            .then(
-            //json => dispatch(receiveSosModelRun(json))
             )
     }
 }
@@ -550,9 +546,6 @@ export function saveScenario(scenario){
                 response => response.json(),
                 error => console.log('An error occurred.', error)
             )
-            .then(
-                //json => dispatch(receiveSosModelRun(json))
-            )
     }
 }
 
@@ -563,10 +556,10 @@ export function createScenario(scenarioName){
 
         let newScenario = {
             'name': scenarioName, 
-            'description': '', 
+            'description': '',
+            'scenario_set': '',
+            'parameters': []
         }
-        
-        console.log(newScenario)
 
         // make API request, returning a promise
         return fetch('/api/v1/scenarios/', {
@@ -580,9 +573,6 @@ export function createScenario(scenarioName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
-            )
-            .then(
-            //json => dispatch(receiveSosModelRun(json))
             )
     }
 }
@@ -601,9 +591,6 @@ export function deleteScenario(scenarioName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
-            )
-            .then(
-            //json => dispatch(receiveSosModelRun(json))
             )
     }
 }
@@ -724,9 +711,6 @@ export function saveNarrative(narrative){
                 response => response.json(),
                 error => console.log('An error occurred.', error)
             )
-            .then(
-                //json => dispatch(receiveSosModelRun(json))
-            )
     }
 }
 
@@ -737,15 +721,15 @@ export function createNarrative(narrativeName){
 
         let newNarrative = {
             'name': narrativeName, 
-            'description': '', 
+            'description': '',
+            'narrative_set': '',
+            'filename': ''
         }
-        
-        console.log(narrativeName)
 
         // make API request, returning a promise
         return fetch('/api/v1/narratives/', {
             method: 'post',
-            body: JSON.stringify(narrativeName),
+            body: JSON.stringify(newNarrative),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -754,9 +738,6 @@ export function createNarrative(narrativeName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
-            )
-            .then(
-            //json => dispatch(receiveSosModelRun(json))
             )
     }
 }
@@ -775,9 +756,6 @@ export function deleteNarrative(narrativeName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
-            )
-            .then(
-            //json => dispatch(receiveSosModelRun(json))
             )
     }
 }
