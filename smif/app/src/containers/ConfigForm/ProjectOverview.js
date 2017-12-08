@@ -33,8 +33,6 @@ class ProjectOverview extends Component {
         this.deletePopupSubmit = this.deletePopupSubmit.bind(this)
 
         this.handleInputChange = this.handleInputChange.bind(this)
-        this.handleProjectSave = this.handleProjectSave.bind(this)
-        this.handleCancel = this.handleCancel.bind(this)
     }
 
     componentWillMount () {
