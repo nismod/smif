@@ -1,10 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-
-import { Link } from 'react-router-dom'
 import update from 'immutability-helper'
-
-import { saveSosModel } from '../../actions/actions.js'
 
 import PropertySelector from './General/PropertySelector.js'
 import DependencySelector from './SosModel/DependencySelector.js'
@@ -14,13 +10,12 @@ class SosModelConfigForm extends Component {
     constructor(props) {
         super(props)
 
+        this.handleChange = this.handleChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {}
         this.state.selectedSosModel = this.props.sosModel
-        
-        this.handleChange = this.handleChange.bind(this)
     }
 
     handleChange(event) {
@@ -42,7 +37,7 @@ class SosModelConfigForm extends Component {
     }
 
     render() {
-        const {sosModel, sectorModels, scenarioSets, scenarios, narrativeSets, narratives} = this.props
+        const {sectorModels, scenarioSets, narrativeSets} = this.props
         const {selectedSosModel} = this.state
 
         return (
@@ -154,121 +149,9 @@ SosModelConfigForm.propTypes = {
     sosModel: PropTypes.object.isRequired,
     sectorModels: PropTypes.array.isRequired,
     scenarioSets: PropTypes.array.isRequired,
-    scenarios: PropTypes.array.isRequired,
     narrativeSets: PropTypes.array.isRequired,
     saveSosModel: PropTypes.func.isRequired,
     cancelSosModel: PropTypes.func.isRequired
 }
 
 export default SosModelConfigForm
-            
-            
-        
-
-//     <h3>Dependencies</h3>
-//     <div className="table-container">
-//         <table>
-//             <tr>
-//                 <th colSpan="2">Source</th>
-//                 <th colSpan="2">Sink</th>
-//                 <th colSpan="1"></th>
-//             </tr>
-//             <tr>
-//                 <th>Model</th>
-//                 <th>Output</th>
-//                 <th>Model</th>
-//                 <th>Input</th>
-//                 <th></th>
-//             </tr>
-//             <tr>
-//                 <td>population</td>
-//                 <td>count</td>
-//                 <td>energy_demand</td>
-//                 <td>population</td>
-//                 <td><FaTrash /></td>
-//             </tr>
-//             <tr>
-//                 <td>energy_demand</td>
-//                 <td>gas_demand</td>
-//                 <td>energy_supply</td>
-//                 <td>natural_gas_demand</td>
-//                 <td><FaTrash /></td>
-//             </tr>
-//         </table>
-//     </div>
-
-//     <fieldset>
-//         <label>Source Model:</label>
-//         <div className="select-container">
-//             <select>
-//                 <option value="" disabled="disabled" selected="selected">Select a source model</option>
-//                 <option value="Energy_Demand">Energy Demand</option>
-//                 <option value="Energy_Supply">Energy Supply</option>
-//                 <option value="Transport">Transport</option>
-//                 <option value="Solid_Waste">Solid Waste</option>
-//             </select>
-//         </div>
-//         <label>Source Model Output:</label>
-//         <div className="select-container">
-//             <select>
-//                 <option value="" disabled="disabled" selected="selected">Select a source model output</option>
-//                 <option value="population">Popula            //     <h3>Model</h3>
-//     <fieldset>
-//         <legend>Scenario Sets</legend>
-//         <label>
-//             <input type="checkbox" />
-//             Population
-//         </label>
-//         <label>
-//             <input type="checkbox" />
-//             Economy
-//         </label>
-//     </fieldset>
-//     <fieldset>
-//         <legend>Sector Models</legend>
-//         <label>
-//             <input type="checkbox" />
-//             Energy Dethis.handleSave = this.handleSave.bind(this)mand
-//         </label>
-//         <label>
-//             <input type="checkbox" />
-//             Energy Supply
-//         </label>
-//         <label>
-//             <input type="checkbox" />
-//             Transport
-//         </label>
-//         <label>
-//             <input type="checkbox" />
-//             Solid Waste
-//         </label>
-//     </fieldset>tion</option>
-//                 <option value="total_costs">Total costs</option>
-//                 <option value="fuel_price">Fuel price</option>
-//             </select>
-//         </div>
-//         <label>Sink Model:</label>
-//         <div className="select-container">
-//             <select>
-//                 <option value="" disabled="disabled" selected="selected">Select a sink model</option>
-//                 <option value="Energy_Demand">Energy Demand</option>
-//                 <option value="Energy_Supply">Energy Supply</option>
-//                 <option value="Transport">Transport</option>
-//                 <option value="Solid_Waste">Solid Waste</option>
-//             </select>
-//         </div>
-//         <label>Sink Model Input:</label>
-//         <div className="select-container">
-//             <select>
-//                 <option value="" disabled="disabled" selected="selected">Select a sink model input</option>
-//                 <option value="population">Population</option>
-//                 <option value="total_costs">Total costs</option>
-//                 <option value="fuel_price">Fuel price</option>
-//             </select>
-//         </div>
-//         <input type="button" value="Add Dependency" />
-//     </fieldset>
-
-//     <input type="button" value="Save SoS Model Configuration" />
-//     <input type="button" value="Cancel" />
-// </div>

@@ -1,10 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-
-import { Link } from 'react-router-dom'
 import update from 'react-addons-update'
-
-import { saveSosModelRun } from '../../actions/actions.js'
 
 import SosModelSelector from './SosModelRun/SosModelSelector.js'
 import ScenarioSelector from './SosModelRun/ScenarioSelector.js'
@@ -248,6 +244,8 @@ class SosModelRunConfigForm extends Component {
 
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save Model Run Configuration" onClick={this.handleSave} />
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} /> 
+
+                <br/>
             </div>
         )
     }
