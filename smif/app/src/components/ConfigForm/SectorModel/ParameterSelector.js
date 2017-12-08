@@ -2,30 +2,37 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'react-addons-update'
 
-import Popup from '../Popup.js'
+import Popup from '../General/Popup.js'
 
-class ParameterFileSelector extends Component {
+class ParameterSelector extends Component {
     constructor(props) {
         super(props)
 
         this.state = {
             CreatePopupIsOpen: false
         }
+
         
         this.state.inputs = {
             name: '',
-            filename: '',
-            spatial_resolution: '',
-            temporal_resolution: '',
-            units: '',
+            description: '',
+            absolute_range_min: '',
+            absolute_range_max: '',
+            suggested_range_min: '',
+            suggested_range_max: '',
+            default_value: '',
+            units: ''
         }
 
         this.state.className = {
             name: 'form-control',
-            filename: 'form-control',
-            spatial_resolution: 'form-control',
-            temporal_resolution: 'form-control',
-            units: 'form-control',
+            description: 'form-control',
+            absolute_range_min: 'form-control',
+            absolute_range_max: 'form-control',
+            suggested_range_min: 'form-control',
+            suggested_range_max: 'form-control',
+            default_value: 'form-control',
+            units: 'form-control'
         }
 
         this.closeCreatePopup = this.closeCreatePopup.bind(this)
@@ -61,8 +68,17 @@ class ParameterFileSelector extends Component {
         // Submit change
         if (inputOk) {
 
+            let newParameter = {
+                name: inputs.name,
+                description: inputs.description,
+                absolute_range: '(' + inputs.absolute_range_min + ', ' + inputs.absolute_range_max + ')',
+                suggested_range: '(' + inputs.suggested_range_min + ', ' + inputs.suggested_range_max + ')',
+                default_value: inputs.default_value,
+                units: inputs.units
+            }
+
             let newParameters = parameters
-            newParameters.push(inputs)
+            newParameters.push(newParameter)
 
             onChange(
                 {
@@ -96,7 +112,7 @@ class ParameterFileSelector extends Component {
         })
     }
 
-    renderParameterFileSelector() {
+    renderParameterSelector() {
 
         return (    
             <div>
@@ -112,13 +128,19 @@ class ParameterFileSelector extends Component {
                                     <input type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
-                                    </div>
+                                    </div> 
+   
+                                    <label>Description</label>
+                                    <input type="text" className={this.state.className.description} name="description" onChange={this.handleChange}/>
+                                    <div className="invalid-feedback">
+                                    Please provide a valid input.
+                                    </div>   
                                 </div>    
                             </div>
 
                             <div className="row">
                                 <div className="col">
-                                    <label>Filename</label>
+                                    <label>Default Value</label>
                                 </div>  
                                 <div className="col">
                                     <label>Units</label>
@@ -126,7 +148,7 @@ class ParameterFileSelector extends Component {
                             </div>
                             <div className="row">
                                 <div className="col">
-                                    <input type="text" className={this.state.className.filename} name="filename" onChange={this.handleChange}/>
+                                    <input type="number" className={this.state.className.default_value} name="default_value" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
                                     </div> 
@@ -139,27 +161,36 @@ class ParameterFileSelector extends Component {
                                 </div> 
                             </div>
 
+                            <label>Absolute Range</label>
                             <div className="row">
                                 <div className="col">
-                                    <label>Spatial Resolution</label>
-                                </div>  
-                                <div className="col">
-                                    <label>Temporal Resolution</label>
-                                </div>   
-                            </div>
-                            <div className="row">
-                                <div className="col">
-                                    <input type="text" className={this.state.className.spatial_resolution} name="spatial_resolution" onChange={this.handleChange}/>
+                                    <input type="number" className={this.state.className.absolute_range_min} name="absolute_range_min" placeholder="Minimum" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
-                                Please provide a valid input.
+                                            Please provide a valid input.
                                     </div> 
-                                </div>  
-                                <div className="col">
-                                    <input type="text" className={this.state.className.temporal_resolution} name="temporal_resolution" onChange={this.handleChange}/>
+                                </div>
+                                <div className="col">      
+                                    <input type="number" className={this.state.className.absolute_range_max} name="absolute_range_max" placeholder="Maximum" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
-                                Please provide a valid input.
-                                    </div>
-                                </div> 
+                                            Please provide a valid input.
+                                    </div>   
+                                </div>
+                            </div>
+
+                            <label>Suggested Range</label>
+                            <div className="row">
+                                <div className="col">
+                                    <input type="number" className={this.state.className.suggested_range_min} name="suggested_range_min" placeholder="Minimum" onChange={this.handleChange}/>
+                                    <div className="invalid-feedback">
+                                            Please provide a valid input.
+                                    </div> 
+                                </div>
+                                <div className="col">      
+                                    <input type="number" className={this.state.className.suggested_range_max} name="suggested_range_max" placeholder="Maximum" onChange={this.handleChange}/>
+                                    <div className="invalid-feedback">
+                                            Please provide a valid input.
+                                    </div>   
+                                </div>
                             </div>
                         </div>
 
@@ -189,15 +220,15 @@ class ParameterFileSelector extends Component {
         if (parameters == undefined) {
             return this.renderWarning('Parameters are undefined')
         } else {           
-            return this.renderParameterFileSelector(parameters)
+            return this.renderParameterSelector(parameters)
         }        
     }
 }
 
-ParameterFileSelector.propTypes = {
+ParameterSelector.propTypes = {
     parameters: PropTypes.array,
     onChange: PropTypes.func,
     onDelete: PropTypes.func
 }
 
-export default ParameterFileSelector
+export default ParameterSelector

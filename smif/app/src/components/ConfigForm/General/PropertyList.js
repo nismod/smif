@@ -153,7 +153,7 @@ class PropertyList extends Component {
 PropertyList.propTypes = {
     itemsName: PropTypes.string,
     items: PropTypes.array,
-    columns: PropTypes.array,
+    columns: PropTypes.object,
     editButton: PropTypes.bool,
     deleteButton: PropTypes.bool,
     onEdit: PropTypes.func,

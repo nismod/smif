@@ -4,16 +4,16 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Link, Router } from 'react-router-dom'
 
-import { fetchSectorModel } from '../actions/actions.js'
-import { fetchSectorModels } from '../actions/actions.js'
-import { fetchScenarioSets } from '../actions/actions.js'
-import { fetchScenarios } from '../actions/actions.js'
-import { fetchNarrativeSets } from '../actions/actions.js'
-import { fetchNarratives } from '../actions/actions.js'
+import { fetchSectorModel } from '../../actions/actions.js'
+import { fetchSectorModels } from '../../actions/actions.js'
+import { fetchScenarioSets } from '../../actions/actions.js'
+import { fetchScenarios } from '../../actions/actions.js'
+import { fetchNarrativeSets } from '../../actions/actions.js'
+import { fetchNarratives } from '../../actions/actions.js'
 
-import { saveSectorModel } from '../actions/actions.js'
+import { saveSectorModel } from '../../actions/actions.js'
 
-import SectorModelConfigForm from '../components/SectorModelConfigForm.js'
+import SectorModelConfigForm from '../../components/ConfigForm/SectorModelConfigForm.js'
 
 class SectorModelConfig extends Component {
     constructor(props) {

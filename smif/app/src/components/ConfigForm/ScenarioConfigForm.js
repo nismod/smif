@@ -2,8 +2,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import PropertyList from '../components/PropertyList'
-import ParameterFileSelector from '../components/ScenarioConfigForm/ParameterFileSelector'
+import PropertyList from './General/PropertyList'
+import ParameterFileSelector from './Scenario/ParameterFileSelector'
 
 class ScenarioConfigForm extends Component {
     constructor(props) {

@@ -6,12 +6,12 @@ import { Route, BrowserRouter as Router } from 'react-router-dom'
 
 import Nav from './components/Nav'
 import Welcome from './components/Welcome'
-import ProjectOverview from './containers/ProjectOverview'
-import SosModelRunConfig from './containers/SosModelRunConfig'
-import SosModelConfig from './containers/SosModelConfig'
-import SectorModelConfig from './containers/SectorModelConfig'
-import ScenarioConfig from './containers/ScenarioConfig'
-import NarrativeConfig from './containers/NarrativeConfig'
+import ProjectOverview from './containers/ConfigForm/ProjectOverview'
+import SosModelRunConfig from './containers/ConfigForm/SosModelRunConfig'
+import SosModelConfig from './containers/ConfigForm/SosModelConfig'
+import SectorModelConfig from './containers/ConfigForm/SectorModelConfig'
+import ScenarioConfig from './containers/ConfigForm/ScenarioConfig'
+import NarrativeConfig from './containers/ConfigForm/NarrativeConfig'
 
 import store from './store/store.js'
 

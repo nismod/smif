@@ -4,29 +4,31 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Link, Router } from 'react-router-dom'
 
-import { fetchSosModel } from '../actions/actions.js'
-import { fetchSectorModels } from '../actions/actions.js'
-import { fetchScenarioSets } from '../actions/actions.js'
-import { fetchScenarios } from '../actions/actions.js'
-import { fetchNarrativeSets } from '../actions/actions.js'
-import { fetchNarratives } from '../actions/actions.js'
+import { fetchScenario } from '../../actions/actions.js'
+import { fetchSectorModels } from '../../actions/actions.js'
+import { fetchScenarioSets } from '../../actions/actions.js'
+import { fetchScenarios } from '../../actions/actions.js'
+import { fetchNarrativeSets } from '../../actions/actions.js'
+import { fetchNarratives } from '../../actions/actions.js'
 
-import { saveSosModel } from '../actions/actions.js'
+import { saveScenario } from '../../actions/actions.js'
 
-import SosModelConfigForm from '../components/SosModelConfigForm.js'
+import ScenarioConfigForm from '../../components/ConfigForm/ScenarioConfigForm.js'
 
-class SosModelConfig extends Component {
+class ScenarioConfig extends Component {
     constructor(props) {
         super(props)
 
-        this.saveSosModel = this.saveSosModel.bind(this)
+        this.render = this.render.bind(this)
+
+        this.saveScenario = this.saveScenario.bind(this)
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
     }
 
     componentDidMount() {
         const { dispatch } = this.props
 
-        dispatch(fetchSosModel(this.props.match.params.name))
+        dispatch(fetchScenario(this.props.match.params.name))
         dispatch(fetchSectorModels())
         dispatch(fetchScenarioSets())
         dispatch(fetchScenarios())
@@ -38,9 +40,9 @@ class SosModelConfig extends Component {
         this.forceUpdate()
     }
 
-    saveSosModel(sosModel) {
+    saveScenario(Scenario) {
         const { dispatch } = this.props
-        dispatch(saveSosModel(sosModel))
+        dispatch(saveScenario(Scenario))
         this.returnToPreviousPage()
     }
 
@@ -64,28 +66,28 @@ class SosModelConfig extends Component {
         )
     }
 
-    renderSosModelConfig(sos_model, sector_models, scenario_sets, scenarios, narrative_sets, narratives) {
+    renderScenarioConfig(scenario, sector_models, scenario_sets, scenarios, narrative_sets, narratives) {
         return (
             <div>
-                <h1>System-of-systems Model Configuration</h1>         
-                <SosModelConfigForm sosModel={sos_model} sectorModels={sector_models} scenarioSets={scenario_sets} scenarios={scenarios} narrativeSets={narrative_sets} narratives={narratives} saveSosModel={this.saveSosModel} cancelSosModel={this.returnToPreviousPage}/>            
+                <h1>Scenario Configuration</h1>         
+                <ScenarioConfigForm scenario={scenario} sectorModels={sector_models} scenarioSets={scenario_sets} scenarios={scenarios} narrativeSets={narrative_sets} narratives={narratives} saveScenario={this.saveScenario} cancelScenario={this.returnToPreviousPage}/>            
             </div>
         )
     }
 
     render () {
-        const {sos_model, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching} = this.props
+        const {scenario, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching} = this.props
 
         if (isFetching) {
             return this.renderLoading()
         } else {
-            return this.renderSosModelConfig(sos_model, sector_models, scenario_sets, scenarios, narrative_sets, narratives)
+            return this.renderScenarioConfig(scenario, sector_models, scenario_sets, scenarios, narrative_sets, narratives)
         }
     }
 }
 
-SosModelConfig.propTypes = {
-    sos_model: PropTypes.object.isRequired,
+ScenarioConfig.propTypes = {
+    scenario: PropTypes.object.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenario_sets: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
@@ -95,15 +97,16 @@ SosModelConfig.propTypes = {
 }
 
 function mapStateToProps(state) {
+
     return {
-        sos_model: state.sos_model.item,
+        scenario: state.scenario.item,
         sector_models: state.sector_models.items,
         scenario_sets: state.scenario_sets.items,
         scenarios: state.scenarios.items,
         narrative_sets: state.narrative_sets.items,
         narratives: state.narratives.items,
-        isFetching: (state.sos_model.isFetching || state.sos_models.isFetching || state.scenario_sets.isFetching || state.scenarios.isFetching || state.narrative_sets.isFetching || state.narratives.isFetching)
+        isFetching: (state.scenario.isFetching)
     }
 }
 
-export default connect(mapStateToProps)(SosModelConfig)
+export default connect(mapStateToProps)(ScenarioConfig)
