@@ -9,12 +9,15 @@ import { Link } from 'react-router-dom'
 import { fetchSosModelRuns } from '../actions/actions.js'
 import { fetchSosModels } from '../actions/actions.js'
 import { fetchSectorModels } from '../actions/actions.js'
+import { fetchScenarios } from '../actions/actions.js'
+import { fetchNarratives } from '../actions/actions.js'
 
 import { createSosModelRun } from '../actions/actions.js'
 import { deleteSosModelRun } from '../actions/actions.js'
 
 import Popup from '../components/Popup.js'
 import ProjectOverviewItem from '../components/ProjectOverviewItem.js'
+import PropertyList from '../components/PropertyList.js'
 
 class ProjectOverview extends Component {
     constructor() {
@@ -42,6 +45,8 @@ class ProjectOverview extends Component {
         dispatch(fetchSosModelRuns())
         dispatch(fetchSosModels())
         dispatch(fetchSectorModels())
+        dispatch(fetchScenarios())
+        dispatch(fetchNarratives())
     }
 
     handleInputChange(event) {
@@ -90,6 +95,18 @@ class ProjectOverview extends Component {
         return null
     }
 
+    deleteSectorModel(sectorModelName) {
+        return null
+    }
+
+    deleteScenario(scenarioName) {
+        return null
+    }
+
+    deleteNarrative(narrativeName) {
+        return null
+    }
+
     handleProjectSave() {
         console.log(this.props)
     }
@@ -99,7 +116,7 @@ class ProjectOverview extends Component {
     }
 
     render () {
-        const { sos_model_runs, sos_models, sector_models, isFetching } = this.props
+        const { sos_model_runs, sos_models, sector_models, scenarios, narratives, isFetching } = this.props
 
         return (
             <div>
@@ -133,7 +150,7 @@ class ProjectOverview extends Component {
                             Model Runs
                         </div>
                         <div className="card-body">
-                            <ProjectOverviewItem items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.deleteSosModelRun} />
+                            <ProjectOverviewItem items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.deleteSosModelRun} />                            
                             <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a new Model Run" onClick={this.openCreateSosModelRunPopup}/>
                         </div>
                     </div>
@@ -164,11 +181,29 @@ class ProjectOverview extends Component {
 
                     <br/>
 
-                    <h2>Scenarios</h2>
-                    <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a Scenario" />
+                    <div className="card">
+                        <div className="card-header">
+                            Scenarios
+                        </div>
+                        <div className="card-body">
+                            <ProjectOverviewItem items={scenarios} itemLink="/configure/scenarios/" onDelete={this.deleteScenario} />
+                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a new Scenario" />
+                        </div>
+                    </div>
 
-                    <h2>Narratives</h2>
-                    <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a Narrative" />
+                    <br/>
+
+                    <div className="card">
+                        <div className="card-header">
+                            Narratives
+                        </div>
+                        <div className="card-body">
+                            <ProjectOverviewItem items={narratives} itemLink="/configure/narratives/" onDelete={this.deleteNarrative} />
+                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Create a new Narrative" />
+                        </div>
+                    </div>
+
+                    <br/>
 
                     <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save Project Configuration" onClick={this.handleProjectSave} />
                     <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
@@ -217,18 +252,22 @@ ProjectOverview.propTypes = {
     sos_model_runs: PropTypes.array.isRequired,
     sos_models: PropTypes.array.isRequired,
     sector_models: PropTypes.array.isRequired,
+    scenarios: PropTypes.array.isRequired,
+    narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
 }
 
 function mapStateToProps(state) {
-    const { sos_model_runs, sos_models, sector_models } = state
+    const { sos_model_runs, sos_models, sector_models, scenarios, narratives } = state
 
     return {
         sos_model_runs: sos_model_runs.items,
         sos_models: sos_models.items,
         sector_models: sector_models.items,
-        isFetching: (sos_models.isFetching && sos_model_runs.isFetching)
+        scenarios: scenarios.items,
+        narratives: narratives.items,
+        isFetching: (sos_models.isFetching || sos_model_runs.isFetching || sector_models.isFetching || scenarios.isFetching || narratives.isFetching )
     }
 }
 
