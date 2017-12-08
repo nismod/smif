@@ -8,6 +8,7 @@
 """
 from __future__ import absolute_import, division, print_function
 
+import json
 import logging
 import os
 from copy import copy
@@ -35,7 +36,7 @@ logging.basicConfig(filename='test_logs.log',
 
 
 @fixture(scope='function')
-def setup_folder_structure(tmpdir_factory):
+def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
     """
 
     Returns
@@ -55,13 +56,20 @@ def setup_folder_structure(tmpdir_factory):
         os.path.join('data', 'narratives'),
         os.path.join('data', 'region_definitions'),
         os.path.join('data', 'scenarios'),
-        'models'
+        'models',
+        'results'
     ]
 
     test_folder = tmpdir_factory.mktemp("smif")
 
     for folder in folder_list:
         test_folder.mkdir(folder)
+
+    region_file = test_folder.join('data', 'region_definitions', 'test_region.json')
+    region_file.write(json.dumps(oxford_region))
+
+    intervals_file = test_folder.join('data', 'interval_definitions', 'annual.csv')
+    intervals_file.write("id,start,end\n1,P0Y,P1Y\n")
 
     return test_folder
 

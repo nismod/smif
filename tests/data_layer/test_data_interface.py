@@ -4,9 +4,11 @@ import csv
 import json
 import os
 from copy import deepcopy
-from pytest import raises
 
-from smif.data_layer import (DataExistsError, DataMismatchError, DataNotFoundError)
+import numpy as np
+from pytest import raises
+from smif.data_layer import (DataExistsError, DataMismatchError,
+                             DataNotFoundError)
 from smif.data_layer.datafile_interface import transform_leaves
 from smif.data_layer.load import dump
 
@@ -812,6 +814,146 @@ class TestDatafileInterface():
         }
         actual = get_handler.read_parameters('unique_model_run_name', 'energy_demand')
         assert actual == expected
+
+    def test_read_results(self, setup_folder_structure, get_handler):
+        """Results from .csv in a folder structure which encodes metadata
+        in filenames and directory structure.
+
+        With no decision/iteration specifiers:
+            results/
+            <modelrun_name>/
+            <model_name>/
+                output_<output_name>_
+                timestep_<timestep>_
+                regions_<spatial_resolution>_
+                intervals_<temporal_resolution>.csv
+        Else:
+            results/
+            <modelrun_name>/
+            <model_name>/
+            decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/
+                output_<output_name>_
+                timestep_<timestep>_
+                regions_<spatial_resolution>_
+                intervals_<temporal_resolution>.csv
+        """
+        modelrun = 'energy_transport_baseline'
+        model = 'energy_demand'
+        output = 'electricity_demand'
+        timestep = 2020
+        spatial_resolution = 'lad'
+        temporal_resolution = 'annual'
+
+        # 1. case with neither modelset nor decision
+        expected = np.array([[[1.0]]])
+        csv_contents = "region,interval,value\noxford,1,1.0\n"
+        path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            model,
+            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                output,
+                timestep,
+                spatial_resolution,
+                temporal_resolution
+            )
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as fh:
+            fh.write(csv_contents)
+
+        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep)
+        assert actual == expected
+
+        # 2. case with decision
+        decision_iteration = 1
+        expected = np.array([[[2.0]]])
+        csv_contents = "region,interval,value\noxford,1,2.0\n"
+        path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            model,
+            "decision_{}".format(decision_iteration),
+            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                output,
+                timestep,
+                spatial_resolution,
+                temporal_resolution
+            )
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as fh:
+            fh.write(csv_contents)
+
+        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep, None,
+                                          decision_iteration)
+        assert actual == expected
+
+        # 3. case with modelset
+        modelset_iteration = 1
+        expected = np.array([[[3.0]]])
+        csv_contents = "region,interval,value\noxford,1,3.0\n"
+        path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            model,
+            "modelset_{}".format(modelset_iteration),
+            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                output,
+                timestep,
+                spatial_resolution,
+                temporal_resolution
+            )
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as fh:
+            fh.write(csv_contents)
+
+        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep, modelset_iteration)
+        assert actual == expected
+
+        # 4. case with both decision and modelset
+        expected = np.array([[[4.0]]])
+        csv_contents = "region,interval,value\noxford,1,4.0\n"
+        path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            model,
+            "decision_{}_modelset_{}".format(
+                modelset_iteration,
+                decision_iteration
+            ),
+            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                output,
+                timestep,
+                spatial_resolution,
+                temporal_resolution
+            )
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as fh:
+            fh.write(csv_contents)
+
+        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep, modelset_iteration,
+                                          decision_iteration)
+        assert actual == expected
+
+    def test_read_results_missing(self, setup_folder_structure, get_handler):
+        pass
+
+    def test_write_results(self, setup_folder_structure, get_handler):
+        pass
+
+    def test_write_results_misshapen(self, setup_folder_structure, get_handler):
+        pass
 
 
 def test_transform_leaves_empty():

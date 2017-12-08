@@ -1,12 +1,17 @@
 """Common data interface
 """
-
 from abc import ABCMeta, abstractmethod
+from logging import getLogger
+
+import numpy as np
 
 
 class DataInterface(metaclass=ABCMeta):
     """Abstract base class to define common data interface
     """
+    def __init__(self):
+        self.logger = getLogger(__name__)
+
     @abstractmethod
     def read_sos_model_runs(self):
         raise NotImplementedError()
@@ -168,6 +173,105 @@ class DataInterface(metaclass=ABCMeta):
                       temporal_resolution, timestep=None, modelset_iteration=None,
                       decision_iteration=None):
         raise NotImplementedError()
+
+    @staticmethod
+    def ndarray_to_data_list(data, region_names, interval_names):
+        """Convert :class:`numpy.ndarray` to list of observations
+
+        Parameters
+        ----------
+        data : numpy.ndarray
+        region_names : list of str
+        interval_names : list of str
+
+        Returns
+        -------
+        observations : list of dict
+            Each dict has keys: 'region' (a region name), 'interval' (an
+            interval name) and 'value'.
+        """
+        observations = []
+        for region_idx, region in enumerate(region_names):
+            for interval_idx, interval in enumerate(interval_names):
+                observations.append({
+                    'region': region,
+                    'interval': interval,
+                    'value': data[region_idx, interval_idx]
+                })
+        return observations
+
+    @staticmethod
+    def data_list_to_ndarray(observations, region_names, interval_names):
+        """Convert list of observations to :class:`numpy.ndarray`
+
+        Parameters
+        ----------
+        observations : list of dict
+            Required keys for each dict are 'region' (a region name), 'interval'
+            (an interval name) and 'value'.
+        region_names : list of str
+        interval_names : list of str
+
+        Returns
+        -------
+        data : numpy.ndarray
+
+        Raises
+        ------
+        KeyError
+            If an observation is missing a required key
+        ValueError
+            If an observation region or interval is not in region_names or
+            interval_names
+        DataNotFoundError
+            If the observations don't include data for any region/interval
+            combination
+        """
+        DataInterface._validate_observations(observations, region_names, interval_names)
+
+        data = np.full((len(region_names), len(interval_names)), np.nan)
+
+        for obs in observations:
+            region_idx = region_names.index(obs['region'])
+            interval_idx = interval_names.index(obs['interval'])
+            data[region_idx, interval_idx] = obs['value']
+
+        return data
+
+    @staticmethod
+    def _validate_observations(observations, region_names, interval_names):
+        if len(observations) != len(region_names) * len(interval_names):
+            raise DataMismatchError(
+                "Number of observations is not equal to intervals x regions when loading %s"
+            )
+        DataInterface._validate_observation_keys(observations)
+        DataInterface._validate_observation_meta(observations, region_names, 'region')
+        DataInterface._validate_observation_meta(observations, interval_names, 'interval')
+
+    @staticmethod
+    def _validate_observation_keys(observations):
+        for obs in observations:
+            if 'region' not in obs:
+                raise KeyError(
+                    "Observation missing region: {}".format(obs))
+            if 'interval' not in obs:
+                raise KeyError(
+                    "Observation missing interval: {}".format(obs))
+            if 'value' not in obs:
+                raise KeyError(
+                    "Observation missing value: {}".format(obs))
+
+    @staticmethod
+    def _validate_observation_meta(observations, meta_list, meta_name):
+        observed = set()
+        for obs in observations:
+            if obs[meta_name] not in meta_list:
+                raise ValueError("Unknown interval '{}'".format(obs[meta_name]))
+            else:
+                observed.add(obs[meta_name])
+        missing = set(meta_list) - observed
+        if missing:
+            raise DataNotFoundError("Missing values for %ss: %s", meta_name, list(missing))
 
 
 class DataNotFoundError(Exception):

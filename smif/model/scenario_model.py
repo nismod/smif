@@ -1,3 +1,6 @@
+"""Scenario models represent scenario data sources within a system-of-systems
+model.
+"""
 from logging import getLogger
 
 import numpy as np
@@ -125,18 +128,12 @@ class ScenarioModelBuilder(object):
         self.region_register = get_region_register()
         self.interval_register = get_interval_register()
 
-    def construct(self, scenario_config, data, timesteps):
-        """Build the complete and populated ScenarioModel
-
-        Assumes that a ScenarioModel can only have one output
+    def construct(self, scenario_config):
+        """Build a ScenarioModel
 
         Arguments
         ---------
         scenario_config: dict
-        data: dict
-            A dictionary of scenario data, with keys scenario parameter names
-        timesteps: list
-            A list of integer years e.g. ``[2010, 2011, 2013]``
         """
         self.scenario.scenario_set = scenario_config['scenario_set']
         # Scenarios need to be known by the scenario set name
@@ -156,104 +153,7 @@ class ScenarioModelBuilder(object):
                                      temporal_res,
                                      parameter['units'])
 
-            array_data = self._data_list_to_array(name,
-                                                  data[name],
-                                                  timesteps,
-                                                  spatial_res,
-                                                  temporal_res)
-
-            self.scenario.add_data(name, array_data, timesteps)
-
     def finish(self):
         """Return the built ScenarioModel
         """
         return self.scenario
-
-    def _data_list_to_array(self, param, observations, timestep_names,
-                            spatial_resolution, temporal_resolution):
-        # TODO push down into data_layer
-        """Convert list of observations to :class:`numpy.ndarray`
-
-        Arguments
-        ---------
-        param : str
-        observations : list
-        timestep_names : list
-        spatial_resolution : smif.convert.area.RegionSet
-        temporal_resolution : smif.convert.interval.IntervalSet
-
-        """
-        interval_names = temporal_resolution.get_entry_names()
-        region_names = spatial_resolution.get_entry_names()
-
-        self._validate_observations(param, observations, region_names, spatial_resolution.name,
-                                    interval_names, temporal_resolution.name)
-
-        if len(timestep_names) == 0:
-            self.logger.error("No timesteps found when loading %s", param)
-
-        data = np.full((
-            len(timestep_names),
-            len(region_names),
-            len(interval_names)
-        ), np.nan)
-
-        if len(observations) != data.size:
-            self.logger.warning(
-                "Number of observations is not equal to timesteps x  " +
-                "intervals x regions when loading %s", param)
-
-        skipped_years = set()
-
-        for obs in observations:
-            year = int(obs['year'])
-            region = obs['region']
-            interval = obs['interval']
-
-            if year not in timestep_names:
-                # Don't add data if year is not in timestep list
-                skipped_years.add(year)
-                continue
-
-            timestep_idx = timestep_names.index(year)
-            interval_idx = interval_names.index(interval)
-            region_idx = region_names.index(region)
-
-            data[timestep_idx, region_idx, interval_idx] = obs['value']
-
-        for year in skipped_years:
-            msg = "Year '%s' not defined in model timesteps so skipping"
-            self.logger.warning(msg, year)
-
-        return data
-
-    @staticmethod
-    def _validate_observations(param, observations, region_names, region_set_name,
-                               interval_names, interval_set_name):
-        for obs in observations:
-            if 'year' not in obs:
-                raise ValueError(
-                    "Scenario data item missing year: '{}'".format(obs))
-            if 'region' not in obs:
-                raise ValueError(
-                    "Scenario data item missing region: '{}'".format(obs))
-            if 'interval' not in obs:
-                raise ValueError(
-                    "Scenario data item missing interval: {}".format(obs))
-            if 'value' not in obs:
-                raise ValueError(
-                    "Scenario data item missing value: {}".format(obs))
-
-            if obs['region'] not in region_names:
-                raise ValueError(
-                    "Region '{}' not defined in set '{}' for parameter '{}'".format(
-                        obs['region'],
-                        region_set_name,
-                        param))
-
-            if obs['interval'] not in interval_names:
-                raise ValueError(
-                    "Interval '{}' not defined in set '{}' for parameter '{}'".format(
-                        obs['interval'],
-                        interval_set_name,
-                        param))

@@ -25,6 +25,8 @@ class DatafileInterface(DataInterface):
         The path to the configuration and data files
     """
     def __init__(self, base_folder):
+        super().__init__()
+
         self.base_folder = base_folder
         self.file_dir = {}
         self.file_dir['project'] = os.path.join(base_folder, 'config')
@@ -389,6 +391,12 @@ class DatafileInterface(DataInterface):
 
         return data
 
+    def _read_region_names(self, region_definition_name):
+        return [
+            feature['properties']['name']
+            for feature in self.read_region_definition_data(region_definition_name)
+        ]
+
     def write_region_definition(self, region_definition):
         """Write region_definition to project configuration
 
@@ -449,7 +457,7 @@ class DatafileInterface(DataInterface):
 
         Notes
         -----
-        Expects csv file to contain headings of `year`, `start`, `end`
+        Expects csv file to contain headings of `id`, `start`, `end`
         """
         interval_defs = self.read_interval_definitions()
         filename = None
@@ -465,6 +473,12 @@ class DatafileInterface(DataInterface):
             for row in reader:
                 data.append(row)
         return data
+
+    def _read_interval_names(self, interval_definition_name):
+        return [
+            interval['id']
+            for interval in self.read_interval_definition_data(interval_definition_name)
+        ]
 
     def write_interval_definition(self, interval_definition):
         """Write interval_definition to project configuration
@@ -1004,8 +1018,17 @@ class DatafileInterface(DataInterface):
         modelset_iteration : int, optional
         decision_iteration : int, optional
         """
-        results_path = self._get_results_path(modelrun_id, model_name, output_name)
-        return self._get_data_from_csv(results_path)
+        if timestep is None:
+            raise NotImplementedError
+
+        results_path = self._get_results_path(
+            modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
+            timestep, modelset_iteration, decision_iteration)
+
+        csv_data = self._get_data_from_csv(results_path)
+        region_names = self._read_region_names(spatial_resolution)
+        interval_names = self._read_interval_names(temporal_resolution)
+        return self.data_list_to_ndarray(csv_data, region_names, interval_names)
 
     def write_results(self, modelrun_id, model_name, output_name, data, spatial_resolution,
                       temporal_resolution, timestep=None, modelset_iteration=None,
@@ -1024,32 +1047,110 @@ class DatafileInterface(DataInterface):
         modelset_iteration : int, optional
         decision_iteration : int, optional
         """
-        results_path = self._get_results_path(modelrun_id, model_name, output_name)
+        if timestep is None:
+            raise NotImplementedError
+
+        results_path = self._get_results_path(
+            modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
+            timestep, modelset_iteration, decision_iteration)
+        os.makedirs(os.path.dirname(results_path), exist_ok=True)
+
         if data.ndims == 3:
-            self._write_data_to_csv(results_path, data)
+            raise NotImplementedError
         elif data.ndims == 2:
-            self._write_data_to_csv(results_path, data, timestep)
+            region_names = self._read_region_names(spatial_resolution)
+            interval_names = self._read_interval_names(temporal_resolution)
+            csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
+            self._write_data_to_csv(results_path, csv_data)
         else:
             DataMismatchError(
                 "Expected to write either timestep x region x interval or " +
                 "region x interval data"
             )
 
-    def _get_results_path(self, modelrun_id, model_name, output_name):
+    def _get_results_path(self, modelrun_id, model_name, output_name, spatial_resolution,
+                          temporal_resolution, timestep, modelset_iteration=None,
+                          decision_iteration=None):
         """Return path to text file for a given output
+
+        On the pattern of:
+            results/
+            <modelrun_name>/
+            <model_name>/
+            decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/ or none
+                output_<output_name>_
+                timestep_<timestep>_
+                regions_<spatial_resolution>_
+                intervals_<temporal_resolution>.csv
 
         Parameters
         ----------
         modelrun_id : str
         model_name : str
         output_name : str
+        spatial_resolution : str
+        temporal_resolution : str
+        timestep : str or int
+        modelset_iteration : int, optional
+        decision_iteration : int, optional
+
+        Returns
+        -------
+        path : strs
         """
         results_dir = self.file_dir['results']
-        return os.path.join(
-            results_dir,
-            modelrun_id,
-            "{}_{}.csv".format(model_name, output_name)
-        )
+        if modelset_iteration is None and decision_iteration is None:
+            path = os.path.join(
+                results_dir,
+                modelrun_id,
+                model_name,
+                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                    output_name,
+                    timestep,
+                    spatial_resolution,
+                    temporal_resolution
+                )
+            )
+        elif modelset_iteration is None and decision_iteration is not None:
+            path = os.path.join(
+                results_dir,
+                modelrun_id,
+                model_name,
+                "decision_{}".format(decision_iteration),
+                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                    output_name,
+                    timestep,
+                    spatial_resolution,
+                    temporal_resolution
+                )
+            )
+        elif modelset_iteration is not None and decision_iteration is None:
+            path = os.path.join(
+                results_dir,
+                modelrun_id,
+                model_name,
+                "modelset_{}".format(modelset_iteration),
+                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                    output_name,
+                    timestep,
+                    spatial_resolution,
+                    temporal_resolution
+                )
+            )
+        else:
+            path = os.path.join(
+                results_dir,
+                modelrun_id,
+                model_name,
+                "decision_{}_modelset_{}".format(decision_iteration, modelset_iteration),
+                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                    output_name,
+                    timestep,
+                    spatial_resolution,
+                    temporal_resolution
+                )
+            )
+        return path
 
     def _read_project_config(self):
         """Read the project configuration
