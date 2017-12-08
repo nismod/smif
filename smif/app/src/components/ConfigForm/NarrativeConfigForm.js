@@ -6,13 +6,12 @@ class NarrativeConfigForm extends Component {
     constructor(props) {
         super(props)
 
+        this.handleChange = this.handleChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {}
         this.state.selectedNarrative = this.props.narrative
-        
-        this.handleChange = this.handleChange.bind(this)
     }
 
     handleChange(event) {
@@ -36,8 +35,6 @@ class NarrativeConfigForm extends Component {
     render() {
         const {narrativeSets} = this.props
         const {selectedNarrative} = this.state
-
-        console.log(selectedNarrative)
      
         return (
             <div>

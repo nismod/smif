@@ -9,13 +9,12 @@ class ScenarioConfigForm extends Component {
     constructor(props) {
         super(props)
 
+        this.handleChange = this.handleChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {}
         this.state.selectedScenario = this.props.scenario
-        
-        this.handleChange = this.handleChange.bind(this)
     }
 
     handleChange(event) {
@@ -37,7 +36,7 @@ class ScenarioConfigForm extends Component {
     }
 
     render() {
-        const {scenario, sectorModels, scenarioSets, scenarios, narrativeSets, narratives} = this.props
+        const {scenarioSets} = this.props
         const {selectedScenario} = this.state
      
         return (
@@ -92,7 +91,7 @@ class ScenarioConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Parameters</div>
                         <div className="card-body">
-                            <PropertyList itemsName="parameters" items={selectedScenario.parameters} columns={{name: 'Name', filename: 'Filename', spatial_resolution: 'Spatial Resolution', temporal_resolution: 'Temporal Resolution', units: 'Units'}} editButton={false} deleteButton={true} onEdit="" onDelete={this.handleChange} />
+                            <PropertyList itemsName="parameters" items={selectedScenario.parameters} columns={{name: 'Name', filename: 'Filename', spatial_resolution: 'Spatial Resolution', temporal_resolution: 'Temporal Resolution', units: 'Units'}} editButton={false} deleteButton={true} onDelete={this.handleChange} />
                             <ParameterFileSelector parameters={selectedScenario.parameters} onChange={this.handleChange}/>
                         </div>
                     </div>
@@ -112,10 +111,7 @@ class ScenarioConfigForm extends Component {
 
 ScenarioConfigForm.propTypes = {
     scenario: PropTypes.object.isRequired,
-    sectorModels: PropTypes.array.isRequired,
     scenarioSets: PropTypes.array.isRequired,
-    scenarios: PropTypes.array.isRequired,
-    narrativeSets: PropTypes.array.isRequired,
     saveScenario: PropTypes.func.isRequired,
     cancelScenario: PropTypes.func.isRequired
 }

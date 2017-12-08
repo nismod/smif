@@ -10,14 +10,13 @@ import PropertyList from './General/PropertyList.js'
 class SectorModelConfigForm extends Component {
     constructor(props) {
         super(props)
-
+        
+        this.handleChange = this.handleChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {}
         this.state.selectedSectorModel = this.props.sectorModel
-        
-        this.handleChange = this.handleChange.bind(this)
     }
 
     handleChange(event) {
@@ -39,7 +38,6 @@ class SectorModelConfigForm extends Component {
     }
 
     render() {
-        const {sectorModel, sectorModels, scenarioSets, scenarios, narrativeSets, narratives} = this.props
         const {selectedSectorModel} = this.state
 
         return (
@@ -94,7 +92,7 @@ class SectorModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Inputs</div>
                         <div className="card-body">
-                            <PropertyList itemsName="inputs" items={selectedSectorModel.inputs} columns={{name: 'Name', spatial_resolution: 'Spatial Resolution', temporal_resolution: 'Temporal Resolution', units: 'Units'}} editButton={false} deleteButton={true} onEdit="" onDelete={this.handleChange} />
+                            <PropertyList itemsName="inputs" items={selectedSectorModel.inputs} columns={{name: 'Name', spatial_resolution: 'Spatial Resolution', temporal_resolution: 'Temporal Resolution', units: 'Units'}} editButton={false} deleteButton={true} onDelete={this.handleChange} />
                             <InputsOutputsForm items={selectedSectorModel.inputs} isInputs={true} onChange={this.handleChange}/>
                         </div>
                     </div>
@@ -104,7 +102,7 @@ class SectorModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Outputs</div>
                         <div className="card-body">
-                            <PropertyList itemsName="outputs" items={selectedSectorModel.outputs} columns={{name: 'Name', spatial_resolution: 'Spatial Resolution', temporal_resolution: 'Temporal Resolution', units: 'Units'}} editButton={false} deleteButton={true} onEdit="" onDelete={this.handleChange} />
+                            <PropertyList itemsName="outputs" items={selectedSectorModel.outputs} columns={{name: 'Name', spatial_resolution: 'Spatial Resolution', temporal_resolution: 'Temporal Resolution', units: 'Units'}} editButton={false} deleteButton={true} onDelete={this.handleChange} />
                             <InputsOutputsForm items={selectedSectorModel.outputs} isOutputs={true} onChange={this.handleChange}/>
                         </div>
                     </div>
@@ -114,79 +112,10 @@ class SectorModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Parameters</div>
                         <div className="card-body">
-                            <PropertyList itemsName="parameters" items={selectedSectorModel.parameters} columns={{name: 'Name', description: 'Description', default_value: 'Default Value', units: 'Units', absolute_range: 'Absolute Range', suggested_range: 'Suggested Range'}} editButton={false} deleteButton={true} onEdit="" onDelete={this.handleChange} />
+                            <PropertyList itemsName="parameters" items={selectedSectorModel.parameters} columns={{name: 'Name', description: 'Description', default_value: 'Default Value', units: 'Units', absolute_range: 'Absolute Range', suggested_range: 'Suggested Range'}} editButton={false} deleteButton={true} onDelete={this.handleChange} />
                             <ParameterSelector parameters={selectedSectorModel.parameters} onChange={this.handleChange}/>
                         </div>
                     </div>
-
-                    <br/>
-
-                    {/* <div className="card">
-                        <div className="card-header">Settings</div>
-                        <div className="card-body">
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Sector Models</label>
-                                <div className="col-sm-10">
-                                    <PropertySelector name="sector_models" activeProperties={selectedSectorModel.sector_models} availableProperties={sectorModels} onChange={this.handleChange} />
-                                </div>
-                            </div>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Scenario Sets</label>
-                                <div className="col-sm-10">
-                                    <PropertySelector name="scenario_sets" activeProperties={selectedSectorModel.scenario_sets} availableProperties={scenarioSets} onChange={this.handleChange} />
-                                </div>
-                            </div>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Narrative Sets</label>
-                                <div className="col-sm-10">
-                                    <PropertySelector name="narrative_sets" activeProperties={selectedSectorModel.narrative_sets} availableProperties={narrativeSets} onChange={this.handleChange} />
-                                </div>
-                            </div>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Iterations</label>
-                                <div className="col-sm-10">
-                                    <div className="input-group">
-                                        <span className="input-group-addon">Maximum</span>
-                                        <input className="form-control" name="max_iterations" type="number" min="1" defaultValue={selectedSectorModel.max_iterations} onChange={this.handleChange}/>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <br/>
-
-                    <div className="card">
-                        <div className="card-header">Dependencies</div>
-                        <div className="card-body">
-                            <PropertyList itemsName="dependencies" items={selectedSectorModel.dependencies} columns={['Source Model', 'Output', 'Sink Model', 'Input']} editButton={false} deleteButton={true} onEdit="" onDelete={this.handleChange} />
-                            <DependencySelector dependencies={selectedSectorModel.dependencies} sectorModels={sectorModels} onChange={this.handleChange}/>
-                        </div>
-                    </div>
-
-                    <br/>
-
-                    <div className="card">
-                        <div className="card-header">Convergence Tolerance</div>
-                        <div className="card-body">
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Absolute</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" name="convergence_absolute_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSectorModel.convergence_absolute_tolerance} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Relative</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" name="convergence_relative_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSectorModel.convergence_relative_tolerance} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-                        </div>
-                    </div> */}
 
                     <br/>
                 </form>
