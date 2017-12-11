@@ -55,15 +55,19 @@ class DatafileInterface(DataInterface):
         list
             A list of sos_model_run dicts
         """
-        sos_model_runs = []
+        sos_model_run_name_desc = []
 
         sos_model_run_names = self._read_filenames_in_dir(self.file_dir['sos_model_runs'],
                                                           '.yml')
         for sos_model_run_name in sos_model_run_names:
-            sos_model_runs.append(self._read_yaml_file(self.file_dir['sos_model_runs'],
-                                                       sos_model_run_name))
+            sos_model_run = self._read_yaml_file(
+                self.file_dir['sos_model_runs'], sos_model_run_name)
+            sos_model_run_name_desc.append({
+                'name': sos_model_run['name'],
+                'description': sos_model_run['description']
+            })
 
-        return sos_model_runs
+        return sos_model_run_name_desc
 
     def read_sos_model_run(self, sos_model_run_name):
         """Read a system-of-system model run
@@ -182,7 +186,8 @@ class DatafileInterface(DataInterface):
         if self._sos_model_exists(sos_model['name']):
             raise DataExistsError("sos_model '%s' already exists" % sos_model['name'])
         else:
-            self._write_yaml_file(self.file_dir['sos_models'],
+            self._write_yaml_file(
+                self.file_dir['sos_models'],
                 sos_model['name'],
                 sos_model)
 
@@ -232,11 +237,12 @@ class DatafileInterface(DataInterface):
         """
         sector_models = []
 
-        sector_model_names = self._read_filenames_in_dir(self.file_dir['sector_models'],
-                                                          '.yml')
+        sector_model_names = self._read_filenames_in_dir(
+            self.file_dir['sector_models'], '.yml')
         for sector_model_name in sector_model_names:
-            sector_models.append(self._read_yaml_file(self.file_dir['sector_models'],
-                                                       sector_model_name))
+            sector_models.append(
+                self._read_yaml_file(
+                    self.file_dir['sector_models'], sector_model_name))
 
         return sector_models
 
@@ -507,20 +513,72 @@ class DatafileInterface(DataInterface):
         Returns
         -------
         list
-            A list of scenarios within the specified 'scenario_set_name'
+            A scenario_set dictionary
         """
         project_config = self._read_project_config()
+        for scenario_data in project_config['scenario_sets']:
+            if scenario_data['name'] == scenario_set_name:
+                return scenario_data
+        raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
 
-        # Filter only the scenarios of the selected scenario_set_name
-        filtered_scenario_data = []
-        for scenario_data in project_config['scenarios']:
-            if scenario_data['scenario_set'] == scenario_set_name:
-                filtered_scenario_data.append(scenario_data)
+    def _scenario_set_exists(self, scenario_set_name):
+        project_config = self._read_project_config()
+        for scenario_set in project_config['scenario_sets']:
+            if scenario_set['name'] == scenario_set_name:
+                return scenario_set
 
-        return filtered_scenario_data
+    def write_scenario_set(self, scenario_set):
+        """Write scenario_set to project configuration
 
-    def read_scenario_definition(self, scenario_name):
-        """Read scenario definition data
+        Arguments
+        ---------
+        scenario_set: dict
+            A scenario_set dict
+        """
+        if self._scenario_set_exists(scenario_set['name']):
+            raise DataExistsError("scenario_set '%s' already exists" % scenario_set['name'])
+        else:
+            project_config = self._read_project_config()
+            project_config['scenario_sets'].append(scenario_set)
+            self._write_project_config(project_config)
+
+    def update_scenario_set(self, scenario_set_name, scenario_set):
+        """Update scenario_set to project configuration
+
+        Arguments
+        ---------
+        scenario_set_name: str
+            Name of the (original) entry
+        scenario_set: dict
+            The updated scenario_set dict
+        """
+        if not self._scenario_set_exists(scenario_set_name):
+            raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
+
+        project_config = self._read_project_config()
+
+        project_config['scenario_sets'] = [
+            entry for entry in project_config['scenario_sets']
+            if (entry['name'] != scenario_set['name'] and
+                entry['name'] != scenario_set_name)
+        ]
+        project_config['scenario_sets'].append(scenario_set)
+
+        self._write_project_config(project_config)
+
+    def read_scenarios(self):
+        """Read scenario sets from project configuration
+
+        Returns
+        -------
+        list
+            A list of scenario set dicts
+        """
+        project_config = self._read_project_config()
+        return project_config['scenarios']
+
+    def read_scenario(self, scenario_name):
+        """Read all scenarios from a certain scenario
 
         Arguments
         ---------
@@ -529,13 +587,80 @@ class DatafileInterface(DataInterface):
 
         Returns
         -------
-        dict
-            The scenario definition
+        list
+            A scenario dictionary
         """
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
+            print(scenario_data)
             if scenario_data['name'] == scenario_name:
                 return scenario_data
+        raise DataNotFoundError("scenario '%s' not found" % scenario_name)
+
+    def _scenario_exists(self, scenario_name):
+        project_config = self._read_project_config()
+        for scenario in project_config['scenarios']:
+            if scenario['name'] == scenario_name:
+                return scenario
+
+    def write_scenario(self, scenario):
+        """Write scenario to project configuration
+
+        Arguments
+        ---------
+        scenario: dict
+            A scenario dict
+        """
+        if self._scenario_exists(scenario['name']):
+            raise DataExistsError("scenario '%s' already exists" % scenario['name'])
+        else:
+            project_config = self._read_project_config()
+            project_config['scenarios'].append(scenario)
+            self._write_project_config(project_config)
+
+    def update_scenario(self, scenario_name, scenario):
+        """Update scenario to project configuration
+
+        Arguments
+        ---------
+        scenario_name: str
+            Name of the (original) entry
+        scenario: dict
+            The updated scenario dict
+        """
+        if not self._scenario_exists(scenario_name):
+            raise DataNotFoundError("scenario '%s' not found" % scenario_name)
+
+        project_config = self._read_project_config()
+
+        project_config['scenarios'] = [
+            entry for entry in project_config['scenarios']
+            if (entry['name'] != scenario['name'] and
+                entry['name'] != scenario_name)
+        ]
+        project_config['scenarios'].append(scenario)
+
+        self._write_project_config(project_config)
+
+    def delete_scenario(self, scenario_name):
+        """Delete scenario from project configuration
+
+        Arguments
+        ---------
+        scenario_name: str
+            A scenario name
+        """
+        if not self._scenario_exists(scenario_name):
+            raise DataNotFoundError("scenario '%s' not found" % scenario_name)
+
+        project_config = self._read_project_config()
+
+        project_config['scenarios'] = [
+            entry for entry in project_config['scenarios']
+            if (entry['name'] != scenario_name)
+        ]
+
+        self._write_project_config(project_config)
 
     def read_scenario_data(self, scenario_name):
         """Read scenario data file
@@ -566,76 +691,6 @@ class DatafileInterface(DataInterface):
 
         return data
 
-    def write_scenario_set(self, scenario_set):
-        """Write scenario_set to project configuration
-
-        Arguments
-        ---------
-        scenario_set: dict
-            A scenario_set dict
-        """
-        project_config = self._read_project_config()
-
-        project_config['scenario_sets'].append(scenario_set)
-        self._write_project_config(project_config)
-
-    def update_scenario_set(self, scenario_set_name, scenario_set):
-        """Update scenario_set to project configuration
-
-        Arguments
-        ---------
-        scenario_set_name: str
-            Name of the (original) entry
-        scenario_set: dict
-            The updated scenario_set dict
-        """
-        project_config = self._read_project_config()
-
-        # Create updated list
-        project_config['scenario_sets'] = [
-            entry for entry in project_config['scenario_sets']
-            if (entry['name'] != scenario_set['name'] and
-                entry['name'] != scenario_set_name)
-        ]
-        project_config['scenario_sets'].append(scenario_set)
-
-        self._write_project_config(project_config)
-
-    def write_scenario(self, scenario):
-        """Write scenario to project configuration
-
-        Arguments
-        ---------
-        scenario: dict
-            A scenario dict
-        """
-        project_config = self._read_project_config()
-
-        project_config['scenarios'].append(scenario)
-        self._write_project_config(project_config)
-
-    def update_scenario(self, scenario_name, scenario):
-        """Update scenario to project configuration
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the (original) entry
-        scenario: dict
-            The updated scenario dict
-        """
-        project_config = self._read_project_config()
-
-        # Create updated list
-        project_config['scenarios'] = [
-            entry for entry in project_config['scenarios']
-            if (entry['name'] != scenario['name'] and
-                entry['name'] != scenario_name)
-        ]
-        project_config['scenarios'].append(scenario)
-
-        self._write_project_config(project_config)
-
     def read_narrative_sets(self):
         """Read narrative sets from project configuration
 
@@ -658,17 +713,153 @@ class DatafileInterface(DataInterface):
         Returns
         -------
         list
-            A list of narratives within the specified 'narrative_set_name'
+            A narrative_set dictionary
         """
         project_config = self._read_project_config()
+        for narrative_data in project_config['narrative_sets']:
+            if narrative_data['name'] == narrative_set_name:
+                return narrative_data
+        raise DataNotFoundError("narrative_set '%s' not found" % narrative_set_name)
 
-        # Filter only the narratives of the selected narrative_set_name
-        filtered_narrative_data = []
+    def _narrative_set_exists(self, narrative_set_name):
+        project_config = self._read_project_config()
+        for narrative_set in project_config['narrative_sets']:
+            if narrative_set['name'] == narrative_set_name:
+                return narrative_set
+
+    def write_narrative_set(self, narrative_set):
+        """Write narrative_set to project configuration
+
+        Arguments
+        ---------
+        narrative_set: dict
+            A narrative_set dict
+        """
+        if self._narrative_set_exists(narrative_set['name']):
+            raise DataExistsError("narrative_set '%s' already exists" % narrative_set['name'])
+        else:
+            project_config = self._read_project_config()
+            project_config['narrative_sets'].append(narrative_set)
+            self._write_project_config(project_config)
+
+    def update_narrative_set(self, narrative_set_name, narrative_set):
+        """Update narrative_set to project configuration
+
+        Arguments
+        ---------
+        narrative_set_name: str
+            Name of the (original) entry
+        narrative_set: dict
+            The updated narrative_set dict
+        """
+        if not self._narrative_set_exists(narrative_set_name):
+            raise DataNotFoundError("narrative_set '%s' not found" % narrative_set_name)
+
+        project_config = self._read_project_config()
+
+        project_config['narrative_sets'] = [
+            entry for entry in project_config['narrative_sets']
+            if (entry['name'] != narrative_set['name'] and
+                entry['name'] != narrative_set_name)
+        ]
+        project_config['narrative_sets'].append(narrative_set)
+
+        self._write_project_config(project_config)
+
+    def read_narratives(self):
+        """Read narrative sets from project configuration
+
+        Returns
+        -------
+        list
+            A list of narrative set dicts
+        """
+        project_config = self._read_project_config()
+        return project_config['narratives']
+
+    def read_narrative(self, narrative_name):
+        """Read all narratives from a certain narrative
+
+        Arguments
+        ---------
+        narrative_name: str
+            Name of the narrative
+
+        Returns
+        -------
+        list
+            A narrative dictionary
+        """
+        project_config = self._read_project_config()
         for narrative_data in project_config['narratives']:
-            if narrative_data['narrative_set'] == narrative_set_name:
-                filtered_narrative_data.append(narrative_data)
+            if narrative_data['name'] == narrative_name:
+                return narrative_data
+        raise DataNotFoundError("narrative '%s' not found" % narrative_name)
 
-        return filtered_narrative_data
+    def _narrative_exists(self, narrative_name):
+        project_config = self._read_project_config()
+        for narrative in project_config['narratives']:
+            if narrative['name'] == narrative_name:
+                return narrative
+
+    def write_narrative(self, narrative):
+        """Write narrative to project configuration
+
+        Arguments
+        ---------
+        narrative: dict
+            A narrative dict
+        """
+        if self._narrative_exists(narrative['name']):
+            raise DataExistsError("narrative '%s' already exists" % narrative['name'])
+        else:
+            project_config = self._read_project_config()
+            project_config['narratives'].append(narrative)
+            self._write_project_config(project_config)
+
+    def update_narrative(self, narrative_name, narrative):
+        """Update narrative to project configuration
+
+        Arguments
+        ---------
+        narrative_name: str
+            Name of the (original) entry
+        narrative: dict
+            The updated narrative dict
+        """
+        if not self._narrative_exists(narrative_name):
+            raise DataNotFoundError("narrative '%s' not found" % narrative_name)
+
+        project_config = self._read_project_config()
+
+        project_config['narratives'] = [
+            entry for entry in project_config['narratives']
+            if (entry['name'] != narrative['name'] and
+                entry['name'] != narrative_name)
+        ]
+        project_config['narratives'].append(narrative)
+
+        self._write_project_config(project_config)
+
+    def delete_narrative(self, narrative_name):
+        """Delete narrative from project configuration
+
+        Arguments
+        ---------
+        narrative_name: str
+            A narrative name
+        """
+        if not self._narrative_exists(narrative_name):
+            raise DataNotFoundError("narrative '%s' not found" % narrative_name)
+
+        project_config = self._read_project_config()
+
+        project_config['narratives'] = [
+            entry for entry in project_config['narratives']
+            if (entry['name'] != narrative_name)
+        ]
+
+        self._write_project_config(project_config)
 
     def read_narrative_data(self, narrative_name):
         """Read narrative data file
@@ -713,76 +904,6 @@ class DatafileInterface(DataInterface):
             if narrative['name'] == narrative_name:
                 definition = narrative
         return definition
-
-    def write_narrative_set(self, narrative_set):
-        """Write narrative_set to project configuration
-
-        Arguments
-        ---------
-        narrative_set: dict
-            A narrative_set dict
-        """
-        project_config = self._read_project_config()
-
-        project_config['narrative_sets'].append(narrative_set)
-        self._write_project_config(project_config)
-
-    def update_narrative_set(self, narrative_set_name, narrative_set):
-        """Update narrative_set to project configuration
-
-        Arguments
-        ---------
-        narrative_set_name: str
-            Name of the (original) entry
-        narrative_set: dict
-            The updated narrative_set dict
-        """
-        project_config = self._read_project_config()
-
-        # Create updated list
-        project_config['narrative_sets'] = [
-            entry for entry in project_config['narrative_sets']
-            if (entry['name'] != narrative_set['name'] and
-                entry['name'] != narrative_set_name)
-        ]
-        project_config['narrative_sets'].append(narrative_set)
-
-        self._write_project_config(project_config)
-
-    def write_narrative(self, narrative):
-        """Write narrative to project configuration
-
-        Arguments
-        ---------
-        narrative: dict
-            A narrative dict
-        """
-        project_config = self._read_project_config()
-
-        project_config['narratives'].append(narrative)
-        self._write_project_config(project_config)
-
-    def update_narrative(self, narrative_name, narrative):
-        """Update narrative to project configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the (original) entry
-        narrative: dict
-            The updated narrative dict
-        """
-        project_config = self._read_project_config()
-
-        # Create updated list
-        project_config['narratives'] = [
-            entry for entry in project_config['narratives']
-            if (entry['name'] != narrative['name'] and
-                entry['name'] != narrative_name)
-        ]
-        project_config['narratives'].append(narrative)
-
-        self._write_project_config(project_config)
 
     def _read_project_config(self):
         """Read the project configuration

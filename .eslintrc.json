@@ -19,7 +19,7 @@
         "no-unused-vars": "warn",
         "constructor-super": "warn",
         "valid-typeof": "warn",
-        "semi": ["error", "always"],
+        "semi": ["error", "never"],
         "quotes": ["warn", "single"],
         "indent": ["warn", 4]
     }

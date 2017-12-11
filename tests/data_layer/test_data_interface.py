@@ -3,7 +3,7 @@
 import csv
 import json
 import os
-from copy import copy, deepcopy
+from copy import deepcopy
 from pytest import raises
 
 from smif.data_layer import (DataExistsError, DataMismatchError, DataNotFoundError)
@@ -572,8 +572,7 @@ class TestDatafileInterface():
         config_handler = get_handler
 
         # Scenarios / read existing (from fixture)
-        scenarios = config_handler.read_scenario_set('population')
-        assert scenarios[0]['name'] == 'High Population (ONS)'
+        scenarios = config_handler.read_scenarios()
         assert len(scenarios) == 2
 
         # Scenarios / add
@@ -592,7 +591,7 @@ class TestDatafileInterface():
             'scenario_set': 'population',
         }
         config_handler.write_scenario(scenario)
-        scenarios = config_handler.read_scenario_set('population')
+        scenarios = config_handler.read_scenarios()
         assert len(scenarios) == 3
         for scenario in scenarios:
             if scenario['name'] == 'Medium Population (ONS)':
@@ -601,7 +600,7 @@ class TestDatafileInterface():
         # Scenarios / modify
         scenario['filename'] = 'population_med.csv'
         config_handler.update_scenario(scenario['name'], scenario)
-        scenarios = config_handler.read_scenario_set('population')
+        scenarios = config_handler.read_scenarios()
         assert len(scenarios) == 3
         for scenario in scenarios:
             if scenario['name'] == 'Medium Population (ONS)':
@@ -610,7 +609,7 @@ class TestDatafileInterface():
         # Scenarios / modify unique identifier (name)
         scenario['name'] = 'name_change'
         config_handler.update_scenario('Medium Population (ONS)', scenario)
-        scenarios = config_handler.read_scenario_set('population')
+        scenarios = config_handler.read_scenarios()
         assert len(scenarios) == 3
         for scenario in scenarios:
             if scenario['name'] == 'name_change':
@@ -621,86 +620,95 @@ class TestDatafileInterface():
         """
         config_handler = get_handler
 
-        # Narrative sets / read existing (from fixture)
+        # narrative sets / read existing (from fixture)
         narrative_sets = config_handler.read_narrative_sets()
         assert narrative_sets[0]['name'] == 'technology'
         assert len(narrative_sets) == 2
 
-        # Narrative sets / add
+        # narrative sets / add
         narrative_set = {
-            'description': 'New narrative set',
-            'name': 'new_narrative_set'
+            'description': 'The rate of development in the UK',
+            'name': 'development'
         }
         config_handler.write_narrative_set(narrative_set)
         narrative_sets = config_handler.read_narrative_sets()
         assert len(narrative_sets) == 3
         for narrative_set in narrative_sets:
-            if narrative_set['name'] == 'new_narrative_set':
-                assert narrative_set['description'] == 'New narrative set'
+            if narrative_set['name'] == 'development':
+                expected = 'The rate of development in the UK'
+                assert narrative_set['description'] == expected
 
-        # Narrative sets / modify
+        # narrative sets / modify
         narrative_set = {
-            'description': 'New narrative set description',
-            'name': 'new_narrative_set'
+            'description': 'The rate of technical development in the NL',
+            'name': 'technology'
         }
-        config_handler.update_narrative_set(
-            narrative_set['name'], narrative_set)
+        config_handler.update_narrative_set(narrative_set['name'], narrative_set)
         narrative_sets = config_handler.read_narrative_sets()
         assert len(narrative_sets) == 3
         for narrative_set in narrative_sets:
-            if narrative_set['name'] == 'new_narrative_set':
-                assert narrative_set['description'] == 'New narrative set description'
+            if narrative_set['name'] == 'technology':
+                expected = 'The rate of technical development in the NL'
+                assert narrative_set['description'] == expected
 
-        # Narrative sets / modify unique identifier (name)
+        # narrative sets / modify unique identifier (name)
         narrative_set['name'] = 'name_change'
-        config_handler.update_narrative_set('new_narrative_set', narrative_set)
+        config_handler.update_narrative_set('technology', narrative_set)
         narrative_sets = config_handler.read_narrative_sets()
         assert len(narrative_sets) == 3
         for narrative_set in narrative_sets:
             if narrative_set['name'] == 'name_change':
-                assert narrative_set['description'] == 'New narrative set description'
+                expected = 'The rate of technical development in the NL'
+                assert narrative_set['description'] == expected
 
     def test_project_narratives(self, get_handler):
         """ Test to read and write the project configuration
         """
         config_handler = get_handler
 
-        # Narratives / read existing (from fixture)
-        narratives = config_handler.read_narrative_set('technology')
-        assert narratives[0]['name'] == 'Energy Demand - High Tech'
-        assert len(narratives) == 1
+        # narratives / read existing (from fixture)
+        narratives = config_handler.read_narratives()
+        assert len(narratives) == 2
 
         # narratives / add
         narrative = {
-            'description': 'Low penetration of SMART technology on the demand side',
-            'filename': 'energy_demand_low_tech.yml',
-            'name': 'Energy Demand - Low Tech',
-            'narrative_set': 'technology',
+            'description': 'The Medium ONS Forecast for UK population out to 2050',
+            'filename': 'population_medium.csv',
+            'name': 'Medium Population (ONS)',
+            'parameters': [
+                {
+                    'name': 'population_count',
+                    'spatial_resolution': 'lad',
+                    'temporal_resolution': 'annual',
+                    'units': 'people',
+                }
+            ],
+            'narrative_set': 'population',
         }
         config_handler.write_narrative(narrative)
-        narratives = config_handler.read_narrative_set('technology')
-        assert len(narratives) == 2
+        narratives = config_handler.read_narratives()
+        assert len(narratives) == 3
         for narrative in narratives:
-            if narrative['name'] == 'Energy Demand - Low Tech':
-                assert narrative['filename'] == 'energy_demand_low_tech.yml'
+            if narrative['name'] == 'Medium Population (ONS)':
+                assert narrative['filename'] == 'population_medium.csv'
 
         # narratives / modify
-        narrative['filename'] = 'energy_demand_low_tech_v2.yml'
+        narrative['filename'] = 'population_med.csv'
         config_handler.update_narrative(narrative['name'], narrative)
-        narratives = config_handler.read_narrative_set('technology')
-        assert len(narratives) == 2
+        narratives = config_handler.read_narratives()
+        assert len(narratives) == 3
         for narrative in narratives:
-            if narrative['name'] == 'Energy Demand - Low Tech':
-                assert narrative['filename'] == 'energy_demand_low_tech_v2.yml'
+            if narrative['name'] == 'Medium Population (ONS)':
+                assert narrative['filename'] == 'population_med.csv'
 
         # narratives / modify unique identifier (name)
         narrative['name'] = 'name_change'
-        config_handler.update_narrative('Energy Demand - Low Tech', narrative)
-        narratives = config_handler.read_narrative_set('technology')
-        assert len(narratives) == 2
+        config_handler.update_narrative('Medium Population (ONS)', narrative)
+        narratives = config_handler.read_narratives()
+        assert len(narratives) == 3
         for narrative in narratives:
             if narrative['name'] == 'name_change':
-                assert narrative['filename'] == 'energy_demand_low_tech_v2.yml'
+                assert narrative['filename'] == 'population_med.csv'
 
 
 def test_transform_leaves_empty():

@@ -23,6 +23,7 @@ from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
+from smif.parameters.narrative import Narrative
 
 from .convert.test_area import (regions_half_squares, regions_half_triangles,
                                 regions_rect, regions_single_half_square)
@@ -844,6 +845,9 @@ def get_sos_model():
         'scenario_sets': [
             'population'
         ],
+        'narrative_sets': [
+            'technology'
+        ],
         'sector_models': [
             'energy_demand',
             'energy_supply'
@@ -908,6 +912,36 @@ def get_sector_model():
 
 
 @fixture(scope='function')
+def get_scenario_set():
+    """Return sample scenario_set
+    """
+    return {
+        "description": "Growth in UK economy",
+        "name": "economy"
+    }
+
+
+@fixture(scope='function')
+def get_scenario():
+    """Return sample scenario
+    """
+    return {
+        "description": "Central Economy for the UK (High)",
+        "name": "Central Economy (High)",
+        "parameters": [
+            {
+                "filename": "economy_low.csv",
+                "name": "economy_low",
+                "spatial_resolution": "national",
+                "temporal_resolution": "annual",
+                "units": "million people"
+            }
+        ],
+        "scenario_set": "economy"
+    }
+
+
+@fixture(scope='function')
 def get_scenario_data():
     """Return sample scenario_data
     """
@@ -962,3 +996,19 @@ def get_handler(setup_folder_structure, get_project_config):
         str(basefolder), 'config', 'project.yml')
     dump(get_project_config, project_config_path)
     return DatafileInterface(str(basefolder))
+
+
+@fixture
+def get_narrative():
+    narrative = Narrative('Energy Demand - High Tech',
+                          'A description',
+                          'technology')
+    return narrative
+
+
+@fixture
+def get_narrative_set():
+    return {
+        'name': 'technology',
+        'description': 'Describes the evolution of technology'
+    }
