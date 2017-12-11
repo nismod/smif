@@ -79,7 +79,7 @@ from threading import Timer
 
 import smif
 from smif.data_layer.load import dump
-from smif.data_layer import DatafileInterface
+from smif.data_layer import DatafileInterface, DataNotFoundError
 from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
@@ -223,11 +223,9 @@ def get_model_run_definition(args):
     load_region_sets(handler)
     load_interval_sets(handler)
 
-    # HARDCODE selet the first model run only
     try:
-        model_run_config = next(config for config in handler.read_sos_model_runs()
-                                if config['name'] == args.modelrun)
-    except StopIteration:
+        model_run_config = handler.read_sos_model_run(args.modelrun)
+    except DataNotFoundError:
         LOGGER.error("Model run %s not found. Run 'smif list' to see available model runs.",
                      args.modelrun)
         exit(-1)
@@ -273,7 +271,7 @@ def get_model_run_definition(args):
     scenario_objects = []
     for scenario in model_run_config['scenarios']:
         LOGGER.debug("Finding data for '%s'", scenario[1])
-        scenario_definition = handler.read_scenario_definition(scenario[1])
+        scenario_definition = handler.read_scenario(scenario[1])
         scenario_data = handler.read_scenario_data(scenario[1])
         scenario_set = scenario_definition['scenario_set']
         scenario_model_builder = ScenarioModelBuilder(scenario_set)
