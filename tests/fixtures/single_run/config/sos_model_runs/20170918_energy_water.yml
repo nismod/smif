@@ -8,7 +8,7 @@ timesteps:
 sos_model: energy_water
 decision_module: ''
 scenarios:
-- ['population', 'Central Population']
+- ['population', 'Central Population (Medium)']
 - ['rainfall', 'Central Rainfall']
 narratives:
 - technology:

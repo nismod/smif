@@ -6,6 +6,7 @@ import os
 
 import dateutil.parser
 import pytest
+from smif.data_layer import DataExistsError
 from smif.http_api import create_app
 
 
@@ -341,18 +342,20 @@ def test_get_narrative_sets(client, get_handler, get_narrative_set):
     """
     response = client.get('/api/v1/narrative_sets/')
     data = parse_json(response)
-    assert len(data) == 1
+    assert len(data) == 2
 
+    get_narrative_set['name'] = 'non-clashing'
     get_handler.write_narrative_set(get_narrative_set)
     response = client.get('/api/v1/narrative_sets/')
     data = parse_json(response)
-    assert len(data) == 2
+    assert len(data) == 3
     assert get_narrative_set in data
 
 
 def test_get_narrative_set(client, get_handler, get_narrative_set):
     """GET single system-of-systems model
     """
+    get_narrative_set['name'] = 'non-clashing-2'
     name = get_narrative_set['name']
     get_handler.write_narrative_set(get_narrative_set)
 
@@ -395,22 +398,30 @@ def test_get_narratives(client, get_handler, get_narrative):
     data = parse_json(response)
     assert len(data) == 2
 
-    get_handler.write_narrative(get_narrative)
+    narrative = get_narrative.as_dict()
+    narrative['name'] = 'non-clashing'
+    get_handler.write_narrative(narrative)
+
     response = client.get('/api/v1/narratives/')
     data = parse_json(response)
     assert len(data) == 3
-    assert get_narrative in data
+    assert narrative in data
 
 
 def test_get_narrative(client, get_handler, get_narrative):
     """GET single system-of-systems model
     """
-    name = get_narrative['name']
-    get_handler.write_narrative(get_narrative)
+    narrative = get_narrative.as_dict()
+    name = narrative['name']
+    try:
+        get_handler.write_narrative(narrative)
+    except DataExistsError:
+        get_handler.delete_narrative(narrative['name'])
+        get_handler.write_narrative(narrative)
 
     response = client.get('/api/v1/narratives/{}'.format(name))
     data = parse_json(response)
-    assert data == get_narrative
+    assert data == narrative
 
 
 def test_get_narrative_missing(client):
@@ -426,8 +437,9 @@ def test_create_narrative(client, get_handler, get_narrative):
     """POST system-of-systems model
     """
     name = 'test_create_narrative'
-    get_narrative['name'] = name
-    send = serialise_json(get_narrative)
+    narrative = get_narrative.as_dict()
+    narrative['name'] = name
+    send = serialise_json(narrative)
     response = client.post(
         '/api/v1/narratives/',
         data=send,
@@ -437,4 +449,4 @@ def test_create_narrative(client, get_handler, get_narrative):
     assert data['message'] == 'success'
 
     actual = get_handler.read_narrative(name)
-    assert actual == get_narrative
+    assert actual == narrative

@@ -27,7 +27,7 @@ scenarios:
   description: 'Central Population for the UK (Low)'
   scenario_set: population
   parameters:
-  - name: population_low
+  - name: population
     filename: population_low.csv
     spatial_resolution: national
     temporal_resolution: annual
@@ -36,7 +36,7 @@ scenarios:
   description: 'Central Population for the UK (Medium)'
   scenario_set: population
   parameters:
-  - name: population_med
+  - name: population
     filename: population_med.csv
     spatial_resolution: national
     temporal_resolution: annual
@@ -45,7 +45,7 @@ scenarios:
   description: 'Central Population for the UK (High)'
   scenario_set: population
   parameters:
-  - name: population_low
+  - name: population
     filename: population_low.csv
     spatial_resolution: national
     temporal_resolution: annual

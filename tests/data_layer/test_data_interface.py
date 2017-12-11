@@ -3,7 +3,7 @@
 import csv
 import json
 import os
-from copy import copy, deepcopy
+from copy import deepcopy
 from pytest import raises
 
 from smif.data_layer import (DataExistsError, DataMismatchError, DataNotFoundError)
@@ -614,7 +614,6 @@ class TestDatafileInterface():
         for scenario in scenarios:
             if scenario['name'] == 'name_change':
                 assert scenario['filename'] == 'population_med.csv'
-
 
     def test_project_narrative_sets(self, get_handler):
         """ Test to read and write the project configuration

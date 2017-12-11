@@ -60,9 +60,12 @@ class DatafileInterface(DataInterface):
         sos_model_run_names = self._read_filenames_in_dir(self.file_dir['sos_model_runs'],
                                                           '.yml')
         for sos_model_run_name in sos_model_run_names:
-            sos_model_run = (self._read_yaml_file(self.file_dir['sos_model_runs'],
-                                                       sos_model_run_name))
-            sos_model_run_name_desc.append({'name': sos_model_run['name'], 'description': sos_model_run['description']})
+            sos_model_run = self._read_yaml_file(
+                self.file_dir['sos_model_runs'], sos_model_run_name)
+            sos_model_run_name_desc.append({
+                'name': sos_model_run['name'],
+                'description': sos_model_run['description']
+            })
 
         return sos_model_run_name_desc
 
@@ -183,7 +186,8 @@ class DatafileInterface(DataInterface):
         if self._sos_model_exists(sos_model['name']):
             raise DataExistsError("sos_model '%s' already exists" % sos_model['name'])
         else:
-            self._write_yaml_file(self.file_dir['sos_models'],
+            self._write_yaml_file(
+                self.file_dir['sos_models'],
                 sos_model['name'],
                 sos_model)
 
@@ -233,11 +237,12 @@ class DatafileInterface(DataInterface):
         """
         sector_models = []
 
-        sector_model_names = self._read_filenames_in_dir(self.file_dir['sector_models'],
-                                                          '.yml')
+        sector_model_names = self._read_filenames_in_dir(
+            self.file_dir['sector_models'], '.yml')
         for sector_model_name in sector_model_names:
-            sector_models.append(self._read_yaml_file(self.file_dir['sector_models'],
-                                                       sector_model_name))
+            sector_models.append(
+                self._read_yaml_file(
+                    self.file_dir['sector_models'], sector_model_name))
 
         return sector_models
 
@@ -587,6 +592,7 @@ class DatafileInterface(DataInterface):
         """
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
+            print(scenario_data)
             if scenario_data['name'] == scenario_name:
                 return scenario_data
         raise DataNotFoundError("scenario '%s' not found" % scenario_name)
@@ -834,21 +840,6 @@ class DatafileInterface(DataInterface):
         project_config['narratives'].append(narrative)
 
         self._write_project_config(project_config)
-
-    def write_narrative(self, narrative):
-        """Write narrative to project configuration
-
-        Arguments
-        ---------
-        narrative: dict
-            A narrative dict
-        """
-        if self._narrative_exists(narrative['name']):
-            raise DataExistsError("narrative '%s' already exists" % narrative['name'])
-        else:
-            project_config = self._read_project_config()
-            project_config['narratives'].append(narrative)
-            self._write_project_config(project_config)
 
     def delete_narrative(self, narrative_name):
         """Delete narrative from project configuration
