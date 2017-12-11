@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import update from 'react-addons-update'
+import update from 'immutability-helper'
 
 import Popup from '../General/Popup.js'
 
@@ -88,15 +88,15 @@ class InputsOutputsForm extends Component {
             this.closeCreateDependencyPopup()
         }
 
-        this.forceUpdate()        
+        this.forceUpdate()
     }
 
     openCreateDependencyPopup() {
         this.setState({CreateDependencypopupIsOpen: true})
     }
-    
+
     closeCreateDependencyPopup() {
-        
+
         const {inputs, className} = this.state
 
         this.setState({CreateDependencypopupIsOpen: false})
@@ -109,7 +109,7 @@ class InputsOutputsForm extends Component {
 
     renderInputForm(type) {
 
-        return (    
+        return (
             <div>
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value={'Add ' + type} onClick={this.openCreateDependencyPopup} />
 
@@ -123,23 +123,23 @@ class InputsOutputsForm extends Component {
                                     <input ref="" type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
-                                    </div> 
+                                    </div>
                                 </div>
-                                <div className="col">      
+                                <div className="col">
                                     <label>Units</label>
                                     <input ref="" type="text" className={this.state.className.units} name="units" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
-                                    </div>   
+                                    </div>
                                 </div>
                             </div>
-                            <div className="row">    
+                            <div className="row">
                                 <div className="col">
                                     <label>Spatial Resolution</label>
                                     <input ref="" type="text" className={this.state.className.spatial_resolution} name="spatial_resolution" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
-                                    </div>  
+                                    </div>
                                 </div>
                                 <div className="col">
                                     <label>Temporal Resolution</label>
@@ -187,7 +187,7 @@ class InputsOutputsForm extends Component {
             return this.renderInputForm('input')
         } else if (isOutputs) {
             return this.renderInputForm('output')
-        }        
+        }
     }
 }
 

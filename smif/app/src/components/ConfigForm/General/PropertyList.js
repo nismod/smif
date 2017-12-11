@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes, { string } from 'prop-types'
-import update from 'react-addons-update'
+import update from 'immutability-helper'
 
 import FaTrash from 'react-icons/lib/fa/trash'
 import FaPencil from 'react-icons/lib/fa/pencil'
@@ -47,10 +47,10 @@ class PropertyList extends Component {
     }
 
     getButtonColumn(active) {
-        
+
         if (active) {
             return (<th width='8%' scope='col'></th>)
-        } 
+        }
         return
     }
 
@@ -61,9 +61,9 @@ class PropertyList extends Component {
                     <button type="button" className="btn btn-outline-dark" key={itemNumber} value={itemNumber} name='edit' onClick={this.handleChange}>
                         <FaPencil/>
                     </button>
-                </td> 
+                </td>
             )
-        } 
+        }
         return
     }
 
@@ -74,24 +74,24 @@ class PropertyList extends Component {
                     <button type="button" className="btn btn-outline-dark" key={itemNumber} value={itemNumber} name='delete' onClick={this.handleChange}>
                         <FaTrash/>
                     </button>
-                </td> 
+                </td>
             )
-        } 
+        }
         return
     }
 
     renderPropertyList(name, items, columns, editButton, deleteButton) {
         //
-        return (    
+        return (
             <div>
                 <table className="table table-hover">
-                    
+
                     <thead className="thead-light">
 
                         <tr>
                             {
                                 Object.keys(columns).map((column, i) => (
-                                    
+
                                     <th width={this.getColumnSize(columns, editButton, deleteButton)} key={i} scope="col">
                                         {columns[column]}
                                     </th>
@@ -113,14 +113,14 @@ class PropertyList extends Component {
                                             <td width={this.getColumnSize(columns, editButton, deleteButton)} key={k}>
                                                 {items[item][column]}
                                             </td>
-                                            
+
                                         ))
                                     }
                                     {this.getEditButton(editButton, item)}
                                     {this.getDeleteButton(deleteButton, item)}
                                 </tr>
-                            ))   
-                            
+                            ))
+
                         }
                     </tbody>
                 </table>
@@ -138,15 +138,15 @@ class PropertyList extends Component {
 
     render() {
         const {itemsName, items, columns, editButton, deleteButton} = this.props
-        
+
         if (items == null || items == undefined) {
             return this.renderWarning('The items property is not initialised')
         }
         else if (items.length == 0) {
             return this.renderWarning('There are no ' + itemsName + ' configured')
-        } else {           
+        } else {
             return this.renderPropertyList(itemsName, items, columns, editButton, deleteButton)
-        }        
+        }
     }
 }
 

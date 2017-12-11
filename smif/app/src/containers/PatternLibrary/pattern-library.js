@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 
 import FaTrash from 'react-icons/lib/fa/trash';
 

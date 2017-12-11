@@ -15,9 +15,8 @@ import NarrativeConfig from './containers/ConfigForm/NarrativeConfig'
 
 import store from './store/store.js'
 
-import 'normalize.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
-//import '../static/css/main.css'
+import '../static/css/main.css'
 
 render(
     <Provider store={store}>

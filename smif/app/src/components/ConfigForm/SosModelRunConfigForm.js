@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import update from 'react-addons-update'
+import update from 'immutability-helper'
 
 import SosModelSelector from './SosModelRun/SosModelSelector.js'
 import ScenarioSelector from './SosModelRun/ScenarioSelector.js'
@@ -32,7 +32,7 @@ class SosModelRunConfigForm extends Component {
     handleScenariosChange(scenario_set, scenario) {
     /**
      * Set a scenario change in the local selectedSosModelRun state representation
-     * 
+     *
      * Arguments
      * ---------
      * scenario_set: str
@@ -64,7 +64,7 @@ class SosModelRunConfigForm extends Component {
     handleNarrativeChange(narrative_set, narrative, active) {
     /**
      * Add or remove a narrative from the local selectedSosModelRun state representation
-     * 
+     *
      * Arguments
      * ---------
      * narrative_set:
@@ -97,7 +97,7 @@ class SosModelRunConfigForm extends Component {
                     for (let k = 0; k <= narratives[i][narrative_set].length; k++) {
 
                         if ((narratives[i][narrative_set][k] == narrative) && !active) {
-                            // Remove narrative to set                      
+                            // Remove narrative to set
                             narratives[i][narrative_set].splice(k, 1)
 
                             // If there are no narratives left in this set, remove the set
@@ -113,7 +113,7 @@ class SosModelRunConfigForm extends Component {
                             }
                             break
                         }
-                        
+
                         if (typeof narratives[i][narrative_set][k] === 'undefined') {
                             // Add narrative to set
                             narratives[i][narrative_set].push(narrative)
@@ -186,7 +186,7 @@ class SosModelRunConfigForm extends Component {
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Created</label>
-                            <div className="col-sm-10"> 
+                            <div className="col-sm-10">
                                 <label className="form-control">{selectedSosModelRun.stamp}</label>
                             </div>
                         </div>
@@ -194,7 +194,7 @@ class SosModelRunConfigForm extends Component {
                 </div>
 
                 <br/>
-                
+
                 <div className="card">
                     <div className="card-header">Model</div>
                     <div className="card-body">
@@ -205,7 +205,7 @@ class SosModelRunConfigForm extends Component {
                                 <SosModelSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} onChange={this.handleSosModelChange} />
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
 
@@ -243,7 +243,7 @@ class SosModelRunConfigForm extends Component {
                 <br/>
 
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save Model Run Configuration" onClick={this.handleSave} />
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} /> 
+                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
 
                 <br/>
             </div>

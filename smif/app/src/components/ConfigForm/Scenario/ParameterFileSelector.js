@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import update from 'react-addons-update'
+import update from 'immutability-helper'
 
 import Popup from '../General/Popup.js'
 
@@ -11,7 +11,7 @@ class ParameterFileSelector extends Component {
         this.state = {
             CreatePopupIsOpen: false
         }
-        
+
         this.state.inputs = {
             name: '',
             filename: '',
@@ -77,15 +77,15 @@ class ParameterFileSelector extends Component {
             this.closeCreatePopup()
         }
 
-        this.forceUpdate()        
+        this.forceUpdate()
     }
 
     openCreatePopup() {
         this.setState({CreatePopupIsOpen: true})
     }
-    
+
     closeCreatePopup() {
-        
+
         const {inputs, className} = this.state
 
         this.setState({CreatePopupIsOpen: false})
@@ -98,7 +98,7 @@ class ParameterFileSelector extends Component {
 
     renderParameterFileSelector() {
 
-        return (    
+        return (
             <div>
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Parameter" onClick={this.openCreatePopup} />
 
@@ -113,53 +113,53 @@ class ParameterFileSelector extends Component {
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
                                     </div>
-                                </div>    
+                                </div>
                             </div>
 
                             <div className="row">
                                 <div className="col">
                                     <label>Filename</label>
-                                </div>  
+                                </div>
                                 <div className="col">
                                     <label>Units</label>
-                                </div>   
+                                </div>
                             </div>
                             <div className="row">
                                 <div className="col">
                                     <input type="text" className={this.state.className.filename} name="filename" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
-                                    </div> 
-                                </div>  
+                                    </div>
+                                </div>
                                 <div className="col">
                                     <input type="text" className={this.state.className.units} name="units" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
                                     </div>
-                                </div> 
+                                </div>
                             </div>
 
                             <div className="row">
                                 <div className="col">
                                     <label>Spatial Resolution</label>
-                                </div>  
+                                </div>
                                 <div className="col">
                                     <label>Temporal Resolution</label>
-                                </div>   
+                                </div>
                             </div>
                             <div className="row">
                                 <div className="col">
                                     <input type="text" className={this.state.className.spatial_resolution} name="spatial_resolution" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                 Please provide a valid input.
-                                    </div> 
-                                </div>  
+                                    </div>
+                                </div>
                                 <div className="col">
                                     <input type="text" className={this.state.className.temporal_resolution} name="temporal_resolution" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                 Please provide a valid input.
                                     </div>
-                                </div> 
+                                </div>
                             </div>
                         </div>
 
@@ -188,9 +188,9 @@ class ParameterFileSelector extends Component {
 
         if (parameters == undefined) {
             return this.renderWarning('Parameters are undefined')
-        } else {           
+        } else {
             return this.renderParameterFileSelector(parameters)
-        }        
+        }
     }
 }
 

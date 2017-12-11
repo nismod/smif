@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import update from 'react-addons-update'
+import update from 'immutability-helper'
 
 import Popup from '../General/Popup.js'
 
@@ -12,7 +12,7 @@ class ParameterSelector extends Component {
             CreatePopupIsOpen: false
         }
 
-        
+
         this.state.inputs = {
             name: '',
             description: '',
@@ -93,15 +93,15 @@ class ParameterSelector extends Component {
             this.closeCreatePopup()
         }
 
-        this.forceUpdate()        
+        this.forceUpdate()
     }
 
     openCreatePopup() {
         this.setState({CreatePopupIsOpen: true})
     }
-    
+
     closeCreatePopup() {
-        
+
         const {inputs, className} = this.state
 
         this.setState({CreatePopupIsOpen: false})
@@ -114,7 +114,7 @@ class ParameterSelector extends Component {
 
     renderParameterSelector() {
 
-        return (    
+        return (
             <div>
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Parameter" onClick={this.openCreatePopup} />
 
@@ -128,37 +128,37 @@ class ParameterSelector extends Component {
                                     <input type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
-                                    </div> 
-   
+                                    </div>
+
                                     <label>Description</label>
                                     <input type="text" className={this.state.className.description} name="description" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
-                                    </div>   
-                                </div>    
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="row">
                                 <div className="col">
                                     <label>Default Value</label>
-                                </div>  
+                                </div>
                                 <div className="col">
                                     <label>Units</label>
-                                </div>   
+                                </div>
                             </div>
                             <div className="row">
                                 <div className="col">
                                     <input type="number" className={this.state.className.default_value} name="default_value" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
-                                    </div> 
-                                </div>  
+                                    </div>
+                                </div>
                                 <div className="col">
                                     <input type="text" className={this.state.className.units} name="units" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
                                     </div>
-                                </div> 
+                                </div>
                             </div>
 
                             <label>Absolute Range</label>
@@ -167,13 +167,13 @@ class ParameterSelector extends Component {
                                     <input type="number" className={this.state.className.absolute_range_min} name="absolute_range_min" placeholder="Minimum" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
-                                    </div> 
+                                    </div>
                                 </div>
-                                <div className="col">      
+                                <div className="col">
                                     <input type="number" className={this.state.className.absolute_range_max} name="absolute_range_max" placeholder="Maximum" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
-                                    </div>   
+                                    </div>
                                 </div>
                             </div>
 
@@ -183,13 +183,13 @@ class ParameterSelector extends Component {
                                     <input type="number" className={this.state.className.suggested_range_min} name="suggested_range_min" placeholder="Minimum" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
-                                    </div> 
+                                    </div>
                                 </div>
-                                <div className="col">      
+                                <div className="col">
                                     <input type="number" className={this.state.className.suggested_range_max} name="suggested_range_max" placeholder="Maximum" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
-                                    </div>   
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -219,9 +219,9 @@ class ParameterSelector extends Component {
 
         if (parameters == undefined) {
             return this.renderWarning('Parameters are undefined')
-        } else {           
+        } else {
             return this.renderParameterSelector(parameters)
-        }        
+        }
     }
 }
 

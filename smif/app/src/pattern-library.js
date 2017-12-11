@@ -1,12 +1,12 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { render } from 'react-dom';
 
 import PatternLibrary from './containers/PatternLibrary/pattern-library.js';
 
-import 'normalize.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import '../static/css/main.css';
 
-ReactDOM.render(
+render(
     <PatternLibrary />,
     document.getElementById('root')
 );

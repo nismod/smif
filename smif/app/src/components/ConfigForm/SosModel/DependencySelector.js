@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import update from 'react-addons-update'
+import update from 'immutability-helper'
 
 import Popup from '../General/Popup.js'
 
@@ -61,7 +61,7 @@ class DependencySelector extends Component {
             let newDependencies = dependencies
 
             newDependencies.push({
-                source_model: SourceModel, 
+                source_model: SourceModel,
                 source_model_output: SourceOutput,
                 sink_model: SinkModel,
                 sink_model_input: SinkInput
@@ -80,15 +80,15 @@ class DependencySelector extends Component {
             this.closeCreateDependencyPopup()
         }
 
-        this.forceUpdate()        
+        this.forceUpdate()
     }
 
     openCreateDependencyPopup() {
         this.setState({CreateDependencypopupIsOpen: true})
     }
-    
+
     closeCreateDependencyPopup() {
-        
+
         const {inputs, className} = this.state
 
         this.setState({CreateDependencypopupIsOpen: false})
@@ -101,7 +101,7 @@ class DependencySelector extends Component {
 
     renderDependencySelector(dependencies, sectorModels) {
 
-        return (    
+        return (
             <div>
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Dependency" onClick={this.openCreateDependencyPopup} />
 
@@ -122,9 +122,9 @@ class DependencySelector extends Component {
                                     </select>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
-                                    </div> 
+                                    </div>
                                 </div>
-                                <div className="col">      
+                                <div className="col">
                                     <label>Sink</label>
                                     <select className={this.state.className.SinkModel} name="SinkModel" defaultValue="none" onChange={this.handleChange}>
                                         <option disabled="disabled" value="none">Please select a sink</option>
@@ -136,15 +136,15 @@ class DependencySelector extends Component {
                                     </select>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
-                                    </div>   
+                                    </div>
                                 </div>
                             </div>
-                            <div className="row">    
+                            <div className="row">
                                 <div className="col">
                                     <input ref="" type="text" className={this.state.className.SourceOutput} name="SourceOutput" placeholder="Source Output" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
-                                    </div>  
+                                    </div>
                                 </div>
                                 <div className="col">
                                     <input type="text" className={this.state.className.SinkInput} name="SinkInput" placeholder="Sink Input" onChange={this.handleChange}/>
@@ -182,9 +182,9 @@ class DependencySelector extends Component {
             return this.renderWarning('Dependencies are undefined')
         } else if (sectorModels == null) {
             return this.renderWarning('There are no sectorModels configured')
-        } else {           
+        } else {
             return this.renderDependencySelector(dependencies, sectorModels)
-        }        
+        }
     }
 }
 
