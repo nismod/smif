@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
+import { Redirect } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 
 import FaPencil from 'react-icons/lib/fa/pencil'
@@ -10,7 +11,27 @@ class SosModelRunItem extends Component {
     constructor(props) {
         super(props)
 
+        this.state = {
+            redirect: false,
+            redirect_to: ''
+        }
+
+        this.onEditHandler = this.onEditHandler.bind(this)
         this.onDeleteHandler = this.onDeleteHandler.bind(this)
+    }
+
+    onEditHandler(event) {
+        const {itemLink} = this.props
+
+        const target = event.currentTarget
+        const name = target.id
+        
+        if (name != undefined) {
+            this.setState({
+                redirect: true,
+                redirect_to: itemLink + name
+            })
+        }
     }
 
     onDeleteHandler(event) {
@@ -31,43 +52,43 @@ class SosModelRunItem extends Component {
     }
 
     renderItems(itemname, items, itemLink) {
-        return (
-            <div>
-                <table className="table table-sm fixed">
-                    <thead className="thead-light">
-                    
-                        <tr>
-                            <th width="20%" scope="col">Name</th>
-                            <th width="66%" scope="col">Description</th>
-                            <th width="7%" scope="col"></th>
-                            <th width="7%" scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            items.map((item, i) => (
-                                <tr key={i}>
-                                    <td>{item.name}</td>
-                                    <td>{item.description}</td>
-                                    <td>
-                                        <Link to={itemLink + item.name }>
-                                            <button type="button" className="btn btn-outline-dark" name={item.name}>
-                                                <FaPencil/>
+        
+        if (this.state.redirect) {
+            return <Redirect push to={this.state.redirect_to}/>
+        }
+        else {
+            return (
+                <div>
+                    <table className="table table-hover">
+                        <thead className="thead-light">
+
+                            <tr>
+                                <th width="20%" scope="col">Name</th>
+                                <th width="73%" scope="col">Description</th>
+                                <th width="7%" scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {
+                                items.map((item, i) => (
+                                    <tr key={i}>
+                                        <td id={item.name} onClick={(e) => this.onEditHandler(e)}>
+                                            {item.name}
+                                        </td>
+                                        <td id={item.name} onClick={(e) => this.onEditHandler(e)}>{item.description}</td>
+                                        <td>
+                                            <button type="button" className="btn btn-outline-dark" value={'delete' + itemname} name={item.name} onClick={this.onDeleteHandler}>
+                                                <FaTrash/>
                                             </button>
-                                        </Link>
-                                    </td> 
-                                    <td>
-                                        <button type="button" className="btn btn-outline-dark" value={'delete' + itemname} name={item.name} onClick={this.onDeleteHandler}>
-                                            <FaTrash/>
-                                        </button>
-                                    </td> 
-                                </tr>
-                            ))
-                        }
-                    </tbody>
-                </table>
-            </div>
-        )
+                                        </td> 
+                                    </tr>
+                                ))
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            )
+        }
     }
 
     renderWarning(message) {
