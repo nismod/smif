@@ -10,12 +10,27 @@ class SosModelConfigForm extends Component {
     constructor(props) {
         super(props)
 
+        this.handleKeyPress = this.handleKeyPress.bind(this)
         this.handleChange = this.handleChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {}
         this.state.selectedSosModel = this.props.sosModel
+    }
+
+    componentDidMount(){
+        document.addEventListener("keydown", this.handleKeyPress, false)
+    }
+
+    componentWillUnmount(){
+        document.removeEventListener("keydown", this.handleKeyPress, false)
+    }
+
+    handleKeyPress(){
+        if(event.keyCode === 27) {
+            this.handleCancel()
+        }
     }
 
     handleChange(event) {
@@ -98,7 +113,7 @@ class SosModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Dependencies</div>
                         <div className="card-body">
-                            <PropertyList itemsName="dependencies" items={selectedSosModel.dependencies} columns={{source_model: 'Source Model', source_model_output: 'Output', sink_model: 'Sink Model', sink_model_input: 'Input'}} editButton={false} deleteButton={true} onEdit="" onDelete={this.handleChange} />
+                            <PropertyList itemsName="dependencies" items={selectedSosModel.dependencies} columns={{source_model: 'Source Model', source_model_output: 'Output', sink_model: 'Sink Model', sink_model_input: 'Input'}} editButton={false} deleteButton={true} onDelete={this.handleChange} />
                             <DependencySelector dependencies={selectedSosModel.dependencies} sectorModels={sectorModels} onChange={this.handleChange}/>
                         </div>
                     </div>
