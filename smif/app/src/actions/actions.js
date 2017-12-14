@@ -239,8 +239,6 @@ export function createSosModel(sosModelName){
         let newModel = {
             'name': sosModelName, 
             'description': '',
-            'scenario_sets': [],
-            'narrative_sets': [],
             'sector_models': [],
             'dependencies': [],
             'max_iterations': 1,
