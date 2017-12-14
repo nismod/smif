@@ -238,13 +238,14 @@ export function createSosModel(sosModelName){
 
         let newModel = {
             'name': sosModelName, 
-            'description': '', 
-            'stamp': datetime.toISOString(),  
-            'sos_model': '',
-            'scenarios': [],
-            'narratives': [],
-            'decision_module': '', 
-            'timesteps': []
+            'description': '',
+            'scenario_sets': [],
+            'narrative_sets': [],
+            'sector_models': [],
+            'dependencies': [],
+            'max_iterations': 1,
+            'convergence_absolute_tolerance': 1e-05,
+            'convergence_relative_tolerance': 1e-05
         }
 
         // make API request, returning a promise
