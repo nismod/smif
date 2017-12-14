@@ -92,12 +92,9 @@ class SosModelConfigForm extends Component {
                             </div>
 
                             <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Iterations</label>
+                                <label className="col-sm-2 col-form-label">Maximum Iterations</label>
                                 <div className="col-sm-10">
-                                    <div className="input-group">
-                                        <span className="input-group-addon">Maximum</span>
-                                        <input className="form-control" name="max_iterations" type="number" min="1" defaultValue={selectedSosModel.max_iterations} onChange={this.handleChange}/>
-                                    </div>
+                                    <input className="form-control" name="max_iterations" type="number" min="1" defaultValue={selectedSosModel.max_iterations} onChange={this.handleChange}/>
                                 </div>
                             </div>
                         </div>
