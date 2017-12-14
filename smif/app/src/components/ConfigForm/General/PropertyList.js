@@ -84,7 +84,7 @@ class PropertyList extends Component {
         //
         return (
             <div>
-                <table className="table table-hover">
+                <table className="table">
 
                     <thead className="thead-light">
 
