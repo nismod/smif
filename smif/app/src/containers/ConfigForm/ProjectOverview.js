@@ -240,7 +240,7 @@ class ProjectOverview extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="createPopupName" type="text" onChange={this.handleInputChange} required/>
+                                    <input autoFocus className="form-control" name="createPopupName" type="text" onChange={this.handleInputChange} required/>
                                 </div>
                             </div>
                             
@@ -255,7 +255,7 @@ class ProjectOverview extends Component {
                             <h2 ref={subtitle => this.subtitle = subtitle}>Confirm delete</h2>
                             Are you sure you would like to delete {this.state.deletePopupHeader}?
                             <br/>
-                            <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Delete"/>
+                            <input autoFocus className="btn btn-secondary btn-lg btn-block" type="submit" value="Delete"/>
                             <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeDeletePopup}/> 
                         </form>
                     </Popup>
