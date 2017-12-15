@@ -4,9 +4,9 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-import { fetchSosModelRuns, fetchSosModels,  fetchSectorModels,  fetchScenarios, fetchNarratives } from '../../actions/actions.js'
-import { createSosModelRun, createSosModel, createSectorModel, createScenario, createNarrative } from '../../actions/actions.js'
-import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenario, deleteNarrative } from '../../actions/actions.js'
+import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from '../../actions/actions.js'
+import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createScenario, createNarrativeSet, createNarrative } from '../../actions/actions.js'
+import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteScenario, deleteNarrativeSet, deleteNarrative } from '../../actions/actions.js'
 
 import Popup from '../../components/ConfigForm/General/Popup.js'
 import ProjectOverviewItem from '../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
@@ -40,7 +40,9 @@ class ProjectOverview extends Component {
         dispatch(fetchSosModelRuns())
         dispatch(fetchSosModels())
         dispatch(fetchSectorModels())
+        dispatch(fetchScenarioSets())
         dispatch(fetchScenarios())
+        dispatch(fetchNarrativeSets())
         dispatch(fetchNarratives())
     }
 
@@ -84,9 +86,17 @@ class ProjectOverview extends Component {
             dispatch(createSectorModel(createPopupName))
             dispatch(fetchSectorModels())
             break
+        case 'createScenarioSet':
+            dispatch(createScenarioSet(createPopupName))
+            dispatch(fetchScenarioSets())
+            break
         case 'createScenario':
             dispatch(createScenario(createPopupName))
             dispatch(fetchScenarios())
+            break
+        case 'createNarrativeSet':
+            dispatch(createNarrativeSet(createPopupName))
+            dispatch(fetchNarrativeSets())
             break
         case 'createNarrative':
             dispatch(createNarrative(createPopupName))
@@ -127,9 +137,17 @@ class ProjectOverview extends Component {
             dispatch(deleteSectorModel(deletePopupHeader))
             dispatch(fetchSectorModels())
             break
+        case 'deleteScenarioSet':
+            dispatch(deleteScenarioSet(deletePopupHeader))
+            dispatch(fetchScenarioSets())
+            break
         case 'deleteScenario':
             dispatch(deleteScenario(deletePopupHeader))
             dispatch(fetchScenarios())
+            break
+        case 'deleteNarrativeSet':
+            dispatch(deleteNarrativeSet(deletePopupHeader))
+            dispatch(fetchNarrativeSets())
             break
         case 'deleteNarrative':
             dispatch(deleteNarrative(deletePopupHeader))
@@ -143,7 +161,7 @@ class ProjectOverview extends Component {
     }
 
     render () {
-        const { sos_model_runs, sos_models, sector_models, scenarios, narratives, isFetching } = this.props
+        const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching } = this.props
 
         return (
             <div>
@@ -210,11 +228,35 @@ class ProjectOverview extends Component {
 
                     <div className="card">
                         <div className="card-header">
+                            Scenario Sets
+                        </div>
+                        <div className="card-body">
+                            <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/scenario-set/" onDelete={this.openDeletePopup} />
+                            <input className="btn btn-secondary btn-lg btn-block" name="createScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
+                        </div>
+                    </div>
+
+                    <br/>
+
+                    <div className="card">
+                        <div className="card-header">
                             Scenarios
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="Scenario" items={scenarios} itemLink="/configure/scenarios/" onDelete={this.openDeletePopup} />
                             <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Create a new Scenario" onClick={this.openCreatePopup}/>
+                        </div>
+                    </div>
+
+                    <br/>
+
+                    <div className="card">
+                        <div className="card-header">
+                            Narrative Sets
+                        </div>
+                        <div className="card-body">
+                            <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/narrative-set/" onDelete={this.openDeletePopup} />
+                            <input className="btn btn-secondary btn-lg btn-block" name="createNarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -270,20 +312,24 @@ ProjectOverview.propTypes = {
     sos_model_runs: PropTypes.array.isRequired,
     sos_models: PropTypes.array.isRequired,
     sector_models: PropTypes.array.isRequired,
+    scenario_sets: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
+    narrative_sets: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
 }
 
 function mapStateToProps(state) {
-    const { sos_model_runs, sos_models, sector_models, scenarios, narratives } = state
+    const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives } = state
 
     return {
         sos_model_runs: sos_model_runs.items,
         sos_models: sos_models.items,
         sector_models: sector_models.items,
+        scenario_sets: scenario_sets.items,
         scenarios: scenarios.items,
+        narrative_sets: narrative_sets.items,
         narratives: narratives.items,
         isFetching: false
     }
