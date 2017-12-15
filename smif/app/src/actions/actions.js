@@ -454,6 +454,74 @@ export function fetchScenarioSets(){
     }
 }
 
+export function saveScenarioSet(scenarioSet){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+
+        // make API request, returning a promise
+        return fetch('/api/v1/scenario_sets/' + scenarioSet.name, {
+            method: 'put',
+            body: JSON.stringify(scenarioSet),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }}
+        )
+            .then (
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                //json => dispatch(receiveSosModelRun(json))
+            )
+    }
+}
+
+export function createScenarioSet(scenarioSetName){
+    return function (dispatch) {
+        // prepare the new modelrun
+
+        let datetime = new Date()
+
+        let newScenarioSet = {
+            'name':  scenarioSetName,
+            'description': '',
+        }
+
+        // make API request, returning a promise
+        return fetch('/api/v1/scenario_sets/', {
+            method: 'post',
+            body: JSON.stringify(newScenarioSet),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+    }
+}
+
+export function deleteScenarioSet(scenarioSetName){
+    return function (dispatch) {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/scenario_sets/' + scenarioSetName, {
+            method: 'delete',
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+    }
+}
+
 export const REQUEST_SCENARIOS = 'REQUEST_SCENARIOS'
 function requestScenarios(){
     return {
