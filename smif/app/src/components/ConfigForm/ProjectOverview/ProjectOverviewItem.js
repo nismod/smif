@@ -59,13 +59,12 @@ class SosModelRunItem extends Component {
         else {
             return (
                 <div>
-                    <table className="table table-hover">
+                    <table className="table table-hover table-projectoverview">
                         <thead className="thead-light">
-
                             <tr>
-                                <th width="20%" scope="col">Name</th>
-                                <th width="73%" scope="col">Description</th>
-                                <th width="7%" scope="col"></th>
+                                <th className="col-name" scope="col">Name</th>
+                                <th className="col-desc" scope="col">Description</th>
+                                <th className="col-action" scope="col"></th>
                             </tr>
                         </thead>
                         <tbody>
