@@ -50,6 +50,14 @@ class NarrativeConfigForm extends Component {
     render() {
         const {narrativeSets} = this.props
         const {selectedNarrative} = this.state
+
+        let selectedNarrativeSet = {name: '', description: ''}
+        let narrativeSetSelected = false
+
+        if (selectedNarrative.narrative_set != '') {
+            selectedNarrativeSet = narrativeSets.filter(narrativeSet => narrativeSet.name == selectedNarrative.narrative_set)[0]
+            narrativeSetSelected = true
+        }
      
         return (
             <div>
@@ -83,16 +91,20 @@ class NarrativeConfigForm extends Component {
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Narrative Set</label>
-                                <div className="col-sm-10">
-                                     
-                                    <input className="form-control" name="narrative_set" list="narrative_sets" type="text" defaultValue={selectedNarrative.narrative_set} onChange={this.handleChange}/>
-                                    <datalist id="narrative_sets">
+                                <div className="col-sm-10">    
+                                    <select className="form-control" name="narrative_set" defaultValue={selectedNarrative.narrative_set} onChange={this.handleChange}>
+                                        <option disabled="disabled" value="" >Please select a Narrative Set</option>
                                         {
                                             narrativeSets.map(narrativeSet =>
-                                                <option key={narrativeSet.name} value={narrativeSet.name}/>
+                                                <option key={narrativeSet.name} value={narrativeSet.name}>{narrativeSet.name}</option>
                                             )
                                         }
-                                    </datalist>
+                                    </select>
+                                    <br/>
+                                
+                                    <div className="alert alert-dark" hidden={!narrativeSetSelected} role="alert">
+                                        {selectedNarrativeSet.description}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -107,7 +119,6 @@ class NarrativeConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Filename</label>
                                 <div className="col-sm-10">
-
                                     <input className="form-control" name="filename" type="text" defaultValue={selectedNarrative.filename} onChange={this.handleChange}/>
                                 </div>
                             </div>
