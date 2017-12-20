@@ -266,7 +266,7 @@ class DataInterface(metaclass=ABCMeta):
         observed = set()
         for obs in observations:
             if obs[meta_name] not in meta_list:
-                raise ValueError("Unknown interval '{}'".format(obs[meta_name]))
+                raise ValueError("Unknown {} '{}'".format(meta_name, obs[meta_name]))
             else:
                 observed.add(obs[meta_name])
         missing = set(meta_list) - observed
