@@ -16,6 +16,7 @@ convergence.
 """
 
 import numpy as np
+from smif.data_layer import DataHandle
 from smif.model import CompositeModel, element_before
 
 
@@ -36,9 +37,6 @@ class ModelSet(CompositeModel):
 
     Attributes
     ----------
-    timestep: int
-    iterated_results: dict
-        Holds results for each iteration upto `max_iterations`
     max_iterations: int
         The maximum number of iterations
     models: list
@@ -51,9 +49,8 @@ class ModelSet(CompositeModel):
         self.models = models
         self._model_names = {model.name for model in models}
         self._derive_deps_from_models()
+        self._current_iteration = 0
 
-        self.timestep = None
-        self.iterated_results = None
         self.max_iterations = int(max_iterations)
         # tolerance for convergence assessment - see numpy.allclose docs
         self.relative_tolerance = float(relative_tolerance)
@@ -66,7 +63,7 @@ class ModelSet(CompositeModel):
                     self.deps[sink] = dep
                     self.inputs.add_metadata(model.inputs[sink])
 
-    def simulate(self, timestep, data=None):
+    def simulate(self, data_handle):
         """Runs a set of one or more models
 
         Arguments
@@ -74,104 +71,82 @@ class ModelSet(CompositeModel):
         timestep : int
         data : dict, default=None
         """
-        # Start by running all models in set with best guess
-        # - zeroes
-        # - last year's inputs
         self.logger.info("Simulating %s", self.name)
-        self.iterated_results = [{}]
-        self.timestep = timestep
-        if data is None:
-            data = {}
-
-        for model in self.models:
-            sim_data = {}
-            sim_data = self._get_parameter_values(model, sim_data, data)
-
-            results = self.guess_results(model, timestep, sim_data)
-            self.iterated_results[-1][model.name] = results
 
         # - keep track of intermediate results (iterations within the timestep)
         # - stop iterating according to near-equality condition
         for i in range(self.max_iterations):
-            if self.converged():
+            self._current_iteration = i
+            if self.converged(data_handle):
                 break
             else:
-                self._run_iteration(i, data)
+                self._run_iteration(i, data_handle)
         else:
             raise TimeoutError("Model evaluation exceeded max iterations")
 
-        return self.get_last_iteration_results()
-
-    def _run_iteration(self, i, data):
+    def _run_iteration(self, i, data_handle):
         """Run all models within the set
 
         Arguments
         ---------
         i : int
             Iteration counter
-        data : dict
-            The data passed into the model within the set
+        data_handle : smif.data_layer.DataHandle
         """
-        self.iterated_results.append({})
         for model in self.models:
-            self.logger.info("Simulating %s", model.name)
-            model_data = {}
-            for input_name, dep in model.deps.items():
-                if input_name in self.inputs:
-                    # if external dependency
-                    dep_data = data[dep.source.name]
-                else:
-                    # else, pull from iterated results
-                    dep_data = \
-                        self.iterated_results[-2][dep.source_model.name][dep.source.name]
-                model_data[input_name] = dep.convert(dep_data)
-            results = model.simulate(self.timestep, model_data)
+            self.logger.info("Simulating %s, iteration %s", model.name, i)
+            model_data_handle = DataHandle(
+                data_handle._store,
+                data_handle._modelrun_name,
+                data_handle._current_timestep,
+                data_handle._timesteps,
+                model,
+                i,
+                data_handle._decision_iteration
+            )
+            # Start by running all models in set with best guess
+            # - zeroes
+            # - last year's inputs
+            if i == 0:
+                self.guess_results(model, model_data_handle)
+            else:
+                model.simulate(model_data_handle)
 
-            self.logger.debug("Iteration %s, model %s, results: %s",
-                              i, model.name, results)
-            for model_name, model_results in results.items():
-                self.iterated_results[-1][model_name] = model_results
-
-    def get_last_iteration_results(self):
-        """Return results from the last iteration
-
-        Returns
-        -------
-        results : dict
-            Dictionary of Model results, keyed by model name
-        """
-        return self.iterated_results[-1]
-
-    def guess_results(self, model, timestep, data):
-        """Dependency-free guess at a model's result set.
+    def guess_results(self, model, data_handle):
+        """Dependency-free guess at a model's input result set.
 
         Initially, guess zeroes, or the previous timestep's results.
 
         Arguments
         ---------
         model : smif.model.composite.Model
-        timestep : int
-        data : dict
+        data_handle : smif.data_layer.DataHandle
 
         Returns
         -------
         results : dict
         """
-        timesteps = sorted(list(data.keys()))
-        timestep_before = element_before(timestep, timesteps)
+        timestep_before = element_before(
+            data_handle.current_timestep,
+            data_handle.timesteps
+        )
         if timestep_before is not None:
             # last iteration of previous timestep results
-            results = data[timestep_before][model.name]
+            for output in model.outputs.metadata:
+                data_handle.set_results(
+                    data_handle.get_data(output.name, timestep_before)
+                )
         else:
             # generate zero-values for each parameter/region/interval combination
-            results = {}
             for output in model.outputs.metadata:
                 regions = output.get_region_names()
                 intervals = output.get_interval_names()
-                results[output.name] = np.zeros((len(regions), len(intervals)))
-        return results
+                data_handle.set_results(
+                    output.name,
+                    np.zeros((len(regions), len(intervals)))
+                )
 
-    def converged(self):
+    def converged(self, data_handle):
         """Check whether the results of a set of models have converged.
 
         Returns
@@ -184,7 +159,7 @@ class ModelSet(CompositeModel):
         DiverganceError
             If the results appear to be diverging
         """
-        if len(self.iterated_results) < 2:
+        if self._current_iteration < 2:
             # must have at least two result sets per model to assess convergence
             return False
 
@@ -198,13 +173,14 @@ class ModelSet(CompositeModel):
         if all(
                 self._model_converged(
                     model,
-                    self.iterated_results[-1][model.name],
-                    self.iterated_results[-2][model.name])
+                    data_handle.get_iteration_data(model.name, -1),
+                    data_handle.get_iteration_data(model.name, -2)
+                )
                 for model in self.models):
             # if all most recent are almost equal to penultimate, must have converged
             return True
 
-        # TODO check for divergance and raise error
+        # TODO check for divergence and raise error
 
         return False
 
