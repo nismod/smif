@@ -4,6 +4,7 @@ import networkx
 import numpy as np
 import pytest
 from pytest import fixture, raises
+from smif.data_layer import DataHandle, MemoryInterface
 from smif.metadata import Metadata, MetadataSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel as AbstractSectorModel
@@ -17,18 +18,16 @@ def get_scenario():
                         scenario.regions.get_entry('LSOA'),
                         scenario.intervals.get_entry('annual'),
                         'unit')
-    scenario.add_data('electricity_demand_output',
-                      np.array([[[123]]]), [2010])
-
     return scenario
 
 
 @fixture
 def get_sector_model():
     class SectorModel(AbstractSectorModel):
-
+        """A no-op sector model
+        """
         def simulate(self, timestep, data=None):
-            return {self.name: data}
+            return data
 
         def extract_obj(self):
             pass
@@ -38,6 +37,23 @@ def get_sector_model():
     return SectorModel
 
 
+def get_data_handle(model):
+    """Return a data handle for the model
+    """
+    store = MemoryInterface()
+    store.write_sos_model_run({
+        'name': 'test',
+        'narratives': {}
+    })
+    return DataHandle(
+        store,
+        'test',  # modelrun_name
+        2010,  # current_timestep
+        [2010],  # timesteps
+        model
+    )
+
+
 @fixture
 def get_water_sector_model():
     class SectorModel(AbstractSectorModel):
@@ -45,12 +61,10 @@ def get_water_sector_model():
         fluffyness -> electricity_demand
         """
 
-        def simulate(self, timestep, input_data=None):
-            results = {}
-            x = input_data['fluffyness']
-            results['electricity_demand'] = (
-                x**3) - (6 * x**2) + (0.9 * x) + 0.15
-            return {self.name: results}
+        def simulate(self, data_handle=None):
+            x = data_handle['fluffyness']
+            data_handle['electricity_demand'] = (x**3) - (6 * x**2) + (0.9 * x) + 0.15
+            return data_handle
 
         def extract_obj(self):
             pass
@@ -78,13 +92,12 @@ def get_energy_sector_model():
         electricity_demand_input -> fluffiness
         """
 
-        def simulate(self, timestep, input_data=None):
+        def simulate(self, data_handle):
             """Mimics the running of a sector model
             """
-            results = {}
-            fluff = input_data['electricity_demand_input']
-            results['fluffiness'] = fluff * 0.819
-            return {self.name: results}
+            fluff = data_handle['electricity_demand_input']
+            data_handle['fluffiness'] = fluff * 0.819
+            return data_handle
 
         def extract_obj(self):
             pass
@@ -113,10 +126,7 @@ class TestModelSet:
                                  elec_scenario.regions.get_entry('LSOA'),
                                  elec_scenario.intervals.get_entry('annual'),
                                  'unit')
-        elec_scenario.add_data('output', np.array([[[123]]]), [2010])
-
-        model_set = ModelSet([elec_scenario])
-        model_set.simulate(2010)
+        ModelSet([elec_scenario])
 
     def test_model_set_deps(self, get_water_sector_model, get_energy_sector_model):
         pop_scenario = ScenarioModel('population')
@@ -154,7 +164,6 @@ class TestBasics:
         SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data('output', np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -173,7 +182,6 @@ class TestDependencyGraph:
         SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-        elec_scenario.add_data('output', np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -199,8 +207,6 @@ class TestDependencyGraph:
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
 
-        elec_scenario.add_data('output', np.array([[[123]]]), [2010])
-
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
         energy_model.add_dependency(elec_scenario, 'output', 'input')
@@ -221,8 +227,6 @@ class TestDependencyGraph:
         SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
         elec_scenario.add_output('output', Mock(), Mock(), 'unit')
-
-        elec_scenario.add_data('output', np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('model')
         energy_model.add_input('input', Mock(), Mock(), 'unit')
@@ -251,9 +255,9 @@ class TestSosModel:
         model = SectorModel('test_model')
         model.add_input('input', Mock(), Mock(), 'units')
         sos_model.add_model(model)
-        data = {'input_not_here': 0}
+        data_handle = get_data_handle(sos_model)
         with raises(NotImplementedError):
-            sos_model.simulate(2010, data)
+            sos_model.simulate(data_handle)
 
 
 class TestCompositeIntegration:
@@ -264,7 +268,8 @@ class TestCompositeIntegration:
         elec_scenario = get_scenario
         sos_model = SosModel('simple')
         sos_model.add_model(elec_scenario)
-        actual = sos_model.simulate(2010)
+        data_handle = get_data_handle(sos_model)
+        actual = sos_model.simulate(data_handle)
         expected = {
             'electricity_demand_scenario': {
                 'electricity_demand_output': np.array([[123]])
@@ -276,9 +281,10 @@ class TestCompositeIntegration:
         no_inputs = get_energy_sector_model
         no_inputs._inputs = MetadataSet([])
         no_inputs.simulate = lambda x: x
-        actual = no_inputs.simulate(2010)
-        expected = 2010
-        assert actual == expected
+
+        data_handle = Mock()
+        no_inputs.simulate(data_handle)
+        data_handle.assert_not_called()
 
     def test_sector_model_one_input(self, get_energy_sector_model,
                                     get_scenario):
@@ -293,7 +299,8 @@ class TestCompositeIntegration:
         sos_model.add_model(elec_scenario)
         sos_model.add_model(energy_model)
 
-        actual = sos_model.simulate(2010)
+        data_handle = get_data_handle(sos_model)
+        actual = sos_model.simulate(data_handle)
 
         expected = {
             'energy_sector_model': {
@@ -411,8 +418,6 @@ class TestNestedModels():
         elec_scenario = ScenarioModel('electricity_demand_scenario')
         elec_scenario.add_output('electricity_demand_output',
                                  Mock(), Mock(), 'unit')
-        elec_scenario.add_data('electricity_demand_output',
-                               np.array([[[123]]]), [2010])
 
         energy_model = SectorModel('energy_sector_model')
         energy_model.add_input(
@@ -442,7 +447,7 @@ class TestNestedModels():
 
         fluf_scenario = ScenarioModel('fluffiness_scenario')
         fluf_scenario.add_output('fluffiness', Mock(), Mock(), 'unit')
-        fluf_scenario.add_data('fluffiness', np.array([[[12]]]), [2010])
+        # fluf_scenario.add_data('fluffiness', np.array([[[12]]]), [2010])
 
         assert sos_model_lo.free_inputs.names == ['fluffiness_input']
 
@@ -456,14 +461,22 @@ class TestNestedModels():
         sos_model_high.add_model(sos_model_lo)
         sos_model_high.add_model(fluf_scenario)
 
-        actual = sos_model_high.simulate(2010)
-        expected = {'fluffiness_scenario': {'fluffiness': 12},
-                    'lower': {'electricity_demand_scenario':
-                              {'electricity_demand_output': 123},
-                              'energy_sector_model': {'cost': 158.5962,
-                                                      'fluffyness': 264}
-                              }
-                    }
+        data_handle = get_data_handle(sos_model_high)
+        actual = sos_model_high.simulate(data_handle)
+        expected = {
+            'fluffiness_scenario': {
+                'fluffiness': 12
+            },
+            'lower': {
+                'electricity_demand_scenario': {
+                    'electricity_demand_output': 123
+                },
+                'energy_sector_model': {
+                    'cost': 158.5962,
+                    'fluffyness': 264
+                }
+            }
+        }
 
         assert actual == expected
 
@@ -474,14 +487,12 @@ class TestCircularDependency:
         """Fails because no functionality to deal with loops
         """
         energy_model = get_energy_sector_model
-
         water_model = get_water_sector_model
 
         sos_model = SosModel('energy_water_model')
         water_model.add_dependency(energy_model, 'fluffiness', 'fluffyness')
         energy_model.add_dependency(water_model, 'electricity_demand',
                                     'electricity_demand_input')
-
         sos_model.add_model(water_model)
         sos_model.add_model(energy_model)
 
@@ -499,13 +510,9 @@ class TestCircularDependency:
         assert (water_model, energy_model) in graph.edges()
         assert (energy_model, water_model) in graph.edges()
 
-        modelset = ModelSet([water_model, energy_model])
-        actual = modelset.guess_results(water_model, 2010, {})
-        expected = {'electricity_demand': np.array([1.])}
-        # assert actual == expected
-
         sos_model.max_iterations = 100
-        results = sos_model.simulate(2010)
+        data_handle = get_data_handle(sos_model)
+        results = sos_model.simulate(data_handle)
 
         expected = np.array([[0.13488114]], dtype=np.float)
         actual = results['energy_sector_model']['fluffiness']
