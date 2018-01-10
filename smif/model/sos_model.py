@@ -11,6 +11,7 @@ import logging
 import networkx
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
+from smif.data_layer import DataHandle
 from smif.intervention import InterventionRegister
 from smif.model import CompositeModel, Model, element_after, element_before
 from smif.model.model_set import ModelSet
@@ -95,14 +96,23 @@ class SosModel(CompositeModel):
         self.logger.info("Loading model: %s", model.name)
         self.models[model.name] = model
 
-    def before_model_run(self, data):
+    def before_model_run(self, data_handle):
         """Initialise each model (passing in parameter data only)
         """
-        for model in self.sector_models:
-            param_data = self._get_parameter_values(self.models[model], {}, data)
-            self.models[model].before_model_run(param_data)
+        for model in self.sector_models.values():
+            # get custom data handle for the Model
+            model_data_handle = DataHandle(
+                data_handle._store,
+                data_handle._modelrun_name,
+                data_handle._current_timestep,
+                data_handle._timesteps,
+                model,
+                data_handle._modelset_iteration,
+                data_handle._decision_iteration
+            )
+            model.before_model_run(model_data_handle)
 
-    def simulate(self, timestep, data=None):
+    def simulate(self, data_handle):
         """Run the SosModel
 
         Returns
@@ -114,27 +124,19 @@ class SosModel(CompositeModel):
         self.check_dependencies()
         run_order = self._get_model_sets_in_run_order()
         self.logger.info("Determined run order as %s", [x.name for x in run_order])
-        results = {}
         for model in run_order:
-            # get data for model
-            # TODO settle and test data dict structure/object between simple/composite models
-            sim_data = {}
-            for dep in model.deps.values():
-                if dep.sink.name in self.free_inputs:
-                    # pick external dependencies from data
-                    param_data = data[dep.source_model.name][dep.source.name]
-                else:
-                    # pick internal dependencies from results
-                    param_data = results[dep.source_model.name][dep.source.name]
-                param_data_converted = dep.convert(param_data)
-                sim_data[dep.sink.name] = param_data_converted
-
-            sim_data = self._get_parameter_values(model, sim_data, data)
-
-            sim_results = model.simulate(timestep, sim_data)
-            for model_name, model_results in sim_results.items():
-                results[model_name] = model_results
-        return results
+            # get custom data handle for the Model
+            model_data_handle = DataHandle(
+                data_handle._store,
+                data_handle._modelrun_name,
+                data_handle._current_timestep,
+                data_handle._timesteps,
+                model,
+                data_handle._modelset_iteration,
+                data_handle._decision_iteration
+            )
+            model.simulate(model_data_handle)
+        return data_handle
 
     def check_dependencies(self):
         """For each contained model, compare dependency list against

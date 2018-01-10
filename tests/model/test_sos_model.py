@@ -18,13 +18,11 @@ from ..fixtures.water_supply import WaterSupplySectorModel
 @fixture(scope='function')
 def get_scenario_model_object():
 
-    data = np.array([[[3.]], [[5.]], [[1.]]], dtype=float)
     scenario_model = ScenarioModel('test_scenario_model')
     scenario_model.add_output('raininess',
                               scenario_model.regions.get_entry('LSOA'),
                               scenario_model.intervals.get_entry('annual'),
                               'ml')
-    scenario_model.add_data('raininess', data, [2010, 2011, 2012])
     scenario_model.scenario_set = 'raininess'
     return scenario_model
 
