@@ -87,7 +87,7 @@ class DataHandle(object):
         """
         if input_name not in self._inputs:
             raise KeyError(
-                "'%s' not recognised as input for '%s'", input_name, self._model_name)
+                "'{}' not recognised as input for '{}'".format(input_name, self._model_name))
 
         # resolve timestep
         if timestep is None:
@@ -125,7 +125,8 @@ class DataHandle(object):
         """
         if parameter_name not in self._parameters:
             raise KeyError(
-                "'%s' not recognised as parameter for '%s'", parameter_name, self._model_name)
+                "'{}' not recognised as parameter for '{}'".format(
+                    parameter_name, self._model_name))
 
         return self._parameters[parameter_name]
 
