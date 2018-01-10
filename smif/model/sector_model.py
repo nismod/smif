@@ -187,13 +187,11 @@ class SectorModel(Model, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def simulate(self, timestep, data=None):
+    def simulate(self, data=None):
         """Implement this method to run the model
 
         Arguments
         ---------
-        timestep : int
-            The timestep for which to run the SectorModel
         data: dict, default=None
             A collection of state, parameter values, dependency inputs
         Returns
