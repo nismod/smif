@@ -3,7 +3,6 @@ model.
 """
 from logging import getLogger
 
-import numpy as np
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.model import Model
@@ -29,34 +28,19 @@ class ScenarioModel(Model):
 
     def __init__(self, name):
         super().__init__(name)
-
-        self._data = {}
-        self.timesteps = []
         self.scenario_set = None
 
     def as_dict(self):
         config = {
             'name': self.name,
             'description': self.description,
-            'scenario_set': self.scenario_set
+            'scenario_set': self.scenario_set,
+            'parameters': [
+                output.as_dict()
+                for output in self.outputs.values()
+            ]
         }
-
-        parameters = [output.as_dict() for output in self.outputs.values()]
-        config['parameters'] = parameters
-
         return config
-
-    def get_data(self, output):
-        """Get data associated with `output`
-
-        Arguments
-        ---------
-        output : str
-            The name of the output for which to retrieve data
-
-        """
-        self._check_output(output)
-        return self._data[output]
 
     def add_output(self, name, spatial_resolution, temporal_resolution, units):
         """Add an output to the scenario model
@@ -77,46 +61,19 @@ class ScenarioModel(Model):
         }
         self.outputs.add_metadata(output_metadata)
 
-    def add_data(self, output, data, timesteps):
-        """Add data to the scenario
-
-        Arguments
-        ---------
-        output : str
-            The name of the output to which to add data
-        data : numpy.ndarray
-        timesteps : list
-
-        Example
-        -------
-        >>> elec_scenario = ScenarioModel('elec_scenario')
-        >>> data = np.array([[[120.23]]])
-        >>> timesteps = [2010]
-        >>> elec_scenario.add_data(data, timesteps)
-        """
-        self._check_output(output)
-
-        self.timesteps = timesteps
-        assert isinstance(data, np.ndarray)
-        self._data[output] = data
-
     def _check_output(self, output):
         if output not in self.outputs.names:
             raise KeyError("'{}' not in scenario outputs".format(output))
 
-    def simulate(self, timestep, data=None):
-        """Returns the scenario data
+    def simulate(self, data):
+        """Accesses the scenario data from the backing store
         """
-        time_index = self.timesteps.index(timestep)
-
-        all_data = {
-            output_name: self._data[output_name][time_index]
-            for output_name in self.outputs
-        }
-
-        return {
-            self.name: all_data
-        }
+        for output_name in self.outputs:
+            data.set_results(
+                output_name,
+                data.get_data(output_name)
+            )
+        return data
 
 
 class ScenarioModelBuilder(object):
