@@ -1,20 +1,18 @@
-import numpy as np
-from pytest import fixture, raises
-from smif.convert.area import RegionSet
-from smif.convert.interval import IntervalSet
+from unittest.mock import Mock
+
+from pytest import fixture
 from smif.model.scenario_model import ScenarioModel, ScenarioModelBuilder
 
 
 @fixture(scope='function')
 def get_scenario_model_object():
-
-    data = np.array([[[3.]], [[5.]], [[1.]]], dtype=float)
     scenario_model = ScenarioModel('test_scenario_model')
     scenario_model.add_output('raininess',
                               scenario_model.regions.get_entry('LSOA'),
                               scenario_model.intervals.get_entry('annual'),
                               'ml')
-    scenario_model.add_data('raininess', data, [2010, 2011, 2012])
+    # data = np.array([[[3.]], [[5.]], [[1.]]], dtype=float)
+    # scenario_model.add_data('raininess', data, [2010, 2011, 2012])
     return scenario_model
 
 
@@ -84,242 +82,26 @@ class TestScenarioObject:
 
 class TestScenarioModelData:
 
-    def test_nest_scenario_data(self, gb_ni_regions):
-        data = {'length': [
-            {
-                'year': 2015,
-                'region': 'GB',
-                'interval': 'wet_season',
-                'value': 3
-            },
-            {
-                'year': 2015,
-                'region': 'GB',
-                'interval': 'dry_season',
-                'value': 5
-            },
-            {
-                'year': 2015,
-                'region': 'NI',
-                'interval': 'wet_season',
-                'value': 1
-            },
-            {
-                'year': 2015,
-                'region': 'NI',
-                'interval': 'dry_season',
-                'value': 2
-            },
-            {
-                'year': 2016,
-                'region': 'GB',
-                'interval': 'wet_season',
-                'value': 4
-            },
-            {
-                'year': 2016,
-                'region': 'GB',
-                'interval': 'dry_season',
-                'value': 6
-            },
-            {
-                'year': 2016,
-                'region': 'NI',
-                'interval': 'wet_season',
-                'value': 1
-            },
-            {
-                'year': 2016,
-                'region': 'NI',
-                'interval': 'dry_season',
-                'value': 2.5
-            }
-        ]}
-
-        expected = np.array([
-            # 2015
-            [
-                # GB
-                [3, 5],
-                # NI
-                [1, 2]
-            ],
-            # 2016
-            [
-                # GB
-                [4, 6],
-                # NI
-                [1, 2.5]
-            ]
-        ], dtype=float)
-
+    def test_nest_scenario_data(self):
         builder = ScenarioModelBuilder('test_scenario_model')
-
-        interval_data = [
-            {'id': 'wet_season', 'start': 'P0M', 'end': 'P5M'},
-            {'id': 'dry_season', 'start': 'P5M', 'end': 'P10M'},
-            {'id': 'wet_season', 'start': 'P10M', 'end': 'P1Y'},
-        ]
-        hack = ScenarioModel('hacky')
-
-        hack.intervals.register(
-            IntervalSet('seasonal', interval_data))
-        hack.regions.register(
-            RegionSet('country', gb_ni_regions['features']))
-
         config = {
             'name': 'mass',
             'scenario_set': '',
             'parameters': [
                 {
-                    'spatial_resolution': 'country',
-                    'temporal_resolution': 'seasonal',
-                    'units': 'kg',
-                    'name': 'length'
+                    'name': 'length',
+                    'spatial_resolution': 'LSOA',
+                    'temporal_resolution': 'annual',
+                    'units': 'kg'
                 }
             ]
         }
-        builder.construct(config, data, [2015, 2016])
+        builder.construct(config)
         scenario = builder.finish()
 
-        actual = scenario.get_data('length')
-        assert np.allclose(actual, expected)
-
-    def test_scenario_data_defaults(self, oxford_region):
-        data = {'length': [
-            {
-                'year': 2015,
-                'interval': '1',
-                'value': 3.14,
-                'region': 'oxford'
-            }
-        ]}
-
-        expected = np.array([[[3.14]]])
-
-        builder = ScenarioModelBuilder('length')
-        builder.construct({
-            'name': 'length',
-            'scenario_set': '',
-            'parameters': [{
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'm',
-                'name': 'length'
-                }]
-        }, data, [2015])
-        scenario = builder.finish()
-        assert scenario.get_data('length') == expected
-
-    def test_scenario_data_missing_year(self, oxford_region):
-        data = {'length': [
-            {
-                'value': 3.14
-            }
-        ]}
-
-        builder = ScenarioModelBuilder('length')
-
-        msg = "Scenario data item missing year"
-        with raises(ValueError) as ex:
-            builder.construct({
-                'name': 'length',
-                'scenario_set': '',
-                'parameters': [{
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'units': 'm',
-                    'name': 'length'
-                    }]
-            }, data, [2015])
-        assert msg in str(ex.value)
-
-    def test_scenario_data_missing_param_region(self, oxford_region):
-        data = {'length': [
-            {
-                'value': 3.14,
-                'region': 'missing',
-                'interval': '1',
-                'year': 2015
-            }
-        ]}
-
-        builder = ScenarioModelBuilder('length')
-
-        msg = "Region 'missing' not defined in set 'LSOA' for parameter 'length'"
-        with raises(ValueError) as ex:
-            builder.construct({
-                'name': 'length',
-                'scenario_set': '',
-                'parameters': [{
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual',
-                    'units': 'm',
-                    'name': 'length'
-                    }]
-            }, data, [2015])
-        assert msg in str(ex)
-
-    def test_scenario_data_missing_param_interval(self, oxford_region):
-        data = {'length': [
-            {
-                'value': 3.14,
-                'region': 'oxford',
-                'interval': '1',
-                'year': 2015
-            },
-            {
-                'value': 3.14,
-                'region': 'oxford',
-                'interval': 'extra',
-                'year': 2015
-            }
-        ]}
-
-        builder = ScenarioModelBuilder('length')
-        msg = "Interval 'extra' not defined in set 'annual' for parameter 'length'"
-        with raises(ValueError) as ex:
-            builder.construct({
-                'name': 'length',
-                'scenario_set': '',
-                'parameters': [{
-                    'name': 'length',
-                    'units': 'm',
-                    'spatial_resolution': 'LSOA',
-                    'temporal_resolution': 'annual'}]},
-                data, [2015])
-        assert msg in str(ex)
-
-    def test_data_list_to_array(self):
-
-        data = [
-            {
-                'year': 2010,
-                'value': 3,
-                'region': 'oxford',
-                'interval': '1'
-            },
-            {
-                'year': 2011,
-                'value': 5,
-                'region': 'oxford',
-                'interval': '1'
-            },
-            {
-                'year': 2012,
-                'value': 1,
-                'region': 'oxford',
-                'interval': '1'
-            }
-        ]
-
-        builder = ScenarioModelBuilder("test_scenario_model")
-
-        spatial = builder.region_register.get_entry('LSOA')
-        temporal = builder.interval_register.get_entry('annual')
-
-        actual = builder._data_list_to_array('raininess', data,
-                                             [2010, 2011, 2012],
-                                             spatial, temporal)
-        expected = np.array([[[3.]], [[5.]], [[1.]]], dtype=float)
-        np.testing.assert_equal(actual, expected)
+        data_handle = Mock()
+        actual = scenario.simulate(2015, data_handle)
+        assert actual is data_handle
+        data_handle.get_data.assert_called_once_with('length', 2015)
+        mock_get = data_handle.get_data('length', 2015)
+        data_handle.set_results.assert_called_once_with('length', mock_get)
