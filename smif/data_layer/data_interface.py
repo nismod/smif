@@ -101,15 +101,15 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_scenario_data(self, scenario_name):
-        raise NotImplementedError()
-
-    @abstractmethod
     def write_scenario_set(self, scenario_set):
         raise NotImplementedError()
 
     @abstractmethod
     def update_scenario_set(self, scenario_set):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read_scenario_data(self, scenario_name):
         raise NotImplementedError()
 
     @abstractmethod
@@ -129,15 +129,15 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_narrative_data(self, narrative_name):
-        raise NotImplementedError()
-
-    @abstractmethod
     def write_narrative_set(self, narrative_set):
         raise NotImplementedError()
 
     @abstractmethod
     def update_narrative_set(self, narrative_set):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read_narrative_data(self, narrative_name):
         raise NotImplementedError()
 
     @abstractmethod
