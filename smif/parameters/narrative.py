@@ -38,10 +38,14 @@ class Narrative(object):
         dict
             A nested dictionary containing the narrative data::
 
-                {'global': [{'global_parameter': 'value'}],
-                 'model_name': [{'model_parameter': 'value'},
-                                {'model_parameter_two': 'value'}
-                                ]
+                {
+                    'global': [
+                        {'global_parameter': 'value'}
+                    ],
+                    'model_name': [
+                        {'model_parameter': 'value'},
+                        {'model_parameter_two': 'value'}
+                    ]
                 }
         """
         return self._data
@@ -57,11 +61,15 @@ class Narrative(object):
 
         Example
         -------
-        >>> narrative_data = {'global': [{'name': 'parameter_name',
-                                          'value': 42}]}
-        >>> narrative = Narrative('Energy Demand - High Tech',
-                                      'A description',
-                                      'technology')
+        >>> narrative_data = {
+                'global': [
+                    {'parameter_name': 42}
+                ]
+            }
+        >>> narrative = Narrative(
+                'Energy Demand - High Tech',
+                'A description',
+                'technology')
         >>> narrative.add_data(narrative_data)
         """
         if isinstance(data, dict):
