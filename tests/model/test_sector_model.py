@@ -3,11 +3,9 @@
 from copy import copy
 from unittest.mock import Mock
 
-import numpy as np
 from pytest import fixture, raises
 from smif.convert.area import get_register
 from smif.metadata import Metadata, MetadataSet
-from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
 from smif.parameters import ParameterList
 
@@ -114,21 +112,6 @@ class TestCompositeSectorModel():
         data = {'input_name': [0]}
         actual = model.simulate(2010, data)
         assert actual == {}
-
-    def test_scenario_dependencies(self):
-
-        scenario_model = ScenarioModel('test_scenario')
-        scenario_model.add_output('scenario_output', Mock(), Mock(), 'units')
-        data = np.array([[[120.23]]])
-        timesteps = [2010]
-        scenario_model.add_data('scenario_output', data, timesteps)
-
-        model = EmptySectorModel('test_model')
-        model.add_input('input_name', Mock(), Mock(), 'units')
-        model.add_dependency(scenario_model, 'scenario_output', 'input_name')
-
-        assert 'input_name' in model.deps
-        assert model.get_scenario_data('input_name') == data
 
 
 class TestSectorModelBuilder():
