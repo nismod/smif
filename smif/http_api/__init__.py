@@ -192,6 +192,7 @@ class SosModelAPI(MethodView):
         response = jsonify({})
         return response
 
+
 class SectorModelAPI(MethodView):
     """Implement CRUD operations for sector_model configuration data
     """
@@ -244,6 +245,7 @@ class SectorModelAPI(MethodView):
         response = jsonify({})
         return response
 
+
 class ScenarioSetAPI(MethodView):
     """Implement CRUD operations for scenario_sets configuration data
     """
@@ -252,7 +254,6 @@ class ScenarioSetAPI(MethodView):
         all: GET /api/v1/scenario_sets/
         one: GET /api/vi/scenario_sets/name
         """
-        # return str(current_app.config)
         data_interface = current_app.config.get_data_interface()
         if scenario_set_name is None:
             data = data_interface.read_scenario_sets()
@@ -295,6 +296,7 @@ class ScenarioSetAPI(MethodView):
         data_interface.delete_scenario_set(scenario_set_name)
         response = jsonify({})
         return response
+
 
 class ScenarioAPI(MethodView):
     """Implement CRUD operations for scenarios configuration data
@@ -401,6 +403,7 @@ class NarrativeSetAPI(MethodView):
         response = jsonify({})
         return response
 
+
 class NarrativeAPI(MethodView):
     """Implement CRUD operations for narratives configuration data
     """
@@ -452,6 +455,7 @@ class NarrativeAPI(MethodView):
         data_interface.delete_narrative(narrative_name)
         response = jsonify({})
         return response
+
 
 def register_api(app, view, endpoint, url, key='id', key_type='int'):
     """Register a MethodView as an endpoint with CRUD operations at a URL

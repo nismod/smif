@@ -527,6 +527,31 @@ class DatafileInterface(DataInterface):
         return project_config['scenario_sets']
 
     def read_scenario_set(self, scenario_set_name):
+        """Read a scenario_set
+
+        Arguments
+        ---------
+        scenario_set_name: str
+            Name of the scenario_set
+
+        Returns
+        -------
+        dict
+            Scenario set definition
+        """
+        project_config = self._read_project_config()
+
+        try:
+            return next(
+                scenario_set
+                for scenario_set in project_config['scenario_sets']
+                if scenario_set['name'] == scenario_set_name
+            )
+        except StopIteration:
+            raise DataNotFoundError(
+                "Scenario set '{}' not found".format(scenario_set_name))
+
+    def read_scenario_set_scenario_definitions(self, scenario_set_name):
         """Read all scenarios from a certain scenario_set
 
         Arguments
@@ -548,7 +573,7 @@ class DatafileInterface(DataInterface):
         ]
 
         if not filtered_scenario_data:
-            raise DataNotFoundError(
+            self.logger.warning(
                 "Scenario set '{}' has no scenarios defined".format(scenario_set_name))
 
         return filtered_scenario_data
@@ -643,18 +668,18 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def read_scenarios(self):
-        """Read scenario sets from project configuration
+        """Read scenarios from project configuration
 
         Returns
         -------
         list
-            A list of scenario set dicts
+            A list of scenario dicts
         """
         project_config = self._read_project_config()
         return project_config['scenarios']
 
     def read_scenario(self, scenario_name):
-        """Read all scenarios from a certain scenario
+        """Read a scenario
 
         Arguments
         ---------
@@ -663,12 +688,11 @@ class DatafileInterface(DataInterface):
 
         Returns
         -------
-        list
+        dict
             A scenario dictionary
         """
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
-            print(scenario_data)
             if scenario_data['name'] == scenario_name:
                 return scenario_data
         raise DataNotFoundError("scenario '%s' not found" % scenario_name)

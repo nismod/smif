@@ -720,7 +720,7 @@ class TestDatafileInterface():
         """
         with raises(DataNotFoundError) as ex:
             get_handler.read_scenario_set('missing')
-        assert "Scenario set 'missing' has no scenarios defined" in str(ex)
+        assert "Scenario set 'missing' not found" in str(ex)
 
     def test_project_scenarios(self, get_handler):
         """ Test to read and write the project configuration
@@ -770,6 +770,43 @@ class TestDatafileInterface():
         for scenario in scenarios:
             if scenario['name'] == 'name_change':
                 assert scenario['filename'] == 'population_med.csv'
+
+    def test_read_scenario_set_scenario_definitions(self, get_handler):
+        """ Test to read all scenario definitions for a scenario
+        """
+        config_handler = get_handler
+        actual = config_handler.read_scenario_set_scenario_definitions('population')
+        expected = [
+            {
+                'description': 'The High ONS Forecast for UK population out to 2050',
+                'name': 'High Population (ONS)',
+                'parameters': [
+                    {
+                        'name': 'population_count',
+                        'filename': 'population_high.csv',
+                        'spatial_resolution': 'lad',
+                        'temporal_resolution': 'annual',
+                        'units': 'people',
+                    }
+                ],
+                'scenario_set': 'population',
+            },
+            {
+                'description': 'The Low ONS Forecast for UK population out to 2050',
+                'name': 'Low Population (ONS)',
+                'parameters': [
+                    {
+                        'name': 'population_count',
+                        'filename': 'population_low.csv',
+                        'spatial_resolution': 'lad',
+                        'temporal_resolution': 'annual',
+                        'units': 'people',
+                    }
+                ],
+                'scenario_set': 'population',
+            }
+        ]
+        assert actual == expected
 
     def test_project_narrative_sets(self, get_handler):
         """ Test to read and write the project configuration
