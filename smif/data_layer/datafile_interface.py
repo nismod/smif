@@ -980,7 +980,13 @@ class DatafileInterface(DataInterface):
                 break
 
         # Read the narrative data from file
-        return load(os.path.join(self.file_dir['narratives'], filename))
+        try:
+            narrative_data = load(os.path.join(self.file_dir['narratives'], filename))
+        except FileNotFoundError:
+            raise DataNotFoundError(
+                'Narrative \'{}\' has no data defined'.format(narrative_name))
+
+        return narrative_data
 
     def read_narrative_definition(self, narrative_name):
         """Read the narrative definition
@@ -995,12 +1001,12 @@ class DatafileInterface(DataInterface):
         dict
 
         """
-        definition = None
         project_config = self._read_project_config()
         for narrative in project_config['narratives']:
             if narrative['name'] == narrative_name:
-                definition = narrative
-        return definition
+                return narrative
+
+        raise DataNotFoundError('Narrative \'{}\' not found'.format(narrative_name))
 
     def read_results(self, modelrun_id, model_name, output_name, spatial_resolution,
                      temporal_resolution, timestep=None, modelset_iteration=None,
