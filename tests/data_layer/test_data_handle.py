@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock
 
 import numpy as np
 from pytest import fixture
-from smif.data_layer.model_data import DataHandle
+from smif.data_layer import DataHandle
 from smif.metadata import Metadata, MetadataSet
 from smif.model.dependency import Dependency
 from smif.parameters import ParameterList

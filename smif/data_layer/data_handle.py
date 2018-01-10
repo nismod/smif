@@ -59,6 +59,12 @@ class DataHandle(object):
     def __setitem__(self, key, value):
         self.set_results(key, value)
 
+    @property
+    def current_timestep(self):
+        """Current timestep
+        """
+        return self._current_timestep
+
     def get_data(self, input_name, timestep=None):
         """Get data required for model inputs
 
