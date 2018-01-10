@@ -65,6 +65,12 @@ class DataHandle(object):
         """
         return self._current_timestep
 
+    @property
+    def timesteps(self):
+        """Current timestep
+        """
+        return tuple(self._timesteps)
+
     def get_data(self, input_name, timestep=None):
         """Get data required for model inputs
 
