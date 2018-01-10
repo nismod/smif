@@ -105,8 +105,8 @@ class DataHandle(object):
             self._modelrun_name,
             source_model_name,  # read from source model
             source_output_name,  # using source model output name
-            self._inputs[input_name].spatial_resolution,
-            self._inputs[input_name].temporal_resolution,
+            self._inputs[input_name].spatial_resolution.name,
+            self._inputs[input_name].temporal_resolution.name,
             timestep,
             self._modelset_iteration,
             self._decision_iteration
@@ -157,8 +157,8 @@ class DataHandle(object):
             self._model_name,
             output_name,
             data,
-            self._outputs[output_name].spatial_resolution,
-            self._outputs[output_name].temporal_resolution,
+            self._outputs[output_name].spatial_resolution.name,
+            self._outputs[output_name].temporal_resolution.name,
             self._current_timestep,
             self._modelset_iteration,
             self._decision_iteration
