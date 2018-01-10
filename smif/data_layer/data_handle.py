@@ -100,6 +100,10 @@ class DataHandle(object):
         # resolve source
         source_model_name = self._dependencies[input_name].source_model.name
         source_output_name = self._dependencies[input_name].source.name
+        if self._modelset_iteration is not None:
+            i = self._modelset_iteration - 1  # read from previous
+        else:
+            i = self._modelset_iteration
 
         return self._store.read_results(
             self._modelrun_name,
@@ -108,7 +112,7 @@ class DataHandle(object):
             self._inputs[input_name].spatial_resolution.name,
             self._inputs[input_name].temporal_resolution.name,
             timestep,
-            self._modelset_iteration,
+            i,
             self._decision_iteration
         )
 
