@@ -22,7 +22,6 @@ A very simple example with just one scenario:
 
 >>> elec_scenario = ScenarioModel('scenario')
 >>> elec_scenario.add_output('demand', 'national', 'annual', 'GWh')
->>> elec_scenario.add_data('demand', np.array([[[123]]]), [2010])
 >>> sos_model = SosModel('simple')
 >>> sos_model.add_model(elec_scenario)
 >>> sos_model.simulate(2010)
@@ -32,7 +31,6 @@ A more comprehensive example with one scenario and one scenario model:
 
 >>> elec_scenario = ScenarioModel('scenario')
 >>> elec_scenario.add_output('demand', 'national', 'annual', 'GWh')
->>> elec_scenario.add_data('demand', np.array([[[123]]]), [2010])
 >>> class EnergyModel(SectorModel):
 ...   def extract_obj(self):
 ...     pass
@@ -127,15 +125,13 @@ class Model(metaclass=ABCMeta):
         return MetadataSet(self.inputs[name] for name in free_input_names)
 
     @abstractmethod
-    def simulate(self, timestep, data=None):
+    def simulate(self, data=None):
         """Override to implement the generation of model results
 
         Generate ``results`` for ``timestep`` using ``data``
 
         Arguments
         ---------
-        timestep : int
-            The timestep for which to run the Model
         data: dict, default=None
             A collection of state, parameter values, dependency inputs.
 
@@ -218,68 +214,6 @@ class CompositeModel(Model, metaclass=ABCMeta):
     def __init__(self, name):
         super().__init__(name)
         self.models = {}
-
-    @property
-    def parameters(self):
-        """Returns all the contained parameters as {model name: ParameterList}
-
-        Returns
-        -------
-        smif.parameters.ParameterList
-            A combined collection of parameters for all the contained models
-        """
-        my_parameters = super().parameters
-
-        contained_parameters = {self.name: my_parameters}
-
-        for model in self.models.values():
-            contained_parameters[model.name] = model.parameters
-        return contained_parameters
-
-    def _get_parameter_values(self, model, sim_data, data):
-        """Gets default or passed in parameter values for a contained model
-
-        If the `model` is composite, then data is passed in directly, otherwise
-        default parameter values are first generated, and then overwritten by
-        passed in items.
-
-        Arguments
-        ---------
-        model : smif.model.Model
-            A contained model
-        sim_data : dict
-            An existing data dictionary into which parameter values will be
-            merged
-        data : dict
-            A dictionary of parameter values passed into this object
-        """
-        # Pass in parameters to contained composite model if they exist
-        if data:
-            self.logger.debug("Data passed in: %s", list(data.keys()))
-
-        if isinstance(model, CompositeModel):
-            if data:
-                sim_data.update(data)
-        else:
-            # Get default values from own and contained parameters
-            default_data = model.parameters.defaults
-            self.logger.debug("Default parameter data: %s", default_data)
-
-            # If model parameters exist in data, override default values
-            if data and model.name in data.keys():
-                param_data = dict(default_data, **data[model.name])
-                self.logger.debug("Overriden parameter data: %s", param_data)
-                sim_data.update(param_data)
-                self.logger.debug("Updated sim data: %s", list(sim_data.keys()))
-            else:
-                sim_data.update(default_data)
-
-            # Always pass in global data to contained models
-            sim_data.update(self._parameters.defaults)
-            if data and self.name in data:
-                sim_data.update(data[self.name])
-
-        return sim_data
 
     @property
     def free_inputs(self):
