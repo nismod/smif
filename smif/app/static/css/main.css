@@ -1,89 +1,18 @@
 /**
  * Top-level and utility
  */
-.content-wrapper {
-    padding: 0 1em;
-    max-width: 45em;
-}
-.jumbotron {
-    margin-top: 1em;
-}
-details {
-    font-size: 1em;
-    line-height: 1.4;
-    margin-bottom: 0.4em;
-    color: #006e79;
-}
-.content-image {
-    display: block;
-    margin: 1em auto;
-    max-width: 100%;
-    height: auto;
-}
-input[type=text],
-input[type=number],
-input[type=date],
-input[type=datetime-local],
-input[type=button],
-input[type=submit]{
+
+.table-projectoverview {
     width: 100%;
-    border-radius: 0px;
-    border-style: solid;
-    margin-bottom: 0.4em;
-    padding: 0.4em 0.4em;
-}
-input[type=button],
-input[type=submit]{
-    border-radius: 5px;
-    display: inline-block;
-    background-color: #666;
-    border: none;
-    color: white;
-    padding: 10px 32px;
-    text-decoration: none;
-    cursor: pointer;
-}
-input[type=range]{
-    width: 100%;
-    margin-bottom: 0.4em;
-}
-input[type=checkbox],
-input[type=radio]{
-    margin-bottom: 0.4em;
-    margin-top: 0.4em;
-    margin-right: 0.4em;
-    margin-left: 0.4em;
-}
-textarea {
-    width: 100%;
-    border-radius: 0px;
-    border-style: solid;
-    resize: none;
-    padding: 0.4em 0.4em;
-}
-Fieldset {
-    width: 100%;
-    margin-bottom: 0.4em;
-    border-radius: 0px;
-    border-style: solid;
-    resize: none;
-}
-.textarea-container {
-    margin-bottom: 0.4em;
-}
-select{
-    width: 100%;
-}
-.select-container {
-    margin-bottom: 0.4em;
-}
-summary {
-    outline: 0;
-    cursor: pointer;
-}
-table.fixed {
+    margin: 20px auto;
     table-layout: fixed;
 }
-table.fixed td {
-    overflow: hidden;
+.table-projectoverview .col-name {
+    width: 20%;
+}
+.table-projectoverview .col-desc {
+    width: 70%;
+}
+.table-projectoverview .col-action {
+    width: 10%;
 }

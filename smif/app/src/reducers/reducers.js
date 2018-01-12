@@ -14,12 +14,16 @@ import {
     RECEIVE_SECTOR_MODEL,
     REQUEST_SCENARIO_SETS,
     RECEIVE_SCENARIO_SETS,
+    REQUEST_SCENARIO_SET,
+    RECEIVE_SCENARIO_SET,
     REQUEST_SCENARIOS,
     RECEIVE_SCENARIOS,
     REQUEST_SCENARIO,
     RECEIVE_SCENARIO,
     REQUEST_NARRATIVE_SETS,
     RECEIVE_NARRATIVE_SETS,
+    REQUEST_NARRATIVE_SET,
+    RECEIVE_NARRATIVE_SET,
     REQUEST_NARRATIVES,
     RECEIVE_NARRATIVES,
     REQUEST_NARRATIVE,
@@ -187,6 +191,29 @@ function scenario_sets(
     }
 }
 
+function scenario_set(
+    state = {
+        isFetching: false,
+        item: {}
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_SCENARIO_SET:
+        return Object.assign({}, state, {
+            isFetching: true
+        })
+    case RECEIVE_SCENARIO_SET:
+        return Object.assign({}, state, {
+            isFetching: false,
+            item: action.scenario_set,
+            lastUpdated: action.receivedAt
+        })
+    default:
+        return state
+    }
+}
+
 function scenarios(
     state = {
         isFetching: false,
@@ -256,6 +283,29 @@ function narrative_sets(
     }
 }
 
+function narrative_set(
+    state = {
+        isFetching: false,
+        item: {}
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_NARRATIVE_SET:
+        return Object.assign({}, state, {
+            isFetching: true
+        })
+    case RECEIVE_NARRATIVE_SET:
+        return Object.assign({}, state, {
+            isFetching: false,
+            item: action.narrative_set,
+            lastUpdated: action.receivedAt
+        })
+    default:
+        return state
+    }
+}
+
 function narratives(
     state = {
         isFetching: false,
@@ -310,9 +360,11 @@ const rootReducer = combineReducers({
     sector_models,
     sector_model,
     scenario_sets,
+    scenario_set,
     scenarios,
     scenario,
     narrative_sets,
+    narrative_set,
     narratives,
     narrative
 })

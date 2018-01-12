@@ -566,6 +566,26 @@ class DatafileInterface(DataInterface):
 
         self._write_project_config(project_config)
 
+    def delete_scenario_set(self, scenario_set_name):
+        """Delete scenario_set from project configuration
+
+        Arguments
+        ---------
+        scenario_set_name: str
+            A scenario_set name
+        """
+        if not self._scenario_set_exists(scenario_set_name):
+            raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
+
+        project_config = self._read_project_config()
+
+        project_config['scenario_sets'] = [
+            entry for entry in project_config['scenario_sets']
+            if (entry['name'] != scenario_set_name)
+        ]
+
+        self._write_project_config(project_config)
+
     def read_scenarios(self):
         """Read scenario sets from project configuration
 
@@ -763,6 +783,26 @@ class DatafileInterface(DataInterface):
                 entry['name'] != narrative_set_name)
         ]
         project_config['narrative_sets'].append(narrative_set)
+
+        self._write_project_config(project_config)
+
+    def delete_narrative_set(self, narrative_set_name):
+        """Delete narrative_set from project configuration
+
+        Arguments
+        ---------
+        narrative_set_name: str
+            A narrative_set name
+        """
+        if not self._narrative_set_exists(narrative_set_name):
+            raise DataNotFoundError("narrative_set '%s' not found" % narrative_set_name)
+
+        project_config = self._read_project_config()
+
+        project_config['narrative_sets'] = [
+            entry for entry in project_config['narrative_sets']
+            if (entry['name'] != narrative_set_name)
+        ]
 
         self._write_project_config(project_config)
 

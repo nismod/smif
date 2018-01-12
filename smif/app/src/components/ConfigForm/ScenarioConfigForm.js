@@ -9,12 +9,27 @@ class ScenarioConfigForm extends Component {
     constructor(props) {
         super(props)
 
+        this.handleKeyPress = this.handleKeyPress.bind(this)
         this.handleChange = this.handleChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {}
         this.state.selectedScenario = this.props.scenario
+    }
+
+    componentDidMount(){
+        document.addEventListener("keydown", this.handleKeyPress, false)
+    }
+
+    componentWillUnmount(){
+        document.removeEventListener("keydown", this.handleKeyPress, false)
+    }
+
+    handleKeyPress(){
+        if(event.keyCode === 27) {
+            this.handleCancel()
+        }
     }
 
     handleChange(event) {
@@ -38,6 +53,14 @@ class ScenarioConfigForm extends Component {
     render() {
         const {scenarioSets} = this.props
         const {selectedScenario} = this.state
+
+        let selectedScenarioSet = {name: '', description: ''}
+        let scenarioSetSelected = false
+
+        if (selectedScenario.scenario_set != '') {
+            selectedScenarioSet = scenarioSets.filter(scenarioSet => scenarioSet.name == selectedScenario.scenario_set)[0]
+            scenarioSetSelected = true
+        }
      
         return (
             <div>
@@ -71,16 +94,19 @@ class ScenarioConfigForm extends Component {
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Scenario Set</label>
-                                <div className="col-sm-10">
-                                     
-                                    <input className="form-control" name="scenario_set" list="scenario_sets" type="text" defaultValue={selectedScenario.scenario_set} onChange={this.handleChange}/>
-                                    <datalist id="scenario_sets">
+                                <div className="col-sm-10">          
+                                    <select className="form-control" name="scenario_set" defaultValue={selectedScenario.scenario_set} onChange={this.handleChange}>
+                                        <option disabled="disabled" value="" >Please select a Scenario Set</option>
                                         {
                                             scenarioSets.map(scenarioSet =>
-                                                <option key={scenarioSet.name} value={scenarioSet.name}/>
+                                                <option key={scenarioSet.name} value={scenarioSet.name}>{scenarioSet.name}</option>
                                             )
                                         }
-                                    </datalist>
+                                    </select>
+                                    <br/>
+                                    <div className="alert alert-dark" hidden={!scenarioSetSelected} role="alert">
+                                        {selectedScenarioSet.description}
+                                    </div>
                                 </div>
                             </div>
                         </div>

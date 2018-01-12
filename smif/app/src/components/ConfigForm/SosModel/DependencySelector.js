@@ -112,7 +112,7 @@ class DependencySelector extends Component {
                             <div className="row">
                                 <div className="col">
                                     <label>Source</label>
-                                    <select className={this.state.className.SourceModel} name="SourceModel" defaultValue="none" onChange={this.handleChange}>
+                                    <select autoFocus className={this.state.className.SourceModel} name="SourceModel" defaultValue="none" onChange={this.handleChange}>
                                         <option disabled="disabled" value="none">Please select a source</option>
                                         {
                                             sectorModels.map((sectorModel, i) => (

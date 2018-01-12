@@ -125,7 +125,7 @@ class ParameterSelector extends Component {
                             <div className="row">
                                 <div className="col">
                                     <label>Name</label>
-                                    <input type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
+                                    <input autoFocus type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
                                     </div>
