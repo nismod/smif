@@ -507,12 +507,15 @@ class TestDatafileInterface():
             dict_writer.writerows(scenario_data)
 
         config_handler = get_handler
-        test_scenario = config_handler.read_scenario_data(
-            'High Population (ONS)')
+        expected = np.array([[200.0]])
+        actual = config_handler.read_scenario_data(
+            'High Population (ONS)',
+            'population_count',
+            'lad',
+            'annual',
+            2017)
 
-        assert len(test_scenario) == 1
-        assert 'population_count' in test_scenario
-        assert test_scenario['population_count'][0]['region'] == 'GB'
+        np.testing.assert_almost_equal(actual, expected)
 
     def test_narrative_data(self, setup_folder_structure, get_handler, narrative_data):
         """ Test to dump a narrative (yml) data-file and then read the file

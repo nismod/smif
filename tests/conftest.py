@@ -744,19 +744,22 @@ def get_scenario_data():
         {
             'value': 100,
             'units': 'people',
-            'region': 'GB',
+            'region': 'oxford',
+            'interval': 1,
             'year': 2015
         },
         {
             'value': 150,
             'units': 'people',
-            'region': 'GB',
+            'region': 'oxford',
+            'interval': 1,
             'year': 2016
         },
         {
             'value': 200,
             'units': 'people',
-            'region': 'GB',
+            'region': 'oxford',
+            'interval': 1,
             'year': 2017
         }
     ]
