@@ -51,6 +51,7 @@ smif/app/dist
 
 # smif outputs
 results.yaml
+smif/sample_project/results/*
 
 # data file
 energy_demand_data/*
