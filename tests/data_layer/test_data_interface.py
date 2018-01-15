@@ -530,7 +530,7 @@ class TestDatafileInterface():
         config_handler = get_handler
         test_narrative = config_handler.read_narrative_data('Central Planning')
 
-        assert test_narrative[0]['energy_demand'] == {'smart_meter_savings': 8}
+        assert test_narrative['energy_demand'] == {'smart_meter_savings': 8}
 
     def test_narrative_data_missing(self, get_handler):
         """Should raise a DataNotFoundError if narrative has no data

@@ -769,16 +769,14 @@ def get_scenario_data():
 def narrative_data():
     """Return sample narrative_data
     """
-    return [
-        {
-            'energy_demand': {
-                'smart_meter_savings': 8
-            },
-            'water_supply': {
-                'clever_water_meter_savings': 8
-            }
+    return {
+        'energy_demand': {
+            'smart_meter_savings': 8
+        },
+        'water_supply': {
+            'clever_water_meter_savings': 8
         }
-    ]
+    }
 
 
 @fixture(scope='function')
