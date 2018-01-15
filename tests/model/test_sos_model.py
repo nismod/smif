@@ -515,20 +515,6 @@ class TestSosModelBuilderComponents():
         sos_model = builder.finish()
         assert sos_model.convergence_relative_tolerance == 0.1
 
-    def test_load_models(self):
-        pass
-
-    def test_load_scenario_models(self, get_sos_model_config):
-        config = get_sos_model_config
-        builder = SosModelBuilder()
-        builder.construct(config)
-        sos_model = builder.finish()
-        scenario = sos_model.models['test_scenario_model']
-
-        expected = {'test_scenario_model': {'raininess': np.array([[3.]])}}
-
-        assert scenario.simulate(2010) == expected
-
 
 class TestSosModelBuilder():
     """Tests that the correct SosModel structure is created from a configuration
