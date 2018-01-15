@@ -300,17 +300,11 @@ class TestCompositeIntegration:
         sos_model.add_model(energy_model)
 
         data_handle = get_data_handle(sos_model)
-        actual = sos_model.simulate(data_handle)
+        results = sos_model.simulate(data_handle)
 
-        expected = {
-            'energy_sector_model': {
-                'fluffiness': np.array([[100.737]])
-            },
-            'electricity_demand_scenario': {
-                'electricity_demand_output': np.array([[123]])
-            }
-        }
-        assert actual == expected
+        expected = np.array([[100.737]])
+        actual = results.get_results('fluffiness', 'energy_sector_model')
+        np.testing.assert_allclose(actual, expected, rtol=1e-5)
 
 
 class TestNestedModels():
@@ -515,8 +509,11 @@ class TestCircularDependency:
         results = sos_model.simulate(data_handle)
 
         expected = np.array([[0.13488114]], dtype=np.float)
-        actual = results['energy_sector_model']['fluffiness']
+        actual = results.get_results('fluffiness', model_name='energy_sector_model',
+                                     modelset_iteration=35)
         np.testing.assert_allclose(actual, expected, rtol=1e-5)
+
         expected = np.array([[0.16469004]], dtype=np.float)
-        actual = results['water_supply_model']['electricity_demand']
+        actual = results.get_results('electricity_demand', model_name='water_supply_model',
+                                     modelset_iteration=35)
         np.testing.assert_allclose(actual, expected, rtol=1e-5)

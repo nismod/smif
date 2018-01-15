@@ -52,6 +52,8 @@ class DataHandle(object):
             return self.get_parameter(key)
         elif key in self._inputs:
             return self.get_data(key)
+        elif key in self._outputs:
+            return self.get_results(key)
         else:
             raise KeyError(
                 "'%s' not recognised as input or parameter for '%s'", key, self._model_name)
@@ -166,6 +168,52 @@ class DataHandle(object):
             self._current_timestep,
             self._modelset_iteration,
             self._decision_iteration
+        )
+
+    def get_results(self, output_name, model_name=None, modelset_iteration=None,
+                    decision_iteration=None, timestep=None):
+        """Get results values for model outputs
+
+        Parameters
+        ----------
+        output_name : str
+        model_name : str or None
+        modelset_iteration : int or None
+        decision_iteration : int or None
+        timestep : int or RelativeTimestep or None
+        """
+        if output_name not in self._outputs:
+            raise KeyError(
+                "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
+
+        # resolve timestep
+        if timestep is None:
+            timestep = self._current_timestep
+        elif isinstance(timestep, RelativeTimestep):
+            timestep = timestep.resolve_relative_to(self._current_timestep, self._timesteps)
+        else:
+            assert isinstance(timestep, int) and timestep <= self._current_timestep
+
+        if model_name is None:
+            model_name = self._model_name
+        if modelset_iteration is None:
+            modelset_iteration = self._modelset_iteration
+        if decision_iteration is None:
+            decision_iteration = self._decision_iteration
+
+        self.logger.debug(
+            "Read %s %s %s %s", model_name, output_name, timestep,
+            modelset_iteration)
+
+        return self._store.read_results(
+            self._modelrun_name,
+            model_name,
+            output_name,
+            self._outputs[output_name].spatial_resolution.name,
+            self._outputs[output_name].temporal_resolution.name,
+            timestep,
+            modelset_iteration,
+            decision_iteration
         )
 
 
