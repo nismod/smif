@@ -14,6 +14,7 @@ from smif.model.sos_model import ModelSet, SosModel
 @fixture
 def get_scenario():
     scenario = ScenarioModel('electricity_demand_scenario')
+    scenario.scenario_name = 'Arbitrary Demand Scenario'
     scenario.add_output('electricity_demand_output',
                         scenario.regions.get_entry('LSOA'),
                         scenario.intervals.get_entry('annual'),
@@ -46,7 +47,7 @@ def get_data_handle(model):
         'narratives': {}
     })
     store.write_scenario_data(
-        'electricity_demand_scenario',
+        'Arbitrary Demand Scenario',
         'electricity_demand_output',
         np.array([[123]]),
         'LSOA',
