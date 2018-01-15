@@ -189,82 +189,62 @@ class TestSosModel():
         assert actual == expected
 
     def test_run_with_global_parameters(self, get_sos_model_object):
-
         sos_model = get_sos_model_object
-        sos_model.name = 'test_sos_model'
-
-        sos_model_param = {
+        sos_model.add_parameter({
             'name': 'sos_model_param',
             'description': 'A global parameter passed to all contained models',
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
             'default_value': 3,
-            'units': '%'}
-
-        sos_model.add_parameter(sos_model_param)
-
-        sos_model.models['water_supply'].simulate = lambda x, y: y
-
-        assert 'sos_model_param' in sos_model.parameters['test_sos_model']
+            'units': '%'
+        })
+        assert 'sos_model_param' in sos_model.parameters
 
     def test_run_with_sector_parameters(self, get_sos_model_object):
-
         sos_model = get_sos_model_object
-        sos_model.name = 'test_sos_model'
-
         sector_model = sos_model.models['water_supply']
-
-        sector_model_param = {
+        sector_model.add_parameter({
             'name': 'sector_model_param',
             'description': 'A model parameter passed to a specific model',
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
             'default_value': 3,
-            'units': '%'}
-
-        sector_model.add_parameter(sector_model_param)
-
-        assert 'sector_model_param' in sos_model.parameters['water_supply']
+            'units': '%'
+        })
+        assert 'sector_model_param' in sector_model.parameters
 
     def test_add_parameters(self, get_empty_sector_model):
-
+        sos_model = SosModel('global')
         sos_model_param = {
             'name': 'sos_model_param',
             'description': 'A global parameter passed to all contained models',
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
             'default_value': 3,
-            'units': '%'}
-
-        sos_model = SosModel('global')
+            'units': '%'
+        }
         sos_model.add_parameter(sos_model_param)
-
         expected = dict(sos_model_param, **{'parent': sos_model})
 
-        assert sos_model.parameters == {'global': {'sos_model_param': expected}}
-        assert sos_model.parameters['global'].names == ['sos_model_param']
+        assert sos_model.parameters == {'sos_model_param': expected}
+        assert sos_model.parameters.names == ['sos_model_param']
 
         sector_model = get_empty_sector_model('source_model')
-        sector_model.add_parameter({'name': 'sector_model_param',
-                                    'description': 'Required for the sectormodel',
-                                    'absolute_range': (0, 100),
-                                    'suggested_range': (3, 10),
-                                    'default_value': 3,
-                                    'units': '%'})
-
+        sector_model.add_parameter({
+            'name': 'sector_model_param',
+            'description': 'Required for the sectormodel',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'
+        })
         sos_model.add_model(sector_model)
 
-        # SosModel contains ParameterList objects in a nested dict by model name
-        assert 'global' in sos_model.parameters
-        assert 'sos_model_param' in sos_model.parameters['global'].names
-        # SosModel parameter attribute holds references to contained
-        # model parameters keyed by model name
-        assert 'source_model' in sos_model.parameters
-        assert 'sector_model_param' in sos_model.parameters['source_model']
-        # SectorModel has a ParameterList, gettable by param name
+        # SosModel contains only its own parameters
+        assert 'sos_model_param' in sos_model.parameters.names
+
+        # SectorModel has its own ParameterList, gettable by param name
         assert 'sector_model_param' in sector_model.parameters.names
-        assert 'source_model' in sos_model.parameters
-        assert 'sector_model_param' in sos_model.parameters['source_model']
 
     def test_add_dependency(self, get_empty_sector_model):
 
