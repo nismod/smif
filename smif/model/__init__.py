@@ -241,6 +241,14 @@ class CompositeModel(Model, metaclass=ABCMeta):
 
         return metadataset
 
+    @property
+    def outputs(self):
+        outputs = super().outputs.metadata
+        for model in self.models.values():
+            outputs.extend(model.outputs.metadata)
+
+        return MetadataSet(outputs)
+
 
 def element_before(element, list_):
     """Return the element before a given element in a list, or None if the
