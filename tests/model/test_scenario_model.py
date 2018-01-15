@@ -82,7 +82,9 @@ class TestScenarioObject:
 
 class TestScenarioModelData:
 
-    def test_nest_scenario_data(self):
+    def test_scenario_data(self):
+        """Scenario model simulate method should be a no-op
+        """
         builder = ScenarioModelBuilder('test_scenario_model')
         config = {
             'name': 'mass',
@@ -100,8 +102,6 @@ class TestScenarioModelData:
         scenario = builder.finish()
 
         data_handle = Mock()
-        actual = scenario.simulate(2015, data_handle)
+        actual = scenario.simulate(data_handle)
         assert actual is data_handle
-        data_handle.get_data.assert_called_once_with('length', 2015)
-        mock_get = data_handle.get_data('length', 2015)
-        data_handle.set_results.assert_called_once_with('length', mock_get)
+        data_handle.assert_not_called()
