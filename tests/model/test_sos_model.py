@@ -131,8 +131,8 @@ def get_empty_sector_model():
         def initialise(self, initial_conditions):
             pass
 
-        def simulate(self, timestep, data=None):
-            return {self.name: {'output_name': 'some_data', 'timestep': timestep}}
+        def simulate(self, data):
+            return data
 
         def extract_obj(self, results):
             return 0
@@ -266,66 +266,25 @@ class TestSosModel():
         assert 'source_model' in sos_model.parameters
         assert 'sector_model_param' in sos_model.parameters['source_model']
 
-    def test_default_parameter_passing(self, get_empty_sector_model):
-        """Tests that default values for global parameters are passed to all
-        models, and others default values only passed into the intended models.
-        """
-
-        sos_model_param = {
-            'name': 'sos_model_param',
-            'description': 'A global parameter passed to all contained models',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%'}
-
-        sos_model = SosModel('global')
-        sos_model.add_parameter(sos_model_param)
-
-        sector_model = get_empty_sector_model('source_model')
-
-        # Patch the sector model so that it returns the calling arguments
-        sector_model.simulate = lambda _, y: {'sm1': y}
-        sos_model.add_model(sector_model)
-        assert sos_model.simulate(2010) == {'sm1': {'sos_model_param': 3}}
-
-        sector_model.add_parameter({'name': 'sector_model_param',
-                                    'description': 'Some meaningful text',
-                                    'absolute_range': (0, 100),
-                                    'suggested_range': (3, 10),
-                                    'default_value': 3,
-                                    'units': '%'})
-
-        assert sos_model.simulate(2010) == {'sm1': {'sector_model_param': 3,
-                                            'sos_model_param': 3}}
-
-        sector_model_2 = get_empty_sector_model('another')
-        sector_model_2.simulate = lambda _, y: {'sm2': y}
-        sos_model.add_model(sector_model_2)
-
-        assert sos_model.simulate(2010) == {'sm1': {'sector_model_param': 3,
-                                            'sos_model_param': 3},
-                                            'sm2': {'sos_model_param': 3}}
-
-
     def test_add_dependency(self, get_empty_sector_model):
 
+        regions = Mock()
+        regions.name = 'test_regions'
+        intervals = Mock()
+        intervals.name = 'test_intervals'
+        units = 'test_units'
+
         sink_model = get_empty_sector_model('sink_model')
-        sink_model.simulate = lambda _, data: {'sink_model': data}
-        sink_model.add_input('input_name', Mock(), Mock(), 'units')
+        sink_model.add_input('input_name', regions, intervals, units)
 
         source_model = get_empty_sector_model('source_model')
-        source_model.add_output('output_name', Mock(), Mock(), 'units')
+        source_model.add_output('output_name', regions, intervals, units)
 
-        sink_model.add_dependency(source_model, 'output_name', 'input_name', lambda x: x)
+        sink_model.add_dependency(source_model, 'output_name', 'input_name')
 
         sos_model = SosModel('test')
         sos_model.add_model(source_model)
         sos_model.add_model(sink_model)
-        results = sos_model.simulate(2010)
-        actual = results['sink_model']['input_name']
-        expected = 'some_data'
-        assert actual == expected
 
     def test_timestep_before(self):
         sos_model = SosModel('test')
@@ -345,9 +304,14 @@ class TestSosModel():
 
     def test_run_sequential(self, get_sos_model_object):
         sos_model = get_sos_model_object
-        sos_model.simulate(2010)
-        sos_model.simulate(2011)
-        sos_model.simulate(2012)
+        data_handle = Mock()
+        data_handle.timesteps = [2010, 2011, 2012]
+        data_handle._current_timestep = 2010
+        sos_model.simulate(data_handle)
+        data_handle._current_timestep = 2011
+        sos_model.simulate(data_handle)
+        data_handle._current_timestep = 2012
+        sos_model.simulate(data_handle)
 
     @pytest.mark.xfail(reason="Summed dependencies not yet implemented")
     def test_dependency_aggregation(self, get_sos_model_with_summed_dependency):
