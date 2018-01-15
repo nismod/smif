@@ -190,12 +190,17 @@ class TestBasics:
 class TestDependencyGraph:
 
     def test_simple_graph(self, get_sector_model):
+        regions = Mock()
+        regions.name = 'test_regions'
+        intervals = Mock()
+        intervals.name = 'test_intervals'
+
         SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
-        elec_scenario.add_output('output', Mock(), Mock(), 'unit')
+        elec_scenario.add_output('output', regions, intervals, 'unit')
 
         energy_model = SectorModel('model')
-        energy_model.add_input('input', Mock(), Mock(), 'unit')
+        energy_model.add_input('input', regions, intervals, 'unit')
         energy_model.add_dependency(elec_scenario, 'output', 'input')
 
         sos_model = SosModel('energy_sos_model')
@@ -213,13 +218,17 @@ class TestDependencyGraph:
         assert graph.edges() == [(elec_scenario, energy_model)]
 
     def test_get_model_sets(self, get_sector_model):
-        SectorModel = get_sector_model
+        regions = Mock()
+        regions.name = 'test_regions'
+        intervals = Mock()
+        intervals.name = 'test_intervals'
 
         elec_scenario = ScenarioModel('scenario')
-        elec_scenario.add_output('output', Mock(), Mock(), 'unit')
+        elec_scenario.add_output('output', regions, intervals, 'unit')
 
+        SectorModel = get_sector_model
         energy_model = SectorModel('model')
-        energy_model.add_input('input', Mock(), Mock(), 'unit')
+        energy_model.add_input('input', regions, intervals, 'unit')
         energy_model.add_dependency(elec_scenario, 'output', 'input')
 
         sos_model = SosModel('energy_sos_model')
@@ -235,12 +244,17 @@ class TestDependencyGraph:
             assert model.name == name
 
     def test_topological_sort(self, get_sector_model):
+        regions = Mock()
+        regions.name = 'test_regions'
+        intervals = Mock()
+        intervals.name = 'test_intervals'
+
         SectorModel = get_sector_model
         elec_scenario = ScenarioModel('scenario')
-        elec_scenario.add_output('output', Mock(), Mock(), 'unit')
+        elec_scenario.add_output('output', regions, intervals, 'unit')
 
         energy_model = SectorModel('model')
-        energy_model.add_input('input', Mock(), Mock(), 'unit')
+        energy_model.add_input('input', regions, intervals, 'unit')
         energy_model.add_dependency(elec_scenario, 'output', 'input')
 
         sos_model = SosModel('energy_sos_model')
