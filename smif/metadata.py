@@ -50,6 +50,9 @@ class Metadata(object):
         self.temporal_resolution = temporal_resolution
         self.units = self.normalise_unit(units, name)
 
+    def __repr__(self):
+        return repr(self.as_dict())
+
     def __eq__(self, other):
         return self.name == other.name \
             and self.spatial_resolution == other.spatial_resolution \
@@ -116,6 +119,9 @@ class MetadataSet(collections.abc.Mapping):
         if metadata_list is not None:
             for metadata_item in metadata_list:
                 self.add_metadata(metadata_item)
+
+    def __repr__(self):
+        return "MetadataSet({})".format(repr(list(self._metadata.values())))
 
     @property
     def metadata(self):
