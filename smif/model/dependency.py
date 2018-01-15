@@ -8,7 +8,7 @@ class Dependency(object):
 
     Arguments
     ---------
-    source_model : smif.composite.Model
+    source_model : smif.model.Model
         The source model object
     source : smif.metadata.Metadata
         The source parameter (output) object
