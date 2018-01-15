@@ -45,6 +45,13 @@ def get_data_handle(model):
         'name': 'test',
         'narratives': {}
     })
+    store.write_scenario_data(
+        'electricity_demand_scenario',
+        'electricity_demand_output',
+        np.array([[123]]),
+        'LSOA',
+        'annual',
+        2010)
     return DataHandle(
         store,
         'test',  # modelrun_name
@@ -126,7 +133,7 @@ class TestModelSet:
                                  elec_scenario.regions.get_entry('LSOA'),
                                  elec_scenario.intervals.get_entry('annual'),
                                  'unit')
-        ModelSet([elec_scenario])
+        ModelSet({elec_scenario.name: elec_scenario})
 
     def test_model_set_deps(self, get_water_sector_model, get_energy_sector_model):
         pop_scenario = ScenarioModel('population')
@@ -146,9 +153,13 @@ class TestModelSet:
                                     'electricity_demand_input')
         water_model.add_dependency(energy_model, 'fluffiness', 'fluffyness')
 
-        model_set = ModelSet([energy_model, water_model])
+        model_set = ModelSet({
+            energy_model.name: energy_model,
+            water_model.name: water_model
+        })
         # ModelSet should derive inputs as any input to one of its models which
         # is not met by an internal dependency
+        print(model_set.inputs)
         assert len(model_set.inputs) == 1
         assert 'population' in model_set.inputs.names
 
@@ -269,13 +280,8 @@ class TestCompositeIntegration:
         sos_model = SosModel('simple')
         sos_model.add_model(elec_scenario)
         data_handle = get_data_handle(sos_model)
-        actual = sos_model.simulate(data_handle)
-        expected = {
-            'electricity_demand_scenario': {
-                'electricity_demand_output': np.array([[123]])
-            }
-        }
-        assert actual == expected
+        sos_model.simulate(data_handle)
+        # no results available, as only scenario model ran
 
     def test_sector_model_null_model(self, get_energy_sector_model):
         no_inputs = get_energy_sector_model

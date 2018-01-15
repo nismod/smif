@@ -91,8 +91,19 @@ class MemoryInterface(DataInterface):
     def update_scenario_set(self, scenario_set):
         self._scenario_sets[scenario_set['name']] = scenario_set
 
-    def read_scenario_data(self, scenario_name):
-        return self._scenarios[scenario_name]
+    def read_scenario_data(self, scenario_name, parameter_name,
+                           spatial_resolution, temporal_resolution, timestep):
+        return self._scenarios[(
+                scenario_name, parameter_name, spatial_resolution,
+                temporal_resolution, timestep
+            )]
+
+    def write_scenario_data(self, scenario_name, parameter_name, data,
+                            spatial_resolution, temporal_resolution, timestep):
+        self._scenarios[(
+            scenario_name, parameter_name, spatial_resolution,
+            temporal_resolution, timestep
+        )] = data
 
     def write_scenario(self, scenario):
         self._scenarios[scenario['name']] = scenario

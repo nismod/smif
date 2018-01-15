@@ -66,13 +66,8 @@ class ScenarioModel(Model):
             raise KeyError("'{}' not in scenario outputs".format(output))
 
     def simulate(self, data):
-        """Accesses the scenario data from the backing store
+        """No-op, as the data is assumed already available in the store
         """
-        for output_name in self.outputs:
-            data.set_results(
-                output_name,
-                data.get_data(output_name)
-            )
         return data
 
 

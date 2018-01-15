@@ -762,34 +762,53 @@ class DatafileInterface(DataInterface):
 
         self._write_project_config(project_config)
 
-    def read_scenario_data(self, scenario_name):
+    def read_scenario_data(self, scenario_name, parameter_name,
+                           spatial_resolution, temporal_resolution, timestep):
         """Read scenario data file
 
         Arguments
         ---------
         scenario_name: str
             Name of the scenario
+        parameter_name: str
+            Name of the scenario parameter to read
+        spatial_resolution : str
+        temporal_resolution : str
+        timestep: int
 
         Returns
         -------
-        dict
-            A dict of lists of dicts containing the contents of `scenario_name`
-            data file(s) associated with the scenario parameters. The keys of
-            the dict are the parameter names
+        data: numpy.ndarray
+
         """
-        data = {}
         # Find filenames for this scenario
         filename = None
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
             if scenario_data['name'] == scenario_name:
                 for param in scenario_data['parameters']:
-                    filename = param['filename']
-                    # Read the scenario data from file
-                    filepath = os.path.join(self.file_dir['scenarios'], filename)
-                    data[param['name']] = self._get_data_from_csv(filepath)
+                    if param['name'] == parameter_name:
+                        filename = param['filename']
+                        break
+                break
 
-        return data
+        if filename is None:
+            raise DataNotFoundError(
+                "Scenario '{}' with parameter '{}' not found".format(
+                    scenario_name, parameter_name))
+
+        # Read the scenario data from file
+        filepath = os.path.join(self.file_dir['scenarios'], filename)
+        data = [
+            datum for datum in
+            self._get_data_from_csv(filepath)
+            if int(datum['year']) == timestep
+        ]
+
+        region_names = self._read_region_names(spatial_resolution)
+        interval_names = self._read_interval_names(temporal_resolution)
+
+        return self.data_list_to_ndarray(data, region_names, interval_names)
 
     def read_narrative_sets(self):
         """Read narrative sets from project configuration
@@ -1047,6 +1066,11 @@ class DatafileInterface(DataInterface):
         timestep : int, optional
         modelset_iteration : int, optional
         decision_iteration : int, optional
+
+        Returns
+        -------
+        data: numpy.ndarray
+
         """
         if timestep is None:
             raise NotImplementedError

@@ -7,7 +7,10 @@ data (at any computed or pre-computed timestep) and write access to output data
 (at the current timestep).
 """
 
+from logging import getLogger
+
 from enum import Enum
+from smif.model.scenario_model import ScenarioModel
 from types import MappingProxyType
 
 
@@ -31,6 +34,7 @@ class DataHandle(object):
         decision_iteration :
             ID of the current Decision iteration
         """
+        self.logger = getLogger(__name__)
         self._store = store
         self._modelrun_name = modelrun_name
         self._current_timestep = current_timestep
@@ -100,23 +104,38 @@ class DataHandle(object):
             assert isinstance(timestep, int) and timestep <= self._current_timestep
 
         # resolve source
-        source_model_name = self._dependencies[input_name].source_model.name
+        source_model = self._dependencies[input_name].source_model
+        source_model_name = source_model.name
         source_output_name = self._dependencies[input_name].source.name
         if self._modelset_iteration is not None:
             i = self._modelset_iteration - 1  # read from previous
         else:
             i = self._modelset_iteration
 
-        return self._store.read_results(
-            self._modelrun_name,
-            source_model_name,  # read from source model
-            source_output_name,  # using source model output name
-            self._inputs[input_name].spatial_resolution.name,
-            self._inputs[input_name].temporal_resolution.name,
-            timestep,
-            i,
-            self._decision_iteration
-        )
+        self.logger.debug(
+            "Read %s %s %s %s", source_model_name, source_output_name, timestep, i)
+
+        if isinstance(source_model, ScenarioModel):
+            data = self._store.read_scenario_data(
+                source_model_name,  # read from scenario
+                source_output_name,  # using output (parameter) name
+                self._inputs[input_name].spatial_resolution.name,
+                self._inputs[input_name].temporal_resolution.name,
+                timestep
+            )
+        else:
+            data = self._store.read_results(
+                self._modelrun_name,
+                source_model_name,  # read from source model
+                source_output_name,  # using source model output name
+                self._inputs[input_name].spatial_resolution.name,
+                self._inputs[input_name].temporal_resolution.name,
+                timestep,
+                i,
+                self._decision_iteration
+            )
+
+        return data
 
     def get_parameter(self, parameter_name):
         """Get the value for a  parameter
@@ -156,7 +175,11 @@ class DataHandle(object):
         """
         if output_name not in self._outputs:
             raise KeyError(
-                "'%s' not recognised as output for '%s'", output_name, self._model_name)
+                "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
+
+        self.logger.debug(
+            "Write %s %s %s %s", self._model_name, output_name, self._current_timestep,
+            self._modelset_iteration)
 
         self._store.write_results(
             self._modelrun_name,

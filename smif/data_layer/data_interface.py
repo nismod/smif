@@ -109,7 +109,8 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_scenario_data(self, scenario_name):
+    def read_scenario_data(self, scenario_name, parameter_name,
+                           spatial_resolution, temporal_resolution, timestep):
         raise NotImplementedError()
 
     @abstractmethod
