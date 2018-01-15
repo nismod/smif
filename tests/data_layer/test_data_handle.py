@@ -33,19 +33,23 @@ def mock_model():
             'parent': None
         }
     ])
+    regions = Mock()
+    regions.name = 'test_regions'
+    intervals = Mock()
+    intervals.name = 'test_intervals'
     model.inputs = MetadataSet([
-        Metadata('test', 'test_regions', 'test_intervals', 'test_unit')
+        Metadata('test', regions, intervals, 'test_unit')
     ])
     model.outputs = MetadataSet([
-        Metadata('test', 'test_regions', 'test_intervals', 'test_unit')
+        Metadata('test', regions, intervals, 'test_unit')
     ])
     source_model = Mock()
     source_model.name = 'test_source'
     model.deps = {
         'test': Dependency(
             source_model,
-            Metadata('test_output', 'test_regions', 'test_intervals', 'test_unit'),
-            Metadata('test', 'test_regions', 'test_intervals', 'test_unit')
+            Metadata('test_output', regions, intervals, 'test_unit'),
+            Metadata('test', regions, intervals, 'test_unit')
         )
     }
     return model
