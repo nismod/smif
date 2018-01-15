@@ -566,11 +566,6 @@ class TestSosModelBuilder():
         assert isinstance(sos_model.models['water_supply'], SectorModel)
         assert isinstance(sos_model.models['test_scenario_model'], ScenarioModel)
 
-        actual = sos_model.models['test_scenario_model']._data
-        expected = {'raininess': np.array([[[3.]], [[5.]], [[1.]]], dtype=float)}
-        np.testing.assert_equal(actual,
-                                expected)
-
     def test_simple_dependency(self, get_sos_model_config_with_dep):
 
         config_data = get_sos_model_config_with_dep
