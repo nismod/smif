@@ -266,7 +266,7 @@ class TestSosModel():
         assert 'source_model' in sos_model.parameters
         assert 'sector_model_param' in sos_model.parameters['source_model']
 
-    def test_default_parameter_passing_(self, get_empty_sector_model):
+    def test_default_parameter_passing(self, get_empty_sector_model):
         """Tests that default values for global parameters are passed to all
         models, and others default values only passed into the intended models.
         """
@@ -307,43 +307,6 @@ class TestSosModel():
                                             'sos_model_param': 3},
                                             'sm2': {'sos_model_param': 3}}
 
-    def test_parameter_passing_into_models(self, get_empty_sector_model):
-        """Tests that policy values for global parameters are passed to all
-        models, and policy values only passed into the intended models.
-        """
-
-        sos_model_param = {
-            'name': 'sos_model_param',
-            'description': 'A global parameter passed to all contained models',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%'}
-
-        sos_model = SosModel('global')
-        sos_model.add_parameter(sos_model_param)
-
-        sector_model = get_empty_sector_model('source_model')
-
-        # Patch the sector model so that it returns the calling arguments
-        sector_model.simulate = lambda _, y: {'sm1': y}
-        sos_model.add_model(sector_model)
-        sector_model.add_parameter({'name': 'sector_model_param',
-                                    'description': 'Some meaningful text',
-                                    'absolute_range': (0, 100),
-                                    'suggested_range': (3, 10),
-                                    'default_value': 3,
-                                    'units': '%'})
-        sector_model_2 = get_empty_sector_model('another')
-        sector_model_2.simulate = lambda _, y: {'sm2': y}
-        sos_model.add_model(sector_model_2)
-
-        data = {'global': {'sos_model_param': 999},
-                'source_model': {'sector_model_param': 123}}
-
-        assert sos_model.simulate(2010, data) == \
-            {'sm1': {'sector_model_param': 123, 'sos_model_param': 999},
-             'sm2': {'sos_model_param': 999}}
 
     def test_add_dependency(self, get_empty_sector_model):
 
