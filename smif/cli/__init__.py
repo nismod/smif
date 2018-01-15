@@ -272,12 +272,8 @@ def get_model_run_definition(args):
         scenario_definition = handler.read_scenario_definition(scenario_name)
         LOGGER.debug("Scenario definition: %s", scenario_definition)
 
-        scenario_data = handler.read_scenario_data(scenario_name)
-        LOGGER.debug("Scenario data for {}: {}".format(scenario_name, scenario_data))
-
         scenario_model_builder = ScenarioModelBuilder(scenario_set)
-        scenario_model_builder.construct(scenario_definition, scenario_data,
-                                         model_run_config['timesteps'])
+        scenario_model_builder.construct(scenario_definition)
         scenario_objects.append(scenario_model_builder.finish())
 
     LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
