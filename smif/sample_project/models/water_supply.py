@@ -25,7 +25,7 @@ class WaterSupplySectorModel(SectorModel):
         """
         pass
 
-    def simulate(self, timestep, data=None):
+    def simulate(self, data):
         """
 
         Arguments
@@ -40,17 +40,8 @@ class WaterSupplySectorModel(SectorModel):
                 - system state, e.g. reservoir level at year start
         """
 
-        if 'state' in data:
-            state = data['state']
-        else:
-            self.logger.warning("No state supplied to WaterSupplySectorModel.simulate")
-            state = [StateData('Kielder Water', {'current_level': {'value': 10}})]
-
-        if 'decisions' in data:
-            decisions = data['decisions']
-        else:
-            self.logger.warning("No decisions supplied to WaterSupplySectorModel.simulate")
-            decisions = []
+        state = [StateData('Kielder Water', {'current_level': {'value': 10}})]
+        decisions = []
 
         # unpack inputs
         water_demand = data['water_demand']
@@ -71,16 +62,15 @@ class WaterSupplySectorModel(SectorModel):
         instance.reservoir_level = reservoir_level
 
         water, cost = instance.run()
-        results = {
-            "water": np.ones((3, 1)) * water / 3,
-            "cost": np.ones((3, 1)) * cost / 3,
-            "energy_demand": np.ones((3, 1)) * 3,
-            "state": StateData('Kielder Water', {
-                'current_level': {'value': instance.reservoir_level}
-            }),
-        }
+        data["water"] = np.ones((3, 1)) * water / 3
+        data["cost"] = np.ones((3, 1)) * cost / 3
+        data["energy_demand"] = np.ones((3, 1)) * 3
 
-        return {self.name: results}
+        StateData('Kielder Water', {
+            'current_level': {'value': instance.reservoir_level}
+        })
+
+        return data
 
     def extract_obj(self, results):
         return results['cost']

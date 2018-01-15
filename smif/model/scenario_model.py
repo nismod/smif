@@ -29,6 +29,7 @@ class ScenarioModel(Model):
     def __init__(self, name):
         super().__init__(name)
         self.scenario_set = None
+        self.scenario_name = None
 
     def as_dict(self):
         config = {
@@ -88,8 +89,7 @@ class ScenarioModelBuilder(object):
         scenario_config: dict
         """
         self.scenario.scenario_set = scenario_config['scenario_set']
-        # Scenarios need to be known by the scenario set name
-        self.scenario.name = scenario_config['scenario_set']
+        self.scenario.scenario_name = scenario_config['name']
         parameters = scenario_config['parameters']
 
         for parameter in parameters:

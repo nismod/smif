@@ -157,10 +157,10 @@ class DataInterface(metaclass=ABCMeta):
         params = {}
         for narratives in modelrun_config['narratives'].values():
             for narrative in narratives:
-                for data in self.read_narrative_data(narrative):
-                    for model_or_global, narrative_params in data.items():
-                        if model_or_global in ('global', model_name):
-                            params.update(narrative_params)
+                data = self.read_narrative_data(narrative)
+                for model_or_global, narrative_params in data.items():
+                    if model_or_global in ('global', model_name):
+                        params.update(narrative_params)
         return params
 
     @abstractmethod

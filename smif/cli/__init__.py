@@ -67,6 +67,7 @@ from __future__ import print_function
 import logging
 import logging.config
 import os
+import pkg_resources
 import re
 import shutil
 import sys
@@ -158,22 +159,26 @@ def setup_project_folder(args):
     ----------
     args
     """
-    # setup.cfg data_files installs to path relative to sys.prefix
-    example_path = os.path.join(sys.prefix, 'smif', 'example')
-    # copy without deleting any files present
-    _recursive_overwrite(example_path, args.directory)
+    _recursive_overwrite('smif', 'sample_project', args.directory)
+    if args.directory == ".":
+        dirname = "the current directory"
+    else:
+        dirname = args.directory
+    LOGGER.info("Created sample project in %s", dirname)
 
 
-def _recursive_overwrite(src, dest):
-    if os.path.isdir(src):
+def _recursive_overwrite(pkg, src, dest):
+    if pkg_resources.resource_isdir(pkg, src):
         if not os.path.isdir(dest):
             os.makedirs(dest)
-        files = os.listdir(src)
-        for f in files:
-            _recursive_overwrite(os.path.join(src, f),
-                                 os.path.join(dest, f))
+        contents = pkg_resources.resource_listdir(pkg, src)
+        for item in contents:
+            _recursive_overwrite(pkg,
+                                 os.path.join(src, item),
+                                 os.path.join(dest, item))
     else:
-        shutil.copyfile(src, dest)
+        filename = pkg_resources.resource_filename(pkg, src)
+        shutil.copyfile(filename, dest)
 
 
 def load_region_sets(handler):
@@ -378,7 +383,8 @@ def execute_model_run(args):
     modelrun = build_model_run(model_run_config)
 
     LOGGER.info("Running model run %s", modelrun.name)
-    modelrun.run()
+    store = DatafileInterface(args.directory)
+    modelrun.run(store)
 
     print("Model run complete")
 

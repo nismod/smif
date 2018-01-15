@@ -117,7 +117,7 @@ class DataHandle(object):
 
         if isinstance(source_model, ScenarioModel):
             data = self._store.read_scenario_data(
-                source_model_name,  # read from scenario
+                source_model.scenario_name,  # read from scenario
                 source_output_name,  # using output (parameter) name
                 self._inputs[input_name].spatial_resolution.name,
                 self._inputs[input_name].temporal_resolution.name,

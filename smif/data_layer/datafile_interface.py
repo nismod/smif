@@ -1109,9 +1109,9 @@ class DatafileInterface(DataInterface):
             timestep, modelset_iteration, decision_iteration)
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
-        if data.ndims == 3:
+        if data.ndim == 3:
             raise NotImplementedError
-        elif data.ndims == 2:
+        elif data.ndim == 2:
             region_names = self._read_region_names(spatial_resolution)
             interval_names = self._read_interval_names(temporal_resolution)
             csv_data = self.ndarray_to_data_list(data, region_names, interval_names)

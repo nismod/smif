@@ -39,7 +39,7 @@ def test_fixture_single_run():
     """Test running the filesystem-based single_run fixture
     """
     config_dir = os.path.join(os.path.dirname(__file__),
-                              '..', 'fixtures', 'single_run')
+                              '..', '..', 'smif', 'sample_project')
     output = subprocess.run(["smif", "-v", "run", "-d", config_dir,
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -51,7 +51,7 @@ def test_fixture_list_runs():
     """Test running the filesystem-based single_run fixture
     """
     config_dir = os.path.join(os.path.dirname(__file__),
-                              '..', 'fixtures', 'single_run')
+                              '..', '..', 'smif', 'sample_project')
     output = subprocess.run(["smif", "list", "-d", config_dir], stdout=subprocess.PIPE)
     assert "20170918_energy_water" in str(output.stdout)
     assert "20170918_energy_water_short" in str(output.stdout)
@@ -143,7 +143,7 @@ class TestRunSosModelRunComponents():
 
     def test_narratives(self):
         config_file = os.path.join(os.path.dirname(__file__),
-                                   '..', 'fixtures', 'single_run')
+                                   '..', '..', 'smif', 'sample_project')
 
         handler = DatafileInterface(config_file)
         narratives = {'technology': ['High Tech Demand Side Management']}
