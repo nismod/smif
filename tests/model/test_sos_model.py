@@ -552,9 +552,10 @@ class TestSosModelBuilder():
 
         with raises(NotImplementedError) as ex:
             data_handle = Mock()
+            data_handle.timesteps = [2010]
             sos_model.simulate(data_handle)
 
-        assert "Units conversion not implemented" in str(ex.value)
+        assert "Implicit units conversion not implemented" in str(ex.value)
 
     def test_cyclic_dependencies(self, get_sos_model_config_with_summed_dependency):
         config_data = get_sos_model_config_with_summed_dependency

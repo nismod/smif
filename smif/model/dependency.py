@@ -24,6 +24,25 @@ class Dependency(object):
         self.source = source
         self.sink = sink
 
+        # Insist on identical metadata - conversions to be explicit
+        if source.spatial_resolution.name != \
+                sink.spatial_resolution.name:
+            raise NotImplementedError(
+                "Implicit spatial conversion not implemented (attempted {}>{})".format(
+                    source.spatial_resolution.name,
+                    sink.spatial_resolution.name))
+        if source.temporal_resolution.name != \
+                sink.temporal_resolution.name:
+            raise NotImplementedError(
+                "Implicit spatial conversion not implemented (attempted {}>{})".format(
+                    source.temporal_resolution.name,
+                    sink.temporal_resolution.name))
+        if source.units != sink.units:
+            raise NotImplementedError(
+                "Implicit units conversion not implemented (attempted {}>{})".format(
+                    source.units,
+                    sink.units))
+
         if function:
             self.convert = function
         else:
