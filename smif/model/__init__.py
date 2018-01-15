@@ -125,19 +125,15 @@ class Model(metaclass=ABCMeta):
         return MetadataSet(self.inputs[name] for name in free_input_names)
 
     @abstractmethod
-    def simulate(self, data=None):
+    def simulate(self, data):
         """Override to implement the generation of model results
 
         Generate ``results`` for ``timestep`` using ``data``
 
         Arguments
         ---------
-        data: dict, default=None
-            A collection of state, parameter values, dependency inputs.
-
-        Returns
-        -------
-        results : dict
+        data: smif.data_layer.DataHandle
+            Access state, parameter values, dependency inputs.
         """
         pass
 

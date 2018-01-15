@@ -73,7 +73,7 @@ class DataHandle(object):
 
     @property
     def timesteps(self):
-        """Current timestep
+        """All timesteps (as tuple)
         """
         return tuple(self._timesteps)
 

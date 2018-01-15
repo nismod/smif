@@ -115,10 +115,15 @@ class SosModel(CompositeModel):
     def simulate(self, data_handle):
         """Run the SosModel
 
+        Arguments
+        ---------
+        data_handle: smif.data_layer.DataHandle
+            Access state, parameter values, dependency inputs
+
         Returns
         -------
-        results : dict
-            Nested dict keyed by model name, parameter name
+        results : smif.data_layer.DataHandle
+            Access model outputs
 
         """
         self.check_dependencies()
@@ -130,7 +135,7 @@ class SosModel(CompositeModel):
                 data_handle._store,
                 data_handle._modelrun_name,
                 data_handle._current_timestep,
-                data_handle._timesteps,
+                list(data_handle.timesteps),
                 model,
                 data_handle._modelset_iteration,
                 data_handle._decision_iteration
@@ -204,7 +209,7 @@ class SosModel(CompositeModel):
                     ordered_sets.append(models.pop())
                 else:
                     ordered_sets.append(ModelSet(
-                        models,
+                        {model.name: model for model in models},
                         max_iterations=self.max_iterations,
                         relative_tolerance=self.convergence_relative_tolerance,
                         absolute_tolerance=self.convergence_absolute_tolerance))

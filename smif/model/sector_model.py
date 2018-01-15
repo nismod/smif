@@ -181,27 +181,30 @@ class SectorModel(Model, metaclass=ABCMeta):
         """
         pass
 
-    def before_model_run(self, param_data=None):
+    def before_model_run(self, data):
         """Implement this method to conduct pre-model run tasks
+
+        Arguments
+        ---------
+        data: smif.data_layer.DataHandle
+            Access parameter values (before any model is run, no dependency
+            input data or state is guaranteed to be available)
         """
         pass
 
     @abstractmethod
-    def simulate(self, data=None):
+    def simulate(self, data):
         """Implement this method to run the model
 
         Arguments
         ---------
-        data: dict, default=None
-            A collection of state, parameter values, dependency inputs
-        Returns
-        -------
-        results : dict
-            This method should return a results dictionary
+        data: smif.data_layer.DataHandle
+            Access state, parameter values, dependency inputs
 
         Notes
         -----
-        In the results returned from the :py:meth:`simulate` method:
+        See docs on :class:`smif.data_layer.DataHandle` for details of how to
+        access inputs, parameters and state and how to set results.
 
         ``interval``
             should reference an id from the interval set corresponding to
@@ -233,23 +236,6 @@ class SectorModel(Model, metaclass=ABCMeta):
             A scalar component generated from the simulation model results
         """
         pass
-
-    def get_scenario_data(self, input_name):
-        """Returns all scenario dependency data as a numpy array
-
-        Returns
-        -------
-        numpy.ndarray
-            A numpy.ndarray which has the dimensions timestep-by-regions-by-intervals
-        """
-        if input_name not in self.deps:
-            raise ValueError("Scenario data for %s not available for this input",
-                             input_name)
-
-        source_model = self.deps[input_name].source_model
-        output_name = self.deps[input_name].source.name
-
-        return source_model.get_data(output_name)
 
     def get_region_names(self, region_set_name):
         """Get the list of region names for ``region_set_name``

@@ -607,7 +607,8 @@ class TestSosModelBuilder():
         scenario.outputs['raininess'].units = 'incompatible'
 
         with raises(NotImplementedError) as ex:
-            sos_model.simulate(2010)
+            data_handle = Mock()
+            sos_model.simulate(data_handle)
 
         assert "Units conversion not implemented" in str(ex.value)
 
