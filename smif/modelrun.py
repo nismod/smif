@@ -108,7 +108,7 @@ class ModelRun(object):
         self.logger.debug("Running model run %s", self.name)
         if self.status == 'Built':
             self.status = 'Running'
-            modelrunner = ModelRunner(store)
+            modelrunner = ModelRunner()
             modelrunner.solve_model(self, store)
             self.status = 'Successful'
         else:
@@ -118,7 +118,7 @@ class ModelRun(object):
 class ModelRunner(object):
     """Runs a ModelRun
     """
-    def __init__(self, store):
+    def __init__(self):
         self.logger = getLogger(__name__)
 
     def solve_model(self, model_run, store):

@@ -1,4 +1,4 @@
-from unittest.mock import Mock, call
+from unittest.mock import Mock
 
 from pytest import fixture
 from smif.modelrun import ModelRunBuilder, ModelRunner
@@ -56,8 +56,9 @@ class TestModelRunBuilder:
 class TestModelRun:
 
     def test_run_static(self, get_model_run):
+        store = Mock()
         model_run = get_model_run
-        model_run.run()
+        model_run.run(store)
 
     def test_serialize(self, get_model_run_config_data):
         builder = ModelRunBuilder()
@@ -74,25 +75,23 @@ class TestModelRun:
 class TestModelRunner():
 
     def test_call_before_model_run(self):
+        store = Mock()
         runner = ModelRunner()
         modelrun = Mock()
         modelrun.narratives = []
         modelrun.model_horizon = [1, 2]
 
-        runner.solve_model(modelrun)
+        runner.solve_model(modelrun, store)
 
-        modelrun.sos_model.before_model_run.assert_called_once_with({})
+        modelrun.sos_model.before_model_run.assert_called_once()
 
     def test_call_simulate(self):
+        store = Mock()
         runner = ModelRunner()
         modelrun = Mock()
         modelrun.narratives = []
         modelrun.model_horizon = [1, 2]
 
-        runner.solve_model(modelrun)
+        runner.solve_model(modelrun, store)
 
-        calls = [
-            call(1, {}),
-            call(2, {})
-        ]
-        modelrun.sos_model.simulate.assert_has_calls(calls)
+        assert len(modelrun.sos_model.simulate.mock_calls) == 2
