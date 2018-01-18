@@ -83,7 +83,7 @@ class TestModelRunner():
 
         runner.solve_model(modelrun, store)
 
-        modelrun.sos_model.before_model_run.assert_called_once()
+        modelrun.sos_model.before_model_run.call_count == 1
 
     def test_call_simulate(self):
         store = Mock()
@@ -94,4 +94,4 @@ class TestModelRunner():
 
         runner.solve_model(modelrun, store)
 
-        assert len(modelrun.sos_model.simulate.mock_calls) == 2
+        assert modelrun.sos_model.simulate.call_count == 2
