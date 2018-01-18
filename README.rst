@@ -119,19 +119,24 @@ Follow the `getting started guide
 <http://smif.readthedocs.io/en/latest/getting_started.html>`_ to help set up the
 necessary configuration.
 
+To set up an sample project in the current directory, run::
+
+        $ smif setup
+
 To list available model runs::
 
         $ smif list
-        demo_model_run.yml
+        demo_model_run
         ...
 
 To run a system-of-systems model run::
 
-        $ smif run demo_model_run.yml
+        $ smif run demo_model_run
         ...
         Model run complete
 
-By default, all results will be saved to `results.yaml`
+By default, results will be stored in a results directory, grouped by model run
+and simulation model.
 
 To see all options and flags::
 
