@@ -51,20 +51,16 @@ Activate it (run each time you switch projects)::
 
     activate smif_env
 
-Note that you ``source activate smif`` on OSX and Linux (or e.g. Git Bash on
+Note that you ``source activate smif_env`` on OSX and Linux (or e.g. Git Bash on
 Windows).
 
-Add the conda-forge channel, which has shapely and fiona available::
+Add the conda-forge channel, which has smif available::
 
     conda config --add channels conda-forge
 
-Install python packages, along with library dependencies::
-
-    conda install numpy pyyaml fiona rtree shapely scikit-optimize
-
 Finally install ``smif``::
 
-    pip install smif
+    conda install smif
 
 
 GLPK
