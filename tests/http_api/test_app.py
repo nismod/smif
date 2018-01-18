@@ -264,7 +264,7 @@ def test_get_scenario_set_missing(client):
     response = client.get('/api/v1/scenario_sets/does_not_exist')
     assert response.status_code == 404
     data = parse_json(response)
-    assert data['message'] == "scenario_set 'does_not_exist' not found"
+    assert data['message'] == "Scenario set 'does_not_exist' not found"
 
 
 def test_create_scenario_set(client, get_handler, get_scenario_set):

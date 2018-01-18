@@ -50,7 +50,7 @@ scenarios:
     spatial_resolution: national
     temporal_resolution: annual
     units: million people
-- name: 'Central Rainfall'
+- name: Central Rainfall
   description: 'Central Rainfall Scenario for the UK'
   scenario_set: rainfall
   parameters:
@@ -60,7 +60,7 @@ scenarios:
     temporal_resolution: annual
     units: ml
 narratives:
-- name: 'High Tech Demand Side Management'
+- name: High Tech Demand Side Management
   description: 'High penetration of SMART technology on the demand side'
   filename: high_tech_dsm.yml
   narrative_set: technology

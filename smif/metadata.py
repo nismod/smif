@@ -18,6 +18,7 @@ for example::
 """
 from __future__ import absolute_import, division, print_function
 
+import collections.abc
 import logging
 
 from smif.convert.unit import parse_unit
@@ -48,6 +49,9 @@ class Metadata(object):
         self.spatial_resolution = spatial_resolution
         self.temporal_resolution = temporal_resolution
         self.units = self.normalise_unit(units, name)
+
+    def __repr__(self):
+        return repr(self.as_dict())
 
     def __eq__(self, other):
         return self.name == other.name \
@@ -87,7 +91,7 @@ class Metadata(object):
         return self.temporal_resolution.get_entry_names()
 
 
-class MetadataSet(object):
+class MetadataSet(collections.abc.Mapping):
     """A container for metadata about model inputs or outputs
 
     Arguments
@@ -110,13 +114,14 @@ class MetadataSet(object):
                          'kW')
 
     """
-    def __init__(self, metadata_list):
+    def __init__(self, metadata_list=None):
         self._metadata = {}
-        for metadata_item in metadata_list:
-            if isinstance(metadata_item, dict):
+        if metadata_list is not None:
+            for metadata_item in metadata_list:
                 self.add_metadata(metadata_item)
-            elif isinstance(metadata_item, Metadata):
-                self.add_metadata_object(metadata_item)
+
+    def __repr__(self):
+        return "MetadataSet({})".format(repr(list(self._metadata.values())))
 
     @property
     def metadata(self):
@@ -141,34 +146,27 @@ class MetadataSet(object):
         return metadata_item
 
     def __iter__(self):
-        return iter(self.metadata)
+        for item in self._metadata:
+            yield item
 
-    def add_metadata(self, metadata_item):
+    def add_metadata(self, item):
         """Add an item to the set
 
         Arguments
         ---------
-        metadata_item: dict
-            A dictionary with keys 'name', 'spatial resolution', 'temporal
-            resolution' and 'units'
+        item: Metadata or dict
+            Metadata object or dictionary with keys 'name', 'spatial_resolution',
+            'temporal_resolution' and 'units'
         """
-        metadata = Metadata(metadata_item['name'],
-                            metadata_item['spatial_resolution'],
-                            metadata_item['temporal_resolution'],
-                            metadata_item['units'])
-        self._metadata[metadata.name] = metadata
-
-    def add_metadata_object(self, metadata_object):
-        """Add an metadata object to the set
-
-        Arguments
-        ---------
-        metadata_object : Metadata
-            A smif.metadata.Metadata instance
-
-        """
-        assert isinstance(metadata_object, Metadata)
-        self._metadata[metadata_object.name] = metadata_object
+        if isinstance(item, dict):
+            item = Metadata(
+                item['name'],
+                item['spatial_resolution'],
+                item['temporal_resolution'],
+                item['units']
+            )
+        assert isinstance(item, Metadata)
+        self._metadata[item.name] = item
 
     def get_spatial_res(self, name):
         """The spatial resolution for parameter `name`
@@ -210,7 +208,7 @@ class MetadataSet(object):
             A list of the spatial resolutions associated with the model
             parameters
         """
-        return [parameter.spatial_resolution for name, parameter in self._metadata.items()]
+        return [parameter.spatial_resolution for parameter in self._metadata.values()]
 
     @property
     def temporal_resolutions(self):
@@ -222,13 +220,13 @@ class MetadataSet(object):
             A list of the temporal resolutions associated with the model
             parameters
         """
-        return [parameter.temporal_resolution for name, parameter in self._metadata.items()]
+        return [parameter.temporal_resolution for parameter in self._metadata.values()]
 
     @property
     def names(self):
         """A list of the parameter names
         """
-        return list(self._metadata.keys())
+        return [parameter.name for parameter in self._metadata.values()]
 
     @property
     def units(self):
@@ -240,4 +238,4 @@ class MetadataSet(object):
             A list of the units associated with the model
             parameters
         """
-        return [parameter.units for name, parameter in self._metadata.items()]
+        return [parameter.units for parameter in self._metadata.values()]

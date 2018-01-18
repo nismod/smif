@@ -18,6 +18,7 @@ ModeRun has attributes:
 
 """
 from logging import getLogger
+from smif.data_layer import DataHandle
 
 
 class ModelRun(object):
@@ -91,13 +92,13 @@ class ModelRun(object):
         list
             A list of timesteps, distinct and sorted in ascending order
         """
-        return self._model_horizon
+        return self._model_horizon.copy()
 
     @model_horizon.setter
     def model_horizon(self, value):
         self._model_horizon = sorted(list(set(value)))
 
-    def run(self):
+    def run(self, store):
         """Builds all the objects and passes them to the ModelRunner
 
         The idea is that this will add ModelRuns to a queue for asychronous
@@ -108,9 +109,8 @@ class ModelRun(object):
         if self.status == 'Built':
             self.status = 'Running'
             modelrunner = ModelRunner()
-            modelrunner.solve_model(self)
+            modelrunner.solve_model(self, store)
             self.status = 'Successful'
-            return modelrunner.results
         else:
             raise ValueError("Model is not yet built.")
 
@@ -118,12 +118,10 @@ class ModelRun(object):
 class ModelRunner(object):
     """Runs a ModelRun
     """
-
     def __init__(self):
         self.logger = getLogger(__name__)
-        self.results = {}
 
-    def solve_model(self, model_run):
+    def solve_model(self, model_run, store):
         """Solve a ModelRun
 
         This method first calls :func:`smif.model.SosModel.before_model_run`
@@ -136,28 +134,20 @@ class ModelRunner(object):
         model_run : :class:`smif.modelrun.ModelRun`
         """
         # Initialise each of the sector models
-        param_data = self._get_parameter_data(model_run)
-        model_run.sos_model.before_model_run(param_data)
+        data_handle = DataHandle(
+            store, model_run.name, None, model_run.model_horizon,
+            model_run.sos_model)
+        model_run.sos_model.before_model_run(data_handle)
 
         # Solve the models over all timesteps
         for timestep in model_run.model_horizon:
             self.logger.debug('Running model for timestep %s', timestep)
-            self.logger.debug("Passing parameter data %s into '%s'",
-                              param_data, model_run.sos_model.name)
 
-            self.results[timestep] = model_run.sos_model.simulate(timestep,
-                                                                  param_data)
-        return self.results
-
-    def _get_parameter_data(self, model_run):
-        """Loads overridden parameter values from narrative/policy files
-        """
-        data = {}
-        for narrative in model_run.narratives:
-            self.logger.debug("Loading narratives: %s", narrative.data)
-            data.update(narrative.data)
-
-        return data
+            data_handle = DataHandle(
+                store, model_run.name, timestep, model_run.model_horizon,
+                model_run.sos_model)
+            model_run.sos_model.simulate(data_handle)
+        return data_handle
 
 
 class ModelRunBuilder(object):

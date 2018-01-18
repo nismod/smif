@@ -4,11 +4,91 @@ import csv
 import json
 import os
 from copy import deepcopy
-from pytest import raises
 
-from smif.data_layer import (DataExistsError, DataMismatchError, DataNotFoundError)
+import numpy as np
+from pytest import raises
+from smif.data_layer import (DataExistsError, DataMismatchError,
+                             DataNotFoundError)
+from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.datafile_interface import transform_leaves
 from smif.data_layer.load import dump
+
+
+class TestDataInterface():
+    def test_data_list_to_array(self):
+
+        data = [
+            {
+                'year': 2010,
+                'value': 3,
+                'region': 'oxford',
+                'interval': '1'
+            }
+        ]
+        actual = DataInterface.data_list_to_ndarray(
+            data,
+            ['oxford'],
+            ['1']
+        )
+        expected = np.array([[3.]], dtype=float)
+        np.testing.assert_equal(actual, expected)
+
+    def test_scenario_data_missing_year(self, oxford_region):
+        data = [
+            {
+                'value': 3.14
+            }
+        ]
+        msg = "Observation missing region"
+        with raises(KeyError) as ex:
+            DataInterface.data_list_to_ndarray(
+                data,
+                ['oxford'],
+                ['1']
+            )
+        assert msg in str(ex.value)
+
+    def test_scenario_data_missing_param_region(self, oxford_region):
+        data = [
+            {
+                'value': 3.14,
+                'region': 'missing',
+                'interval': '1',
+                'year': 2015
+            }
+        ]
+        msg = "Unknown region 'missing'"
+        with raises(ValueError) as ex:
+            DataInterface.data_list_to_ndarray(
+                data,
+                ['oxford'],
+                ['1']
+            )
+        assert msg in str(ex)
+
+    def test_scenario_data_missing_param_interval(self):
+        data = [
+            {
+                'value': 3.14,
+                'region': 'oxford',
+                'interval': '1',
+                'year': 2015
+            },
+            {
+                'value': 3.14,
+                'region': 'oxford',
+                'interval': 'extra',
+                'year': 2015
+            }
+        ]
+        msg = "Number of observations is not equal to intervals x regions"
+        with raises(DataMismatchError) as ex:
+            DataInterface.data_list_to_ndarray(
+                data,
+                ['oxford'],
+                ['1']
+            )
+        assert msg in str(ex)
 
 
 class TestDatafileInterface():
@@ -66,9 +146,8 @@ class TestDatafileInterface():
     def test_sos_model_run_read_missing(self, get_handler):
         """Test that reading a missing sos_model_run fails.
         """
-        config_handler = get_handler
         with raises(DataNotFoundError) as ex:
-            config_handler.read_sos_model_run('missing_name')
+            get_handler.read_sos_model_run('missing_name')
         assert "sos_model_run 'missing_name' not found" in str(ex)
 
     def test_sos_model_run_update(self, get_sos_model_run, get_handler):
@@ -370,14 +449,14 @@ class TestDatafileInterface():
             config_handler.delete_sector_model('missing_name')
         assert "sector_model 'missing_name' not found" in str(ex)
 
-    def test_region_definition_data(self, setup_folder_structure, setup_region_data,
+    def test_region_definition_data(self, setup_folder_structure, oxford_region,
                                     get_handler):
         """ Test to dump a region_definition_set (GeoJSON) data-file and then read the data
         using the datafile interface. Finally check if the data shows up in the
         returned dictionary.
         """
         basefolder = setup_folder_structure
-        region_definition_data = setup_region_data
+        region_definition_data = oxford_region
 
         with open(os.path.join(str(basefolder), 'data', 'region_definitions',
                                'test_region.json'), 'w+') as region_definition_file:
@@ -388,6 +467,28 @@ class TestDatafileInterface():
             'lad')
 
         assert test_region_definition[0]['properties']['name'] == 'oxford'
+
+    def test_missing_region_definition_data(self, setup_folder_structure, get_handler):
+        """Should raise error if region definition not found
+        """
+        with raises(DataNotFoundError) as ex:
+            get_handler.read_region_definition_data('missing')
+        assert "Region definition 'missing' not found" in str(ex)
+
+    def test_read_scenario_definition(self, setup_folder_structure, get_handler,
+                                      project_config):
+        """Should read a scenario definition
+        """
+        expected = project_config['scenarios'][1]
+        actual = get_handler.read_scenario_definition(project_config['scenarios'][1]['name'])
+        assert actual == expected
+
+    def test_missing_scenario_definition(self, setup_folder_structure, get_handler):
+        """Should raise a DataNotFoundError if scenario definition not found
+        """
+        with raises(DataNotFoundError) as ex:
+            get_handler.read_scenario_definition('missing')
+        assert "Scenario definition 'missing' not found" in str(ex)
 
     def test_scenario_data(self, setup_folder_structure, get_handler,
                            get_scenario_data):
@@ -406,14 +507,17 @@ class TestDatafileInterface():
             dict_writer.writerows(scenario_data)
 
         config_handler = get_handler
-        test_scenario = config_handler.read_scenario_data(
-            'High Population (ONS)')
+        expected = np.array([[200.0]])
+        actual = config_handler.read_scenario_data(
+            'High Population (ONS)',
+            'population_count',
+            'lad',
+            'annual',
+            2017)
 
-        assert len(test_scenario) == 1
-        assert 'population_count' in test_scenario
-        assert test_scenario['population_count'][0]['region'] == 'GB'
+        np.testing.assert_almost_equal(actual, expected)
 
-    def test_narrative_data(self, setup_folder_structure, get_handler, get_narrative_data):
+    def test_narrative_data(self, setup_folder_structure, get_handler, narrative_data):
         """ Test to dump a narrative (yml) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
         returned dictionary.
@@ -421,12 +525,60 @@ class TestDatafileInterface():
         basefolder = setup_folder_structure
         narrative_data_path = os.path.join(str(basefolder), 'data', 'narratives',
                                            'central_planning.yml')
-        dump(get_narrative_data, narrative_data_path)
+        dump(narrative_data, narrative_data_path)
 
         config_handler = get_handler
         test_narrative = config_handler.read_narrative_data('Central Planning')
 
-        assert test_narrative[0]['energy_demand'][0]['name'] == 'smart_meter_savings'
+        assert test_narrative['energy_demand'] == {'smart_meter_savings': 8}
+
+    def test_narrative_data_missing(self, get_handler):
+        """Should raise a DataNotFoundError if narrative has no data
+        """
+        with raises(DataNotFoundError) as ex:
+            get_handler.read_narrative_data('missing')
+        assert "Narrative 'missing' has no data defined" in str(ex)
+
+    def test_read_narrative_definition(self, setup_folder_structure, get_handler,
+                                       project_config):
+        expected = project_config['narratives'][0]
+        actual = get_handler.read_narrative_definition(expected['name'])
+        assert actual == expected
+
+    def test_read_narrative_definition_missing(self, get_handler):
+        """Should raise a DataNotFoundError if narrative not defined
+        """
+        with raises(DataNotFoundError) as ex:
+            get_handler.read_narrative_definition('missing')
+        assert "Narrative 'missing' not found" in str(ex)
+
+    def test_read_interventions(self, setup_folder_structure, water_interventions_abc,
+                                get_handler):
+        path = os.path.join(str(setup_folder_structure), 'data', 'interventions',
+                            'reservoirs.yml')
+        dump(water_interventions_abc, path)
+        actual = get_handler.read_interventions('reservoirs.yml')
+        assert actual == water_interventions_abc
+
+    def test_read_initial_conditions(self, setup_folder_structure, initial_system,
+                                     get_handler):
+        path = os.path.join(str(setup_folder_structure), 'data', 'initial_conditions',
+                            'system.yml')
+        dump(initial_system, path)
+        actual = get_handler.read_initial_conditions('system.yml')
+        assert actual == initial_system
+
+    def test_read_interval_definition_data(self, setup_folder_structure, annual_intervals,
+                                           get_handler):
+        path = os.path.join(str(setup_folder_structure), 'data', 'interval_definitions',
+                            'annual.csv')
+        with open(path, 'w') as fh:
+            w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
+            w.writeheader()
+            w.writerows(annual_intervals)
+
+        actual = get_handler.read_interval_definition_data('annual')
+        assert actual == annual_intervals
 
     def test_project_region_definitions(self, get_handler):
         """ Test to read and write the project configuration
@@ -566,6 +718,13 @@ class TestDatafileInterface():
                 expected = 'The annual mortality rate in NL population'
                 assert scenario_set['description'] == expected
 
+    def test_read_scenario_set_missing(self, get_handler):
+        """Should raise a DataNotFoundError if scenario set not found
+        """
+        with raises(DataNotFoundError) as ex:
+            get_handler.read_scenario_set('missing')
+        assert "Scenario set 'missing' not found" in str(ex)
+
     def test_project_scenarios(self, get_handler):
         """ Test to read and write the project configuration
         """
@@ -614,6 +773,43 @@ class TestDatafileInterface():
         for scenario in scenarios:
             if scenario['name'] == 'name_change':
                 assert scenario['filename'] == 'population_med.csv'
+
+    def test_read_scenario_set_scenario_definitions(self, get_handler):
+        """ Test to read all scenario definitions for a scenario
+        """
+        config_handler = get_handler
+        actual = config_handler.read_scenario_set_scenario_definitions('population')
+        expected = [
+            {
+                'description': 'The High ONS Forecast for UK population out to 2050',
+                'name': 'High Population (ONS)',
+                'parameters': [
+                    {
+                        'name': 'population_count',
+                        'filename': 'population_high.csv',
+                        'spatial_resolution': 'lad',
+                        'temporal_resolution': 'annual',
+                        'units': 'people',
+                    }
+                ],
+                'scenario_set': 'population',
+            },
+            {
+                'description': 'The Low ONS Forecast for UK population out to 2050',
+                'name': 'Low Population (ONS)',
+                'parameters': [
+                    {
+                        'name': 'population_count',
+                        'filename': 'population_low.csv',
+                        'spatial_resolution': 'lad',
+                        'temporal_resolution': 'annual',
+                        'units': 'people',
+                    }
+                ],
+                'scenario_set': 'population',
+            }
+        ]
+        assert actual == expected
 
     def test_project_narrative_sets(self, get_handler):
         """ Test to read and write the project configuration
@@ -709,6 +905,173 @@ class TestDatafileInterface():
         for narrative in narratives:
             if narrative['name'] == 'name_change':
                 assert narrative['filename'] == 'population_med.csv'
+
+    def test_read_parameters(self, setup_folder_structure, get_handler, get_sos_model_run,
+                             narrative_data):
+        """ Test to read a modelrun's parameters
+        """
+        sos_model_run = get_sos_model_run
+        get_handler.write_sos_model_run(sos_model_run)
+        central_narrative_path = os.path.join(
+            str(setup_folder_structure),
+            'data',
+            'narratives',
+            'central_planning.yml'
+        )
+        dump(narrative_data, central_narrative_path)
+        high_tech_narrative_path = os.path.join(
+            str(setup_folder_structure),
+            'data',
+            'narratives',
+            'energy_demand_high_tech.yml'
+        )
+        dump(narrative_data, high_tech_narrative_path)
+
+        expected = {
+            'smart_meter_savings': 8
+        }
+        actual = get_handler.read_parameters('unique_model_run_name', 'energy_demand')
+        assert actual == expected
+
+    def test_read_results(self, setup_folder_structure, get_handler):
+        """Results from .csv in a folder structure which encodes metadata
+        in filenames and directory structure.
+
+        With no decision/iteration specifiers:
+            results/
+            <modelrun_name>/
+            <model_name>/
+                output_<output_name>_
+                timestep_<timestep>_
+                regions_<spatial_resolution>_
+                intervals_<temporal_resolution>.csv
+        Else:
+            results/
+            <modelrun_name>/
+            <model_name>/
+            decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/
+                output_<output_name>_
+                timestep_<timestep>_
+                regions_<spatial_resolution>_
+                intervals_<temporal_resolution>.csv
+        """
+        modelrun = 'energy_transport_baseline'
+        model = 'energy_demand'
+        output = 'electricity_demand'
+        timestep = 2020
+        spatial_resolution = 'lad'
+        temporal_resolution = 'annual'
+
+        # 1. case with neither modelset nor decision
+        expected = np.array([[[1.0]]])
+        csv_contents = "region,interval,value\noxford,1,1.0\n"
+        path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            model,
+            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                output,
+                timestep,
+                spatial_resolution,
+                temporal_resolution
+            )
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as fh:
+            fh.write(csv_contents)
+
+        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep)
+        assert actual == expected
+
+        # 2. case with decision
+        decision_iteration = 1
+        expected = np.array([[[2.0]]])
+        csv_contents = "region,interval,value\noxford,1,2.0\n"
+        path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            model,
+            "decision_{}".format(decision_iteration),
+            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                output,
+                timestep,
+                spatial_resolution,
+                temporal_resolution
+            )
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as fh:
+            fh.write(csv_contents)
+
+        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep, None,
+                                          decision_iteration)
+        assert actual == expected
+
+        # 3. case with modelset
+        modelset_iteration = 1
+        expected = np.array([[[3.0]]])
+        csv_contents = "region,interval,value\noxford,1,3.0\n"
+        path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            model,
+            "modelset_{}".format(modelset_iteration),
+            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                output,
+                timestep,
+                spatial_resolution,
+                temporal_resolution
+            )
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as fh:
+            fh.write(csv_contents)
+
+        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep, modelset_iteration)
+        assert actual == expected
+
+        # 4. case with both decision and modelset
+        expected = np.array([[[4.0]]])
+        csv_contents = "region,interval,value\noxford,1,4.0\n"
+        path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            model,
+            "decision_{}_modelset_{}".format(
+                modelset_iteration,
+                decision_iteration
+            ),
+            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                output,
+                timestep,
+                spatial_resolution,
+                temporal_resolution
+            )
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as fh:
+            fh.write(csv_contents)
+
+        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep, modelset_iteration,
+                                          decision_iteration)
+        assert actual == expected
+
+    def test_read_results_missing(self, setup_folder_structure, get_handler):
+        pass
+
+    def test_write_results(self, setup_folder_structure, get_handler):
+        pass
+
+    def test_write_results_misshapen(self, setup_folder_structure, get_handler):
+        pass
 
 
 def test_transform_leaves_empty():

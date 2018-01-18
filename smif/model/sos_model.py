@@ -7,12 +7,11 @@ and the dependencies between the models.
 
 """
 import logging
-from collections import defaultdict
 
 import networkx
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
-from smif.decision import Planning
+from smif.data_layer import DataHandle
 from smif.intervention import InterventionRegister
 from smif.model import CompositeModel, Model, element_after, element_before
 from smif.model.model_set import ModelSet
@@ -52,11 +51,6 @@ class SosModel(CompositeModel):
         self.timesteps = []
         self.interventions = InterventionRegister()
         self.initial_conditions = []
-        self.planning = Planning([])
-        self._state = defaultdict(dict)
-
-        # scenario data and results
-        self._results = defaultdict(dict)
 
     def as_dict(self):
         """Serialize the SosModel object
@@ -102,60 +96,52 @@ class SosModel(CompositeModel):
         self.logger.info("Loading model: %s", model.name)
         self.models[model.name] = model
 
-    @property
-    def results(self):
-        """Get nested dict of model results
-
-        Returns
-        -------
-        dict
-            Nested dictionary in the format
-            results[str:model][str:parameter]
-        """
-        # convert from defaultdict to plain dict
-        return dict(self._results)
-
-    def before_model_run(self, data):
+    def before_model_run(self, data_handle):
         """Initialise each model (passing in parameter data only)
         """
-        for model in self.sector_models:
-            param_data = self._get_parameter_values(self.models[model], {}, data)
-            self.models[model].before_model_run(param_data)
+        for model in self.sector_models.values():
+            # get custom data handle for the Model
+            model_data_handle = DataHandle(
+                data_handle._store,
+                data_handle._modelrun_name,
+                data_handle._current_timestep,
+                data_handle._timesteps,
+                model,
+                data_handle._modelset_iteration,
+                data_handle._decision_iteration
+            )
+            model.before_model_run(model_data_handle)
 
-    def simulate(self, timestep, data=None):
+    def simulate(self, data_handle):
         """Run the SosModel
+
+        Arguments
+        ---------
+        data_handle: smif.data_layer.DataHandle
+            Access state, parameter values, dependency inputs
 
         Returns
         -------
-        results : dict
-            Nested dict keyed by model name, parameter name
+        results : smif.data_layer.DataHandle
+            Access model outputs
 
         """
         self.check_dependencies()
         run_order = self._get_model_sets_in_run_order()
         self.logger.info("Determined run order as %s", [x.name for x in run_order])
-        results = {}
         for model in run_order:
-            # get data for model
-            # TODO settle and test data dict structure/object between simple/composite models
-            sim_data = {}
-            for input_name, dep in model.deps.items():
-                input_ = model.model_inputs[input_name]
-                if input_ in self.free_inputs:
-                    # pick external dependencies from data
-                    param_data = data[dep.source_model.name][dep.source.name]
-                else:
-                    # pick internal dependencies from results
-                    param_data = results[dep.source_model.name][dep.source.name]
-                param_data_converted = dep.convert(param_data, input_)
-                sim_data[input_.name] = param_data_converted
-
-            sim_data = self._get_parameter_values(model, sim_data, data)
-
-            sim_results = model.simulate(timestep, sim_data)
-            for model_name, model_results in sim_results.items():
-                results[model_name] = model_results
-        return results
+            # get custom data handle for the Model
+            model_data_handle = DataHandle(
+                data_handle._store,
+                data_handle._modelrun_name,
+                data_handle._current_timestep,
+                list(data_handle.timesteps),
+                model,
+                data_handle._modelset_iteration,
+                data_handle._decision_iteration
+            )
+            model.simulate(model_data_handle)
+        return data_handle
 
     def check_dependencies(self):
         """For each contained model, compare dependency list against
@@ -167,74 +153,45 @@ class SosModel(CompositeModel):
             raise NotImplementedError(msg, ", ".join(self.free_inputs.names))
 
         for model in self.models.values():
-
             if isinstance(model, SosModel):
                 msg = "Nesting of SosModels not yet supported"
                 raise NotImplementedError(msg)
             else:
-                self.dependency_graph.add_node(model,
-                                               name=model.name)
+                self.dependency_graph.add_node(model, name=model.name)
 
-                for sink, dependency in model.deps.items():
-                    provider = dependency.source_model
-                    msg = "Dependency '%s' provided by '%s'"
-                    self.logger.debug(msg, sink, provider.name)
+        for sink_model in self.models.values():
+            for dependency in sink_model.deps.values():
+                source_model = dependency.source_model
+                msg = "Dependency '%s' provided by '%s'"
+                self.logger.debug(msg, dependency.sink.name, sink_model.name)
 
-                    self.dependency_graph.add_edge(provider,
-                                                   model,
-                                                   {'source': dependency.source,
-                                                    'sink': sink})
+                # Insist on identical metadata - conversions to be explicit
+                if dependency.source.spatial_resolution.name != \
+                        dependency.sink.spatial_resolution.name:
+                    raise NotImplementedError(
+                        "Implicit spatial conversion not implemented (attempted {}>{})".format(
+                            dependency.source.spatial_resolution.name,
+                            dependency.sink.spatial_resolution.name))
+                if dependency.source.temporal_resolution.name != \
+                        dependency.sink.temporal_resolution.name:
+                    raise NotImplementedError(
+                        "Implicit spatial conversion not implemented (attempted {}>{})".format(
+                            dependency.source.temporal_resolution.name,
+                            dependency.sink.temporal_resolution.name))
+                if dependency.source.units != dependency.sink.units:
+                    raise NotImplementedError(
+                        "Implicit units conversion not implemented (attempted {}>{})".format(
+                            dependency.source.units,
+                            dependency.sink.units))
 
-    def get_decisions(self, model, timestep):
-        """Gets the interventions that correspond to the decisions
-
-        Parameters
-        ----------
-        model: :class:`smif.sector_model.SectorModel`
-            The instance of the sector model wrapper to run
-        timestep: int
-            The current model year
-
-        TODO: Move into DecisionManager class
-        """
-        self.logger.debug("Finding decisions for %i", timestep)
-        current_decisions = []
-        for decision in self.planning.planned_interventions:
-            if decision['build_date'] <= timestep:
-                name = decision['name']
-                if name in model.intervention_names:
-                    msg = "Adding decision '%s' to instruction list"
-                    self.logger.debug(msg, name)
-                    intervention = self.interventions.get_intervention(name)
-                    current_decisions.append(intervention)
-        # for decision in self.planning.get_rule_based_interventions(timestep):
-        #   current_decisions.append(intervention)
-        # for decision in self.planning.get_optimised_interventions(timestep):
-        #   current_decisions.append(intervention)
-
-        return current_decisions
-
-    def get_state(self, model, timestep):
-        """Gets the state to pass to SectorModel.simulate
-        """
-        if model.name not in self._state[timestep]:
-            self.logger.warning("Found no state for %s in timestep %s", model.name, timestep)
-            return []
-        return self._state[timestep][model.name]
-
-    def set_state(self, model, from_timestep, state):
-        """Sets state output from model ready for next timestep
-        """
-        for_timestep = self.timestep_after(from_timestep)
-        self._state[for_timestep][model.name] = state
-
-    def set_data(self, model, timestep, results):
-        """Sets results output from model as data available to other/future models
-
-        Stores only latest estimated results (i.e. not holding on to iterations
-        here while trying to solve interdependencies)
-        """
-        self._results[timestep][model.name] = results
+                self.dependency_graph.add_edge(
+                    source_model,
+                    sink_model,
+                    {
+                        'source': dependency.source,
+                        'sink': dependency.sink
+                    }
+                )
 
     def _get_model_sets_in_run_order(self):
         """Returns a list of :class:`Model` in a runnable order.
@@ -271,7 +228,7 @@ class SosModel(CompositeModel):
                     ordered_sets.append(models.pop())
                 else:
                     ordered_sets.append(ModelSet(
-                        models,
+                        {model.name: model for model in models},
                         max_iterations=self.max_iterations,
                         relative_tolerance=self.convergence_relative_tolerance,
                         absolute_tolerance=self.convergence_absolute_tolerance))

@@ -11,8 +11,10 @@ from smif.data_layer.data_interface import (
     DataMismatchError,
     DataNotFoundError
 )
+from smif.data_layer.data_handle import DataHandle
+from smif.data_layer.memory_interface import MemoryInterface
 
 # Define what should be imported as * ::
 #         from smif.data_layer import *
 __all__ = ['DatabaseInterface', 'DatafileInterface', 'DataExistsError',
-           'DataMismatchError', 'DataNotFoundError']
+           'DataMismatchError', 'DataNotFoundError', 'DataHandle', 'MemoryInterface']

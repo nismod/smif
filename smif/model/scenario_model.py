@@ -1,6 +1,8 @@
+"""Scenario models represent scenario data sources within a system-of-systems
+model.
+"""
 from logging import getLogger
 
-import numpy as np
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.model import Model
@@ -11,51 +13,35 @@ class ScenarioModel(Model):
 
     Arguments
     ---------
-    name : string
+    name : str
         The unique name of this scenario
+
+    Attributes
+    ----------
+    name : str
+        Name of this scenario
+    timesteps : list
+        List of timesteps for which the scenario holds data
+    scenario_set : str
+        Scenario set to which this scenario belongs
     """
 
     def __init__(self, name):
         super().__init__(name)
-
-        self._data = {}
-        self.timesteps = []
-
-        "The scenario set to which this scenario belongs"
         self.scenario_set = None
+        self.scenario_name = None
 
     def as_dict(self):
-
         config = {
             'name': self.name,
             'description': self.description,
-            'scenario_set': self.scenario_set}
-
-        parameters = []
-        for output in self.model_outputs:
-
-            parameters.append({
-                'name': output.name,
-                'spatial_resolution': output.spatial_resolution.name,
-                'temporal_resolution': output.temporal_resolution.name,
-                'units': output.units
-                })
-
-        config['parameters'] = parameters
-
+            'scenario_set': self.scenario_set,
+            'parameters': [
+                output.as_dict()
+                for output in self.outputs.values()
+            ]
+        }
         return config
-
-    def get_data(self, output):
-        """Get data associated with `output`
-
-        Arguments
-        ---------
-        output : str
-            The name of the output for which to retrieve data
-
-        """
-        self._check_output(output)
-        return self._data[output]
 
     def add_output(self, name, spatial_resolution, temporal_resolution, units):
         """Add an output to the scenario model
@@ -68,49 +54,22 @@ class ScenarioModel(Model):
         units: str
 
         """
-        output_metadata = {"name": name,
-                           "spatial_resolution": spatial_resolution,
-                           "temporal_resolution": temporal_resolution,
-                           "units": units}
-
-        self._model_outputs.add_metadata(output_metadata)
-
-    def add_data(self, output, data, timesteps):
-        """Add data to the scenario
-
-        Arguments
-        ---------
-        output : str
-            The name of the output to which to add data
-        data : numpy.ndarray
-        timesteps : list
-
-        Example
-        -------
-        >>> elec_scenario = ScenarioModel('elec_scenario')
-        >>> data = np.array([[[120.23]]])
-        >>> timesteps = [2010]
-        >>> elec_scenario.add_data(data, timesteps)
-        """
-        self._check_output(output)
-
-        self.timesteps = timesteps
-        assert isinstance(data, np.ndarray)
-        self._data[output] = data
+        output_metadata = {
+            "name": name,
+            "spatial_resolution": spatial_resolution,
+            "temporal_resolution": temporal_resolution,
+            "units": units
+        }
+        self.outputs.add_metadata(output_metadata)
 
     def _check_output(self, output):
-        if output not in self.model_outputs.names:
+        if output not in self.outputs.names:
             raise KeyError("'{}' not in scenario outputs".format(output))
 
-    def simulate(self, timestep, data=None):
-        """Returns the scenario data
+    def simulate(self, data):
+        """No-op, as the data is assumed already available in the store
         """
-        time_index = self.timesteps.index(timestep)
-
-        all_data = {output.name: self._data[output.name][time_index]
-                    for output in self.model_outputs}
-
-        return {self.name: all_data}
+        return data
 
 
 class ScenarioModelBuilder(object):
@@ -122,23 +81,15 @@ class ScenarioModelBuilder(object):
         self.region_register = get_region_register()
         self.interval_register = get_interval_register()
 
-    def construct(self, scenario_config, data, timesteps):
-        """Build the complete and populated ScenarioModel
-
-        Assumes that a ScenarioModel can only have one output
+    def construct(self, scenario_config):
+        """Build a ScenarioModel
 
         Arguments
         ---------
         scenario_config: dict
-        data: dict
-            A dictionary of scenario data, with keys scenario parameter names
-        timesteps: list
-            A list of integer years e.g. ``[2010, 2011, 2013]``
         """
-
         self.scenario.scenario_set = scenario_config['scenario_set']
-        # Scenarios need to be known by the scenario set name
-        self.scenario.name = scenario_config['scenario_set']
+        self.scenario.scenario_name = scenario_config['name']
         parameters = scenario_config['parameters']
 
         for parameter in parameters:
@@ -154,94 +105,7 @@ class ScenarioModelBuilder(object):
                                      temporal_res,
                                      parameter['units'])
 
-            array_data = self._data_list_to_array(name,
-                                                  data[name],
-                                                  timesteps,
-                                                  spatial_res,
-                                                  temporal_res)
-
-            self.scenario.add_data(name, array_data, timesteps)
-
     def finish(self):
         """Return the built ScenarioModel
         """
         return self.scenario
-
-    def _data_list_to_array(self, param, observations, timestep_names,
-                            spatial_resolution, temporal_resolution):
-        """Convert list of observations to :class:`numpy.ndarray`
-
-        Arguments
-        ---------
-        param : str
-        observations : list
-        timestep_names : list
-        spatial_resolution : smif.convert.area.RegionSet
-        temporal_resolution : smif.convert.interval.IntervalSet
-
-        """
-        interval_names = temporal_resolution.get_entry_names()
-        region_names = spatial_resolution.get_entry_names()
-
-        if len(timestep_names) == 0:
-            self.logger.error("No timesteps found when loading %s", param)
-
-        data = np.zeros((
-            len(timestep_names),
-            len(region_names),
-            len(interval_names)
-        ))
-        data.fill(np.nan)
-
-        if len(observations) != data.size:
-            self.logger.warning(
-                "Number of observations is not equal to timesteps x  " +
-                "intervals x regions when loading %s", param)
-
-        skipped_years = set()
-
-        for obs in observations:
-
-            if 'year' not in obs:
-                raise ValueError(
-                    "Scenario data item missing year: '{}'".format(obs))
-            year = int(obs['year'])
-
-            if year not in timestep_names:
-                # Don't add data if year is not in timestep list
-                skipped_years.add(year)
-                continue
-
-            if 'region' not in obs:
-                raise ValueError(
-                    "Scenario data item missing region: '{}'".format(obs))
-            region = obs['region']
-            if region not in region_names:
-                raise ValueError(
-                    "Region '{}' not defined in set '{}' for parameter '{}'".format(
-                        region,
-                        spatial_resolution.name,
-                        param))
-
-            if 'interval' not in obs:
-                raise ValueError(
-                    "Scenario data item missing interval: {}".format(obs))
-            interval = obs['interval']
-            if interval not in interval_names:
-                raise ValueError(
-                    "Interval '{}' not defined in set '{}' for parameter '{}'".format(
-                        interval,
-                        temporal_resolution.name,
-                        param))
-
-            timestep_idx = timestep_names.index(year)
-            interval_idx = interval_names.index(interval)
-            region_idx = region_names.index(region)
-
-            data[timestep_idx, region_idx, interval_idx] = obs['value']
-
-        for year in skipped_years:
-            msg = "Year '%s' not defined in model timesteps so skipping"
-            self.logger.warning(msg, year)
-
-        return data

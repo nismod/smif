@@ -247,13 +247,15 @@ class TestMetadataSet(object):
         assert metadata.get_interval_names() == ["winter", "spring", "summer", "autumn"]
 
     def test_iterate_over_empty(self):
-
-        metadata_set = MetadataSet([])
+        """Should initialise as empty by default
+        """
+        metadata_set = MetadataSet()
         assert metadata_set.metadata == []
-
         assert [x for x in metadata_set] == []
 
     def test_iterate_over_populated(self):
+        """Should initialise with list of metadata if provided
+        """
         metadata_list = [
             {
                 "name": "total_lane_kilometres",
@@ -263,23 +265,44 @@ class TestMetadataSet(object):
             }
         ]
         metadata_set = MetadataSet(metadata_list)
+        expected_metadata = Metadata(
+            "total_lane_kilometres",
+            region_set,
+            interval_set,
+            "kilometers"
+        )
 
         actual = metadata_set.metadata
-        assert actual == [Metadata("total_lane_kilometres",
-                                   region_set,
-                                   interval_set,
-                                   "kilometers")]
+        assert actual == [expected_metadata]
 
-        assert [x for x in metadata_set] == [Metadata("total_lane_kilometres",
-                                                      region_set,
-                                                      interval_set,
-                                                      "kilometers")]
+        actual = [(k, v) for k, v in metadata_set.items()]
+        assert actual == [("total_lane_kilometres", expected_metadata)]
 
     def test_add_meta_object(self):
+        """Should allow adding a Metadata object
+        """
         metadata = Metadata("total_lane_kilometres", region_set, interval_set,
                             "kilometer")
-        metadata_set = MetadataSet([])
-        metadata_set.add_metadata_object(metadata)
+        metadata_set = MetadataSet()
+        metadata_set.add_metadata(metadata)
+
+        # access list of metadata attributes
+        assert metadata_set.names == ["total_lane_kilometres"]
+        assert metadata_set.spatial_resolutions == [region_set]
+        assert metadata_set.temporal_resolutions == [interval_set]
+        assert metadata_set.units == ["kilometer"]
+
+    def test_add_meta_dict(self):
+        """Should allow adding a dict with required keys
+        """
+        metadata = {
+            "name": "total_lane_kilometres",
+            "spatial_resolution": region_set,
+            "temporal_resolution": interval_set,
+            "units": "kilometers"
+        }
+        metadata_set = MetadataSet()
+        metadata_set.add_metadata(metadata)
 
         # access list of metadata attributes
         assert metadata_set.names == ["total_lane_kilometres"]

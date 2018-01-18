@@ -25,9 +25,12 @@ class DatafileInterface(DataInterface):
         The path to the configuration and data files
     """
     def __init__(self, base_folder):
+        super().__init__()
+
         self.base_folder = base_folder
         self.file_dir = {}
         self.file_dir['project'] = os.path.join(base_folder, 'config')
+        self.file_dir['results'] = os.path.join(base_folder, 'results')
 
         config_folders = {
             'sos_model_runs': 'config',
@@ -189,7 +192,8 @@ class DatafileInterface(DataInterface):
             self._write_yaml_file(
                 self.file_dir['sos_models'],
                 sos_model['name'],
-                sos_model)
+                sos_model
+            )
 
     def update_sos_model(self, sos_model_name, sos_model):
         """Update system-of-system model in Yaml file
@@ -242,7 +246,10 @@ class DatafileInterface(DataInterface):
         for sector_model_name in sector_model_names:
             sector_models.append(
                 self._read_yaml_file(
-                    self.file_dir['sector_models'], sector_model_name))
+                    self.file_dir['sector_models'],
+                    sector_model_name
+                )
+            )
 
         return sector_models
 
@@ -365,11 +372,16 @@ class DatafileInterface(DataInterface):
             A list of data from the specified file in a fiona formatted dict
         """
         # Find filename for this region_definition_name
-        filename = ''
-        for region_definition in self.read_region_definitions():
-            if region_definition['name'] == region_definition_name:
-                filename = region_definition['filename']
-                break
+        region_definitions = self.read_region_definitions()
+        try:
+            filename = next(
+                rdef['filename']
+                for rdef in region_definitions
+                if rdef['name'] == region_definition_name
+            )
+        except StopIteration:
+            raise DataNotFoundError(
+                "Region definition '{}' not found".format(region_definition_name))
 
         # Read the region data from file
         filepath = os.path.join(self.file_dir['region_definitions'], filename)
@@ -378,6 +390,12 @@ class DatafileInterface(DataInterface):
                 data = [f for f in src]
 
         return data
+
+    def _read_region_names(self, region_definition_name):
+        return [
+            feature['properties']['name']
+            for feature in self.read_region_definition_data(region_definition_name)
+        ]
 
     def write_region_definition(self, region_definition):
         """Write region_definition to project configuration
@@ -439,7 +457,7 @@ class DatafileInterface(DataInterface):
 
         Notes
         -----
-        Expects csv file to contain headings of `year`, `start`, `end`
+        Expects csv file to contain headings of `id`, `start`, `end`
         """
         interval_defs = self.read_interval_definitions()
         filename = None
@@ -455,6 +473,12 @@ class DatafileInterface(DataInterface):
             for row in reader:
                 data.append(row)
         return data
+
+    def _read_interval_names(self, interval_definition_name):
+        return [
+            interval['id']
+            for interval in self.read_interval_definition_data(interval_definition_name)
+        ]
 
     def write_interval_definition(self, interval_definition):
         """Write interval_definition to project configuration
@@ -503,6 +527,31 @@ class DatafileInterface(DataInterface):
         return project_config['scenario_sets']
 
     def read_scenario_set(self, scenario_set_name):
+        """Read a scenario_set
+
+        Arguments
+        ---------
+        scenario_set_name: str
+            Name of the scenario_set
+
+        Returns
+        -------
+        dict
+            Scenario set definition
+        """
+        project_config = self._read_project_config()
+
+        try:
+            return next(
+                scenario_set
+                for scenario_set in project_config['scenario_sets']
+                if scenario_set['name'] == scenario_set_name
+            )
+        except StopIteration:
+            raise DataNotFoundError(
+                "Scenario set '{}' not found".format(scenario_set_name))
+
+    def read_scenario_set_scenario_definitions(self, scenario_set_name):
         """Read all scenarios from a certain scenario_set
 
         Arguments
@@ -513,13 +562,45 @@ class DatafileInterface(DataInterface):
         Returns
         -------
         list
-            A scenario_set dictionary
+            A list of scenarios within the specified 'scenario_set_name'
         """
         project_config = self._read_project_config()
-        for scenario_data in project_config['scenario_sets']:
-            if scenario_data['name'] == scenario_set_name:
-                return scenario_data
-        raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
+
+        # Filter only the scenarios of the selected scenario_set_name
+        filtered_scenario_data = [
+            data for data in project_config['scenarios']
+            if data['scenario_set'] == scenario_set_name
+        ]
+
+        if not filtered_scenario_data:
+            self.logger.warning(
+                "Scenario set '{}' has no scenarios defined".format(scenario_set_name))
+
+        return filtered_scenario_data
+
+    def read_scenario_definition(self, scenario_name):
+        """Read scenario definition data
+
+        Arguments
+        ---------
+        scenario_name: str
+            Name of the scenario
+
+        Returns
+        -------
+        dict
+            The scenario definition
+        """
+        project_config = self._read_project_config()
+        try:
+            return next(
+                sdef
+                for sdef in project_config['scenarios']
+                if sdef['name'] == scenario_name
+            )
+        except StopIteration:
+            raise DataNotFoundError(
+                "Scenario definition '{}' not found".format(scenario_name))
 
     def _scenario_set_exists(self, scenario_set_name):
         project_config = self._read_project_config()
@@ -587,18 +668,18 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def read_scenarios(self):
-        """Read scenario sets from project configuration
+        """Read scenarios from project configuration
 
         Returns
         -------
         list
-            A list of scenario set dicts
+            A list of scenario dicts
         """
         project_config = self._read_project_config()
         return project_config['scenarios']
 
     def read_scenario(self, scenario_name):
-        """Read all scenarios from a certain scenario
+        """Read a scenario
 
         Arguments
         ---------
@@ -607,12 +688,11 @@ class DatafileInterface(DataInterface):
 
         Returns
         -------
-        list
+        dict
             A scenario dictionary
         """
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
-            print(scenario_data)
             if scenario_data['name'] == scenario_name:
                 return scenario_data
         raise DataNotFoundError("scenario '%s' not found" % scenario_name)
@@ -682,34 +762,53 @@ class DatafileInterface(DataInterface):
 
         self._write_project_config(project_config)
 
-    def read_scenario_data(self, scenario_name):
+    def read_scenario_data(self, scenario_name, parameter_name,
+                           spatial_resolution, temporal_resolution, timestep):
         """Read scenario data file
 
         Arguments
         ---------
         scenario_name: str
             Name of the scenario
+        parameter_name: str
+            Name of the scenario parameter to read
+        spatial_resolution : str
+        temporal_resolution : str
+        timestep: int
 
         Returns
         -------
-        dict
-            A dict of lists of dicts containing the contents of `scenario_name`
-            data file(s) associated with the scenario parameters. The keys of
-            the dict are the parameter names
+        data: numpy.ndarray
+
         """
-        data = {}
         # Find filenames for this scenario
         filename = None
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
             if scenario_data['name'] == scenario_name:
                 for param in scenario_data['parameters']:
-                    filename = param['filename']
-                    # Read the scenario data from file
-                    filepath = os.path.join(self.file_dir['scenarios'], filename)
-                    data[param['name']] = self._get_data_from_csv(filepath)
+                    if param['name'] == parameter_name:
+                        filename = param['filename']
+                        break
+                break
 
-        return data
+        if filename is None:
+            raise DataNotFoundError(
+                "Scenario '{}' with parameter '{}' not found".format(
+                    scenario_name, parameter_name))
+
+        # Read the scenario data from file
+        filepath = os.path.join(self.file_dir['scenarios'], filename)
+        data = [
+            datum for datum in
+            self._get_data_from_csv(filepath)
+            if int(datum['year']) == timestep
+        ]
+
+        region_names = self._read_region_names(spatial_resolution)
+        interval_names = self._read_interval_names(temporal_resolution)
+
+        return self.data_list_to_ndarray(data, region_names, interval_names)
 
     def read_narrative_sets(self):
         """Read narrative sets from project configuration
@@ -719,6 +818,7 @@ class DatafileInterface(DataInterface):
         list
             A list of narrative set dicts
         """
+        # Find filename for this narrative
         project_config = self._read_project_config()
         return project_config['narrative_sets']
 
@@ -915,15 +1015,25 @@ class DatafileInterface(DataInterface):
             A list with dictionaries containing the contents of 'narrative_name' data file
         """
         # Find filename for this narrative
-        filename = ''
+        filename = None
         project_config = self._read_project_config()
         for narrative in project_config['narratives']:
             if narrative['name'] == narrative_name:
                 filename = narrative['filename']
                 break
 
+        if filename is None:
+            raise DataNotFoundError(
+                'Narrative \'{}\' has no data defined'.format(narrative_name))
+
         # Read the narrative data from file
-        return load(os.path.join(self.file_dir['narratives'], filename))
+        try:
+            narrative_data = load(os.path.join(self.file_dir['narratives'], filename))
+        except FileNotFoundError:
+            raise DataNotFoundError(
+                'Narrative \'{}\' has no data defined'.format(narrative_name))
+
+        return narrative_data
 
     def read_narrative_definition(self, narrative_name):
         """Read the narrative definition
@@ -938,12 +1048,167 @@ class DatafileInterface(DataInterface):
         dict
 
         """
-        definition = None
         project_config = self._read_project_config()
         for narrative in project_config['narratives']:
             if narrative['name'] == narrative_name:
-                definition = narrative
-        return definition
+                return narrative
+
+        raise DataNotFoundError('Narrative \'{}\' not found'.format(narrative_name))
+
+    def read_results(self, modelrun_id, model_name, output_name, spatial_resolution,
+                     temporal_resolution, timestep=None, modelset_iteration=None,
+                     decision_iteration=None):
+        """Return path to text file for a given output
+
+        Parameters
+        ----------
+        modelrun_id : str
+        model_name : str
+        output_name : str
+        spatial_resolution : str
+        temporal_resolution : str
+        timestep : int, optional
+        modelset_iteration : int, optional
+        decision_iteration : int, optional
+
+        Returns
+        -------
+        data: numpy.ndarray
+
+        """
+        if timestep is None:
+            raise NotImplementedError
+
+        results_path = self._get_results_path(
+            modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
+            timestep, modelset_iteration, decision_iteration)
+
+        csv_data = self._get_data_from_csv(results_path)
+        region_names = self._read_region_names(spatial_resolution)
+        interval_names = self._read_interval_names(temporal_resolution)
+        return self.data_list_to_ndarray(csv_data, region_names, interval_names)
+
+    def write_results(self, modelrun_id, model_name, output_name, data, spatial_resolution,
+                      temporal_resolution, timestep=None, modelset_iteration=None,
+                      decision_iteration=None):
+        """Return path to text file for a given output
+
+        Parameters
+        ----------
+        modelrun_id : str
+        model_name : str
+        output_name : str
+        data : numpy.ndarray
+        spatial_resolution : str
+        temporal_resolution : str
+        timestep : int, optional
+        modelset_iteration : int, optional
+        decision_iteration : int, optional
+        """
+        if timestep is None:
+            raise NotImplementedError
+
+        results_path = self._get_results_path(
+            modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
+            timestep, modelset_iteration, decision_iteration)
+        os.makedirs(os.path.dirname(results_path), exist_ok=True)
+
+        if data.ndim == 3:
+            raise NotImplementedError
+        elif data.ndim == 2:
+            region_names = self._read_region_names(spatial_resolution)
+            interval_names = self._read_interval_names(temporal_resolution)
+            csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
+            self._write_data_to_csv(results_path, csv_data)
+        else:
+            DataMismatchError(
+                "Expected to write either timestep x region x interval or " +
+                "region x interval data"
+            )
+
+    def _get_results_path(self, modelrun_id, model_name, output_name, spatial_resolution,
+                          temporal_resolution, timestep, modelset_iteration=None,
+                          decision_iteration=None):
+        """Return path to text file for a given output
+
+        On the pattern of:
+            results/
+            <modelrun_name>/
+            <model_name>/
+            decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/ or none
+                output_<output_name>_
+                timestep_<timestep>_
+                regions_<spatial_resolution>_
+                intervals_<temporal_resolution>.csv
+
+        Parameters
+        ----------
+        modelrun_id : str
+        model_name : str
+        output_name : str
+        spatial_resolution : str
+        temporal_resolution : str
+        timestep : str or int
+        modelset_iteration : int, optional
+        decision_iteration : int, optional
+
+        Returns
+        -------
+        path : strs
+        """
+        results_dir = self.file_dir['results']
+        if modelset_iteration is None and decision_iteration is None:
+            path = os.path.join(
+                results_dir,
+                modelrun_id,
+                model_name,
+                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                    output_name,
+                    timestep,
+                    spatial_resolution,
+                    temporal_resolution
+                )
+            )
+        elif modelset_iteration is None and decision_iteration is not None:
+            path = os.path.join(
+                results_dir,
+                modelrun_id,
+                model_name,
+                "decision_{}".format(decision_iteration),
+                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                    output_name,
+                    timestep,
+                    spatial_resolution,
+                    temporal_resolution
+                )
+            )
+        elif modelset_iteration is not None and decision_iteration is None:
+            path = os.path.join(
+                results_dir,
+                modelrun_id,
+                model_name,
+                "modelset_{}".format(modelset_iteration),
+                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                    output_name,
+                    timestep,
+                    spatial_resolution,
+                    temporal_resolution
+                )
+            )
+        else:
+            path = os.path.join(
+                results_dir,
+                modelrun_id,
+                model_name,
+                "decision_{}_modelset_{}".format(decision_iteration, modelset_iteration),
+                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                    output_name,
+                    timestep,
+                    spatial_resolution,
+                    temporal_resolution
+                )
+            )
+        return path
 
     def _read_project_config(self):
         """Read the project configuration
@@ -965,7 +1230,8 @@ class DatafileInterface(DataInterface):
         """
         self._write_yaml_file(self.file_dir['project'], 'project', data)
 
-    def _read_filenames_in_dir(self, path, extension):
+    @staticmethod
+    def _read_filenames_in_dir(path, extension):
         """Returns the name of the Yaml files in a certain directory
 
         Arguments
@@ -986,7 +1252,8 @@ class DatafileInterface(DataInterface):
                 files.append(os.path.splitext(filename)[0])
         return files
 
-    def _get_data_from_csv(self, filepath):
+    @staticmethod
+    def _get_data_from_csv(filepath):
         scenario_data = []
         with open(filepath, 'r') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -996,7 +1263,33 @@ class DatafileInterface(DataInterface):
                 scenario_data.append(row)
         return scenario_data
 
-    def _read_yaml_file(self, path, filename, extension='.yml'):
+    @staticmethod
+    def _write_data_to_csv(filepath, data, timestep=None):
+        if timestep is None:
+            with open(filepath, 'w') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=(
+                    'timestep',
+                    'region',
+                    'interval',
+                    'value'
+                ))
+                writer.writeheader()
+                for row in data:
+                    writer.writerow(row)
+        else:
+            with open(filepath, 'a') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=(
+                    'timestep',
+                    'region',
+                    'interval',
+                    'value'
+                ))
+                for row in data:
+                    row['timestep'] = timestep
+                    writer.writerow(row)
+
+    @staticmethod
+    def _read_yaml_file(path, filename, extension='.yml'):
         """Read a Data dict from a Yaml file
 
         Arguments
@@ -1018,7 +1311,8 @@ class DatafileInterface(DataInterface):
         data = load(filepath)
         return transform_leaves(data, _str_to_datetime)
 
-    def _write_yaml_file(self, path, filename, data, extension='.yml'):
+    @staticmethod
+    def _write_yaml_file(path, filename, data, extension='.yml'):
         """Write a data dict to a Yaml file
 
         Arguments

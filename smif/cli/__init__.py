@@ -67,6 +67,7 @@ from __future__ import print_function
 import logging
 import logging.config
 import os
+import pkg_resources
 import re
 import shutil
 import sys
@@ -78,7 +79,6 @@ from multiprocessing import Process
 from threading import Timer
 
 import smif
-from smif.data_layer.load import dump
 from smif.data_layer import DatafileInterface, DataNotFoundError
 from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
@@ -155,26 +155,30 @@ INTERVALS = get_interval_register()
 def setup_project_folder(args):
     """Creates folder structure in the target directory
 
-    Arguments
-    =========
+    Parameters
+    ----------
     args
     """
-    # setup.cfg data_files installs to path relative to sys.prefix
-    example_path = os.path.join(sys.prefix, 'smif', 'example')
-    # copy without deleting any files present
-    _recursive_overwrite(example_path, args.directory)
+    _recursive_overwrite('smif', 'sample_project', args.directory)
+    if args.directory == ".":
+        dirname = "the current directory"
+    else:
+        dirname = args.directory
+    LOGGER.info("Created sample project in %s", dirname)
 
 
-def _recursive_overwrite(src, dest):
-    if os.path.isdir(src):
+def _recursive_overwrite(pkg, src, dest):
+    if pkg_resources.resource_isdir(pkg, src):
         if not os.path.isdir(dest):
             os.makedirs(dest)
-        files = os.listdir(src)
-        for f in files:
-            _recursive_overwrite(os.path.join(src, f),
-                                 os.path.join(dest, f))
+        contents = pkg_resources.resource_listdir(pkg, src)
+        for item in contents:
+            _recursive_overwrite(pkg,
+                                 os.path.join(src, item),
+                                 os.path.join(dest, item))
     else:
-        shutil.copyfile(src, dest)
+        filename = pkg_resources.resource_filename(pkg, src)
+        shutil.copyfile(filename, dest)
 
 
 def load_region_sets(handler):
@@ -263,20 +267,18 @@ def get_model_run_definition(args):
         sector_model_object = sector_model_builder.finish()
 
         sector_model_objects.append(sector_model_object)
-        LOGGER.debug("Model inputs: %s", sector_model_object.model_inputs.names)
+        LOGGER.debug("Model inputs: %s", sector_model_object.inputs.names)
 
     LOGGER.debug("Sector models: %s", sector_model_objects)
     sos_model_config['sector_models'] = sector_model_objects
 
     scenario_objects = []
-    for scenario in model_run_config['scenarios']:
-        LOGGER.debug("Finding data for '%s'", scenario[1])
-        scenario_definition = handler.read_scenario(scenario[1])
-        scenario_data = handler.read_scenario_data(scenario[1])
-        scenario_set = scenario_definition['scenario_set']
+    for scenario_set, scenario_name in model_run_config['scenarios'].items():
+        scenario_definition = handler.read_scenario_definition(scenario_name)
+        LOGGER.debug("Scenario definition: %s", scenario_definition)
+
         scenario_model_builder = ScenarioModelBuilder(scenario_set)
-        scenario_model_builder.construct(scenario_definition, scenario_data,
-                                         model_run_config['timesteps'])
+        scenario_model_builder.construct(scenario_definition)
         scenario_objects.append(scenario_model_builder.finish())
 
     LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
@@ -296,14 +298,14 @@ def get_model_run_definition(args):
     return model_run_config
 
 
-def get_narratives(handler, narratives):
+def get_narratives(handler, narrative_config):
     """Load the narrative data from the sos model run configuration
 
     Arguments
     ---------
     handler: :class:`smif.data_layer.DataInterface`
-    narratives: list
-        A list of narrative_set, narrative_list/narrative pairs
+    narrative_config: dict
+        A dict with keys as narrative_set names and values as narrative names
 
     Returns
     -------
@@ -313,21 +315,19 @@ def get_narratives(handler, narratives):
 
     """
     narrative_objects = []
-    for narrative in narratives:
-        LOGGER.debug(narrative)
-        for narrative_set, narrative_list in narrative.items():
-            LOGGER.info("Loading narrative data for narrative set '%s'",
-                        narrative_set)
-            for narrative_entry in narrative_list:
-                LOGGER.debug("Adding narrative entry '%s'",
-                             narrative_entry)
-                definition = handler.read_narrative_definition(narrative_entry)
-                data = handler.read_narrative_data(narrative_entry)
-                narr_object = Narrative(narrative_entry,
-                                        definition['description'],
-                                        narrative_set)
-                narr_object.data = data
-                narrative_objects.append(narr_object)
+    for narrative_set, narrative_names in narrative_config.items():
+        LOGGER.info("Loading narrative data for narrative set '%s'",
+                    narrative_set)
+        for narrative_name in narrative_names:
+            LOGGER.debug("Adding narrative entry '%s'", narrative_name)
+            definition = handler.read_narrative_definition(narrative_name)
+            narrative = Narrative(
+                narrative_name,
+                definition['description'],
+                narrative_set
+            )
+            narrative.data = handler.read_narrative_data(narrative_name)
+            narrative_objects.append(narrative)
     return narrative_objects
 
 
@@ -372,21 +372,20 @@ def build_model_run(model_run_config):
 def execute_model_run(args):
     """Runs the model run
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     args
     """
     LOGGER.info("Getting model run definition")
     model_run_config = get_model_run_definition(args)
+
     LOGGER.info("Build model run from configuration data")
     modelrun = build_model_run(model_run_config)
 
     LOGGER.info("Running model run %s", modelrun.name)
-    modelrun.run()
+    store = DatafileInterface(args.directory)
+    modelrun.run(store)
 
-    output_file = args.output_file
-    LOGGER.info("Writing results to %s", output_file)
-    dump(modelrun.sos_model.results, output_file)
     print("Model run complete")
 
 
@@ -419,8 +418,8 @@ def _run_server(args):
 def run_app(args):
     """Run the client/server application
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     args
     """
     print("Opening smif application")
@@ -490,9 +489,6 @@ def parse_arguments():
     # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
-    parser_run.add_argument('-o', '--output-file',
-                            default='results.yaml',
-                            help='Output file')
     parser_run.set_defaults(func=execute_model_run)
     parser_run.add_argument('-d', '--directory',
                             default='.',

@@ -18,13 +18,11 @@ from ..fixtures.water_supply import WaterSupplySectorModel
 @fixture(scope='function')
 def get_scenario_model_object():
 
-    data = np.array([[[3.]], [[5.]], [[1.]]], dtype=float)
     scenario_model = ScenarioModel('test_scenario_model')
     scenario_model.add_output('raininess',
                               scenario_model.regions.get_entry('LSOA'),
                               scenario_model.intervals.get_entry('annual'),
                               'ml')
-    scenario_model.add_data('raininess', data, [2010, 2011, 2012])
     scenario_model.scenario_set = 'raininess'
     return scenario_model
 
@@ -70,7 +68,7 @@ def get_sos_model_object(get_sector_model_object,
 
 
 @fixture(scope='function')
-def get_sos_model_with_summed_dependency(setup_region_data):
+def get_sos_model_with_summed_dependency(oxford_region):
     scenario_model = get_scenario_model_object
 
     builder = SosModelBuilder()
@@ -133,8 +131,8 @@ def get_empty_sector_model():
         def initialise(self, initial_conditions):
             pass
 
-        def simulate(self, timestep, data=None):
-            return {'output_name': 'some_data', 'timestep': timestep}
+        def simulate(self, data):
+            return data
 
         def extract_obj(self, results):
             return 0
@@ -150,9 +148,9 @@ class TestSosModelProperties():
         expected = {'raininess': 'water_supply'}
 
         for key, value in expected.items():
-            model_inputs = sos_model.models[value].model_inputs
-            assert isinstance(model_inputs, MetadataSet)
-            assert key in model_inputs.names
+            inputs = sos_model.models[value].inputs
+            assert isinstance(inputs, MetadataSet)
+            assert key in inputs.names
 
     def test_model_outputs_property(self, get_sos_model_object):
         sos_model = get_sos_model_object
@@ -160,9 +158,9 @@ class TestSosModelProperties():
         expected = {'cost': 'water_supply'}
 
         for key, value in expected.items():
-            model_outputs = sos_model.models[value].model_outputs
-            assert isinstance(model_outputs, MetadataSet)
-            assert key in model_outputs.names
+            outputs = sos_model.models[value].outputs
+            assert isinstance(outputs, MetadataSet)
+            assert key in outputs.names
 
 
 class TestSosModel():
@@ -191,176 +189,82 @@ class TestSosModel():
         assert actual == expected
 
     def test_run_with_global_parameters(self, get_sos_model_object):
-
         sos_model = get_sos_model_object
-        sos_model.name = 'test_sos_model'
-
-        sos_model_param = {
+        sos_model.add_parameter({
             'name': 'sos_model_param',
             'description': 'A global parameter passed to all contained models',
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
             'default_value': 3,
-            'units': '%'}
-
-        sos_model.add_parameter(sos_model_param)
-
-        sos_model.models['water_supply'].simulate = lambda x, y: y
-
-        assert 'sos_model_param' in sos_model.parameters['test_sos_model']
+            'units': '%'
+        })
+        assert 'sos_model_param' in sos_model.parameters
 
     def test_run_with_sector_parameters(self, get_sos_model_object):
-
         sos_model = get_sos_model_object
-        sos_model.name = 'test_sos_model'
-
         sector_model = sos_model.models['water_supply']
-
-        sector_model_param = {
+        sector_model.add_parameter({
             'name': 'sector_model_param',
             'description': 'A model parameter passed to a specific model',
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
             'default_value': 3,
-            'units': '%'}
-
-        sector_model.add_parameter(sector_model_param)
-
-        assert 'sector_model_param' in sos_model.parameters['water_supply']
+            'units': '%'
+        })
+        assert 'sector_model_param' in sector_model.parameters
 
     def test_add_parameters(self, get_empty_sector_model):
-
+        sos_model = SosModel('global')
         sos_model_param = {
             'name': 'sos_model_param',
             'description': 'A global parameter passed to all contained models',
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
             'default_value': 3,
-            'units': '%'}
-
-        sos_model = SosModel('global')
+            'units': '%'
+        }
         sos_model.add_parameter(sos_model_param)
-
         expected = dict(sos_model_param, **{'parent': sos_model})
 
-        assert sos_model.parameters == {'global': {'sos_model_param': expected}}
-        assert sos_model.parameters['global'].names == ['sos_model_param']
+        assert sos_model.parameters == {'sos_model_param': expected}
+        assert sos_model.parameters.names == ['sos_model_param']
 
         sector_model = get_empty_sector_model('source_model')
-        sector_model.add_parameter({'name': 'sector_model_param',
-                                    'description': 'Required for the sectormodel',
-                                    'absolute_range': (0, 100),
-                                    'suggested_range': (3, 10),
-                                    'default_value': 3,
-                                    'units': '%'})
-
+        sector_model.add_parameter({
+            'name': 'sector_model_param',
+            'description': 'Required for the sectormodel',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%'
+        })
         sos_model.add_model(sector_model)
 
-        # SosModel contains ParameterList objects in a nested dict by model name
-        assert 'global' in sos_model.parameters
-        assert 'sos_model_param' in sos_model.parameters['global'].names
-        # SosModel parameter attribute holds references to contained
-        # model parameters keyed by model name
-        assert 'source_model' in sos_model.parameters
-        assert 'sector_model_param' in sos_model.parameters['source_model']
-        # SectorModel has a ParameterList, gettable by param name
+        # SosModel contains only its own parameters
+        assert 'sos_model_param' in sos_model.parameters.names
+
+        # SectorModel has its own ParameterList, gettable by param name
         assert 'sector_model_param' in sector_model.parameters.names
-        assert 'source_model' in sos_model.parameters
-        assert 'sector_model_param' in sos_model.parameters['source_model']
-
-    def test_default_parameter_passing_(self, get_empty_sector_model):
-        """Tests that default values for global parameters are passed to all
-        models, and others default values only passed into the intended models.
-        """
-
-        sos_model_param = {
-            'name': 'sos_model_param',
-            'description': 'A global parameter passed to all contained models',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%'}
-
-        sos_model = SosModel('global')
-        sos_model.add_parameter(sos_model_param)
-
-        sector_model = get_empty_sector_model('source_model')
-
-        # Patch the sector model so that it returns the calling arguments
-        sector_model.simulate = lambda _, y: {'sm1': y}
-        sos_model.add_model(sector_model)
-        assert sos_model.simulate(2010) == {'sm1': {'sos_model_param': 3}}
-
-        sector_model.add_parameter({'name': 'sector_model_param',
-                                    'description': 'Some meaningful text',
-                                    'absolute_range': (0, 100),
-                                    'suggested_range': (3, 10),
-                                    'default_value': 3,
-                                    'units': '%'})
-
-        assert sos_model.simulate(2010) == {'sm1': {'sector_model_param': 3,
-                                            'sos_model_param': 3}}
-
-        sector_model_2 = get_empty_sector_model('another')
-        sector_model_2.simulate = lambda _, y: {'sm2': y}
-        sos_model.add_model(sector_model_2)
-
-        assert sos_model.simulate(2010) == {'sm1': {'sector_model_param': 3,
-                                            'sos_model_param': 3},
-                                            'sm2': {'sos_model_param': 3}}
-
-    def test_parameter_passing_into_models(self, get_empty_sector_model):
-        """Tests that policy values for global parameters are passed to all
-        models, and policy values only passed into the intended models.
-        """
-
-        sos_model_param = {
-            'name': 'sos_model_param',
-            'description': 'A global parameter passed to all contained models',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%'}
-
-        sos_model = SosModel('global')
-        sos_model.add_parameter(sos_model_param)
-
-        sector_model = get_empty_sector_model('source_model')
-
-        # Patch the sector model so that it returns the calling arguments
-        sector_model.simulate = lambda _, y: {'sm1': y}
-        sos_model.add_model(sector_model)
-        sector_model.add_parameter({'name': 'sector_model_param',
-                                    'description': 'Some meaningful text',
-                                    'absolute_range': (0, 100),
-                                    'suggested_range': (3, 10),
-                                    'default_value': 3,
-                                    'units': '%'})
-        sector_model_2 = get_empty_sector_model('another')
-        sector_model_2.simulate = lambda _, y: {'sm2': y}
-        sos_model.add_model(sector_model_2)
-
-        data = {'global': {'sos_model_param': 999},
-                'source_model': {'sector_model_param': 123}}
-
-        assert sos_model.simulate(2010, data) == \
-            {'sm1': {'sector_model_param': 123, 'sos_model_param': 999},
-             'sm2': {'sos_model_param': 999}}
 
     def test_add_dependency(self, get_empty_sector_model):
 
+        regions = Mock()
+        regions.name = 'test_regions'
+        intervals = Mock()
+        intervals.name = 'test_intervals'
+        units = 'test_units'
+
         sink_model = get_empty_sector_model('sink_model')
-        sink_model.add_input('input_name', Mock(), Mock(), 'units')
+        sink_model.add_input('input_name', regions, intervals, units)
 
         source_model = get_empty_sector_model('source_model')
-        source_model.add_output('output_name', Mock(), Mock(), 'units')
+        source_model.add_output('output_name', regions, intervals, units)
 
-        sink_model.add_dependency(source_model, 'output_name', 'input_name', lambda x, y: x)
+        sink_model.add_dependency(source_model, 'output_name', 'input_name')
 
-        model_input = sink_model.model_inputs['input_name']
-        actual = sink_model.deps['input_name'].get_data(2010, model_input)
-        expected = 'some_data'
-        assert actual == expected
+        sos_model = SosModel('test')
+        sos_model.add_model(source_model)
+        sos_model.add_model(sink_model)
 
     def test_timestep_before(self):
         sos_model = SosModel('test')
@@ -380,19 +284,26 @@ class TestSosModel():
 
     def test_run_sequential(self, get_sos_model_object):
         sos_model = get_sos_model_object
-        sos_model.simulate(2010)
-        sos_model.simulate(2011)
-        sos_model.simulate(2012)
+        data_handle = Mock()
+        data_handle.timesteps = [2010, 2011, 2012]
+        data_handle._current_timestep = 2010
+        sos_model.simulate(data_handle)
+        data_handle._current_timestep = 2011
+        sos_model.simulate(data_handle)
+        data_handle._current_timestep = 2012
+        sos_model.simulate(data_handle)
 
     @pytest.mark.xfail(reason="Summed dependencies not yet implemented")
     def test_dependency_aggregation(self, get_sos_model_with_summed_dependency):
         sos_model = get_sos_model_with_summed_dependency
 
-        data = {2010: {'decisions': [],
-                       'raininess': np.array([[1, 1]]),
-                       'water': np.array([2, 2])
-                       }
-                }
+        data = {
+            2010: {
+                'decisions': [],
+                'raininess': np.array([[1, 1]]),
+                'water': np.array([2, 2])
+            }
+        }
 
         sos_model.simulate(2010, data)
 
@@ -511,36 +422,28 @@ class TestSosModelBuilderComponents():
         sos_model = builder.finish()
         assert sos_model.convergence_relative_tolerance == 0.1
 
-    def test_load_models(self):
-        pass
-
-    def test_load_scenario_models(self, get_sos_model_config):
-        config = get_sos_model_config
-        builder = SosModelBuilder()
-        builder.construct(config)
-        sos_model = builder.finish()
-        scenario = sos_model.models['test_scenario_model']
-
-        expected = {'test_scenario_model': {'raininess': np.array([[3.]])}}
-
-        assert scenario.simulate(2010) == expected
-
 
 class TestSosModelBuilder():
     """Tests that the correct SosModel structure is created from a configuration
     dictionary
 
-    {'name': 'sos_model_name',
-     'description': 'friendly description of the sos model',
-     'sector_models': [sector_model_object],
-     'scenario_sets': [scenario_model_object],
-     'max_iterations': ,
-     'convergence_absolute_tolerance': ,
-     'convergence_relative_tolerance': ,
-     'dependencies': [{'source_model': ,
-                       'source_model_output':,
-                       'sink_model':,
-                       'sink_model_output': }]}
+    {
+        'name': 'sos_model_name',
+        'description': 'friendly description of the sos model',
+        'sector_models': list of Model,
+        'scenario_sets': list of ScenarioModel,
+        'max_iterations': int,
+        'convergence_absolute_tolerance': float,
+        'convergence_relative_tolerance': float,
+        'dependencies': [
+            {
+                'source_model': str (Model.name),
+                'source_model_output': str (Metadata.name),
+                'sink_model': str (Model.name),
+                'sink_model_output': str (Metadata.name)
+            }
+        ]
+    }
 
     """
     def test_scenarios(self, get_sos_model_config):
@@ -556,11 +459,6 @@ class TestSosModelBuilder():
         assert isinstance(sos_model.models['water_supply'], SectorModel)
         assert isinstance(sos_model.models['test_scenario_model'], ScenarioModel)
 
-        actual = sos_model.models['test_scenario_model']._data
-        expected = {'raininess': np.array([[[3.]], [[5.]], [[1.]]], dtype=float)}
-        np.testing.assert_equal(actual,
-                                expected)
-
     def test_simple_dependency(self, get_sos_model_config_with_dep):
 
         config_data = get_sos_model_config_with_dep
@@ -573,12 +471,17 @@ class TestSosModelBuilder():
         graph = sos_model.dependency_graph
 
         scenario = sos_model.models['test_scenario_model']
+        model = sos_model.models['water_supply']
 
         assert 'water_supply' in sos_model.models
         assert sos_model.models['water_supply'] in graph.nodes()
         deps = sos_model.models['water_supply'].deps
         assert 'raininess' in deps.keys()
-        expected = Dependency(scenario, scenario.model_outputs['raininess'])
+        expected = Dependency(
+            scenario,
+            scenario.outputs['raininess'],
+            model.inputs['raininess']
+        )
         assert deps['raininess'] == expected
 
         assert 'test_scenario_model' in sos_model.models
@@ -589,12 +492,14 @@ class TestSosModelBuilder():
         sos_model = get_sos_model_object
         scenario = sos_model.models['test_scenario_model']
 
-        scenario.model_outputs['raininess'].units = 'incompatible'
+        scenario.outputs['raininess'].units = 'incompatible'
 
         with raises(NotImplementedError) as ex:
-            sos_model.simulate(2010)
+            data_handle = Mock()
+            data_handle.timesteps = [2010]
+            sos_model.simulate(data_handle)
 
-        assert "Units conversion not implemented" in str(ex.value)
+        assert "Implicit units conversion not implemented" in str(ex.value)
 
     def test_cyclic_dependencies(self, get_sos_model_config_with_summed_dependency):
         config_data = get_sos_model_config_with_summed_dependency

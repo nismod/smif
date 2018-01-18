@@ -3,64 +3,68 @@
 from copy import copy
 from unittest.mock import Mock
 
-import numpy as np
 from pytest import fixture, raises
 from smif.convert.area import get_register
 from smif.metadata import Metadata, MetadataSet
-from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel, SectorModelBuilder
 from smif.parameters import ParameterList
 
 
 @fixture(scope='function')
-def get_sector_model_config(setup_project_folder, setup_registers):
+def get_sector_model_config(setup_folder_structure, setup_runpy_file, setup_registers):
 
-    path = setup_project_folder
+    path = setup_folder_structure
     water_supply_wrapper_path = str(
         path.join(
             'models', 'water_supply', '__init__.py'
         )
     )
 
-    config = {"name": "water_supply",
-              "description": 'a description',
-              "path": water_supply_wrapper_path,
-              "classname": "WaterSupplySectorModel",
-              "inputs": [{'name': 'raininess',
-                          'spatial_resolution': 'LSOA',
-                          'temporal_resolution': 'annual',
-                          'units': 'milliliter'
-                          }
-                         ],
-              "outputs": [
-                  {
-                      'name': 'cost',
-                      'spatial_resolution': 'LSOA',
-                      'temporal_resolution': 'annual',
-                      'units': 'million GBP'
-                  },
-                  {
-                      'name': 'water',
-                      'spatial_resolution': 'LSOA',
-                      'temporal_resolution': 'annual',
-                      'units': 'megaliter'
-                  }
-              ],
-              "initial_conditions": [],
-              "interventions": [
-                  {"name": "water_asset_a", "location": "oxford"},
-                  {"name": "water_asset_b", "location": "oxford"},
-                  {"name": "water_asset_c", "location": "oxford"},
-              ],
-              "parameters": [{
-                  'name': 'assump_diff_floorarea_pp',
-                  'description': 'Difference in floor area per person \
-                                 in end year compared to base year',
-                  'absolute_range': (0.5, 2),
-                  'suggested_range': (0.5, 2),
-                  'default_value': 1,
-                  'units': '%'}]
-              }
+    config = {
+        "name": "water_supply",
+        "description": 'a description',
+        "path": water_supply_wrapper_path,
+        "classname": "WaterSupplySectorModel",
+        "inputs": [
+            {
+                'name': 'raininess',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'units': 'milliliter'
+            }
+        ],
+        "outputs": [
+            {
+                'name': 'cost',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'units': 'million GBP'
+            },
+            {
+                'name': 'water',
+                'spatial_resolution': 'LSOA',
+                'temporal_resolution': 'annual',
+                'units': 'megaliter'
+            }
+        ],
+        "initial_conditions": [],
+        "interventions": [
+            {"name": "water_asset_a", "location": "oxford"},
+            {"name": "water_asset_b", "location": "oxford"},
+            {"name": "water_asset_c", "location": "oxford"},
+        ],
+        "parameters": [
+            {
+                'name': 'assump_diff_floorarea_pp',
+                'description': 'Difference in floor area per person \
+                                in end year compared to base year',
+                'absolute_range': (0.5, 2),
+                'suggested_range': (0.5, 2),
+                'default_value': 1,
+                'units': '%'
+            }
+        ]
+    }
 
     return config
 
@@ -84,7 +88,7 @@ class TestCompositeSectorModel():
         model = EmptySectorModel('test_model')
         model.add_input('input_name', [], [], 'units')
 
-        inputs = model.model_inputs
+        inputs = model.inputs
 
         assert inputs.names == ['input_name']
         assert inputs.units == ['units']
@@ -96,7 +100,7 @@ class TestCompositeSectorModel():
         model = EmptySectorModel('test_model')
         model.add_output('output_name', Mock(), Mock(), 'units')
 
-        outputs = model.model_outputs
+        outputs = model.outputs
 
         assert outputs.names == ['output_name']
         assert outputs.units == ['units']
@@ -109,28 +113,13 @@ class TestCompositeSectorModel():
         actual = model.simulate(2010, data)
         assert actual == {}
 
-    def test_scenario_dependencies(self):
-
-        scenario_model = ScenarioModel('test_scenario')
-        scenario_model.add_output('scenario_output', Mock(), Mock(), 'units')
-        data = np.array([[[120.23]]])
-        timesteps = [2010]
-        scenario_model.add_data('scenario_output', data, timesteps)
-
-        model = EmptySectorModel('test_model')
-        model.add_input('input_name', Mock(), Mock(), 'units')
-        model.add_dependency(scenario_model, 'scenario_output', 'input_name')
-
-        assert 'input_name' in model.deps
-        assert model.get_scenario_data('input_name') == data
-
 
 class TestSectorModelBuilder():
 
-    def test_add_inputs(self, setup_project_folder):
+    def test_add_inputs(self, setup_folder_structure, setup_runpy_file):
 
-        model_path = str(setup_project_folder.join('models', 'water_supply',
-                                                   '__init__.py'))
+        model_path = str(setup_folder_structure.join('models', 'water_supply',
+                                                     '__init__.py'))
 
         builder = SectorModelBuilder('test')
         builder.load_model(model_path, 'WaterSupplySectorModel')
@@ -142,11 +131,11 @@ class TestSectorModelBuilder():
 
         builder.add_inputs(inputs)
 
-        assert 'an_input' in builder._sector_model.model_inputs.names
+        assert 'an_input' in builder._sector_model.inputs.names
 
-    def test_sector_model_builder(self, setup_project_folder):
-        model_path = str(setup_project_folder.join('models', 'water_supply',
-                                                   '__init__.py'))
+    def test_sector_model_builder(self, setup_folder_structure, setup_runpy_file):
+        model_path = str(setup_folder_structure.join('models', 'water_supply',
+                                                     '__init__.py'))
 
         register = Mock()
         register.get_entry = Mock(return_value='a_resolution_set')
@@ -197,19 +186,16 @@ class TestSectorModelBuilder():
         assert sector_model.timesteps == timesteps
 
         actual = sector_model.as_dict()
-
+        # sort to match expected output
+        actual['inputs'].sort(key=lambda m: m['name'])
+        actual['outputs'].sort(key=lambda m: m['name'])
         assert actual == config
-
-        assert actual['name'] == config['name']
-        assert actual['description'] == config['description']
-        assert actual['path'] == config['path']
-        assert actual['parameters'] == config['parameters']
 
 
 class TestInputs:
 
-    def test_add_no_inputs(self, setup_project_folder):
-        model_path = str(setup_project_folder.join('models', 'water_supply', '__init__.py'))
+    def test_add_no_inputs(self, setup_folder_structure, setup_runpy_file):
+        model_path = str(setup_folder_structure.join('models', 'water_supply', '__init__.py'))
         registers = {'regions': Mock(),
                      'intervals': Mock()}
 
@@ -217,8 +203,8 @@ class TestInputs:
         builder.load_model(model_path, 'WaterSupplySectorModel')
         builder.add_inputs(None)
         sector_model = builder.finish()
-        assert isinstance(sector_model.model_inputs, MetadataSet)
-        actual_inputs = sector_model.model_inputs.names
+        assert isinstance(sector_model.inputs, MetadataSet)
+        actual_inputs = sector_model.inputs.names
         assert actual_inputs == []
 
 
