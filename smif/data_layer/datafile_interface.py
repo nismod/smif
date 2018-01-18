@@ -1015,12 +1015,16 @@ class DatafileInterface(DataInterface):
             A list with dictionaries containing the contents of 'narrative_name' data file
         """
         # Find filename for this narrative
-        filename = ''
+        filename = None
         project_config = self._read_project_config()
         for narrative in project_config['narratives']:
             if narrative['name'] == narrative_name:
                 filename = narrative['filename']
                 break
+
+        if filename is None:
+            raise DataNotFoundError(
+                'Narrative \'{}\' has no data defined'.format(narrative_name))
 
         # Read the narrative data from file
         try:
