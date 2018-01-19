@@ -93,8 +93,8 @@ install the python packages as usual using::
     brew install geos
 
 
-Installing `smif`
-=================
+Installing `smif` with other methods
+------------------------------------
 
 Once the dependencies are installed on your system,
 a normal installation of `smif` can be achieved using pip on the command line::
