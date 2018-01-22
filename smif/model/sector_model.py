@@ -8,14 +8,10 @@ first implement :class:`SectorModel`.
 Utility Methods
 ===============
 A number of utility methods are included to ease the integration of a
-SectorModel wrapper within a System of Systems model.  These include::
+SectorModel wrapper within a System of Systems model.  These include:
 
-get_scenario_data(input_name)
-    Get an array of scenario data (timestep-by-region-by-interval)
-get_region_names(region_set_name)
-    Get a list of region names
-get_interval_names(interval_set_name)
-    Get a list of interval names
+* ``get_region_names(region_set_name)`` - Get a list of region names
+* ``get_interval_names(interval_set_name)`` - Get a list of interval names
 
 Key Functions
 =============
@@ -28,7 +24,7 @@ framework. From the model's perspective, :class:`SectorModel` provides a bridge
 from the sector-specific problem representation to the general representation
 which allows reasoning across infrastructure systems.
 
-The key functions include
+The key functions include:
 
 * converting input/outputs to/from geographies/temporal resolutions
 * converting control vectors from the decision layer of the framework, to
