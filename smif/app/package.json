@@ -8,7 +8,7 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "mocha --require babel-polyfill --compilers js:babel-register --require ./test/helpers.js",
+    "test": "mocha --require babel-polyfill --compilers js:babel-register --require ./test/helpers.js --recursive",
     "build": "webpack",
     "watch": "webpack --progress --watch",
     "start": "webpack-dev-server --open"
