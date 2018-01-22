@@ -1,6 +1,7 @@
 """Energy demand dummy model
 """
 import numpy as np
+from smif.data_layer.data_handle import RelativeTimestep
 from smif.model.sector_model import SectorModel
 
 
@@ -13,8 +14,10 @@ class EDMWrapper(SectorModel):
     def simulate(self, data):
 
         # Get the current timestep
+
+        now = data.current_timestep
         self.logger.info("EDMWrapper received inputs in %s",
-                         data.current_timestep)
+                         now)
 
         # Demonstrates how to get the value for a model parameter
         parameter_value = data.get_parameter('smart_meter_savings')
@@ -22,9 +25,28 @@ class EDMWrapper(SectorModel):
 
         # Demonstrates how to get the value for a model input
         # (defaults to the current time period)
-        energy_demand = data.get_data('energy_demand')
-        self.logger.info("Energy demand in %s is %s",
-                         data.current_timestep, energy_demand)
+        current_energy_demand = data.get_data('energy_demand')
+        self.logger.info("Current energy demand in %s is %s",
+                         now, current_energy_demand)
+
+        # Demonstrates how to get the value for a model input from the base
+        # timeperiod
+        base_year_enum = RelativeTimestep.BASE
+        base_energy_demand = data.get_data('energy_demand', base_year_enum)
+        base_year = base_year_enum.resolve_relative_to(now,
+                                                       data.timesteps)
+        self.logger.info("Base year energy demand in %s was %s", base_year,
+                         base_energy_demand)
+
+        # Demonstrates how to get the value for a model input from the previous
+        # timeperiod
+        if now > base_year:
+            prev_year_enum = RelativeTimestep.PREVIOUS
+            prev_energy_demand = data.get_data('energy_demand', prev_year_enum)
+            prev_year = base_year_enum.resolve_relative_to(now,
+                                                           data.timesteps)
+            self.logger.info("Previous energy demand in %s was %s",
+                             prev_year, prev_energy_demand)
 
         # Pretend to call the 'energy model'
         # This code prints out debug logging messages for each input
@@ -45,7 +67,7 @@ class EDMWrapper(SectorModel):
         data.set_results("water_demand", np.ones((3, 1)) * 3)
 
         self.logger.info("EDMWrapper produced outputs in %s",
-                         data.current_timestep)
+                         now)
 
     def extract_obj(self, results):
         return 0

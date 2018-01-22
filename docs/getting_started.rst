@@ -509,8 +509,8 @@ is required:
    units, string,
    filename, string,
 
-Wrapping a Sector Model
------------------------
+Wrapping a Sector Model: Overview
+---------------------------------
 
 In addition to collecting the configuration data listed above, 
 to integrate a new sector model into the system-of-systems model 
@@ -551,38 +551,176 @@ prompt, or import a python sector model and pass in parameters values directly.
 As such, what follows is a recipe of components from which you can construct
 a wrapper to full integrate your simulation model within smif.
 
-For help or feature requests, please raise issues at the github repository[2]_ 
+For help or feature requests, please raise issues at the github repository [2]_ 
 and we will endeavour to provide assistance as resources allow.
 
 Example Wrapper
 ~~~~~~~~~~~~~~~
 
-.. literalinclude:: ../smif/sample_project/models/water_supply.py
-   :language: yaml
-   :lines: 18-73
+Here's a reproduction of the example wrapper in the sample project included
+within smif. In this case, the wrapper doesn't actually call or run a separate
+model, but demonstrates calls to the data handler methods necessary to pass
+data into an external model, and send results back to smif.
+
+.. literalinclude:: ../smif/sample_project/models/energy_demand.py
+   :language: python
+   :lines: 7-48
+
+The key methods in the SectorModel class which need to be overridden are:
+
+- :py:meth:`~smif.sector_model.SectorModel.initialise`
+- :py:meth:`~smif.sector_model.SectorModel.simulate`
+- :py:meth:`~smif.sector_model.SectorModel.extract_obj`
+
+The wrapper should be written in a python file, e.g. ``water_supply.py``.
+The path to the location of this file should be entered in the
+sector model configuration of the project.
+(see A Simulation Model File above).
+
+Wrapping a Sector Model: Simulate
+---------------------------------
+
+The most common workflow that will need to be implemented in the simulate 
+method is:
+
+1. Retrieve model input and parameter data from the data handler
+2. Write or pass this data to the wrapped model
+3. Run the model
+4. Retrieve results from the model
+5. Write results back to the data handler
+
+Accessing model parameter data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the :py:meth:`~smif.data_layer.DataHandle.get_parameter` or 
+:py:meth:`~smif.data_layer.DataHandle.get_parameters` method as shown in the
+example:
+
+.. literalinclude:: ../smif/sample_project/models/energy_demand.py
+   :language: python
+   :lines:  22
+
+Note that the name argument passed to the :py:meth:`~smif.data_layer.DataHandle.get_parameter` is that which is defined in
+the sector model configuration file.
+
+Accessing model input data for the current year
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The method :py:meth:`~smif.data_layer.DataHandle.get_data()` allows a user to
+get the value for any model input that has been defined in the sector model's
+configuration.  In the example, the option year argument is omitted, and it
+defaults to fetching the data for the current timestep.
+
+.. literalinclude:: ../smif/sample_project/models/energy_demand.py
+   :language: python
+   :lines: 27
+
+Accessing model input data for the base year
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To access model input data from the timestep prior to the current timestep, 
+you can use the following argument:
+
+.. literalinclude:: ../smif/sample_project/models/energy_demand.py
+   :language: python
+   :lines:  33-34
+
+Accessing model input data for a previous year
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To access model input data from the timestep prior to the current timestep, 
+you can use the following argument:
+
+.. literalinclude:: ../smif/sample_project/models/energy_demand.py
+   :language: python
+   :lines:  42-44
+
+Writing data to a database
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The exact implementation of writing input and parameter data will differ on a
+case-by-case basis. In the following example, we write model inputs 
+``energy_demand`` to a postgreSQL database table ``ElecLoad`` using the 
+psycopg2 library [3]_ ::
+
+    def simulate(self, data):
+
+        # Open a connection to the database
+        conn = psycopg2.connect("dbname=vagrant user=vagrant")
+        # Open a cursor to perform database operations
+        cur = conn.cursor()
+
+        # Returns a numpy array whose dimensions are defined by the interval and
+        # region definitions
+        elec_data = data.get_data('electricity_demand')
+
+        # Build the SQL string
+        sql = """INSERT INTO "ElecLoad" (Year, Interval, BusID, ElecLoad) 
+                 VALUES (%s, %s, %s, %s)"""
+
+        # Get the time interval definitions associated with the input
+        time_intervals = self.inputs[name].get_interval_names()
+        # Get the region definitions associated with the input
+        regions = self.inputs[name].get_region_names()
+        # Iterate over the regions and intervals (columns and rows) of the numpy
+        # array holding the energy demand data and write each value into the table
+        for i, region in enumerate(regions):
+            for j, interval in enumerate(time_intervals):
+                # This line calls out to a helper method which associates 
+                # electricity grid bus bars to energy demand regions
+                bus_number = get_bus_number(region)
+                # Build the tuple to write to the table
+                insert_data = (data.current_timestep,
+                               interval,
+                               bus_number,
+                               data[i, j])
+                cur.execute(sql, insert_data)
+
+        # Make the changes to the database persistent
+        conn.commit()
+
+        # Close communication with the database
+        cur.close()
+        conn.close()
+
+Writing data to a text file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Again, the exact implementation of writing data to a text file for subsequent
+reading into the wrapped model will differ on a case-by-case basis.
+In the following example, we write some data to a comma-separated-values (.csv)
+file:
 
 
-The key methods which need to be overridden are:
 
-- :py:meth:`smif.sector_model.SectorModel.initialise`
-- :py:meth:`smif.sector_model.SectorModel.simulate`
-- :py:meth:`smif.sector_model.SectorModel.extract_obj`
+Passing model data directly to a Python model
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The wrapper should be written in a python file, e.g. ``run.py``.
-The path to the location of this ``run.py`` file should be entered in the
-``model.yaml`` file under the ``path`` key
-(see System-of-Systems Model File above).
 
-To integrate an infrastructure simulation model within the system-of-systems
-modelling framework, it is also necessary to provide the configuration
-data.
-This configuration data includes definitions of the spatial and temporal resolutions
-of the input and output data to and from the models.
-This enables the framework to convert data from one spatio-temporal resolution
-to another.
 
+Passing model data in as a command line argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Writing model results to the data handler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Writing results back to the data handler is as simple as calling the 
+:py:meth:`~smif.data_layer.DataHandle.set_results` method::
+
+    data.set_results("cost", np.array([[1.23, 1.543, 2.355]])
+
+The expected format of the data is a numpy array with the dimensions 
+(len(regions), len(intervals)) as defined in the model's output configuration.
+Results are expected to be set for each of the model outputs defined in the 
+output configuration.
+
+The interval definitions associated with the output can be interrogated from
+within the SectorModel class using ``self.outputs[name].get_interval_names()``
+and the regions using ``self.outputs[name].get_region_names()`` and these can
+then be used to compose the numpy array.
 
 References
 ----------
 .. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
 .. [2] https://github.com/nismod/smif/issues
+.. [3] http://initd.org/psycopg/
