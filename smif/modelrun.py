@@ -37,7 +37,7 @@ class ModelRun(object):
     scenarios: dict
         For each scenario set, a mapping to a valid scenario within that set
     narratives: list
-        A list of :class:`smif.parameters.narrative.Narrative` objects
+        A list of :class:`smif.parameters.Narrative` objects
     strategies: dict
     status: str
     logger: logging.Logger

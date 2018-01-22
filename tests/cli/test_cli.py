@@ -10,7 +10,7 @@ import smif
 from smif.cli import (confirm, get_narratives, parse_arguments,
                       setup_project_folder)
 from smif.data_layer import DatafileInterface
-from smif.parameters.narrative import Narrative
+from smif.parameters import Narrative
 
 
 def get_args(args):

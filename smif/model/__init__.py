@@ -185,9 +185,7 @@ class Model(metaclass=ABCMeta):
             Contains the keys ``name``, ``description``,  ``absolute_range``,
             ``suggested_range``, ``default_value``, ``units``
         """
-        parameter_dict['parent'] = self
-
-        self._parameters.add_parameters_from_list([parameter_dict])
+        self._parameters.add_parameter(parameter_dict)
 
     @property
     def parameters(self):
