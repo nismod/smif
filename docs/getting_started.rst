@@ -512,9 +512,55 @@ is required:
 Wrapping a Sector Model
 -----------------------
 
-To integrate a sector model into the system-of-systems model, it is necessary
-to write a Python wrapper,
-which implements :class:`smif.sector_model.SectorModel`.
+In addition to collecting the configuration data listed above, 
+to integrate a new sector model into the system-of-systems model 
+it is necessary to write a Python wrapper function.
+The template class :class:`smif.model.sector_model.SectorModel` enables a user
+to write a script which runs the wrapped model, passes in parameters and writes 
+out results.
+
+The wrapper acts as an interface between the simulation modelling
+integration framework and the simulation model, keeping all the code necessary
+to implement the conversion of data types in one place.
+
+In particular, the wrapper must take the smif formatted data, which includes
+inputs, parameters, state and pass this data into the wrapped model. After the
+:py:meth:`~smif.model.sector_model.SectorModel.simulate` has run, results from
+the sector model must be formatted and passed back into smif.
+
+The handling of data is aided through the use of a set of methods provided by 
+:class:`smif.data_layer.DataHandle`, namely:
+
+- :py:meth:`~smif.data_layer.DataHandle.get_data`
+- :py:meth:`~smif.data_layer.DataHandle.get_parameter`
+- :py:meth:`~smif.data_layer.DataHandle.get_parameters`
+- :py:meth:`~smif.data_layer.DataHandle.get_results`
+
+and 
+
+- :py:meth:`~smif.data_layer.DataHandle.set_results`
+
+In this section, we describe the process necessary to correctly write this
+wrapper function, referring to the example project included with the package.
+
+It is difficult to provide exhaustive details for every type of sector model
+implementation - our decision to leave this largely up to the user 
+is enabled by the flexibility afforded by python. The wrapper can write to a
+database or structured text file before running a model from a command line 
+prompt, or import a python sector model and pass in parameters values directly.
+As such, what follows is a recipe of components from which you can construct
+a wrapper to full integrate your simulation model within smif.
+
+For help or feature requests, please raise issues at the github repository[2]_ 
+and we will endeavour to provide assistance as resources allow.
+
+Example Wrapper
+~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../smif/sample_project/models/water_supply.py
+   :language: yaml
+   :lines: 18-73
+
 
 The key methods which need to be overridden are:
 
@@ -539,3 +585,4 @@ to another.
 References
 ----------
 .. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
+.. [2] https://github.com/nismod/smif/issues
