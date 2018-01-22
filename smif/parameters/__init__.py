@@ -2,7 +2,7 @@
 default and an expected range.
 
 """
-from smif.parameters._narrative import Narrative
-from smif.parameters._parameters import Parameter, ParameterList
+from smif.parameters.narrative import Narrative
+from smif.parameters.parameters import Parameter, ParameterList
 
 __all__ = ['Parameter', 'ParameterList', 'Narrative']
