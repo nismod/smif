@@ -1,6 +1,7 @@
 """Parameter and ParameterList
 """
 import collections.abc
+from collections import OrderedDict
 
 
 class Parameter():
@@ -93,7 +94,7 @@ class ParameterList(collections.abc.Mapping):
     """
 
     def __init__(self, parameters=None):
-        self._data = {}
+        self._data = OrderedDict()
 
         if parameters is not None:
             for parameter in parameters:
