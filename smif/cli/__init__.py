@@ -55,7 +55,7 @@ supply and an energy demand model::
 
 The sector model implementations can be installed independently of the model run
 configuration. The paths to python wrapper classes (implementing SectorModel)
-should be specified in each sector_model/*.yml configuration.
+should be specified in each ``sector_model/*.yml`` configuration.
 
 The project.yaml file specifies the metadata shared by all elements of the
 project; ``sos_models`` specify the combinations of ``sector_models`` and

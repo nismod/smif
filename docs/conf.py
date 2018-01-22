@@ -8,7 +8,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-# -- Hack for ReadTheDocs ------------------------------------------------------
+# -- Hack for ReadTheDocs and apidoc options -----------------------------------
 # This hack is necessary since RTD does not issue `sphinx-apidoc` before running
 # If extensions (or modules to document with autodoc) are in another directory,
 # DON'T FORGET: Check the box "Install your project inside a virtualenv using
@@ -16,26 +16,29 @@
 # `sphinx-build -b html . _build/html`. See Issue:
 # https://github.com/rtfd/readthedocs.org/issues/1139
 
+# It also appears necessary in order to pass options to sphinx-apidoc which obr
+# or setuptools don't currently allow. See issue:
+# https://github.com/sphinx-doc/sphinx/issues/1861
+
+import inspect
 import os
 import sys
+
+from sphinx import apidoc
 
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
 
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-if on_rtd:
-    import inspect
-    from sphinx import apidoc
 
-    __location__ = os.path.join(os.getcwd(), os.path.dirname(
-        inspect.getfile(inspect.currentframe())))
+__location__ = os.path.join(os.getcwd(), os.path.dirname(
+    inspect.getfile(inspect.currentframe())))
 
-    output_dir = os.path.join(__location__, "../docs/api")
-    module_dir = os.path.join(__location__, "../smif")
-    cmd_line_template = "sphinx-apidoc -f -o {outputdir} {moduledir}"
-    cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
-    apidoc.main(cmd_line.split(" "))
+output_dir = os.path.join(__location__, "../docs/api")
+module_dir = os.path.join(__location__, "../smif")
+cmd_line_template = "sphinx-apidoc -f -M -o {outputdir} {moduledir}"
+cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
+apidoc.main(cmd_line.split(" "))
 
 # -- General configuration -----------------------------------------------------
 

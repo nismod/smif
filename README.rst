@@ -51,20 +51,16 @@ Activate it (run each time you switch projects)::
 
     activate smif_env
 
-Note that you ``source activate smif`` on OSX and Linux (or e.g. Git Bash on
+Note that you ``source activate smif_env`` on OSX and Linux (or e.g. Git Bash on
 Windows).
 
-Add the conda-forge channel, which has shapely and fiona available::
+Add the conda-forge channel, which has smif available::
 
     conda config --add channels conda-forge
 
-Install python packages, along with library dependencies::
-
-    conda install numpy pyyaml fiona rtree shapely scikit-optimize
-
 Finally install ``smif``::
 
-    pip install smif
+    conda install smif
 
 
 GLPK
@@ -97,8 +93,8 @@ install the python packages as usual using::
     brew install geos
 
 
-Installing `smif`
-=================
+Installing `smif` with other methods
+------------------------------------
 
 Once the dependencies are installed on your system,
 a normal installation of `smif` can be achieved using pip on the command line::
@@ -123,19 +119,24 @@ Follow the `getting started guide
 <http://smif.readthedocs.io/en/latest/getting_started.html>`_ to help set up the
 necessary configuration.
 
+To set up an sample project in the current directory, run::
+
+        $ smif setup
+
 To list available model runs::
 
         $ smif list
-        demo_model_run.yml
+        demo_model_run
         ...
 
 To run a system-of-systems model run::
 
-        $ smif run demo_model_run.yml
+        $ smif run demo_model_run
         ...
         Model run complete
 
-By default, all results will be saved to `results.yaml`
+By default, results will be stored in a results directory, grouped by model run
+and simulation model.
 
 To see all options and flags::
 
