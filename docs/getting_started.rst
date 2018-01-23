@@ -689,7 +689,39 @@ Writing data to a text file
 Again, the exact implementation of writing data to a text file for subsequent
 reading into the wrapped model will differ on a case-by-case basis.
 In the following example, we write some data to a comma-separated-values (.csv)
-file:
+file::
+
+    with open(path_to_data_file, 'w') as open_file:
+        fieldnames = ['year', 'PETROL', 'DIESEL', 'LPG', 
+                      'ELECTRICITY', 'HYDROGEN', 'HYBRID']
+        writer = csv.DictWriter(open_file, fieldnames)
+        writer.writeheader()
+
+        now = data.current_timestep
+        base_year_enum = RelativeTimestep.BASE
+
+        base_price_set = {
+            'year': base_year_enum.resolve_relative_to(now, data.timesteps),
+            'PETROL': data.get_data('petrol_price', base_year_enum),
+            'DIESEL': data.get_data('diesel_price', base_year_enum),
+            'LPG': data.get_data('lpg_price', base_year_enum),
+            'ELECTRICITY': data.get_data('electricity_price', base_year_enum),
+            'HYDROGEN': data.get_data('hydrogen_price', base_year_enum),
+            'HYBRID': data.get_data('hybrid_price', base_year_enum)
+        }
+
+        current_price_set = {
+            'year': now,
+            'PETROL': data.get_data('petrol_price'),
+            'DIESEL': data.get_data('diesel_price'),
+            'LPG': data.get_data('lpg_price'),
+            'ELECTRICITY': data.get_data('electricity_price'),
+            'HYDROGEN': data.get_data('hydrogen_price'),
+            'HYBRID': data.get_data('hybrid_price')
+        }
+
+        writer.writerow(base_price_set)
+        writer.writerow(current_price_set)
 
 
 
