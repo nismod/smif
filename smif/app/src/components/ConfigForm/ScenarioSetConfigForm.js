@@ -12,11 +12,13 @@ class ScenarioSetConfigForm extends Component {
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {}
-        this.state.selectedScenarioSet = this.props.scenario_set
+        this.state.selectedScenarioSet = this.props.scenarioSet
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
+        if (Object.keys(document).length) {
+            document.addEventListener("keydown", this.handleKeyPress, false)
+        }
     }
 
     componentWillUnmount(){
@@ -60,14 +62,14 @@ class ScenarioSetConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="name" type="text" disabled="true" defaultValue={selectedScenarioSet.name} onChange={this.handleChange}/>
+                                    <input id="scenario_set_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedScenarioSet.name} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Description</label>
                                 <div className="col-sm-10">
-                                    <textarea className="form-control" name="description" rows="5" defaultValue={selectedScenarioSet.description} onChange={this.handleChange}/>
+                                    <textarea id="scenario_set_description" className="form-control" name="description" rows="5" defaultValue={selectedScenarioSet.description} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -88,9 +90,9 @@ class ScenarioSetConfigForm extends Component {
 }
 
 ScenarioSetConfigForm.propTypes = {
-    scenario_set: PropTypes.object.isRequired,
-    saveScenarioSet: PropTypes.func.isRequired,
-    cancelScenarioSet: PropTypes.func.isRequired
+    scenarioSet: PropTypes.object.isRequired,
+    saveScenarioSet: PropTypes.func,
+    cancelScenarioSet: PropTypes.func
 }
 
 export default ScenarioSetConfigForm
