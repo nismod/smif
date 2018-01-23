@@ -10,6 +10,13 @@ var render, warning
 
 describe('<ScenarioSelector />', () => {
 
+    it('renders scenario sets and scenario name', () => {
+        render = shallow(<ScenarioSelector sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} />)
+
+        expect(render.html()).to.contain(scenarios[0].name)
+        expect(render.html()).to.contain(scenarios[0].scenario_set)
+    })
+
     it('warning no sosModel selected', () => {
         var custom_sos_model_run = Object.assign({}, sos_model_run)
         custom_sos_model_run.sos_model = ""

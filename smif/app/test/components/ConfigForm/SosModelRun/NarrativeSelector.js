@@ -10,6 +10,13 @@ var render, warning
 
 describe('<NarrativeSelector />', () => {
 
+    it('renders narrative sets and narrative name', () => {
+        render = shallow(<NarrativeSelector sosModelRun={sos_model_run} sosModels={sos_models} narratives={narratives} />)
+
+        expect(render.html()).to.contain(narratives[0].name)
+        expect(render.html()).to.contain(narratives[0].narrative_set)
+    })
+     
     it('warning no sosModel selected', () => {
         var custom_sos_model_run = Object.assign({}, sos_model_run)
         custom_sos_model_run.sos_model = ""
