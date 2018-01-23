@@ -70,7 +70,7 @@ class SosModelRunItem extends Component {
                         <tbody>
                             {
                                 items.map((item, i) => (
-                                    <tr key={i}>
+                                    <tr id={"row_" + item.name} key={i}>
                                         <td id={item.name} onClick={(e) => this.onEditHandler(e)}>
                                             {item.name}
                                         </td>
@@ -92,8 +92,8 @@ class SosModelRunItem extends Component {
 
     renderWarning(message) {
         return (
-            <div>
-                <font color="red">{message}</font>
+            <div id="project_overview_item_warning" className="alert alert-danger">
+                {message}
             </div>
         )
     }
@@ -101,15 +101,23 @@ class SosModelRunItem extends Component {
     render() {
         const {itemname, items, itemLink} = this.props
 
-        return this.renderItems(itemname, items, itemLink)
+        if (itemname == "" || itemname == undefined || itemname == null) {
+            return this.renderWarning('There is no itemname configured')
+        } else if (itemLink == "" || itemLink == undefined || itemLink == null) {
+            return this.renderWarning('There is no itemLink configured')
+        } else if (items == null || items == undefined || items.length == 0) {
+            return this.renderWarning('There are no items in this list')            
+        } else {
+            return this.renderItems(itemname, items, itemLink)
+        }
     }    
 }
 
 SosModelRunItem.propTypes = {
-    itemname: PropTypes.string.isRequired,
-    items: PropTypes.array.isRequired,
-    itemLink: PropTypes.string.isRequired,
-    onDelete: PropTypes.func.isRequired
+    itemname: PropTypes.string,
+    items: PropTypes.array,
+    itemLink: PropTypes.string,
+    onDelete: PropTypes.func
 }
 
 export default SosModelRunItem
