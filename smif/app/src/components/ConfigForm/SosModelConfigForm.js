@@ -164,8 +164,8 @@ SosModelConfigForm.propTypes = {
     sectorModels: PropTypes.array.isRequired,
     scenarioSets: PropTypes.array.isRequired,
     narrativeSets: PropTypes.array.isRequired,
-    saveSosModel: PropTypes.func.isRequired,
-    cancelSosModel: PropTypes.func.isRequired
+    saveSosModel: PropTypes.func,
+    cancelSosModel: PropTypes.func
 }
 
 export default SosModelConfigForm
