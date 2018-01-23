@@ -8,7 +8,7 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "mocha --require babel-polyfill --compilers js:babel-register --require ./test/helpers.js --recursive",
+    "test": "nyc mocha --require babel-polyfill --compilers js:babel-register --require ./test/helpers.js --recursive",
     "build": "webpack",
     "watch": "webpack --progress --watch",
     "start": "webpack-dev-server --open"
@@ -45,6 +45,7 @@
     "extract-text-webpack-plugin": "^3.0.0",
     "html-webpack-plugin": "^2.30.1",
     "mocha": "^3.5.3",
+    "nyc": "^11.4.1",
     "react-test-renderer": "^15.6.2",
     "redux-devtools": "^3.4.0",
     "style-loader": "^0.18.2",
