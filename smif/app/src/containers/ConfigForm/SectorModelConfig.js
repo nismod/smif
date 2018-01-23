@@ -81,7 +81,7 @@ SectorModelConfig.propTypes = {
 function mapStateToProps(state) {
     return {
         sector_model: state.sector_model.item,
-        isFetching: (state.sos_model.isFetching)
+        isFetching: (state.sector_model.isFetching)
     }
 }
 
