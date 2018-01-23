@@ -32,7 +32,7 @@ export const sos_model_run = {
         population: 'Central Population (Medium)',
         rainfall: 'Central Rainfall'
     },
-    sos_model: 'energy_water',
+    sos_model: 'energy_waste',
     stamp: 'Mon, 18 Sep 2017 12:53:23 GMT',
     timesteps: [
         2010,
