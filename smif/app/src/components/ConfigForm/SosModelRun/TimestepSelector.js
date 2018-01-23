@@ -16,10 +16,14 @@ class TimestepSelector extends Component {
     componentWillMount(){
         const {timeSteps} = this.props
 
-        if (timeSteps != null ){
+        if (timeSteps != undefined && timeSteps.length > 0){
             this.setState({baseYear: timeSteps[0]})
             this.setState({endYear: timeSteps[timeSteps.length - 1]})
             this.setState({resolution: ((timeSteps[timeSteps.length - 1] - timeSteps[0]) / (timeSteps.length - 1))})
+        } else {
+            this.setState({baseYear: 2015})
+            this.setState({endYear: 2020})
+            this.setState({resolution: 5})
         }
     }
 
@@ -84,14 +88,14 @@ class TimestepSelector extends Component {
                 <div className="form-group row">
                     <label className="col-sm-2 col-form-label">Resolution</label>
                     <div className="col-sm-10">
-                        <input className="form-control" name="resolution" type="number" min="1" defaultValue={resolution} onChange={this.onChangeHandler}/>
+                        <input id="sos_model_run_timesteps_resolution" className="form-control" name="resolution" type="number" min="1" defaultValue={resolution} onChange={this.onChangeHandler}/>
                     </div>
                 </div>
 
                 <div className="form-group row">
                     <label className="col-sm-2 col-form-label">Base year</label>
                     <div className="col-sm-10">
-                        <select className="form-control" value={baseYear} name="baseyear" onChange={this.onChangeHandler}>
+                        <select id="sos_model_run_timesteps_baseyear" className="form-control" value={baseYear} name="baseyear" onChange={this.onChangeHandler}>
                             <option disabled="disabled">Please select a base year</option>
                             {this.createBaseyearSelectItems()}
                         </select>
@@ -101,7 +105,7 @@ class TimestepSelector extends Component {
                 <div className="form-group row">
                     <label className="col-sm-2 col-form-label">End year</label>
                     <div className="col-sm-10">
-                        <select className="form-control" value={endYear} name="endyear" onChange={this.onChangeHandler}>
+                        <select id="sos_model_run_timesteps_endyear" className="form-control" value={endYear} name="endyear" onChange={this.onChangeHandler}>
                             <option value="" disabled="disabled">Please select an end year</option>
                             {this.createEndyearSelectItems(baseYear, resolution)}
                         </select>
@@ -113,7 +117,7 @@ class TimestepSelector extends Component {
 
     renderWarning(message) {
         return (
-            <div className="alert alert-danger">
+            <div id="timestep_selector_warning" className="alert alert-danger">
                 {message}
             </div>
         )
@@ -123,10 +127,8 @@ class TimestepSelector extends Component {
         const {timeSteps} = this.props
         const {baseYear, endYear, resolution} = this.state
 
-        if (timeSteps == null || timeSteps == undefined || Object.keys(timeSteps).length === 0) {
-            return this.renderWarning('There is no defaultValue configured')
-        } else if (baseYear == null) {
-            return this.renderWarning('Loading defaultValues')
+        if (timeSteps == null || timeSteps == undefined) {
+            return this.renderWarning('There are no TimeSteps configured')
         } else {
             return this.renderTimestepSelector(baseYear, endYear, resolution)
         }
