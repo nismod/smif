@@ -173,6 +173,20 @@ export const sos_model = {
             source_model: 'energy_demand',
             source_model_output: 'water_demand'
         }
+    ],
+    description: 'The future supply and demand of energy and water for the UK',
+    max_iterations: 100,
+    name: 'energy_waste',
+    narrative_sets: [
+        'technology'
+    ],
+    scenario_sets: [
+        'population',
+        'rainfall'
+    ],
+    sector_models: [
+        'water_supply',
+        'energy_demand'
     ]
 }
 
