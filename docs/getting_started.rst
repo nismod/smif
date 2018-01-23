@@ -451,6 +451,18 @@ in the ``project/data/interventions`` For example:
 Narratives
 ~~~~~~~~~~
 
+A narrative file contains references to 0 or more parameters defined in the
+simulation models, as well as special ``global`` parameters. Whereas model 
+parameters are available only to individual simulation models, 
+global parameters are available across all models. The intention is to use
+global paramaters for system-wide constants, such as emission coefficients,
+exchange rates, conversion factors etc.
+
+Value specified in the narrative file override the default values specified
+in the simulation model configuration. If more than one narrative file is
+selected in the sos model configuration, then values in later files override
+values in earlier files.
+
 .. literalinclude:: ../smif/sample_project/data/narratives/high_tech_dsm.yml
    :language: yaml
 
@@ -564,7 +576,7 @@ data into an external model, and send results back to smif.
 
 .. literalinclude:: ../smif/sample_project/models/energy_demand.py
    :language: python
-   :lines: 7-48
+   :lines: 8-70
 
 The key methods in the SectorModel class which need to be overridden are:
 
@@ -598,7 +610,9 @@ example:
 
 .. literalinclude:: ../smif/sample_project/models/energy_demand.py
    :language: python
-   :lines:  22
+   :lines:  23
+   :dedent: 8
+
 
 Note that the name argument passed to the :py:meth:`~smif.data_layer.DataHandle.get_parameter` is that which is defined in
 the sector model configuration file.
@@ -613,7 +627,9 @@ defaults to fetching the data for the current timestep.
 
 .. literalinclude:: ../smif/sample_project/models/energy_demand.py
    :language: python
-   :lines: 27
+   :lines: 28
+   :dedent: 8
+
 
 Accessing model input data for the base year
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -624,6 +640,8 @@ you can use the following argument:
 .. literalinclude:: ../smif/sample_project/models/energy_demand.py
    :language: python
    :lines:  33-34
+   :dedent: 8
+
 
 Accessing model input data for a previous year
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -634,6 +652,7 @@ you can use the following argument:
 .. literalinclude:: ../smif/sample_project/models/energy_demand.py
    :language: python
    :lines:  42-44
+   :dedent: 8
 
 Writing data to a database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -724,14 +743,39 @@ file::
         writer.writerow(current_price_set)
 
 
-
 Passing model data directly to a Python model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+If the wrapped model is a python script or package, then the wrapper can
+import and instantiate the model, passing in data directly.
 
+.. literalinclude:: ../smif/sample_project/models/water_supply.py
+   :language: python
+   :lines:  73-80
+   :dedent: 8
+
+In this example, the example water supply simulation model is instantiated
+within the simulate method, data is written to properties of the instantiated 
+class and  the ``run()`` method of the simulation model is called. 
+Finally, (dummy) results are written back to the data handler using the 
+:py:meth:`~smif.data_layer.DataHandle.set_results` method.
+
+Alternatively, the wrapper could call the model via the command line 
+(see below).
 
 Passing model data in as a command line argument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the model is fairly simple, or requires a parameter value or input data to
+be passed as an argument on the command line, 
+use the methods provided by :py:mod:`subprocess` to call out to the model 
+from the wrapper::
+
+    parameter = data.get_parameter('command_line_argument')
+    arguments = ['path/to/model/executable',
+                 '-my_argument={}'.format(parameter)]
+    output = subprocess.run(arguments, check=True)
+
 
 Writing model results to the data handler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -741,10 +785,12 @@ Writing results back to the data handler is as simple as calling the
 
     data.set_results("cost", np.array([[1.23, 1.543, 2.355]])
 
-The expected format of the data is a numpy array with the dimensions 
-(len(regions), len(intervals)) as defined in the model's output configuration.
+The expected format of the data is a 2-dimensional numpy array with the 
+dimensions described by the tuple ``(len(regions), len(intervals))`` 
+as defined in the model's output configuration.
 Results are expected to be set for each of the model outputs defined in the 
-output configuration.
+output configuration and a warning is raised if these are not present at 
+runtime.
 
 The interval definitions associated with the output can be interrogated from
 within the SectorModel class using ``self.outputs[name].get_interval_names()``
