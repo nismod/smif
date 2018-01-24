@@ -16,7 +16,6 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   README <readme>
    Getting Started <getting_started>
    Concept <concept>
 
