@@ -6,7 +6,7 @@ inputs:
 - name: population
   spatial_resolution: national
   temporal_resolution: annual
-  units: million people
+  units: people
 - name: energy_demand
   spatial_resolution: national
   temporal_resolution: annual

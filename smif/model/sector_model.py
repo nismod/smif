@@ -34,12 +34,12 @@ The key functions include:
   approaches
 
 """
+import importlib
 import logging
 import os
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
-import importlib
 from smif import StateData
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
@@ -65,8 +65,6 @@ class SectorModel(Model, metaclass=ABCMeta):
         self.path = ''
         self._initial_state = defaultdict(dict)
         self.interventions = []
-        self.system = []
-        self._user_data = {}
 
         self.logger = logging.getLogger(__name__)
 
@@ -89,17 +87,6 @@ class SectorModel(Model, metaclass=ABCMeta):
             'initial_conditions': self._initial_state
         }
         return config
-
-    @property
-    def user_data(self):
-        """A utility dictionary provided for use by the model wrapper
-        """
-        return self._user_data
-
-    @user_data.setter
-    def user_data(self, value):
-        self.logger.debug("Adding %s to user data for %s", value, self.name)
-        self._user_data = value
 
     def add_input(self, name, spatial_resolution, temporal_resolution, units):
         """Add an input to the sector model

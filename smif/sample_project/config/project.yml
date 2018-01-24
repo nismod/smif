@@ -31,7 +31,7 @@ scenarios:
     filename: population_low.csv
     spatial_resolution: national
     temporal_resolution: annual
-    units: million people
+    units: people
 - name: 'Central Population (Medium)'
   description: 'Central Population for the UK (Medium)'
   scenario_set: population
@@ -40,7 +40,7 @@ scenarios:
     filename: population_med.csv
     spatial_resolution: national
     temporal_resolution: annual
-    units: million people
+    units: people
 - name: 'Central Population (High)'
   description: 'Central Population for the UK (High)'
   scenario_set: population
@@ -49,7 +49,7 @@ scenarios:
     filename: population_low.csv
     spatial_resolution: national
     temporal_resolution: annual
-    units: million people
+    units: people
 - name: Central Rainfall
   description: 'Central Rainfall Scenario for the UK'
   scenario_set: rainfall
@@ -58,7 +58,7 @@ scenarios:
     filename: raininess.csv
     spatial_resolution: national
     temporal_resolution: annual
-    units: ml
+    units: Ml
 narratives:
 - name: High Tech Demand Side Management
   description: 'High penetration of SMART technology on the demand side'

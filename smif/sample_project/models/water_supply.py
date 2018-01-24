@@ -20,6 +20,7 @@ class WaterSupplySectorModel(SectorModel):
     using one of the toy water models below to simulate the water supply
     system.
     """
+
     def initialise(self, initial_conditions):
         """Set up system here
         """
@@ -40,20 +41,33 @@ class WaterSupplySectorModel(SectorModel):
                 - system state, e.g. reservoir level at year start
         """
 
-        state = [StateData('Kielder Water', {'current_level': {'value': 10}})]
-        decisions = []
+        self.logger.debug("Initial conditions: %s", self._initial_state)
+
+        state = self._initial_state[0]
 
         # unpack inputs
-        water_demand = data['water_demand']
-        reservoir_level = state[0].data['current_level']['value'] - water_demand[2]
-        raininess = np.sum(data['raininess'])
+        per_capita_water_demand = \
+            data.get_parameter('per_capita_water_demand')  # liter/person
+
+        population = data.get_data('population')  # people
+
+        water_demand = (population * per_capita_water_demand) + \
+            data.get_data('water_demand')  # liter
+
+        raininess = sum(data.get_data('raininess'))  # megaliters
+
+        reservoir_level = state.data['current_level']['value'] \
+            - (1e-6 * water_demand.sum())  # megaliters
+
+        self.logger.debug("Parameters:\n  Population: %s\n  Raininess: %s\n "
+                          "Reservoir level: %s\n  ", population.sum(),
+                          raininess.sum(), reservoir_level)
 
         # unpack assets
         number_of_treatment_plants = 2
 
-        self.logger.debug(decisions)
         self.logger.debug(state)
-        self.logger.debug(data)
+        self.logger.debug(data.get_parameters())
 
         # simulate (wrapping toy model)
         instance = ExampleWaterSupplySimulationModel()
@@ -62,36 +76,16 @@ class WaterSupplySectorModel(SectorModel):
         instance.reservoir_level = reservoir_level
 
         water, cost = instance.run()
-        data["water"] = np.ones((3, 1)) * water / 3
-        data["cost"] = np.ones((3, 1)) * cost / 3
-        data["energy_demand"] = np.ones((3, 1)) * 3
+        data.set_results('water', np.ones((3, 1)) * water / 3)
+        data.set_results("cost", np.ones((3, 1)) * cost / 3)
+        data.set_results("energy_demand", np.ones((3, 1)) * 3)
 
-        StateData('Kielder Water', {
+        state = StateData('Kielder Water', {
             'current_level': {'value': instance.reservoir_level}
         })
 
-        return data
-
     def extract_obj(self, results):
-        return results['cost']
-
-    def constraints(self, parameters):
-        """
-
-        Notes
-        =====
-        This constraint below expresses that water supply must be greater than
-        or equal to 3.  ``x[0]`` is the decision variable for water treatment
-        capacity, while the value ``parameters[0]`` in the min term is the
-        value of the raininess parameter.
-        """
-        constraints = (
-            {
-                'type': 'ineq',
-                'fun': lambda x: min(x[0], parameters[0]) - 3
-            }
-        )
-        return constraints
+        return results['cost'].sum()
 
 
 class ExampleWaterSupplySimulationModel(object):

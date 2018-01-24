@@ -7,11 +7,11 @@ data (at any computed or pre-computed timestep) and write access to output data
 (at the current timestep).
 """
 
-from logging import getLogger
-
 from enum import Enum
-from smif.model.scenario_model import ScenarioModel
+from logging import getLogger
 from types import MappingProxyType
+
+from smif.model.scenario_model import ScenarioModel
 
 
 class DataHandle(object):
@@ -70,6 +70,24 @@ class DataHandle(object):
         """Current timestep
         """
         return self._current_timestep
+
+    @property
+    def previous_timestep(self):
+        """Previous timestep
+        """
+        return RelativeTimestep.PREVIOUS.resolve_relative_to(
+            self._current_timestep,
+            self._timesteps
+        )
+
+    @property
+    def base_timestep(self):
+        """Base timestep
+        """
+        return RelativeTimestep.BASE.resolve_relative_to(
+            self._current_timestep,
+            self._timesteps
+        )
 
     @property
     def timesteps(self):
@@ -136,6 +154,34 @@ class DataHandle(object):
             )
 
         return data
+
+    def get_base_timestep_data(self, input_name):
+        """Get data from the base timestep as required for model inputs
+
+        Parameters
+        ----------
+        input_name : str
+
+        Returns
+        -------
+        data : numpy.ndarray
+            Two-dimensional array with shape (len(regions), len(intervals))
+        """
+        return self.get_data(input_name, RelativeTimestep.BASE)
+
+    def get_previous_timestep_data(self, input_name):
+        """Get data from the previous timestep as required for model inputs
+
+        Parameters
+        ----------
+        input_name : str
+
+        Returns
+        -------
+        data : numpy.ndarray
+            Two-dimensional array with shape (len(regions), len(intervals))
+        """
+        return self.get_data(input_name, RelativeTimestep.PREVIOUS)
 
     def get_parameter(self, parameter_name):
         """Get the value for a  parameter
@@ -261,13 +307,23 @@ class RelativeTimestep(Enum):
             return timestep
 
         if self.name == 'PREVIOUS':
-            return element_before(timestep, timesteps)
+            try:
+                return element_before(timestep, timesteps)
+            except ValueError:
+                raise TimestepResolutionError(
+                    "{} has no previous timestep in {}".format(timestep, timesteps))
 
         if self.name == 'BASE':
             return timesteps[0]
 
         if self.name == 'ALL':
             return None
+
+
+class TimestepResolutionError(Exception):
+    """Raise when timestep cannot be resolved
+    """
+    pass
 
 
 def element_before(element, list_):

@@ -3,8 +3,9 @@
 from unittest.mock import MagicMock, Mock
 
 import numpy as np
-from pytest import fixture
+from pytest import fixture, raises
 from smif.data_layer import DataHandle
+from smif.data_layer.data_handle import TimestepResolutionError
 from smif.metadata import Metadata, MetadataSet
 from smif.model.dependency import Dependency
 from smif.parameters import ParameterList
@@ -55,91 +56,156 @@ def mock_model():
     return model
 
 
-def test_create():
-    """should be created with a DataInterface
+class TestDataHandle():
+    def test_create(self):
+        """should be created with a DataInterface
+        """
+        DataHandle(Mock(), 1, 2015, [2015, 2020], Mock())
+
+    def test_get_data(self, mock_store, mock_model):
+        """should allow read access to input data
+        """
+        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+        expected = np.array([[1.0]])
+        actual = data_handle.get_data("test")
+        assert actual == expected
+
+        mock_store.read_results.assert_called_with(
+            1,
+            'test_source',  # read from source model
+            'test_output',  # using source model output name
+            'test_regions',
+            'test_intervals',
+            2015,
+            None,
+            None
+        )
+
+    def test_get_base_timestep_data(self, mock_store, mock_model):
+        """should allow read access to input data from base timestep
+        """
+        data_handle = DataHandle(mock_store, 1, 2025, [2015, 2020, 2025], mock_model)
+        expected = np.array([[1.0]])
+        actual = data_handle.get_base_timestep_data("test")
+        assert actual == expected
+
+        mock_store.read_results.assert_called_with(
+            1,
+            'test_source',  # read from source model
+            'test_output',  # using source model output name
+            'test_regions',
+            'test_intervals',
+            2015,  # base timetep
+            None,
+            None
+        )
+
+    def test_get_previous_timestep_data(self, mock_store, mock_model):
+        """should allow read access to input data from previous timestep
+        """
+        data_handle = DataHandle(mock_store, 1, 2025, [2015, 2020, 2025], mock_model)
+        expected = np.array([[1.0]])
+        actual = data_handle.get_previous_timestep_data("test")
+        assert actual == expected
+
+        mock_store.read_results.assert_called_with(
+            1,
+            'test_source',  # read from source model
+            'test_output',  # using source model output name
+            'test_regions',
+            'test_intervals',
+            2020,  # previous timetep
+            None,
+            None
+        )
+
+    def test_get_data_with_square_brackets(self, mock_store, mock_model):
+        """should allow dict-like read access to input data
+        """
+        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+        expected = np.array([[1.0]])
+        actual = data_handle["test"]
+        assert actual == expected
+
+        mock_store.read_results.assert_called_with(
+            1,
+            'test_source',  # read from source model
+            'test_output',  # using source model output name
+            'test_regions',
+            'test_intervals',
+            2015,
+            None,
+            None
+        )
+
+    def test_set_data(self, mock_store, mock_model):
+        """should allow write access to output data
+        """
+        expected = np.array([[1.0]])
+        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+
+        data_handle.set_results("test", expected)
+        assert data_handle["test"] == expected
+
+        mock_store.write_results.assert_called_with(
+            1,
+            'test_model',
+            'test',
+            expected,
+            'test_regions',
+            'test_intervals',
+            2015,
+            None,
+            None
+        )
+
+    def test_set_data_with_square_brackets(self, mock_store, mock_model):
+        """should allow dict-like write access to output data
+        """
+        expected = np.array([[1.0]])
+        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+
+        data_handle["test"] = expected
+        assert data_handle["test"] == expected
+
+        mock_store.write_results.assert_called_with(
+            1,
+            'test_model',
+            'test',
+            expected,
+            'test_regions',
+            'test_intervals',
+            2015,
+            None,
+            None
+        )
+
+
+class TestDataHandleTimesteps():
+    """Test timestep helper properties
     """
-    DataHandle(Mock(), 1, 2015, [2015, 2020], Mock())
+    def test_current_timestep(self):
+        """should return current timestep
+        """
+        data_handle = DataHandle(Mock(), 1, 2015, [2015, 2020], Mock())
+        assert data_handle.current_timestep == 2015
 
+    def test_base_timestep(self):
+        """should return first timestep in list
+        """
+        data_handle = DataHandle(Mock(), 1, 2015, [2015, 2020], Mock())
+        assert data_handle.base_timestep == 2015
 
-def test_get_data(mock_store, mock_model):
-    """should allow read access to input data
-    """
-    data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-    expected = np.array([[1.0]])
-    actual = data_handle.get_data("test")
-    assert actual == expected
+    def test_previous_timestep(self):
+        """should return previous timestep from list
+        """
+        data_handle = DataHandle(Mock(), 1, 2020, [2015, 2020], Mock())
+        assert data_handle.previous_timestep == 2015
 
-    mock_store.read_results.assert_called_with(
-        1,
-        'test_source',  # read from source model
-        'test_output',  # using source model output name
-        'test_regions',
-        'test_intervals',
-        2015,
-        None,
-        None
-    )
-
-
-def test_get_data_with_square_brackets(mock_store, mock_model):
-    """should allow dict-like read access to input data
-    """
-    data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-    expected = np.array([[1.0]])
-    actual = data_handle["test"]
-    assert actual == expected
-
-    mock_store.read_results.assert_called_with(
-        1,
-        'test_source',  # read from source model
-        'test_output',  # using source model output name
-        'test_regions',
-        'test_intervals',
-        2015,
-        None,
-        None
-    )
-
-
-def test_set_data(mock_store, mock_model):
-    """should allow write access to output data
-    """
-    expected = np.array([[1.0]])
-    data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-
-    data_handle.set_results("test", expected)
-    assert data_handle["test"] == expected
-
-    mock_store.write_results.assert_called_with(
-        1,
-        'test_model',
-        'test',
-        expected,
-        'test_regions',
-        'test_intervals',
-        2015,
-        None,
-        None
-    )
-
-
-def test_set_data_with_square_brackets(mock_store, mock_model):
-    """should allow dict-like write access to output data
-    """
-    expected = np.array([[1.0]])
-    data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-
-    data_handle["test"] = expected
-    assert data_handle["test"] == expected
-
-    mock_store.write_results.assert_called_with(
-        1,
-        'test_model',
-        'test',
-        expected,
-        'test_regions',
-        'test_intervals',
-        2015,
-        None,
-        None
-    )
+    def test_previous_timestep_error(self):
+        """should raise error if there's no previous timestep in the list
+        """
+        data_handle = DataHandle(Mock(), 1, 2015, [2015, 2020], Mock())
+        with raises(TimestepResolutionError) as ex:
+            data_handle.previous_timestep
+        assert 'no previous timestep' in str(ex)

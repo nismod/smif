@@ -150,7 +150,8 @@ class TestRunSosModelRunComponents():
         actual = get_narratives(handler, narratives)
 
         data = {'energy_demand': {'smart_meter_savings': 8},
-                'water_supply': {'clever_water_meter_savings': 8}
+                'water_supply': {'clever_water_meter_savings': 8,
+                                 'per_capita_water_demand': 1.2}
                 }
         name = 'High Tech Demand Side Management'
         description = 'High penetration of SMART technology on the demand side'
