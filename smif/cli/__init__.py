@@ -85,7 +85,7 @@ from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
 from smif.http_api import create_app
-from smif.parameters.narrative import Narrative
+from smif.parameters import Narrative
 from smif.modelrun import ModelRunBuilder
 from smif.model.sos_model import SosModelBuilder
 from smif.model.sector_model import SectorModelBuilder

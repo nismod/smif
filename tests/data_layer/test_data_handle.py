@@ -22,7 +22,7 @@ def mock_model():
     model = Mock()
     model.name = 'test_model'
     model.parameters = ParameterList()
-    model.parameters.add_parameters_from_list([
+    model.parameters.add_parameter(
         {
             'name': 'smart_meter_savings',
             'description': 'The savings from smart meters',
@@ -32,7 +32,7 @@ def mock_model():
             'units': '%',
             'parent': None
         }
-    ])
+    )
     regions = Mock()
     regions.name = 'test_regions'
     intervals = Mock()

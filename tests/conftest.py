@@ -22,7 +22,7 @@ from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
-from smif.parameters.narrative import Narrative
+from smif.parameters import Narrative
 
 from .convert.test_area import (regions_half_squares, regions_half_triangles,
                                 regions_rect, regions_single_half_square)

@@ -5,3 +5,4 @@ pre-commit
 pytest-cov
 pytest
 pylint
+better-apidoc

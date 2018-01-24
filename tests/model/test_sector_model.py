@@ -275,10 +275,7 @@ class TestParameters():
         model.add_parameter(param_config)
 
         assert isinstance(model.parameters, ParameterList)
-
-        param_config['parent'] = model
-
-        assert model.parameters['smart_meter_savings'] == param_config
+        assert model.parameters['smart_meter_savings'].as_dict() == param_config
 
         actual = model.simulate(2010, {'smart_meter_savings': 3})
         expected = {'savings': 3}

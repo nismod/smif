@@ -224,9 +224,9 @@ class TestSosModel():
             'units': '%'
         }
         sos_model.add_parameter(sos_model_param)
-        expected = dict(sos_model_param, **{'parent': sos_model})
+        expected = sos_model_param
 
-        assert sos_model.parameters == {'sos_model_param': expected}
+        assert sos_model.parameters['sos_model_param'].as_dict() == expected
         assert sos_model.parameters.names == ['sos_model_param']
 
         sector_model = get_empty_sector_model('source_model')
@@ -425,25 +425,25 @@ class TestSosModelBuilderComponents():
 
 class TestSosModelBuilder():
     """Tests that the correct SosModel structure is created from a configuration
-    dictionary
+    dictionary::
 
-    {
-        'name': 'sos_model_name',
-        'description': 'friendly description of the sos model',
-        'sector_models': list of Model,
-        'scenario_sets': list of ScenarioModel,
-        'max_iterations': int,
-        'convergence_absolute_tolerance': float,
-        'convergence_relative_tolerance': float,
-        'dependencies': [
-            {
-                'source_model': str (Model.name),
-                'source_model_output': str (Metadata.name),
-                'sink_model': str (Model.name),
-                'sink_model_output': str (Metadata.name)
-            }
-        ]
-    }
+        {
+            'name': 'sos_model_name',
+            'description': 'friendly description of the sos model',
+            'sector_models': list of Model,
+            'scenario_sets': list of ScenarioModel,
+            'max_iterations': int,
+            'convergence_absolute_tolerance': float,
+            'convergence_relative_tolerance': float,
+            'dependencies': [
+                {
+                    'source_model': str (Model.name),
+                    'source_model_output': str (Metadata.name),
+                    'sink_model': str (Model.name),
+                    'sink_model_output': str (Metadata.name)
+                }
+            ]
+        }
 
     """
     def test_scenarios(self, get_sos_model_config):

@@ -24,7 +24,8 @@ import inspect
 import os
 import sys
 
-from sphinx import apidoc
+# from sphinx import apidoc
+import better_apidoc
 
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -36,9 +37,18 @@ __location__ = os.path.join(os.getcwd(), os.path.dirname(
 
 output_dir = os.path.join(__location__, "../docs/api")
 module_dir = os.path.join(__location__, "../smif")
-cmd_line_template = "sphinx-apidoc -f -M -o {outputdir} {moduledir}"
-cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
-apidoc.main(cmd_line.split(" "))
+templates_dir = os.path.join(__location__, "../docs/_templates")
+
+better_apidoc.main([
+    'better-apidoc',
+    '-t',
+    templates_dir,
+    '--force',
+    '--separate',
+    '-o',
+    output_dir,
+    module_dir
+])
 
 # -- General configuration -----------------------------------------------------
 
