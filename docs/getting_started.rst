@@ -654,6 +654,79 @@ you can use the following argument:
    :lines:  42-44
    :dedent: 8
 
+Passing model data directly to a Python model
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the wrapped model is a python script or package, then the wrapper can
+import and instantiate the model, passing in data directly.
+
+.. literalinclude:: ../smif/sample_project/models/water_supply.py
+   :language: python
+   :lines:  73-80
+   :dedent: 8
+
+In this example, the example water supply simulation model is instantiated
+within the simulate method, data is written to properties of the instantiated 
+class and  the ``run()`` method of the simulation model is called. 
+Finally, (dummy) results are written back to the data handler using the 
+:py:meth:`~smif.data_layer.DataHandle.set_results` method.
+
+Alternatively, the wrapper could call the model via the command line 
+(see below).
+
+Passing model data in as a command line argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the model is fairly simple, or requires a parameter value or input data to
+be passed as an argument on the command line, 
+use the methods provided by :py:mod:`subprocess` to call out to the model 
+from the wrapper::
+
+    parameter = data.get_parameter('command_line_argument')
+    arguments = ['path/to/model/executable',
+                 '-my_argument={}'.format(parameter)]
+    output = subprocess.run(arguments, check=True)
+
+Writing data to a text file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Again, the exact implementation of writing data to a text file for subsequent
+reading into the wrapped model will differ on a case-by-case basis.
+In the following example, we write some data to a comma-separated-values (.csv)
+file::
+
+    with open(path_to_data_file, 'w') as open_file:
+        fieldnames = ['year', 'PETROL', 'DIESEL', 'LPG', 
+                      'ELECTRICITY', 'HYDROGEN', 'HYBRID']
+        writer = csv.DictWriter(open_file, fieldnames)
+        writer.writeheader()
+
+        now = data.current_timestep
+        base_year_enum = RelativeTimestep.BASE
+
+        base_price_set = {
+            'year': base_year_enum.resolve_relative_to(now, data.timesteps),
+            'PETROL': data.get_data('petrol_price', base_year_enum),
+            'DIESEL': data.get_data('diesel_price', base_year_enum),
+            'LPG': data.get_data('lpg_price', base_year_enum),
+            'ELECTRICITY': data.get_data('electricity_price', base_year_enum),
+            'HYDROGEN': data.get_data('hydrogen_price', base_year_enum),
+            'HYBRID': data.get_data('hybrid_price', base_year_enum)
+        }
+
+        current_price_set = {
+            'year': now,
+            'PETROL': data.get_data('petrol_price'),
+            'DIESEL': data.get_data('diesel_price'),
+            'LPG': data.get_data('lpg_price'),
+            'ELECTRICITY': data.get_data('electricity_price'),
+            'HYDROGEN': data.get_data('hydrogen_price'),
+            'HYBRID': data.get_data('hybrid_price')
+        }
+
+        writer.writerow(base_price_set)
+        writer.writerow(current_price_set)
+
 Writing data to a database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -701,81 +774,6 @@ psycopg2 library [3]_ ::
         # Close communication with the database
         cur.close()
         conn.close()
-
-Writing data to a text file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Again, the exact implementation of writing data to a text file for subsequent
-reading into the wrapped model will differ on a case-by-case basis.
-In the following example, we write some data to a comma-separated-values (.csv)
-file::
-
-    with open(path_to_data_file, 'w') as open_file:
-        fieldnames = ['year', 'PETROL', 'DIESEL', 'LPG', 
-                      'ELECTRICITY', 'HYDROGEN', 'HYBRID']
-        writer = csv.DictWriter(open_file, fieldnames)
-        writer.writeheader()
-
-        now = data.current_timestep
-        base_year_enum = RelativeTimestep.BASE
-
-        base_price_set = {
-            'year': base_year_enum.resolve_relative_to(now, data.timesteps),
-            'PETROL': data.get_data('petrol_price', base_year_enum),
-            'DIESEL': data.get_data('diesel_price', base_year_enum),
-            'LPG': data.get_data('lpg_price', base_year_enum),
-            'ELECTRICITY': data.get_data('electricity_price', base_year_enum),
-            'HYDROGEN': data.get_data('hydrogen_price', base_year_enum),
-            'HYBRID': data.get_data('hybrid_price', base_year_enum)
-        }
-
-        current_price_set = {
-            'year': now,
-            'PETROL': data.get_data('petrol_price'),
-            'DIESEL': data.get_data('diesel_price'),
-            'LPG': data.get_data('lpg_price'),
-            'ELECTRICITY': data.get_data('electricity_price'),
-            'HYDROGEN': data.get_data('hydrogen_price'),
-            'HYBRID': data.get_data('hybrid_price')
-        }
-
-        writer.writerow(base_price_set)
-        writer.writerow(current_price_set)
-
-
-Passing model data directly to a Python model
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If the wrapped model is a python script or package, then the wrapper can
-import and instantiate the model, passing in data directly.
-
-.. literalinclude:: ../smif/sample_project/models/water_supply.py
-   :language: python
-   :lines:  73-80
-   :dedent: 8
-
-In this example, the example water supply simulation model is instantiated
-within the simulate method, data is written to properties of the instantiated 
-class and  the ``run()`` method of the simulation model is called. 
-Finally, (dummy) results are written back to the data handler using the 
-:py:meth:`~smif.data_layer.DataHandle.set_results` method.
-
-Alternatively, the wrapper could call the model via the command line 
-(see below).
-
-Passing model data in as a command line argument
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If the model is fairly simple, or requires a parameter value or input data to
-be passed as an argument on the command line, 
-use the methods provided by :py:mod:`subprocess` to call out to the model 
-from the wrapper::
-
-    parameter = data.get_parameter('command_line_argument')
-    arguments = ['path/to/model/executable',
-                 '-my_argument={}'.format(parameter)]
-    output = subprocess.run(arguments, check=True)
-
 
 Writing model results to the data handler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
