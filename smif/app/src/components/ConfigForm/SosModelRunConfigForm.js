@@ -25,7 +25,9 @@ class SosModelRunConfigForm extends Component {
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
+        if (Object.keys(document).length) {
+            document.addEventListener("keydown", this.handleKeyPress, false)
+        }
     }
 
     componentWillUnmount(){
@@ -188,21 +190,21 @@ class SosModelRunConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModelRun.name} onChange={this.handleInputChange}/>
+                                <input id="sos_model_run_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModelRun.name} onChange={this.handleInputChange}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea className="form-control" name="description" rows="5" defaultValue={selectedSosModelRun.description} onChange={this.handleInputChange}/>
+                                <textarea id="sos_model_run_description" className="form-control" name="description" rows="5" defaultValue={selectedSosModelRun.description} onChange={this.handleInputChange}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Created</label>
                             <div className="col-sm-10">
-                                <label className="form-control">{selectedSosModelRun.stamp}</label>
+                                <label id="sos_model_run_stamp" className="form-control">{selectedSosModelRun.stamp}</label>
                             </div>
                         </div>
                     </div>
@@ -217,7 +219,7 @@ class SosModelRunConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">System-of-systems model</label>
                             <div className="col-sm-10">
-                                <SosModelSelector sosModelRun={selectedSosModelRun} sosModels={sosModels} onChange={this.handleSosModelChange} />
+                                <SosModelSelector id="sos_model_run_sos_model" sosModelRun={selectedSosModelRun} sosModels={sosModels} onChange={this.handleSosModelChange} />
                             </div>
                         </div>
 
@@ -271,8 +273,8 @@ SosModelRunConfigForm.propTypes = {
     sosModels: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
-    saveModelRun: PropTypes.func.isRequired,
-    cancelModelRun: PropTypes.func.isRequired
+    saveModelRun: PropTypes.func,
+    cancelModelRun: PropTypes.func
 }
 
 export default SosModelRunConfigForm

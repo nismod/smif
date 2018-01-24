@@ -19,7 +19,9 @@ class ScenarioConfigForm extends Component {
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
+        if (Object.keys(document).length) {
+            document.addEventListener("keydown", this.handleKeyPress, false)
+        }
     }
 
     componentWillUnmount(){
@@ -72,14 +74,14 @@ class ScenarioConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="name" type="text" disabled="true" defaultValue={selectedScenario.name} onChange={this.handleChange}/>
+                                    <input id="scenario_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedScenario.name} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Description</label>
                                 <div className="col-sm-10">
-                                    <textarea className="form-control" name="description" rows="5" defaultValue={selectedScenario.description} onChange={this.handleChange}/>
+                                    <textarea id="scenario_description" className="form-control" name="description" rows="5" defaultValue={selectedScenario.description} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -105,7 +107,7 @@ class ScenarioConfigForm extends Component {
                                     </select>
                                     <br/>
                                     <div className="alert alert-dark" hidden={!scenarioSetSelected} role="alert">
-                                        {selectedScenarioSet.description}
+                                        {selectedScenarioSet && selectedScenarioSet.description}
                                     </div>
                                 </div>
                             </div>
@@ -138,8 +140,8 @@ class ScenarioConfigForm extends Component {
 ScenarioConfigForm.propTypes = {
     scenario: PropTypes.object.isRequired,
     scenarioSets: PropTypes.array.isRequired,
-    saveScenario: PropTypes.func.isRequired,
-    cancelScenario: PropTypes.func.isRequired
+    saveScenario: PropTypes.func,
+    cancelScenario: PropTypes.func
 }
 
 export default ScenarioConfigForm

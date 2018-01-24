@@ -59,7 +59,7 @@ class NarrativeSetConfig extends Component {
         return (
             <div>
                 <h1>Narrative Set Configuration</h1>         
-                <NarrativeSetConfigForm narrative_set={narrative_set} saveNarrativeSet={this.saveNarrativeSet} cancelNarrativeSet={this.returnToPreviousPage}/>            
+                <NarrativeSetConfigForm narrativeSet={narrative_set} saveNarrativeSet={this.saveNarrativeSet} cancelNarrativeSet={this.returnToPreviousPage}/>            
             </div>
         )
     }

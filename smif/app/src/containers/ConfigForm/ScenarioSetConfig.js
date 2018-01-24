@@ -59,7 +59,7 @@ class ScenarioSetConfig extends Component {
         return (
             <div>
                 <h1>Scenario Set Configuration</h1>         
-                <ScenarioSetConfigForm scenario_set={scenario_set} saveScenarioSet={this.saveScenarioSet} cancelScenarioSet={this.returnToPreviousPage}/>            
+                <ScenarioSetConfigForm scenarioSet={scenario_set} saveScenarioSet={this.saveScenarioSet} cancelScenarioSet={this.returnToPreviousPage}/>            
             </div>
         )
     }

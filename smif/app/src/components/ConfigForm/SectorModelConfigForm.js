@@ -21,7 +21,9 @@ class SectorModelConfigForm extends Component {
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
+        if (Object.keys(document).length) {
+            document.addEventListener("keydown", this.handleKeyPress, false)
+        }
     }
 
     componentWillUnmount(){
@@ -65,14 +67,14 @@ class SectorModelConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSectorModel.name} onChange={this.handleChange}/>
+                                    <input id="sector_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSectorModel.name} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Description</label>
                                 <div className="col-sm-10">
-                                    <textarea className="form-control" name="description" rows="5" defaultValue={selectedSectorModel.description} onChange={this.handleChange}/>
+                                    <textarea id="sector_model_description" className="form-control" name="description" rows="5" defaultValue={selectedSectorModel.description} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -146,12 +148,8 @@ class SectorModelConfigForm extends Component {
 
 SectorModelConfigForm.propTypes = {
     sectorModel: PropTypes.object.isRequired,
-    sectorModels: PropTypes.array.isRequired,
-    scenarioSets: PropTypes.array.isRequired,
-    scenarios: PropTypes.array.isRequired,
-    narrativeSets: PropTypes.array.isRequired,
-    saveSectorModel: PropTypes.func.isRequired,
-    cancelSectorModel: PropTypes.func.isRequired
+    saveSectorModel: PropTypes.func,
+    cancelSectorModel: PropTypes.func
 }
 
 export default SectorModelConfigForm

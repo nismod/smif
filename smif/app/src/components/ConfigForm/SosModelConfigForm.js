@@ -20,7 +20,9 @@ class SosModelConfigForm extends Component {
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
+        if (Object.keys(document).length) {
+            document.addEventListener("keydown", this.handleKeyPress, false)
+        }
     }
 
     componentWillUnmount(){
@@ -65,14 +67,14 @@ class SosModelConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModel.name} onChange={this.handleChange}/>
+                                    <input id="sos_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModel.name} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Description</label>
                                 <div className="col-sm-10">
-                                    <textarea className="form-control" name="description" rows="5" defaultValue={selectedSosModel.description} onChange={this.handleChange}/>
+                                    <textarea id="sos_model_description" className="form-control" name="description" rows="5" defaultValue={selectedSosModel.description} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -162,8 +164,8 @@ SosModelConfigForm.propTypes = {
     sectorModels: PropTypes.array.isRequired,
     scenarioSets: PropTypes.array.isRequired,
     narrativeSets: PropTypes.array.isRequired,
-    saveSosModel: PropTypes.func.isRequired,
-    cancelSosModel: PropTypes.func.isRequired
+    saveSosModel: PropTypes.func,
+    cancelSosModel: PropTypes.func
 }
 
 export default SosModelConfigForm

@@ -16,7 +16,9 @@ class NarrativeConfigForm extends Component {
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
+        if (Object.keys(document).length) {
+            document.addEventListener("keydown", this.handleKeyPress, false)
+        }
     }
 
     componentWillUnmount(){
@@ -69,14 +71,14 @@ class NarrativeConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="name" type="text" disabled="true" defaultValue={selectedNarrative.name} onChange={this.handleChange}/>
+                                    <input id="narrative_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedNarrative.name} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Description</label>
                                 <div className="col-sm-10">
-                                    <textarea className="form-control" name="description" rows="5" defaultValue={selectedNarrative.description} onChange={this.handleChange}/>
+                                    <textarea id="narrative_description" className="form-control" name="description" rows="5" defaultValue={selectedNarrative.description} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -103,7 +105,7 @@ class NarrativeConfigForm extends Component {
                                     <br/>
                                 
                                     <div className="alert alert-dark" hidden={!narrativeSetSelected} role="alert">
-                                        {selectedNarrativeSet.description}
+                                        {selectedNarrativeSet && selectedNarrativeSet.description}
                                     </div>
                                 </div>
                             </div>
@@ -141,8 +143,8 @@ class NarrativeConfigForm extends Component {
 NarrativeConfigForm.propTypes = {
     narrative: PropTypes.object.isRequired,
     narrativeSets: PropTypes.array.isRequired,
-    saveNarrative: PropTypes.func.isRequired,
-    cancelNarrative: PropTypes.func.isRequired
+    saveNarrative: PropTypes.func,
+    cancelNarrative: PropTypes.func
 }
 
 export default NarrativeConfigForm
