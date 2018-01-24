@@ -1,7 +1,6 @@
 """Energy demand dummy model
 """
 import numpy as np
-from smif.data_layer.data_handle import RelativeTimestep
 from smif.model.sector_model import SectorModel
 
 
@@ -31,8 +30,7 @@ class EDMWrapper(SectorModel):
 
         # Demonstrates how to get the value for a model input from the base
         # timeperiod
-        base_energy_demand = data.get_data('energy_demand',
-                                           RelativeTimestep.BASE)
+        base_energy_demand = data.get_base_timestep_data('energy_demand')
         base_year = data.base_timestep
         self.logger.info("Base year energy demand in %s was %s", base_year,
                          base_energy_demand)
@@ -40,8 +38,7 @@ class EDMWrapper(SectorModel):
         # Demonstrates how to get the value for a model input from the previous
         # timeperiod
         if now > base_year:
-            prev_energy_demand = data.get_data('energy_demand',
-                                               RelativeTimestep.PREVIOUS)
+            prev_energy_demand = data.get_previous_timestep_data('energy_demand')
             prev_year = data.previous_timestep
             self.logger.info("Previous energy demand in %s was %s",
                              prev_year, prev_energy_demand)

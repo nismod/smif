@@ -81,6 +81,44 @@ class TestDataHandle():
             None
         )
 
+    def test_get_base_timestep_data(self, mock_store, mock_model):
+        """should allow read access to input data from base timestep
+        """
+        data_handle = DataHandle(mock_store, 1, 2025, [2015, 2020, 2025], mock_model)
+        expected = np.array([[1.0]])
+        actual = data_handle.get_base_timestep_data("test")
+        assert actual == expected
+
+        mock_store.read_results.assert_called_with(
+            1,
+            'test_source',  # read from source model
+            'test_output',  # using source model output name
+            'test_regions',
+            'test_intervals',
+            2015,  # base timetep
+            None,
+            None
+        )
+
+    def test_get_previous_timestep_data(self, mock_store, mock_model):
+        """should allow read access to input data from previous timestep
+        """
+        data_handle = DataHandle(mock_store, 1, 2025, [2015, 2020, 2025], mock_model)
+        expected = np.array([[1.0]])
+        actual = data_handle.get_previous_timestep_data("test")
+        assert actual == expected
+
+        mock_store.read_results.assert_called_with(
+            1,
+            'test_source',  # read from source model
+            'test_output',  # using source model output name
+            'test_regions',
+            'test_intervals',
+            2020,  # previous timetep
+            None,
+            None
+        )
+
     def test_get_data_with_square_brackets(self, mock_store, mock_model):
         """should allow dict-like read access to input data
         """

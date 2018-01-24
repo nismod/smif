@@ -155,6 +155,34 @@ class DataHandle(object):
 
         return data
 
+    def get_base_timestep_data(self, input_name):
+        """Get data from the base timestep as required for model inputs
+
+        Parameters
+        ----------
+        input_name : str
+
+        Returns
+        -------
+        data : numpy.ndarray
+            Two-dimensional array with shape (len(regions), len(intervals))
+        """
+        return self.get_data(input_name, RelativeTimestep.BASE)
+
+    def get_previous_timestep_data(self, input_name):
+        """Get data from the previous timestep as required for model inputs
+
+        Parameters
+        ----------
+        input_name : str
+
+        Returns
+        -------
+        data : numpy.ndarray
+            Two-dimensional array with shape (len(regions), len(intervals))
+        """
+        return self.get_data(input_name, RelativeTimestep.PREVIOUS)
+
     def get_parameter(self, parameter_name):
         """Get the value for a  parameter
 
