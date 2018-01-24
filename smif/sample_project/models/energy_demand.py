@@ -31,20 +31,20 @@ class EDMWrapper(SectorModel):
 
         # Demonstrates how to get the value for a model input from the base
         # timeperiod
-        base_year_enum = RelativeTimestep.BASE
-        base_energy_demand = data.get_data('energy_demand', base_year_enum)
-        base_year = base_year_enum.resolve_relative_to(now,
-                                                       data.timesteps)
+        base_energy_demand = data.get_data('energy_demand',
+                                           RelativeTimestep.BASE)
+        base_year = RelativeTimestep.BASE.resolve_relative_to(now,
+                                                              data.timesteps)
         self.logger.info("Base year energy demand in %s was %s", base_year,
                          base_energy_demand)
 
         # Demonstrates how to get the value for a model input from the previous
         # timeperiod
         if now > base_year:
-            prev_year_enum = RelativeTimestep.PREVIOUS
-            prev_energy_demand = data.get_data('energy_demand', prev_year_enum)
-            prev_year = base_year_enum.resolve_relative_to(now,
-                                                           data.timesteps)
+            prev_energy_demand = data.get_data('energy_demand',
+                                               RelativeTimestep.PREVIOUS)
+            prev_year = RelativeTimestep.PREVIOUS.resolve_relative_to(
+                now, data.timesteps)
             self.logger.info("Previous energy demand in %s was %s",
                              prev_year, prev_energy_demand)
 
