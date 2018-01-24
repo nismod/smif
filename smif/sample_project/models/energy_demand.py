@@ -33,8 +33,7 @@ class EDMWrapper(SectorModel):
         # timeperiod
         base_energy_demand = data.get_data('energy_demand',
                                            RelativeTimestep.BASE)
-        base_year = RelativeTimestep.BASE.resolve_relative_to(now,
-                                                              data.timesteps)
+        base_year = data.base_timestep
         self.logger.info("Base year energy demand in %s was %s", base_year,
                          base_energy_demand)
 
@@ -43,8 +42,7 @@ class EDMWrapper(SectorModel):
         if now > base_year:
             prev_energy_demand = data.get_data('energy_demand',
                                                RelativeTimestep.PREVIOUS)
-            prev_year = RelativeTimestep.PREVIOUS.resolve_relative_to(
-                now, data.timesteps)
+            prev_year = data.previous_timestep
             self.logger.info("Previous energy demand in %s was %s",
                              prev_year, prev_energy_demand)
 
