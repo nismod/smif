@@ -610,7 +610,7 @@ example:
 
 .. literalinclude:: ../smif/sample_project/models/energy_demand.py
    :language: python
-   :lines:  23
+   :lines:  22
    :dedent: 8
 
 
@@ -627,7 +627,7 @@ defaults to fetching the data for the current timestep.
 
 .. literalinclude:: ../smif/sample_project/models/energy_demand.py
    :language: python
-   :lines: 28
+   :lines: 27
    :dedent: 8
 
 
@@ -639,7 +639,7 @@ you can use the following argument:
 
 .. literalinclude:: ../smif/sample_project/models/energy_demand.py
    :language: python
-   :lines:  33-34
+   :lines:  33
    :dedent: 8
 
 
@@ -651,7 +651,7 @@ you can use the following argument:
 
 .. literalinclude:: ../smif/sample_project/models/energy_demand.py
    :language: python
-   :lines:  42-44
+   :lines:  41
    :dedent: 8
 
 Passing model data directly to a Python model
