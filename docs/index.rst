@@ -9,9 +9,9 @@ smif
     :target: https://travis-ci.org/nismod/smif
     :alt: Travis CI build status
 
-.. image:: https://coveralls.io/repos/github/nismod/smif/badge.svg?branch=master
-    :target: https://coveralls.io/github/nismod/smif?branch=master
-    :alt: Coveralls code coverage
+.. image:: https://img.shields.io/codecov/c/github/nismod/smif/master.svg   
+    :target: https://codecov.io/gh/nismod/smif?branch=master
+    :alt: Code Coverage
 
 .. image:: https://img.shields.io/pypi/v/smif.svg
     :target: https://pypi.python.org/pypi/smif
