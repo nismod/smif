@@ -6,6 +6,8 @@ import subprocess
 from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
+import pkg_resources
+
 import smif
 from smif.cli import (confirm, get_narratives, parse_arguments,
                       setup_project_folder)
@@ -38,8 +40,7 @@ def test_parse_arguments():
 def test_fixture_single_run():
     """Test running the filesystem-based single_run fixture
     """
-    config_dir = os.path.join(os.path.dirname(__file__),
-                              '..', '..', 'smif', 'sample_project')
+    config_dir = pkg_resources.resource_filename('smif', 'sample_project')
     output = subprocess.run(["smif", "-v", "run", "-d", config_dir,
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -50,8 +51,7 @@ def test_fixture_single_run():
 def test_fixture_list_runs():
     """Test running the filesystem-based single_run fixture
     """
-    config_dir = os.path.join(os.path.dirname(__file__),
-                              '..', '..', 'smif', 'sample_project')
+    config_dir = pkg_resources.resource_filename('smif', 'sample_project')
     output = subprocess.run(["smif", "list", "-d", config_dir], stdout=subprocess.PIPE)
     assert "20170918_energy_water" in str(output.stdout)
     assert "20170918_energy_water_short" in str(output.stdout)
@@ -141,18 +141,23 @@ def test_verbose_info(setup_folder_structure):
 
 class TestRunSosModelRunComponents():
 
-    def test_narratives(self):
-        config_file = os.path.join(os.path.dirname(__file__),
-                                   '..', '..', 'smif', 'sample_project')
-
-        handler = DatafileInterface(config_file)
+    def test_get_narratives(self):
+        """should load a list of narratives with parameter value data
+        """
+        config_dir = pkg_resources.resource_filename('smif', 'sample_project')
+        handler = DatafileInterface(config_dir)
         narratives = {'technology': ['High Tech Demand Side Management']}
         actual = get_narratives(handler, narratives)
 
-        data = {'energy_demand': {'smart_meter_savings': 8},
-                'water_supply': {'clever_water_meter_savings': 8,
-                                 'per_capita_water_demand': 1.2}
-                }
+        data = {
+            'energy_demand': {
+                'smart_meter_savings': 8
+            },
+            'water_supply': {
+                'clever_water_meter_savings': 8,
+                'per_capita_water_demand': 1.2
+            }
+        }
         name = 'High Tech Demand Side Management'
         description = 'High penetration of SMART technology on the demand side'
         narrative_set = 'technology'
