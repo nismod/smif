@@ -115,8 +115,8 @@ class SosModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Dependencies</div>
                         <div className="card-body">
-                            <PropertyList itemsName="dependencies" items={selectedSosModel.dependencies} columns={{source_model: 'Source Model', source_model_output: 'Output', sink_model: 'Sink Model', sink_model_input: 'Input'}} editButton={false} deleteButton={true} onDelete={this.handleChange} />
-                            <DependencySelector dependencies={selectedSosModel.dependencies} sectorModels={sectorModels} onChange={this.handleChange}/>
+                            <PropertyList itemsName="dependencies" items={selectedSosModel.dependencies} columns={{source_model: 'Source', source_model_output: 'Output', sink_model: 'Sink', sink_model_input: 'Input'}} editButton={false} deleteButton={true} onDelete={this.handleChange} />
+                            <DependencySelector dependencies={selectedSosModel.dependencies} sectorModels={sectorModels} scenarioSets={scenarioSets} onChange={this.handleChange}/>
                         </div>
                     </div>
 
