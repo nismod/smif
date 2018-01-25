@@ -85,6 +85,38 @@ Decision - simulation class interaction/interface design
     :alt: UML for smif decision and simulation interaction
     :target: _images/decision-simulation.png
 
+Data flow
+---------
+
+Locating the data required by a particular simulation model could become
+complicated. A data input may be provided as scenario data or as the
+output from another model. Scenario data vary between model runs as different
+scenarios are explored. Model outputs vary between model runs and possibly
+within model runs, as coupled models iterate to find stable solutions to
+loops in the dependency graph or as decision algorithms run multiple simulations
+to explore possible interventions.
+
+The two abstractions introduced are a ``DataInterface`` and a ``DataHandle``. A
+``DataInterface`` has responsibility for accessing and persisting data and
+results, for example to a file system or database. A ``DataHandle`` has
+responsibility for directing a simulation model's requests to the correct
+dataset, given the modelrun, requesting model, particular spatial or temporal
+resolution, and current iteration state. The containing layers - ``ModelRun``,
+``SosModel``, ``ModelSet`` - must incrementally add and update details when
+creating a specialised ``DataHandle`` to pass in to each simulation model.
+
+.. image:: uml/data_flow.png
+    :alt: Sequence diagram for smif data flow
+    :target: _images/data_flow.png
+
+This class diagram show part of the API to ``DataInterface`` and the smaller API
+to ``DataHandle`` which internally makes use of ``DataHandle``'s private
+attributes.
+
+.. image:: uml/data_handle.png
+    :alt: Class diagram for smif DataHandle / DataInterface composition
+    :target: _images/data_handle.png
+
 
 .. _packaging: https://packaging.python.org/distributing/
 .. _github.com/nismod/smif: https://github.com/nismod/smif

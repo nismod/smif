@@ -1,0 +1,57 @@
+@startuml
+
+actor Modeller
+participant ModelRun
+participant SosModel
+participant ScenarioModel
+participant aSectorModel
+participant bSectorModel
+participant DataHandle
+participant DataInterface
+
+Modeller -> ModelRun : run()
+ModelRun -> DataInterface : init(details)
+ModelRun -> DataHandle : init(data_interface, modelrun, timestep)
+ModelRun -> SosModel : simulate(data_handle)
+activate SosModel
+
+SosModel -> ScenarioModel : simulate(data_handle)
+SosModel <-- ScenarioModel
+
+SosModel -> DataHandle : init(data_handle, aSectorModel)
+activate DataHandle
+SosModel -> aSectorModel : simulate(data_handle)
+activate aSectorModel
+
+aSectorModel -> DataHandle : get_parameters()
+DataHandle -> DataInterface : read_parameters(modelrun, model)
+DataInterface -> DataHandle : parameters
+DataHandle -> aSectorModel : parameters
+
+aSectorModel -> DataHandle : get_data(input)
+DataHandle -> DataInterface : read_scenario_data(scenario, parameter, resolution, timestep)
+DataInterface -> DataHandle : data
+DataHandle -> aSectorModel : data
+
+aSectorModel --> SosModel
+deactivate aSectorModel
+deactivate DataHandle
+
+SosModel -> DataHandle : init(data_handle, bSectorModel)
+activate DataHandle
+SosModel -> bSectorModel : simulate(data_handle)
+activate bSectorModel
+
+bSectorModel -> DataHandle : get_data(input)
+DataHandle -> DataInterface : read_results(modelrun, model, output, resolution, timestep)
+DataInterface -> DataHandle : data
+DataHandle -> bSectorModel : data
+
+bSectorModel --> SosModel
+deactivate bSectorModel
+deactivate DataHandle
+
+SosModel --> ModelRun
+deactivate SosModel
+
+@enduml
