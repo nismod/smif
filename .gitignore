@@ -45,13 +45,12 @@ docs/_build/*
 cover/*
 MANIFEST
 node_modules
-smif/app/dist
+src/smif/app/dist
 
 .DS_Store
 
 # smif outputs
-results.yaml
-smif/sample_project/results/*
+src/smif/sample_project/results/*
 
 # data file
 energy_demand_data/*
