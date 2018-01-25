@@ -112,7 +112,7 @@ class PropertySelector extends Component {
         const {name, activeProperties, availableProperties} = this.props
 
         if (availableProperties == null || availableProperties.length == 0) {
-            return this.renderDanger('There are no ' + name + ' properties available')
+            return this.renderInfo('There are no ' + name + ' properties available')
         } else {
             let selectedProperties = this.flagActiveSectorModels(activeProperties, availableProperties)
             return this.renderProperySelector(selectedProperties)

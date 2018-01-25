@@ -197,7 +197,7 @@ class DependencySelector extends Component {
         if (dependencies == undefined) {
             return this.renderDanger('Dependencies are undefined')
         } else if (sectorModels == null) {
-            return this.renderDanger('There are no sectorModels configured')
+            return this.renderInfo('There are no sectorModels configured')
         } else {
             return this.renderDependencySelector(dependencies, sectorModels)
         }
