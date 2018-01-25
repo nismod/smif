@@ -1,20 +1,9 @@
 # Generate UML images
 
-# pyreverse deduces class and package structure from code
-#
-# Command is bundled with pylint
-# - pip install pylint
-pyreverse smif -p smif -o png
-
 # PlantUML converts plain text diagram notation to images
 #
 # Requires plantuml jar from http://plantuml.com/download to provide plantuml
-# command. E.g. create bash function:
-  run_plantuml()
-  {
-    java -jar ../../../plantuml.jar $1
-  }
-  export -f run_plantuml
+# command. 
 #
 # Depends on GraphViz from http://www.graphviz.org/Download..php to create
 # diagrams. E.g. set environment variable
@@ -24,4 +13,14 @@ pyreverse smif -p smif -o png
 # UML class notation: http://plantuml.com/class-diagram
 # Colour and style parameters: http://plantuml.com/skinparam
 # Syntax highlight plugin (for VS Code): Yog PlantUML Highlight
-run_plantuml ./*.uml
+# Preview plugin (for VS Code): PlantUML by jebbs
+if [ $# -eq 0 ]
+  then
+    echo "Please provide path to plantuml.jar"
+    exit 1
+fi
+
+for image in $(ls ./*uml); do
+  echo "Converting $image"
+  java -jar $1 $image
+done;
