@@ -405,7 +405,7 @@ def _open_browser():
 
 
 def _run_server(args):
-    app_folder = os.path.join(sys.prefix, 'smif', 'app')
+    app_folder = pkg_resources.resource_filename('smif', 'app/dist')
     get_data_interface = make_get_data_interface(args)
     app = create_app(
         static_folder=app_folder,
