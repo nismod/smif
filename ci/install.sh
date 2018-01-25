@@ -6,7 +6,6 @@
 #
 # This script is taken from Scikit-Learn (http://scikit-learn.org/)
 #
-# THIS SCRIPT IS SUPPOSED TO BE AN EXAMPLE. MODIFY IT ACCORDING TO YOUR NEEDS!
 
 set -e
 
@@ -27,14 +26,29 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Configure the conda environment and put it in the path using the
     # provided versions
     conda config --add channels conda-forge
-    conda create -n testenv --yes python=$PYTHON_VERSION pip numpy pyyaml fiona rtree shapely scikit-optimize
+    conda create -n testenv --yes python=$PYTHON_VERSION \
+        fiona \
+        flask \
+        isodate \
+        networkx \
+        numpy \
+        pint \
+        pytest \
+        pytest-cov \
+        python-dateutil \
+        pyyaml \
+        rtree \
+        scikit-optimize \
+        shapely
     source activate testenv
-
-elif [[ "$DISTRIB" == "ubuntu" ]]; then
-    # Use standard ubuntu packages in their default version
-    echo ubuntu
 fi
 
-if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage coveralls
-fi
+# Pip install by default
+pip install -r requirements.txt
+python setup.py develop
+
+# Install node and npm dependencies
+nvm install 6.11.4
+nvm use 6.11.4
+cd $TRAVIS_BUILD_DIR/src/smif/app && npm install
+cd $TRAVIS_BUILD_DIR

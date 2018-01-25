@@ -216,7 +216,7 @@ class TestDependencyGraph:
         assert energy_model in graph
         assert elec_scenario in graph
 
-        assert graph.edges() == [(elec_scenario, energy_model)]
+        assert list(graph.edges()) == [(elec_scenario, energy_model)]
 
     def test_get_model_sets(self, get_sector_model):
         regions = Mock()
@@ -265,7 +265,7 @@ class TestDependencyGraph:
         sos_model.check_dependencies()
 
         graph = sos_model.dependency_graph
-        actual = networkx.topological_sort(graph, reverse=False)
+        actual = list(networkx.topological_sort(graph))
         assert actual == [elec_scenario, energy_model]
 
 

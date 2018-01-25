@@ -1,0 +1,2 @@
+include src/smif/app/dist/*
+recursive-include smif/sample_project/
