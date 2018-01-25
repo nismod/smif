@@ -92,6 +92,22 @@ class PropertySelector extends Component {
         )
     }
 
+    renderWarning(message) {
+        return (
+            <div className="alert alert-warning">
+                {message}
+            </div>
+        )
+    }
+
+    renderInfo(message) {
+        return (
+            <div className="alert alert-info">
+                {message}
+            </div>
+        )
+    }
+
     render() {
         const {name, activeProperties, availableProperties} = this.props
 
