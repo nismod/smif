@@ -122,7 +122,7 @@ class SosModelRunItem extends Component {
         } else if (itemLink == "" || itemLink == undefined || itemLink == null) {
             return this.renderDanger('There is no itemLink configured')
         } else if (items == null || items == undefined || items.length == 0) {
-            return this.renderDanger('There are no items in this list')            
+            return this.renderInfo('There are no items in this list')            
         } else {
             return this.renderItems(itemname, items, itemLink)
         }

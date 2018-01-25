@@ -159,7 +159,7 @@ class PropertyList extends Component {
             return this.renderDanger('The items property is not initialised')
         }
         else if (items.length == 0) {
-            return this.renderDanger('There are no ' + itemsName + ' configured')
+            return this.renderInfo('There are no ' + itemsName + ' configured')
         } else {
             return this.renderPropertyList(itemsName, items, columns, editButton, deleteButton)
         }

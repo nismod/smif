@@ -179,7 +179,7 @@ class NarrativeSelector extends Component {
         } else {
             selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)
             if (selectedSosModel.narrative_sets == null || selectedSosModel.narrative_sets == undefined || selectedSosModel.narrative_sets[0] == undefined) {
-                return this.renderDanger('There are no NarrativeSets configured in the SosModel')
+                return this.renderInfo('There are no NarrativeSets configured in the SosModel')
             }
 
             selectedNarratives = this.pickNarrativesBySets(selectedSosModel.narrative_sets, narratives)
