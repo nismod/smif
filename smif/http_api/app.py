@@ -16,7 +16,7 @@ def get_data_interface():
     """Return a data_layer.DataInterface
     """
     return DatafileInterface(
-        os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'fixtures', 'single_run')
+        os.path.join(os.path.dirname(__file__), '..', '..', 'smif', 'sample_project')
     )
 
 
