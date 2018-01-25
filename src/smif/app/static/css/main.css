@@ -1,0 +1,18 @@
+/**
+ * Top-level and utility
+ */
+
+.table-projectoverview {
+    width: 100%;
+    margin: 20px auto;
+    table-layout: fixed;
+}
+.table-projectoverview .col-name {
+    width: 20%;
+}
+.table-projectoverview .col-desc {
+    width: 70%;
+}
+.table-projectoverview .col-action {
+    width: 10%;
+}
