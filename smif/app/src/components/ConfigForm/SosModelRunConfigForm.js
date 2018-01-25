@@ -59,23 +59,7 @@ class SosModelRunConfigForm extends Component {
      */
         const { scenarios } = this.state.selectedSosModelRun
 
-        if (scenarios === undefined || scenarios[0] === undefined) {
-            // there are no scenarios defined
-            // Initialize array
-            // Add scenario_set and scenario
-            scenarios.push({[scenario_set]: scenario})
-        }
-        else {
-            for (let i = 0; i < scenarios.length; i++) {
-                if (scenarios[i][scenario_set] != null) {
-                    scenarios[i][scenario_set] = scenario
-                    break
-                } else if (i == (scenarios.length - 1)) {
-                    scenarios.push({[scenario_set]: scenario})
-                    break
-                }
-            }
-        }
+        scenarios[scenario_set] = scenario
     }
 
     handleNarrativeChange(narrative_set, narrative, active) {

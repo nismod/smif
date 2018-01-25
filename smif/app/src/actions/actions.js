@@ -99,7 +99,7 @@ export function createSosModelRun(sosModelRunName){
             'description': '', 
             'stamp': datetime.toISOString(),  
             'sos_model': '',
-            'scenarios': [],
+            'scenarios': {},
             'narratives': [],
             'decision_module': '', 
             'timesteps': []
