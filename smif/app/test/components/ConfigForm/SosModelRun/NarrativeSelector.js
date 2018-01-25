@@ -19,19 +19,19 @@ describe('<NarrativeSelector />', () => {
      
     it('warning no sosModel selected', () => {
         var custom_sos_model_run = Object.assign({}, sos_model_run)
-        custom_sos_model_run.sos_model = ""
+        custom_sos_model_run.sos_model = ''
 
         render = shallow(<NarrativeSelector sosModelRun={custom_sos_model_run} sosModels={sos_models} narratives={narratives} />)
-        warning = render.find('[id="narrative_selector_warning"]')
+        warning = render.find('[id="narrative_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There is no SosModel configured in the SosModelRun")
+        expect(warning.html()).to.contain('There is no SosModel configured in the SosModelRun')
 
         custom_sos_model_run.sos_model = null
 
         render = shallow(<NarrativeSelector sosModelRun={custom_sos_model_run} sosModels={sos_models} narratives={narratives} />)
-        warning = render.find('[id="narrative_selector_warning"]')
+        warning = render.find('[id="narrative_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There is no SosModel configured in the SosModelRun")
+        expect(warning.html()).to.contain('There is no SosModel configured in the SosModelRun')
     })
 
     it('warning no narrativeSets in sosModel', () => {
@@ -39,51 +39,51 @@ describe('<NarrativeSelector />', () => {
         custom_sos_models[0].narrative_sets = []
 
         render = shallow(<NarrativeSelector sosModelRun={sos_model_run} sosModels={custom_sos_models} narratives={narratives} />)
-        warning = render.find('[id="narrative_selector_warning"]')
+        warning = render.find('[id="narrative_selector_alert-info"]')
 
-        expect(warning.html()).to.contain("There are no NarrativeSets configured in the SosModel")
+        expect(warning.html()).to.contain('There are no NarrativeSets configured in the SosModel')
 
         custom_sos_models[0].narrative_sets = null
 
         render = shallow(<NarrativeSelector sosModelRun={sos_model_run} sosModels={custom_sos_models} narratives={narratives} />)
-        warning = render.find('[id="narrative_selector_warning"]')
+        warning = render.find('[id="narrative_selector_alert-info"]')
 
-        expect(warning.html()).to.contain("There are no NarrativeSets configured in the SosModel")
+        expect(warning.html()).to.contain('There are no NarrativeSets configured in the SosModel')
     })
 
     it('warning no sosModelRun configured', () => {
         render = shallow(<NarrativeSelector sosModelRun={empty_object} sosModels={sos_models} narratives={narratives} />)
-        warning = render.find('[id="narrative_selector_warning"]')
+        warning = render.find('[id="narrative_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There is no SosModelRun configured")
+        expect(warning.html()).to.contain('There is no SosModelRun configured')
 
         render = shallow(<NarrativeSelector sosModelRun={null} sosModels={sos_models} narratives={narratives} />)
-        warning = render.find('[id="narrative_selector_warning"]')
+        warning = render.find('[id="narrative_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There is no SosModelRun configured")
+        expect(warning.html()).to.contain('There is no SosModelRun configured')
     })
 
     it('warning no sosModels configured', () => {
         render = shallow(<NarrativeSelector sosModelRun={sos_model_run} sosModels={empty_array} narratives={narratives} />)
-        warning = render.find('[id="narrative_selector_warning"]')
+        warning = render.find('[id="narrative_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no SosModels configured")
+        expect(warning.html()).to.contain('There are no SosModels configured')
 
         render = shallow(<NarrativeSelector sosModelRun={sos_model_run} sosModels={null} narratives={narratives} />)
-        warning = render.find('[id="narrative_selector_warning"]')
+        warning = render.find('[id="narrative_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no SosModels configured")
+        expect(warning.html()).to.contain('There are no SosModels configured')
     })
 
     it('warning no narratives configured', () => {
         render = shallow(<NarrativeSelector sosModelRun={sos_model_run} sosModels={sos_models} narratives={empty_array} />)
-        warning = render.find('[id="narrative_selector_warning"]')
+        warning = render.find('[id="narrative_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no Narratives configured")
+        expect(warning.html()).to.contain('There are no Narratives configured')
 
         render = shallow(<NarrativeSelector sosModelRun={sos_model_run} sosModels={sos_models} narratives={null} />)
-        warning = render.find('[id="narrative_selector_warning"]')
+        warning = render.find('[id="narrative_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no Narratives configured")
+        expect(warning.html()).to.contain('There are no Narratives configured')
     })
 })

@@ -43,36 +43,36 @@ describe('<ProjectOverviewItem />', () => {
     it('warning no itemname', () => {
         wrapper = shallow(<ProjectOverviewItem itemname={""} items={items} itemLink={itemlink} />)
 
-        item = wrapper.find('[id="project_overview_item_warning"]')
+        item = wrapper.find('[id="project_overview_item_alert-danger"]')
         expect(item.html()).to.contain('There is no itemname configured')
 
         wrapper = shallow(<ProjectOverviewItem itemname={null} items={items} itemLink={itemlink} />)
 
-        item = wrapper.find('[id="project_overview_item_warning"]')
+        item = wrapper.find('[id="project_overview_item_alert-danger"]')
         expect(item.html()).to.contain('There is no itemname configured')
     })
 
     it('warning no items', () => {
         wrapper = shallow(<ProjectOverviewItem itemname={itemname} items={empty_array} itemLink={itemlink} />)
 
-        item = wrapper.find('[id="project_overview_item_warning"]')
+        item = wrapper.find('[id="project_overview_item_alert-info"]')
         expect(item.html()).to.contain('There are no items in this list')
 
         wrapper = shallow(<ProjectOverviewItem itemname={itemname} items={null} itemLink={itemlink} />)
 
-        item = wrapper.find('[id="project_overview_item_warning"]')
+        item = wrapper.find('[id="project_overview_item_alert-info"]')
         expect(item.html()).to.contain('There are no items in this list')
     })
 
     it('warning no itemLink', () => {
         wrapper = shallow(<ProjectOverviewItem itemname={itemname} items={items} itemLink={""} />)
 
-        item = wrapper.find('[id="project_overview_item_warning"]')
+        item = wrapper.find('[id="project_overview_item_alert-danger"]')
         expect(item.html()).to.contain('There is no itemLink configured')
 
         wrapper = shallow(<ProjectOverviewItem itemname={itemname} items={items} itemLink={null} />)
 
-        item = wrapper.find('[id="project_overview_item_warning"]')
+        item = wrapper.find('[id="project_overview_item_alert-danger"]')
         expect(item.html()).to.contain('There is no itemLink configured')
     })
 })

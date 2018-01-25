@@ -177,7 +177,7 @@ class ParameterFileSelector extends Component {
 
     renderDanger(message) {
         return (
-            <div className="alert alert-danger">
+            <div id="parameter_file_selector_alert-danger" className="alert alert-danger">
                 {message}
             </div>
         )
@@ -185,7 +185,7 @@ class ParameterFileSelector extends Component {
 
     renderWarning(message) {
         return (
-            <div className="alert alert-warning">
+            <div id="parameter_file_selector_alert-warning" className="alert alert-warning">
                 {message}
             </div>
         )
@@ -193,7 +193,7 @@ class ParameterFileSelector extends Component {
 
     renderInfo(message) {
         return (
-            <div className="alert alert-info">
+            <div id="parameter_file_selector_alert-info" className="alert alert-info">
                 {message}
             </div>
         )

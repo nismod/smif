@@ -92,7 +92,7 @@ class SosModelRunItem extends Component {
 
     renderDanger(message) {
         return (
-            <div id="project_overview_item_warning" className="alert alert-danger">
+            <div id="project_overview_item_alert-danger" className="alert alert-danger">
                 {message}
             </div>
         )
@@ -100,7 +100,7 @@ class SosModelRunItem extends Component {
 
     renderWarning(message) {
         return (
-            <div className="alert alert-warning">
+            <div id="project_overview_item_alert-warning" className="alert alert-warning">
                 {message}
             </div>
         )
@@ -108,7 +108,7 @@ class SosModelRunItem extends Component {
 
     renderInfo(message) {
         return (
-            <div className="alert alert-info">
+            <div id="project_overview_item_alert-info" className="alert alert-info">
                 {message}
             </div>
         )

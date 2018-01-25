@@ -130,7 +130,7 @@ class PropertyList extends Component {
 
     renderDanger(message) {
         return (
-            <div className="alert alert-danger">
+            <div id="property_list_alert-danger" className="alert alert-danger">
                 {message}
             </div>
         )
@@ -138,7 +138,7 @@ class PropertyList extends Component {
 
     renderWarning(message) {
         return (
-            <div className="alert alert-warning">
+            <div id="property_list_alert-warning" className="alert alert-warning">
                 {message}
             </div>
         )
@@ -146,7 +146,7 @@ class PropertyList extends Component {
 
     renderInfo(message) {
         return (
-            <div className="alert alert-info">
+            <div id="property_list_alert-info" className="alert alert-info">
                 {message}
             </div>
         )

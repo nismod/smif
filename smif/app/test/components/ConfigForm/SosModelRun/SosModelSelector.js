@@ -26,7 +26,7 @@ describe('<SosModelSelector />', () => {
 
     it('selects no sosModel when none is selected in sosModelRun', () => {
         var custom_sos_model_run = Object.assign({}, sos_model_run)
-        custom_sos_model_run.sos_model = ""
+        custom_sos_model_run.sos_model = ''
 
         render = shallow(<SosModelSelector sosModelRun={custom_sos_model_run} sosModels={sos_models} />)
 
@@ -35,25 +35,25 @@ describe('<SosModelSelector />', () => {
 
     it('warning no sosModelRun configured', () => {
         render = shallow(<SosModelSelector sosModelRun={empty_object} sosModels={sos_models} />)
-        warning = render.find('[id="sos_model_selector_warning"]')
+        warning = render.find('[id="sos_model_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There is no SosModelRun configured")
+        expect(warning.html()).to.contain('There is no SosModelRun configured')
 
         render = shallow(<SosModelSelector sosModelRun={null} sosModels={sos_models} />)
-        warning = render.find('[id="sos_model_selector_warning"]')
+        warning = render.find('[id="sos_model_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There is no SosModelRun configured")
+        expect(warning.html()).to.contain('There is no SosModelRun configured')
     })
 
     it('warning no sosModelRun configured', () => {
         render = shallow(<SosModelSelector sosModelRun={sos_model_run} sosModels={empty_array} />)
-        warning = render.find('[id="sos_model_selector_warning"]')
+        warning = render.find('[id="sos_model_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no SosModels configured")
+        expect(warning.html()).to.contain('There are no SosModels configured')
 
         render = shallow(<SosModelSelector sosModelRun={sos_model_run} sosModels={null} />)
-        warning = render.find('[id="sos_model_selector_warning"]')
+        warning = render.find('[id="sos_model_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no SosModels configured")
+        expect(warning.html()).to.contain('There are no SosModels configured')
     })
 })

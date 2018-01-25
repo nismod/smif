@@ -132,7 +132,7 @@ class ScenarioSelector extends Component {
 
     renderDanger(message) {
         return (
-            <div id="scenario_selector_warning" className="alert alert-danger">
+            <div id="scenario_selector_alert-danger" className="alert alert-danger">
                 {message}
             </div>
         )
@@ -140,7 +140,7 @@ class ScenarioSelector extends Component {
 
     renderWarning(message) {
         return (
-            <div className="alert alert-warning">
+            <div id="scenario_selector_alert-warning" className="alert alert-warning">
                 {message}
             </div>
         )
@@ -148,7 +148,7 @@ class ScenarioSelector extends Component {
 
     renderInfo(message) {
         return (
-            <div className="alert alert-info">
+            <div id="scenario_selector_alert-info" className="alert alert-info">
                 {message}
             </div>
         )
@@ -167,7 +167,7 @@ class ScenarioSelector extends Component {
         } else if (scenarios == null || scenarios == undefined || scenarios[0] == null) {
             return this.renderDanger('There are no Scenarios configured')
         } else if (sosModelRun.sos_model == "" || sosModelRun.sos_model == null || sosModelRun.sos_model == undefined) {
-            return this.renderDanger('There is no SosModel selected in the SosModelRun')
+            return this.renderInfo('There is no SosModel selected in the SosModelRun')
         } else {
             selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)
             if (selectedSosModel.scenario_sets == null || selectedSosModel.scenario_sets == undefined || selectedSosModel.scenario_sets[0] == undefined) {

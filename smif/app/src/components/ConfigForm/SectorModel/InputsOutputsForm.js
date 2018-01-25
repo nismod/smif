@@ -165,7 +165,7 @@ class InputsOutputsForm extends Component {
 
     renderDanger(message) {
         return (
-            <div className="alert alert-danger">
+            <div id="inputs_outputs_form_alert-danger" className="alert alert-danger">
                 {message}
             </div>
         )
@@ -173,7 +173,7 @@ class InputsOutputsForm extends Component {
 
     renderWarning(message) {
         return (
-            <div className="alert alert-warning">
+            <div id="inputs_outputs_form_alert-warning" className="alert alert-warning">
                 {message}
             </div>
         )
@@ -181,7 +181,7 @@ class InputsOutputsForm extends Component {
 
     renderInfo(message) {
         return (
-            <div className="alert alert-info">
+            <div id="inputs_outputs_form_alert-info" className="alert alert-info">
                 {message}
             </div>
         )
