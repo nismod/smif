@@ -167,7 +167,7 @@ class DependencySelector extends Component {
         )
     }
 
-    renderWarning(message) {
+    renderDanger(message) {
         return (
             <div className="alert alert-danger">
                 {message}
@@ -179,9 +179,9 @@ class DependencySelector extends Component {
         const {dependencies, sectorModels} = this.props
 
         if (dependencies == undefined) {
-            return this.renderWarning('Dependencies are undefined')
+            return this.renderDanger('Dependencies are undefined')
         } else if (sectorModels == null) {
-            return this.renderWarning('There are no sectorModels configured')
+            return this.renderDanger('There are no sectorModels configured')
         } else {
             return this.renderDependencySelector(dependencies, sectorModels)
         }

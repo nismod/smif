@@ -138,7 +138,7 @@ class NarrativeSelector extends Component {
         )
     }
 
-    renderWarning(message) {
+    renderDanger(message) {
         return (
             <div id="narrative_selector_warning" className="alert alert-danger">
                 {message}
@@ -153,17 +153,17 @@ class NarrativeSelector extends Component {
         let selectedNarratives = null
 
         if (sosModelRun == null || sosModelRun == undefined || Object.keys(sosModelRun).length == 0) {
-            return this.renderWarning('There is no SosModelRun configured')
+            return this.renderDanger('There is no SosModelRun configured')
         } else if (sosModels == null || sosModels == undefined || sosModels[0] == null) {
-            return this.renderWarning('There are no SosModels configured')
+            return this.renderDanger('There are no SosModels configured')
         } else if (narratives == null || narratives == undefined || narratives[0] == null) {
-            return this.renderWarning('There are no Narratives configured')       
+            return this.renderDanger('There are no Narratives configured')       
         } else if (sosModelRun.sos_model == "" || sosModelRun.sos_model == null || sosModelRun.sos_model == undefined) {
-            return this.renderWarning('There is no SosModel configured in the SosModelRun')
+            return this.renderDanger('There is no SosModel configured in the SosModelRun')
         } else {
             selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)
             if (selectedSosModel.narrative_sets == null || selectedSosModel.narrative_sets == undefined || selectedSosModel.narrative_sets[0] == undefined) {
-                return this.renderWarning('There are no NarrativeSets configured in the SosModel')
+                return this.renderDanger('There are no NarrativeSets configured in the SosModel')
             }
 
             selectedNarratives = this.pickNarrativesBySets(selectedSosModel.narrative_sets, narratives)

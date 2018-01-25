@@ -84,7 +84,7 @@ class PropertySelector extends Component {
         )
     }
 
-    renderWarning(message) {
+    renderDanger(message) {
         return (
             <div className="alert alert-danger">
                 {message}
@@ -96,7 +96,7 @@ class PropertySelector extends Component {
         const {name, activeProperties, availableProperties} = this.props
 
         if (availableProperties == null || availableProperties.length == 0) {
-            return this.renderWarning('There are no ' + name + ' properties available')
+            return this.renderDanger('There are no ' + name + ' properties available')
         } else {
             let selectedProperties = this.flagActiveSectorModels(activeProperties, availableProperties)
             return this.renderProperySelector(selectedProperties)

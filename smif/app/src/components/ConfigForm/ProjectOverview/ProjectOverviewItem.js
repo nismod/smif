@@ -90,7 +90,7 @@ class SosModelRunItem extends Component {
         }
     }
 
-    renderWarning(message) {
+    renderDanger(message) {
         return (
             <div id="project_overview_item_warning" className="alert alert-danger">
                 {message}
@@ -102,11 +102,11 @@ class SosModelRunItem extends Component {
         const {itemname, items, itemLink} = this.props
 
         if (itemname == "" || itemname == undefined || itemname == null) {
-            return this.renderWarning('There is no itemname configured')
+            return this.renderDanger('There is no itemname configured')
         } else if (itemLink == "" || itemLink == undefined || itemLink == null) {
-            return this.renderWarning('There is no itemLink configured')
+            return this.renderDanger('There is no itemLink configured')
         } else if (items == null || items == undefined || items.length == 0) {
-            return this.renderWarning('There are no items in this list')            
+            return this.renderDanger('There are no items in this list')            
         } else {
             return this.renderItems(itemname, items, itemLink)
         }

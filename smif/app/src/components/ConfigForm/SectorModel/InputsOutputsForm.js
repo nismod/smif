@@ -163,7 +163,7 @@ class InputsOutputsForm extends Component {
         )
     }
 
-    renderWarning(message) {
+    renderDanger(message) {
         return (
             <div className="alert alert-danger">
                 {message}
@@ -177,12 +177,12 @@ class InputsOutputsForm extends Component {
         if (items == undefined || items == null)
         {
             if (isInputs) {
-                return this.renderWarning('Inputs are undefined')
+                return this.renderDanger('Inputs are undefined')
             } else if (isOutputs) {
-                return this.renderWarning('Outputs are undefined')
+                return this.renderDanger('Outputs are undefined')
             }
         } else if ((isInputs && isOutputs) || (!isInputs && !isOutputs)) {
-            return this.renderWarning('Item type is not selected')
+            return this.renderDanger('Item type is not selected')
         } else if (isInputs) {
             return this.renderInputForm('input')
         } else if (isOutputs) {
