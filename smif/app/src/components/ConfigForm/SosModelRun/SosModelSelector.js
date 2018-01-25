@@ -39,6 +39,22 @@ class SosModelSelector extends Component {
         )
     }
 
+    renderWarning(message) {
+        return (
+            <div className="alert alert-warning">
+                {message}
+            </div>
+        )
+    }
+
+    renderInfo(message) {
+        return (
+            <div className="alert alert-info">
+                {message}
+            </div>
+        )
+    }
+
     render() {
         const {sosModelRun, sosModels} = this.props
 

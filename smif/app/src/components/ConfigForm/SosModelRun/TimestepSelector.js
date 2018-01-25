@@ -123,6 +123,22 @@ class TimestepSelector extends Component {
         )
     }
 
+    renderWarning(message) {
+        return (
+            <div className="alert alert-warning">
+                {message}
+            </div>
+        )
+    }
+
+    renderInfo(message) {
+        return (
+            <div className="alert alert-info">
+                {message}
+            </div>
+        )
+    }
+
     render() {
         const {timeSteps} = this.props
         const {baseYear, endYear, resolution} = this.state
