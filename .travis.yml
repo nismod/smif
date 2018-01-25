@@ -27,19 +27,19 @@ install:
 - python setup.py develop
 - nvm install 6.11.4
 - nvm use 6.11.4
-- cd $TRAVIS_BUILD_DIR/smif/app && npm install
+- cd $TRAVIS_BUILD_DIR/src/smif/app && npm install
 script:
 - cd $TRAVIS_BUILD_DIR && python setup.py test
-- cd $TRAVIS_BUILD_DIR/smif/app && npm test
+- cd $TRAVIS_BUILD_DIR/src/smif/app && npm test
 after_success:
 - cd $TRAVIS_BUILD_DIR
 - if [[ "$COVERAGE" == "true" ]]; then bash <(curl -s https://codecov.io/bash) -cF python || echo "failed"; fi
-- cd $TRAVIS_BUILD_DIR/smif/app && npm run-script report
+- cd $TRAVIS_BUILD_DIR/src/smif/app && npm run-script report
 - if [[ "$COVERAGE" == "true" ]]; then bash <(curl -s https://codecov.io/bash) -cF javascript || echo "failed"; fi
 notifications:
   email: false
 before_deploy:
-  cd $TRAVIS_BUILD_DIR/smif/app && npm run build
+  cd $TRAVIS_BUILD_DIR/src/smif/app && npm run build
 deploy:
   provider: pypi
   user: willu47
