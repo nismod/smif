@@ -99,7 +99,7 @@ class DependencySelector extends Component {
         })
     }
 
-    renderDependencySelector(dependencies, sectorModels) {
+    renderDependencySelector(dependencies, sectorModels, scenarioSets) {
 
         return (
             <div>
@@ -114,6 +114,13 @@ class DependencySelector extends Component {
                                     <label>Source</label>
                                     <select autoFocus className={this.state.className.SourceModel} name="SourceModel" defaultValue="none" onChange={this.handleChange}>
                                         <option disabled="disabled" value="none">Please select a source</option>
+                                        <option disabled="disabled">Scenario Sets</option>
+                                        {
+                                            scenarioSets.map((scenarioSet, i) => (
+                                                <option key={i} value={scenarioSet.name}>{scenarioSet.name}</option>
+                                            ))
+                                        }
+                                        <option disabled="disabled">Sector Models</option>
                                         {
                                             sectorModels.map((sectorModel, i) => (
                                                 <option key={i} value={sectorModel.name}>{sectorModel.name}</option>
@@ -192,14 +199,22 @@ class DependencySelector extends Component {
     }
 
     render() {
-        const {dependencies, sectorModels} = this.props
+        const {dependencies, sectorModels, scenarioSets} = this.props
 
-        if (dependencies == undefined) {
+        console.log(scenarioSets)
+
+        if (dependencies == null || dependencies == undefined) {
             return this.renderDanger('Dependencies are undefined')
-        } else if (sectorModels == null) {
-            return this.renderInfo('There are no sectorModels configured')
+        } else if ((sectorModels == null || sectorModels == undefined) && (scenarioSets == null || scenarioSets == undefined)) {
+            return this.renderInfo('There are no sectorModels and scenarioSets configured')
+        } else if ((sectorModels == null || sectorModels == undefined) || (scenarioSets == null || scenarioSets == undefined)) {
+            if (sectorModels == null || sectorModels == undefined) {
+                return this.renderDependencySelector(dependencies, [], scenarioSets)
+            } else if (scenarioSets == null || scenarioSets == undefined) {
+                return this.renderDependencySelector(dependencies, sectorModels, [])
+            }
         } else {
-            return this.renderDependencySelector(dependencies, sectorModels)
+            return this.renderDependencySelector(dependencies, sectorModels, scenarioSets)
         }
     }
 }
@@ -207,6 +222,7 @@ class DependencySelector extends Component {
 DependencySelector.propTypes = {
     dependencies: PropTypes.array,
     sectorModels: PropTypes.array,
+    scenarioSets: PropTypes.array,
     onChange: PropTypes.func,
     onDelete: PropTypes.func
 }
