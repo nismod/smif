@@ -24,6 +24,7 @@ addons:
 install:
 - source tests/travis_install.sh
 - pip install -r requirements.txt
+- python setup.py develop
 - nvm install 6.11.4
 - nvm use 6.11.4
 - cd $TRAVIS_BUILD_DIR/smif/app && npm install
