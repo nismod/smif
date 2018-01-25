@@ -31,7 +31,7 @@ class SosModelSelector extends Component {
         )
     }
 
-    renderWarning(message) {
+    renderDanger(message) {
         return (
             <div id="sos_model_selector_warning" className="alert alert-danger">
                 {message}
@@ -43,9 +43,9 @@ class SosModelSelector extends Component {
         const {sosModelRun, sosModels} = this.props
 
         if (sosModelRun == null || sosModelRun == undefined || Object.keys(sosModelRun).length == 0) {
-            return this.renderWarning('There is no SosModelRun configured')
+            return this.renderDanger('There is no SosModelRun configured')
         } else if (sosModels == null || sosModels == undefined || sosModels[0] == null) {
-            return this.renderWarning('There are no SosModels configured')
+            return this.renderDanger('There are no SosModels configured')
         } else if (sosModelRun.sos_model == "") {
             return this.renderSosModelSelector(sosModels, 'none')
         } else {

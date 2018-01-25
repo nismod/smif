@@ -128,7 +128,7 @@ class PropertyList extends Component {
         )
     }
 
-    renderWarning(message) {
+    renderDanger(message) {
         return (
             <div className="alert alert-danger">
                 {message}
@@ -140,10 +140,10 @@ class PropertyList extends Component {
         const {itemsName, items, columns, editButton, deleteButton} = this.props
 
         if (items == null || items == undefined) {
-            return this.renderWarning('The items property is not initialised')
+            return this.renderDanger('The items property is not initialised')
         }
         else if (items.length == 0) {
-            return this.renderWarning('There are no ' + itemsName + ' configured')
+            return this.renderDanger('There are no ' + itemsName + ' configured')
         } else {
             return this.renderPropertyList(itemsName, items, columns, editButton, deleteButton)
         }

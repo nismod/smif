@@ -115,7 +115,7 @@ class TimestepSelector extends Component {
         )
     }
 
-    renderWarning(message) {
+    renderDanger(message) {
         return (
             <div id="timestep_selector_warning" className="alert alert-danger">
                 {message}
@@ -128,7 +128,7 @@ class TimestepSelector extends Component {
         const {baseYear, endYear, resolution} = this.state
 
         if (timeSteps == null || timeSteps == undefined) {
-            return this.renderWarning('There are no TimeSteps configured')
+            return this.renderDanger('There are no TimeSteps configured')
         } else {
             return this.renderTimestepSelector(baseYear, endYear, resolution)
         }

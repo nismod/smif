@@ -206,7 +206,7 @@ class ParameterSelector extends Component {
         )
     }
 
-    renderWarning(message) {
+    renderDanger(message) {
         return (
             <div className="alert alert-danger">
                 {message}
@@ -218,7 +218,7 @@ class ParameterSelector extends Component {
         const {parameters} = this.props
 
         if (parameters == undefined) {
-            return this.renderWarning('Parameters are undefined')
+            return this.renderDanger('Parameters are undefined')
         } else {
             return this.renderParameterSelector(parameters)
         }

@@ -130,7 +130,7 @@ class ScenarioSelector extends Component {
         )
     }
 
-    renderWarning(message) {
+    renderDanger(message) {
         return (
             <div id="scenario_selector_warning" className="alert alert-danger">
                 {message}
@@ -145,17 +145,17 @@ class ScenarioSelector extends Component {
         let selectedSosModel = null
 
         if (sosModelRun == null || sosModelRun == undefined || Object.keys(sosModelRun).length == 0) {
-            return this.renderWarning('There is no SosModelRun configured')
+            return this.renderDanger('There is no SosModelRun configured')
         } else if (sosModels == null || sosModels == undefined || sosModels[0] == null) {
-            return this.renderWarning('There are no SosModels configured')
+            return this.renderDanger('There are no SosModels configured')
         } else if (scenarios == null || scenarios == undefined || scenarios[0] == null) {
-            return this.renderWarning('There are no Scenarios configured')
+            return this.renderDanger('There are no Scenarios configured')
         } else if (sosModelRun.sos_model == "" || sosModelRun.sos_model == null || sosModelRun.sos_model == undefined) {
-            return this.renderWarning('There is no SosModel configured in the SosModelRun')
+            return this.renderDanger('There is no SosModel selected in the SosModelRun')
         } else {
             selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)
             if (selectedSosModel.scenario_sets == null || selectedSosModel.scenario_sets == undefined || selectedSosModel.scenario_sets[0] == undefined) {
-                return this.renderWarning('There are no ScenarioSets configured in the SosModel')
+                return this.renderDanger('There are no ScenarioSets configured in the SosModel')
             }
 
             selectedScenarios = this.pickScenariosBySets(selectedSosModel.scenario_sets, scenarios)
