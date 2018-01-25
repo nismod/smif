@@ -11,14 +11,14 @@ class ScenarioSelector extends Component {
     pickSosModelByName(sos_model_name, sos_models) {
         /**
          * Get SosModel parameters, that belong to a given sos_model_name
-         * 
+         *
          * Arguments
          * ---------
          * sos_model_name: str
          *     Name identifier of the sos_model
          * sos_models: array
          *     Full list of available sos_models
-         * 
+         *
          * Returns
          * -------
          * Object
@@ -32,26 +32,26 @@ class ScenarioSelector extends Component {
         if (typeof sos_model === 'undefined') {
             sos_model = sos_models[0]
         }
-        
+
         return sos_model
     }
 
     pickScenariosBySets(scenario_sets, scenarios) {
-        /** 
+        /**
          * Get all the scenarios, that belong to a given scenario_sets
-         * 
+         *
          * Arguments
          * ---------
          * scenario_sets: str
          *     Name identifier of the scenario_sets
          * scenarios: array
          *     Full list of available scenarios
-         * 
+         *
          * Returns
          * -------
          * Object
          *     All scenarios that belong to the given scenario_sets
-         */ 
+         */
 
         let scenarios_in_sets = new Object()
 
@@ -67,26 +67,23 @@ class ScenarioSelector extends Component {
     flagActiveScenarios(selectedScenarios, sosModelRun) {
         /**
          * Flag the scenarios that are active in the project configuration
-         * 
+         *
          * Arguments
          * ---------
-         * 
+         *
          * Returns
          * -------
          * Object
          *     All scenarios complimented with a true or false active flag
          */
-
         Object.keys(selectedScenarios).forEach(function(scenarioSet) {
+
             for (let i = 0; i < selectedScenarios[scenarioSet].length; i++) {
                 selectedScenarios[scenarioSet][i].active = false
 
-                for (let k = 0; k < sosModelRun.scenarios.length; k++) {
+                for (var key in sosModelRun.scenarios) {
 
-                    let obj = {
-                        [scenarioSet]: selectedScenarios[scenarioSet][i].name
-                    }
-                    if (JSON.stringify(obj) === JSON.stringify(sosModelRun.scenarios[k])) {
+                    if ((scenarioSet == key) && (selectedScenarios[scenarioSet][i].name == sosModelRun.scenarios[key])) {
                         selectedScenarios[scenarioSet][i].active = true
                     }
                 }
@@ -104,7 +101,8 @@ class ScenarioSelector extends Component {
     }
 
     renderScenarioSelector(selectedScenarios) {
-        return (     
+
+        return (
             <div>
                 {
                     Object.keys(selectedScenarios).map((scenarioSet) => (
@@ -116,7 +114,7 @@ class ScenarioSelector extends Component {
                                         selectedScenarios[scenarioSet].map((scenario) => (
                                             <div className="form-check" key={scenario.name}>
                                                 <label className="form-check-label">
-                                                    <input className="form-check-input" type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} defaultChecked={scenario.active} onClick={this.handleChange}/>
+                                                    <input id={'radio_' + scenarioSet + '_' + scenario.name} className="form-check-input" type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} defaultChecked={scenario.active} onClick={this.handleChange}/>
                                                     {scenario.name}
                                                 </label>
                                             </div>
@@ -151,7 +149,7 @@ class ScenarioSelector extends Component {
         } else if (sosModels == null || sosModels == undefined || sosModels[0] == null) {
             return this.renderWarning('There are no SosModels configured')
         } else if (scenarios == null || scenarios == undefined || scenarios[0] == null) {
-            return this.renderWarning('There are no Scenarios configured')    
+            return this.renderWarning('There are no Scenarios configured')
         } else if (sosModelRun.sos_model == "" || sosModelRun.sos_model == null || sosModelRun.sos_model == undefined) {
             return this.renderWarning('There is no SosModel configured in the SosModelRun')
         } else {
@@ -162,7 +160,7 @@ class ScenarioSelector extends Component {
 
             selectedScenarios = this.pickScenariosBySets(selectedSosModel.scenario_sets, scenarios)
             selectedScenarios = this.flagActiveScenarios(selectedScenarios, sosModelRun)
-            
+
             return this.renderScenarioSelector(selectedScenarios)
         }
     }

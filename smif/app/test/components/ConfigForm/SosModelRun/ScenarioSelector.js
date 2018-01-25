@@ -17,9 +17,19 @@ describe('<ScenarioSelector />', () => {
         expect(render.html()).to.contain(scenarios[0].scenario_set)
     })
 
+    it('activate the radiobuttons for the selected scenarios', () => {
+        render = shallow(<ScenarioSelector sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} />)
+
+        let scenario_set = Object.keys(sos_model_run.scenarios)[0]
+        let scenario = sos_model_run.scenarios[scenario_set]
+
+        render = render.find('[id="radio_' + scenario_set + '_' + scenario + '"]')
+        expect(render.html()).to.contain('checked')
+    })
+
     it('warning no sosModel selected', () => {
         var custom_sos_model_run = Object.assign({}, sos_model_run)
-        custom_sos_model_run.sos_model = ""
+        custom_sos_model_run.sos_model = ''
 
         render = shallow(<ScenarioSelector sosModelRun={custom_sos_model_run} sosModels={sos_models} scenarios={scenarios} />)
         warning = render.find('[id="scenario_selector_warning"]')
