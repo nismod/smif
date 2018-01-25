@@ -49,8 +49,8 @@ describe('<TimestepSelector />', () => {
 
     it('warning no timeSteps configured', () => {
         render = shallow(<TimestepSelector timeSteps={null} />)
-        warning = render.find('[id="timestep_selector_warning"]')
+        warning = render.find('[id="timestep_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no TimeSteps configured")
+        expect(warning.html()).to.contain('There are no TimeSteps configured')
     })
 })

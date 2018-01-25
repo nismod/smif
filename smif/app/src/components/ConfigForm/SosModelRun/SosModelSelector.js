@@ -33,7 +33,7 @@ class SosModelSelector extends Component {
 
     renderDanger(message) {
         return (
-            <div id="sos_model_selector_warning" className="alert alert-danger">
+            <div id="sos_model_selector_alert-danger" className="alert alert-danger">
                 {message}
             </div>
         )
@@ -41,7 +41,7 @@ class SosModelSelector extends Component {
 
     renderWarning(message) {
         return (
-            <div className="alert alert-warning">
+            <div id="sos_model_selector_alert-warning" className="alert alert-warning">
                 {message}
             </div>
         )
@@ -49,7 +49,7 @@ class SosModelSelector extends Component {
 
     renderInfo(message) {
         return (
-            <div className="alert alert-info">
+            <div id="sos_model_selector_alert-info" className="alert alert-info">
                 {message}
             </div>
         )

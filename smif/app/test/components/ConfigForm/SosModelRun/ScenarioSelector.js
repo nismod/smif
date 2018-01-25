@@ -32,16 +32,16 @@ describe('<ScenarioSelector />', () => {
         custom_sos_model_run.sos_model = ''
 
         render = shallow(<ScenarioSelector sosModelRun={custom_sos_model_run} sosModels={sos_models} scenarios={scenarios} />)
-        warning = render.find('[id="scenario_selector_warning"]')
+        warning = render.find('[id="scenario_selector_alert-info"]')
 
-        expect(warning.html()).to.contain("There is no SosModel configured in the SosModelRun")
+        expect(warning.html()).to.contain('There is no SosModel selected in the SosModelRun')
 
         custom_sos_model_run.sos_model = null
 
         render = shallow(<ScenarioSelector sosModelRun={custom_sos_model_run} sosModels={sos_models} scenarios={scenarios} />)
-        warning = render.find('[id="scenario_selector_warning"]')
+        warning = render.find('[id="scenario_selector_alert-info"]')
 
-        expect(warning.html()).to.contain("There is no SosModel configured in the SosModelRun")
+        expect(warning.html()).to.contain('There is no SosModel selected in the SosModelRun')
     })
 
     it('warning no scenariosets in sosModel', () => {
@@ -49,51 +49,51 @@ describe('<ScenarioSelector />', () => {
         custom_sos_models[0].scenario_sets = []
 
         render = shallow(<ScenarioSelector sosModelRun={sos_model_run} sosModels={custom_sos_models} scenarios={scenarios} />)
-        warning = render.find('[id="scenario_selector_warning"]')
+        warning = render.find('[id="scenario_selector_alert-info"]')
 
-        expect(warning.html()).to.contain("There are no ScenarioSets configured in the SosModel")
+        expect(warning.html()).to.contain('There are no ScenarioSets configured in the SosModel')
 
         custom_sos_models[0].scenario_sets = null
 
         render = shallow(<ScenarioSelector sosModelRun={sos_model_run} sosModels={custom_sos_models} scenarios={scenarios} />)
-        warning = render.find('[id="scenario_selector_warning"]')
+        warning = render.find('[id="scenario_selector_alert-info"]')
 
-        expect(warning.html()).to.contain("There are no ScenarioSets configured in the SosModel")
+        expect(warning.html()).to.contain('There are no ScenarioSets configured in the SosModel')
     })
 
     it('warning no sosModelRun configured', () => {
         render = shallow(<ScenarioSelector sosModelRun={empty_object} sosModels={sos_models} scenarios={scenarios} />)
-        warning = render.find('[id="scenario_selector_warning"]')
+        warning = render.find('[id="scenario_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There is no SosModelRun configured")
+        expect(warning.html()).to.contain('There is no SosModelRun configured')
 
         render = shallow(<ScenarioSelector sosModelRun={null} sosModels={sos_models} scenarios={scenarios} />)
-        warning = render.find('[id="scenario_selector_warning"]')
+        warning = render.find('[id="scenario_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There is no SosModelRun configured")
+        expect(warning.html()).to.contain('There is no SosModelRun configured')
     })
 
     it('warning no sosModels configured', () => {
         render = shallow(<ScenarioSelector sosModelRun={sos_model_run} sosModels={empty_array} scenarios={scenarios} />)
-        warning = render.find('[id="scenario_selector_warning"]')
+        warning = render.find('[id="scenario_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no SosModels configured")
+        expect(warning.html()).to.contain('There are no SosModels configured')
 
         render = shallow(<ScenarioSelector sosModelRun={sos_model_run} sosModels={null} scenarios={scenarios} />)
-        warning = render.find('[id="scenario_selector_warning"]')
+        warning = render.find('[id="scenario_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no SosModels configured")
+        expect(warning.html()).to.contain('There are no SosModels configured')
     })
 
     it('warning no scenarios configured', () => {
         render = shallow(<ScenarioSelector sosModelRun={sos_model_run} sosModels={sos_models} scenarios={empty_array} />)
-        warning = render.find('[id="scenario_selector_warning"]')
+        warning = render.find('[id="scenario_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no Scenarios configured")
+        expect(warning.html()).to.contain('There are no Scenarios configured')
 
         render = shallow(<ScenarioSelector sosModelRun={sos_model_run} sosModels={sos_models} scenarios={null} />)
-        warning = render.find('[id="scenario_selector_warning"]')
+        warning = render.find('[id="scenario_selector_alert-danger"]')
 
-        expect(warning.html()).to.contain("There are no Scenarios configured")
+        expect(warning.html()).to.contain('There are no Scenarios configured')
     })
 })
