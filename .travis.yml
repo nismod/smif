@@ -13,7 +13,7 @@ env:
   - SKIP_GENERATE_AUTHORS=1
   - SKIP_WRITE_GIT_CHANGELOG=1
   matrix:
-  - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
+  - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="false"
   - DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="true"
 install:
 - source tests/travis_install.sh
@@ -27,7 +27,9 @@ script:
 - cd $TRAVIS_BUILD_DIR/smif/app && npm test
 after_success:
 - cd $TRAVIS_BUILD_DIR
-- if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
+- if [[ "$COVERAGE" == "true" ]]; then bash <(curl -s https://codecov.io/bash) -cF python || echo "failed"; fi
+- cd $TRAVIS_BUILD_DIR/smif/app && npm run-script report
+- if [[ "$COVERAGE" == "true" ]]; then bash <(curl -s https://codecov.io/bash) -cF javascript || echo "failed"; fi
 notifications:
   email: false
 deploy:

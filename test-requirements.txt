@@ -6,3 +6,4 @@ pytest-cov
 pytest
 pylint
 better-apidoc
+codecov
