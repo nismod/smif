@@ -7,11 +7,11 @@ data (at any computed or pre-computed timestep) and write access to output data
 (at the current timestep).
 """
 
-from enum import Enum
 from logging import getLogger
-from types import MappingProxyType
 
+from enum import Enum
 from smif.model.scenario_model import ScenarioModel
+from types import MappingProxyType
 
 
 class DataHandle(object):

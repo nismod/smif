@@ -34,12 +34,12 @@ The key functions include:
   approaches
 
 """
-import importlib
 import logging
 import os
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
+import importlib
 from smif import StateData
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
