@@ -1,0 +1,54 @@
+@startuml
+skinparam {
+  shadowing false
+  classBackgroundColor white
+  classBorderColor black
+  noteBackgroundColor white
+  noteBorderColor #222
+}
+
+package smif.data_layer {
+  abstract class DataInterface {
+    - details of file system/database/API
+    ..
+    + {method} other methods to access model configuration and metadata
+    ...
+    ..
+    + read_parameters(modelrun_name, model_name)
+    + read_scenario_data(scenario_name, parameter_name, spatial_resolution,
+        temporal_resolution, timestep)
+    + read_results(modelrun_name, model_name, output_name, spatial_resolution,
+        temporal_resolution, timestep=None, modelset_iteration=None, decision_iteration=None)
+    + write_results(modelrun_name, model_name, output_name, data, spatial_resolution,
+        temporal_resolution, timestep=None, modelset_iteration=None, decision_iteration=None)
+  }
+
+  class DataHandle {
+    - store : DataInterface
+    - modelrun_name
+    - current_timestep
+    - timesteps
+    - modelset_iteration
+    - decision_iteration
+    - model_name
+    - inputs
+    - outputs
+    - dependencies
+    -- Data access --
+    + get_data(input_name, timestep=None)
+    + get_parameter(parameter_name)
+    + get_parameters()
+    + set_results(output_name, data)
+    + get_results(output_name, model_name=None, modelset_iteration=None,
+        decision_iteration=None, timestep=None)
+    -- Timestep helpers --
+    + current_timestep
+    + base_timestep
+    + previous_timestep
+    + timesteps
+    + get_base_timestep_data(input_name)
+    + get_previous_timestep_data(input_name)
+  }
+  DataHandle *-- DataInterface
+}
+@enduml
