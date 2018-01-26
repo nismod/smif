@@ -28,7 +28,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # provided versions
     conda config --add channels conda-forge
     conda create -n testenv --yes python=$PYTHON_VERSION \
-        codecov \
         fiona \
         flask \
         isodate \
