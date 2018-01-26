@@ -1308,8 +1308,7 @@ class DatafileInterface(DataInterface):
         """
         filename = filename + extension
         filepath = os.path.join(path, filename)
-        data = load(filepath)
-        return transform_leaves(data, _str_to_datetime)
+        return load(filepath)
 
     @staticmethod
     def _write_yaml_file(path, filename, data, extension='.yml'):
@@ -1328,118 +1327,5 @@ class DatafileInterface(DataInterface):
         """
         filename = filename + extension
         filepath = os.path.join(path, filename)
-        data = transform_leaves(data, _datetime_to_str)
         dump(data, filepath)
 
-
-def _datetime_to_str(obj, path):
-    if path[-1] in ('stamp', 'timestamp', 'created', 'updated') and isinstance(obj, datetime):
-        return obj.isoformat()
-    else:
-        return obj
-
-
-def _str_to_datetime(obj, path):
-    if path[-1] in ('stamp', 'timestamp', 'created', 'updated'):
-        try:
-            date = dateutil.parser.parse(obj)
-        except(ValueError):
-            date = obj
-    else:
-        date = obj
-    return date
-
-
-def transform_leaves(tree, leaf_transform):
-    """Call leaf_transform with the value of each non list/dict element of a
-    nested list/dict data structure and replace in-place with the returned
-    value.
-    """
-    if isinstance(tree, dict):
-        # start a new tree with an empty dict
-        new_tree = {}
-    elif isinstance(tree, list):
-        # start a new tree with a list of the same length as that passed in
-        new_tree = [None] * len(tree)
-    else:
-        # return anything else unchanged
-        return tree
-
-    # track lists and dicts visited
-    visited_ids = set()
-    # track nodes to visit
-    paths_to_visit = deque([()])
-
-    while paths_to_visit:
-        # get the next node to visit
-        path = paths_to_visit.popleft()
-        current = _get_by_path(tree, path)
-
-        # check for circularity
-        if isinstance(current, dict) or isinstance(current, list):
-            if id(current) in visited_ids:
-                raise ValueError("Circular reference detected")
-            else:
-                visited_ids.add(id(current))
-
-        if isinstance(current, dict):
-            # plan to visit each of the dict values
-            children = [path + (k,) for k in current.keys()]
-            paths_to_visit.extend(children)
-            # set an empty dict in the new tree
-            _set_by_path(new_tree, path, {})
-        elif isinstance(current, list):
-            # plan to visit each of the list entries
-            children = [path + (i,) for i in range(len(current))]
-            paths_to_visit.extend(children)
-            # set a list of None of identical length in the new tree
-            _set_by_path(new_tree, path, [None] * len(current))
-        else:
-            # pass object through transform function
-            transformed = leaf_transform(current, path)
-            # set the object in the new tree
-            _set_by_path(new_tree, path, transformed)
-
-    return new_tree
-
-
-def _get_by_path(tree, path):
-    """Loop down through a nested data structure to get a value
-
-        nested = {'a': {'b': {'c': False}}}
-        leaf = _get_by_path(
-            nested,
-            ['a', 'b', 'c']
-        )
-        # leaf == False
-    """
-    if not path:
-        return tree
-
-    tmp = tree
-    for key in path:
-        tmp = tmp[key]
-    return tmp
-
-
-def _set_by_path(tree, path, obj):
-    """Loop down through a nested data structure to set a value
-
-        nested = {'a': {'b': {'c': False}}}
-        _set_by_path(
-            nested,
-            ['a', 'b', 'c'],
-            True
-        )
-        # nested['a']['b']['c'] == True
-    """
-    if not path:
-        return
-
-    n = len(path)
-    tmp = tree
-    for i, key in enumerate(path):
-        if i == n - 1:
-            tmp[key] = obj
-        else:
-            tmp = tmp[key]
