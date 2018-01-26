@@ -10,7 +10,6 @@ from pytest import raises
 from smif.data_layer import (DataExistsError, DataMismatchError,
                              DataNotFoundError)
 from smif.data_layer.data_interface import DataInterface
-from smif.data_layer.datafile_interface import transform_leaves
 from smif.data_layer.load import dump
 
 
@@ -1072,46 +1071,6 @@ class TestDatafileInterface():
 
     def test_write_results_misshapen(self, setup_folder_structure, get_handler):
         pass
-
-
-def test_transform_leaves_empty():
-    tree = []
-    actual = transform_leaves(tree, replace_e)
-    assert id(tree) != id(actual)
-    assert actual == []
-
-
-def test_transform_leaves_non_tree():
-    tree = "not a tree"
-    actual = transform_leaves(tree, replace_e)
-    assert actual == tree
-
-
-def test_transform_list():
-    tree = ['a', 'b', 'c', 'd', 'e']
-    defensive_copy = deepcopy(tree)
-    actual = transform_leaves(tree, replace_e)
-    expected = ['a', 'b', 'c', 'd', 'XXX']
-    assert actual == expected
-    assert tree == defensive_copy
-
-
-def test_transform_dict():
-    tree = {'a': 'e', 'b': ['c', 'e']}
-    defensive_copy = deepcopy(tree)
-    actual = transform_leaves(tree, replace_e)
-    expected = {'a': 'XXX', 'b': ['c', 'XXX']}
-    assert actual == expected
-    assert tree == defensive_copy
-
-
-def test_transform_circular():
-    tree = {'b': 'e'}
-    tree['a'] = tree
-    with raises(ValueError) as ex:
-        transform_leaves(tree, replace_e)
-    assert 'Circular reference detected' in str(ex)
-
 
 def replace_e(obj, path):
     if obj == 'e':
