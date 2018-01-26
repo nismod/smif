@@ -28,20 +28,19 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # provided versions
     conda config --add channels conda-forge
     conda create -n testenv --yes python=3.6 \
+        codecov \
         fiona \
         flask \
         isodate \
         networkx \
         numpy \
         pint \
+        pytest \
+        pytest-cov \
         python-dateutil \
         pyyaml \
         rtree \
         scikit-optimize \
         shapely
     source activate testenv
-
-    if [[ "$COVERAGE" == "true" ]]; then
-        conda install pytest pytest-cov codecov
-    fi
 fi
