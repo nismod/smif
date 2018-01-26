@@ -44,7 +44,8 @@ after_success:
 notifications:
   email: false
 before_deploy:
-  cd $TRAVIS_BUILD_DIR/src/smif/app && npm run build
+- cd $TRAVIS_BUILD_DIR/src/smif/app && npm run build
+- cd $TRAVIS_BUILD_DIR
 deploy:
   provider: pypi
   user: willu47
