@@ -27,16 +27,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Configure the conda environment and put it in the path using the
     # provided versions
     conda config --add channels conda-forge
-    conda create -n testenv --yes python=$PYTHON_VERSION \
-        codecov \  # test
+    conda create -n testenv --yes python=3.6 \
         fiona \
         flask \
         isodate \
         networkx \
         numpy \
         pint \
-        pytest \  # test
-        pytest-cov \  # test
         python-dateutil \
         pyyaml \
         rtree \
@@ -44,11 +41,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         shapely
     source activate testenv
 
-elif [[ "$DISTRIB" == "ubuntu" ]]; then
-    # Use standard ubuntu packages in their default version
-    echo ubuntu
-fi
-
-if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage coveralls
+    if [[ "$COVERAGE" == "true" ]]; then
+        conda install pytest pytest-cov codecov
+    fi
 fi
