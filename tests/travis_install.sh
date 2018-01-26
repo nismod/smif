@@ -27,7 +27,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Configure the conda environment and put it in the path using the
     # provided versions
     conda config --add channels conda-forge
-    conda create -n testenv --yes python=3.6 \
+    conda create -n testenv --yes python=$PYTHON_VERSION \
         codecov \
         fiona \
         flask \
