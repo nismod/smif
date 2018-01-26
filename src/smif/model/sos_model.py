@@ -186,11 +186,7 @@ class SosModel(CompositeModel):
 
                 self.dependency_graph.add_edge(
                     source_model,
-                    sink_model,
-                    {
-                        'source': dependency.source,
-                        'sink': dependency.sink
-                    }
+                    sink_model
                 )
 
     def _get_model_sets_in_run_order(self):
@@ -207,7 +203,7 @@ class SosModel(CompositeModel):
         if networkx.is_directed_acyclic_graph(self.dependency_graph):
             # topological sort gives a single list from directed graph, currently
             # ignoring opportunities to run independent models in parallel
-            run_order = networkx.topological_sort(self.dependency_graph, reverse=False)
+            run_order = networkx.topological_sort(self.dependency_graph)
 
             # list of Models (typically ScenarioModel and SectorModel)
             ordered_sets = list(run_order)
@@ -222,7 +218,7 @@ class SosModel(CompositeModel):
             # contracted nodes, whose 'members' attribute refers back to the
             # original dependency graph
             ordered_sets = []
-            for node_id in networkx.topological_sort(condensation, reverse=False):
+            for node_id in networkx.topological_sort(condensation):
                 models = condensation.node[node_id]['members']
                 if len(models) == 1:
                     ordered_sets.append(models.pop())
