@@ -30,7 +30,21 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Configure the conda environment and put it in the path using the
     # provided versions
     conda config --add channels conda-forge
-    conda create -n testenv --yes python=$PYTHON_VERSION pip numpy pyyaml fiona rtree shapely scikit-optimize
+    conda create -n testenv --yes python=$PYTHON_VERSION \
+        codecov \  # test
+        fiona \
+        flask \
+        isodate \
+        networkx \
+        numpy \
+        pint \
+        pytest \  # test
+        pytest-cov \  # test
+        python-dateutil \
+        pyyaml \
+        rtree \
+        scikit-optimize \
+        shapely
     source activate testenv
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
