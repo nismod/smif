@@ -14,7 +14,6 @@ env:
   - SKIP_GENERATE_AUTHORS=1
   - SKIP_WRITE_GIT_CHANGELOG=1
   matrix:
-  - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="false"
   - DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="true"
 addons:
   apt:
