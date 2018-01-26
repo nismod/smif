@@ -1,101 +1,28 @@
 # Conda environment specification
-# 1. to export (recommend editing before checking in to git):
-#    conda env export > .environment.yml
-# 2. to import/create a copy of the environment:
+# To import/create a copy of the environment:
 #    conda env create -f .environment.yml
 name: smif
 channels:
 - conda-forge
 - defaults
 dependencies:
-- backports=1.0=py35_1
-- backports.functools_lru_cache=1.4=py35_1
-- ca-certificates=2017.11.5=0
-- certifi=2017.11.5=py35_0
-- click=6.7=py35_0
-- click-plugins=1.0.3=py35_0
-- cligj=0.4.0=py35_0
-- curl=7.55.1
-- cycler=0.10.0=py35_0
-- expat=2.1.0
-- fiona=1.7.10=py35_2
-- freetype=2.7
-- freexl=1.0.2
-- gdal=2.1.3
-- geos=3.6.2
-- hdf4=4.2.13
-- hdf5=1.10.1
-- icu=58.2
-- jpeg=9b
-- kealib=1.4.7
-- krb5=1.14.2
-- libiconv=1.14
-- libnetcdf=4.4.1.1
-- libpng=1.6.28
-- libpq=9.6.3
-- libspatialindex=1.8.5
-- libspatialite=4.3.0a
-- libssh2=1.8.0
-- libtiff=4.0.9
-- libxml2=2.9.5
-- matplotlib=2.1.0=py35_1
-- munch=2.2.0=py35_0
-- openjpeg=2.1.2
-- openssl=1.0.2l
-- pcre=8.39
-- pip=9.0.1=py35_0
-- proj4=4.9.3
-- pyparsing=2.2.0=py35_0
-- pyqt=5.6.0=py35_4
-- python=3.5.4=1
-- python-dateutil=2.6.1=py35_0
-- pytz=2017.3=py_2
-- pyyaml=3.12=py35_1
-- qt=5.6.2
-- rtree=0.8.3=py35_0
-- scikit-optimize=0.3=py35_0
-- setuptools=37.0.0=py35_0
-- shapely=1.6.2=py35_1
-- sip=4.18=py35_1
-- six=1.11.0=py35_1
-- sqlite=3.13.0
-- tornado=4.5.2=py35_0
-- wheel=0.30.0
-- xerces-c=3.2.0
-- yaml=0.1.6
-- zlib=1.2.11
-- mkl=2017.0.3=0
-- numpy=1.13.1=py35_0
-- scikit-learn=0.19.0=np113py35_0
-- scipy=0.19.1=np113py35_0
+- python=3.6
+- codecov  # test
+- fiona
+- flask
+- isodate
+- networkx
+- numpy
+- pint
+- pylint  # dev
+- pytest  # test
+- pytest-cov  # test
+- python-dateutil
+- pyyaml
+- rtree
+- scikit-optimize
+- shapely
+- sphinx  # docs
 - pip:
-  - alabaster==0.7.10
-  - aspy.yaml==1.0.0
-  - babel==2.5.3
-  - backports.functools-lru-cache==1.4
-  - better-apidoc==0.1.2
-  - cached-property==1.3.1
-  - chardet==3.0.4
-  - colorama==0.3.9
-  - decorator==4.1.2
-  - docutils==0.14
-  - flask==0.12.2
-  - identify==1.0.7
-  - idna==2.6
-  - imagesize==0.7.1
-  - isodate==0.6.0
-  - itsdangerous==0.24
-  - jinja2==2.10
-  - markupsafe==1.0
-  - networkx==1.11
-  - nodeenv==1.2.0
-  - pint==0.8.1
-  - pre-commit==1.4.1
-  - pygments==2.2.0
-  - requests==2.18.4
-  - snowballstemmer==1.2.1
-  - sphinx==1.6.6
-  - sphinxcontrib-websupport==1.0.1
-  - urllib3==1.22
-  - virtualenv==15.1.0
-  - werkzeug==0.12.2
+  - better-apidoc  # docs
+  - pre-commit  # dev
