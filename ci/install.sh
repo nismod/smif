@@ -6,7 +6,6 @@
 #
 # This script is taken from Scikit-Learn (http://scikit-learn.org/)
 #
-# THIS SCRIPT IS SUPPOSED TO BE AN EXAMPLE. MODIFY IT ACCORDING TO YOUR NEEDS!
 
 set -e
 
@@ -43,3 +42,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
         shapely
     source activate testenv
 fi
+
+# Pip install by default
+pip install -r requirements.txt
+python setup.py develop
+
+# Install node and npm dependencies
+nvm install 6.11.4
+nvm use 6.11.4
+cd $TRAVIS_BUILD_DIR/src/smif/app && npm install
+cd $TRAVIS_BUILD_DIR
