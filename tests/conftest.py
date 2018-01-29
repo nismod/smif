@@ -607,7 +607,7 @@ def get_sos_model_run():
     return {
         'name': 'unique_model_run_name',
         'description': 'a description of what the model run contains',
-        'stamp': datetime(2017, 9, 20, 12, 53, 23, tzinfo=tzutc()),
+        'stamp': '2017-09-20T12:53:23+00:00',
         'timesteps': [
             2015,
             2020,

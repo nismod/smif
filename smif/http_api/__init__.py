@@ -114,7 +114,6 @@ class SosModelRunAPI(MethodView):
         """
         data_interface = current_app.config.get_data_interface()
         data = request.get_json() or request.form
-        data = check_timestamp(data)
 
         data_interface.write_sos_model_run(data)
         response = jsonify({"message": "success"})
@@ -127,7 +126,6 @@ class SosModelRunAPI(MethodView):
         """
         data_interface = current_app.config.get_data_interface()
         data = request.get_json() or request.form
-        data = check_timestamp(data)
         data_interface.update_sos_model_run(sos_model_run_name, data)
         response = jsonify({})
         return response

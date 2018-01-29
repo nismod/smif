@@ -45,18 +45,7 @@ def client(request, app):
 def parse_json(response):
     """Parse response data
     """
-    return json.loads(response.data.decode('utf-8'), object_hook=timestamp_parser)
-
-
-def timestamp_parser(json_dict):
-    """Parse 'stamp' to python datetime
-    """
-    if 'stamp' in json_dict:
-        try:
-            json_dict['stamp'] = dateutil.parser.parse(json_dict['stamp'])
-        except(ValueError):
-            pass
-    return json_dict
+    return json.loads(response.data.decode('utf-8'))
 
 
 def serialise_json(data):
