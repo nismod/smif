@@ -36,6 +36,7 @@ after_success: $TRAVIS_BUILD_DIR/ci/coverage.sh
 jobs:
   include:
     - stage: PyPI release
+      if: tag =~ ^v
       env: PYTHON_VERSION="3.6" COVERAGE="false"
       install: source $TRAVIS_BUILD_DIR/ci/install.sh
       script: echo "Deploying to PyPI"
