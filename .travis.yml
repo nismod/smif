@@ -18,18 +18,17 @@ cache:
 before_cache:
   - rm -f $HOME/.cache/pip/log/debug.log
 
-env:
-  global:
-  - SKIP_GENERATE_AUTHORS=1
-  - SKIP_WRITE_GIT_CHANGELOG=1
-
 jobs:
   include:
     - stage: test
       env:
+        global:
+          - SKIP_GENERATE_AUTHORS=1
+          - SKIP_WRITE_GIT_CHANGELOG=1
+          - DISTRIB="conda"
         matrix:
-          - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="false"
-          - DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="true"
+          - PYTHON_VERSION="3.5" COVERAGE="false"
+          - PYTHON_VERSION="3.6" COVERAGE="true"
       install: source $TRAVIS_BUILD_DIR/ci/install.sh
       script:
         - cd $TRAVIS_BUILD_DIR && python setup.py test
@@ -37,10 +36,14 @@ jobs:
       after_success: $TRAVIS_BUILD_DIR/ci/coverage.sh
 
     - stage: PyPI release
+      install:
+        - nvm install 6.11.4
+        - nvm use 6.11.4
+        - cd $TRAVIS_BUILD_DIR/src/smif/app && npm install
       script: echo "Deploying to PyPI"
       before_deploy:
-      - cd $TRAVIS_BUILD_DIR/src/smif/app && npm run build
-      - cd $TRAVIS_BUILD_DIR
+        - cd $TRAVIS_BUILD_DIR/src/smif/app && npm run build
+        - cd $TRAVIS_BUILD_DIR
       deploy:
         provider: pypi
         user: willu47
