@@ -1,17 +1,9 @@
 sudo: false
 language: python
-virtualenv:
-  system_site_packages: true
-addons:
-  apt:
-    packages:
-      - git
-      - python-pip
 notifications:
   email: false
 
 cache:
-  apt: true
   pip: true
   directories:
     - src/smif/app/node_modules
