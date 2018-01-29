@@ -27,9 +27,10 @@ jobs:
   include:
     - stage: test
       env:
-        - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="false"
-        - DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="true"
-      install: $TRAVIS_BUILD_DIR/ci/install.sh
+        matrix:
+          - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="false"
+          - DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="true"
+      install: source $TRAVIS_BUILD_DIR/ci/install.sh
       script:
         - cd $TRAVIS_BUILD_DIR && python setup.py test
         - cd $TRAVIS_BUILD_DIR/src/smif/app && npm test
