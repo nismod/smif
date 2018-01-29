@@ -9,7 +9,7 @@ smif
     :target: https://travis-ci.org/nismod/smif
     :alt: Travis CI build status
 
-.. image:: https://img.shields.io/codecov/c/github/nismod/smif/master.svg   
+.. image:: https://img.shields.io/codecov/c/github/nismod/smif/master.svg
     :target: https://codecov.io/gh/nismod/smif?branch=master
     :alt: Code Coverage
 
@@ -64,7 +64,7 @@ Contents
    Contributing <contributing>
    License <license>
    Authors <authors>
-   Changelog <changes>
+   Changelog <changelog>
 
 
 Indices and tables
