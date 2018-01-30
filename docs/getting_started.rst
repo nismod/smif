@@ -90,7 +90,7 @@ The Project File
 
 This file holds all the project configuration.
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :caption: project.yml
    :language: yaml
 
@@ -98,21 +98,21 @@ We'll step through this configuration file section by section.
 
 The first line gives the project name, a unique identifier for this project.
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
    :lines: 1
 
 The next section lists the scenario sets. These give the categories into which
 scenarios are collected.
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
    :lines: 2-6
 
 Narrative sets collect together the categories into which narrative files are
 collected.
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
    :lines: 7-9
 
@@ -120,7 +120,7 @@ Region definitions list the collection of region files and the mapping to a
 unique name which can be used in scenarios and sector models.
 Region definitions define the spatial resolution of data.
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
    :lines: 10,12-17
 
@@ -128,30 +128,30 @@ Interval definitions list the collection of interval files and the mapping to a
 unique name which can be used in scenarios and sector models.
 Interval definitions define the temporal resolution of data.
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
    :lines: 18,20-22
 
 Unit definitions references a file containing custom units, not included in
 the Pint library default unit register (e.g. non-SI units).
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
    :lines: 23
 
 The ``scenarios`` section lists the scenarios and corresponding collections of
 data associated with scenarios.
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
-   :lines: 24,26-43
+   :lines: 24,26-52
 
 The ``narratives`` section lists the narratives and mapping to one or more
 narrative files
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
-   :lines: 44-48
+   :lines: 62-66
 
 A Simulation Model File
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -163,7 +163,7 @@ the user wishes to expose to smif which can be adjusted in narratives.
 Intervention files and initial condition files contain the collections of data
 that are needed to expose the model to smif's decision making functionality.
 
-.. literalinclude:: ../smif/sample_project/config/sector_models/water_supply.yml
+.. literalinclude:: ../src/smif/sample_project/config/sector_models/water_supply.yml
    :language: yaml
 
 Inputs
@@ -174,7 +174,7 @@ to run the model.
 Inputs are defined with a name, spatial resolution,
 temporal-resolution and units.
 
-.. literalinclude:: ../smif/sample_project/config/sector_models/water_supply.yml
+.. literalinclude:: ../src/smif/sample_project/config/sector_models/water_supply.yml
    :language: yaml
    :lines: 6-14
 
@@ -194,7 +194,7 @@ Define the collection of output model parameters used for the purpose
 of metrics, for accounting purposes, such as operational cost and
 emissions, or as the source of a dependency in another model.
 
-.. literalinclude:: ../smif/sample_project/config/sector_models/water_supply.yml
+.. literalinclude:: ../src/smif/sample_project/config/sector_models/water_supply.yml
    :language: yaml
    :lines: 19-27
 
@@ -210,7 +210,7 @@ emissions, or as the source of a dependency in another model.
 Parameters
 ^^^^^^^^^^
 
-.. literalinclude:: ../smif/sample_project/config/sector_models/water_supply.yml
+.. literalinclude:: ../src/smif/sample_project/config/sector_models/water_supply.yml
    :language: yaml
    :lines: 37-43
 
@@ -232,7 +232,7 @@ A System-of-System Model File
 A system-of-systems model collects together scenario sets and simulation models.
 Users define dependencies between scenario and simulation models.
 
-.. literalinclude:: ../smif/sample_project/config/sos_models/energy_water.yml
+.. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
 
 Scenario Sets
@@ -243,7 +243,7 @@ Choosing a scenario set at this points allows different scenario data
 to be chosen in model runs which share the same system-of-systems model
 configuration defintion.
 
-.. literalinclude:: ../smif/sample_project/config/sos_models/energy_water.yml
+.. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
    :lines: 3-5
 
@@ -259,7 +259,7 @@ Simulation Models
 This section contains a list of pre-configured simulation models which exist in
 the current project.
 
-.. literalinclude:: ../smif/sample_project/config/sos_models/energy_water.yml
+.. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
    :lines: 6-8
 
@@ -274,7 +274,7 @@ Dependencies
 
 In this section, dependencies are defined between sources and sinks.
 
-.. literalinclude:: ../smif/sample_project/config/sos_models/energy_water.yml
+.. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
    :lines: 9-17
 
@@ -294,7 +294,7 @@ A model run brings together a system-of-systems model definition with timesteps
 over which planning takes place, and a choice of scenarios and narratives to
 population the placeholder scenario sets in the system-of-systems model.
 
-.. literalinclude:: ../smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
+.. literalinclude:: ../src/smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
    :language: yaml
 
 Timesteps
@@ -303,7 +303,7 @@ Timesteps
 A list of timesteps define the years in which planning takes place,
 and the simulation models are executed.
 
-.. literalinclude:: ../smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
+.. literalinclude:: ../src/smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
    :language: yaml
    :lines: 4-7
 
@@ -319,7 +319,7 @@ Scenarios
 For each scenario set available in the contained system-of-systems model,
 one scenario should be chosen.
 
-.. literalinclude:: ../smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
+.. literalinclude:: ../src/smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
    :language: yaml
    :lines: 10-12
 
@@ -335,7 +335,7 @@ Narratives
 For each narrative set available in the project, zero or more available
 narratives should be chosen.
 
-.. literalinclude:: ../smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
+.. literalinclude:: ../src/smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
    :language: yaml
    :lines: 13-15
 
@@ -360,7 +360,7 @@ as well as exogenous environmental data held in scenarios.
 Initial Conditions
 ~~~~~~~~~~~~~~~~~~
 
-.. literalinclude:: ../smif/sample_project/data/initial_conditions/reservoirs.yml
+.. literalinclude:: ../src/smif/sample_project/data/initial_conditions/reservoirs.yml
    :language: yaml
 
 Interval definitions
@@ -382,7 +382,7 @@ Use ISO 8601 [1]_ duration format to specify periods::
 
 For example:
 
-.. literalinclude:: ../smif/sample_project/data/interval_definitions/annual_intervals.csv
+.. literalinclude:: ../src/smif/sample_project/data/interval_definitions/annual_intervals.csv
    :language: text
 
 In this example, the interval with id ``1`` begins in the first hour of the year
@@ -413,7 +413,7 @@ an attribute "name" to use as an identifier for the region.
 The sets of geographic regions are specified in the project configuration file
 using a ``region_definitions`` attributes as shown below:
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
    :lines: 10,12-17
 
@@ -444,7 +444,7 @@ are incorporated in the strategies).
 Define all possible interventions in an ``*.yml`` file
 in the ``project/data/interventions`` For example:
 
-.. literalinclude:: ../smif/sample_project/data/interventions/water_supply.yml
+.. literalinclude:: ../src/smif/sample_project/data/interventions/water_supply.yml
    :language: yaml
    :lines: 6-19
 
@@ -463,7 +463,7 @@ in the simulation model configuration. If more than one narrative file is
 selected in the sos model configuration, then values in later files override
 values in earlier files.
 
-.. literalinclude:: ../smif/sample_project/data/narratives/high_tech_dsm.yml
+.. literalinclude:: ../src/smif/sample_project/data/narratives/high_tech_dsm.yml
    :language: yaml
 
 Scenarios
@@ -476,7 +476,7 @@ In the case of the example project file shown earlier,
 the ``scenarios`` section lists the scenarios and corresponding collections of
 data associated with the scenario sets:
 
-.. literalinclude:: ../smif/sample_project/config/project.yml
+.. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
    :lines: 24,26-43
 
@@ -505,7 +505,7 @@ The filename in the ``parameters`` section within the scenario definition
 points to a comma-seperated-values file stored in the ``project/data/scenarios``
 folder. For example:
 
-.. literalinclude:: ../smif/sample_project/data/scenarios/population_high.csv
+.. literalinclude:: ../src/smif/sample_project/data/scenarios/population_high.csv
    :language: text
 
 For each entry in the scenario parameters list, the following metadata
@@ -574,7 +574,7 @@ within smif. In this case, the wrapper doesn't actually call or run a separate
 model, but demonstrates calls to the data handler methods necessary to pass
 data into an external model, and send results back to smif.
 
-.. literalinclude:: ../smif/sample_project/models/energy_demand.py
+.. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
    :language: python
    :lines: 8-70
 
@@ -608,7 +608,7 @@ Use the :py:meth:`~smif.data_layer.DataHandle.get_parameter` or
 :py:meth:`~smif.data_layer.DataHandle.get_parameters` method as shown in the
 example:
 
-.. literalinclude:: ../smif/sample_project/models/energy_demand.py
+.. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
    :language: python
    :lines:  22
    :dedent: 8
@@ -625,7 +625,7 @@ get the value for any model input that has been defined in the sector model's
 configuration.  In the example, the option year argument is omitted, and it
 defaults to fetching the data for the current timestep.
 
-.. literalinclude:: ../smif/sample_project/models/energy_demand.py
+.. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
    :language: python
    :lines: 27
    :dedent: 8
@@ -637,7 +637,7 @@ Accessing model input data for the base year
 To access model input data from the timestep prior to the current timestep, 
 you can use the following argument:
 
-.. literalinclude:: ../smif/sample_project/models/energy_demand.py
+.. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
    :language: python
    :lines:  33
    :dedent: 8
@@ -649,7 +649,7 @@ Accessing model input data for a previous year
 To access model input data from the timestep prior to the current timestep, 
 you can use the following argument:
 
-.. literalinclude:: ../smif/sample_project/models/energy_demand.py
+.. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
    :language: python
    :lines:  41
    :dedent: 8
@@ -660,7 +660,7 @@ Passing model data directly to a Python model
 If the wrapped model is a python script or package, then the wrapper can
 import and instantiate the model, passing in data directly.
 
-.. literalinclude:: ../smif/sample_project/models/water_supply.py
+.. literalinclude:: ../src/smif/sample_project/models/water_supply.py
    :language: python
    :lines:  73-80
    :dedent: 8
