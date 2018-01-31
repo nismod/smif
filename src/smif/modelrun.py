@@ -18,6 +18,7 @@ ModeRun has attributes:
 
 """
 from logging import getLogger
+
 from smif.data_layer import DataHandle
 
 
@@ -133,12 +134,15 @@ class ModelRunner(object):
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
         """
+        self.logger.debug("Initialising each of the sector models")
         # Initialise each of the sector models
         data_handle = DataHandle(
             store, model_run.name, None, model_run.model_horizon,
             model_run.sos_model)
         model_run.sos_model.before_model_run(data_handle)
 
+        self.logger.debug("Solving the models over all timesteps: %s",
+                          model_run.model_horizon)
         # Solve the models over all timesteps
         for timestep in model_run.model_horizon:
             self.logger.debug('Running model for timestep %s', timestep)
