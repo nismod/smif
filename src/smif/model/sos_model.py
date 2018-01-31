@@ -148,9 +148,9 @@ class SosModel(CompositeModel):
         list of available models and build the dependency graph
         """
         if self.free_inputs.names:
-            msg = "A SosModel must have all inputs linked to dependencies." \
-                  "Define dependencies for %s"
-            raise NotImplementedError(msg, ", ".join(self.free_inputs.names))
+            msg = "A SosModel must have all inputs linked to dependencies. " \
+                  "Define dependencies for {}"
+            raise NotImplementedError(msg.format(", ".join(self.free_inputs.names)))
 
         for model in self.models.values():
             if isinstance(model, SosModel):
