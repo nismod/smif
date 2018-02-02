@@ -423,12 +423,14 @@ with a file containing the geographic data.
 Interventions
 ~~~~~~~~~~~~~
 
-An Intervention is an investment which has a name (or name),
-other attributes (such as capital cost and economic lifetime), and location,
-but no build date.
+Interventions are the atomic units which comprise the infrastructure systems 
+in the simulation models.
+Interventions can represent physical assets such as pipes, 
+and lines (edges in a network) or power stations and reservoirs 
+(nodes in a network).
+Interventions can also represent intangibles which affects the operation 
+of a system, such as a policy.
 
-An intervention is a possible investment, normally an infrastructure asset,
-the timing of which can be decided by the logic-layer.
 
 An exhaustive list of the interventions (often infrastructure assets)
 should be defined.
@@ -454,8 +456,8 @@ Narratives
 A narrative file contains references to 0 or more parameters defined in the
 simulation models, as well as special ``global`` parameters. Whereas model 
 parameters are available only to individual simulation models, 
-global parameters are available across all models. The intention is to use
-global paramaters for system-wide constants, such as emission coefficients,
+global parameters are available across all models. 
+Use global paramaters for system-wide constants, such as emission coefficients,
 exchange rates, conversion factors etc.
 
 Value specified in the narrative file override the default values specified
@@ -541,16 +543,16 @@ inputs, parameters, state and pass this data into the wrapped model. After the
 the sector model must be formatted and passed back into smif.
 
 The handling of data is aided through the use of a set of methods provided by 
-:class:`smif.data_layer.DataHandle`, namely:
+:class:`smif.data_layer.data_handle.DataHandle`, namely:
 
-- :py:meth:`~smif.data_layer.DataHandle.get_data`
-- :py:meth:`~smif.data_layer.DataHandle.get_parameter`
-- :py:meth:`~smif.data_layer.DataHandle.get_parameters`
-- :py:meth:`~smif.data_layer.DataHandle.get_results`
+- :py:meth:`~smif.data_layer.data_handle.DataHandle.get_data`
+- :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameter`
+- :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameters`
+- :py:meth:`~smif.data_layer.data_handle.DataHandle.get_results`
 
 and 
 
-- :py:meth:`~smif.data_layer.DataHandle.set_results`
+- :py:meth:`~smif.data_layer.data_handle.DataHandle.set_results`
 
 In this section, we describe the process necessary to correctly write this
 wrapper function, referring to the example project included with the package.
@@ -580,9 +582,9 @@ data into an external model, and send results back to smif.
 
 The key methods in the SectorModel class which need to be overridden are:
 
-- :py:meth:`~smif.sector_model.SectorModel.initialise`
-- :py:meth:`~smif.sector_model.SectorModel.simulate`
-- :py:meth:`~smif.sector_model.SectorModel.extract_obj`
+- :py:meth:`~smif.model.sector_model.SectorModel.initialise`
+- :py:meth:`~smif.model.sector_model.SectorModel.simulate`
+- :py:meth:`~smif.model.sector_model.SectorModel.extract_obj`
 
 The wrapper should be written in a python file, e.g. ``water_supply.py``.
 The path to the location of this file should be entered in the
@@ -604,8 +606,8 @@ method is:
 Accessing model parameter data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use the :py:meth:`~smif.data_layer.DataHandle.get_parameter` or 
-:py:meth:`~smif.data_layer.DataHandle.get_parameters` method as shown in the
+Use the :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameter` or 
+:py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameters` method as shown in the
 example:
 
 .. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
@@ -614,13 +616,13 @@ example:
    :dedent: 8
 
 
-Note that the name argument passed to the :py:meth:`~smif.data_layer.DataHandle.get_parameter` is that which is defined in
+Note that the name argument passed to the :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameter` is that which is defined in
 the sector model configuration file.
 
 Accessing model input data for the current year
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The method :py:meth:`~smif.data_layer.DataHandle.get_data()` allows a user to
+The method :py:meth:`~smif.data_layer.data_handle.DataHandle.get_data()` allows a user to
 get the value for any model input that has been defined in the sector model's
 configuration.  In the example, the option year argument is omitted, and it
 defaults to fetching the data for the current timestep.
@@ -669,7 +671,7 @@ In this example, the example water supply simulation model is instantiated
 within the simulate method, data is written to properties of the instantiated 
 class and  the ``run()`` method of the simulation model is called. 
 Finally, (dummy) results are written back to the data handler using the 
-:py:meth:`~smif.data_layer.DataHandle.set_results` method.
+:py:meth:`~smif.data_layer.data_handle.DataHandle.set_results` method.
 
 Alternatively, the wrapper could call the model via the command line 
 (see below).
@@ -779,7 +781,7 @@ Writing model results to the data handler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Writing results back to the data handler is as simple as calling the 
-:py:meth:`~smif.data_layer.DataHandle.set_results` method::
+:py:meth:`~smif.data_layer.data_handle.DataHandle.set_results` method::
 
     data.set_results("cost", np.array([[1.23, 1.543, 2.355]])
 

@@ -10,8 +10,8 @@ Utility Methods
 A number of utility methods are included to ease the integration of a
 SectorModel wrapper within a System of Systems model.  These include:
 
-* ``get_region_names(region_set_name)`` - Get a list of region names
-* ``get_interval_names(interval_set_name)`` - Get a list of interval names
+- ``get_region_names(region_set_name)`` - gets a list of region names
+- ``get_interval_names(interval_set_name)`` - gets a list of interval names
 
 Key Functions
 =============
@@ -53,10 +53,38 @@ __license__ = "mit"
 class SectorModel(Model, metaclass=ABCMeta):
     """A representation of the sector model with inputs and outputs
 
+    Implement this class to enable integration of the wrapped simulation model
+    into a system-of-system model.
+
     Arguments
     ---------
     name : str
         The unique name of the sector model
+
+    Notes
+    -----
+
+    Implement the various abstract functions throughout the class to
+    provide an interface to the simulation model, which can then be called
+    upon by the framework.
+
+    The key methods in the SectorModel class which need to be overridden are:
+
+    - :py:meth:`SectorModel.initialise`
+    - :py:meth:`SectorModel.simulate`
+    - :py:meth:`SectorModel.extract_obj`
+
+    A number of utility methods are included to ease the integration of a
+    SectorModel wrapper within a System of Systems model.  These include:
+
+    * ``get_region_names(region_set_name)`` - Get a list of region names
+    * ``get_interval_names(interval_set_name)`` - Get a list of interval names
+
+    For example, within the implementation of the simulate method, call::
+
+        self.get_region_names('lad')
+
+    to return a list of region names defined in the region register at runtime.
 
     """
     def __init__(self, name):
@@ -196,6 +224,18 @@ class SectorModel(Model, metaclass=ABCMeta):
         ``region``
             should reference a region name from the region set corresponding to
             the output parameter, as specified in model configuration
+
+        To obtain simulation model data in this method,
+        use the data_handle methods such as::
+
+            parameter_value = data.get_parameter('my_parameter_name')
+
+        Other useful methods are ``get_base_timestep_data(input_name)``,
+        ``get_previous_timestep_data(input_name)``,
+        ``get_parameter(parameter_name)``, ``get_data(input_name, timestep=None)``,
+        ``get_parameters()`` and
+        ``get_results(output_name, model_name=None, modelset_iteration=None,
+        decision_iteration=None, timestep=None)``.
 
         """
         pass
