@@ -1,6 +1,7 @@
 import React from 'react'
+import sinon from 'sinon'
 import { expect } from 'chai'
-import { shallow } from 'enzyme'
+import { mount, shallow } from 'enzyme'
 import SosModelRunConfigForm from '../../../src/components/ConfigForm/SosModelRunConfigForm.js'
 
 import {sos_model_run, sos_models, scenarios, narratives} from '../../helpers.js'
@@ -30,4 +31,10 @@ describe('<SosModelRunConfigForm />', () => {
         const sos_model_run_description = dataMissingRender.find('[id="sos_model_run_description"]')
         expect(sos_model_run_description.html()).to.contain(`id="sos_model_run_description"`)
     })
+
+    it('loads properties ', () => {
+        const wrapper = mount(<SosModelRunConfigForm sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} narratives={narratives} />)
+        expect(wrapper.props()['sosModelRun']).to.equal(sos_model_run)
+    })
+
 })

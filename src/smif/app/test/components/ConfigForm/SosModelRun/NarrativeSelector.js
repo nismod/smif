@@ -1,6 +1,7 @@
 import React from 'react'
+import sinon from 'sinon'
 import { expect } from 'chai'
-import { shallow } from 'enzyme'
+import { mount, shallow } from 'enzyme'
 import NarrativeSelector from '../../../../src/components/ConfigForm/SosModelRun/NarrativeSelector.js'
 
 import {sos_model_run, sos_models, narratives, sos_model} from '../../../helpers.js'
@@ -15,6 +16,37 @@ describe('<NarrativeSelector />', () => {
 
         expect(render.html()).to.contain(narratives[0].name)
         expect(render.html()).to.contain(narratives[0].narrative_set)
+    })
+
+    it('correctly displays the sos_model_run configuration', () => {
+        const wrapper = mount(<NarrativeSelector sosModelRun={sos_model_run} sosModels={sos_models} narratives={narratives} />)
+
+        for (var i = 0; i < narratives.length; i++) {
+            if (sos_model_run['narratives'][narratives[i]['narrative_set']].includes(narratives[i]['name'])) {
+                expect(wrapper.find('[id="' + narratives[i]['name'] + '"]').props().defaultChecked).to.equal(true)
+            } else {
+                expect(wrapper.find('[id="' + narratives[i]['name'] + '"]').props().defaultChecked).to.equal(false)
+            }
+        }
+    })
+
+    it('onChange callback', () => {
+        const onChange = sinon.spy()
+        const wrapper = mount(<NarrativeSelector sosModelRun={sos_model_run} sosModels={sos_models} narratives={narratives} onChange={onChange} />)
+
+        for (var i = 0; i < narratives.length; i++) {
+            if (sos_model_run['narratives'][narratives[i]['narrative_set']].includes(narratives[i]['name'])) {
+                wrapper.find('[id="' + narratives[i]['name'] + '"]').simulate('click', { target: { name: narratives[i]['narrative_set'], checked: false }})
+                expect(onChange.args[i][0]).to.equal(narratives[i]['narrative_set'])
+                expect(onChange.args[i][1]).to.equal(narratives[i]['name'])
+                expect(onChange.args[i][2]).to.equal(false)
+            } else {
+                wrapper.find('[id="' + narratives[i]['name'] + '"]').simulate('click', { target: { name: narratives[i]['narrative_set'], checked: true }})
+                expect(onChange.args[i][0]).to.equal(narratives[i]['narrative_set'])
+                expect(onChange.args[i][1]).to.equal(narratives[i]['name'])
+                expect(onChange.args[i][2]).to.equal(true)
+            }
+        }
     })
 
     it('warning no sosModel selected', () => {

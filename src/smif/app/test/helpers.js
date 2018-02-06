@@ -461,6 +461,12 @@ export const narratives = [
         filename: 'high_tech_dsm.yml',
         name: 'High Tech Demand Side Management',
         narrative_set: 'technology'
+    },
+    {
+        description: 'Low penetration of SMART technology on the demand side',
+        filename: 'low_tech_dsm.yml',
+        name: 'Low Tech Demand Side Management',
+        narrative_set: 'technology'
     }
 ]
 

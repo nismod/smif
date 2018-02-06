@@ -82,18 +82,10 @@ class NarrativeSelector extends Component {
             for (let i = 0; i < selectedNarratives[narrativeSet].length; i++) {
 
                 selectedNarratives[narrativeSet][i].active = false
-
-                if (typeof sosModelRun.narratives != 'undefined') {
-
-                    for (let k = 0; k < sosModelRun.narratives.length; k++) {
-
-                        if (typeof sosModelRun.narratives[k][selectedNarratives[narrativeSet][i].narrative_set] != 'undefined') {
-                            sosModelRun.narratives[k][selectedNarratives[narrativeSet][i].narrative_set].forEach(function(narrative) {
-                                if (selectedNarratives[narrativeSet][i].name == narrative) {
-                                    selectedNarratives[narrativeSet][i].active = true
-                                }
-                            })
-                        }
+                
+                if (typeof sosModelRun.narratives[selectedNarratives[narrativeSet][i]['narrative_set']] != 'undefined'){
+                    if (sosModelRun.narratives[selectedNarratives[narrativeSet][i]['narrative_set']].includes(selectedNarratives[narrativeSet][i]['name'])) {
+                        selectedNarratives[narrativeSet][i].active = true
                     }
                 }
             }
@@ -105,7 +97,6 @@ class NarrativeSelector extends Component {
     handleChange(event, narrative_name) {
         const target = event.target
         const {onChange} = this.props
-
         onChange(target.name, narrative_name, target.checked)
     }
 
@@ -122,7 +113,7 @@ class NarrativeSelector extends Component {
                                         selectedNarratives[narrativeSet].map((narrative) => (
                                             <div className="form-check" key={narrative.name}>
                                                 <label className="form-check-label">
-                                                    <input className="form-check-input" type="checkbox" name={narrativeSet} key={narrative.name} value={narrative.name} defaultChecked={narrative.active} onClick={(event) => {this.handleChange(event, narrative.name);}}></input>
+                                                    <input id={narrative.name} className="form-check-input" type="checkbox" name={narrativeSet} key={narrative.name} value={narrative.name} defaultChecked={narrative.active} onClick={(event) => {this.handleChange(event, narrative.name);}}></input>
                                                     {narrative.name}
                                                 </label>
                                             </div>

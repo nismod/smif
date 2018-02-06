@@ -73,65 +73,27 @@ class SosModelRunConfigForm extends Component {
      * active:
      *     The new state of this narrative
      */
-
         const {narratives} = this.state.selectedSosModelRun
 
-        if (narratives === undefined || narratives[0] === undefined) {
-            // there are no narratives defined
-            // Initialize array
-            // Add narrative_set and narrative
-            let obj = {}
-            obj[narrative_set] = [narrative]
+        let obj = this.state.selectedSosModelRun.narratives
 
-            this.setState({
-                selectedSosModelRun: update(this.state.selectedSosModelRun, {narratives: {$set: [obj]}})
-            })
-        }
-        else {
-            // there are already narratives defined
-            for (let i = 0; i < narratives.length; i++) {
-
-                if (Object.keys(narratives[i]) == narrative_set) {
-
-                    for (let k = 0; k <= narratives[i][narrative_set].length; k++) {
-
-                        if ((narratives[i][narrative_set][k] == narrative) && !active) {
-                            // Remove narrative to set
-                            narratives[i][narrative_set].splice(k, 1)
-
-                            // If there are no narratives left in this set, remove the set
-                            if (narratives[i][narrative_set].length == 0) {
-                                narratives.splice(i, 1)
-                            }
-
-                            // If there are no narrative sets left, remove the narratives
-                            if (narratives.length == 0) {
-                                this.setState({
-                                    selectedSosModelRun: update(this.state.selectedSosModelRun, {narratives: {$set: undefined }})
-                                })
-                            }
-                            break
-                        }
-
-                        if (typeof narratives[i][narrative_set][k] === 'undefined') {
-                            // Add narrative to set
-                            narratives[i][narrative_set].push(narrative)
-                            break
-                        }
-                    }
-                    break
-                }
-                if (i == (narratives.length - 1)) {
-                    // Narrative set does not exist in ModelrunConfig
-                    // Add narrative_set and narrative
-                    let obj = {}
-                    obj[narrative_set] = [narrative]
-
-                    narratives.push(obj)
-                    break
-                }
+        if (active) {
+            if (this.state.selectedSosModelRun['narratives'][narrative_set] == undefined){
+                obj[narrative_set] = [narrative]
+            } else {
+                obj[narrative_set].push(narrative)
+            }
+        } else {
+            if (this.state.selectedSosModelRun['narratives'][narrative_set].length == 1) {
+                delete obj[narrative_set]
+            } else {
+                obj[narrative_set].splice(obj[narrative_set].indexOf(narrative), 1)
             }
         }
+
+        this.setState({
+            selectedSosModelRun: update(this.state.selectedSosModelRun, {narratives: {$set: obj}})
+        })
     }
 
     handleTimestepChange(timesteps) {
