@@ -25,9 +25,7 @@ class SosModelRunConfigForm extends Component {
     }
 
     componentDidMount(){
-        if (Object.keys(document).length) {
-            document.addEventListener("keydown", this.handleKeyPress, false)
-        }
+        document.addEventListener("keydown", this.handleKeyPress, false)
     }
 
     componentWillUnmount(){

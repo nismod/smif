@@ -60,7 +60,6 @@ describe('<NarrativeSetConfigForm />', () => {
         wrapper.find('[id="saveButton"]').simulate('click')
 
         expect(onSaveClick).to.have.property('callCount', 1)
-        console.log(onSaveClick.args[0][0])
         expect(onSaveClick.args[0][0]).to.deep.equal(changed_narrative_set)
     })
     
