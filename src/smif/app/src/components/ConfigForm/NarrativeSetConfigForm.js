@@ -80,8 +80,8 @@ class NarrativeSetConfigForm extends Component {
 
                 </form>
 
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save Narrative Set Configuration" onClick={this.handleSave} />
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save Narrative Set Configuration" onClick={this.handleSave} />
+                <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
 
                 <br/>
             </div>
