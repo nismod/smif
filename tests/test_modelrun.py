@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
-from pytest import fixture
-from smif.modelrun import ModelRunBuilder, ModelRunner
+from pytest import fixture, raises
+from smif.modelrun import ModelRunBuilder, ModelRunError, ModelRunner
 
 
 @fixture(scope='function')
@@ -59,6 +59,19 @@ class TestModelRun:
         store = Mock()
         model_run = get_model_run
         model_run.run(store)
+
+    def test_run_timesteps(self, get_model_run_config_data):
+        """should error that timesteps are empty
+        """
+        config_data = get_model_run_config_data
+        config_data['timesteps'] = []
+        builder = ModelRunBuilder()
+        builder.construct(config_data)
+        model_run = builder.finish()
+        store = Mock()
+        with raises(ModelRunError) as ex:
+            model_run.run(store)
+        assert 'No timesteps specified' in str(ex)
 
     def test_serialize(self, get_model_run_config_data):
         builder = ModelRunBuilder()
