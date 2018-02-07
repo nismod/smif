@@ -86,7 +86,7 @@ from smif.convert.interval import get_register as get_interval_register
 from smif.convert.interval import IntervalSet
 from smif.http_api import create_app
 from smif.parameters import Narrative
-from smif.modelrun import ModelRunBuilder
+from smif.modelrun import ModelRunBuilder, ModelRunError
 from smif.model.sos_model import SosModelBuilder
 from smif.model.sector_model import SectorModelBuilder
 from smif.model.scenario_model import ScenarioModelBuilder
@@ -384,7 +384,12 @@ def execute_model_run(args):
 
     LOGGER.info("Running model run %s", modelrun.name)
     store = DatafileInterface(args.directory)
-    modelrun.run(store)
+
+    try:
+        modelrun.run(store)
+    except ModelRunError as ex:
+        LOGGER.exception(ex)
+        exit(1)
 
     print("Model run complete")
 
