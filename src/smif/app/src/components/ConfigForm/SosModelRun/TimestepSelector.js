@@ -14,7 +14,7 @@ class TimestepSelector extends Component {
     }
 
     componentWillMount(){
-        const {timeSteps} = this.props
+        const {timeSteps, onChange} = this.props
 
         if (timeSteps != undefined && timeSteps.length > 0){
             this.setState({baseYear: timeSteps[0]})
@@ -24,6 +24,8 @@ class TimestepSelector extends Component {
             this.setState({baseYear: 2015})
             this.setState({endYear: 2020})
             this.setState({resolution: 5})
+
+            onChange([2015, 2020])
         }
     }
 
