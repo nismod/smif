@@ -101,6 +101,27 @@ class DependencySelector extends Component {
 
     renderDependencySelector(dependencies, sectorModels, scenarioSets) {
 
+        let source_available, sectorModels_available, scenarioSets_available = null
+        if (sectorModels.length > 0 || scenarioSets.length > 0) {
+            source_available = <option disabled="disabled" value="none">Please select a source</option>
+
+            if (sectorModels.length > 0) {
+                sectorModels_available = <option disabled="disabled">Sector Model</option>
+            }
+            if (scenarioSets.length > 0) {
+                scenarioSets_available = <option disabled="disabled">Scenario Set</option>
+            }
+        } else {
+            source_available = <option disabled="disabled" value="none">No source available</option>
+        }
+
+        let sink_available = null
+        if (sectorModels.length > 0) {
+            sink_available = <option disabled="disabled" value="none">Please select a sink</option>
+        } else {
+            sink_available = <option disabled="disabled" value="none">No sink available</option>
+        }
+
         return (
             <div>
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Dependency" onClick={this.openCreateDependencyPopup} />
@@ -113,17 +134,17 @@ class DependencySelector extends Component {
                                 <div className="col">
                                     <label>Source</label>
                                     <select autoFocus className={this.state.className.SourceModel} name="SourceModel" defaultValue="none" onChange={this.handleChange}>
-                                        <option disabled="disabled" value="none">Please select a source</option>
-                                        <option disabled="disabled">Scenario Sets</option>
+                                        {source_available}
+                                        {scenarioSets_available}
                                         {
                                             scenarioSets.map((scenarioSet, i) => (
-                                                <option key={i} value={scenarioSet.name}>{scenarioSet.name}</option>
+                                                <option key={i} value={scenarioSet}>{scenarioSet}</option>
                                             ))
                                         }
-                                        <option disabled="disabled">Sector Models</option>
+                                        {sectorModels_available}
                                         {
                                             sectorModels.map((sectorModel, i) => (
-                                                <option key={i} value={sectorModel.name}>{sectorModel.name}</option>
+                                                <option key={i} value={sectorModel}>{sectorModel}</option>
                                             ))
                                         }
                                     </select>
@@ -134,10 +155,10 @@ class DependencySelector extends Component {
                                 <div className="col">
                                     <label>Sink</label>
                                     <select className={this.state.className.SinkModel} name="SinkModel" defaultValue="none" onChange={this.handleChange}>
-                                        <option disabled="disabled" value="none">Please select a sink</option>
+                                        {sink_available}
                                         {
                                             sectorModels.map((sectorModel, i) => (
-                                                <option key={i} value={sectorModel.name}>{sectorModel.name}</option>
+                                                <option key={i} value={sectorModel}>{sectorModel}</option>
                                             ))
                                         }
                                     </select>
@@ -200,8 +221,6 @@ class DependencySelector extends Component {
 
     render() {
         const {dependencies, sectorModels, scenarioSets} = this.props
-
-        console.log(scenarioSets)
 
         if (dependencies == null || dependencies == undefined) {
             return this.renderDanger('Dependencies are undefined')

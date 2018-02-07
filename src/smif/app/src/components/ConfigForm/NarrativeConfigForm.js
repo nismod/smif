@@ -24,7 +24,6 @@ class NarrativeConfigForm extends Component {
     }
 
     handleKeyPress(){
-        console.log('keypress!')
         if(event.keyCode === 27) {
             this.handleCancel()
         }

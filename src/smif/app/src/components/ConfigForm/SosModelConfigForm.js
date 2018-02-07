@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
+import PropTypes, { object } from 'prop-types'
 import update from 'immutability-helper'
 
 import PropertySelector from './General/PropertySelector.js'
@@ -17,10 +17,12 @@ class SosModelConfigForm extends Component {
 
         this.state = {}
         this.state.selectedSosModel = this.props.sosModel
+        this.state.dependencyWarning = []
     }
 
     componentDidMount(){
         document.addEventListener("keydown", this.handleKeyPress, false)
+        this.validateForm()
     }
 
     componentWillUnmount(){
@@ -38,9 +40,35 @@ class SosModelConfigForm extends Component {
         const value = target.type === 'checkbox' ? target.checked : target.value
         const name = target.name
 
+        this.validateForm()
+
         this.setState({
             selectedSosModel: update(this.state.selectedSosModel, {[name]: {$set: value}})
         })
+    }
+
+    validateForm() {
+        const {selectedSosModel} = this.state
+
+        if (Object.keys(selectedSosModel).length > 0) {
+
+            // Check for dependencies that contain sector models or scenario sets that are not configured
+            let illegalDependencies = []
+
+            for (let i = 0; i < selectedSosModel.dependencies.length; i++) {
+                if ((selectedSosModel.sector_models.includes(selectedSosModel.dependencies[i].sink_model) || selectedSosModel.scenario_sets.includes(selectedSosModel.dependencies[i].sink_model)) &&
+                    (selectedSosModel.sector_models.includes(selectedSosModel.dependencies[i].source_model) || selectedSosModel.scenario_sets.includes(selectedSosModel.dependencies[i].source_model))) {
+                    illegalDependencies[i] = false
+                } else {
+                    illegalDependencies[i] = true
+                }
+            }
+
+            this.setState({
+                dependencyWarning: illegalDependencies
+            })
+        }
+        
     }
 
     handleSave() {
@@ -113,8 +141,8 @@ class SosModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Dependencies</div>
                         <div className="card-body">
-                            <PropertyList itemsName="dependencies" items={selectedSosModel.dependencies} columns={{source_model: 'Source', source_model_output: 'Output', sink_model: 'Sink', sink_model_input: 'Input'}} editButton={false} deleteButton={true} onDelete={this.handleChange} />
-                            <DependencySelector dependencies={selectedSosModel.dependencies} sectorModels={sectorModels} scenarioSets={scenarioSets} onChange={this.handleChange}/>
+                            <PropertyList itemsName="dependencies" items={selectedSosModel.dependencies} columns={{source_model: 'Source', source_model_output: 'Output', sink_model: 'Sink', sink_model_input: 'Input'}} enableWarnings={true} rowWarning={this.state.dependencyWarning} editButton={false} deleteButton={true} onDelete={this.handleChange} />
+                            <DependencySelector dependencies={selectedSosModel.dependencies} sectorModels={selectedSosModel.sector_models} scenarioSets={selectedSosModel.scenario_sets} onChange={this.handleChange}/>
                         </div>
                     </div>
 
