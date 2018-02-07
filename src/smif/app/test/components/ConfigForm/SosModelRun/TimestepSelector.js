@@ -1,6 +1,7 @@
 import React from 'react'
+import sinon from 'sinon'
 import { expect } from 'chai'
-import { shallow } from 'enzyme'
+import { mount, shallow } from 'enzyme'
 import TimestepSelector from '../../../../src/components/ConfigForm/SosModelRun/TimestepSelector.js'
 
 import {sos_model_run} from '../../../helpers.js'
@@ -36,19 +37,21 @@ describe('<TimestepSelector />', () => {
     })
 
     it('render without initial timesteps', () => {
-        render = shallow(<TimestepSelector timeSteps={empty_array} />)
+        const onChange = sinon.spy()
+        render = mount(<TimestepSelector timeSteps={empty_array} onChange={onChange} />)
 
         select_resolution = render.find('[id="sos_model_run_timesteps_resolution"]')
         select_baseyear = render.find('[id="sos_model_run_timesteps_baseyear"]')
         select_endyear = render.find('[id="sos_model_run_timesteps_endyear"]')
 
         expect(select_resolution.html()).to.contain('value="5"')
-        expect(select_baseyear.html()).to.contain('<option selected="" value="2015">')
-        expect(select_endyear.html()).to.contain('<option selected="" value="2020">')
+        expect(select_baseyear.html()).to.contain('<option value="2015">')
+        expect(select_endyear.html()).to.contain('<option value="2020">')
     })
 
     it('warning no timeSteps configured', () => {
-        render = shallow(<TimestepSelector timeSteps={null} />)
+        const onChange = sinon.spy()
+        render = mount(<TimestepSelector timeSteps={null} onChange={onChange} />)
         warning = render.find('[id="timestep_selector_alert-danger"]')
 
         expect(warning.html()).to.contain('There are no TimeSteps configured')
