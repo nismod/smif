@@ -102,7 +102,7 @@ export function createSosModelRun(sosModelRunName){
             'scenarios': {},
             'narratives': {},
             'decision_module': '',
-            'timesteps': []
+            'timesteps': [2015, 2020]
         }
 
         // make API request, returning a promise
