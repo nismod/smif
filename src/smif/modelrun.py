@@ -81,7 +81,7 @@ class ModelRun(object):
             'decision_module': None,
             'scenarios': self.scenarios,
             'narratives': self.narratives,
-            }
+        }
         return config
 
     @property
@@ -108,12 +108,14 @@ class ModelRun(object):
         """
         self.logger.debug("Running model run %s", self.name)
         if self.status == 'Built':
+            if not self.model_horizon:
+                raise ModelRunError("No timesteps specified for model run")
             self.status = 'Running'
             modelrunner = ModelRunner()
             modelrunner.solve_model(self, store)
             self.status = 'Successful'
         else:
-            raise ValueError("Model is not yet built.")
+            raise ModelRunError("Model is not yet built.")
 
 
 class ModelRunner(object):
@@ -227,3 +229,9 @@ class ModelRunBuilder(object):
             A list of smif.parameters.Narrative objects
         """
         self.model_run.narratives = narratives
+
+
+class ModelRunError(Exception):
+    """Raise when model run requirements are not satisfied
+    """
+    pass
