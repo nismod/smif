@@ -37,4 +37,37 @@ describe('<SosModelRunConfigForm />', () => {
         expect(wrapper.props()['sosModelRun']).to.equal(sos_model_run)
     })
 
+    it('scenarios correctly managed', () => {
+        // This test assumes that the population scenario is available with Central Population (Medium) already configured
+        const wrapper = mount(<SosModelRunConfigForm sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} narratives={narratives} />)
+
+        // Check excisting scenario to be loaded
+        expect(wrapper.find('[id="radio_population_Central Population (Low)"]').props().defaultChecked).to.equal(false)
+        expect(wrapper.find('[id="radio_population_Central Population (Medium)"]').props().defaultChecked).to.equal(true)
+        expect(wrapper.find('[id="radio_population_Central Population (High)"]').props().defaultChecked).to.equal(false)
+        expect(wrapper.state()['selectedSosModelRun']['scenarios']['population']).to.equal("Central Population (Medium)")
+
+        // Change scenario
+        wrapper.find('[id="radio_population_Central Population (High)"]').simulate('click', { target: { name: 'population', value: "Central Population (High)"}})
+        expect(wrapper.state()['selectedSosModelRun']['scenarios']['population']).to.equal("Central Population (High)")
+    })
+
+    it('narratives correctly managed', () => {
+        // This test assumes that the technology narrative is available with High Tech Demand Side Management already configured
+        const wrapper = mount(<SosModelRunConfigForm sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} narratives={narratives} />)
+
+        // Check excisting narrative to be loaded
+        expect(wrapper.find('[id="High Tech Demand Side Management"]').props().defaultChecked).to.equal(true)
+        expect(wrapper.find('[id="Low Tech Demand Side Management"]').props().defaultChecked).to.equal(false)
+
+        // Remove the one existing narrative
+        wrapper.find('[id="High Tech Demand Side Management"]').simulate('click', { target: { name: 'technology', checked: false }})
+        expect(wrapper.state()['selectedSosModelRun']['narratives']).to.deep.equal({})
+
+        // Select two narratives
+        wrapper.find('[id="High Tech Demand Side Management"]').simulate('click', { target: { name: 'technology', checked: true }})
+        wrapper.find('[id="Low Tech Demand Side Management"]').simulate('click', { target: { name: 'technology', checked: true }})
+        expect(wrapper.state()['selectedSosModelRun']['narratives']).to.deep.equal({technology: ['High Tech Demand Side Management', 'Low Tech Demand Side Management']})
+    })
+
 })
