@@ -67,7 +67,7 @@ describe('<NarrativeSelector />', () => {
     })
 
     it('warning no narrativeSets in sosModel', () => {
-        var custom_sos_models = sos_models.slice(0)
+        var custom_sos_models = sos_models.map(a => Object.assign({}, a)) // deep copy variant of -> var custom_sos_models = sos_models.slice(0)
         custom_sos_models[0].narrative_sets = []
 
         render = shallow(<NarrativeSelector sosModelRun={sos_model_run} sosModels={custom_sos_models} narratives={narratives} />)
