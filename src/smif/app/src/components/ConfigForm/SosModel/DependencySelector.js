@@ -97,31 +97,56 @@ class DependencySelector extends Component {
         Object.keys(inputs).forEach(function(input) {
             className[input] = 'form-control'
         })
+        this.setState({
+            inputs: {SourceModel: '', SinkModel: '', SourceOutput: '', SinkInput: ''}
+        })
     }
 
     renderDependencySelector(dependencies, sectorModels, scenarioSets) {
 
-        let source_available, sectorModels_available, scenarioSets_available = null
-        if (sectorModels.length > 0 || scenarioSets.length > 0) {
-            source_available = <option disabled="disabled" value="none">Please select a source</option>
+        const {inputs} = this.state
 
+        let source_selector = []
+        let sink_selector = []
+
+        // Prepare the options for the dependency selector source and sink
+        if (sectorModels != null && scenarioSets != null) {
+            source_selector.push(<option key={'source_selector_info'} disabled="disabled" value="none">Please select a source</option>)
+            sink_selector.push(<option key={'sink_selector_info'} disabled="disabled" value="none">Please select a sink</option>)
+
+            // Fill sector models
             if (sectorModels.length > 0) {
-                sectorModels_available = <option disabled="disabled">Sector Model</option>
+                source_selector.push(<option key={'source_sectormodel_info'} disabled="disabled">Sector Model</option>)
+                sink_selector.push(<option key={'sink_sectormodel_info'} disabled="disabled">Sector Model</option>)
+                for(let i = 0; i < sectorModels.length; i++) {
+                    if (inputs['SinkModel'] != sectorModels[i]) {
+                        source_selector.push(<option key={'source_selector_sectormodel_' + i} value={sectorModels[i]}>{sectorModels[i]}</option>)
+                    }
+                    if (inputs['SourceModel'] != sectorModels[i]) {
+                        sink_selector.push(<option key={'sink_selector_sectormodel_' + i} value={sectorModels[i]}>{sectorModels[i]}</option>)
+                    }
+                }
             }
+            
+            // If no sector models available for sink, write not available
+            if (sink_selector.length <= 2) {
+                sink_selector = <option key={'sink_selector_info'} disabled="disabled" value="none">No sink available</option>
+            }
+            
+            // Fill scenario sets
             if (scenarioSets.length > 0) {
-                scenarioSets_available = <option disabled="disabled">Scenario Set</option>
+                source_selector.push(<option key={'scenariosets_info'} disabled="disabled">Scenario Set</option>)
+                for(let i = 0; i < scenarioSets.length; i++) {
+                    source_selector.push(<option key={'source_selector_scenarioset_' + i} value={scenarioSets[i]}>{scenarioSets[i]}</option>)
+                }
             }
-        } else {
-            source_available = <option disabled="disabled" value="none">No source available</option>
+            
+            // If no sector models and scenario sets available for source, write not available
+            if (source_selector.length <= 1) {
+                source_selector = <option key={'source_selector_info'} disabled="disabled" value="none">No source available</option>
+            }
         }
-
-        let sink_available = null
-        if (sectorModels.length > 0) {
-            sink_available = <option disabled="disabled" value="none">Please select a sink</option>
-        } else {
-            sink_available = <option disabled="disabled" value="none">No sink available</option>
-        }
-
+        
         return (
             <div>
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Dependency" onClick={this.openCreateDependencyPopup} />
@@ -134,19 +159,7 @@ class DependencySelector extends Component {
                                 <div className="col">
                                     <label>Source</label>
                                     <select autoFocus className={this.state.className.SourceModel} name="SourceModel" defaultValue="none" onChange={this.handleChange}>
-                                        {source_available}
-                                        {scenarioSets_available}
-                                        {
-                                            scenarioSets.map((scenarioSet, i) => (
-                                                <option key={i} value={scenarioSet}>{scenarioSet}</option>
-                                            ))
-                                        }
-                                        {sectorModels_available}
-                                        {
-                                            sectorModels.map((sectorModel, i) => (
-                                                <option key={i} value={sectorModel}>{sectorModel}</option>
-                                            ))
-                                        }
+                                        {source_selector}
                                     </select>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
@@ -155,12 +168,7 @@ class DependencySelector extends Component {
                                 <div className="col">
                                     <label>Sink</label>
                                     <select className={this.state.className.SinkModel} name="SinkModel" defaultValue="none" onChange={this.handleChange}>
-                                        {sink_available}
-                                        {
-                                            sectorModels.map((sectorModel, i) => (
-                                                <option key={i} value={sectorModel}>{sectorModel}</option>
-                                            ))
-                                        }
+                                        {sink_selector}
                                     </select>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
