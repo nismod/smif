@@ -33,4 +33,4 @@ def dump(data, file_path):
     """
     with open(file_path, 'w') as file_handle:
         return yaml.dump(data, file_handle, Dumper=Dumper,
-                         default_flow_style=False)
+                         default_flow_style=False, allow_unicode=True)
