@@ -1,5 +1,6 @@
 """HTTP API endpoint
 """
+import smif
 import dateutil.parser
 
 from flask import Flask, render_template, request, jsonify, current_app
@@ -45,6 +46,8 @@ def register_routes(app):
 def register_api_endpoints(app):
     """Register API calls (using pluggable views)
     """
+    register_api(app, SmifAPI, 'smif_api', '/api/v1/smif/',
+                 key='key', key_type='string')
     register_api(app, SosModelRunAPI, 'sos_model_run_api', '/api/v1/sos_model_runs/',
                  key='sos_model_run_name', key_type='string')
     register_api(app, SosModelAPI, 'sos_model_api', '/api/v1/sos_models/',
@@ -86,6 +89,20 @@ def register_error_handlers(app):
         """
         response = jsonify({"message": str(error)})
         response.status_code = 404
+        return response
+
+
+class SmifAPI(MethodView):
+    """Implement operations for Smif
+    """
+    def get(self, key):
+        """Get smif details
+        version: GET /api/v1/smif/version
+        """
+        if key == 'version':
+            data = {'version': smif.__version__}
+            response = jsonify(data)
+
         return response
 
 

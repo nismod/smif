@@ -6,6 +6,7 @@ import os
 
 import dateutil.parser
 import pytest
+import smif
 from smif.data_layer import DataExistsError
 from smif.http_api import create_app
 
@@ -64,6 +65,14 @@ def test_hello(client):
     """
     response = client.get('/')
     assert "Welcome to smif" in str(response.data)
+
+
+def test_get_smif_version(client, get_handler):
+    """GET smif version
+    """
+    response = client.get('/api/v1/smif/version')
+    data = parse_json(response)
+    assert data['version'] == smif.__version__
 
 
 def test_get_sos_model_runs(client, get_handler, get_sos_model_run):
