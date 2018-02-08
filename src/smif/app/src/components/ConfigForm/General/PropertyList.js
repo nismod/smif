@@ -61,7 +61,7 @@ class PropertyList extends Component {
             if (this.props.rowWarning[itemNumber]) {
                 return (
                     <td width='8%'>
-                        <FaExclamationTriangle/>
+                        <FaExclamationTriangle id="warning" />
                     </td>
                 )
             } else {
@@ -128,7 +128,7 @@ class PropertyList extends Component {
                         {
                             Object.keys(items).map((item, i) => (
 
-                                <tr key={i}>
+                                <tr id={'property_' + i} key={i}>
                                     {this.getWarning(enableWarnings, item)}
                                     {
                                         Object.keys(columns).map((column, k) => (
