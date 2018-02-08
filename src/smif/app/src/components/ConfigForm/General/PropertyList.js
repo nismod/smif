@@ -16,7 +16,7 @@ class PropertyList extends Component {
 
     handleChange(event) {
 
-        const {name, items, onChange, onDelete} = this.props
+        const {itemsName, items, onChange, onDelete} = this.props
 
         const target = event.currentTarget
         const value = target.type === 'checkbox' ? target.checked : target.value
@@ -26,11 +26,12 @@ class PropertyList extends Component {
             onChange(value)
         }
         else if (targetname == 'delete') {
+            items.splice(value, 1)
             onDelete(
                 {
                     target: {
-                        name: name,
-                        value: items.splice(value, 1),
+                        name: itemsName,
+                        value: items,
                         type: 'array'
                     }
                 }
