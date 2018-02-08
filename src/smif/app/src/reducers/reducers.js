@@ -1,5 +1,7 @@
 import { combineReducers } from 'redux'
 import {
+    REQUEST_SMIF_DETAILS,
+    RECEIVE_SMIF_DETAILS,
     REQUEST_SOS_MODEL_RUNS,
     RECEIVE_SOS_MODEL_RUNS,
     REQUEST_SOS_MODEL_RUN,
@@ -29,6 +31,29 @@ import {
     REQUEST_NARRATIVE,
     RECEIVE_NARRATIVE,
 } from '../actions/actions.js'
+
+function smif(
+    state = {
+        isFetching: false,
+        item: {}
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_SMIF_DETAILS:
+        return Object.assign({}, state, {
+            isFetching: true
+        })
+    case RECEIVE_SMIF_DETAILS:
+        return Object.assign({}, state, {
+            isFetching: false,
+            item: action.smif,
+            lastUpdated: action.receivedAt
+        })
+    default:
+        return state
+    }
+}
 
 function sos_model_runs(
     state = {
@@ -353,6 +378,7 @@ function narrative(
 }
 
 const rootReducer = combineReducers({
+    smif,
     sos_model_runs,
     sos_model_run,
     sos_models,

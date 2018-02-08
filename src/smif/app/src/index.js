@@ -6,6 +6,7 @@ import { Route, BrowserRouter as Router } from 'react-router-dom'
 
 import Nav from './components/Nav'
 import Welcome from './components/Welcome'
+import Footer from './containers/Footer'
 import ProjectOverview from './containers/ConfigForm/ProjectOverview'
 import SosModelRunConfig from './containers/ConfigForm/SosModelRunConfig'
 import SosModelConfig from './containers/ConfigForm/SosModelConfig'
@@ -34,6 +35,7 @@ render(
                 <Route path="/configure/scenarios/:name" component={ScenarioConfig}/>
                 <Route path="/configure/narrative-set/:name" component={NarrativeSetConfig}/>
                 <Route path="/configure/narratives/:name" component={NarrativeConfig}/>
+                <Footer />
             </div>
         </Router>
     </Provider>,

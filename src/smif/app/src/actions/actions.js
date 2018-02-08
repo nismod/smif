@@ -1,5 +1,38 @@
 import fetch from 'isomorphic-fetch'
 
+export const REQUEST_SMIF_DETAILS = 'REQUEST_SMIF_DETAILS'
+function requestSmifDetails(){
+    return {
+        type: REQUEST_SMIF_DETAILS
+    }
+}
+
+export const RECEIVE_SMIF_DETAILS = 'RECEIVE_SMIF_DETAILS'
+function receiveSmifDetails(json) {
+    return {
+        type: RECEIVE_SMIF_DETAILS,
+        smif: json,
+        receivedAt: Date.now()
+    }
+}
+
+export function fetchSmifDetails(){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestSmifDetails())
+
+        // make API request, returning a promise
+        return fetch('/api/v1/smif/')
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                json => dispatch(receiveSmifDetails(json))
+            )
+    }
+}
+
 export const REQUEST_SOS_MODEL_RUNS = 'REQUEST_SOS_MODEL_RUNS'
 function requestSosModelRuns(){
     return {

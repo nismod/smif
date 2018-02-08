@@ -100,10 +100,11 @@ class SmifAPI(MethodView):
         version: GET /api/v1/smif/version
         """
         if key == 'version':
-            data = {'version': smif.__version__}
-            response = jsonify(data)
-
-        return response
+            data = smif.__version__
+        else:
+            data = {}
+            data['version'] = smif.__version__
+        return jsonify(data)
 
 
 class SosModelRunAPI(MethodView):
