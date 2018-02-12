@@ -2,6 +2,41 @@
 Changelog
 =========
 
+Version 0.6
+===========
+
+Functionality:
+
+- Getting started documentation updated to reflect new concepts and
+  folder structure
+- First version of web app GUI suitable for configuring simulation models,
+  system of system models and model runs
+- Implemented HTTP API whcih exposes smif data interface to the GUI
+- Added ``smif app`` command to start the GUI server and open web package
+  from the command line
+- Added ``smif setup`` command to copy bundled example project to user folder
+- Added functionality to SectorModel wrapper which enables introspection of
+  configuration data - managed by the ``DataHandle`` class and accessed at 
+  runtime in SectorModel.simulate() via the ``self.data`` property. This gives
+  access to timesteps, input data, region and interval sets, model parameters.
+
+ Development:
+
+- Build documentation using better-api package to better order and display the
+  code on readthedocs
+- Added class diagram for data DataHandle class
+- Migrated code coverage to codecov.io 
+- Updated pyscaffold dependency to v3.0 (removes pbr which causes issues with
+   e.g. submodules among other things)
+- GUI is now build on travis in deploy stage
+- Travis build stages are used to separate testing and deployment
+
+Bugs:
+
+- Fixed incorrect datetime parsing
+- Fixed assumption over http app location for debug
+- Fixed lack of error warning when running a modelrun when no timesteps defined
+
 Version 0.5
 ===========
 
