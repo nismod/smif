@@ -5,6 +5,20 @@ Developing `smif`
 
 *smif* is under active development at `github.com/nismod/smif`_
 
+Install
+-------
+
+The :code:`smif` codebase is contained in ``src/smif``.
+
+Install the library in develop mode using the command::
+
+    python setup.py develop
+
+If you also wish to use the GUI while using smif in develop mode, you'll need
+to navigate to the ``src/smif/app`` folder and run the commands::
+
+    npm install
+    npm run build
 
 Testing
 -------
