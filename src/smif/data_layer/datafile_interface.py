@@ -2,11 +2,8 @@
 """
 import csv
 import os
-from collections import deque
 from csv import DictReader
-from datetime import datetime
 
-import dateutil.parser
 import fiona
 from smif.data_layer.data_interface import (DataExistsError, DataInterface,
                                             DataMismatchError,
@@ -41,12 +38,27 @@ class DatafileInterface(DataInterface):
             'interventions': 'data',
             'narratives': 'data',
             'region_definitions': 'data',
-            'scenarios': 'data'
+            'scenarios': 'data',
+            'units': 'data'
         }
 
         for category, folder in config_folders.items():
             self.file_dir[category] = os.path.join(base_folder, folder,
                                                    category)
+
+    def read_units_file_name(self):
+        project_config = self._read_project_config()
+        filename = project_config['units']
+        if filename is not None:
+            path = self.file_dir['units']
+            units_file_path = os.path.join(path,
+                                           filename)
+            if os.path.exists(units_file_path):
+                return units_file_path
+            else:
+                return None
+        else:
+            return None
 
     def read_sos_model_runs(self):
         """Read all system-of-system model runs from Yaml files
@@ -1328,4 +1340,3 @@ class DatafileInterface(DataInterface):
         filename = filename + extension
         filepath = os.path.join(path, filename)
         dump(data, filepath)
-

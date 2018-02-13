@@ -7,7 +7,7 @@ import logging
 from pint import UndefinedUnitError, UnitRegistry
 
 LOGGER = logging.getLogger()
-UNIT_REGISTRY = UnitRegistry()
+__UNIT_REGISTRY = UnitRegistry(on_redefinition='raise')
 
 
 def parse_unit(unit_string):
@@ -22,8 +22,14 @@ def parse_unit(unit_string):
     quantity : :class:`pint.Unit`
     """
     try:
-        unit = UNIT_REGISTRY.parse_units(unit_string)
+        unit = __UNIT_REGISTRY.parse_units(unit_string)
     except UndefinedUnitError:
         LOGGER.warning("Unrecognised unit: %s", unit_string)
         unit = None
     return unit
+
+
+def get_register():
+    """Returns a reference to the unit registry
+    """
+    return __UNIT_REGISTRY

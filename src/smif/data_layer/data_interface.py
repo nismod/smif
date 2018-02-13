@@ -13,6 +13,10 @@ class DataInterface(metaclass=ABCMeta):
         self.logger = getLogger(__name__)
 
     @abstractmethod
+    def read_units_file_name(self):
+        raise NotImplementedError()
+
+    @abstractmethod
     def read_sos_model_runs(self):
         raise NotImplementedError()
 

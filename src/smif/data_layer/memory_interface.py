@@ -19,6 +19,9 @@ class MemoryInterface(DataInterface):
         self._narratives = {}
         self._results = {}
 
+    def read_units_file_name(self):
+        return self._units.values()
+
     def read_sos_model_runs(self):
         return self._sos_model_runs.values()
 
