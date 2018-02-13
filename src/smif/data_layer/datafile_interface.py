@@ -59,10 +59,6 @@ class DatafileInterface(DataInterface):
         else:
             return None
 
-    @property
-    def project(self):
-        return self._read_project_config()
-
     def read_sos_model_runs(self):
         """Read all system-of-system model runs from Yaml files
 
