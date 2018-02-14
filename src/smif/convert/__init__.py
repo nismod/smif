@@ -118,11 +118,6 @@ class SpaceTimeConvertor(object):
 
 class UnitConvertor(object):
     """Handles the conversion of units for a numpy array of values
-
-    Arguments
-    ---------
-    unit_register: :class:`smif.convert.unit.UnitRegister`
-        A fully populated register of the units that exist in the model
     """
     def __init__(self):
         self.logger = logging.getLogger(__name__)
