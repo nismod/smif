@@ -8,6 +8,7 @@ The :meth:`~SpaceTimeConvertor.convert` method returns a new
 """
 import logging
 import numpy as np
+import pint
 
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
@@ -143,8 +144,23 @@ class UnitConvertor(object):
         -------
         numpy.ndarray
             An array of data with dimensions regions x intervals
-        """
-        Q_ = self.units.Quantity(data, from_unit)
-        Q_.ito(to_unit)
 
-        return Q_.magnitude
+        Raises
+        ------
+        ValueError
+            If the units are not in the unit register or conversion is not possible
+        """
+        try:
+            Q_ = self.units.Quantity(data, from_unit)
+        except pint.errors.UndefinedUnitError:
+            raise ValueError('Cannot convert from undefined unit ' + from_unit)
+
+        try:
+            result = Q_.it(to_unit).magnitude
+        except pint.errors.UndefinedUnitError:
+            raise ValueError('Cannot convert to undefined unit ' + to_unit)
+        except pint.errors.DimensionalityError:
+            raise ValueError('Cannot convert from ' + from_unit + ' to ' + to_unit)
+        
+        return result
+
