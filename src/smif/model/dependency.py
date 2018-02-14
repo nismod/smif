@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from smif.convert import SpaceTimeConvertor
+from smif.convert import SpaceTimeConvertor, UnitConvertor
 
 
 class Dependency(object):
@@ -37,11 +37,6 @@ class Dependency(object):
                 "Implicit spatial conversion not implemented (attempted {}>{})".format(
                     source.temporal_resolution.name,
                     sink.temporal_resolution.name))
-        if source.units != sink.units:
-            raise NotImplementedError(
-                "Implicit units conversion not implemented (attempted {}>{})".format(
-                    source.units,
-                    sink.units))
 
         if function:
             self.convert = function
@@ -58,18 +53,24 @@ class Dependency(object):
         """
         from_units = self.source.units
         to_units = self.sink.units
-        self.logger.debug("Unit conversion: %s -> %s", from_units, to_units)
 
         if from_units != to_units:
-            raise NotImplementedError("Units conversion not implemented %s - %s",
-                                      from_units, to_units)
+            self.logger.debug("Unit conversion: %s -> %s", from_units, to_units)
+            convertor = UnitConvertor()
+            data = convertor.convert(data, from_units, to_units)
 
-        convertor = SpaceTimeConvertor()
-        return convertor.convert(data,
-                                 self.source.spatial_resolution.name,
-                                 self.sink.spatial_resolution.name,
-                                 self.source.temporal_resolution.name,
-                                 self.sink.temporal_resolution.name)
+        from_spatial = self.source.spatial_resolution.name
+        to_spatial = self.sink.spatial_resolution.name
+        from_temporal = self.source.temporal_resolution.name
+        to_temporal = self.sink.temporal_resolution.name
+
+        if from_spatial != to_spatial or from_temporal != to_temporal:
+            self.logger.debug("Spacetime conversion: %s -> %s, %s -> %s",
+                              from_spatial, to_spatial, from_temporal, to_temporal)
+            convertor = SpaceTimeConvertor()
+            data = convertor.convert(data, from_spatial, to_spatial, from_temporal, to_temporal)
+
+        return data
 
     def __repr__(self):
         return "<Dependency({}, {}, {})".format(self.source_model, self.source, self.sink)

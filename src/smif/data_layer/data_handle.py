@@ -125,6 +125,7 @@ class DataHandle(object):
         source_model = self._dependencies[input_name].source_model
         source_model_name = source_model.name
         source_output_name = self._dependencies[input_name].source.name
+        conversion = self._dependencies[input_name].convert
         if self._modelset_iteration is not None:
             i = self._modelset_iteration - 1  # read from previous
         else:
@@ -153,7 +154,7 @@ class DataHandle(object):
                 self._decision_iteration
             )
 
-        return data
+        return conversion(data)
 
     def get_base_timestep_data(self, input_name):
         """Get data from the base timestep as required for model inputs

@@ -56,6 +56,41 @@ def mock_model():
     return model
 
 
+@fixture(scope='function')
+def mock_model_with_conversion():
+    model = Mock()
+    model.name = 'test_model'
+    model.parameters = ParameterList()
+    model.parameters.add_parameter(
+        {
+            'name': 'smart_meter_savings',
+            'description': 'The savings from smart meters',
+            'absolute_range': (0, 100),
+            'suggested_range': (3, 10),
+            'default_value': 3,
+            'units': '%',
+            'parent': None
+        }
+    )
+    regions = Mock()
+    regions.name = 'test_regions'
+    intervals = Mock()
+    intervals.name = 'test_intervals'
+    model.inputs = MetadataSet([
+        Metadata('test', regions, intervals, 'liters')
+    ])
+    source_model = Mock()
+    source_model.name = 'test_source'
+    model.deps = {
+        'test': Dependency(
+            source_model,
+            Metadata('test_output', regions, intervals, 'milliliters'),
+            Metadata('test', regions, intervals, 'liters')
+        )
+    }
+    return model
+
+
 class TestDataHandle():
     def test_create(self):
         """should be created with a DataInterface
@@ -67,6 +102,25 @@ class TestDataHandle():
         """
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         expected = np.array([[1.0]])
+        actual = data_handle.get_data("test")
+        assert actual == expected
+
+        mock_store.read_results.assert_called_with(
+            1,
+            'test_source',  # read from source model
+            'test_output',  # using source model output name
+            'test_regions',
+            'test_intervals',
+            2015,
+            None,
+            None
+        )
+    
+    def test_get_data_with_conversion(self, mock_store, mock_model_with_conversion):
+        """should convert liters to milliliters (1 -> 0.001)
+        """
+        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model_with_conversion)
+        expected = np.array([[0.001]])
         actual = data_handle.get_data("test")
         assert actual == expected
 
