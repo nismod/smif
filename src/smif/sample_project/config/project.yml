@@ -20,7 +20,7 @@ interval_definitions:
 - name: annual
   description: ''
   filename: annual_intervals.csv
-units:
+units: units.txt
 scenarios:
 # given input data, required values for every year of a model run
 - name: 'Central Population (Low)'

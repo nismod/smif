@@ -38,8 +38,7 @@ class DatafileInterface(DataInterface):
             'interventions': 'data',
             'narratives': 'data',
             'region_definitions': 'data',
-            'scenarios': 'data',
-            'units': 'data'
+            'scenarios': 'data'
         }
 
         for category, folder in config_folders.items():
@@ -49,11 +48,11 @@ class DatafileInterface(DataInterface):
     def read_units_file_name(self):
         project_config = self._read_project_config()
         filename = project_config['units']
+        self.logger.debug("Units filename is %s", filename)
         if filename is not None:
-            path = self.file_dir['units']
-            units_file_path = os.path.join(path,
-                                           filename)
-            if os.path.exists(units_file_path):
+            path = os.path.join(self.base_folder, 'data')
+            units_file_path = os.path.join(path, filename)
+            if os.path.isfile(units_file_path):
                 return units_file_path
             else:
                 return None

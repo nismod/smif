@@ -12,9 +12,7 @@ import json
 import logging
 import os
 from copy import copy
-from datetime import datetime
 
-from dateutil.tz import tzutc
 from pytest import fixture
 from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
@@ -70,6 +68,9 @@ def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
 
     intervals_file = test_folder.join('data', 'interval_definitions', 'annual.csv')
     intervals_file.write("id,start,end\n1,P0Y,P1Y\n")
+
+    units_file = test_folder.join('data', 'user_units.txt')
+    units_file.write("mcm = 10^6 * m^3\nGBP = [currency]")
 
     return test_folder
 

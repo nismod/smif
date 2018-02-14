@@ -3,13 +3,13 @@
 import csv
 import json
 import os
-from copy import deepcopy
 
 import numpy as np
 from pytest import raises
 from smif.data_layer import (DataExistsError, DataMismatchError,
                              DataNotFoundError)
 from smif.data_layer.data_interface import DataInterface
+from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.load import dump
 
 
@@ -91,6 +91,39 @@ class TestDataInterface():
 
 
 class TestDatafileInterface():
+
+    def test_units_file_path_blank(self, project_config,
+                                   setup_folder_structure):
+        """If no units file specified, should return None
+        """
+        config = project_config
+        config['units'] = ''
+
+        basefolder = setup_folder_structure
+        project_config_path = os.path.join(
+            str(basefolder), 'config', 'project.yml')
+        dump(config, project_config_path)
+        config_handler = DatafileInterface(str(basefolder))
+
+        actual = config_handler.read_units_file_name()
+        expected = None
+        assert actual == expected
+
+    def test_units_file_path(self, project_config, setup_folder_structure):
+        """If units file specified, should return full path to file
+        """
+        config = project_config
+        config['units'] = 'user_units.txt'
+
+        basefolder = setup_folder_structure
+        project_config_path = os.path.join(
+            str(basefolder), 'config', 'project.yml')
+        dump(config, project_config_path)
+        config_handler = DatafileInterface(str(basefolder))
+
+        actual = config_handler.read_units_file_name()
+        expected = os.path.join(str(basefolder), 'data', 'user_units.txt')
+        assert actual == expected
 
     def test_sos_model_run_read_all(self, get_sos_model_run, get_handler):
         """Test to write two sos_model_run configurations to Yaml files, then
@@ -1071,6 +1104,7 @@ class TestDatafileInterface():
 
     def test_write_results_misshapen(self, setup_folder_structure, get_handler):
         pass
+
 
 def replace_e(obj, path):
     if obj == 'e':
