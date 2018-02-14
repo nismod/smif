@@ -178,6 +178,10 @@ class SosModel(CompositeModel):
                         "Implicit spatial conversion not implemented (attempted {}>{})".format(
                             dependency.source.temporal_resolution.name,
                             dependency.sink.temporal_resolution.name))
+                if dependency.source.units != dependency.sink.units:
+                    coefficient = dependency.convert(1)
+                    self.logger.debug("Implicit units conversion (%s>%s) uses coefficient %s", 
+                                    dependency.source.units, dependency.sink.units, coefficient)
 
                 self.dependency_graph.add_edge(
                     source_model,
