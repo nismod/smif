@@ -19,6 +19,8 @@ Functionality:
   configuration data - managed by the ``DataHandle`` class and accessed at 
   runtime in SectorModel.simulate() via the ``self.data`` property. This gives
   access to timesteps, input data, region and interval sets, model parameters.
+- Added unit conversion and the ability to load custom units from a file, the
+  location to which is specified under the ``units`` key in the project file
 
  Development:
 
