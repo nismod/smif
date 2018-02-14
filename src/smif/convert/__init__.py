@@ -156,11 +156,10 @@ class UnitConvertor(object):
             raise ValueError('Cannot convert from undefined unit ' + from_unit)
 
         try:
-            result = Q_.it(to_unit).magnitude
+            result = Q_.to(to_unit).magnitude
         except pint.errors.UndefinedUnitError:
             raise ValueError('Cannot convert to undefined unit ' + to_unit)
         except pint.errors.DimensionalityError:
             raise ValueError('Cannot convert from ' + from_unit + ' to ' + to_unit)
         
         return result
-
