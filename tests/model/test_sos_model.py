@@ -487,19 +487,33 @@ class TestSosModelBuilder():
         assert 'test_scenario_model' in sos_model.models
         assert sos_model.models['test_scenario_model'] in graph.nodes()
 
-    def test_invalid_unit_conversion(self, get_sos_model_object):
+    def test_undefined_unit_conversion(self, get_sos_model_object):
 
         sos_model = get_sos_model_object
         scenario = sos_model.models['test_scenario_model']
 
         scenario.outputs['raininess'].units = 'incompatible'
 
-        with raises(NotImplementedError) as ex:
+        with raises(ValueError) as ex:
             data_handle = Mock()
             data_handle.timesteps = [2010]
             sos_model.simulate(data_handle)
 
-        assert "Implicit units conversion not implemented" in str(ex.value)
+        assert "Cannot convert from undefined unit incompatible" in str(ex.value)    
+
+    def test_invalid_unit_conversion(self, get_sos_model_object):
+
+        sos_model = get_sos_model_object
+        scenario = sos_model.models['test_scenario_model']
+
+        scenario.outputs['raininess'].units = 'meter'
+
+        with raises(ValueError) as ex:
+            data_handle = Mock()
+            data_handle.timesteps = [2010]
+            sos_model.simulate(data_handle)
+
+        assert "Cannot convert from meter to milliliter" in str(ex.value)
 
     def test_cyclic_dependencies(self, get_sos_model_config_with_summed_dependency):
         config_data = get_sos_model_config_with_summed_dependency
