@@ -11,9 +11,10 @@ import numpy as np
 
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
+from smif.convert.unit import get_register as get_unit_register
 
-__author__ = "Will Usher, Tom Russell"
-__copyright__ = "Will Usher, Tom Russell"
+__author__ = "Will Usher, Tom Russell, Roald Schoenmakers"
+__copyright__ = "Will Usher, Tom Russell, Roald Schoenmakers"
 __license__ = "mit"
 
 
@@ -112,3 +113,38 @@ class SpaceTimeConvertor(object):
         converted = np.apply_along_axis(self.intervals.convert, 1, data,
                                         from_temporal, to_temporal)
         return converted
+
+
+class UnitConvertor(object):
+    """Handles the conversion of units for a numpy array of values
+
+    Arguments
+    ---------
+    unit_register: :class:`smif.convert.unit.UnitRegister`
+        A fully populated register of the units that exist in the model
+    """
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.units = get_unit_register()
+
+    def convert(self, data, from_unit, to_unit):
+        """Convert the data from set of regions and intervals to another unit
+
+        Parameters
+        ----------
+        data: numpy.ndarray
+            An array of values with dimensions regions x intervals
+        from_unit: str
+            The name of the unit of the data
+        to_unit: str
+            The name of the required unit
+
+        Returns
+        -------
+        numpy.ndarray
+            An array of data with dimensions regions x intervals
+        """
+        Q_ = self.units.Quantity(data, from_unit)
+        Q_.ito(to_unit)
+
+        return Q_.magnitude
