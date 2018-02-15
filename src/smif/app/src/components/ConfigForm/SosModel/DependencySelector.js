@@ -102,7 +102,7 @@ class DependencySelector extends Component {
         })
     }
 
-    renderDependencySelector(sectorModels, dependencies, selectedSectorModels, scenarioSets) {
+    renderDependencySelector(sectorModels, scenarioSets, dependencies, selectedSectorModels, selectedScenarioSets) {
 
         const {inputs} = this.state
 
@@ -110,7 +110,7 @@ class DependencySelector extends Component {
         let sink_selector = []
 
         // Prepare the options for the dependency selector source and sink
-        if (selectedSectorModels != null && scenarioSets != null) {
+        if (selectedSectorModels != null && selectedScenarioSets != null) {
             source_selector.push(<option key={'source_selector_info'} disabled="disabled" value="none">Please select a source</option>)
             sink_selector.push(<option key={'sink_selector_info'} disabled="disabled" value="none">Please select a sink</option>)
 
@@ -134,10 +134,10 @@ class DependencySelector extends Component {
             }
             
             // Fill scenario sets
-            if (scenarioSets.length > 0) {
-                source_selector.push(<option key={'scenariosets_info'} disabled="disabled">Scenario Set</option>)
-                for(let i = 0; i < scenarioSets.length; i++) {
-                    source_selector.push(<option key={'source_selector_scenarioset_' + i} value={scenarioSets[i]}>{scenarioSets[i]}</option>)
+            if (selectedScenarioSets.length > 0) {
+                source_selector.push(<option key={'selectedScenariosets_info'} disabled="disabled">Scenario Set</option>)
+                for(let i = 0; i < selectedScenarioSets.length; i++) {
+                    source_selector.push(<option key={'source_selector_scenarioset_' + i} value={selectedScenarioSets[i]}>{selectedScenarioSets[i]}</option>)
                 }
             }
             
@@ -148,12 +148,15 @@ class DependencySelector extends Component {
         }
         
         // Prepare options for source output selector
+        let source_output_selector = []
+
+        console.log(sectorModels)
+        console.log(inputs.SourceModel)
 
         
         return (
             <div>
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Dependency" onClick={this.openCreateDependencyPopup} />
-                {console.log(this.state.CreateDependencypopupIsOpen)}
                 <Popup onRequestOpen={this.state.CreateDependencypopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit()}}>
                         <h2 ref={subtitle => this.subtitle = subtitle}>Add a new Dependency</h2>
@@ -180,7 +183,9 @@ class DependencySelector extends Component {
                             </div>
                             <div className="row">
                                 <div className="col">
-                                    <input ref="" type="text" className={this.state.className.SourceOutput} name="SourceOutput" placeholder="Source Output" onChange={this.handleChange}/>
+                                    <select className={this.state.className.SourceOutput} name="SourceOutput" defaultValue="none" onChange={this.handleChange}>
+                                        {source_output_selector}
+                                    </select>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
@@ -188,7 +193,7 @@ class DependencySelector extends Component {
                                 <div className="col">
                                     <input type="text" className={this.state.className.SinkInput} name="SinkInput" placeholder="Sink Input" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
-                                            Please provide a valid input.
+                                            Pleasource_output_selectorse provide a valid input.
                                     </div>
                                 </div>
                             </div>
@@ -231,33 +236,36 @@ class DependencySelector extends Component {
     }
 
     render() {
-        const {sectorModels, dependencies, selectedSectorModels, scenarioSets} = this.props
+        const {sectorModels, scenarioSets, dependencies, selectedSectorModels, selectedScenarioSets} = this.props
 
         if (sectorModels == null || sectorModels == undefined) {
             return this.renderDanger('sectorModels are undefined')
+        } else if (scenarioSets == null || scenarioSets == undefined) {
+            return this.renderDanger('scenarioSets are undefined')
         } else if (dependencies == null || dependencies == undefined) {
             return this.renderDanger('Dependencies are undefined')
         } else if (selectedSectorModels == null || selectedSectorModels == undefined) {
             return this.renderDanger('selectedSectorModels are undefined')
-        } else if (scenarioSets == null || scenarioSets == undefined) {
-            return this.renderDanger('scenarioSets are undefined')
-        } else if ((selectedSectorModels == null || selectedSectorModels == undefined) || (scenarioSets == null || scenarioSets == undefined)) {
+        } else if (selectedScenarioSets == null || selectedScenarioSets == undefined) {
+            return this.renderDanger('selectedScenarioSets are undefined')
+        } else if ((selectedSectorModels == null || selectedSectorModels == undefined) || (selectedScenarioSets == null || selectedScenarioSets == undefined)) {
             if (selectedSectorModels == null || selectedSectorModels == undefined) {
-                return this.renderDependencySelector(sectorModels, dependencies, [], scenarioSets)
-            } else if (scenarioSets == null || scenarioSets == undefined) {
-                return this.renderDependencySelector(sectorModels, dependencies, selectedSectorModels, [])
+                return this.renderDependencySelector(sectorModels, scenarioSets, dependencies, [], selectedScenarioSets)
+            } else if (selectedScenarioSets == null || selectedScenarioSets == undefined) {
+                return this.renderDependencySelector(sectorModels, scenarioSets, dependencies, selectedSectorModels, [])
             }
         } else {
-            return this.renderDependencySelector(sectorModels, dependencies, selectedSectorModels, scenarioSets)
+            return this.renderDependencySelector(sectorModels, scenarioSets, dependencies, selectedSectorModels, selectedScenarioSets)
         }
     }
 }
 
 DependencySelector.propTypes = {
-    dependencies: PropTypes.array,
     sectorModels: PropTypes.array,
-    selectedSectorModels: PropTypes.array,
     scenarioSets: PropTypes.array,
+    dependencies: PropTypes.array,
+    selectedSectorModels: PropTypes.array,
+    selectedScenarioSets: PropTypes.array,
     onChange: PropTypes.func,
     onDelete: PropTypes.func
 }
