@@ -18,7 +18,6 @@ def create_app(static_folder='static', template_folder='templates', get_data_int
     """
     app = Flask(
         __name__,
-        static_url_path='',
         static_folder=static_folder,
         template_folder=template_folder
     )
@@ -36,8 +35,9 @@ def create_app(static_folder='static', template_folder='templates', get_data_int
 def register_routes(app):
     """Register plain routing
     """
-    @app.route("/")
-    def home():
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def home(path):
         """Render single page
         """
         return render_template('index.html')
