@@ -240,18 +240,6 @@ class ProjectOverview extends Component {
 
                     <div className="card">
                         <div className="card-header">
-                            Scenarios
-                        </div>
-                        <div className="card-body">
-                            <ProjectOverviewItem itemname="Scenario" items={scenarios} itemLink="/configure/scenarios/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Create a new Scenario" onClick={this.openCreatePopup}/>
-                        </div>
-                    </div>
-
-                    <br/>
-
-                    <div className="card">
-                        <div className="card-header">
                             Narrative Sets
                         </div>
                         <div className="card-body">
