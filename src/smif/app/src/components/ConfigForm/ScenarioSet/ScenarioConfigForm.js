@@ -78,7 +78,7 @@ class ScenarioConfigForm extends Component {
 
         let facetNav = []
         for (let i=0; i < selectedScenario.facets.length; i++) {
-            facetNav.push(<li className={'page-item-' + i}><a className="page-link" name={i} onClick={this.handleFacetChange}>{i+1}</a></li>)
+            facetNav.push(<li className={'page-item-' + i} key={i}><a className="page-link" name={i} onClick={this.handleFacetChange}>{i+1}</a></li>)
         }
 
         return (
