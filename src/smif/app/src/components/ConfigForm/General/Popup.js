@@ -34,6 +34,10 @@ class Popup extends Component {
         this.setState({popupIsOpen: false})
     }
 
+    componentWillMount() {
+        Modal.setAppElement('body')
+    }
+
     render() {
         const {onRequestOpen, onRequestClose} = this.props
 
