@@ -1,18 +1,18 @@
-import React, { Component } from 'react';
+import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
-import Modal from 'react-modal';
+import Modal from 'react-modal'
 
 const customStyles = {
     content : {
         top                   : '50%',
         left                  : '50%',
-        right                 : 'auto',
+        right                 : '50%',
         bottom                : 'auto',
         marginRight           : '-50%',
         transform             : 'translate(-50%, -50%)'
     }
-};
+}
 
 class Popup extends Component {
     constructor(props) {
@@ -27,11 +27,11 @@ class Popup extends Component {
     }
 
     openCreateSosModelRunPopup() {
-        this.setState({popupIsOpen: true});
+        this.setState({popupIsOpen: true})
     }
 
     closeCreateSosModelRunPopup() {
-        this.setState({popupIsOpen: false});
+        this.setState({popupIsOpen: false})
     }
 
     render() {
@@ -51,6 +51,6 @@ class Popup extends Component {
 
 Popup.propTypes = {
     onRequestOpen: PropTypes.bool.isRequired
-};
+}
 
-export default Popup;
+export default Popup

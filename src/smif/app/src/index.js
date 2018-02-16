@@ -12,7 +12,6 @@ import SosModelRunConfig from './containers/ConfigForm/SosModelRunConfig'
 import SosModelConfig from './containers/ConfigForm/SosModelConfig'
 import SectorModelConfig from './containers/ConfigForm/SectorModelConfig'
 import ScenarioSetConfig from './containers/ConfigForm/ScenarioSetConfig'
-import ScenarioConfig from './containers/ConfigForm/ScenarioConfig'
 import NarrativeSetConfig from './containers/ConfigForm/NarrativeSetConfig'
 import NarrativeConfig from './containers/ConfigForm/NarrativeConfig'
 
@@ -32,7 +31,6 @@ render(
                 <Route path="/configure/sos-models/:name" component={SosModelConfig}/>
                 <Route path="/configure/sector-models/:name" component={SectorModelConfig}/>
                 <Route path="/configure/scenario-set/:name" component={ScenarioSetConfig}/>
-                <Route path="/configure/scenarios/:name" component={ScenarioConfig}/>
                 <Route path="/configure/narrative-set/:name" component={NarrativeSetConfig}/>
                 <Route path="/configure/narratives/:name" component={NarrativeConfig}/>
                 <Footer />

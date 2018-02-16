@@ -16,14 +16,14 @@ class PropertyList extends Component {
 
     handleChange(event) {
 
-        const {itemsName, items, onChange, onDelete} = this.props
+        const {itemsName, items, onEdit, onDelete} = this.props
 
         const target = event.currentTarget
         const value = target.type === 'checkbox' ? target.checked : target.value
         const targetname = target.name
 
         if (targetname == 'edit') {
-            onChange(value)
+            onEdit(value)
         }
         else if (targetname == 'delete') {
             items.splice(value, 1)
