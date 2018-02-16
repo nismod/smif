@@ -56,34 +56,32 @@ class FacetConfigForm extends Component {
 
         return (
             <div>
-                <form>
-                    <div className="card">
-                        <div className="card-header">General</div>
-                        <div className="card-body">
+                <div className="card">
+                    <div className="card-header">General</div>
+                    <div className="card-body">
 
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Name</label>
-                                <div className="col-sm-10">
-                                    <input id="facet_name" className="form-control" name="name" type="text" disabled={editMode} defaultValue={selectedFacet.name} onChange={this.handleChange}/>
-                                </div>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Name</label>
+                            <div className="col-sm-10">
+                                <input id="facet_name" className="form-control" name="name" type="text" disabled={editMode} defaultValue={selectedFacet.name} onChange={this.handleChange}/>
                             </div>
+                        </div>
 
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Description</label>
-                                <div className="col-sm-10">
-                                    <textarea id="facet_description" className="form-control" name="description" rows="5" defaultValue={selectedFacet.description} onChange={this.handleChange}/>
-                                </div>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Description</label>
+                            <div className="col-sm-10">
+                                <textarea id="facet_description" className="form-control" name="description" rows="5" defaultValue={selectedFacet.description} onChange={this.handleChange}/>
                             </div>
-
                         </div>
 
                     </div>
 
-                    <br/>
+                </div>
 
-                    <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save Facet" onClick={this.handleSave} />
-                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
-                </form>
+                <br/>
+
+                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save Facet" onClick={this.handleSave} />
+                <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
             </div>
         )
     }
@@ -96,13 +94,3 @@ FacetConfigForm.propTypes = {
 }
 
 export default FacetConfigForm
-
-// <div className="form-group row">
-// <label className="col-sm-2 col-form-label">Name</label>
-// <div className="col-sm-10">
-//     <input autoFocus className="form-control" name="createPopupName" type="text" onChange={this.handleInputChange} required/>
-// </div>
-// </div>
-
-// <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Create"/>
-// <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreatePopup}/>

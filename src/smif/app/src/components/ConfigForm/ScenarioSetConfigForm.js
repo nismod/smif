@@ -160,51 +160,48 @@ class ScenarioSetConfigForm extends Component {
 
         return (
             <div>
-                <form>
-                    <div className="card">
-                        <div className="card-header">General</div>
-                        <div className="card-body">
+                <div className="card">
+                    <div className="card-header">General</div>
+                    <div className="card-body">
 
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-lathis.closeScenarioPopup()bel">Name</label>
-                                <div className="col-sm-10">
-                                    <input id="scenario_set_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedScenarioSet.name} onChange={this.handleChange}/>
-                                </div>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-lathis.closeScenarioPopup()bel">Name</label>
+                            <div className="col-sm-10">
+                                <input id="scenario_set_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedScenarioSet.name} onChange={this.handleChange}/>
                             </div>
+                        </div>
 
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Description</label>
-                                <div className="col-sm-10">
-                                    <textarea id="scenario_set_description" className="form-control" name="description" rows="5" defaultValue={selectedScenarioSet.description} onChange={this.handleChange}/>
-                                </div>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Description</label>
+                            <div className="col-sm-10">
+                                <textarea id="scenario_set_description" className="form-control" name="description" rows="5" defaultValue={selectedScenarioSet.description} onChange={this.handleChange}/>
                             </div>
-
                         </div>
+
                     </div>
+                </div>
 
-                    <br/>
+                <br/>
 
-                    <div className="card">
-                        <div className="card-header">Facets</div>
-                        <div className="card-body">
-                            <PropertyList itemsName="facets" items={selectedScenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.handleChange} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createFacet" type="button" value="Add a facet" onClick={this.openAddFacetPopup}/>
-                        </div>
+                <div className="card">
+                    <div className="card-header">Facets</div>
+                    <div className="card-body">
+                        <PropertyList itemsName="facets" items={selectedScenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.handleChange} />
+                        <input className="btn btn-secondary btn-lg btn-block" name="createFacet" type="button" value="Add a facet" onClick={this.openAddFacetPopup}/>
                     </div>
+                </div>
 
-                    <br/>
+                <br/>
 
-                    <div className="card">
-                        <div className="card-header">Scenarios</div>
-                        <div className="card-body">
-                            <PropertyList itemsName="Scenario" items={selectedScenarios} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditScenarioPopup} onDelete={this.handleChange} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Add a new Scenario" onClick={this.openAddScenarioPopup}/>
-                        </div>
+                <div className="card">
+                    <div className="card-header">Scenarios</div>
+                    <div className="card-body">
+                        <PropertyList itemsName="Scenario" items={selectedScenarios} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditScenarioPopup} onDelete={this.handleChange} />
+                        <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Add a new Scenario" onClick={this.openAddScenarioPopup}/>
                     </div>
+                </div>
 
-                    <br/>
-
-                </form>
+                <br/>
 
                 <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save Scenario Set Configuration" onClick={this.handleSave} />
                 <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
