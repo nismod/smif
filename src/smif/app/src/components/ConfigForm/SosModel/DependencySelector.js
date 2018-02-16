@@ -149,10 +149,27 @@ class DependencySelector extends Component {
         
         // Prepare options for source output selector
         let source_output_selector = []
+        if (inputs.SourceModel != '') {
+            sectorModels.filter(sectorModel => sectorModel.name == inputs.SourceModel)[0].outputs.map(output => 
+                source_output_selector.push(
+                    <option key={'source_output_' + output['name']} value={output['name']}>{output['name']}</option>
+                )
+            )
+        } else {
+            source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">None</option>)
+        }
 
-        console.log(sectorModels)
-        console.log(inputs.SourceModel)
-
+        // Prepare options for sink input selector
+        let sink_input_selector = []
+        if (inputs.SinkModel != '') {
+            sectorModels.filter(sectorModel => sectorModel.name == inputs.SinkModel)[0].inputs.map(input => 
+                sink_input_selector.push(
+                    <option key={'sink_input_' + input['name']} value={input['name']}>{input['name']}</option>
+                )
+            )
+        } else {
+            sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">None</option>)
+        }
         
         return (
             <div>
@@ -191,9 +208,11 @@ class DependencySelector extends Component {
                                     </div>
                                 </div>
                                 <div className="col">
-                                    <input type="text" className={this.state.className.SinkInput} name="SinkInput" placeholder="Sink Input" onChange={this.handleChange}/>
+                                    <select className={this.state.className.SinkInput} name="SinkInput" defaultValue="none" onChange={this.handleChange}>
+                                        {sink_input_selector}
+                                    </select>
                                     <div className="invalid-feedback">
-                                            Pleasource_output_selectorse provide a valid input.
+                                            Please provide a valid input.
                                     </div>
                                 </div>
                             </div>
