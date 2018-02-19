@@ -16,6 +16,7 @@ class ScenarioSetConfigForm extends Component {
         this.handleSave = this.handleSave.bind(this) 
         this.handleFacetSave = this.handleFacetSave.bind(this)
         this.handleScenarioSave = this.handleScenarioSave.bind(this)
+        this.handleScenarioCreate = this.handleScenarioCreate.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
         this.openAddFacetPopup = this.openAddFacetPopup.bind(this)
@@ -80,6 +81,12 @@ class ScenarioSetConfigForm extends Component {
 
     handleScenarioSave(scenario) {
         this.props.saveScenario(scenario)
+        this.closeScenarioPopup()
+    }
+
+    handleScenarioCreate(scenario) {
+        console.log(scenario)
+        this.props.createScenario(scenario)
         this.closeScenarioPopup()
     }
 
@@ -187,7 +194,7 @@ class ScenarioSetConfigForm extends Component {
                     <div className="card-header">Facets</div>
                     <div className="card-body">
                         <PropertyList itemsName="facets" items={selectedScenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.handleChange} />
-                        <input className="btn btn-secondary btn-lg btn-block" name="createFacet" type="button" value="Add a facet" onClick={this.openAddFacetPopup}/>
+                        <input className="btn btn-secondary btn-lg btn-block" name="createFacet" type="button" value="Add a Facet" onClick={this.openAddFacetPopup}/>
                     </div>
                 </div>
 
@@ -216,7 +223,7 @@ class ScenarioSetConfigForm extends Component {
 
                 <Popup onRequestOpen={this.state.editScenarioPopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation()}}>                
-                        <ScenarioConfigForm scenario={selectedScenario} scenarioSet={selectedScenarioSet} saveScenario={this.handleScenarioSave} cancelScenario={this.closeScenarioPopup}/>
+                        <ScenarioConfigForm scenario={selectedScenario} scenarioSet={selectedScenarioSet} createScenario={this.handleScenarioCreate} saveScenario={this.handleScenarioSave} cancelScenario={this.closeScenarioPopup}/>
                     </form>
                 </Popup>
             </div>
@@ -228,6 +235,7 @@ ScenarioSetConfigForm.propTypes = {
     scenarioSet: PropTypes.object.isRequired,
     scenarios: PropTypes.array.isRequired,
     saveScenarioSet: PropTypes.func,
+    createScenario: PropTypes.func,
     saveScenario: PropTypes.func,
     cancelScenarioSet: PropTypes.func
 }

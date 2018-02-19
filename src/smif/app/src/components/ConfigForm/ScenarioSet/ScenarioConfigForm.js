@@ -17,6 +17,12 @@ class ScenarioConfigForm extends Component {
         this.state = {}
         this.state.selectedScenario = this.props.scenario
         this.state.currentFacet = 0
+        
+        if (this.props.scenario.name === undefined){
+            this.state.editMode = false
+        } else {
+            this.state.editMode = true
+        }
     }
 
     componentDidMount(){
@@ -38,9 +44,6 @@ class ScenarioConfigForm extends Component {
         const value = target.type === 'checkbox' ? target.checked : target.value
         const name = target.name
 
-        console.log(name)
-        console.log(value)
-
         this.state.currentFacet = name
         this.forceUpdate()
     }
@@ -60,7 +63,11 @@ class ScenarioConfigForm extends Component {
     }
 
     handleSave() {
-        this.props.saveScenario(this.state.selectedScenario)
+        if (this.state.editMode) {
+            this.props.saveScenario(this.state.selectedScenario)
+        } else {
+            this.props.createScenario(this.state.selectedScenario)
+        }
     }
 
     handleCancel() {
@@ -68,17 +75,16 @@ class ScenarioConfigForm extends Component {
     }
 
     render() {
-        const {selectedScenario, currentFacet} = this.state
+        const {selectedScenario, currentFacet, editMode} = this.state
         const {scenario} = this.props
-
-        console.log(selectedScenario)
-
-        let editMode = true
-        if (scenario.name === undefined) editMode = false
 
         let facetNav = []
         for (let i=0; i < selectedScenario.facets.length; i++) {
-            facetNav.push(<li className={'page-item-' + i} key={i}><a className="page-link" name={i} onClick={this.handleFacetChange}>{i+1}</a></li>)
+            if (i == currentFacet) {
+                facetNav.push(<li className={'page-item active'} key={i}><a className="page-link" name={i} onClick={this.handleFacetChange}>{i+1}</a></li>)
+            } else {
+                facetNav.push(<li className={'page-item'} key={i}><a className="page-link" name={i} onClick={this.handleFacetChange}>{i+1}</a></li>)
+            }
         }
 
         return (
@@ -113,7 +119,7 @@ class ScenarioConfigForm extends Component {
                             <div className="row">
                                 <div className="col">
                                     <label>Name</label>
-                                    <input autoFocus className='form-control' type="text" name="facet_name" value={selectedScenario.facets[currentFacet].name} onChange={this.handleChange}/>
+                                    <input className='form-control' type="text" name="facet_name" value={selectedScenario.facets[currentFacet].name} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -165,8 +171,6 @@ class ScenarioConfigForm extends Component {
 
                 <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save Scenario" onClick={this.handleSave} />
                 <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
-
-                <br/>
             </div>
         )
     }
