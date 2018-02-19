@@ -552,6 +552,7 @@ export function createScenarioSet(scenarioSetName){
         let newScenarioSet = {
             'name':  scenarioSetName,
             'description': '',
+            'facets': []
         }
 
         // make API request, returning a promise
