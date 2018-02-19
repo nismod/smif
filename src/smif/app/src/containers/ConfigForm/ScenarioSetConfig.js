@@ -7,6 +7,7 @@ import { Link, Router } from 'react-router-dom'
 import { fetchScenarios } from '../../actions/actions.js'
 import { saveScenario } from '../../actions/actions.js'
 import { createScenario } from '../../actions/actions.js'
+import { deleteScenario } from '../../actions/actions.js'
 import { fetchScenarioSet } from '../../actions/actions.js'
 import { saveScenarioSet } from '../../actions/actions.js'
 
@@ -21,6 +22,7 @@ class ScenarioSetConfig extends Component {
         this.saveScenarioSet = this.saveScenarioSet.bind(this)
         this.saveScenario = this.saveScenario.bind(this)
         this.createScenario = this.createScenario.bind(this)
+        this.deleteScenario = this.deleteScenario.bind(this)
 
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
     }
@@ -55,6 +57,12 @@ class ScenarioSetConfig extends Component {
         dispatch(fetchScenarios())
     }
 
+    deleteScenario(scenario) {
+        const { dispatch } = this.props
+        dispatch(deleteScenario(scenario))
+        dispatch(fetchScenarios())
+    }
+
     returnToPreviousPage() {
         history.back()
     }
@@ -79,7 +87,7 @@ class ScenarioSetConfig extends Component {
         return (
             <div>
                 <h1>Scenario Set Configuration</h1>
-                <ScenarioSetConfigForm scenarioSet={scenario_set} scenarios={scenarios} saveScenarioSet={this.saveScenarioSet} createScenario={this.createScenario} saveScenario={this.saveScenario} cancelScenarioSet={this.returnToPreviousPage}/>
+                <ScenarioSetConfigForm scenarioSet={scenario_set} scenarios={scenarios} saveScenarioSet={this.saveScenarioSet} createScenario={this.createScenario} deleteScenario={this.deleteScenario} saveScenario={this.saveScenario} cancelScenarioSet={this.returnToPreviousPage}/>
             </div>
         )
     }

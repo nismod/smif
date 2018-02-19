@@ -13,6 +13,12 @@ class FacetConfigForm extends Component {
 
         this.state = {}
         this.state.selectedFacet = this.props.facet
+
+        if (this.props.facet.name === undefined){
+            this.state.editMode = false
+        } else {
+            this.state.editMode = true
+        }
     }
 
     componentDidMount(){
@@ -48,11 +54,7 @@ class FacetConfigForm extends Component {
     }
 
     render() {
-        const { selectedFacet } = this.state
-        const { facet } = this.props
-
-        let editMode = true
-        if (Object.keys(facet).length === 0) editMode = false
+        const { selectedFacet, editMode } = this.state
 
         return (
             <div>

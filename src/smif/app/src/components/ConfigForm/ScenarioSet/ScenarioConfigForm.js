@@ -123,6 +123,8 @@ class ScenarioConfigForm extends Component {
                                 </div>
                             </div>
 
+                            <br/>
+
                             <div className="row">
                                 <div className="col">
                                     <label>Filename</label>
@@ -139,6 +141,8 @@ class ScenarioConfigForm extends Component {
                                     <input type="text" className='form-control' name="facet_units" value={selectedScenario.facets[currentFacet].units} onChange={this.handleChange}/>
                                 </div>
                             </div>
+
+                            <br/>
 
                             <div className="row">
                                 <div className="col">
