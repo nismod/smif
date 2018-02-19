@@ -74,7 +74,7 @@ class ScenarioConfigForm extends Component {
         this.props.cancelScenario()
     }
 
-    render() {
+    renderScenarioConfigForm() {
         const {selectedScenario, currentFacet, editMode} = this.state
         const {scenario} = this.props
 
@@ -177,6 +177,61 @@ class ScenarioConfigForm extends Component {
                 <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
             </div>
         )
+    }
+
+    renderDanger(message) {
+        return (
+            <div>
+                <div id="property_list_alert-danger" className="alert alert-danger">
+                    {message}
+                </div>
+                <div>
+                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                </div>
+            </div>
+        )
+    }
+
+    renderWarning(message) {
+        return (
+            <div>
+                <div id="property_list_alert-warning" className="alert alert-warning">
+                    {message}
+                
+                </div>
+                <div>
+                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                </div>
+            </div>
+        )
+    }
+
+    renderInfo(message) {
+        return (
+            <div>
+                <div id="property_list_alert-info" className="alert alert-info">
+                    {message}
+                
+                </div>
+                <div>
+                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                </div>
+            </div>
+        )
+    }
+
+    render() {
+        const {scenario, scenarioSet } = this.props
+
+        if (scenario == null || scenario == undefined) {
+            return this.renderDanger('The scenarios are not initialised')
+        } else if (scenarioSet == null || scenarioSet == undefined) {
+            return this.renderDanger('The scenarioSet is not initialised')
+        } else if (scenario.facets.length == 0) {
+            return this.renderWarning('There are no facets configured in the ScenarioSet')
+        } else {
+            return this.renderScenarioConfigForm()
+        }
     }
 }
 

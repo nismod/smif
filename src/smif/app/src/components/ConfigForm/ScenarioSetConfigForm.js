@@ -68,19 +68,15 @@ class ScenarioSetConfigForm extends Component {
     }
 
     handleSave() {
-        console.log(this.props.scenarios)
-        // console.log(this.state.selectedScenarios)
 
         // delete all existing scenarios in this set
         let deleteScenarios = this.props.scenarios.filter(scenario => scenario.scenario_set == this.props.scenarioSet['name'])
         for (var i in deleteScenarios) {
-            console.log('delete', deleteScenarios[i]['name'])
             this.props.deleteScenario(deleteScenarios[i]['name'])
         }
 
         // add the current state of scenarios
         for (var i in this.state.selectedScenarios) {
-            console.log('add', this.state.selectedScenarios[i])
             this.props.createScenario(this.state.selectedScenarios[i])
         }
 
@@ -204,9 +200,6 @@ class ScenarioSetConfigForm extends Component {
     render() {
         const {selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet} = this.state
 
-        console.log('scenarioSetConfig', selectedScenarios)
-        console.log('scenarioSetConfig', selectedScenarioSet.facets)
-
         return (
             <div>
                 <div className="card">
@@ -236,7 +229,7 @@ class ScenarioSetConfigForm extends Component {
                     <div className="card-header">Facets</div>
                     <div className="card-body">
                         <PropertyList itemsName="facets" items={selectedScenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.handleChange} />
-                        <input className="btn btn-secondary btn-lg btn-block" name="createFacet" type="button" value="Add a Facet" onClick={this.openAddFacetPopup}/>
+                        <input className="btn btn-secondary btn-lg btn-block" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
                     </div>
                 </div>
 
@@ -246,7 +239,7 @@ class ScenarioSetConfigForm extends Component {
                     <div className="card-header">Scenarios</div>
                     <div className="card-body">
                         <PropertyList itemsName="Scenario" items={selectedScenarios} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditScenarioPopup} onDelete={this.handleChange} />
-                        <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Add a new Scenario" onClick={this.openAddScenarioPopup}/>
+                        <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Add Scenario" onClick={this.openAddScenarioPopup}/>
                     </div>
                 </div>
 
