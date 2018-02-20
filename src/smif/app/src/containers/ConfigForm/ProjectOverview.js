@@ -120,6 +120,7 @@ class ProjectOverview extends Component {
     deletePopupSubmit() {
 
         const {deletePopupType, deletePopupHeader} = this.state
+        const { scenarios } = this.props
         const { dispatch } = this.props
 
         this.closeDeletePopup(deletePopupType)
@@ -140,10 +141,12 @@ class ProjectOverview extends Component {
         case 'deleteScenarioSet':
             dispatch(deleteScenarioSet(deletePopupHeader))
             dispatch(fetchScenarioSets())
-            break
-        case 'deleteScenario':
-            dispatch(deleteScenario(deletePopupHeader))
-            dispatch(fetchScenarios())
+
+            // also delete all the scenarios that belong to the set
+            let deleteScenarios = scenarios.filter(scenario => scenario['scenario_set'] == deletePopupHeader)
+            for (let scenario of deleteScenarios) {
+                dispatch(deleteScenario(scenario['name']))
+            }
             break
         case 'deleteNarrativeSet':
             dispatch(deleteNarrativeSet(deletePopupHeader))

@@ -598,6 +598,7 @@ function requestScenarios(){
 
 export const RECEIVE_SCENARIOS = 'RECEIVE_SCENARIOS'
 function receiveScenarios(json) {
+    if (json == null) json = []
     return {
         type: RECEIVE_SCENARIOS,
         scenarios: json,
@@ -676,6 +677,7 @@ export function saveScenario(scenario){
 }
 
 export function createScenario(scenarioName){
+    console.log(scenarioName)
     return function (dispatch) {
         // prepare the new modelrun
         let datetime = new Date()

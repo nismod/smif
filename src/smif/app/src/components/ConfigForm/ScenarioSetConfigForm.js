@@ -213,8 +213,6 @@ class ScenarioSetConfigForm extends Component {
                 scenarioFacetList.push(facet['name'])
             }
 
-            console.log('facetlist', facetlist)
-            console.log('scenarioFacetList', scenarioFacetList)
             if (facetlist.toString() == scenarioFacetList.toString()) {
                 scenarioWarnings.push(false)
             } else {

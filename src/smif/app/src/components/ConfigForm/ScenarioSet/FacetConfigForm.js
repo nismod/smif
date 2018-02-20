@@ -65,7 +65,7 @@ class FacetConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input id="facet_name" className="form-control" name="name" type="text" disabled={editMode} defaultValue={selectedFacet.name} onChange={this.handleChange}/>
+                                <input autoFocus id="facet_name" className="form-control" name="name" type="text" disabled={editMode} defaultValue={selectedFacet.name} onChange={this.handleChange}/>
                             </div>
                         </div>
 
