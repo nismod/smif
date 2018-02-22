@@ -160,32 +160,58 @@ class DependencySelector extends Component {
                         <option key={'source_output_' + output['name']} value={output['name']}>{output['name']}</option>
                     )
                 )
+
+                // set state for default selection
+                if (scenarioset_source_outputs[0].facets.length > 0) {
+                    this.state.inputs.SourceOutput = sectormodel_source_outputs[0].outputs[0].name
+                } else {
+                    this.state.inputs.SourceOutput = ""
+                }
+
             } else if (scenarioset_source_outputs.length == 1 && sectormodel_source_outputs.length == 0) {
-                scenarioset_source_outputs[0].facets.map(output => 
+                scenarioset_source_outputs[0].facets.map(facet => 
                     source_output_selector.push(
-                        <option key={'source_output_' + output['name']} value={output['name']}>{output['name']}</option>
+                        <option key={'source_output_' + facet['name']} value={facet['name']}>{facet['name']}</option>
                     )
                 )
+
+                // set state for default selection
+                if (scenarioset_source_outputs[0].facets.length > 0) {
+                    this.state.inputs.SourceOutput = scenarioset_source_outputs[0].facets[0].name
+                } else {
+                    this.state.inputs.SourceOutput = ""
+                }
+
             } else if ((sectormodel_source_outputs.length + scenarioset_source_outputs.length) > 1) {
-                source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="duplicates">Error: Duplicates</option>)
+                source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">Error: Duplicates</option>)
+                this.state.inputs.SourceOutput = ''
+
             } else {
                 source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">None</option>)
+                this.state.inputs.SourceOutput = ''
+
             }
 
         } else {
             source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">None</option>)
+            this.state.inputs.SourceOutput = ''
+
         }
 
         // Prepare options for sink input selector
         let sink_input_selector = []
+        
         if (inputs.SinkModel != '') {
-            sectorModels.filter(sectorModel => sectorModel.name == inputs.SinkModel)[0].inputs.map(input => 
+            let sectormodel_sink_inputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SinkModel)
+            sectormodel_sink_inputs[0].inputs.map(input => 
                 sink_input_selector.push(
                     <option key={'sink_input_' + input['name']} value={input['name']}>{input['name']}</option>
                 )
             )
+            this.state.inputs.SinkInput = sectormodel_sink_inputs[0].inputs[0]['name']
         } else {
             sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">None</option>)
+            this.state.inputs.SinkInput = ''
         }
         
         return (
