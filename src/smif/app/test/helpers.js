@@ -353,24 +353,43 @@ export const sector_model = {
 export const scenario_sets = [
     {
         description: 'UK precipitation',
-        name: 'rainfall'
+        name: 'rainfall',
+        facets: [
+            {
+                description: 'Rainfall for the UK',
+                name: 'rainfall'
+            }
+        ]
+
     },
     {
         description: 'Growth in UK population',
-        name: 'population'
+        name: 'population',
+        facets: [
+            {
+                description: 'Central Population for the UK',
+                name: 'population'
+            }
+        ]
     }
 ]
 
 export const scenario_set = {
-    description: 'UK precipitation',
-    name: 'rainfall'
+    description: 'Growth in UK population',
+    name: 'population',
+    facets: [
+        {
+            description: 'Central Population for the UK',
+            name: 'population'
+        }
+    ]
 }
 
 export const scenarios = [
     {
         description: 'Central Population for the UK (Low)',
         name: 'Central Population (Low)',
-        parameters: [
+        facets: [
             {
                 filename: 'population_low.csv',
                 name: 'population',
@@ -385,7 +404,7 @@ export const scenarios = [
     {
         description: 'Central Population for the UK (Medium)',
         name: 'Central Population (Medium)',
-        parameters: [
+        facets: [
             {
                 filename: 'population_med.csv',
                 name: 'population',
@@ -400,7 +419,7 @@ export const scenarios = [
     {
         description: 'Central Population for the UK (High)',
         name: 'Central Population (High)',
-        parameters: [
+        facets: [
             {
                 filename: 'population_low.csv',
                 name: 'population',
@@ -415,7 +434,7 @@ export const scenarios = [
     {
         description: 'Central Rainfall Scenario for the UK',
         name: 'Central Rainfall',
-        parameters: [
+        facets: [
             {
                 filename: 'raininess.csv',
                 name: 'raininess',
@@ -431,7 +450,7 @@ export const scenarios = [
 export const scenario = {
     description: 'Central Population for the UK (Medium)',
     name: 'Central Population (Medium)',
-    parameters: [
+    facets: [
         {
             filename: 'population_med.csv',
             name: 'population',
