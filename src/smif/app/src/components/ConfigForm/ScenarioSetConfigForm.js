@@ -199,7 +199,14 @@ class ScenarioSetConfigForm extends Component {
 
     renderScenarioSetConfigForm(selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet) {
 
+        // Do not show scenarios when there are no facets configured
+        let scenarioCardState = 'collapse show'
+        if (selectedScenarioSet.facets.length == 0) {
+            scenarioCardState = 'collapse'
+        }
+
         // Check if facets are configured in all scenario sets
+        // prepare an array with warning
         let scenarioWarnings = []
         
         let facetlist = []
@@ -254,11 +261,13 @@ class ScenarioSetConfigForm extends Component {
 
                 <br/>
 
-                <div className="card">
-                    <div className="card-header">Scenarios</div>
-                    <div className="card-body">
-                        <PropertyList itemsName="Scenario" items={selectedScenarios} columns={{name: 'Name', description: 'Description'}} enableWarnings={true} rowWarning={scenarioWarnings} editButton={true} deleteButton={true} onEdit={this.openEditScenarioPopup} onDelete={this.handleChange} />
-                        <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Add Scenario" onClick={this.openAddScenarioPopup}/>
+                <div className={scenarioCardState} >
+                    <div className="card">
+                        <div className="card-header">Scenarios</div>
+                        <div className="card-body">
+                            <PropertyList itemsName="Scenario" items={selectedScenarios} columns={{name: 'Name', description: 'Description'}} enableWarnings={true} rowWarning={scenarioWarnings} editButton={true} deleteButton={true} onEdit={this.openEditScenarioPopup} onDelete={this.handleChange} />
+                            <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Add Scenario" onClick={this.openAddScenarioPopup}/>
+                        </div>
                     </div>
                 </div>
 
