@@ -227,7 +227,7 @@ class ScenarioConfigForm extends Component {
             return this.renderDanger('The scenarios are not initialised')
         } else if (scenarioSet == null || scenarioSet == undefined) {
             return this.renderDanger('The scenarioSet is not initialised')
-        } else if (scenario.facets.length == 0) {
+        } else if (scenario.facets == undefined) {
             return this.renderWarning('There are no facets configured in the ScenarioSet')
         } else {
             return this.renderScenarioConfigForm()

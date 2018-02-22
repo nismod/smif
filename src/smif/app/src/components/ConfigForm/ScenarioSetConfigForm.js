@@ -197,8 +197,7 @@ class ScenarioSetConfigForm extends Component {
         this.setState({editScenarioPopupIsOpen: true})
     }
 
-    render() {
-        const {selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet} = this.state
+    renderScenarioSetConfigForm(selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet) {
 
         // Check if facets are configured in all scenario sets
         let scenarioWarnings = []
@@ -283,6 +282,65 @@ class ScenarioSetConfigForm extends Component {
                 </Popup>
             </div>
         )
+    }
+
+    renderDanger(message) {
+        return (
+            <div>
+                <div id="alert-danger" className="alert alert-danger">
+                    {message}
+                </div>
+                <div>
+                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                </div>
+            </div>
+        )
+    }
+
+    renderWarning(message) {
+        return (
+            <div>
+                <div id="alert-warning" className="alert alert-warning">
+                    {message}
+                
+                </div>
+                <div>
+                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                </div>
+            </div>
+        )
+    }
+
+    renderInfo(message) {
+        return (
+            <div>
+                <div id="alert-info" className="alert alert-info">
+                    {message}
+                
+                </div>
+                <div>
+                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                </div>
+            </div>
+        )
+    }
+
+    render() {
+        const {selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet} = this.state
+        
+        if (selectedScenarioSet == null || selectedScenarioSet == undefined) {
+            return this.renderDanger('The selectedScenarioSet are not initialised')
+        } else if (selectedScenarioSet.facets == null || selectedScenarioSet.facets == undefined) {
+            return this.renderDanger('The selectedScenarioSet.facets is not initialised')
+        } else if (selectedScenarios == null || selectedScenarios == undefined) {
+            return this.renderDanger('The selectedScenarios is not initialised')
+        } else if (selectedScenario == null || selectedScenario == undefined) {
+            return this.renderDanger('The selectedScenario is not initialised')
+        } else if (selectedFacet == null || selectedFacet == undefined) {
+            return this.renderDanger('The selectedFacet is not initialised')
+        } else {
+            return this.renderScenarioSetConfigForm(selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet)
+        }
     }
 }
 
