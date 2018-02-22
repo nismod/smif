@@ -18,6 +18,7 @@ def create_app(static_folder='static', template_folder='templates', get_data_int
     """
     app = Flask(
         __name__,
+        static_url_path='',
         static_folder=static_folder,
         template_folder=template_folder
     )
