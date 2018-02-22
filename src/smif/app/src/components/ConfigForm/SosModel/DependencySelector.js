@@ -150,11 +150,28 @@ class DependencySelector extends Component {
         // Prepare options for source output selector
         let source_output_selector = []
         if (inputs.SourceModel != '') {
-            sectorModels.filter(sectorModel => sectorModel.name == inputs.SourceModel)[0].outputs.map(output => 
-                source_output_selector.push(
-                    <option key={'source_output_' + output['name']} value={output['name']}>{output['name']}</option>
+            
+            let sectormodel_source_outputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SourceModel)
+            let scenarioset_source_outputs = scenarioSets.filter(scenarioSet => scenarioSet.name == inputs.SourceModel)
+            
+            if (sectormodel_source_outputs.length == 1 && scenarioset_source_outputs.length == 0) {
+                sectormodel_source_outputs[0].outputs.map(output => 
+                    source_output_selector.push(
+                        <option key={'source_output_' + output['name']} value={output['name']}>{output['name']}</option>
+                    )
                 )
-            )
+            } else if (scenarioset_source_outputs.length == 1 && sectormodel_source_outputs.length == 0) {
+                scenarioset_source_outputs[0].facets.map(output => 
+                    source_output_selector.push(
+                        <option key={'source_output_' + output['name']} value={output['name']}>{output['name']}</option>
+                    )
+                )
+            } else if ((sectormodel_source_outputs.length + scenarioset_source_outputs.length) > 1) {
+                source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="duplicates">Error: Duplicates</option>)
+            } else {
+                source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">None</option>)
+            }
+
         } else {
             source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">None</option>)
         }
