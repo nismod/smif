@@ -37,7 +37,6 @@ class DependencySelector extends Component {
 
         // Reset the SourceOutput and SinkInput if a difference source or sink is selected
         if (event.target.name == 'SourceModel'){
-            console.log('looo')
             this.setState({
                 inputs: update(this.state.inputs, {
                     SourceModel: {$set: event.target.value},
@@ -188,14 +187,6 @@ class DependencySelector extends Component {
                 )
             } else if ((sectormodel_source_outputs.length + scenarioset_source_outputs.length) > 1) {
                 source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">Error: Duplicates</option>)
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-                this.state.inputs.SourceOutput = ''
-
->>>>>>> 5c3ae94b27afb9e296bba695a458e720ea9c80a7
->>>>>>> 80f012412421043ec7b603abc102d4daf60267ac
             } else {
                 source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">None</option>)
             }
@@ -208,16 +199,8 @@ class DependencySelector extends Component {
         let sink_input_selector = []
         
         if (inputs.SinkModel != '') {
-<<<<<<< HEAD
-            sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">Please select a sink input</option>)
-            
-=======
-<<<<<<< HEAD
-            sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">Please select a sink input</option>)
-            
-=======
->>>>>>> 5c3ae94b27afb9e296bba695a458e720ea9c80a7
->>>>>>> 80f012412421043ec7b603abc102d4daf60267ac
+            sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">Please select a sink input</option>)  
+
             let sectormodel_sink_inputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SinkModel)
             sectormodel_sink_inputs[0].inputs.map(input => 
                 sink_input_selector.push(
