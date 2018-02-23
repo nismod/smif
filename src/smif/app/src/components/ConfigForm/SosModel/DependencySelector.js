@@ -34,9 +34,28 @@ class DependencySelector extends Component {
     }
 
     handleChange(event) {
-        this.setState({
-            inputs: update(this.state.inputs, {[event.target.name]: {$set: event.target.value}})
-        })
+
+
+        // Reset the SourceOutput and SinkInput if a difference source or sink is selected
+        if (event.target.name == 'SourceModel'){
+            this.setState({
+                inputs: update(this.state.inputs, {
+                    SourceModel: {$set: event.target.value},
+                    SourceOutput: {$set: ''}
+                })
+            })
+        } else if (event.target.name == 'SinkModel'){
+            this.setState({
+                inputs: update(this.state.inputs, {
+                    SinkModel: {$set: event.target.value},
+                    SinkInput: {$set: ''}
+                })
+            })
+        } else {
+            this.setState({
+                inputs: update(this.state.inputs, {[event.target.name]: {$set: event.target.value}})
+            })
+        }
     }
 
     handleSubmit() {
@@ -150,6 +169,7 @@ class DependencySelector extends Component {
         // Prepare options for source output selector
         let source_output_selector = []
         if (inputs.SourceModel != '') {
+            source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">Please select a source output</option>)
             
             let sectormodel_source_outputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SourceModel)
             let scenarioset_source_outputs = scenarioSets.filter(scenarioSet => scenarioSet.name == inputs.SourceModel)
@@ -160,58 +180,36 @@ class DependencySelector extends Component {
                         <option key={'source_output_' + output['name']} value={output['name']}>{output['name']}</option>
                     )
                 )
-
-                // set state for default selection
-                if (sectormodel_source_outputs[0].outputs.length > 0) {
-                    this.state.inputs.SourceOutput = sectormodel_source_outputs[0].outputs[0].name
-                } else {
-                    this.state.inputs.SourceOutput = ""
-                }
-
             } else if (scenarioset_source_outputs.length == 1 && sectormodel_source_outputs.length == 0) {
                 scenarioset_source_outputs[0].facets.map(facet => 
                     source_output_selector.push(
                         <option key={'source_output_' + facet['name']} value={facet['name']}>{facet['name']}</option>
                     )
                 )
-
-                // set state for default selection
-                if (scenarioset_source_outputs[0].facets.length > 0) {
-                    this.state.inputs.SourceOutput = scenarioset_source_outputs[0].facets[0].name
-                } else {
-                    this.state.inputs.SourceOutput = ""
-                }
-
             } else if ((sectormodel_source_outputs.length + scenarioset_source_outputs.length) > 1) {
                 source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">Error: Duplicates</option>)
-                this.state.inputs.SourceOutput = ''
-
             } else {
                 source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">None</option>)
-                this.state.inputs.SourceOutput = ''
-
             }
 
         } else {
             source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">None</option>)
-            this.state.inputs.SourceOutput = ''
-
         }
 
         // Prepare options for sink input selector
         let sink_input_selector = []
         
         if (inputs.SinkModel != '') {
+            sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">Please select a sink input</option>)
+            
             let sectormodel_sink_inputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SinkModel)
             sectormodel_sink_inputs[0].inputs.map(input => 
                 sink_input_selector.push(
                     <option key={'sink_input_' + input['name']} value={input['name']}>{input['name']}</option>
                 )
             )
-            this.state.inputs.SinkInput = sectormodel_sink_inputs[0].inputs[0]['name']
         } else {
             sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">None</option>)
-            this.state.inputs.SinkInput = ''
         }
         
         return (
@@ -224,7 +222,7 @@ class DependencySelector extends Component {
                             <div className="row">
                                 <div className="col">
                                     <label>Source</label>
-                                    <select autoFocus className={this.state.className.SourceModel} name="SourceModel" defaultValue="none" onChange={this.handleChange}>
+                                    <select autoFocus className={this.state.className.SourceModel} name="SourceModel" value={this.state.inputs.SourceModel} onChange={this.handleChange}>
                                         {source_selector}
                                     </select>
                                     <div className="invalid-feedback">
@@ -233,7 +231,7 @@ class DependencySelector extends Component {
                                 </div>
                                 <div className="col">
                                     <label>Sink</label>
-                                    <select className={this.state.className.SinkModel} name="SinkModel" defaultValue="none" onChange={this.handleChange}>
+                                    <select className={this.state.className.SinkModel} name="SinkModel" value={this.state.inputs.SinkModel} onChange={this.handleChange}>
                                         {sink_selector}
                                     </select>
                                     <div className="invalid-feedback">
@@ -243,7 +241,7 @@ class DependencySelector extends Component {
                             </div>
                             <div className="row">
                                 <div className="col">
-                                    <select className={this.state.className.SourceOutput} name="SourceOutput" defaultValue="none" onChange={this.handleChange}>
+                                    <select className={this.state.className.SourceOutput} name="SourceOutput" value={this.state.inputs.SourceOutput} onChange={this.handleChange}>
                                         {source_output_selector}
                                     </select>
                                     <div className="invalid-feedback">
@@ -251,7 +249,7 @@ class DependencySelector extends Component {
                                     </div>
                                 </div>
                                 <div className="col">
-                                    <select className={this.state.className.SinkInput} name="SinkInput" defaultValue="none" onChange={this.handleChange}>
+                                    <select className={this.state.className.SinkInput} name="SinkInput" value={this.state.inputs.SinkInput} onChange={this.handleChange}>
                                         {sink_input_selector}
                                     </select>
                                     <div className="invalid-feedback">
