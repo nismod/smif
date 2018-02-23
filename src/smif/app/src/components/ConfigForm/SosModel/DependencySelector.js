@@ -35,9 +35,9 @@ class DependencySelector extends Component {
 
     handleChange(event) {
 
-
         // Reset the SourceOutput and SinkInput if a difference source or sink is selected
         if (event.target.name == 'SourceModel'){
+            console.log('looo')
             this.setState({
                 inputs: update(this.state.inputs, {
                     SourceModel: {$set: event.target.value},
