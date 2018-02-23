@@ -27,13 +27,13 @@ class Dependency(object):
         # Insist on identical metadata - conversions to be explicit
         if source.spatial_resolution.name != \
                 sink.spatial_resolution.name:
-            raise NotImplementedError(
+            self.logger.warn(
                 "Implicit spatial conversion not implemented (attempted {}>{})".format(
                     source.spatial_resolution.name,
                     sink.spatial_resolution.name))
         if source.temporal_resolution.name != \
                 sink.temporal_resolution.name:
-            raise NotImplementedError(
+            self.logger.warn(
                 "Implicit spatial conversion not implemented (attempted {}>{})".format(
                     source.temporal_resolution.name,
                     sink.temporal_resolution.name))
@@ -68,7 +68,9 @@ class Dependency(object):
             self.logger.debug("Spacetime conversion: %s -> %s, %s -> %s",
                               from_spatial, to_spatial, from_temporal, to_temporal)
             convertor = SpaceTimeConvertor()
-            data = convertor.convert(data, from_spatial, to_spatial, from_temporal, to_temporal)
+            data = convertor.convert(data,
+                                     from_spatial, to_spatial,
+                                     from_temporal, to_temporal)
 
         return data
 
