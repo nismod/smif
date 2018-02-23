@@ -82,7 +82,7 @@ class FacetConfigForm extends Component {
 
                 <br/>
 
-                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save Facet" onClick={this.handleSave} />
+                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
                 <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
             </div>
         )
