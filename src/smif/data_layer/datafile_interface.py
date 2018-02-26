@@ -1132,7 +1132,7 @@ class DatafileInterface(DataInterface):
             csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
             self._write_data_to_csv(results_path, csv_data)
         else:
-            DataMismatchError(
+            raise DataMismatchError(
                 "Expected to write either timestep x region x interval or " +
                 "region x interval data"
             )
