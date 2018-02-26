@@ -36,10 +36,10 @@ def create_app(static_folder='static', template_folder='templates', get_data_int
 def register_routes(app):
     """Register plain routing
     """
-    @app.route('/', defaults={'path': ''})
-    @app.route('/configure', defaults={'path': ''})
+    @app.route('/')
+    @app.route('/configure')
     @app.route('/configure/<path:path>')
-    def home(path):
+    def home(path=None):
         """Render single page
         """
         return render_template('index.html')
