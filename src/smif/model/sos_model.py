@@ -163,28 +163,26 @@ class SosModel(CompositeModel):
             for dependency in sink_model.deps.values():
                 source_model = dependency.source_model
                 msg = "Dependency '%s' provided by '%s'"
-                self.logger.debug(msg, dependency.sink.name, sink_model.name)
+                self.logger.debug(msg, dependency.sink.name, source_model.name)
 
                 # Insist on identical metadata - conversions to be explicit
                 if dependency.source.spatial_resolution.name != \
                         dependency.sink.spatial_resolution.name:
                     self.logger.warn(
-                        "Implicit spatial conversion not implemented (attempted {}>{})".format(
+                        "Implicit spatial conversion attempted ({}>{})".format(
                             dependency.source.spatial_resolution.name,
                             dependency.sink.spatial_resolution.name))
                 if dependency.source.temporal_resolution.name != \
                         dependency.sink.temporal_resolution.name:
                     self.logger.warn(
-                        "Implicit spatial conversion not implemented (attempted {}>{})".format(
+                        "Implicit temporal conversion attempted ({}>{})".format(
                             dependency.source.temporal_resolution.name,
                             dependency.sink.temporal_resolution.name))
                 if dependency.source.units != dependency.sink.units:
-                    coefficient = dependency.convert(1)
                     self.logger.debug(
-                        "Implicit units conversion (%s>%s) uses coefficient %s",
+                        "Implicit units conversion (%s>%s)",
                         dependency.source.units,
-                        dependency.sink.units,
-                        coefficient)
+                        dependency.sink.units)
 
                 self.dependency_graph.add_edge(
                     source_model,
