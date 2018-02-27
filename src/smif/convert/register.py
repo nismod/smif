@@ -6,6 +6,11 @@ from abc import ABCMeta, abstractmethod
 
 class Register(metaclass=ABCMeta):
 
+    @property
+    @abstractmethod
+    def names(self):
+        raise NotImplementedError
+
     @abstractmethod
     def register(self, resolution_set):
         raise NotImplementedError

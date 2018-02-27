@@ -1,8 +1,8 @@
 import numpy as np
-from smif.convert import SpaceTimeConvertor
+from smif.convert import SpaceTimeUnitConvertor
 
 
-class TestSpaceTimeConvertor_TimeOnly:
+class TestSpaceTimeUnitConvertor_TimeOnly:
 
     def test_one_region_pass_through_time(self):
         """Only one region, 12 months, neither space nor time conversion is required
@@ -21,13 +21,15 @@ class TestSpaceTimeConvertor_TimeOnly:
             30,
             31
         ]], dtype=float)
-        convertor = SpaceTimeConvertor()
+        convertor = SpaceTimeUnitConvertor()
         actual = convertor.convert(
             data,
             'half_squares',
             'half_squares',
             'months',
-            'months'
+            'months',
+            's',
+            's'
         )
         assert np.allclose(actual, data)
 
@@ -56,14 +58,16 @@ class TestSpaceTimeConvertor_TimeOnly:
             30 + 31 + 30
         ]], dtype=float)  # area a, seasons 1-4
 
-        convertor = SpaceTimeConvertor()
+        convertor = SpaceTimeUnitConvertor()
 
         actual = convertor.convert(
             data,
             'half_squares',
             'half_squares',
             'months',
-            'seasons'
+            'seasons',
+            's',
+            's'
         )
         assert np.allclose(actual, expected)
 
@@ -103,13 +107,15 @@ class TestSpaceTimeConvertor_TimeOnly:
             ]
         ], dtype=float)
 
-        convertor = SpaceTimeConvertor()
+        convertor = SpaceTimeUnitConvertor()
         actual = convertor.convert(
             data,
             'half_squares',
             'half_squares',
             'months',
-            'seasons'
+            'seasons',
+            'm',
+            'm'
         )
 
         expected = np.array([
@@ -134,13 +140,15 @@ class TestSpaceTimeConvertor_TimeOnly:
         """
 
         data = np.ones((1, 24))  # area a, hours 0-23
-        convertor = SpaceTimeConvertor()
+        convertor = SpaceTimeUnitConvertor()
         actual = convertor.convert(
             data,
             'half_squares',
             'half_squares',
             'hourly_day',
             'one_day'
+            'm',
+            'm'
         )
         expected = np.array([[24]])  # area a, day 0
         assert np.allclose(actual, expected)
@@ -155,13 +163,15 @@ class TestSpaceTimeConvertor_TimeOnly:
             30+31+31
         ]], dtype=float)
 
-        convertor = SpaceTimeConvertor()
+        convertor = SpaceTimeUnitConvertor()
         actual = convertor.convert(
             data,
             'half_squares',
             'half_squares',
             'remap_months',
             'months',
+            'm',
+            'm'
         )
         expected = np.array([
             30.666666666,
@@ -197,13 +207,15 @@ class TestSpaceTimeConvertor_TimeOnly:
             31
         ]], dtype=float)
 
-        convertor = SpaceTimeConvertor()
+        convertor = SpaceTimeUnitConvertor()
         actual = convertor.convert(
             data,
             'half_squares',
             'half_squares',
             'months',
-            'remap_months'
+            'remap_months',
+            'm',
+            'm'
         )
         expected = np.array([[
             30+31+31,
@@ -214,7 +226,7 @@ class TestSpaceTimeConvertor_TimeOnly:
         assert np.allclose(actual, expected)
 
 
-class TestSpaceTimeConvertor_RegionOnly:
+class TestSpaceTimeUnitConvertor_RegionOnly:
 
     def test_half_to_one_region_pass_through_time(self):
         """Convert from half a region to one region, pass through time
@@ -223,13 +235,15 @@ class TestSpaceTimeConvertor_RegionOnly:
 
         data = np.ones((2, 12)) / 2  # area a,b, months 1-12
 
-        convertor = SpaceTimeConvertor()
+        convertor = SpaceTimeUnitConvertor()
         actual = convertor.convert(
             data,
             'half_squares',
             'rect',
             'months',
-            'months'
+            'months',
+            'm',
+            'm'
         )
         expected = np.ones((1, 12))  # area zero, months 1-12
         assert np.allclose(actual, expected)
@@ -240,30 +254,34 @@ class TestSpaceTimeConvertor_RegionOnly:
 
         data = np.array([[24], [24]])  # area a,b, single interval
 
-        convertor = SpaceTimeConvertor()
+        convertor = SpaceTimeUnitConvertor()
         actual = convertor.convert(
             data,
             'half_squares',
             'rect',
             'one_day',
-            'one_day'
+            'one_day',
+            'm',
+            'm'
         )
         expected = np.array([[48]])  # area zero, single interval
         assert np.allclose(actual, expected)
 
 
-class TestSpaceTimeConvertorBoth:
+class TestSpaceTimeUnitConvertorBoth:
 
     def test_convert_both_space_and_time(self):
         data = np.ones((2, 12)) / 2  # area a,b, months 1-12
 
-        convertor = SpaceTimeConvertor()
+        convertor = SpaceTimeUnitConvertor()
         actual = convertor.convert(
             data,
             'half_squares',
             'rect',
             'months',
-            'seasons'
+            'seasons',
+            'm',
+            'm'
         )
         expected = np.ones((1, 4)) * 3  # area zero, seasons 1-4
         assert np.allclose(actual, expected)
