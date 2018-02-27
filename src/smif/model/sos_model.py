@@ -126,10 +126,12 @@ class SosModel(CompositeModel):
             Access model outputs
 
         """
-        self.check_dependencies()
         run_order = self._get_model_sets_in_run_order()
         self.logger.info("Determined run order as %s", [x.name for x in run_order])
         for model in run_order:
+
+            self.logger.info("*** Running the %s model ***", model.name)
+
             # get custom data handle for the Model
             model_data_handle = DataHandle(
                 data_handle._store,
@@ -143,51 +145,17 @@ class SosModel(CompositeModel):
             model.simulate(model_data_handle)
         return data_handle
 
-    def check_dependencies(self):
+    def make_dependency_graph(self):
         """For each contained model, compare dependency list against
         list of available models and build the dependency graph
         """
-        if self.free_inputs.names:
-            msg = "A SosModel must have all inputs linked to dependencies. " \
-                  "Define dependencies for {}"
-            raise NotImplementedError(msg.format(", ".join(self.free_inputs.names)))
-
         for model in self.models.values():
-            if isinstance(model, SosModel):
-                msg = "Nesting of SosModels not yet supported"
-                raise NotImplementedError(msg)
-            else:
-                self.dependency_graph.add_node(model, name=model.name)
+            self.dependency_graph.add_node(model, name=model.name)
 
         for sink_model in self.models.values():
             for dependency in sink_model.deps.values():
                 source_model = dependency.source_model
-                msg = "Dependency '%s' provided by '%s'"
-                self.logger.debug(msg, dependency.sink.name, source_model.name)
-
-                # Insist on identical metadata - conversions to be explicit
-                if dependency.source.spatial_resolution.name != \
-                        dependency.sink.spatial_resolution.name:
-                    self.logger.warn(
-                        "Implicit spatial conversion attempted ({}>{})".format(
-                            dependency.source.spatial_resolution.name,
-                            dependency.sink.spatial_resolution.name))
-                if dependency.source.temporal_resolution.name != \
-                        dependency.sink.temporal_resolution.name:
-                    self.logger.warn(
-                        "Implicit temporal conversion attempted ({}>{})".format(
-                            dependency.source.temporal_resolution.name,
-                            dependency.sink.temporal_resolution.name))
-                if dependency.source.units != dependency.sink.units:
-                    self.logger.debug(
-                        "Implicit units conversion (%s>%s)",
-                        dependency.source.units,
-                        dependency.sink.units)
-
-                self.dependency_graph.add_edge(
-                    source_model,
-                    sink_model
-                )
+                self.dependency_graph.add_edge(source_model, sink_model)
 
     def _get_model_sets_in_run_order(self):
         """Returns a list of :class:`Model` in a runnable order.
@@ -420,9 +388,49 @@ class SosModelBuilder(object):
         for scenario in scenario_list:
             self.sos_model.add_model(scenario)
 
+    def check_dependencies(self):
+        """For each contained model, compare dependency list against
+        list of available models
+        """
+        if self.sos_model.free_inputs.names:
+            msg = "A SosModel must have all inputs linked to dependencies. " \
+                  "Define dependencies for {}"
+            raise NotImplementedError(msg.format(", ".join(self.sos_model.free_inputs.names)))
+
+        for model in self.sos_model.models.values():
+            if isinstance(model, SosModel):
+                msg = "Nesting of SosModels not yet supported"
+                raise NotImplementedError(msg)
+
+        for sink_model in self.sos_model.models.values():
+            for dependency in sink_model.deps.values():
+                source_model = dependency.source_model
+                msg = "Dependency '%s' provided by '%s'"
+                self.logger.debug(msg, dependency.sink.name, source_model.name)
+
+                # Insist on identical metadata - conversions to be explicit
+                if dependency.source.spatial_resolution.name != \
+                        dependency.sink.spatial_resolution.name:
+                    self.logger.warn(
+                        "Implicit spatial conversion attempted ({}>{})".format(
+                            dependency.source.spatial_resolution.name,
+                            dependency.sink.spatial_resolution.name))
+                if dependency.source.temporal_resolution.name != \
+                        dependency.sink.temporal_resolution.name:
+                    self.logger.warn(
+                        "Implicit temporal conversion attempted ({}>{})".format(
+                            dependency.source.temporal_resolution.name,
+                            dependency.sink.temporal_resolution.name))
+                if dependency.source.units != dependency.sink.units:
+                    self.logger.warn(
+                        "Implicit units conversion (%s>%s)",
+                        dependency.source.units,
+                        dependency.sink.units)
+
     def finish(self):
         """Returns a configured system-of-systems model ready for operation
 
         Includes validation steps, e.g. to check dependencies
         """
+        self.check_dependencies()
         return self.sos_model
