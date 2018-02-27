@@ -195,6 +195,8 @@ class RegionRegister(Register):
         return converted
 
     def _generate_coefficients(self, set_a, set_b):
+        msg = "Generating region coefficients from set %s to %s"
+        self.logger.info(msg, set_a, set_b)
         # from a to b
         self._conversions[set_a.name][set_b.name] = self._conversion_coefficients(set_a, set_b)
         # from b to a
