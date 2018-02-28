@@ -1,0 +1,3 @@
+mcm = 10^6 * m^3
+GBP = [currency]
+people = [population] = pop = per capita = person
