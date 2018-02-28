@@ -3,6 +3,9 @@
 import csv
 import os
 from csv import DictReader
+import pyarrow.parquet as pq
+import pyarrow as pa
+import pandas as pd
 
 import fiona
 from smif.data_layer.data_interface import (DataExistsError, DataInterface,
@@ -1094,7 +1097,7 @@ class DatafileInterface(DataInterface):
             modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
 
-        csv_data = self._get_data_from_csv(results_path)
+        csv_data = self._get_data_from_parquet(results_path)
         region_names = self._read_region_names(spatial_resolution)
         interval_names = self._read_interval_names(temporal_resolution)
         return self.data_list_to_ndarray(csv_data, region_names, interval_names)
@@ -1131,6 +1134,9 @@ class DatafileInterface(DataInterface):
             interval_names = self._read_interval_names(temporal_resolution)
             csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
             self._write_data_to_csv(results_path, csv_data)
+
+            csv_data = self.ndarray_to_data_frame(data, region_names, interval_names)
+            self._write_data_to_parquet(results_path, csv_data)
         else:
             raise DataMismatchError(
                 "Expected to write either timestep x region x interval or " +
@@ -1298,6 +1304,27 @@ class DatafileInterface(DataInterface):
                 for row in data:
                     row['timestep'] = timestep
                     writer.writerow(row)
+
+    @staticmethod
+    def _get_data_from_parquet(filepath):
+        scenario_data = []
+
+        table = pq.read_table(filepath + '.parquet')
+        df = table.to_pandas()
+        scenario_data = df.to_dict(orient='records')
+
+        return scenario_data
+
+    @staticmethod
+    def _write_data_to_parquet(filepath, data, timestep=None):
+        if timestep is None:
+            timesteps = pd.DataFrame({'timestep': [''] * data.shape[0]})
+            table = pa.Table.from_pandas(pd.concat([timesteps, data], axis=1))
+            pq.write_table(table, filepath + '.parquet')
+        else:
+            timesteps = pd.DataFrame({'timestep': [timestep] * data.shape[0]})
+            table = pa.Table.from_pandas(pd.concat([timesteps, data], axis=1))
+            pq.write_table(table, filepath + '.parquet')
 
     @staticmethod
     def _read_yaml_file(path, filename, extension='.yml'):

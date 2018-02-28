@@ -4,7 +4,8 @@ from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
 import numpy as np
-
+import pandas as pd
+import pyarrow as pa
 
 class DataInterface(metaclass=ABCMeta):
     """Abstract base class to define common data interface
@@ -204,6 +205,32 @@ class DataInterface(metaclass=ABCMeta):
                     'value': data[region_idx, interval_idx]
                 })
         return observations
+
+    @staticmethod
+    def ndarray_to_data_frame(data, region_names, interval_names):
+        """Convert :class:`numpy.ndarray` to list of observations
+
+        Parameters
+        ----------
+        data : numpy.ndarray
+        region_names : list of str
+        interval_names : list of str
+
+        Returns
+        -------
+        DataFrame
+            Each DataFrame has rows: 'region' (a region name), 'interval' (an
+            interval name) and 'value'.
+        """
+        df = pd.DataFrame(columns=['region', 'interval', 'value'])
+        for region_idx, region in enumerate(region_names):
+            for interval_idx, interval in enumerate(interval_names):
+                df = df.append({
+                    'region': region,
+                    'interval': interval,
+                    'value': data[region_idx, interval_idx]
+                }, ignore_index=True)
+        return df
 
     @staticmethod
     def data_list_to_ndarray(observations, region_names, interval_names):
