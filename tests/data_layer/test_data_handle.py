@@ -35,22 +35,22 @@ def mock_model():
         }
     )
     regions = Mock()
-    regions.name = 'test_regions'
+    regions.name = 'half_squares'
     intervals = Mock()
-    intervals.name = 'test_intervals'
+    intervals.name = 'remap_months'
     model.inputs = MetadataSet([
-        Metadata('test', regions, intervals, 'test_unit')
+        Metadata('test', regions, intervals, 'm')
     ])
     model.outputs = MetadataSet([
-        Metadata('test', regions, intervals, 'test_unit')
+        Metadata('test', regions, intervals, 'm')
     ])
     source_model = Mock()
     source_model.name = 'test_source'
     model.deps = {
         'test': Dependency(
             source_model,
-            Metadata('test_output', regions, intervals, 'test_unit'),
-            Metadata('test', regions, intervals, 'test_unit')
+            Metadata('test_output', regions, intervals, 'm'),
+            Metadata('test', regions, intervals, 'm')
         )
     }
     return model
@@ -73,9 +73,9 @@ def mock_model_with_conversion():
         }
     )
     regions = Mock()
-    regions.name = 'test_regions'
+    regions.name = 'half_squares'
     intervals = Mock()
-    intervals.name = 'test_intervals'
+    intervals.name = 'remap_months'
     model.inputs = MetadataSet([
         Metadata('test', regions, intervals, 'liters')
     ])
@@ -109,13 +109,13 @@ class TestDataHandle():
             1,
             'test_source',  # read from source model
             'test_output',  # using source model output name
-            'test_regions',
-            'test_intervals',
+            'half_squares',
+            'remap_months',
             2015,
             None,
             None
         )
-    
+
     def test_get_data_with_conversion(self, mock_store, mock_model_with_conversion):
         """should convert liters to milliliters (1 -> 0.001)
         """
@@ -128,8 +128,8 @@ class TestDataHandle():
             1,
             'test_source',  # read from source model
             'test_output',  # using source model output name
-            'test_regions',
-            'test_intervals',
+            'half_squares',
+            'remap_months',
             2015,
             None,
             None
@@ -147,8 +147,8 @@ class TestDataHandle():
             1,
             'test_source',  # read from source model
             'test_output',  # using source model output name
-            'test_regions',
-            'test_intervals',
+            'half_squares',
+            'remap_months',
             2015,  # base timetep
             None,
             None
@@ -166,8 +166,8 @@ class TestDataHandle():
             1,
             'test_source',  # read from source model
             'test_output',  # using source model output name
-            'test_regions',
-            'test_intervals',
+            'half_squares',
+            'remap_months',
             2020,  # previous timetep
             None,
             None
@@ -185,8 +185,8 @@ class TestDataHandle():
             1,
             'test_source',  # read from source model
             'test_output',  # using source model output name
-            'test_regions',
-            'test_intervals',
+            'half_squares',
+            'remap_months',
             2015,
             None,
             None
@@ -206,8 +206,8 @@ class TestDataHandle():
             'test_model',
             'test',
             expected,
-            'test_regions',
-            'test_intervals',
+            'half_squares',
+            'remap_months',
             2015,
             None,
             None
@@ -227,8 +227,8 @@ class TestDataHandle():
             'test_model',
             'test',
             expected,
-            'test_regions',
-            'test_intervals',
+            'half_squares',
+            'remap_months',
             2015,
             None,
             None

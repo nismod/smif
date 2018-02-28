@@ -14,10 +14,10 @@ import os
 from copy import copy
 
 from pytest import fixture
-from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
-from smif.convert.interval import get_register as get_interval_register
+from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import IntervalSet
+from smif.convert.interval import get_register as get_interval_register
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
 from smif.parameters import Narrative
@@ -70,7 +70,7 @@ def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
     intervals_file.write("id,start,end\n1,P0Y,P1Y\n")
 
     units_file = test_folder.join('data', 'user_units.txt')
-    units_file.write("mcm = 10^6 * m^3\nGBP = [currency]")
+    units_file.write("mcm = 10^6 * m^3\nGBP = [currency]\npeople= [people]\n")
 
     return test_folder
 

@@ -209,7 +209,7 @@ class TestDependencyGraph:
         sos_model.add_model(elec_scenario)
 
         # Builds the dependency graph
-        sos_model.check_dependencies()
+        sos_model.make_dependency_graph()
 
         graph = sos_model.dependency_graph
 
@@ -236,7 +236,7 @@ class TestDependencyGraph:
         sos_model.add_model(energy_model)
         sos_model.add_model(elec_scenario)
 
-        sos_model.check_dependencies()
+        sos_model.make_dependency_graph()
 
         actual = sos_model._get_model_sets_in_run_order()
         expected = ['scenario', 'model']
@@ -262,28 +262,11 @@ class TestDependencyGraph:
         sos_model.add_model(energy_model)
         sos_model.add_model(elec_scenario)
 
-        sos_model.check_dependencies()
+        sos_model.make_dependency_graph()
 
         graph = sos_model.dependency_graph
         actual = list(networkx.topological_sort(graph))
         assert actual == [elec_scenario, energy_model]
-
-
-class TestSosModel:
-
-    def test_simulate_data_not_present(self, get_sector_model):
-        SectorModel = get_sector_model
-        """Raise a NotImplementedError if an input is defined but no dependency links
-        it to a data source
-        """
-
-        sos_model = SosModel('test')
-        model = SectorModel('test_model')
-        model.add_input('input', Mock(), Mock(), 'units')
-        sos_model.add_model(model)
-        data_handle = get_data_handle(sos_model)
-        with raises(NotImplementedError):
-            sos_model.simulate(data_handle)
 
 
 class TestCompositeIntegration:
@@ -312,13 +295,13 @@ class TestCompositeIntegration:
         elec_scenario = get_scenario
 
         energy_model = get_energy_sector_model
-        energy_model.add_dependency(elec_scenario,
-                                    'electricity_demand_output',
-                                    'electricity_demand_input')
 
         sos_model = SosModel('blobby')
         sos_model.add_model(elec_scenario)
         sos_model.add_model(energy_model)
+        energy_model.add_dependency(elec_scenario,
+                                    'electricity_demand_output',
+                                    'electricity_demand_input')
 
         data_handle = get_data_handle(sos_model)
         results = sos_model.simulate(data_handle)
@@ -403,7 +386,7 @@ class TestNestedModels():
         sos_model_high.add_model(sos_model_lo)
 
         with raises(NotImplementedError):
-            sos_model_high.check_dependencies()
+            sos_model_high.make_dependency_graph()
         graph = sos_model_high.dependency_graph
         assert graph.edges() == []
 
@@ -419,7 +402,7 @@ class TestNestedModels():
         sos_model_high.add_dependency(scenario, 'elec_demand_output',
                                       'electricity_demand_input')
 
-        sos_model_high.check_dependencies()
+        sos_model_high.make_dependency_graph()
         assert graph.edges() == [(scenario, sos_model_high)]
 
     @pytest.mark.xfail(reason="Nested sosmodels not yet implemented")
@@ -519,7 +502,7 @@ class TestCircularDependency:
         assert water_model.free_inputs.names == []
         assert sos_model.free_inputs.names == []
 
-        sos_model.check_dependencies()
+        sos_model.make_dependency_graph()
         graph = sos_model.dependency_graph
 
         assert (water_model, energy_model) in graph.edges()

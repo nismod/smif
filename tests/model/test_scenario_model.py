@@ -73,7 +73,7 @@ class TestScenarioObject:
                     'name': 'population_density',
                     'spatial_resolution': 'LSOA',
                     'temporal_resolution': 'annual',
-                    'units': 'people/km^2'
+                    'units': 'people / kilometer ** 2'
                 }
             ]
         }

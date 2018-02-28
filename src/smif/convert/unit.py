@@ -13,14 +13,21 @@ class UnitRegister(Register):
     def __init__(self):
         self._register = UnitRegistry(on_redefinition='raise')
         self.LOGGER = logging.getLogger()
-        self.names = []
 
     @property
     def names(self):
-        return list(self._register)
+        return list(self._register.__dict__['_units'].keys())
 
-    def register(self, unit):
-        pass
+    def register(self, unit_file):
+        """Load unit definitions into the registry
+        """
+        self._register.load_definitions(unit_file)
+        self.LOGGER.info("Finished registering user defined units")
+
+        with open(unit_file, 'r') as readonlyfile:
+            self.LOGGER.info("Imported user units:")
+            for line in readonlyfile:
+                self.LOGGER.info("    %s", line.split('=')[0])
 
     def get_entry(self, name):
         pass
@@ -80,8 +87,10 @@ class UnitRegister(Register):
         return unit
 
 
+__REGISTER = UnitRegister()
+
+
 def get_register():
     """Returns a reference to the unit registry
     """
-    __UNIT_REGISTRY = UnitRegister()
-    return __UNIT_REGISTRY
+    return __REGISTER
