@@ -18,6 +18,49 @@ __copyright__ = "Will Usher, Tom Russell, Roald Schoenmakers"
 __license__ = "mit"
 
 
+class Convertor(object):
+    """
+    """
+    def __init__(self):
+        self._convertor = SpaceTimeUnitConvertor()
+        self.regions = self._convertor.regions
+        self.intervals = self._convertor.intervals
+        self.units = self._convertor.units
+
+    def convert(self, data, dependency):
+        """
+
+        Arguments
+        ---------
+        data : numpy.ndarray
+            Two dimensional array of data indexed over space and time
+        dependency : smif.model.Dependency
+            The dependency that the data needs to traverse
+
+        1. Looks up coefficient matrix for each from/to pair across dimensions
+        2. Performs numpy dot product
+        """
+        from_spatial = dependency.source.spatial_resolution.name
+        to_spatial = dependency.sink.spatial_resolution.name
+        from_temporal = dependency.source.temporal_resolution.name
+        to_temporal = dependency.sink.temporal_resolution.name
+        from_units = dependency.source.units
+        to_units = dependency.sink.units
+
+        # a numpy array of dimensions from-by-to regions
+        spatial_coefficients = self.regions.get_coefficients(from_spatial, to_spatial)
+        # a numpy array of dimensions from-by-to intervals
+        temporal_coefficients = self.intervals.get_coefficients(from_temporal, to_temporal)
+        # a scalar
+        unit_coefficients = self.units.get_coefficients(from_units, to_units)
+
+        respaced_data = np.tensordot(data, spatial_coefficients, axes=2)
+        retimed_data = np.tensordot(respaced_data, temporal_coefficients, axes=1)
+        reunited_data = np.dot(retimed_data, unit_coefficients)
+
+        return reunited_data
+
+
 class SpaceTimeUnitConvertor(object):
     """Handles the conversion of time and space for a list of values
 
