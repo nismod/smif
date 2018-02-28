@@ -3,11 +3,11 @@
 import csv
 import os
 from csv import DictReader
-import pyarrow.parquet as pq
-import pyarrow as pa
-import pandas as pd
 
 import fiona
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 from smif.data_layer.data_interface import (DataExistsError, DataInterface,
                                             DataMismatchError,
                                             DataNotFoundError)
@@ -1097,10 +1097,13 @@ class DatafileInterface(DataInterface):
             modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
 
-        csv_data = self._get_data_from_parquet(results_path)
-        region_names = self._read_region_names(spatial_resolution)
-        interval_names = self._read_interval_names(temporal_resolution)
-        return self.data_list_to_ndarray(csv_data, region_names, interval_names)
+        with pa.memory_map(results_path, 'rb') as f:
+            f.seek(0)
+            buf = f.read_buffer()
+
+            data = pa.deserialize(buf)
+
+        return data['data']
 
     def write_results(self, modelrun_id, model_name, output_name, data, spatial_resolution,
                       temporal_resolution, timestep=None, modelset_iteration=None,
@@ -1132,11 +1135,16 @@ class DatafileInterface(DataInterface):
         elif data.ndim == 2:
             region_names = self._read_region_names(spatial_resolution)
             interval_names = self._read_interval_names(temporal_resolution)
-            csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
-            self._write_data_to_csv(results_path, csv_data)
+            # csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
+            # self._write_data_to_csv(results_path, csv_data)
 
-            csv_data = self.ndarray_to_data_frame(data, region_names, interval_names)
-            self._write_data_to_parquet(results_path, csv_data)
+            buf = pa.serialize({
+                'data': data,
+                'region_names': region_names,
+                'interval_names': interval_names
+                }).to_buffer()
+            with pa.OSFile(results_path, 'wb') as f:
+                f.write(buf)
         else:
             raise DataMismatchError(
                 "Expected to write either timestep x region x interval or " +
