@@ -21,7 +21,7 @@ from __future__ import absolute_import, division, print_function
 import collections.abc
 import logging
 
-from smif.convert.unit import parse_unit
+from smif.convert.unit import get_register as get_unit_register
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell, University of Oxford 2017"
@@ -44,6 +44,7 @@ class Metadata(object):
 
     """
     def __init__(self, name, spatial_resolution, temporal_resolution, units):
+        self.unit_register = get_unit_register()
         self.logger = logging.getLogger(__name__)
         self.name = name
         self.spatial_resolution = spatial_resolution
@@ -71,7 +72,7 @@ class Metadata(object):
     def normalise_unit(self, unit_string, param_name):
         """Parse unit and return standard string representation
         """
-        unit = parse_unit(unit_string)
+        unit = self.unit_register.parse_unit(unit_string)
         if unit is not None:
             # if parsed successfully
             normalised = str(unit)

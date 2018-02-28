@@ -309,16 +309,14 @@ class TestSosModel():
 
 
 @fixture(scope='function')
-def get_sos_model_config(get_scenario_model_object,
-                         get_sector_model_object):
+def get_sos_model_config(get_scenario_model_object):
 
     scenario_model = get_scenario_model_object
-    sector_model = get_sector_model_object
     config_data = {
         'name': 'energy_sos_model',
         'description': 'description of a sos model',
         'scenario_sets': [scenario_model],
-        'sector_models': [sector_model],
+        'sector_models': [],
         'dependencies': []
     }
 
@@ -326,23 +324,29 @@ def get_sos_model_config(get_scenario_model_object,
 
 
 @fixture
-def get_sos_model_config_with_dep(get_sos_model_config):
+def get_sos_model_config_with_dep(get_sos_model_config,
+                                  get_sector_model_object):
 
+    sector_model = get_sector_model_object
     dependency_config = [{'source_model': 'test_scenario_model',
                           'source_model_output': 'raininess',
                           'sink_model': 'water_supply',
                           'sink_model_input': 'raininess'}]
 
     config_data = get_sos_model_config
+    config_data['sector_models'].append(sector_model)
     config_data['dependencies'] = dependency_config
 
     return config_data
 
 
 @fixture
-def get_sos_model_config_with_summed_dependency(get_sos_model_config):
+def get_sos_model_config_with_summed_dependency(get_sos_model_config, get_sector_model_object):
 
     config = get_sos_model_config
+
+    water_model_one = get_sector_model_object
+    config['sector_models'].append(water_model_one)
 
     water_model_two = copy(config['sector_models'][0])
     water_model_two.name = 'water_supply_two'
@@ -389,8 +393,8 @@ class TestSosModelBuilderComponents():
         sos_model = builder.finish()
 
         assert isinstance(sos_model, SosModel)
-        assert list(sos_model.sector_models.keys()) == ['water_supply']
-        assert isinstance(sos_model.models['water_supply'], SectorModel)
+        assert list(sos_model.scenario_models.keys()) == ['test_scenario_model']
+        assert isinstance(sos_model.models['test_scenario_model'], ScenarioModel)
 
     def test_set_max_iterations(self, get_sos_model_config):
         """Test constructing from single dict config
@@ -455,8 +459,6 @@ class TestSosModelBuilder():
         sos_model = builder.finish()
 
         assert isinstance(sos_model, SosModel)
-        assert list(sos_model.sector_models.keys()) == ['water_supply']
-        assert isinstance(sos_model.models['water_supply'], SectorModel)
         assert isinstance(sos_model.models['test_scenario_model'], ScenarioModel)
 
     def test_simple_dependency(self, get_sos_model_config_with_dep):
@@ -467,7 +469,7 @@ class TestSosModelBuilder():
         builder.construct(config_data)
         sos_model = builder.finish()
 
-        sos_model.check_dependencies()
+        sos_model.make_dependency_graph()
         graph = sos_model.dependency_graph
 
         scenario = sos_model.models['test_scenario_model']
@@ -487,31 +489,42 @@ class TestSosModelBuilder():
         assert 'test_scenario_model' in sos_model.models
         assert sos_model.models['test_scenario_model'] in graph.nodes()
 
-    def test_undefined_unit_conversion(self, get_sos_model_object):
+    def test_data_not_present(self, get_sos_model_config_with_dep):
+        """Raise a NotImplementedError if an input is defined but no dependency links
+        it to a data source
+        """
+        config_data = get_sos_model_config_with_dep
+        config_data['scenario_sets'] = []
+        config_data['dependencies'] = []
+        with raises(NotImplementedError):
+            builder = SosModelBuilder()
+            builder.construct(config_data)
+            builder.finish()
 
-        sos_model = get_sos_model_object
-        scenario = sos_model.models['test_scenario_model']
+    def test_undefined_unit_conversion(self, get_sos_model_config_with_dep):
 
-        scenario.outputs['raininess'].units = 'incompatible'
+        config_data = get_sos_model_config_with_dep
+        sector_model = config_data['sector_models'][0]
+        sector_model.inputs['raininess'].units = 'incompatible'
 
         with raises(ValueError) as ex:
-            data_handle = Mock()
-            data_handle.timesteps = [2010]
-            sos_model.simulate(data_handle)
+            builder = SosModelBuilder()
+            builder.construct(config_data)
+            builder.finish()
 
-        assert "Cannot convert from undefined unit incompatible" in str(ex.value)    
+        assert "Cannot convert to undefined unit 'incompatible'" in str(ex.value)
 
-    def test_invalid_unit_conversion(self, get_sos_model_object):
+    def test_invalid_unit_conversion(self, get_sos_model_config_with_dep):
 
-        sos_model = get_sos_model_object
-        scenario = sos_model.models['test_scenario_model']
+        config_data = get_sos_model_config_with_dep
+        scenario = config_data['scenario_sets'][0]
 
         scenario.outputs['raininess'].units = 'meter'
 
         with raises(ValueError) as ex:
-            data_handle = Mock()
-            data_handle.timesteps = [2010]
-            sos_model.simulate(data_handle)
+            builder = SosModelBuilder()
+            builder.construct(config_data)
+            builder.finish()
 
         assert "Cannot convert from meter to milliliter" in str(ex.value)
 

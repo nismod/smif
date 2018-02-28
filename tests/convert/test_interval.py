@@ -493,7 +493,7 @@ class TestValidation:
             IntervalSet('remap_months', data)
         assert "Duplicate entry for hour 0 in interval set remap_months." in str(excinfo.value)
 
-    def test_time_interval_start_before_end(get_time_intervals):
+    def test_time_interval_start_before_end(self):
         with raises(ValueError) as excinfo:
             Interval('backwards', ('P1Y', 'P3M'))
         assert "A time interval must not end before it starts" in str(excinfo)

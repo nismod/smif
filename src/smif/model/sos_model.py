@@ -11,6 +11,7 @@ import logging
 import networkx
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
+from smif.convert.unit import get_register as get_unit_register
 from smif.data_layer import DataHandle
 from smif.intervention import InterventionRegister
 from smif.model import CompositeModel, Model, element_after, element_before
@@ -126,6 +127,7 @@ class SosModel(CompositeModel):
             Access model outputs
 
         """
+        self.make_dependency_graph()
         run_order = self._get_model_sets_in_run_order()
         self.logger.info("Determined run order as %s", [x.name for x in run_order])
         for model in run_order:
@@ -285,6 +287,7 @@ class SosModelBuilder(object):
         self.sos_model = SosModel(name)
         self.region_register = get_region_register()
         self.interval_register = get_interval_register()
+        self.unit_register = get_unit_register()
 
         self.logger = logging.getLogger(__name__)
 
@@ -395,7 +398,8 @@ class SosModelBuilder(object):
         if self.sos_model.free_inputs.names:
             msg = "A SosModel must have all inputs linked to dependencies. " \
                   "Define dependencies for {}"
-            raise NotImplementedError(msg.format(", ".join(self.sos_model.free_inputs.names)))
+            raise NotImplementedError(
+                msg.format(", ".join(self.sos_model.free_inputs.names)))
 
         for model in self.sos_model.models.values():
             if isinstance(model, SosModel):
@@ -404,28 +408,45 @@ class SosModelBuilder(object):
 
         for sink_model in self.sos_model.models.values():
             for dependency in sink_model.deps.values():
-                source_model = dependency.source_model
-                msg = "Dependency '%s' provided by '%s'"
-                self.logger.debug(msg, dependency.sink.name, source_model.name)
+                self._validate_each_dependency(dependency)
 
-                # Insist on identical metadata - conversions to be explicit
-                if dependency.source.spatial_resolution.name != \
-                        dependency.sink.spatial_resolution.name:
-                    self.logger.warn(
-                        "Implicit spatial conversion attempted ({}>{})".format(
-                            dependency.source.spatial_resolution.name,
-                            dependency.sink.spatial_resolution.name))
-                if dependency.source.temporal_resolution.name != \
-                        dependency.sink.temporal_resolution.name:
-                    self.logger.warn(
-                        "Implicit temporal conversion attempted ({}>{})".format(
-                            dependency.source.temporal_resolution.name,
-                            dependency.sink.temporal_resolution.name))
-                if dependency.source.units != dependency.sink.units:
-                    self.logger.warn(
-                        "Implicit units conversion (%s>%s)",
-                        dependency.source.units,
-                        dependency.sink.units)
+    def _validate_each_dependency(self, dependency):
+        source_model = dependency.source_model
+        msg = "Dependency '%s' provided by '%s'"
+        self.logger.debug(msg, dependency.sink.name, source_model.name)
+
+        # Insist on identical metadata - conversions to be explicit
+        if dependency.source.spatial_resolution.name != \
+                dependency.sink.spatial_resolution.name:
+            self.logger.warn(
+                "Implicit spatial conversion attempted ({}>{})".format(
+                    dependency.source.spatial_resolution.name,
+                    dependency.sink.spatial_resolution.name))
+
+        if dependency.source.temporal_resolution.name != \
+                dependency.sink.temporal_resolution.name:
+            self.logger.warn(
+                "Implicit temporal conversion attempted ({}>{})".format(
+                    dependency.source.temporal_resolution.name,
+                    dependency.sink.temporal_resolution.name))
+
+        if dependency.source.units != dependency.sink.units:
+            self.logger.warn(
+                "Implicit units conversion (%s>%s)",
+                dependency.source.units,
+                dependency.sink.units)
+
+        source_units = dependency.source.units
+        sink_units = dependency.sink.units
+
+        if self.unit_register.parse_unit(source_units) is None:
+            msg = "Cannot convert from undefined unit '{}'"
+            raise ValueError(msg.format(source_units))
+        if self.unit_register.parse_unit(sink_units) is None:
+            msg = "Cannot convert to undefined unit '{}'"
+            raise ValueError(msg.format(sink_units))
+
+        self.unit_register.convert(1, source_units, sink_units)
 
     def finish(self):
         """Returns a configured system-of-systems model ready for operation

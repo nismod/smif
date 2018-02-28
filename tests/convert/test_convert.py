@@ -146,7 +146,7 @@ class TestSpaceTimeUnitConvertor_TimeOnly:
             'half_squares',
             'half_squares',
             'hourly_day',
-            'one_day'
+            'one_day',
             'm',
             'm'
         )

@@ -227,7 +227,7 @@ def load_units(handler):
     unit_file = handler.read_units_file_name()
     if unit_file is not None:
         LOGGER.info("Loading units in from %s", unit_file)
-        UNITS.load_definitions(unit_file)
+        UNITS.register(unit_file)
 
 
 def get_model_run_definition(args):
@@ -279,7 +279,7 @@ def get_model_run_definition(args):
         sector_model_config['initial_conditions'] = initial_condition_list
 
         sector_model_builder = SectorModelBuilder(sector_model_config['name'])
-        LOGGER.debug("Sector model config: %s", sector_model_config)
+        # LOGGER.debug("Sector model config: %s", sector_model_config)
         sector_model_builder.construct(sector_model_config,
                                        model_run_config['timesteps'])
         sector_model_object = sector_model_builder.finish()

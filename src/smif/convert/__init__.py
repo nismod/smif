@@ -103,6 +103,10 @@ class SpaceTimeUnitConvertor(object):
         else:
             converted = data
 
+        if from_unit != to_unit:
+            converted = self._convert_units(converted,
+                                            from_unit, to_unit)
+
         return converted
 
     def _convert_regions(self, data, from_spatial, to_spatial):
@@ -118,3 +122,6 @@ class SpaceTimeUnitConvertor(object):
         converted = np.apply_along_axis(self.intervals.convert, 1, data,
                                         from_temporal, to_temporal)
         return converted
+
+    def _convert_units(self, data, from_unit, to_unit):
+        return self.units.convert(data, from_unit, to_unit)

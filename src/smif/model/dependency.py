@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from smif.convert import SpaceTimeConvertor, UnitConvertor
+from smif.convert import SpaceTimeUnitConvertor
 
 
 class Dependency(object):
@@ -28,13 +28,13 @@ class Dependency(object):
         if source.spatial_resolution.name != \
                 sink.spatial_resolution.name:
             self.logger.warn(
-                "Implicit spatial conversion not implemented (attempted {}>{})".format(
+                "Implicit spatial conversion attempted ({}>{})".format(
                     source.spatial_resolution.name,
                     sink.spatial_resolution.name))
         if source.temporal_resolution.name != \
                 sink.temporal_resolution.name:
             self.logger.warn(
-                "Implicit spatial conversion not implemented (attempted {}>{})".format(
+                "Implicit spatial conversion attempted ({}>{})".format(
                     source.temporal_resolution.name,
                     sink.temporal_resolution.name))
 
@@ -51,26 +51,25 @@ class Dependency(object):
         data : numpy.ndarray
             The data series for conversion
         """
-        from_units = self.source.units
-        to_units = self.sink.units
-
-        if from_units != to_units:
-            self.logger.debug("Unit conversion: %s -> %s", from_units, to_units)
-            convertor = UnitConvertor()
-            data = convertor.convert(data, from_units, to_units)
-
         from_spatial = self.source.spatial_resolution.name
         to_spatial = self.sink.spatial_resolution.name
         from_temporal = self.source.temporal_resolution.name
         to_temporal = self.sink.temporal_resolution.name
+        from_units = self.source.units
+        to_units = self.sink.units
 
-        if from_spatial != to_spatial or from_temporal != to_temporal:
-            self.logger.debug("Spacetime conversion: %s -> %s, %s -> %s",
-                              from_spatial, to_spatial, from_temporal, to_temporal)
-            convertor = SpaceTimeConvertor()
+        if from_spatial != to_spatial \
+                or from_temporal != to_temporal \
+                or from_units != to_units:
+
+            self.logger.debug("SpaceTimeUnit conversion: %s -> %s, %s -> %s, %s -> %s",
+                              from_spatial, to_spatial, from_temporal, to_temporal,
+                              from_units, to_units)
+            convertor = SpaceTimeUnitConvertor()
             data = convertor.convert(data,
                                      from_spatial, to_spatial,
-                                     from_temporal, to_temporal)
+                                     from_temporal, to_temporal,
+                                     from_units, to_units)
 
         return data
 
