@@ -128,17 +128,16 @@ class RegionRegister(NDimensionalRegister):
 
         """
         from_set = self.get_entry(from_set_name)
-        from_set_names = from_set.get_entry_names()
         to_set = self.get_entry(to_set_name)
         to_set_names = to_set.get_entry_names()
 
         converted = np.zeros(len(to_set))
-        coefficents = self._conversion_coefficients(from_set, to_set)
+        coefficents = self.get_coefficients(from_set.name, to_set.name)
 
-        for from_region_name, from_value in zip(from_set_names, data):
-            for to_region_name, coef in coefficents[from_region_name]:
-                to_region_idx = to_set_names.index(to_region_name)
-                converted[to_region_idx] += coef*from_value
+        for from_idx, from_value in enumerate(data):
+            for to_idx, _ in enumerate(to_set_names):
+                coef = coefficents[from_idx, to_idx]
+                converted[to_idx] += coef*from_value
 
         return converted
 
