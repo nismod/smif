@@ -188,8 +188,8 @@ class RegionRegister(NDimensionalRegister):
     def get_proportion(self, entry_a, entry_b):
         """Calculate the proportion of shape a that intersects with shape b
         """
-        intersection = entry_a.intersection(entry_b)
-        return intersection.area / entry_a.area
+        intersection = entry_a.shape.intersection(entry_b.shape)
+        return intersection.area / entry_a.shape.area
 
     def _generate_coefficients(self, set_a, set_b):
         msg = "Generating region coefficients from set %s to %s"
@@ -218,7 +218,7 @@ class RegionRegister(NDimensionalRegister):
             intersecting_from_regions = from_set.intersection(to_region.shape.bounds)
 
             for from_region in intersecting_from_regions:
-                proportion = self.get_proportion(from_region.shape, to_region.shape)
+                proportion = self.get_proportion(from_region, to_region)
                 coefficient_pair = (to_region.name, proportion)
                 coefficients[from_region.name].append(coefficient_pair)
 

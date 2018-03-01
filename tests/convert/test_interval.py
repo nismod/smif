@@ -348,6 +348,19 @@ class TestTimeRegisterConversion:
         assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
 
 
+class TestTimeRegisterCoefficients:
+
+    def test_coeff(self, months, seasons):
+
+        register = TimeIntervalRegister()
+        register.register(IntervalSet('months', months))
+        register.register(IntervalSet('seasons', seasons))
+
+        actual = register.get_coefficients('months', 'seasons')
+        expected = np.array([3, 3, 3, 3])
+        assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
+
+
 class TestIntervalSet:
 
     def test_get_names(self, months):
