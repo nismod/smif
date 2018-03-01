@@ -1155,7 +1155,7 @@ class DatafileInterface(DataInterface):
     def _get_results_path(self, modelrun_id, model_name, output_name, spatial_resolution,
                           temporal_resolution, timestep, modelset_iteration=None,
                           decision_iteration=None):
-        """Return path to text file for a given output
+        """Return path to filename for a given output without file extension
 
         On the pattern of:
             results/
@@ -1188,7 +1188,7 @@ class DatafileInterface(DataInterface):
                 results_dir,
                 modelrun_id,
                 model_name,
-                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                     output_name,
                     timestep,
                     spatial_resolution,
@@ -1201,7 +1201,7 @@ class DatafileInterface(DataInterface):
                 modelrun_id,
                 model_name,
                 "decision_{}".format(decision_iteration),
-                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                     output_name,
                     timestep,
                     spatial_resolution,
@@ -1214,7 +1214,7 @@ class DatafileInterface(DataInterface):
                 modelrun_id,
                 model_name,
                 "modelset_{}".format(modelset_iteration),
-                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                     output_name,
                     timestep,
                     spatial_resolution,
@@ -1227,13 +1227,19 @@ class DatafileInterface(DataInterface):
                 modelrun_id,
                 model_name,
                 "decision_{}_modelset_{}".format(decision_iteration, modelset_iteration),
-                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                     output_name,
                     timestep,
                     spatial_resolution,
                     temporal_resolution
                 )
             )
+
+        if self.storage_format == 'local_csv':
+            path += '.csv'
+        elif self.storage_format == 'local_binary':
+            path += '.dat'
+
         return path
 
     def _read_project_config(self):
@@ -1316,7 +1322,7 @@ class DatafileInterface(DataInterface):
 
     @staticmethod
     def _get_data_from_native_file(filepath):
-        with pa.memory_map(filepath + '.dat', 'rb') as f:
+        with pa.memory_map(filepath, 'rb') as f:
             f.seek(0)
             buf = f.read_buffer()
 
@@ -1327,10 +1333,10 @@ class DatafileInterface(DataInterface):
     @staticmethod
     def _write_data_to_native_file(filepath, data, timestep=None):
         if timestep is None:
-            with pa.OSFile(filepath + '.dat', 'wb') as f:
+            with pa.OSFile(filepath, 'wb') as f:
                 f.write(data)
         else:
-            with pa.OSFile(filepath + '.dat', 'wb') as f:
+            with pa.OSFile(filepath, 'wb') as f:
                 f.write(data)
 
     @staticmethod
