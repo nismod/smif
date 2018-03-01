@@ -128,13 +128,12 @@ Development Notes
   before adding them to the set of intervals
 
 """
-import logging
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from datetime import datetime, timedelta
 
 import numpy as np
 from isodate import parse_duration
-from smif.convert.register import Register, ResolutionSet
+from smif.convert.register import NDimensionalRegister, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -411,6 +410,15 @@ class IntervalSet(ResolutionSet):
         """
         return [interval.name for interval in self.data.values()]
 
+    def intersection(self, bounds):
+        """Return the subset of intervals intersecting with the bounds
+
+        Argument
+        --------
+        bounds : tuple
+            Start and end hours
+        """
+
     def __getitem___(self, key):
         return self._data[key]
 
@@ -418,14 +426,9 @@ class IntervalSet(ResolutionSet):
         return len(self._data)
 
 
-class TimeIntervalRegister(Register):
+class TimeIntervalRegister(NDimensionalRegister):
     """Holds the set of time-intervals used by the SectorModels
     """
-
-    def __init__(self):
-        self._register = OrderedDict()
-        self._conversions = defaultdict(dict)
-        self.logger = logging.getLogger(__name__)
 
     @property
     def names(self):
@@ -472,6 +475,12 @@ class TimeIntervalRegister(Register):
 
         self._register[interval_set.name] = interval_set
         self.logger.info("Adding interval set '%s' to register", interval_set.name)
+
+    def get_bounds(self, entry):
+        pass
+
+    def get_proportion(self, entry_a, entry_b):
+        pass
 
     def convert(self, data, from_interval_set_name, to_interval_set_name):
         """Convert some data to a time_interval type

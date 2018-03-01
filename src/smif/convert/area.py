@@ -1,12 +1,11 @@
 """Handles conversion between the sets of regions used in the `SosModel`
 """
-import logging
-from collections import OrderedDict, defaultdict, namedtuple
+from collections import defaultdict, namedtuple
 
 import numpy as np
 from rtree import index
 from shapely.geometry import mapping, shape
-from smif.convert.register import Register, ResolutionSet
+from smif.convert.register import NDimensionalRegister, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -120,14 +119,10 @@ class RegionSet(ResolutionSet):
         return len(self._regions)
 
 
-class RegionRegister(Register):
+class RegionRegister(NDimensionalRegister):
     """Holds the sets of regions used by the SectorModels and provides conversion
     between data values relating to compatible sets of regions.
     """
-    def __init__(self):
-        self._register = OrderedDict()
-        self._conversions = defaultdict(dict)
-        self.logger = logging.getLogger(__name__)
 
     @property
     def names(self):
@@ -194,39 +189,12 @@ class RegionRegister(Register):
 
         return converted
 
-    def get_coefficients(self, source, destination):
-        """
+    def get_bounds(self, entry):
+        return entry.shape.bounds
 
-        Arguments
-        ---------
-        source : string
-            The name of the source region set
-        destination : string
-            The name of the destination region set
-
-        Returns
-        -------
-        numpy.ndarray
-        """
-
-        from_set = self._register[source]
-        to_set = self._register[destination]
-
-        from_names = from_set.get_entry_names()
-
-        coefficients = np.zeros((len(from_set), len(to_set)), dtype=np.float)
-
-        for to_idx, to_region in enumerate(to_set):
-            intersecting_from_regions = from_set.intersection(to_region.shape.bounds)
-            for from_region in intersecting_from_regions:
-                proportion = proportion_of_a_intersecting_b(
-                    from_region.shape, to_region.shape)
-
-                from_idx = from_names.index(from_region.name)
-
-                coefficients[from_idx, to_idx] = proportion
-
-        return coefficients
+    def get_proportion(self, entry_a, entry_b):
+        return proportion_of_a_intersecting_b(entry_a.shape,
+                                              entry_b.shape)
 
     def _generate_coefficients(self, set_a, set_b):
         msg = "Generating region coefficients from set %s to %s"
