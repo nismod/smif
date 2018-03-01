@@ -1296,29 +1296,17 @@ class DatafileInterface(DataInterface):
         return scenario_data
 
     @staticmethod
-    def _write_data_to_csv(filepath, data, timestep=None):
-        if timestep is None:
-            with open(filepath, 'w') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=(
-                    'timestep',
-                    'region',
-                    'interval',
-                    'value'
-                ))
-                writer.writeheader()
-                for row in data:
-                    writer.writerow(row)
-        else:
-            with open(filepath, 'a') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=(
-                    'timestep',
-                    'region',
-                    'interval',
-                    'value'
-                ))
-                for row in data:
-                    row['timestep'] = timestep
-                    writer.writerow(row)
+    def _write_data_to_csv(filepath, data):
+        with open(filepath, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=(
+                'timestep',
+                'region',
+                'interval',
+                'value'
+            ))
+            writer.writeheader()
+            for row in data:
+                writer.writerow(row)
 
     @staticmethod
     def _get_data_from_native_file(filepath):
@@ -1331,13 +1319,9 @@ class DatafileInterface(DataInterface):
         return data['data']
 
     @staticmethod
-    def _write_data_to_native_file(filepath, data, timestep=None):
-        if timestep is None:
-            with pa.OSFile(filepath, 'wb') as f:
-                f.write(data)
-        else:
-            with pa.OSFile(filepath, 'wb') as f:
-                f.write(data)
+    def _write_data_to_native_file(filepath, data):
+        with pa.OSFile(filepath, 'wb') as f:
+            f.write(data)
 
     @staticmethod
     def _read_yaml_file(path, filename, extension='.yml'):
