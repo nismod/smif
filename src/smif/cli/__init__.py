@@ -240,7 +240,7 @@ def get_model_run_definition(args):
         ScenarioModel, SosModel and SectorModel objects
 
     """
-    handler = DatafileInterface(args.directory)
+    handler = DatafileInterface(args.directory, args.interface)
     load_region_sets(handler)
     load_interval_sets(handler)
     load_units(handler)
@@ -401,7 +401,7 @@ def execute_model_run(args):
     modelrun = build_model_run(model_run_config)
 
     LOGGER.info("Running model run %s", modelrun.name)
-    store = DatafileInterface(args.directory)
+    store = DatafileInterface(args.directory, args.interface)
 
     try:
         modelrun.run(store)
@@ -483,6 +483,7 @@ def parse_arguments():
                         action='count',
                         help='show messages: -v to see messages reporting on progress, ' +
                         '-vv to see debug messages.')
+    
     subparsers = parser.add_subparsers(help='available commands')
 
     # SETUP
@@ -513,6 +514,10 @@ def parse_arguments():
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
     parser_run.set_defaults(func=execute_model_run)
+    parser_run.add_argument('-i', '--interface',
+                            default='local_binary',
+                            choices=['local_csv', 'local_binary'],
+                            help="Select the data interface (default: %(default)s)")
     parser_run.add_argument('-d', '--directory',
                             default='.',
                             help="Path to the project directory")

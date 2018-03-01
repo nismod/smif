@@ -15,6 +15,7 @@ from smif.data_layer.load import dump, load
 
 class DatafileInterface(DataInterface):
     """Read and write interface to YAML / CSV configuration files
+    and intermediate CSV / native-binary data storage.
 
     Project.yml
 
@@ -22,11 +23,15 @@ class DatafileInterface(DataInterface):
     ---------
     base_folder: str
         The path to the configuration and data files
+    storage_format: str
+        The format used to store intermediate data (local_csv, local_binary)
     """
-    def __init__(self, base_folder):
+    def __init__(self, base_folder, storage_format):
         super().__init__()
 
         self.base_folder = base_folder
+        self.storage_format = storage_format
+
         self.file_dir = {}
         self.file_dir['project'] = os.path.join(base_folder, 'config')
         self.file_dir['results'] = os.path.join(base_folder, 'results')
@@ -1096,17 +1101,13 @@ class DatafileInterface(DataInterface):
             modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
 
-        # Read csv-file (TODO)
-        csv_data = self._get_data_from_csv(results_path)
-        region_names = self._read_region_names(spatial_resolution)
-        interval_names = self._read_interval_names(temporal_resolution)
-        data1 = self.data_list_to_ndarray(csv_data, region_names, interval_names)
-
-        # Or - Read native-os-file (TODO)
-        data2 = self._get_data_from_native_file(results_path)
-
-        return data2
-
+        if self.storage_format == 'local_csv':
+            csv_data = self._get_data_from_csv(results_path)
+            region_names = self._read_region_names(spatial_resolution)
+            interval_names = self._read_interval_names(temporal_resolution)
+            return self.data_list_to_ndarray(csv_data, region_names, interval_names)
+        elif self.storage_format == 'local_binary':
+            return self._get_data_from_native_file(results_path)
 
     def write_results(self, modelrun_id, model_name, output_name, data, spatial_resolution,
                       temporal_resolution, timestep=None, modelset_iteration=None,
@@ -1139,14 +1140,12 @@ class DatafileInterface(DataInterface):
             region_names = self._read_region_names(spatial_resolution)
             interval_names = self._read_interval_names(temporal_resolution)
 
-            # Option 1 - Write to csv-file (TODO)
-            csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
-            self._write_data_to_csv(results_path, csv_data)
-
-            # Option 2 - OR Write to native-os-file (TODO)
-            buffer = self.ndarray_to_buffer(data, region_names, interval_names)
-            self._write_data_to_native_file(results_path, buffer)
-
+            if self.storage_format == 'local_csv':
+                csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
+                self._write_data_to_csv(results_path, csv_data)
+            elif self.storage_format == 'local_binary':
+                buffer = self.ndarray_to_buffer(data, region_names, interval_names)
+                self._write_data_to_native_file(results_path, buffer)
         else:
             raise DataMismatchError(
                 "Expected to write either timestep x region x interval or " +
