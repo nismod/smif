@@ -4,7 +4,6 @@ from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 
 class DataInterface(metaclass=ABCMeta):
