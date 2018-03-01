@@ -12,13 +12,6 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-def proportion_of_a_intersecting_b(shape_a, shape_b):
-    """Calculate the proportion of shape a that intersects with shape b
-    """
-    intersection = shape_a.intersection(shape_b)
-    return intersection.area / shape_a.area
-
-
 NamedShape = namedtuple('NamedShape', ['name', 'shape'])
 
 
@@ -193,8 +186,10 @@ class RegionRegister(NDimensionalRegister):
         return entry.shape.bounds
 
     def get_proportion(self, entry_a, entry_b):
-        return proportion_of_a_intersecting_b(entry_a.shape,
-                                              entry_b.shape)
+        """Calculate the proportion of shape a that intersects with shape b
+        """
+        intersection = entry_a.intersection(entry_b)
+        return intersection.area / entry_a.area
 
     def _generate_coefficients(self, set_a, set_b):
         msg = "Generating region coefficients from set %s to %s"
@@ -204,8 +199,7 @@ class RegionRegister(NDimensionalRegister):
         # from b to a
         self._conversions[set_b.name][set_a.name] = self._conversion_coefficients(set_b, set_a)
 
-    @staticmethod
-    def _conversion_coefficients(from_set, to_set):
+    def _conversion_coefficients(self, from_set, to_set):
         """Return a dict containing the proportions of to_regions intersecting
         with each given from_region::
 
@@ -224,7 +218,7 @@ class RegionRegister(NDimensionalRegister):
             intersecting_from_regions = from_set.intersection(to_region.shape.bounds)
 
             for from_region in intersecting_from_regions:
-                proportion = proportion_of_a_intersecting_b(from_region.shape, to_region.shape)
+                proportion = self.get_proportion(from_region.shape, to_region.shape)
                 coefficient_pair = (to_region.name, proportion)
                 coefficients[from_region.name].append(coefficient_pair)
 

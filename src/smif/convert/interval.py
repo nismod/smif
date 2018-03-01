@@ -516,6 +516,22 @@ class TimeIntervalRegister(NDimensionalRegister):
 
         return converted
 
+    def get_coefficients(self, source, destination):
+
+        timeseries = np.ones(len(source.data), dtype=np.float)
+        coefficients = self._convert_to_hourly_buckets(timeseries, source)
+
+        converted = np.zeros(len(destination))
+
+        for idx, interval in enumerate(destination.data.values()):
+            interval_tuples = interval.to_hours()
+
+            for lower, upper in interval_tuples:
+                self.logger.debug("Range: %s-%s", lower, upper)
+                converted[idx] += sum(coefficients[lower:upper])
+
+        return converted
+
     def _convert_to_hourly_buckets(self, timeseries, interval_set):
         """Iterates through the `timeseries` and assigns values to hourly buckets
 
