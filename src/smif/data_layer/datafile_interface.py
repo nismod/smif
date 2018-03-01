@@ -5,7 +5,6 @@ import os
 from csv import DictReader
 
 import fiona
-import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from smif.data_layer.data_interface import (DataExistsError, DataInterface,
@@ -1097,19 +1096,23 @@ class DatafileInterface(DataInterface):
             modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
 
-        with pa.memory_map(results_path, 'rb') as f:
-            f.seek(0)
-            buf = f.read_buffer()
+        # Read csv-file (TODO)
+        csv_data = self._get_data_from_csv(results_path)
+        region_names = self._read_region_names(spatial_resolution)
+        interval_names = self._read_interval_names(temporal_resolution)
+        data1 = self.data_list_to_ndarray(csv_data, region_names, interval_names)
 
-            data = pa.deserialize(buf)
+        # Or - Read native-os-file (TODO)
+        data2 = self._get_data_from_native_file(results_path)
 
-        return data['data']
+        return data2
+
 
     def write_results(self, modelrun_id, model_name, output_name, data, spatial_resolution,
                       temporal_resolution, timestep=None, modelset_iteration=None,
                       decision_iteration=None):
         """Return path to text file for a given output
-
+        
         Parameters
         ----------
         modelrun_id : str
@@ -1135,16 +1138,15 @@ class DatafileInterface(DataInterface):
         elif data.ndim == 2:
             region_names = self._read_region_names(spatial_resolution)
             interval_names = self._read_interval_names(temporal_resolution)
-            # csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
-            # self._write_data_to_csv(results_path, csv_data)
 
-            buf = pa.serialize({
-                'data': data,
-                'region_names': region_names,
-                'interval_names': interval_names
-                }).to_buffer()
-            with pa.OSFile(results_path, 'wb') as f:
-                f.write(buf)
+            # Option 1 - Write to csv-file (TODO)
+            csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
+            self._write_data_to_csv(results_path, csv_data)
+
+            # Option 2 - OR Write to native-os-file (TODO)
+            buffer = self.ndarray_to_buffer(data, region_names, interval_names)
+            self._write_data_to_native_file(results_path, buffer)
+
         else:
             raise DataMismatchError(
                 "Expected to write either timestep x region x interval or " +
@@ -1314,25 +1316,23 @@ class DatafileInterface(DataInterface):
                     writer.writerow(row)
 
     @staticmethod
-    def _get_data_from_parquet(filepath):
-        scenario_data = []
+    def _get_data_from_native_file(filepath):
+        with pa.memory_map(filepath + '.dat', 'rb') as f:
+            f.seek(0)
+            buf = f.read_buffer()
 
-        table = pq.read_table(filepath + '.parquet')
-        df = table.to_pandas()
-        scenario_data = df.to_dict(orient='records')
-
-        return scenario_data
+            data = pa.deserialize(buf)
+        
+        return data['data']
 
     @staticmethod
-    def _write_data_to_parquet(filepath, data, timestep=None):
+    def _write_data_to_native_file(filepath, data, timestep=None):
         if timestep is None:
-            timesteps = pd.DataFrame({'timestep': [''] * data.shape[0]})
-            table = pa.Table.from_pandas(pd.concat([timesteps, data], axis=1))
-            pq.write_table(table, filepath + '.parquet')
+            with pa.OSFile(filepath + '.dat', 'wb') as f:
+                f.write(data)
         else:
-            timesteps = pd.DataFrame({'timestep': [timestep] * data.shape[0]})
-            table = pa.Table.from_pandas(pd.concat([timesteps, data], axis=1))
-            pq.write_table(table, filepath + '.parquet')
+            with pa.OSFile(filepath + '.dat', 'wb') as f:
+                f.write(data)
 
     @staticmethod
     def _read_yaml_file(path, filename, extension='.yml'):

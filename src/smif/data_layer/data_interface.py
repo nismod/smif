@@ -207,8 +207,8 @@ class DataInterface(metaclass=ABCMeta):
         return observations
 
     @staticmethod
-    def ndarray_to_data_frame(data, region_names, interval_names):
-        """Convert :class:`numpy.ndarray` to list of observations
+    def ndarray_to_buffer(data, region_names, interval_names):
+        """Serialize :class:`numpy.ndarray` and metadata to a byte buffer
 
         Parameters
         ----------
@@ -218,19 +218,14 @@ class DataInterface(metaclass=ABCMeta):
 
         Returns
         -------
-        DataFrame
-            Each DataFrame has rows: 'region' (a region name), 'interval' (an
-            interval name) and 'value'.
+        pyarrow.lib.Buffer
+            Byte buffer containing the serialized input ndarray and metadata
         """
-        df = pd.DataFrame(columns=['region', 'interval', 'value'])
-        for region_idx, region in enumerate(region_names):
-            for interval_idx, interval in enumerate(interval_names):
-                df = df.append({
-                    'region': region,
-                    'interval': interval,
-                    'value': data[region_idx, interval_idx]
-                }, ignore_index=True)
-        return df
+        return pa.serialize({
+            'data': data,
+            'region_names': region_names,
+            'interval_names': interval_names
+        }).to_buffer()
 
     @staticmethod
     def data_list_to_ndarray(observations, region_names, interval_names):
