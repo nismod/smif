@@ -32,6 +32,9 @@ class UnitRegister(Register):
     def get_entry(self, name):
         pass
 
+    def get_coefficients(self, source, destination):
+        return self.convert(1, source, destination)
+
     def convert(self, data, from_unit, to_unit):
         """Convert the data from one unit to another unit
 
