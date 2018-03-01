@@ -206,25 +206,19 @@ class DataInterface(metaclass=ABCMeta):
         return observations
 
     @staticmethod
-    def ndarray_to_buffer(data, region_names, interval_names):
+    def ndarray_to_buffer(data):
         """Serialize :class:`numpy.ndarray` and metadata to a byte buffer
 
         Parameters
         ----------
         data : numpy.ndarray
-        region_names : list of str
-        interval_names : list of str
 
         Returns
         -------
         pyarrow.lib.Buffer
-            Byte buffer containing the serialized input ndarray and metadata
+            Byte buffer containing the serialized input
         """
-        return pa.serialize({
-            'data': data,
-            'region_names': region_names,
-            'interval_names': interval_names
-        }).to_buffer()
+        return pa.serialize(data).to_buffer()
 
     @staticmethod
     def data_list_to_ndarray(observations, region_names, interval_names):

@@ -1144,7 +1144,7 @@ class DatafileInterface(DataInterface):
                 csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
                 self._write_data_to_csv(results_path, csv_data)
             elif self.storage_format == 'local_binary':
-                buffer = self.ndarray_to_buffer(data, region_names, interval_names)
+                buffer = self.ndarray_to_buffer(data)
                 self._write_data_to_native_file(results_path, buffer)
         else:
             raise DataMismatchError(
@@ -1315,8 +1315,7 @@ class DatafileInterface(DataInterface):
             buf = f.read_buffer()
 
             data = pa.deserialize(buf)
-        
-        return data['data']
+        return data
 
     @staticmethod
     def _write_data_to_native_file(filepath, data):
