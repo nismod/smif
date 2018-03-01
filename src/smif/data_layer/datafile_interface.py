@@ -5,6 +5,8 @@ import os
 from csv import DictReader
 
 import fiona
+import pyarrow as pa
+import pyarrow.parquet as pq
 from smif.data_layer.data_interface import (DataExistsError, DataInterface,
                                             DataMismatchError,
                                             DataNotFoundError)
@@ -13,6 +15,7 @@ from smif.data_layer.load import dump, load
 
 class DatafileInterface(DataInterface):
     """Read and write interface to YAML / CSV configuration files
+    and intermediate CSV / native-binary data storage.
 
     Project.yml
 
@@ -20,11 +23,15 @@ class DatafileInterface(DataInterface):
     ---------
     base_folder: str
         The path to the configuration and data files
+    storage_format: str
+        The format used to store intermediate data (local_csv, local_binary)
     """
-    def __init__(self, base_folder):
+    def __init__(self, base_folder, storage_format='local_binary'):
         super().__init__()
 
         self.base_folder = base_folder
+        self.storage_format = storage_format
+
         self.file_dir = {}
         self.file_dir['project'] = os.path.join(base_folder, 'config')
         self.file_dir['results'] = os.path.join(base_folder, 'results')
@@ -1094,16 +1101,19 @@ class DatafileInterface(DataInterface):
             modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
 
-        csv_data = self._get_data_from_csv(results_path)
-        region_names = self._read_region_names(spatial_resolution)
-        interval_names = self._read_interval_names(temporal_resolution)
-        return self.data_list_to_ndarray(csv_data, region_names, interval_names)
+        if self.storage_format == 'local_csv':
+            csv_data = self._get_data_from_csv(results_path)
+            region_names = self._read_region_names(spatial_resolution)
+            interval_names = self._read_interval_names(temporal_resolution)
+            return self.data_list_to_ndarray(csv_data, region_names, interval_names)
+        elif self.storage_format == 'local_binary':
+            return self._get_data_from_native_file(results_path)
 
     def write_results(self, modelrun_id, model_name, output_name, data, spatial_resolution,
                       temporal_resolution, timestep=None, modelset_iteration=None,
                       decision_iteration=None):
         """Return path to text file for a given output
-
+        
         Parameters
         ----------
         modelrun_id : str
@@ -1129,8 +1139,13 @@ class DatafileInterface(DataInterface):
         elif data.ndim == 2:
             region_names = self._read_region_names(spatial_resolution)
             interval_names = self._read_interval_names(temporal_resolution)
-            csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
-            self._write_data_to_csv(results_path, csv_data)
+
+            if self.storage_format == 'local_csv':
+                csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
+                self._write_data_to_csv(results_path, csv_data)
+            elif self.storage_format == 'local_binary':
+                buffer = self.ndarray_to_buffer(data)
+                self._write_data_to_native_file(results_path, buffer)
         else:
             raise DataMismatchError(
                 "Expected to write either timestep x region x interval or " +
@@ -1140,7 +1155,7 @@ class DatafileInterface(DataInterface):
     def _get_results_path(self, modelrun_id, model_name, output_name, spatial_resolution,
                           temporal_resolution, timestep, modelset_iteration=None,
                           decision_iteration=None):
-        """Return path to text file for a given output
+        """Return path to filename for a given output without file extension
 
         On the pattern of:
             results/
@@ -1173,7 +1188,7 @@ class DatafileInterface(DataInterface):
                 results_dir,
                 modelrun_id,
                 model_name,
-                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                     output_name,
                     timestep,
                     spatial_resolution,
@@ -1186,7 +1201,7 @@ class DatafileInterface(DataInterface):
                 modelrun_id,
                 model_name,
                 "decision_{}".format(decision_iteration),
-                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                     output_name,
                     timestep,
                     spatial_resolution,
@@ -1199,7 +1214,7 @@ class DatafileInterface(DataInterface):
                 modelrun_id,
                 model_name,
                 "modelset_{}".format(modelset_iteration),
-                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                     output_name,
                     timestep,
                     spatial_resolution,
@@ -1212,13 +1227,19 @@ class DatafileInterface(DataInterface):
                 modelrun_id,
                 model_name,
                 "decision_{}_modelset_{}".format(decision_iteration, modelset_iteration),
-                "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                     output_name,
                     timestep,
                     spatial_resolution,
                     temporal_resolution
                 )
             )
+
+        if self.storage_format == 'local_csv':
+            path += '.csv'
+        elif self.storage_format == 'local_binary':
+            path += '.dat'
+
         return path
 
     def _read_project_config(self):
@@ -1275,29 +1296,31 @@ class DatafileInterface(DataInterface):
         return scenario_data
 
     @staticmethod
-    def _write_data_to_csv(filepath, data, timestep=None):
-        if timestep is None:
-            with open(filepath, 'w') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=(
-                    'timestep',
-                    'region',
-                    'interval',
-                    'value'
-                ))
-                writer.writeheader()
-                for row in data:
-                    writer.writerow(row)
-        else:
-            with open(filepath, 'a') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=(
-                    'timestep',
-                    'region',
-                    'interval',
-                    'value'
-                ))
-                for row in data:
-                    row['timestep'] = timestep
-                    writer.writerow(row)
+    def _write_data_to_csv(filepath, data):
+        with open(filepath, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=(
+                'timestep',
+                'region',
+                'interval',
+                'value'
+            ))
+            writer.writeheader()
+            for row in data:
+                writer.writerow(row)
+
+    @staticmethod
+    def _get_data_from_native_file(filepath):
+        with pa.memory_map(filepath, 'rb') as f:
+            f.seek(0)
+            buf = f.read_buffer()
+
+            data = pa.deserialize(buf)
+        return data
+
+    @staticmethod
+    def _write_data_to_native_file(filepath, data):
+        with pa.OSFile(filepath, 'wb') as f:
+            f.write(data)
 
     @staticmethod
     def _read_yaml_file(path, filename, extension='.yml'):

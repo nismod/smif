@@ -33,6 +33,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         networkx \
         numpy \
         pint \
+        pyarrow \
         pytest \
         pytest-cov \
         python-dateutil \
