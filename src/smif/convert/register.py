@@ -26,6 +26,22 @@ class Register(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    # @abstractmethod
+    def get_coefficients(self, source, destination):
+        """Implement to return a coefficient matrix that represents
+        the mapping from `source` to `destination`
+
+        Arguments
+        ---------
+        source
+        destination
+
+        Returns
+        -------
+        numpy.ndarray
+        """
+        raise NotImplementedError
+
 
 class ResolutionSet(metaclass=ABCMeta):
 

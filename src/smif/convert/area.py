@@ -194,6 +194,40 @@ class RegionRegister(Register):
 
         return converted
 
+    def get_coefficients(self, source, destination):
+        """
+
+        Arguments
+        ---------
+        source : string
+            The name of the source region set
+        destination : string
+            The name of the destination region set
+
+        Returns
+        -------
+        numpy.ndarray
+        """
+
+        from_set = self._register[source]
+        to_set = self._register[destination]
+
+        from_names = from_set.get_entry_names()
+
+        coefficients = np.zeros((len(from_set), len(to_set)), dtype=np.float)
+
+        for to_idx, to_region in enumerate(to_set):
+            intersecting_from_regions = from_set.intersection(to_region.shape.bounds)
+            for from_region in intersecting_from_regions:
+                proportion = proportion_of_a_intersecting_b(
+                    from_region.shape, to_region.shape)
+
+                from_idx = from_names.index(from_region.name)
+
+                coefficients[from_idx, to_idx] = proportion
+
+        return coefficients
+
     def _generate_coefficients(self, set_a, set_b):
         msg = "Generating region coefficients from set %s to %s"
         self.logger.info(msg, set_a, set_b)
