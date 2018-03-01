@@ -1,6 +1,6 @@
 """Handles conversion between the sets of regions used in the `SosModel`
 """
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 import numpy as np
 from rtree import index
@@ -149,39 +149,6 @@ class RegionRegister(NDimensionalRegister):
         """
         intersection = entry_a.shape.intersection(entry_b.shape)
         return intersection.area / entry_a.shape.area
-
-    def _generate_coefficients(self, set_a, set_b):
-        msg = "Generating region coefficients from set %s to %s"
-        self.logger.info(msg, set_a, set_b)
-        # from a to b
-        self._conversions[set_a.name][set_b.name] = self._conversion_coefficients(set_a, set_b)
-        # from b to a
-        self._conversions[set_b.name][set_a.name] = self._conversion_coefficients(set_b, set_a)
-
-    def _conversion_coefficients(self, from_set, to_set):
-        """Return a dict containing the proportions of to_regions intersecting
-        with each given from_region::
-
-            {
-                from_region.name: [
-                    (to_region.name, proportion),
-                    # ...
-                ],
-                # ...
-            }
-
-        """
-        coefficients = defaultdict(list)
-
-        for to_region in to_set:
-            intersecting_from_regions = from_set.intersection(to_region.shape.bounds)
-
-            for from_region in intersecting_from_regions:
-                proportion = self.get_proportion(from_region, to_region)
-                coefficient_pair = (to_region.name, proportion)
-                coefficients[from_region.name].append(coefficient_pair)
-
-        return coefficients
 
 
 __REGISTER = RegionRegister()
