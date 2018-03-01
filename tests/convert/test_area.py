@@ -3,8 +3,7 @@
 import numpy as np
 from pytest import fixture, raises
 from shapely.geometry import shape
-from smif.convert.area import (RegionRegister, RegionSet, get_register,
-                               proportion_of_a_intersecting_b)
+from smif.convert.area import RegionRegister, RegionSet, get_register
 
 
 @fixture(scope='function')
@@ -142,19 +141,21 @@ def regions_half_triangles():
 def test_proportion(regions):
     """Sense-check proportion calculator
     """
+    rreg = RegionRegister()
+
     unit = shape(regions[0]['geometry'])
     half = shape(regions[1]['geometry'])
     two = shape(regions[2]['geometry'])
 
-    assert proportion_of_a_intersecting_b(unit, unit) == 1
+    assert rreg.get_proportion(unit, unit) == 1
 
-    assert proportion_of_a_intersecting_b(unit, half) == 0.5
-    assert proportion_of_a_intersecting_b(half, unit) == 1
+    assert rreg.get_proportion(unit, half) == 0.5
+    assert rreg.get_proportion(half, unit) == 1
 
-    assert proportion_of_a_intersecting_b(unit, two) == 1
-    assert proportion_of_a_intersecting_b(two, unit) == 0.5
-    assert proportion_of_a_intersecting_b(half, two) == 1
-    assert proportion_of_a_intersecting_b(two, half) == 0.25
+    assert rreg.get_proportion(unit, two) == 1
+    assert rreg.get_proportion(two, unit) == 0.5
+    assert rreg.get_proportion(half, two) == 1
+    assert rreg.get_proportion(two, half) == 0.25
 
 
 class TestRegionSet():

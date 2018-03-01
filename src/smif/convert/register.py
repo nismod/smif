@@ -1,5 +1,9 @@
-"""Register and ResolutionSet abstract classes to contain area and interval
-metadata.
+"""Register, NDimensionalRegister and ResolutionSet
+abstract classes to contain area, interval and unit metadata.
+
+Implemented by :class:`smif.convert.interval.TimeIntervalRegister`,
+:class:`smif.convert.area.RegionRegister` and
+:class:`smif.convert.unit.UnitRegister`.
 """
 import logging
 from abc import ABCMeta, abstractmethod
@@ -9,7 +13,8 @@ import numpy as np
 
 
 class Register(metaclass=ABCMeta):
-
+    """Abstract class which holds the ResolutionSets
+    """
     @property
     @abstractmethod
     def names(self):
@@ -36,7 +41,8 @@ class Register(metaclass=ABCMeta):
 
 
 class NDimensionalRegister(Register):
-
+    """Abstract class which holds N-Dimensional ResolutionSets
+    """
     def __init__(self):
         self._register = OrderedDict()
         self._conversions = defaultdict(dict)
@@ -50,10 +56,29 @@ class NDimensionalRegister(Register):
         ---------
         entry
             An entry from a ResolutionSet
+
+        Returns
+        -------
+        bounds
+            The bounds of the entry
         """
         raise NotImplementedError
 
     def get_proportion(self, entry_a, entry_b):
+        """Calculate the proportion of `entry_a` and `entry_b`
+
+        Arguments
+        ---------
+        entry_a : string
+            Name of an entry in `ResolutionSet`
+        entry_b : string
+            Name of an entry in `ResolutionSet`
+
+        Returns
+        -------
+        float
+            The proportion of `entry_a` and `entry_b`
+        """
         raise NotImplementedError
 
     def get_coefficients(self, source, destination):
@@ -92,7 +117,8 @@ class NDimensionalRegister(Register):
 
 
 class ResolutionSet(metaclass=ABCMeta):
-
+    """Abstract class which holds the Resolution definitions
+    """
     def __init__(self):
 
         self.name = ''
@@ -100,7 +126,7 @@ class ResolutionSet(metaclass=ABCMeta):
         self.data = []
 
     def as_dict(self):
-        """
+        """Get a serialisable representation of the object
         """
         return {'name': self.name,
                 'description': self.description}
