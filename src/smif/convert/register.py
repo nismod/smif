@@ -40,6 +40,27 @@ class NDimensionalRegister(Register):
         self._register = OrderedDict()
         self._conversions = defaultdict(dict)
 
+    def register(self, resolution_set):
+        """Add a ResolutionSet to the register
+
+        Detects duplicate references to the same annual-hours by performing a
+        convolution of the two one-dimensional arrays of time-intervals.
+
+        Parameters
+        ----------
+        resolution_set : smif.convert.ResolutionSet
+
+        Raises
+        ------
+        ValueError
+            If a ResolutionSet of the same name already exists in the register
+        """
+        if resolution_set.name in self._register:
+            msg = "A ResolutionSet named {} has already been loaded"
+            raise ValueError(msg.format(resolution_set.name))
+
+        self._register[resolution_set.name] = resolution_set
+
     @property
     def names(self):
         """Names of registered region sets

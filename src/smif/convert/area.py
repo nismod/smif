@@ -116,18 +116,6 @@ class RegionRegister(NDimensionalRegister):
     """Holds the sets of regions used by the SectorModels and provides conversion
     between data values relating to compatible sets of regions.
     """
-    def register(self, region_set):
-        """Register a set of regions as a source/target for conversion
-        """
-        if region_set.name in self._register:
-            msg = "A region set named {} has already been loaded"
-            raise ValueError(msg.format(region_set.name))
-
-        already_registered = self.names
-        self._register[region_set.name] = region_set
-        for other_set_name in already_registered:
-            self._generate_coefficients(region_set, self._register[other_set_name])
-
     def convert(self, data, from_set_name, to_set_name):
         """Convert a list of data points for a given set of regions
         to another set of regions.
@@ -145,7 +133,7 @@ class RegionRegister(NDimensionalRegister):
         to_set_names = to_set.get_entry_names()
 
         converted = np.zeros(len(to_set))
-        coefficents = self._conversions[from_set.name][to_set.name]
+        coefficents = self._conversion_coefficients(from_set, to_set)
 
         for from_region_name, from_value in zip(from_set_names, data):
             for to_region_name, coef in coefficents[from_region_name]:
