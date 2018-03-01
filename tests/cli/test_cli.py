@@ -145,7 +145,7 @@ class TestRunSosModelRunComponents():
         """should load a list of narratives with parameter value data
         """
         config_dir = pkg_resources.resource_filename('smif', 'sample_project')
-        handler = DatafileInterface(config_dir)
+        handler = DatafileInterface(config_dir, 'local_csv')
         narratives = {'technology': ['High Tech Demand Side Management']}
         actual = get_narratives(handler, narratives)
 

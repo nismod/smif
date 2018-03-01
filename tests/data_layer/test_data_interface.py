@@ -103,7 +103,7 @@ class TestDatafileInterface():
         project_config_path = os.path.join(
             str(basefolder), 'config', 'project.yml')
         dump(config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = DatafileInterface(str(basefolder), 'local_csv')
 
         actual = config_handler.read_units_file_name()
         expected = None
@@ -119,7 +119,7 @@ class TestDatafileInterface():
         project_config_path = os.path.join(
             str(basefolder), 'config', 'project.yml')
         dump(config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder))
+        config_handler = DatafileInterface(str(basefolder), 'local_csv')
 
         actual = config_handler.read_units_file_name()
         expected = os.path.join(str(basefolder), 'data', 'user_units.txt')
