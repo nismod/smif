@@ -14,6 +14,7 @@ dependencies:
 - networkx
 - numpy
 - pint
+- pyarrow
 - pylint  # dev
 - pytest  # test
 - pytest-cov  # test
