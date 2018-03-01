@@ -5,6 +5,7 @@ import json
 import os
 
 import numpy as np
+import pyarrow as pa
 from pytest import raises
 from smif.data_layer import (DataExistsError, DataMismatchError,
                              DataNotFoundError)
@@ -965,7 +966,7 @@ class TestDatafileInterface():
         actual = get_handler.read_parameters('unique_model_run_name', 'energy_demand')
         assert actual == expected
 
-    def test_read_results(self, setup_folder_structure, get_handler):
+    def test_read_results(self, setup_folder_structure, get_handler_csv, get_handler_binary):
         """Results from .csv in a folder structure which encodes metadata
         in filenames and directory structure.
 
@@ -997,12 +998,14 @@ class TestDatafileInterface():
         # 1. case with neither modelset nor decision
         expected = np.array([[[1.0]]])
         csv_contents = "region,interval,value\noxford,1,1.0\n"
+        binary_contents = get_handler_binary.ndarray_to_buffer(expected, ['oxford'], ['1'])
+        
         path = os.path.join(
             str(setup_folder_structure),
             "results",
             modelrun,
             model,
-            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+            "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                 output,
                 timestep,
                 spatial_resolution,
@@ -1010,24 +1013,32 @@ class TestDatafileInterface():
             )
         )
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'w') as fh:
+        
+        with open(path + '.csv', 'w') as fh:
             fh.write(csv_contents)
-
-        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+        actual = get_handler_csv.read_results(modelrun, model, output, spatial_resolution,
                                           temporal_resolution, timestep)
         assert actual == expected
 
+        with pa.OSFile(path + '.dat', 'wb') as f:
+            f.write(binary_contents)
+        actual = get_handler_binary.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep)
+        assert actual == expected
+        
         # 2. case with decision
         decision_iteration = 1
         expected = np.array([[[2.0]]])
         csv_contents = "region,interval,value\noxford,1,2.0\n"
+        binary_contents = get_handler_binary.ndarray_to_buffer(expected, ['oxford'], ['1'])
+        
         path = os.path.join(
             str(setup_folder_structure),
             "results",
             modelrun,
             model,
             "decision_{}".format(decision_iteration),
-            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+            "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                 output,
                 timestep,
                 spatial_resolution,
@@ -1035,10 +1046,17 @@ class TestDatafileInterface():
             )
         )
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'w') as fh:
-            fh.write(csv_contents)
 
-        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+        with open(path + '.csv', 'w') as fh:
+            fh.write(csv_contents)
+        actual = get_handler_csv.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep, None,
+                                          decision_iteration)
+        assert actual == expected
+
+        with pa.OSFile(path + '.dat', 'wb') as f:
+            f.write(binary_contents)
+        actual = get_handler_binary.read_results(modelrun, model, output, spatial_resolution,
                                           temporal_resolution, timestep, None,
                                           decision_iteration)
         assert actual == expected
@@ -1047,13 +1065,14 @@ class TestDatafileInterface():
         modelset_iteration = 1
         expected = np.array([[[3.0]]])
         csv_contents = "region,interval,value\noxford,1,3.0\n"
+        binary_contents = get_handler_binary.ndarray_to_buffer(expected, ['oxford'], ['1'])
         path = os.path.join(
             str(setup_folder_structure),
             "results",
             modelrun,
             model,
             "modelset_{}".format(modelset_iteration),
-            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+            "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                 output,
                 timestep,
                 spatial_resolution,
@@ -1061,16 +1080,23 @@ class TestDatafileInterface():
             )
         )
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'w') as fh:
+        
+        with open(path + '.csv', 'w') as fh:
             fh.write(csv_contents)
+        actual = get_handler_csv.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep, modelset_iteration)
+        assert actual == expected
 
-        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+        with pa.OSFile(path + '.dat', 'wb') as f:
+            f.write(binary_contents)
+        actual = get_handler_binary.read_results(modelrun, model, output, spatial_resolution,
                                           temporal_resolution, timestep, modelset_iteration)
         assert actual == expected
 
         # 4. case with both decision and modelset
         expected = np.array([[[4.0]]])
         csv_contents = "region,interval,value\noxford,1,4.0\n"
+        binary_contents = get_handler_binary.ndarray_to_buffer(expected, ['oxford'], ['1'])
         path = os.path.join(
             str(setup_folder_structure),
             "results",
@@ -1080,7 +1106,7 @@ class TestDatafileInterface():
                 modelset_iteration,
                 decision_iteration
             ),
-            "output_{}_timestep_{}_regions_{}_intervals_{}.csv".format(
+            "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                 output,
                 timestep,
                 spatial_resolution,
@@ -1088,10 +1114,17 @@ class TestDatafileInterface():
             )
         )
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'w') as fh:
-            fh.write(csv_contents)
 
-        actual = get_handler.read_results(modelrun, model, output, spatial_resolution,
+        with open(path + '.csv', 'w') as fh:
+            fh.write(csv_contents)
+        actual = get_handler_csv.read_results(modelrun, model, output, spatial_resolution,
+                                          temporal_resolution, timestep, modelset_iteration,
+                                          decision_iteration)
+        assert actual == expected
+
+        with pa.OSFile(path + '.dat', 'wb') as f:
+            f.write(binary_contents)
+        actual = get_handler_binary.read_results(modelrun, model, output, spatial_resolution,
                                           temporal_resolution, timestep, modelset_iteration,
                                           decision_iteration)
         assert actual == expected
