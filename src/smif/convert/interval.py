@@ -516,7 +516,10 @@ class TimeIntervalRegister(NDimensionalRegister):
 
         return converted
 
-    def get_coefficients(self, source, destination):
+    def get_coefficients(self, source_name, destination_name):
+
+        source = self.get_entry(source_name)
+        destination = self.get_entry(destination_name)
 
         timeseries = np.ones(len(source.data), dtype=np.float)
         coefficients = self._convert_to_hourly_buckets(timeseries, source)

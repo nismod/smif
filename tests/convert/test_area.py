@@ -138,6 +138,7 @@ def regions_half_triangles():
     ])
 
 
+# TODO: Need to wrap these shapes in a container so that get_proportion can correctly call them
 def test_proportion(regions):
     """Sense-check proportion calculator
     """
