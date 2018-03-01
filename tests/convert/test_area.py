@@ -338,3 +338,22 @@ class TestRegionRegister():
         converted = rreg.convert(data, 'half_triangles', 'half_squares')
         expected = np.array([0.375, 0.625])
         np.testing.assert_equal(converted, expected)
+
+
+class TestGetCoefficients:
+
+    def test_get_coefficients(self):
+        rreg = get_register()
+        actual = rreg.get_coefficients('half_triangles',
+                                       'half_squares')
+        expected = np.array([[0.75, 0.25],
+                             [0.25, 0.75]])
+        np.testing.assert_equal(actual, expected)
+
+    def test_coefs_should_map_to_themselves(self):
+        rreg = get_register()
+        actual = rreg.get_coefficients('half_triangles',
+                                       'half_triangles')
+        expected = np.array([[1, 0],
+                             [0, 1]])
+        np.testing.assert_equal(actual, expected)
