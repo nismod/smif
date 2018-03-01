@@ -2,7 +2,6 @@
 """
 import numpy as np
 from pytest import fixture, raises
-from shapely.geometry import shape
 from smif.convert.area import RegionRegister, RegionSet, get_register
 
 
@@ -138,25 +137,22 @@ def regions_half_triangles():
     ])
 
 
-# TODO: Need to wrap these shapes in a container so that get_proportion can correctly call them
 def test_proportion(regions):
     """Sense-check proportion calculator
     """
     rreg = RegionRegister()
+    region_set = RegionSet('regions', regions)
 
-    unit = shape(regions[0]['geometry'])
-    half = shape(regions[1]['geometry'])
-    two = shape(regions[2]['geometry'])
+    assert rreg.get_proportion(region_set[0],
+                               region_set[0]) == 1
 
-    assert rreg.get_proportion(unit, unit) == 1
+    assert rreg.get_proportion(region_set[0], region_set[1]) == 0.5
+    assert rreg.get_proportion(region_set[1], region_set[0]) == 1
 
-    assert rreg.get_proportion(unit, half) == 0.5
-    assert rreg.get_proportion(half, unit) == 1
-
-    assert rreg.get_proportion(unit, two) == 1
-    assert rreg.get_proportion(two, unit) == 0.5
-    assert rreg.get_proportion(half, two) == 1
-    assert rreg.get_proportion(two, half) == 0.25
+    assert rreg.get_proportion(region_set[0], region_set[2]) == 1
+    assert rreg.get_proportion(region_set[2], region_set[0]) == 0.5
+    assert rreg.get_proportion(region_set[1], region_set[2]) == 1
+    assert rreg.get_proportion(region_set[2], region_set[1]) == 0.25
 
 
 class TestRegionSet():
