@@ -240,7 +240,7 @@ def get_model_run_definition(args):
         ScenarioModel, SosModel and SectorModel objects
 
     """
-    handler = DatafileInterface(args.directory, args.interface)
+    handler = DatafileInterface(args.directory)
     load_region_sets(handler)
     load_interval_sets(handler)
     load_units(handler)

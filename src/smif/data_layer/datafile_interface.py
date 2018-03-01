@@ -26,7 +26,7 @@ class DatafileInterface(DataInterface):
     storage_format: str
         The format used to store intermediate data (local_csv, local_binary)
     """
-    def __init__(self, base_folder, storage_format):
+    def __init__(self, base_folder, storage_format='local_binary'):
         super().__init__()
 
         self.base_folder = base_folder
