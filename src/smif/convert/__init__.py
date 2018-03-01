@@ -54,11 +54,156 @@ class Convertor(object):
         # a scalar
         unit_coefficients = self.units.get_coefficients(from_units, to_units)
 
-        respaced_data = np.tensordot(data, spatial_coefficients, axes=2)
-        retimed_data = np.tensordot(respaced_data, temporal_coefficients, axes=1)
-        reunited_data = np.dot(retimed_data, unit_coefficients)
+        converted_data = self.perform_conversion(
+            data,
+            spatial_coefficients,
+            temporal_coefficients,
+            unit_coefficients)
 
-        return reunited_data
+        return converted_data
+
+    def perform_conversion(self, data,
+                           spatial_coefficients,
+                           temporal_coefficients,
+                           unit_coefficients):
+        """
+
+        Arguments
+        ---------
+        data : numpy.ndarray
+            Holds the data we wish to transform where row :math:`m` is the
+            number of source regions and column :math:`n` is the number of
+            source intervals. Each entry :math:`x_{ij}` holds a value which is
+            mapped to a single region and interval.
+        spatial_coefficients : numpy.ndarray
+            Contains the weights which attribute the values along the
+            source spatial dimension row :math:`m` to those in the target spatial
+            dimension column :math:`p`
+        temporal_coefficients : numpy.ndarray
+            Contains the weights which attribute the values along the source
+            temporal dimension row :math:`n` to those in the target temporal
+            dimension column :math:`q`.
+        unit_coefficients : float
+            Contains the scalar value for unit conversion from source to
+            destination units
+
+        Returns
+        -------
+        numpy.ndarray
+            The target data matrix :math:`X'=[x'_{kl}]_{(pq)}` holds the
+            transformed data in the target spatiotemporal resolution,
+            where row :math:`p` is the number of target regions and column
+            :math:`q` is the number of target intervals.
+
+        Examples
+        --------
+        Perform disaggregation over space dimension only:
+
+        >>> data = np.array([[1]])
+        >>> space = np.array([[0.333, 0.333, 0.333]])
+        >>> time = np.array([[1]])
+        >>> unit_coefficients = 1000
+        >>> convertor.perform_conversion(data,
+                                         space,
+                                         time,
+                                         unit_coefficients)
+        np.array([[333], [333], [333]])
+
+        Perform disaggregation over time dimension only:
+
+        >>> data = np.array([[1]])
+        >>> space = np.array([[1.0]])
+        >>> time = np.array([[0.333, 0.333, 0.333]])
+        >>> unit_coefficients = 1000
+        >>> convertor.perform_conversion(data,
+                                         space,
+                                         time,
+                                         unit_coefficients)
+        np.array([[333, 333, 333]])
+
+        Perform disaggregation over space and time dimensions:
+
+        >>> data = np.array([[1]])
+        >>> space = np.array([[0.333333, 0.333333, 0.333333]])
+        >>> time = np.array([[0.333, 0.333, 0.333]])
+        >>> unit_coefficients = 1000
+        >>> convertor.perform_conversion(data,
+                                         space,
+                                         time,
+                                         unit_coefficients)
+        np.array([[111, 111, 111],
+                  [111, 111, 111],
+                  [111, 111, 111]]))
+
+        Perform aggregation over space and time dimensions:
+
+        >>> data = np.array([[333.333, 333.333, 333.333],
+                             [333.333, 333.333, 333.333]])
+        >>> space = np.array([[1], [1]])
+        >>> time = np.array([[1], [1], [1]])
+        >>> unit_coefficients = 1e-3
+        >>> convertor.perform_conversion(data,
+                                         space,
+                                         time,
+                                         unit_coefficients)
+        np.array([[2]]))
+
+        """
+        source_regions, source_intervals = data.shape
+        if spatial_coefficients.shape[0] != source_regions:
+            msg = "Region counts of spatial coefficients does not match source \
+                   regions from data matrix: %s != %s"
+            raise ValueError(msg, spatial_coefficients.shape[0],
+                             source_regions)
+        if temporal_coefficients.shape[0] != source_intervals:
+            msg = "Interval counts of temporal coefficients does not match \
+                   source intervals from data matrix: %s != %s"
+            raise ValueError(msg, temporal_coefficients.shape[0],
+                             source_intervals)
+
+        a = np.dot(spatial_coefficients.T, data)
+        return np.dot(a, temporal_coefficients) * unit_coefficients
+
+    def compute_intersection(self, source, destination):
+        """Compute intersection of source and destination arrays
+
+        Given two arrays containing the areas or durations for source
+        and destination compute the proportion of source contained
+        in destination
+
+        Arguments
+        ---------
+        source_array: numpy.ndarray
+        destination_array: numpy.ndarray
+
+        Returns
+        -------
+        numpy.ndarray
+
+        Notes
+        -----
+        For each element in the source array, find the weighted proportion of
+        the destination element.
+
+        """
+        assert source.sum(axis=0) == destination.sum(axis=0)
+
+        coefficients = np.zeros((
+                                 len(destination),
+                                 len(source)
+                                 )
+                                )
+
+        for d_cell in destination.flat:
+            for s_cell in source.flat:
+                if d_cell > 0:
+                    coefficients = s_cell / d_cell
+
+                    d_cell = d_cell - s_cell
+                else:
+                    break
+
+        return coefficients
 
 
 class SpaceTimeUnitConvertor(object):
