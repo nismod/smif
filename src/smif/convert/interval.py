@@ -429,53 +429,6 @@ class IntervalSet(ResolutionSet):
 class TimeIntervalRegister(NDimensionalRegister):
     """Holds the set of time-intervals used by the SectorModels
     """
-
-    @property
-    def names(self):
-        """A list of the interval set names contained in the register
-
-        Returns
-        -------
-        list
-        """
-        return list(self._register.keys())
-
-    def get_entry(self, name):
-        """Returns the ResolutionSet of `name`
-
-        Arguments
-        ---------
-        name : str
-            The unique identifier of a ResolutionSet in the register
-
-        Returns
-        -------
-        smif.convert.interval.IntervalSet
-
-        """
-        if name not in self._register:
-            msg = "Interval set '{}' not registered"
-            raise ValueError(msg.format(name))
-        return self._register[name]
-
-    def register(self, interval_set):
-        """Add a time-interval definition to the set of intervals types
-
-        Detects duplicate references to the same annual-hours by performing a
-        convolution of the two one-dimensional arrays of time-intervals.
-
-        Parameters
-        ----------
-        interval_set : :class:`smif.convert.interval.IntervalSet`
-            A collection of intervals
-        """
-        if interval_set.name in self._register:
-            msg = "An interval set named {} has already been loaded"
-            raise ValueError(msg.format(interval_set.name))
-
-        self._register[interval_set.name] = interval_set
-        self.logger.info("Adding interval set '%s' to register", interval_set.name)
-
     def get_bounds(self, entry):
         pass
 
