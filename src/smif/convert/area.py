@@ -116,34 +116,6 @@ class RegionRegister(NDimensionalRegister):
     """Holds the sets of regions used by the SectorModels and provides conversion
     between data values relating to compatible sets of regions.
     """
-
-    @property
-    def names(self):
-        """Names of registered region sets
-
-        Returns
-        -------
-        sets: list of str
-        """
-        return list(self._register.keys())
-
-    def get_entry(self, name):
-        """Returns the ResolutionSet of `name`
-
-        Arguments
-        ---------
-        name : str
-            The unique identifier of a ResolutionSet in the register
-
-        Returns
-        -------
-        smif.convert.area.RegionSet
-
-        """
-        if name not in self._register:
-            raise ValueError("Region set '{}' not registered".format(name))
-        return self._register[name]
-
     def register(self, region_set):
         """Register a set of regions as a source/target for conversion
         """

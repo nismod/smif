@@ -15,6 +15,9 @@ import numpy as np
 class Register(metaclass=ABCMeta):
     """Abstract class which holds the ResolutionSets
     """
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
     @property
     @abstractmethod
     def names(self):
@@ -28,25 +31,42 @@ class Register(metaclass=ABCMeta):
     def get_coefficients(self, source, destination):
         raise NotImplementedError
 
-    @abstractmethod
-    def get_entry(self, name):
-        """Implement to return the smif.convert.ResolutionSet associated with the `name`
-
-        Arguments
-        ---------
-        name : str
-            The unique identifier of the ResolutionSet
-        """
-        raise NotImplementedError
-
 
 class NDimensionalRegister(Register):
     """Abstract class which holds N-Dimensional ResolutionSets
     """
     def __init__(self):
+        super().__init__()
         self._register = OrderedDict()
         self._conversions = defaultdict(dict)
-        self.logger = logging.getLogger(__name__)
+
+    @property
+    def names(self):
+        """Names of registered region sets
+
+        Returns
+        -------
+        sets: list of str
+        """
+        return list(self._register.keys())
+
+    def get_entry(self, name):
+        """Returns the ResolutionSet of `name`
+
+        Arguments
+        ---------
+        name : str
+            The unique identifier of a ResolutionSet in the register
+
+        Returns
+        -------
+        smif.convert.ResolutionSet
+
+        """
+        if name not in self._register:
+            msg = "ResolutionSet '{}' not registered"
+            raise ValueError(msg.format(name))
+        return self._register[name]
 
     @abstractmethod
     def get_bounds(self, entry):
@@ -96,8 +116,8 @@ class NDimensionalRegister(Register):
         numpy.ndarray
         """
 
-        from_set = self._register[source]
-        to_set = self._register[destination]
+        from_set = self.get_entry(source)
+        to_set = self.get_entry(destination)
 
         from_names = from_set.get_entry_names()
 

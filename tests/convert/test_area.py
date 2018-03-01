@@ -265,7 +265,7 @@ class TestRegionRegister():
 
         with raises(ValueError) as ex:
             rreg.get_entry('nonexistent')
-        assert "Region set 'nonexistent' not registered" in str(ex)
+        assert "ResolutionSet 'nonexistent' not registered" in str(ex)
 
     def test_convert_equal(self):
         rreg = get_register()
