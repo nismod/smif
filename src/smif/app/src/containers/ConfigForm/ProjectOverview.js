@@ -6,10 +6,13 @@ import { Link } from 'react-router-dom'
 
 import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from '../../actions/actions.js'
 import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createScenario, createNarrativeSet, createNarrative } from '../../actions/actions.js'
+import { saveSosModelRun,   saveSosModel,   saveSectorModel,   saveScenarioSet,   saveScenario,   saveNarrativeSet,   saveNarrative   } from '../../actions/actions.js'
 import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteScenario, deleteNarrativeSet, deleteNarrative } from '../../actions/actions.js'
 
 import Popup from '../../components/ConfigForm/General/Popup.js'
 import ProjectOverviewItem from '../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
+import CreateConfigForm from '../../components/ConfigForm/ProjectOverview/CreateConfigForm.js'
+import DeleteForm from '../../components/ConfigForm/ProjectOverview/DeleteForm.js'
 
 class ProjectOverview extends Component {
     constructor() {
@@ -20,7 +23,7 @@ class ProjectOverview extends Component {
             createPopupHeader: 'none',
             createPopupType: 'none',
             deletePopupIsOpen: false,
-            deletePopupHeader: 'none',
+            deletePopupConfigName: 'none',
             deletePopupType: 'none'
         }
 
@@ -66,40 +69,91 @@ class ProjectOverview extends Component {
         })
     }
 
-    createPopupSubmit() {
+    createPopupSubmit(config) {
 
-        const {createPopupType, createPopupName} = this.state
+        const {createPopupType} = this.state
         const { dispatch } = this.props
 
         this.closeCreatePopup(createPopupType)
-
+        
         switch(createPopupType) {
         case 'createSosModelRun':
-            dispatch(createSosModelRun(createPopupName))
+            dispatch(createSosModelRun(config.name))
+            dispatch(saveSosModelRun(
+                {
+                    'name': config.name,
+                    'description': config.description,
+                    'stamp': new Date().toISOString(),
+                    'sos_model': '',
+                    'scenarios': {},
+                    'narratives': {},
+                    'decision_module': '',
+                    'timesteps': [2015, 2020]
+                }
+            ))
             dispatch(fetchSosModelRuns())
             break
         case 'createSosModel':
-            dispatch(createSosModel(createPopupName))
+            dispatch(createSosModel(config.name))
+            dispatch(saveSosModel(
+                {
+                    'name': config.name,
+                    'description': config.description,
+                    'sector_models': [],
+                    'dependencies': [],
+                    'max_iterations': 1,
+                    'convergence_absolute_tolerance': 1e-05,
+                    'convergence_relative_tolerance': 1e-05
+                }
+            ))
             dispatch(fetchSosModels())
             break
         case 'createSectorModel':
-            dispatch(createSectorModel(createPopupName))
+            dispatch(createSectorModel(config.name))
+            dispatch(saveSectorModel(
+                {
+                    'name':  config.name,
+                    'description': config.description,
+                    'classname': '',
+                    'path': '',
+                    'inputs': [],
+                    'outputs': [],
+                    'parameters': [],
+                    'interventions': [],
+                    'initial_conditions': []
+                }
+            ))
             dispatch(fetchSectorModels())
             break
         case 'createScenarioSet':
-            dispatch(createScenarioSet(createPopupName))
+            dispatch(createScenarioSet(config.name))
+            dispatch(saveScenarioSet(
+                {
+                    'name':  config.name,
+                    'description': config.description,
+                    'facets': []
+                }
+            ))
             dispatch(fetchScenarioSets())
             break
-        case 'createScenario':
-            dispatch(createScenario(createPopupName))
-            dispatch(fetchScenarios())
-            break
         case 'createNarrativeSet':
-            dispatch(createNarrativeSet(createPopupName))
+            dispatch(createNarrativeSet(config.name))
+            dispatch(saveNarrativeSet({
+                    'name': config.name,
+                    'description': config.description,
+                }
+            ))
             dispatch(fetchNarrativeSets())
             break
         case 'createNarrative':
-            dispatch(createNarrative(createPopupName))
+            dispatch(createNarrative(config.name))
+            dispatch(saveNarrative({
+                    'name': config.name,
+                    'description': config.description,
+                    'narrative_set': '',
+                    'filename': ''
+                }
+            ))
             dispatch(fetchNarratives())
             break
         }
@@ -112,14 +166,14 @@ class ProjectOverview extends Component {
     openDeletePopup(event) {
         this.setState({
             deletePopupIsOpen: true,
-            deletePopupHeader: event.target.value,
+            deletePopupConfigName: event.target.value,
             deletePopupType: event.target.name
         })
     }
 
     deletePopupSubmit() {
 
-        const {deletePopupType, deletePopupHeader} = this.state
+        const {deletePopupType, deletePopupConfigName} = this.state
         const { scenarios } = this.props
         const { dispatch } = this.props
 
@@ -127,33 +181,33 @@ class ProjectOverview extends Component {
 
         switch(deletePopupType) {
         case 'deleteSosModelRun':
-            dispatch(deleteSosModelRun(deletePopupHeader))
+            dispatch(deleteSosModelRun(deletePopupConfigName))
             dispatch(fetchSosModelRuns())
             break
         case 'deleteSosModel':
-            dispatch(deleteSosModel(deletePopupHeader))
+            dispatch(deleteSosModel(deletePopupConfigName))
             dispatch(fetchSosModels())
             break
         case 'deleteSectorModel':
-            dispatch(deleteSectorModel(deletePopupHeader))
+            dispatch(deleteSectorModel(deletePopupConfigName))
             dispatch(fetchSectorModels())
             break
         case 'deleteScenarioSet':
-            dispatch(deleteScenarioSet(deletePopupHeader))
+            dispatch(deleteScenarioSet(deletePopupConfigName))
             dispatch(fetchScenarioSets())
 
             // also delete all the scenarios that belong to the set
-            let deleteScenarios = scenarios.filter(scenario => scenario['scenario_set'] == deletePopupHeader)
+            let deleteScenarios = scenarios.filter(scenario => scenario['scenario_set'] == deletePopupConfigName)
             for (let scenario of deleteScenarios) {
                 dispatch(deleteScenario(scenario['name']))
             }
             break
         case 'deleteNarrativeSet':
-            dispatch(deleteNarrativeSet(deletePopupHeader))
+            dispatch(deleteNarrativeSet(deletePopupConfigName))
             dispatch(fetchNarrativeSets())
             break
         case 'deleteNarrative':
-            dispatch(deleteNarrative(deletePopupHeader))
+            dispatch(deleteNarrative(deletePopupConfigName))
             dispatch(fetchNarratives())
             break
         }
@@ -267,32 +321,13 @@ class ProjectOverview extends Component {
 
                     {/* Popup for Create */}
                     <Popup onRequestOpen={this.state.createPopupIsOpen}>
-                        <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.createPopupSubmit()}}>
-                            <h2 ref={subtitle => this.subtitle = subtitle}>{this.state.createPopupHeader}</h2>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Name</label>
-                                <div className="col-sm-10">
-                                    <input autoFocus className="form-control" name="createPopupName" type="text" onChange={this.handleInputChange} required/>
-                                </div>
-                            </div>
-
-                            <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Create"/>
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreatePopup}/>
-                        </form>
+                        <CreateConfigForm header={this.state.createPopupHeader} submit={this.createPopupSubmit} cancel={this.closeCreatePopup}/>
                     </Popup>
 
                     {/* Popup for Delete */}
                     <Popup onRequestOpen={this.state.deletePopupIsOpen}>
-                        <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.deletePopupSubmit()}}>
-                            <h2 ref={subtitle => this.subtitle = subtitle}>Confirm delete</h2>
-                            Are you sure you would like to delete {this.state.deletePopupHeader}?
-                            <br/>
-                            <input autoFocus className="btn btn-secondary btn-lg btn-block" type="submit" value="Delete"/>
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeDeletePopup}/>
-                        </form>
+                        <DeleteForm config_name={this.state.deletePopupConfigName} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
                     </Popup>
-
                 </div>
             </div>
         )
