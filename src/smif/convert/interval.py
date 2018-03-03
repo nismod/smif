@@ -128,7 +128,6 @@ Development Notes
   before adding them to the set of intervals
 
 """
-from collections import OrderedDict
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -357,67 +356,97 @@ class IntervalSet(ResolutionSet):
     """
 
     def __init__(self, name, data, base_year=2010):
+        self._data = []
         super().__init__()
         self.name = name
         self._base_year = base_year
-        self._data = None
         self.data = data
+        self.bool_array = self._make_intersection_array()
+
+    def _make_intersection_array(self):
+        array = np.zeros((len(self.data), 8760))
+        for row, interval in enumerate(self.data):
+            array[row, :] = interval.to_hourly_array()
+        return array
 
     @property
     def data(self):
-        """Returns the intervals as an ordered dict
+        """Returns the intervals as a list
 
         Returns
         -------
-        OrderedDict
+        list
         """
         return self._data
 
     @data.setter
     def data(self, interval_data):
-        intervals = OrderedDict()
+        names = {}
 
         for interval in interval_data:
             name = interval['id']
-
-            if name in intervals:
-                interval_tuple = (interval['start'], interval['end'])
-                intervals[name].interval = interval_tuple
+            interval_tuple = (interval['start'], interval['end'])
+            if name in names:
+                # Append duration to existing entry
+                self.logger.debug(
+                    "Entry %s in interval set exists at position %s", name, names[name])
+                self.data[names[name]].interval = interval_tuple
             else:
-                interval_tuple = (interval['start'], interval['end'])
-                intervals[name] = Interval(name,
-                                           interval_tuple,
-                                           self._base_year)
-        self._data = intervals
+                self.logger.debug(
+                    "Add new entry %s in interval set at position %s", name, len(self._data))
+                # Make a new entry
+                self._data.append(
+                    Interval(name,
+                             interval_tuple,
+                             self._base_year))
+                names[name] = len(self._data) - 1
+
         self._validate_intervals()
 
     def _get_hourly_array(self):
         array = np.zeros(8760, dtype=np.int)
-        for interval in self._data.values():
+        for interval in self.data:
             array += interval.to_hourly_array()
         return array
 
     def _validate_intervals(self):
-        array = self._get_hourly_array()
-        duplicate_hours = np.where(array > 1)[0]
-        if len(duplicate_hours):
-            hour = duplicate_hours[0]
-            msg = "Duplicate entry for hour {} in interval set {}."
-            raise ValueError(msg.format(hour, self.name))
+        if self.data:
+            array = self._get_hourly_array()
+            duplicate_hours = np.where(array > 1)[0]
+            if len(duplicate_hours):
+                hour = duplicate_hours[0]
+                msg = "Duplicate entry for hour {} in interval set {}."
+                raise ValueError(msg.format(hour, self.name))
 
     def get_entry_names(self):
         """Returns the names of the intervals
         """
-        return [interval.name for interval in self.data.values()]
+        return [interval.name for interval in self.data]
 
+    # TODO: Finish this off
     def intersection(self, bounds):
         """Return the subset of intervals intersecting with the bounds
 
         Argument
         --------
-        bounds : tuple
-            Start and end hours
+        bounds : list
+            List of start and end hours
+
+        Notes
+        -----
+        Look at the columns of the intersection array and identify
+        overlapping intervals
         """
+        elements = []
+        for lower, upper in bounds:
+            bool_array = np.sum(self.bool_array[:, lower:upper], axis=1)
+            intersect = np.nonzero(bool_array)[0]
+            self.logger.debug(
+                'Interval %s intersects with %s',
+                bounds, intersect
+            )
+            elements.extend(intersect)
+        return [self.data[elem] for elem in set(elements)]
 
     def __getitem___(self, key):
         return self._data[key]
@@ -430,91 +459,23 @@ class TimeIntervalRegister(NDimensionalRegister):
     """Holds the set of time-intervals used by the SectorModels
     """
     def get_bounds(self, entry):
-        pass
+        return entry.to_hours()
 
     def get_proportion(self, entry_a, entry_b):
-        pass
+        """Find proportion of `entry_a` in `entry_b`
 
-    def convert(self, data, from_interval_set_name, to_interval_set_name):
-        """Convert some data to a time_interval type
-
-        Parameters
-        ----------
-        data: :class:`numpy.ndarray`
-            The timeseries to convert from `from_interval` to `to_interval`
-        from_interval_set_name: str
-            The unique identifier of a interval type which matches the
-            timeseries
-        to_interval_set_name: str
-            The unique identifier of a registered interval type
-
-        Returns
-        -------
-        :class:`numpy.ndarray`
-            An array of the resampled timeseries values.
-
+        Notes
+        -----
+        Find overlap
         """
-        from_interval_set = self.get_entry(from_interval_set_name)
-        to_interval_set = self.get_entry(to_interval_set_name)
-
-        converted = np.zeros(len(to_interval_set))
-        hourly_values = self._convert_to_hourly_buckets(data, from_interval_set)
-
-        for idx, interval in enumerate(to_interval_set.data.values()):
-            interval_tuples = interval.to_hours()
-
-            for lower, upper in interval_tuples:
-                self.logger.debug("Range: %s-%s", lower, upper)
-                converted[idx] += sum(hourly_values[lower:upper])
-
-        return converted
-
-    def get_coefficients(self, source_name, destination_name):
-
-        source = self.get_entry(source_name)
-        destination = self.get_entry(destination_name)
-
-        timeseries = np.ones(len(source.data), dtype=np.float)
-        coefficients = self._convert_to_hourly_buckets(timeseries, source)
-
-        converted = np.zeros(len(destination))
-
-        for idx, interval in enumerate(destination.data.values()):
-            interval_tuples = interval.to_hours()
-
-            for lower, upper in interval_tuples:
-                self.logger.debug("Range: %s-%s", lower, upper)
-                converted[idx] += sum(coefficients[lower:upper])
-
-        return converted
-
-    def _convert_to_hourly_buckets(self, timeseries, interval_set):
-        """Iterates through the `timeseries` and assigns values to hourly buckets
-
-        Parameters
-        ----------
-        timeseries: :class:`numpy.ndarray`
-            The timeseries to convert to hourly buckets ready for further
-            operations
-        interval_set: list of :class:`smif.convert.Interval`
-            The interval set associated with the timeseries
-
-        """
-        hourly_values = np.zeros(8760)
-
-        for value, interval in zip(timeseries, interval_set.data.values()):
-            list_of_intervals = interval.to_hours()
-            divisor = len(list_of_intervals)
-            for lower, upper in list_of_intervals:
-                self.logger.debug("lower: %s, upper: %s", lower, upper)
-                number_hours_in_range = upper - lower
-                self.logger.debug("number_hours: %s", number_hours_in_range)
-
-                apportioned_value = value / number_hours_in_range
-                self.logger.debug("apportioned_value: %s", apportioned_value)
-                hourly_values[lower:upper] = apportioned_value / divisor
-
-        return hourly_values
+        from_hours = entry_a.to_hourly_array()
+        to_hours = entry_b.to_hourly_array()
+        a_in_b = np.logical_and(from_hours, to_hours)
+        proportion = np.sum(from_hours) / np.sum(a_in_b)
+        self.logger.debug("%s shares %s hours [%s] with %s",
+                          entry_a.name, np.sum(a_in_b),
+                          proportion, entry_b.name)
+        return proportion
 
 
 __REGISTER = TimeIntervalRegister()

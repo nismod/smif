@@ -151,13 +151,13 @@ class Convertor(object):
         """
         source_regions, source_intervals = data.shape
         if spatial_coefficients.shape[0] != source_regions:
-            msg = "Region counts of spatial coefficients does not match source \
-                   regions from data matrix: %s != %s"
+            msg = "Region counts of spatial coefficients does not match source " \
+                  "regions from data matrix: %s != %s"
             raise ValueError(msg, spatial_coefficients.shape[0],
                              source_regions)
         if temporal_coefficients.shape[0] != source_intervals:
-            msg = "Interval counts of temporal coefficients does not match \
-                   source intervals from data matrix: %s != %s"
+            msg = "Interval counts of temporal coefficients does not match "\
+                  "source intervals from data matrix: %s != %s"
             raise ValueError(msg, temporal_coefficients.shape[0],
                              source_intervals)
 

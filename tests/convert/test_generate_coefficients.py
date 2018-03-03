@@ -1,80 +1,7 @@
 import numpy as np
-from pytest import fixture, mark
+from pytest import mark
 from smif.convert import Convertor
-
-
-@fixture(scope='module')
-def year_to_month_coefficients():
-    """From one year to 12 months
-
-    (apportions)
-    """
-
-    month_lengths = np.array([[31, 28, 31, 30, 31, 31, 30, 30, 31, 31, 30, 31]],
-                             dtype=np.float).T
-    return month_lengths / 365
-
-
-@fixture(scope='module')
-def month_to_year_coefficients():
-    """
-    """
-    return np.ones((1, 12), dtype=np.float)
-
-
-@fixture(scope='module')
-def month_to_season_coefficients():
-    """
-    12 months to four seasons (winter is December, January, Feb)
-
-    Sum value for each month into season
-    """
-    coef = np.array(
-        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # winter
-        [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],  # spring
-        [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],  # summer
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0])  # autumn
-
-    return coef
-
-
-@fixture(scope='module')
-def season_to_month_coefficients():
-    """
-    12 months to four seasons (winter is December, January, Feb)
-
-    To convert from seasons to months, find the proportion of each season that
-    corresponds to the relevant month.
-
-    E.g. winter to january is (duration of Jan / total duration of winter)
-    """
-    coef = np.array(
-        # winter
-        #     spring
-        #        summer
-        #           autumn
-        [[31, 0, 0, 0],  # January
-         [28, 0, 0, 0],  # Feb
-         [0, 31, 0, 0],  # March
-         [0, 30, 0, 0],  # April
-         [0, 31, 0, 0],  # May
-         [0, 0, 30, 0],  # June
-         [0, 0, 31, 0],  # July
-         [0, 0, 31, 0],  # August
-         [0, 0, 0, 30],  # September
-         [0, 0, 0, 31],  # October
-         [0, 0, 0, 30],  # November
-         [31, 0, 0, 0]]   # December
-    )
-
-    days_in_seasons = np.array([
-        31+31+28,  # winter
-        31+30+31,  # spring
-        30+31+31,  # summer
-        30+31+30  # autumn
-    ], dtype=float)
-
-    return coef / days_in_seasons
+from smif.convert.interval import IntervalSet, TimeIntervalRegister
 
 
 class TestComputeCoefficients:
@@ -84,23 +11,6 @@ class TestComputeCoefficients:
 
     def test_compute_intersection(self):
         pass
-
-
-class TestChooseOperation:
-
-    def test_conversion(self):
-
-        source = np.array([2190, 2190, 2190, 2190])
-        destination = np.array([2920, 2920, 2920])
-
-        expected = np.array(
-            [[0.25, 1./12, 0, 0],
-             [0, 2./12, 2./12, 0],
-             [0, 0, 1./12, 0.25]], dtype=np.float)
-
-        convertor = Convertor()
-        actual = convertor.compute_intersection(source, destination)
-        np.testing.assert_equal(actual, expected)
 
 
 class TestPerformConversion:
@@ -170,6 +80,39 @@ class TestPerformConversion:
         np.testing.assert_allclose(actual, expected, rtol=1e-1)
 
 
+class TestTimeRegisterCoefficients:
+
+    def test_coeff(self, months, seasons, month_to_season_coefficients):
+
+        register = TimeIntervalRegister()
+        register.register(IntervalSet('months', months))
+        register.register(IntervalSet('seasons', seasons))
+
+        actual = register.get_coefficients('months', 'seasons')
+        expected = month_to_season_coefficients
+        assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
+
+    def test_time_only_conversion(self, months, seasons):
+
+        register = TimeIntervalRegister()
+        register.register(IntervalSet('months', months))
+        register.register(IntervalSet('seasons', seasons))
+        data = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+        actual = register.convert(data, 'months', 'seasons')
+        expected = np.array([3, 3, 3, 3])
+        np.testing.assert_array_equal(actual, expected)
+
+    def test_time_only_conversion_disagg(self, months, seasons):
+
+        register = TimeIntervalRegister()
+        register.register(IntervalSet('months', months))
+        register.register(IntervalSet('seasons', seasons))
+        data = np.array([3, 3, 3, 3])
+        actual = register.convert(data, 'seasons', 'months')
+        expected = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+        np.testing.assert_array_equal(actual, expected)
+
+
 class TestAggregation:
     """Tests aggregation of data
 
@@ -178,6 +121,9 @@ class TestAggregation:
     remains the same, then the data is aggregated
     """
 
-    def test_aggregation(self):
+    def test_aggregation(self, month_to_season_coefficients):
 
-        pass
+        convertor = Convertor()
+        actual = convertor._convertor.intervals.get_coefficients('months', 'seasons')
+        expected = month_to_season_coefficients
+        np.testing.assert_allclose(actual, expected)
