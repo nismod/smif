@@ -22,10 +22,10 @@ from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
 from smif.parameters import Narrative
 
+from .convert.conftest import (months, one_day, remap_months, seasons,
+                               twenty_four_hours)
 from .convert.test_area import (regions_half_squares, regions_half_triangles,
                                 regions_rect, regions_single_half_square)
-from .convert.test_interval import (months, one_day, remap_months, seasons,
-                                    twenty_four_hours)
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,

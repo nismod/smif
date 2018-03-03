@@ -2,7 +2,6 @@
 """
 from collections import namedtuple
 
-import numpy as np
 from rtree import index
 from shapely.geometry import mapping, shape
 from smif.convert.register import NDimensionalRegister, ResolutionSet
@@ -116,31 +115,6 @@ class RegionRegister(NDimensionalRegister):
     """Holds the sets of regions used by the SectorModels and provides conversion
     between data values relating to compatible sets of regions.
     """
-    def convert(self, data, from_set_name, to_set_name):
-        """Convert a list of data points for a given set of regions
-        to another set of regions.
-
-        Parameters
-        ----------
-        data: numpy.ndarray with dimension regions
-        from_set_name: str
-        to_set_name: str
-
-        """
-        from_set = self.get_entry(from_set_name)
-        to_set = self.get_entry(to_set_name)
-        to_set_names = to_set.get_entry_names()
-
-        converted = np.zeros(len(to_set))
-        coefficents = self.get_coefficients(from_set.name, to_set.name)
-
-        for from_idx, from_value in enumerate(data):
-            for to_idx, _ in enumerate(to_set_names):
-                coef = coefficents[from_idx, to_idx]
-                converted[to_idx] += coef*from_value
-
-        return converted
-
     def get_bounds(self, entry):
         return entry.shape.bounds
 

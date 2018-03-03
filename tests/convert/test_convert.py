@@ -1,5 +1,7 @@
+from unittest.mock import Mock
+
 import numpy as np
-from smif.convert import SpaceTimeUnitConvertor
+from smif.convert import Convertor, SpaceTimeUnitConvertor
 
 
 class TestSpaceTimeUnitConvertor_TimeOnly:
@@ -283,5 +285,22 @@ class TestSpaceTimeUnitConvertorBoth:
             'm',
             'm'
         )
+        expected = np.ones((1, 4)) * 3  # area zero, seasons 1-4
+        assert np.allclose(actual, expected)
+
+
+class TestConvertor:
+
+    def test_convertor(self):
+        data = np.ones((2, 12)) / 2  # area a,b, months 1-12
+        depend = Mock()
+        depend.source.spatial_resolution.name = 'half_squares'
+        depend.sink.spatial_resolution.name = 'rect'
+        depend.source.temporal_resolution.name = 'months'
+        depend.sink.temporal_resolution.name = 'seasons'
+        depend.source.units = 'm'
+        depend.sink.units = 'm'
+        convertor = Convertor()
+        actual = convertor.convert(data, depend)
         expected = np.ones((1, 4)) * 3  # area zero, seasons 1-4
         assert np.allclose(actual, expected)

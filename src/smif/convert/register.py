@@ -40,6 +40,26 @@ class NDimensionalRegister(Register):
         self._register = OrderedDict()
         self._conversions = defaultdict(dict)
 
+    def convert(self, data, from_set_name, to_set_name):
+        """Convert a list of data points for a given set to another set
+
+        Parameters
+        ----------
+        data: numpy.ndarray with dimension regions
+        from_set_name: str
+        to_set_name: str
+
+        Returns
+        -------
+        numpy.ndarray
+
+        """
+        coefficients = self.get_coefficients(
+            from_set_name,
+            to_set_name)
+
+        return np.dot(data, coefficients)
+
     def register(self, resolution_set):
         """Add a ResolutionSet to the register
 
@@ -143,13 +163,16 @@ class NDimensionalRegister(Register):
         from_names = from_set.get_entry_names()
 
         coefficients = np.zeros((len(from_set), len(to_set)), dtype=np.float)
+        self.logger.debug("Coefficients array is of shape %s for %s to %s",
+                          coefficients.shape, source, destination)
 
         for to_idx, to_entry in enumerate(to_set):
-            bounds = self.get_bounds(to_entry)
-            intersecting_from_entries = from_set.intersection(bounds)
+            to_bounds = self.get_bounds(to_entry)
+            intersecting_from_entries = from_set.intersection(to_bounds)
             for from_entry in intersecting_from_entries:
                 proportion = self.get_proportion(from_entry, to_entry)
-
+                self.logger.debug("%s of %s is in %s", proportion,
+                                  from_entry.name, to_entry.name)
                 from_idx = from_names.index(from_entry.name)
 
                 coefficients[from_idx, to_idx] = proportion
@@ -165,12 +188,16 @@ class ResolutionSet(metaclass=ABCMeta):
         self.name = ''
         self.description = ''
         self.data = []
+        self.logger = logging.getLogger(__name__)
 
     def as_dict(self):
         """Get a serialisable representation of the object
         """
         return {'name': self.name,
                 'description': self.description}
+
+    def __iter__(self):
+        return iter(self.data)
 
     @abstractmethod
     def get_entry_names(self):
