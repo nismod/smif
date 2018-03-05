@@ -301,11 +301,11 @@ class TestRemapConvert:
 
         np.testing.assert_allclose(actual, expected)
 
-    def test_remap_timeslices_to_months(self,
-                                        months,
-                                        remap_month_data_as_months,
-                                        remap_months,
-                                        remap_month_data):
+    def test_resample_timeslices_to_months(self,
+                                           months,
+                                           remap_month_data_as_months,
+                                           remap_months,
+                                           remap_month_data):
         """Converts from remapped month data (where one average month is used
         for each season) back to months
         """
@@ -365,8 +365,10 @@ class TestTimeRegisterCoefficients:
         register.register(IntervalSet('seasons', seasons))
         data = np.array([[3, 3, 3, 3]])
         actual = register.convert(data, 'seasons', 'months')
-        expected = np.array([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])
-        np.testing.assert_array_equal(actual, expected)
+        expected = np.array([[1.033333, 0.933333, 1.01087, 0.978261,
+                              1.01087, 0.978261, 1.01087, 1.01087,
+                              0.989011, 1.021978, 0.989011, 1.033333]])
+        np.testing.assert_allclose(actual, expected, rtol=1e-3)
 
 
 class TestValidation:
@@ -399,3 +401,47 @@ class TestValidation:
         with raises(ValueError) as excinfo:
             interval.interval = ('P2M', 'P1M')
         assert "A time interval must not end before it starts" in str(excinfo)
+
+
+class TestCoefficientComponents:
+
+    def test_intersection(self, months):
+
+        month_set = IntervalSet('months', months)
+
+        bounds = [(0, 8760)]
+        actual = month_set.intersection(bounds)
+        expected = month_set.data
+        assert actual == expected
+
+    def test_intersection_seasons(self, seasons):
+
+        season_set = IntervalSet('seasons', seasons)
+        bounds = [(0, 1)]
+        actual = season_set.intersection(bounds)
+        expected = [season_set.data[0]]
+        assert actual == expected
+
+    def test_get_proportion_month_in_season(self, months, seasons):
+
+        month_set = IntervalSet('months', months)
+        season_set = IntervalSet('seasons', seasons)
+
+        january = month_set.data[0]
+        winter = season_set.data[0]
+
+        actual = month_set.get_proportion(january, winter)
+        expected = 1
+        assert actual == expected
+
+    def test_get_proportion_season_in_month(self, months, seasons):
+
+        month_set = IntervalSet('months', months)
+        season_set = IntervalSet('seasons', seasons)
+
+        january = month_set.data[0]
+        winter = season_set.data[0]
+
+        actual = month_set.get_proportion(winter, january)
+        expected = 31 * 1 / (31+31+28)
+        np.testing.assert_allclose(actual, expected)

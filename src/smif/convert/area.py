@@ -104,6 +104,17 @@ class RegionSet(ResolutionSet):
         """
         return [self._regions[pos] for pos in self._idx.intersection(bounds)]
 
+    @staticmethod
+    def get_proportion(entry_a, entry_b):
+        """Calculate the proportion of shape a that intersects with shape b
+        """
+        intersection = entry_a.shape.intersection(entry_b.shape)
+        return intersection.area / entry_a.shape.area
+
+    @property
+    def coverage(self):
+        return 1
+
     def __getitem__(self, key):
         return self._regions[key]
 
@@ -125,12 +136,6 @@ class RegionRegister(NDimensionalRegister):
 
     def get_bounds(self, entry):
         return entry.shape.bounds
-
-    def get_proportion(self, entry_a, entry_b):
-        """Calculate the proportion of shape a that intersects with shape b
-        """
-        intersection = entry_a.shape.intersection(entry_b.shape)
-        return intersection.area / entry_a.shape.area
 
 
 __REGISTER = RegionRegister()

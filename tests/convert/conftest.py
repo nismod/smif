@@ -154,7 +154,7 @@ def remap_month_data():
         31+30+31,  # Mar, Apr, May
         30+31+31,  # Jun, Jul, Aug
         30+31+30  # Sep, Oct, Nov
-    ]], dtype=float)
+    ]], dtype=float) / 3
 
     return data
 

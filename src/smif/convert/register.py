@@ -151,23 +151,6 @@ class NDimensionalRegister(Register):
         """
         raise NotImplementedError
 
-    def get_proportion(self, entry_a, entry_b):
-        """Calculate the proportion of `entry_a` and `entry_b`
-
-        Arguments
-        ---------
-        entry_a : string
-            Name of an entry in `ResolutionSet`
-        entry_b : string
-            Name of an entry in `ResolutionSet`
-
-        Returns
-        -------
-        float
-            The proportion of `entry_a` and `entry_b`
-        """
-        raise NotImplementedError
-
     def get_coefficients(self, source, destination):
         """Get coefficients representing intersection of sets
 
@@ -186,23 +169,54 @@ class NDimensionalRegister(Register):
         from_set = self.get_entry(source)
         to_set = self.get_entry(destination)
 
-        from_names = from_set.get_entry_names()
+        if from_set.coverage == to_set.coverage and \
+                len(from_set) == len(to_set):
+            # Perform conversion
+            coefficients = self._obtain_coefficients(from_set, to_set)
 
+        elif from_set.coverage == to_set.coverage and \
+                len(from_set) > len(to_set):
+            # Perform aggregation
+            coefficients = self._obtain_coefficients(from_set, to_set)
+
+        elif from_set.coverage == to_set.coverage and \
+                len(from_set) < len(to_set):
+            # Perform disaggregation
+            coefficients = self._obtain_coefficients(from_set, to_set)
+
+        elif from_set.coverage < to_set.coverage:
+            # Perform remapping
+            msg = "Remapping is not yet implemented"
+            raise NotImplementedError(msg)
+        elif from_set.coverage > to_set.coverage:
+            # Perform resampling
+            msg = "Resampling is not yet implemented"
+            raise NotImplementedError(msg)
+        else:
+            msg = "Cannot perform conversions where coverage is not " \
+                  "equal for resolution sets"
+            raise NotImplementedError(msg)
+
+        return coefficients
+
+    def _obtain_coefficients(self, from_set, to_set):
+        """
+        """
         coefficients = np.zeros((len(from_set), len(to_set)), dtype=np.float)
         self.logger.debug("Coefficients array is of shape %s for %s to %s",
-                          coefficients.shape, source, destination)
+                          coefficients.shape, from_set.name, to_set.name)
 
+        from_names = from_set.get_entry_names()
         for to_idx, to_entry in enumerate(to_set):
             to_bounds = self.get_bounds(to_entry)
             intersecting_from_entries = from_set.intersection(to_bounds)
             for from_entry in intersecting_from_entries:
-                proportion = self.get_proportion(from_entry, to_entry)
+                proportion = from_set.get_proportion(from_entry, to_entry)
                 self.logger.debug("%s of %s is in %s", proportion,
                                   from_entry.name, to_entry.name)
                 from_idx = from_names.index(from_entry.name)
 
                 coefficients[from_idx, to_idx] = proportion
-
         return coefficients
 
 
@@ -240,4 +254,28 @@ class ResolutionSet(metaclass=ABCMeta):
     def intersection(self, bounds):
         """Return the subset of entries intersecting with the bounds
         """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def get_proportion(entry_a, entry_b):
+        """Calculate the proportion of `entry_a` and `entry_b`
+
+        Arguments
+        ---------
+        entry_a : string
+            Name of an entry in `ResolutionSet`
+        entry_b : string
+            Name of an entry in `ResolutionSet`
+
+        Returns
+        -------
+        float
+            The proportion of `entry_a` and `entry_b`
+        """
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def coverage(self):
         raise NotImplementedError
