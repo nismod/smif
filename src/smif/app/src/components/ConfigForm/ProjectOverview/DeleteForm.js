@@ -36,20 +36,20 @@ class DeleteForm extends Component {
     }
 
     render() {
-        const { config_name } = this.props
+        const { config_name, config_type } = this.props
 
         return (
             <div>
                 <div className="card">
                     <div className="card-header">Delete a configuration</div>
                     <div className="card-body">
-                        Would you like to delete <b>{config_name}</b>?
+                        Would you like to delete the <b>{config_type}</b> with name <b>{config_name}</b>?
                     </div>
                 </div>
 
                 <br/>
 
-                <input id="deleteButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Delete" onClick={this.handleSubmit} />
+                <input autoFocus id="deleteButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Delete" onClick={this.handleSubmit} />
                 <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
             </div>
         )
@@ -58,6 +58,7 @@ class DeleteForm extends Component {
 
 DeleteForm.propTypes = {
     config_name: PropTypes.string,
+    config_type: PropTypes.string,
     submit: PropTypes.func,
     cancel: PropTypes.func
 }
