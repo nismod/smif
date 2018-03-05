@@ -20,7 +20,6 @@ class ProjectOverview extends Component {
 
         this.state = {
             createPopupIsOpen: false,
-            createPopupHeader: 'none',
             createPopupType: 'none',
             deletePopupIsOpen: false,
             deletePopupConfigName: 'none',
@@ -34,6 +33,8 @@ class ProjectOverview extends Component {
         this.closeDeletePopup = this.closeDeletePopup.bind(this)
         this.openDeletePopup = this.openDeletePopup.bind(this)
         this.deletePopupSubmit = this.deletePopupSubmit.bind(this)
+
+        this.collectIdentifiers = this.collectIdentifiers.bind(this)
 
         this.handleInputChange = this.handleInputChange.bind(this)
     }
@@ -64,7 +65,6 @@ class ProjectOverview extends Component {
 
         this.setState({
             createPopupIsOpen: true,
-            createPopupHeader: event.target.value,
             createPopupType: event.target.name
         })
     }
@@ -77,7 +77,7 @@ class ProjectOverview extends Component {
         this.closeCreatePopup(createPopupType)
         
         switch(createPopupType) {
-        case 'createSosModelRun':
+        case 'SosModelRun':
             dispatch(createSosModelRun(config.name))
             dispatch(saveSosModelRun(
                 {
@@ -93,7 +93,7 @@ class ProjectOverview extends Component {
             ))
             dispatch(fetchSosModelRuns())
             break
-        case 'createSosModel':
+        case 'SosModel':
             dispatch(createSosModel(config.name))
             dispatch(saveSosModel(
                 {
@@ -108,7 +108,7 @@ class ProjectOverview extends Component {
             ))
             dispatch(fetchSosModels())
             break
-        case 'createSectorModel':
+        case 'SectorModel':
             dispatch(createSectorModel(config.name))
             dispatch(saveSectorModel(
                 {
@@ -125,7 +125,7 @@ class ProjectOverview extends Component {
             ))
             dispatch(fetchSectorModels())
             break
-        case 'createScenarioSet':
+        case 'ScenarioSet':
             dispatch(createScenarioSet(config.name))
             dispatch(saveScenarioSet(
                 {
@@ -136,7 +136,7 @@ class ProjectOverview extends Component {
             ))
             dispatch(fetchScenarioSets())
             break
-        case 'createNarrativeSet':
+        case 'NarrativeSet':
             dispatch(createNarrativeSet(config.name))
             dispatch(saveNarrativeSet({
                     'name': config.name,
@@ -145,7 +145,7 @@ class ProjectOverview extends Component {
             ))
             dispatch(fetchNarrativeSets())
             break
-        case 'createNarrative':
+        case 'Narrative':
             dispatch(createNarrative(config.name))
             dispatch(saveNarrative({
                     'name': config.name,
@@ -160,6 +160,7 @@ class ProjectOverview extends Component {
     }
 
     closeCreatePopup() {
+        console.log('close popup')
         this.setState({createPopupIsOpen: false})
     }
 
@@ -180,19 +181,19 @@ class ProjectOverview extends Component {
         this.closeDeletePopup(deletePopupType)
 
         switch(deletePopupType) {
-        case 'deleteSosModelRun':
+        case 'SosModelRun':
             dispatch(deleteSosModelRun(deletePopupConfigName))
             dispatch(fetchSosModelRuns())
             break
-        case 'deleteSosModel':
+        case 'SosModel':
             dispatch(deleteSosModel(deletePopupConfigName))
             dispatch(fetchSosModels())
             break
-        case 'deleteSectorModel':
+        case 'SectorModel':
             dispatch(deleteSectorModel(deletePopupConfigName))
             dispatch(fetchSectorModels())
             break
-        case 'deleteScenarioSet':
+        case 'ScenarioSet':
             dispatch(deleteScenarioSet(deletePopupConfigName))
             dispatch(fetchScenarioSets())
 
@@ -202,11 +203,11 @@ class ProjectOverview extends Component {
                 dispatch(deleteScenario(scenario['name']))
             }
             break
-        case 'deleteNarrativeSet':
+        case 'NarrativeSet':
             dispatch(deleteNarrativeSet(deletePopupConfigName))
             dispatch(fetchNarrativeSets())
             break
-        case 'deleteNarrative':
+        case 'Narrative':
             dispatch(deleteNarrative(deletePopupConfigName))
             dispatch(fetchNarratives())
             break
@@ -217,8 +218,27 @@ class ProjectOverview extends Component {
         this.setState({deletePopupIsOpen: false})
     }
 
+    collectIdentifiers() {
+        const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching } = this.props
+        let types = [sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching]
+
+        let identifiers = []
+
+        types.forEach(function(type){
+            if (type.length > 0) {
+                type.forEach(function(config){
+                    identifiers.push(config.name)
+                })
+            }
+        })
+
+        return identifiers
+    }
+
     render () {
         const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching } = this.props
+
+        let used_identifiers = this.collectIdentifiers()
 
         return (
             <div>
@@ -253,7 +273,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createSosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -265,7 +285,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createSosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -277,7 +297,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createSectorModel" type="button" value="Create a new Simulation Model" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="SectorModel" type="button" value="Create a new Simulation Model" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -289,7 +309,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/scenario-set/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -301,7 +321,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/narrative-set/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createNarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -313,7 +333,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/narratives/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createNarrative" type="button" value="Create a new Narrative" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="Narrative" type="button" value="Create a new Narrative" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -321,12 +341,12 @@ class ProjectOverview extends Component {
 
                     {/* Popup for Create */}
                     <Popup onRequestOpen={this.state.createPopupIsOpen}>
-                        <CreateConfigForm header={this.state.createPopupHeader} submit={this.createPopupSubmit} cancel={this.closeCreatePopup}/>
+                        <CreateConfigForm config_type={this.state.createPopupType} existing_names={used_identifiers} submit={this.createPopupSubmit} cancel={this.closeCreatePopup}/>
                     </Popup>
 
                     {/* Popup for Delete */}
                     <Popup onRequestOpen={this.state.deletePopupIsOpen}>
-                        <DeleteForm config_name={this.state.deletePopupConfigName} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
+                        <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
                     </Popup>
                 </div>
             </div>

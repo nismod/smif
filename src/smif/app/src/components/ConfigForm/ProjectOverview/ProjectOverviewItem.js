@@ -76,7 +76,7 @@ class SosModelRunItem extends Component {
                                         </td>
                                         <td id={item.name} onClick={(e) => this.onEditHandler(e)}>{item.description}</td>
                                         <td>
-                                            <button type="button" className="btn btn-outline-dark" value={'delete' + itemname} name={item.name} onClick={this.onDeleteHandler}>
+                                            <button type="button" className="btn btn-outline-dark" value={itemname} name={item.name} onClick={this.onDeleteHandler}>
                                                 <FaTrash/>
                                             </button>
                                         </td>
