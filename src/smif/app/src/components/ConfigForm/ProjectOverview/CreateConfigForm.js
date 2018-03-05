@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
-import {Alert} from 'reactstrap';
 
 class CreateConfigForm extends Component {
     constructor(props) {
@@ -99,10 +98,10 @@ class CreateConfigForm extends Component {
                 </div>
 
                 <br/>
-
-                <Alert color="danger" isOpen={this.state.alert_visible} toggle={this.onDismiss}>
+                
+                <div hidden={!this.state.alert_visible} className="alert alert-danger" role="alert">
                     {this.state.alert_message}
-                </Alert>
+                </div>
 
                 <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSubmit} />
                 <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
