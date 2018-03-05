@@ -14,9 +14,16 @@ import numpy as np
 
 class Register(metaclass=ABCMeta):
     """Abstract class which holds the ResolutionSets
+
+    Arguments
+    ---------
+    axis : int, default=None
+        The axis over which operations on the data array are performed
+
     """
-    def __init__(self):
+    def __init__(self, axis=None):
         self.logger = logging.getLogger(__name__)
+        self.axis = axis
 
     @property
     @abstractmethod
@@ -31,21 +38,12 @@ class Register(metaclass=ABCMeta):
     def get_coefficients(self, source, destination):
         raise NotImplementedError
 
-
-class NDimensionalRegister(Register):
-    """Abstract class which holds N-Dimensional ResolutionSets
-    """
-    def __init__(self):
-        super().__init__()
-        self._register = OrderedDict()
-        self._conversions = defaultdict(dict)
-
     def convert(self, data, from_set_name, to_set_name):
         """Convert a list of data points for a given set to another set
 
         Parameters
         ----------
-        data: numpy.ndarray with dimension regions
+        data: numpy.ndarray
         from_set_name: str
         to_set_name: str
 
@@ -54,11 +52,39 @@ class NDimensionalRegister(Register):
         numpy.ndarray
 
         """
-        coefficients = self.get_coefficients(
-            from_set_name,
-            to_set_name)
+        coefficients = self.get_coefficients(from_set_name, to_set_name)
 
-        return np.dot(data, coefficients)
+        if self.axis is not None:
+            data_count = data.shape[self.axis]
+            if coefficients.shape[0] != data_count:
+                msg = "Size of coefficient array does not match source " \
+                      "resolution set from data matrix: %s != %s"
+                raise ValueError(msg, coefficients.shape[self.axis],
+                                 data_count)
+
+        if self.axis == 0:
+            converted = np.dot(coefficients.T, data)
+        elif self.axis == 1:
+            converted = np.dot(data, coefficients)
+        else:
+            converted = np.dot(data, coefficients)
+
+        return converted
+
+
+class NDimensionalRegister(Register):
+    """Abstract class which holds N-Dimensional ResolutionSets
+
+    Arguments
+    ---------
+    axis : int, default=None
+        The axis over which operations on the data array are performed
+
+    """
+    def __init__(self, axis=None):
+        super().__init__(axis)
+        self._register = OrderedDict()
+        self._conversions = defaultdict(dict)
 
     def register(self, resolution_set):
         """Add a ResolutionSet to the register

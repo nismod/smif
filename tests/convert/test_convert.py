@@ -1,7 +1,5 @@
-from unittest.mock import Mock
-
 import numpy as np
-from smif.convert import Convertor, SpaceTimeUnitConvertor
+from smif.convert import SpaceTimeUnitConvertor
 
 
 class TestSpaceTimeUnitConvertor_TimeOnly:
@@ -191,23 +189,10 @@ class TestSpaceTimeUnitConvertor_TimeOnly:
         ], dtype=float)
         assert np.allclose(actual, expected)
 
-    def test_remap_months_to_timeslices(self):
+    def test_remap_months_to_timeslices(self, monthly_data, remap_month_data):
         """One region, time remapping required
         """
-        data = np.array([[
-            31,
-            28,
-            31,
-            30,
-            31,
-            30,
-            31,
-            31,
-            30,
-            31,
-            30,
-            31
-        ]], dtype=float)
+        data = monthly_data
 
         convertor = SpaceTimeUnitConvertor()
         actual = convertor.convert(
@@ -219,12 +204,7 @@ class TestSpaceTimeUnitConvertor_TimeOnly:
             'm',
             'm'
         )
-        expected = np.array([[
-            30+31+31,
-            28+31+30,
-            31+31+30,
-            30+31+31
-        ]], dtype=float)
+        expected = remap_month_data
         assert np.allclose(actual, expected)
 
 
@@ -293,14 +273,13 @@ class TestConvertor:
 
     def test_convertor(self):
         data = np.ones((2, 12)) / 2  # area a,b, months 1-12
-        depend = Mock()
-        depend.source.spatial_resolution.name = 'half_squares'
-        depend.sink.spatial_resolution.name = 'rect'
-        depend.source.temporal_resolution.name = 'months'
-        depend.sink.temporal_resolution.name = 'seasons'
-        depend.source.units = 'm'
-        depend.sink.units = 'm'
-        convertor = Convertor()
-        actual = convertor.convert(data, depend)
+        convertor = SpaceTimeUnitConvertor()
+        actual = convertor.convert(data,
+                                   'half_squares',
+                                   'rect',
+                                   'months',
+                                   'seasons',
+                                   'm',
+                                   'm')
         expected = np.ones((1, 4)) * 3  # area zero, seasons 1-4
         assert np.allclose(actual, expected)

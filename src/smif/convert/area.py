@@ -114,7 +114,15 @@ class RegionSet(ResolutionSet):
 class RegionRegister(NDimensionalRegister):
     """Holds the sets of regions used by the SectorModels and provides conversion
     between data values relating to compatible sets of regions.
+
+    Arguments
+    ---------
+    axis : int, default=None
+        The axis over which operations on the data array are performed
     """
+    def __init__(self):
+        super().__init__(axis=0)
+
     def get_bounds(self, entry):
         return entry.shape.bounds
 

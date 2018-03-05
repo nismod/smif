@@ -458,11 +458,18 @@ class IntervalSet(ResolutionSet):
 class TimeIntervalRegister(NDimensionalRegister):
     """Holds the set of time-intervals used by the SectorModels
     """
+    def __init__(self):
+        super().__init__(axis=1)
+
     def get_bounds(self, entry):
         return entry.to_hours()
 
     def get_proportion(self, entry_a, entry_b):
         """Find proportion of `entry_a` in `entry_b`
+
+        Returns
+        -------
+        float
 
         Notes
         -----

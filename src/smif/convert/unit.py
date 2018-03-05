@@ -13,6 +13,7 @@ class UnitRegister(Register):
     def __init__(self):
         self._register = UnitRegistry(on_redefinition='raise')
         self.LOGGER = logging.getLogger()
+        self.axis = None
 
     @property
     def names(self):
@@ -33,9 +34,9 @@ class UnitRegister(Register):
         pass
 
     def get_coefficients(self, source, destination):
-        return self.convert(1, source, destination)
+        return self.convert_old(1, source, destination)
 
-    def convert(self, data, from_unit, to_unit):
+    def convert_old(self, data, from_unit, to_unit):
         """Convert the data from one unit to another unit
 
         Parameters

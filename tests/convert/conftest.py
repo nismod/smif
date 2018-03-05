@@ -100,7 +100,7 @@ def months():
 def monthly_data():
     """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     """
-    data = np.array([
+    data = np.array([[
         31,
         28,
         31,
@@ -113,7 +113,7 @@ def monthly_data():
         31,
         30,
         31,
-    ])
+    ]])
     return data
 
 
@@ -133,35 +133,35 @@ def remap_months():
 
     """
     data = [{'id': '1', 'start': 'P0M', 'end': 'P1M'},
-            {'id': '2', 'start': 'P1M', 'end': 'P2M'},
+            {'id': '1', 'start': 'P1M', 'end': 'P2M'},
             {'id': '2', 'start': 'P2M', 'end': 'P3M'},
             {'id': '2', 'start': 'P3M', 'end': 'P4M'},
-            {'id': '3', 'start': 'P4M', 'end': 'P5M'},
+            {'id': '2', 'start': 'P4M', 'end': 'P5M'},
             {'id': '3', 'start': 'P5M', 'end': 'P6M'},
             {'id': '3', 'start': 'P6M', 'end': 'P7M'},
-            {'id': '4', 'start': 'P7M', 'end': 'P8M'},
+            {'id': '3', 'start': 'P7M', 'end': 'P8M'},
             {'id': '4', 'start': 'P8M', 'end': 'P9M'},
             {'id': '4', 'start': 'P9M', 'end': 'P10M'},
-            {'id': '1', 'start': 'P10M', 'end': 'P11M'},
+            {'id': '4', 'start': 'P10M', 'end': 'P11M'},
             {'id': '1', 'start': 'P11M', 'end': 'P12M'}]
     return data
 
 
 @fixture(scope='function')
 def remap_month_data():
-    data = np.array([
-        30+31+31,
-        28+31+30,
-        31+31+30,
-        30+31+31
-    ], dtype=float)
+    data = np.array([[
+        31+31+28,  # Dec, Jan, Feb
+        31+30+31,  # Mar, Apr, May
+        30+31+31,  # Jun, Jul, Aug
+        30+31+30  # Sep, Oct, Nov
+    ]], dtype=float)
 
     return data
 
 
 @fixture(scope='function')
 def remap_month_data_as_months():
-    data = np.array([
+    data = np.array([[
         30.666666666,
         29.666666666,
         29.666666666,
@@ -174,7 +174,7 @@ def remap_month_data_as_months():
         30.666666666,
         30.666666666,
         30.666666666
-    ])
+    ]])
     return data
 
 
@@ -191,12 +191,12 @@ def seasons():
 
 @fixture(scope='function')
 def monthly_data_as_seasons():
-    return np.array([
+    return np.array([[
         31 + 31 + 28,
         31 + 30 + 31,
         30 + 31 + 31,
         30 + 31 + 30
-    ], dtype=float)
+    ]], dtype=float)
 
 
 @fixture(scope='function')
