@@ -446,7 +446,9 @@ class SosModelBuilder(object):
             msg = "Cannot convert to undefined unit '{}'"
             raise ValueError(msg.format(sink_units))
 
-        self.unit_register.convert(1, source_units, sink_units)
+        if source_units != sink_units:
+            self.unit_register.get_coefficients(source_units,
+                                                sink_units)
 
     def finish(self):
         """Returns a configured system-of-systems model ready for operation

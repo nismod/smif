@@ -128,6 +128,7 @@ Development Notes
   before adding them to the set of intervals
 
 """
+import logging
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -172,6 +173,7 @@ class Interval(object):
     def __init__(self, name, list_of_intervals, base_year=BASE_YEAR):
         self._name = name
         self._baseyear = base_year
+        self.logger = logging.getLogger(__name__)
 
         if not list_of_intervals:
             msg = "Must construct Interval with at least one interval"
@@ -364,10 +366,69 @@ class IntervalSet(ResolutionSet):
         self.bool_array = self._make_intersection_array()
 
     def _make_intersection_array(self):
-        array = np.zeros((len(self.data), 8760))
+        """
+        Returns
+        -------
+        numpy.array
+            A boolean array where rows correspond to entries in the interval
+            set and columns represent hours of the year
+        """
+        array = np.zeros((len(self.data), 8760), dtype=np.bool)
         for row, interval in enumerate(self.data):
             array[row, :] = interval.to_hourly_array()
         return array
+
+    @staticmethod
+    def get_proportion(from_interval, to_interval):
+        """Find proportion of `from_interval` in `to_interval`
+
+        Arguments
+        ---------
+        from_interval : Interval
+        to_interval : Interval
+
+        Returns
+        -------
+        float
+
+        Notes
+        -----
+        Find overlap
+        """
+        from_hours = from_interval.to_hourly_array()
+        to_hours = to_interval.to_hourly_array()
+        a_and_b = np.logical_and(from_hours, to_hours)
+        proportion = np.sum(a_and_b) / np.sum(from_hours)
+        return proportion
+
+    def intersection(self, bounds):
+        """Return the subset of intervals intersecting with the bounds
+
+        Argument
+        --------
+        bounds : list
+            List of start and end hours
+
+        Returns
+        -------
+        list
+            A list of Intervals that intersect with bounds
+
+        Notes
+        -----
+        Look at the columns of the intersection array and identify
+        overlapping intervals
+        """
+        elements = []
+        for lower, upper in bounds:
+            bool_array = np.sum(self.bool_array[:, lower:upper], axis=1)
+            intersect = np.nonzero(bool_array)[0]
+            self.logger.debug(
+                'Interval %s intersects with %s',
+                bounds, intersect
+            )
+            elements.extend(intersect)
+        return [self.data[elem] for elem in set(elements)]
 
     @property
     def data(self):
@@ -378,6 +439,19 @@ class IntervalSet(ResolutionSet):
         list
         """
         return self._data
+
+    @property
+    def coverage(self):
+        """The total coverage in hours of the year by the interval set
+
+        Returns
+        -------
+        float
+        """
+        compact_array = np.sum(self.bool_array, axis=1)
+        coverage_value = np.sum(compact_array, axis=0)
+        self.logger.debug("Coverage of %s is %s", self.name, coverage_value)
+        return coverage_value
 
     @data.setter
     def data(self, interval_data):
@@ -423,31 +497,6 @@ class IntervalSet(ResolutionSet):
         """
         return [interval.name for interval in self.data]
 
-    # TODO: Finish this off
-    def intersection(self, bounds):
-        """Return the subset of intervals intersecting with the bounds
-
-        Argument
-        --------
-        bounds : list
-            List of start and end hours
-
-        Notes
-        -----
-        Look at the columns of the intersection array and identify
-        overlapping intervals
-        """
-        elements = []
-        for lower, upper in bounds:
-            bool_array = np.sum(self.bool_array[:, lower:upper], axis=1)
-            intersect = np.nonzero(bool_array)[0]
-            self.logger.debug(
-                'Interval %s intersects with %s',
-                bounds, intersect
-            )
-            elements.extend(intersect)
-        return [self.data[elem] for elem in set(elements)]
-
     def __getitem___(self, key):
         return self._data[key]
 
@@ -463,26 +512,6 @@ class TimeIntervalRegister(NDimensionalRegister):
 
     def get_bounds(self, entry):
         return entry.to_hours()
-
-    def get_proportion(self, entry_a, entry_b):
-        """Find proportion of `entry_a` in `entry_b`
-
-        Returns
-        -------
-        float
-
-        Notes
-        -----
-        Find overlap
-        """
-        from_hours = entry_a.to_hourly_array()
-        to_hours = entry_b.to_hourly_array()
-        a_in_b = np.logical_and(from_hours, to_hours)
-        proportion = np.sum(from_hours) / np.sum(a_in_b)
-        self.logger.debug("%s shares %s hours [%s] with %s",
-                          entry_a.name, np.sum(a_in_b),
-                          proportion, entry_b.name)
-        return proportion
 
 
 __REGISTER = TimeIntervalRegister()
