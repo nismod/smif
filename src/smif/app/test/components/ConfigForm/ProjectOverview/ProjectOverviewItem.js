@@ -27,7 +27,7 @@ describe('<ProjectOverviewItem />', () => {
         wrapper = shallow(<ProjectOverviewItem itemname={itemname} items={items} itemLink={itemlink} />)
 
         item = wrapper.find('[id="row_item_1"]').first()
-        expect(item.html()).to.contain('value="delete' + itemname)
+        expect(item.html()).to.contain('value="' + itemname + '"')
     })
 
     it('renders items', () => {
