@@ -173,7 +173,7 @@ class TestTimeRegisterConversion:
 
     def test_convert_from_hour_to_day(self, twenty_four_hours, one_day):
 
-        data = np.ones(24)
+        data = np.ones((1, 24))
 
         register = TimeIntervalRegister()
         register.register(IntervalSet('hourly_day', twenty_four_hours))
@@ -277,28 +277,49 @@ class TestIntervalRegister:
 class TestRemapConvert:
 
     def test_remap_coefficients(self, months, remap_months, month_to_season_coefficients):
+        """Twelve months are remapped (averaged) into four
+        representative months
+        """
         register = TimeIntervalRegister()
         register.register(IntervalSet('months', months))
         register.register(IntervalSet('remap_months', remap_months))
         actual = register.get_coefficients('months', 'remap_months')
 
-        expected = month_to_season_coefficients
+        expected = np.array([[0.333333, 0, 0, 0],
+                             [0, 0.333333, 0, 0],
+                             [0, 0.333333, 0, 0],
+                             [0, 0.333333, 0, 0],
+                             [0, 0, 0.333333, 0],
+                             [0, 0, 0.333333, 0],
+                             [0, 0, 0.333333, 0],
+                             [0, 0, 0, 0.333333],
+                             [0, 0, 0, 0.333333],
+                             [0, 0, 0, 0.333333],
+                             [0.333333, 0, 0, 0],
+                             [0.333333, 0, 0, 0]]
+                            )
 
-        np.testing.assert_equal(actual, expected)
+        np.testing.assert_allclose(actual, expected)
 
     def test_remap_timeslices_to_months(self,
                                         months,
                                         remap_month_data_as_months,
                                         remap_months,
                                         remap_month_data):
+        """Converts from remapped month data (where one average month is used
+        for each season) back to months
+        """
         register = TimeIntervalRegister()
-        register.register(IntervalSet('months', months))
         register.register(IntervalSet('remap_months', remap_months))
+        register.register(IntervalSet('months', months))
 
-        actual = register.convert(remap_month_data, 'remap_months', 'months')
-        expected = remap_month_data_as_months
+        data = np.array([[1, 1, 1, 1]])
+        actual = register.convert(data,
+                                  'remap_months',
+                                  'months')
+        expected = np.array([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])
 
-        np.testing.assert_allclose(actual, expected, rtol=1e-05, atol=1e-08)
+        np.testing.assert_allclose(actual, expected)
 
     def test_remap_months_to_timeslices(self,
                                         months,
@@ -313,6 +334,39 @@ class TestRemapConvert:
         expected = remap_month_data
 
         np.testing.assert_allclose(actual, expected, rtol=1e-05, atol=1e-08)
+
+
+class TestTimeRegisterCoefficients:
+
+    def test_coeff(self, months, seasons, month_to_season_coefficients):
+
+        register = TimeIntervalRegister()
+        register.register(IntervalSet('months', months))
+        register.register(IntervalSet('seasons', seasons))
+
+        actual = register.get_coefficients('months', 'seasons')
+        expected = month_to_season_coefficients
+        assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
+
+    def test_time_only_conversion(self, months, seasons):
+
+        register = TimeIntervalRegister()
+        register.register(IntervalSet('months', months))
+        register.register(IntervalSet('seasons', seasons))
+        data = np.array([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])
+        actual = register.convert(data, 'months', 'seasons')
+        expected = np.array([[3, 3, 3, 3]])
+        np.testing.assert_array_equal(actual, expected)
+
+    def test_time_only_conversion_disagg(self, months, seasons):
+
+        register = TimeIntervalRegister()
+        register.register(IntervalSet('months', months))
+        register.register(IntervalSet('seasons', seasons))
+        data = np.array([[3, 3, 3, 3]])
+        actual = register.convert(data, 'seasons', 'months')
+        expected = np.array([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])
+        np.testing.assert_array_equal(actual, expected)
 
 
 class TestValidation:
