@@ -12,7 +12,7 @@ import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet
 import Popup from '../../components/ConfigForm/General/Popup.js'
 import ProjectOverviewItem from '../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
 import CreateConfigForm from '../../components/ConfigForm/ProjectOverview/CreateConfigForm.js'
-import DeleteForm from '../../components/ConfigForm/ProjectOverview/DeleteForm.js'
+import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
 
 class ProjectOverview extends Component {
     constructor() {

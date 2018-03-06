@@ -634,7 +634,6 @@ export function saveScenario(scenario){
 }
 
 export function createScenario(scenarioName){
-    console.log(scenarioName)
     return function (dispatch) {
 
         // make API request, returning a promise
