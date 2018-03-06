@@ -53,6 +53,14 @@ class DeleteForm extends Component {
     render() {
         const { config_name, config_type, in_use_by } = this.props
 
+        let message = (<div></div>)
+
+        if (isNaN(config_name)) {
+            message = (<div>Would you like to delete the <b>{config_type}</b> with name <b>{config_name}</b>?</div>)
+        } else {
+            message = (<div>Would you like to delete this <b>{config_type}</b>?</div>)
+        }
+
         if (this.state.redirect) {
             return <Redirect push to={this.state.redirect_to}/>
         } else if (in_use_by == undefined || in_use_by.length == 0) {
@@ -61,7 +69,7 @@ class DeleteForm extends Component {
                     <div className="card">
                         <div className="card-header">Delete a configuration</div>
                         <div className="card-body">
-                            Would you like to delete the <b>{config_type}</b> with name <b>{config_name}</b>?
+                            {message}
                         </div>
                     </div>
 
