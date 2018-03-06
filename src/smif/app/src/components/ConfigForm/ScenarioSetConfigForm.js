@@ -218,16 +218,18 @@ class ScenarioSetConfigForm extends Component {
 
         switch(event.target.name) {
             case 'Scenario':
-                // this.props.sos_model_runs.forEach(function(sos_model_run) {   
-                //     if (sos_model_run.sos_model == event.target.value) {
-                //         target_in_use_by.push({
-                //             name: sos_model_run.name,
-                //             link: '/configure/sos-model-run/',
-                //             type: 'SosModelRun'
-                //         })
-                //     }                    
-                // })
-                // break
+                this.props.sosModelRuns.forEach(function(sos_model_run) {   
+                    Object.keys(sos_model_run.scenarios).forEach(function(key) {
+                        if (event.target.value == sos_model_run.scenarios[key]) {
+                            target_in_use_by.push({
+                                name: sos_model_run.name,
+                                link: '/configure/sos-model-run/',
+                                type: 'SosModelRun'
+                            })
+                        }
+                    })
+                })
+                break
         }
 
         this.setState({
@@ -420,6 +422,7 @@ class ScenarioSetConfigForm extends Component {
 }
 
 ScenarioSetConfigForm.propTypes = {
+    sosModelRuns: PropTypes.array.isRequired, 
     scenarioSet: PropTypes.object.isRequired,
     scenarios: PropTypes.array.isRequired,
     saveScenarioSet: PropTypes.func,
