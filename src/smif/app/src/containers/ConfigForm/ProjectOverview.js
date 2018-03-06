@@ -225,6 +225,16 @@ class ProjectOverview extends Component {
                         }
                     })
                 })
+
+                this.props.narratives.forEach(function(narrative) {   
+                    if (narrative.narrative_set == event.target.value) {
+                        target_in_use_by.push({
+                            name: narrative.name,
+                            link: '/configure/narratives/',
+                            type: 'Narrative'
+                        })
+                    }
+                })
                 break
 
             case 'Narrative':
