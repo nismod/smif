@@ -6,6 +6,7 @@ import { Link, Router } from 'react-router-dom'
 
 import { fetchSectorModel } from '../../actions/actions.js'
 import { saveSectorModel } from '../../actions/actions.js'
+import { fetchSosModels } from '../../actions/actions.js'
 
 import SectorModelConfigForm from '../../components/ConfigForm/SectorModelConfigForm.js'
 
@@ -21,6 +22,7 @@ class SectorModelConfig extends Component {
         const { dispatch } = this.props
 
         dispatch(fetchSectorModel(this.props.match.params.name))
+        dispatch(fetchSosModels())
     }
 
     componentWillReceiveProps() {
@@ -53,33 +55,35 @@ class SectorModelConfig extends Component {
         )
     }
 
-    renderSectorModelConfig(sector_model) {
+    renderSectorModelConfig(sos_models, sector_model) {
         return (
             <div>
                 <h1>Sector Model Configuration</h1>
-                <SectorModelConfigForm sectorModel={sector_model} saveSectorModel={this.saveSectorModel} cancelSectorModel={this.returnToPreviousPage}/>
+                <SectorModelConfigForm sosModels={sos_models} sectorModel={sector_model} saveSectorModel={this.saveSectorModel} cancelSectorModel={this.returnToPreviousPage}/>
             </div>
         )
     }
 
     render () {
-        const {sector_model, isFetching} = this.props
+        const {sos_models, sector_model, isFetching} = this.props
 
         if (isFetching) {
             return this.renderLoading()
         } else {
-            return this.renderSectorModelConfig(sector_model)
+            return this.renderSectorModelConfig(sos_models, sector_model)
         }
     }
 }
 
 SectorModelConfig.propTypes = {
+    sos_models: PropTypes.array.isRequired,
     sector_model: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired
 }
 
 function mapStateToProps(state) {
     return {
+        sos_models: state.sos_models.items,
         sector_model: state.sector_model.item,
         isFetching: (state.sector_model.isFetching)
     }
