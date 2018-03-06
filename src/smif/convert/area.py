@@ -99,17 +99,22 @@ class RegionSet(ResolutionSet):
             for region in self._regions
         ]
 
-    def intersection(self, bounds):
+    def intersection(self, to_entry):
         """Return the subset of regions intersecting with a bounding box
         """
-        return [self._regions[pos] for pos in self._idx.intersection(bounds)]
+        bounds = to_entry.shape.bounds
+        return [x for x in self._idx.intersection(bounds)]
 
-    @staticmethod
-    def get_proportion(entry_a, entry_b):
+    def get_proportion(self, from_idx, entry_b):
         """Calculate the proportion of shape a that intersects with shape b
         """
+        entry_a = self.data[from_idx]
         intersection = entry_a.shape.intersection(entry_b.shape)
         return intersection.area / entry_a.shape.area
+
+    @staticmethod
+    def get_bounds(entry):
+        return entry.shape.bounds
 
     @property
     def coverage(self):
@@ -133,9 +138,6 @@ class RegionRegister(NDimensionalRegister):
     """
     def __init__(self):
         super().__init__(axis=0)
-
-    def get_bounds(self, entry):
-        return entry.shape.bounds
 
 
 __REGISTER = RegionRegister()

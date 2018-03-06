@@ -135,22 +135,6 @@ class NDimensionalRegister(Register):
             raise ValueError(msg.format(name))
         return self._register[name]
 
-    @abstractmethod
-    def get_bounds(self, entry):
-        """Implement this helper method to return bounds from an entry in the register
-
-        Arguments
-        ---------
-        entry
-            An entry from a ResolutionSet
-
-        Returns
-        -------
-        bounds
-            The bounds of the entry
-        """
-        raise NotImplementedError
-
     def get_coefficients(self, source, destination):
         """Get coefficients representing intersection of sets
 
@@ -171,23 +155,27 @@ class NDimensionalRegister(Register):
 
         if from_set.coverage == to_set.coverage and \
                 len(from_set) == len(to_set):
-            # Perform conversion
+            msg = "Perform conversion from %s to %s"
+            self.logger.info(msg, source, destination)
             coefficients = self._obtain_coefficients(from_set, to_set)
 
         elif from_set.coverage == to_set.coverage and \
                 len(from_set) > len(to_set):
-            # Perform aggregation
+            msg = "Perform aggregation from %s to %s"
+            self.logger.info(msg, source, destination)
             coefficients = self._obtain_coefficients(from_set, to_set)
 
         elif from_set.coverage == to_set.coverage and \
                 len(from_set) < len(to_set):
-            # Perform disaggregation
+            msg = "Perform disaggregation from %s to %s"
+            self.logger.info(msg, source, destination)
             coefficients = self._obtain_coefficients(from_set, to_set)
 
         elif from_set.coverage < to_set.coverage:
             # Perform remapping
             msg = "Remapping is not yet implemented"
             raise NotImplementedError(msg)
+
         elif from_set.coverage > to_set.coverage:
             # Perform resampling
             msg = "Resampling is not yet implemented"
@@ -208,13 +196,14 @@ class NDimensionalRegister(Register):
 
         from_names = from_set.get_entry_names()
         for to_idx, to_entry in enumerate(to_set):
-            to_bounds = self.get_bounds(to_entry)
-            intersecting_from_entries = from_set.intersection(to_bounds)
-            for from_entry in intersecting_from_entries:
-                proportion = from_set.get_proportion(from_entry, to_entry)
-                self.logger.debug("%s of %s is in %s", proportion,
-                                  from_entry.name, to_entry.name)
-                from_idx = from_names.index(from_entry.name)
+            for from_idx in from_set.intersection(to_entry):
+
+                proportion = from_set.get_proportion(from_idx, to_entry)
+
+                self.logger.debug("%i percent of %s is in %s",
+                                  proportion * 100,
+                                  to_entry.name, from_set.data[from_idx].name)
+                from_idx = from_names.index(from_set.data[from_idx].name)
 
                 coefficients[from_idx, to_idx] = proportion
         return coefficients
@@ -256,7 +245,6 @@ class ResolutionSet(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    @staticmethod
     @abstractmethod
     def get_proportion(entry_a, entry_b):
         """Calculate the proportion of `entry_a` and `entry_b`
@@ -278,4 +266,21 @@ class ResolutionSet(metaclass=ABCMeta):
     @property
     @abstractmethod
     def coverage(self):
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def get_bounds(entry):
+        """Implement this helper method to return bounds from an entry in the register
+
+        Arguments
+        ---------
+        entry
+            An entry from a ResolutionSet
+
+        Returns
+        -------
+        bounds
+            The bounds of the entry
+        """
         raise NotImplementedError
