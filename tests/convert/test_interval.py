@@ -171,7 +171,7 @@ class TestIntervalSet:
         assert actual == expected
 
 
-class TestIntervalRegister:
+class TestIntervalRegister():
 
     def test_interval_loads(self):
         """Pass a time-interval definition into the register
@@ -238,16 +238,19 @@ class TestIntervalRegister:
 
         assert actual == intervals
 
-    def test_conversion_with_different_converage_fails(self, one_year, one_day):
+    def test_conversion_with_different_coverage_fails(self, one_year, one_day, caplog):
 
         register = TimeIntervalRegister()
         register.register(IntervalSet("one_year", one_year))
         register.register(IntervalSet("one_day", one_day))
 
         data = np.array([[1]])
+        register.convert(data, 'one_year', 'one_day')
 
-        with raises(NotImplementedError):
-            register.convert(data, 'one_year', 'one_day')
+        expected = "Coverage for 'one_year' is 8760 and does not match " \
+                   "coverage for 'one_day' which is 24"
+
+        assert expected in caplog.text
 
 
 class TestTimeRegisterCoefficients:

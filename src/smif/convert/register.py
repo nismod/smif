@@ -12,7 +12,15 @@ from collections import OrderedDict, defaultdict
 import numpy as np
 
 
-class Register(metaclass=ABCMeta):
+class LogMixin(object):
+
+    @property
+    def logger(self):
+        name = '.'.join([__name__, self.__class__.__name__])
+        return logging.getLogger(name)
+
+
+class Register(LogMixin, metaclass=ABCMeta):
     """Abstract class which holds the ResolutionSets
 
     Arguments
@@ -22,7 +30,6 @@ class Register(metaclass=ABCMeta):
 
     """
     def __init__(self, axis=None):
-        self.logger = logging.getLogger(__name__)
         self.axis = axis
 
     @property
@@ -89,9 +96,6 @@ class NDimensionalRegister(Register):
     def register(self, resolution_set):
         """Add a ResolutionSet to the register
 
-        Detects duplicate references to the same annual-hours by performing a
-        convolution of the two one-dimensional arrays of time-intervals.
-
         Parameters
         ----------
         resolution_set : smif.convert.ResolutionSet
@@ -104,6 +108,10 @@ class NDimensionalRegister(Register):
         if resolution_set.name in self._register:
             msg = "A ResolutionSet named {} has already been loaded"
             raise ValueError(msg.format(resolution_set.name))
+
+        self.logger.info("Registering '%s' with %i items",
+                         resolution_set.name,
+                         len(resolution_set))
 
         self._register[resolution_set.name] = resolution_set
 
@@ -172,10 +180,11 @@ class NDimensionalRegister(Register):
             coefficients = self._obtain_coefficients(from_set, to_set)
 
         elif from_set.coverage != to_set.coverage:
-            # Perform remapping
-            msg = "Cannot perform conversions where coverage is not " \
-                  "equal for resolution sets"
-            raise NotImplementedError(msg)
+            log_msg = "Coverage for '%s' is %d and does not match coverage " \
+                      "for '%s' which is %d"
+            self.logger.warning(log_msg, from_set.name, from_set.coverage,
+                                to_set.name, to_set.coverage)
+            coefficients = self._obtain_coefficients(from_set, to_set)
 
         else:
             msg = "An unidentified error occured"
