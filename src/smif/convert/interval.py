@@ -348,6 +348,26 @@ class Interval(object):
             array[lower:upper] += 1
         return array
 
+    @property
+    def check_year_end(self):
+        """Identifies the condition where interval overlaps the end of a year
+        """
+        bounds = self.bounds
+        found_start = False
+        found_end = False
+        only_two = False
+
+        if bounds == 2:
+            only_two = True
+
+        for bound in bounds:
+            if bound[0] == 0:
+                found_start = True
+            if bound[1] == 8760:
+                found_end = True
+
+        return found_end and found_start and only_two
+
 
 class IntervalSet(ResolutionSet):
     """A collection of intervals
@@ -402,7 +422,7 @@ class IntervalSet(ResolutionSet):
         """
         from_interval = self.data[from_index]
 
-        if self.check_year_end(from_interval) or self.check_year_end(to_interval):
+        if from_interval.check_year_end or to_interval.check_year_end:
             # Source Interval contains a year split
             proportion = self._compute_proportion(from_interval, to_interval)
 
@@ -476,43 +496,6 @@ class IntervalSet(ResolutionSet):
             elements.extend(intersect)
 
         return elements
-
-    def check(self, bounds):
-
-        if len(bounds) == 2 and self.check_year_end(bounds):
-            # Special case where interval crosses year boundary
-            pass
-
-        elif len(bounds) > 1 and self.check_interval_bounds_equal(bounds):
-            # Resampling/remapping is required
-            pass
-
-        elif len(bounds) > 1 and not self.check_interval_bounds_equal(bounds):
-            msg = "Cannot resample intervals of different lengths"
-            raise NotImplementedError(msg)
-
-        else:
-            pass
-
-    @staticmethod
-    def check_year_end(interval):
-        """Identifies the condition where an interval overlaps the end of a year
-        """
-        bounds = interval.bounds
-        found_start = False
-        found_end = False
-        only_two = False
-
-        if interval.bounds == 2:
-            only_two = True
-
-        for bound in bounds:
-            if bound[0] == 0:
-                found_start = True
-            if bound[1] == 8760:
-                found_end = True
-
-        return found_end and found_start and only_two
 
     @staticmethod
     def check_interval_bounds_equal(bounds):
