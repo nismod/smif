@@ -260,7 +260,7 @@ export function createSosModel(sosModelName){
         // make API request, returning a promise
         return fetch('/api/v1/sos_models/', {
             method: 'post',
-            body: JSON.stringify(sosModelName),
+            body: JSON.stringify({name: sosModelName}),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -387,7 +387,7 @@ export function createSectorModel(sectorModelName){
         // make API request, returning a promise
         return fetch('/api/v1/sector_models/', {
             method: 'post',
-            body: JSON.stringify(newSectorModel),
+            body: JSON.stringify({name: sectorModelName}),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -514,7 +514,7 @@ export function createScenarioSet(scenarioSetName){
         // make API request, returning a promise
         return fetch('/api/v1/scenario_sets/', {
             method: 'post',
-            body: JSON.stringify(newScenarioSet),
+            body: JSON.stringify({name: scenarioSetName}),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -637,20 +637,10 @@ export function createScenario(scenarioName){
     console.log(scenarioName)
     return function (dispatch) {
 
-        // prepare the new modelrun
-        let datetime = new Date()
-
-        let newScenario = {
-            'name': scenarioName,
-            'description': '',
-            'scenario_set': '',
-            'parameters': []
-        }
-
         // make API request, returning a promise
         return fetch('/api/v1/scenarios/', {
             method: 'post',
-            body: JSON.stringify(newScenario),
+            body: JSON.stringify({name: scenarioName}),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -777,7 +767,7 @@ export function createNarrativeSet(narrativeSetName){
         // make API request, returning a promise
         return fetch('/api/v1/narrative_sets/', {
             method: 'post',
-            body: JSON.stringify(newNarrativeSet),
+            body: JSON.stringify({name: narrativeSetName}),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -900,7 +890,7 @@ export function createNarrative(narrativeName){
         // make API request, returning a promise
         return fetch('/api/v1/narratives/', {
             method: 'post',
-            body: JSON.stringify(newNarrative),
+            body: JSON.stringify({name: narrativeName}),
 
             headers: {
                 'Content-Type': 'application/json'
