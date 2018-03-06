@@ -171,19 +171,15 @@ class NDimensionalRegister(Register):
             self.logger.info(msg, source, destination)
             coefficients = self._obtain_coefficients(from_set, to_set)
 
-        elif from_set.coverage < to_set.coverage:
+        elif from_set.coverage != to_set.coverage:
             # Perform remapping
-            msg = "Remapping is not yet implemented"
-            raise NotImplementedError(msg)
-
-        elif from_set.coverage > to_set.coverage:
-            # Perform resampling
-            msg = "Resampling is not yet implemented"
-            raise NotImplementedError(msg)
-        else:
             msg = "Cannot perform conversions where coverage is not " \
                   "equal for resolution sets"
             raise NotImplementedError(msg)
+
+        else:
+            msg = "An unidentified error occured"
+            raise RuntimeError(msg)
 
         return coefficients
 
