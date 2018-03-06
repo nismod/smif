@@ -209,6 +209,16 @@ class ProjectOverview extends Component {
                             })
                         }
                     })
+
+                    sos_model.dependencies.forEach(function(dependency) {
+                        if (dependency.source_model == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model.name,
+                                link: '/configure/sos-models/',
+                                type: 'SosModel'
+                            })
+                        }
+                    })
                 })
                 break
 
