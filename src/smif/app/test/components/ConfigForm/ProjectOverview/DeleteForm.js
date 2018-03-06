@@ -3,7 +3,7 @@ import sinon from 'sinon'
 import { expect } from 'chai'
 import { mount, shallow } from 'enzyme'
 
-import DeleteForm from '../../../../src/components/ConfigForm/ProjectOverview/DeleteForm.js'
+import DeleteForm from '../../../../src/components/ConfigForm/General/DeleteForm.js'
 
 describe('<DeleteForm />', () => {
 
