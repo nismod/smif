@@ -92,10 +92,43 @@ class SectorModelConfigForm extends Component {
     }
 
     openDeletePopup(event) {
+
+        let target_in_use_by = []
+
+        switch(event.target.name) {
+            case 'inputs' || 'parameters':
+                this.props.sosModels.forEach(function(sos_model) {   
+                    sos_model.dependencies.forEach(function(dependency) {
+                        if (dependency.sink_model_input == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model.name,
+                                link: '/configure/sos-models/',
+                                type: 'SosModel'
+                            })
+                        }
+                    })
+                })
+                break
+            case 'outputs':
+                this.props.sosModels.forEach(function(sos_model) {   
+                    sos_model.dependencies.forEach(function(dependency) {
+                        if (dependency.source_model_output == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model.name,
+                                link: '/configure/sos-models/',
+                                type: 'SosModel'
+                            })
+                        }
+                    })
+                })
+                break
+        }
+
         this.setState({
             deletePopupIsOpen: true,
             deletePopupConfigName: event.target.value,
             deletePopupType: event.target.name,
+            deletePopupInUseBy: target_in_use_by
         })
     }
 
@@ -187,7 +220,7 @@ class SectorModelConfigForm extends Component {
                 </form>
 
                 <Popup onRequestOpen={this.state.deletePopupIsOpen}>
-                    <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
+                    <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
                 </Popup>
 
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
@@ -200,6 +233,7 @@ class SectorModelConfigForm extends Component {
 }
 
 SectorModelConfigForm.propTypes = {
+    sosModels: PropTypes.array.isRequired,
     sectorModel: PropTypes.object.isRequired,
     saveSectorModel: PropTypes.func,
     cancelSectorModel: PropTypes.func
