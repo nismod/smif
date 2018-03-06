@@ -58,6 +58,8 @@ class SosModelRunConfigForm extends Component {
         const { scenarios } = this.state.selectedSosModelRun
 
         scenarios[scenario_set] = scenario
+
+        this.forceUpdate()
     }
 
     handleNarrativeChange(narrative_set, narrative, active) {

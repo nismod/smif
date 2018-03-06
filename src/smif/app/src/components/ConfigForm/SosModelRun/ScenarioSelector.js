@@ -97,7 +97,11 @@ class ScenarioSelector extends Component {
         const target = event.target
         const {onChange} = this.props
 
-        onChange(target.name, target.value)
+        if (this.props.sosModelRun.scenarios[target.name] == target.value) {
+            onChange(target.name, "")
+        } else {
+            onChange(target.name, target.value)
+        }
     }
 
     renderScenarioSelector(selectedScenarios) {
@@ -114,7 +118,7 @@ class ScenarioSelector extends Component {
                                         selectedScenarios[scenarioSet].map((scenario) => (
                                             <div className="form-check" key={scenario.name}>
                                                 <label className="form-check-label">
-                                                    <input id={'radio_' + scenarioSet + '_' + scenario.name} className="form-check-input" type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} defaultChecked={scenario.active} onClick={this.handleChange}/>
+                                                    <input id={'radio_' + scenarioSet + '_' + scenario.name} className="form-check-input" type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} checked={scenario.active} onClick={this.handleChange}/>
                                                     {scenario.name}
                                                 </label>
                                             </div>
