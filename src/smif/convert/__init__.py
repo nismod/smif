@@ -97,9 +97,8 @@ class SpaceTimeUnitConvertor(object):
                                              from_spatial,
                                              to_spatial)
 
-        elif from_unit != to_unit:
-            converted = self.units.convert(converted,
-                                           from_unit,
-                                           to_unit)
+        converted = self.units.convert(converted,
+                                       from_unit,
+                                       to_unit)
 
         return converted

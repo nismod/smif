@@ -308,19 +308,28 @@ class TestRegionRegister():
         expected = 2.0
         assert actual == expected
 
-    def test_convert_to_half_not_covered(self):
+    def test_convert_to_half_not_covered(self, caplog):
         rreg = get_register()
 
         data = np.array([3])
-        with raises(NotImplementedError):
-            rreg.convert(data, 'rect', 'single_half_square')
 
-    def test_convert_from_half_not_covered(self):
+        rreg.convert(data, 'rect', 'single_half_square')
+
+        expected = "Coverage for 'rect' is 2 and does not match " \
+                   "coverage for 'single_half_square' which is 1"
+
+        assert expected in caplog.text
+
+    def test_convert_from_half_not_covered(self, caplog):
         rreg = get_register()
 
         data = np.array([3])
-        with raises(NotImplementedError):
-            rreg.convert(data, 'single_half_square', 'rect')
+        rreg.convert(data, 'single_half_square', 'rect')
+
+        expected = "Coverage for 'single_half_square' is 1 and does not " \
+                   "match coverage for 'rect' which is 2"
+
+        assert expected in caplog.text
 
     def test_convert_square_to_triangle(self):
         rreg = get_register()

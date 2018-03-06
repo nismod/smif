@@ -6,6 +6,7 @@ from logging import getLogger
 import numpy as np
 import pyarrow as pa
 
+
 class DataInterface(metaclass=ABCMeta):
     """Abstract base class to define common data interface
     """
@@ -262,7 +263,7 @@ class DataInterface(metaclass=ABCMeta):
     def _validate_observations(observations, region_names, interval_names):
         if len(observations) != len(region_names) * len(interval_names):
             raise DataMismatchError(
-                "Number of observations is not equal to intervals x regions when loading %s"
+                "Number of observations is not equal to intervals x regions"
             )
         DataInterface._validate_observation_keys(observations)
         DataInterface._validate_observation_meta(observations, region_names, 'region')
