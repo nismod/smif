@@ -140,19 +140,18 @@ def regions_half_triangles():
 def test_proportion(regions):
     """Sense-check proportion calculator
     """
-    rreg = RegionRegister()
     region_set = RegionSet('regions', regions)
 
-    assert rreg.get_proportion(region_set[0],
-                               region_set[0]) == 1
+    assert region_set.get_proportion(0,
+                                     region_set[0]) == 1
 
-    assert rreg.get_proportion(region_set[0], region_set[1]) == 0.5
-    assert rreg.get_proportion(region_set[1], region_set[0]) == 1
+    assert region_set.get_proportion(0, region_set[1]) == 0.5
+    assert region_set.get_proportion(1, region_set[0]) == 1
 
-    assert rreg.get_proportion(region_set[0], region_set[2]) == 1
-    assert rreg.get_proportion(region_set[2], region_set[0]) == 0.5
-    assert rreg.get_proportion(region_set[1], region_set[2]) == 1
-    assert rreg.get_proportion(region_set[2], region_set[1]) == 0.25
+    assert region_set.get_proportion(0, region_set[2]) == 1
+    assert region_set.get_proportion(2, region_set[0]) == 0.5
+    assert region_set.get_proportion(1, region_set[2]) == 1
+    assert region_set.get_proportion(2, region_set[1]) == 0.25
 
 
 class TestRegionSet():

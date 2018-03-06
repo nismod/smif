@@ -79,41 +79,20 @@ def season_to_month_coefficients():
 @fixture(scope='function')
 def months():
     data = [
-        {'id': '1_0', 'start': 'P0M', 'end': 'P1M'},
-        {'id': '1_1', 'start': 'P1M', 'end': 'P2M'},
-        {'id': '1_2', 'start': 'P2M', 'end': 'P3M'},
-        {'id': '1_3', 'start': 'P3M', 'end': 'P4M'},
-        {'id': '1_4', 'start': 'P4M', 'end': 'P5M'},
-        {'id': '1_5', 'start': 'P5M', 'end': 'P6M'},
-        {'id': '1_6', 'start': 'P6M', 'end': 'P7M'},
-        {'id': '1_7', 'start': 'P7M', 'end': 'P8M'},
-        {'id': '1_8', 'start': 'P8M', 'end': 'P9M'},
-        {'id': '1_9', 'start': 'P9M', 'end': 'P10M'},
-        {'id': '1_10', 'start': 'P10M', 'end': 'P11M'},
-        {'id': '1_11', 'start': 'P11M', 'end': 'P12M'}
+        {'id': 'jan', 'start': 'P0M', 'end': 'P1M'},
+        {'id': 'feb', 'start': 'P1M', 'end': 'P2M'},
+        {'id': 'mar', 'start': 'P2M', 'end': 'P3M'},
+        {'id': 'apr', 'start': 'P3M', 'end': 'P4M'},
+        {'id': 'may', 'start': 'P4M', 'end': 'P5M'},
+        {'id': 'jun', 'start': 'P5M', 'end': 'P6M'},
+        {'id': 'jul', 'start': 'P6M', 'end': 'P7M'},
+        {'id': 'aug', 'start': 'P7M', 'end': 'P8M'},
+        {'id': 'sep', 'start': 'P8M', 'end': 'P9M'},
+        {'id': 'oct', 'start': 'P9M', 'end': 'P10M'},
+        {'id': 'nov', 'start': 'P10M', 'end': 'P11M'},
+        {'id': 'dec', 'start': 'P11M', 'end': 'P12M'}
     ]
 
-    return data
-
-
-@fixture(scope='function')
-def monthly_data():
-    """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    """
-    data = np.array([[
-        31,
-        28,
-        31,
-        30,
-        31,
-        30,
-        31,
-        31,
-        30,
-        31,
-        30,
-        31,
-    ]])
     return data
 
 
@@ -132,49 +111,18 @@ def remap_months():
     data will be averaged and aggregated.
 
     """
-    data = [{'id': '1', 'start': 'P0M', 'end': 'P1M'},
-            {'id': '1', 'start': 'P1M', 'end': 'P2M'},
-            {'id': '2', 'start': 'P2M', 'end': 'P3M'},
-            {'id': '2', 'start': 'P3M', 'end': 'P4M'},
-            {'id': '2', 'start': 'P4M', 'end': 'P5M'},
-            {'id': '3', 'start': 'P5M', 'end': 'P6M'},
-            {'id': '3', 'start': 'P6M', 'end': 'P7M'},
-            {'id': '3', 'start': 'P7M', 'end': 'P8M'},
-            {'id': '4', 'start': 'P8M', 'end': 'P9M'},
-            {'id': '4', 'start': 'P9M', 'end': 'P10M'},
-            {'id': '4', 'start': 'P10M', 'end': 'P11M'},
-            {'id': '1', 'start': 'P11M', 'end': 'P12M'}]
-    return data
-
-
-@fixture(scope='function')
-def remap_month_data():
-    data = np.array([[
-        31+31+28,  # Dec, Jan, Feb
-        31+30+31,  # Mar, Apr, May
-        30+31+31,  # Jun, Jul, Aug
-        30+31+30  # Sep, Oct, Nov
-    ]], dtype=float) / 3
-
-    return data
-
-
-@fixture(scope='function')
-def remap_month_data_as_months():
-    data = np.array([[
-        30.666666666,
-        29.666666666,
-        29.666666666,
-        29.666666666,
-        30.666666666,
-        30.666666666,
-        30.666666666,
-        30.666666666,
-        30.666666666,
-        30.666666666,
-        30.666666666,
-        30.666666666
-    ]])
+    data = [{'id': 'cold_month', 'start': 'P0M', 'end': 'P1M'},
+            {'id': 'cold_month', 'start': 'P1M', 'end': 'P2M'},
+            {'id': 'spring_month', 'start': 'P2M', 'end': 'P3M'},
+            {'id': 'spring_month', 'start': 'P3M', 'end': 'P4M'},
+            {'id': 'spring_month', 'start': 'P4M', 'end': 'P5M'},
+            {'id': 'hot_month', 'start': 'P5M', 'end': 'P6M'},
+            {'id': 'hot_month', 'start': 'P6M', 'end': 'P7M'},
+            {'id': 'hot_month', 'start': 'P7M', 'end': 'P8M'},
+            {'id': 'fall_month', 'start': 'P8M', 'end': 'P9M'},
+            {'id': 'fall_month', 'start': 'P9M', 'end': 'P10M'},
+            {'id': 'fall_month', 'start': 'P10M', 'end': 'P11M'},
+            {'id': 'cold_month', 'start': 'P11M', 'end': 'P12M'}]
     return data
 
 
@@ -187,16 +135,6 @@ def seasons():
             {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'},
             {'id': 'winter', 'start': 'P11M', 'end': 'P12M'}]
     return data
-
-
-@fixture(scope='function')
-def monthly_data_as_seasons():
-    return np.array([[
-        31 + 31 + 28,
-        31 + 30 + 31,
-        30 + 31 + 31,
-        30 + 31 + 30
-    ]], dtype=float)
 
 
 @fixture(scope='function')
@@ -233,4 +171,72 @@ def twenty_four_hours():
 @fixture(scope='function')
 def one_day():
     data = [{'id': 'one_day', 'start': 'P0D', 'end': 'P1D'}]
+    return data
+
+
+@fixture(scope='function')
+def one_year():
+    data = [{'id': 'one_year', 'start': 'P0Y', 'end': 'P1Y'}]
+    return data
+
+
+@fixture(scope='function')
+def monthly_data():
+    """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    """
+    data = np.array([[
+        31,
+        28,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ]])
+    return data
+
+
+@fixture(scope='function')
+def monthly_data_as_seasons():
+    return np.array([[
+        31+31+28,
+        31+30+31,
+        30+31+31,
+        30+31+30
+    ]], dtype=float)
+
+
+@fixture(scope='function')
+def remap_month_data():
+    data = np.array([[
+        31+31+28,  # Dec, Jan, Feb
+        31+30+31,  # Mar, Apr, May
+        30+31+31,  # Jun, Jul, Aug
+        30+31+30  # Sep, Oct, Nov
+    ]], dtype=float) / 3
+
+    return data
+
+
+@fixture(scope='function')
+def remap_month_data_as_months():
+    data = np.array([[
+        30.666666666,
+        29.666666666,
+        29.666666666,
+        29.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666,
+        30.666666666
+    ]])
     return data

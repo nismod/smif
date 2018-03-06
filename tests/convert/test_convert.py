@@ -153,14 +153,17 @@ class TestSpaceTimeUnitConvertor_TimeOnly:
         expected = np.array([[24]])  # area a, day 0
         assert np.allclose(actual, expected)
 
+
+class TestRemapConversion:
+
     def test_remap_timeslices_to_months(self):
         """One region, time remapping required
         """
         data = np.array([[
-            30+31+31,
-            28+31+30,
-            31+31+30,
-            30+31+31
+            1,  # winter month
+            1,  # spring month
+            1,  # summer month
+            1  # autumn month
         ]], dtype=float)
 
         convertor = SpaceTimeUnitConvertor()
@@ -173,20 +176,9 @@ class TestSpaceTimeUnitConvertor_TimeOnly:
             'm',
             'm'
         )
-        expected = np.array([
-            30.666666666,
-            29.666666666,
-            29.666666666,
-            29.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666,
-            30.666666666
-        ], dtype=float)
+        expected = np.array([[1.03333333, 0.93333333, 1.01086957, 0.97826087,
+                              1.01086957, 0.97826087, 1.01086957, 1.01086957,
+                              0.98901099, 1.02197802, 0.98901099, 1.03333333]])
         assert np.allclose(actual, expected)
 
     def test_remap_months_to_timeslices(self, monthly_data, remap_month_data):

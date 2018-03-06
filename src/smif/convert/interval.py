@@ -196,7 +196,7 @@ class Interval(object):
         self._validate()
 
     def _validate(self):
-        for lower, upper in self.to_hours():
+        for lower, upper in self.bounds:
             if lower > upper:
                 msg = "A time interval must not end before it starts - found %d > %d"
                 raise ValueError(msg, lower, upper)
@@ -277,7 +277,7 @@ class Interval(object):
 
     def __str__(self):
         string = "Interval '{}' maps to:\n".format(self.name)
-        for interval in self.to_hours():
+        for interval in self.bounds:
             start = interval[0]
             end = interval[1]
             suffix = "  hour {} to hour {}\n".format(start, end)
@@ -293,7 +293,8 @@ class Interval(object):
         else:
             return False
 
-    def to_hours(self):
+    @property
+    def bounds(self):
         """Return a list of tuples of the intervals in terms of hours
 
         Returns
@@ -337,10 +338,13 @@ class Interval(object):
     def to_hourly_array(self):
         """Converts a list of intervals to a boolean array of hours
 
+        Returns
+        -------
+        numpy.ndarray
+            A boolean array
         """
         array = np.zeros(8760, dtype=np.int)
-        list_of_tuples = self.to_hours()
-        for lower, upper in list_of_tuples:
+        for lower, upper in self.bounds:
             array[lower:upper] += 1
         return array
 
@@ -379,66 +383,56 @@ class IntervalSet(ResolutionSet):
         return array
 
     @staticmethod
-    def get_proportion(from_interval, to_interval):
-        """Find proportion of `from_interval` in `to_interval`
+    def get_bounds(entry):
+        return entry.bounds
+
+    def get_proportion(self, from_index, to_interval):
+        """Find proportion of interval address by `from_index` in `to_interval`
 
         Arguments
         ---------
-        from_interval : Interval
+        from_index : int
+            Index of source interval
         to_interval : Interval
-
+            The destination interval
         Returns
         -------
         float
 
-        Notes
-        -----
-        Find overlap
         """
-        from_hours = from_interval.to_hourly_array()
-        to_hours = to_interval.to_hourly_array()
-        a_and_b = np.logical_and(from_hours, to_hours)
-        proportion = np.sum(a_and_b) / np.sum(from_hours)
+        from_interval = self.data[from_index]
+
+        if self.check_year_end(from_interval) or self.check_year_end(to_interval):
+            # Source Interval contains a year split
+            proportion = self._compute_proportion(from_interval, to_interval)
+
+        elif len(from_interval.bounds) > 2:
+            # Resampling
+            proportion = self._compute_proportion(from_interval, to_interval)
+            proportion = proportion * len(from_interval.bounds)
+
+        elif len(to_interval.bounds) > 2:
+            # Remapping
+            proportion = self._compute_proportion(from_interval, to_interval)
+            proportion = proportion / len(to_interval.bounds)
+
+        else:
+            proportion = self._compute_proportion(from_interval, to_interval)
+
         return proportion
 
-    def intersection(self, bounds):
-        """Return the subset of intervals intersecting with the bounds
+    def _compute_proportion(self, from_interval, to_interval):
+        from_hours = from_interval.to_hourly_array()
+        to_hours = to_interval.to_hourly_array()
 
-        Argument
-        --------
-        bounds : list
-            List of start and end hours
+        # Find overlapping hours (intersection of two intervals)
+        a_and_b = np.logical_and(from_hours, to_hours)
+        # Find the proportion of from interval in the intersection of the
+        # intervals
+        intersection_duration = np.sum(a_and_b)
+        from_duration = np.sum(from_hours)
 
-        Returns
-        -------
-        list
-            A list of Intervals that intersect with bounds
-
-        Notes
-        -----
-        Look at the columns of the intersection array and identify
-        overlapping intervals
-        """
-        elements = []
-        for lower, upper in bounds:
-            bool_array = np.sum(self.bool_array[:, lower:upper], axis=1)
-            intersect = np.nonzero(bool_array)[0]
-            self.logger.debug(
-                'Interval %s intersects with %s',
-                bounds, intersect
-            )
-            elements.extend(intersect)
-        return [self.data[elem] for elem in set(elements)]
-
-    @property
-    def data(self):
-        """Returns the intervals as a list
-
-        Returns
-        -------
-        list
-        """
-        return self._data
+        return intersection_duration / from_duration
 
     @property
     def coverage(self):
@@ -452,6 +446,99 @@ class IntervalSet(ResolutionSet):
         coverage_value = np.sum(compact_array, axis=0)
         self.logger.debug("Coverage of %s is %s", self.name, coverage_value)
         return coverage_value
+
+    def intersection(self, to_entry):
+        """Return the destination intervals that intersect with `to_entry`
+
+        Argument
+        --------
+        to_entry : Interval
+
+        Returns
+        -------
+        list
+            A list of Intervals that intersect with bounds
+
+        Notes
+        -----
+        Look at the columns of the intersection array and identify
+        overlapping intervals
+        """
+        elements = []
+
+        for lower, upper in to_entry.bounds:
+            bool_array = np.sum(self.bool_array[:, lower:upper], axis=1)
+            intersect = np.nonzero(bool_array)[0]
+            self.logger.debug(
+                "Interval '%s' intersects with '%s'",
+                to_entry.name, ",".join([self.data[x].name for x in intersect])
+            )
+            elements.extend(intersect)
+
+        return elements
+
+    def check(self, bounds):
+
+        if len(bounds) == 2 and self.check_year_end(bounds):
+            # Special case where interval crosses year boundary
+            pass
+
+        elif len(bounds) > 1 and self.check_interval_bounds_equal(bounds):
+            # Resampling/remapping is required
+            pass
+
+        elif len(bounds) > 1 and not self.check_interval_bounds_equal(bounds):
+            msg = "Cannot resample intervals of different lengths"
+            raise NotImplementedError(msg)
+
+        else:
+            pass
+
+    @staticmethod
+    def check_year_end(interval):
+        """Identifies the condition where an interval overlaps the end of a year
+        """
+        bounds = interval.bounds
+        found_start = False
+        found_end = False
+        only_two = False
+
+        if interval.bounds == 2:
+            only_two = True
+
+        for bound in bounds:
+            if bound[0] == 0:
+                found_start = True
+            if bound[1] == 8760:
+                found_end = True
+
+        return found_end and found_start and only_two
+
+    @staticmethod
+    def check_interval_bounds_equal(bounds):
+        """Checks that each interval in the list of bounds is equal
+
+        Arguments
+        ---------
+        bounds : list
+            A list of tuples containing the start and end hours of an interval
+
+        Returns
+        -------
+        bool
+            True if all intervals in list of bounds are equal in length
+        """
+        return len(set([x[1] - x[0] for x in bounds])) <= 1
+
+    @property
+    def data(self):
+        """Returns the intervals as a list
+
+        Returns
+        -------
+        list
+        """
+        return self._data
 
     @data.setter
     def data(self, interval_data):
@@ -509,9 +596,6 @@ class TimeIntervalRegister(NDimensionalRegister):
     """
     def __init__(self):
         super().__init__(axis=1)
-
-    def get_bounds(self, entry):
-        return entry.to_hours()
 
 
 __REGISTER = TimeIntervalRegister()
