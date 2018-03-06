@@ -100,10 +100,12 @@ class ProjectOverview extends Component {
                     'name': config.name,
                     'description': config.description,
                     'sector_models': [],
+                    'narrative_sets': [],
+                    'scenario_sets': [],
                     'dependencies': [],
                     'max_iterations': 1,
-                    'convergence_absolute_tolerance': 1e-05,
-                    'convergence_relative_tolerance': 1e-05
+                    'convergence_absolute_tolerance': "1e-05",
+                    'convergence_relative_tolerance': "1e-05"
                 }
             ))
             dispatch(fetchSosModels())
@@ -160,15 +162,93 @@ class ProjectOverview extends Component {
     }
 
     closeCreatePopup() {
-        console.log('close popup')
         this.setState({createPopupIsOpen: false})
     }
 
     openDeletePopup(event) {
+        
+        let target_in_use_by = []
+
+        switch(event.target.name) {
+            case 'SosModel':
+                this.props.sos_model_runs.forEach(function(sos_model_run) {   
+                    if (sos_model_run.sos_model == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model_run.name,
+                            link: '/configure/sos-model-run/',
+                            type: 'SosModelRun'
+                        })
+                    }                    
+                })
+                break
+
+            case 'SectorModel':
+                this.props.sos_models.forEach(function(sos_model) {   
+                    
+                    sos_model.sector_models.forEach(function(sector_model) {
+                        if (sector_model == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model.name,
+                                link: '/configure/sos-models/',
+                                type: 'SosModel'
+                            })
+                        }
+                    })
+                })
+                break
+
+            case 'ScenarioSet':
+                this.props.sos_models.forEach(function(sos_model) {   
+                        
+                    sos_model.scenario_sets.forEach(function(scenario_set) {
+                        if (scenario_set == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model.name,
+                                link: '/configure/sos-models/',
+                                type: 'SosModel'
+                            })
+                        }
+                    })
+                })
+                break
+
+            case 'NarrativeSet':
+                this.props.sos_models.forEach(function(sos_model) {   
+                        
+                    sos_model.narrative_sets.forEach(function(narrative_set) {
+                        if (narrative_set == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model.name,
+                                link: '/configure/sos-models/',
+                                type: 'SosModel'
+                            })
+                        }
+                    })
+                })
+                break
+
+            case 'Narrative':
+                this.props.sos_model_runs.forEach(function(sos_model_run) {   
+                    Object.keys(sos_model_run.narratives).forEach(function(narrative_sets) {
+                        sos_model_run.narratives[narrative_sets].forEach(function(narrative) {
+                            if (narrative == event.target.value) {
+                                target_in_use_by.push({
+                                    name: sos_model_run.name,
+                                    link: '/configure/sos-model-run/',
+                                    type: 'SosModelRun'
+                                })
+                            }                    
+                        })
+                    })
+                })
+                break
+        }
+
         this.setState({
             deletePopupIsOpen: true,
             deletePopupConfigName: event.target.value,
-            deletePopupType: event.target.name
+            deletePopupType: event.target.name,
+            deletePopupInUseBy: target_in_use_by
         })
     }
 
@@ -346,7 +426,7 @@ class ProjectOverview extends Component {
 
                     {/* Popup for Delete */}
                     <Popup onRequestOpen={this.state.deletePopupIsOpen}>
-                        <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
+                        <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
                     </Popup>
                 </div>
             </div>
