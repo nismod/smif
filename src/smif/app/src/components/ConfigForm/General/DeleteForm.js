@@ -55,7 +55,7 @@ class DeleteForm extends Component {
 
         if (this.state.redirect) {
             return <Redirect push to={this.state.redirect_to}/>
-        } else if (in_use_by.length == 0) {
+        } else if (in_use_by == undefined || in_use_by.length == 0) {
             return (
                 <div>
                     <div className="card">

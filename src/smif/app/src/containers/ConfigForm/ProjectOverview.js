@@ -28,7 +28,7 @@ class ProjectOverview extends Component {
 
         this.closeCreatePopup = this.closeCreatePopup.bind(this)
         this.openCreatePopup = this.openCreatePopup.bind(this)
-        this.createPopupSubmit = this.createPopupSubmit.bind(this)
+        this.handleDelete = this.handleDelete.bind(this)
 
         this.closeDeletePopup = this.closeDeletePopup.bind(this)
         this.openDeletePopup = this.openDeletePopup.bind(this)
@@ -69,7 +69,7 @@ class ProjectOverview extends Component {
         })
     }
 
-    createPopupSubmit(config) {
+    handleDelete(config) {
 
         const {createPopupType} = this.state
         const { dispatch } = this.props
@@ -431,7 +431,7 @@ class ProjectOverview extends Component {
 
                     {/* Popup for Create */}
                     <Popup onRequestOpen={this.state.createPopupIsOpen}>
-                        <CreateConfigForm config_type={this.state.createPopupType} existing_names={used_identifiers} submit={this.createPopupSubmit} cancel={this.closeCreatePopup}/>
+                        <CreateConfigForm config_type={this.state.createPopupType} existing_names={used_identifiers} submit={this.handleDelete} cancel={this.closeCreatePopup}/>
                     </Popup>
 
                     {/* Popup for Delete */}
