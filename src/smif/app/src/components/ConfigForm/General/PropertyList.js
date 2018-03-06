@@ -10,33 +10,35 @@ class PropertyList extends Component {
     constructor(props) {
         super(props)
 
-        this.handleChange = this.handleChange.bind(this)
+        this.onEditHandler = this.onEditHandler.bind(this)
+        this.onDeleteHandler = this.onDeleteHandler.bind(this)
 
     }
 
-    handleChange(event) {
+    onEditHandler(event) {
+        const {onEdit} = this.props
+        
+        const target = event.currentTarget
+        const name = target.name
 
-        const {itemsName, items, onEdit, onDelete} = this.props
+        onEdit(target.value)
+    }
+
+    onDeleteHandler(event) {
+        const {onDelete} = this.props
 
         const target = event.currentTarget
-        const value = target.type === 'checkbox' ? target.checked : target.value
-        const targetname = target.name
+        const name = target.name
 
-        if (targetname == 'edit') {
-            onEdit(value)
-        }
-        else if (targetname == 'delete') {
-            items.splice(value, 1)
-            onDelete(
-                {
-                    target: {
-                        name: itemsName,
-                        value: items,
-                        type: 'array'
-                    }
+        onDelete(
+            {
+                target: {
+                    name: target.value,
+                    value: name,
+                    type: 'action'
                 }
-            )
-        }
+            }
+        )
     }
 
     getColumnSize(columns, editButton, deleteButton, enableWarnings) {
@@ -79,7 +81,7 @@ class PropertyList extends Component {
         if (active) {
             return (
                 <td width='8%' >
-                    <button type="button" className="btn btn-outline-dark" key={itemNumber} value={itemNumber} name='edit' onClick={this.handleChange}>
+                    <button type="button" className="btn btn-outline-dark" key={itemNumber} value={itemNumber} name='edit' onClick={this.onEditHandler}>
                         <FaPencil/>
                     </button>
                 </td>
@@ -88,11 +90,11 @@ class PropertyList extends Component {
         return
     }
 
-    getDeleteButton(active, itemNumber) {
+    getDeleteButton(active, itemname, configname) {
         if (active) {
             return (
                 <td width='8%'>
-                    <button type="button" className="btn btn-outline-dark" key={itemNumber} value={itemNumber} name='delete' onClick={this.handleChange}>
+                    <button type="button" className="btn btn-outline-dark" key={itemname} value={itemname} name={configname} onClick={this.onDeleteHandler}>
                         <FaTrash/>
                     </button>
                 </td>
@@ -136,11 +138,10 @@ class PropertyList extends Component {
                                             <td width={this.getColumnSize(columns, editButton, deleteButton, enableWarnings)} key={k}>
                                                 {items[item][column]}
                                             </td>
-
                                         ))
                                     }
-                                    {this.getEditButton(editButton, item)}
-                                    {this.getDeleteButton(deleteButton, item)}
+                                    {this.getEditButton(editButton, items[item].name)}
+                                    {this.getDeleteButton(deleteButton, name, items[item].name)}
                                 </tr>
                             ))
 
