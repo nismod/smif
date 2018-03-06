@@ -21,7 +21,7 @@ env:
 
 install: source $TRAVIS_BUILD_DIR/ci/install.sh
 script:
-  - cd $TRAVIS_BUILD_DIR && python setup.py test
+  - cd $TRAVIS_BUILD_DIR && pytest --cov-report html --cov=smif tests/
   - cd $TRAVIS_BUILD_DIR/src/smif/app && npm test
 after_success: $TRAVIS_BUILD_DIR/ci/coverage.sh
 
