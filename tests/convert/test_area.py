@@ -294,21 +294,33 @@ class TestRegionRegister():
         expected = np.array([5])
         np.testing.assert_equal(converted, expected)
 
+    def test_coverage_half(self):
+        rreg = get_register()
+        half_covered = rreg.get_entry('single_half_square')
+        actual = half_covered.coverage
+        expected = 1.0
+        assert actual == expected
+
+    def test_coverage_whole(self):
+        rreg = get_register()
+        rect = rreg.get_entry('rect')
+        actual = rect.coverage
+        expected = 2.0
+        assert actual == expected
+
     def test_convert_to_half_not_covered(self):
         rreg = get_register()
 
         data = np.array([3])
-        converted = rreg.convert(data, 'rect', 'single_half_square')
-        expected = np.array([1.5])
-        np.testing.assert_equal(converted, expected)
+        with raises(NotImplementedError):
+            rreg.convert(data, 'rect', 'single_half_square')
 
     def test_convert_from_half_not_covered(self):
         rreg = get_register()
 
         data = np.array([3])
-        converted = rreg.convert(data, 'single_half_square', 'rect')
-        expected = np.array([3])
-        np.testing.assert_equal(converted, expected)
+        with raises(NotImplementedError):
+            rreg.convert(data, 'single_half_square', 'rect')
 
     def test_convert_square_to_triangle(self):
         rreg = get_register()
