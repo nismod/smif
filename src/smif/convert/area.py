@@ -118,7 +118,7 @@ class RegionSet(ResolutionSet):
 
     @property
     def coverage(self):
-        return 1
+        return sum([x.shape.area for x in self.data])
 
     def __getitem__(self, key):
         return self._regions[key]
