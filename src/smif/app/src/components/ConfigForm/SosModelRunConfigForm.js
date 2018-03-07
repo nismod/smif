@@ -57,7 +57,11 @@ class SosModelRunConfigForm extends Component {
      */
         const { scenarios } = this.state.selectedSosModelRun
 
-        scenarios[scenario_set] = scenario
+        if (scenario == "") {
+            delete scenarios[scenario_set]
+        } else {
+            scenarios[scenario_set] = scenario
+        }
 
         this.forceUpdate()
     }
