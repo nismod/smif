@@ -25,11 +25,14 @@ class DatafileInterface(DataInterface):
         The path to the configuration and data files
     storage_format: str
         The format used to store intermediate data (local_csv, local_binary)
+    timestamp: str
+        The ISO-8601 timestamp that identifies the modelrun (%y%m%dT%H%M%S)
     """
-    def __init__(self, base_folder, storage_format='local_binary'):
+    def __init__(self, base_folder, storage_format='local_binary', timestamp='yyyy_mm_dd_hhmm'):
         super().__init__()
 
         self.base_folder = base_folder
+        self.timestamp = timestamp
         self.storage_format = storage_format
 
         self.file_dir = {}
@@ -1098,7 +1101,7 @@ class DatafileInterface(DataInterface):
             raise NotImplementedError
 
         results_path = self._get_results_path(
-            modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
+            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution, temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
 
         if self.storage_format == 'local_csv':
@@ -1130,7 +1133,7 @@ class DatafileInterface(DataInterface):
             raise NotImplementedError
 
         results_path = self._get_results_path(
-            modelrun_id, model_name, output_name, spatial_resolution, temporal_resolution,
+            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution, temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
@@ -1152,7 +1155,7 @@ class DatafileInterface(DataInterface):
                 "region x interval data"
             )
 
-    def _get_results_path(self, modelrun_id, model_name, output_name, spatial_resolution,
+    def _get_results_path(self, modelrun_id, timestamp, model_name, output_name, spatial_resolution,
                           temporal_resolution, timestep, modelset_iteration=None,
                           decision_iteration=None):
         """Return path to filename for a given output without file extension
@@ -1160,6 +1163,7 @@ class DatafileInterface(DataInterface):
         On the pattern of:
             results/
             <modelrun_name>/
+            <timestamp>/
             <model_name>/
             decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/ or none
                 output_<output_name>_
@@ -1171,6 +1175,7 @@ class DatafileInterface(DataInterface):
         ----------
         modelrun_id : str
         model_name : str
+        timestamp : str
         output_name : str
         spatial_resolution : str
         temporal_resolution : str
@@ -1187,6 +1192,7 @@ class DatafileInterface(DataInterface):
             path = os.path.join(
                 results_dir,
                 modelrun_id,
+                timestamp,
                 model_name,
                 "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                     output_name,
@@ -1199,6 +1205,7 @@ class DatafileInterface(DataInterface):
             path = os.path.join(
                 results_dir,
                 modelrun_id,
+                timestamp,
                 model_name,
                 "decision_{}".format(decision_iteration),
                 "output_{}_timestep_{}_regions_{}_intervals_{}".format(
@@ -1212,6 +1219,7 @@ class DatafileInterface(DataInterface):
             path = os.path.join(
                 results_dir,
                 modelrun_id,
+                timestamp,
                 model_name,
                 "modelset_{}".format(modelset_iteration),
                 "output_{}_timestep_{}_regions_{}_intervals_{}".format(
@@ -1225,6 +1233,7 @@ class DatafileInterface(DataInterface):
             path = os.path.join(
                 results_dir,
                 modelrun_id,
+                timestamp,
                 model_name,
                 "decision_{}_modelset_{}".format(decision_iteration, modelset_iteration),
                 "output_{}_timestep_{}_regions_{}_intervals_{}".format(

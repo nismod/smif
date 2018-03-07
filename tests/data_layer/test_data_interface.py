@@ -999,11 +999,13 @@ class TestDatafileInterface():
         expected = np.array([[[1.0]]])
         csv_contents = "region,interval,value\noxford,1,1.0\n"
         binary_contents = get_handler_binary.ndarray_to_buffer(expected)
+        timestamp = '20180307T144423'  # same timestamp as get_handler
         
         path = os.path.join(
             str(setup_folder_structure),
             "results",
             modelrun,
+            timestamp,
             model,
             "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                 output,
@@ -1036,6 +1038,7 @@ class TestDatafileInterface():
             str(setup_folder_structure),
             "results",
             modelrun,
+            timestamp,
             model,
             "decision_{}".format(decision_iteration),
             "output_{}_timestep_{}_regions_{}_intervals_{}".format(
@@ -1070,6 +1073,7 @@ class TestDatafileInterface():
             str(setup_folder_structure),
             "results",
             modelrun,
+            timestamp,
             model,
             "modelset_{}".format(modelset_iteration),
             "output_{}_timestep_{}_regions_{}_intervals_{}".format(
@@ -1101,6 +1105,7 @@ class TestDatafileInterface():
             str(setup_folder_structure),
             "results",
             modelrun,
+            timestamp,
             model,
             "decision_{}_modelset_{}".format(
                 modelset_iteration,
