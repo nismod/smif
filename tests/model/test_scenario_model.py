@@ -42,7 +42,7 @@ class TestScenarioObject:
         }
         assert actual == expected
 
-    def test_serialise_scenario_two_outputs(self):
+    def test_serialise_scenario_two_outputs(self, setup_folder_structure):
         scenario_model = ScenarioModel('High Population (ONS)')
         scenario_model.add_output('population_count',
                                   scenario_model.regions.get_entry('LSOA'),
@@ -51,7 +51,7 @@ class TestScenarioObject:
         scenario_model.add_output('population_density',
                                   scenario_model.regions.get_entry('LSOA'),
                                   scenario_model.intervals.get_entry('annual'),
-                                  'people/km^2')
+                                  'people / kilometer ** 2')
         scenario_model.description = 'The High ONS Forecast for UK population out to 2050'
         scenario_model.scenario_set = 'population'
         actual = scenario_model.as_dict()

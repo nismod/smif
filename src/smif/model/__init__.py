@@ -54,6 +54,7 @@ from logging import getLogger
 
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
+from smif.convert.unit import get_register as get_unit_register
 from smif.metadata import MetadataSet
 from smif.model.dependency import Dependency
 from smif.parameters import ParameterList
@@ -82,6 +83,7 @@ class Model(metaclass=ABCMeta):
 
         self.regions = get_region_register()
         self.intervals = get_interval_register()
+        self.units = get_unit_register()
         self.timesteps = []
 
         self.logger = getLogger(__name__)
