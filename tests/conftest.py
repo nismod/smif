@@ -55,6 +55,7 @@ def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
         os.path.join('data', 'narratives'),
         os.path.join('data', 'region_definitions'),
         os.path.join('data', 'scenarios'),
+        os.path.join('data', 'coefficients'),
         'models',
         'results'
     ]

@@ -47,7 +47,8 @@ class DatafileInterface(DataInterface):
             'interventions': 'data',
             'narratives': 'data',
             'region_definitions': 'data',
-            'scenarios': 'data'
+            'scenarios': 'data',
+            'coefficients': 'data'
         }
 
         for category, folder in config_folders.items():
@@ -1099,9 +1100,9 @@ class DatafileInterface(DataInterface):
 
     def _get_coefficients_path(self, source_name, destination_name):
 
-        results_dir = self.file_dir['results']
-        path = os.path.join(results_dir, source_name, destination_name)
-        return path
+        results_dir = self.file_dir['coefficients']
+        path = os.path.join(results_dir, source_name + '_' + destination_name)
+        return path + '.dat'
 
     def read_results(self, modelrun_id, model_name, output_name, spatial_resolution,
                      temporal_resolution, timestep=None, modelset_iteration=None,
