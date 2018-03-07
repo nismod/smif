@@ -243,7 +243,7 @@ def get_model_run_definition(args):
 
     """
     handler = DatafileInterface(args.directory)
-    Register.data_handler = handler
+    Register.data_interface = handler
     load_region_sets(handler)
     load_interval_sets(handler)
     load_units(handler)
