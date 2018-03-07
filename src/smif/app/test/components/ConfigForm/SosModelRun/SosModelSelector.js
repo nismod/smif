@@ -30,7 +30,7 @@ describe('<SosModelSelector />', () => {
 
         render = shallow(<SosModelSelector sosModelRun={custom_sos_model_run} sosModels={sos_models} />)
 
-        expect(render.html()).to.contain('<option selected="" disabled="" value="none">')
+        expect(render.html()).to.contain('<option selected="" value="">')
     })
 
     it('warning no sosModelRun configured', () => {

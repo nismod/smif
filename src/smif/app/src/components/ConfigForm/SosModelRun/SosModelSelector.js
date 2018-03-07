@@ -20,7 +20,7 @@ class SosModelSelector extends Component {
         return (
             <div className="select-container">
                 <select className="form-control" name="sos_model" type="select" defaultValue={selectedSosModelName} onChange={(event) => {this.handleChange(event)}}>
-                    <option value="" >Please select a system-of-systems model</option>
+                    <option value="">Please select a system-of-systems model</option>
                     {
                         sosModels.map((sosModel) => (
                             <option key={sosModel.name} value={sosModel.name}>{sosModel.name}</option>
@@ -63,7 +63,7 @@ class SosModelSelector extends Component {
         } else if (sosModels == null || sosModels == undefined || sosModels[0] == null) {
             return this.renderDanger('There are no SosModels configured')
         } else if (sosModelRun.sos_model == "") {
-            return this.renderSosModelSelector(sosModels, 'none')
+            return this.renderSosModelSelector(sosModels, '')
         } else {
             return this.renderSosModelSelector(sosModels, sosModelRun.sos_model)
         }
