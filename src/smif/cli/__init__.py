@@ -64,6 +64,7 @@ and narrative combinations to be used in each run of the models.
 
 """
 from __future__ import print_function
+import datetime
 import logging
 import logging.config
 import os
@@ -394,14 +395,16 @@ def execute_model_run(args):
     ----------
     args
     """
+    timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
+    
     LOGGER.info("Getting model run definition")
     model_run_config = get_model_run_definition(args)
 
     LOGGER.info("Build model run from configuration data")
     modelrun = build_model_run(model_run_config)
 
-    LOGGER.info("Running model run %s", modelrun.name)
-    store = DatafileInterface(args.directory, args.interface)
+    LOGGER.info("Running model run %s with timestamp %s", modelrun.name, timestamp)
+    store = DatafileInterface(args.directory, args.interface, timestamp)
 
     try:
         modelrun.run(store)
