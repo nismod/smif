@@ -170,6 +170,7 @@ class NDimensionalRegister(Register):
         """
         from_set = self.get_entry(source)
         to_set = self.get_entry(destination)
+
         if from_set.coverage != to_set.coverage:
             log_msg = "Coverage for '%s' is %d and does not match coverage " \
                     "for '%s' which is %d"
@@ -177,13 +178,12 @@ class NDimensionalRegister(Register):
                                 to_set.name, to_set.coverage)
 
         if self.data_interface:
-            try:
 
-                self.logger.info("Using data interface to load coefficients")
-                coefficients = self.data_interface.read_coefficients(source,
-                                                                     destination)
+            self.logger.info("Using data interface to load coefficients")
+            coefficients = self.data_interface.read_coefficients(source,
+                                                                 destination)
 
-            except(self.data_interface.DataNotFoundError):
+            if coefficients is None:
                 msg = "Coefficients not found, generating coefficients for %s to %s"
                 self.logger.info(msg, source, destination)
 
@@ -191,8 +191,12 @@ class NDimensionalRegister(Register):
                 self._write_coefficients(source, destination, coefficients)
 
         else:
+
+            msg = "No data interface specified, generating coefficients for %s to %s"
+            self.logger.info(msg, source, destination)
             coefficients = self._obtain_coefficients(from_set, to_set)
-            return coefficients
+
+        return coefficients
 
     def _obtain_coefficients(self, from_set, to_set):
         """

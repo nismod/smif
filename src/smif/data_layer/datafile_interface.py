@@ -1083,11 +1083,12 @@ class DatafileInterface(DataInterface):
 
         """
         results_path = self._get_coefficients_path(source_name, destination_name)
-        if not os.path.exists(results_path):
-            msg = "Could not find the coefficients file for %s to %s"
-            raise DataNotFoundError(msg, source_name, destination_name)
-        else:
+        if os.path.isfile(results_path):
             return self._get_data_from_native_file(results_path)
+        else:
+            msg = "Could not find the coefficients file for %s to %s"
+            self.logger.warning(msg, source_name, destination_name)
+            return None
 
     def write_coefficients(self, source_name, destination_name, data):
         """Writes coefficients to file on disk

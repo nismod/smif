@@ -1187,3 +1187,11 @@ class TestCoefficients:
         expected = np.eye(1000)
 
         np.testing.assert_equal(actual, expected)
+
+    def test_read_raises(self, get_handler):
+
+        handler = get_handler
+
+        actual = handler.read_coefficients('doesnotexist', 'to_set_name')
+
+        assert actual is None
