@@ -1084,7 +1084,8 @@ class DatafileInterface(DataInterface):
         """
         results_path = self._get_coefficients_path(source_name, destination_name)
         if not os.path.exists(results_path):
-            raise DataNotFoundError
+            msg = "Could not find the coefficients file for %s to %s"
+            raise DataNotFoundError(msg, source_name, destination_name)
         else:
             return self._get_data_from_native_file(results_path)
 

@@ -150,6 +150,9 @@ class NDimensionalRegister(Register):
             self.data_interface.write_coefficients(source,
                                                    destination,
                                                    data)
+        else:
+            msg = "Data interface not available to write coefficients"
+            self.logger.warning(msg)
 
     def get_coefficients(self, source, destination):
         """Get coefficients representing intersection of sets
@@ -176,13 +179,13 @@ class NDimensionalRegister(Register):
         if self.data_interface:
             try:
 
+                self.logger.info("Using data interface to load coefficients")
                 coefficients = self.data_interface.read_coefficients(source,
                                                                      destination)
 
             except(self.data_interface.DataNotFoundError):
-
-                self.logger.info("Generating coefficients for %s to %s",
-                                 source, destination)
+                msg = "Coefficients not found, generating coefficients for %s to %s"
+                self.logger.info(msg, source, destination)
 
                 coefficients = self._obtain_coefficients(from_set, to_set)
                 self._write_coefficients(source, destination, coefficients)
