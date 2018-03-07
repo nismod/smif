@@ -19,6 +19,9 @@ class FacetConfigForm extends Component {
         } else {
             this.state.editMode = true
         }
+
+        this.state.alert_visible = false
+        this.state.alert_message = ''
     }
 
     componentDidMount(){
@@ -46,7 +49,17 @@ class FacetConfigForm extends Component {
     }
 
     handleSave() {
-        this.props.saveFacet(this.state.selectedFacet)
+        const {selectedFacet} = this.state
+        console.log(selectedFacet)
+
+        if (selectedFacet.name === undefined) {
+            this.setState({
+                alert_message: 'Cannot create a facet without a name',
+                alert_visible: true
+            })
+        } else {
+            this.props.saveFacet(this.state.selectedFacet)
+        }
     }
 
     handleCancel() {
@@ -81,6 +94,10 @@ class FacetConfigForm extends Component {
                 </div>
 
                 <br/>
+
+                <div hidden={!this.state.alert_visible} className="alert alert-danger" role="alert">
+                    {this.state.alert_message}
+                </div>
 
                 <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
                 <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />

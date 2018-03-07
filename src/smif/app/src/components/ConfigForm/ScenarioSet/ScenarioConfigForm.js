@@ -23,6 +23,9 @@ class ScenarioConfigForm extends Component {
         } else {
             this.state.editMode = true
         }
+
+        this.state.alert_visible = false
+        this.state.alert_message = ''
     }
 
     componentDidMount(){
@@ -63,10 +66,19 @@ class ScenarioConfigForm extends Component {
     }
 
     handleSave() {
-        if (this.state.editMode) {
-            this.props.saveScenario(this.state.selectedScenario)
+        const {selectedScenario} = this.state
+
+        if (selectedScenario.name === undefined) {
+            this.setState({
+                alert_message: 'Cannot save a scenario without a name',
+                alert_visible: true
+            })
         } else {
-            this.props.createScenario(this.state.selectedScenario)
+            if (this.state.editMode) {
+                this.props.saveScenario(selectedScenario)
+            } else {
+                this.props.createScenario(selectedScenario)
+            }
         }
     }
 
@@ -172,6 +184,10 @@ class ScenarioConfigForm extends Component {
                 </div>
 
                 <br/>
+
+                <div hidden={!this.state.alert_visible} className="alert alert-danger" role="alert">
+                    {this.state.alert_message}
+                </div>
 
                 <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
                 <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
