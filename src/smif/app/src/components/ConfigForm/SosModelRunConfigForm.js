@@ -57,7 +57,13 @@ class SosModelRunConfigForm extends Component {
      */
         const { scenarios } = this.state.selectedSosModelRun
 
-        scenarios[scenario_set] = scenario
+        if (scenario == "") {
+            delete scenarios[scenario_set]
+        } else {
+            scenarios[scenario_set] = scenario
+        }
+
+        this.forceUpdate()
     }
 
     handleNarrativeChange(narrative_set, narrative, active) {
@@ -203,7 +209,7 @@ class SosModelRunConfigForm extends Component {
 
                 <br/>
 
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save Model Run Configuration" onClick={this.handleSave} />
+                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
 
                 <br/>

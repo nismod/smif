@@ -93,7 +93,7 @@ class NarrativeConfigForm extends Component {
                                 <label className="col-sm-2 col-form-label">Narrative Set</label>
                                 <div className="col-sm-10">
                                     <select className="form-control" name="narrative_set" defaultValue={selectedNarrative.narrative_set} onChange={this.handleChange}>
-                                        <option disabled="disabled" value="" >Please select a Narrative Set</option>
+                                        <option value="" >Please select a Narrative Set</option>
                                         {
                                             narrativeSets.map(narrativeSet =>
                                                 <option key={narrativeSet.name} value={narrativeSet.name}>{narrativeSet.name}</option>
@@ -129,7 +129,7 @@ class NarrativeConfigForm extends Component {
 
                 </form>
 
-                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save Sector Model Configuration" onClick={this.handleSave} />
+                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
                 <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
 
                 <br/>

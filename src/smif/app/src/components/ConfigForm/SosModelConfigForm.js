@@ -2,9 +2,11 @@ import React, { Component } from 'react'
 import PropTypes, { object } from 'prop-types'
 import update from 'immutability-helper'
 
+import Popup from './General/Popup.js'
 import PropertySelector from './General/PropertySelector.js'
 import DependencySelector from './SosModel/DependencySelector.js'
 import PropertyList from './General/PropertyList.js'
+import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
 
 class SosModelConfigForm extends Component {
     constructor(props) {
@@ -15,9 +17,15 @@ class SosModelConfigForm extends Component {
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
-        this.state = {}
-        this.state.selectedSosModel = this.props.sosModel
-        this.state.dependencyWarning = []
+        this.state = {
+            selectedSosModel: this.props.sosModel,
+            dependencyWarning: [],
+            deletePopupIsOpen: false
+        }
+
+        this.closeDeletePopup = this.closeDeletePopup.bind(this)
+        this.openDeletePopup = this.openDeletePopup.bind(this)
+        this.handleDelete = this.handleDelete.bind(this)
     }
 
     componentDidMount(){
@@ -45,6 +53,18 @@ class SosModelConfigForm extends Component {
         this.setState({
             selectedSosModel: update(this.state.selectedSosModel, {[name]: {$set: value}})
         })
+    }
+
+    handleDelete(config) {
+        const {deletePopupType, selectedSosModel} = this.state
+
+        switch(deletePopupType) {
+            case 'dependency':
+                this.state.selectedSosModel.dependencies.splice(config, 1)
+        }
+
+        this.forceUpdate()
+        this.closeDeletePopup()
     }
 
     validateForm() {
@@ -79,9 +99,35 @@ class SosModelConfigForm extends Component {
         this.props.cancelSosModel()
     }
 
+    openDeletePopup(event) {
+        this.setState({
+            deletePopupIsOpen: true,
+            deletePopupConfigName: event.target.value,
+            deletePopupType: event.target.name,
+        })
+    }
+
+    closeDeletePopup() {
+        this.setState({deletePopupIsOpen: false})
+    }
+
     render() {
         const {sectorModels, scenarioSets, narrativeSets} = this.props
         const {selectedSosModel} = this.state
+
+        // Get dependencies, give an index as name
+        let dependencies = []
+        if (selectedSosModel.dependencies != undefined) {
+            for (let i = 0; i < selectedSosModel.dependencies.length; i++) {
+                dependencies.push({
+                    name: i,
+                    sink_model: selectedSosModel.dependencies[i].sink_model,
+                    sink_model_input: selectedSosModel.dependencies[i].sink_model_input,
+                    source_model: selectedSosModel.dependencies[i].source_model,
+                    source_model_output: selectedSosModel.dependencies[i].source_model_output
+                })
+            }
+        }
 
         return (
             <div>
@@ -141,8 +187,8 @@ class SosModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Dependencies</div>
                         <div className="card-body">
-                            <PropertyList itemsName="dependencies" items={selectedSosModel.dependencies} columns={{source_model: 'Source', source_model_output: 'Output', sink_model: 'Sink', sink_model_input: 'Input'}} enableWarnings={true} rowWarning={this.state.dependencyWarning} editButton={false} deleteButton={true} onDelete={this.handleChange} />
-                            <DependencySelector dependencies={selectedSosModel.dependencies} sectorModels={selectedSosModel.sector_models} scenarioSets={selectedSosModel.scenario_sets} onChange={this.handleChange}/>
+                            <PropertyList itemsName="dependency" items={dependencies} columns={{source_model: 'Source', source_model_output: 'Output', sink_model: 'Sink', sink_model_input: 'Input'}} enableWarnings={true} rowWarning={this.state.dependencyWarning} editButton={false} deleteButton={true} onDelete={this.openDeletePopup} />
+                            <DependencySelector sectorModels={sectorModels} scenarioSets={scenarioSets} dependencies={selectedSosModel.dependencies} selectedSectorModels={selectedSosModel.sector_models} selectedScenarioSets={selectedSosModel.scenario_sets} onChange={this.handleChange}/>
                         </div>
                     </div>
 
@@ -176,7 +222,12 @@ class SosModelConfigForm extends Component {
                     <br/>
                 </form>
 
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save System-of-systems Model Configuration" onClick={this.handleSave} />
+                <Popup onRequestOpen={this.state.deletePopupIsOpen}>
+                    <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
+                </Popup>
+
+
+                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
 
                 <br/>

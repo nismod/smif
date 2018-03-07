@@ -6,10 +6,13 @@ import { Link } from 'react-router-dom'
 
 import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from '../../actions/actions.js'
 import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createScenario, createNarrativeSet, createNarrative } from '../../actions/actions.js'
+import { saveSosModelRun,   saveSosModel,   saveSectorModel,   saveScenarioSet,   saveScenario,   saveNarrativeSet,   saveNarrative   } from '../../actions/actions.js'
 import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteScenario, deleteNarrativeSet, deleteNarrative } from '../../actions/actions.js'
 
 import Popup from '../../components/ConfigForm/General/Popup.js'
 import ProjectOverviewItem from '../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
+import CreateConfigForm from '../../components/ConfigForm/ProjectOverview/CreateConfigForm.js'
+import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
 
 class ProjectOverview extends Component {
     constructor() {
@@ -17,20 +20,21 @@ class ProjectOverview extends Component {
 
         this.state = {
             createPopupIsOpen: false,
-            createPopupHeader: 'none',
             createPopupType: 'none',
             deletePopupIsOpen: false,
-            deletePopupHeader: 'none',
+            deletePopupConfigName: 'none',
             deletePopupType: 'none'
         }
 
         this.closeCreatePopup = this.closeCreatePopup.bind(this)
         this.openCreatePopup = this.openCreatePopup.bind(this)
-        this.createPopupSubmit = this.createPopupSubmit.bind(this)
+        this.handleDelete = this.handleDelete.bind(this)
 
         this.closeDeletePopup = this.closeDeletePopup.bind(this)
         this.openDeletePopup = this.openDeletePopup.bind(this)
         this.deletePopupSubmit = this.deletePopupSubmit.bind(this)
+
+        this.collectIdentifiers = this.collectIdentifiers.bind(this)
 
         this.handleInputChange = this.handleInputChange.bind(this)
     }
@@ -61,45 +65,97 @@ class ProjectOverview extends Component {
 
         this.setState({
             createPopupIsOpen: true,
-            createPopupHeader: event.target.value,
             createPopupType: event.target.name
         })
     }
 
-    createPopupSubmit() {
+    handleDelete(config) {
 
-        const {createPopupType, createPopupName} = this.state
+        const {createPopupType} = this.state
         const { dispatch } = this.props
 
         this.closeCreatePopup(createPopupType)
-
+        
         switch(createPopupType) {
-        case 'createSosModelRun':
-            dispatch(createSosModelRun(createPopupName))
+        case 'SosModelRun':
+            dispatch(createSosModelRun(config.name))
+            dispatch(saveSosModelRun(
+                {
+                    'name': config.name,
+                    'description': config.description,
+                    'stamp': new Date().toISOString(),
+                    'sos_model': '',
+                    'scenarios': {},
+                    'narratives': {},
+                    'decision_module': '',
+                    'timesteps': [2015, 2020]
+                }
+            ))
             dispatch(fetchSosModelRuns())
             break
-        case 'createSosModel':
-            dispatch(createSosModel(createPopupName))
+        case 'SosModel':
+            dispatch(createSosModel(config.name))
+            dispatch(saveSosModel(
+                {
+                    'name': config.name,
+                    'description': config.description,
+                    'sector_models': [],
+                    'narrative_sets': [],
+                    'scenario_sets': [],
+                    'dependencies': [],
+                    'max_iterations': 1,
+                    'convergence_absolute_tolerance': "1e-05",
+                    'convergence_relative_tolerance': "1e-05"
+                }
+            ))
             dispatch(fetchSosModels())
             break
-        case 'createSectorModel':
-            dispatch(createSectorModel(createPopupName))
+        case 'SectorModel':
+            dispatch(createSectorModel(config.name))
+            dispatch(saveSectorModel(
+                {
+                    'name':  config.name,
+                    'description': config.description,
+                    'classname': '',
+                    'path': '',
+                    'inputs': [],
+                    'outputs': [],
+                    'parameters': [],
+                    'interventions': [],
+                    'initial_conditions': []
+                }
+            ))
             dispatch(fetchSectorModels())
             break
-        case 'createScenarioSet':
-            dispatch(createScenarioSet(createPopupName))
+        case 'ScenarioSet':
+            dispatch(createScenarioSet(config.name))
+            dispatch(saveScenarioSet(
+                {
+                    'name':  config.name,
+                    'description': config.description,
+                    'facets': []
+                }
+            ))
             dispatch(fetchScenarioSets())
             break
-        case 'createScenario':
-            dispatch(createScenario(createPopupName))
-            dispatch(fetchScenarios())
-            break
-        case 'createNarrativeSet':
-            dispatch(createNarrativeSet(createPopupName))
+        case 'NarrativeSet':
+            dispatch(createNarrativeSet(config.name))
+            dispatch(saveNarrativeSet({
+                    'name': config.name,
+                    'description': config.description,
+                }
+            ))
             dispatch(fetchNarrativeSets())
             break
-        case 'createNarrative':
-            dispatch(createNarrative(createPopupName))
+        case 'Narrative':
+            dispatch(createNarrative(config.name))
+            dispatch(saveNarrative({
+                    'name': config.name,
+                    'description': config.description,
+                    'narrative_set': '',
+                    'filename': ''
+                }
+            ))
             dispatch(fetchNarratives())
             break
         }
@@ -110,47 +166,149 @@ class ProjectOverview extends Component {
     }
 
     openDeletePopup(event) {
+        
+        let target_in_use_by = []
+
+        switch(event.target.name) {
+            case 'SosModel':
+                this.props.sos_model_runs.forEach(function(sos_model_run) {   
+                    if (sos_model_run.sos_model == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model_run.name,
+                            link: '/configure/sos-model-run/',
+                            type: 'SosModelRun'
+                        })
+                    }                    
+                })
+                break
+
+            case 'SectorModel':
+                this.props.sos_models.forEach(function(sos_model) {   
+                    
+                    sos_model.sector_models.forEach(function(sector_model) {
+                        if (sector_model == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model.name,
+                                link: '/configure/sos-models/',
+                                type: 'SosModel'
+                            })
+                        }
+                    })
+                })
+                break
+
+            case 'ScenarioSet':
+                this.props.sos_models.forEach(function(sos_model) {   
+                        
+                    sos_model.scenario_sets.forEach(function(scenario_set) {
+                        if (scenario_set == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model.name,
+                                link: '/configure/sos-models/',
+                                type: 'SosModel'
+                            })
+                        }
+                    })
+
+                    sos_model.dependencies.forEach(function(dependency) {
+                        if (dependency.source_model == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model.name,
+                                link: '/configure/sos-models/',
+                                type: 'SosModel'
+                            })
+                        }
+                    })
+                })
+                break
+
+            case 'NarrativeSet':
+                this.props.sos_models.forEach(function(sos_model) {   
+                        
+                    sos_model.narrative_sets.forEach(function(narrative_set) {
+                        if (narrative_set == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model.name,
+                                link: '/configure/sos-models/',
+                                type: 'SosModel'
+                            })
+                        }
+                    })
+                })
+
+                this.props.narratives.forEach(function(narrative) {   
+                    if (narrative.narrative_set == event.target.value) {
+                        target_in_use_by.push({
+                            name: narrative.name,
+                            link: '/configure/narratives/',
+                            type: 'Narrative'
+                        })
+                    }
+                })
+                break
+
+            case 'Narrative':
+                this.props.sos_model_runs.forEach(function(sos_model_run) {   
+                    Object.keys(sos_model_run.narratives).forEach(function(narrative_sets) {
+                        sos_model_run.narratives[narrative_sets].forEach(function(narrative) {
+                            if (narrative == event.target.value) {
+                                target_in_use_by.push({
+                                    name: sos_model_run.name,
+                                    link: '/configure/sos-model-run/',
+                                    type: 'SosModelRun'
+                                })
+                            }                    
+                        })
+                    })
+                })
+                break
+        }
+
         this.setState({
             deletePopupIsOpen: true,
-            deletePopupHeader: event.target.value,
-            deletePopupType: event.target.name
+            deletePopupConfigName: event.target.value,
+            deletePopupType: event.target.name,
+            deletePopupInUseBy: target_in_use_by
         })
     }
 
     deletePopupSubmit() {
 
-        const {deletePopupType, deletePopupHeader} = this.state
+        const {deletePopupType, deletePopupConfigName} = this.state
+        const { scenarios } = this.props
         const { dispatch } = this.props
 
         this.closeDeletePopup(deletePopupType)
 
         switch(deletePopupType) {
-        case 'deleteSosModelRun':
-            dispatch(deleteSosModelRun(deletePopupHeader))
+        case 'SosModelRun':
+            dispatch(deleteSosModelRun(deletePopupConfigName))
             dispatch(fetchSosModelRuns())
             break
-        case 'deleteSosModel':
-            dispatch(deleteSosModel(deletePopupHeader))
+        case 'SosModel':
+            dispatch(deleteSosModel(deletePopupConfigName))
             dispatch(fetchSosModels())
             break
-        case 'deleteSectorModel':
-            dispatch(deleteSectorModel(deletePopupHeader))
+        case 'SectorModel':
+            dispatch(deleteSectorModel(deletePopupConfigName))
             dispatch(fetchSectorModels())
             break
-        case 'deleteScenarioSet':
-            dispatch(deleteScenarioSet(deletePopupHeader))
+        case 'ScenarioSet':
+            dispatch(deleteScenarioSet(deletePopupConfigName))
             dispatch(fetchScenarioSets())
+
+            // also delete all the scenarios that belong to the set
+            let deleteScenarios = scenarios.filter(scenario => scenario['scenario_set'] == deletePopupConfigName)
+            for (let scenario of deleteScenarios) {
+                dispatch(deleteScenario(scenario['name']))
+            }
             break
-        case 'deleteScenario':
-            dispatch(deleteScenario(deletePopupHeader))
-            dispatch(fetchScenarios())
-            break
-        case 'deleteNarrativeSet':
-            dispatch(deleteNarrativeSet(deletePopupHeader))
+        case 'NarrativeSet':
+            dispatch(deleteNarrativeSet(deletePopupConfigName))
             dispatch(fetchNarrativeSets())
             break
-        case 'deleteNarrative':
-            dispatch(deleteNarrative(deletePopupHeader))
+        case 'Narrative':
+            dispatch(deleteNarrative(deletePopupConfigName))
             dispatch(fetchNarratives())
             break
         }
@@ -160,8 +318,27 @@ class ProjectOverview extends Component {
         this.setState({deletePopupIsOpen: false})
     }
 
+    collectIdentifiers() {
+        const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching } = this.props
+        let types = [sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching]
+
+        let identifiers = []
+
+        types.forEach(function(type){
+            if (type.length > 0) {
+                type.forEach(function(config){
+                    identifiers.push(config.name)
+                })
+            }
+        })
+
+        return identifiers
+    }
+
     render () {
         const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching } = this.props
+
+        let used_identifiers = this.collectIdentifiers()
 
         return (
             <div>
@@ -196,7 +373,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createSosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -208,7 +385,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createSosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -220,7 +397,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createSectorModel" type="button" value="Create a new Simulation Model" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="SectorModel" type="button" value="Create a new Simulation Model" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -232,19 +409,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/scenario-set/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
-                        </div>
-                    </div>
-
-                    <br/>
-
-                    <div className="card">
-                        <div className="card-header">
-                            Scenarios
-                        </div>
-                        <div className="card-body">
-                            <ProjectOverviewItem itemname="Scenario" items={scenarios} itemLink="/configure/scenarios/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Create a new Scenario" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -256,7 +421,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/narrative-set/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createNarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -268,7 +433,7 @@ class ProjectOverview extends Component {
                         </div>
                         <div className="card-body">
                             <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/narratives/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createNarrative" type="button" value="Create a new Narrative" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block" name="Narrative" type="button" value="Create a new Narrative" onClick={this.openCreatePopup}/>
                         </div>
                     </div>
 
@@ -276,32 +441,13 @@ class ProjectOverview extends Component {
 
                     {/* Popup for Create */}
                     <Popup onRequestOpen={this.state.createPopupIsOpen}>
-                        <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.createPopupSubmit()}}>
-                            <h2 ref={subtitle => this.subtitle = subtitle}>{this.state.createPopupHeader}</h2>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Name</label>
-                                <div className="col-sm-10">
-                                    <input autoFocus className="form-control" name="createPopupName" type="text" onChange={this.handleInputChange} required/>
-                                </div>
-                            </div>
-
-                            <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Create"/>
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreatePopup}/>
-                        </form>
+                        <CreateConfigForm config_type={this.state.createPopupType} existing_names={used_identifiers} submit={this.handleDelete} cancel={this.closeCreatePopup}/>
                     </Popup>
 
                     {/* Popup for Delete */}
                     <Popup onRequestOpen={this.state.deletePopupIsOpen}>
-                        <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.deletePopupSubmit()}}>
-                            <h2 ref={subtitle => this.subtitle = subtitle}>Confirm delete</h2>
-                            Are you sure you would like to delete {this.state.deletePopupHeader}?
-                            <br/>
-                            <input autoFocus className="btn btn-secondary btn-lg btn-block" type="submit" value="Delete"/>
-                            <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeDeletePopup}/>
-                        </form>
+                        <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
                     </Popup>
-
                 </div>
             </div>
         )
