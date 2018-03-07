@@ -100,7 +100,7 @@ class RegionSet(ResolutionSet):
         ]
 
     def intersection(self, to_entry):
-        """Return the subset of regions intersecting with a bounding box
+        """Return the set of regions intersecting with the bounds of `to_entry`
         """
         bounds = to_entry.shape.bounds
         return [x for x in self._idx.intersection(bounds)]
@@ -130,6 +130,11 @@ class RegionSet(ResolutionSet):
 class RegionRegister(NDimensionalRegister):
     """Holds the sets of regions used by the SectorModels and provides conversion
     between data values relating to compatible sets of regions.
+
+    Notes
+    -----
+    The argument ``axis=0`` refers to the dimension of the data array that is
+    associated with the regions dimension.
     """
     def __init__(self):
         super().__init__(axis=0)
