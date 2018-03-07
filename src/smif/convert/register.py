@@ -251,7 +251,7 @@ class ResolutionSet(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_proportion(entry_a, entry_b):
+    def get_proportion(self, entry_a, entry_b):
         """Calculate the proportion of `entry_a` and `entry_b`
 
         Arguments

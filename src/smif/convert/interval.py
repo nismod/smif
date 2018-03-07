@@ -357,7 +357,7 @@ class Interval(object):
         found_end = False
         only_two = False
 
-        if bounds == 2:
+        if len(bounds) == 2:
             only_two = True
 
         for bound in bounds:
@@ -576,6 +576,12 @@ class IntervalSet(ResolutionSet):
 
 class TimeIntervalRegister(NDimensionalRegister):
     """Holds the set of time-intervals used by the SectorModels
+
+    Notes
+    -----
+    The argument ``axis=1`` refers to the dimension of the data array that is
+    associated with the intervals dimension.
+
     """
     def __init__(self):
         super().__init__(axis=1)
