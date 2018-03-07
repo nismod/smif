@@ -521,6 +521,9 @@ def parse_arguments():
                             default='local_binary',
                             choices=['local_csv', 'local_binary'],
                             help="Select the data interface (default: %(default)s)")
+    parser_run.add_argument('-w', '--warm',
+                            action='store_true',
+                            help="Use intermediate results from the last modelrun and continue from where it had left")
     parser_run.add_argument('-d', '--directory',
                             default='.',
                             help="Path to the project directory")
