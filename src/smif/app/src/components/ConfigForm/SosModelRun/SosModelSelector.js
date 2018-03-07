@@ -20,7 +20,7 @@ class SosModelSelector extends Component {
         return (
             <div className="select-container">
                 <select className="form-control" name="sos_model" type="select" defaultValue={selectedSosModelName} onChange={(event) => {this.handleChange(event)}}>
-                    <option disabled="disabled" value="none" >Please select a system-of-systems model</option>
+                    <option value="" >Please select a system-of-systems model</option>
                     {
                         sosModels.map((sosModel) => (
                             <option key={sosModel.name} value={sosModel.name}>{sosModel.name}</option>
