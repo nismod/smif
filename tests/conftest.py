@@ -799,24 +799,6 @@ def get_handler(setup_folder_structure, project_config):
     return DatafileInterface(str(basefolder), 'local_binary', '20180307T144423')
 
 
-@fixture(scope='function')
-def get_handler_csv(setup_folder_structure, project_config):
-    basefolder = setup_folder_structure
-    project_config_path = os.path.join(
-        str(basefolder), 'config', 'project.yml')
-    dump(project_config, project_config_path)
-    return DatafileInterface(str(basefolder), 'local_csv', '20180307T144423')
-
-
-@fixture(scope='function')
-def get_handler_binary(setup_folder_structure, project_config):
-    basefolder = setup_folder_structure
-    project_config_path = os.path.join(
-        str(basefolder), 'config', 'project.yml')
-    dump(project_config, project_config_path)
-    return DatafileInterface(str(basefolder), 'local_binary', '20180307T144423')
-
-
 @fixture
 def get_narrative():
     narrative = Narrative('Energy Demand - High Tech',
