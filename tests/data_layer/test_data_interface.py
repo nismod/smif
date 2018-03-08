@@ -861,7 +861,7 @@ class TestDatafileInterface():
             {
                 'description': 'The High ONS Forecast for UK population out to 2050',
                 'name': 'High Population (ONS)',
-                'parameters': [
+                'facets': [
                     {
                         'name': 'population_count',
                         'filename': 'population_high.csv',
@@ -875,7 +875,7 @@ class TestDatafileInterface():
             {
                 'description': 'The Low ONS Forecast for UK population out to 2050',
                 'name': 'Low Population (ONS)',
-                'parameters': [
+                'facets': [
                     {
                         'name': 'population_count',
                         'filename': 'population_low.csv',
@@ -917,7 +917,8 @@ class TestDatafileInterface():
             'description': 'The rate of technical development in the NL',
             'name': 'technology'
         }
-        config_handler.update_narrative_set(narrative_set['name'], narrative_set)
+        config_handler.update_narrative_set(narrative_set['name'],
+                                            narrative_set)
         narrative_sets = config_handler.read_narrative_sets()
         assert len(narrative_sets) == 3
         for narrative_set in narrative_sets:
@@ -1008,7 +1009,8 @@ class TestDatafileInterface():
         expected = {
             'smart_meter_savings': 8
         }
-        actual = get_handler.read_parameters('unique_model_run_name', 'energy_demand')
+        actual = get_handler.read_parameters('unique_model_run_name',
+                                             'energy_demand')
         assert actual == expected
 
     def test_read_results(self, setup_folder_structure, get_handler_csv,
