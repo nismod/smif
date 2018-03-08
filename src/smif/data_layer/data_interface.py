@@ -14,6 +14,14 @@ class DataInterface(metaclass=ABCMeta):
         self.logger = getLogger(__name__)
 
     @abstractmethod
+    def read_coefficients(self, source_name, destination_name):
+        raise NotImplementedError
+
+    @abstractmethod
+    def write_coefficients(self, source_name, destination_name, data):
+        raise NotImplementedError
+
+    @abstractmethod
     def read_units_file_name(self):
         raise NotImplementedError()
 

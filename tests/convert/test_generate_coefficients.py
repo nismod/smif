@@ -4,10 +4,11 @@ different operations
 from unittest.mock import Mock
 
 import numpy as np
-from pytest import mark
+from pytest import fixture, mark
 from smif.convert.area import RegionRegister
 from smif.convert.interval import TimeIntervalRegister
 from smif.convert.interval import get_register as get_interval_register
+from smif.convert.register import Register
 
 
 class TestPerformConversion:
@@ -102,3 +103,54 @@ class TestAggregationCoefficient:
         actual = intervals.get_coefficients('months', 'seasons')
         expected = month_to_season_coefficients
         np.testing.assert_allclose(actual, expected)
+
+
+@fixture(scope='function')
+def patch_register_data_interface():
+    mocked_interface = Mock()
+    Register.data_interface = mocked_interface
+    yield mocked_interface
+
+    Register.data_interface = None
+
+
+class TestRegisterCaching:
+    """Tests that coefficients are cached if a data handle is present
+    """
+
+    def test_read_coefficients(self, month_to_season_coefficients,
+                               patch_register_data_interface):
+
+        interval = get_interval_register()
+
+        mock_interface = patch_register_data_interface
+        mock_interface.read_coefficients = Mock()
+
+        assert interval.data_interface == mock_interface
+
+        interval.get_coefficients('months', 'seasons')
+
+        interval.data_interface.read_coefficients.assert_called_once_with('months', 'seasons')
+
+    def test_write_coefficients(self, month_to_season_coefficients,
+                                patch_register_data_interface):
+        """Checks that coefficients are
+        """
+
+        data = np.array(month_to_season_coefficients, dtype=np.float)
+
+        interval = get_interval_register()
+
+        mock_data_interface = patch_register_data_interface
+
+        mock_data_interface.read_coefficients = Mock(return_value=None)
+        mock_data_interface.write_coefficients = Mock()
+
+        assert interval.data_interface == mock_data_interface
+
+        interval.get_coefficients('months', 'seasons')
+
+        actual = interval.data_interface.write_coefficients.call_args[0]
+        expected = ('months', 'seasons', data)
+
+        np.testing.assert_equal(actual, expected)

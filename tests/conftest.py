@@ -18,6 +18,7 @@ from smif.convert.area import RegionSet
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import IntervalSet
 from smif.convert.interval import get_register as get_interval_register
+from smif.convert.unit import get_register as get_unit_register
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
 from smif.parameters import Narrative
@@ -54,6 +55,7 @@ def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
         os.path.join('data', 'narratives'),
         os.path.join('data', 'region_definitions'),
         os.path.join('data', 'scenarios'),
+        os.path.join('data', 'coefficients'),
         'models',
         'results'
     ]
@@ -70,7 +72,7 @@ def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
     intervals_file.write("id,start,end\n1,P0Y,P1Y\n")
 
     units_file = test_folder.join('data', 'user_units.txt')
-    units_file.write("mcm = 10^6 * m^3\nGBP = [currency]\npeople= [people]\n")
+    units_file.write("blobbiness = m^3 * 10^6\n")
 
     return test_folder
 
@@ -486,7 +488,7 @@ def water_interventions_abc():
 
 
 @fixture(scope="session", autouse=True)
-def setup_registers(oxford_region, annual_intervals):
+def setup_registers(oxford_region, annual_intervals, tmpdir_factory):
     """One-time setup: load all the fixture region and interval
     sets into the module-level registers.
     """
@@ -510,6 +512,14 @@ def setup_registers(oxford_region, annual_intervals):
     intervals.register(IntervalSet('hourly_day', twenty_four_hours()))
     intervals.register(IntervalSet('one_day', one_day()))
     intervals.register(IntervalSet('remap_months', remap_months()))
+
+    test_folder = tmpdir_factory.mktemp("smif")
+
+    units_file = test_folder.join('user_units.txt')
+    units_file.write("mcm = 10^6 * m^3\nGBP=[currency]\npeople=[people]\n")
+
+    units = get_unit_register()
+    units.register(str(units_file))
 
 
 @fixture(scope='function')
@@ -782,24 +792,6 @@ def narrative_data():
 
 @fixture(scope='function')
 def get_handler(setup_folder_structure, project_config):
-    basefolder = setup_folder_structure
-    project_config_path = os.path.join(
-        str(basefolder), 'config', 'project.yml')
-    dump(project_config, project_config_path)
-    return DatafileInterface(str(basefolder), 'local_binary', '20180307T144423')
-
-
-@fixture(scope='function')
-def get_handler_csv(setup_folder_structure, project_config):
-    basefolder = setup_folder_structure
-    project_config_path = os.path.join(
-        str(basefolder), 'config', 'project.yml')
-    dump(project_config, project_config_path)
-    return DatafileInterface(str(basefolder), 'local_csv', '20180307T144423')
-
-
-@fixture(scope='function')
-def get_handler_binary(setup_folder_structure, project_config):
     basefolder = setup_folder_structure
     project_config_path = os.path.join(
         str(basefolder), 'config', 'project.yml')

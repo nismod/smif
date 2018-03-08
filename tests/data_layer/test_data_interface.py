@@ -939,8 +939,8 @@ class TestDatafileInterface():
             if narrative['name'] == 'name_change':
                 assert narrative['filename'] == 'population_med.csv'
 
-    def test_read_parameters(self, setup_folder_structure, get_handler, get_sos_model_run,
-                             narrative_data):
+    def test_read_parameters(self, setup_folder_structure, get_handler,
+                             get_sos_model_run, narrative_data):
         """ Test to read a modelrun's parameters
         """
         sos_model_run = get_sos_model_run
@@ -966,7 +966,8 @@ class TestDatafileInterface():
         actual = get_handler.read_parameters('unique_model_run_name', 'energy_demand')
         assert actual == expected
 
-    def test_read_results(self, setup_folder_structure, get_handler_csv, get_handler_binary):
+    def test_read_results(self, setup_folder_structure, get_handler_csv,
+                          get_handler_binary):
         """Results from .csv in a folder structure which encodes metadata
         in filenames and directory structure.
 
@@ -1015,25 +1016,27 @@ class TestDatafileInterface():
             )
         )
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        
+
         with open(path + '.csv', 'w') as fh:
             fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output, spatial_resolution,
-                                          temporal_resolution, timestep)
+        actual = get_handler_csv.read_results(modelrun, model, output,
+                                              spatial_resolution,
+                                              temporal_resolution, timestep)
         assert actual == expected
 
         with pa.OSFile(path + '.dat', 'wb') as f:
             f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output, spatial_resolution,
-                                          temporal_resolution, timestep)
+        actual = get_handler_binary.read_results(modelrun, model, output,
+                                                 spatial_resolution,
+                                                 temporal_resolution, timestep)
         assert actual == expected
-        
+
         # 2. case with decision
         decision_iteration = 1
         expected = np.array([[[2.0]]])
         csv_contents = "region,interval,value\noxford,1,2.0\n"
         binary_contents = get_handler_binary.ndarray_to_buffer(expected)
-        
+
         path = os.path.join(
             str(setup_folder_structure),
             "results",
@@ -1052,16 +1055,18 @@ class TestDatafileInterface():
 
         with open(path + '.csv', 'w') as fh:
             fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output, spatial_resolution,
-                                          temporal_resolution, timestep, None,
-                                          decision_iteration)
+        actual = get_handler_csv.read_results(modelrun, model, output,
+                                              spatial_resolution,
+                                              temporal_resolution, timestep,
+                                              None, decision_iteration)
         assert actual == expected
 
         with pa.OSFile(path + '.dat', 'wb') as f:
             f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output, spatial_resolution,
-                                          temporal_resolution, timestep, None,
-                                          decision_iteration)
+        actual = get_handler_binary.read_results(modelrun, model, output,
+                                                 spatial_resolution,
+                                                 temporal_resolution, timestep,
+                                                 None, decision_iteration)
         assert actual == expected
 
         # 3. case with modelset
@@ -1084,17 +1089,21 @@ class TestDatafileInterface():
             )
         )
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        
+
         with open(path + '.csv', 'w') as fh:
             fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output, spatial_resolution,
-                                          temporal_resolution, timestep, modelset_iteration)
+        actual = get_handler_csv.read_results(modelrun, model, output,
+                                              spatial_resolution,
+                                              temporal_resolution, timestep,
+                                              modelset_iteration)
         assert actual == expected
 
         with pa.OSFile(path + '.dat', 'wb') as f:
             f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output, spatial_resolution,
-                                          temporal_resolution, timestep, modelset_iteration)
+        actual = get_handler_binary.read_results(modelrun, model, output,
+                                                 spatial_resolution,
+                                                 temporal_resolution, timestep,
+                                                 modelset_iteration)
         assert actual == expected
 
         # 4. case with both decision and modelset
@@ -1122,26 +1131,30 @@ class TestDatafileInterface():
 
         with open(path + '.csv', 'w') as fh:
             fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output, spatial_resolution,
-                                          temporal_resolution, timestep, modelset_iteration,
-                                          decision_iteration)
+        actual = get_handler_csv.read_results(modelrun, model, output,
+                                              spatial_resolution,
+                                              temporal_resolution, timestep,
+                                              modelset_iteration,
+                                              decision_iteration)
         assert actual == expected
 
         with pa.OSFile(path + '.dat', 'wb') as f:
             f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output, spatial_resolution,
-                                          temporal_resolution, timestep, modelset_iteration,
-                                          decision_iteration)
+        actual = get_handler_binary.read_results(modelrun, model, output,
+                                                 spatial_resolution,
+                                                 temporal_resolution, timestep,
+                                                 modelset_iteration,
+                                                 decision_iteration)
         assert actual == expected
 
-    def test_read_results_missing(self, setup_folder_structure, get_handler):
-        pass
+    # def test_read_results_missing(self, setup_folder_structure, get_handler):
+    #     pass
 
-    def test_write_results(self, setup_folder_structure, get_handler):
-        pass
+    # def test_write_results(self, setup_folder_structure, get_handler):
+    #     pass
 
-    def test_write_results_misshapen(self, setup_folder_structure, get_handler):
-        pass
+    # def test_write_results_misshapen(self, setup_folder_structure, get_handler):
+    #     pass
 
 
 def replace_e(obj, path):
@@ -1149,3 +1162,36 @@ def replace_e(obj, path):
         return 'XXX'
     else:
         return obj
+
+
+class TestCoefficients:
+
+    def test_write(self, get_handler):
+        data = np.eye(100)
+        handler = get_handler
+        handler.write_coefficients('from_set_name', 'to_set_name', data)
+
+        expected_file = os.path.join(handler.base_folder, 'data',
+                                     'coefficients',
+                                     'from_set_name_to_set_name.dat')
+
+        assert os.path.exists(expected_file)
+
+    def test_read(self, get_handler):
+
+        data = np.eye(1000)
+        handler = get_handler
+        handler.write_coefficients('from_set_name', 'to_set_name', data)
+
+        actual = handler.read_coefficients('from_set_name', 'to_set_name')
+        expected = np.eye(1000)
+
+        np.testing.assert_equal(actual, expected)
+
+    def test_read_raises(self, get_handler):
+
+        handler = get_handler
+
+        actual = handler.read_coefficients('doesnotexist', 'to_set_name')
+
+        assert actual is None

@@ -18,6 +18,7 @@ class MemoryInterface(DataInterface):
         self._narrative_sets = {}
         self._narratives = {}
         self._results = {}
+        self._coefficients = {}
 
     def read_units_file_name(self):
         return self._units.values()
@@ -154,3 +155,9 @@ class MemoryInterface(DataInterface):
                 temporal_resolution, timestep, modelset_iteration,
                 decision_iteration
             )] = data
+
+    def read_coefficients(self, source_name, destination_name):
+        return self._coefficients[(source_name, destination_name)]
+
+    def write_coefficients(self, source_name, destination_name, data):
+        self._coefficients[(source_name, destination_name)] = data

@@ -6,7 +6,6 @@ from csv import DictReader
 
 import fiona
 import pyarrow as pa
-import pyarrow.parquet as pq
 from smif.data_layer.data_interface import (DataExistsError, DataInterface,
                                             DataMismatchError,
                                             DataNotFoundError)
@@ -48,7 +47,8 @@ class DatafileInterface(DataInterface):
             'interventions': 'data',
             'narratives': 'data',
             'region_definitions': 'data',
-            'scenarios': 'data'
+            'scenarios': 'data',
+            'coefficients': 'data'
         }
 
         for category, folder in config_folders.items():
@@ -1076,6 +1076,36 @@ class DatafileInterface(DataInterface):
 
         raise DataNotFoundError('Narrative \'{}\' not found'.format(narrative_name))
 
+    def read_coefficients(self, source_name, destination_name):
+        """Reads coefficients from file on disk
+
+        Coefficients are uniquely identified by their source/destination names
+
+        """
+        results_path = self._get_coefficients_path(source_name, destination_name)
+        if os.path.isfile(results_path):
+            return self._get_data_from_native_file(results_path)
+        else:
+            msg = "Could not find the coefficients file for %s to %s"
+            self.logger.warning(msg, source_name, destination_name)
+            return None
+
+    def write_coefficients(self, source_name, destination_name, data):
+        """Writes coefficients to file on disk
+
+        Coefficients are uniquely identified by their source/destination names
+
+        """
+        results_path = self._get_coefficients_path(source_name, destination_name)
+        buffer = self.ndarray_to_buffer(data)
+        self._write_data_to_native_file(results_path, buffer)
+
+    def _get_coefficients_path(self, source_name, destination_name):
+
+        results_dir = self.file_dir['coefficients']
+        path = os.path.join(results_dir, source_name + '_' + destination_name)
+        return path + '.dat'
+
     def read_results(self, modelrun_id, model_name, output_name, spatial_resolution,
                      temporal_resolution, timestep=None, modelset_iteration=None,
                      decision_iteration=None):
@@ -1116,7 +1146,7 @@ class DatafileInterface(DataInterface):
                       temporal_resolution, timestep=None, modelset_iteration=None,
                       decision_iteration=None):
         """Return path to text file for a given output
-        
+
         Parameters
         ----------
         modelrun_id : str
