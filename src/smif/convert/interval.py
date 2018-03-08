@@ -422,11 +422,7 @@ class IntervalSet(ResolutionSet):
         """
         from_interval = self.data[from_index]
 
-        if from_interval.check_year_end or to_interval.check_year_end:
-            # Source Interval contains a year split
-            proportion = self._compute_proportion(from_interval, to_interval)
-
-        elif len(from_interval.bounds) > 2:
+        if len(from_interval.bounds) > 2:
             # Resampling
             proportion = self._compute_proportion(from_interval, to_interval)
             proportion = proportion * len(from_interval.bounds)
