@@ -521,7 +521,9 @@ def project_config():
         'scenario_sets': [
             {
                 'description': 'The annual change in UK population',
-                'name': 'population'
+                'name': 'population',
+                'facets': {'name': "population_count",
+                           'description': "The count of population"}
             }
         ],
         'narrative_sets': [
@@ -557,7 +559,7 @@ def project_config():
             {
                 'description': 'The High ONS Forecast for UK population out to 2050',
                 'name': 'High Population (ONS)',
-                'parameters': [
+                'facets': [
                     {
                         'name': 'population_count',
                         'filename': 'population_high.csv',
@@ -571,7 +573,7 @@ def project_config():
             {
                 'description': 'The Low ONS Forecast for UK population out to 2050',
                 'name': 'Low Population (ONS)',
-                'parameters': [
+                'facets': [
                     {
                         'name': 'population_count',
                         'filename': 'population_low.csv',
@@ -713,7 +715,9 @@ def get_scenario_set():
     """
     return {
         "description": "Growth in UK economy",
-        "name": "economy"
+        "name": "economy",
+        "facets": {"name": "economy_low",
+                   "description": "a description"}
     }
 
 
@@ -724,7 +728,7 @@ def get_scenario():
     return {
         "description": "Central Economy for the UK (High)",
         "name": "Central Economy (High)",
-        "parameters": [
+        "facets": [
             {
                 "filename": "economy_low.csv",
                 "name": "economy_low",
