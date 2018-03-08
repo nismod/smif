@@ -29,10 +29,10 @@ scenarios:
 - description: ''
   facets:
   - filename: raininess.csv
-    name: central rainfall
+    name: raininess
     spatial_resolution: national
     temporal_resolution: annual
-    units: m^3
+    units: litre
   name: Central Rainfall
   scenario_set: rainfall
 - description: ''
