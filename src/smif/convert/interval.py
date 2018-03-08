@@ -348,26 +348,6 @@ class Interval(object):
             array[lower:upper] += 1
         return array
 
-    @property
-    def check_year_end(self):
-        """Identifies the condition where interval overlaps the end of a year
-        """
-        bounds = self.bounds
-        found_start = False
-        found_end = False
-        only_two = False
-
-        if len(bounds) == 2:
-            only_two = True
-
-        for bound in bounds:
-            if bound[0] == 0:
-                found_start = True
-            if bound[1] == 8760:
-                found_end = True
-
-        return found_end and found_start and only_two
-
 
 class IntervalSet(ResolutionSet):
     """A collection of intervals
