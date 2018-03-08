@@ -20,11 +20,21 @@ region_definitions:
   name: oxfordshire
 scenario_sets:
 - description: Growth in UK population
-  facets:
-  - description: Central Population for the UK
-    name: population
+  facets: null
   name: population
+- description: Rainfall in the UK
+  facets: null
+  name: rainfall
 scenarios:
+- description: ''
+  facets:
+  - filename: raininess.csv
+    name: central rainfall
+    spatial_resolution: national
+    temporal_resolution: annual
+    units: m^3
+  name: Central Rainfall
+  scenario_set: rainfall
 - description: ''
   facets:
   - filename: population_low.csv
