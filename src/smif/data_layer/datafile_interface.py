@@ -6,7 +6,6 @@ from csv import DictReader
 
 import fiona
 import pyarrow as pa
-import pyarrow.parquet as pq
 from smif.data_layer.data_interface import (DataExistsError, DataInterface,
                                             DataMismatchError,
                                             DataNotFoundError)
@@ -776,7 +775,7 @@ class DatafileInterface(DataInterface):
 
         self._write_project_config(project_config)
 
-    def read_scenario_data(self, scenario_name, parameter_name,
+    def read_scenario_data(self, scenario_name, facet_name,
                            spatial_resolution, temporal_resolution, timestep):
         """Read scenario data file
 
@@ -784,8 +783,8 @@ class DatafileInterface(DataInterface):
         ---------
         scenario_name: str
             Name of the scenario
-        parameter_name: str
-            Name of the scenario parameter to read
+        facet_name: str
+            Name of the scenario facet to read
         spatial_resolution : str
         temporal_resolution : str
         timestep: int
@@ -800,16 +799,16 @@ class DatafileInterface(DataInterface):
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
             if scenario_data['name'] == scenario_name:
-                for param in scenario_data['parameters']:
-                    if param['name'] == parameter_name:
-                        filename = param['filename']
+                for facet in scenario_data['facets']:
+                    if facet['name'] == facet_name:
+                        filename = facet['filename']
                         break
                 break
 
         if filename is None:
             raise DataNotFoundError(
-                "Scenario '{}' with parameter '{}' not found".format(
-                    scenario_name, parameter_name))
+                "Scenario '{}' with facet '{}' not found".format(
+                    scenario_name, facet_name))
 
         # Read the scenario data from file
         filepath = os.path.join(self.file_dir['scenarios'], filename)
@@ -1109,7 +1108,7 @@ class DatafileInterface(DataInterface):
                       temporal_resolution, timestep=None, modelset_iteration=None,
                       decision_iteration=None):
         """Return path to text file for a given output
-        
+
         Parameters
         ----------
         modelrun_id : str

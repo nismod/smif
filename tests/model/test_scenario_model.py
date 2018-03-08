@@ -31,7 +31,7 @@ class TestScenarioObject:
             'name': 'High Population (ONS)',
             'description': 'The High ONS Forecast for UK population out to 2050',
             'scenario_set': 'population',
-            'parameters': [
+            'facets': [
                 {
                     'name': 'population_count',
                     'spatial_resolution': 'LSOA',
@@ -56,13 +56,13 @@ class TestScenarioObject:
         scenario_model.scenario_set = 'population'
         actual = scenario_model.as_dict()
         # sort to match expected output
-        actual['parameters'].sort(key=lambda p: p['name'])
+        actual['facets'].sort(key=lambda p: p['name'])
 
         expected = {
             'name': 'High Population (ONS)',
             'description': 'The High ONS Forecast for UK population out to 2050',
             'scenario_set': 'population',
-            'parameters': [
+            'facets': [
                 {
                     'name': 'population_count',
                     'spatial_resolution': 'LSOA',
@@ -89,7 +89,7 @@ class TestScenarioModelData:
         config = {
             'name': 'mass',
             'scenario_set': '',
-            'parameters': [
+            'facets': [
                 {
                     'name': 'length',
                     'spatial_resolution': 'LSOA',
