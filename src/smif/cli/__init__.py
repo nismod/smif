@@ -406,11 +406,11 @@ def execute_model_run(args):
     LOGGER.info("Running model run %s with timestamp %s", modelrun.name, timestamp)
     store = DatafileInterface(args.directory, args.interface, timestamp)
 
-    if args.warm:
-        store.prepare_warm_start(modelrun.name)
-
     try:
-        modelrun.run(store)
+        if args.warm:
+            modelrun.run(store, store.prepare_warm_start(modelrun.name))
+        else:
+            modelrun.run(store)
     except ModelRunError as ex:
         LOGGER.exception(ex)
         exit(1)
