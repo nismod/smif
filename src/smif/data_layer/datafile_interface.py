@@ -1164,10 +1164,10 @@ class DatafileInterface(DataInterface):
 
         """
         results_dir = os.path.join(self.file_dir['results'], modelrun_id)
-        previous_results = [
+        previous_results = sorted([
             name for name in os.listdir(results_dir) 
             if os.path.isdir(os.path.join(results_dir, name)) 
-        ]
+        ])
 
         # Check if warm start is possible
         previous_results_have_different_storage_format = False
@@ -1175,12 +1175,17 @@ class DatafileInterface(DataInterface):
 
         if len(previous_results) > 0:
             previous_results_dir = os.path.join(self.file_dir['results'], modelrun_id, previous_results[-1])
-
+            
             # Check if the previous modelrun used the same storage format
-            for filename in glob.iglob(os.path.join(previous_results_dir, '**/*.*'), recursive=True):
-                if ((self.storage_format == 'local_csv' and not filename.endswith(".csv")) or
-                (self.storage_format == 'local_binary' and not filename.endswith(".dat"))):
-                    previous_results_have_different_storage_format = True
+            results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'), recursive=True))
+
+            if len(results) > 0:
+                for filename in results:
+                    if ((self.storage_format == 'local_csv' and not filename.endswith(".csv")) or
+                    (self.storage_format == 'local_binary' and not filename.endswith(".dat"))):
+                        previous_results_have_different_storage_format = True
+            else:
+                previous_results_dont_exist = True
         else:
             previous_results_dont_exist = True
 
@@ -1200,7 +1205,7 @@ class DatafileInterface(DataInterface):
             
             # Get metadata for all results
             result_metadata = []
-            for filename in glob.iglob(os.path.join(current_results_dir, '**/*.dat'), recursive=True):
+            for filename in glob.iglob(os.path.join(current_results_dir, '**/*.*'), recursive=True):
                 result_metadata.append(self._parse_results_path(filename.replace(self.file_dir['results'], '')[1:]))
 
             # Find latest timestep
@@ -1354,7 +1359,7 @@ class DatafileInterface(DataInterface):
                     elif parse_element == 'output':
                         results.setdefault('output', []).append(element)
                     elif parse_element == 'timestep':
-                        results.setdefault('timestep', []).append(element)
+                        results['timestep'] = int(element)
                     elif parse_element == 'regions':
                         results.setdefault('regions', []).append(element)
                     elif parse_element == 'intervals':
@@ -1371,7 +1376,7 @@ class DatafileInterface(DataInterface):
             'output_name': '_'.join(results['output']),
             'spatial_resolution': '_'.join(results['regions']),
             'temporal_resolution': '_'.join(results['intervals']),
-            'timestep': '_'.join(results['timestep']),
+            'timestep': results['timestep'],
             'modelset_iteration': modelset_iteration,
             'decision_iteration': decision_iteration,
             'storage_format': storage_format
