@@ -2,7 +2,11 @@
 """
 import csv
 import os
+import re
+import shutil
 from csv import DictReader
+
+import glob
 
 import fiona
 import pyarrow as pa
@@ -1155,6 +1159,64 @@ class DatafileInterface(DataInterface):
                 "region x interval data"
             )
 
+    def prepare_warm_start(self, modelrun_id):
+        """Copy the results from the previous modelrun if available
+
+        """
+        results_dir = os.path.join(self.file_dir['results'], modelrun_id)
+        previous_results = [
+            name for name in os.listdir(results_dir) 
+            if os.path.isdir(os.path.join(results_dir, name)) 
+        ]
+
+        # Check if warm start is possible
+        previous_results_have_different_storage_format = False
+        previous_results_dont_exist = False
+
+        if len(previous_results) > 0:
+            previous_results_dir = os.path.join(self.file_dir['results'], modelrun_id, previous_results[-1])
+
+            # Check if the previous modelrun used the same storage format
+            for filename in glob.iglob(os.path.join(previous_results_dir, '**/*.*'), recursive=True):
+                if ((self.storage_format == 'local_csv' and not filename.endswith(".csv")) or
+                (self.storage_format == 'local_binary' and not filename.endswith(".dat"))):
+                    previous_results_have_different_storage_format = True
+        else:
+            previous_results_dont_exist = True
+
+        # Attempt warm start
+        if previous_results_dont_exist:
+            self.logger.info("Warm start not possible because there are no previous results")
+            return None
+        elif previous_results_have_different_storage_format:
+            self.logger.info("Warm start not possible because a different storage mode was used in the previous run")
+            return None
+        else:
+            self.logger.info("Warm start from timestamp", previous_results[-1])
+        
+            # Copy results from latest timestep from this modelrun_id
+            current_results_dir = os.path.join(self.file_dir['results'], modelrun_id, self.timestamp)
+            shutil.copytree(previous_results_dir, current_results_dir)
+            
+            # Get metadata for all results
+            result_metadata = []
+            for filename in glob.iglob(os.path.join(current_results_dir, '**/*.dat'), recursive=True):
+                result_metadata.append(self._parse_results_path(filename.replace(self.file_dir['results'], '')[1:]))
+
+            # Find latest timestep
+            result_metadata = sorted(result_metadata, key=lambda k: k['timestep'], reverse=True)
+            latest_timestep = result_metadata[0]['timestep']
+
+            # Remove all results with this timestep
+            results_to_remove = [result for result in result_metadata if result['timestep'] == latest_timestep]
+
+            for result in results_to_remove:
+                os.remove(self._get_results_path(result['modelrun_id'], result['timestamp'], result['model_name'],
+                        result['output_name'], result['spatial_resolution'], result['temporal_resolution'],
+                        result['timestep'], result['modelset_iteration'], result['decision_iteration']))
+
+            return latest_timestep
+
     def _get_results_path(self, modelrun_id, timestamp, model_name, output_name, spatial_resolution,
                           temporal_resolution, timestep, modelset_iteration=None,
                           decision_iteration=None):
@@ -1174,8 +1236,8 @@ class DatafileInterface(DataInterface):
         Parameters
         ----------
         modelrun_id : str
-        model_name : str
         timestamp : str
+        model_name : str
         output_name : str
         spatial_resolution : str
         temporal_resolution : str
