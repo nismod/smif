@@ -23,7 +23,7 @@ dependencies:
 - rtree
 - scikit-optimize
 - shapely
-- sphinx  # docs
+- sphinx=1.6  # docs
 - pip:
   - better-apidoc  # docs
   - pre-commit  # dev
