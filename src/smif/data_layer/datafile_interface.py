@@ -1251,6 +1251,70 @@ class DatafileInterface(DataInterface):
 
         return path
 
+    def _parse_results_path(self, path):
+        """Return result metadata for a given result path
+
+        On the pattern of:
+            results/
+            <modelrun_name>/
+            <timestamp>/
+            <model_name>/
+            decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/ or none
+                output_<output_name>_
+                timestep_<timestep>_
+                regions_<spatial_resolution>_
+                intervals_<temporal_resolution>.csv
+
+        Parameters
+        ----------
+        path : str
+
+        Returns
+        -------
+        dict : A dict containing all of the metadata
+        """
+        modelset_iteration = None
+        decision_iteration = None
+
+        data = re.findall(r"[\w']+", path)
+
+        for section in data[3:len(data)]:
+            if section.startswith('modelset'):
+                modelset_iteration = int(section.replace('modelset_', ''))
+            elif section.startswith('decision'):
+                decision_iteration = int(section.replace('decision_', ''))
+            elif section.startswith('output'):
+                result_elements = re.findall(r"[^_]+", section)
+                results = {}
+                for element in result_elements:
+                    if element in ('output', 'timestep', 'regions', 'intervals'):
+                        parse_element = element
+                    elif parse_element == 'output':
+                        results.setdefault('output', []).append(element)
+                    elif parse_element == 'timestep':
+                        results.setdefault('timestep', []).append(element)
+                    elif parse_element == 'regions':
+                        results.setdefault('regions', []).append(element)
+                    elif parse_element == 'intervals':
+                        results.setdefault('intervals', []).append(element)
+            elif section == 'csv':
+                storage_format = 'local_csv'
+            elif section == 'dat':
+                storage_format = 'local_binary'
+
+        return {
+            'modelrun_id': data[0],
+            'timestamp': data[1],
+            'model_name': data[2],
+            'output_name': '_'.join(results['output']),
+            'spatial_resolution': '_'.join(results['regions']),
+            'temporal_resolution': '_'.join(results['intervals']),
+            'timestep': '_'.join(results['timestep']),
+            'modelset_iteration': modelset_iteration,
+            'decision_iteration': decision_iteration,
+            'storage_format': storage_format
+        }
+
     def _read_project_config(self):
         """Read the project configuration
 
