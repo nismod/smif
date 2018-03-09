@@ -1162,6 +1162,13 @@ class DatafileInterface(DataInterface):
     def prepare_warm_start(self, modelrun_id):
         """Copy the results from the previous modelrun if available
 
+        Parameters
+        ----------
+        modelrun_id: str
+
+        Returns
+        -------
+        num: The timestep where the data store was recovered to
         """
         results_dir = os.path.join(self.file_dir['results'], modelrun_id)
         previous_results = sorted([
