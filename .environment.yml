@@ -23,7 +23,7 @@ dependencies:
 - rtree
 - scikit-optimize
 - shapely
-- sphinx=1.6  # docs
+- sphinx  # docs
 - pip:
-  - better-apidoc  # docs
+  - "--editable=git+https://github.com/goerz/better-apidoc@master#egg=better-apidoc"  # docs
   - pre-commit  # dev
