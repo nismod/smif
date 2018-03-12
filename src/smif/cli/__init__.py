@@ -409,7 +409,10 @@ def execute_model_run(args):
     store = DatafileInterface(args.directory, args.interface, timestamp)
 
     try:
-        modelrun.run(store)
+        if args.warm:
+            modelrun.run(store, store.prepare_warm_start(modelrun.name))
+        else:
+            modelrun.run(store)
     except ModelRunError as ex:
         LOGGER.exception(ex)
         exit(1)
@@ -523,6 +526,9 @@ def parse_arguments():
                             default='local_binary',
                             choices=['local_csv', 'local_binary'],
                             help="Select the data interface (default: %(default)s)")
+    parser_run.add_argument('-w', '--warm',
+                            action='store_true',
+                            help="Use intermediate results from the last modelrun and continue from where it had left")
     parser_run.add_argument('-d', '--directory',
                             default='.',
                             help="Path to the project directory")

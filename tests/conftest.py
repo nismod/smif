@@ -8,6 +8,7 @@
 """
 from __future__ import absolute_import, division, print_function
 
+import csv
 import json
 import logging
 import os
@@ -70,6 +71,14 @@ def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
 
     intervals_file = test_folder.join('data', 'interval_definitions', 'annual.csv')
     intervals_file.write("id,start,end\n1,P0Y,P1Y\n")
+
+    data = remap_months()
+    intervals_file = test_folder.join('data', 'interval_definitions', 'remap.csv')
+    keys = data[0].keys()
+    with open(str(intervals_file), 'w+') as open_csv_file:
+        dict_writer = csv.DictWriter(open_csv_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(data)
 
     units_file = test_folder.join('data', 'user_units.txt')
     units_file.write("blobbiness = m^3 * 10^6\n")
@@ -559,6 +568,10 @@ def project_config():
             {
                 'description': 'One annual timestep, used for aggregate yearly data',
                 'filename': 'annual.csv', 'name': 'annual'
+            },
+            {
+                'description': 'Remapped months to four representative months',
+                'filename': 'remap.csv', 'name': 'remap_months'
             }
         ],
         'units': 'user_units.txt',
@@ -774,7 +787,6 @@ def get_scenario_data():
             'year': 2017
         }
     ]
-
 
 @fixture(scope='function')
 def narrative_data():

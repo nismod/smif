@@ -99,7 +99,7 @@ class ModelRun(object):
     def model_horizon(self, value):
         self._model_horizon = sorted(list(set(value)))
 
-    def run(self, store):
+    def run(self, store, warm_start_timestep=None):
         """Builds all the objects and passes them to the ModelRunner
 
         The idea is that this will add ModelRuns to a queue for asychronous
@@ -110,6 +110,9 @@ class ModelRun(object):
         if self.status == 'Built':
             if not self.model_horizon:
                 raise ModelRunError("No timesteps specified for model run")
+            if warm_start_timestep:
+                idx = self.model_horizon.index(warm_start_timestep)
+                self.model_horizon = self.model_horizon[idx:]
             self.status = 'Running'
             modelrunner = ModelRunner()
             modelrunner.solve_model(self, store)
@@ -145,6 +148,7 @@ class ModelRunner(object):
 
         self.logger.debug("Solving the models over all timesteps: %s",
                           model_run.model_horizon)
+
         # Solve the models over all timesteps
         for timestep in model_run.model_horizon:
             self.logger.debug('Running model for timestep %s', timestep)

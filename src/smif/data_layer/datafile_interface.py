@@ -1,7 +1,10 @@
 """File-backed data interface
 """
 import csv
+import glob
 import os
+import re
+import shutil
 from csv import DictReader
 
 import fiona
@@ -413,10 +416,10 @@ class DatafileInterface(DataInterface):
         return data
 
     def _read_region_names(self, region_definition_name):
-        return [
+        return list(set([
             feature['properties']['name']
             for feature in self.read_region_definition_data(region_definition_name)
-        ]
+        ]))
 
     def write_region_definition(self, region_definition):
         """Write region_definition to project configuration
@@ -480,12 +483,16 @@ class DatafileInterface(DataInterface):
         -----
         Expects csv file to contain headings of `id`, `start`, `end`
         """
-        interval_defs = self.read_interval_definitions()
+        interval_list = self.read_interval_definitions()
         filename = None
-        while not filename:
-            for interval_def in interval_defs:
-                if interval_def['name'] == interval_definition_name:
-                    filename = interval_def['filename']
+
+        for interval in interval_list:
+            if interval['name'] == interval_definition_name:
+                filename = interval['filename']
+
+        if filename is None:
+            raise KeyError("Interval set definition '{}' does not exist".format(
+                interval_definition_name))
 
         filepath = os.path.join(self.file_dir['interval_definitions'], filename)
         with open(filepath, 'r') as csvfile:
@@ -496,10 +503,10 @@ class DatafileInterface(DataInterface):
         return data
 
     def _read_interval_names(self, interval_definition_name):
-        return [
+        return list(set([
             interval['id']
             for interval in self.read_interval_definition_data(interval_definition_name)
-        ]
+        ]))
 
     def write_interval_definition(self, interval_definition):
         """Write interval_definition to project configuration
@@ -1185,6 +1192,77 @@ class DatafileInterface(DataInterface):
                 "region x interval data"
             )
 
+    def prepare_warm_start(self, modelrun_id):
+        """Copy the results from the previous modelrun if available
+
+        Parameters
+        ----------
+        modelrun_id: str
+
+        Returns
+        -------
+        num: The timestep where the data store was recovered to
+        """
+        results_dir = os.path.join(self.file_dir['results'], modelrun_id)
+
+        # Return if path to previous modelruns doe snot exist
+        if not os.path.isdir(results_dir):
+            self.logger.info("Warm start not possible because modelrun has no previous results (path does not exist)")
+            return None
+
+        # Collect previous results
+        previous_results = sorted([
+            name for name in os.listdir(results_dir)
+            if os.path.isdir(os.path.join(results_dir, name))
+        ])
+
+        # Return if no previous results exist in previous modelrun
+        if len(previous_results) == 0:
+            self.logger.info("Warm start not possible because modelrun has no previous results (no results in path)")
+            return None
+
+        previous_results_dir = os.path.join(self.file_dir['results'], modelrun_id, previous_results[-1])
+        results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'), recursive=True))
+
+        # Return if no results exist in last modelrun
+        if len(results) == 0:
+            self.logger.info("Warm start not possible because there are no results in the previous modelrun")
+            return None
+
+        # Return if previous results were stored in a different format
+        for filename in results:
+            if ((self.storage_format == 'local_csv' and not filename.endswith(".csv")) or
+            (self.storage_format == 'local_binary' and not filename.endswith(".dat"))):
+                self.logger.info("Warm start not possible because a different storage mode was used in the previous run")
+                return None
+
+        # Perform warm start
+        self.logger.info("Warm start using results from timestamp %s", previous_results[-1])
+
+        # Copy results from latest timestep from this modelrun_id
+        current_results_dir = os.path.join(self.file_dir['results'], modelrun_id, self.timestamp)
+        shutil.copytree(previous_results_dir, current_results_dir)
+
+        # Get metadata for all results
+        result_metadata = []
+        for filename in glob.iglob(os.path.join(current_results_dir, '**/*.*'), recursive=True):
+            result_metadata.append(self._parse_results_path(filename.replace(self.file_dir['results'], '')[1:]))
+
+        # Find latest timestep
+        result_metadata = sorted(result_metadata, key=lambda k: k['timestep'], reverse=True)
+        latest_timestep = result_metadata[0]['timestep']
+
+        # Remove all results with this timestep
+        results_to_remove = [result for result in result_metadata if result['timestep'] == latest_timestep]
+
+        for result in results_to_remove:
+            os.remove(self._get_results_path(result['modelrun_id'], result['timestamp'], result['model_name'],
+                    result['output_name'], result['spatial_resolution'], result['temporal_resolution'],
+                    result['timestep'], result['modelset_iteration'], result['decision_iteration']))
+
+        self.logger.info("Warm start will resume at timestep %s", latest_timestep)
+        return latest_timestep
+
     def _get_results_path(self, modelrun_id, timestamp, model_name, output_name, spatial_resolution,
                           temporal_resolution, timestep, modelset_iteration=None,
                           decision_iteration=None):
@@ -1204,8 +1282,8 @@ class DatafileInterface(DataInterface):
         Parameters
         ----------
         modelrun_id : str
-        model_name : str
         timestamp : str
+        model_name : str
         output_name : str
         spatial_resolution : str
         temporal_resolution : str
@@ -1280,6 +1358,70 @@ class DatafileInterface(DataInterface):
             path += '.dat'
 
         return path
+
+    def _parse_results_path(self, path):
+        """Return result metadata for a given result path
+
+        On the pattern of:
+            results/
+            <modelrun_name>/
+            <timestamp>/
+            <model_name>/
+            decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/ or none
+                output_<output_name>_
+                timestep_<timestep>_
+                regions_<spatial_resolution>_
+                intervals_<temporal_resolution>.csv
+
+        Parameters
+        ----------
+        path : str
+
+        Returns
+        -------
+        dict : A dict containing all of the metadata
+        """
+        modelset_iteration = None
+        decision_iteration = None
+
+        data = re.findall(r"[\w']+", path)
+
+        for section in data[3:len(data)]:
+            if section.startswith('modelset'):
+                modelset_iteration = int(section.replace('modelset_', ''))
+            elif section.startswith('decision'):
+                decision_iteration = int(section.replace('decision_', ''))
+            elif section.startswith('output'):
+                result_elements = re.findall(r"[^_]+", section)
+                results = {}
+                for element in result_elements:
+                    if element in ('output', 'timestep', 'regions', 'intervals'):
+                        parse_element = element
+                    elif parse_element == 'output':
+                        results.setdefault('output', []).append(element)
+                    elif parse_element == 'timestep':
+                        results['timestep'] = int(element)
+                    elif parse_element == 'regions':
+                        results.setdefault('regions', []).append(element)
+                    elif parse_element == 'intervals':
+                        results.setdefault('intervals', []).append(element)
+            elif section == 'csv':
+                storage_format = 'local_csv'
+            elif section == 'dat':
+                storage_format = 'local_binary'
+
+        return {
+            'modelrun_id': data[0],
+            'timestamp': data[1],
+            'model_name': data[2],
+            'output_name': '_'.join(results['output']),
+            'spatial_resolution': '_'.join(results['regions']),
+            'temporal_resolution': '_'.join(results['intervals']),
+            'timestep': results['timestep'],
+            'modelset_iteration': modelset_iteration,
+            'decision_iteration': decision_iteration,
+            'storage_format': storage_format
+        }
 
     def _read_project_config(self):
         """Read the project configuration

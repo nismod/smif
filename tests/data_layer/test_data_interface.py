@@ -81,7 +81,7 @@ class TestDataInterface():
                 'year': 2015
             }
         ]
-        msg = "Number of observations is not equal to intervals x regions"
+        msg = "Number of observations (2) is not equal to intervals (1) x regions (1)"
         with raises(DataMismatchError) as ex:
             DataInterface.data_list_to_ndarray(
                 data,
@@ -550,6 +550,51 @@ class TestDatafileInterface():
 
         np.testing.assert_almost_equal(actual, expected)
 
+    def test_scenario_data_validates(self, setup_folder_structure, get_handler,
+                                     get_remapped_scenario_data):
+        """ DatafileInterface and DataInterface perform validation of scenario
+        data against raw interval and region data.
+
+        As such `len(region_names) * len(interval_names)` is not a valid size
+        of scenario data under cases where resolution definitions contain
+        remapping/resampling info (i.e. multiple hours in a year/regions mapped
+        to one name).
+
+        The set of unique region or interval names can be used instead.
+        """
+        basefolder = setup_folder_structure
+        scenario_data = get_remapped_scenario_data
+
+        keys = scenario_data[0].keys()
+        with open(os.path.join(str(basefolder), 'data', 'scenarios',
+                               'population_high.csv'), 'w+') as output_file:
+            dict_writer = csv.DictWriter(output_file, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(scenario_data)
+
+        config_handler = get_handler
+
+        expected_data = [210, 200, 150, 100]
+        actual = config_handler.read_scenario_data(
+            'High Population (ONS)',
+            'population_count',
+            'lad',
+            'remap_months',
+            2015)
+
+        for expected in expected_data:
+            assert expected in actual
+
+        actual_names = config_handler._read_interval_names('remap_months')
+
+        expected_names = {210: 'fall_month',
+                          200: 'hot_month',
+                          150: 'spring_month',
+                          100: 'cold_month'}
+
+        for value, name in zip(actual.flat, actual_names):
+            assert name == expected_names[value]
+
     def test_narrative_data(self, setup_folder_structure, get_handler, narrative_data):
         """ Test to dump a narrative (yml) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
@@ -666,7 +711,7 @@ class TestDatafileInterface():
         # interval_definitions / read existing (from fixture)
         interval_definitions = config_handler.read_interval_definitions()
         assert interval_definitions[0]['name'] == 'hourly'
-        assert len(interval_definitions) == 2
+        assert len(interval_definitions) == 3
 
         # interval_definition sets / add
         interval_definition = {
@@ -676,7 +721,7 @@ class TestDatafileInterface():
         }
         config_handler.write_interval_definition(interval_definition)
         interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 3
+        assert len(interval_definitions) == 4
         for interval_definition in interval_definitions:
             if interval_definition['name'] == 'monthly':
                 assert interval_definition['filename'] == 'monthly.csv'
@@ -690,7 +735,7 @@ class TestDatafileInterface():
         config_handler.update_interval_definition(
             interval_definition['name'], interval_definition)
         interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 3
+        assert len(interval_definitions) == 4
         for interval_definition in interval_definitions:
             if interval_definition['name'] == 'monthly':
                 assert interval_definition['filename'] == 'monthly_V2.csv'
@@ -700,7 +745,7 @@ class TestDatafileInterface():
         config_handler.update_interval_definition(
             'monthly', interval_definition)
         interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 3
+        assert len(interval_definitions) == 4
         for interval_definition in interval_definitions:
             if interval_definition['name'] == 'name_change':
                 assert interval_definition['filename'] == 'monthly_V2.csv'
@@ -1001,7 +1046,7 @@ class TestDatafileInterface():
         csv_contents = "region,interval,value\noxford,1,1.0\n"
         binary_contents = get_handler_binary.ndarray_to_buffer(expected)
         timestamp = '20180307T144423'  # same timestamp as get_handler
-        
+
         path = os.path.join(
             str(setup_folder_structure),
             "results",
@@ -1156,6 +1201,171 @@ class TestDatafileInterface():
     # def test_write_results_misshapen(self, setup_folder_structure, get_handler):
     #     pass
 
+    def test_prepare_warm_start(self, setup_folder_structure, project_config):
+        """ Confirm that the warm start copies previous model results
+        and reports the correct next timestep
+        """
+
+        modelrun = 'energy_transport_baseline'
+        model = 'energy_demand'
+        previous_timestamp = '20180307T144423'
+        current_timestamp = '20180307T162453'
+
+        # Setup
+        basefolder = setup_folder_structure
+        current_interface = DatafileInterface(str(basefolder), 'local_csv', current_timestamp)
+
+        # Create results for a 'previous' modelrun
+        previous_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            previous_timestamp,
+            model
+        )
+        os.makedirs(previous_results_path, exist_ok=True)
+
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,4.0\n")
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,6.0\n")
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,8.0\n")
+
+        # Prepare warm start
+        current_timestep = current_interface.prepare_warm_start(modelrun)
+
+        # Confirm that the function reports the correct timestep where the model should continue
+        assert current_timestep == 2030
+
+        # Confirm that previous results (excluding the last timestep) were copied
+        current_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            current_timestamp,
+            model
+        )
+        assert os.listdir(previous_results_path)[:-1] == os.listdir(current_results_path)
+
+    def test_prepare_warm_start_other_local_storage(self, setup_folder_structure, project_config):
+        """ Confirm that the warm start does not work when previous
+        results were saved using a different local storage type
+        """
+
+        modelrun = 'energy_transport_baseline'
+        model = 'energy_demand'
+        previous_timestamp = '20180307T144423'
+        current_timestamp = '20180307T162453'
+
+        # Setup
+        basefolder = setup_folder_structure
+        current_interface = DatafileInterface(str(basefolder), 'local_binary', current_timestamp)
+
+        # Create results for a 'previous' modelrun
+        previous_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            previous_timestamp,
+            model
+        )
+        os.makedirs(previous_results_path, exist_ok=True)
+
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,4.0\n")
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,6.0\n")
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,8.0\n")
+
+        # Prepare warm start
+        current_timestep = current_interface.prepare_warm_start(modelrun)
+
+        # Confirm that the function reports the correct timestep where the model should continue
+        assert current_timestep == None
+
+        # Confirm that no results were copied
+        current_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            current_timestamp,
+            model
+        )
+        os.makedirs(current_results_path, exist_ok=True)
+        assert len(os.listdir(current_results_path)) == 0
+
+    def test_prepare_warm_start_no_previous_results(self, setup_folder_structure, project_config):
+        """ Confirm that the warm start does not work when no previous
+        results were saved
+        """
+
+        modelrun = 'energy_transport_baseline'
+        model = 'energy_demand'
+        previous_timestamp = '20180307T144423'
+        current_timestamp = '20180307T162453'
+
+        # Setup
+        basefolder = setup_folder_structure
+        current_interface = DatafileInterface(str(basefolder), 'local_binary', current_timestamp)
+
+        # Create results for a 'previous' modelrun
+        previous_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            previous_timestamp,
+            model
+        )
+        os.makedirs(previous_results_path, exist_ok=True)
+
+        # Prepare warm start
+        current_timestep = current_interface.prepare_warm_start(modelrun)
+
+        # Confirm that the function reports the correct timestep where the model should continue
+        assert current_timestep == None
+
+        # Confirm that no results were copied
+        current_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            current_timestamp,
+            model
+        )
+        os.makedirs(current_results_path, exist_ok=True)
+        assert len(os.listdir(current_results_path)) == 0
+
+    def test_prepare_warm_start_no_previous_modelrun(self, setup_folder_structure, project_config):
+        """ Confirm that the warm start does not work when no previous
+        modelrun occured
+        """
+
+        modelrun = 'energy_transport_baseline'
+        model = 'energy_demand'
+        current_timestamp = '20180307T162453'
+
+        # Setup
+        basefolder = setup_folder_structure
+        current_interface = DatafileInterface(str(basefolder), 'local_binary', current_timestamp)
+
+        # Prepare warm start
+        current_timestep = current_interface.prepare_warm_start(modelrun)
+
+        # Confirm that the function reports the correct timestep where the model should continue
+        assert current_timestep == None
+
+        # Confirm that no results were copied
+        current_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            current_timestamp,
+            model
+        )
+        os.makedirs(current_results_path, exist_ok=True)
+        assert len(os.listdir(current_results_path)) == 0
 
 def replace_e(obj, path):
     if obj == 'e':
