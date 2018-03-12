@@ -416,10 +416,10 @@ class DatafileInterface(DataInterface):
         return data
 
     def _read_region_names(self, region_definition_name):
-        return [
+        return list(set([
             feature['properties']['name']
             for feature in self.read_region_definition_data(region_definition_name)
-        ]
+        ]))
 
     def write_region_definition(self, region_definition):
         """Write region_definition to project configuration
@@ -503,10 +503,10 @@ class DatafileInterface(DataInterface):
         return data
 
     def _read_interval_names(self, interval_definition_name):
-        return [
+        return list(set([
             interval['id']
             for interval in self.read_interval_definition_data(interval_definition_name)
-        ]
+        ]))
 
     def write_interval_definition(self, interval_definition):
         """Write interval_definition to project configuration
