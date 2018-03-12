@@ -81,7 +81,7 @@ class TestDataInterface():
                 'year': 2015
             }
         ]
-        msg = "Number of observations is not equal to intervals x regions"
+        msg = "Number of observations (2) is not equal to intervals (1) x regions (1)"
         with raises(DataMismatchError) as ex:
             DataInterface.data_list_to_ndarray(
                 data,
@@ -550,6 +550,51 @@ class TestDatafileInterface():
 
         np.testing.assert_almost_equal(actual, expected)
 
+    def test_scenario_data_validates(self, setup_folder_structure, get_handler,
+                                     get_remapped_scenario_data):
+        """ DatafileInterface and DataInterface perform validation of scenario
+        data against raw interval and region data.
+
+        As such `len(region_names) * len(interval_names)` is not a valid size
+        of scenario data under cases where resolution definitions contain
+        remapping/resampling info (i.e. multiple hours in a year/regions mapped
+        to one name).
+
+        The set of unique region or interval names can be used instead.
+        """
+        basefolder = setup_folder_structure
+        scenario_data = get_remapped_scenario_data
+
+        keys = scenario_data[0].keys()
+        with open(os.path.join(str(basefolder), 'data', 'scenarios',
+                               'population_high.csv'), 'w+') as output_file:
+            dict_writer = csv.DictWriter(output_file, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(scenario_data)
+
+        config_handler = get_handler
+
+        expected_data = [210, 200, 150, 100]
+        actual = config_handler.read_scenario_data(
+            'High Population (ONS)',
+            'population_count',
+            'lad',
+            'remap_months',
+            2015)
+
+        for expected in expected_data:
+            assert expected in actual
+
+        actual_names = config_handler._read_interval_names('remap_months')
+
+        expected_names = {210: 'fall_month',
+                          200: 'hot_month',
+                          150: 'spring_month',
+                          100: 'cold_month'}
+
+        for value, name in zip(actual.flat, actual_names):
+            assert name == expected_names[value]
+
     def test_narrative_data(self, setup_folder_structure, get_handler, narrative_data):
         """ Test to dump a narrative (yml) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
@@ -666,7 +711,7 @@ class TestDatafileInterface():
         # interval_definitions / read existing (from fixture)
         interval_definitions = config_handler.read_interval_definitions()
         assert interval_definitions[0]['name'] == 'hourly'
-        assert len(interval_definitions) == 2
+        assert len(interval_definitions) == 3
 
         # interval_definition sets / add
         interval_definition = {
@@ -676,7 +721,7 @@ class TestDatafileInterface():
         }
         config_handler.write_interval_definition(interval_definition)
         interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 3
+        assert len(interval_definitions) == 4
         for interval_definition in interval_definitions:
             if interval_definition['name'] == 'monthly':
                 assert interval_definition['filename'] == 'monthly.csv'
@@ -690,7 +735,7 @@ class TestDatafileInterface():
         config_handler.update_interval_definition(
             interval_definition['name'], interval_definition)
         interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 3
+        assert len(interval_definitions) == 4
         for interval_definition in interval_definitions:
             if interval_definition['name'] == 'monthly':
                 assert interval_definition['filename'] == 'monthly_V2.csv'
@@ -700,7 +745,7 @@ class TestDatafileInterface():
         config_handler.update_interval_definition(
             'monthly', interval_definition)
         interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 3
+        assert len(interval_definitions) == 4
         for interval_definition in interval_definitions:
             if interval_definition['name'] == 'name_change':
                 assert interval_definition['filename'] == 'monthly_V2.csv'
@@ -1001,7 +1046,7 @@ class TestDatafileInterface():
         csv_contents = "region,interval,value\noxford,1,1.0\n"
         binary_contents = get_handler_binary.ndarray_to_buffer(expected)
         timestamp = '20180307T144423'  # same timestamp as get_handler
-        
+
         path = os.path.join(
             str(setup_folder_structure),
             "results",
