@@ -1,12 +1,11 @@
 """File-backed data interface
 """
 import csv
+import glob
 import os
 import re
 import shutil
 from csv import DictReader
-
-import glob
 
 import fiona
 import pyarrow as pa
@@ -484,12 +483,16 @@ class DatafileInterface(DataInterface):
         -----
         Expects csv file to contain headings of `id`, `start`, `end`
         """
-        interval_defs = self.read_interval_definitions()
+        interval_list = self.read_interval_definitions()
         filename = None
-        while not filename:
-            for interval_def in interval_defs:
-                if interval_def['name'] == interval_definition_name:
-                    filename = interval_def['filename']
+
+        for interval in interval_list:
+            if interval['name'] == interval_definition_name:
+                filename = interval['filename']
+
+        if filename is None:
+            raise KeyError("Interval set definition '{}' does not exist".format(
+                interval_definition_name))
 
         filepath = os.path.join(self.file_dir['interval_definitions'], filename)
         with open(filepath, 'r') as csvfile:
@@ -1120,7 +1123,7 @@ class DatafileInterface(DataInterface):
                       temporal_resolution, timestep=None, modelset_iteration=None,
                       decision_iteration=None):
         """Return path to text file for a given output
-        
+
         Parameters
         ----------
         modelrun_id : str
@@ -1179,8 +1182,8 @@ class DatafileInterface(DataInterface):
 
         # Collect previous results
         previous_results = sorted([
-            name for name in os.listdir(results_dir) 
-            if os.path.isdir(os.path.join(results_dir, name)) 
+            name for name in os.listdir(results_dir)
+            if os.path.isdir(os.path.join(results_dir, name))
         ])
 
         # Return if no previous results exist in previous modelrun
@@ -1205,11 +1208,11 @@ class DatafileInterface(DataInterface):
 
         # Perform warm start
         self.logger.info("Warm start using results from timestamp %s", previous_results[-1])
-    
+
         # Copy results from latest timestep from this modelrun_id
         current_results_dir = os.path.join(self.file_dir['results'], modelrun_id, self.timestamp)
         shutil.copytree(previous_results_dir, current_results_dir)
-        
+
         # Get metadata for all results
         result_metadata = []
         for filename in glob.iglob(os.path.join(current_results_dir, '**/*.*'), recursive=True):
