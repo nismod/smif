@@ -78,8 +78,7 @@ class ProjectOverview extends Component {
         
         switch(createPopupType) {
         case 'SosModelRun':
-            dispatch(createSosModelRun(config.name))
-            dispatch(saveSosModelRun(
+            dispatch(createSosModelRun(
                 {
                     'name': config.name,
                     'description': config.description,
@@ -91,11 +90,9 @@ class ProjectOverview extends Component {
                     'timesteps': [2015, 2020]
                 }
             ))
-            dispatch(fetchSosModelRuns())
             break
         case 'SosModel':
-            dispatch(createSosModel(config.name))
-            dispatch(saveSosModel(
+            dispatch(createSosModel(
                 {
                     'name': config.name,
                     'description': config.description,
@@ -108,11 +105,9 @@ class ProjectOverview extends Component {
                     'convergence_relative_tolerance': "1e-05"
                 }
             ))
-            dispatch(fetchSosModels())
             break
         case 'SectorModel':
-            dispatch(createSectorModel(config.name))
-            dispatch(saveSectorModel(
+            dispatch(createSectorModel(
                 {
                     'name':  config.name,
                     'description': config.description,
@@ -125,38 +120,33 @@ class ProjectOverview extends Component {
                     'initial_conditions': []
                 }
             ))
-            dispatch(fetchSectorModels())
             break
         case 'ScenarioSet':
-            dispatch(createScenarioSet(config.name))
-            dispatch(saveScenarioSet(
+            dispatch(createScenarioSet(
                 {
                     'name':  config.name,
                     'description': config.description,
                     'facets': []
                 }
             ))
-            dispatch(fetchScenarioSets())
             break
         case 'NarrativeSet':
-            dispatch(createNarrativeSet(config.name))
-            dispatch(saveNarrativeSet({
+            dispatch(createNarrativeSet(
+                {
                     'name': config.name,
                     'description': config.description,
                 }
             ))
-            dispatch(fetchNarrativeSets())
             break
         case 'Narrative':
-            dispatch(createNarrative(config.name))
-            dispatch(saveNarrative({
+            dispatch(createNarrative(
+                {
                     'name': config.name,
                     'description': config.description,
                     'narrative_set': '',
                     'filename': ''
                 }
             ))
-            dispatch(fetchNarratives())
             break
         }
     }

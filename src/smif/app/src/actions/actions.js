@@ -124,13 +124,13 @@ export function saveSosModelRun(modelrun){
     }
 }
 
-export function createSosModelRun(sosModelRunName){
+export function createSosModelRun(sosModelRun){
     return function (dispatch) {
 
         // make API request, returning a promise
         return fetch('/api/v1/sos_model_runs/', {
             method: 'post',
-            body: JSON.stringify({name: sosModelRunName}),
+            body: JSON.stringify(sosModelRun),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -141,7 +141,7 @@ export function createSosModelRun(sosModelRunName){
                 error => console.log('An error occurred.', error)
             )
             .then(
-            //json => dispatch(receiveSosModelRun(json))
+                dispatch(fetchSosModelRuns())
             )
     }
 }
@@ -254,13 +254,13 @@ export function saveSosModel(model){
     }
 }
 
-export function createSosModel(sosModelName){
+export function createSosModel(sosModel){
     return function (dispatch) {
 
         // make API request, returning a promise
         return fetch('/api/v1/sos_models/', {
             method: 'post',
-            body: JSON.stringify({name: sosModelName}),
+            body: JSON.stringify(sosModel),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -269,6 +269,9 @@ export function createSosModel(sosModelName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                dispatch(fetchSosModels())
             )
     }
 }
@@ -381,13 +384,13 @@ export function saveSectorModel(model){
     }
 }
 
-export function createSectorModel(sectorModelName){
+export function createSectorModel(sectorModel){
     return function (dispatch) {
 
         // make API request, returning a promise
         return fetch('/api/v1/sector_models/', {
             method: 'post',
-            body: JSON.stringify({name: sectorModelName}),
+            body: JSON.stringify(sectorModel),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -396,6 +399,9 @@ export function createSectorModel(sectorModelName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                dispatch(fetchSectorModels())
             )
     }
 }
@@ -508,13 +514,15 @@ export function saveScenarioSet(scenarioSet){
     }
 }
 
-export function createScenarioSet(scenarioSetName){
+export function createScenarioSet(scenarioSet){
     return function (dispatch) {
+
+        console.log('1')
 
         // make API request, returning a promise
         return fetch('/api/v1/scenario_sets/', {
             method: 'post',
-            body: JSON.stringify({name: scenarioSetName}),
+            body: JSON.stringify(scenarioSet),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -523,6 +531,9 @@ export function createScenarioSet(scenarioSetName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                dispatch(fetchScenarioSets())
             )
     }
 }
@@ -633,13 +644,13 @@ export function saveScenario(scenario){
     }
 }
 
-export function createScenario(scenarioName){
+export function createScenario(scenario){
     return function (dispatch) {
 
         // make API request, returning a promise
         return fetch('/api/v1/scenarios/', {
             method: 'post',
-            body: JSON.stringify({name: scenarioName}),
+            body: JSON.stringify(scenario),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -648,6 +659,9 @@ export function createScenario(scenarioName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                dispatch(fetchScenarios())
             )
     }
 }
@@ -760,13 +774,13 @@ export function saveNarrativeSet(narrativeSet){
     }
 }
 
-export function createNarrativeSet(narrativeSetName){
+export function createNarrativeSet(narrativeSet){
     return function (dispatch) {
 
         // make API request, returning a promise
         return fetch('/api/v1/narrative_sets/', {
             method: 'post',
-            body: JSON.stringify({name: narrativeSetName}),
+            body: JSON.stringify(narrativeSet),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -775,6 +789,9 @@ export function createNarrativeSet(narrativeSetName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                dispatch(fetchNarrativeSets())
             )
     }
 }
@@ -883,13 +900,13 @@ export function saveNarrative(narrative){
     }
 }
 
-export function createNarrative(narrativeName){
+export function createNarrative(narrative){
     return function (dispatch) {
 
         // make API request, returning a promise
         return fetch('/api/v1/narratives/', {
             method: 'post',
-            body: JSON.stringify({name: narrativeName}),
+            body: JSON.stringify(narrative),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -898,6 +915,9 @@ export function createNarrative(narrativeName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                dispatch(fetchNarratives())
             )
     }
 }
