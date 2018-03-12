@@ -21,13 +21,13 @@ region_definitions:
 scenario_sets:
 - description: Growth in UK population
   facets:
-    - name: population
-      description:
+  - name: population
+    description: ''
   name: population
 - description: Rainfall in the UK
   facets:
   - name: raininess
-    description:
+    description: ''
   name: rainfall
 scenarios:
 - description: ''
