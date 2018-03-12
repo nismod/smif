@@ -261,9 +261,10 @@ class DataInterface(metaclass=ABCMeta):
 
     @staticmethod
     def _validate_observations(observations, region_names, interval_names):
-        if len(observations) != len(region_names) * len(interval_names):
+        if len(observations) != len(set(region_names)) * len(set(interval_names)):
             raise DataMismatchError(
-                "Number of observations is not equal to intervals x regions"
+                "Number of observations (%i) is not equal to intervals (%i) x regions (%i)",
+                len(observations), len(region_names), len(interval_names)
             )
         DataInterface._validate_observation_keys(observations)
         DataInterface._validate_observation_meta(observations, region_names, 'region')
