@@ -1171,63 +1171,64 @@ class DatafileInterface(DataInterface):
         num: The timestep where the data store was recovered to
         """
         results_dir = os.path.join(self.file_dir['results'], modelrun_id)
+
+        # Return if path to previous modelruns doe snot exist
+        if not os.path.isdir(results_dir):
+            self.logger.info("Warm start not possible because modelrun has no previous results (path does not exist)")
+            return None
+
+        # Collect previous results
         previous_results = sorted([
             name for name in os.listdir(results_dir) 
             if os.path.isdir(os.path.join(results_dir, name)) 
         ])
 
-        # Check if warm start is possible
-        previous_results_have_different_storage_format = False
-        previous_results_dont_exist = False
-
-        if len(previous_results) > 0:
-            previous_results_dir = os.path.join(self.file_dir['results'], modelrun_id, previous_results[-1])
-            
-            # Check if the previous modelrun used the same storage format
-            results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'), recursive=True))
-
-            if len(results) > 0:
-                for filename in results:
-                    if ((self.storage_format == 'local_csv' and not filename.endswith(".csv")) or
-                    (self.storage_format == 'local_binary' and not filename.endswith(".dat"))):
-                        previous_results_have_different_storage_format = True
-            else:
-                previous_results_dont_exist = True
-        else:
-            previous_results_dont_exist = True
-
-        # Attempt warm start
-        if previous_results_dont_exist:
-            self.logger.info("Warm start not possible because there are no previous results")
+        # Return if no previous results exist in previous modelrun
+        if len(previous_results) == 0:
+            self.logger.info("Warm start not possible because modelrun has no previous results (no results in path)")
             return None
-        elif previous_results_have_different_storage_format:
-            self.logger.info("Warm start not possible because a different storage mode was used in the previous run")
+
+        previous_results_dir = os.path.join(self.file_dir['results'], modelrun_id, previous_results[-1])
+        results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'), recursive=True))
+
+        # Return if no results exist in last modelrun
+        if len(results) == 0:
+            self.logger.info("Warm start not possible because there are no results in the previous modelrun")
             return None
-        else:
-            self.logger.info("Warm start from timestamp", previous_results[-1])
+
+        # Return if previous results were stored in a different format
+        for filename in results:
+            if ((self.storage_format == 'local_csv' and not filename.endswith(".csv")) or
+            (self.storage_format == 'local_binary' and not filename.endswith(".dat"))):
+                self.logger.info("Warm start not possible because a different storage mode was used in the previous run")
+                return None
+
+        # Perform warm start
+        self.logger.info("Warm start using results from timestamp %s", previous_results[-1])
+    
+        # Copy results from latest timestep from this modelrun_id
+        current_results_dir = os.path.join(self.file_dir['results'], modelrun_id, self.timestamp)
+        shutil.copytree(previous_results_dir, current_results_dir)
         
-            # Copy results from latest timestep from this modelrun_id
-            current_results_dir = os.path.join(self.file_dir['results'], modelrun_id, self.timestamp)
-            shutil.copytree(previous_results_dir, current_results_dir)
-            
-            # Get metadata for all results
-            result_metadata = []
-            for filename in glob.iglob(os.path.join(current_results_dir, '**/*.*'), recursive=True):
-                result_metadata.append(self._parse_results_path(filename.replace(self.file_dir['results'], '')[1:]))
+        # Get metadata for all results
+        result_metadata = []
+        for filename in glob.iglob(os.path.join(current_results_dir, '**/*.*'), recursive=True):
+            result_metadata.append(self._parse_results_path(filename.replace(self.file_dir['results'], '')[1:]))
 
-            # Find latest timestep
-            result_metadata = sorted(result_metadata, key=lambda k: k['timestep'], reverse=True)
-            latest_timestep = result_metadata[0]['timestep']
+        # Find latest timestep
+        result_metadata = sorted(result_metadata, key=lambda k: k['timestep'], reverse=True)
+        latest_timestep = result_metadata[0]['timestep']
 
-            # Remove all results with this timestep
-            results_to_remove = [result for result in result_metadata if result['timestep'] == latest_timestep]
+        # Remove all results with this timestep
+        results_to_remove = [result for result in result_metadata if result['timestep'] == latest_timestep]
 
-            for result in results_to_remove:
-                os.remove(self._get_results_path(result['modelrun_id'], result['timestamp'], result['model_name'],
-                        result['output_name'], result['spatial_resolution'], result['temporal_resolution'],
-                        result['timestep'], result['modelset_iteration'], result['decision_iteration']))
+        for result in results_to_remove:
+            os.remove(self._get_results_path(result['modelrun_id'], result['timestamp'], result['model_name'],
+                    result['output_name'], result['spatial_resolution'], result['temporal_resolution'],
+                    result['timestep'], result['modelset_iteration'], result['decision_iteration']))
 
-            return latest_timestep
+        self.logger.info("Warm start will resume at timestep %s", latest_timestep)
+        return latest_timestep
 
     def _get_results_path(self, modelrun_id, timestamp, model_name, output_name, spatial_resolution,
                           temporal_resolution, timestep, modelset_iteration=None,
