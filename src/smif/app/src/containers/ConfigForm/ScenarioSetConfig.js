@@ -55,10 +55,14 @@ class ScenarioSetConfig extends Component {
 
     createScenario(scenario) {
         const { dispatch } = this.props
-        dispatch(createScenario(scenario['name']))
-        scenario['scenario_set'] = this.props.scenario_set['name']
-        dispatch(saveScenario(scenario))
-        dispatch(fetchScenarios())
+        dispatch(createScenario(
+            {
+                name: scenario['name'],
+                description: scenario['description'],
+                facets: scenario['facets'],
+                scenario_set: this.props.scenario_set['name']
+            }
+        ))
     }
 
     deleteScenario(scenario) {
