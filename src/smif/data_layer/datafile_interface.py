@@ -27,7 +27,8 @@ class DatafileInterface(DataInterface):
     timestamp: str
         The ISO-8601 timestamp that identifies the modelrun (%y%m%dT%H%M%S)
     """
-    def __init__(self, base_folder, storage_format='local_binary', timestamp='yyyy_mm_dd_hhmm'):
+    def __init__(self, base_folder, storage_format='local_binary',
+                 timestamp='yyyy_mm_dd_hhmm'):
         super().__init__()
 
         self.base_folder = base_folder
@@ -413,10 +414,10 @@ class DatafileInterface(DataInterface):
         return data
 
     def _read_region_names(self, region_definition_name):
-        return [
+        return list(set([
             feature['properties']['name']
             for feature in self.read_region_definition_data(region_definition_name)
-        ]
+        ]))
 
     def write_region_definition(self, region_definition):
         """Write region_definition to project configuration
@@ -480,12 +481,16 @@ class DatafileInterface(DataInterface):
         -----
         Expects csv file to contain headings of `id`, `start`, `end`
         """
-        interval_defs = self.read_interval_definitions()
+        interval_list = self.read_interval_definitions()
         filename = None
-        while not filename:
-            for interval_def in interval_defs:
-                if interval_def['name'] == interval_definition_name:
-                    filename = interval_def['filename']
+
+        for interval in interval_list:
+            if interval['name'] == interval_definition_name:
+                filename = interval['filename']
+
+        if filename is None:
+            raise KeyError("Interval set definition '{}' does not exist".format(
+                interval_definition_name))
 
         filepath = os.path.join(self.file_dir['interval_definitions'], filename)
         with open(filepath, 'r') as csvfile:
@@ -496,10 +501,10 @@ class DatafileInterface(DataInterface):
         return data
 
     def _read_interval_names(self, interval_definition_name):
-        return [
+        return list(set([
             interval['id']
             for interval in self.read_interval_definition_data(interval_definition_name)
-        ]
+        ]))
 
     def write_interval_definition(self, interval_definition):
         """Write interval_definition to project configuration
@@ -1131,7 +1136,8 @@ class DatafileInterface(DataInterface):
             raise NotImplementedError
 
         results_path = self._get_results_path(
-            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution, temporal_resolution,
+            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution,
+            temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
 
         if self.storage_format == 'local_csv':
@@ -1163,7 +1169,8 @@ class DatafileInterface(DataInterface):
             raise NotImplementedError
 
         results_path = self._get_results_path(
-            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution, temporal_resolution,
+            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution,
+            temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
@@ -1185,7 +1192,8 @@ class DatafileInterface(DataInterface):
                 "region x interval data"
             )
 
-    def _get_results_path(self, modelrun_id, timestamp, model_name, output_name, spatial_resolution,
+    def _get_results_path(self, modelrun_id, timestamp, model_name, output_name,
+                          spatial_resolution,
                           temporal_resolution, timestep, modelset_iteration=None,
                           decision_iteration=None):
         """Return path to filename for a given output without file extension
