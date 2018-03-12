@@ -1143,6 +1143,171 @@ class TestDatafileInterface():
     def test_write_results_misshapen(self, setup_folder_structure, get_handler):
         pass
 
+    def test_prepare_warm_start(self, setup_folder_structure, project_config):
+        """ Confirm that the warm start copies previous model results
+        and reports the correct next timestep
+        """
+
+        modelrun = 'energy_transport_baseline'
+        model = 'energy_demand'
+        previous_timestamp = '20180307T144423'
+        current_timestamp = '20180307T162453'
+
+        # Setup
+        basefolder = setup_folder_structure
+        current_interface = DatafileInterface(str(basefolder), 'local_csv', current_timestamp)
+
+        # Create results for a 'previous' modelrun
+        previous_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            previous_timestamp,
+            model
+        )
+        os.makedirs(previous_results_path, exist_ok=True)
+
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,4.0\n")
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,6.0\n")
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,8.0\n")
+
+        # Prepare warm start
+        current_timestep = current_interface.prepare_warm_start(modelrun)
+
+        # Confirm that the function reports the correct timestep where the model should continue
+        assert current_timestep == 2030
+
+        # Confirm that previous results (excluding the last timestep) were copied
+        current_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            current_timestamp,
+            model
+        )
+        assert os.listdir(previous_results_path)[:-1] == os.listdir(current_results_path)     
+
+    def test_prepare_warm_start_other_local_storage(self, setup_folder_structure, project_config):
+        """ Confirm that the warm start does not work when previous
+        results were saved using a different local storage type
+        """
+
+        modelrun = 'energy_transport_baseline'
+        model = 'energy_demand'
+        previous_timestamp = '20180307T144423'
+        current_timestamp = '20180307T162453'
+
+        # Setup
+        basefolder = setup_folder_structure
+        current_interface = DatafileInterface(str(basefolder), 'local_binary', current_timestamp)
+
+        # Create results for a 'previous' modelrun
+        previous_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            previous_timestamp,
+            model
+        )
+        os.makedirs(previous_results_path, exist_ok=True)
+
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,4.0\n")
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,6.0\n")
+        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv"), 'w') as fh:
+            fh.write("region,interval,value\noxford,1,8.0\n")
+
+        # Prepare warm start
+        current_timestep = current_interface.prepare_warm_start(modelrun)
+
+        # Confirm that the function reports the correct timestep where the model should continue
+        assert current_timestep == None
+
+        # Confirm that no results were copied
+        current_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            current_timestamp,
+            model
+        )
+        os.makedirs(current_results_path, exist_ok=True)
+        assert len(os.listdir(current_results_path)) == 0
+
+    def test_prepare_warm_start_no_previous_results(self, setup_folder_structure, project_config):
+        """ Confirm that the warm start does not work when no previous
+        results were saved
+        """
+
+        modelrun = 'energy_transport_baseline'
+        model = 'energy_demand'
+        previous_timestamp = '20180307T144423'
+        current_timestamp = '20180307T162453'
+
+        # Setup
+        basefolder = setup_folder_structure
+        current_interface = DatafileInterface(str(basefolder), 'local_binary', current_timestamp)
+
+        # Create results for a 'previous' modelrun
+        previous_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            previous_timestamp,
+            model
+        )
+        os.makedirs(previous_results_path, exist_ok=True)
+
+        # Prepare warm start
+        current_timestep = current_interface.prepare_warm_start(modelrun)
+
+        # Confirm that the function reports the correct timestep where the model should continue
+        assert current_timestep == None
+
+        # Confirm that no results were copied
+        current_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            current_timestamp,
+            model
+        )
+        os.makedirs(current_results_path, exist_ok=True)
+        assert len(os.listdir(current_results_path)) == 0
+
+    def test_prepare_warm_start_no_previous_modelrun(self, setup_folder_structure, project_config):
+        """ Confirm that the warm start does not work when no previous
+        modelrun occured
+        """
+
+        modelrun = 'energy_transport_baseline'
+        model = 'energy_demand'
+        current_timestamp = '20180307T162453'
+
+        # Setup
+        basefolder = setup_folder_structure
+        current_interface = DatafileInterface(str(basefolder), 'local_binary', current_timestamp)
+
+        # Prepare warm start
+        current_timestep = current_interface.prepare_warm_start(modelrun)
+
+        # Confirm that the function reports the correct timestep where the model should continue
+        assert current_timestep == None
+
+        # Confirm that no results were copied
+        current_results_path = os.path.join(
+            str(setup_folder_structure),
+            "results",
+            modelrun,
+            current_timestamp,
+            model
+        )
+        os.makedirs(current_results_path, exist_ok=True)
+        assert len(os.listdir(current_results_path)) == 0
 
 def replace_e(obj, path):
     if obj == 'e':
