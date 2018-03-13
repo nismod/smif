@@ -1188,7 +1188,12 @@ class TestDatafileInterface():
             current_timestamp,
             model
         )
-        assert os.listdir(previous_results_path)[:-1] == os.listdir(current_results_path)     
+        
+        warm_start_results = os.listdir(current_results_path)
+
+        assert 'output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv' in warm_start_results
+        assert 'output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv' in warm_start_results
+        assert 'output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv' not in warm_start_results
 
     def test_prepare_warm_start_other_local_storage(self, setup_folder_structure, project_config):
         """ Confirm that the warm start does not work when previous
