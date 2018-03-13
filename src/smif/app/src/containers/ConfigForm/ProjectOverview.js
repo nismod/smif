@@ -283,12 +283,6 @@ class ProjectOverview extends Component {
             break
         case 'ScenarioSet':
             dispatch(deleteScenarioSet(deletePopupConfigName))
-
-            // also delete all the scenarios that belong to the set
-            let deleteScenarios = scenarios.filter(scenario => scenario['scenario_set'] == deletePopupConfigName)
-            for (let scenario of deleteScenarios) {
-                dispatch(deleteScenario(scenario['name']))
-            }
             break
         case 'NarrativeSet':
             dispatch(deleteNarrativeSet(deletePopupConfigName))

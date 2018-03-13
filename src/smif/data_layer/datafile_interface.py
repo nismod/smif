@@ -671,6 +671,7 @@ class DatafileInterface(DataInterface):
 
     def delete_scenario_set(self, scenario_set_name):
         """Delete scenario_set from project configuration
+        and all scenarios within scenario_set
 
         Arguments
         ---------
@@ -681,6 +682,11 @@ class DatafileInterface(DataInterface):
             raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
 
         project_config = self._read_project_config()
+
+        project_config['scenarios'] = [
+            entry for entry in project_config['scenarios']
+            if entry['scenario_set'] != scenario_set_name
+        ]
 
         project_config['scenario_sets'] = [
             entry for entry in project_config['scenario_sets']
