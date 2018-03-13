@@ -36,7 +36,7 @@ class ScenarioModel(Model):
             'name': self.name,
             'description': self.description,
             'scenario_set': self.scenario_set,
-            'parameters': [
+            'facets': [
                 output.as_dict()
                 for output in self.outputs.values()
             ]
@@ -90,20 +90,20 @@ class ScenarioModelBuilder(object):
         """
         self.scenario.scenario_set = scenario_config['scenario_set']
         self.scenario.scenario_name = scenario_config['name']
-        parameters = scenario_config['parameters']
+        facets = scenario_config['facets']
 
-        for parameter in parameters:
-            spatial = parameter['spatial_resolution']
-            temporal = parameter['temporal_resolution']
+        for facet in facets:
+            spatial = facet['spatial_resolution']
+            temporal = facet['temporal_resolution']
 
             spatial_res = self.region_register.get_entry(spatial)
             temporal_res = self.interval_register.get_entry(temporal)
 
-            name = parameter['name']
+            name = facet['name']
             self.scenario.add_output(name,
                                      spatial_res,
                                      temporal_res,
-                                     parameter['units'])
+                                     facet['units'])
 
     def finish(self):
         """Return the built ScenarioModel

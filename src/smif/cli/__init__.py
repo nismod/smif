@@ -81,6 +81,7 @@ from threading import Timer
 
 import smif
 from smif.data_layer import DatafileInterface, DataNotFoundError
+from smif.convert.register import Register
 from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
@@ -242,6 +243,7 @@ def get_model_run_definition(args):
 
     """
     handler = DatafileInterface(args.directory)
+    Register.data_interface = handler
     load_region_sets(handler)
     load_interval_sets(handler)
     load_units(handler)
@@ -489,7 +491,7 @@ def parse_arguments():
                         action='count',
                         help='show messages: -v to see messages reporting on progress, ' +
                         '-vv to see debug messages.')
-    
+
     subparsers = parser.add_subparsers(help='available commands')
 
     # SETUP

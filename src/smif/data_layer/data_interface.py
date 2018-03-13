@@ -14,6 +14,14 @@ class DataInterface(metaclass=ABCMeta):
         self.logger = getLogger(__name__)
 
     @abstractmethod
+    def read_coefficients(self, source_name, destination_name):
+        raise NotImplementedError
+
+    @abstractmethod
+    def write_coefficients(self, source_name, destination_name, data):
+        raise NotImplementedError
+
+    @abstractmethod
     def read_units_file_name(self):
         raise NotImplementedError()
 
@@ -230,8 +238,10 @@ class DataInterface(metaclass=ABCMeta):
         observations : list of dict
             Required keys for each dict are 'region' (a region name), 'interval'
             (an interval name) and 'value'.
-        region_names : list of str
-        interval_names : list of str
+        region_names : list
+            A list of unique region names
+        interval_names : list
+            A list of unique interval names
 
         Returns
         -------
@@ -248,6 +258,10 @@ class DataInterface(metaclass=ABCMeta):
             If the observations don't include data for any region/interval
             combination
         """
+        # Check that the list of region and interval names are unique
+        assert len(region_names) == len(set(region_names))
+        assert len(interval_names) == len(set(interval_names))
+
         DataInterface._validate_observations(observations, region_names, interval_names)
 
         data = np.full((len(region_names), len(interval_names)), np.nan)
@@ -262,8 +276,9 @@ class DataInterface(metaclass=ABCMeta):
     @staticmethod
     def _validate_observations(observations, region_names, interval_names):
         if len(observations) != len(region_names) * len(interval_names):
+            msg = "Number of observations ({}) is not equal to intervals ({}) x regions ({})"
             raise DataMismatchError(
-                "Number of observations is not equal to intervals x regions"
+                msg.format(len(observations), len(region_names), len(interval_names))
             )
         DataInterface._validate_observation_keys(observations)
         DataInterface._validate_observation_meta(observations, region_names, 'region')

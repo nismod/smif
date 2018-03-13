@@ -5,22 +5,17 @@ import { mount, shallow } from 'enzyme'
 
 import ScenarioSetConfigForm from '../../../src/components/ConfigForm/ScenarioSetConfigForm.js'
 
-import {scenario_set} from '../../helpers.js'
+import {scenario_set, scenarios} from '../../helpers.js'
 import {empty_object, empty_array} from '../../helpers.js'
 
 describe('<ScenarioSetConfigForm />', () => {
 
-    const correctRender = shallow(<ScenarioSetConfigForm scenarioSet={scenario_set} />)
-    const dataMissingRender = shallow(<ScenarioSetConfigForm scenarioSet={empty_object} />)
+    const correctRender = shallow(<ScenarioSetConfigForm scenarioSet={scenario_set} scenarios={scenarios} />)
+    const dataMissingRender = shallow(<ScenarioSetConfigForm scenarioSet={empty_object} scenarios={empty_array}/>)
 
     it('renders scenario_set.name', () => {
         const scenario_set_name = correctRender.find('[id="scenario_set_name"]')
         expect(scenario_set_name.html()).to.contain(scenario_set.name)
-    })
-
-    it('renders scenario_set.name when data missing', () => {
-        const scenario_set_name = dataMissingRender.find('[id="scenario_set_name"]')
-        expect(scenario_set_name.html()).to.contain(`id="scenario_set_name"`)
     })
 
     it('renders scenario_set.description', () => {
@@ -28,19 +23,16 @@ describe('<ScenarioSetConfigForm />', () => {
         expect(scenario_set_description.html()).to.contain(scenario_set.description)
     })
 
-    it('renders scenario_set.description when data missing', () => {
-        const scenario_set_description = dataMissingRender.find('[id="scenario_set_description"]')
-        expect(scenario_set_description.html()).to.contain(`id="scenario_set_description"`)
-    })
-
     it('loads properties ', () => {
-        const wrapper = mount((<ScenarioSetConfigForm scenarioSet={scenario_set} />))
+        const wrapper = mount((<ScenarioSetConfigForm scenarioSet={scenario_set} scenarios={scenarios} />))
         expect(wrapper.props()['scenarioSet']).to.equal(scenario_set)
     })
 
     it('save callback on saveButton click', () => {
         const onSaveClick = sinon.spy()
-        const wrapper = mount((<ScenarioSetConfigForm scenarioSet={scenario_set} saveScenarioSet={onSaveClick} />))
+        const onDeleteScenario = sinon.spy()
+        const onCreateScenario = sinon.spy()
+        const wrapper = mount((<ScenarioSetConfigForm scenarioSet={scenario_set} scenarios={scenarios} saveScenarioSet={onSaveClick} deleteScenario={onDeleteScenario} createScenario={onCreateScenario} />))
     
         wrapper.find('[id="saveButton"]').simulate('click')
         expect(onSaveClick).to.have.property('callCount', 1)
@@ -50,11 +42,19 @@ describe('<ScenarioSetConfigForm />', () => {
     it('save callback with changed properties', () => {
         const changed_scenario_set = {
             name: 'new_name',
-            description: 'new_description'
+            description: 'new_description',
+            facets: [
+                {
+                    description: 'Central Population for the UK',
+                    name: 'population'
+                }
+            ]
         }
 
         const onSaveClick = sinon.spy()
-        const wrapper = mount((<ScenarioSetConfigForm scenarioSet={scenario_set} saveScenarioSet={onSaveClick} />))
+        const onDeleteScenario = sinon.spy()
+        const onCreateScenario = sinon.spy()
+        const wrapper = mount((<ScenarioSetConfigForm scenarioSet={scenario_set} scenarios={scenarios} saveScenarioSet={onSaveClick} deleteScenario={onDeleteScenario} createScenario={onCreateScenario}/>))
 
         wrapper.find('[id="scenario_set_name"]').simulate('change', { target: { name: 'name', value: changed_scenario_set['name'] } })
         wrapper.find('[id="scenario_set_description"]').simulate('change', { target: { name: 'description', value: changed_scenario_set['description'] } })
@@ -66,14 +66,14 @@ describe('<ScenarioSetConfigForm />', () => {
     
     it('cancel callback on cancelButton click', () => {
         const onCancelClick = sinon.spy()
-        const wrapper = mount((<ScenarioSetConfigForm scenarioSet={scenario_set} cancelScenarioSet={onCancelClick} />))
+        const wrapper = mount((<ScenarioSetConfigForm scenarioSet={scenario_set} scenarios={scenarios} cancelScenarioSet={onCancelClick} />))
     
         wrapper.find('[id="cancelButton"]').simulate('click')
         expect(onCancelClick).to.have.property('callCount', 1)
     })
 
     it('unmount', () => {
-        var wrapper = mount((<ScenarioSetConfigForm scenarioSet={scenario_set} />))
+        var wrapper = mount((<ScenarioSetConfigForm scenarioSet={scenario_set} scenarios={scenarios} />))
 
         wrapper = wrapper.unmount()
         expect(wrapper.html()).to.be.null

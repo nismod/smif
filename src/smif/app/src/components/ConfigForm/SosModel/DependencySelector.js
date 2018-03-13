@@ -34,9 +34,28 @@ class DependencySelector extends Component {
     }
 
     handleChange(event) {
-        this.setState({
-            inputs: update(this.state.inputs, {[event.target.name]: {$set: event.target.value}})
-        })
+
+
+        // Reset the SourceOutput and SinkInput if a difference source or sink is selected
+        if (event.target.name == 'SourceModel'){
+            this.setState({
+                inputs: update(this.state.inputs, {
+                    SourceModel: {$set: event.target.value},
+                    SourceOutput: {$set: ''}
+                })
+            })
+        } else if (event.target.name == 'SinkModel'){
+            this.setState({
+                inputs: update(this.state.inputs, {
+                    SinkModel: {$set: event.target.value},
+                    SinkInput: {$set: ''}
+                })
+            })
+        } else {
+            this.setState({
+                inputs: update(this.state.inputs, {[event.target.name]: {$set: event.target.value}})
+            })
+        }
     }
 
     handleSubmit() {
@@ -102,7 +121,7 @@ class DependencySelector extends Component {
         })
     }
 
-    renderDependencySelector(dependencies, sectorModels, scenarioSets) {
+    renderDependencySelector(sectorModels, scenarioSets, dependencies, selectedSectorModels, selectedScenarioSets) {
 
         const {inputs} = this.state
 
@@ -110,20 +129,20 @@ class DependencySelector extends Component {
         let sink_selector = []
 
         // Prepare the options for the dependency selector source and sink
-        if (sectorModels != null && scenarioSets != null) {
+        if (selectedSectorModels != null && selectedScenarioSets != null) {
             source_selector.push(<option key={'source_selector_info'} disabled="disabled" value="none">Please select a source</option>)
             sink_selector.push(<option key={'sink_selector_info'} disabled="disabled" value="none">Please select a sink</option>)
 
             // Fill sector models
-            if (sectorModels.length > 0) {
+            if (selectedSectorModels.length > 0) {
                 source_selector.push(<option key={'source_sectormodel_info'} disabled="disabled">Sector Model</option>)
                 sink_selector.push(<option key={'sink_sectormodel_info'} disabled="disabled">Sector Model</option>)
-                for(let i = 0; i < sectorModels.length; i++) {
-                    if (inputs['SinkModel'] != sectorModels[i]) {
-                        source_selector.push(<option key={'source_selector_sectormodel_' + i} value={sectorModels[i]}>{sectorModels[i]}</option>)
+                for(let i = 0; i < selectedSectorModels.length; i++) {
+                    if (inputs['SinkModel'] != selectedSectorModels[i]) {
+                        source_selector.push(<option key={'source_selector_sectormodel_' + i} value={selectedSectorModels[i]}>{selectedSectorModels[i]}</option>)
                     }
-                    if (inputs['SourceModel'] != sectorModels[i]) {
-                        sink_selector.push(<option key={'sink_selector_sectormodel_' + i} value={sectorModels[i]}>{sectorModels[i]}</option>)
+                    if (inputs['SourceModel'] != selectedSectorModels[i]) {
+                        sink_selector.push(<option key={'sink_selector_sectormodel_' + i} value={selectedSectorModels[i]}>{selectedSectorModels[i]}</option>)
                     }
                 }
             }
@@ -134,10 +153,10 @@ class DependencySelector extends Component {
             }
             
             // Fill scenario sets
-            if (scenarioSets.length > 0) {
-                source_selector.push(<option key={'scenariosets_info'} disabled="disabled">Scenario Set</option>)
-                for(let i = 0; i < scenarioSets.length; i++) {
-                    source_selector.push(<option key={'source_selector_scenarioset_' + i} value={scenarioSets[i]}>{scenarioSets[i]}</option>)
+            if (selectedScenarioSets.length > 0) {
+                source_selector.push(<option key={'selectedScenariosets_info'} disabled="disabled">Scenario Set</option>)
+                for(let i = 0; i < selectedScenarioSets.length; i++) {
+                    source_selector.push(<option key={'source_selector_scenarioset_' + i} value={selectedScenarioSets[i]}>{selectedScenarioSets[i]}</option>)
                 }
             }
             
@@ -147,10 +166,63 @@ class DependencySelector extends Component {
             }
         }
         
+        // Prepare options for source output selector
+        let source_output_selector = []
+        if (inputs.SourceModel != '') {
+            source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">Please select a source output</option>)
+            
+            let sectormodel_source_outputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SourceModel)
+            let scenarioset_source_outputs = scenarioSets.filter(scenarioSet => scenarioSet.name == inputs.SourceModel)
+            
+            if (sectormodel_source_outputs.length == 1 && scenarioset_source_outputs.length == 0) {
+                sectormodel_source_outputs[0].outputs.map(output => 
+                    source_output_selector.push(
+                        <option key={'source_output_' + output['name']} value={output['name']}>{output['name']}</option>
+                    )
+                )
+
+                // set state for default selection
+                if (scenarioset_source_outputs[0].facets.length > 0) {
+                    this.state.inputs.SourceOutput = sectormodel_source_outputs[0].outputs[0].name
+                } else {
+                    this.state.inputs.SourceOutput = ''
+                }
+
+            } else if (scenarioset_source_outputs.length == 1 && sectormodel_source_outputs.length == 0) {
+                scenarioset_source_outputs[0].facets.map(facet => 
+                    source_output_selector.push(
+                        <option key={'source_output_' + facet['name']} value={facet['name']}>{facet['name']}</option>
+                    )
+                )
+            } else if ((sectormodel_source_outputs.length + scenarioset_source_outputs.length) > 1) {
+                source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">Error: Duplicates</option>)
+            } else {
+                source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">None</option>)
+            }
+
+        } else {
+            source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">None</option>)
+        }
+
+        // Prepare options for sink input selector
+        let sink_input_selector = []
+        
+        if (inputs.SinkModel != '') {
+            sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">Please select a sink input</option>)
+            
+            let sectormodel_sink_inputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SinkModel)
+            sectormodel_sink_inputs[0].inputs.map(input => 
+                sink_input_selector.push(
+                    <option key={'sink_input_' + input['name']} value={input['name']}>{input['name']}</option>
+                )
+            )
+        } else {
+            sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">None</option>)
+        }
+        
         return (
             <div>
                 <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Dependency" onClick={this.openCreateDependencyPopup} />
-
                 <Popup onRequestOpen={this.state.CreateDependencypopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit()}}>
                         <h2 ref={subtitle => this.subtitle = subtitle}>Add a new Dependency</h2>
@@ -158,7 +230,7 @@ class DependencySelector extends Component {
                             <div className="row">
                                 <div className="col">
                                     <label>Source</label>
-                                    <select autoFocus className={this.state.className.SourceModel} name="SourceModel" defaultValue="none" onChange={this.handleChange}>
+                                    <select autoFocus className={this.state.className.SourceModel} name="SourceModel" value={this.state.inputs.SourceModel} onChange={this.handleChange}>
                                         {source_selector}
                                     </select>
                                     <div className="invalid-feedback">
@@ -167,7 +239,7 @@ class DependencySelector extends Component {
                                 </div>
                                 <div className="col">
                                     <label>Sink</label>
-                                    <select className={this.state.className.SinkModel} name="SinkModel" defaultValue="none" onChange={this.handleChange}>
+                                    <select className={this.state.className.SinkModel} name="SinkModel" value={this.state.inputs.SinkModel} onChange={this.handleChange}>
                                         {sink_selector}
                                     </select>
                                     <div className="invalid-feedback">
@@ -177,13 +249,17 @@ class DependencySelector extends Component {
                             </div>
                             <div className="row">
                                 <div className="col">
-                                    <input ref="" type="text" className={this.state.className.SourceOutput} name="SourceOutput" placeholder="Source Output" onChange={this.handleChange}/>
+                                    <select className={this.state.className.SourceOutput} name="SourceOutput" value={this.state.inputs.SourceOutput} onChange={this.handleChange}>
+                                        {source_output_selector}
+                                    </select>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
                                 </div>
                                 <div className="col">
-                                    <input type="text" className={this.state.className.SinkInput} name="SinkInput" placeholder="Sink Input" onChange={this.handleChange}/>
+                                    <select className={this.state.className.SinkInput} name="SinkInput" value={this.state.inputs.SinkInput} onChange={this.handleChange}>
+                                        {sink_input_selector}
+                                    </select>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
@@ -228,28 +304,36 @@ class DependencySelector extends Component {
     }
 
     render() {
-        const {dependencies, sectorModels, scenarioSets} = this.props
+        const {sectorModels, scenarioSets, dependencies, selectedSectorModels, selectedScenarioSets} = this.props
 
-        if (dependencies == null || dependencies == undefined) {
+        if (sectorModels == null || sectorModels == undefined) {
+            return this.renderDanger('sectorModels are undefined')
+        } else if (scenarioSets == null || scenarioSets == undefined) {
+            return this.renderDanger('scenarioSets are undefined')
+        } else if (dependencies == null || dependencies == undefined) {
             return this.renderDanger('Dependencies are undefined')
-        } else if ((sectorModels == null || sectorModels == undefined) && (scenarioSets == null || scenarioSets == undefined)) {
-            return this.renderInfo('There are no sectorModels and scenarioSets configured')
-        } else if ((sectorModels == null || sectorModels == undefined) || (scenarioSets == null || scenarioSets == undefined)) {
-            if (sectorModels == null || sectorModels == undefined) {
-                return this.renderDependencySelector(dependencies, [], scenarioSets)
-            } else if (scenarioSets == null || scenarioSets == undefined) {
-                return this.renderDependencySelector(dependencies, sectorModels, [])
+        } else if (selectedSectorModels == null || selectedSectorModels == undefined) {
+            return this.renderDanger('selectedSectorModels are undefined')
+        } else if (selectedScenarioSets == null || selectedScenarioSets == undefined) {
+            return this.renderDanger('selectedScenarioSets are undefined')
+        } else if ((selectedSectorModels == null || selectedSectorModels == undefined) || (selectedScenarioSets == null || selectedScenarioSets == undefined)) {
+            if (selectedSectorModels == null || selectedSectorModels == undefined) {
+                return this.renderDependencySelector(sectorModels, scenarioSets, dependencies, [], selectedScenarioSets)
+            } else if (selectedScenarioSets == null || selectedScenarioSets == undefined) {
+                return this.renderDependencySelector(sectorModels, scenarioSets, dependencies, selectedSectorModels, [])
             }
         } else {
-            return this.renderDependencySelector(dependencies, sectorModels, scenarioSets)
+            return this.renderDependencySelector(sectorModels, scenarioSets, dependencies, selectedSectorModels, selectedScenarioSets)
         }
     }
 }
 
 DependencySelector.propTypes = {
-    dependencies: PropTypes.array,
     sectorModels: PropTypes.array,
     scenarioSets: PropTypes.array,
+    dependencies: PropTypes.array,
+    selectedSectorModels: PropTypes.array,
+    selectedScenarioSets: PropTypes.array,
     onChange: PropTypes.func,
     onDelete: PropTypes.func
 }

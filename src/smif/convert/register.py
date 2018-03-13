@@ -29,6 +29,8 @@ class Register(LogMixin, metaclass=ABCMeta):
         The axis over which operations on the data array are performed
 
     """
+    data_interface = None
+
     def __init__(self, axis=None):
         self.axis = axis
 
@@ -143,6 +145,15 @@ class NDimensionalRegister(Register):
             raise ValueError(msg.format(name))
         return self._register[name]
 
+    def _write_coefficients(self, source, destination, data):
+        if self.data_interface:
+            self.data_interface.write_coefficients(source,
+                                                   destination,
+                                                   data)
+        else:
+            msg = "Data interface not available to write coefficients"
+            self.logger.warning(msg)
+
     def get_coefficients(self, source, destination):
         """Get coefficients representing intersection of sets
 
@@ -157,38 +168,33 @@ class NDimensionalRegister(Register):
         -------
         numpy.ndarray
         """
-
         from_set = self.get_entry(source)
         to_set = self.get_entry(destination)
 
-        if from_set.coverage == to_set.coverage and \
-                len(from_set) == len(to_set):
-            msg = "Perform conversion from %s to %s"
-            self.logger.info(msg, source, destination)
-            coefficients = self._obtain_coefficients(from_set, to_set)
-
-        elif from_set.coverage == to_set.coverage and \
-                len(from_set) > len(to_set):
-            msg = "Perform aggregation from %s to %s"
-            self.logger.info(msg, source, destination)
-            coefficients = self._obtain_coefficients(from_set, to_set)
-
-        elif from_set.coverage == to_set.coverage and \
-                len(from_set) < len(to_set):
-            msg = "Perform disaggregation from %s to %s"
-            self.logger.info(msg, source, destination)
-            coefficients = self._obtain_coefficients(from_set, to_set)
-
-        elif from_set.coverage != to_set.coverage:
+        if from_set.coverage != to_set.coverage:
             log_msg = "Coverage for '%s' is %d and does not match coverage " \
-                      "for '%s' which is %d"
+                    "for '%s' which is %d"
             self.logger.warning(log_msg, from_set.name, from_set.coverage,
                                 to_set.name, to_set.coverage)
-            coefficients = self._obtain_coefficients(from_set, to_set)
+
+        if self.data_interface:
+
+            self.logger.info("Using data interface to load coefficients")
+            coefficients = self.data_interface.read_coefficients(source,
+                                                                 destination)
+
+            if coefficients is None:
+                msg = "Coefficients not found, generating coefficients for %s to %s"
+                self.logger.info(msg, source, destination)
+
+                coefficients = self._obtain_coefficients(from_set, to_set)
+                self._write_coefficients(source, destination, coefficients)
 
         else:
-            msg = "An unidentified error occured"
-            raise RuntimeError(msg)
+
+            msg = "No data interface specified, generating coefficients for %s to %s"
+            self.logger.info(msg, source, destination)
+            coefficients = self._obtain_coefficients(from_set, to_set)
 
         return coefficients
 

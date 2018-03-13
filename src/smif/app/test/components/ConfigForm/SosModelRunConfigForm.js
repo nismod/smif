@@ -42,9 +42,9 @@ describe('<SosModelRunConfigForm />', () => {
         const wrapper = mount(<SosModelRunConfigForm sosModelRun={sos_model_run} sosModels={sos_models} scenarios={scenarios} narratives={narratives} />)
 
         // Check excisting scenario to be loaded
-        expect(wrapper.find('[id="radio_population_Central Population (Low)"]').props().defaultChecked).to.equal(false)
-        expect(wrapper.find('[id="radio_population_Central Population (Medium)"]').props().defaultChecked).to.equal(true)
-        expect(wrapper.find('[id="radio_population_Central Population (High)"]').props().defaultChecked).to.equal(false)
+        expect(wrapper.find('[id="radio_population_Central Population (Low)"]').props().checked).to.equal(false)
+        expect(wrapper.find('[id="radio_population_Central Population (Medium)"]').props().checked).to.equal(true)
+        expect(wrapper.find('[id="radio_population_Central Population (High)"]').props().checked).to.equal(false)
         expect(wrapper.state()['selectedSosModelRun']['scenarios']['population']).to.equal("Central Population (Medium)")
 
         // Change scenario

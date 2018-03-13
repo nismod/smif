@@ -10,7 +10,6 @@ import glob
 
 import fiona
 import pyarrow as pa
-import pyarrow.parquet as pq
 from smif.data_layer.data_interface import (DataExistsError, DataInterface,
                                             DataMismatchError,
                                             DataNotFoundError)
@@ -32,7 +31,8 @@ class DatafileInterface(DataInterface):
     timestamp: str
         The ISO-8601 timestamp that identifies the modelrun (%y%m%dT%H%M%S)
     """
-    def __init__(self, base_folder, storage_format='local_binary', timestamp='yyyy_mm_dd_hhmm'):
+    def __init__(self, base_folder, storage_format='local_binary',
+                 timestamp='yyyy_mm_dd_hhmm'):
         super().__init__()
 
         self.base_folder = base_folder
@@ -52,7 +52,8 @@ class DatafileInterface(DataInterface):
             'interventions': 'data',
             'narratives': 'data',
             'region_definitions': 'data',
-            'scenarios': 'data'
+            'scenarios': 'data',
+            'coefficients': 'data'
         }
 
         for category, folder in config_folders.items():
@@ -83,19 +84,15 @@ class DatafileInterface(DataInterface):
         list
             A list of sos_model_run dicts
         """
-        sos_model_run_name_desc = []
+        sos_model_runs = []
 
         sos_model_run_names = self._read_filenames_in_dir(self.file_dir['sos_model_runs'],
                                                           '.yml')
         for sos_model_run_name in sos_model_run_names:
-            sos_model_run = self._read_yaml_file(
-                self.file_dir['sos_model_runs'], sos_model_run_name)
-            sos_model_run_name_desc.append({
-                'name': sos_model_run['name'],
-                'description': sos_model_run['description']
-            })
+            sos_model_runs.append(self._read_yaml_file(
+                self.file_dir['sos_model_runs'], sos_model_run_name))
 
-        return sos_model_run_name_desc
+        return sos_model_runs
 
     def read_sos_model_run(self, sos_model_run_name):
         """Read a system-of-system model run
@@ -417,10 +414,10 @@ class DatafileInterface(DataInterface):
         return data
 
     def _read_region_names(self, region_definition_name):
-        return [
+        return list(set([
             feature['properties']['name']
             for feature in self.read_region_definition_data(region_definition_name)
-        ]
+        ]))
 
     def write_region_definition(self, region_definition):
         """Write region_definition to project configuration
@@ -484,12 +481,16 @@ class DatafileInterface(DataInterface):
         -----
         Expects csv file to contain headings of `id`, `start`, `end`
         """
-        interval_defs = self.read_interval_definitions()
+        interval_list = self.read_interval_definitions()
         filename = None
-        while not filename:
-            for interval_def in interval_defs:
-                if interval_def['name'] == interval_definition_name:
-                    filename = interval_def['filename']
+
+        for interval in interval_list:
+            if interval['name'] == interval_definition_name:
+                filename = interval['filename']
+
+        if filename is None:
+            raise KeyError("Interval set definition '{}' does not exist".format(
+                interval_definition_name))
 
         filepath = os.path.join(self.file_dir['interval_definitions'], filename)
         with open(filepath, 'r') as csvfile:
@@ -500,10 +501,10 @@ class DatafileInterface(DataInterface):
         return data
 
     def _read_interval_names(self, interval_definition_name):
-        return [
+        return list(set([
             interval['id']
             for interval in self.read_interval_definition_data(interval_definition_name)
-        ]
+        ]))
 
     def write_interval_definition(self, interval_definition):
         """Write interval_definition to project configuration
@@ -674,6 +675,7 @@ class DatafileInterface(DataInterface):
 
     def delete_scenario_set(self, scenario_set_name):
         """Delete scenario_set from project configuration
+        and all scenarios within scenario_set
 
         Arguments
         ---------
@@ -684,6 +686,11 @@ class DatafileInterface(DataInterface):
             raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
 
         project_config = self._read_project_config()
+
+        project_config['scenarios'] = [
+            entry for entry in project_config['scenarios']
+            if entry['scenario_set'] != scenario_set_name
+        ]
 
         project_config['scenario_sets'] = [
             entry for entry in project_config['scenario_sets']
@@ -787,7 +794,7 @@ class DatafileInterface(DataInterface):
 
         self._write_project_config(project_config)
 
-    def read_scenario_data(self, scenario_name, parameter_name,
+    def read_scenario_data(self, scenario_name, facet_name,
                            spatial_resolution, temporal_resolution, timestep):
         """Read scenario data file
 
@@ -795,8 +802,8 @@ class DatafileInterface(DataInterface):
         ---------
         scenario_name: str
             Name of the scenario
-        parameter_name: str
-            Name of the scenario parameter to read
+        facet_name: str
+            Name of the scenario facet to read
         spatial_resolution : str
         temporal_resolution : str
         timestep: int
@@ -811,16 +818,16 @@ class DatafileInterface(DataInterface):
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
             if scenario_data['name'] == scenario_name:
-                for param in scenario_data['parameters']:
-                    if param['name'] == parameter_name:
-                        filename = param['filename']
+                for facet in scenario_data['facets']:
+                    if facet['name'] == facet_name:
+                        filename = facet['filename']
                         break
                 break
 
         if filename is None:
             raise DataNotFoundError(
-                "Scenario '{}' with parameter '{}' not found".format(
-                    scenario_name, parameter_name))
+                "Scenario '{}' with facet '{}' not found".format(
+                    scenario_name, facet_name))
 
         # Read the scenario data from file
         filepath = os.path.join(self.file_dir['scenarios'], filename)
@@ -1080,6 +1087,36 @@ class DatafileInterface(DataInterface):
 
         raise DataNotFoundError('Narrative \'{}\' not found'.format(narrative_name))
 
+    def read_coefficients(self, source_name, destination_name):
+        """Reads coefficients from file on disk
+
+        Coefficients are uniquely identified by their source/destination names
+
+        """
+        results_path = self._get_coefficients_path(source_name, destination_name)
+        if os.path.isfile(results_path):
+            return self._get_data_from_native_file(results_path)
+        else:
+            msg = "Could not find the coefficients file for %s to %s"
+            self.logger.warning(msg, source_name, destination_name)
+            return None
+
+    def write_coefficients(self, source_name, destination_name, data):
+        """Writes coefficients to file on disk
+
+        Coefficients are uniquely identified by their source/destination names
+
+        """
+        results_path = self._get_coefficients_path(source_name, destination_name)
+        buffer = self.ndarray_to_buffer(data)
+        self._write_data_to_native_file(results_path, buffer)
+
+    def _get_coefficients_path(self, source_name, destination_name):
+
+        results_dir = self.file_dir['coefficients']
+        path = os.path.join(results_dir, source_name + '_' + destination_name)
+        return path + '.dat'
+
     def read_results(self, modelrun_id, model_name, output_name, spatial_resolution,
                      temporal_resolution, timestep=None, modelset_iteration=None,
                      decision_iteration=None):
@@ -1105,7 +1142,8 @@ class DatafileInterface(DataInterface):
             raise NotImplementedError
 
         results_path = self._get_results_path(
-            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution, temporal_resolution,
+            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution,
+            temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
 
         if self.storage_format == 'local_csv':
@@ -1120,7 +1158,7 @@ class DatafileInterface(DataInterface):
                       temporal_resolution, timestep=None, modelset_iteration=None,
                       decision_iteration=None):
         """Return path to text file for a given output
-        
+
         Parameters
         ----------
         modelrun_id : str
@@ -1137,7 +1175,8 @@ class DatafileInterface(DataInterface):
             raise NotImplementedError
 
         results_path = self._get_results_path(
-            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution, temporal_resolution,
+            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution,
+            temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
