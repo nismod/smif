@@ -58,6 +58,15 @@ def test_fixture_single_run_csv():
     assert "Running 20170918_energy_water_short" in str(output.stderr)
     assert "Model run complete" in str(output.stdout)
 
+def test_fixture_single_run_warm():
+    """Test running the (default) single_run fixture with warm setting enabled
+    """
+    config_dir = pkg_resources.resource_filename('smif', 'sample_project')
+    output = subprocess.run(["smif", "-v", "run", "-w", "-d", config_dir,
+                             "20170918_energy_water_short"],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert "Running 20170918_energy_water_short" in str(output.stderr)
+    assert "Model run complete" in str(output.stdout)
 
 def test_fixture_list_runs():
     """Test running the filesystem-based single_run fixture
