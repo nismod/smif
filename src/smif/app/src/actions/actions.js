@@ -649,6 +649,9 @@ export function saveScenario(scenario){
                 response => response.json(),
                 error => console.log('An error occurred.', error)
             )
+            .then (
+                data => dispatch(fetchScenarios())
+            )
     }
 }
 

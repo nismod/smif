@@ -75,34 +75,6 @@ class ScenarioSetConfigForm extends Component {
     }
 
     handleSave() {
-
-        let existingScenarios = this.props.scenarios.map(scenario => scenario.name)
-
-        // Create new scenarios
-        let createScenarios = this.state.selectedScenarios.filter(scenario => existingScenarios.includes(scenario.name) == false)
-        for (var i in createScenarios) {
-            this.props.createScenario(createScenarios[i])
-        }
-
-        // Save scenarios
-        let saveScenarios = this.state.selectedScenarios.filter(scenario => existingScenarios.includes(scenario.name) == true)
-        for (var i in saveScenarios) {
-            this.props.saveScenario(saveScenarios[i])
-        }
-
-        // delete scenarios that were removed
-        let beforeSaveScenarios = this.props.scenarios.filter(
-            scenario => scenario.scenario_set == this.props.scenarioSet['name']
-        ).map(scenario => scenario.name)
-        let afterSaveScenarios = this.state.selectedScenarios.map(scenario => scenario.name)
-        
-        for (var i in beforeSaveScenarios) {
-            if (afterSaveScenarios.includes(beforeSaveScenarios[i]) == false) {
-                console.log
-                this.props.deleteScenario(beforeSaveScenarios[i])
-            }
-        }
-
         // save the scenario set
         this.props.saveScenarioSet(this.state.selectedScenarioSet)
     }
@@ -129,22 +101,13 @@ class ScenarioSetConfigForm extends Component {
 
     handleScenarioSave(saveScenario) {
         var newScenarios = []
-
-        for (var i in this.state.selectedScenarios) {
-            if (this.state.selectedScenarios[i]['name'] == saveScenario['name']) {
-                newScenarios.push(saveScenario)
-            } else {
-                newScenarios.push(this.state.selectedScenarios[i])
-            }
-        }
-
-        this.handleChange({target: {name: 'Scenario', value: newScenarios}})
+        this.props.saveScenario(saveScenario)
         this.closeScenarioPopup()
     }
 
     handleScenarioCreate(scenario) {
         let {selectedScenarios} = this.state
-        selectedScenarios.push(scenario)
+        this.props.createScenario(scenario)
         this.closeScenarioPopup()
     }
 
@@ -296,11 +259,7 @@ class ScenarioSetConfigForm extends Component {
                 break
                 
             case 'Scenario':
-                for (let i = 0; i < Object.keys(selectedScenarios).length; i++) {
-                    if (selectedScenarios[i].name == deletePopupConfigName) {
-                        selectedScenarios.splice(i, 1)
-                    }
-                }
+                this.props.deleteScenario(deletePopupConfigName)
                 break
         }
 
