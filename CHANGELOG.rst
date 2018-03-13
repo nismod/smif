@@ -2,6 +2,32 @@
 Changelog
 =========
 
+Version 0.7
+===========
+
+Functionality:
+
+- Renamed ScenarioSets parameters to facets which constrain the dimensions of
+  data defined in Scenarios 
+- Numerous functionality and usability improvements to the smif GUI
+- Refactored and generalised conversion of space and time to use numpy operations
+- Conversion coefficients are cached and loaded instead of being regenerated each run
+- Added a warm start argument ``--warm`` to the smif command line inteface which
+  resumes a model run from the last successfully completed time interval of a run
+- Added timestamps to results
+- Add a binary file interface ``-i`` argument to the command line interface that
+  writes intermediate model results using pyarrow resulting in much smaller file 
+  sizes than csv and a great speedup
+
+Bugs:
+
+- Fixes to the GUI to avoid locking due to threading
+- Fixed a bug in datafileinterface where an infinite loop was entered when an 
+  interval definition did not exist
+- Datafileinterface validates data from the set of unique interval and region 
+  names
+
+
 Version 0.6
 ===========
 
