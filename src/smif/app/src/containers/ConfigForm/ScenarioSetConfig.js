@@ -68,7 +68,6 @@ class ScenarioSetConfig extends Component {
     deleteScenario(scenario) {
         const { dispatch } = this.props
         dispatch(deleteScenario(scenario))
-        dispatch(fetchScenarios())
     }
 
     returnToPreviousPage() {

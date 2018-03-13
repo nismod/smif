@@ -76,15 +76,31 @@ class ScenarioSetConfigForm extends Component {
 
     handleSave() {
 
-        // delete all existing scenarios in this set
-        let deleteScenarios = this.props.scenarios.filter(scenario => scenario.scenario_set == this.props.scenarioSet['name'])
-        for (var i in deleteScenarios) {
-            this.props.deleteScenario(deleteScenarios[i]['name'])
+        let existingScenarios = this.props.scenarios.map(scenario => scenario.name)
+
+        // Create new scenarios
+        let createScenarios = this.state.selectedScenarios.filter(scenario => existingScenarios.includes(scenario.name) == false)
+        for (var i in createScenarios) {
+            this.props.createScenario(createScenarios[i])
         }
 
-        // add the current state of scenarios
-        for (var i in this.state.selectedScenarios) {
-            this.props.createScenario(this.state.selectedScenarios[i])
+        // Save scenarios
+        let saveScenarios = this.state.selectedScenarios.filter(scenario => existingScenarios.includes(scenario.name) == true)
+        for (var i in saveScenarios) {
+            this.props.saveScenario(saveScenarios[i])
+        }
+
+        // delete scenarios that were removed
+        let beforeSaveScenarios = this.props.scenarios.filter(
+            scenario => scenario.scenario_set == this.props.scenarioSet['name']
+        ).map(scenario => scenario.name)
+        let afterSaveScenarios = this.state.selectedScenarios.map(scenario => scenario.name)
+        
+        for (var i in beforeSaveScenarios) {
+            if (afterSaveScenarios.includes(beforeSaveScenarios[i]) == false) {
+                console.log
+                this.props.deleteScenario(beforeSaveScenarios[i])
+            }
         }
 
         // save the scenario set
