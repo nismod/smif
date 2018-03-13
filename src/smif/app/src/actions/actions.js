@@ -141,7 +141,7 @@ export function createSosModelRun(sosModelRun){
                 error => console.log('An error occurred.', error)
             )
             .then(
-                dispatch(fetchSosModelRuns())
+                data => dispatch(fetchSosModelRuns())
             )
     }
 }
@@ -160,6 +160,9 @@ export function deleteSosModelRun(sosModelRunName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                data => dispatch(fetchSosModelRuns())
             )
     }
 }
@@ -271,7 +274,7 @@ export function createSosModel(sosModel){
                 error => console.log('An error occurred.', error)
             )
             .then(
-                dispatch(fetchSosModels())
+                date => dispatch(fetchSosModels())
             )
     }
 }
@@ -290,6 +293,9 @@ export function deleteSosModel(sosModelName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                date => dispatch(fetchSosModels())
             )
     }
 }
@@ -401,7 +407,7 @@ export function createSectorModel(sectorModel){
                 error => console.log('An error occurred.', error)
             )
             .then(
-                dispatch(fetchSectorModels())
+                data => dispatch(fetchSectorModels())
             )
     }
 }
@@ -420,6 +426,9 @@ export function deleteSectorModel(sectorModelName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                data => dispatch(fetchSectorModels())
             )
     }
 }
@@ -516,25 +525,21 @@ export function saveScenarioSet(scenarioSet){
 
 export function createScenarioSet(scenarioSet){
     return function (dispatch) {
-
-        console.log('1')
-
         // make API request, returning a promise
         return fetch('/api/v1/scenario_sets/', {
             method: 'post',
             body: JSON.stringify(scenarioSet),
-
             headers: {
                 'Content-Type': 'application/json'
             }
         })
-            .then(
-                response => response.json(),
-                error => console.log('An error occurred.', error)
-            )
-            .then(
-                dispatch(fetchScenarioSets())
-            )
+        .then(
+            response => response.json(),
+            error => console.log('An error occurred.', error)
+        )
+        .then(
+            data => dispatch(fetchScenarioSets())
+        )
     }
 }
 
@@ -549,10 +554,13 @@ export function deleteScenarioSet(scenarioSetName){
                 'Content-Type': 'application/json'
             }
         })
-            .then(
-                response => response.json(),
-                error => console.log('An error occurred.', error)
-            )
+        .then(
+            response => response.json(),
+            error => console.log('An error occurred.', error)
+        )
+        .then(
+            data => dispatch(fetchScenarioSets())
+        )
     }
 }
 
@@ -661,7 +669,7 @@ export function createScenario(scenario){
                 error => console.log('An error occurred.', error)
             )
             .then(
-                dispatch(fetchScenarios())
+                data => dispatch(fetchScenarios())
             )
     }
 }
@@ -680,6 +688,9 @@ export function deleteScenario(scenarioName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                data => dispatch(fetchScenarios())
             )
     }
 }
@@ -791,7 +802,7 @@ export function createNarrativeSet(narrativeSet){
                 error => console.log('An error occurred.', error)
             )
             .then(
-                dispatch(fetchNarrativeSets())
+                data => dispatch(fetchNarrativeSets())
             )
     }
 }
@@ -810,6 +821,9 @@ export function deleteNarrativeSet(narrativeSetName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                data => dispatch(fetchNarrativeSets())
             )
     }
 }
@@ -917,7 +931,7 @@ export function createNarrative(narrative){
                 error => console.log('An error occurred.', error)
             )
             .then(
-                dispatch(fetchNarratives())
+                data => dispatch(fetchNarratives())
             )
     }
 }
@@ -936,6 +950,9 @@ export function deleteNarrative(narrativeName){
             .then(
                 response => response.json(),
                 error => console.log('An error occurred.', error)
+            )
+            .then(
+                data => dispatch(fetchNarratives())
             )
     }
 }

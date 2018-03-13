@@ -28,19 +28,20 @@ class ProjectOverview extends Component {
 
         this.closeCreatePopup = this.closeCreatePopup.bind(this)
         this.openCreatePopup = this.openCreatePopup.bind(this)
-        this.handleDelete = this.handleDelete.bind(this)
+        this.handleCreate = this.handleCreate.bind(this)
 
         this.closeDeletePopup = this.closeDeletePopup.bind(this)
         this.openDeletePopup = this.openDeletePopup.bind(this)
-        this.deletePopupSubmit = this.deletePopupSubmit.bind(this)
+        this.handleDelete = this.handleDelete.bind(this)
 
         this.collectIdentifiers = this.collectIdentifiers.bind(this)
 
         this.handleInputChange = this.handleInputChange.bind(this)
     }
 
-    componentWillMount () {
+    componentDidMount () {
         const { dispatch } = this.props
+        
         dispatch(fetchSosModelRuns())
         dispatch(fetchSosModels())
         dispatch(fetchSectorModels())
@@ -69,7 +70,7 @@ class ProjectOverview extends Component {
         })
     }
 
-    handleDelete(config) {
+    handleCreate(config) {
 
         const {createPopupType} = this.state
         const { dispatch } = this.props
@@ -262,7 +263,7 @@ class ProjectOverview extends Component {
         })
     }
 
-    deletePopupSubmit() {
+    handleDelete() {
 
         const {deletePopupType, deletePopupConfigName} = this.state
         const { scenarios } = this.props
@@ -273,19 +274,15 @@ class ProjectOverview extends Component {
         switch(deletePopupType) {
         case 'SosModelRun':
             dispatch(deleteSosModelRun(deletePopupConfigName))
-            dispatch(fetchSosModelRuns())
             break
         case 'SosModel':
             dispatch(deleteSosModel(deletePopupConfigName))
-            dispatch(fetchSosModels())
             break
         case 'SectorModel':
             dispatch(deleteSectorModel(deletePopupConfigName))
-            dispatch(fetchSectorModels())
             break
         case 'ScenarioSet':
             dispatch(deleteScenarioSet(deletePopupConfigName))
-            dispatch(fetchScenarioSets())
 
             // also delete all the scenarios that belong to the set
             let deleteScenarios = scenarios.filter(scenario => scenario['scenario_set'] == deletePopupConfigName)
@@ -295,11 +292,9 @@ class ProjectOverview extends Component {
             break
         case 'NarrativeSet':
             dispatch(deleteNarrativeSet(deletePopupConfigName))
-            dispatch(fetchNarrativeSets())
             break
         case 'Narrative':
             dispatch(deleteNarrative(deletePopupConfigName))
-            dispatch(fetchNarratives())
             break
         }
     }
@@ -431,12 +426,12 @@ class ProjectOverview extends Component {
 
                     {/* Popup for Create */}
                     <Popup onRequestOpen={this.state.createPopupIsOpen}>
-                        <CreateConfigForm config_type={this.state.createPopupType} existing_names={used_identifiers} submit={this.handleDelete} cancel={this.closeCreatePopup}/>
+                        <CreateConfigForm config_type={this.state.createPopupType} existing_names={used_identifiers} submit={this.handleCreate} cancel={this.closeCreatePopup}/>
                     </Popup>
 
                     {/* Popup for Delete */}
                     <Popup onRequestOpen={this.state.deletePopupIsOpen}>
-                        <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
+                        <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
                     </Popup>
                 </div>
             </div>
