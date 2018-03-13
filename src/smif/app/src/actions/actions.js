@@ -274,7 +274,7 @@ export function createSosModel(sosModel){
                 error => console.log('An error occurred.', error)
             )
             .then(
-                date => dispatch(fetchSosModels())
+                data => dispatch(fetchSosModels())
             )
     }
 }
@@ -295,7 +295,7 @@ export function deleteSosModel(sosModelName){
                 error => console.log('An error occurred.', error)
             )
             .then(
-                date => dispatch(fetchSosModels())
+                data => dispatch(fetchSosModels())
             )
     }
 }
