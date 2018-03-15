@@ -102,19 +102,19 @@ The first line gives the project name, a unique identifier for this project.
    :language: yaml
    :lines: 1
 
-The next section lists the scenario sets. These give the categories into which
+One section lists the scenario sets. These give the categories into which
 scenarios are collected.
 
 .. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
-   :lines: 2-6
+   :lines: 2-7
 
 Narrative sets collect together the categories into which narrative files are
 collected.
 
 .. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
-   :lines: 7-9
+   :lines: 13-15
 
 Region definitions list the collection of region files and the mapping to a
 unique name which can be used in scenarios and sector models.
@@ -122,7 +122,7 @@ Region definitions define the spatial resolution of data.
 
 .. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
-   :lines: 10,12-17
+   :lines: 25-28
 
 Interval definitions list the collection of interval files and the mapping to a
 unique name which can be used in scenarios and sector models.
@@ -130,28 +130,28 @@ Interval definitions define the temporal resolution of data.
 
 .. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
-   :lines: 18,20-22
+   :lines: 16-19
 
 Unit definitions references a file containing custom units, not included in
 the Pint library default unit register (e.g. non-SI units).
 
 .. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
-   :lines: 23
+   :lines: 69
 
 The ``scenarios`` section lists the scenarios and corresponding collections of
 data associated with scenarios.
 
 .. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
-   :lines: 24,26-52
+   :lines: 32-41
 
 The ``narratives`` section lists the narratives and mapping to one or more
 narrative files
 
 .. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
-   :lines: 62-66
+   :lines: 20-24
 
 A Simulation Model File
 ~~~~~~~~~~~~~~~~~~~~~~~

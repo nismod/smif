@@ -1,11 +1,22 @@
+name: Test Project
+scenario_sets:
+- description: Growth in UK population
+  facets:
+  - name: population
+    description: ''
+  name: population
+- description: Rainfall in the UK
+  facets:
+  - name: raininess
+    description: ''
+  name: rainfall
+narrative_sets:
+- description: Describes the evolution of technology
+  name: technology
 interval_definitions:
 - description: ''
   filename: annual_intervals.csv
   name: annual
-name: Test Project
-narrative_sets:
-- description: Describes the evolution of technology
-  name: technology
 narratives:
 - description: High penetration of SMART technology on the demand side
   filename: high_tech_dsm.yml
@@ -18,17 +29,6 @@ region_definitions:
 - description: ''
   filename: oxfordshire/regions.geojson
   name: oxfordshire
-scenario_sets:
-- description: Growth in UK population
-  facets:
-  - name: population
-    description: ''
-  name: population
-- description: Rainfall in the UK
-  facets:
-  - name: raininess
-    description: ''
-  name: rainfall
 scenarios:
 - description: ''
   facets:
