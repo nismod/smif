@@ -25,5 +25,5 @@ dependencies:
 - shapely
 - sphinx  # docs
 - pip:
-  - better-apidoc  # docs
+  - "--editable=git+https://github.com/goerz/better-apidoc@master#egg=better-apidoc"  # docs
   - pre-commit  # dev
