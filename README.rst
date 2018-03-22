@@ -130,6 +130,10 @@ To list available model runs::
         demo_model_run
         ...
 
+To start the smif app, a user-interface that helps to display, create and edit a configuration, run::
+
+        $ smif app
+
 To run a system-of-systems model run::
 
         $ smif run demo_model_run
@@ -147,10 +151,11 @@ To see all options and flags::
         Command line tools for smif
 
         positional arguments:
-        {setup,list,run}  available commands
-            setup           Setup the project folder
-            list            List available model runs
-            run             Run a model
+        {setup,list,app,run}  available commands
+            setup               Setup the project folder
+            list                List available model runs
+            app                 Open smif app
+            run                 Run a model
 
         optional arguments:
         -h, --help        show this help message and exit
