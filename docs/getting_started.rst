@@ -31,6 +31,97 @@ so you can run smif commands explicitly::
   $ smif list -d ~/projects/smif_sample_project/
   ...
 
+User Interface
+---------------------
+The smif app is a web-based user interface, which helps to manage project configurations.
+The app can be started within the project configuration directory or anywhere else by specifying the project directory::
+  
+  $ smif app
+  $ smif app -d ~/projects/smif_sample_project/
+
+This will automatically open the smif app welcome screen in the default configured browser:
+
+.. figure:: gui/welcome.png
+    :width: 200px
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+    The Smif welcome screen
+
+The Project Configuration
+~~~~~~~~~~~~~~~~
+
+.. figure:: gui/configure.png
+    :width: 200px
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+    The Project configurator
+
+Simulation Model Configuration
+~~~~~~~~~~~~~~~~
+
+.. figure:: gui/configure-sector-models.png
+    :width: 200px
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+    The Simulation Model configurator
+
+.. csv-table:: Configuration Attributes
+   :header: "Attribute", "Notes"
+   :widths: 15, 50
+
+   *General*,
+   Name,
+   Description, 
+   *Environment*,
+   Class Name,
+   Path,
+   *Inputs*,
+   Name,
+   Spatial Resultion,
+   Temporal Resolution,
+   Units,
+   *Outputs*,
+   Name,
+   Spatial Resultion,
+   Temporal Resolution,
+   Units,
+   *Parameters*,
+   Name,
+   Description,
+   Default Value,
+   Units,
+   Absolute Range,
+   Suggested Range
+
+System-of-System model configuration
+~~~~~~~~~~~~~~~~
+
+.. figure:: gui/configure-sos-models.png
+    :width: 200px
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+    The System-of-System Model configurator
+
+Model Run Configuration
+~~~~~~~~~~~~~~~~
+
+.. figure:: gui/configure-sos-model-run.png
+    :width: 200px
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+    The Model Run configurator
+
+
 Project Configuration
 ---------------------
 
