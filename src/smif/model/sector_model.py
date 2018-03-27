@@ -262,12 +262,18 @@ class SectorModel(Model, metaclass=ABCMeta):
         pass
 
     def get_region_names(self, region_set_name):
-        """Get the list of region names for ``region_set_name``
+        """Get the unordered list of region names for
+        ``region_set_name``
 
         Returns
         -------
         list
             A list of region names
+
+        Notes
+        -----
+        The order of region names in the list does not match the
+        position in a data array. Use ``data_handle.get_region_names()``
         """
         return self.regions.get_entry(region_set_name).get_entry_names()
 
@@ -299,6 +305,13 @@ class SectorModel(Model, metaclass=ABCMeta):
         -------
         list
             A list of interval names
+
+        Notes
+        -----
+        The order of interval names in the list does not match the
+        position in a data array.
+
+        Use ``data_handle.get_interval_names()``.
         """
         return self.intervals.get_entry(interval_set_name).get_entry_names()
 
