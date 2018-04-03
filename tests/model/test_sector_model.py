@@ -296,8 +296,10 @@ class TestSectorModelRegions():
     def test_access_region_names(self):
         """Access names
         """
+        data_handle = Mock()
+        data_handle.get_region_names = Mock(return_value=['a', 'b'])
         model = self.get_model()
-        region_names = model.get_region_names('half_squares')
+        region_names = model.get_region_names(data_handle, 'half_squares')
         assert sorted(region_names) == ['a', 'b']
 
     def test_access_region_geometries(self):

@@ -195,10 +195,10 @@ def load_region_sets(handler):
     """
     region_definitions = handler.read_region_definitions()
     for region_def in region_definitions:
-        region_name = region_def['name']
-        LOGGER.info("Reading in region definition %s", region_name)
-        region_data = handler.read_region_definition_data(region_name)
-        region_set = RegionSet(region_name, region_data)
+        region_def_name = region_def['name']
+        LOGGER.info("Reading in region definition %s", region_def_name)
+        region_data = handler.read_region_definition_data(region_def_name)
+        region_set = RegionSet(region_def_name, region_data)
         REGIONS.register(region_set)
 
 
@@ -398,7 +398,7 @@ def execute_model_run(args):
     args
     """
     timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
-    
+
     LOGGER.info("Getting model run definition")
     model_run_config = get_model_run_definition(args)
 

@@ -100,7 +100,7 @@ class NDimensionalRegister(Register):
 
         Parameters
         ----------
-        resolution_set : smif.convert.ResolutionSet
+        resolution_set : :class:`smif.convert.ResolutionSet`
 
         Raises
         ------
