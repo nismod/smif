@@ -185,10 +185,10 @@ class DataHandle(object):
         return self.get_data(input_name, RelativeTimestep.PREVIOUS)
 
     def get_region_names(self, spatial_resolution):
-        return self._store._read_region_names(spatial_resolution)
+        return self._store.read_region_names(spatial_resolution)
 
     def get_interval_names(self, temporal_resolution):
-        return self._store._read_interval_names(temporal_resolution)
+        return self._store.read_interval_names(temporal_resolution)
 
     def get_parameter(self, parameter_name):
         """Get the value for a  parameter
