@@ -585,7 +585,7 @@ class TestDatafileInterface():
         for expected in expected_data:
             assert expected in actual
 
-        actual_names = config_handler._read_interval_names('remap_months')
+        actual_names = config_handler.read_interval_names('remap_months')
 
         expected_names = {210: 'fall_month',
                           200: 'hot_month',
@@ -1194,15 +1194,6 @@ class TestDatafileInterface():
                                                  decision_iteration)
         assert actual == expected
 
-    # def test_read_results_missing(self, setup_folder_structure, get_handler):
-    #     pass
-
-    # def test_write_results(self, setup_folder_structure, get_handler):
-    #     pass
-
-    # def test_write_results_misshapen(self, setup_folder_structure, get_handler):
-    #     pass
-
     def test_prepare_warm_start(self, setup_folder_structure, project_config):
         """ Confirm that the warm start copies previous model results
         and reports the correct next timestep
@@ -1215,7 +1206,8 @@ class TestDatafileInterface():
 
         # Setup
         basefolder = setup_folder_structure
-        current_interface = DatafileInterface(str(basefolder), 'local_csv', current_timestamp)
+        current_interface = DatafileInterface(str(basefolder), 'local_csv',
+                                              current_timestamp)
 
         # Create results for a 'previous' modelrun
         previous_results_path = os.path.join(
@@ -1227,17 +1219,21 @@ class TestDatafileInterface():
         )
         os.makedirs(previous_results_path, exist_ok=True)
 
-        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv"), 'w') as fh:
+        with open(os.path.join(previous_results_path,
+                  "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv"), 'w') as fh:
             fh.write("region,interval,value\noxford,1,4.0\n")
-        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv"), 'w') as fh:
+        with open(os.path.join(previous_results_path,
+                  "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv"), 'w') as fh:
             fh.write("region,interval,value\noxford,1,6.0\n")
-        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv"), 'w') as fh:
+        with open(os.path.join(previous_results_path,
+                  "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv"), 'w') as fh:
             fh.write("region,interval,value\noxford,1,8.0\n")
 
         # Prepare warm start
         current_timestep = current_interface.prepare_warm_start(modelrun)
 
-        # Confirm that the function reports the correct timestep where the model should continue
+        # Confirm that the function reports the correct timestep where the model
+        # should continue
         assert current_timestep == 2030
 
         # Confirm that previous results (excluding the last timestep) were copied
@@ -1248,14 +1244,15 @@ class TestDatafileInterface():
             current_timestamp,
             model
         )
-        
+
         warm_start_results = os.listdir(current_results_path)
 
         assert 'output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv' in warm_start_results
         assert 'output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv' in warm_start_results
         assert 'output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv' not in warm_start_results
 
-    def test_prepare_warm_start_other_local_storage(self, setup_folder_structure, project_config):
+    def test_prepare_warm_start_other_local_storage(self, setup_folder_structure,
+                                                    project_config):
         """ Confirm that the warm start does not work when previous
         results were saved using a different local storage type
         """
@@ -1267,7 +1264,8 @@ class TestDatafileInterface():
 
         # Setup
         basefolder = setup_folder_structure
-        current_interface = DatafileInterface(str(basefolder), 'local_binary', current_timestamp)
+        current_interface = DatafileInterface(str(basefolder), 'local_binary',
+                                              current_timestamp)
 
         # Create results for a 'previous' modelrun
         previous_results_path = os.path.join(
@@ -1279,18 +1277,22 @@ class TestDatafileInterface():
         )
         os.makedirs(previous_results_path, exist_ok=True)
 
-        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv"), 'w') as fh:
+        with open(os.path.join(previous_results_path,
+                  "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv"), 'w') as fh:
             fh.write("region,interval,value\noxford,1,4.0\n")
-        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv"), 'w') as fh:
+        with open(os.path.join(previous_results_path,
+                  "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv"), 'w') as fh:
             fh.write("region,interval,value\noxford,1,6.0\n")
-        with open(os.path.join(previous_results_path, "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv"), 'w') as fh:
+        with open(os.path.join(previous_results_path,
+                  "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv"), 'w') as fh:
             fh.write("region,interval,value\noxford,1,8.0\n")
 
         # Prepare warm start
         current_timestep = current_interface.prepare_warm_start(modelrun)
 
-        # Confirm that the function reports the correct timestep where the model should continue
-        assert current_timestep == None
+        # Confirm that the function reports the correct timestep where the model
+        # should continue
+        assert current_timestep is None
 
         # Confirm that no results were copied
         current_results_path = os.path.join(
@@ -1303,7 +1305,8 @@ class TestDatafileInterface():
         os.makedirs(current_results_path, exist_ok=True)
         assert len(os.listdir(current_results_path)) == 0
 
-    def test_prepare_warm_start_no_previous_results(self, setup_folder_structure, project_config):
+    def test_prepare_warm_start_no_previous_results(self, setup_folder_structure,
+                                                    project_config):
         """ Confirm that the warm start does not work when no previous
         results were saved
         """
@@ -1315,7 +1318,8 @@ class TestDatafileInterface():
 
         # Setup
         basefolder = setup_folder_structure
-        current_interface = DatafileInterface(str(basefolder), 'local_binary', current_timestamp)
+        current_interface = DatafileInterface(str(basefolder), 'local_binary',
+                                              current_timestamp)
 
         # Create results for a 'previous' modelrun
         previous_results_path = os.path.join(
@@ -1330,8 +1334,9 @@ class TestDatafileInterface():
         # Prepare warm start
         current_timestep = current_interface.prepare_warm_start(modelrun)
 
-        # Confirm that the function reports the correct timestep where the model should continue
-        assert current_timestep == None
+        # Confirm that the function reports the correct timestep where the model
+        # should continue
+        assert current_timestep is None
 
         # Confirm that no results were copied
         current_results_path = os.path.join(
@@ -1344,7 +1349,8 @@ class TestDatafileInterface():
         os.makedirs(current_results_path, exist_ok=True)
         assert len(os.listdir(current_results_path)) == 0
 
-    def test_prepare_warm_start_no_previous_modelrun(self, setup_folder_structure, project_config):
+    def test_prepare_warm_start_no_previous_modelrun(self, setup_folder_structure,
+                                                     project_config):
         """ Confirm that the warm start does not work when no previous
         modelrun occured
         """
@@ -1355,13 +1361,15 @@ class TestDatafileInterface():
 
         # Setup
         basefolder = setup_folder_structure
-        current_interface = DatafileInterface(str(basefolder), 'local_binary', current_timestamp)
+        current_interface = DatafileInterface(str(basefolder), 'local_binary',
+                                              current_timestamp)
 
         # Prepare warm start
         current_timestep = current_interface.prepare_warm_start(modelrun)
 
-        # Confirm that the function reports the correct timestep where the model should continue
-        assert current_timestep == None
+        # Confirm that the function reports the correct timestep where the model
+        # should continue
+        assert current_timestep is None
 
         # Confirm that no results were copied
         current_results_path = os.path.join(
@@ -1373,6 +1381,7 @@ class TestDatafileInterface():
         )
         os.makedirs(current_results_path, exist_ok=True)
         assert len(os.listdir(current_results_path)) == 0
+
 
 def replace_e(obj, path):
     if obj == 'e':
