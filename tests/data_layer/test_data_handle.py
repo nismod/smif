@@ -237,25 +237,25 @@ class TestDataHandle():
     def test_get_regions(self, mock_store, mock_model):
         """should allow read access to input data
         """
-        mock_store._read_region_names = Mock(return_value=['a', 'b'])
+        mock_store.read_region_names = Mock(return_value=['a', 'b'])
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         expected = ['a', 'b']
         actual = data_handle.get_region_names("half_squares")
         assert actual == expected
 
-        mock_store._read_region_names.assert_called_with(
+        mock_store.read_region_names.assert_called_with(
             'half_squares')
 
     def test_get_intervals(self, mock_store, mock_model):
         """should allow read access to input data
         """
-        mock_store._read_interval_names = Mock(return_value=['a', 'b'])
+        mock_store.read_interval_names = Mock(return_value=['a', 'b'])
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         expected = ['a', 'b']
         actual = data_handle.get_interval_names("remap_months")
         assert actual == expected
 
-        mock_store._read_interval_names.assert_called_with(
+        mock_store.read_interval_names.assert_called_with(
             'remap_months')
 
 
