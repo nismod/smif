@@ -13,6 +13,10 @@ from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.load import dump
 
+from ..convert.conftest import remap_months, remap_months_csv
+from ..convert.conftest import twenty_four_hours as hourly_day
+from ..convert.conftest import twenty_four_hours_csv as hourly_day_csv
+
 
 class TestDataInterface():
     def test_data_list_to_array(self):
@@ -574,7 +578,7 @@ class TestDatafileInterface():
 
         config_handler = get_handler
 
-        expected_data = [210, 200, 150, 100]
+        expected_data = np.array([[100, 150, 200, 210]], dtype=float)
         actual = config_handler.read_scenario_data(
             'High Population (ONS)',
             'population_count',
@@ -582,18 +586,7 @@ class TestDatafileInterface():
             'remap_months',
             2015)
 
-        for expected in expected_data:
-            assert expected in actual
-
-        actual_names = config_handler.read_interval_names('remap_months')
-
-        expected_names = {210: 'fall_month',
-                          200: 'hot_month',
-                          150: 'spring_month',
-                          100: 'cold_month'}
-
-        for value, name in zip(actual.flat, actual_names):
-            assert name == expected_names[value]
+        np.testing.assert_equal(actual, expected_data)
 
     def test_narrative_data(self, setup_folder_structure, get_handler, narrative_data):
         """ Test to dump a narrative (yml) data-file and then read the file
@@ -646,17 +639,64 @@ class TestDatafileInterface():
         actual = get_handler.read_initial_conditions('system.yml')
         assert actual == initial_system
 
-    def test_read_interval_definition_data(self, setup_folder_structure, annual_intervals,
+    def test_read_hourly_interval_definition_data(self,
+                                           setup_folder_structure,
+                                           setup_registers,
                                            get_handler):
-        path = os.path.join(str(setup_folder_structure), 'data', 'interval_definitions',
-                            'annual.csv')
+        path = os.path.join(str(setup_folder_structure),
+                                'data',
+                                'interval_definitions',
+                                'hourly.csv')
         with open(path, 'w') as fh:
             w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
             w.writeheader()
-            w.writerows(annual_intervals)
+            w.writerows(hourly_day_csv())
+
+        actual = get_handler.read_interval_definition_data('hourly')
+        expected = hourly_day()
+        assert actual == expected
+
+
+    def test_read_remap_interval_definition_data(self,
+                                                 setup_folder_structure,
+                                                 setup_registers,
+                                                 get_handler):
+        path = os.path.join(str(setup_folder_structure),
+                            'data',
+                            'interval_definitions',
+                            'remap.csv')
+        with open(path, 'w') as fh:
+            w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
+            w.writeheader()
+            w.writerows(remap_months_csv())
+
+        actual = get_handler.read_interval_definition_data('remap_months')
+
+        expected = remap_months()
+        assert actual == expected
+
+
+
+    def test_read_annual_interval_definition(self,
+                                             setup_folder_structure,
+                                             annual_intervals_csv,
+                                             annual_intervals,
+                                             get_handler):
+        path = os.path.join(str(setup_folder_structure), 'data',
+                                'interval_definitions',
+                                'annual.csv')
+        with open(path, 'w') as fh:
+            w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
+            w.writeheader()
+            w.writerows(annual_intervals_csv)
 
         actual = get_handler.read_interval_definition_data('annual')
-        assert actual == annual_intervals
+        expected = annual_intervals
+        assert actual == expected
+
+
+
+
 
     def test_project_region_definitions(self, get_handler):
         """ Test to read and write the project configuration

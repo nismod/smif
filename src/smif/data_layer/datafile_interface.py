@@ -415,10 +415,10 @@ class DatafileInterface(DataInterface):
     def read_region_names(self, region_definition_name):
         """Return the set of unique region names in region set `region_definition_name`
         """
-        return list(set([
+        return [
             feature['properties']['name']
             for feature in self.read_region_definition_data(region_definition_name)
-        ]))
+        ]
 
     def write_region_definition(self, region_definition):
         """Write region_definition to project configuration
@@ -494,18 +494,34 @@ class DatafileInterface(DataInterface):
                 interval_definition_name))
 
         filepath = os.path.join(self.file_dir['interval_definitions'], filename)
+
+        names = {}
+
         with open(filepath, 'r') as csvfile:
             reader = DictReader(csvfile)
             data = []
-            for row in reader:
-                data.append(row)
+            for interval in reader:
+
+                name = interval['id']
+                interval_tuple = (interval['start'], interval['end'])
+                if name in names:
+                    # Append duration to existing entry
+                    self.logger.debug(
+                        "Entry %s in interval set exists at position %s", name, names[name])
+                    data[names[name]][1].append(interval_tuple)
+                else:
+                    self.logger.debug(
+                        "Add new entry %s in interval set at position %s", name, len(data))
+                    # Make a new entry
+
+                    data.append((name, [interval_tuple]))
+                    names[name] = len(data) - 1
+
         return data
 
     def read_interval_names(self, interval_definition_name):
-        return list(set([
-            interval['id']
-            for interval in self.read_interval_definition_data(interval_definition_name)
-        ]))
+        return [interval[0]
+            for interval in self.read_interval_definition_data(interval_definition_name)]
 
     def write_interval_definition(self, interval_definition):
         """Write interval_definition to project configuration
