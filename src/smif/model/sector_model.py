@@ -261,8 +261,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         """
         pass
 
-    @staticmethod
-    def get_region_names(data_handle, region_set_name):
+    def get_region_names(self, region_set_name):
         """Get the unordered list of region names for
         ``region_set_name``
 
@@ -271,7 +270,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         list
             A list of region names
         """
-        return data_handle.get_region_names(region_set_name)
+        return self.regions.get_entry(region_set_name).get_entry_names()
 
     def get_regions(self, region_set_name):
         """Get the list of regions for ``region_set_name``
@@ -294,8 +293,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         """
         return self.regions.get_entry(region_set_name).centroids_as_features()
 
-    @staticmethod
-    def get_interval_names(data_handle, interval_set_name):
+    def get_interval_names(self, interval_set_name):
         """Get the list of interval names for ``interval_set_name``
 
         Returns
@@ -304,7 +302,7 @@ class SectorModel(Model, metaclass=ABCMeta):
             A list of interval names
 
         """
-        return data_handle.get_interval_names(interval_set_name)
+        return self.intervals.get_entry(interval_set_name).get_entry_names()
 
 
 class SectorModelBuilder(object):
