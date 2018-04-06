@@ -24,8 +24,8 @@ from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
 from smif.parameters import Narrative
 
-from .convert.conftest import (months, one_day, remap_months, seasons,
-                               twenty_four_hours)
+from .convert.conftest import (months, one_day, remap_months, remap_months_csv,
+                               seasons, twenty_four_hours)
 from .convert.test_area import (regions_half_squares, regions_half_triangles,
                                 regions_rect, regions_single_half_square)
 
@@ -72,7 +72,7 @@ def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
     intervals_file = test_folder.join('data', 'interval_definitions', 'annual.csv')
     intervals_file.write("id,start,end\n1,P0Y,P1Y\n")
 
-    data = remap_months()
+    data = remap_months_csv()
     intervals_file = test_folder.join('data', 'interval_definitions', 'remap.csv')
     keys = data[0].keys()
     with open(str(intervals_file), 'w+') as open_csv_file:
@@ -323,13 +323,22 @@ def water_outputs():
 
 
 @fixture(scope='session')
-def annual_intervals():
+def annual_intervals_csv():
     return [
         {
             "start": "P0Y",
             "end": "P1Y",
             "id": '1'
         }
+    ]
+
+
+@fixture(scope='session')
+def annual_intervals():
+    return [
+        (
+         '1', [("P0Y", "P1Y")]
+        )
     ]
 
 

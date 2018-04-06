@@ -501,25 +501,20 @@ class IntervalSet(ResolutionSet):
 
     @data.setter
     def data(self, interval_data):
+        """
+
+        Arguments
+        ---------
+        interval_data : list
+            A list of tuples containing (interval_id, list of interval tuples)
+        """
         names = {}
 
         for interval in interval_data:
-            name = interval['id']
-            interval_tuple = (interval['start'], interval['end'])
-            if name in names:
-                # Append duration to existing entry
-                self.logger.debug(
-                    "Entry %s in interval set exists at position %s", name, names[name])
-                self.data[names[name]].interval = interval_tuple
-            else:
-                self.logger.debug(
-                    "Add new entry %s in interval set at position %s", name, len(self._data))
-                # Make a new entry
-                self._data.append(
-                    Interval(name,
-                             interval_tuple,
-                             self._base_year))
-                names[name] = len(self._data) - 1
+            name, interval_list = interval
+            self._data.append(
+                Interval(name, interval_list, self._base_year))
+            names[name] = len(self._data) - 1
 
         self._validate_intervals()
 
