@@ -41,6 +41,7 @@ The app can be started within a project configuration directory or anywhere else
 
 This will automatically open the smif app welcome screen in the default configured browser.
 
+.. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/welcome.png
     :width: 200px
     :align: center
@@ -59,6 +60,7 @@ The Project Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 This overview displays all of the configurations that are currently present in the system-of-systems configuration directory. New configurations can be created and existing ones can be edited or removed. See also :ref:`Project Configuration`.
 
+.. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure.png
     :width: 200px
     :align: center
@@ -97,11 +99,13 @@ Simulation Model Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The Simulation Model configuration tool helps to view, edit or create a simulation model configuration. This interface builds upon the specifications explained in :ref:`A Simulation Model File`.
 
+.. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure-sector-models.png
     :width: 200px
     :align: center
     :alt: alternate text
     :figclass: align-center
+
 
     The Simulation Model configuration
 
@@ -135,6 +139,7 @@ System-of-Systems model configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The System-of-Systems model configuration tool helps to view, edit or create a system-of-systems model configuration. This interface builds upon the specifications explained in :ref:`A System-of-Systems Model File`.
 
+.. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure-sos-models.png
     :width: 200px
     :align: center
@@ -176,6 +181,7 @@ Model Run Configuration
 The Model Run configuration tool helps to view, edit or create a Model Run configuration. 
 This interface builds upon the specifications explained in :ref:`A Model Run File`.
 
+.. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure-sos-model-run.png
     :width: 200px
     :align: center
