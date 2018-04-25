@@ -1202,10 +1202,9 @@ class DatafileInterface(DataInterface):
         if data.ndim == 3:
             raise NotImplementedError
         elif data.ndim == 2:
-            region_names = self.read_region_names(spatial_resolution)
-            interval_names = self.read_interval_names(temporal_resolution)
-
             if self.storage_format == 'local_csv':
+                region_names = self.read_region_names(spatial_resolution)
+                interval_names = self.read_interval_names(temporal_resolution)
                 csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
                 self._write_data_to_csv(results_path, csv_data)
             elif self.storage_format == 'local_binary':
