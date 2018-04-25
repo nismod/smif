@@ -1260,13 +1260,13 @@ class TestDatafileInterface():
         os.makedirs(previous_results_path, exist_ok=True)
 
         with open(os.path.join(previous_results_path,
-                  "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv"), 'w') as fh:
+                  "output_electricity_demand_timestep_2020_regions_lad_regions_intervals_annual.csv"), 'w') as fh:
             fh.write("region,interval,value\noxford,1,4.0\n")
         with open(os.path.join(previous_results_path,
-                  "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv"), 'w') as fh:
+                  "output_electricity_demand_timestep_2025_regions_lad_regions_intervals_annual.csv"), 'w') as fh:
             fh.write("region,interval,value\noxford,1,6.0\n")
         with open(os.path.join(previous_results_path,
-                  "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv"), 'w') as fh:
+                  "output_electricity_demand_timestep_2030_regions_lad_regions_intervals_annual.csv"), 'w') as fh:
             fh.write("region,interval,value\noxford,1,8.0\n")
 
         # Prepare warm start
@@ -1287,9 +1287,9 @@ class TestDatafileInterface():
 
         warm_start_results = os.listdir(current_results_path)
 
-        assert 'output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv' in warm_start_results
-        assert 'output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv' in warm_start_results
-        assert 'output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv' not in warm_start_results
+        assert 'output_electricity_demand_timestep_2020_regions_lad_regions_intervals_annual.csv' in warm_start_results
+        assert 'output_electricity_demand_timestep_2025_regions_lad_regions_intervals_annual.csv' in warm_start_results
+        assert 'output_electricity_demand_timestep_2030_regions_lad_regions_intervals_annual.csv' not in warm_start_results
 
     def test_prepare_warm_start_other_local_storage(self, setup_folder_structure,
                                                     project_config):
