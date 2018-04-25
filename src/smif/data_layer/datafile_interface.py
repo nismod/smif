@@ -1439,8 +1439,9 @@ class DatafileInterface(DataInterface):
             elif section.startswith('output'):
                 result_elements = re.findall(r"[^_]+", section)
                 results = {}
+                parse_element = ""
                 for element in result_elements:
-                    if element in ('output', 'timestep', 'regions', 'intervals'):
+                    if element in ('output', 'timestep', 'regions', 'intervals') and parse_element != element:
                         parse_element = element
                     elif parse_element == 'output':
                         results.setdefault('output', []).append(element)
