@@ -77,7 +77,7 @@ def season_to_month_coefficients():
 
 
 @fixture(scope='function')
-def months():
+def months_csv():
     data = [
         {'id': 'jan', 'start': 'P0M', 'end': 'P1M'},
         {'id': 'feb', 'start': 'P1M', 'end': 'P2M'},
@@ -97,7 +97,27 @@ def months():
 
 
 @fixture(scope='function')
-def remap_months():
+def months():
+    data = [
+        ('jan', [('P0M', 'P1M')]),
+        ('feb', [('P1M', 'P2M')]),
+        ('mar', [('P2M', 'P3M')]),
+        ('apr', [('P3M', 'P4M')]),
+        ('may', [('P4M', 'P5M')]),
+        ('jun', [('P5M', 'P6M')]),
+        ('jul', [('P6M', 'P7M')]),
+        ('aug', [('P7M', 'P8M')]),
+        ('sep', [('P8M', 'P9M')]),
+        ('oct', [('P9M', 'P10M')]),
+        ('nov', [('P10M', 'P11M')]),
+        ('dec', [('P11M', 'P12M')])
+    ]
+
+    return data
+
+
+@fixture(scope='function')
+def remap_months_csv():
     """Remapping four representative months to months across the year
 
     In this case we have a model which represents the seasons through
@@ -127,7 +147,18 @@ def remap_months():
 
 
 @fixture(scope='function')
-def seasons():
+def remap_months():
+    data = [
+        ('cold_month', [('P0M', 'P1M'), ('P1M', 'P2M'), ('P11M', 'P12M')]),
+        ('spring_month', [('P2M', 'P3M'), ('P3M', 'P4M'), ('P4M', 'P5M')]),
+        ('hot_month', [('P5M', 'P6M'), ('P6M', 'P7M'), ('P7M', 'P8M')]),
+        ('fall_month', [('P8M', 'P9M'), ('P9M', 'P10M'), ('P10M', 'P11M')])
+        ]
+    return data
+
+
+@fixture(scope='function')
+def seasons_csv():
     # NB "winter" is split into two pieces around the year end
     data = [{'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
             {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
@@ -138,7 +169,17 @@ def seasons():
 
 
 @fixture(scope='function')
-def twenty_four_hours():
+def seasons():
+    # NB "winter" is split into two pieces around the year end
+    data = [('winter', [('P0M', 'P2M'), ('P11M', 'P12M')]),
+            ('spring', [('P2M', 'P5M')]),
+            ('summer', [('P5M', 'P8M')]),
+            ('autumn', [('P8M', 'P11M')])]
+    return data
+
+
+@fixture(scope='function')
+def twenty_four_hours_csv():
     data = [
         {'id': '1_0', 'start': 'PT0H', 'end': 'PT1H'},
         {'id': '1_1', 'start': 'PT1H', 'end': 'PT2H'},
@@ -169,14 +210,57 @@ def twenty_four_hours():
 
 
 @fixture(scope='function')
-def one_day():
+def twenty_four_hours():
+
+    data = [
+            ('1_0', [('PT0H', 'PT1H')]),
+            ('1_1', [('PT1H', 'PT2H')]),
+            ('1_2', [('PT2H', 'PT3H')]),
+            ('1_3', [('PT3H', 'PT4H')]),
+            ('1_4', [('PT4H', 'PT5H')]),
+            ('1_5', [('PT5H', 'PT6H')]),
+            ('1_6', [('PT6H', 'PT7H')]),
+            ('1_7', [('PT7H', 'PT8H')]),
+            ('1_8', [('PT8H', 'PT9H')]),
+            ('1_9', [('PT9H', 'PT10H')]),
+            ('1_10', [('PT10H', 'PT11H')]),
+            ('1_11', [('PT11H', 'PT12H')]),
+            ('1_12', [('PT12H', 'PT13H')]),
+            ('1_13', [('PT13H', 'PT14H')]),
+            ('1_14', [('PT14H', 'PT15H')]),
+            ('1_15', [('PT15H', 'PT16H')]),
+            ('1_16', [('PT16H', 'PT17H')]),
+            ('1_17', [('PT17H', 'PT18H')]),
+            ('1_18', [('PT18H', 'PT19H')]),
+            ('1_19', [('PT19H', 'PT20H')]),
+            ('1_20', [('PT20H', 'PT21H')]),
+            ('1_21', [('PT21H', 'PT22H')]),
+            ('1_22', [('PT22H', 'PT23H')]),
+            ('1_23', [('PT23H', 'PT24H')])]
+    return data
+
+
+@fixture(scope='function')
+def one_day_csv():
     data = [{'id': 'one_day', 'start': 'P0D', 'end': 'P1D'}]
     return data
 
 
 @fixture(scope='function')
-def one_year():
+def one_day():
+    data = [('one_day', [('P0D', 'P1D')])]
+    return data
+
+
+@fixture(scope='function')
+def one_year_csv():
     data = [{'id': 'one_year', 'start': 'P0Y', 'end': 'P1Y'}]
+    return data
+
+
+@fixture(scope='function')
+def one_year():
+    data = [('one_year', [('P0Y', 'P1Y')])]
     return data
 
 

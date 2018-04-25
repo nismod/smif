@@ -262,7 +262,8 @@ class SectorModel(Model, metaclass=ABCMeta):
         pass
 
     def get_region_names(self, region_set_name):
-        """Get the list of region names for ``region_set_name``
+        """Get the unordered list of region names for
+        ``region_set_name``
 
         Returns
         -------
@@ -299,6 +300,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         -------
         list
             A list of interval names
+
         """
         return self.intervals.get_entry(interval_set_name).get_entry_names()
 

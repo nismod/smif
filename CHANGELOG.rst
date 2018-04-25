@@ -26,6 +26,8 @@ Bugs:
   interval definition did not exist
 - Datafileinterface validates data from the set of unique interval and region 
   names
+- Updated SectorModel calls to region register to return lists of intervals and
+  regions in same order as the datafileinterface
 
 
 Version 0.6

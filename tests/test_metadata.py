@@ -63,11 +63,10 @@ def interval_set():
     """Return an interval set of the four seasons
     """
     seasons = [
-        {'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
-        {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
-        {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
-        {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'},
-        {'id': 'winter', 'start': 'P11M', 'end': 'P12M'}
+        ('winter', [('P0M', 'P2M'), ('P11M', 'P12M')]),
+        ('spring', [('P2M', 'P5M')]),
+        ('summer', [('P5M', 'P8M')]),
+        ('autumn', [('P8M', 'P11M')])
     ]
 
     return IntervalSet('seasons', seasons)

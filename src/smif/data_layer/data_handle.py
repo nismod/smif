@@ -7,11 +7,11 @@ data (at any computed or pre-computed timestep) and write access to output data
 (at the current timestep).
 """
 
-from logging import getLogger
-
 from enum import Enum
-from smif.model.scenario_model import ScenarioModel
+from logging import getLogger
 from types import MappingProxyType
+
+from smif.model.scenario_model import ScenarioModel
 
 
 class DataHandle(object):
@@ -183,6 +183,12 @@ class DataHandle(object):
             Two-dimensional array with shape (len(regions), len(intervals))
         """
         return self.get_data(input_name, RelativeTimestep.PREVIOUS)
+
+    def get_region_names(self, spatial_resolution):
+        return self._store.read_region_names(spatial_resolution)
+
+    def get_interval_names(self, temporal_resolution):
+        return self._store.read_interval_names(temporal_resolution)
 
     def get_parameter(self, parameter_name):
         """Get the value for a  parameter

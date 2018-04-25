@@ -282,6 +282,18 @@ class TestParameters():
         assert actual == expected
 
 
+class TestSectorModelIntervals():
+    """SectorModels should have access to intervals (name)
+    """
+
+    def test_access_region_names(self):
+        """Access names
+        """
+        model = EmptySectorModel('region_test')
+        interval_names = model.get_interval_names('annual')
+        assert interval_names == ['1']
+
+
 class TestSectorModelRegions():
     """SectorModels should have access to regions (name, geometry and centroid)
     """
@@ -298,7 +310,7 @@ class TestSectorModelRegions():
         """
         model = self.get_model()
         region_names = model.get_region_names('half_squares')
-        assert sorted(region_names) == ['a', 'b']
+        assert region_names == ['a', 'b']
 
     def test_access_region_geometries(self):
         model = self.get_model()
