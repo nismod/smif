@@ -431,8 +431,7 @@ def make_get_data_interface(args):
 
 
 def _open_browser():
-    print(" * Opening page in browser...")
-    webbrowser.open("http://localhost:5000/")
+    print(" * Smif app is running at http://localhost:5000")
 
 
 def _run_server(args):
