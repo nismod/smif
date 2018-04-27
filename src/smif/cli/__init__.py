@@ -443,7 +443,7 @@ def _run_server(args):
         template_folder=app_folder,
         get_data_interface=get_data_interface
     )
-    app.run(host='localhost', port=5000, threaded=True)
+    app.run(host='0.0.0.0', port=5000, threaded=True)
 
 
 def run_app(args):
