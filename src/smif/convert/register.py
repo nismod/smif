@@ -78,6 +78,9 @@ class Register(LogMixin, metaclass=ABCMeta):
         else:
             converted = np.dot(data, coefficients)
 
+        self.logger.debug("Converting from %s to %s.", from_set_name, to_set_name)
+        self.logger.debug("Converted value from %s to %s", data.sum(), converted.sum() )
+
         return converted
 
 
