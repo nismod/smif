@@ -232,8 +232,30 @@ def load_units(handler):
         UNITS.register(unit_file)
 
 
-def get_model_run_definition(args):
+def load_resolution_sets(directory):
+    """Loads the region, interval units resolution sets
+
+    Arguments
+    ---------
+    directory: str
+        Path to the project directory
+    """
+    handler = DatafileInterface(directory)
+    Register.data_interface = handler
+    load_region_sets(handler)
+    load_interval_sets(handler)
+    load_units(handler)
+
+
+def get_model_run_definition(directory, modelrun):
     """Builds the model run
+
+    Arguments
+    ---------
+    directory : str
+        Path to the project directory
+    modelrun : str
+        Name of the model run to run
 
     Returns
     -------
@@ -242,17 +264,12 @@ def get_model_run_definition(args):
         ScenarioModel, SosModel and SectorModel objects
 
     """
-    handler = DatafileInterface(args.directory)
-    Register.data_interface = handler
-    load_region_sets(handler)
-    load_interval_sets(handler)
-    load_units(handler)
-
+    handler = DatafileInterface(directory)
     try:
-        model_run_config = handler.read_sos_model_run(args.modelrun)
+        model_run_config = handler.read_sos_model_run(modelrun)
     except DataNotFoundError:
         LOGGER.error("Model run %s not found. Run 'smif list' to see available model runs.",
-                     args.modelrun)
+                     modelrun)
         exit(-1)
 
     LOGGER.info("Running %s", model_run_config['name'])
@@ -263,7 +280,7 @@ def get_model_run_definition(args):
     for sector_model in sos_model_config['sector_models']:
         sector_model_config = handler.read_sector_model(sector_model)
 
-        absolute_path = os.path.join(args.directory,
+        absolute_path = os.path.join(directory,
                                      sector_model_config['path'])
         sector_model_config['path'] = absolute_path
 
@@ -399,8 +416,11 @@ def execute_model_run(args):
     """
     timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
 
+    LOGGER.info("Loading resolution data")
+    load_resolution_sets(args.directory)
+
     LOGGER.info("Getting model run definition")
-    model_run_config = get_model_run_definition(args)
+    model_run_config = get_model_run_definition(args.directory, args.modelrun)
 
     LOGGER.info("Build model run from configuration data")
     modelrun = build_model_run(model_run_config)
@@ -528,7 +548,8 @@ def parse_arguments():
                             help="Select the data interface (default: %(default)s)")
     parser_run.add_argument('-w', '--warm',
                             action='store_true',
-                            help="Use intermediate results from the last modelrun and continue from where it had left")
+                            help="Use intermediate results from the last modelrun \
+                                  and continue from where it had left")
     parser_run.add_argument('-d', '--directory',
                             default='.',
                             help="Path to the project directory")
