@@ -18,6 +18,8 @@ Functionality:
 - Add a binary file interface ``-i`` argument to the command line interface that
   writes intermediate model results using pyarrow resulting in much smaller file 
   sizes than csv and a great speedup
+- Write out a link to the ``smif app`` in the console, instead of opening the app 
+  in the default browser automatically
 
 Bugs:
 
@@ -28,6 +30,11 @@ Bugs:
   names
 - Updated SectorModel calls to region register to return lists of intervals and
   regions in same order as the datafileinterface
+- Fixes to the GUI server to enable port-forwarding through a virtual machine
+- Fixes bug in smif --warm, where certain keywords caused the warm start to not
+  being able to find previous modelrun results
+- Fixes loading modelruns interactively, resolve error when loading duplicate 
+  region/interval definitions
 
 
 Version 0.6
