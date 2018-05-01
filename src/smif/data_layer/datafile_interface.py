@@ -506,14 +506,9 @@ class DatafileInterface(DataInterface):
                 interval_tuple = (interval['start'], interval['end'])
                 if name in names:
                     # Append duration to existing entry
-                    self.logger.debug(
-                        "Entry %s in interval set exists at position %s", name, names[name])
                     data[names[name]][1].append(interval_tuple)
                 else:
-                    self.logger.debug(
-                        "Add new entry %s in interval set at position %s", name, len(data))
                     # Make a new entry
-
                     data.append((name, [interval_tuple]))
                     names[name] = len(data) - 1
 
@@ -1202,10 +1197,9 @@ class DatafileInterface(DataInterface):
         if data.ndim == 3:
             raise NotImplementedError
         elif data.ndim == 2:
-            region_names = self.read_region_names(spatial_resolution)
-            interval_names = self.read_interval_names(temporal_resolution)
-
             if self.storage_format == 'local_csv':
+                region_names = self.read_region_names(spatial_resolution)
+                interval_names = self.read_interval_names(temporal_resolution)
                 csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
                 self._write_data_to_csv(results_path, csv_data)
             elif self.storage_format == 'local_binary':
