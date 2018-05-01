@@ -4,6 +4,7 @@ from collections import namedtuple
 
 from rtree import index
 from shapely.geometry import mapping, shape
+from shapely.validation import explain_validity
 from smif.convert.register import NDimensionalRegister, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
@@ -109,8 +110,22 @@ class RegionSet(ResolutionSet):
         """Calculate the proportion of shape a that intersects with shape b
         """
         entry_a = self.data[from_idx]
-        intersection = entry_a.shape.intersection(entry_b.shape)
-        return intersection.area / entry_a.shape.area
+        if self.check_valid_shape(entry_a.shape):
+            if self.check_valid_shape(entry_b.shape):
+                intersection = entry_a.shape.intersection(entry_b.shape)
+                return intersection.area / entry_a.shape.area
+            else:
+                raise RuntimeError("Shape {} is not valid".format(entry_b.name))
+        else:
+            raise RuntimeError("Shape {} from {} is not valid".format(entry_a.name, self.name))
+
+    def check_valid_shape(self, shape):
+        if not shape.is_valid:
+            validity = explain_validity(shape)
+            print("Shape is not valid. Explanation: %s", validity)
+            return False
+        else:
+            return True
 
     @staticmethod
     def get_bounds(entry):

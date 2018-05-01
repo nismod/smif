@@ -506,14 +506,9 @@ class DatafileInterface(DataInterface):
                 interval_tuple = (interval['start'], interval['end'])
                 if name in names:
                     # Append duration to existing entry
-                    self.logger.debug(
-                        "Entry %s in interval set exists at position %s", name, names[name])
                     data[names[name]][1].append(interval_tuple)
                 else:
-                    self.logger.debug(
-                        "Add new entry %s in interval set at position %s", name, len(data))
                     # Make a new entry
-
                     data.append((name, [interval_tuple]))
                     names[name] = len(data) - 1
 
