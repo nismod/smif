@@ -43,10 +43,15 @@ class ParameterSelector extends Component {
     }
 
     handleChange(event) {
-
-        this.setState({
-            inputs: update(this.state.inputs, {[event.target.name]: {$set: event.target.value}})
-        })
+        if (event.target.type == 'number') {
+            this.setState({
+                inputs: update(this.state.inputs, {[event.target.name]: {$set: parseInt(event.target.value)}})
+            })
+        } else {
+            this.setState({
+                inputs: update(this.state.inputs, {[event.target.name]: {$set: event.target.value}})
+            })
+        }
     }
 
     handleSubmit() {
