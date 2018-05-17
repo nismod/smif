@@ -19,7 +19,14 @@ def get_model_run_config_data():
         'narratives':
             [Mock(data={'model_name': {'parameter_name': 0}}),
              Mock(data={'model_name': {'parameter_name': 0}})
-             ]
+             ],
+        'strategies': [{'strategy': 'pre-specified-planning',
+                        'description': 'build_nuclear',
+                        'model_name': 'energy_supply',
+                        'interventions': [
+                            {'name': 'nuclear_large', 'build_year': 2012},
+                            {'name': 'carrington_retire', 'build_year': 2011}]
+                        }]
     }
     return config
 
@@ -51,6 +58,7 @@ class TestModelRunBuilder:
         assert modelrun.status == 'Built'
         assert modelrun.scenarios == {'raininess': 'high_raininess'}
         assert modelrun.narratives == config_data['narratives']
+        assert modelrun.strategies == config_data['strategies']
 
 
 class TestModelRun:
