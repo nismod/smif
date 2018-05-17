@@ -74,7 +74,6 @@ import shutil
 import sys
 import time
 import traceback
-import webbrowser
 from argparse import ArgumentParser
 from multiprocessing import Process
 from threading import Timer
@@ -321,6 +320,17 @@ def get_model_run_definition(directory, modelrun):
 
     LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
     sos_model_config['scenario_sets'] = scenario_objects
+
+    strategies = []
+    for strategy in model_run_config['strategies']:
+        if strategy['strategy'] == 'pre-specified-planning':
+            interventions = handler.read_strategies(strategy['filename'])
+            del strategy['filename']
+            strategy['interventions'] = interventions
+            LOGGER.debug("Added %s pre-specified planning interventions to %s",
+                         len(interventions), strategy['model_name'])
+        strategies.append(strategy)
+    sos_model_config['strategies'] = strategies
 
     sos_model_builder = SosModelBuilder()
     sos_model_builder.construct(sos_model_config)
