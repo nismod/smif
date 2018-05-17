@@ -81,6 +81,7 @@ class ModelRun(object):
             'decision_module': None,
             'scenarios': self.scenarios,
             'narratives': self.narratives,
+            'strategies': self.strategies
         }
         return config
 
@@ -182,6 +183,7 @@ class ModelRunBuilder(object):
         self._add_sos_model(model_run_config['sos_model'])
         self._add_scenarios(model_run_config['scenarios'])
         self._add_narratives(model_run_config['narratives'])
+        self._add_strategies(model_run_config['strategies'])
 
         self.model_run.status = 'Built'
 
@@ -233,6 +235,16 @@ class ModelRunBuilder(object):
             A list of smif.parameters.Narrative objects
         """
         self.model_run.narratives = narratives
+
+    def _add_strategies(self, strategies):
+        """
+
+        Arguments
+        ---------
+        narratives : list
+            A list of strategies
+        """
+        self.model_run.strategies = strategies
 
 
 class ModelRunError(Exception):
