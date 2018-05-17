@@ -1,0 +1,28 @@
+- name: nuclear_large
+  location: Oxford
+  capacity:
+    value: 1000
+    units: MW
+  operational_lifetime:
+    value: 40
+    units: years
+  economic_lifetime:
+    value: 25
+    units: years
+  capital_cost:
+    value: 2000
+    units: million £
+- name: carrington_retire
+  location: Oxford
+  capacity:
+    value: -500
+    units: MW
+  operational_lifetime:
+    value: 0
+    units: years
+  economic_lifetime:
+    value: 0
+    units: years
+  capital_cost:
+    value: 0
+    units: million £
