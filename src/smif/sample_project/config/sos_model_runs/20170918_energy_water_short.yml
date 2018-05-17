@@ -14,4 +14,4 @@ narratives:
   - 'High Tech Demand Side Management'
 strategies:
   - strategy: pre-specified-planning
-    interventions: energy_supply.yml
+    interventions: build_nuke.yml
