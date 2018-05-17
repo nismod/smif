@@ -19,6 +19,10 @@ class MemoryInterface(DataInterface):
         self._narratives = {}
         self._results = {}
         self._coefficients = {}
+        self._strategies = {}
+
+    def read_strategies(self):
+        return self._strategies.items()
 
     def read_units_file_name(self):
         return self._units.values()
