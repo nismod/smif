@@ -1,0 +1,47 @@
+@startuml
+
+participant ModelRun
+participant SosModel
+participant aSectorModel
+participant DataHandle
+participant DecisionManager
+
+ModelRun -> DataHandle : init(data_interface, modelrun, timestep)
+
+ModelRun -> DecisionManager : init(strategy_bundle)
+activate DecisionManager
+
+ModelRun -> DecisionManager : get_next()
+ModelRun <-- DecisionManager : (decision_iteration, timesteps)
+
+loop for each timestep in decision_interation
+
+    ModelRun -> SosModel : simulate(data_handle)
+    activate SosModel
+
+    SosModel -> DataHandle : init(data_handle, aSectorModel)
+    activate DataHandle
+
+    SosModel -> aSectorModel : initialize(data_handle)
+    activate aSectorModel
+
+    aSectorModel -> DecisionManager : get_state(model, decision_iteration, timestep)
+
+    DecisionManager -> DecisionManager : get_action()
+
+    aSectorModel <-- DecisionManager : state
+
+    SosModel -> aSectorModel : simulate(data_handle)
+
+    DataHandle <- aSectorModel : write_results(model, decision_iteration, timestep)
+
+    aSectorModel --> SosModel
+    destroy aSectorModel
+    destroy DataHandle
+
+    SosModel --> ModelRun
+    destroy SosModel
+
+end
+
+@enduml

@@ -9,9 +9,6 @@ and the dependencies between the models.
 import logging
 
 import networkx
-from smif.convert.area import get_register as get_region_register
-from smif.convert.interval import get_register as get_interval_register
-from smif.convert.unit import get_register as get_unit_register
 from smif.data_layer import DataHandle
 from smif.intervention import InterventionRegister
 from smif.model import CompositeModel, Model, element_after, element_before
@@ -285,10 +282,6 @@ class SosModelBuilder(object):
     """
     def __init__(self, name='global'):
         self.sos_model = SosModel(name)
-        self.region_register = get_region_register()
-        self.interval_register = get_interval_register()
-        self.unit_register = get_unit_register()
-
         self.logger = logging.getLogger(__name__)
 
     def construct(self, sos_model_config):
@@ -439,15 +432,15 @@ class SosModelBuilder(object):
         source_units = dependency.source.units
         sink_units = dependency.sink.units
 
-        if self.unit_register.parse_unit(source_units) is None:
+        if source_model.units.parse_unit(source_units) is None:
             msg = "Cannot convert from undefined unit '{}'"
             raise ValueError(msg.format(source_units))
-        if self.unit_register.parse_unit(sink_units) is None:
+        if source_model.units.parse_unit(sink_units) is None:
             msg = "Cannot convert to undefined unit '{}'"
             raise ValueError(msg.format(sink_units))
 
         if source_units != sink_units:
-            self.unit_register.get_coefficients(source_units,
+            source_model.units.get_coefficients(source_units,
                                                 sink_units)
 
     def finish(self):
