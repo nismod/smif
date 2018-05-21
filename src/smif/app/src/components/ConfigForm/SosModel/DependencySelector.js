@@ -182,7 +182,7 @@ class DependencySelector extends Component {
                 )
 
                 // set state for default selection
-                if (scenarioset_source_outputs[0].facets.length > 0) {
+                if (sectormodel_source_outputs[0].outputs.length > 0) {
                     this.state.inputs.SourceOutput = sectormodel_source_outputs[0].outputs[0].name
                 } else {
                     this.state.inputs.SourceOutput = ''
