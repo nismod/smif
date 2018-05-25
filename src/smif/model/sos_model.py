@@ -10,7 +10,7 @@ import logging
 
 import networkx
 from smif.data_layer import DataHandle
-from smif.intervention import InterventionRegister
+from smif.intervention import Intervention, InterventionRegister
 from smif.model import CompositeModel, Model, element_after, element_before
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
@@ -141,6 +141,18 @@ class SosModel(CompositeModel):
                 data_handle._modelset_iteration,
                 data_handle._decision_iteration
             )
+
+            model_state = []
+
+            sos_state = data_handle.get_state()
+            self.logger.debug("Sos State: %s", sos_state)
+            for build_year, names in sos_state.items():
+                for name in names:
+                    intervention = self.interventions.get_intervention(name)
+                    if intervention.sector == model.name:
+                        intervention.build_year = build_year
+                        model_state.append(intervention)
+            model_data_handle.set_state(model_state)
             model.simulate(model_data_handle)
         return data_handle
 
@@ -299,6 +311,7 @@ class SosModelBuilder(object):
         self.set_convergence_rel_tolerance(sos_model_config)
 
         self.load_models(sos_model_config['sector_models'])
+        self.register_interventions(sos_model_config['sector_models'])
         self.load_scenario_models(sos_model_config['scenario_sets'])
 
         self.add_dependencies(sos_model_config['dependencies'])
@@ -370,6 +383,14 @@ class SosModelBuilder(object):
         self.logger.info("Loading models")
         for model in model_list:
             self.sos_model.add_model(model)
+
+    def register_interventions(self, sector_models):
+        for model in sector_models:
+            for intervention in model.interventions:
+                intervention_object = Intervention(
+                    data=intervention,
+                    sector=model.name)
+                self.sos_model.interventions.register(intervention_object)
 
     def load_scenario_models(self, scenario_list):
         """Loads the scenario models into the system-of-systems model

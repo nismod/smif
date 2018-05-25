@@ -24,6 +24,37 @@ __license__ = "mit"
 from abc import ABCMeta, abstractmethod
 
 
+class DecisionFactory(object):
+    """Returns a DecisionModule implementation
+
+    Arguments
+    ---------
+    horizon: list
+    strategies: list
+    """
+
+    def __init__(self, horizon, strategies):
+        self._horizon = horizon
+        self._strategies = strategies
+
+    def get_managers(self):
+
+        decision_maker = None
+
+        for strategy in self._strategies:
+            if strategy['strategy'] == 'pre-specified-planning':
+                decision_maker = PreSpecified(self._horizon,
+                                              strategy['interventions'])
+            else:
+                msg = "Only pre-specified planning strategies are implemented"
+                raise NotImplementedError(msg)
+
+        if decision_maker is None:
+            decision_maker = PreSpecified(self._horizon, [])
+
+        return decision_maker
+
+
 class DecisionModule(metaclass=ABCMeta):
     """Abstract class which provides the interface to decision mechanisms.
 
@@ -42,14 +73,10 @@ class DecisionModule(metaclass=ABCMeta):
     ---------
     timesteps : list
         A list of planning timesteps
-    intervention_register : smif.intervention.Register
-        Reference to an intervention register object populated with available
-        interventions for the current SosModel
 
     """
-    def __init__(self, timesteps, intervention_register=None):
+    def __init__(self, timesteps):
         self.horizon = timesteps
-        self.register = intervention_register
 
     def __next__(self):
         return self._get_next_decision_iteration()
@@ -57,6 +84,12 @@ class DecisionModule(metaclass=ABCMeta):
     @abstractmethod
     def _get_next_decision_iteration(self):
         """Implement to return the next decision iteration
+
+        Within a list of decision-iteration/timestep pairs, the assumption is
+        that all decision iterations can be run in parallel
+        (otherwise only one will be returned) and within a decision interation,
+        all timesteps may be run in parallel as long as there are no
+        inter-timestep state transitions required (e.g. reservoir level)
 
         Returns
         -------
@@ -78,8 +111,8 @@ class DecisionModule(metaclass=ABCMeta):
         -------
         numpy.ndarray
         """
-        return self.register.get_state(timestep.PREVIOUS,
-                                       decision_iteration)
+        return self.get_state(timestep.PREVIOUS,
+                              decision_iteration)
 
     def _set_post_decision_state(self, timestep, decision_iteration, decision):
         """Sets the post-decision state
@@ -122,6 +155,10 @@ class DecisionModule(metaclass=ABCMeta):
 
 class PreSpecified(DecisionModule):
 
+    def __init__(self, timesteps, register):
+        super().__init__(timesteps)
+        self.register = register
+
     def _get_next_decision_iteration(self):
         return {1: [year for year in self.horizon]}
 
@@ -133,6 +170,53 @@ class PreSpecified(DecisionModule):
         to the correct decision iteration reference.
         """
         pass
+
+    def get_state(self, timestep):
+        """Return a dict of intervention names built in timestep
+
+        Returns
+        -------
+        dict
+
+        Examples
+        --------
+        >>> dm = PreSpecified([2010, 2015], [{'name': 'intervention_a', 'build_year': 2010}])
+        >>> dm.get_state(2010)
+        {2010: ['intervention_a']}
+
+        """
+        state = {}
+
+        for intervention in self.register:
+            build_year = intervention['build_year']
+            name = intervention['name']
+            if self.buildable(build_year, timestep):
+                if build_year in state:
+                    state[build_year].append(name)
+                else:
+                    state[build_year] = [name]
+
+        return state
+
+    def buildable(self, build_year, timestep):
+        """Interventions are deemed available if build_year is less than next timestep
+
+        For example, if `a` is built in 2011 and timesteps are
+        [2005, 2010, 2015, 2020] then buildable returns True for timesteps
+        2010, 2015 and 2020 and False for 2005.
+        """
+        if timestep not in self.horizon:
+            raise ValueError("Timestep not in model horizon")
+        index = self.horizon.index(timestep)
+        if index == len(self.horizon) - 1:
+            next_year = 99999
+        else:
+            next_year = self.horizon[index + 1]
+
+        if build_year < next_year:
+            return True
+        else:
+            return False
 
 
 class RuleBased(DecisionModule):
@@ -157,44 +241,3 @@ class RuleBased(DecisionModule):
 
     def _set_state(self, model, timestep, decision_iteration):
         pass
-
-
-class Planning:
-    """
-    Holds the list of planned interventions, where a single planned intervention
-    is an intervention with a build date after which it will be included in the
-    modelled systems.
-
-    For example, a small pumping station might be built in
-    Oxford in 2045::
-
-            {
-                'name': 'small_pumping_station',
-                'build_date': 2045
-            }
-
-    Attributes
-    ----------
-    planned_interventions : list
-        A list of pre-specified planned interventions
-
-    """
-
-    def __init__(self, planned_interventions=None):
-
-        if planned_interventions is not None:
-            self.planned_interventions = planned_interventions
-        else:
-            self.planned_interventions = []
-
-    @property
-    def names(self):
-        """Returns the set of assets defined in the planned interventions
-        """
-        return {plan['name'] for plan in self.planned_interventions}
-
-    @property
-    def timeperiods(self):
-        """Returns the set of build dates defined in the planned interventions
-        """
-        return {plan['build_date'] for plan in self.planned_interventions}

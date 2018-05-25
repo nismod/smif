@@ -1,77 +1,78 @@
-from pytest import fixture
-from smif.decision import Planning, PreSpecified, RuleBased
+from pytest import fixture, raises
+from smif.decision import DecisionFactory, PreSpecified, RuleBased
 
 
 @fixture(scope='function')
 def plan():
     planned_interventions = [
         {
-            'name': 'small_pumping_station',
-            'build_date': 2045,
-            'location': 'oxford',
-            'capacity': {
-                'value': 500,
-                'units': 'mcm/day'
-            }
+         'name': 'small_pumping_station_oxford',
+         'build_year': 2010
         },
         {
-            'name': 'small_pumping_station',
-            'build_date': 2035,
-            'location': 'bicester',
-            'capacity': {
-                'value': 500,
-                'units': 'mcm/day'
-            }
+         'name': 'small_pumping_station_abingdon',
+         'build_year': 2015
+
         },
         {
-            'name': 'large_pumping_station',
-            'build_date': 2035,
-            'location': 'abingdon',
-            'capacity': {
-                'value': 1500,
-                'units': 'mcm/day'
-            }
+         'name': 'large_pumping_station_oxford',
+         'build_year': 2020
         }
     ]
 
-    return Planning(planned_interventions)
+    return planned_interventions
 
 
-class TestPlanning:
+@fixture(scope='function')
+def get_strategies():
+    strategies = [{'strategy': 'pre-specified-planning',
+                   'description': 'build_nuclear',
+                   'model_name': 'energy_supply',
+                   'interventions': [{'name': 'nuclear_large', 'build_year': 2012},
+                                     {'name': 'carrington_retire', 'build_year': 2011}]
+                   }]
 
-    def test_intervention_names(self, plan):
-        expected = {'small_pumping_station', 'large_pumping_station'}
-        actual = plan.names
-        assert actual == expected
-
-    def test_timeperiods(self, plan):
-        expected = {2045, 2035}
-        actual = plan.timeperiods
-        assert actual == expected
-
-    def test_empty(self):
-        plan = Planning()
-        assert plan.planned_interventions == []
+    return strategies
 
 
 class TestPreSpecified:
 
-    def test_initialisation(self):
+    def test_initialisation(self, plan):
 
         timesteps = [2010, 2015, 2020]
-        actual = PreSpecified(timesteps)
+        actual = PreSpecified(timesteps, plan)
 
         assert actual.horizon == timesteps
 
-    def test_generator(self):
+    def test_generator(self, plan):
 
         timesteps = [2010, 2015, 2020]
-        dm = PreSpecified(timesteps)
+        dm = PreSpecified(timesteps, plan)
 
         actual = next(dm)
 
         expected = {1: timesteps}
 
+        assert actual == expected
+
+    def test_get_state(self, plan):
+
+        timesteps = [2010, 2015, 2020]
+        dm = PreSpecified(timesteps, plan)
+
+        actual = dm.get_state(2010)
+        expected = {2010: ['small_pumping_station_oxford']}
+        assert actual == expected
+
+        actual = dm.get_state(2015)
+        expected = {2010: ['small_pumping_station_oxford'],
+                    2015: ['small_pumping_station_abingdon']}
+        assert actual == expected
+
+        actual = dm.get_state(2020)
+        expected = {2010: ['small_pumping_station_oxford'],
+                    2015: ['small_pumping_station_abingdon'],
+                    2020: ['large_pumping_station_oxford']}
         assert actual == expected
 
 
@@ -107,3 +108,44 @@ class TestRuleBased:
         dm.current_timestep_index = 2
         actual = next(dm)
         assert actual is None
+
+
+class TestDecisionManager():
+
+    def test_null_strategy(self):
+        strategy = []
+        df = DecisionFactory([2010, 2015], strategy)
+        dm = df.get_managers()
+        assert isinstance(dm, PreSpecified)
+
+    def test_decision_manager_init(self, get_strategies):
+        df = DecisionFactory([2010, 2015], get_strategies)
+        dm = df.get_managers()
+        assert isinstance(dm, PreSpecified)
+
+    def test_buildable(self, get_strategies):
+        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
+        assert dm.horizon == [2010, 2015]
+        assert dm.buildable(2010, 2010) is True
+        assert dm.buildable(2011, 2010) is True
+
+    def test_buildable_raises(self, get_strategies):
+        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
+        with raises(ValueError):
+            dm.buildable(2015, 2014)
+
+    def test_get_state(self, get_strategies):
+        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
+        actual = dm.get_state(2010)
+        expected = {2011: ['carrington_retire'],
+                    2012: ['nuclear_large']}
+        assert actual == expected
+
+        # actual = dm.get_state(2015)
+        # expected = {2011: ['carrington_retire']}
+        # assert actual == expected
+
+        actual = dm.get_state(2015)
+        expected = {2011: ['carrington_retire'],
+                    2012: ['nuclear_large']}
+        assert actual == expected

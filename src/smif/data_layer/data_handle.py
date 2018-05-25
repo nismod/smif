@@ -47,6 +47,8 @@ class DataHandle(object):
         self._outputs = model.outputs
         self._dependencies = model.deps
 
+        self._state = {}
+
         configured_parameters = self._store.read_parameters(
             self._modelrun_name, self._model_name)
         self._parameters = model.parameters.overridden(configured_parameters)
@@ -94,6 +96,19 @@ class DataHandle(object):
         """All timesteps (as tuple)
         """
         return tuple(self._timesteps)
+
+    def get_state(self):
+        """The current state of the model
+
+        Returns
+        -------
+        A dict of interventions installed at the current timestep
+        """
+        return self._state
+
+    def set_state(self, data):
+        self.logger.debug("Writing %s to model state", data)
+        self._state = data
 
     def get_data(self, input_name, timestep=None):
         """Get data required for model inputs
