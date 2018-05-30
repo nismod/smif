@@ -19,7 +19,7 @@ dependencies:
 - pytest  # test
 - pytest-cov  # test
 - python-dateutil
-- pyyaml
+- ruamel.yaml
 - rtree
 - scikit-optimize
 - shapely
