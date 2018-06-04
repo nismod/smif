@@ -1,0 +1,15 @@
+cff-version: 1.0.3
+message: If you use this software, please cite it as below.
+authors:
+  - family-names: Usher
+    given-names: Will
+  - family-names: Russell
+    given-names: Tom
+  - family-names: Schoenmakers
+    given-names: Roald
+title: "smif: simulation modelling integration framework"
+version: 0.7.6
+date-released: 2018-05-01
+repository-code: "https://github.com/nismod/smif/"
+license: MIT
+url: "http://smif.readthedocs.io/"
