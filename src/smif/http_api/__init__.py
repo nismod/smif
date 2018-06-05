@@ -25,7 +25,7 @@ def create_app(static_folder='static', template_folder='templates', get_data_int
     # Pass get_data_interface method which must return an instance of a class
     # implementing DataInterface. There may be a better way!
     app.config.get_data_interface = get_data_interface
-    
+
     register_routes(app)
     register_api_endpoints(app)
     register_error_handlers(app)
