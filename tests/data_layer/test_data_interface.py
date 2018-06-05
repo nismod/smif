@@ -13,9 +13,9 @@ from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.load import dump
 
-from ..convert.conftest import remap_months, remap_months_csv
 from ..convert.conftest import twenty_four_hours as hourly_day
 from ..convert.conftest import twenty_four_hours_csv as hourly_day_csv
+from ..convert.conftest import remap_months, remap_months_csv
 
 
 class TestDataInterface():
@@ -640,13 +640,13 @@ class TestDatafileInterface():
         assert actual == initial_system
 
     def test_read_hourly_interval_definition_data(self,
-                                           setup_folder_structure,
-                                           setup_registers,
-                                           get_handler):
+                                                  setup_folder_structure,
+                                                  setup_registers,
+                                                  get_handler):
         path = os.path.join(str(setup_folder_structure),
-                                'data',
-                                'interval_definitions',
-                                'hourly.csv')
+                            'data',
+                            'interval_definitions',
+                            'hourly.csv')
         with open(path, 'w') as fh:
             w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
             w.writeheader()
@@ -655,7 +655,6 @@ class TestDatafileInterface():
         actual = get_handler.read_interval_definition_data('hourly')
         expected = hourly_day()
         assert actual == expected
-
 
     def test_read_remap_interval_definition_data(self,
                                                  setup_folder_structure,
@@ -675,16 +674,14 @@ class TestDatafileInterface():
         expected = remap_months()
         assert actual == expected
 
-
-
     def test_read_annual_interval_definition(self,
                                              setup_folder_structure,
                                              annual_intervals_csv,
                                              annual_intervals,
                                              get_handler):
         path = os.path.join(str(setup_folder_structure), 'data',
-                                'interval_definitions',
-                                'annual.csv')
+                            'interval_definitions',
+                            'annual.csv')
         with open(path, 'w') as fh:
             w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
             w.writeheader()
@@ -693,10 +690,6 @@ class TestDatafileInterface():
         actual = get_handler.read_interval_definition_data('annual')
         expected = annual_intervals
         assert actual == expected
-
-
-
-
 
     def test_project_region_definitions(self, get_handler):
         """ Test to read and write the project configuration
@@ -827,7 +820,10 @@ class TestDatafileInterface():
                 assert scenario_set['description'] == expected
 
         # Scenario sets / modify unique identifier (name)
-        scenario_set['name'] = 'name_change'
+        scenario_set = {
+            'description': 'The annual mortality rate in NL population',
+            'name': 'name_change'
+        }
         config_handler.update_scenario_set('mortality', scenario_set)
         scenario_sets = config_handler.read_scenario_sets()
         assert len(scenario_sets) == 2
@@ -853,7 +849,7 @@ class TestDatafileInterface():
         assert len(scenarios) == 2
 
         # Scenarios / add
-        scenario = {
+        sample_scenario = {
             'description': 'The Medium ONS Forecast for UK population out to 2050',
             'filename': 'population_medium.csv',
             'name': 'Medium Population (ONS)',
@@ -867,6 +863,7 @@ class TestDatafileInterface():
             ],
             'scenario_set': 'population',
         }
+        scenario = sample_scenario.copy()
         config_handler.write_scenario(scenario)
         scenarios = config_handler.read_scenarios()
         assert len(scenarios) == 3
@@ -875,6 +872,7 @@ class TestDatafileInterface():
                 assert scenario['filename'] == 'population_medium.csv'
 
         # Scenarios / modify
+        scenario = sample_scenario.copy()
         scenario['filename'] = 'population_med.csv'
         config_handler.update_scenario(scenario['name'], scenario)
         scenarios = config_handler.read_scenarios()
@@ -884,13 +882,15 @@ class TestDatafileInterface():
                 assert scenario['filename'] == 'population_med.csv'
 
         # Scenarios / modify unique identifier (name)
+        scenario = sample_scenario.copy()
         scenario['name'] = 'name_change'
+        scenario['filename'] = 'population_medium_change.csv'
         config_handler.update_scenario('Medium Population (ONS)', scenario)
         scenarios = config_handler.read_scenarios()
         assert len(scenarios) == 3
         for scenario in scenarios:
             if scenario['name'] == 'name_change':
-                assert scenario['filename'] == 'population_med.csv'
+                assert scenario['filename'] == 'population_medium_change.csv'
 
     def test_read_scenario_set_scenario_definitions(self, get_handler):
         """ Test to read all scenario definitions for a scenario
@@ -967,7 +967,10 @@ class TestDatafileInterface():
                 assert narrative_set['description'] == expected
 
         # narrative sets / modify unique identifier (name)
-        narrative_set['name'] = 'name_change'
+        narrative_set = {
+            'name': 'name_change',
+            'description': 'The rate of technical development in the NL'
+        }
         config_handler.update_narrative_set('technology', narrative_set)
         narrative_sets = config_handler.read_narrative_sets()
         assert len(narrative_sets) == 3
@@ -1259,14 +1262,22 @@ class TestDatafileInterface():
         )
         os.makedirs(previous_results_path, exist_ok=True)
 
-        with open(os.path.join(previous_results_path,
-                  "output_electricity_demand_timestep_2020_regions_lad_regions_intervals_annual.csv"), 'w') as fh:
+        path = os.path.join(
+            previous_results_path,
+            "output_electricity_demand_timestep_2020_regions_lad_regions_intervals_annual.csv")
+        with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,4.0\n")
-        with open(os.path.join(previous_results_path,
-                  "output_electricity_demand_timestep_2025_regions_lad_regions_intervals_annual.csv"), 'w') as fh:
+
+        path = os.path.join(
+            previous_results_path,
+            "output_electricity_demand_timestep_2025_regions_lad_regions_intervals_annual.csv")
+        with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,6.0\n")
-        with open(os.path.join(previous_results_path,
-                  "output_electricity_demand_timestep_2030_regions_lad_regions_intervals_annual.csv"), 'w') as fh:
+
+        path = os.path.join(
+            previous_results_path,
+            "output_electricity_demand_timestep_2030_regions_lad_regions_intervals_annual.csv")
+        with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,8.0\n")
 
         # Prepare warm start
@@ -1287,9 +1298,12 @@ class TestDatafileInterface():
 
         warm_start_results = os.listdir(current_results_path)
 
-        assert 'output_electricity_demand_timestep_2020_regions_lad_regions_intervals_annual.csv' in warm_start_results
-        assert 'output_electricity_demand_timestep_2025_regions_lad_regions_intervals_annual.csv' in warm_start_results
-        assert 'output_electricity_demand_timestep_2030_regions_lad_regions_intervals_annual.csv' not in warm_start_results
+        assert 'output_electricity_demand_timestep_2020' + \
+            '_regions_lad_regions_intervals_annual.csv' in warm_start_results
+        assert 'output_electricity_demand_timestep_2025' + \
+            '_regions_lad_regions_intervals_annual.csv' in warm_start_results
+        assert 'output_electricity_demand_timestep_2030' + \
+            '_regions_lad_regions_intervals_annual.csv' not in warm_start_results
 
     def test_prepare_warm_start_other_local_storage(self, setup_folder_structure,
                                                     project_config):
@@ -1317,14 +1331,22 @@ class TestDatafileInterface():
         )
         os.makedirs(previous_results_path, exist_ok=True)
 
-        with open(os.path.join(previous_results_path,
-                  "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv"), 'w') as fh:
+        path = os.path.join(
+            previous_results_path,
+            "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv")
+        with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,4.0\n")
-        with open(os.path.join(previous_results_path,
-                  "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv"), 'w') as fh:
+
+        path = os.path.join(
+            previous_results_path,
+            "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv")
+        with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,6.0\n")
-        with open(os.path.join(previous_results_path,
-                  "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv"), 'w') as fh:
+
+        path = os.path.join(
+            previous_results_path,
+            "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv")
+        with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,8.0\n")
 
         # Prepare warm start
