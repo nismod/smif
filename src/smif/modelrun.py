@@ -150,27 +150,28 @@ class ModelRunner(object):
         model_run.sos_model.before_model_run(data_handle)
 
         self.logger.debug("Initialising the decision manager")
-        df = DecisionFactory(model_run.model_horizon, model_run.strategies)
-        dm = df.get_managers()
+        decisions = DecisionFactory(model_run.model_horizon, model_run.strategies)
 
         self.logger.debug("Solving the models over all timesteps: %s",
                           model_run.model_horizon)
 
-        decision_iterations = next(dm)
-
-        # Solve the models over all timesteps
-        for iteration, timesteps in decision_iterations.items():
+        # Solve the models over all timesteps for each decision iteration
+        for iteration, decisions in decisions.get_managers():
             self.logger.info('Running decision iteration %s', iteration)
 
-            for timestep in timesteps:
+            for timestep in decisions.horizon:
                 self.logger.info('Running timestep %s', timestep)
+                state = decisions.get_state(timestep, iteration)
 
                 data_handle = DataHandle(
-                    store, model_run.name, timestep, model_run.model_horizon,
-                    model_run.sos_model, decision_iteration=iteration)
-
-                state = dm.get_state(timestep)
-                data_handle.set_state(state)
+                    store=store,
+                    modelrun_name=model_run.name,
+                    current_timestep=timestep,
+                    timesteps=model_run.model_horizon,
+                    model=model_run.sos_model,
+                    decision_iteration=iteration,
+                    state=state
+                )
                 model_run.sos_model.simulate(data_handle)
         return data_handle
 

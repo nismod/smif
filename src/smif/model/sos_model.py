@@ -128,32 +128,10 @@ class SosModel(CompositeModel):
         run_order = self._get_model_sets_in_run_order()
         self.logger.info("Determined run order as %s", [x.name for x in run_order])
         for model in run_order:
-
             self.logger.info("*** Running the %s model ***", model.name)
-
-            # get custom data handle for the Model
-            model_data_handle = DataHandle(
-                data_handle._store,
-                data_handle._modelrun_name,
-                data_handle._current_timestep,
-                list(data_handle.timesteps),
-                model,
-                data_handle._modelset_iteration,
-                data_handle._decision_iteration
-            )
-
-            model_state = []
-
-            sos_state = data_handle.get_state()
-            self.logger.debug("Sos State: %s", sos_state)
-            for build_year, names in sos_state.items():
-                for name in names:
-                    intervention = self.interventions.get_intervention(name)
-                    if intervention.sector == model.name:
-                        intervention.build_year = build_year
-                        model_state.append(intervention)
-            model_data_handle.set_state(model_state)
-            model.simulate(model_data_handle)
+            # Pass simulate access to a DataHandle derived for the particular
+            # model
+            model.simulate(data_handle.derive_for(model))
         return data_handle
 
     def make_dependency_graph(self):
