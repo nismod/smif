@@ -38,13 +38,16 @@ class DecisionFactory(object):
         self._strategies = strategies
 
     def get_managers(self):
-
+        """Generate decision maker
+        """
         decision_maker = None
 
         for strategy in self._strategies:
             if strategy['strategy'] == 'pre-specified-planning':
-                decision_maker = PreSpecified(self._horizon,
-                                              strategy['interventions'])
+                decision_maker = PreSpecified(
+                    self._horizon,
+                    strategy['interventions']
+                )
             else:
                 msg = "Only pre-specified planning strategies are implemented"
                 raise NotImplementedError(msg)
@@ -52,7 +55,7 @@ class DecisionFactory(object):
         if decision_maker is None:
             decision_maker = PreSpecified(self._horizon, [])
 
-        return decision_maker
+        yield (0, decision_maker)
 
 
 class DecisionModule(metaclass=ABCMeta):
@@ -75,8 +78,9 @@ class DecisionModule(metaclass=ABCMeta):
         A list of planning timesteps
 
     """
-    def __init__(self, timesteps):
+    def __init__(self, timesteps, register):
         self.horizon = timesteps
+        self.register = register
 
     def __next__(self):
         return self._get_next_decision_iteration()
@@ -99,6 +103,12 @@ class DecisionModule(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def get_state(self, timestep, iteration):
+        """Return decisions for a given timestep and decision iteration
+        """
+        raise NotImplementedError
+
     def _get_previous_state(self, timestep, decision_iteration):
         """Gets state of the previous `timestep` for `decision_iteration`
 
@@ -111,8 +121,7 @@ class DecisionModule(metaclass=ABCMeta):
         -------
         numpy.ndarray
         """
-        return self.get_state(timestep.PREVIOUS,
-                              decision_iteration)
+        return self.get_state(timestep.PREVIOUS, decision_iteration)
 
     def _set_post_decision_state(self, timestep, decision_iteration, decision):
         """Sets the post-decision state
@@ -154,10 +163,11 @@ class DecisionModule(metaclass=ABCMeta):
 
 
 class PreSpecified(DecisionModule):
+    """Pre-specified planning
+    """
 
     def __init__(self, timesteps, register):
-        super().__init__(timesteps)
-        self.register = register
+        super().__init__(timesteps, register)
 
     def _get_next_decision_iteration(self):
         return {1: [year for year in self.horizon]}
@@ -171,7 +181,7 @@ class PreSpecified(DecisionModule):
         """
         pass
 
-    def get_state(self, timestep):
+    def get_state(self, timestep, iteration=None):
         """Return a dict of intervention names built in timestep
 
         Returns
@@ -209,7 +219,7 @@ class PreSpecified(DecisionModule):
             raise ValueError("Timestep not in model horizon")
         index = self.horizon.index(timestep)
         if index == len(self.horizon) - 1:
-            next_year = 99999
+            next_year = timestep + 1
         else:
             next_year = self.horizon[index + 1]
 
@@ -220,9 +230,11 @@ class PreSpecified(DecisionModule):
 
 
 class RuleBased(DecisionModule):
+    """Rule-base decision modules
+    """
 
     def __init__(self, timesteps):
-        super().__init__(timesteps)
+        super().__init__(timesteps, register=None)
         self.satisfied = False
         self.current_timestep_index = 0
         self.current_iteration = 0
@@ -239,5 +251,8 @@ class RuleBased(DecisionModule):
                 self.current_iteration += 1
                 return {self.current_iteration: [self.horizon[self.current_timestep_index]]}
 
-    def _set_state(self, model, timestep, decision_iteration):
-        pass
+    def get_state(self, timestep, iteration):
+        return {}
+
+    def _set_state(self, timestep, decision_iteration):
+        raise NotImplementedError

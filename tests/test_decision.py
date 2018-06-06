@@ -116,12 +116,14 @@ class TestDecisionManager():
         strategy = []
         df = DecisionFactory([2010, 2015], strategy)
         dm = df.get_managers()
-        assert isinstance(dm, PreSpecified)
+        _, decision_maker = next(dm)
+        assert isinstance(decision_maker, PreSpecified)
 
     def test_decision_manager_init(self, get_strategies):
         df = DecisionFactory([2010, 2015], get_strategies)
         dm = df.get_managers()
-        assert isinstance(dm, PreSpecified)
+        _, decision_maker = next(dm)
+        assert isinstance(decision_maker, PreSpecified)
 
     def test_buildable(self, get_strategies):
         dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
