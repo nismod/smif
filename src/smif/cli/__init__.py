@@ -478,17 +478,18 @@ def run_app(args):
     ----------
     args
     """
-    print("Opening smif application")
+    print("    Opening smif app\n")
 
     # avoid one of two error messages from 'forrtl error(200)' when running
     # on windows cmd - seems related to scipy's underlying Fortran
     os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = 'T'
 
     # Create backend server process
-    print(" * smif app is running at http://localhost:5000")
+    print("    Copy/paste this URL into your web browser to connect:")
+    print("        http://localhost:5000\n")
 
     # add flush to ensure that text is printed before server thread starts
-    print(" * Type CTRL-C to quit", flush=True)
+    print("    Close your browser then type Control-C here to quit.", flush=True)
 
     if USE_WIN32:
         # Set handler for CTRL-C. Necessary to avoid `forrtl: error (200):
