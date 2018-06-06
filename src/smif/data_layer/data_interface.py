@@ -114,6 +114,10 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
+    def read_strategies(self):
+        raise NotImplementedError
+
+    @abstractmethod
     def write_scenario_set(self, scenario_set):
         raise NotImplementedError()
 

@@ -20,7 +20,8 @@ outputs:
   spatial_resolution: national
   temporal_resolution: annual
   units: Ml
-interventions: []
+interventions:
+- energy_supply.yml
 initial_conditions: []
 parameters:
 - name: smart_meter_savings

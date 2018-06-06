@@ -285,6 +285,7 @@ class TestSosModel():
     def test_run_sequential(self, get_sos_model_object):
         sos_model = get_sos_model_object
         data_handle = Mock()
+        data_handle.get_state = Mock(return_value={})
         data_handle.timesteps = [2010, 2011, 2012]
         data_handle._current_timestep = 2010
         sos_model.simulate(data_handle)

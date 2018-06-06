@@ -20,6 +20,7 @@ ModeRun has attributes:
 from logging import getLogger
 
 from smif.data_layer import DataHandle
+from smif.decision import DecisionFactory
 
 
 class ModelRun(object):
@@ -81,6 +82,7 @@ class ModelRun(object):
             'decision_module': None,
             'scenarios': self.scenarios,
             'narratives': self.narratives,
+            'strategies': self.strategies
         }
         return config
 
@@ -139,24 +141,38 @@ class ModelRunner(object):
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
         """
-        self.logger.debug("Initialising each of the sector models")
+
+        self.logger.info("Initialising each of the sector models")
         # Initialise each of the sector models
         data_handle = DataHandle(
             store, model_run.name, None, model_run.model_horizon,
             model_run.sos_model)
         model_run.sos_model.before_model_run(data_handle)
 
+        self.logger.debug("Initialising the decision manager")
+        decisions = DecisionFactory(model_run.model_horizon, model_run.strategies)
+
         self.logger.debug("Solving the models over all timesteps: %s",
                           model_run.model_horizon)
 
-        # Solve the models over all timesteps
-        for timestep in model_run.model_horizon:
-            self.logger.debug('Running model for timestep %s', timestep)
+        # Solve the models over all timesteps for each decision iteration
+        for iteration, decisions in decisions.get_managers():
+            self.logger.info('Running decision iteration %s', iteration)
 
-            data_handle = DataHandle(
-                store, model_run.name, timestep, model_run.model_horizon,
-                model_run.sos_model)
-            model_run.sos_model.simulate(data_handle)
+            for timestep in decisions.horizon:
+                self.logger.info('Running timestep %s', timestep)
+                state = decisions.get_state(timestep, iteration)
+
+                data_handle = DataHandle(
+                    store=store,
+                    modelrun_name=model_run.name,
+                    current_timestep=timestep,
+                    timesteps=model_run.model_horizon,
+                    model=model_run.sos_model,
+                    decision_iteration=iteration,
+                    state=state
+                )
+                model_run.sos_model.simulate(data_handle)
         return data_handle
 
 
@@ -182,6 +198,7 @@ class ModelRunBuilder(object):
         self._add_sos_model(model_run_config['sos_model'])
         self._add_scenarios(model_run_config['scenarios'])
         self._add_narratives(model_run_config['narratives'])
+        self._add_strategies(model_run_config['strategies'])
 
         self.model_run.status = 'Built'
 
@@ -233,6 +250,16 @@ class ModelRunBuilder(object):
             A list of smif.parameters.Narrative objects
         """
         self.model_run.narratives = narratives
+
+    def _add_strategies(self, strategies):
+        """
+
+        Arguments
+        ---------
+        narratives : list
+            A list of strategies
+        """
+        self.model_run.strategies = strategies
 
 
 class ModelRunError(Exception):

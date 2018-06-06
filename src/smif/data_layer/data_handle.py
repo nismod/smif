@@ -18,8 +18,9 @@ class DataHandle(object):
     """Get/set model parameters and data
     """
     def __init__(self, store, modelrun_name, current_timestep, timesteps, model,
-                 modelset_iteration=None, decision_iteration=None):
-        """Create a DataHandle for a Model to
+                 modelset_iteration=None, decision_iteration=None, state=None):
+        """Create a DataHandle for a Model to access data, parameters and state, and to
+        communicate results.
 
         Parameters
         ----------
@@ -46,10 +47,35 @@ class DataHandle(object):
         self._inputs = model.inputs
         self._outputs = model.outputs
         self._dependencies = model.deps
+        self._model = model
+
+        if state is None:
+            self._state = {}
+        else:
+            self._state = state
 
         configured_parameters = self._store.read_parameters(
             self._modelrun_name, self._model_name)
         self._parameters = model.parameters.overridden(configured_parameters)
+
+    def derive_for(self, model):
+        """Derive a new DataHandle configured for the given Model
+
+        Parameters
+        ----------
+        model : Model
+            Model which will use this DataHandle
+        """
+        return DataHandle(
+            store=self._store,
+            modelrun_name=self._modelrun_name,
+            current_timestep=self._current_timestep,
+            timesteps=list(self.timesteps),
+            model=model,
+            modelset_iteration=self._modelset_iteration,
+            decision_iteration=self._decision_iteration,
+            state=self._state
+        )
 
     def __getitem__(self, key):
         if key in self._parameters:
@@ -94,6 +120,24 @@ class DataHandle(object):
         """All timesteps (as tuple)
         """
         return tuple(self._timesteps)
+
+    def get_state(self):
+        """The current state of the model
+
+        Returns
+        -------
+        A list of interventions installed at the current timestep
+        """
+        model_state = []
+        model = self._model
+        sos_state = self._state
+        for build_year, names in sos_state.items():
+            for name in names:
+                intervention = model.interventions.get_intervention(name)
+                if intervention.sector == model.name:
+                    intervention.build_year = build_year
+                    model_state.append(intervention)
+        return model_state
 
     def get_data(self, input_name, timestep=None):
         """Get data required for model inputs

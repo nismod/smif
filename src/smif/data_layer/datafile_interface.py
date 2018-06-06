@@ -52,7 +52,8 @@ class DatafileInterface(DataInterface):
             'narratives': 'data',
             'region_definitions': 'data',
             'scenarios': 'data',
-            'coefficients': 'data'
+            'coefficients': 'data',
+            'strategies': 'data'
         }
 
         for category, folder in config_folders.items():
@@ -354,6 +355,17 @@ class DatafileInterface(DataInterface):
         filepath = self.file_dir['interventions']
         return self._read_yaml_file(filepath, filename, extension='')
 
+    def read_strategies(self, filename):
+        """Read the strategy data from filename
+
+        Arguments
+        ---------
+        filename: str
+            The name of the strategy yml file to read in
+        """
+        filepath = self.file_dir['strategies']
+        return self._read_yaml_file(filepath, filename, extension='')
+
     def read_initial_conditions(self, filename):
         """Read the initial conditions from filename
 
@@ -516,7 +528,8 @@ class DatafileInterface(DataInterface):
 
     def read_interval_names(self, interval_definition_name):
         return [interval[0]
-            for interval in self.read_interval_definition_data(interval_definition_name)]
+                for interval in self.read_interval_definition_data(
+                    interval_definition_name)]
 
     def write_interval_definition(self, interval_definition):
         """Write interval_definition to project configuration

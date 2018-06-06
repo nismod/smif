@@ -3,8 +3,6 @@ model.
 """
 from logging import getLogger
 
-from smif.convert.area import get_register as get_region_register
-from smif.convert.interval import get_register as get_interval_register
 from smif.model import Model
 
 
@@ -78,9 +76,6 @@ class ScenarioModelBuilder(object):
         self.scenario = ScenarioModel(name)
         self.logger = getLogger(__name__)
 
-        self.region_register = get_region_register()
-        self.interval_register = get_interval_register()
-
     def construct(self, scenario_config):
         """Build a ScenarioModel
 
@@ -96,8 +91,8 @@ class ScenarioModelBuilder(object):
             spatial = facet['spatial_resolution']
             temporal = facet['temporal_resolution']
 
-            spatial_res = self.region_register.get_entry(spatial)
-            temporal_res = self.interval_register.get_entry(temporal)
+            spatial_res = self.scenario.regions.get_entry(spatial)
+            temporal_res = self.scenario.intervals.get_entry(temporal)
 
             name = facet['name']
             self.scenario.add_output(name,

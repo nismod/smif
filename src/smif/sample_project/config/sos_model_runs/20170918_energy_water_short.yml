@@ -12,3 +12,8 @@ scenarios:
 narratives:
   technology:
   - 'High Tech Demand Side Management'
+strategies:
+- strategy: pre-specified-planning
+  description: build_nuclear
+  filename: build_nuke.yml
+  model_name: energy_supply
