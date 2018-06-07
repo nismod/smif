@@ -37,7 +37,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         pytest \
         pytest-cov \
         python-dateutil \
-        pyyaml \
+        ruamel.yaml \
         rtree \
         scikit-optimize \
         shapely

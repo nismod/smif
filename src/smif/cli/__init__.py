@@ -64,6 +64,12 @@ and narrative combinations to be used in each run of the models.
 
 """
 from __future__ import print_function
+
+try:
+    import _thread
+except ImportError:
+    import thread as _thread
+
 import datetime
 import logging
 import logging.config
@@ -74,9 +80,14 @@ import shutil
 import sys
 import time
 import traceback
+
+try:
+    import win32api
+    USE_WIN32 = True
+except ImportError:
+    USE_WIN32 = False
+
 from argparse import ArgumentParser
-from multiprocessing import Process
-from threading import Timer
 
 import smif
 from smif.data_layer import DatafileInterface, DataNotFoundError
@@ -460,10 +471,6 @@ def make_get_data_interface(args):
     return getter
 
 
-def _open_browser():
-    print(" * Smif app is running at http://localhost:5000")
-
-
 def _run_server(args):
     app_folder = pkg_resources.resource_filename('smif', 'app/dist')
     get_data_interface = make_get_data_interface(args)
@@ -482,25 +489,31 @@ def run_app(args):
     ----------
     args
     """
-    print("Opening smif application")
+    print("    Opening smif app\n")
+    print("    Copy/paste this URL into your web browser to connect:")
+    print("        http://localhost:5000\n")
+    # add flush to ensure that text is printed before server thread starts
+    print("    Close your browser then type Control-C here to quit.", flush=True)
 
     # avoid one of two error messages from 'forrtl error(200)' when running
     # on windows cmd - seems related to scipy's underlying Fortran
     os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = 'T'
 
-    # Create backend server process
-    server = Process(target=_run_server, args=(args,))
+    if USE_WIN32:
+        # Set handler for CTRL-C. Necessary to avoid `forrtl: error (200):
+        # program aborting...` crash on CTRL-C if we're runnging from Windows
+        # cmd.exe
+        def handler(dw_ctrl_type, hook_sigint=_thread.interrupt_main):
+            """Handler for CTRL-C interrupt
+            """
+            if dw_ctrl_type == 0:  # CTRL-C
+                hook_sigint()
+                return 1  # don't chain to the next handler
+            return 0  # chain to the next handler
+        win32api.SetConsoleCtrlHandler(handler, 1)
 
-    try:
-        print(" * Type CTRL-C to stop")
-        server.start()
-        Timer(2, _open_browser).start()
-        while True:
-            time.sleep(0.2)
-    except KeyboardInterrupt:
-        print(" * Stopping...")
-        server.terminate()
-        server.join()
+    # Create backend server process
+    _run_server(args)
 
 
 def parse_arguments():

@@ -13,7 +13,7 @@ Simulation Modelling Integration Framework
     :target: http://smif.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://img.shields.io/codecov/c/github/nismod/smif/master.svg   
+.. image:: https://img.shields.io/codecov/c/github/nismod/smif/master.svg
     :target: https://codecov.io/gh/nismod/smif?branch=master
     :alt: Code Coverage
 
@@ -162,6 +162,25 @@ To see all options and flags::
         -V, --version     show the current version of smif
         -v, --verbose     show messages: -v to see messages reporting on progress,
                             -vv to see debug messages.
+
+Citation
+========
+
+If you use **smif** for research, please cite the software directly:
+
+* Usher, W., Russell, T. and Schoenmakers, R. (2018). smif: simulation modelling
+  integration framework (v0.7.6) [Software]. Available online:
+  https://github.com/nismod/smif
+
+Here's an example BibTeX entry::
+
+        @Misc{,
+            author = {Will Usher and Tom Russell and Roald Schoenmakers},
+            title = {{smif}: simulation modelling integration framework (v0.7.6)},
+            year = {2018},
+            url = "https://github.com/nismod/smif",
+            note = {[Online; accessed <today>]}
+        }
 
 
 A word from our sponsors

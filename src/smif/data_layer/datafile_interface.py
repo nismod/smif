@@ -57,8 +57,7 @@ class DatafileInterface(DataInterface):
         }
 
         for category, folder in config_folders.items():
-            self.file_dir[category] = os.path.join(base_folder, folder,
-                                                   category)
+            self.file_dir[category] = os.path.join(base_folder, folder, category)
 
     def read_units_file_name(self):
         project_config = self._read_project_config()
@@ -262,18 +261,20 @@ class DatafileInterface(DataInterface):
             A list of sector_model dicts
         """
         sector_models = []
+        file_dir = self.file_dir['sector_models']
 
-        sector_model_names = self._read_filenames_in_dir(
-            self.file_dir['sector_models'], '.yml')
+        sector_model_names = self._read_filenames_in_dir(file_dir, '.yml')
         for sector_model_name in sector_model_names:
-            sector_models.append(
-                self._read_yaml_file(
-                    self.file_dir['sector_models'],
-                    sector_model_name
-                )
-            )
+            sector_models.append(self._read_yaml_file(file_dir, sector_model_name))
 
         return sector_models
+
+    def _sector_model_exists(self, name):
+        file_name = name + '.yml'
+        file_dir = self.file_dir['sector_models']
+
+        if os.path.exists(os.path.join(file_dir, file_name)):
+            return self._read_yaml_file(file_dir, name)
 
     def read_sector_model(self, sector_model_name):
         """Read a sector model
@@ -288,13 +289,11 @@ class DatafileInterface(DataInterface):
         sector_model: dict
             A sector_model dictionary
         """
-        if not self._sector_model_exists(sector_model_name):
+        sector_model = self._sector_model_exists(sector_model_name)
+        if sector_model is None:
             raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
-        return self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
 
-    def _sector_model_exists(self, name):
-        return os.path.exists(
-            os.path.join(self.file_dir['sector_models'], name + '.yml'))
+        return sector_model
 
     def write_sector_model(self, sector_model):
         """Write sector model to Yaml file
@@ -306,9 +305,9 @@ class DatafileInterface(DataInterface):
         """
         if self._sector_model_exists(sector_model['name']):
             raise DataExistsError("sector_model '%s' already exists" % sector_model['name'])
-        else:
-            self._write_yaml_file(self.file_dir['sector_models'],
-                                  sector_model['name'], sector_model)
+
+        self._write_yaml_file(
+            self.file_dir['sector_models'], sector_model['name'], sector_model)
 
     def update_sector_model(self, sector_model_name, sector_model):
         """Update sector model in Yaml file
@@ -328,6 +327,7 @@ class DatafileInterface(DataInterface):
 
         if not self._sector_model_exists(sector_model_name):
             raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+
         self._write_yaml_file(self.file_dir['sector_models'],
                               sector_model['name'], sector_model)
 
@@ -388,6 +388,11 @@ class DatafileInterface(DataInterface):
         project_config = self._read_project_config()
         return project_config['region_definitions']
 
+    def _region_definition_exists(self, region_definition_name):
+        for region_definition in self.read_region_definitions():
+            if region_definition['name'] == region_definition_name:
+                return region_definition
+
     def read_region_definition_data(self, region_definition_name):
         """Read region_definition data file into a Fiona feature collection
 
@@ -405,16 +410,13 @@ class DatafileInterface(DataInterface):
             A list of data from the specified file in a fiona formatted dict
         """
         # Find filename for this region_definition_name
-        region_definitions = self.read_region_definitions()
-        try:
-            filename = next(
-                rdef['filename']
-                for rdef in region_definitions
-                if rdef['name'] == region_definition_name
-            )
-        except StopIteration:
+        region_definition = self._region_definition_exists(region_definition_name)
+
+        if region_definition is None:
             raise DataNotFoundError(
                 "Region definition '{}' not found".format(region_definition_name))
+        else:
+            filename = region_definition['filename']
 
         # Read the region data from file
         filepath = os.path.join(self.file_dir['region_definitions'], filename)
@@ -440,8 +442,12 @@ class DatafileInterface(DataInterface):
         region_definition: dict
             A region_definition dict
         """
-        project_config = self._read_project_config()
 
+        if self._region_definition_exists(region_definition['name']):
+            raise DataExistsError(
+                "region_definition '%s' already exists" % region_definition['name'])
+
+        project_config = self._read_project_config()
         project_config['region_definitions'].append(region_definition)
         self._write_project_config(project_config)
 
@@ -455,15 +461,22 @@ class DatafileInterface(DataInterface):
         region_definition: dict
             The updated region_definition dict
         """
+        previous_region_definition = self._region_definition_exists(region_definition_name)
+        if previous_region_definition is None:
+            raise DataNotFoundError(
+                "region_definition '%s' does not exist" % region_definition_name)
+
+        # Update
         project_config = self._read_project_config()
 
-        # Create updated list
-        project_config['region_definitions'] = [
-            entry for entry in project_config['region_definitions']
-            if (entry['name'] != region_definition['name'] and
-                entry['name'] != region_definition_name)
-        ]
-        project_config['region_definitions'].append(region_definition)
+        idx = None
+        for i, existing_region_definition in enumerate(project_config['region_definitions']):
+            if existing_region_definition['name'] == region_definition_name:
+                # Guaranteed to match thanks to existence check above
+                idx = i
+                break
+
+        project_config['region_definitions'][idx] = region_definition
 
         self._write_project_config(project_config)
 
@@ -478,8 +491,13 @@ class DatafileInterface(DataInterface):
         project_config = self._read_project_config()
         return project_config['interval_definitions']
 
+    def _interval_definition_exists(self, interval_definition_name):
+        for interval_definition in self.read_interval_definitions():
+            if interval_definition['name'] == interval_definition_name:
+                return interval_definition
+
     def read_interval_definition_data(self, interval_definition_name):
-        """
+        """Read data for an interval definition
 
         Arguments
         ---------
@@ -494,17 +512,13 @@ class DatafileInterface(DataInterface):
         -----
         Expects csv file to contain headings of `id`, `start`, `end`
         """
-        interval_list = self.read_interval_definitions()
-        filename = None
+        interval_definition = self._interval_definition_exists(interval_definition_name)
 
-        for interval in interval_list:
-            if interval['name'] == interval_definition_name:
-                filename = interval['filename']
-
-        if filename is None:
-            raise KeyError("Interval set definition '{}' does not exist".format(
+        if interval_definition is None:
+            raise DataNotFoundError("Interval set definition '{}' does not exist".format(
                 interval_definition_name))
 
+        filename = interval_definition['filename']
         filepath = os.path.join(self.file_dir['interval_definitions'], filename)
 
         names = {}
@@ -527,9 +541,11 @@ class DatafileInterface(DataInterface):
         return data
 
     def read_interval_names(self, interval_definition_name):
-        return [interval[0]
-                for interval in self.read_interval_definition_data(
-                    interval_definition_name)]
+        return [
+            interval[0]
+            for interval
+            in self.read_interval_definition_data(interval_definition_name)
+        ]
 
     def write_interval_definition(self, interval_definition):
         """Write interval_definition to project configuration
@@ -539,8 +555,11 @@ class DatafileInterface(DataInterface):
         interval_definition: dict
             A interval_definition dict
         """
-        project_config = self._read_project_config()
+        if self._interval_definition_exists(interval_definition['name']):
+            raise DataExistsError(
+                "Interval definition '%s' already exists" % interval_definition['name'])
 
+        project_config = self._read_project_config()
         project_config['interval_definitions'].append(interval_definition)
         self._write_project_config(project_config)
 
@@ -554,53 +573,32 @@ class DatafileInterface(DataInterface):
         interval_definition: dict
             The updated interval_definition dict
         """
+        if not self._interval_definition_exists(interval_definition_name):
+            raise DataNotFoundError(
+                "Interval definition '%s' does not exist" % interval_definition_name)
+
         project_config = self._read_project_config()
 
         # Create updated list
-        project_config['interval_definitions'] = [
-            entry for entry in project_config['interval_definitions']
-            if (entry['name'] != interval_definition['name'] and
-                entry['name'] != interval_definition_name)
-        ]
-        project_config['interval_definitions'].append(interval_definition)
+        idx = None
+        for i, existing_interval_def in enumerate(project_config['interval_definitions']):
+            if existing_interval_def['name'] == interval_definition_name:
+                # Guaranteed to match thanks to existence check above
+                idx = i
+                break
+
+        project_config['interval_definitions'][idx] = interval_definition
 
         self._write_project_config(project_config)
 
-    def read_scenario_sets(self):
-        """Read scenario sets from project configuration
-
-        Returns
-        -------
-        list
-            A list of scenario set dicts
-        """
+    def read_scenario_definitions(self):
         project_config = self._read_project_config()
-        return project_config['scenario_sets']
+        return project_config['scenarios']
 
-    def read_scenario_set(self, scenario_set_name):
-        """Read a scenario_set
-
-        Arguments
-        ---------
-        scenario_set_name: str
-            Name of the scenario_set
-
-        Returns
-        -------
-        dict
-            Scenario set definition
-        """
-        project_config = self._read_project_config()
-
-        try:
-            return next(
-                scenario_set
-                for scenario_set in project_config['scenario_sets']
-                if scenario_set['name'] == scenario_set_name
-            )
-        except StopIteration:
-            raise DataNotFoundError(
-                "Scenario set '{}' not found".format(scenario_set_name))
+    def _scenario_definition_exists(self, scenario_name):
+        for scenario in self.read_scenario_definitions():
+            if scenario['name'] == scenario_name:
+                return scenario
 
     def read_scenario_set_scenario_definitions(self, scenario_set_name):
         """Read all scenarios from a certain scenario_set
@@ -615,17 +613,15 @@ class DatafileInterface(DataInterface):
         list
             A list of scenarios within the specified 'scenario_set_name'
         """
-        project_config = self._read_project_config()
-
         # Filter only the scenarios of the selected scenario_set_name
         filtered_scenario_data = [
-            data for data in project_config['scenarios']
+            data for data in self.read_scenario_definitions()
             if data['scenario_set'] == scenario_set_name
         ]
 
         if not filtered_scenario_data:
             self.logger.warning(
-                "Scenario set '{}' has no scenarios defined".format(scenario_set_name))
+                "Scenario set '%s' has no scenarios defined", scenario_set_name)
 
         return filtered_scenario_data
 
@@ -642,22 +638,50 @@ class DatafileInterface(DataInterface):
         dict
             The scenario definition
         """
-        project_config = self._read_project_config()
-        try:
-            return next(
-                sdef
-                for sdef in project_config['scenarios']
-                if sdef['name'] == scenario_name
-            )
-        except StopIteration:
+        scenario_definition = self._scenario_definition_exists(scenario_name)
+
+        if scenario_definition is None:
             raise DataNotFoundError(
                 "Scenario definition '{}' not found".format(scenario_name))
 
-    def _scenario_set_exists(self, scenario_set_name):
+        return scenario_definition
+
+    def read_scenario_sets(self):
+        """Read scenario sets from project configuration
+
+        Returns
+        -------
+        list
+            A list of scenario set dicts
+        """
         project_config = self._read_project_config()
-        for scenario_set in project_config['scenario_sets']:
+        return project_config['scenario_sets']
+
+    def _scenario_set_exists(self, scenario_set_name):
+        for scenario_set in self.read_scenario_sets():
             if scenario_set['name'] == scenario_set_name:
                 return scenario_set
+
+    def read_scenario_set(self, scenario_set_name):
+        """Read a scenario_set
+
+        Arguments
+        ---------
+        scenario_set_name: str
+            Name of the scenario_set
+
+        Returns
+        -------
+        dict
+            Scenario set definition
+        """
+        scenario_set = self._scenario_set_exists(scenario_set_name)
+
+        if scenario_set is None:
+            raise DataNotFoundError(
+                "Scenario set '{}' not found".format(scenario_set_name))
+
+        return scenario_set
 
     def write_scenario_set(self, scenario_set):
         """Write scenario_set to project configuration
@@ -669,10 +693,10 @@ class DatafileInterface(DataInterface):
         """
         if self._scenario_set_exists(scenario_set['name']):
             raise DataExistsError("scenario_set '%s' already exists" % scenario_set['name'])
-        else:
-            project_config = self._read_project_config()
-            project_config['scenario_sets'].append(scenario_set)
-            self._write_project_config(project_config)
+
+        project_config = self._read_project_config()
+        project_config['scenario_sets'].append(scenario_set)
+        self._write_project_config(project_config)
 
     def update_scenario_set(self, scenario_set_name, scenario_set):
         """Update scenario_set to project configuration
@@ -689,12 +713,14 @@ class DatafileInterface(DataInterface):
 
         project_config = self._read_project_config()
 
-        project_config['scenario_sets'] = [
-            entry for entry in project_config['scenario_sets']
-            if (entry['name'] != scenario_set['name'] and
-                entry['name'] != scenario_set_name)
-        ]
-        project_config['scenario_sets'].append(scenario_set)
+        idx = None
+        for i, existing_scenario_set in enumerate(project_config['scenario_sets']):
+            if existing_scenario_set['name'] == scenario_set_name:
+                # Guaranteed to find a match thanks to existence assertion above
+                idx = i
+                break
+
+        project_config['scenario_sets'][idx] = scenario_set
 
         self._write_project_config(project_config)
 
@@ -733,6 +759,8 @@ class DatafileInterface(DataInterface):
             A list of scenario dicts
         """
         project_config = self._read_project_config()
+        print([s['name'] for s in project_config['scenarios']])
+        print([s['description'] for s in project_config['scenarios']])
         return project_config['scenarios']
 
     def read_scenario(self, scenario_name):
@@ -790,12 +818,14 @@ class DatafileInterface(DataInterface):
 
         project_config = self._read_project_config()
 
-        project_config['scenarios'] = [
-            entry for entry in project_config['scenarios']
-            if (entry['name'] != scenario['name'] and
-                entry['name'] != scenario_name)
-        ]
-        project_config['scenarios'].append(scenario)
+        idx = None
+        for i, existing_scenario in enumerate(project_config['scenarios']):
+            if existing_scenario['name'] == scenario_name:
+                # Guaranteed to match given existence check above
+                idx = i
+                break
+
+        project_config['scenarios'][idx] = scenario
 
         self._write_project_config(project_config)
 
@@ -936,12 +966,14 @@ class DatafileInterface(DataInterface):
 
         project_config = self._read_project_config()
 
-        project_config['narrative_sets'] = [
-            entry for entry in project_config['narrative_sets']
-            if (entry['name'] != narrative_set['name'] and
-                entry['name'] != narrative_set_name)
-        ]
-        project_config['narrative_sets'].append(narrative_set)
+        idx = None
+        for i, existing_narrative_set in enumerate(project_config['narrative_sets']):
+            if existing_narrative_set['name'] == narrative_set_name:
+                # Guaranteed to match thanks to existence check above
+                idx = i
+                break
+
+        project_config['narrative_sets'][idx] = narrative_set
 
         self._write_project_config(project_config)
 
@@ -1031,12 +1063,14 @@ class DatafileInterface(DataInterface):
 
         project_config = self._read_project_config()
 
-        project_config['narratives'] = [
-            entry for entry in project_config['narratives']
-            if (entry['name'] != narrative['name'] and
-                entry['name'] != narrative_name)
-        ]
-        project_config['narratives'].append(narrative)
+        idx = None
+        for i, existing_narrative in enumerate(project_config['narratives']):
+            if existing_narrative['name'] == narrative_name:
+                # Guaranteed to match given existence check
+                idx = i
+                break
+
+        project_config['narratives'][idx] = narrative
 
         self._write_project_config(project_config)
 
@@ -1268,8 +1302,12 @@ class DatafileInterface(DataInterface):
 
         # Return if previous results were stored in a different format
         for filename in results:
-            if ((self.storage_format == 'local_csv' and not filename.endswith(".csv")) or
-                    (self.storage_format == 'local_binary' and not filename.endswith(".dat"))):
+            if (
+                    (self.storage_format == 'local_csv' and
+                        not filename.endswith(".csv")) or
+                    (self.storage_format == 'local_binary' and
+                        not filename.endswith(".dat"))
+                        ):
                 self.logger.info("Warm start not possible because a different "
                                  "storage mode was used in the previous run")
                 return None
@@ -1444,20 +1482,7 @@ class DatafileInterface(DataInterface):
             elif section.startswith('decision'):
                 decision_iteration = int(section.replace('decision_', ''))
             elif section.startswith('output'):
-                result_elements = re.findall(r"[^_]+", section)
-                results = {}
-                parse_element = ""
-                for element in result_elements:
-                    if element in ('output', 'timestep', 'regions', 'intervals') and parse_element != element:
-                        parse_element = element
-                    elif parse_element == 'output':
-                        results.setdefault('output', []).append(element)
-                    elif parse_element == 'timestep':
-                        results['timestep'] = int(element)
-                    elif parse_element == 'regions':
-                        results.setdefault('regions', []).append(element)
-                    elif parse_element == 'intervals':
-                        results.setdefault('intervals', []).append(element)
+                results = self._parse_output_section(section)
             elif section == 'csv':
                 storage_format = 'local_csv'
             elif section == 'dat':
@@ -1475,6 +1500,24 @@ class DatafileInterface(DataInterface):
             'decision_iteration': decision_iteration,
             'storage_format': storage_format
         }
+
+    def _parse_output_section(self, section):
+        result_elements = re.findall(r"[^_]+", section)
+        results = {}
+        parse_element = ""
+        for element in result_elements:
+            if element in ('output', 'timestep', 'regions', 'intervals') and \
+                    parse_element != element:
+                parse_element = element
+            elif parse_element == 'output':
+                results.setdefault('output', []).append(element)
+            elif parse_element == 'timestep':
+                results['timestep'] = int(element)
+            elif parse_element == 'regions':
+                results.setdefault('regions', []).append(element)
+            elif parse_element == 'intervals':
+                results.setdefault('intervals', []).append(element)
+        return results
 
     def _read_project_config(self):
         """Read the project configuration
