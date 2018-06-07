@@ -42,7 +42,7 @@ class TestPreSpecified:
         timesteps = [2010, 2015, 2020]
         actual = PreSpecified(timesteps, plan)
 
-        assert actual.horizon == timesteps
+        assert actual.timesteps == timesteps
 
     def test_generator(self, plan):
 
@@ -82,7 +82,7 @@ class TestRuleBased:
 
         timesteps = [2010, 2015, 2020]
         dm = RuleBased(timesteps)
-        assert dm.horizon == timesteps
+        assert dm.timesteps == timesteps
         assert dm.satisfied is False
         assert dm.current_timestep_index == 0
         assert dm.current_iteration == 0
@@ -131,7 +131,7 @@ class TestDecisionManager():
 
     def test_buildable(self, get_strategies):
         dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
-        assert dm.horizon == [2010, 2015]
+        assert dm.timesteps == [2010, 2015]
         assert dm.buildable(2010, 2010) is True
         assert dm.buildable(2011, 2010) is True
 
