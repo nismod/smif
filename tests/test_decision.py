@@ -1,5 +1,5 @@
 from pytest import fixture, raises
-from smif.decision import DecisionFactory, PreSpecified, RuleBased
+from smif.decision import DecisionManager, PreSpecified, RuleBased
 
 
 @fixture(scope='function')
@@ -114,16 +114,20 @@ class TestDecisionManager():
 
     def test_null_strategy(self):
         strategy = []
-        df = DecisionFactory([2010, 2015], strategy)
-        dm = df.get_managers()
-        _, decision_maker = next(dm)
-        assert isinstance(decision_maker, PreSpecified)
+        df = DecisionManager([2010, 2015], strategy)
+        dm = df.decision_loop()
+        bundle = next(dm)
+        assert bundle == {0: [2010, 2015]}
+        with raises(StopIteration):
+            next(dm)
 
     def test_decision_manager_init(self, get_strategies):
-        df = DecisionFactory([2010, 2015], get_strategies)
-        dm = df.get_managers()
-        _, decision_maker = next(dm)
-        assert isinstance(decision_maker, PreSpecified)
+        df = DecisionManager([2010, 2015], get_strategies)
+        dm = df.decision_loop()
+        bundle = next(dm)
+        assert bundle == {0: [2010, 2015]}
+        with raises(StopIteration):
+            next(dm)
 
     def test_buildable(self, get_strategies):
         dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
