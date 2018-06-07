@@ -20,7 +20,7 @@ ModeRun has attributes:
 from logging import getLogger
 
 from smif.data_layer import DataHandle
-from smif.decision import DecisionFactory
+from smif.decision import DecisionManager
 
 
 class ModelRun(object):
@@ -124,7 +124,8 @@ class ModelRun(object):
 
 
 class ModelRunner(object):
-    """Runs a ModelRun
+    """The ModelRunner orchestrates the simulation of a SoSModel over decision iterations and
+    timesteps as provided by a DecisionManager.
     """
     def __init__(self):
         self.logger = getLogger(__name__)
@@ -141,38 +142,51 @@ class ModelRunner(object):
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
         """
-
-        self.logger.info("Initialising each of the sector models")
         # Initialise each of the sector models
+        self.logger.info("Initialising each of the sector models")
         data_handle = DataHandle(
-            store, model_run.name, None, model_run.model_horizon,
-            model_run.sos_model)
+            store=store,
+            modelrun_name=model_run.name,
+            current_timestep=None,
+            timesteps=model_run.model_horizon,
+            model=model_run.sos_model
+        )
         model_run.sos_model.before_model_run(data_handle)
 
+        # Initialise the decision manager (and hence decision modules)
         self.logger.debug("Initialising the decision manager")
-        decisions = DecisionFactory(model_run.model_horizon, model_run.strategies)
+        decision_manager = DecisionManager(model_run.model_horizon, model_run.strategies)
 
-        self.logger.debug("Solving the models over all timesteps: %s",
-                          model_run.model_horizon)
+        # Solve the model run: decision loop generates a series of bundles of independent
+        # decision iterations, each with a number of timesteps to run
+        self.logger.debug("Solving the models over all timesteps: %s", model_run.model_horizon)
+        for bundle in decision_manager.decision_loop():
+            # each iteration is independent at this point, so the following loop is a
+            # candidate for running in parallel
+            for iteration, timesteps in bundle.items():
+                self.logger.info('Running decision iteration %s', iteration)
 
-        # Solve the models over all timesteps for each decision iteration
-        for iteration, decisions in decisions.get_managers():
-            self.logger.info('Running decision iteration %s', iteration)
+                # Each timestep *might* be able to be run in parallel - until we have an
+                # explicit way of declaring inter-timestep dependencies
+                for timestep in timesteps:
+                    self.logger.info('Running timestep %s', timestep)
 
-            for timestep in decisions.horizon:
-                self.logger.info('Running timestep %s', timestep)
-                state = decisions.get_state(timestep, iteration)
+                    # this should be pushed down into the responsibility of DataHandle and
+                    # DataInterface
+                    # - DecisionManager/Module sets state for each timestep, iteration
+                    # - SosModel/Model calls through DataHandle to access 'current' state
+                    state = decision_manager.get_state(timestep, iteration)
 
-                data_handle = DataHandle(
-                    store=store,
-                    modelrun_name=model_run.name,
-                    current_timestep=timestep,
-                    timesteps=model_run.model_horizon,
-                    model=model_run.sos_model,
-                    decision_iteration=iteration,
-                    state=state
-                )
-                model_run.sos_model.simulate(data_handle)
+                    data_handle = DataHandle(
+                        store=store,
+                        modelrun_name=model_run.name,
+                        current_timestep=timestep,
+                        timesteps=model_run.model_horizon,
+                        model=model_run.sos_model,
+                        decision_iteration=iteration,
+                        state=state
+                    )
+                    model_run.sos_model.simulate(data_handle)
         return data_handle
 
 

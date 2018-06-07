@@ -1,5 +1,5 @@
 from pytest import fixture, raises
-from smif.decision import DecisionFactory, PreSpecified, RuleBased
+from smif.decision import DecisionManager, PreSpecified, RuleBased
 
 
 @fixture(scope='function')
@@ -42,7 +42,7 @@ class TestPreSpecified:
         timesteps = [2010, 2015, 2020]
         actual = PreSpecified(timesteps, plan)
 
-        assert actual.horizon == timesteps
+        assert actual.timesteps == timesteps
 
     def test_generator(self, plan):
 
@@ -82,7 +82,7 @@ class TestRuleBased:
 
         timesteps = [2010, 2015, 2020]
         dm = RuleBased(timesteps)
-        assert dm.horizon == timesteps
+        assert dm.timesteps == timesteps
         assert dm.satisfied is False
         assert dm.current_timestep_index == 0
         assert dm.current_iteration == 0
@@ -114,20 +114,24 @@ class TestDecisionManager():
 
     def test_null_strategy(self):
         strategy = []
-        df = DecisionFactory([2010, 2015], strategy)
-        dm = df.get_managers()
-        _, decision_maker = next(dm)
-        assert isinstance(decision_maker, PreSpecified)
+        df = DecisionManager([2010, 2015], strategy)
+        dm = df.decision_loop()
+        bundle = next(dm)
+        assert bundle == {0: [2010, 2015]}
+        with raises(StopIteration):
+            next(dm)
 
     def test_decision_manager_init(self, get_strategies):
-        df = DecisionFactory([2010, 2015], get_strategies)
-        dm = df.get_managers()
-        _, decision_maker = next(dm)
-        assert isinstance(decision_maker, PreSpecified)
+        df = DecisionManager([2010, 2015], get_strategies)
+        dm = df.decision_loop()
+        bundle = next(dm)
+        assert bundle == {0: [2010, 2015]}
+        with raises(StopIteration):
+            next(dm)
 
     def test_buildable(self, get_strategies):
         dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
-        assert dm.horizon == [2010, 2015]
+        assert dm.timesteps == [2010, 2015]
         assert dm.buildable(2010, 2010) is True
         assert dm.buildable(2011, 2010) is True
 

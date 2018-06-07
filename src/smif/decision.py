@@ -24,38 +24,80 @@ __license__ = "mit"
 from abc import ABCMeta, abstractmethod
 
 
-class DecisionFactory(object):
-    """Returns a DecisionModule implementation
+class DecisionManager(object):
+    """A DecisionManager is initialised with one or more model run strategies that refer to
+    DecisionModules such as pre-specified planning, a rule-based models or multi-objective
+    optimisation. These implementations influence the combination and ordering of decision
+    iterations and model timesteps that need to be performed by the model runner.
+
+    The DecisionManager presents a simple decision loop interface to the model runner, in the
+    form of a generator which allows the model runner to iterate over the collection of
+    independent simulations required at each step.
+
+    (Not yet implemented.) A DecisionManager collates the output of the decision algorithms and
+    writes the post-decision state through a DataHandle. This allows Models to access a given
+    decision state (identified uniquely by timestep and decision iteration id).
+
+    (Not yet implemented.) A DecisionManager may also pass a DataHandle down to a
+    DecisionModule, allowing the DecisionModule to access model results from previous timesteps
+    and decision iterations when making decisions.
 
     Arguments
     ---------
-    horizon: list
+    timesteps: list
     strategies: list
     """
 
-    def __init__(self, horizon, strategies):
-        self._horizon = horizon
+    def __init__(self, timesteps, strategies):
+        self._timesteps = timesteps
         self._strategies = strategies
+        self._decision_modules = []
 
-    def get_managers(self):
-        """Generate decision maker
-        """
-        decision_maker = None
+        self._set_up_decision_modules()
+
+    def _set_up_decision_modules(self):
+        interventions = []
 
         for strategy in self._strategies:
             if strategy['strategy'] == 'pre-specified-planning':
-                decision_maker = PreSpecified(
-                    self._horizon,
-                    strategy['interventions']
-                )
+                interventions.extend(strategy['interventions'])
             else:
                 msg = "Only pre-specified planning strategies are implemented"
                 raise NotImplementedError(msg)
 
-        if decision_maker is None:
-            decision_maker = PreSpecified(self._horizon, [])
+        self._decision_modules = [PreSpecified(self._timesteps, interventions)]
 
-        yield (0, decision_maker)
+    def decision_loop(self):
+        """Generate bundles of simulation steps to run.
+
+        Each iteration returns a dict: {decision_iteration (int) => list of timesteps (int)}
+
+        With only pre-specified planning, there is a single step in the loop, with a single
+        decision iteration with timesteps covering the entire model horizon.
+
+        With a rule based approach, there might be many steps in the loop, each with a single
+        decision iteration and single timestep, moving on once some threshold is satisfied.
+
+        With a genetic algorithm, there might be a configurable number of steps in the loop,
+        each with multiple decision iterations (one for each member of the algorithm's
+        population) and timesteps covering the entire model horizon.
+
+        Implicitly, if the bundle returned in an iteration contains multiple decision
+        iterations, they can be performed in parallel. If each decision iteration contains
+        multiple timesteps, they can also be parallelised, so long as there are no temporal
+        dependencies.
+        """
+        assert len(self._decision_modules) == 1
+        assert isinstance(self._decision_modules[0], PreSpecified)
+        yield {0: self._timesteps}
+
+    def get_state(self, timestep, iteration):
+        """Return all interventions built in the given timestep for the given decision
+        iteration.
+
+        Deprecated - to be pushed down into DataHandle
+        """
+        self._decision_modules[0].get_state(timestep, iteration)
 
 
 class DecisionModule(metaclass=ABCMeta):
@@ -79,7 +121,7 @@ class DecisionModule(metaclass=ABCMeta):
 
     """
     def __init__(self, timesteps, register):
-        self.horizon = timesteps
+        self.timesteps = timesteps
         self.register = register
 
     def __next__(self):
@@ -170,7 +212,7 @@ class PreSpecified(DecisionModule):
         super().__init__(timesteps, register)
 
     def _get_next_decision_iteration(self):
-        return {1: [year for year in self.horizon]}
+        return {1: [year for year in self.timesteps]}
 
     def _set_state(self, timestep, decision_iteration):
         """Pre-specified planning interventions are loaded during initialisation
@@ -215,13 +257,13 @@ class PreSpecified(DecisionModule):
         [2005, 2010, 2015, 2020] then buildable returns True for timesteps
         2010, 2015 and 2020 and False for 2005.
         """
-        if timestep not in self.horizon:
-            raise ValueError("Timestep not in model horizon")
-        index = self.horizon.index(timestep)
-        if index == len(self.horizon) - 1:
+        if timestep not in self.timesteps:
+            raise ValueError("Timestep not in model timesteps")
+        index = self.timesteps.index(timestep)
+        if index == len(self.timesteps) - 1:
             next_year = timestep + 1
         else:
-            next_year = self.horizon[index + 1]
+            next_year = self.timesteps[index + 1]
 
         if build_year < next_year:
             return True
@@ -240,16 +282,16 @@ class RuleBased(DecisionModule):
         self.current_iteration = 0
 
     def _get_next_decision_iteration(self):
-            if self.satisfied and self.current_timestep_index == len(self.horizon) - 1:
+            if self.satisfied and self.current_timestep_index == len(self.timesteps) - 1:
                 return None
-            elif self.satisfied and self.current_timestep_index <= len(self.horizon):
+            elif self.satisfied and self.current_timestep_index <= len(self.timesteps):
                 self.satisfied = False
                 self.current_timestep_index += 1
                 self.current_iteration += 1
-                return {self.current_iteration: [self.horizon[self.current_timestep_index]]}
+                return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
             else:
                 self.current_iteration += 1
-                return {self.current_iteration: [self.horizon[self.current_timestep_index]]}
+                return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
 
     def get_state(self, timestep, iteration):
         return {}
