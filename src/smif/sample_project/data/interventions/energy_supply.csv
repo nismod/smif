@@ -1,0 +1,5 @@
+﻿name,capital_cost_value,capital_cost_unit,economic_lifetime,operational_lifetime,line_num,from_location,to_location,capacity,capacity_unit,length,length_unit
+ac_line1,5,£/km,5,80,1,1,2,525,MW,50,km
+ac_line2,4,£/km,5,80,2,1,3,132,MW,40,km
+ac_line3,4.2,£/km,5,80,3,2,4,760,MW,42,km
+ac_line4,6,£/km,5,80,4,4,7,1090,MW,60,km

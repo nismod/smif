@@ -1,14 +1,19 @@
-decision_module: ''
-description: Combined energy and water under central scenario, only to 2015
 name: 20170918_energy_water_short
-narratives:
-  technology:
-  - High Tech Demand Side Management
-scenarios:
-  population: Central Population (Medium)
-  rainfall: Central Rainfall
-sos_model: energy_water
-stamp: '2017-09-18T12:53:23+00:00'
+description: Combined energy and water under central scenario, only to 2015
+stamp: "2017-09-18T12:53:23+00:00"
 timesteps:
 - 2010
 - 2015
+sos_model: energy_water
+decision_module: ''
+scenarios:
+  population: Central Population (Medium)
+  rainfall: Central Rainfall
+narratives:
+  technology:
+  - 'High Tech Demand Side Management'
+strategies:
+- strategy: pre-specified-planning
+  description: build_nuclear
+  filename: build_nuke.yml
+  model_name: energy_supply

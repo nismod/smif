@@ -57,6 +57,7 @@ def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
         os.path.join('data', 'region_definitions'),
         os.path.join('data', 'scenarios'),
         os.path.join('data', 'coefficients'),
+        os.path.join('data', 'strategies'),
         'models',
         'results'
     ]
@@ -653,6 +654,14 @@ def get_sos_model_run():
         'scenarios': {
             'population': 'High Population (ONS)'
         },
+        'strategies': [{'strategy': 'pre-specified-planning',
+                        'description': 'description of the strategy',
+                        'model_name': 'energy_supply',
+                        'interventions': [
+                           {'name': 'nuclear_large', 'build_year': 2030},
+                           {'name': 'carrington_return', 'build_year': 2030}
+                           ]
+                        }],
         'narratives': {
             'technology': [
                 'Energy Demand - High Tech'

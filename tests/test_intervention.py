@@ -1,31 +1,11 @@
 from pytest import fixture, raises
-from smif.intervention import (Asset, AssetRegister, Intervention,
-                               InterventionRegister)
-
-
-@fixture(scope='function')
-def get_wtp():
-    name = 'water_treatment_plant'
-    data = {
-        'sector': 'water_supply',
-        'capacity': {
-            'units': 'ML/day',
-            'value': 5
-        },
-        'location': 'oxford',
-        'build_date': 2016
-    }
-    return Asset(
-        name=name,
-        data=data
-    )
+from smif.intervention import Intervention, InterventionRegister
 
 
 @fixture(scope='function')
 def get_intervention():
     name = 'water_treatment_plant'
     data = {
-        'sector': 'water_supply',
         'capacity': {
             'units': 'ML/day',
             'value': 5
@@ -34,7 +14,8 @@ def get_intervention():
     }
     return Intervention(
         name=name,
-        data=data
+        data=data,
+        sector='water_supply'
     )
 
 
@@ -101,143 +82,6 @@ class TestIntervention:
     def test_intervention_init_location(self, build_intervention_ws):
         actual = Intervention(data=build_intervention_ws)
         assert actual.location == "POINT(51.1 -1.7)"
-
-
-class TestAsset:
-
-    def test_create_asset(self, get_wtp):
-        water_treatment_plant = get_wtp
-        assert water_treatment_plant.name == 'water_treatment_plant'
-
-    def test_create_asset_with_sector(self):
-        data = {
-            'sector': 'water_supply',
-            'capacity': {
-                'units': 'ML/day',
-                'value': 5
-            },
-            'build_date': 2020,
-            'location': "POINT(51.1 -1.7)"
-        }
-        asset = Asset(data=data)
-        assert asset.sector == 'water_supply'
-
-    def test_create_asset_without_sector(self):
-        data = {
-            'capacity': {
-                'units': 'ML/day',
-                'value': 5
-            },
-            'build_date': 2020,
-            'location': "POINT(51.1 -1.7)"
-        }
-        asset = Asset(data=data, sector='water_supply')
-        assert asset.sector == 'water_supply'
-
-    def test_create_asset_with_full_data(self, get_wtp):
-        name = 'water_treatment_plant'
-        data = {
-            'sector': 'water_supply',
-            'capacity': {
-                'units': 'ML/day',
-                'value': 5
-            },
-            'build_date': 2020,
-            'location': "POINT(51.1 -1.7)"
-        }
-        wtp = Asset(
-            name,
-            data
-        )
-        assert wtp.location == "POINT(51.1 -1.7)"
-        assert wtp.build_date == 2020
-
-    def test_location(self, get_wtp):
-        water_treatment_plant = get_wtp
-        assert water_treatment_plant.location == 'oxford'
-
-    def test_set_location(self, get_wtp):
-        water_treatment_plant = get_wtp
-        water_treatment_plant.location = "POINT(51.1 -1.7)"
-        assert water_treatment_plant.location == "POINT(51.1 -1.7)"
-
-    def test_build_date(self, get_wtp):
-        water_treatment_plant = get_wtp
-        assert water_treatment_plant.build_date == 2016
-
-    def test_set_build_date(self, get_wtp):
-        water_treatment_plant = get_wtp
-        water_treatment_plant.build_date = 2020
-        assert water_treatment_plant.build_date == 2020
-
-    def test_get_data(self, get_wtp):
-        water_treatment_plant = get_wtp
-        water_treatment_plant.location = "POINT(51.1 -1.7)"
-        water_treatment_plant.build_date = 2020
-        water_treatment_plant.data["name"] = "oxford treatment plant"
-
-        assert water_treatment_plant.data == {
-            'sector': 'water_supply',
-            'name': 'oxford treatment plant',
-            'capacity': {
-                'units': 'ML/day',
-                'value': 5
-            },
-            'location': "POINT(51.1 -1.7)",
-            'build_date': 2020
-        }
-
-    def test_hash(self, get_wtp):
-        water_treatment_plant = get_wtp
-
-        data_str = '{"build_date": 2016, ' + \
-                   '"capacity": {"units": "ML/day", "value": 5}, ' + \
-                   '"location": "oxford", ' + \
-                   '"name": "water_treatment_plant", ' + \
-                   '"sector": "water_supply"}'
-
-        repr_str = 'Asset("water_treatment_plant", {' + \
-                   '"build_date": 2016, ' + \
-                   '"capacity": {"units": "ML/day", "value": 5}, ' + \
-                   '"location": "oxford", ' + \
-                   '"name": "water_treatment_plant", ' + \
-                   '"sector": "water_supply"})'
-
-        # should be able to reproduce sha1sum by doing
-        # `printf "data_str..." | sha1sum` on the command line
-        sha1sum = "c2c6e0860718e11bc85913ef4701d629e604c41f"
-        assert str(water_treatment_plant) == data_str
-        assert repr(water_treatment_plant) == repr_str
-        assert water_treatment_plant.sha1sum() == sha1sum
-
-
-class TestAssetRegister:
-
-    def test_fail_add_intervention(self, get_intervention):
-        not_an_asset = get_intervention
-        register = AssetRegister()
-        with raises(TypeError):
-            register.register(not_an_asset)
-
-    def test_register_assert_length(self, get_wtp):
-        water = get_wtp
-        register = AssetRegister()
-        register.register(water)
-
-        assert len(register) == 1
-
-    def test_register_assert_keys(self, get_wtp):
-        water = get_wtp
-        register = AssetRegister()
-        register.register(water)
-
-        assert sorted(register._attribute_keys) == [
-            "build_date",
-            "capacity",
-            "location",
-            "name",
-            "sector"
-        ]
 
 
 class TestInterventionRegister:

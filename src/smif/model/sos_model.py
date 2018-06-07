@@ -9,11 +9,8 @@ and the dependencies between the models.
 import logging
 
 import networkx
-from smif.convert.area import get_register as get_region_register
-from smif.convert.interval import get_register as get_interval_register
-from smif.convert.unit import get_register as get_unit_register
 from smif.data_layer import DataHandle
-from smif.intervention import InterventionRegister
+from smif.intervention import Intervention, InterventionRegister
 from smif.model import CompositeModel, Model, element_after, element_before
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
@@ -131,20 +128,10 @@ class SosModel(CompositeModel):
         run_order = self._get_model_sets_in_run_order()
         self.logger.info("Determined run order as %s", [x.name for x in run_order])
         for model in run_order:
-
             self.logger.info("*** Running the %s model ***", model.name)
-
-            # get custom data handle for the Model
-            model_data_handle = DataHandle(
-                data_handle._store,
-                data_handle._modelrun_name,
-                data_handle._current_timestep,
-                list(data_handle.timesteps),
-                model,
-                data_handle._modelset_iteration,
-                data_handle._decision_iteration
-            )
-            model.simulate(model_data_handle)
+            # Pass simulate access to a DataHandle derived for the particular
+            # model
+            model.simulate(data_handle.derive_for(model))
         return data_handle
 
     def make_dependency_graph(self):
@@ -285,10 +272,6 @@ class SosModelBuilder(object):
     """
     def __init__(self, name='global'):
         self.sos_model = SosModel(name)
-        self.region_register = get_region_register()
-        self.interval_register = get_interval_register()
-        self.unit_register = get_unit_register()
-
         self.logger = logging.getLogger(__name__)
 
     def construct(self, sos_model_config):
@@ -306,6 +289,7 @@ class SosModelBuilder(object):
         self.set_convergence_rel_tolerance(sos_model_config)
 
         self.load_models(sos_model_config['sector_models'])
+        self.register_interventions(sos_model_config['sector_models'])
         self.load_scenario_models(sos_model_config['scenario_sets'])
 
         self.add_dependencies(sos_model_config['dependencies'])
@@ -378,6 +362,14 @@ class SosModelBuilder(object):
         for model in model_list:
             self.sos_model.add_model(model)
 
+    def register_interventions(self, sector_models):
+        for model in sector_models:
+            for intervention in model.interventions:
+                intervention_object = Intervention(
+                    data=intervention,
+                    sector=model.name)
+                self.sos_model.interventions.register(intervention_object)
+
     def load_scenario_models(self, scenario_list):
         """Loads the scenario models into the system-of-systems model
 
@@ -439,15 +431,15 @@ class SosModelBuilder(object):
         source_units = dependency.source.units
         sink_units = dependency.sink.units
 
-        if self.unit_register.parse_unit(source_units) is None:
+        if source_model.units.parse_unit(source_units) is None:
             msg = "Cannot convert from undefined unit '{}'"
             raise ValueError(msg.format(source_units))
-        if self.unit_register.parse_unit(sink_units) is None:
+        if source_model.units.parse_unit(sink_units) is None:
             msg = "Cannot convert to undefined unit '{}'"
             raise ValueError(msg.format(sink_units))
 
         if source_units != sink_units:
-            self.unit_register.get_coefficients(source_units,
+            source_model.units.get_coefficients(source_units,
                                                 sink_units)
 
     def finish(self):

@@ -1,15 +1,15 @@
 name: Test Project
 scenario_sets:
+- description: Growth in UK population
+  facets:
+  - name: population
+    description: ''
+  name: population
 - description: Rainfall in the UK
   facets:
   - name: raininess
     description: ''
   name: rainfall
-- description: Growth in UK population
-  facets:
-  - description: ''
-    name: population
-  name: population
 narrative_sets:
 - description: Describes the evolution of technology
   name: technology

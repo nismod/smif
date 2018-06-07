@@ -52,7 +52,8 @@ class DatafileInterface(DataInterface):
             'narratives': 'data',
             'region_definitions': 'data',
             'scenarios': 'data',
-            'coefficients': 'data'
+            'coefficients': 'data',
+            'strategies': 'data'
         }
 
         for category, folder in config_folders.items():
@@ -352,6 +353,17 @@ class DatafileInterface(DataInterface):
             The name of the intervention yml file to read in
         """
         filepath = self.file_dir['interventions']
+        return self._read_yaml_file(filepath, filename, extension='')
+
+    def read_strategies(self, filename):
+        """Read the strategy data from filename
+
+        Arguments
+        ---------
+        filename: str
+            The name of the strategy yml file to read in
+        """
+        filepath = self.file_dir['strategies']
         return self._read_yaml_file(filepath, filename, extension='')
 
     def read_initial_conditions(self, filename):

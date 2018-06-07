@@ -7,19 +7,31 @@ from smif.modelrun import ModelRunBuilder, ModelRunError, ModelRunner
 @fixture(scope='function')
 def get_model_run_config_data():
 
+    sos_model = Mock()
+    energy_supply = Mock()
+    energy_supply.name = 'energy_supply'
+    sos_model.models = [energy_supply]
+
     config = {
         'name': 'unique_model_run_name',
         'stamp': '2017-09-20T12:53:23+00:00',
         'description': 'a description of what the model run contains',
         'decision_module': None,
         'timesteps': [2010, 2011, 2012],
-        'sos_model': Mock(sector_models=[]),
+        'sos_model': sos_model,
         'scenarios':
             {'raininess': 'high_raininess'},
         'narratives':
             [Mock(data={'model_name': {'parameter_name': 0}}),
              Mock(data={'model_name': {'parameter_name': 0}})
-             ]
+             ],
+        'strategies': [{'strategy': 'pre-specified-planning',
+                        'description': 'build_nuclear',
+                        'model_name': 'energy_supply',
+                        'interventions': [
+                            {'name': 'nuclear_large', 'build_year': 2012},
+                            {'name': 'carrington_retire', 'build_year': 2011}]
+                        }]
     }
     return config
 
@@ -51,6 +63,7 @@ class TestModelRunBuilder:
         assert modelrun.status == 'Built'
         assert modelrun.scenarios == {'raininess': 'high_raininess'}
         assert modelrun.narratives == config_data['narratives']
+        assert modelrun.strategies == config_data['strategies']
 
 
 class TestModelRun:
@@ -91,6 +104,11 @@ class TestModelRunner():
         store = Mock()
         runner = ModelRunner()
         modelrun = Mock()
+        modelrun.strategies = []
+        sos_model = Mock()
+        sos_model.models = []
+        modelrun.sos_model = sos_model
+
         modelrun.narratives = []
         modelrun.model_horizon = [1, 2]
 
@@ -102,6 +120,10 @@ class TestModelRunner():
         store = Mock()
         runner = ModelRunner()
         modelrun = Mock()
+        modelrun.strategies = []
+        sos_model = Mock()
+        sos_model.models = []
+        modelrun.sos_model = sos_model
         modelrun.narratives = []
         modelrun.model_horizon = [1, 2]
 

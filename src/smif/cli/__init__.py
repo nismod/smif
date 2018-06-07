@@ -332,6 +332,17 @@ def get_model_run_definition(directory, modelrun):
     LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
     sos_model_config['scenario_sets'] = scenario_objects
 
+    strategies = []
+    for strategy in model_run_config['strategies']:
+        if strategy['strategy'] == 'pre-specified-planning':
+            interventions = handler.read_strategies(strategy['filename'])
+            del strategy['filename']
+            strategy['interventions'] = interventions
+            LOGGER.debug("Added %s pre-specified planning interventions to %s",
+                         len(interventions), strategy['model_name'])
+        strategies.append(strategy)
+    sos_model_config['strategies'] = strategies
+
     sos_model_builder = SosModelBuilder()
     sos_model_builder.construct(sos_model_config)
     sos_model_object = sos_model_builder.finish()
@@ -479,17 +490,14 @@ def run_app(args):
     args
     """
     print("    Opening smif app\n")
+    print("    Copy/paste this URL into your web browser to connect:")
+    print("        http://localhost:5000\n")
+    # add flush to ensure that text is printed before server thread starts
+    print("    Close your browser then type Control-C here to quit.", flush=True)
 
     # avoid one of two error messages from 'forrtl error(200)' when running
     # on windows cmd - seems related to scipy's underlying Fortran
     os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = 'T'
-
-    # Create backend server process
-    print("    Copy/paste this URL into your web browser to connect:")
-    print("        http://localhost:5000\n")
-
-    # add flush to ensure that text is printed before server thread starts
-    print("    Close your browser then type Control-C here to quit.", flush=True)
 
     if USE_WIN32:
         # Set handler for CTRL-C. Necessary to avoid `forrtl: error (200):
@@ -504,6 +512,7 @@ def run_app(args):
             return 0  # chain to the next handler
         win32api.SetConsoleCtrlHandler(handler, 1)
 
+    # Create backend server process
     _run_server(args)
 
 

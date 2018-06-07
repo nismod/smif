@@ -71,6 +71,9 @@ class Model(metaclass=ABCMeta):
     outputs : smif.metadata.MetaDataSet
 
     """
+    regions = get_region_register()
+    intervals = get_interval_register()
+    units = get_unit_register()
 
     def __init__(self, name):
         self.name = name
@@ -81,9 +84,6 @@ class Model(metaclass=ABCMeta):
 
         self._parameters = ParameterList()
 
-        self.regions = get_region_register()
-        self.intervals = get_interval_register()
-        self.units = get_unit_register()
         self.timesteps = []
 
         self.logger = getLogger(__name__)
