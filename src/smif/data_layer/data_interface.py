@@ -4,7 +4,6 @@ from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
 import numpy as np
-import pyarrow as pa
 
 
 class DataInterface(metaclass=ABCMeta):
@@ -217,21 +216,6 @@ class DataInterface(metaclass=ABCMeta):
                     'value': data[region_idx, interval_idx]
                 })
         return observations
-
-    @staticmethod
-    def ndarray_to_buffer(data):
-        """Serialize :class:`numpy.ndarray` and metadata to a byte buffer
-
-        Parameters
-        ----------
-        data : numpy.ndarray
-
-        Returns
-        -------
-        pyarrow.lib.Buffer
-            Byte buffer containing the serialized input
-        """
-        return pa.serialize(data).to_buffer()
 
     @staticmethod
     def data_list_to_ndarray(observations, region_names, interval_names):
