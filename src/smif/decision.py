@@ -44,11 +44,12 @@ class DecisionManager(object):
 
     Arguments
     ---------
-    horizon: list strategies: list
+    timesteps: list
+    strategies: list
     """
 
-    def __init__(self, horizon, strategies):
-        self._horizon = horizon
+    def __init__(self, timesteps, strategies):
+        self._timesteps = timesteps
         self._strategies = strategies
         self._decision_modules = []
 
@@ -64,7 +65,7 @@ class DecisionManager(object):
                 msg = "Only pre-specified planning strategies are implemented"
                 raise NotImplementedError(msg)
 
-        self._decision_modules = [PreSpecified(self._horizon, interventions)]
+        self._decision_modules = [PreSpecified(self._timesteps, interventions)]
 
     def decision_loop(self):
         """Generate bundles of simulation steps to run.
@@ -88,7 +89,7 @@ class DecisionManager(object):
         """
         assert len(self._decision_modules) == 1
         assert isinstance(self._decision_modules[0], PreSpecified)
-        yield {0: self._horizon}
+        yield {0: self._timesteps}
 
     def get_state(self, timestep, iteration):
         """Deprecated - to be pushed down into DataHandle
@@ -117,7 +118,7 @@ class DecisionModule(metaclass=ABCMeta):
 
     """
     def __init__(self, timesteps, register):
-        self.horizon = timesteps
+        self.timesteps = timesteps
         self.register = register
 
     def __next__(self):
@@ -208,7 +209,7 @@ class PreSpecified(DecisionModule):
         super().__init__(timesteps, register)
 
     def _get_next_decision_iteration(self):
-        return {1: [year for year in self.horizon]}
+        return {1: [year for year in self.timesteps]}
 
     def _set_state(self, timestep, decision_iteration):
         """Pre-specified planning interventions are loaded during initialisation
@@ -253,13 +254,13 @@ class PreSpecified(DecisionModule):
         [2005, 2010, 2015, 2020] then buildable returns True for timesteps
         2010, 2015 and 2020 and False for 2005.
         """
-        if timestep not in self.horizon:
-            raise ValueError("Timestep not in model horizon")
-        index = self.horizon.index(timestep)
-        if index == len(self.horizon) - 1:
+        if timestep not in self.timesteps:
+            raise ValueError("Timestep not in model timesteps")
+        index = self.timesteps.index(timestep)
+        if index == len(self.timesteps) - 1:
             next_year = timestep + 1
         else:
-            next_year = self.horizon[index + 1]
+            next_year = self.timesteps[index + 1]
 
         if build_year < next_year:
             return True
@@ -278,16 +279,16 @@ class RuleBased(DecisionModule):
         self.current_iteration = 0
 
     def _get_next_decision_iteration(self):
-            if self.satisfied and self.current_timestep_index == len(self.horizon) - 1:
+            if self.satisfied and self.current_timestep_index == len(self.timesteps) - 1:
                 return None
-            elif self.satisfied and self.current_timestep_index <= len(self.horizon):
+            elif self.satisfied and self.current_timestep_index <= len(self.timesteps):
                 self.satisfied = False
                 self.current_timestep_index += 1
                 self.current_iteration += 1
-                return {self.current_iteration: [self.horizon[self.current_timestep_index]]}
+                return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
             else:
                 self.current_iteration += 1
-                return {self.current_iteration: [self.horizon[self.current_timestep_index]]}
+                return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
 
     def get_state(self, timestep, iteration):
         return {}
