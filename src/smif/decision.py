@@ -92,7 +92,10 @@ class DecisionManager(object):
         yield {0: self._timesteps}
 
     def get_state(self, timestep, iteration):
-        """Deprecated - to be pushed down into DataHandle
+        """Return all interventions built in the given timestep for the given decision
+        iteration.
+
+        Deprecated - to be pushed down into DataHandle
         """
         self._decision_modules[0].get_state(timestep, iteration)
 
