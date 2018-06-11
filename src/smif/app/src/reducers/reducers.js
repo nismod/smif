@@ -34,7 +34,7 @@ import {
 
 function smif(
     state = {
-        isFetching: false,
+        isFetching: true,
         item: {}
     },
     action
@@ -80,7 +80,7 @@ function sos_model_runs(
 
 function sos_model_run(
     state = {
-        isFetching: false,
+        isFetching: true,
         item: {}
     },
     action
@@ -103,7 +103,7 @@ function sos_model_run(
 
 function sos_models(
     state = {
-        isFetching: false,
+        isFetching: true,
         items: []
     },
     action
@@ -126,7 +126,7 @@ function sos_models(
 
 function sos_model(
     state = {
-        isFetching: false,
+        isFetching: true,
         item: {}
     },
     action
@@ -149,7 +149,7 @@ function sos_model(
 
 function sector_models(
     state = {
-        isFetching: false,
+        isFetching: true,
         items: []
     },
     action
@@ -172,7 +172,7 @@ function sector_models(
 
 function sector_model(
     state = {
-        isFetching: false,
+        isFetching: true,
         item: {}
     },
     action
@@ -195,7 +195,7 @@ function sector_model(
 
 function scenario_sets(
     state = {
-        isFetching: false,
+        isFetching: true,
         items: []
     },
     action
@@ -218,7 +218,7 @@ function scenario_sets(
 
 function scenario_set(
     state = {
-        isFetching: false,
+        isFetching: true,
         item: {}
     },
     action
@@ -241,7 +241,7 @@ function scenario_set(
 
 function scenarios(
     state = {
-        isFetching: false,
+        isFetching: true,
         items: []
     },
     action
@@ -264,7 +264,7 @@ function scenarios(
 
 function scenario(
     state = {
-        isFetching: false,
+        isFetching: true,
         item: {}
     },
     action
@@ -287,7 +287,7 @@ function scenario(
 
 function narrative_sets(
     state = {
-        isFetching: false,
+        isFetching: true,
         items: []
     },
     action
@@ -310,7 +310,7 @@ function narrative_sets(
 
 function narrative_set(
     state = {
-        isFetching: false,
+        isFetching: true,
         item: {}
     },
     action
@@ -333,7 +333,7 @@ function narrative_set(
 
 function narratives(
     state = {
-        isFetching: false,
+        isFetching: true,
         items: []
     },
     action
@@ -356,7 +356,7 @@ function narratives(
 
 function narrative(
     state = {
-        isFetching: false,
+        isFetching: true,
         item: {}
     },
     action

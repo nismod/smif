@@ -12,7 +12,6 @@ class ScenarioSetConfigForm extends Component {
     constructor(props) {
         super(props)
 
-        this.handleKeyPress = this.handleKeyPress.bind(this)
         this.handleChange = this.handleChange.bind(this)
         this.handleSave = this.handleSave.bind(this) 
         this.handleFacetSave = this.handleFacetSave.bind(this)
@@ -41,20 +40,6 @@ class ScenarioSetConfigForm extends Component {
             addFacetPopupIsOpen: false,
             editScenarioPopupIsOpen: false,
             deletePopupIsOpen: false
-        }
-    }
-
-    componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    componentWillUnmount(){
-        document.removeEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    handleKeyPress(){
-        if(event.keyCode === 27) {
-            this.handleCancel()
         }
     }
 

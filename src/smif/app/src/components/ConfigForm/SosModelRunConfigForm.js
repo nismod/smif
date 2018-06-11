@@ -10,8 +10,7 @@ import TimestepSelector from './SosModelRun/TimestepSelector.js'
 class SosModelRunConfigForm extends Component {
     constructor(props) {
         super(props)
-
-        this.handleKeyPress = this.handleKeyPress.bind(this)
+        
         this.handleSosModelChange = this.handleSosModelChange.bind(this)
         this.handleScenariosChange = this.handleScenariosChange.bind(this)
         this.handleNarrativeChange = this.handleNarrativeChange.bind(this)
@@ -22,20 +21,6 @@ class SosModelRunConfigForm extends Component {
 
         this.state = {}
         this.state.selectedSosModelRun = this.props.sosModelRun
-    }
-
-    componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    componentWillUnmount(){
-        document.removeEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    handleKeyPress(){
-        if(event.keyCode === 27) {
-            this.handleCancel()
-        }
     }
 
     handleSosModelChange(sos_model) {

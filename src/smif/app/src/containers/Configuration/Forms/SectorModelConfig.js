@@ -4,29 +4,37 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Link, Router } from 'react-router-dom'
 
-import { fetchSectorModel } from '../../actions/actions.js'
-import { saveSectorModel } from '../../actions/actions.js'
-import { fetchSosModels } from '../../actions/actions.js'
+import { fetchSectorModel } from '../../../actions/actions.js'
+import { saveSectorModel } from '../../../actions/actions.js'
+import { fetchSosModels } from '../../../actions/actions.js'
 
-import SectorModelConfigForm from '../../components/ConfigForm/SectorModelConfigForm.js'
+import SectorModelConfigForm from '../../../components/ConfigForm/SectorModelConfigForm.js'
 
 class SectorModelConfig extends Component {
     constructor(props) {
         super(props)
+        this.init = true
 
         this.saveSectorModel = this.saveSectorModel.bind(this)
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
+
+        this.config_name = this.props.match.params.name
     }
 
     componentDidMount() {
         const { dispatch } = this.props
 
-        dispatch(fetchSectorModel(this.props.match.params.name))
+        dispatch(fetchSectorModel(this.config_name))
         dispatch(fetchSosModels())
     }
 
-    componentWillReceiveProps() {
-        this.forceUpdate()
+    componentDidUpdate() {
+        const { dispatch } = this.props
+
+        if (this.config_name != this.props.match.params.name) {
+            this.config_name = this.props.match.params.name
+            dispatch(fetchSectorModel(this.config_name))
+        }
     }
 
     saveSectorModel(SectorModel) {
@@ -36,7 +44,7 @@ class SectorModelConfig extends Component {
     }
 
     returnToPreviousPage() {
-        history.back()
+        this.props.history.push('/configure/sector-models')
     }
 
     renderLoading() {
@@ -55,22 +63,22 @@ class SectorModelConfig extends Component {
         )
     }
 
-    renderSectorModelConfig(sos_models, sector_model) {
+    renderSectorModelConfig(sector_model, sos_models) {
         return (
-            <div>
-                <h1>Sector Model Configuration</h1>
+            <div key={sector_model.name}>
                 <SectorModelConfigForm sosModels={sos_models} sectorModel={sector_model} saveSectorModel={this.saveSectorModel} cancelSectorModel={this.returnToPreviousPage}/>
             </div>
         )
     }
 
     render () {
-        const {sos_models, sector_model, isFetching} = this.props
+        const {sector_model, sos_models, isFetching} = this.props
 
-        if (isFetching) {
+        if (isFetching && this.init) {
             return this.renderLoading()
         } else {
-            return this.renderSectorModelConfig(sos_models, sector_model)
+            this.init = false
+            return this.renderSectorModelConfig(sector_model, sos_models)
         }
     }
 }
@@ -85,7 +93,10 @@ function mapStateToProps(state) {
     return {
         sos_models: state.sos_models.items,
         sector_model: state.sector_model.item,
-        isFetching: (state.sector_model.isFetching)
+        isFetching: (
+            state.sos_models.isFetching ||
+            state.sector_model.isFetching
+        )
     }
 }
 

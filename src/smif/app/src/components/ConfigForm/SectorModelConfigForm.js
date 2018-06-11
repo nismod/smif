@@ -13,7 +13,6 @@ class SectorModelConfigForm extends Component {
     constructor(props) {
         super(props)
 
-        this.handleKeyPress = this.handleKeyPress.bind(this)
         this.handleChange = this.handleChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
@@ -26,20 +25,6 @@ class SectorModelConfigForm extends Component {
         this.closeDeletePopup = this.closeDeletePopup.bind(this)
         this.openDeletePopup = this.openDeletePopup.bind(this)
         this.handleDelete = this.handleDelete.bind(this)
-    }
-
-    componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    componentWillUnmount(){
-        document.removeEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    handleKeyPress(){
-        if(event.keyCode === 27) {
-            this.handleCancel()
-        }
     }
 
     handleChange(event) {

@@ -4,15 +4,15 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from '../../actions/actions.js'
-import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createScenario, createNarrativeSet, createNarrative } from '../../actions/actions.js'
-import { saveSosModelRun,   saveSosModel,   saveSectorModel,   saveScenarioSet,   saveScenario,   saveNarrativeSet,   saveNarrative   } from '../../actions/actions.js'
-import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteScenario, deleteNarrativeSet, deleteNarrative } from '../../actions/actions.js'
+import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from '../../../actions/actions.js'
+import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createScenario, createNarrativeSet, createNarrative } from '../../../actions/actions.js'
+import { saveSosModelRun,   saveSosModel,   saveSectorModel,   saveScenarioSet,   saveScenario,   saveNarrativeSet,   saveNarrative   } from '../../../actions/actions.js'
+import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteScenario, deleteNarrativeSet, deleteNarrative } from '../../../actions/actions.js'
 
-import Popup from '../../components/ConfigForm/General/Popup.js'
-import ProjectOverviewItem from '../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
-import CreateConfigForm from '../../components/ConfigForm/ProjectOverview/CreateConfigForm.js'
-import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
+import Popup from '../../../components/ConfigForm/General/Popup.js'
+import ProjectOverviewItem from '../../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
+import CreateConfigForm from '../../../components/ConfigForm/ProjectOverview/CreateConfigForm.js'
+import DeleteForm from '../../../components/ConfigForm/General/DeleteForm.js'
 
 class ProjectOverview extends Component {
     constructor() {
@@ -316,6 +316,7 @@ class ProjectOverview extends Component {
 
     render () {
         const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching } = this.props
+        const { name } = this.props.match.params
 
         let used_identifiers = this.collectIdentifiers()
 
@@ -330,93 +331,86 @@ class ProjectOverview extends Component {
                 </div>
 
                 <div hidden={ isFetching }>
-                    <div className="card">
-                        <div className="card-header">
-                            Project information
-                        </div>
-                        <div className="card-body">
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Name</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" type="text" defaultValue="NISMOD v2.0"/>
-                                </div>
+
+                    <div hidden={name!='sos-model-run'}>
+                        <div className="jumbotron jumbotron-fluid">
+                            <div className="container">
+                                <h1>Model Runs</h1>
+                                <p>A model run brings together a system-of-systems model definition with timesteps over 
+                                    which planning takes place, and a choice of scenarios and narratives to population 
+                                    the placeholder scenario sets in the system-of-systems model.</p>
+                                <input className="btn btn-secondary btn-lg" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                             </div>
                         </div>
+                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.openDeletePopup} />
+                        <br/>
+                    </div>
+                        <div hidden={name!='sos-models'}>
+                        <div className="jumbotron jumbotron-fluid">
+                            <div className="container">
+                                <h1>Models</h1>
+                                <p>A system-of-systems model collects together scenario sets and simulation models. 
+                                    Users define dependencies between scenario and simulation models.</p>
+                                <input className="btn btn-secondary btn-lg" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
+                            </div>
+                        </div>
+                        <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
+                        <br/>
                     </div>
 
-                    <br/>
-
-                    <div className="card">
-                        <div className="card-header">
-                            Model Runs
+                    <div hidden={name!='sector-models'}>
+                        <div className="jumbotron jumbotron-fluid">
+                            <div className="container">
+                                <h1>Wrappers</h1>
+                                <p>To integrate a new sector model into the system-of-systems model it is necessary to 
+                                    write a Python wrapper function. The wrapper acts as an interface between the simulation 
+                                    modelling integration framework and the simulation model, keeping all the code necessary 
+                                    to implement the conversion of data types in one place.</p>
+                                <input className="btn btn-secondary btn-lg" name="SectorModel" type="button" value="Create a new Simulation Model" onClick={this.openCreatePopup}/>
+                            </div>
                         </div>
-                        <div className="card-body">
-                            <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
-                        </div>
+                        <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
+                        <br/>
                     </div>
 
-                    <br/>
-
-                    <div className="card">
-                        <div className="card-header">
-                            System-of-Systems Models
+                    <div hidden={name!='data'}>
+                        <div className="jumbotron jumbotron-fluid">
+                            <div className="container">
+                                <h1>Scenarios</h1>
+                                <p>Scenarios allows to define static sources for simulation model dependencies. Scenario sets 
+                                    are the categories in which scenario data are organised. Choosing a scenario set at this 
+                                    points allows different scenario data to be chosen in model runs which share the same 
+                                    system-of-systems model configuration defintion.</p>
+                                <input className="btn btn-secondary btn-lg" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
+                            </div>
                         </div>
-                        <div className="card-body">
-                            <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
-                        </div>
+                        <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/data/scenario-set/" onDelete={this.openDeletePopup} />
+                        <br/>
                     </div>
 
-                    <br/>
-
-                    <div className="card">
-                        <div className="card-header">
-                            Simulation Model
+                    <div hidden={name!='data'}>
+                        <div className="jumbotron jumbotron-fluid">
+                            <div className="container">
+                                <h1>Narrative Sets</h1>
+                                <p></p>
+                                <input className="btn btn-secondary btn-lg" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
+                            </div>
                         </div>
-                        <div className="card-body">
-                            <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="SectorModel" type="button" value="Create a new Simulation Model" onClick={this.openCreatePopup}/>
-                        </div>
+                        <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/data/narrative-set/" onDelete={this.openDeletePopup} />
+                        <br/>
                     </div>
 
-                    <br/>
-
-                    <div className="card">
-                        <div className="card-header">
-                            Scenario Sets
+                    <div hidden={name!='data'}>
+                        <div className="jumbotron jumbotron-fluid">
+                            <div className="container">
+                                <h1>Narratives</h1>
+                                <p></p>
+                                <input className="btn btn-secondary btn-lg" name="Narrative" type="button" value="Create a new Narrative" onClick={this.openCreatePopup}/>
+                            </div>
                         </div>
-                        <div className="card-body">
-                            <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/scenario-set/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
-                        </div>
+                        <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/data/narratives/" onDelete={this.openDeletePopup} />
+                        <br/>
                     </div>
-
-                    <br/>
-
-                    <div className="card">
-                        <div className="card-header">
-                            Narrative Sets
-                        </div>
-                        <div className="card-body">
-                            <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/narrative-set/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
-                        </div>
-                    </div>
-
-                    <br/>
-
-                    <div className="card">
-                        <div className="card-header">
-                            Narratives
-                        </div>
-                        <div className="card-body">
-                            <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/narratives/" onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="Narrative" type="button" value="Create a new Narrative" onClick={this.openCreatePopup}/>
-                        </div>
-                    </div>
-
-                    <br/>
 
                     {/* Popup for Create */}
                     <Popup onRequestOpen={this.state.createPopupIsOpen}>
