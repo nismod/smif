@@ -31,6 +31,15 @@ so you can run smif commands explicitly::
   $ smif list -d ~/projects/smif_sample_project/
   ...
 
+Groups of model runs can run as a batches by using the ``-b`` flag and a path to a batchfile::
+
+  $ smif run -b batchfile
+
+A batchfile is a textfile with a list modelrun names, each on a new line, like::
+
+  20170918_energy_water_short
+  20170918_energy_water
+
 User Interface
 ---------------------
 The smif app is a web-based user interface, which helps to manage project configurations.
