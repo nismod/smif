@@ -45,7 +45,7 @@ def test_fixture_single_run():
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run complete" in str(output.stdout)
+    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
 
 
 def test_fixture_single_run_csv():
@@ -56,7 +56,7 @@ def test_fixture_single_run_csv():
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run complete" in str(output.stdout)
+    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
 
 def test_fixture_single_run_warm():
     """Test running the (default) single_run fixture with warm setting enabled
@@ -66,7 +66,19 @@ def test_fixture_single_run_warm():
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run complete" in str(output.stdout)
+    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+
+def test_fixture_batch_run():
+    """Test running the multiple modelruns using the batch_run option
+    """
+    config_dir = pkg_resources.resource_filename('smif', 'sample_project')
+    output = subprocess.run(["smif", "-v", "run", "-b", "-d", config_dir,
+                             os.path.join(config_dir, "batchfile")],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert "Running 20170918_energy_water" in str(output.stderr)
+    assert "Model run '20170918_energy_water' complete" in str(output.stdout)
+    assert "Running 20170918_energy_water_short" in str(output.stderr)
+    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
 
 def test_fixture_list_runs():
     """Test running the filesystem-based single_run fixture
