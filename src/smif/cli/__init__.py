@@ -435,6 +435,8 @@ def execute_model_run(args):
     ----------
     args
     """
+    timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
+    
     LOGGER.info("Loading resolution data")
     load_resolution_sets(args.directory)
 
@@ -450,8 +452,6 @@ def execute_model_run(args):
         model_run_definitions.append(get_model_run_definition(args.directory, model_run))
     
     for model_run_config in model_run_definitions:
-
-        timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
 
         LOGGER.info("Build model run from configuration data")
         modelrun = build_model_run(model_run_config)
