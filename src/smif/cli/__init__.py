@@ -442,14 +442,16 @@ def execute_model_run(args):
         with open(args.modelrun, 'r') as f:
             model_runs = f.read().splitlines()
     else:
-        model_runs = [args.modelrun]    
+        model_runs = [args.modelrun]
 
+    model_run_definitions = []
     for model_run in model_runs:
-        print("Start model run '" + model_run)
-        timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
+        LOGGER.info("Getting model run definition for '" + model_run + "'")
+        model_run_definitions.append(get_model_run_definition(args.directory, model_run))
+    
+    for model_run_config in model_run_definitions:
 
-        LOGGER.info("Getting model run definition")
-        model_run_config = get_model_run_definition(args.directory, model_run)
+        timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
 
         LOGGER.info("Build model run from configuration data")
         modelrun = build_model_run(model_run_config)
@@ -466,7 +468,7 @@ def execute_model_run(args):
             LOGGER.exception(ex)
             exit(1)
 
-        print("Model run '" + model_run + "' complete")
+        print("Model run '" + modelrun.name + "' complete")
 
 
 def make_get_data_interface(args):
