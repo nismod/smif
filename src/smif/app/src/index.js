@@ -31,9 +31,9 @@ render(
                     <Route exact strict path="/configure/sos-model-run/:name" component={SosModelRunConfig}/>
                     <Route exact strict path="/configure/sos-models/:name" component={SosModelConfig}/>
                     <Route exact strict path="/configure/sector-models/:name" component={SectorModelConfig}/>
-                    <Route exact strict path="/configure/data/scenario-set/:name" component={ScenarioSetConfig}/>
-                    <Route exact strict path="/configure/data/narrative-set/:name" component={NarrativeSetConfig}/>
-                    <Route exact strict path="/configure/data/narratives/:name" component={NarrativeConfig}/>
+                    <Route exact strict path="/configure/scenario-set/:name" component={ScenarioSetConfig}/>
+                    <Route exact strict path="/configure/narrative-set/:name" component={NarrativeSetConfig}/>
+                    <Route exact strict path="/configure/narratives/:name" component={NarrativeConfig}/>
                 </div>
                 </main>
             </div>

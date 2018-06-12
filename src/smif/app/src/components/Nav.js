@@ -7,7 +7,7 @@ import Footer from '../containers/Footer'
 import {fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives} from '../actions/actions.js'
 
 import {FaHome, FaSliders, FaSitemap, FaCode, FaBarChart} from 'react-icons/lib/fa'
-import { timingSafeEqual } from 'crypto';
+import { Badge, Button } from 'reactstrap'
 
 class Nav extends Component {
     constructor(props) {
@@ -64,7 +64,7 @@ class Nav extends Component {
                     <li className="nav-item">
                         <NavLink className="nav-link" to="/configure/sos-model-run" >
                             <FaSliders size={20}/>
-                            <span className="ml-1">Model Runs</span>
+                            <span className="ml-1">Model Runs <Badge color="secondary">{sos_model_runs.length}</Badge></span>
                         </NavLink>
                         <Route path="/configure/sos-model-run/" render={() => 
                             <div>
@@ -89,7 +89,7 @@ class Nav extends Component {
                     <li className="nav-item">
                         <NavLink exact className="nav-link" to="/configure/sos-models" >
                             <FaSitemap size={20}/>
-                            <span className="ml-1">Models</span>
+                            <span className="ml-1">Models <Badge color="secondary">{sos_models.length}</Badge></span>
                         </NavLink>
                         <Route path="/configure/sos-models/" render={() => 
                             <div>
@@ -106,7 +106,7 @@ class Nav extends Component {
 
                         <NavLink exact className="nav-link" to="/configure/sector-models" >
                             <FaCode size={20}/>
-                            <span className="ml-1">Wrappers</span>
+                            <span className="ml-1">Wrappers <Badge color="secondary">{sector_models.length}</Badge></span>
                         </NavLink>
                         <Route path="/configure/sector-models/" render={() => 
                             <div>
@@ -123,31 +123,15 @@ class Nav extends Component {
                     </li>
 
                     <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/configure/data" >
+                        <NavLink exact className="nav-link" to="/configure/scenario-set" >
                             <FaBarChart size={20}/>
-                            <span className="ml-1">Data</span>
+                            <span className="ml-1">Scenarios <Badge color="secondary">{scenario_sets.length}</Badge></span>
                         </NavLink>
-                        <Route path="/configure/data/" render={() => 
+                        <Route path="/configure/scenario-set/" render={() => 
                             <div>
-                            <span className="ml-4"/>
-                            <span className="ml-1">Scenario Sets</span>
                             {scenario_sets.map(config =>
                                 <div key={'nav_' + config.name}>
-                                    <NavLink exact className="nav-link" to={"/configure/data/scenario-set/" + config.name} >
-                                        <span className="ml-3"/>
-                                        <span className="ml-1 text-muted">{config.name}</span>
-                                    </NavLink>
-                                </div>
-                            )}
-                            </div>
-                        }/>   
-                        <Route path="/configure/data/" render={() => 
-                            <div>
-                            <span className="ml-4"/>
-                            <span className="ml-1">Narrative Sets</span>
-                            {narrative_sets.map(config =>
-                                <div key={'nav_' + config.name}>
-                                    <NavLink exact className="nav-link" to={"/configure/data/narrative-set/" + config.name} >
+                                    <NavLink exact className="nav-link" to={"/configure/scenario-set/" + config.name} >
                                         <span className="ml-3"/>
                                         <span className="ml-1 text-muted">{config.name}</span>
                                     </NavLink>
@@ -155,13 +139,35 @@ class Nav extends Component {
                             )}
                             </div>
                         }/>
-                        <Route path="/configure/data/" render={() => 
+                    </li>
+
+                    <li className="nav-item">
+                        <NavLink exact className="nav-link" to="/configure/narrative-set" >
+                            <FaBarChart size={20}/>
+                            <span className="ml-1">Narratives <Badge color="secondary">{narrative_sets.length}</Badge></span>
+                        </NavLink>    
+
+                        <Route path="/configure/narrative*" render={() => 
                             <div>
                             <span className="ml-4"/>
-                            <span className="ml-1">Narratives</span>
+                            <span className="ml-1">Sets</span>
+                            {narrative_sets.map(config =>
+                                <div key={'nav_' + config.name}>
+                                    <NavLink exact className="nav-link" to={"/configure/narrative-set/" + config.name} >
+                                        <span className="ml-3"/>
+                                        <span className="ml-1 text-muted">{config.name}</span>
+                                    </NavLink>
+                                </div>
+                            )}
+                            </div>
+                        }/>
+                        <Route path="/configure/narrative*" render={() => 
+                            <div>
+                            <span className="ml-4"/>
+                            <span className="ml-1">Data</span>
                             {narratives.map(config =>
                                 <div key={'nav_' + config.name}>
-                                    <NavLink exact className="nav-link" to={"/configure/data/narratives/" + config.name} >
+                                    <NavLink exact className="nav-link" to={"/configure/narratives/" + config.name} >
                                         <span className="ml-3"/>
                                         <span className="ml-1 text-muted">{config.name}</span>
                                     </NavLink>

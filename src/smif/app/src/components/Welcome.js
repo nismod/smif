@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 const Welcome = () => (
     <div className="jumbotron jumbotron-fluid">
@@ -11,9 +10,6 @@ const Welcome = () => (
             between models, persistence of data and the communication of state
             between timesteps.
         </p>
-        <Link to="/configure" className="btn btn-success btn-lg">
-            Set up a system-of-systems project
-        </Link>
     </div>
 );
 

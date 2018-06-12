@@ -77,7 +77,7 @@ class ScenarioSetConfig extends Component {
     }
 
     returnToPreviousPage() {
-        this.props.history.push('/configure/data')
+        this.props.history.push('/configure/scenario-set')
     }
 
     renderLoading() {

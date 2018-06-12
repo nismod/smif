@@ -339,7 +339,7 @@ class ProjectOverview extends Component {
                                 <p>A model run brings together a system-of-systems model definition with timesteps over 
                                     which planning takes place, and a choice of scenarios and narratives to population 
                                     the placeholder scenario sets in the system-of-systems model.</p>
-                                <input className="btn btn-secondary btn-lg" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
+                                <input className="btn btn-success btn-lg" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                             </div>
                         </div>
                         <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.openDeletePopup} />
@@ -351,7 +351,7 @@ class ProjectOverview extends Component {
                                 <h1>Models</h1>
                                 <p>A system-of-systems model collects together scenario sets and simulation models. 
                                     Users define dependencies between scenario and simulation models.</p>
-                                <input className="btn btn-secondary btn-lg" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
+                                <input className="btn btn-success btn-lg" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
                             </div>
                         </div>
                         <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
@@ -366,49 +366,47 @@ class ProjectOverview extends Component {
                                     write a Python wrapper function. The wrapper acts as an interface between the simulation 
                                     modelling integration framework and the simulation model, keeping all the code necessary 
                                     to implement the conversion of data types in one place.</p>
-                                <input className="btn btn-secondary btn-lg" name="SectorModel" type="button" value="Create a new Simulation Model" onClick={this.openCreatePopup}/>
+                                <input className="btn btn-success btn-lg" name="SectorModel" type="button" value="Add a new Wrapper" onClick={this.openCreatePopup}/>
                             </div>
                         </div>
                         <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
                         <br/>
                     </div>
 
-                    <div hidden={name!='data'}>
+                    <div hidden={name!='scenario-set'}>
                         <div className="jumbotron jumbotron-fluid">
                             <div className="container">
-                                <h1>Scenarios</h1>
+                                <h1>Scenario Sets</h1>
                                 <p>Scenarios allows to define static sources for simulation model dependencies. Scenario sets 
-                                    are the categories in which scenario data are organised. Choosing a scenario set at this 
-                                    points allows different scenario data to be chosen in model runs which share the same 
-                                    system-of-systems model configuration defintion.</p>
-                                <input className="btn btn-secondary btn-lg" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
+                                    are the categories in which scenario data are organised.</p>
+                                <input className="btn btn-success btn-lg" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
                             </div>
                         </div>
-                        <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/data/scenario-set/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/scenario-set/" onDelete={this.openDeletePopup} />
                         <br/>
                     </div>
 
-                    <div hidden={name!='data'}>
+                    <div hidden={name!='narrative-set'}>
                         <div className="jumbotron jumbotron-fluid">
                             <div className="container">
                                 <h1>Narrative Sets</h1>
-                                <p></p>
-                                <input className="btn btn-secondary btn-lg" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
+                                <p>Narrative sets are the categories in which narrative data are organised.</p>
+                                <input className="btn btn-success btn-lg" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
                             </div>
                         </div>
-                        <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/data/narrative-set/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/narrative-set/" onDelete={this.openDeletePopup} />
                         <br/>
                     </div>
 
-                    <div hidden={name!='data'}>
+                    <div hidden={name!='narrative-set'}>
                         <div className="jumbotron jumbotron-fluid">
                             <div className="container">
                                 <h1>Narratives</h1>
-                                <p></p>
-                                <input className="btn btn-secondary btn-lg" name="Narrative" type="button" value="Create a new Narrative" onClick={this.openCreatePopup}/>
+                                <p>Narratives are configurations that target the files which contain narrative data</p>
+                                <input className="btn btn-success btn-lg" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
                             </div>
                         </div>
-                        <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/data/narratives/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/narratives/" onDelete={this.openDeletePopup} />
                         <br/>
                     </div>
 

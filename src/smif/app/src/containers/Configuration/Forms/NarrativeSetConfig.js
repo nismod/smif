@@ -42,7 +42,7 @@ class NarrativeSetConfig extends Component {
     }
 
     returnToPreviousPage() {
-        this.props.history.push('/configure/data')
+        this.props.history.push('/configure/narrative-set')
     }
 
     renderLoading() {
