@@ -435,6 +435,9 @@ def execute_model_run(args):
     ----------
     args
     """
+    LOGGER.info("Loading resolution data")
+    load_resolution_sets(args.directory)
+
     if args.batchfile:
         with open(args.modelrun, 'r') as f:
             model_runs = f.read().splitlines()
@@ -444,9 +447,6 @@ def execute_model_run(args):
     for model_run in model_runs:
         print("Start model run '" + model_run)
         timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
-
-        LOGGER.info("Loading resolution data")
-        load_resolution_sets(args.directory)
 
         LOGGER.info("Getting model run definition")
         model_run_config = get_model_run_definition(args.directory, model_run)
