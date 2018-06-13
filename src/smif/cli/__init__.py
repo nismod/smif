@@ -109,6 +109,23 @@ def list_model_runs(args):
         print(run['name'])
 
 
+def run_model_runs(args):
+    """Run the model runs as requested. Check if results exist and asks
+    user for permission to overwrite
+
+    Parameters
+    ----------
+    args
+    """
+    if args.batchfile:
+        with open(args.modelrun, 'r') as f:
+            model_run_ids = f.read().splitlines()
+    else:
+        model_run_ids = [args.modelrun]
+
+    execute_model_run(model_run_ids, args.directory, args.interface, args.warm)
+
+
 def make_get_data_interface(args):
     """Use args to make a function returning a suitable DataInterface
     """
@@ -211,7 +228,7 @@ def parse_arguments():
     # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
-    parser_run.set_defaults(func=execute_model_run)
+    parser_run.set_defaults(func=run_model_runs)
     parser_run.add_argument('-i', '--interface',
                             default='local_binary',
                             choices=['local_csv', 'local_binary'],

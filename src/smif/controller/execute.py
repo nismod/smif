@@ -8,26 +8,21 @@ from smif.modelrun import ModelRunError
 LOGGER = logging.getLogger(__name__)
 
 
-def execute_model_run(args):
+def execute_model_run(model_run_ids, directory, interface='local_binary', warm=False):
     """Runs the model run
 
     Parameters
     ----------
-    args
+    modelrun_ids: list
+        Modelrun ids that should be executed sequentially
     """
     LOGGER.info("Loading resolution data")
-    load_resolution_sets(args.directory)
-
-    if args.batchfile:
-        with open(args.modelrun, 'r') as f:
-            model_runs = f.read().splitlines()
-    else:
-        model_runs = [args.modelrun]
+    load_resolution_sets(directory)
 
     model_run_definitions = []
-    for model_run in model_runs:
+    for model_run in model_run_ids:
         LOGGER.info("Getting model run definition for '" + model_run + "'")
-        model_run_definitions.append(get_model_run_definition(args.directory, model_run))
+        model_run_definitions.append(get_model_run_definition(directory, model_run))
 
     for model_run_config in model_run_definitions:
 
@@ -35,10 +30,10 @@ def execute_model_run(args):
         modelrun = build_model_run(model_run_config)
 
         LOGGER.info("Running model run %s", modelrun.name)
-        store = DatafileInterface(args.directory, args.interface)
+        store = DatafileInterface(directory, interface)
 
         try:
-            if args.warm:
+            if warm:
                 modelrun.run(store, store.prepare_warm_start(modelrun.name))
             else:
                 modelrun.run(store)

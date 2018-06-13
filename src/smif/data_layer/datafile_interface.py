@@ -1251,6 +1251,25 @@ class DatafileInterface(DataInterface):
                 "region x interval data"
             )
 
+    def results_exist(self, modelrun_name):
+        """Checks whether modelrun results exists on the filesystem
+        for a particular modelrun_name
+
+        Parameters
+        ----------
+        modelrun_name: str
+
+        Returns
+        -------
+        bool: True when results exist for this modelrun_name
+        """
+        previous_results_dir = os.path.join(self.file_dir['results'],
+                                            modelrun_name)
+        results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'),
+                                  recursive=True))
+
+        return len(results) > 0
+
     def prepare_warm_start(self, modelrun_id):
         """Copy the results from the previous modelrun if available
 
@@ -1270,19 +1289,16 @@ class DatafileInterface(DataInterface):
                              "no previous results (path does not exist)")
             return None
 
-        # Collect results
-        previous_results_dir = os.path.join(self.file_dir['results'],
-                                            modelrun_id)
-        results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'),
-                                  recursive=True))
-
         # Return if no results exist in last modelrun
-        if len(results) == 0:
+        if not self.results_exist(modelrun_id):
             self.logger.info("Warm start not possible because the "
                              "modelrun does not have any results")
             return None
 
         # Return if previous results were stored in a different format
+        previous_results_dir = os.path.join(self.file_dir['results'], modelrun_id)
+        results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'),
+                                  recursive=True))
         for filename in results:
             if (
                     (self.storage_format == 'local_csv' and
