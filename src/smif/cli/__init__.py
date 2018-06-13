@@ -75,7 +75,6 @@ import logging
 import logging.config
 import os
 import pkg_resources
-import re
 import shutil
 import sys
 import time
@@ -90,6 +89,7 @@ except ImportError:
 from argparse import ArgumentParser
 
 import smif
+import smif.cli.log
 from smif.data_layer import DatafileInterface, DataNotFoundError
 from smif.convert.register import Register
 from smif.convert.area import get_register as get_region_register
@@ -109,57 +109,7 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-LOGGING_CONFIG = {
-    'version': 1,
-    'formatters': {
-        'default': {
-            'format': '%(asctime)s %(name)-12s: %(levelname)-8s %(message)s'
-        },
-        'message': {
-            'format': '\033[1;34m%(levelname)-8s\033[0m %(message)s'
-        }
-    },
-    'handlers': {
-        'file': {
-            'class': 'logging.FileHandler',
-            'level': 'DEBUG',
-            'formatter': 'default',
-            'filename': 'smif.log',
-            'mode': 'a',
-            'encoding': 'utf-8'
-        },
-        'stream': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'message',
-            'level': 'DEBUG'
-        }
-    },
-    'root': {
-        'handlers': ['file', 'stream'],
-        'level': 'DEBUG'
-    }
-}
-
-# Configure logging once, outside of any dependency on argparse
-VERBOSITY = None
-if '--verbose' in sys.argv:
-    VERBOSITY = sys.argv.count('--verbose')
-else:
-    for arg in sys.argv:
-        if re.match(r'\A-v+\Z', arg):
-            VERBOSITY = len(arg) - 1
-            break
-
-if VERBOSITY is None:
-    LOGGING_CONFIG['root']['level'] = logging.WARNING
-elif VERBOSITY == 1:
-    LOGGING_CONFIG['root']['level'] = logging.INFO
-else:
-    LOGGING_CONFIG['root']['level'] = logging.DEBUG
-
-logging.config.dictConfig(LOGGING_CONFIG)
 LOGGER = logging.getLogger(__name__)
-LOGGER.debug('Debug logging enabled.')
 
 REGIONS = get_region_register()
 INTERVALS = get_interval_register()
@@ -436,7 +386,7 @@ def execute_model_run(args):
     args
     """
     timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
-    
+
     LOGGER.info("Loading resolution data")
     load_resolution_sets(args.directory)
 
@@ -450,7 +400,7 @@ def execute_model_run(args):
     for model_run in model_runs:
         LOGGER.info("Getting model run definition for '" + model_run + "'")
         model_run_definitions.append(get_model_run_definition(args.directory, model_run))
-    
+
     for model_run_config in model_run_definitions:
 
         LOGGER.info("Build model run from configuration data")
@@ -660,7 +610,3 @@ def main(arguments=None):
         args.func(args)
     else:
         parser.print_help()
-
-
-if __name__ == '__main__':
-    main(sys.argv[1:])
