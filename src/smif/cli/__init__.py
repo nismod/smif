@@ -70,13 +70,11 @@ try:
 except ImportError:
     import thread as _thread
 
-import datetime
 import logging
 import logging.config
 import os
 import pkg_resources
 import shutil
-import time
 
 try:
     import win32api
@@ -88,10 +86,9 @@ from argparse import ArgumentParser
 
 import smif
 import smif.cli.log
-from smif.controller.load import load_resolution_sets
-from smif.controller.build import get_model_run_definition, build_model_run
+
+from smif.controller.execute import execute_model_run
 from smif.http_api import create_app
-from smif.modelrun import ModelRunError
 from smif.data_layer import DatafileInterface
 
 
@@ -139,49 +136,6 @@ def list_model_runs(args):
     model_run_configs = handler.read_sos_model_runs()
     for run in model_run_configs:
         print(run['name'])
-
-
-def execute_model_run(args):
-    """Runs the model run
-
-    Parameters
-    ----------
-    args
-    """
-    timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
-
-    LOGGER.info("Loading resolution data")
-    load_resolution_sets(args.directory)
-
-    if args.batchfile:
-        with open(args.modelrun, 'r') as f:
-            model_runs = f.read().splitlines()
-    else:
-        model_runs = [args.modelrun]
-
-    model_run_definitions = []
-    for model_run in model_runs:
-        LOGGER.info("Getting model run definition for '" + model_run + "'")
-        model_run_definitions.append(get_model_run_definition(args.directory, model_run))
-
-    for model_run_config in model_run_definitions:
-
-        LOGGER.info("Build model run from configuration data")
-        modelrun = build_model_run(model_run_config)
-
-        LOGGER.info("Running model run %s with timestamp %s", modelrun.name, timestamp)
-        store = DatafileInterface(args.directory, args.interface, timestamp)
-
-        try:
-            if args.warm:
-                modelrun.run(store, store.prepare_warm_start(modelrun.name))
-            else:
-                modelrun.run(store)
-        except ModelRunError as ex:
-            LOGGER.exception(ex)
-            exit(1)
-
-        print("Model run '" + modelrun.name + "' complete")
 
 
 def make_get_data_interface(args):
