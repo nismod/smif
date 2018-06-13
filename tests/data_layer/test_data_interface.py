@@ -13,9 +13,9 @@ from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.load import dump
 
+from ..convert.conftest import remap_months, remap_months_csv
 from ..convert.conftest import twenty_four_hours as hourly_day
 from ..convert.conftest import twenty_four_hours_csv as hourly_day_csv
-from ..convert.conftest import remap_months, remap_months_csv
 
 
 class TestDataInterface():
@@ -1090,13 +1090,11 @@ class TestDatafileInterface():
         expected = np.array([[[1.0]]])
         csv_contents = "region,interval,value\noxford,1,1.0\n"
         binary_contents = get_handler_binary.ndarray_to_buffer(expected)
-        timestamp = '20180307T144423'  # same timestamp as get_handler
 
         path = os.path.join(
             str(setup_folder_structure),
             "results",
             modelrun,
-            timestamp,
             model,
             "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                 output,
@@ -1131,7 +1129,6 @@ class TestDatafileInterface():
             str(setup_folder_structure),
             "results",
             modelrun,
-            timestamp,
             model,
             "decision_{}".format(decision_iteration),
             "output_{}_timestep_{}_regions_{}_intervals_{}".format(
@@ -1168,7 +1165,6 @@ class TestDatafileInterface():
             str(setup_folder_structure),
             "results",
             modelrun,
-            timestamp,
             model,
             "modelset_{}".format(modelset_iteration),
             "output_{}_timestep_{}_regions_{}_intervals_{}".format(
@@ -1204,7 +1200,6 @@ class TestDatafileInterface():
             str(setup_folder_structure),
             "results",
             modelrun,
-            timestamp,
             model,
             "decision_{}_modelset_{}".format(
                 modelset_iteration,
@@ -1244,20 +1239,16 @@ class TestDatafileInterface():
 
         modelrun = 'energy_transport_baseline'
         model = 'energy_demand'
-        previous_timestamp = '20180307T144423'
-        current_timestamp = '20180307T162453'
 
         # Setup
         basefolder = setup_folder_structure
-        current_interface = DatafileInterface(str(basefolder), 'local_csv',
-                                              current_timestamp)
+        current_interface = DatafileInterface(str(basefolder), 'local_csv')
 
         # Create results for a 'previous' modelrun
         previous_results_path = os.path.join(
             str(setup_folder_structure),
             "results",
             modelrun,
-            previous_timestamp,
             model
         )
         os.makedirs(previous_results_path, exist_ok=True)
@@ -1292,7 +1283,6 @@ class TestDatafileInterface():
             str(setup_folder_structure),
             "results",
             modelrun,
-            current_timestamp,
             model
         )
 
@@ -1313,20 +1303,16 @@ class TestDatafileInterface():
 
         modelrun = 'energy_transport_baseline'
         model = 'energy_demand'
-        previous_timestamp = '20180307T144423'
-        current_timestamp = '20180307T162453'
 
         # Setup
         basefolder = setup_folder_structure
-        current_interface = DatafileInterface(str(basefolder), 'local_binary',
-                                              current_timestamp)
+        current_interface = DatafileInterface(str(basefolder), 'local_binary')
 
         # Create results for a 'previous' modelrun
         previous_results_path = os.path.join(
             str(setup_folder_structure),
             "results",
             modelrun,
-            previous_timestamp,
             model
         )
         os.makedirs(previous_results_path, exist_ok=True)
@@ -1356,17 +1342,6 @@ class TestDatafileInterface():
         # should continue
         assert current_timestep is None
 
-        # Confirm that no results were copied
-        current_results_path = os.path.join(
-            str(setup_folder_structure),
-            "results",
-            modelrun,
-            current_timestamp,
-            model
-        )
-        os.makedirs(current_results_path, exist_ok=True)
-        assert len(os.listdir(current_results_path)) == 0
-
     def test_prepare_warm_start_no_previous_results(self, setup_folder_structure,
                                                     project_config):
         """ Confirm that the warm start does not work when no previous
@@ -1375,20 +1350,16 @@ class TestDatafileInterface():
 
         modelrun = 'energy_transport_baseline'
         model = 'energy_demand'
-        previous_timestamp = '20180307T144423'
-        current_timestamp = '20180307T162453'
 
         # Setup
         basefolder = setup_folder_structure
-        current_interface = DatafileInterface(str(basefolder), 'local_binary',
-                                              current_timestamp)
+        current_interface = DatafileInterface(str(basefolder), 'local_binary')
 
         # Create results for a 'previous' modelrun
         previous_results_path = os.path.join(
             str(setup_folder_structure),
             "results",
             modelrun,
-            previous_timestamp,
             model
         )
         os.makedirs(previous_results_path, exist_ok=True)
@@ -1405,7 +1376,6 @@ class TestDatafileInterface():
             str(setup_folder_structure),
             "results",
             modelrun,
-            current_timestamp,
             model
         )
         os.makedirs(current_results_path, exist_ok=True)
@@ -1419,12 +1389,10 @@ class TestDatafileInterface():
 
         modelrun = 'energy_transport_baseline'
         model = 'energy_demand'
-        current_timestamp = '20180307T162453'
 
         # Setup
         basefolder = setup_folder_structure
-        current_interface = DatafileInterface(str(basefolder), 'local_binary',
-                                              current_timestamp)
+        current_interface = DatafileInterface(str(basefolder), 'local_binary')
 
         # Prepare warm start
         current_timestep = current_interface.prepare_warm_start(modelrun)
@@ -1438,7 +1406,6 @@ class TestDatafileInterface():
             str(setup_folder_structure),
             "results",
             modelrun,
-            current_timestamp,
             model
         )
         os.makedirs(current_results_path, exist_ok=True)

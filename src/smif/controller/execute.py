@@ -1,6 +1,4 @@
-import datetime
 import logging
-import time
 
 from smif.controller.build import build_model_run, get_model_run_definition
 from smif.controller.load import load_resolution_sets
@@ -17,8 +15,6 @@ def execute_model_run(args):
     ----------
     args
     """
-    timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
-
     LOGGER.info("Loading resolution data")
     load_resolution_sets(args.directory)
 
@@ -38,8 +34,8 @@ def execute_model_run(args):
         LOGGER.info("Build model run from configuration data")
         modelrun = build_model_run(model_run_config)
 
-        LOGGER.info("Running model run %s with timestamp %s", modelrun.name, timestamp)
-        store = DatafileInterface(args.directory, args.interface, timestamp)
+        LOGGER.info("Running model run %s", modelrun.name)
+        store = DatafileInterface(args.directory, args.interface)
 
         try:
             if args.warm:
