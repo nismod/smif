@@ -7,7 +7,7 @@ import { Link, Router } from 'react-router-dom'
 import { fetchSmifDetails } from '../actions/actions.js'
 
 class Footer extends Component {
-    
+
     constructor(props) {
         super(props)
 
@@ -35,11 +35,11 @@ class Footer extends Component {
     }
 
     renderFooter(version) {
-        return (  
+        return (
             <div className="container">
-                <div className="row justify-content-md-center">
-                    <div className="col-md-auto">
-                        <span className="badge badge-dark">{version}</span>
+                <div className="row">
+                    <div className="col">
+                        smif version: <span className="badge badge-dark">{version}</span>
                     </div>
                 </div>
             </div>
