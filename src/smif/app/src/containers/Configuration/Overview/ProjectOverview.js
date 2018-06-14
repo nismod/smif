@@ -340,14 +340,14 @@ class ProjectOverview extends Component {
                     </div>
 
                     <div hidden={name!='sos-models'}>
-                        <IntroBlock title="Models" intro="A system-of-systems model collects together scenario sets and simulation models. Users define dependencies between scenario and simulation models.">
+                        <IntroBlock title="System-of-Systems Models" intro="A system-of-systems model collects together scenario sets and simulation models. Users define dependencies between scenario and simulation models.">
                             <input className="btn btn-success" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='sector-models'}>
-                        <IntroBlock title="Wrappers" intro="To integrate a new sector model into the system-of-systems model it is necessary to write a Python wrapper function. The wrapper acts as an interface between the simulation modelling integration framework and the simulation model, keeping all the code necessary to implement the conversion of data types in one place.">
+                        <IntroBlock title="Model Wrappers" intro="To integrate a new sector model into the system-of-systems model it is necessary to write a Python wrapper function. The wrapper acts as an interface between the simulation modelling integration framework and the simulation model, keeping all the code necessary to implement the conversion of data types in one place.">
                             <input className="btn btn-success" name="SectorModel" type="button" value="Add a new Wrapper" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />

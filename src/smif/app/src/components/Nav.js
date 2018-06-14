@@ -49,12 +49,12 @@ class Nav extends Component {
                 <nav className="col-md-2 d-none d-md-block bg-light sidebar">
                 <div className="sidebar-sticky">
                     <ul className="nav flex-column">
-                    <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/">
-                            <FaHome size={20}/>
-                            <span className="ml-1">Home</span>
-                        </NavLink>
-                    </li>
+                        <li className="nav-item">
+                            <NavLink exact className="nav-link" to="/">
+                                <FaHome size={20}/>
+                                Home
+                            </NavLink>
+                        </li>
                     </ul>
 
                     <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
@@ -64,19 +64,22 @@ class Nav extends Component {
                     <li className="nav-item">
                         <NavLink className="nav-link" to="/configure/sos-model-run" >
                             <FaSliders size={20}/>
-                            <span className="ml-1">Model Runs <Badge color="secondary">{sos_model_runs.length}</Badge></span>
+                            Model Runs
+                            <Badge color="secondary">{sos_model_runs.length}</Badge>
                         </NavLink>
                         <Route path="/configure/sos-model-run/" render={() =>
-                            <div>
-                                {sos_model_runs.map(sos_model_run =>
-                                    <div key={'nav_' + sos_model_run.name}>
-                                        <NavLink className="nav-link" to={"/configure/sos-model-run/" + sos_model_run.name} >
-                                            <span className="ml-3"/>
-                                            <span className="ml-1 text-muted">{sos_model_run.name}</span>
-                                        </NavLink>
-                                    </div>
-                                )}
-                            </div>
+                            <ul className="nav flex-column">
+                            {sos_model_runs.map(sos_model_run =>
+                                <li className="nav-item">
+                                    <NavLink
+                                        key={'nav_' + sos_model_run.name}
+                                        className="nav-link"
+                                        to={"/configure/sos-model-run/" + sos_model_run.name} >
+                                            {sos_model_run.name}
+                                    </NavLink>
+                                </li>
+                            )}
+                            </ul>
                         }/>
                     </li>
                     </ul>
@@ -89,90 +92,111 @@ class Nav extends Component {
                     <li className="nav-item">
                         <NavLink exact className="nav-link" to="/configure/sos-models" >
                             <FaSitemap size={20}/>
-                            <span className="ml-1">Models <Badge color="secondary">{sos_models.length}</Badge></span>
+                            System-of-Systems Models
+                            <Badge color="secondary">{sos_models.length}</Badge>
                         </NavLink>
                         <Route path="/configure/sos-models/" render={() =>
-                            <div>
+                            <ul className="nav flex-column">
                             {sos_models.map(sos_models =>
-                                <div key={'nav_' + sos_models.name}>
-                                    <NavLink exact className="nav-link" to={"/configure/sos-models/" + sos_models.name} >
-                                        <span className="ml-3"/>
-                                        <span className="ml-1 text-muted">{sos_models.name}</span>
+                                <li className="nav-item">
+                                    <NavLink
+                                        key={'nav_' + sos_models.name}
+                                        exact
+                                        className="nav-link"
+                                        to={"/configure/sos-models/" + sos_models.name} >
+                                            {sos_models.name}
                                     </NavLink>
-                                </div>
+                                </li>
                             )}
-                            </div>
+                            </ul>
                         }/>
 
                         <NavLink exact className="nav-link" to="/configure/sector-models" >
                             <FaCode size={20}/>
-                            <span className="ml-1">Wrappers <Badge color="secondary">{sector_models.length}</Badge></span>
+                            Model Wrappers
+                            <Badge color="secondary">{sector_models.length}</Badge>
                         </NavLink>
                         <Route path="/configure/sector-models/" render={() =>
-                            <div>
+                            <ul className="nav flex-column">
                             {sector_models.map(sector_models =>
-                                <div key={'nav_' + sector_models.name}>
-                                    <NavLink exact className="nav-link" to={"/configure/sector-models/" + sector_models.name} >
-                                        <span className="ml-3"/>
-                                        <span className="ml-1 text-muted">{sector_models.name}</span>
+                                <li className="nav-item">
+                                    <NavLink
+                                        key={'nav_' + sector_models.name}
+                                        exact
+                                        className="nav-link"
+                                        to={"/configure/sector-models/" + sector_models.name} >
+                                            {sector_models.name}
                                     </NavLink>
-                                </div>
+                                </li>
                             )}
-                            </div>
+                            </ul>
                         }/>
                     </li>
 
                     <li className="nav-item">
                         <NavLink exact className="nav-link" to="/configure/scenario-set" >
                             <FaBarChart size={20}/>
-                            <span className="ml-1">Scenarios <Badge color="secondary">{scenario_sets.length}</Badge></span>
+                            Scenarios
+                            <Badge color="secondary">{scenario_sets.length}</Badge>
                         </NavLink>
                         <Route path="/configure/scenario-set/" render={() =>
-                            <div>
+                            <ul className="nav flex-column">
                             {scenario_sets.map(config =>
-                                <div key={'nav_' + config.name}>
-                                    <NavLink exact className="nav-link" to={"/configure/scenario-set/" + config.name} >
-                                        <span className="ml-3"/>
-                                        <span className="ml-1 text-muted">{config.name}</span>
+                                <li className="nav-item">
+                                    <NavLink
+                                        key={'nav_' + config.name}
+                                        exact
+                                        className="nav-link"
+                                        to={"/configure/scenario-set/" + config.name} >
+                                            {config.name}
                                     </NavLink>
-                                </div>
+                                </li>
                             )}
-                            </div>
+                            </ul>
                         }/>
                     </li>
 
                     <li className="nav-item">
                         <NavLink exact className="nav-link" to="/configure/narrative-set" >
                             <FaBarChart size={20}/>
-                            <span className="ml-1">Narratives <Badge color="secondary">{narrative_sets.length}</Badge></span>
+                            Narratives
+                            <Badge color="secondary">{narrative_sets.length}</Badge>
                         </NavLink>
 
                         <Route path="/configure/narrative*" render={() =>
                             <div>
-                            <span className="ml-4"/>
-                            <span className="ml-1">Sets</span>
-                            {narrative_sets.map(config =>
-                                <div key={'nav_' + config.name}>
-                                    <NavLink exact className="nav-link" to={"/configure/narrative-set/" + config.name} >
-                                        <span className="ml-3"/>
-                                        <span className="ml-1 text-muted">{config.name}</span>
-                                    </NavLink>
-                                </div>
-                            )}
+                                <span className="ml-4">Sets</span>
+                                <ul className="nav flex-column">
+                                {narrative_sets.map(config =>
+                                    <li className="nav-item">
+                                        <NavLink
+                                            key={'nav_' + config.name}
+                                            exact
+                                            className="nav-link"
+                                            to={"/configure/narrative-set/" + config.name} >
+                                                {config.name}
+                                        </NavLink>
+                                    </li>
+                                )}
+                                </ul>
                             </div>
                         }/>
                         <Route path="/configure/narrative*" render={() =>
                             <div>
-                            <span className="ml-4"/>
-                            <span className="ml-1">Data</span>
-                            {narratives.map(config =>
-                                <div key={'nav_' + config.name}>
-                                    <NavLink exact className="nav-link" to={"/configure/narratives/" + config.name} >
-                                        <span className="ml-3"/>
-                                        <span className="ml-1 text-muted">{config.name}</span>
-                                    </NavLink>
-                                </div>
-                            )}
+                                <span className="ml-4">Data</span>
+                                <ul className="nav flex-column">
+                                {narratives.map(config =>
+                                    <li className="nav-item">
+                                        <NavLink
+                                            key={'nav_' + config.name}
+                                            exact
+                                            className="nav-link"
+                                            to={"/configure/narratives/" + config.name} >
+                                                {config.name}
+                                        </NavLink>
+                                    </li>
+                                )}
+                                </ul>
                             </div>
                         }/>
                     </li>
