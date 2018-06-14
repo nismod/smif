@@ -6,6 +6,8 @@ import FaPencil from 'react-icons/lib/fa/pencil'
 
 import { Redirect } from 'react-router-dom'
 
+import { CancelButton } from './Buttons'
+
 class DeleteForm extends Component {
     constructor(props) {
         super(props)
@@ -76,7 +78,7 @@ class DeleteForm extends Component {
                     <br/>
 
                     <input autoFocus id="deleteButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Delete" onClick={this.handleSubmit} />
-                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                    <CancelButton onClick={this.handleCancel} />
                 </div>
             )
         } else {
@@ -102,7 +104,7 @@ class DeleteForm extends Component {
 
                     <br/>
 
-                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                    <CancelButton onClick={this.handleCancel} />
                 </div>
             )
         }

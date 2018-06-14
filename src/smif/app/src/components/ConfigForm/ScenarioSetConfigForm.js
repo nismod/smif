@@ -7,13 +7,14 @@ import PropertyList from './General/PropertyList.js'
 import ScenarioConfigForm from './ScenarioSet/ScenarioConfigForm.js'
 import FacetConfigForm from './ScenarioSet/FacetConfigForm.js'
 import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
+import { SaveButton, CancelButton } from './General/Buttons'
 
 class ScenarioSetConfigForm extends Component {
     constructor(props) {
         super(props)
 
         this.handleChange = this.handleChange.bind(this)
-        this.handleSave = this.handleSave.bind(this) 
+        this.handleSave = this.handleSave.bind(this)
         this.handleFacetSave = this.handleFacetSave.bind(this)
         this.handleScenarioSave = this.handleScenarioSave.bind(this)
         this.handleScenarioCreate = this.handleScenarioCreate.bind(this)
@@ -51,7 +52,7 @@ class ScenarioSetConfigForm extends Component {
         if (name == 'Scenario') {
             this.setState({
                 selectedScenarios: value
-            })         
+            })
         } else {
             this.setState({
                 selectedScenarioSet: update(this.state.selectedScenarioSet, {[name]: {$set: value}})
@@ -147,7 +148,7 @@ class ScenarioSetConfigForm extends Component {
     closeScenarioPopup() {
         this.setState({editScenarioPopupIsOpen: false})
     }
-    
+
     openEditScenarioPopup(name) {
 
         const { selectedScenarios, selectedScenarioSet} = this.state
@@ -187,12 +188,12 @@ class ScenarioSetConfigForm extends Component {
     }
 
     openDeletePopup(event) {
-        
+
         let target_in_use_by = []
 
         switch(event.target.name) {
             case 'Facet':
-                this.props.sosModels.forEach(function(sos_model) {   
+                this.props.sosModels.forEach(function(sos_model) {
                     sos_model.dependencies.forEach(function(dependency) {
                         if (event.target.value == dependency.source_model_output) {
                             target_in_use_by.push({
@@ -206,7 +207,7 @@ class ScenarioSetConfigForm extends Component {
                 break
 
             case 'Scenario':
-                this.props.sosModelRuns.forEach(function(sos_model_run) {   
+                this.props.sosModelRuns.forEach(function(sos_model_run) {
                     Object.keys(sos_model_run.scenarios).forEach(function(key) {
                         if (event.target.value == sos_model_run.scenarios[key]) {
                             target_in_use_by.push({
@@ -242,7 +243,7 @@ class ScenarioSetConfigForm extends Component {
                     }
                 }
                 break
-                
+
             case 'Scenario':
                 this.props.deleteScenario(deletePopupConfigName)
                 break
@@ -267,7 +268,7 @@ class ScenarioSetConfigForm extends Component {
         // Check if facets are configured in all scenario sets
         // prepare an array with warning
         let scenarioWarnings = []
-        
+
         let facetlist = []
         for (let facet of selectedScenarioSet.facets) {
             facetlist.push(facet['name'])
@@ -308,8 +309,6 @@ class ScenarioSetConfigForm extends Component {
                     </div>
                 </div>
 
-                <br/>
-
                 <div className="card">
                     <div className="card-header">Facets</div>
                     <div className="card-body">
@@ -317,8 +316,6 @@ class ScenarioSetConfigForm extends Component {
                         <input className="btn btn-secondary btn-lg btn-block" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
                     </div>
                 </div>
-
-                <br/>
 
                 <div className={scenarioCardState} >
                     <div className="card">
@@ -330,16 +327,12 @@ class ScenarioSetConfigForm extends Component {
                     </div>
                 </div>
 
+                <SaveButton onClick={this.handleSave} />
+                <CancelButton onClick={this.handleCancel} />
+
                 <Popup onRequestOpen={this.state.deletePopupIsOpen}>
                     <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
                 </Popup>
-
-                <br/>
-
-                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
-                <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
-
-                <br/>
 
                 <Popup onRequestOpen={this.state.addFacetPopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation()}}>
@@ -348,7 +341,7 @@ class ScenarioSetConfigForm extends Component {
                 </Popup>
 
                 <Popup onRequestOpen={this.state.editScenarioPopupIsOpen}>
-                    <form onSubmit={(e) => {e.preselectedScenarioventDefault(); e.stopPropagation()}}>                
+                    <form onSubmit={(e) => {e.preselectedScenarioventDefault(); e.stopPropagation()}}>
                         <ScenarioConfigForm scenario={selectedScenario} scenarioSet={selectedScenarioSet} createScenario={this.handleScenarioCreate} saveScenario={this.handleScenarioSave} cancelScenario={this.closeScenarioPopup}/>
                     </form>
                 </Popup>
@@ -362,9 +355,7 @@ class ScenarioSetConfigForm extends Component {
                 <div id="alert-danger" className="alert alert-danger">
                     {message}
                 </div>
-                <div>
-                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
-                </div>
+                <CancelButton onClick={this.handleCancel} />
             </div>
         )
     }
@@ -374,11 +365,8 @@ class ScenarioSetConfigForm extends Component {
             <div>
                 <div id="alert-warning" className="alert alert-warning">
                     {message}
-                
                 </div>
-                <div>
-                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
-                </div>
+                <CancelButton onClick={this.handleCancel} />
             </div>
         )
     }
@@ -388,18 +376,15 @@ class ScenarioSetConfigForm extends Component {
             <div>
                 <div id="alert-info" className="alert alert-info">
                     {message}
-                
                 </div>
-                <div>
-                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
-                </div>
+                <CancelButton onClick={this.handleCancel} />
             </div>
         )
     }
 
     render() {
         const {selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet} = this.state
-        
+
         if (selectedScenarioSet == null || selectedScenarioSet == undefined) {
             return this.renderDanger('The selectedScenarioSet are not initialised')
         } else if (selectedScenarioSet.facets == null || selectedScenarioSet.facets == undefined) {
@@ -417,7 +402,7 @@ class ScenarioSetConfigForm extends Component {
 }
 
 ScenarioSetConfigForm.propTypes = {
-    sosModelRuns: PropTypes.array.isRequired, 
+    sosModelRuns: PropTypes.array.isRequired,
     sosModels: PropTypes.array.isRequired,
     scenarioSet: PropTypes.object.isRequired,
     scenarios: PropTypes.array.isRequired,

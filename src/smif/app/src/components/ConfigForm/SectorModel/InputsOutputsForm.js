@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import Popup from '../General/Popup.js'
+import { SaveButton, CancelButton, CreateButton } from '../General/Buttons'
 
 class InputsOutputsForm extends Component {
     constructor(props) {
@@ -111,7 +112,7 @@ class InputsOutputsForm extends Component {
 
         return (
             <div>
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value={'Add ' + type} onClick={this.openCreateDependencyPopup} />
+                <CreateButton value={'Add ' + type} onClick={this.openCreateDependencyPopup} />
 
                 <Popup onRequestOpen={this.state.CreateDependencypopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit()}}>
@@ -151,14 +152,10 @@ class InputsOutputsForm extends Component {
                             </div>
                         </div>
 
-                        <br/>
-
-                        <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Add"/>
-                        <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreateDependencyPopup}/>
+                        <SaveButton />
+                        <CancelButton onClick={this.closeCreateDependencyPopup}/>
                     </form>
-
                 </Popup>
-
             </div>
         )
     }

@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
+import { SaveButton, CancelButton } from '../General/Buttons'
+
 class FacetConfigForm extends Component {
     constructor(props) {
         super(props)
@@ -93,14 +95,12 @@ class FacetConfigForm extends Component {
 
                 </div>
 
-                <br/>
-
                 <div hidden={!this.state.alert_visible} className="alert alert-danger" role="alert">
                     {this.state.alert_message}
                 </div>
 
-                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
-                <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                <SaveButton onClick={this.handleSave} />
+                <CancelButton onClick={this.handleCancel} />
             </div>
         )
     }

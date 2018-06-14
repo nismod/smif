@@ -8,6 +8,7 @@ import InputsOutputsForm from './SectorModel/InputsOutputsForm.js'
 import ParameterSelector from './SectorModel/ParameterSelector.js'
 import PropertyList from './General/PropertyList.js'
 import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
+import { SaveButton, CancelButton } from './General/Buttons'
 
 class SectorModelConfigForm extends Component {
     constructor(props) {
@@ -63,7 +64,7 @@ class SectorModelConfigForm extends Component {
                 }
                 break
         }
-        
+
         this.forceUpdate()
         this.closeDeletePopup()
     }
@@ -82,7 +83,7 @@ class SectorModelConfigForm extends Component {
 
         switch(event.target.name) {
             case 'inputs' || 'parameters':
-                this.props.sosModels.forEach(function(sos_model) {   
+                this.props.sosModels.forEach(function(sos_model) {
                     sos_model.dependencies.forEach(function(dependency) {
                         if (dependency.sink_model_input == event.target.value) {
                             target_in_use_by.push({
@@ -95,7 +96,7 @@ class SectorModelConfigForm extends Component {
                 })
                 break
             case 'outputs':
-                this.props.sosModels.forEach(function(sos_model) {   
+                this.props.sosModels.forEach(function(sos_model) {
                     sos_model.dependencies.forEach(function(dependency) {
                         if (dependency.source_model_output == event.target.value) {
                             target_in_use_by.push({
@@ -148,8 +149,6 @@ class SectorModelConfigForm extends Component {
                         </div>
                     </div>
 
-                    <br/>
-
                     <div className="card">
                         <div className="card-header">Environment</div>
                         <div className="card-body">
@@ -171,8 +170,6 @@ class SectorModelConfigForm extends Component {
                         </div>
                     </div>
 
-                    <br/>
-
                     <div className="card">
                         <div className="card-header">Inputs</div>
                         <div className="card-body">
@@ -180,8 +177,6 @@ class SectorModelConfigForm extends Component {
                             <InputsOutputsForm items={selectedSectorModel.inputs} isInputs={true} onChange={this.handleChange}/>
                         </div>
                     </div>
-
-                    <br/>
 
                     <div className="card">
                         <div className="card-header">Outputs</div>
@@ -191,8 +186,6 @@ class SectorModelConfigForm extends Component {
                         </div>
                     </div>
 
-                    <br/>
-
                     <div className="card">
                         <div className="card-header">Parameters</div>
                         <div className="card-body">
@@ -200,16 +193,14 @@ class SectorModelConfigForm extends Component {
                             <ParameterSelector parameters={selectedSectorModel.parameters} onChange={this.handleChange}/>
                         </div>
                     </div>
-
-                    <br/>
                 </form>
 
                 <Popup onRequestOpen={this.state.deletePopupIsOpen}>
                     <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
                 </Popup>
 
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                <SaveButton onClick={this.handleSave} />
+                <CancelButton onClick={this.handleCancel} />
 
                 <br/>
             </div>

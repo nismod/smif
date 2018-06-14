@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
+import { SaveButton, CancelButton } from './General/Buttons'
+
 class NarrativeConfigForm extends Component {
     constructor(props) {
         super(props)
@@ -68,8 +70,6 @@ class NarrativeConfigForm extends Component {
                         </div>
                     </div>
 
-                    <br/>
-
                     <div className="card">
                         <div className="card-header">Settings</div>
                         <div className="card-body">
@@ -95,8 +95,6 @@ class NarrativeConfigForm extends Component {
                         </div>
                     </div>
 
-                    <br/>
-
                     <div className="card">
                         <div className="card-header">Parameters</div>
                         <div className="card-body">
@@ -109,15 +107,10 @@ class NarrativeConfigForm extends Component {
                             </div>
                         </div>
                     </div>
-
-                    <br/>
-
                 </form>
 
-                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
-                <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
-
-                <br/>
+                <SaveButton onClick={this.handleSave} />
+                <CancelButton onClick={this.handleCancel} />
             </div>
         )
     }
