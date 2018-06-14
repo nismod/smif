@@ -9,6 +9,7 @@ import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet
 import { saveSosModelRun,   saveSosModel,   saveSectorModel,   saveScenarioSet,   saveScenario,   saveNarrativeSet,   saveNarrative   } from '../../../actions/actions.js'
 import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteScenario, deleteNarrativeSet, deleteNarrative } from '../../../actions/actions.js'
 
+import IntroBlock from '../../../components/ConfigForm/General/IntroBlock.js'
 import Popup from '../../../components/ConfigForm/General/Popup.js'
 import ProjectOverviewItem from '../../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
 import CreateConfigForm from '../../../components/ConfigForm/ProjectOverview/CreateConfigForm.js'
@@ -41,7 +42,7 @@ class ProjectOverview extends Component {
 
     componentDidMount () {
         const { dispatch } = this.props
-        
+
         dispatch(fetchSosModelRuns())
         dispatch(fetchSosModels())
         dispatch(fetchSectorModels())
@@ -76,7 +77,7 @@ class ProjectOverview extends Component {
         const { dispatch } = this.props
 
         this.closeCreatePopup(createPopupType)
-        
+
         switch(createPopupType) {
         case 'SosModelRun':
             dispatch(createSosModelRun(
@@ -157,25 +158,25 @@ class ProjectOverview extends Component {
     }
 
     openDeletePopup(event) {
-        
+
         let target_in_use_by = []
 
         switch(event.target.name) {
             case 'SosModel':
-                this.props.sos_model_runs.forEach(function(sos_model_run) {   
+                this.props.sos_model_runs.forEach(function(sos_model_run) {
                     if (sos_model_run.sos_model == event.target.value) {
                         target_in_use_by.push({
                             name: sos_model_run.name,
                             link: '/configure/sos-model-run/',
                             type: 'SosModelRun'
                         })
-                    }                    
+                    }
                 })
                 break
 
             case 'SectorModel':
-                this.props.sos_models.forEach(function(sos_model) {   
-                    
+                this.props.sos_models.forEach(function(sos_model) {
+
                     sos_model.sector_models.forEach(function(sector_model) {
                         if (sector_model == event.target.value) {
                             target_in_use_by.push({
@@ -189,8 +190,8 @@ class ProjectOverview extends Component {
                 break
 
             case 'ScenarioSet':
-                this.props.sos_models.forEach(function(sos_model) {   
-                        
+                this.props.sos_models.forEach(function(sos_model) {
+
                     sos_model.scenario_sets.forEach(function(scenario_set) {
                         if (scenario_set == event.target.value) {
                             target_in_use_by.push({
@@ -214,8 +215,8 @@ class ProjectOverview extends Component {
                 break
 
             case 'NarrativeSet':
-                this.props.sos_models.forEach(function(sos_model) {   
-                        
+                this.props.sos_models.forEach(function(sos_model) {
+
                     sos_model.narrative_sets.forEach(function(narrative_set) {
                         if (narrative_set == event.target.value) {
                             target_in_use_by.push({
@@ -227,7 +228,7 @@ class ProjectOverview extends Component {
                     })
                 })
 
-                this.props.narratives.forEach(function(narrative) {   
+                this.props.narratives.forEach(function(narrative) {
                     if (narrative.narrative_set == event.target.value) {
                         target_in_use_by.push({
                             name: narrative.name,
@@ -239,7 +240,7 @@ class ProjectOverview extends Component {
                 break
 
             case 'Narrative':
-                this.props.sos_model_runs.forEach(function(sos_model_run) {   
+                this.props.sos_model_runs.forEach(function(sos_model_run) {
                     Object.keys(sos_model_run.narratives).forEach(function(narrative_sets) {
                         sos_model_run.narratives[narrative_sets].forEach(function(narrative) {
                             if (narrative == event.target.value) {
@@ -248,7 +249,7 @@ class ProjectOverview extends Component {
                                     link: '/configure/sos-model-run/',
                                     type: 'SosModelRun'
                                 })
-                            }                    
+                            }
                         })
                     })
                 })
@@ -331,83 +332,46 @@ class ProjectOverview extends Component {
                 </div>
 
                 <div hidden={ isFetching }>
-
                     <div hidden={name!='sos-model-run'}>
-                        <div className="jumbotron jumbotron-fluid">
-                            <div className="container">
-                                <h1>Model Runs</h1>
-                                <p>A model run brings together a system-of-systems model definition with timesteps over 
-                                    which planning takes place, and a choice of scenarios and narratives to population 
-                                    the placeholder scenario sets in the system-of-systems model.</p>
-                                <input className="btn btn-success btn-lg" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
-                            </div>
-                        </div>
+                        <IntroBlock title="Model Runs" intro="A model run brings together a system-of-systems model definition with timesteps over which planning takes place, and a choice of scenarios and narratives to population the placeholder scenario sets in the system-of-systems model.">
+                            <input className="btn btn-success" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
+                        </IntroBlock>
                         <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.openDeletePopup} />
-                        <br/>
                     </div>
-                        <div hidden={name!='sos-models'}>
-                        <div className="jumbotron jumbotron-fluid">
-                            <div className="container">
-                                <h1>Models</h1>
-                                <p>A system-of-systems model collects together scenario sets and simulation models. 
-                                    Users define dependencies between scenario and simulation models.</p>
-                                <input className="btn btn-success btn-lg" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
-                            </div>
-                        </div>
+
+                    <div hidden={name!='sos-models'}>
+                        <IntroBlock title="Models" intro="A system-of-systems model collects together scenario sets and simulation models. Users define dependencies between scenario and simulation models.">
+                            <input className="btn btn-success" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
+                        </IntroBlock>
                         <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
-                        <br/>
                     </div>
 
                     <div hidden={name!='sector-models'}>
-                        <div className="jumbotron jumbotron-fluid">
-                            <div className="container">
-                                <h1>Wrappers</h1>
-                                <p>To integrate a new sector model into the system-of-systems model it is necessary to 
-                                    write a Python wrapper function. The wrapper acts as an interface between the simulation 
-                                    modelling integration framework and the simulation model, keeping all the code necessary 
-                                    to implement the conversion of data types in one place.</p>
-                                <input className="btn btn-success btn-lg" name="SectorModel" type="button" value="Add a new Wrapper" onClick={this.openCreatePopup}/>
-                            </div>
-                        </div>
+                        <IntroBlock title="Wrappers" intro="To integrate a new sector model into the system-of-systems model it is necessary to write a Python wrapper function. The wrapper acts as an interface between the simulation modelling integration framework and the simulation model, keeping all the code necessary to implement the conversion of data types in one place.">
+                            <input className="btn btn-success" name="SectorModel" type="button" value="Add a new Wrapper" onClick={this.openCreatePopup}/>
+                        </IntroBlock>
                         <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
-                        <br/>
                     </div>
 
                     <div hidden={name!='scenario-set'}>
-                        <div className="jumbotron jumbotron-fluid">
-                            <div className="container">
-                                <h1>Scenario Sets</h1>
-                                <p>Scenarios allows to define static sources for simulation model dependencies. Scenario sets 
-                                    are the categories in which scenario data are organised.</p>
-                                <input className="btn btn-success btn-lg" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
-                            </div>
-                        </div>
+                        <IntroBlock title="Scenario Sets" intro="Scenarios allows to define static sources for simulation model dependencies. Scenario sets are the categories in which scenario data are organised.">
+                            <input className="btn btn-success" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
+                        </IntroBlock>
                         <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/scenario-set/" onDelete={this.openDeletePopup} />
-                        <br/>
                     </div>
 
                     <div hidden={name!='narrative-set'}>
-                        <div className="jumbotron jumbotron-fluid">
-                            <div className="container">
-                                <h1>Narrative Sets</h1>
-                                <p>Narrative sets are the categories in which narrative data are organised.</p>
-                                <input className="btn btn-success btn-lg" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
-                            </div>
-                        </div>
+                        <IntroBlock title="Narrative Sets" intro="Narrative sets are the categories in which narrative data are organised.">
+                            <input className="btn btn-success" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
+                        </IntroBlock>
                         <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/narrative-set/" onDelete={this.openDeletePopup} />
-                        <br/>
                     </div>
 
                     <div hidden={name!='narrative-set'}>
-                        <div className="jumbotron jumbotron-fluid">
-                            <div className="container">
-                                <h1>Narratives</h1>
-                                <p>Narratives are configurations that target the files which contain narrative data</p>
-                                <input className="btn btn-success btn-lg" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
-                            </div>
-                        </div>
+                        <IntroBlock title="Narratives" intro="Narratives are configurations that target the files which contain narrative data">
+                            <input className="btn btn-success" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
+                        </IntroBlock>
                         <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/narratives/" onDelete={this.openDeletePopup} />
-                        <br/>
                     </div>
 
                     {/* Popup for Create */}
