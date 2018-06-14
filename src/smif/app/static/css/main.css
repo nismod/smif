@@ -25,6 +25,15 @@ body {
 }
 .jumbotron {
   padding: 20px;
+  background-color: #f8f9fa;
+}
+.jumbotron .lead {
+    font-size: 1.25rem
+}
+.jumbotron li,
+.jumbotron p {
+    font-size: 1.125rem;
+    font-weight: 300;
 }
 .btn,
 select {
