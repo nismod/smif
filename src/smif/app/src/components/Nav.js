@@ -52,7 +52,7 @@ class Nav extends Component {
                     <li className="nav-item">
                         <NavLink exact className="nav-link" to="/">
                             <FaHome size={20}/>
-                            <span className="ml-1">Welcome</span>
+                            <span className="ml-1">Home</span>
                         </NavLink>
                     </li>
                     </ul>
@@ -66,10 +66,10 @@ class Nav extends Component {
                             <FaSliders size={20}/>
                             <span className="ml-1">Model Runs <Badge color="secondary">{sos_model_runs.length}</Badge></span>
                         </NavLink>
-                        <Route path="/configure/sos-model-run/" render={() => 
+                        <Route path="/configure/sos-model-run/" render={() =>
                             <div>
                                 {sos_model_runs.map(sos_model_run =>
-                                    <div key={'nav_' + sos_model_run.name}> 
+                                    <div key={'nav_' + sos_model_run.name}>
                                         <NavLink className="nav-link" to={"/configure/sos-model-run/" + sos_model_run.name} >
                                             <span className="ml-3"/>
                                             <span className="ml-1 text-muted">{sos_model_run.name}</span>
@@ -91,9 +91,9 @@ class Nav extends Component {
                             <FaSitemap size={20}/>
                             <span className="ml-1">Models <Badge color="secondary">{sos_models.length}</Badge></span>
                         </NavLink>
-                        <Route path="/configure/sos-models/" render={() => 
+                        <Route path="/configure/sos-models/" render={() =>
                             <div>
-                            {sos_models.map(sos_models => 
+                            {sos_models.map(sos_models =>
                                 <div key={'nav_' + sos_models.name}>
                                     <NavLink exact className="nav-link" to={"/configure/sos-models/" + sos_models.name} >
                                         <span className="ml-3"/>
@@ -108,7 +108,7 @@ class Nav extends Component {
                             <FaCode size={20}/>
                             <span className="ml-1">Wrappers <Badge color="secondary">{sector_models.length}</Badge></span>
                         </NavLink>
-                        <Route path="/configure/sector-models/" render={() => 
+                        <Route path="/configure/sector-models/" render={() =>
                             <div>
                             {sector_models.map(sector_models =>
                                 <div key={'nav_' + sector_models.name}>
@@ -119,7 +119,7 @@ class Nav extends Component {
                                 </div>
                             )}
                             </div>
-                        }/>            
+                        }/>
                     </li>
 
                     <li className="nav-item">
@@ -127,7 +127,7 @@ class Nav extends Component {
                             <FaBarChart size={20}/>
                             <span className="ml-1">Scenarios <Badge color="secondary">{scenario_sets.length}</Badge></span>
                         </NavLink>
-                        <Route path="/configure/scenario-set/" render={() => 
+                        <Route path="/configure/scenario-set/" render={() =>
                             <div>
                             {scenario_sets.map(config =>
                                 <div key={'nav_' + config.name}>
@@ -145,9 +145,9 @@ class Nav extends Component {
                         <NavLink exact className="nav-link" to="/configure/narrative-set" >
                             <FaBarChart size={20}/>
                             <span className="ml-1">Narratives <Badge color="secondary">{narrative_sets.length}</Badge></span>
-                        </NavLink>    
+                        </NavLink>
 
-                        <Route path="/configure/narrative*" render={() => 
+                        <Route path="/configure/narrative*" render={() =>
                             <div>
                             <span className="ml-4"/>
                             <span className="ml-1">Sets</span>
@@ -161,7 +161,7 @@ class Nav extends Component {
                             )}
                             </div>
                         }/>
-                        <Route path="/configure/narrative*" render={() => 
+                        <Route path="/configure/narrative*" render={() =>
                             <div>
                             <span className="ml-4"/>
                             <span className="ml-1">Data</span>
@@ -210,7 +210,7 @@ Nav.propTypes = {
 
 function mapStateToProps(state) {
     const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives } = state
-    
+
     return {
         sos_model_runs: sos_model_runs.items,
         sos_models: sos_models.items,
@@ -221,12 +221,12 @@ function mapStateToProps(state) {
         narratives: narratives.items,
 
         isFetching: (
-            state.sos_model_runs.isFetching || 
-            state.sos_models.isFetching || 
-            state.sector_models.isFetching || 
-            state.scenario_sets.isFetching || 
-            state.scenarios.isFetching || 
-            state.narrative_sets.isFetching || 
+            state.sos_model_runs.isFetching ||
+            state.sos_models.isFetching ||
+            state.sector_models.isFetching ||
+            state.scenario_sets.isFetching ||
+            state.scenarios.isFetching ||
+            state.narrative_sets.isFetching ||
             state.narratives.isFetching
         )
     }
