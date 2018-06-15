@@ -70,16 +70,10 @@ try:
 except ImportError:
     import thread as _thread
 
-import datetime
 import logging
 import logging.config
 import os
 import pkg_resources
-import re
-import shutil
-import sys
-import time
-import traceback
 
 try:
     import win32api
@@ -90,304 +84,20 @@ except ImportError:
 from argparse import ArgumentParser
 
 import smif
-from smif.data_layer import DatafileInterface, DataNotFoundError
-from smif.convert.register import Register
-from smif.convert.area import get_register as get_region_register
-from smif.convert.area import RegionSet
-from smif.convert.interval import get_register as get_interval_register
-from smif.convert.interval import IntervalSet
-from smif.convert.unit import get_register as get_unit_register
+import smif.cli.log
+
+from smif.controller.execute import execute_model_run
+from smif.controller.setup import setup_project_folder
 from smif.http_api import create_app
-from smif.parameters import Narrative
-from smif.modelrun import ModelRunBuilder, ModelRunError
-from smif.model.sos_model import SosModelBuilder
-from smif.model.sector_model import SectorModelBuilder
-from smif.model.scenario_model import ScenarioModelBuilder
+from smif.data_layer import DatafileInterface
+
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-LOGGING_CONFIG = {
-    'version': 1,
-    'formatters': {
-        'default': {
-            'format': '%(asctime)s %(name)-12s: %(levelname)-8s %(message)s'
-        },
-        'message': {
-            'format': '\033[1;34m%(levelname)-8s\033[0m %(message)s'
-        }
-    },
-    'handlers': {
-        'file': {
-            'class': 'logging.FileHandler',
-            'level': 'DEBUG',
-            'formatter': 'default',
-            'filename': 'smif.log',
-            'mode': 'a',
-            'encoding': 'utf-8'
-        },
-        'stream': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'message',
-            'level': 'DEBUG'
-        }
-    },
-    'root': {
-        'handlers': ['file', 'stream'],
-        'level': 'DEBUG'
-    }
-}
-
-# Configure logging once, outside of any dependency on argparse
-VERBOSITY = None
-if '--verbose' in sys.argv:
-    VERBOSITY = sys.argv.count('--verbose')
-else:
-    for arg in sys.argv:
-        if re.match(r'\A-v+\Z', arg):
-            VERBOSITY = len(arg) - 1
-            break
-
-if VERBOSITY is None:
-    LOGGING_CONFIG['root']['level'] = logging.WARNING
-elif VERBOSITY == 1:
-    LOGGING_CONFIG['root']['level'] = logging.INFO
-else:
-    LOGGING_CONFIG['root']['level'] = logging.DEBUG
-
-logging.config.dictConfig(LOGGING_CONFIG)
 LOGGER = logging.getLogger(__name__)
-LOGGER.debug('Debug logging enabled.')
-
-REGIONS = get_region_register()
-INTERVALS = get_interval_register()
-UNITS = get_unit_register()
-
-
-def setup_project_folder(args):
-    """Creates folder structure in the target directory
-
-    Parameters
-    ----------
-    args
-    """
-    _recursive_overwrite('smif', 'sample_project', args.directory)
-    if args.directory == ".":
-        dirname = "the current directory"
-    else:
-        dirname = args.directory
-    LOGGER.info("Created sample project in %s", dirname)
-
-
-def _recursive_overwrite(pkg, src, dest):
-    if pkg_resources.resource_isdir(pkg, src):
-        if not os.path.isdir(dest):
-            os.makedirs(dest)
-        contents = pkg_resources.resource_listdir(pkg, src)
-        for item in contents:
-            _recursive_overwrite(pkg,
-                                 os.path.join(src, item),
-                                 os.path.join(dest, item))
-    else:
-        filename = pkg_resources.resource_filename(pkg, src)
-        shutil.copyfile(filename, dest)
-
-
-def load_region_sets(handler):
-    """Loads the region sets into the project registries
-
-    Parameters
-    ----------
-    handler: :class:`smif.data_layer.DataInterface`
-
-    """
-    region_definitions = handler.read_region_definitions()
-    for region_def in region_definitions:
-        region_def_name = region_def['name']
-        LOGGER.info("Reading in region definition %s", region_def_name)
-        region_data = handler.read_region_definition_data(region_def_name)
-        region_set = RegionSet(region_def_name, region_data)
-        REGIONS.register(region_set)
-
-
-def load_interval_sets(handler):
-    """Loads the time-interval sets into the project registries
-
-    Parameters
-    ----------
-    handler: :class:`smif.data_layer.DataInterface`
-
-    """
-    interval_definitions = handler.read_interval_definitions()
-    for interval_def in interval_definitions:
-        interval_name = interval_def['name']
-        LOGGER.info("Reading in interval definition %s", interval_name)
-        interval_data = handler.read_interval_definition_data(interval_name)
-        interval_set = IntervalSet(interval_name, interval_data)
-        INTERVALS.register(interval_set)
-
-
-def load_units(handler):
-    """Loads the units into the project registries
-
-    Parameters
-    ----------
-    handler: :class:`smif.data_layer.DataInterface`
-    """
-    unit_file = handler.read_units_file_name()
-    if unit_file is not None:
-        LOGGER.info("Loading units in from %s", unit_file)
-        UNITS.register(unit_file)
-
-
-def load_resolution_sets(directory):
-    """Loads the region, interval units resolution sets
-
-    Arguments
-    ---------
-    directory: str
-        Path to the project directory
-    """
-    handler = DatafileInterface(directory)
-    Register.data_interface = handler
-    load_region_sets(handler)
-    load_interval_sets(handler)
-    load_units(handler)
-
-
-def get_model_run_definition(directory, modelrun):
-    """Builds the model run
-
-    Arguments
-    ---------
-    directory : str
-        Path to the project directory
-    modelrun : str
-        Name of the model run to run
-
-    Returns
-    -------
-    dict
-        The complete sos_model_run configuration dictionary with contained
-        ScenarioModel, SosModel and SectorModel objects
-
-    """
-    handler = DatafileInterface(directory)
-    try:
-        model_run_config = handler.read_sos_model_run(modelrun)
-    except DataNotFoundError:
-        LOGGER.error("Model run %s not found. Run 'smif list' to see available model runs.",
-                     modelrun)
-        exit(-1)
-
-    LOGGER.info("Running %s", model_run_config['name'])
-    LOGGER.debug("Model Run: %s", model_run_config)
-    sos_model_config = handler.read_sos_model(model_run_config['sos_model'])
-
-    sector_model_objects = []
-    for sector_model in sos_model_config['sector_models']:
-        sector_model_config = handler.read_sector_model(sector_model)
-
-        absolute_path = os.path.join(directory,
-                                     sector_model_config['path'])
-        sector_model_config['path'] = absolute_path
-
-        intervention_files = sector_model_config['interventions']
-        intervention_list = []
-        for intervention_file in intervention_files:
-            interventions = handler.read_interventions(intervention_file)
-            intervention_list.extend(interventions)
-        sector_model_config['interventions'] = intervention_list
-
-        initial_condition_files = sector_model_config['initial_conditions']
-        initial_condition_list = []
-        for initial_condition_file in initial_condition_files:
-            initial_conditions = handler.read_initial_conditions(initial_condition_file)
-            initial_condition_list.extend(initial_conditions)
-        sector_model_config['initial_conditions'] = initial_condition_list
-
-        sector_model_builder = SectorModelBuilder(sector_model_config['name'])
-        # LOGGER.debug("Sector model config: %s", sector_model_config)
-        sector_model_builder.construct(sector_model_config,
-                                       model_run_config['timesteps'])
-        sector_model_object = sector_model_builder.finish()
-
-        sector_model_objects.append(sector_model_object)
-        LOGGER.debug("Model inputs: %s", sector_model_object.inputs.names)
-
-    LOGGER.debug("Sector models: %s", sector_model_objects)
-    sos_model_config['sector_models'] = sector_model_objects
-
-    scenario_objects = []
-    for scenario_set, scenario_name in model_run_config['scenarios'].items():
-        scenario_definition = handler.read_scenario_definition(scenario_name)
-        LOGGER.debug("Scenario definition: %s", scenario_definition)
-
-        scenario_model_builder = ScenarioModelBuilder(scenario_set)
-        scenario_model_builder.construct(scenario_definition)
-        scenario_objects.append(scenario_model_builder.finish())
-
-    LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
-    sos_model_config['scenario_sets'] = scenario_objects
-
-    strategies = []
-    for strategy in model_run_config['strategies']:
-        if strategy['strategy'] == 'pre-specified-planning':
-            interventions = handler.read_strategies(strategy['filename'])
-            del strategy['filename']
-            strategy['interventions'] = interventions
-            LOGGER.debug("Added %s pre-specified planning interventions to %s",
-                         len(interventions), strategy['model_name'])
-        strategies.append(strategy)
-    sos_model_config['strategies'] = strategies
-
-    sos_model_builder = SosModelBuilder()
-    sos_model_builder.construct(sos_model_config)
-    sos_model_object = sos_model_builder.finish()
-
-    LOGGER.debug("Model list: %s", list(sos_model_object.models.keys()))
-
-    model_run_config['sos_model'] = sos_model_object
-    narrative_objects = get_narratives(handler,
-                                       model_run_config['narratives'])
-    model_run_config['narratives'] = narrative_objects
-
-    return model_run_config
-
-
-def get_narratives(handler, narrative_config):
-    """Load the narrative data from the sos model run configuration
-
-    Arguments
-    ---------
-    handler: :class:`smif.data_layer.DataInterface`
-    narrative_config: dict
-        A dict with keys as narrative_set names and values as narrative names
-
-    Returns
-    -------
-    list
-        A list of :class:`smif.parameter.Narrative` objects populated with
-        data
-
-    """
-    narrative_objects = []
-    for narrative_set, narrative_names in narrative_config.items():
-        LOGGER.info("Loading narrative data for narrative set '%s'",
-                    narrative_set)
-        for narrative_name in narrative_names:
-            LOGGER.debug("Adding narrative entry '%s'", narrative_name)
-            definition = handler.read_narrative_definition(narrative_name)
-            narrative = Narrative(
-                narrative_name,
-                definition['description'],
-                narrative_set
-            )
-            narrative.data = handler.read_narrative_data(narrative_name)
-            narrative_objects.append(narrative)
-    return narrative_objects
 
 
 def list_model_runs(args):
@@ -399,76 +109,21 @@ def list_model_runs(args):
         print(run['name'])
 
 
-def build_model_run(model_run_config):
-    """Builds the model run
-
-    Arguments
-    ---------
-    model_run_config: dict
-        A valid model run configuration dict with objects
-
-    Returns
-    -------
-    `smif.modelrun.ModelRun`
-    """
-    try:
-        builder = ModelRunBuilder()
-        builder.construct(model_run_config)
-        modelrun = builder.finish()
-    except AssertionError as error:
-        err_type, err_value, err_traceback = sys.exc_info()
-        traceback.print_exception(err_type, err_value, err_traceback)
-        err_msg = str(error)
-        if err_msg:
-            LOGGER.error("An AssertionError occurred (%s) see details above.", err_msg)
-        else:
-            LOGGER.error("An AssertionError occurred, see details above.")
-        exit(-1)
-
-    return modelrun
-
-
-def execute_model_run(args):
-    """Runs the model run
+def run_model_runs(args):
+    """Run the model runs as requested. Check if results exist and asks
+    user for permission to overwrite
 
     Parameters
     ----------
     args
     """
-    timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%dT%H%M%S')
-    
-    LOGGER.info("Loading resolution data")
-    load_resolution_sets(args.directory)
-
     if args.batchfile:
         with open(args.modelrun, 'r') as f:
-            model_runs = f.read().splitlines()
+            model_run_ids = f.read().splitlines()
     else:
-        model_runs = [args.modelrun]
+        model_run_ids = [args.modelrun]
 
-    model_run_definitions = []
-    for model_run in model_runs:
-        LOGGER.info("Getting model run definition for '" + model_run + "'")
-        model_run_definitions.append(get_model_run_definition(args.directory, model_run))
-    
-    for model_run_config in model_run_definitions:
-
-        LOGGER.info("Build model run from configuration data")
-        modelrun = build_model_run(model_run_config)
-
-        LOGGER.info("Running model run %s with timestamp %s", modelrun.name, timestamp)
-        store = DatafileInterface(args.directory, args.interface, timestamp)
-
-        try:
-            if args.warm:
-                modelrun.run(store, store.prepare_warm_start(modelrun.name))
-            else:
-                modelrun.run(store)
-        except ModelRunError as ex:
-            LOGGER.exception(ex)
-            exit(1)
-
-        print("Model run '" + modelrun.name + "' complete")
+    execute_model_run(model_run_ids, args.directory, args.interface, args.warm)
 
 
 def make_get_data_interface(args):
@@ -573,7 +228,7 @@ def parse_arguments():
     # RUN
     parser_run = subparsers.add_parser('run',
                                        help='Run a model')
-    parser_run.set_defaults(func=execute_model_run)
+    parser_run.set_defaults(func=run_model_runs)
     parser_run.add_argument('-i', '--interface',
                             default='local_binary',
                             choices=['local_csv', 'local_binary'],
@@ -660,7 +315,3 @@ def main(arguments=None):
         args.func(args)
     else:
         parser.print_help()
-
-
-if __name__ == '__main__':
-    main(sys.argv[1:])

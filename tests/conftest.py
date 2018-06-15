@@ -831,7 +831,7 @@ def get_handler(setup_folder_structure, project_config):
     project_config_path = os.path.join(
         str(basefolder), 'config', 'project.yml')
     dump(project_config, project_config_path)
-    return DatafileInterface(str(basefolder), 'local_binary', '20180307T144423')
+    return DatafileInterface(str(basefolder), 'local_binary')
 
 
 @fixture

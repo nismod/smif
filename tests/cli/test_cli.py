@@ -9,8 +9,8 @@ from unittest.mock import call, patch
 import pkg_resources
 
 import smif
-from smif.cli import (confirm, get_narratives, parse_arguments,
-                      setup_project_folder)
+from smif.cli import confirm, parse_arguments, setup_project_folder
+from smif.controller.build import get_narratives
 from smif.data_layer import DatafileInterface
 from smif.parameters import Narrative
 
@@ -52,11 +52,12 @@ def test_fixture_single_run_csv():
     """Test running the csv-filesystem-based single_run fixture
     """
     config_dir = pkg_resources.resource_filename('smif', 'sample_project')
-    output = subprocess.run(["smif", "-v", "run", "-i", "local_csv","-d", config_dir,
+    output = subprocess.run(["smif", "-v", "run", "-i", "local_csv", "-d", config_dir,
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert "Running 20170918_energy_water_short" in str(output.stderr)
     assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+
 
 def test_fixture_single_run_warm():
     """Test running the (default) single_run fixture with warm setting enabled
@@ -67,6 +68,7 @@ def test_fixture_single_run_warm():
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert "Running 20170918_energy_water_short" in str(output.stderr)
     assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+
 
 def test_fixture_batch_run():
     """Test running the multiple modelruns using the batch_run option
@@ -79,6 +81,7 @@ def test_fixture_batch_run():
     assert "Model run '20170918_energy_water' complete" in str(output.stdout)
     assert "Running 20170918_energy_water_short" in str(output.stderr)
     assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+
 
 def test_fixture_list_runs():
     """Test running the filesystem-based single_run fixture

@@ -4,7 +4,6 @@ import csv
 import glob
 import os
 import re
-import shutil
 from csv import DictReader
 
 import fiona
@@ -27,15 +26,11 @@ class DatafileInterface(DataInterface):
         The path to the configuration and data files
     storage_format: str
         The format used to store intermediate data (local_csv, local_binary)
-    timestamp: str
-        The ISO-8601 timestamp that identifies the modelrun (%y%m%dT%H%M%S)
     """
-    def __init__(self, base_folder, storage_format='local_binary',
-                 timestamp='yyyy_mm_dd_hhmm'):
+    def __init__(self, base_folder, storage_format='local_binary'):
         super().__init__()
 
         self.base_folder = base_folder
-        self.timestamp = timestamp
         self.storage_format = storage_format
 
         self.file_dir = {}
@@ -759,8 +754,6 @@ class DatafileInterface(DataInterface):
             A list of scenario dicts
         """
         project_config = self._read_project_config()
-        print([s['name'] for s in project_config['scenarios']])
-        print([s['description'] for s in project_config['scenarios']])
         return project_config['scenarios']
 
     def read_scenario(self, scenario_name):
@@ -1203,7 +1196,7 @@ class DatafileInterface(DataInterface):
             raise NotImplementedError
 
         results_path = self._get_results_path(
-            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution,
+            modelrun_id, model_name, output_name, spatial_resolution,
             temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
 
@@ -1236,7 +1229,7 @@ class DatafileInterface(DataInterface):
             raise NotImplementedError
 
         results_path = self._get_results_path(
-            modelrun_id, self.timestamp, model_name, output_name, spatial_resolution,
+            modelrun_id, model_name, output_name, spatial_resolution,
             temporal_resolution,
             timestep, modelset_iteration, decision_iteration)
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
@@ -1258,6 +1251,25 @@ class DatafileInterface(DataInterface):
                 "region x interval data"
             )
 
+    def results_exist(self, modelrun_name):
+        """Checks whether modelrun results exists on the filesystem
+        for a particular modelrun_name
+
+        Parameters
+        ----------
+        modelrun_name: str
+
+        Returns
+        -------
+        bool: True when results exist for this modelrun_name
+        """
+        previous_results_dir = os.path.join(self.file_dir['results'],
+                                            modelrun_name)
+        results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'),
+                                  recursive=True))
+
+        return len(results) > 0
+
     def prepare_warm_start(self, modelrun_id):
         """Copy the results from the previous modelrun if available
 
@@ -1271,36 +1283,22 @@ class DatafileInterface(DataInterface):
         """
         results_dir = os.path.join(self.file_dir['results'], modelrun_id)
 
-        # Return if path to previous modelruns doe snot exist
+        # Return if path to previous modelruns does not exist
         if not os.path.isdir(results_dir):
             self.logger.info("Warm start not possible because modelrun has "
                              "no previous results (path does not exist)")
             return None
 
-        # Collect previous results
-        previous_results = sorted([
-            name for name in os.listdir(results_dir)
-            if os.path.isdir(os.path.join(results_dir, name))
-        ])
-
-        # Return if no previous results exist in previous modelrun
-        if len(previous_results) == 0:
-            self.logger.info("Warm start not possible because modelrun has "
-                             "no previous results (no results in path)")
-            return None
-
-        previous_results_dir = os.path.join(self.file_dir['results'],
-                                            modelrun_id, previous_results[-1])
-        results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'),
-                                  recursive=True))
-
         # Return if no results exist in last modelrun
-        if len(results) == 0:
-            self.logger.info("Warm start not possible because there are "
-                             "no results in the previous modelrun")
+        if not self.results_exist(modelrun_id):
+            self.logger.info("Warm start not possible because the "
+                             "modelrun does not have any results")
             return None
 
         # Return if previous results were stored in a different format
+        previous_results_dir = os.path.join(self.file_dir['results'], modelrun_id)
+        results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'),
+                                  recursive=True))
         for filename in results:
             if (
                     (self.storage_format == 'local_csv' and
@@ -1313,17 +1311,11 @@ class DatafileInterface(DataInterface):
                 return None
 
         # Perform warm start
-        self.logger.info("Warm start using results from timestamp %s",
-                         previous_results[-1])
-
-        # Copy results from latest timestep from this modelrun_id
-        current_results_dir = os.path.join(self.file_dir['results'], modelrun_id,
-                                           self.timestamp)
-        shutil.copytree(previous_results_dir, current_results_dir)
+        self.logger.info("Warm start " + modelrun_id)
 
         # Get metadata for all results
         result_metadata = []
-        for filename in glob.iglob(os.path.join(current_results_dir, '**/*.*'),
+        for filename in glob.iglob(os.path.join(results_dir, '**/*.*'),
                                    recursive=True):
             result_metadata.append(self._parse_results_path(
                 filename.replace(self.file_dir['results'], '')[1:]))
@@ -1340,7 +1332,7 @@ class DatafileInterface(DataInterface):
 
         for result in results_to_remove:
             os.remove(self._get_results_path(result['modelrun_id'],
-                      result['timestamp'], result['model_name'],
+                      result['model_name'],
                       result['output_name'],
                       result['spatial_resolution'],
                       result['temporal_resolution'],
@@ -1352,7 +1344,7 @@ class DatafileInterface(DataInterface):
                          latest_timestep)
         return latest_timestep
 
-    def _get_results_path(self, modelrun_id, timestamp, model_name, output_name,
+    def _get_results_path(self, modelrun_id, model_name, output_name,
                           spatial_resolution,
                           temporal_resolution, timestep, modelset_iteration=None,
                           decision_iteration=None):
@@ -1361,7 +1353,6 @@ class DatafileInterface(DataInterface):
         On the pattern of:
             results/
             <modelrun_name>/
-            <timestamp>/
             <model_name>/
             decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/ or none
                 output_<output_name>_
@@ -1372,7 +1363,6 @@ class DatafileInterface(DataInterface):
         Parameters
         ----------
         modelrun_id : str
-        timestamp : str
         model_name : str
         output_name : str
         spatial_resolution : str
@@ -1390,7 +1380,6 @@ class DatafileInterface(DataInterface):
             path = os.path.join(
                 results_dir,
                 modelrun_id,
-                timestamp,
                 model_name,
                 "output_{}_timestep_{}_regions_{}_intervals_{}".format(
                     output_name,
@@ -1403,7 +1392,6 @@ class DatafileInterface(DataInterface):
             path = os.path.join(
                 results_dir,
                 modelrun_id,
-                timestamp,
                 model_name,
                 "decision_{}".format(decision_iteration),
                 "output_{}_timestep_{}_regions_{}_intervals_{}".format(
@@ -1417,7 +1405,6 @@ class DatafileInterface(DataInterface):
             path = os.path.join(
                 results_dir,
                 modelrun_id,
-                timestamp,
                 model_name,
                 "modelset_{}".format(modelset_iteration),
                 "output_{}_timestep_{}_regions_{}_intervals_{}".format(
@@ -1431,7 +1418,6 @@ class DatafileInterface(DataInterface):
             path = os.path.join(
                 results_dir,
                 modelrun_id,
-                timestamp,
                 model_name,
                 "decision_{}_modelset_{}".format(decision_iteration, modelset_iteration),
                 "output_{}_timestep_{}_regions_{}_intervals_{}".format(
@@ -1455,7 +1441,6 @@ class DatafileInterface(DataInterface):
         On the pattern of:
             results/
             <modelrun_name>/
-            <timestamp>/
             <model_name>/
             decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/ or none
                 output_<output_name>_
@@ -1476,11 +1461,14 @@ class DatafileInterface(DataInterface):
 
         data = re.findall(r"[\w']+", path)
 
-        for section in data[3:len(data)]:
-            if section.startswith('modelset'):
-                modelset_iteration = int(section.replace('modelset_', ''))
-            elif section.startswith('decision'):
-                decision_iteration = int(section.replace('decision_', ''))
+        for section in data[2:len(data)]:
+            if 'modelset' in section or 'decision' in section:
+                regex_decision = re.findall(r"decision_(\d{1,})", section)
+                regex_modelset = re.findall(r"modelset_(\d{1,})", section)
+                if regex_decision:
+                    decision_iteration = int(regex_decision[0])
+                if regex_decision:
+                    modelset_iteration = int(regex_modelset[0])
             elif section.startswith('output'):
                 results = self._parse_output_section(section)
             elif section == 'csv':
@@ -1490,8 +1478,7 @@ class DatafileInterface(DataInterface):
 
         return {
             'modelrun_id': data[0],
-            'timestamp': data[1],
-            'model_name': data[2],
+            'model_name': data[1],
             'output_name': '_'.join(results['output']),
             'spatial_resolution': '_'.join(results['regions']),
             'temporal_resolution': '_'.join(results['intervals']),
