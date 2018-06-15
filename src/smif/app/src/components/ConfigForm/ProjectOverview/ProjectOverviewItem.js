@@ -98,14 +98,6 @@ class SosModelRunItem extends Component {
         )
     }
 
-    renderWarning(message) {
-        return (
-            <div id="project_overview_item_alert-warning" className="alert alert-warning">
-                {message}
-            </div>
-        )
-    }
-
     renderInfo(message) {
         return (
             <div id="project_overview_item_alert-info" className="alert alert-info">
