@@ -22,20 +22,20 @@ import '../static/css/main.css'
 render(
     <Provider store={store}>
         <Router>
-            <div className="container-fluid row">
+            <div className="container-fluid">
+                <div className="row">
                     <Route path="/" component={Nav}/>
-                <main role="main" className="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-                <div>
-                    <Route exact path="/" component={Welcome}/>
-                    <Route exact strict path="/configure/:name" component={ProjectOverview}/>
-                    <Route exact strict path="/configure/sos-model-run/:name" component={SosModelRunConfig}/>
-                    <Route exact strict path="/configure/sos-models/:name" component={SosModelConfig}/>
-                    <Route exact strict path="/configure/sector-models/:name" component={SectorModelConfig}/>
-                    <Route exact strict path="/configure/scenario-set/:name" component={ScenarioSetConfig}/>
-                    <Route exact strict path="/configure/narrative-set/:name" component={NarrativeSetConfig}/>
-                    <Route exact strict path="/configure/narratives/:name" component={NarrativeConfig}/>
+                    <main role="main" className="col-12 col-md-9 col-xl-8 py-3 px-4">
+                        <Route exact path="/" component={Welcome}/>
+                        <Route exact strict path="/configure/:name" component={ProjectOverview}/>
+                        <Route exact strict path="/configure/sos-model-run/:name" component={SosModelRunConfig}/>
+                        <Route exact strict path="/configure/sos-models/:name" component={SosModelConfig}/>
+                        <Route exact strict path="/configure/sector-models/:name" component={SectorModelConfig}/>
+                        <Route exact strict path="/configure/scenario-set/:name" component={ScenarioSetConfig}/>
+                        <Route exact strict path="/configure/narrative-set/:name" component={NarrativeSetConfig}/>
+                        <Route exact strict path="/configure/narratives/:name" component={NarrativeConfig}/>
+                    </main>
                 </div>
-                </main>
             </div>
         </Router>
     </Provider>,

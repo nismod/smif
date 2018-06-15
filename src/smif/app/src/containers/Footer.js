@@ -36,9 +36,9 @@ class Footer extends Component {
 
     renderFooter(version) {
         return (
-            <div className="container">
+            <div className="container-fluid">
                 <div className="row">
-                    <div className="col">
+                    <div className="col pb-3">
                         smif version: <span className="badge badge-dark">{version}</span>
                     </div>
                 </div>
