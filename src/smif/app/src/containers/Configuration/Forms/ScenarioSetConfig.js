@@ -99,7 +99,16 @@ class ScenarioSetConfig extends Component {
     renderScenarioSetConfig(sos_model_runs, sos_models, scenario_set, scenarios) {
         return (
             <div key={'scenarioset_' + scenario_set.name}>
-                <ScenarioSetConfigForm sosModelRuns={sos_model_runs} sosModels={sos_models} scenarioSet={scenario_set} scenarios={scenarios} saveScenarioSet={this.saveScenarioSet} createScenario={this.createScenario} deleteScenario={this.deleteScenario} saveScenario={this.saveScenario} cancelScenarioSet={this.returnToPreviousPage}/>
+                <ScenarioSetConfigForm
+                    sosModelRuns={sos_model_runs}
+                    sosModels={sos_models}
+                    scenarioSet={scenario_set}
+                    scenarios={scenarios}
+                    saveScenarioSet={this.saveScenarioSet}
+                    createScenario={this.createScenario}
+                    deleteScenario={this.deleteScenario}
+                    saveScenario={this.saveScenario}
+                    cancelScenarioSet={this.returnToPreviousPage}/>
             </div>
         )
     }
@@ -132,9 +141,9 @@ function mapStateToProps(state) {
         scenario_set: state.scenario_set.item,
         scenarios: state.scenarios.items,
         isFetching: (
-            state.sos_model_runs.isFetching || 
-            state.sos_models.isFetching || 
-            state.scenario_set.isFetching || 
+            state.sos_model_runs.isFetching ||
+            state.sos_models.isFetching ||
+            state.scenario_set.isFetching ||
             state.scenarios.isFetching
         )
     }
