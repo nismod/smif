@@ -34,10 +34,10 @@ describe('<ProjectOverviewItem />', () => {
         wrapper = shallow(<ProjectOverviewItem itemname={itemname} items={items} itemLink={itemlink} />)
 
         item = wrapper.find('[id="row_item_1"]')
-        expect(item.html()).to.contain('<td id="item_1">' + items[0].name + '</td><td id="item_1">' + items[0].description + '</td>')
+        expect(item.html()).to.contain('<td data-name="item_1" class="col-name">' + items[0].name + '</td><td data-name="item_1" class="col-desc">' + items[0].description + '</td>')
 
         item = wrapper.find('[id="row_item_2"]')
-        expect(item.html()).to.contain('<td id="item_2">' + items[1].name + '</td><td id="item_2">' + items[1].description + '</td>')
+        expect(item.html()).to.contain('<td data-name="item_2" class="col-name">' + items[1].name + '</td><td data-name="item_2" class="col-desc">' + items[1].description + '</td>')
     })
 
     it('warning no itemname', () => {

@@ -327,8 +327,8 @@ class ScenarioSetConfigForm extends Component {
                     </div>
                 </div>
 
-                <SaveButton onClick={this.handleSave} />
-                <CancelButton onClick={this.handleCancel} />
+                <SaveButton id="saveScenarioSet" onClick={this.handleSave} />
+                <CancelButton id="cancelScenarioSet" onClick={this.handleCancel} />
 
                 <Popup onRequestOpen={this.state.deletePopupIsOpen}>
                     <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>

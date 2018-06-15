@@ -182,8 +182,8 @@ class ScenarioConfigForm extends Component {
                     {this.state.alert_message}
                 </div>
 
-                <SaveButton onClick={this.handleSave} />
-                <CancelButton onClick={this.handleCancel} />
+                <SaveButton id="saveScenario" onClick={this.handleSave} />
+                <CancelButton id="cancelScenario" onClick={this.handleCancel} />
             </div>
         )
     }

@@ -109,8 +109,8 @@ class NarrativeConfigForm extends Component {
                     </div>
                 </form>
 
-                <SaveButton onClick={this.handleSave} />
-                <CancelButton onClick={this.handleCancel} />
+                <SaveButton id="saveNarrative" onClick={this.handleSave} />
+                <CancelButton id="cancelNarrative" onClick={this.handleCancel} />
             </div>
         )
     }

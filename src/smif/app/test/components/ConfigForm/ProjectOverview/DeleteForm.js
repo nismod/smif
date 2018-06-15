@@ -15,7 +15,7 @@ describe('<DeleteForm />', () => {
     it('submit callback on deleteButton click', () => {
         const onDeleteClick = sinon.spy()
         const wrapper = mount((<DeleteForm config_name={'testname'} config_type={'testconfig'} submit={onDeleteClick} />))
-    
+
         wrapper.find('[id="deleteButton"]').simulate('click')
         expect(onDeleteClick).to.have.property('callCount', 1)
     })
@@ -23,8 +23,8 @@ describe('<DeleteForm />', () => {
     it('cancel callback on cancelButton click', () => {
         const onCancelClick = sinon.spy()
         const wrapper = mount((<DeleteForm config_name={'testname'} config_type={'testconfig'} cancel={onCancelClick} />))
-    
-        wrapper.find('[id="cancelButton"]').simulate('click')
+
+        wrapper.find('input#cancelDelete').simulate('click')
         expect(onCancelClick).to.have.property('callCount', 1)
     })
 

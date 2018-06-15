@@ -78,7 +78,7 @@ class DeleteForm extends Component {
                     <br/>
 
                     <input autoFocus id="deleteButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Delete" onClick={this.handleSubmit} />
-                    <CancelButton onClick={this.handleCancel} />
+                    <CancelButton id="cancelDelete" onClick={this.handleCancel} />
                 </div>
             )
         } else {
@@ -104,7 +104,7 @@ class DeleteForm extends Component {
 
                     <br/>
 
-                    <CancelButton onClick={this.handleCancel} />
+                    <CancelButton id="cancelDelete" onClick={this.handleCancel} />
                 </div>
             )
         }

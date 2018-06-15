@@ -103,8 +103,8 @@ class CreateConfigForm extends Component {
                     {this.state.alert_message}
                 </div>
 
-                <SaveButton onClick={this.handleSubmit} />
-                <CancelButton onClick={this.handleCancel} />
+                <SaveButton id="saveConfig" onClick={this.handleSubmit} />
+                <CancelButton id="cancelConfig" onClick={this.handleCancel} />
             </div>
         )
     }
