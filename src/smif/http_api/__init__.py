@@ -6,6 +6,7 @@ import dateutil.parser
 from flask import Flask, render_template, request, jsonify, current_app
 from flask.views import MethodView
 
+from smif.controller import Scheduler
 from smif.data_layer import (
     DataExistsError,
     DataMismatchError,
@@ -25,6 +26,7 @@ def create_app(static_folder='static', template_folder='templates', get_data_int
     # Pass get_data_interface method which must return an instance of a class
     # implementing DataInterface. There may be a better way!
     app.config.get_data_interface = get_data_interface
+    app.config.scheduler = Scheduler()
 
     register_routes(app)
     register_api_endpoints(app)
@@ -51,7 +53,8 @@ def register_api_endpoints(app):
     register_api(app, SmifAPI, 'smif_api', '/api/v1/smif/',
                  key='key', key_type='string')
     register_api(app, SosModelRunAPI, 'sos_model_run_api', '/api/v1/sos_model_runs/',
-                 key='sos_model_run_name', key_type='string')
+                 key='sos_model_run_name', key_type='string',
+                 action='action', action_type='string')
     register_api(app, SosModelAPI, 'sos_model_api', '/api/v1/sos_models/',
                  key='sos_model_name', key_type='string')
     register_api(app, SectorModelAPI, 'sector_model_api', '/api/v1/sector_models/',
@@ -112,31 +115,58 @@ class SmifAPI(MethodView):
 class SosModelRunAPI(MethodView):
     """Implement CRUD operations for sos_model_run configuration data
     """
-    def get(self, sos_model_run_name):
+    def get(self, sos_model_run_name=None, action=None):
         """Get sos_model_runs
         all: GET /api/v1/sos_model_runs/
         one: GET /api/vi/sos_model_runs/name
         """
         # return str(current_app.config)
         data_interface = current_app.config.get_data_interface()
-        if sos_model_run_name is None:
-            data = data_interface.read_sos_model_runs()
-            response = jsonify(data)
-        else:
-            data = data_interface.read_sos_model_run(sos_model_run_name)
-            response = jsonify(data)
+
+        if action is None:
+            if sos_model_run_name is None:
+                data = data_interface.read_sos_model_runs()
+                response = jsonify(data)
+            else:
+                data = data_interface.read_sos_model_run(sos_model_run_name)
+                response = jsonify(data)
+        elif action == 'status':
+            status = current_app.config.scheduler.get_status(sos_model_run_name)
+            response = jsonify(status)
 
         return response
 
-    def post(self):
-        """Create a sos_model_run:
-        POST /api/v1/sos_model_runs
+    def post(self, sos_model_run_name=None, action=None):
+        """
+        Create a sos_model_run:
+        - POST /api/v1/sos_model_runs
+
+        Perform an operation on a sos_model_run
+        - POST /api/v1/sos_model_runs/<sos_model_run_name>/<action>
+
+        Available actions are
+        - start: Start the sos_model_run
+        - kill: Stop a sos_model_run that is currently running
+        - remove: Remove a sos_model_run that is waiting to be executed
+        - resume: Warm start a sos_model_run
         """
         data_interface = current_app.config.get_data_interface()
-        data = request.get_json() or request.form
 
-        data_interface.write_sos_model_run(data)
-        response = jsonify({"message": "success"})
+        if action is None:
+            data = request.get_json() or request.form
+            data_interface.write_sos_model_run(data)
+            response = jsonify({"message": "success"})
+        elif action == 'start':
+            args = {
+                'directory': data_interface.base_folder
+            }
+            current_app.config.scheduler.add(sos_model_run_name, args)
+            response = jsonify({"message": "success"})
+        elif action == 'kill':
+            print('kill ' + sos_model_run_name)
+        elif action == 'remove':
+            print('remove ' + sos_model_run_name)
+
         response.status_code = 201
         return response
 
@@ -475,13 +505,19 @@ class NarrativeAPI(MethodView):
         return response
 
 
-def register_api(app, view, endpoint, url, key='id', key_type='int'):
+def register_api(app, view, endpoint, url, key='id', key_type='int',
+                 action=None, action_type=None):
     """Register a MethodView as an endpoint with CRUD operations at a URL
     """
     view_func = view.as_view(endpoint)
     app.add_url_rule(url, defaults={key: None},
                      view_func=view_func, methods=['GET'])
     app.add_url_rule(url, view_func=view_func, methods=['POST'])
+    if action:
+        app.add_url_rule('%s<%s:%s>/<%s:%s>' % (url, key_type, key, action_type, action),
+                         view_func=view_func, methods=['GET'])
+        app.add_url_rule('%s<%s:%s>/<%s:%s>' % (url, key_type, key, action_type, action),
+                         view_func=view_func, methods=['POST'])
     app.add_url_rule('%s<%s:%s>' % (url, key_type, key), view_func=view_func,
                      methods=['GET', 'PUT', 'DELETE'])
 

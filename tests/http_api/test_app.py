@@ -4,7 +4,6 @@ import datetime
 import json
 import os
 
-import dateutil.parser
 import pytest
 import smif
 from smif.data_layer import DataExistsError
@@ -66,12 +65,14 @@ def test_hello(client):
     response = client.get('/')
     assert "Welcome to smif" in str(response.data)
 
+
 def test_get_smif(client, get_handler):
     """GET smif details
     """
     response = client.get('/api/v1/smif/')
     data = parse_json(response)
     assert data['version'] == smif.__version__
+
 
 def test_get_smif_version(client, get_handler):
     """GET smif version
@@ -86,13 +87,13 @@ def test_get_sos_model_runs(client, get_handler, get_sos_model_run):
     """
     response = client.get('/api/v1/sos_model_runs/')
     data = parse_json(response)
-    assert len(data) == 0
+    assert len(data) == 2
 
     get_handler.write_sos_model_run(get_sos_model_run)
     response = client.get('/api/v1/sos_model_runs/')
     data = parse_json(response)
-    assert len(data) == 1
-    assert data[0]['name'] == get_sos_model_run['name']
+    assert len(data) == 3
+    assert get_sos_model_run['name'] in [entry['name'] for entry in data]
 
 
 def test_get_sos_model_run(client, get_handler, get_sos_model_run):
@@ -133,18 +134,59 @@ def test_create_sos_model_run(client, get_handler, get_sos_model_run):
     assert actual == get_sos_model_run
 
 
+def test_start_sos_model_run(client):
+    """POST model run
+    """
+
+    # Start a sos_model_run
+    response = client.post(
+        '/api/v1/sos_model_runs/20170918_energy_water/start',
+        data={},
+        content_type='application/json')
+    print(response)
+    data = parse_json(response)
+    assert response.status_code == 201
+    assert data['message'] == 'success'
+
+    # Check if the modelrun is running
+    response = client.get(
+        '/api/v1/sos_model_runs/20170918_energy_water/status'
+    )
+    data = parse_json(response)
+    assert response.status_code == 200
+    assert data['status'] == 'running'
+
+    # Wait for it to finish running
+    while True:
+        response = client.get(
+            '/api/v1/sos_model_runs/20170918_energy_water/status'
+        )
+        data = parse_json(response)
+        assert response.status_code == 200
+        if data['status'] != 'running':
+            break
+
+    # Check if the modelrun was successful
+    response = client.get(
+        '/api/v1/sos_model_runs/20170918_energy_water/status'
+    )
+    data = parse_json(response)
+    assert response.status_code == 200
+    assert data['status'] == 'done'
+
+
 def test_get_sos_models(client, get_handler, get_sos_model):
     """GET all system-of-systems models
     """
     response = client.get('/api/v1/sos_models/')
     data = parse_json(response)
-    assert len(data) == 0
+    assert len(data) == 2
 
     get_handler.write_sos_model(get_sos_model)
     response = client.get('/api/v1/sos_models/')
     data = parse_json(response)
-    assert len(data) == 1
-    assert data == [get_sos_model]
+    assert len(data) == 3
+    assert get_sos_model['name'] in [entry['name'] for entry in data]
 
 
 def test_get_sos_model(client, get_handler, get_sos_model):
@@ -190,13 +232,13 @@ def test_get_sector_models(client, get_handler, get_sector_model):
     """
     response = client.get('/api/v1/sector_models/')
     data = parse_json(response)
-    assert len(data) == 0
+    assert len(data) == 2
 
     get_handler.write_sector_model(get_sector_model)
     response = client.get('/api/v1/sector_models/')
     data = parse_json(response)
-    assert len(data) == 1
-    assert data == [get_sector_model]
+    assert len(data) == 3
+    assert get_sector_model['name'] in [entry['name'] for entry in data]
 
 
 def test_get_sector_model(client, get_handler, get_sector_model):
@@ -242,12 +284,12 @@ def test_get_scenario_sets(client, get_handler, get_scenario_set):
     """
     response = client.get('/api/v1/scenario_sets/')
     data = parse_json(response)
-    assert len(data) == 1
+    assert len(data) == 2
 
     get_handler.write_scenario_set(get_scenario_set)
     response = client.get('/api/v1/scenario_sets/')
     data = parse_json(response)
-    assert len(data) == 2
+    assert len(data) == 3
     assert get_scenario_set in data
 
 
@@ -294,12 +336,12 @@ def test_get_scenarios(client, get_handler, get_scenario):
     """
     response = client.get('/api/v1/scenarios/')
     data = parse_json(response)
-    assert len(data) == 2
+    assert len(data) == 4
 
     get_handler.write_scenario(get_scenario)
     response = client.get('/api/v1/scenarios/')
     data = parse_json(response)
-    assert len(data) == 3
+    assert len(data) == 5
     assert get_scenario in data
 
 
@@ -346,13 +388,13 @@ def test_get_narrative_sets(client, get_handler, get_narrative_set):
     """
     response = client.get('/api/v1/narrative_sets/')
     data = parse_json(response)
-    assert len(data) == 2
+    assert len(data) == 1
 
     get_narrative_set['name'] = 'non-clashing'
     get_handler.write_narrative_set(get_narrative_set)
     response = client.get('/api/v1/narrative_sets/')
     data = parse_json(response)
-    assert len(data) == 3
+    assert len(data) == 2
     assert get_narrative_set in data
 
 
@@ -400,7 +442,7 @@ def test_get_narratives(client, get_handler, get_narrative):
     """
     response = client.get('/api/v1/narratives/')
     data = parse_json(response)
-    assert len(data) == 2
+    assert len(data) == 1
 
     narrative = get_narrative.as_dict()
     narrative['name'] = 'non-clashing'
@@ -408,7 +450,7 @@ def test_get_narratives(client, get_handler, get_narrative):
 
     response = client.get('/api/v1/narratives/')
     data = parse_json(response)
-    assert len(data) == 3
+    assert len(data) == 2
     assert narrative in data
 
 

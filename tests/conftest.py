@@ -73,6 +73,9 @@ def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
     intervals_file = test_folder.join('data', 'interval_definitions', 'annual.csv')
     intervals_file.write("id,start,end\n1,P0Y,P1Y\n")
 
+    intervals_file = test_folder.join('data', 'interval_definitions', 'hourly.csv')
+    intervals_file.write("id,start,end\n1,PT0H,PT1H\n")
+
     data = remap_months_csv()
     intervals_file = test_folder.join('data', 'interval_definitions', 'remap.csv')
     keys = data[0].keys()
@@ -713,7 +716,7 @@ def get_sector_model():
     """Return sample sector_model
     """
     return {
-        'name': 'energy_demand',
+        'name': 'energy_demand_sample',
         'description': "Computes the energy demand of the"
                        "UK population for each timestep",
         'classname': 'EnergyDemandWrapper',
@@ -831,6 +834,7 @@ def get_handler(setup_folder_structure, project_config):
     project_config_path = os.path.join(
         str(basefolder), 'config', 'project.yml')
     dump(project_config, project_config_path)
+
     return DatafileInterface(str(basefolder), 'local_binary')
 
 

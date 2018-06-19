@@ -86,8 +86,7 @@ from argparse import ArgumentParser
 import smif
 import smif.cli.log
 
-from smif.controller.execute import execute_model_run
-from smif.controller.setup import setup_project_folder
+from smif.controller import copy_project_folder, execute_model_run
 from smif.http_api import create_app
 from smif.data_layer import DatafileInterface
 
@@ -179,6 +178,12 @@ def run_app(args):
 
     # Create backend server process
     _run_server(args)
+
+
+def setup_project_folder(args):
+    """Setup a sample project
+    """
+    copy_project_folder(args.directory)
 
 
 def parse_arguments():
