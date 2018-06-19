@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import PropertyList from '../General/PropertyList'
+import { SaveButton, CancelButton } from '../General/Buttons'
 
 class ScenarioConfigForm extends Component {
     constructor(props) {
@@ -17,7 +18,7 @@ class ScenarioConfigForm extends Component {
         this.state = {}
         this.state.selectedScenario = this.props.scenario
         this.state.currentFacet = 0
-        
+
         if (this.props.scenario.name === undefined){
             this.state.editMode = false
         } else {
@@ -122,8 +123,6 @@ class ScenarioConfigForm extends Component {
                     </div>
                 </div>
 
-                <br/>
-                    
                 <div className="card">
                     <div className="card-header">Facets</div>
                     <div className="card-body">
@@ -134,8 +133,6 @@ class ScenarioConfigForm extends Component {
                                     <input className='form-control' type="text" name="facet_name" value={selectedScenario.facets[currentFacet].name} onChange={this.handleChange}/>
                                 </div>
                             </div>
-
-                            <br/>
 
                             <div className="row">
                                 <div className="col">
@@ -153,8 +150,6 @@ class ScenarioConfigForm extends Component {
                                     <input type="text" className='form-control' name="facet_units" value={selectedScenario.facets[currentFacet].units} onChange={this.handleChange}/>
                                 </div>
                             </div>
-
-                            <br/>
 
                             <div className="row">
                                 <div className="col">
@@ -176,21 +171,19 @@ class ScenarioConfigForm extends Component {
                         <br/>
 
                         <nav>
-                            <ul className="pagination justify-content-center"> 
+                            <ul className="pagination justify-content-center">
                                 {facetNav}
                             </ul>
                         </nav>
                     </div>
                 </div>
 
-                <br/>
-
                 <div hidden={!this.state.alert_visible} className="alert alert-danger" role="alert">
                     {this.state.alert_message}
                 </div>
 
-                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
-                <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                <SaveButton id="saveScenario" onClick={this.handleSave} />
+                <CancelButton id="cancelScenario" onClick={this.handleCancel} />
             </div>
         )
     }
@@ -202,7 +195,7 @@ class ScenarioConfigForm extends Component {
                     {message}
                 </div>
                 <div>
-                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                    <CancelButton onClick={this.handleCancel} />
                 </div>
             </div>
         )
@@ -213,10 +206,10 @@ class ScenarioConfigForm extends Component {
             <div>
                 <div id="property_list_alert-warning" className="alert alert-warning">
                     {message}
-                
+
                 </div>
                 <div>
-                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                    <CancelButton onClick={this.handleCancel} />
                 </div>
             </div>
         )
@@ -227,10 +220,10 @@ class ScenarioConfigForm extends Component {
             <div>
                 <div id="property_list_alert-info" className="alert alert-info">
                     {message}
-                
+
                 </div>
                 <div>
-                    <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                    <CancelButton onClick={this.handleCancel} />
                 </div>
             </div>
         )

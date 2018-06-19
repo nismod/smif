@@ -36,6 +36,23 @@ Run tests::
     python setup.py test
 
 
+Documentation
+-------------
+
+We use `better-apidoc <https://github.com/goerz/better-apidoc>`_ for building 
+documentation in reStructuredText under :code:`smif/docs` and the 
+`Numpy style docstrings <https://github.com/numpy/numpy/blob/master/doc/example.py>`_ 
+that are used throughout the codebase. Documentation is generated and hosted
+on `readthedocs <http://smif.readthedocs.org>`_.
+
+There is a makefile that helps building the docs locally::
+
+    cd docs/
+    make html
+
+This generates a local version in :code:`smif/docs/_build/html` that can be opened with a browser.
+
+
 Versioning
 ----------
 

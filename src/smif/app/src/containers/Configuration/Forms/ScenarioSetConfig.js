@@ -4,22 +4,21 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Link, Router } from 'react-router-dom'
 
-import { fetchScenarios } from '../../actions/actions.js'
-import { saveScenario } from '../../actions/actions.js'
-import { createScenario } from '../../actions/actions.js'
-import { deleteScenario } from '../../actions/actions.js'
-import { fetchScenarioSet } from '../../actions/actions.js'
-import { saveScenarioSet } from '../../actions/actions.js'
-import { fetchSosModelRuns } from '../../actions/actions.js'
-import { fetchSosModels } from '../../actions/actions.js'
+import { fetchScenarios } from '../../../actions/actions.js'
+import { saveScenario } from '../../../actions/actions.js'
+import { createScenario } from '../../../actions/actions.js'
+import { deleteScenario } from '../../../actions/actions.js'
+import { fetchScenarioSet } from '../../../actions/actions.js'
+import { saveScenarioSet } from '../../../actions/actions.js'
+import { fetchSosModelRuns } from '../../../actions/actions.js'
+import { fetchSosModels } from '../../../actions/actions.js'
 
-import ScenarioSetConfigForm from '../../components/ConfigForm/ScenarioSetConfigForm.js'
+import ScenarioSetConfigForm from '../../../components/ConfigForm/ScenarioSetConfigForm.js'
 
 class ScenarioSetConfig extends Component {
     constructor(props) {
         super(props)
-
-        this.render = this.render.bind(this)
+        this.init = true
 
         this.saveScenarioSet = this.saveScenarioSet.bind(this)
         this.saveScenario = this.saveScenario.bind(this)
@@ -27,19 +26,26 @@ class ScenarioSetConfig extends Component {
         this.deleteScenario = this.deleteScenario.bind(this)
 
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
+
+        this.config_name = this.props.match.params.name
     }
 
     componentDidMount() {
         const { dispatch } = this.props
 
-        dispatch(fetchScenarios(this.props.match.params.name))
-        dispatch(fetchScenarioSet(this.props.match.params.name))
-        dispatch(fetchSosModels(this.props.match.params.name))
-        dispatch(fetchSosModelRuns(this.props.match.params.name))
+        dispatch(fetchScenarioSet(this.config_name))
+        dispatch(fetchScenarios())
+        dispatch(fetchSosModels())
+        dispatch(fetchSosModelRuns())
     }
 
-    componentWillReceiveProps() {
-        this.forceUpdate()
+    componentDidUpdate() {
+        const { dispatch } = this.props
+
+        if (this.config_name != this.props.match.params.name) {
+            this.config_name = this.props.match.params.name
+            dispatch(fetchScenarioSet(this.config_name))
+        }
     }
 
     saveScenarioSet(ScenarioSet) {
@@ -71,7 +77,7 @@ class ScenarioSetConfig extends Component {
     }
 
     returnToPreviousPage() {
-        history.back()
+        this.props.history.push('/configure/scenario-set')
     }
 
     renderLoading() {
@@ -92,9 +98,17 @@ class ScenarioSetConfig extends Component {
 
     renderScenarioSetConfig(sos_model_runs, sos_models, scenario_set, scenarios) {
         return (
-            <div>
-                <h1>Scenario Set Configuration</h1>
-                <ScenarioSetConfigForm sosModelRuns={sos_model_runs} sosModels={sos_models} scenarioSet={scenario_set} scenarios={scenarios} saveScenarioSet={this.saveScenarioSet} createScenario={this.createScenario} deleteScenario={this.deleteScenario} saveScenario={this.saveScenario} cancelScenarioSet={this.returnToPreviousPage}/>
+            <div key={'scenarioset_' + scenario_set.name}>
+                <ScenarioSetConfigForm
+                    sosModelRuns={sos_model_runs}
+                    sosModels={sos_models}
+                    scenarioSet={scenario_set}
+                    scenarios={scenarios}
+                    saveScenarioSet={this.saveScenarioSet}
+                    createScenario={this.createScenario}
+                    deleteScenario={this.deleteScenario}
+                    saveScenario={this.saveScenario}
+                    cancelScenarioSet={this.returnToPreviousPage}/>
             </div>
         )
     }
@@ -102,17 +116,10 @@ class ScenarioSetConfig extends Component {
     render () {
         const {sos_model_runs, sos_models, scenarios, scenario_set, isFetching} = this.props
 
-        if (isFetching) {
-            return this.renderLoading()
-        } else if (Object.keys(sos_model_runs).length === 0 && sos_model_runs.constructor === Object) {
-            return this.renderLoading()
-        } else if (Object.keys(sos_models).length === 0 && sos_models.constructor === Object) {
-            return this.renderLoading()
-        } else if (Object.keys(scenario_set).length === 0 && scenario_set.constructor === Object) {
-            return this.renderLoading()
-        } else if (Object.keys(scenarios).length === 0 && scenarios.constructor === Object) {
+        if (isFetching && this.init) {
             return this.renderLoading()
         } else {
+            this.init = false
             return this.renderScenarioSetConfig(sos_model_runs, sos_models, scenario_set, scenarios)
         }
     }
@@ -133,7 +140,12 @@ function mapStateToProps(state) {
         sos_models: state.sos_models.items,
         scenario_set: state.scenario_set.item,
         scenarios: state.scenarios.items,
-        isFetching: (state.sos_model_runs.isFetching || state.sos_models.isFetching || state.scenario_set.isFetching || state.scenarios.isFetching)
+        isFetching: (
+            state.sos_model_runs.isFetching ||
+            state.sos_models.isFetching ||
+            state.scenario_set.isFetching ||
+            state.scenarios.isFetching
+        )
     }
 }
 

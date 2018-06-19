@@ -1,7 +1,7 @@
 import React from 'react'
 import sinon from 'sinon'
 import { expect } from 'chai'
-import { mount, shallow } from 'enzyme'
+import { mount, shallow, render } from 'enzyme'
 
 import ScenarioConfigForm from '../../../../src/components/ConfigForm/ScenarioSet/ScenarioConfigForm.js'
 
@@ -24,15 +24,15 @@ describe('<ScenarioConfigForm />', () => {
     })
 
     it('loads properties ', () => {
-        const wrapper = mount((<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} />))
+        const wrapper = mount(<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} />)
         expect(wrapper.props()['scenario']).to.equal(scenario)
     })
 
     it('save callback on saveButton click', () => {
         const onSaveClick = sinon.spy()
-        const wrapper = mount((<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} saveScenario={onSaveClick} />))
-    
-        wrapper.find('[id="saveButton"]').simulate('click')
+        const wrapper = mount(<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} saveScenario={onSaveClick} />)
+
+        wrapper.find('input#saveScenario').simulate('click')
         expect(onSaveClick).to.have.property('callCount', 1)
         expect(onSaveClick.args[0][0]).to.equal(scenario)
     })
@@ -47,24 +47,31 @@ describe('<ScenarioConfigForm />', () => {
         }
 
         const onSaveClick = sinon.spy()
-        const wrapper = mount((<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} saveScenario={onSaveClick} />))
+        const wrapper = mount(<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} saveScenario={onSaveClick} />)
 
-        wrapper.find('[id="scenario_name"]').simulate('change', { target: { name: 'name', value: changed_scenario['name'] } })
-        wrapper.find('[id="scenario_name"]').simulate('change', { target: { name: 'description', value: changed_scenario['description'] } })
-        wrapper.find('[id="scenario_name"]').simulate('change', { target: { name: 'filename', value: changed_scenario['filename'] } })
-        wrapper.find('[id="scenario_name"]').simulate('change', { target: { name: 'scenario_set', value: changed_scenario['scenario_set'] } })
-        wrapper.find('[id="saveButton"]').simulate('click')
+        wrapper.find('#scenario_name').simulate('change', { target: { name: 'name', value: changed_scenario['name'] } })
+        wrapper.find('#scenario_name').simulate('change', { target: { name: 'description', value: changed_scenario['description'] } })
+        wrapper.find('#scenario_name').simulate('change', { target: { name: 'filename', value: changed_scenario['filename'] } })
+        wrapper.find('#scenario_name').simulate('change', { target: { name: 'scenario_set', value: changed_scenario['scenario_set'] } })
+        wrapper.find('input#saveScenario').simulate('click')
 
         expect(onSaveClick).to.have.property('callCount', 1)
         expect(onSaveClick.args[0][0]).to.deep.equal(changed_scenario)
     })
-    
+
     it('cancel callback on cancelButton click', () => {
         const onCancelClick = sinon.spy()
-        const wrapper = mount((<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} cancelScenario={onCancelClick} />))
-    
-        wrapper.find('[id="cancelButton"]').simulate('click')
-        expect(onCancelClick).to.have.property('callCount', 1)
+        const wrapper = mount(<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} cancelScenario={onCancelClick} />)
+
+        const nodes = wrapper.find('input#cancelScenario')
+        // Need to specify element is input (not just by id)
+        // and only find the actual button
+        // calling hostNodes would also filter out React Components
+        // e.g. nodes = wrapper.find('#cancelScenario').hostNodes()
+        // To check the rendered output use:
+        // console.log(nodes.debug())
+        nodes.simulate('click')
+        expect(onCancelClick.calledOnce).to.equal(true);
     })
 
     it('unmount', () => {

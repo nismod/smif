@@ -8,8 +8,12 @@ import {empty_object, empty_array} from '../../helpers.js'
 
 describe('<SectorModelConfigForm />', () => {
 
-    const correctRender = shallow(<SectorModelConfigForm sectorModel={sector_model} />)
-    const dataMissingRender = shallow(<SectorModelConfigForm sectorModel={empty_object} />)
+    const correctRender = shallow(<SectorModelConfigForm
+        sosModels={empty_array}
+        sectorModel={sector_model} />)
+    const dataMissingRender = shallow(<SectorModelConfigForm
+        sosModels={empty_array}
+        sectorModel={empty_object} />)
 
     it('renders sector_model.name', () => {
         const sector_model_name = correctRender.find('[id="sector_model_name"]')

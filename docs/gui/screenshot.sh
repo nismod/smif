@@ -1,21 +1,36 @@
 #!/bin/bash
-# This script takes screenshot from the GUI and removes the whitespace
+# This script takes screenshot from the GUI, removes the whitespace and adds labels
+
+gui_host="http://localhost:8080/"
 
 declare -A screenshots
-screenshots['welcome']="http://localhost:5000/"
-screenshots['configure']="http://localhost:5000/configure"
-screenshots['configure-sos-model-run']="http://localhost:5000/configure/sos-model-run/20170918_energy_water"
-screenshots['configure-sos-models']="http://localhost:5000/configure/sos-models/energy_waste"
-screenshots['configure-sector-models']="http://localhost:5000/configure/sector-models/water_supply"
-screenshots['configure-scenario-set']="http://localhost:5000/configure/scenario-set/population"
-screenshots['configure-narrative-set']="http://localhost:5000/configure/narrative-set/technology"
-screenshots['configure-narratives']="http://localhost:5000/configure/narratives/High%20Tech%20Demand%20Side%20Management"
+screenshots['welcome']=$gui_host
+screenshots['configure']=$gui_host"configure/sos-model-run"
+screenshots['configure-sos-model-run']=$gui_host"configure/sos-model-run/20170918_energy_water"
+screenshots['configure-sos-models']=$gui_host"configure/sos-models/energy_waste"
+screenshots['configure-sector-models']=$gui_host"configure/sector-models/water_supply"
+screenshots['configure-scenario-set']=$gui_host"configure/scenario-set/population"
+screenshots['configure-narrative-set']=$gui_host"configure/narrative-set/technology"
+screenshots['configure-narratives']=$gui_host"configure/narratives/High%20Tech%20Demand%20Side%20Management"
+
+# If argument provided, only process the key supplied
+if [ $# -ne 0 ]
+then
+	for screenshot in ${!screenshots[@]}
+	do
+
+		if [ ${screenshot} != $1 ]
+		then
+			unset screenshots[${screenshot}]
+		fi
+	done
+fi
 
 # Remove whitespace
 for screenshot in ${!screenshots[@]}
 do
-	echo ${screenshot} ${screenshots[${screenshot}]}
-	cutycapt --url=${screenshots[${screenshot}]} --out=_${screenshot}.png --min-width=1920 --min-height=1200 --delay=100
+	echo "Taking screenshot for: "${screenshot} ${screenshots[${screenshot}]}
+	cutycapt --url=${screenshots[${screenshot}]} --out=_${screenshot}.png --min-width=1920 --min-height=1200 --delay=500
 	convert _${screenshot}.png -trim ${screenshot}.png
 	convert -border 20 +repage -bordercolor white ${screenshot}.png ${screenshot}.png
 	rm _${screenshot}.png
@@ -23,100 +38,112 @@ do
 done
 
 # Add numbers
+add_label () {
+	convert -draw 'text '$1','$2'"'$3'" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 1 -pointsize $4 $5 $5
+}
+
 for screenshot in ${!screenshots[@]}
 do
 	if [ "${screenshot}" == "welcome" ]
 	then
-		convert -draw 'text 10,355  "A" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		echo 'Add labels to: '${screenshots[${screenshot}]}
+		add_label 320 130 "A" 35 ${screenshots[${screenshot}]}
+		add_label 320 210 "B" 35 ${screenshots[${screenshot}]}
+		add_label 320 245 "C" 35 ${screenshots[${screenshot}]}
+		add_label 320 285 "D" 35 ${screenshots[${screenshot}]}
+		add_label 320 325 "E" 35 ${screenshots[${screenshot}]}
 	fi
 
 	if [ "${screenshot}" == "configure" ]
 	then
-		convert -draw 'text 4,150  "1" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,350  "2" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,750  "3" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1135  "4" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1515  "5" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1890  "6" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,2200  "7" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-
-		convert -draw 'text 400,570  "A" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 850,410  "B" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 950,410  "C" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		echo 'Add labels to: '${screenshots[${screenshot}]}
+		add_label 610 225 "A" 50 ${screenshots[${screenshot}]}
+		add_label 344 380 "B" 50 ${screenshots[${screenshot}]}
+		add_label 1500 380 "C" 50 ${screenshots[${screenshot}]}
 	fi
 
 	if [ "${screenshot}" == "configure-sos-model-run" ]
 	then
-		convert -draw 'text 4,210  "1" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,280  "2" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,430  "3" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,610  "4" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,800  "5" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1120  "6" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1310  "7" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1360  "8" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1410  "9" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		echo 'Add labels to: '${screenshots[${screenshot}]}
+		add_label 344 140  "1" 50 ${screenshots[${screenshot}]}
+		add_label 344 190  "2" 50 ${screenshots[${screenshot}]}
+		add_label 344 350  "3" 50 ${screenshots[${screenshot}]}
+		add_label 344 520  "4" 50 ${screenshots[${screenshot}]}
+		add_label 344 680  "5" 50 ${screenshots[${screenshot}]}
+		add_label 344 1000 "6" 50 ${screenshots[${screenshot}]}
+		add_label 344 1190 "7" 50 ${screenshots[${screenshot}]}
+		add_label 344 1240 "8" 50 ${screenshots[${screenshot}]}
+		add_label 344 1290 "9" 50 ${screenshots[${screenshot}]}
 
-		convert -draw 'text 440,1510  "A" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 440,1560  "B" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		add_label 530 1380 "A" 50 ${screenshots[${screenshot}]}
 	fi
 
 	if [ "${screenshot}" == "configure-sos-models" ]
 	then
-		convert -draw 'text 4,220  "1" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,280  "2" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,550  "3" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,650  "4" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,760  "5" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,950  "6" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1500  "7" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1570  "8" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1680  "9" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		echo 'Add labels to: '${screenshots[${screenshot}]}
+		add_label 344 140  "1" 50 ${screenshots[${screenshot}]}
+		add_label 344 190  "2" 50 ${screenshots[${screenshot}]}
+		add_label 344 440  "3" 50 ${screenshots[${screenshot}]}
+		add_label 344 560  "4" 50 ${screenshots[${screenshot}]}
+		add_label 344 670  "5" 50 ${screenshots[${screenshot}]}
+		add_label 344 870  "6" 50 ${screenshots[${screenshot}]}
+		add_label 344 1440 "7" 50 ${screenshots[${screenshot}]}
+		add_label 344 1500 "8" 50 ${screenshots[${screenshot}]}
+		add_label 344 1560 "9" 50 ${screenshots[${screenshot}]}
 
-		convert -draw 'text 440,1320  "A" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 440,1810  "B" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 440,1860  "C" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		add_label 560 1290 "A" 50 ${screenshots[${screenshot}]}
+		add_label 530 1670 "B" 50 ${screenshots[${screenshot}]}
 	fi
 
 	if [ "${screenshot}" == "configure-sector-models" ]
 	then
-		convert -draw 'text 4,220  "1" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,280  "2" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,540  "3" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,600  "4" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,760  "5" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1180  "6" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,1600  "7" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		echo 'Add labels to: '${screenshots[${screenshot}]}
+		add_label 344 140  "1" 50 ${screenshots[${screenshot}]}
+		add_label 344 190  "2" 50 ${screenshots[${screenshot}]}
+		add_label 344 440  "3" 50 ${screenshots[${screenshot}]}
+		add_label 344 490  "4" 50 ${screenshots[${screenshot}]}
+		add_label 344 660  "5" 50 ${screenshots[${screenshot}]}
+		add_label 344 1080 "6" 50 ${screenshots[${screenshot}]}
+		add_label 344 1510 "7" 50 ${screenshots[${screenshot}]}
 
-		convert -draw 'text 440,1010  "A" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 440,1430  "B" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 440,1895  "C" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 440,1995  "D" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 440,2045  "E" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		add_label 530 930  "A" 50 ${screenshots[${screenshot}]}
+		add_label 530 1350 "B" 50 ${screenshots[${screenshot}]}
+		add_label 530 1720 "C" 50 ${screenshots[${screenshot}]}
+		add_label 530 1810 "D" 50 ${screenshots[${screenshot}]}
 	fi
 
 	if [ "${screenshot}" == "configure-scenario-set" ]
 	then
-		convert -draw 'text 4,220  "1" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,280  "2" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,540  "3" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,830  "4" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		echo 'Add labels to: '${screenshots[${screenshot}]}
+		add_label 344 140 "1" 50 ${screenshots[${screenshot}]}
+		add_label 344 190 "2" 50 ${screenshots[${screenshot}]}
+		add_label 344 450 "3" 50 ${screenshots[${screenshot}]}
+		add_label 344 750 "4" 50 ${screenshots[${screenshot}]}
+
+		add_label 530 585  "A" 50 ${screenshots[${screenshot}]}
+		add_label 530 1020  "B" 50 ${screenshots[${screenshot}]}
+		add_label 530 1110  "C" 50 ${screenshots[${screenshot}]}
 	fi
 
 	if [ "${screenshot}" == "configure-narrative-set" ]
 	then
-		convert -draw 'text 4,220  "1" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,280  "2" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		echo 'Add labels to: '${screenshots[${screenshot}]}
+		add_label 344 140 "1" 50 ${screenshots[${screenshot}]}
+		add_label 344 190 "2" 50 ${screenshots[${screenshot}]}
+
+		add_label 530 380  "A" 50 ${screenshots[${screenshot}]}
 	fi
 
 	if [ "${screenshot}" == "configure-narratives" ]
 	then
-		convert -draw 'text 4,220  "1" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,280  "2" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,540  "3" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
-		convert -draw 'text 4,790  "4" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 2 -pointsize 50 ${screenshots[${screenshot}]} ${screenshots[${screenshot}]}
+		echo 'Add labels to: '${screenshots[${screenshot}]}
+		add_label 344 140  "1" 50 ${screenshots[${screenshot}]}
+		add_label 344 190  "2" 50 ${screenshots[${screenshot}]}
+		add_label 344 440  "3" 50 ${screenshots[${screenshot}]}
+
+		add_label 530 780  "A" 50 ${screenshots[${screenshot}]}
 	fi
-	
+
 done
 
 

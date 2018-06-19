@@ -7,12 +7,12 @@ import PropertySelector from './General/PropertySelector.js'
 import DependencySelector from './SosModel/DependencySelector.js'
 import PropertyList from './General/PropertyList.js'
 import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
+import { SaveButton, CancelButton } from './General/Buttons'
 
 class SosModelConfigForm extends Component {
     constructor(props) {
         super(props)
 
-        this.handleKeyPress = this.handleKeyPress.bind(this)
         this.handleChange = this.handleChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
@@ -29,18 +29,7 @@ class SosModelConfigForm extends Component {
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
         this.validateForm()
-    }
-
-    componentWillUnmount(){
-        document.removeEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    handleKeyPress(){
-        if(event.keyCode === 27) {
-            this.handleCancel()
-        }
     }
 
     handleChange(event) {
@@ -88,7 +77,7 @@ class SosModelConfigForm extends Component {
                 dependencyWarning: illegalDependencies
             })
         }
-        
+
     }
 
     handleSave() {
@@ -153,8 +142,6 @@ class SosModelConfigForm extends Component {
                         </div>
                     </div>
 
-                    <br/>
-
                     <div className="card">
                         <div className="card-header">Settings</div>
                         <div className="card-body">
@@ -182,8 +169,6 @@ class SosModelConfigForm extends Component {
                         </div>
                     </div>
 
-                    <br/>
-
                     <div className="card">
                         <div className="card-header">Dependencies</div>
                         <div className="card-body">
@@ -191,8 +176,6 @@ class SosModelConfigForm extends Component {
                             <DependencySelector sectorModels={sectorModels} scenarioSets={scenarioSets} dependencies={selectedSosModel.dependencies} selectedSectorModels={selectedSosModel.sector_models} selectedScenarioSets={selectedSosModel.scenario_sets} onChange={this.handleChange}/>
                         </div>
                     </div>
-
-                    <br/>
 
                     <div className="card">
                         <div className="card-header">Iteration Settings</div>
@@ -218,17 +201,14 @@ class SosModelConfigForm extends Component {
                             </div>
                         </div>
                     </div>
-
-                    <br/>
                 </form>
 
                 <Popup onRequestOpen={this.state.deletePopupIsOpen}>
                     <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
                 </Popup>
 
-
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                <SaveButton onClick={this.handleSave} />
+                <CancelButton onClick={this.handleCancel} />
 
                 <br/>
             </div>

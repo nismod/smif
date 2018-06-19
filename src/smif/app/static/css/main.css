@@ -1,7 +1,9 @@
 /**
  * Top-level and utility
  */
-
+body {
+    font-size: .875rem;
+}
 .table-projectoverview {
     width: 100%;
     margin: 20px auto;
@@ -15,4 +17,111 @@
 }
 .table-projectoverview .col-action {
     width: 10%;
+    text-align: right;
+}
+.table-projectoverview .col-action .btn {
+    margin: 0 0 0 0.5em;
+    padding: 0.2rem 0.5rem 0.4rem;
+}
+.jumbotron {
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+.jumbotron .lead {
+    font-size: 1.25rem
+}
+.jumbotron li,
+.jumbotron p {
+    font-size: 1.125rem;
+    font-weight: 300;
+}
+.btn,
+select {
+    margin: 0 0.5em 0.5em 0;
+}
+.card {
+    margin-bottom: 1em;
+}
+
+/*
+ * Sidebar
+ */
+.sidebar {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 0;
+    box-shadow: 1px 0 0 rgba(0, 0, 0, .1);
+    overflow-x: hidden;
+    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+}
+@media(max-width: 768px){
+    .sidebar {
+        position: static;
+        height: auto;
+    }
+}
+.sidebar-heading {
+    font-size: .75rem;
+    text-transform: uppercase;
+}
+.sidebar .nav-link {
+    color: #333;
+}
+.sidebar .nav-link.active {
+    color: #007bff;
+}
+.sidebar .nav-link svg {
+    margin-right: 0.5em;
+}
+.sidebar .nav-link .badge {
+    float: right;
+}
+.sidebar .nav-item .nav {
+    background: #fefefe;
+}
+.sidebar .nav-item .nav-item {
+    padding-left: 2em
+}
+
+/*
+ * Navbar
+ */
+.navbar-brand {
+    padding-top: .75rem;
+    padding-bottom: .75rem;
+    font-size: 1rem;
+    background-color: rgba(0, 0, 0, .25);
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
+}
+.navbar .form-control {
+    padding: .75rem 1rem;
+    border-width: 0;
+    border-radius: 0;
+}
+.nav-link{
+    outline:none;
+}
+.nav-link::-moz-focus-inner {
+    border: 0;
+}
+.form-control-dark {
+    color: #fff;
+    background-color: rgba(255, 255, 255, .1);
+    border-color: rgba(255, 255, 255, .1);
+}
+.form-control-dark:focus {
+    border-color: transparent;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
+}
+
+/*
+ * Utilities
+ */
+.border-top {
+    border-top: 1px solid #e5e5e5;
+}
+.border-bottom {
+    border-bottom: 1px solid #e5e5e5;
 }

@@ -48,7 +48,7 @@ describe('<SosModelRunConfigForm />', () => {
         expect(wrapper.state()['selectedSosModelRun']['scenarios']['population']).to.equal("Central Population (Medium)")
 
         // Change scenario
-        wrapper.find('[id="radio_population_Central Population (High)"]').simulate('click', { target: { name: 'population', value: "Central Population (High)"}})
+        wrapper.find('[id="radio_population_Central Population (High)"]').simulate('change', { target: { name: 'population', value: "Central Population (High)"}})
         expect(wrapper.state()['selectedSosModelRun']['scenarios']['population']).to.equal("Central Population (High)")
     })
 

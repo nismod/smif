@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
+import { SaveButton, CancelButton } from '../General/Buttons'
+
 class CreateConfigForm extends Component {
     constructor(props) {
         super(props)
@@ -97,14 +99,12 @@ class CreateConfigForm extends Component {
                     </div>
                 </div>
 
-                <br/>
-                
                 <div hidden={!this.state.alert_visible} className="alert alert-danger" role="alert">
                     {this.state.alert_message}
                 </div>
 
-                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSubmit} />
-                <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
+                <SaveButton id="saveConfig" onClick={this.handleSubmit} />
+                <CancelButton id="cancelConfig" onClick={this.handleCancel} />
             </div>
         )
     }

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import Popup from '../General/Popup.js'
+import { SaveButton, CancelButton, CreateButton } from '../General/Buttons'
 
 class DependencySelector extends Component {
     constructor(props) {
@@ -146,12 +147,12 @@ class DependencySelector extends Component {
                     }
                 }
             }
-            
+
             // If no sector models available for sink, write not available
             if (sink_selector.length <= 2) {
                 sink_selector = <option key={'sink_selector_info'} disabled="disabled" value="none">No sink available</option>
             }
-            
+
             // Fill scenario sets
             if (selectedScenarioSets.length > 0) {
                 source_selector.push(<option key={'selectedScenariosets_info'} disabled="disabled">Scenario Set</option>)
@@ -159,23 +160,23 @@ class DependencySelector extends Component {
                     source_selector.push(<option key={'source_selector_scenarioset_' + i} value={selectedScenarioSets[i]}>{selectedScenarioSets[i]}</option>)
                 }
             }
-            
+
             // If no sector models and scenario sets available for source, write not available
             if (source_selector.length <= 1) {
                 source_selector = <option key={'source_selector_info'} disabled="disabled" value="none">No source available</option>
             }
         }
-        
+
         // Prepare options for source output selector
         let source_output_selector = []
         if (inputs.SourceModel != '') {
             source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">Please select a source output</option>)
-            
+
             let sectormodel_source_outputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SourceModel)
             let scenarioset_source_outputs = scenarioSets.filter(scenarioSet => scenarioSet.name == inputs.SourceModel)
-            
+
             if (sectormodel_source_outputs.length == 1 && scenarioset_source_outputs.length == 0) {
-                sectormodel_source_outputs[0].outputs.map(output => 
+                sectormodel_source_outputs[0].outputs.map(output =>
                     source_output_selector.push(
                         <option key={'source_output_' + output['name']} value={output['name']}>{output['name']}</option>
                     )
@@ -189,7 +190,7 @@ class DependencySelector extends Component {
                 }
 
             } else if (scenarioset_source_outputs.length == 1 && sectormodel_source_outputs.length == 0) {
-                scenarioset_source_outputs[0].facets.map(facet => 
+                scenarioset_source_outputs[0].facets.map(facet =>
                     source_output_selector.push(
                         <option key={'source_output_' + facet['name']} value={facet['name']}>{facet['name']}</option>
                     )
@@ -206,12 +207,12 @@ class DependencySelector extends Component {
 
         // Prepare options for sink input selector
         let sink_input_selector = []
-        
+
         if (inputs.SinkModel != '') {
             sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">Please select a sink input</option>)
-            
+
             let sectormodel_sink_inputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SinkModel)
-            sectormodel_sink_inputs[0].inputs.map(input => 
+            sectormodel_sink_inputs[0].inputs.map(input =>
                 sink_input_selector.push(
                     <option key={'sink_input_' + input['name']} value={input['name']}>{input['name']}</option>
                 )
@@ -219,58 +220,55 @@ class DependencySelector extends Component {
         } else {
             sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">None</option>)
         }
-        
+
         return (
             <div>
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Dependency" onClick={this.openCreateDependencyPopup} />
+                <CreateButton value="Add Dependency" onClick={this.openCreateDependencyPopup} />
                 <Popup onRequestOpen={this.state.CreateDependencypopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit()}}>
                         <h2 ref={subtitle => this.subtitle = subtitle}>Add a new Dependency</h2>
-                        <div className="container">
-                            <div className="row">
-                                <div className="col">
-                                    <label>Source</label>
-                                    <select autoFocus className={this.state.className.SourceModel} name="SourceModel" value={this.state.inputs.SourceModel} onChange={this.handleChange}>
-                                        {source_selector}
-                                    </select>
-                                    <div className="invalid-feedback">
-                                            Please provide a valid input.
-                                    </div>
-                                </div>
-                                <div className="col">
-                                    <label>Sink</label>
-                                    <select className={this.state.className.SinkModel} name="SinkModel" value={this.state.inputs.SinkModel} onChange={this.handleChange}>
-                                        {sink_selector}
-                                    </select>
-                                    <div className="invalid-feedback">
-                                            Please provide a valid input.
-                                    </div>
+
+                        <div className="row">
+                            <div className="col">
+                                <label>Source</label>
+                                <select autoFocus className={this.state.className.SourceModel} name="SourceModel" value={this.state.inputs.SourceModel} onChange={this.handleChange}>
+                                    {source_selector}
+                                </select>
+                                <div className="invalid-feedback">
+                                        Please provide a valid input.
                                 </div>
                             </div>
-                            <div className="row">
-                                <div className="col">
-                                    <select className={this.state.className.SourceOutput} name="SourceOutput" value={this.state.inputs.SourceOutput} onChange={this.handleChange}>
-                                        {source_output_selector}
-                                    </select>
-                                    <div className="invalid-feedback">
-                                            Please provide a valid input.
-                                    </div>
+                            <div className="col">
+                                <label>Sink</label>
+                                <select className={this.state.className.SinkModel} name="SinkModel" value={this.state.inputs.SinkModel} onChange={this.handleChange}>
+                                    {sink_selector}
+                                </select>
+                                <div className="invalid-feedback">
+                                        Please provide a valid input.
                                 </div>
-                                <div className="col">
-                                    <select className={this.state.className.SinkInput} name="SinkInput" value={this.state.inputs.SinkInput} onChange={this.handleChange}>
-                                        {sink_input_selector}
-                                    </select>
-                                    <div className="invalid-feedback">
-                                            Please provide a valid input.
-                                    </div>
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col">
+                                <select className={this.state.className.SourceOutput} name="SourceOutput" value={this.state.inputs.SourceOutput} onChange={this.handleChange}>
+                                    {source_output_selector}
+                                </select>
+                                <div className="invalid-feedback">
+                                        Please provide a valid input.
+                                </div>
+                            </div>
+                            <div className="col">
+                                <select className={this.state.className.SinkInput} name="SinkInput" value={this.state.inputs.SinkInput} onChange={this.handleChange}>
+                                    {sink_input_selector}
+                                </select>
+                                <div className="invalid-feedback">
+                                        Please provide a valid input.
                                 </div>
                             </div>
                         </div>
 
-                        <br/>
-
-                        <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Add"/>
-                        <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreateDependencyPopup}/>
+                        <SaveButton />
+                        <CancelButton onClick={this.closeCreateDependencyPopup}/>
                     </form>
 
                 </Popup>

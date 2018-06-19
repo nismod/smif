@@ -6,12 +6,12 @@ import SosModelSelector from './SosModelRun/SosModelSelector.js'
 import ScenarioSelector from './SosModelRun/ScenarioSelector.js'
 import NarrativeSelector from './SosModelRun/NarrativeSelector.js'
 import TimestepSelector from './SosModelRun/TimestepSelector.js'
+import { SaveButton, CancelButton } from './General/Buttons'
 
 class SosModelRunConfigForm extends Component {
     constructor(props) {
         super(props)
 
-        this.handleKeyPress = this.handleKeyPress.bind(this)
         this.handleSosModelChange = this.handleSosModelChange.bind(this)
         this.handleScenariosChange = this.handleScenariosChange.bind(this)
         this.handleNarrativeChange = this.handleNarrativeChange.bind(this)
@@ -22,20 +22,6 @@ class SosModelRunConfigForm extends Component {
 
         this.state = {}
         this.state.selectedSosModelRun = this.props.sosModelRun
-    }
-
-    componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    componentWillUnmount(){
-        document.removeEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    handleKeyPress(){
-        if(event.keyCode === 27) {
-            this.handleCancel()
-        }
     }
 
     handleSosModelChange(sos_model) {
@@ -160,8 +146,6 @@ class SosModelRunConfigForm extends Component {
                     </div>
                 </div>
 
-                <br/>
-
                 <div className="card">
                     <div className="card-header">Model</div>
                     <div className="card-body">
@@ -175,8 +159,6 @@ class SosModelRunConfigForm extends Component {
 
                     </div>
                 </div>
-
-                <br/>
 
                 <div className="card">
                     <div className="card-header">Settings</div>
@@ -198,8 +180,6 @@ class SosModelRunConfigForm extends Component {
                     </div>
                 </div>
 
-                <br/>
-
                 <div className="card">
                     <div className="card-header">Timesteps</div>
                     <div className="card-body">
@@ -207,12 +187,8 @@ class SosModelRunConfigForm extends Component {
                     </div>
                 </div>
 
-                <br/>
-
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
-
-                <br/>
+                <SaveButton onClick={this.handleSave} />
+                <CancelButton onClick={this.handleCancel} />
             </div>
         )
     }

@@ -61,13 +61,29 @@ This will automatically open the smif app welcome screen in the default configur
 
 .. topic:: Hints
     
-    Set up a system-of-systems project
+    View the system-of-systems model-run settings
 
-    :app: Click the "Set up a system-of-systems project" button [A] to open the project configuration.
+    :app: Click the "Model Runs" button [A]
 
-The Project Configuration
+    View the system-of-systems models configurations
+
+    :app: Click the "System-of-Systems Model" button [B]
+
+    View the model wrapper configurations
+
+    :app: Click the "Model Wrappers" button [C]
+
+    View the scenario and scenario-set configurations
+
+    :app: Click the "Scenarios" button [D]
+
+    View the narrative and narrative-set configurations
+
+    :app: Click the "Narratives" button [E]
+
+The Configuration Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-This overview displays all of the configurations that are currently present in the system-of-systems configuration directory. New configurations can be created and existing ones can be edited or removed. See also :ref:`Project Configuration`.
+The configuration overview displays the configurations that are currently present in the smif project. New configurations can be created and existing ones can be edited or removed. See also :ref:`Project Configuration`.
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure.png
@@ -76,19 +92,7 @@ This overview displays all of the configurations that are currently present in t
     :alt: alternate text
     :figclass: align-center
 
-    The Project configuration
-
-.. csv-table::
-   :header:  "#", "Attribute", "Notes"
-   :widths: 5, 15, 40
-
-   1, Name, The name of the project configuration that is currently open
-   2, Model Runs, The Model Run configurations that currently exist in the project
-   3, System-of-Systems Model, The System-of-System configurations that currently exist in the project
-   4, Simulation Models, The Simulation Model configurations that currently exist in the project configuration
-   5, Scenario Sets, The Scenario Set configurations that currently exist in the project configuration
-   6, Narrative Sets, The Narrative Set configurations that currently exist in the project configuration
-   7, Narratives, The Narrative configurations that currently exist in the project configuration
+    A configuration overview
 
 .. topic:: Hints
     
@@ -104,9 +108,9 @@ This overview displays all of the configurations that are currently present in t
 
     :app: Click on the bin icon [C] to delete a configuration
 
-Simulation Model Configuration
+Model Wrapper Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The Simulation Model configuration tool helps to view, edit or create a simulation model configuration. This interface builds upon the specifications explained in :ref:`A Simulation Model File`.
+The Model Wrapper configuration tool helps to view, edit or create a simulation model wrapper configuration. This interface builds upon the specifications explained in :ref:`A Simulation Model File`.
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure-sector-models.png
@@ -115,20 +119,19 @@ The Simulation Model configuration tool helps to view, edit or create a simulati
     :alt: alternate text
     :figclass: align-center
 
-
-    The Simulation Model configuration
+    The Model Wrapper configuration
 
 .. csv-table::
    :header:  "#", "Attribute", "Notes"
    :widths: 5, 15, 40
 
-   1, Name, A unique name that identifies the simulation model configuration. Note: this field is non-editable. See also :ref:`A Simulation Model File`
-   2, Description, A description that shortly describes the simulation model for future reference. See also :ref:`A Simulation Model File`
-   3, Class Name, Name of the Class that is used in the smif wrapper. See also :ref:`Wrapping a Sector Model: Overview`
-   4, Path, The location of the python wrapper file. See also :ref:`Wrapping a Sector Model: Overview`
-   5, Inputs, The simulation model inputs with their name, units and temporal-spatial resolution. See also :ref:`Inputs`
-   6, Outputs, The simulation model outputs with their name, units and temporal-spatial resolution. See also :ref:`Outputs`
-   7, Parameters, The simulation model parameters. See also :ref:`Parameters`
+   1, Name, "A unique name that identifies the simulation model that is wrapped. Note: this field is non-editable. See also :ref:`A Simulation Model File`"
+   2, Description, "A description that shortly describes the simulation model for future reference. See also :ref:`A Simulation Model File`"
+   3, Class Name, "Name of the Class that is used in the smif wrapper. See also :ref:`Wrapping a Sector Model: Overview`"
+   4, Path, "The location of the python wrapper file. See also :ref:`Wrapping a Sector Model: Overview`"
+   5, Inputs, "The simulation model inputs with their name, units and temporal-spatial resolution. See also :ref:`Inputs`"
+   6, Outputs, "The simulation model outputs with their name, units and temporal-spatial resolution. See also :ref:`Outputs`"
+   7, Parameters, "The simulation model parameters. See also :ref:`Parameters`"
 
 .. topic:: Hints
 
@@ -143,6 +146,10 @@ The Simulation Model configuration tool helps to view, edit or create a simulati
     Add a simulation model parameter
 
     :app: Click on the "Add Parameter" button [C] to open a form to add a new parameter
+
+    Save or cancel the configuration
+
+    :app: Click on the "Save" button [D] to save changes to this configuration. Click on the "Cancel" button to leave the configuration without saving.
 
 System-of-Systems model configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -161,12 +168,12 @@ The System-of-Systems model configuration tool helps to view, edit or create a s
    :header:  "#", "Attribute", "Notes"
    :widths: 5, 15, 40
 
-   1, Name, A unique name that identifies the System-of-Systems model configuration. Note: this field is non-editable. See also :ref:`A System-of-Systems Model File`
-   2, Description, A description that shortly describes the System-of-Systems model for future reference. See also :ref:`A System-of-Systems Model File`
-   3, Sector Models, The selection of Simulation Models that are used in this System-of-Systems Model. See also :ref:`A System-of-Systems Model File`
-   4, Scenario Sets, The selection of Scenario Sets that are used in this System-of-Systems Model. See also :ref:`A System-of-Systems Model File`
-   5, Narrative Sets, The selection of Narrative Sets that are used in this System-of-Systems Model. See also :ref:`A System-of-Systems Model File`
-   6, Dependencies, The list of Dependencies that are defined between sources and links. See also :ref:`Dependencies`
+   1, Name, "A unique name that identifies the System-of-Systems model configuration. Note: this field is non-editable. See also :ref:`A System-of-Systems Model File`"
+   2, Description, "A description that shortly describes the System-of-Systems model for future reference. See also :ref:`A System-of-Systems Model File`"
+   3, Sector Models, "The selection of Simulation Models that are used in this System-of-Systems Model. See also :ref:`A System-of-Systems Model File`"
+   4, Scenario Sets, "The selection of Scenario Sets that are used in this System-of-Systems Model. See also :ref:`A System-of-Systems Model File`"
+   5, Narrative Sets, "The selection of Narrative Sets that are used in this System-of-Systems Model. See also :ref:`A System-of-Systems Model File`"
+   6, Dependencies, "The list of Dependencies that are defined between sources and links. See also :ref:`Dependencies`"
    7, Maximum Iteration,
    8, Absolute Convergence Tolerance,
    9, Relative Convergence Tolerance,
@@ -177,13 +184,9 @@ The System-of-Systems model configuration tool helps to view, edit or create a s
 
     :app: Click on the "Add Dependency" button [A] to open a form to add a new dependency
 
-    Save the System-of-Systems Model configuration
+    Save or cancel the configuration
 
-    :app: Click on the "Save" button [B] to save the configuration and return to the Project Overview
-
-    Return to the Project Overview
-
-    :app: Click on the "Cancel" button [C] to return to the Project Overview without saving any changes
+    :app: Click on the "Save" button [B] to save changes to this configuration. Click on the "Cancel" button to leave the configuration without saving.
 
 Model Run Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -203,25 +206,21 @@ This interface builds upon the specifications explained in :ref:`A Model Run Fil
    :header:  "#", "Attribute", "Notes"
    :widths: 5, 15, 40
 
-   1, Name, A unique name that identifies the Model Run configuration. Note: this field is non-editable. See also :ref:`A Model Run File`
-   2, Description, A description that shortly describes the Model Run for future reference. See also :ref:`A Model Run File`
-   3, Created, A timestamp that identifies at which time this Model Run was created. Note: this field is non-editable. See also :ref:`A Model Run File`
-   4, System-of-System model, The System-of-Systems Model that this Model Run configuration is using. See also :ref:`A Model Run File`
-   5, Scenarios, The selected Scenario for this Model Run within each of the available Scenario Sets. Note: Only the Scenario Sets that were configured in the selected System-of-System Model will be available here. See also :ref:`Scenarios`
-   6, Narrative, The selected Narratives for this Model Run within each of the available Narrative Sets. Note: Only the Narrative Sets that were configured in the selected System-of-System Model will be available here. See also :ref:`Narratives`
-   7, Resolution, The number of years between each of the Timesteps. See also :ref:`Timesteps`
-   8, Base year, The Timestep where this Model Run must start the simulation. See also :ref:`Timesteps`
-   9, End year, The last Timestep that this Model Run must simulate. See also :ref:`Timesteps`
+   1, Name, "A unique name that identifies the Model Run configuration. Note: this field is non-editable. See also :ref:`A Model Run File`"
+   2, Description, "A description that shortly describes the Model Run for future reference. See also :ref:`A Model Run File`"
+   3, Created, "A timestamp that identifies at which time this Model Run was created. Note: this field is non-editable. See also :ref:`A Model Run File`"
+   4, System-of-System model, "The System-of-Systems Model that this Model Run configuration is using. See also :ref:`A Model Run File`"
+   5, Scenarios, "The selected Scenario for this Model Run within each of the available Scenario Sets. Note: Only the Scenario Sets that were configured in the selected System-of-System Model will be available here. See also :ref:`Scenarios`"
+   6, Narrative, "The selected Narratives for this Model Run within each of the available Narrative Sets. Note: Only the Narrative Sets that were configured in the selected System-of-System Model will be available here. See also :ref:`Narratives`"
+   7, Resolution, "The number of years between each of the Timesteps. See also :ref:`Timesteps`"
+   8, Base year, "The Timestep where this Model Run must start the simulation. See also :ref:`Timesteps`"
+   9, End year, "The last Timestep that this Model Run must simulate. See also :ref:`Timesteps`"
 
 .. topic:: Hints
 
-    Save the Model Run configuration
+    Save or cancel the configuration
 
-    :app: Click on the "Save" button [B] to save the configuration and return to the Project Overview
-
-    Return to the Project Overview
-
-    :app: Click on the "Cancel" button [C] to return to the Project Overview without saving any changes
+    :app: Click on the "Save" button [A] to save changes to this configuration. Click on the "Cancel" button to leave the configuration without saving.
 
 Project Configuration
 ---------------------

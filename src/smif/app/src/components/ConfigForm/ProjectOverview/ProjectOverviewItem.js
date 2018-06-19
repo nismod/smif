@@ -24,7 +24,7 @@ class SosModelRunItem extends Component {
         const {itemLink} = this.props
 
         const target = event.currentTarget
-        const name = target.id
+        const name = target.dataset.name
 
         if (name != undefined) {
             this.setState({
@@ -36,19 +36,16 @@ class SosModelRunItem extends Component {
 
     onDeleteHandler(event) {
         const {onDelete} = this.props
-
         const target = event.currentTarget
         const name = target.name
 
-        onDelete(
-            {
-                target: {
-                    name: target.value,
-                    value: name,
-                    type: 'action'
-                }
+        onDelete({
+            target: {
+                name: target.value,
+                value: name,
+                type: 'action'
             }
-        )
+        })
     }
 
     renderItems(itemname, items, itemLink) {
@@ -58,34 +55,45 @@ class SosModelRunItem extends Component {
         }
         else {
             return (
-                <div>
-                    <table className="table table-hover table-projectoverview">
-                        <thead className="thead-light">
-                            <tr>
-                                <th className="col-name" scope="col">Name</th>
-                                <th className="col-desc" scope="col">Description</th>
-                                <th className="col-action" scope="col"></th>
+                <table className="table table-hover table-projectoverview">
+                    <thead className="thead-light">
+                        <tr>
+                            <th className="col-name" scope="col">Name</th>
+                            <th className="col-desc" scope="col">Description</th>
+                            <th className="col-action" scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                        items.map((item, i) => (
+                            <tr id={"row_" + item.name} key={i}>
+                                <td
+                                    data-name={item.name}
+                                    className="col-name"
+                                    onClick={(e) => this.onEditHandler(e)}>
+                                    {item.name}
+                                </td>
+                                <td
+                                    data-name={item.name}
+                                    className="col-desc"
+                                    onClick={(e) => this.onEditHandler(e)}>
+                                    {item.description}
+                                </td>
+                                <td className="col-action">
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-dark"
+                                        value={itemname}
+                                        name={item.name}
+                                        onClick={this.onDeleteHandler}>
+                                        <FaTrash/>
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {
-                                items.map((item, i) => (
-                                    <tr id={"row_" + item.name} key={i}>
-                                        <td id={item.name} onClick={(e) => this.onEditHandler(e)}>
-                                            {item.name}
-                                        </td>
-                                        <td id={item.name} onClick={(e) => this.onEditHandler(e)}>{item.description}</td>
-                                        <td>
-                                            <button type="button" className="btn btn-outline-dark" value={itemname} name={item.name} onClick={this.onDeleteHandler}>
-                                                <FaTrash/>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                        ))
+                        }
+                    </tbody>
+                </table>
             )
         }
     }
@@ -93,14 +101,6 @@ class SosModelRunItem extends Component {
     renderDanger(message) {
         return (
             <div id="project_overview_item_alert-danger" className="alert alert-danger">
-                {message}
-            </div>
-        )
-    }
-
-    renderWarning(message) {
-        return (
-            <div id="project_overview_item_alert-warning" className="alert alert-warning">
                 {message}
             </div>
         )

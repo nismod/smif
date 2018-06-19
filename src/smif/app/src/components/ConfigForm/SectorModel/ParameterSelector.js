@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import Popup from '../General/Popup.js'
+import { SaveButton, CancelButton, CreateButton } from '../General/Buttons'
 
 class ParameterSelector extends Component {
     constructor(props) {
@@ -121,7 +122,7 @@ class ParameterSelector extends Component {
 
         return (
             <div>
-                <input className="btn btn-secondary btn-lg btn-block" type="button" value="Add Parameter" onClick={this.openCreatePopup} />
+                <CreateButton value="Add Parameter" onClick={this.openCreatePopup} />
 
                 <Popup onRequestOpen={this.state.CreatePopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit()}}>
@@ -199,10 +200,8 @@ class ParameterSelector extends Component {
                             </div>
                         </div>
 
-                        <br/>
-
-                        <input className="btn btn-secondary btn-lg btn-block" type="submit" value="Add"/>
-                        <input className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.closeCreatePopup}/>
+                        <SaveButton />
+                        <CancelButton onClick={this.closeCreatePopup}/>
                     </form>
 
                 </Popup>

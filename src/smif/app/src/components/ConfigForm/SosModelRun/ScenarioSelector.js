@@ -118,8 +118,16 @@ class ScenarioSelector extends Component {
                                         selectedScenarios[scenarioSet].map((scenario) => (
                                             <div className="form-check" key={scenario.name}>
                                                 <label className="form-check-label">
-                                                    <input id={'radio_' + scenarioSet + '_' + scenario.name} className="form-check-input" type="radio" name={scenarioSet} key={scenario.name} value={scenario.name} checked={scenario.active} onClick={this.handleChange}/>
-                                                    {scenario.name}
+                                                    <input
+                                                    id={'radio_' + scenarioSet + '_' + scenario.name}
+                                                    className="form-check-input"
+                                                    type="radio"
+                                                    name={scenarioSet}
+                                                    key={scenario.name}
+                                                    value={scenario.name}
+                                                    checked={scenario.active}
+                                                    onChange={this.handleChange} />
+                                                        {scenario.name}
                                                 </label>
                                             </div>
                                         ))

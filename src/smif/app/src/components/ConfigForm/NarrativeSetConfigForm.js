@@ -2,31 +2,18 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
+import { SaveButton, CancelButton } from './General/Buttons'
+
 class NarrativeSetConfigForm extends Component {
     constructor(props) {
         super(props)
 
-        this.handleKeyPress = this.handleKeyPress.bind(this)
         this.handleChange = this.handleChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {}
         this.state.selectedNarrativeSet = this.props.narrativeSet
-    }
-
-    componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    componentWillUnmount(){
-        document.removeEventListener("keydown", this.handleKeyPress, false)
-    }
-
-    handleKeyPress(){
-        if(event.keyCode === 27) {
-            this.handleCancel()
-        }
     }
 
     handleChange(event) {
@@ -73,15 +60,10 @@ class NarrativeSetConfigForm extends Component {
 
                         </div>
                     </div>
-
-                    <br/>
-
                 </form>
 
-                <input id="saveButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Save" onClick={this.handleSave} />
-                <input id="cancelButton" className="btn btn-secondary btn-lg btn-block" type="button" value="Cancel" onClick={this.handleCancel} />
-
-                <br/>
+                <SaveButton id="saveNarrativeSet" onClick={this.handleSave} />
+                <CancelButton id="cancelNarrativeSet" onClick={this.handleCancel} />
             </div>
         )
     }
