@@ -91,7 +91,8 @@ do
 		add_label 344 1500 "8" 50 ${screenshots[${screenshot}]}
 		add_label 344 1560 "9" 50 ${screenshots[${screenshot}]}
 
-		add_label 530 1670 "A" 50 ${screenshots[${screenshot}]}
+		add_label 560 1290 "A" 50 ${screenshots[${screenshot}]}
+		add_label 530 1670 "B" 50 ${screenshots[${screenshot}]}
 	fi
 
 	if [ "${screenshot}" == "configure-sector-models" ]
@@ -119,7 +120,9 @@ do
 		add_label 344 450 "3" 50 ${screenshots[${screenshot}]}
 		add_label 344 750 "4" 50 ${screenshots[${screenshot}]}
 
-		add_label 530 1110  "A" 50 ${screenshots[${screenshot}]}
+		add_label 530 585  "A" 50 ${screenshots[${screenshot}]}
+		add_label 530 1020  "B" 50 ${screenshots[${screenshot}]}
+		add_label 530 1110  "C" 50 ${screenshots[${screenshot}]}
 	fi
 
 	if [ "${screenshot}" == "configure-narrative-set" ]
