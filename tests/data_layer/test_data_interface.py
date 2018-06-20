@@ -13,9 +13,9 @@ from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.load import dump
 
-from ..convert.conftest import remap_months, remap_months_csv
 from ..convert.conftest import twenty_four_hours as hourly_day
 from ..convert.conftest import twenty_four_hours_csv as hourly_day_csv
+from ..convert.conftest import remap_months, remap_months_csv
 
 
 class TestDataInterface():
@@ -1090,7 +1090,6 @@ class TestDatafileInterface():
         expected = np.array([[[1.0]]])
         csv_contents = "region,interval,value\noxford,1,1.0\n"
         binary_contents = pa.serialize(expected).to_buffer()
-        timestamp = '20180307T144423'  # same timestamp as get_handler
 
         path = os.path.join(
             str(setup_folder_structure),
