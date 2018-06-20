@@ -68,11 +68,14 @@ class SectorModel(Model, metaclass=ABCMeta):
     provide an interface to the simulation model, which can then be called
     upon by the framework.
 
-    The key methods in the SectorModel class which need to be overridden are:
+    The key methods in the SectorModel class which must be overridden are:
 
-    - :py:meth:`SectorModel.initialise`
     - :py:meth:`SectorModel.simulate`
     - :py:meth:`SectorModel.extract_obj`
+
+    An implementation may also override:
+
+    - :py:meth:`SectorModel.before_model_run`
 
     A number of utility methods are included to ease the integration of a
     SectorModel wrapper within a System of Systems model.  These include:
@@ -178,21 +181,6 @@ class SectorModel(Model, metaclass=ABCMeta):
         """
         return [intervention['name'] for intervention in self.interventions]
 
-    @abstractmethod
-    def initialise(self, initial_conditions):
-        """Implement this method to set up the model system
-
-        This method is called as the SectorModel is constructed, and prior to
-        establishment of dependencies and other data links.
-
-        Arguments
-        ---------
-        initial_conditions: list
-            A list of past Interventions, with build dates and locations as
-            necessary to specify the infrastructure system to be modelled.
-        """
-        pass
-
     def before_model_run(self, data):
         """Implement this method to conduct pre-model run tasks
 
@@ -201,6 +189,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         data: smif.data_layer.DataHandle
             Access parameter values (before any model is run, no dependency
             input data or state is guaranteed to be available)
+            Access decision/system state (i.e. initial_conditions)
         """
         pass
 
@@ -354,7 +343,6 @@ class SectorModelBuilder(object):
         self.add_inputs(sector_model_config['inputs'])
         self.add_outputs(sector_model_config['outputs'])
         self.add_interventions(sector_model_config['interventions'])
-        self.create_initial_system(sector_model_config['initial_conditions'])
         self.add_initial_conditions(sector_model_config['initial_conditions'])
         self.add_parameters(sector_model_config['parameters'])
 
@@ -397,14 +385,6 @@ class SectorModelBuilder(object):
             [self.intervention_state_from_data(datum) for datum in initial_conditions]
         )
         self._sector_model._initial_state = list(state_data)
-
-    def create_initial_system(self, initial_conditions):
-        """Set up model with initial system
-        """
-        msg = "Sector model must be loaded before creating initial system"
-        assert self._sector_model is not None, msg
-
-        self._sector_model.initialise(initial_conditions)
 
     def add_parameters(self, parameter_config):
         """Add parameter configuration to sector model

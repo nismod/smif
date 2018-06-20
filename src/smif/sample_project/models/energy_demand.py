@@ -7,9 +7,6 @@ from smif.model.sector_model import SectorModel
 class EDMWrapper(SectorModel):
     """Energy model
     """
-    def initialise(self, initial_conditions):
-        pass
-
     def simulate(self, data):
 
         # Get the current timestep

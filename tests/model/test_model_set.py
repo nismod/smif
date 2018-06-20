@@ -12,9 +12,6 @@ def get_empty_sector_model():
     class EmptySectorModel(SectorModel):
         """Static water supply model
         """
-        def initialise(self, initial_conditions):
-            pass
-
         def simulate(self, data):
             data['cost'] = np.array([[2]])
             data['water'] = np.array([[0.5]])
