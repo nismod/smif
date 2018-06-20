@@ -48,7 +48,6 @@ describe('<DeleteForm />', () => {
                     ]} />
             </MemoryRouter>)
         const link = form.find('a[href*="test_link/Test"]')
-        console.log(form.debug())
         expect(link.length).to.equal(1)
     })
 
