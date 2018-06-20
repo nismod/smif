@@ -1241,8 +1241,8 @@ class DatafileInterface(DataInterface):
             assert data.shape == (len(region_names), len(interval_names))
 
             if self.storage_format == 'local_csv':
-                csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
-                # NB timestep not written
+                csv_data = self.ndarray_to_data_list(
+                    data, region_names, interval_names, timestep=timestep)
                 self._write_data_to_csv(results_path, csv_data)
             elif self.storage_format == 'local_binary':
                 self._write_data_to_native_file(results_path, data)
