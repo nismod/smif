@@ -3,6 +3,7 @@
 import csv
 import json
 import os
+from tempfile import TemporaryDirectory
 
 import numpy as np
 import pyarrow as pa
@@ -1404,3 +1405,12 @@ class TestCoefficients:
         actual = handler.read_coefficients('doesnotexist', 'to_set_name')
 
         assert actual is None
+
+    def test_write_success_if_folder_missing(self):
+        """Ensure we can write files, even if project directory starts empty
+        """
+        with TemporaryDirectory() as tmpdirname:
+            # start with empty project (no data/coefficients subdirectory)
+            handler = DatafileInterface(tmpdirname, 'local_binary')
+            data = np.eye(10)
+            handler.write_coefficients('from_set_name', 'to_set_name', data)
