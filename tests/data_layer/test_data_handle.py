@@ -36,8 +36,10 @@ def mock_model():
     )
     regions = Mock()
     regions.name = 'half_squares'
+    regions.__len__ = lambda self: 1
     intervals = Mock()
     intervals.name = 'remap_months'
+    intervals.__len__ = lambda self: 1
     model.inputs = MetadataSet([
         Metadata('test', regions, intervals, 'm')
     ])
@@ -212,6 +214,18 @@ class TestDataHandle():
             None,
             None
         )
+
+    def test_set_data_wrong_shape(self, mock_store, mock_model):
+        """should allow write access to output data
+        """
+        expect_error = np.array([[1.0, 1.0]])  # regions is 1, intervals is 1 not 2
+        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+
+        with raises(ValueError) as ex:
+            data_handle.set_results("test", expect_error)
+
+        assert "Tried to set results with shape (1, 2), " + \
+            "expected (1, 1) for test_model:test" in str(ex)
 
     def test_set_data_with_square_brackets(self, mock_store, mock_model):
         """should allow dict-like write access to output data

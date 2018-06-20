@@ -1045,7 +1045,7 @@ class TestResults:
         # 1. case with neither modelset nor decision
         expected = np.array([[[1.0]]])
         csv_contents = "region,interval,value\noxford,1,1.0\n"
-        binary_contents = get_handler_binary.ndarray_to_buffer(expected)
+        binary_contents = pa.serialize(expected).to_buffer()
 
         path = os.path.join(
             str(setup_folder_structure),
@@ -1079,7 +1079,7 @@ class TestResults:
         decision_iteration = 1
         expected = np.array([[[2.0]]])
         csv_contents = "region,interval,value\noxford,1,2.0\n"
-        binary_contents = get_handler_binary.ndarray_to_buffer(expected)
+        binary_contents = pa.serialize(expected).to_buffer()
 
         path = os.path.join(
             str(setup_folder_structure),
@@ -1116,7 +1116,7 @@ class TestResults:
         modelset_iteration = 1
         expected = np.array([[[3.0]]])
         csv_contents = "region,interval,value\noxford,1,3.0\n"
-        binary_contents = get_handler_binary.ndarray_to_buffer(expected)
+        binary_contents = pa.serialize(expected).to_buffer()
         path = os.path.join(
             str(setup_folder_structure),
             "results",
@@ -1151,7 +1151,7 @@ class TestResults:
         # 4. case with both decision and modelset
         expected = np.array([[[4.0]]])
         csv_contents = "region,interval,value\noxford,1,4.0\n"
-        binary_contents = get_handler_binary.ndarray_to_buffer(expected)
+        binary_contents = pa.serialize(expected).to_buffer()
         path = os.path.join(
             str(setup_folder_structure),
             "results",
