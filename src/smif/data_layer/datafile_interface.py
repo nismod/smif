@@ -264,12 +264,16 @@ class DatafileInterface(DataInterface):
 
         return sector_models
 
-    def _sector_model_exists(self, name):
-        file_name = name + '.yml'
+    def _get_sector_model_filepath(self, sector_model_name):
+        file_name = '{}.yml'.format(sector_model_name)
         file_dir = self.file_dir['sector_models']
+        return os.path.join(file_dir, file_name)
 
-        if os.path.exists(os.path.join(file_dir, file_name)):
-            return self._read_yaml_file(file_dir, name)
+    def _sector_model_exists(self, sector_model_name):
+        return os.path.exists(self._get_sector_model_filepath(sector_model_name))
+
+    def _read_sector_model_file(self, sector_model_name):
+        return self._read_yaml_file(self._get_sector_model_filepath(sector_model_name))
 
     def read_sector_model(self, sector_model_name):
         """Read a sector model
@@ -284,9 +288,15 @@ class DatafileInterface(DataInterface):
         sector_model: dict
             A sector_model dictionary
         """
-        sector_model = self._sector_model_exists(sector_model_name)
-        if sector_model is None:
+        if not self._sector_model_exists(sector_model_name):
             raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+
+        sector_model = self._read_sector_model_file(sector_model_name)
+
+        sector_model['interventions'] = \
+            self.read_sector_model_interventions(sector_model_name)
+        sector_model['initial_conditions'] = \
+            self.read_sector_model_initial_conditions(sector_model_name)
 
         return sector_model
 
@@ -300,6 +310,11 @@ class DatafileInterface(DataInterface):
         """
         if self._sector_model_exists(sector_model['name']):
             raise DataExistsError("sector_model '%s' already exists" % sector_model['name'])
+
+        if sector_model['interventions'] or sector_model['initial_conditions']:
+            self.logger.warning("Ignoring interventions and initial conditions")
+            sector_model['interventions'] = []
+            sector_model['initial_conditions'] = []
 
         self._write_yaml_file(
             self.file_dir['sector_models'], sector_model['name'], sector_model)
@@ -322,6 +337,18 @@ class DatafileInterface(DataInterface):
 
         if not self._sector_model_exists(sector_model_name):
             raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+
+        # ignore interventions and initial conditions which the app doesn't handle
+        if sector_model['interventions'] or sector_model['initial_conditions']:
+            old_sector_model = self._read_sector_model_file(sector_model['name'])
+
+        if sector_model['interventions']:
+            self.logger.warning("Ignoring interventions write")
+            sector_model['interventions'] = old_sector_model['interventions']
+
+        if sector_model['initial_conditions']:
+            self.logger.warning("Ignoring initial conditions write")
+            sector_model['initial_conditions'] = old_sector_model['initial_conditions']
 
         self._write_yaml_file(self.file_dir['sector_models'],
                               sector_model['name'], sector_model)
@@ -350,6 +377,25 @@ class DatafileInterface(DataInterface):
         filepath = self.file_dir['interventions']
         return self._read_yaml_file(filepath, filename, extension='')
 
+    def read_sector_model_interventions(self, sector_model_name):
+        """Read a SectorModel's interventions
+
+        Arguments
+        ---------
+        sector_model_name: str
+        """
+        if not self._sector_model_exists(sector_model_name):
+            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+
+        sector_model = self._read_sector_model_file(sector_model_name)
+
+        intervention_files = sector_model['interventions']
+        intervention_list = []
+        for intervention_file in intervention_files:
+            interventions = self.read_interventions(intervention_file)
+            intervention_list.extend(interventions)
+        return intervention_list
+
     def read_strategies(self, filename):
         """Read the strategy data from filename
 
@@ -371,6 +417,25 @@ class DatafileInterface(DataInterface):
         """
         filepath = self.file_dir['initial_conditions']
         return self._read_yaml_file(filepath, filename, extension='')
+
+    def read_sector_model_initial_conditions(self, sector_model_name):
+        """Read a SectorModel's initial conditions
+
+        Arguments
+        ---------
+        sector_model_name: str
+        """
+        if not self._sector_model_exists(sector_model_name):
+            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+
+        sector_model = self._read_sector_model_file(sector_model_name)
+
+        initial_condition_files = sector_model['initial_conditions']
+        initial_condition_list = []
+        for initial_condition_file in initial_condition_files:
+            initial_conditions = self.read_initial_conditions(initial_condition_file)
+            initial_condition_list.extend(initial_conditions)
+        return initial_condition_list
 
     def read_region_definitions(self):
         """Read region_definitions from project configuration
@@ -1587,7 +1652,7 @@ class DatafileInterface(DataInterface):
             f.write(data)
 
     @staticmethod
-    def _read_yaml_file(path, filename, extension='.yml'):
+    def _read_yaml_file(path, filename=None, extension='.yml'):
         """Read a Data dict from a Yaml file
 
         Arguments
@@ -1604,12 +1669,15 @@ class DatafileInterface(DataInterface):
         dict
             The data of the Yaml file `filename` in `path`
         """
-        filename = filename + extension
-        filepath = os.path.join(path, filename)
+        if filename is not None:
+            filename = filename + extension
+            filepath = os.path.join(path, filename)
+        else:
+            filepath = path
         return load(filepath)
 
     @staticmethod
-    def _write_yaml_file(path, filename, data, extension='.yml'):
+    def _write_yaml_file(path, filename=None, data=None, extension='.yml'):
         """Write a data dict to a Yaml file
 
         Arguments
@@ -1623,6 +1691,9 @@ class DatafileInterface(DataInterface):
         extension: str, default='.yml'
             The file extension
         """
-        filename = filename + extension
-        filepath = os.path.join(path, filename)
+        if filename is not None:
+            filename = filename + extension
+            filepath = os.path.join(path, filename)
+        else:
+            filepath = path
         dump(data, filepath)
