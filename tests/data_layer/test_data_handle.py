@@ -36,8 +36,10 @@ def mock_model():
     )
     regions = Mock()
     regions.name = 'half_squares'
+    regions.__len__ = lambda self: 1
     intervals = Mock()
     intervals.name = 'remap_months'
+    intervals.__len__ = lambda self: 1
     model.inputs = MetadataSet([
         Metadata('test', regions, intervals, 'm')
     ])
