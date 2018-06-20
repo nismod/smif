@@ -192,7 +192,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @staticmethod
-    def ndarray_to_data_list(data, region_names, interval_names):
+    def ndarray_to_data_list(data, region_names, interval_names, timestep=None):
         """Convert :class:`numpy.ndarray` to list of observations
 
         Parameters
@@ -200,6 +200,7 @@ class DataInterface(metaclass=ABCMeta):
         data : numpy.ndarray
         region_names : list of str
         interval_names : list of str
+        timestep: int or None
 
         Returns
         -------
@@ -211,6 +212,7 @@ class DataInterface(metaclass=ABCMeta):
         for region_idx, region in enumerate(region_names):
             for interval_idx, interval in enumerate(interval_names):
                 observations.append({
+                    'timestep': timestep,
                     'region': region,
                     'interval': interval,
                     'value': data[region_idx, interval_idx]
