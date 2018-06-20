@@ -127,10 +127,8 @@ def get_sos_model_with_summed_dependency(oxford_region):
 def get_empty_sector_model():
 
     class EmptySectorModel(SectorModel):
-
-        def initialise(self, initial_conditions):
-            pass
-
+        """Simulate nothing
+        """
         def simulate(self, data):
             return data
 

@@ -20,12 +20,6 @@ class WaterSupplySectorModel(SectorModel):
     using one of the toy water models below to simulate the water supply
     system.
     """
-
-    def initialise(self, initial_conditions):
-        """Set up system here
-        """
-        pass
-
     def simulate(self, data):
         """
 

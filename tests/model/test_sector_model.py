@@ -70,10 +70,8 @@ def get_sector_model_config(setup_folder_structure, setup_runpy_file, setup_regi
 
 
 class EmptySectorModel(SectorModel):
-
-    def initialise(self, initial_conditions):
-        pass
-
+    """Simulate nothing
+    """
     def simulate(self, timestep, data=None):
         return {}
 

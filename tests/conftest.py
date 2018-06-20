@@ -15,10 +15,10 @@ import os
 from copy import copy
 
 from pytest import fixture
-from smif.convert.area import RegionSet
 from smif.convert.area import get_register as get_region_register
-from smif.convert.interval import IntervalSet
+from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
+from smif.convert.interval import IntervalSet
 from smif.convert.unit import get_register as get_unit_register
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
@@ -99,9 +99,6 @@ def setup_runpy_file(setup_folder_structure):
 from smif.model.sector_model import SectorModel
 
 class WaterSupplySectorModel(SectorModel):
-    def initialise(self, initial_conditions):
-        pass
-
     def simulate(self, timestep, data=None):
         return {self.name: data}
 
