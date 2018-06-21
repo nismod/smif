@@ -37,3 +37,34 @@ class TestExchangeItem():
             exp_range=(10e6, 10e9),
             unit='people'
         )
+
+
+    def test_data_example(self):
+        DataSpec(
+            name='population',
+            dims=[
+                ElementSet('regions', ["England", "Wales"])
+            ],
+            dtype='int',
+            default=0,
+            abs_range=(0, float('inf')),
+            exp_range=(10e6, 10e9),
+            unit='people'
+        )
+        da = DataArray.from_spec(spec)
+        assert da.shape == (2, )
+
+        # Expect defaults
+        assert da[0] == 0
+        assert da[1] == 0
+
+        # xarray: da.data[0] or da[0].item()
+
+        # Set slices
+        da[:] = [1, 2]
+
+        # Access by label
+        assert da["England"] == 1
+        assert da["Scotland"] == 2
+
+        # xarray: da.loc["England"]
