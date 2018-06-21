@@ -64,18 +64,21 @@ class SosModelRunAPI(MethodView):
         if action is None:
             data = request.get_json() or request.form
             data_interface.write_sos_model_run(data)
-            response = jsonify({"message": "success"})
         elif action == 'start':
             args = {
                 'directory': data_interface.base_folder
             }
             current_app.config.scheduler.add(sos_model_run_name, args)
-            response = jsonify({"message": "success"})
         elif action == 'kill':
-            print('kill ' + sos_model_run_name)
+            raise NotImplementedError
         elif action == 'remove':
-            print('remove ' + sos_model_run_name)
+            raise NotImplementedError
+        elif action == 'resume':
+            raise NotImplementedError
+        else:
+            raise SyntaxError("SosModelRun action '%s' does not exist" % action)
 
+        response = jsonify({"message": "success"})
         response.status_code = 201
         return response
 
