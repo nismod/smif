@@ -27,8 +27,8 @@ class TestNarrative:
         }
         assert actual == expected
 
-    def test_load_data(self, get_narrative):
-        narrative = get_narrative
+    def test_load_data(self, get_narrative_obj):
+        narrative = get_narrative_obj
         narrative_data = {
             'global': [
                 {'global_parameter': 'value'}
@@ -44,7 +44,7 @@ class TestNarrative:
 
         assert actual == expected
 
-    def test_load_wrong_type(self, get_narrative):
-        narrative = get_narrative
+    def test_load_wrong_type(self, get_narrative_obj):
+        narrative = get_narrative_obj
         with raises(TypeError):
             narrative.data = list(['should', 'b', 'a', 'dict'])

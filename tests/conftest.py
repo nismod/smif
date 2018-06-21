@@ -786,6 +786,18 @@ def get_scenario():
 
 
 @fixture(scope='function')
+def get_narrative():
+    """Return sample narrative
+    """
+    return {
+        "description": "High penetration of SMART technology on the demand side",
+        "filename": "high_tech_dsm.yml",
+        "name": "High Tech Demand Side Management",
+        "narrative_set": "technology"
+    }
+
+
+@fixture(scope='function')
 def get_scenario_data():
     """Return sample scenario_data
     """
@@ -839,7 +851,7 @@ def get_handler(setup_folder_structure, project_config):
 
 
 @fixture
-def get_narrative():
+def get_narrative_obj():
     narrative = Narrative('Energy Demand - High Tech',
                           'A description',
                           'technology')
