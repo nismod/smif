@@ -52,7 +52,11 @@ class DatafileInterface(DataInterface):
         }
 
         for category, folder in config_folders.items():
-            self.file_dir[category] = os.path.join(base_folder, folder, category)
+            dirname = os.path.join(base_folder, folder, category)
+            # ensure each directory exists
+            os.makedirs(dirname, exist_ok=True)
+            # store dirname
+            self.file_dir[category] = dirname
 
     def read_units_file_name(self):
         project_config = self._read_project_config()
