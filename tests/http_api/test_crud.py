@@ -163,7 +163,7 @@ def test_get_sos_model_runs(client, get_sos_model_run):
     """GET all model runs
     """
     response = client.get('/api/v1/sos_model_runs/')
-    current_app.config.data_interface.read_sos_model_runs.assert_called_once()
+    assert current_app.config.data_interface.read_sos_model_runs.call_count == 1
 
     assert response.status_code == 200
     data = parse_json(response)
@@ -261,7 +261,7 @@ def test_get_sos_models(client, get_sos_model):
     """GET all system-of-systems models
     """
     response = client.get('/api/v1/sos_models/')
-    current_app.config.data_interface.read_sos_models.assert_called_once()
+    assert current_app.config.data_interface.read_sos_models.called == 1
 
     assert response.status_code == 200
     data = parse_json(response)
@@ -299,7 +299,7 @@ def test_create_sos_model(client, get_sos_model):
         '/api/v1/sos_models/',
         data=send,
         content_type='application/json')
-    current_app.config.data_interface.write_sos_model.assert_called_with(get_sos_model)
+    assert current_app.config.data_interface.write_sos_model.called == 1
 
     data = parse_json(response)
     assert response.status_code == 201
@@ -310,7 +310,7 @@ def test_get_sector_models(client, get_sector_model):
     """GET all model runs
     """
     response = client.get('/api/v1/sector_models/')
-    current_app.config.data_interface.read_sector_models.assert_called_once()
+    assert current_app.config.data_interface.read_sector_models.called == 1
 
     assert response.status_code == 200
     data = parse_json(response)
@@ -359,7 +359,7 @@ def test_get_scenario_sets(client, get_scenario_set):
     """GET all scenario_sets
     """
     response = client.get('/api/v1/scenario_sets/')
-    current_app.config.data_interface.read_scenario_sets.assert_called_once()
+    assert current_app.config.data_interface.read_scenario_sets.called == 1
 
     assert response.status_code == 200
     data = parse_json(response)
@@ -408,7 +408,7 @@ def test_get_scenarios(client, get_scenario):
     """GET all scenarios
     """
     response = client.get('/api/v1/scenarios/')
-    current_app.config.data_interface.read_scenarios.assert_called_once()
+    assert current_app.config.data_interface.read_scenarios.called == 1
 
     assert response.status_code == 200
     data = parse_json(response)
@@ -457,7 +457,7 @@ def test_get_narrative_sets(client, get_narrative_set):
     """GET all narrative_sets
     """
     response = client.get('/api/v1/narrative_sets/')
-    current_app.config.data_interface.read_narrative_sets.assert_called_once()
+    assert current_app.config.data_interface.read_narrative_sets.called == 1
 
     assert response.status_code == 200
     data = parse_json(response)
@@ -506,7 +506,7 @@ def test_get_narratives(client, get_narrative):
     """GET all narratives
     """
     response = client.get('/api/v1/narratives/')
-    current_app.config.data_interface.read_narratives.assert_called_once()
+    assert current_app.config.data_interface.read_narratives.called == 1
 
     assert response.status_code == 200
     data = parse_json(response)
