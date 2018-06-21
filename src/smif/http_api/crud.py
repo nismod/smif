@@ -267,7 +267,6 @@ class ScenarioAPI(MethodView):
         one: GET /api/vi/scenarios/name
         """
         # return str(current_app.config)
-        print('hello')
         data_interface = current_app.config.data_interface
         if scenario_name is None:
             data = data_interface.read_scenarios()
