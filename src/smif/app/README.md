@@ -21,7 +21,7 @@ in another terminal with:
 
 ```bash
 cd ../http_api/
-FLASK_APP=smif.http_api.app FLASK_DEBUG=1 flask run
+FLASK_APP=smif.http_api FLASK_DEBUG=1 flask run
 ```
 
 Run tests with:
