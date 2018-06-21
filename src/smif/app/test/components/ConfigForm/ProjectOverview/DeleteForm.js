@@ -1,7 +1,7 @@
 import React from 'react'
 import sinon from 'sinon'
 import { expect } from 'chai'
-import { mount, shallow, render } from 'enzyme'
+import { mount, shallow } from 'enzyme'
 import { MemoryRouter } from 'react-router-dom'
 
 import DeleteForm from '../../../../src/components/ConfigForm/General/DeleteForm.js'
@@ -34,7 +34,7 @@ describe('<DeleteForm />', () => {
     })
 
     it('links to the configuration dependency', () => {
-        const form = render(<MemoryRouter>
+        const form = mount(<MemoryRouter>
                 <DeleteForm
                     config_name={'testname'}
                     config_type={'testconfig'}
@@ -47,7 +47,7 @@ describe('<DeleteForm />', () => {
                         }
                     ]} />
             </MemoryRouter>)
-        const link = form.find('a[href="test_link/Test"]')
+        const link = form.find('a[href*="test_link/Test"]')
         expect(link.length).to.equal(1)
     })
 
