@@ -21,7 +21,7 @@ Enable more detailed debug information by activating the Flask
 debug flag and smif verbosity:
 
 ```bash
-FLASK_DEBUG=1 smif -v app
+FLASK_DEBUG=1 smif -v app -d src/smif/sample_project
 ```
 
 Run tests with:
