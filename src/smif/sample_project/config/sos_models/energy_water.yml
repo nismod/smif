@@ -28,6 +28,11 @@ dependencies:
   source_model_output: water_demand
   sink_model: water_supply
   sink_model_input: water_demand
+- source_model: water_supply
+  source_model_output: reservoir_level
+  sink_model: water_supply
+  sink_model_input: reservoir_level
+  timestep_offset: -1  # suggested declaration of inter-timestep dep.
 max_iterations: 100
 convergence_absolute_tolerance: 1e-05
 convergence_relative_tolerance: 1e-05

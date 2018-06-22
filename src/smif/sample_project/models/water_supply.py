@@ -46,7 +46,7 @@ class WaterSupplySectorModel(SectorModel):
         final_water_demand = (population * per_capita_water_demand) + water_demand
 
         raininess = sum(data.get_data('raininess'))  # megaliters
-        reservoir_level = data.get_data('reservoir_level')  # megaliters
+        reservoir_level = sum(data.get_data('reservoir_level'))  # megaliters
 
         self.logger.debug(
             "Parameters:\n "
@@ -77,8 +77,10 @@ class WaterSupplySectorModel(SectorModel):
         data.set_results("cost", np.ones((3, 1)) * cost / 3)
         data.set_results("energy_demand", np.ones((3, 1)) * 3)
 
-        # state data output
-        data.set_results("reservoir_level", [[instance.reservoir_level]])
+        # state data output - hack around using national resolution to start
+        output = np.zeros((3, 1))
+        output[0, 0] = instance.reservoir_level
+        data.set_results("reservoir_level", output)
 
     def extract_obj(self, results):
         return results['cost'].sum()
