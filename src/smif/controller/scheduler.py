@@ -1,11 +1,11 @@
-""" Implements methods for loading, building and executing model runs
-and a Scheduler that runs instances of smif as a subprocess
-"""
 from subprocess import PIPE, Popen
 
 
 class Scheduler(object):
-
+    """The scheduler can run instances of smif as a subprocess
+    and can provide information whether the modelrun is running,
+    is done or has failed.
+    """
     def __init__(self):
         self._process = {}
         self._output = {}
