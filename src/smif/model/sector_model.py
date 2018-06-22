@@ -38,9 +38,7 @@ import importlib
 import logging
 import os
 from abc import ABCMeta, abstractmethod
-from collections import defaultdict
 
-from smif import StateData
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.model import Model
@@ -94,7 +92,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         super().__init__(name)
 
         self.path = ''
-        self._initial_state = defaultdict(dict)
+        self.initial_conditions = []
         self.interventions = []
 
         self.logger = logging.getLogger(__name__)
@@ -115,7 +113,7 @@ class SectorModel(Model, metaclass=ABCMeta):
             'outputs': [out.as_dict() for out in self.outputs.values()],
             'parameters': self.parameters.as_list(),
             'interventions': self.interventions,
-            'initial_conditions': self._initial_state
+            'initial_conditions': self.initial_conditions
         }
         return config
 
@@ -380,11 +378,7 @@ class SectorModelBuilder(object):
     def add_initial_conditions(self, initial_conditions):
         """Adds initial conditions (state) for a model
         """
-        state_data = filter(
-            lambda d: len(d.data) > 0,
-            [self.intervention_state_from_data(datum) for datum in initial_conditions]
-        )
-        self._sector_model._initial_state = list(state_data)
+        self._sector_model.initial_conditions = initial_conditions
 
     def add_parameters(self, parameter_config):
         """Add parameter configuration to sector model
@@ -461,22 +455,6 @@ class SectorModelBuilder(object):
         assert self._sector_model is not None, msg
 
         self._sector_model.interventions = intervention_list
-
-    @staticmethod
-    def intervention_state_from_data(intervention_data):
-        """Unpack an intervention from the initial system to extract StateData
-        """
-        target = None
-        data = {}
-        for key, value in intervention_data.items():
-            if key == "name":
-                target = value
-
-            if isinstance(value, dict) and "is_state" in value and value["is_state"]:
-                del value["is_state"]
-                data[key] = value
-
-        return StateData(target, data)
 
     def validate(self):
         """Check and/or assert that the sector model is correctly set up
