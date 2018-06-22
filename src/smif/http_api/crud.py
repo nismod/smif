@@ -29,7 +29,6 @@ class SosModelRunAPI(MethodView):
         all: GET /api/v1/sos_model_runs/
         one: GET /api/vi/sos_model_runs/name
         """
-        # return str(current_app.config)
         data_interface = current_app.config.data_interface
 
         if action is None:
