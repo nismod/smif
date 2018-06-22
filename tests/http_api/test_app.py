@@ -234,10 +234,9 @@ def test_create_sector_model(client, get_handler, get_sector_model):
     assert response.status_code == 201
     assert data['message'] == 'success'
 
-    # ignore initial conditions and interventions
+    # ignore interventions
     # at least until DataFileInterface and the app can handle writing them
     expected = get_sector_model
-    expected['initial_conditions'] = []
     expected['interventions'] = []
     actual = get_handler.read_sector_model(name)
     assert actual == expected

@@ -47,7 +47,6 @@ class SosModel(CompositeModel):
         # systems, interventions and (system) state
         self.timesteps = []
         self.interventions = InterventionRegister()
-        self.initial_conditions = []
 
     def as_dict(self):
         """Serialize the SosModel object

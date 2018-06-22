@@ -506,7 +506,7 @@ class DatafileInterface(DataInterface):
         with open(fname, 'r') as file_handle:
             reader = csv.reader(file_handle)
             header = next(reader)
-            if header != ('name', 'build_date'):
+            if header != ['name', 'build_date']:
                 raise DataMismatchError(
                     'Expected state file to have header (name, build_date), got %s' % header)
             state = list(reader)

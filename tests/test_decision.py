@@ -61,18 +61,22 @@ class TestPreSpecified:
         dm = PreSpecified(timesteps, plan)
 
         actual = dm.get_state(2010)
-        expected = {2010: ['small_pumping_station_oxford']}
+        expected = [('small_pumping_station_oxford', 2010)]
         assert actual == expected
 
         actual = dm.get_state(2015)
-        expected = {2010: ['small_pumping_station_oxford'],
-                    2015: ['small_pumping_station_abingdon']}
+        expected = [
+            ('small_pumping_station_oxford', 2010),
+            ('small_pumping_station_abingdon', 2015),
+        ]
         assert actual == expected
 
         actual = dm.get_state(2020)
-        expected = {2010: ['small_pumping_station_oxford'],
-                    2015: ['small_pumping_station_abingdon'],
-                    2020: ['large_pumping_station_oxford']}
+        expected = [
+            ('small_pumping_station_oxford', 2010),
+            ('small_pumping_station_abingdon', 2015),
+            ('large_pumping_station_oxford', 2020),
+        ]
         assert actual == expected
 
 
@@ -143,15 +147,21 @@ class TestDecisionManager():
     def test_get_state(self, get_strategies):
         dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
         actual = dm.get_state(2010)
-        expected = {2011: ['carrington_retire'],
-                    2012: ['nuclear_large']}
-        assert actual == expected
+        expected = [
+            ('carrington_retire', 2011),
+            ('nuclear_large', 2012),
+        ]
+        # assert actual == expected
+        # we don't mind the order
+        assert sorted(actual) == sorted(expected)
 
         # actual = dm.get_state(2015)
-        # expected = {2011: ['carrington_retire']}
+        # expected = [('carrington_retire', 2011)]
         # assert actual == expected
 
         actual = dm.get_state(2015)
-        expected = {2011: ['carrington_retire'],
-                    2012: ['nuclear_large']}
-        assert actual == expected
+        expected = [
+            ('carrington_retire', 2011),
+            ('nuclear_large', 2012),
+        ]
+        assert sorted(actual) == sorted(expected)

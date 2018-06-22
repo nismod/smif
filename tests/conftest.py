@@ -117,69 +117,9 @@ def initial_system():
     """Initial system (interventions with build_date)
     """
     return [
-        {
-            'name': 'water_asset_a',
-            'capacity': {
-                'value': 5,
-                'units': 'GW'
-            },
-            'operational_lifetime': {
-                'value': 150,
-                'units': "years"
-            },
-            'economic_lifetime': {
-                'value': 50,
-                'units': "years"
-            },
-            'capital_cost': {
-                'value': 50,
-                'units': "million £/km"
-            },
-            'location': 'oxford',
-            'build_date': 2017
-        },
-        {
-            'name': 'water_asset_b',
-            'capacity': {
-                'value': 15,
-                'units': 'GW'
-            },
-            'operational_lifetime': {
-                'value': 150,
-                'units': "years"
-            },
-            'economic_lifetime': {
-                'value': 50,
-                'units': "years"
-            },
-            'capital_cost': {
-                'value': 50,
-                'units': "million £/km"
-            },
-            'location': 'oxford',
-            'build_date': 2017
-        },
-        {
-            'name': 'water_asset_c',
-            'capacity': {
-                'value': 25,
-                'units': 'GW'
-            },
-            'operational_lifetime': {
-                'value': 150,
-                'units': "years"
-            },
-            'economic_lifetime': {
-                'value': 50,
-                'units': "years"
-            },
-            'capital_cost': {
-                'value': 50,
-                'units': "million £/km"
-            },
-            'location': 'oxford',
-            'build_date': 2017
-        }
+        ('water_asset_a', 2017),
+        ('water_asset_b', 2017),
+        ('water_asset_c', 2017),
     ]
 
 
@@ -188,26 +128,7 @@ def initial_system_bis():
     """An extra intervention for the initial system
     """
     return [
-        {
-            'name': 'water_asset_d',
-            'capacity': {
-                'value': 15,
-                'units': 'GW'
-            },
-            'operational_lifetime': {
-                'value': 150,
-                'units': "years"
-            },
-            'economic_lifetime': {
-                'value': 50,
-                'units': "years"
-            },
-            'capital_cost': {
-                'value': 50,
-                'units': "million £/km"
-            },
-            'location': 'oxford'
-        }
+        ('water_asset_d', 2017)
     ]
 
 
