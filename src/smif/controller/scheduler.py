@@ -25,6 +25,15 @@ class Scheduler(object):
         ---------
         Exception
             When the modelrun was already started
+
+        Notes
+        -----
+        There is no queuing mechanism implemented, each `add`
+        will directly start a subprocess. This means that it
+        is possible to run multiple modelruns concurrently.
+        This may cause conflicts, it depends on the
+        implementation whether a certain sector model / wrapper
+        touches the filesystem or other shared resources.
         """
         if model_run_name not in self._process or self._process[model_run_name].poll() is None:
             self._process[model_run_name] = Popen(
