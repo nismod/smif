@@ -295,8 +295,6 @@ class DatafileInterface(DataInterface):
 
         sector_model['interventions'] = \
             self.read_sector_model_interventions(sector_model_name)
-        sector_model['initial_conditions'] = \
-            self.read_sector_model_initial_conditions(sector_model_name)
 
         return sector_model
 
@@ -311,10 +309,9 @@ class DatafileInterface(DataInterface):
         if self._sector_model_exists(sector_model['name']):
             raise DataExistsError("sector_model '%s' already exists" % sector_model['name'])
 
-        if sector_model['interventions'] or sector_model['initial_conditions']:
-            self.logger.warning("Ignoring interventions and initial conditions")
+        if sector_model['interventions']:
+            self.logger.warning("Ignoring interventions")
             sector_model['interventions'] = []
-            sector_model['initial_conditions'] = []
 
         self._write_yaml_file(
             self.file_dir['sector_models'], sector_model['name'], sector_model)
@@ -416,7 +413,13 @@ class DatafileInterface(DataInterface):
             The name of the initial conditions yml file to read in
         """
         filepath = self.file_dir['initial_conditions']
-        return self._read_yaml_file(filepath, filename, extension='')
+        _, ext = os.path.splitext(filename)
+        if ext == '.csv':
+            initial_conditions = self._read_state_file(os.path.join(filepath, filename))
+        else:
+            dicts = self._read_yaml_file(filepath, filename, extension='')
+            initial_conditions = [(d['name'], d['build_date']) for d in dicts]
+        return initial_conditions
 
     def read_sector_model_initial_conditions(self, sector_model_name):
         """Read a SectorModel's initial conditions

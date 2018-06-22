@@ -63,3 +63,17 @@
     value: 3
     units: ML
     is_state: True
+- name: Kielder Water
+  location: England
+  capacity:
+    value: 500
+    units: ML
+  operational_lifetime:
+    value: 300
+    units: years
+  economic_lifetime:
+    value: 150
+    units: years
+  capital_cost:
+    value: 15
+    units: million £
