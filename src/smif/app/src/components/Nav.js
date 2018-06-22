@@ -6,7 +6,7 @@ import { NavLink, Route } from 'react-router-dom';
 import Footer from '../containers/Footer'
 import {fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives} from '../actions/actions.js'
 
-import {FaHome, FaSliders, FaSitemap, FaCode, FaBarChart} from 'react-icons/lib/fa'
+import {FaHome, FaTasks, FaSliders, FaSitemap, FaCode, FaBarChart} from 'react-icons/lib/fa'
 import { Badge, Button } from 'reactstrap'
 
 class Nav extends Component {
@@ -64,6 +64,8 @@ class Nav extends Component {
     }
 
     renderNav(sos_model_runs, sos_models, sector_models, scenario_sets, narrative_sets, narratives) {
+        var job_status = ['unknown', 'running', 'done', 'failed']
+
         return (
             <nav className="col-12 col-md-3 col-xl-2 bg-light sidebar">
                 <ul className="nav flex-column">
@@ -79,8 +81,30 @@ class Nav extends Component {
                 <span>Simulation</span>
                 </h6>
                 <ul className="nav flex-column mb-2">
+
                 <li className="nav-item">
-                    <NavLink className="nav-link" to="/configure/sos-model-run" >
+                    <NavLink exact className="nav-link" to="/jobs/" >
+                        <FaTasks size={20}/>
+                        Jobs
+                        <Badge color="secondary">{sos_model_runs.length}</Badge>
+                    </NavLink>
+                    <Route path="/jobs/" render={() =>
+                        <ul className="nav flex-column">
+                        {job_status.map(status =>
+                            <li key={'nav_' + status} className="nav-item">
+                                <NavLink
+                                    className="nav-link"
+                                    to={"/jobs/status=" + status} >
+                                        {status}
+                                </NavLink>
+                            </li>
+                        )}
+                        </ul>
+                    }/>
+                </li>
+
+                <li className="nav-item">
+                    <NavLink exact className="nav-link" to="/configure/sos-model-run" >
                         <FaSliders size={20}/>
                         Model Runs
                         <Badge color="secondary">{sos_model_runs.length}</Badge>

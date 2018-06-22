@@ -33,16 +33,27 @@ class SosModelRunAPI(MethodView):
 
         if action is None:
             if sos_model_run_name is None:
-                data = data_interface.read_sos_model_runs()
-                response = jsonify(data)
-            else:
-                data = data_interface.read_sos_model_run(sos_model_run_name)
-                response = jsonify(data)
-        elif action == 'status':
-            status = current_app.config.scheduler.get_status(sos_model_run_name)
-            response = jsonify(status)
 
-        return response
+                sos_model_runs = data_interface.read_sos_model_runs()
+
+                if 'status' in request.args.keys():
+                    # filered: GET /api/v1/sos_model_runs?status=done
+                    data = []
+                    for sos_model_run in sos_model_runs:
+                        status = current_app.config.scheduler.get_status(sos_model_run['name'])
+                        if status['status'] == request.args['status']:
+                            data.append(sos_model_run)
+                else:
+                    # all: GET /api/v1/sos_model_runs/
+                    data = sos_model_runs
+            else:
+                # one: GET /api/vi/sos_model_runs/name
+                data = data_interface.read_sos_model_run(sos_model_run_name)
+        elif action == 'status':
+            # action: GET /api/vi/sos_model_runs/name/status
+            data = current_app.config.scheduler.get_status(sos_model_run_name)
+
+        return jsonify(data)
 
     def post(self, sos_model_run_name=None, action=None):
         """

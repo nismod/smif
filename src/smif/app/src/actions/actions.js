@@ -18,7 +18,7 @@ function receiveSmifDetails(json) {
 
 export function fetchSmifDetails(){
     return function (dispatch) {
-        
+
         // inform the app that the API request is starting
         dispatch(requestSmifDetails())
 
@@ -50,21 +50,33 @@ function receiveSosModelRuns(json) {
     }
 }
 
-export function fetchSosModelRuns(){
+export function fetchSosModelRuns(filter = undefined){
     return function (dispatch) {
+        console.debug(filter)
 
         // inform the app that the API request is starting
         dispatch(requestSosModelRuns())
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/')
-            .then(
-                response => response.json(),
-                error => console.log('An error occurred.', error)
-            )
-            .then(
-                json => dispatch(receiveSosModelRuns(json))
-            )
+        if (filter == undefined) {
+            return fetch('/api/v1/sos_model_runs/')
+                .then(
+                    response => response.json(),
+                    error => console.log('An error occurred.', error)
+                )
+                .then(
+                    json => dispatch(receiveSosModelRuns(json))
+                )
+        } else {
+            return fetch('/api/v1/sos_model_runs/?' + filter)
+                .then(
+                    response => response.json(),
+                    error => console.log('An error occurred.', error)
+                )
+                .then(
+                    json => dispatch(receiveSosModelRuns(json))
+                )
+        }
     }
 }
 
@@ -163,6 +175,24 @@ export function deleteSosModelRun(sosModelRunName){
             )
             .then(
                 data => dispatch(fetchSosModelRuns())
+            )
+    }
+}
+
+export function startSosModelRun(sosModelRunName){
+    return function (dispatch) {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/sos_model_runs/' + sosModelRunName + '/start', {
+            method: 'post',
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
             )
     }
 }
