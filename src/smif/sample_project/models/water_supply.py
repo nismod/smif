@@ -11,7 +11,6 @@
 import logging
 
 import numpy as np
-from smif import StateData
 from smif.model.sector_model import SectorModel
 
 
@@ -21,46 +20,47 @@ class WaterSupplySectorModel(SectorModel):
     system.
     """
     def simulate(self, data):
-        """
+        """Simulate water supply
 
         Arguments
         =========
         data
-            - scenario data, e.g. expected level of rainfall
-            - decisions
-                - asset build instructions, demand-side interventions to apply
-            - state
-                - existing system/network (unless implementation means maintaining
-                system in sector model)
-                - system state, e.g. reservoir level at year start
+            - inputs/parameters, implicitly includes:
+                - scenario data, e.g. expected level of rainfall
+                - data output from other models in workflow
+                - parameters set or adjusted for this model run
+                - system state data, e.g. reservoir level at year start
+            - system state, implicity includes:
+                - initial existing system/network
+                - decisions, e.g. asset build instructions, demand-side interventions to apply
         """
-
-        self.logger.debug("Initial conditions: %s", self._initial_state)
-
-        state = self._initial_state[0]
-
-        # unpack inputs
-        per_capita_water_demand = \
-            data.get_parameter('per_capita_water_demand')  # liter/person
-
-        population = data.get_data('population')  # people
-
-        water_demand = (population * per_capita_water_demand) + \
-            data.get_data('water_demand')  # liter
-
-        raininess = sum(data.get_data('raininess'))  # megaliters
-
-        reservoir_level = state.data['current_level']['value'] \
-            - (1e-6 * water_demand.sum())  # megaliters
-
-        self.logger.debug("Parameters:\n  Population: %s\n  Raininess: %s\n "
-                          "Reservoir level: %s\n  ", population.sum(),
-                          raininess.sum(), reservoir_level)
-
-        # unpack assets
+        # State
+        self.logger.debug("State: %s", data.get_state())
         number_of_treatment_plants = 2
 
-        self.logger.debug(state)
+        # Inputs
+        per_capita_water_demand = data.get_parameter('per_capita_water_demand')  # liter/person
+        population = data.get_data('population')  # people
+
+        water_demand = data.get_data('water_demand')  # liter
+        final_water_demand = (population * per_capita_water_demand) + water_demand
+
+        raininess = sum(data.get_data('raininess'))  # megaliters
+        reservoir_level = data.get_data('reservoir_level')  # megaliters
+
+        self.logger.debug(
+            "Parameters:\n "
+            "Population: %s\n"
+            "Raininess: %s\n "
+            "Reservoir level: %s\n  "
+            "Final demand: %s\n",
+            population.sum(),
+            raininess.sum(),
+            reservoir_level,
+            final_water_demand
+        )
+
+        # Parameters
         self.logger.debug(data.get_parameters())
 
         # simulate (wrapping toy model)
@@ -69,14 +69,16 @@ class WaterSupplySectorModel(SectorModel):
         instance.number_of_treatment_plants = number_of_treatment_plants
         instance.reservoir_level = reservoir_level
 
+        # run
         water, cost = instance.run()
+
+        # set results
         data.set_results('water', np.ones((3, 1)) * water / 3)
         data.set_results("cost", np.ones((3, 1)) * cost / 3)
         data.set_results("energy_demand", np.ones((3, 1)) * 3)
 
-        state = StateData('Kielder Water', {
-            'current_level': {'value': instance.reservoir_level}
-        })
+        # state data output
+        data.set_results("reservoir_level", [[instance.reservoir_level]])
 
     def extract_obj(self, results):
         return results['cost'].sum()
