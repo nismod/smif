@@ -97,7 +97,7 @@ class DecisionManager(object):
 
         Deprecated - to be pushed down into DataHandle
         """
-        self._decision_modules[0].get_state(timestep, iteration)
+        return self._decision_modules[0].get_state(timestep, iteration)
 
 
 class DecisionModule(metaclass=ABCMeta):
@@ -224,7 +224,7 @@ class PreSpecified(DecisionModule):
         pass
 
     def get_state(self, timestep, iteration=None):
-        """Return a dict of intervention names built in timestep
+        """Return a list of (intervention name, build year) built in timestep
 
         Returns
         -------
@@ -237,16 +237,13 @@ class PreSpecified(DecisionModule):
         {2010: ['intervention_a']}
 
         """
-        state = {}
+        state = []
 
         for intervention in self.register:
             build_year = intervention['build_year']
             name = intervention['name']
             if self.buildable(build_year, timestep):
-                if build_year in state:
-                    state[build_year].append(name)
-                else:
-                    state[build_year] = [name]
+                state.append((name, build_year))
 
         return state
 
