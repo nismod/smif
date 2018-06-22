@@ -9,7 +9,6 @@ and the dependencies between the models.
 import logging
 
 import networkx
-from smif.data_layer import DataHandle
 from smif.intervention import Intervention, InterventionRegister
 from smif.model import CompositeModel, Model, element_after, element_before
 from smif.model.model_set import ModelSet
@@ -99,15 +98,7 @@ class SosModel(CompositeModel):
         """
         for model in self.sector_models.values():
             # get custom data handle for the Model
-            model_data_handle = DataHandle(
-                data_handle._store,
-                data_handle._modelrun_name,
-                data_handle._current_timestep,
-                data_handle._timesteps,
-                model,
-                data_handle._modelset_iteration,
-                data_handle._decision_iteration
-            )
+            model_data_handle = data_handle.derive_for(model)
             model.before_model_run(model_data_handle)
 
     def simulate(self, data_handle):

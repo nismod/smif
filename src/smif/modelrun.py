@@ -141,6 +141,7 @@ class ModelRunner(object):
         Arguments
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
+        store : :class:`smif.data_layer.DataInterface`
         """
         # Initialise each of the sector models
         self.logger.info("Initialising each of the sector models")
@@ -171,11 +172,11 @@ class ModelRunner(object):
                 for timestep in timesteps:
                     self.logger.info('Running timestep %s', timestep)
 
-                    # this should be pushed down into the responsibility of DataHandle and
-                    # DataInterface
-                    # - DecisionManager/Module sets state for each timestep, iteration
-                    # - SosModel/Model calls through DataHandle to access 'current' state
+                    # setting state may be pushed down into the responsibility of
+                    # DecisionManager/Module sets state for each timestep, iteration
+                    # - SosModel/Model then calls through DataHandle to access 'current' state
                     state = decision_manager.get_state(timestep, iteration)
+                    store.write_state(state, model_run.name, timestep, iteration)
 
                     data_handle = DataHandle(
                         store=store,
@@ -183,8 +184,7 @@ class ModelRunner(object):
                         current_timestep=timestep,
                         timesteps=model_run.model_horizon,
                         model=model_run.sos_model,
-                        decision_iteration=iteration,
-                        state=state
+                        decision_iteration=iteration
                     )
                     model_run.sos_model.simulate(data_handle)
         return data_handle
