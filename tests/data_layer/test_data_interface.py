@@ -13,9 +13,9 @@ from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.load import dump
 
-from ..convert.conftest import remap_months, remap_months_csv
 from ..convert.conftest import twenty_four_hours as hourly_day
 from ..convert.conftest import twenty_four_hours_csv as hourly_day_csv
+from ..convert.conftest import remap_months, remap_months_csv
 
 
 class TestDataInterface():
@@ -635,7 +635,7 @@ class TestDatafileInterface():
                                      get_handler):
         path = os.path.join(str(setup_folder_structure), 'data', 'initial_conditions',
                             'system.yml')
-        dump(initial_system, path)
+        dump([{'name': n, 'build_date': d} for n, d in initial_system], path)
         actual = get_handler.read_initial_conditions('system.yml')
         assert actual == initial_system
 
