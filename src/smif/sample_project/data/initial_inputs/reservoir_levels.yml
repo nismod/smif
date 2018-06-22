@@ -1,0 +1,6 @@
+# Initial inputs will be defined like scenario inputs
+# to handle cases where a model depends on some output from timestep t-1
+# sketching this in YAML to indicate
+- reservoir: Kielder Water # intervention dimension
+  value: 3 # value
+  units: Ml
