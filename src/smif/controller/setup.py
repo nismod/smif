@@ -7,18 +7,19 @@ import pkg_resources
 LOGGER = logging.getLogger(__name__)
 
 
-def setup_project_folder(args):
+def copy_project_folder(directory):
     """Creates folder structure in the target directory
 
     Parameters
     ----------
-    args
+    directory:
+        Location where the sample project should be copied to
     """
-    _recursive_overwrite('smif', 'sample_project', args.directory)
-    if args.directory == ".":
+    _recursive_overwrite('smif', 'sample_project', directory)
+    if directory == ".":
         dirname = "the current directory"
     else:
-        dirname = args.directory
+        dirname = directory
     LOGGER.info("Created sample project in %s", dirname)
 
 

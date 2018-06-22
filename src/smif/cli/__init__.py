@@ -86,8 +86,7 @@ from argparse import ArgumentParser
 import smif
 import smif.cli.log
 
-from smif.controller.execute import execute_model_run
-from smif.controller.setup import setup_project_folder
+from smif.controller import copy_project_folder, execute_model_run, Scheduler
 from smif.http_api import create_app
 from smif.data_layer import DatafileInterface
 
@@ -126,23 +125,13 @@ def run_model_runs(args):
     execute_model_run(model_run_ids, args.directory, args.interface, args.warm)
 
 
-def make_get_data_interface(args):
-    """Use args to make a function returning a suitable DataInterface
-    """
-    def getter():
-        """Return a DataInterface
-        """
-        return DatafileInterface(args.directory)
-    return getter
-
-
 def _run_server(args):
     app_folder = pkg_resources.resource_filename('smif', 'app/dist')
-    get_data_interface = make_get_data_interface(args)
     app = create_app(
         static_folder=app_folder,
         template_folder=app_folder,
-        get_data_interface=get_data_interface
+        data_interface=DatafileInterface(args.directory),
+        scheduler=Scheduler()
     )
     app.run(host='0.0.0.0', port=5000, threaded=True)
 
@@ -179,6 +168,12 @@ def run_app(args):
 
     # Create backend server process
     _run_server(args)
+
+
+def setup_project_folder(args):
+    """Setup a sample project
+    """
+    copy_project_folder(args.directory)
 
 
 def parse_arguments():
