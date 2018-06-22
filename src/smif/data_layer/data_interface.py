@@ -166,6 +166,18 @@ class DataInterface(metaclass=ABCMeta):
     def update_narrative(self, narrative):
         raise NotImplementedError()
 
+    @abstractmethod
+    def read_state(self, modelrun_name, timestep=None, decision_iteration=None):
+        """state is a list of (intervention_name, build_year), output of decision module/s
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):
+        """state is a list of (intervention_name, build_year), output of decision module/s
+        """
+        raise NotImplementedError()
+
     def read_parameters(self, modelrun_name, model_name):
         """Read global and model-specific parameter values for a given modelrun
         and model.

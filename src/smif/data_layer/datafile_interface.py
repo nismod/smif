@@ -437,6 +437,74 @@ class DatafileInterface(DataInterface):
             initial_condition_list.extend(initial_conditions)
         return initial_condition_list
 
+    def read_state(self, modelrun_name, timestep=None, decision_iteration=None):
+        """Read list of (intervention_name, build_date) for a given modelrun, timestep,
+        decision
+        """
+        fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
+        sos_model_run = self.read_sos_model_run(modelrun_name)
+        if timestep is None:
+            if os.path.exists(fname):
+                state = self._read_state_file(fname)
+            else:
+                # round-about way of getting to interventions for a given model run
+                state = []
+                sos_model = self.read_sos_model(sos_model_run['sos_model'])
+                for sector_model_name in sos_model['sector_models']:
+                    ics = self.read_sector_model_initial_conditions(sector_model_name)
+                    state.extend([(ic['name'], ic['build_date']) for ic in ics])
+                # rewrite initial state to file
+                self.write_state(state, modelrun_name, timestep, decision_iteration)
+        else:
+            state = self._read_state_file(fname)
+        return state
+
+    def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):
+        """Write state (list of intervention_name, build_date) to file
+        """
+        fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
+        with open(fname, 'w') as file_handle:
+            writer = csv.DictWriter(file_handle, fieldnames=(
+                'name',
+                'build_date'
+            ))
+            writer.writeheader()
+            for row in state:
+                writer.writerow(row)
+
+    def _get_state_filename(self, modelrun_name, timestep=None, decision_iteration=None):
+        """Compose a unique filename for state file:
+                state_{timestep|0000}[_decision_{iteration}].csv
+        """
+        results_dir = self.file_dir['results']
+        if timestep is None and decision_iteration is None:
+            fname = os.path.join(
+                results_dir, 'state_0000.csv')
+        elif timestep is not None and decision_iteration is None:
+            fname = os.path.join(
+                results_dir, 'state_{}.csv'.format(timestep))
+        elif timestep is None and decision_iteration is not None:
+            fname = os.path.join(
+                results_dir, 'state_0000_decision_{}.csv'.format(decision_iteration))
+        else:
+            fname = os.path.join(
+                results_dir, 'state_{}_decision_{}.csv'.format(timestep, decision_iteration))
+
+        return fname
+
+    @staticmethod
+    def _read_state_file(fname):
+        """Read list of intervention_name, build_date from state file
+        """
+        with open(fname, 'r') as file_handle:
+            reader = csv.reader(file_handle)
+            header = next(reader)
+            if header != ('name', 'build_date'):
+                raise DataMismatchError(
+                    'Expected state file to have header (name, build_date), got %s' % header)
+            state = list(reader)
+        return state
+
     def read_region_definitions(self):
         """Read region_definitions from project configuration
 
