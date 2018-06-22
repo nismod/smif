@@ -52,7 +52,11 @@ class DatafileInterface(DataInterface):
         }
 
         for category, folder in config_folders.items():
-            self.file_dir[category] = os.path.join(base_folder, folder, category)
+            dirname = os.path.join(base_folder, folder, category)
+            # ensure each directory exists
+            os.makedirs(dirname, exist_ok=True)
+            # store dirname
+            self.file_dir[category] = dirname
 
     def read_units_file_name(self):
         project_config = self._read_project_config()
@@ -1298,8 +1302,7 @@ class DatafileInterface(DataInterface):
 
         """
         results_path = self._get_coefficients_path(source_name, destination_name)
-        buffer = self.ndarray_to_buffer(data)
-        self._write_data_to_native_file(results_path, buffer)
+        self._write_data_to_native_file(results_path, data)
 
     def _get_coefficients_path(self, source_name, destination_name):
 
@@ -1373,14 +1376,16 @@ class DatafileInterface(DataInterface):
         if data.ndim == 3:
             raise NotImplementedError
         elif data.ndim == 2:
+            region_names = self.read_region_names(spatial_resolution)
+            interval_names = self.read_interval_names(temporal_resolution)
+            assert data.shape == (len(region_names), len(interval_names))
+
             if self.storage_format == 'local_csv':
-                region_names = self.read_region_names(spatial_resolution)
-                interval_names = self.read_interval_names(temporal_resolution)
-                csv_data = self.ndarray_to_data_list(data, region_names, interval_names)
+                csv_data = self.ndarray_to_data_list(
+                    data, region_names, interval_names, timestep=timestep)
                 self._write_data_to_csv(results_path, csv_data)
             elif self.storage_format == 'local_binary':
-                buffer = self.ndarray_to_buffer(data)
-                self._write_data_to_native_file(results_path, buffer)
+                self._write_data_to_native_file(results_path, data)
         else:
             raise DataMismatchError(
                 "Expected to write either timestep x region x interval or " +
@@ -1720,7 +1725,9 @@ class DatafileInterface(DataInterface):
     @staticmethod
     def _write_data_to_native_file(filepath, data):
         with pa.OSFile(filepath, 'wb') as f:
-            f.write(data)
+            f.write(
+                pa.serialize(data).to_buffer()
+            )
 
     @staticmethod
     def _read_yaml_file(path, filename=None, extension='.yml'):

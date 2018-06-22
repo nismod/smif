@@ -270,6 +270,19 @@ class DataHandle(object):
             "Write %s %s %s %s", self._model_name, output_name, self._current_timestep,
             self._modelset_iteration)
 
+        num_regions = len(self._outputs[output_name].spatial_resolution)
+        num_intervals = len(self._outputs[output_name].temporal_resolution)
+        expected_shape = (num_regions, num_intervals)
+        if data.shape != expected_shape:
+            raise ValueError(
+                "Tried to set results with shape {}, expected {} for {}:{}".format(
+                    data.shape,
+                    expected_shape,
+                    self._model_name,
+                    output_name
+                )
+            )
+
         self._store.write_results(
             self._modelrun_name,
             self._model_name,
