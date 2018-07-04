@@ -52,7 +52,6 @@ function receiveSosModelRuns(json) {
 
 export function fetchSosModelRuns(filter = undefined){
     return function (dispatch) {
-        console.debug(filter)
 
         // inform the app that the API request is starting
         dispatch(requestSosModelRuns())
@@ -110,6 +109,40 @@ export function fetchSosModelRun(modelrunid){
             )
             .then(
                 json => dispatch(receiveSosModelRun(json))
+            )
+    }
+}
+
+export const REQUEST_SOS_MODEL_RUN_STATUS = 'REQUEST_SOS_MODEL_RUN_STATUS'
+function requestSosModelRunStatus(){
+    return {
+        type: REQUEST_SOS_MODEL_RUN_STATUS
+    }
+}
+
+export const RECEIVE_SOS_MODEL_RUN_STATUS = 'RECEIVE_SOS_MODEL_RUN_STATUS'
+function receiveSosModelRunStatus(json) {
+    return {
+        type: RECEIVE_SOS_MODEL_RUN_STATUS,
+        sos_model_run_status: json,
+        receivedAt: Date.now()
+    }
+}
+
+export function fetchSosModelRunStatus(modelrunid){
+    return function (dispatch) {
+
+        // inform the app that the API request is starting
+        dispatch(requestSosModelRunStatus())
+
+        // make API request, returning a promise
+        return fetch('/api/v1/sos_model_runs/' + modelrunid + '/status')
+            .then(
+                response => response.json(),
+                error => console.log('An error occurred.', error)
+            )
+            .then(
+                json => dispatch(receiveSosModelRunStatus(json))
             )
     }
 }
@@ -181,6 +214,8 @@ export function deleteSosModelRun(sosModelRunName){
 
 export function startSosModelRun(sosModelRunName){
     return function (dispatch) {
+
+        console.debug('start modelrun')
 
         // make API request, returning a promise
         return fetch('/api/v1/sos_model_runs/' + sosModelRunName + '/start', {
