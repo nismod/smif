@@ -8,6 +8,7 @@ import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets
 import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createScenario, createNarrativeSet, createNarrative } from '../../../actions/actions.js'
 import { saveSosModelRun,   saveSosModel,   saveSectorModel,   saveScenarioSet,   saveScenario,   saveNarrativeSet,   saveNarrative   } from '../../../actions/actions.js'
 import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteScenario, deleteNarrativeSet, deleteNarrative } from '../../../actions/actions.js'
+import { startSosModelRun } from '../../../actions/actions.js'
 
 import IntroBlock from '../../../components/ConfigForm/General/IntroBlock.js'
 import Popup from '../../../components/ConfigForm/General/Popup.js'
@@ -336,7 +337,7 @@ class ProjectOverview extends Component {
                         <IntroBlock title="Model Runs" intro="A model run brings together a system-of-systems model definition with timesteps over which planning takes place, and a choice of scenarios and narratives to population the placeholder scenario sets in the system-of-systems model.">
                             <input className="btn btn-success" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                         </IntroBlock>
-                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" resultLink="/jobs/result/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='sos-models'}>

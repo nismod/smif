@@ -4,21 +4,20 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
 import { fetchSosModelRuns, startSosModelRun } from '../../../actions/actions.js'
-
+import IntroBlock from '../../../components/ConfigForm/General/IntroBlock.js'
+import ProjectOverviewItem from '../../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
 
 class JobsOverview extends Component {
     constructor(props) {
         super(props)
 
-        this.name = this.props.match.params.name
-
-        this.onStartHandler = this.onStartHandler.bind(this)
+        this.param = this.props.match.params.param
     }
 
     componentDidMount () {
         const { dispatch } = this.props
 
-        this.interval = setInterval(() => dispatch(fetchSosModelRuns(this.name)), 1000);
+        this.interval = setInterval(() => dispatch(fetchSosModelRuns(this.param)), 100);
     }
 
     componentWillUnmount() {
@@ -27,18 +26,10 @@ class JobsOverview extends Component {
 
     componentDidUpdate() {
         const { dispatch } = this.props
-        if (this.name != this.props.match.params.name) {
-            this.name = this.props.match.params.name
-            dispatch(fetchSosModelRuns(this.name))
+        if (this.param != this.props.match.params.param) {
+            this.param = this.props.match.params.param
+            dispatch(fetchSosModelRuns(this.param))
         }
-    }
-
-    onStartHandler(event) {
-        const { dispatch } = this.props
-        const target = event.currentTarget
-        const value = target.value
-
-        dispatch(startSosModelRun(value))
     }
 
     render () {
@@ -55,18 +46,9 @@ class JobsOverview extends Component {
                 </div>
 
                 <div hidden={ isFetching }>
-                    {sos_model_runs.map(sos_model_run =>
-                        <div key={'bla' + sos_model_run.name}>
-                            <p>{sos_model_run.name}</p>
-                            <button
-                                type="button"
-                                className="btn btn-outline-dark"
-                                value={sos_model_run.name}
-                                onClick={this.onStartHandler}>
-                                Start
-                            </button>
-                        </div>
-                    )}
+                    <div>
+                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/jobs/result/" onDelete={this.openDeletePopup} />
+                    </div>
                 </div>
             </div>
         )
