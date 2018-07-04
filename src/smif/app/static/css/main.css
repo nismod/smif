@@ -43,6 +43,11 @@ select {
     margin-bottom: 1em;
 }
 
+.console-output {
+    position: relative;
+    overflow-y: scroll;
+    height: 400px
+}
 /*
  * Sidebar
  */
