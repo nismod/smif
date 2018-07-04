@@ -1,4 +1,5 @@
-from subprocess import PIPE, Popen
+import subprocess
+from collections import defaultdict
 
 
 class Scheduler(object):
@@ -7,9 +8,11 @@ class Scheduler(object):
     is done or has failed.
     """
     def __init__(self):
+        self._status = defaultdict(lambda: 'unknown')
         self._process = {}
         self._output = {}
         self._err = {}
+        self.lock = False
 
     def add(self, model_run_name, args):
         """Add a model_run to the Modelrun scheduler.
@@ -35,13 +38,17 @@ class Scheduler(object):
         implementation whether a certain sector model / wrapper
         touches the filesystem or other shared resources.
         """
-        if model_run_name not in self._process or self._process[model_run_name].poll() is None:
-            self._process[model_run_name] = Popen(
-                ['smif', 'run', model_run_name, '-d', args['directory']],
-                stdout=PIPE, stderr=PIPE
+        if self._status[model_run_name] is not 'running':
+            self._output[model_run_name] = ""
+            self._output[model_run_name] = ""
+            self._process[model_run_name] = subprocess.Popen(
+                'smif -v run' + ' ' + model_run_name + ' ' + '-d' + ' ' + args['directory'],
+                shell=True,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )
+            self._status[model_run_name] = 'running'
         else:
-            raise Exception('Modelrun was already added.')
+            raise Exception('Model is already running.')
 
     def get_status(self, model_run_name):
         """Get the status from the Modelrun scheduler.
@@ -63,6 +70,8 @@ class Scheduler(object):
 
         unknown:
             Model run was not started
+        queing:
+            Model run is waiting to be executed
         running:
             Model run is running
         done:
@@ -70,28 +79,43 @@ class Scheduler(object):
         failed:
             Model run completed running with an exit code
         """
-        if model_run_name not in self._process:
+        if self._status[model_run_name] == 'unknown':
+            print('unknown')
             return {
                 'status': 'unknown'
             }
-        elif self._process[model_run_name].poll() is None:
+        elif self._status[model_run_name] == 'running':
+            print('running - 1')
+
+            if self.lock == False:
+                self.lock = True
+                for line in iter(self._process[model_run_name].stdout.readline, b''):
+                    self._output[model_run_name] += line.decode()
+                    self._process[model_run_name].stdout.flush()
+                self.lock = False
+
+            print('running - 2')
+            if self._process[model_run_name].poll() == 0:
+                self._status[model_run_name] = 'done'
+            elif self._process[model_run_name].poll() == 1:
+                self._status[model_run_name] = 'failed'
+
+            print('running - 3')
             return {
                 'status': 'running',
+                'output': self._output[model_run_name]
             }
-        else:
-            if model_run_name not in self._output:
-                self._output[model_run_name], self._err[model_run_name] = \
-                    self._process[model_run_name].communicate()
+        elif self._status[model_run_name] == 'done':
+            print('done')
 
-            if self._process[model_run_name].returncode == 0:
-                return {
-                    'status': 'done',
-                    'output': self._output[model_run_name].decode('utf-8'),
-                    'err': self._err[model_run_name].decode('utf-8')
-                }
-            else:
-                return {
-                    'status': 'failed',
-                    'output': self._output[model_run_name].decode('utf-8'),
-                    'err': self._err[model_run_name].decode('utf-8')
-                }
+            return {
+                'status': 'done',
+                'output': self._output[model_run_name],
+            }
+        elif self._status[model_run_name] == 'failed':
+            print('failed')
+
+            return {
+                'status': 'failed',
+                'output': self._output[model_run_name]
+            }
