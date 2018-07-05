@@ -48,7 +48,7 @@ class SosModelRunItem extends Component {
     }
 
     onStartHandler(event) {
-        const {onStart, resultLink} = this.props
+        const {resultLink} = this.props
         const target = event.currentTarget
         const name = target.name
 
@@ -78,42 +78,42 @@ class SosModelRunItem extends Component {
                     </thead>
                     <tbody>
                         {
-                        items.map((item, i) => (
-                            <tr id={"row_" + item.name} key={i}>
-                                <td
-                                    data-name={item.name}
-                                    className="col-name"
-                                    onClick={(e) => this.onEditHandler(e)}>
-                                    {item.name}
-                                </td>
-                                <td
-                                    data-name={item.name}
-                                    className="col-desc"
-                                    onClick={(e) => this.onEditHandler(e)}>
-                                    {item.description}
-                                </td>
-                                <td hidden={resultLink==undefined} className="col-action">
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline-dark"
-                                        value={itemname}
-                                        name={item.name}
-                                        onClick={this.onStartHandler}>
-                                        <FaPlay/>
-                                    </button>
-                                </td>
-                                <td hidden={itemLink==undefined} className="col-action">
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline-dark"
-                                        value={itemname}
-                                        name={item.name}
-                                        onClick={this.onDeleteHandler}>
-                                        <FaTrash/>
-                                    </button>
-                                </td>
-                            </tr>
-                        ))
+                            items.map((item, i) => (
+                                <tr id={'row_' + item.name} key={i}>
+                                    <td
+                                        data-name={item.name}
+                                        className="col-name"
+                                        onClick={(e) => this.onEditHandler(e)}>
+                                        {item.name}
+                                    </td>
+                                    <td
+                                        data-name={item.name}
+                                        className="col-desc"
+                                        onClick={(e) => this.onEditHandler(e)}>
+                                        {item.description}
+                                    </td>
+                                    <td hidden={resultLink==undefined} className="col-action">
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-dark"
+                                            value={itemname}
+                                            name={item.name}
+                                            onClick={this.onStartHandler}>
+                                            <FaPlay/>
+                                        </button>
+                                    </td>
+                                    <td hidden={itemLink==undefined} className="col-action">
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-dark"
+                                            value={itemname}
+                                            name={item.name}
+                                            onClick={this.onDeleteHandler}>
+                                            <FaTrash/>
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
                         }
                     </tbody>
                 </table>
@@ -140,9 +140,9 @@ class SosModelRunItem extends Component {
     render() {
         const {itemname, items, itemLink, resultLink} = this.props
 
-        if (itemname == "" || itemname == undefined || itemname == null) {
+        if (itemname == '' || itemname == undefined || itemname == null) {
             return this.renderDanger('There is no itemname configured')
-        } else if (itemLink == "" || itemLink == undefined || itemLink == null) {
+        } else if (itemLink == '' || itemLink == undefined || itemLink == null) {
             return this.renderDanger('There is no itemLink configured')
         } else if (items == null || items == undefined || items.length == 0) {
             return this.renderInfo('There are no items in this list')

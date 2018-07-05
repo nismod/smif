@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
-import { Link, Router } from 'react-router-dom'
 
 import { fetchScenarios } from '../../../actions/actions.js'
 import { saveScenario } from '../../../actions/actions.js'
@@ -130,7 +129,10 @@ ScenarioSetConfig.propTypes = {
     sos_models: PropTypes.array.isRequired,
     scenario_set: PropTypes.object.isRequired,
     scenarios: PropTypes.array.isRequired,
-    isFetching: PropTypes.bool.isRequired
+    isFetching: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    match: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {

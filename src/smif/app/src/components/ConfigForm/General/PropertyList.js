@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
-import PropTypes, { string } from 'prop-types'
-import update from 'immutability-helper'
+import PropTypes from 'prop-types'
 
 import FaTrash from 'react-icons/lib/fa/trash'
 import FaPencil from 'react-icons/lib/fa/pencil'
@@ -17,9 +16,7 @@ class PropertyList extends Component {
 
     onEditHandler(event) {
         const {onEdit} = this.props
-        
         const target = event.currentTarget
-        const name = target.name
 
         onEdit(target.value)
     }

@@ -86,13 +86,11 @@ class ScenarioSetConfigForm extends Component {
     }
 
     handleScenarioSave(saveScenario) {
-        var newScenarios = []
         this.props.saveScenario(saveScenario)
         this.closeScenarioPopup()
     }
 
     handleScenarioCreate(scenario) {
-        let {selectedScenarios} = this.state
         this.props.createScenario(scenario)
         this.closeScenarioPopup()
     }
@@ -180,10 +178,14 @@ class ScenarioSetConfigForm extends Component {
                 })
             }
         }
-        this.state.selectedScenarios[id].facets = new_facets
+
+        let new_selectedScenarios = update(
+            this.state.selectedScenarios, {[id]: {facets: {$set: new_facets}}}
+        )
+        this.setState({selectedScenarios: new_selectedScenarios})
 
         // load scenario
-        this.setState({selectedScenario: Object.assign({}, this.state.selectedScenarios[id])})
+        this.setState({selectedScenario: Object.assign({}, new_selectedScenarios[id])})
         this.setState({editScenarioPopupIsOpen: true})
     }
 
@@ -192,33 +194,33 @@ class ScenarioSetConfigForm extends Component {
         let target_in_use_by = []
 
         switch(event.target.name) {
-            case 'Facet':
-                this.props.sosModels.forEach(function(sos_model) {
-                    sos_model.dependencies.forEach(function(dependency) {
-                        if (event.target.value == dependency.source_model_output) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
+        case 'Facet':
+            this.props.sosModels.forEach(function(sos_model) {
+                sos_model.dependencies.forEach(function(dependency) {
+                    if (event.target.value == dependency.source_model_output) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
+                        })
+                    }
                 })
-                break
+            })
+            break
 
-            case 'Scenario':
-                this.props.sosModelRuns.forEach(function(sos_model_run) {
-                    Object.keys(sos_model_run.scenarios).forEach(function(key) {
-                        if (event.target.value == sos_model_run.scenarios[key]) {
-                            target_in_use_by.push({
-                                name: sos_model_run.name,
-                                link: '/configure/sos-model-run/',
-                                type: 'SosModelRun'
-                            })
-                        }
-                    })
+        case 'Scenario':
+            this.props.sosModelRuns.forEach(function(sos_model_run) {
+                Object.keys(sos_model_run.scenarios).forEach(function(key) {
+                    if (event.target.value == sos_model_run.scenarios[key]) {
+                        target_in_use_by.push({
+                            name: sos_model_run.name,
+                            link: '/configure/sos-model-run/',
+                            type: 'SosModelRun'
+                        })
+                    }
                 })
-                break
+            })
+            break
         }
 
         this.setState({
@@ -231,22 +233,20 @@ class ScenarioSetConfigForm extends Component {
 
     deletePopupSubmit() {
 
-        const {deletePopupType, deletePopupConfigName, selectedScenarioSet, selectedScenarios} = this.state
-        const { scenarios } = this.props
-        const { dispatch } = this.props
+        const {deletePopupType, deletePopupConfigName, selectedScenarioSet} = this.state
 
         switch(deletePopupType) {
-            case 'Facet':
-                for (let i = 0; i < Object.keys(selectedScenarioSet.facets).length; i++) {
-                    if (selectedScenarioSet.facets[i].name == deletePopupConfigName) {
-                        selectedScenarioSet.facets.splice(i, 1)
-                    }
+        case 'Facet':
+            for (let i = 0; i < Object.keys(selectedScenarioSet.facets).length; i++) {
+                if (selectedScenarioSet.facets[i].name == deletePopupConfigName) {
+                    selectedScenarioSet.facets.splice(i, 1)
                 }
-                break
+            }
+            break
 
-            case 'Scenario':
-                this.props.deleteScenario(deletePopupConfigName)
-                break
+        case 'Scenario':
+            this.props.deleteScenario(deletePopupConfigName)
+            break
         }
 
         this.closeDeletePopup(deletePopupType)

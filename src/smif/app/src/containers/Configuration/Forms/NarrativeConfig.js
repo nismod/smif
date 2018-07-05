@@ -86,7 +86,10 @@ class NarrativeConfig extends Component {
 NarrativeConfig.propTypes = {
     narrative: PropTypes.object.isRequired,
     narrative_sets: PropTypes.array.isRequired,
-    isFetching: PropTypes.bool.isRequired
+    isFetching: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    match: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {

@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import PropTypes, { object } from 'prop-types'
+import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import Popup from './General/Popup.js'
@@ -45,11 +45,11 @@ class SosModelConfigForm extends Component {
     }
 
     handleDelete(config) {
-        const {deletePopupType, selectedSosModel} = this.state
+        const {deletePopupType} = this.state
 
         switch(deletePopupType) {
-            case 'dependency':
-                this.state.selectedSosModel.dependencies.splice(config, 1)
+        case 'dependency':
+            this.state.selectedSosModel.dependencies.splice(config, 1)
         }
 
         this.forceUpdate()

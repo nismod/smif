@@ -1,8 +1,5 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import update from 'immutability-helper'
-
-import PropertyList from '../General/PropertyList'
 import { SaveButton, CancelButton } from '../General/Buttons'
 
 class ScenarioConfigForm extends Component {
@@ -30,11 +27,11 @@ class ScenarioConfigForm extends Component {
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
+        document.addEventListener('keydown', this.handleKeyPress, false)
     }
 
     componentWillUnmount(){
-        document.removeEventListener("keydown", this.handleKeyPress, false)
+        document.removeEventListener('keydown', this.handleKeyPress, false)
     }
 
     handleKeyPress(){
@@ -45,11 +42,11 @@ class ScenarioConfigForm extends Component {
 
     handleFacetChange(event) {
         const target = event.target
-        const value = target.type === 'checkbox' ? target.checked : target.value
         const name = target.name
 
-        this.state.currentFacet = name
-        this.forceUpdate()
+        this.setState({
+            currentFacet: name
+        })
     }
 
     handleChange(event) {
@@ -89,7 +86,6 @@ class ScenarioConfigForm extends Component {
 
     renderScenarioConfigForm() {
         const {selectedScenario, currentFacet, editMode} = this.state
-        const {scenario} = this.props
 
         let facetNav = []
         for (let i=0; i < selectedScenario.facets.length; i++) {
@@ -248,6 +244,7 @@ ScenarioConfigForm.propTypes = {
     scenario: PropTypes.object.isRequired,
     scenarioSet: PropTypes.object.isRequired,
     saveScenario: PropTypes.func,
+    createScenario: PropTypes.func,
     cancelScenario: PropTypes.func
 }
 

@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import Popup from './General/Popup.js'
-import PropertySelector from './General/PropertySelector.js'
 import InputsOutputsForm from './SectorModel/InputsOutputsForm.js'
 import ParameterSelector from './SectorModel/ParameterSelector.js'
 import PropertyList from './General/PropertyList.js'
@@ -43,26 +42,26 @@ class SectorModelConfigForm extends Component {
         const {deletePopupType, selectedSectorModel} = this.state
 
         switch(deletePopupType) {
-            case 'inputs':
-                for (let i = 0; i < selectedSectorModel.inputs.length; i++) {
-                    if (selectedSectorModel.inputs[i].name == config)
-                        selectedSectorModel.inputs.splice(i, 1)
-                }
-                break
+        case 'inputs':
+            for (let i = 0; i < selectedSectorModel.inputs.length; i++) {
+                if (selectedSectorModel.inputs[i].name == config)
+                    selectedSectorModel.inputs.splice(i, 1)
+            }
+            break
 
-            case 'outputs':
-                for (let i = 0; i < selectedSectorModel.outputs.length; i++) {
-                    if (selectedSectorModel.outputs[i].name == config)
-                        selectedSectorModel.outputs.splice(i, 1)
-                }
-                break
+        case 'outputs':
+            for (let i = 0; i < selectedSectorModel.outputs.length; i++) {
+                if (selectedSectorModel.outputs[i].name == config)
+                    selectedSectorModel.outputs.splice(i, 1)
+            }
+            break
 
-            case 'parameters':
-                for (let i = 0; i < selectedSectorModel.parameters.length; i++) {
-                    if (selectedSectorModel.parameters[i].name == config)
-                        selectedSectorModel.parameters.splice(i, 1)
-                }
-                break
+        case 'parameters':
+            for (let i = 0; i < selectedSectorModel.parameters.length; i++) {
+                if (selectedSectorModel.parameters[i].name == config)
+                    selectedSectorModel.parameters.splice(i, 1)
+            }
+            break
         }
 
         this.forceUpdate()
@@ -82,32 +81,32 @@ class SectorModelConfigForm extends Component {
         let target_in_use_by = []
 
         switch(event.target.name) {
-            case 'inputs' || 'parameters':
-                this.props.sosModels.forEach(function(sos_model) {
-                    sos_model.dependencies.forEach(function(dependency) {
-                        if (dependency.sink_model_input == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
+        case 'inputs' || 'parameters':
+            this.props.sosModels.forEach(function(sos_model) {
+                sos_model.dependencies.forEach(function(dependency) {
+                    if (dependency.sink_model_input == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
+                        })
+                    }
                 })
-                break
-            case 'outputs':
-                this.props.sosModels.forEach(function(sos_model) {
-                    sos_model.dependencies.forEach(function(dependency) {
-                        if (dependency.source_model_output == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
+            })
+            break
+        case 'outputs':
+            this.props.sosModels.forEach(function(sos_model) {
+                sos_model.dependencies.forEach(function(dependency) {
+                    if (dependency.source_model_output == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
+                        })
+                    }
                 })
-                break
+            })
+            break
         }
 
         this.setState({

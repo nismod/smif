@@ -3,8 +3,7 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchSosModelRuns, startSosModelRun } from '../../../actions/actions.js'
-import IntroBlock from '../../../components/ConfigForm/General/IntroBlock.js'
+import { fetchSosModelRuns } from '../../../actions/actions.js'
 import ProjectOverviewItem from '../../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
 
 class JobsOverview extends Component {
@@ -17,11 +16,11 @@ class JobsOverview extends Component {
     componentDidMount () {
         const { dispatch } = this.props
 
-        this.interval = setInterval(() => dispatch(fetchSosModelRuns(this.param)), 100);
+        this.interval = setInterval(() => dispatch(fetchSosModelRuns(this.param)), 100)
     }
 
     componentWillUnmount() {
-        clearInterval(this.interval);
+        clearInterval(this.interval)
     }
 
     componentDidUpdate() {
@@ -58,7 +57,9 @@ class JobsOverview extends Component {
 JobsOverview.propTypes = {
     sos_model_runs: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
-    dispatch: PropTypes.func.isRequired
+    dispatch: PropTypes.func.isRequired,
+    match: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {

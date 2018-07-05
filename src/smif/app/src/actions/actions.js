@@ -172,12 +172,12 @@ export function createSosModelRun(sosModelRun){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchSosModelRuns())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchSosModelRuns())
+                }
+            )
     }
 }
 
@@ -192,12 +192,12 @@ export function deleteSosModelRun(sosModelRunName){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchSosModelRuns())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchSosModelRuns())
+                }
+            )
     }
 }
 
@@ -314,12 +314,12 @@ export function createSosModel(sosModel){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchSosModels())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchSosModels())
+                }
+            )
     }
 }
 
@@ -334,12 +334,12 @@ export function deleteSosModel(sosModelName){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchSosModels())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchSosModels())
+                }
+            )
     }
 }
 
@@ -439,12 +439,12 @@ export function createSectorModel(sectorModel){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchSectorModels())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchSectorModels())
+                }
+            )
     }
 }
 
@@ -459,12 +459,12 @@ export function deleteSectorModel(sectorModelName){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchSectorModels())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchSectorModels())
+                }
+            )
     }
 }
 
@@ -562,12 +562,12 @@ export function createScenarioSet(scenarioSet){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchScenarioSets())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchScenarioSets())
+                }
+            )
     }
 }
 
@@ -582,12 +582,12 @@ export function deleteScenarioSet(scenarioSetName){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchScenarioSets())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchScenarioSets())
+                }
+            )
     }
 }
 
@@ -691,12 +691,12 @@ export function createScenario(scenario){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchScenarios())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchScenarios())
+                }
+            )
     }
 }
 
@@ -711,12 +711,12 @@ export function deleteScenario(scenarioName){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchScenarios())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchScenarios())
+                }
+            )
     }
 }
 
@@ -816,12 +816,12 @@ export function createNarrativeSet(narrativeSet){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchNarrativeSets())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchNarrativeSets())
+                }
+            )
     }
 }
 
@@ -836,12 +836,12 @@ export function deleteNarrativeSet(narrativeSetName){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchNarrativeSets())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchNarrativeSets())
+                }
+            )
     }
 }
 
@@ -922,9 +922,9 @@ export function saveNarrative(narrative){
                 'Content-Type': 'application/json'
             }}
         )
-        .then (
-            response => response.json()
-        )
+            .then (
+                response => response.json()
+            )
     }
 }
 
@@ -940,12 +940,12 @@ export function createNarrative(narrative){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchNarratives())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchNarratives())
+                }
+            )
     }
 }
 
@@ -960,11 +960,11 @@ export function deleteNarrative(narrativeName){
                 'Content-Type': 'application/json'
             }
         })
-        .then(
-            function() {
-                response => response.json()
-                dispatch(fetchNarratives())
-            }
-        )
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchNarratives())
+                }
+            )
     }
 }

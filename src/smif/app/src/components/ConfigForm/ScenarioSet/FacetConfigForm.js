@@ -27,11 +27,11 @@ class FacetConfigForm extends Component {
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
+        document.addEventListener('keydown', this.handleKeyPress, false)
     }
 
     componentWillUnmount(){
-        document.removeEventListener("keydown", this.handleKeyPress, false)
+        document.removeEventListener('keydown', this.handleKeyPress, false)
     }
 
     handleKeyPress(){
@@ -52,7 +52,6 @@ class FacetConfigForm extends Component {
 
     handleSave() {
         const {selectedFacet} = this.state
-        console.log(selectedFacet)
 
         if (selectedFacet.name === undefined) {
             this.setState({

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 class SosModelSelector extends Component {
@@ -62,7 +62,7 @@ class SosModelSelector extends Component {
             return this.renderDanger('There is no SosModelRun configured')
         } else if (sosModels == null || sosModels == undefined || sosModels[0] == null) {
             return this.renderDanger('There are no SosModels configured')
-        } else if (sosModelRun.sos_model == "") {
+        } else if (sosModelRun.sos_model == '') {
             return this.renderSosModelSelector(sosModels, '')
         } else {
             return this.renderSosModelSelector(sosModels, sosModelRun.sos_model)

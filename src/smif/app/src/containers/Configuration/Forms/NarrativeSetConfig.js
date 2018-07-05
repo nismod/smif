@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
-import { Link, Router } from 'react-router-dom'
 
 import { fetchNarrativeSet } from '../../../actions/actions.js'
 import { saveNarrativeSet } from '../../../actions/actions.js'
@@ -83,7 +82,10 @@ class NarrativeSetConfig extends Component {
 
 NarrativeSetConfig.propTypes = {
     narrative_set: PropTypes.object.isRequired,
-    isFetching: PropTypes.bool.isRequired
+    isFetching: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    match: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {

@@ -98,7 +98,7 @@ class ScenarioSelector extends Component {
         const {onChange} = this.props
 
         if (this.props.sosModelRun.scenarios[target.name] == target.value) {
-            onChange(target.name, "")
+            onChange(target.name, '')
         } else {
             onChange(target.name, target.value)
         }
@@ -119,15 +119,15 @@ class ScenarioSelector extends Component {
                                             <div className="form-check" key={scenario.name}>
                                                 <label className="form-check-label">
                                                     <input
-                                                    id={'radio_' + scenarioSet + '_' + scenario.name}
-                                                    className="form-check-input"
-                                                    type="radio"
-                                                    name={scenarioSet}
-                                                    key={scenario.name}
-                                                    value={scenario.name}
-                                                    checked={scenario.active}
-                                                    onChange={this.handleChange} />
-                                                        {scenario.name}
+                                                        id={'radio_' + scenarioSet + '_' + scenario.name}
+                                                        className="form-check-input"
+                                                        type="radio"
+                                                        name={scenarioSet}
+                                                        key={scenario.name}
+                                                        value={scenario.name}
+                                                        checked={scenario.active}
+                                                        onChange={this.handleChange} />
+                                                    {scenario.name}
                                                 </label>
                                             </div>
                                         ))
@@ -178,7 +178,7 @@ class ScenarioSelector extends Component {
             return this.renderDanger('There are no SosModels configured')
         } else if (scenarios == null || scenarios == undefined || scenarios[0] == null) {
             return this.renderDanger('There are no Scenarios configured')
-        } else if (sosModelRun.sos_model == "" || sosModelRun.sos_model == null || sosModelRun.sos_model == undefined) {
+        } else if (sosModelRun.sos_model == '' || sosModelRun.sos_model == null || sosModelRun.sos_model == undefined) {
             return this.renderInfo('There is no SosModel selected in the SosModelRun')
         } else {
             selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)

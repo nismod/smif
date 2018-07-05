@@ -121,14 +121,14 @@ class InputsOutputsForm extends Component {
                             <div className="row">
                                 <div className="col">
                                     <label>Name</label>
-                                    <input autoFocus ref="" type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
+                                    <input autoFocus type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
                                 </div>
                                 <div className="col">
                                     <label>Units</label>
-                                    <input ref="" type="text" className={this.state.className.units} name="units" onChange={this.handleChange}/>
+                                    <input type="text" className={this.state.className.units} name="units" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
@@ -137,7 +137,7 @@ class InputsOutputsForm extends Component {
                             <div className="row">
                                 <div className="col">
                                     <label>Spatial Resolution</label>
-                                    <input ref="" type="text" className={this.state.className.spatial_resolution} name="spatial_resolution" onChange={this.handleChange}/>
+                                    <input type="text" className={this.state.className.spatial_resolution} name="spatial_resolution" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>

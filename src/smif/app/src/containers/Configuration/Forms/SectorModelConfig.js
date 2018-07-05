@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
-import { Link, Router } from 'react-router-dom'
 
 import { fetchSectorModel } from '../../../actions/actions.js'
 import { saveSectorModel } from '../../../actions/actions.js'
@@ -86,7 +85,10 @@ class SectorModelConfig extends Component {
 SectorModelConfig.propTypes = {
     sos_models: PropTypes.array.isRequired,
     sector_model: PropTypes.object.isRequired,
-    isFetching: PropTypes.bool.isRequired
+    isFetching: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    match: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {

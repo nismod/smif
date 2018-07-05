@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
-import { Link, Router } from 'react-router-dom'
 
 import { fetchSosModelRun } from '../../../actions/actions.js'
 import { fetchSosModels } from '../../../actions/actions.js'
@@ -92,7 +91,10 @@ SosModelRunConfig.propTypes = {
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
-    isFetching: PropTypes.bool.isRequired
+    isFetching: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    match: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {

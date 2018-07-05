@@ -34,12 +34,12 @@ class Popup extends Component {
         this.setState({popupIsOpen: false})
     }
 
-    componentWillMount() {
+    componentDidMount() {
         Modal.setAppElement('body')
     }
 
     render() {
-        const {onRequestOpen, onRequestClose} = this.props
+        const {onRequestOpen} = this.props
 
         return (
             <div>
@@ -54,7 +54,8 @@ class Popup extends Component {
 }
 
 Popup.propTypes = {
-    onRequestOpen: PropTypes.bool.isRequired
+    onRequestOpen: PropTypes.bool.isRequired,
+    children: PropTypes.element.isRequired
 }
 
 export default Popup

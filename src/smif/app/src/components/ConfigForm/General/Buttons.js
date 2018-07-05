@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 /**
  * CreateButton
@@ -14,6 +15,12 @@ const CreateButton = (props) => (
         onClick={props.onClick} />
 )
 
+CreateButton.propTypes = {
+    id: PropTypes.string,
+    value: PropTypes.string,
+    onClick: PropTypes.func
+}
+
 /**
  * SaveButton
  *
@@ -27,6 +34,12 @@ const SaveButton = (props) => (
         value={props.value? props.value : 'Save'}
         onClick={props.onClick} />
 )
+
+SaveButton.propTypes = {
+    id: PropTypes.string,
+    value: PropTypes.string,
+    onClick: PropTypes.func
+}
 
 /**
  * CancelButton
@@ -42,6 +55,12 @@ const CancelButton = (props) => (
         onClick={props.onClick} />
 )
 
+CancelButton.propTypes = {
+    id: PropTypes.string,
+    value: PropTypes.string,
+    onClick: PropTypes.func
+}
+
 /**
  * DangerButton
  *
@@ -56,7 +75,13 @@ const DangerButton = (props) => (
         onClick={props.onClick} />
 )
 
-module.exports = {
+DangerButton.propTypes = {
+    id: PropTypes.string,
+    value: PropTypes.string,
+    onClick: PropTypes.func
+}
+
+export {
     CreateButton,
     SaveButton,
     CancelButton,

@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 const SosModelRunSummary = (props) => (
     <dl className="row">
@@ -25,11 +26,11 @@ const SosModelRunSummary = (props) => (
         <dd className="col-sm-9">
             {Object.keys(props.sosModelRun.narratives).map(
                 nar_set => <div key={'sum_nar_set_' + nar_set}>{nar_set}: 
-                    <ul>
-                        {props.sosModelRun.narratives[nar_set].map(
-                            nar => <li key={'sum_nar_set_' + nar_set + '_nar_' + nar}>{nar}</li>
-                        )}
-                    </ul>
+                <ul>
+                    {props.sosModelRun.narratives[nar_set].map(
+                        nar => <li key={'sum_nar_set_' + nar_set + '_nar_' + nar}>{nar}</li>
+                    )}
+                </ul>
                 </div>
             )}
         </dd>
@@ -39,6 +40,10 @@ const SosModelRunSummary = (props) => (
     </dl>
 )
 
-module.exports = {
+SosModelRunSummary.propTypes = {
+    sosModelRun: PropTypes.object.isRequired,
+}
+
+export {
     SosModelRunSummary
 }

@@ -2,13 +2,10 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
-import { Link } from 'react-router-dom'
 
 import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from '../../../actions/actions.js'
-import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createScenario, createNarrativeSet, createNarrative } from '../../../actions/actions.js'
-import { saveSosModelRun,   saveSosModel,   saveSectorModel,   saveScenarioSet,   saveScenario,   saveNarrativeSet,   saveNarrative   } from '../../../actions/actions.js'
-import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteScenario, deleteNarrativeSet, deleteNarrative } from '../../../actions/actions.js'
-import { startSosModelRun } from '../../../actions/actions.js'
+import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createNarrativeSet, createNarrative } from '../../../actions/actions.js'
+import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteNarrativeSet, deleteNarrative } from '../../../actions/actions.js'
 
 import IntroBlock from '../../../components/ConfigForm/General/IntroBlock.js'
 import Popup from '../../../components/ConfigForm/General/Popup.js'
@@ -104,8 +101,8 @@ class ProjectOverview extends Component {
                     'scenario_sets': [],
                     'dependencies': [],
                     'max_iterations': 1,
-                    'convergence_absolute_tolerance': "1e-05",
-                    'convergence_relative_tolerance': "1e-05"
+                    'convergence_absolute_tolerance': '1e-05',
+                    'convergence_relative_tolerance': '1e-05'
                 }
             ))
             break
@@ -163,98 +160,98 @@ class ProjectOverview extends Component {
         let target_in_use_by = []
 
         switch(event.target.name) {
-            case 'SosModel':
-                this.props.sos_model_runs.forEach(function(sos_model_run) {
-                    if (sos_model_run.sos_model == event.target.value) {
+        case 'SosModel':
+            this.props.sos_model_runs.forEach(function(sos_model_run) {
+                if (sos_model_run.sos_model == event.target.value) {
+                    target_in_use_by.push({
+                        name: sos_model_run.name,
+                        link: '/configure/sos-model-run/',
+                        type: 'SosModelRun'
+                    })
+                }
+            })
+            break
+
+        case 'SectorModel':
+            this.props.sos_models.forEach(function(sos_model) {
+
+                sos_model.sector_models.forEach(function(sector_model) {
+                    if (sector_model == event.target.value) {
                         target_in_use_by.push({
-                            name: sos_model_run.name,
-                            link: '/configure/sos-model-run/',
-                            type: 'SosModelRun'
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
                         })
                     }
                 })
-                break
+            })
+            break
 
-            case 'SectorModel':
-                this.props.sos_models.forEach(function(sos_model) {
+        case 'ScenarioSet':
+            this.props.sos_models.forEach(function(sos_model) {
 
-                    sos_model.sector_models.forEach(function(sector_model) {
-                        if (sector_model == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
-                })
-                break
-
-            case 'ScenarioSet':
-                this.props.sos_models.forEach(function(sos_model) {
-
-                    sos_model.scenario_sets.forEach(function(scenario_set) {
-                        if (scenario_set == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
-
-                    sos_model.dependencies.forEach(function(dependency) {
-                        if (dependency.source_model == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
-                })
-                break
-
-            case 'NarrativeSet':
-                this.props.sos_models.forEach(function(sos_model) {
-
-                    sos_model.narrative_sets.forEach(function(narrative_set) {
-                        if (narrative_set == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
-                })
-
-                this.props.narratives.forEach(function(narrative) {
-                    if (narrative.narrative_set == event.target.value) {
+                sos_model.scenario_sets.forEach(function(scenario_set) {
+                    if (scenario_set == event.target.value) {
                         target_in_use_by.push({
-                            name: narrative.name,
-                            link: '/configure/narratives/',
-                            type: 'Narrative'
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
                         })
                     }
                 })
-                break
 
-            case 'Narrative':
-                this.props.sos_model_runs.forEach(function(sos_model_run) {
-                    Object.keys(sos_model_run.narratives).forEach(function(narrative_sets) {
-                        sos_model_run.narratives[narrative_sets].forEach(function(narrative) {
-                            if (narrative == event.target.value) {
-                                target_in_use_by.push({
-                                    name: sos_model_run.name,
-                                    link: '/configure/sos-model-run/',
-                                    type: 'SosModelRun'
-                                })
-                            }
+                sos_model.dependencies.forEach(function(dependency) {
+                    if (dependency.source_model == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
                         })
+                    }
+                })
+            })
+            break
+
+        case 'NarrativeSet':
+            this.props.sos_models.forEach(function(sos_model) {
+
+                sos_model.narrative_sets.forEach(function(narrative_set) {
+                    if (narrative_set == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
+                        })
+                    }
+                })
+            })
+
+            this.props.narratives.forEach(function(narrative) {
+                if (narrative.narrative_set == event.target.value) {
+                    target_in_use_by.push({
+                        name: narrative.name,
+                        link: '/configure/narratives/',
+                        type: 'Narrative'
+                    })
+                }
+            })
+            break
+
+        case 'Narrative':
+            this.props.sos_model_runs.forEach(function(sos_model_run) {
+                Object.keys(sos_model_run.narratives).forEach(function(narrative_sets) {
+                    sos_model_run.narratives[narrative_sets].forEach(function(narrative) {
+                        if (narrative == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model_run.name,
+                                link: '/configure/sos-model-run/',
+                                type: 'SosModelRun'
+                            })
+                        }
                     })
                 })
-                break
+            })
+            break
         }
 
         this.setState({
@@ -268,7 +265,6 @@ class ProjectOverview extends Component {
     handleDelete() {
 
         const {deletePopupType, deletePopupConfigName} = this.state
-        const { scenarios } = this.props
         const { dispatch } = this.props
 
         this.closeDeletePopup(deletePopupType)
@@ -317,7 +313,7 @@ class ProjectOverview extends Component {
     }
 
     render () {
-        const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching } = this.props
+        const { sos_model_runs, sos_models, sector_models, scenario_sets, narrative_sets, narratives, isFetching } = this.props
         const { name } = this.props.match.params
 
         let used_identifiers = this.collectIdentifiers()
@@ -399,6 +395,7 @@ ProjectOverview.propTypes = {
     narrative_sets: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
+    match: PropTypes.object.isRequired,
     dispatch: PropTypes.func.isRequired
 }
 

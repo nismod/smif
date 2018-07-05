@@ -43,7 +43,7 @@ class SosModelRunConfigForm extends Component {
      */
         const { scenarios } = this.state.selectedSosModelRun
 
-        if (scenario == "") {
+        if (scenario == '') {
             delete scenarios[scenario_set]
         } else {
             scenarios[scenario_set] = scenario
@@ -65,8 +65,6 @@ class SosModelRunConfigForm extends Component {
      * active:
      *     The new state of this narrative
      */
-        const {narratives} = this.state.selectedSosModelRun
-
         let obj = this.state.selectedSosModelRun.narratives
 
         if (active) {
