@@ -17,6 +17,8 @@ import { CreateButton, DangerButton, SaveButton } from '../../../components/Conf
 
 import { SosModelRunSummary } from '../../../components/Results/ConfigSummary'
 
+import { FaAngleDoubleUp, FaAngleDoubleDown } from 'react-icons/lib/fa'
+
 class SosModelRunConfig extends Component {
     constructor(props) {
         super(props)
@@ -26,6 +28,7 @@ class SosModelRunConfig extends Component {
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
 
         this.modelrun_name = this.props.match.params.name
+        this.followConsole = false
     }
 
     componentDidMount() {
@@ -34,7 +37,7 @@ class SosModelRunConfig extends Component {
         dispatch(fetchSosModelRun(this.modelrun_name))
         dispatch(fetchSosModelRunStatus(this.modelrun_name))
         
-        this.interval = setInterval(() => dispatch(fetchSosModelRunStatus(this.modelrun_name)), 100)
+        this.setRenderInterval(5000)
     }
 
     componentWillUnmount() {
@@ -49,8 +52,17 @@ class SosModelRunConfig extends Component {
         }
 
         // Scroll the console output down during running status
-        if (this.newData != undefined && this.props.sos_model_run_status.status == 'running') {
+        if (this.newData != undefined && this.props.sos_model_run_status.status == 'running' && this.followConsole) {
             this.newData.scrollIntoView({ behavior: 'instant' })
+        }
+    }
+
+    setRenderInterval(interval) {
+        const { dispatch } = this.props
+        if (interval != this.render_interval) {
+            this.render_interval = interval
+            clearInterval(this.interval)
+            this.interval = setInterval(() => dispatch(fetchSosModelRunStatus(this.modelrun_name)), this.render_interval)
         }
     }
 
@@ -97,33 +109,41 @@ class SosModelRunConfig extends Component {
         var step
         var step_status
         var controls
+
         switch (sos_model_run_status.status) {
         case 'unknown':
-            step = -1
-            step_status = 'wait'
+            step = 0
+            step_status = 'process'
             controls = <CreateButton value='Start Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
+            this.setRenderInterval(1000)
             break
         case 'queing':
-            step = 0
-            step_status = 'wait'
-            controls = <DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>
-            break
-        case 'running':
             step = 1
             step_status = 'process'
             controls = <DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>
+            this.setRenderInterval(100)
+            break
+        case 'running':
+            step = 2
+            step_status = 'process'
+            controls = <DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>
+            this.setRenderInterval(100)
             break
         case 'done':
-            step = 2
-            step_status = 'finish'
+            step = 3
+            step_status = 'process'
             controls = <CreateButton value='Restart Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
+            this.setRenderInterval(1000)
             break
         case 'failed':
-            step = 1
+            step = 2
             step_status = 'error'
             controls = <SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
+            this.setRenderInterval(1000)
             break
         }
+
+        var run_message = sos_model_run_status.status == 'failed' ? 'Modelrun stopped because of error' : 'Modelrun is being executed'
 
         var console_output = null
         if (sos_model_run_status.status == 'running' || sos_model_run_status.status == 'done' || sos_model_run_status.status == 'failed') {
@@ -132,13 +152,36 @@ class SosModelRunConfig extends Component {
                     <div className="col-sm">
                         <div className="card">
                             <div className="card-header">
-                        Console Output
+                                Console Output 
                             </div>
-                            <div className="card-body console-output">
-                                {sos_model_run_status.output.split(/\r?\n/).map((status_output, i) =>
-                                    <div key={'st_out_line_' + i}><Ansi>{status_output}</Ansi></div>
-                                )}
-                                <div className="cont" ref={(ref) => this.newData = ref}/> 
+                            <div className="card-body">
+                                <div className="row">
+                                    <div className="col-11">
+                                        {sos_model_run_status.output.split(/\r?\n/).map((status_output, i) =>
+                                            <div key={'st_out_line_' + i}><Ansi>{status_output}</Ansi></div>
+                                        )}
+                                        <div className="cont" ref={(ref) => this.newData = ref}/> 
+                                    </div>
+                                    <div className={'col-1' + ((this.followConsole) ? ' align-self-end' : '')}>
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-dark"
+                                            onClick={() => {
+                                                this.followConsole = !this.followConsole 
+                                                if ( this.followConsole) {
+                                                    this.newData.scrollIntoView({behavior: 'instant'})
+                                                } else {
+                                                    window.scrollTo(0, 0)
+                                                }
+                                            }}>
+                                            {this.followConsole ? (
+                                                <FaAngleDoubleUp/>
+                                            ) : (
+                                                <FaAngleDoubleDown/>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -147,15 +190,15 @@ class SosModelRunConfig extends Component {
         }
 
         return (
-        
             <div key={'sosModelRun_' + sos_model_run.name}>
                 <div className="row">
                     <div className="col-sm">
                         <div className="card">
                             <div className="card-header">
                                 <Steps current={step} status={step_status}>
-                                    <Step title="Queuing" description="Waiting to be started" />
-                                    <Step title="Running" description="Modelrun is being executed" />
+                                    <Step title="Ready" description="Modelrun is ready to be started" />
+                                    <Step title="Queuing" description="Waiting in the queue" />
+                                    <Step title="Running" description={run_message} />
                                     <Step title="Completed" description="Modelrun has completed" />
                                 </Steps>
                             </div>

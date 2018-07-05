@@ -80,13 +80,10 @@ class Scheduler(object):
             Model run completed running with an exit code
         """
         if self._status[model_run_name] == 'unknown':
-            print('unknown')
             return {
                 'status': 'unknown'
             }
         elif self._status[model_run_name] == 'running':
-            print('running - 1')
-
             if self.lock == False:
                 self.lock = True
                 for line in iter(self._process[model_run_name].stdout.readline, b''):
@@ -94,27 +91,21 @@ class Scheduler(object):
                     self._process[model_run_name].stdout.flush()
                 self.lock = False
 
-            print('running - 2')
             if self._process[model_run_name].poll() == 0:
                 self._status[model_run_name] = 'done'
             elif self._process[model_run_name].poll() == 1:
                 self._status[model_run_name] = 'failed'
 
-            print('running - 3')
             return {
                 'status': 'running',
                 'output': self._output[model_run_name]
             }
         elif self._status[model_run_name] == 'done':
-            print('done')
-
             return {
                 'status': 'done',
                 'output': self._output[model_run_name],
             }
         elif self._status[model_run_name] == 'failed':
-            print('failed')
-
             return {
                 'status': 'failed',
                 'output': self._output[model_run_name]
