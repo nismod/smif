@@ -197,6 +197,7 @@ class SosModelRunConfig extends Component {
                                                 } else {
                                                     window.scrollTo(0, 0)
                                                 }
+                                                this.forceUpdate()
                                             }}>
                                             {this.followConsole ? (
                                                 <FaAngleDoubleUp/>
