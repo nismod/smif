@@ -5,7 +5,7 @@ import { connect } from 'react-redux'
 
 import { fetchSosModelRun } from '../../../actions/actions.js'
 import { fetchSosModelRunStatus } from '../../../actions/actions.js'
-import { startSosModelRun, stopSosModelRun } from '../../../actions/actions.js'
+import { startSosModelRun, killSosModelRun } from '../../../actions/actions.js'
 
 import { saveSosModelRun } from '../../../actions/actions.js'
 
@@ -36,7 +36,7 @@ class SosModelRunConfig extends Component {
 
         dispatch(fetchSosModelRun(this.modelrun_name))
         dispatch(fetchSosModelRunStatus(this.modelrun_name))
-        
+
         this.setRenderInterval(5000)
     }
 
@@ -76,7 +76,7 @@ class SosModelRunConfig extends Component {
     stopJob(modelrun_name) {
         const { dispatch } = this.props
         this.outstanding_request_from = this.props.sos_model_run_status.status
-        dispatch(stopSosModelRun(modelrun_name))
+        dispatch(killSosModelRun(modelrun_name))
         dispatch(fetchSosModelRunStatus(this.modelrun_name))
     }
 
@@ -136,6 +136,12 @@ class SosModelRunConfig extends Component {
             controls = <DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>
             this.setRenderInterval(100)
             break
+        case 'stopped':
+            step = 2
+            step_status = 'error'
+            controls = <SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
+            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(1000)
+            break
         case 'done':
             step = 3
             step_status = 'process'
@@ -150,16 +156,27 @@ class SosModelRunConfig extends Component {
             break
         }
 
-        var run_message = sos_model_run_status.status == 'failed' ? 'Modelrun stopped because of error' : 'Modelrun is being executed'
+        var run_message = null
+        switch (sos_model_run_status.status) {
+        case 'stopped':
+            run_message = 'Modelrun stopped by user'
+            break
+        case 'failed':
+            run_message = 'Modelrun stopped because of error'
+            break
+        default:
+            run_message = 'Modelrun is being executed'
+            break
+        }
 
         var console_output = null
-        if (sos_model_run_status.status == 'running' || sos_model_run_status.status == 'done' || sos_model_run_status.status == 'failed') {
+        if (sos_model_run_status.status == 'running' || sos_model_run_status.status == 'stopped' || sos_model_run_status.status == 'done' || sos_model_run_status.status == 'failed') {
             console_output = (
                 <div className="row">
                     <div className="col-sm">
                         <div className="card">
                             <div className="card-header">
-                                Console Output 
+                                Console Output
                             </div>
                             <div className="card-body">
                                 <div className="row">
@@ -167,14 +184,14 @@ class SosModelRunConfig extends Component {
                                         {sos_model_run_status.output.split(/\r?\n/).map((status_output, i) =>
                                             <div key={'st_out_line_' + i}><Ansi>{status_output}</Ansi></div>
                                         )}
-                                        <div className="cont" ref={(ref) => this.newData = ref}/> 
+                                        <div className="cont" ref={(ref) => this.newData = ref}/>
                                     </div>
                                     <div className={'col-1' + ((this.followConsole) ? ' align-self-end' : '')}>
                                         <button
                                             type="button"
                                             className="btn btn-outline-dark"
                                             onClick={() => {
-                                                this.followConsole = !this.followConsole 
+                                                this.followConsole = !this.followConsole
                                                 if ( this.followConsole) {
                                                     this.newData.scrollIntoView({behavior: 'instant'})
                                                 } else {
@@ -216,7 +233,7 @@ class SosModelRunConfig extends Component {
                         </div>
                     </div>
                 </div>
-                
+
                 {console_output}
             </div>
         )
@@ -254,10 +271,10 @@ function mapStateToProps(state) {
         scenarios: state.scenarios.items,
         narratives: state.narratives.items,
         isFetching: (
-            state.sos_model_run.isFetching || 
-            state.sos_model_run_status.isFetching || 
-            state.sos_models.isFetching || 
-            state.scenarios.isFetching || 
+            state.sos_model_run.isFetching ||
+            state.sos_model_run_status.isFetching ||
+            state.sos_models.isFetching ||
+            state.scenarios.isFetching ||
             state.narratives.isFetching
         )
     }

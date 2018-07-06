@@ -218,6 +218,23 @@ export function startSosModelRun(sosModelRunName){
     }
 }
 
+export function killSosModelRun(sosModelRunName){
+    return function () {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/sos_model_runs/' + sosModelRunName + '/kill', {
+            method: 'post',
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                response => response.json()
+            )
+    }
+}
+
 export const REQUEST_SOS_MODELS = 'REQUEST_SOS_MODELS'
 function requestSosModels(){
     return {

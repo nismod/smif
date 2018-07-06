@@ -37,7 +37,7 @@ class SosModelRunAPI(MethodView):
                 sos_model_runs = data_interface.read_sos_model_runs()
 
                 if 'status' in request.args.keys():
-                    # filered: GET /api/v1/sos_model_runs?status=done
+                    # filtered: GET /api/v1/sos_model_runs?status=done
                     data = []
                     for sos_model_run in sos_model_runs:
                         status = current_app.config.scheduler.get_status(sos_model_run['name'])
@@ -80,7 +80,7 @@ class SosModelRunAPI(MethodView):
             }
             current_app.config.scheduler.add(sos_model_run_name, args)
         elif action == 'kill':
-            raise NotImplementedError
+            current_app.config.scheduler.kill(sos_model_run_name)
         elif action == 'remove':
             raise NotImplementedError
         elif action == 'resume':

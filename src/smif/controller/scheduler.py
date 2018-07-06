@@ -10,7 +10,7 @@ class Scheduler(object):
     def __init__(self):
         self._status = defaultdict(lambda: 'unknown')
         self._process = {}
-        self._output = {}
+        self._output = defaultdict(str)
         self._err = {}
         self.lock = False
 
@@ -40,16 +40,30 @@ class Scheduler(object):
         """
         if self._status[model_run_name] is not 'running':
             self._process[model_run_name] = subprocess.Popen(
-                'smif -v run' + ' ' + model_run_name + ' ' + '-d' + ' ' + args['directory'],
+                'exec smif run' + ' ' + model_run_name + ' ' + '-d' + ' ' + args['directory'],
                 shell=True,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )
-            self._output[model_run_name] = "\x1b[1;34mModelrun \x1b \x1b[0m" + model_run_name + "\n"
-            self._output[model_run_name] += "\x1b[1;34mPID" + " \x1b"*7 + "[0m" + str(self._process[model_run_name].pid) + "\n"
+            self._output[model_run_name] = "\x1b[1;34mModelrun \x1b \x1b[0m" + \
+                                           model_run_name + "\n"
+            self._output[model_run_name] += "\x1b[1;34mPID" + " \x1b"*7 + "[0m" + \
+                                            str(self._process[model_run_name].pid) + "\n"
             self._output[model_run_name] += "-" * 100 + "\n"
             self._status[model_run_name] = 'running'
         else:
             raise Exception('Model is already running.')
+
+    def kill(self, model_run_name):
+        """ Kill a Modelrun that is already running
+
+        Parameters
+        ----------
+        model_run_name: str
+            Name of the modelrun
+        """
+        if self._status[model_run_name] == 'running':
+            self._process[model_run_name].kill()
+            self._status[model_run_name] = 'stopped'
 
     def get_status(self, model_run_name):
         """Get the status from the Modelrun scheduler.
@@ -75,17 +89,15 @@ class Scheduler(object):
             Model run is waiting to be executed
         running:
             Model run is running
+        stopped:
+            Model run was stopped (killed) by user
         done:
             Model run was completed succesfully
         failed:
             Model run completed running with an exit code
         """
-        if self._status[model_run_name] == 'unknown':
-            return {
-                'status': 'unknown'
-            }
-        elif self._status[model_run_name] == 'running':
-            if self.lock == False:
+        if self._status[model_run_name] == 'running':
+            if self.lock is False:
                 self.lock = True
                 for line in iter(self._process[model_run_name].stdout.readline, b''):
                     self._output[model_run_name] += line.decode()
@@ -97,17 +109,7 @@ class Scheduler(object):
             elif self._process[model_run_name].poll() == 1:
                 self._status[model_run_name] = 'failed'
 
-            return {
-                'status': 'running',
-                'output': self._output[model_run_name]
-            }
-        elif self._status[model_run_name] == 'done':
-            return {
-                'status': 'done',
-                'output': self._output[model_run_name],
-            }
-        elif self._status[model_run_name] == 'failed':
-            return {
-                'status': 'failed',
-                'output': self._output[model_run_name]
-            }
+        return {
+            'status': self._status[model_run_name],
+            'output': self._output[model_run_name]
+        }
