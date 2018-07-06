@@ -331,42 +331,42 @@ class ProjectOverview extends Component {
                 <div hidden={ isFetching }>
                     <div hidden={name!='sos-model-run'}>
                         <IntroBlock title="Model Runs" intro="A model run brings together a system-of-systems model definition with timesteps over which planning takes place, and a choice of scenarios and narratives to population the placeholder scenario sets in the system-of-systems model.">
-                            <input className="btn btn-success" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" resultLink="/jobs/result/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='sos-models'}>
                         <IntroBlock title="System-of-Systems Models" intro="A system-of-systems model collects together scenario sets and simulation models. Users define dependencies between scenario and simulation models.">
-                            <input className="btn btn-success" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='sector-models'}>
                         <IntroBlock title="Model Wrappers" intro="To integrate a new sector model into the system-of-systems model it is necessary to write a Python wrapper function. The wrapper acts as an interface between the simulation modelling integration framework and the simulation model, keeping all the code necessary to implement the conversion of data types in one place.">
-                            <input className="btn btn-success" name="SectorModel" type="button" value="Add a new Wrapper" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="SectorModel" type="button" value="Add a new Wrapper" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='scenario-set'}>
                         <IntroBlock title="Scenario Sets" intro="Scenarios allows to define static sources for simulation model dependencies. Scenario sets are the categories in which scenario data are organised.">
-                            <input className="btn btn-success" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/scenario-set/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='narrative-set'}>
                         <IntroBlock title="Narrative Sets" intro="Narrative sets are the categories in which narrative data are organised.">
-                            <input className="btn btn-success" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/narrative-set/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='narrative-set'}>
                         <IntroBlock title="Narratives" intro="Narratives are configurations that target the files which contain narrative data">
-                            <input className="btn btn-success" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/narratives/" onDelete={this.openDeletePopup} />
                     </div>

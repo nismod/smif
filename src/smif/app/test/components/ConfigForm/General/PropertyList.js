@@ -34,7 +34,7 @@ describe('<PropertyList />', () => {
                 expectedRow += '<td width="23%">' + sos_model.dependencies[i][key] + '</td>'
             })
             expect(wrapper.find('[id="property_'+ i +'"]').html()).to.contain(expectedRow)
-            expect(wrapper.find('[id="property_'+ i +'"]').html()).to.contain('<td width="8%"><button type="button" class="btn btn-outline-dark" name="edit">')
+            expect(wrapper.find('[id="property_'+ i +'"]').html()).to.contain('<td width="8%"><button type="button" class="btn btn-outline-dark btn-margin" name="edit">')
         }
     })
 
@@ -49,7 +49,7 @@ describe('<PropertyList />', () => {
                 expectedRow += '<td width="23%">' + sos_model.dependencies[i][key] + '</td>'
             })
             expect(wrapper.find('[id="property_'+ i +'"]').html()).to.contain(expectedRow)
-            expect(wrapper.find('[id="property_'+ i +'"]').html()).to.contain('<button type="button" class="btn btn-outline-dark" value="dependencies">')
+            expect(wrapper.find('[id="property_'+ i +'"]').html()).to.contain('<button type="button" class="btn btn-outline-dark btn-margin" value="dependencies">')
         }
     })
 

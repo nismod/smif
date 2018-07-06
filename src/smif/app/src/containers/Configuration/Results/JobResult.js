@@ -28,7 +28,11 @@ class SosModelRunConfig extends Component {
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
 
         this.modelrun_name = this.props.match.params.name
-        this.followConsole = false
+
+        this.state = {
+            verbosity: 0,
+            followConsole: false
+        }
     }
 
     componentDidMount() {
@@ -52,7 +56,7 @@ class SosModelRunConfig extends Component {
         }
 
         // Scroll the console output down during running status
-        if (this.newData != undefined && this.props.sos_model_run_status.status == 'running' && this.followConsole) {
+        if (this.newData != undefined && this.props.sos_model_run_status.status == 'running' && this.state.followConsole) {
             this.newData.scrollIntoView({ behavior: 'instant' })
         }
     }
@@ -62,14 +66,16 @@ class SosModelRunConfig extends Component {
         if (interval != this.render_interval) {
             this.render_interval = interval
             clearInterval(this.interval)
-            this.interval = setInterval(() => dispatch(fetchSosModelRunStatus(this.modelrun_name)), this.render_interval)
+            if (interval > 0) {
+                this.interval = setInterval(() => dispatch(fetchSosModelRunStatus(this.modelrun_name)), this.render_interval)
+            }
         }
     }
 
     startJob(modelrun_name) {
         const { dispatch } = this.props
         this.outstanding_request_from = this.props.sos_model_run_status.status
-        dispatch(startSosModelRun(modelrun_name))
+        dispatch(startSosModelRun(modelrun_name, this.state.verbosity))
         dispatch(fetchSosModelRunStatus(this.modelrun_name))
     }
 
@@ -110,7 +116,44 @@ class SosModelRunConfig extends Component {
 
         var step
         var step_status
-        var controls
+        var controls = []
+
+        controls.push(
+            <div>
+                <div className="form-group row">
+                    <label className="col-sm-3 col-form-label">Info messages</label>
+                    <div className="col-sm-9">
+                        <div className="btn-group btn-toggle"> 
+                            <button className={'btn ' + (
+                                (this.state.verbosity > 0) ? 'btn-primary active' : 'btn btn-default'
+                            )}
+                            onClick={() => {this.setState({verbosity: 1})}}>
+                            ON</button>
+                            <button className={'btn ' + (
+                                (this.state.verbosity <= 0) ? 'btn-primary active' : 'btn btn-default'
+                            )}
+                            onClick={() => {this.setState({verbosity: 0})}}>
+                            OFF</button>
+                        </div>
+                    </div>
+                    <label className="col-sm-3 col-form-label">Debug messages</label>
+                    <div className="col-sm-9">
+                        <div className="btn-group btn-toggle"> 
+                            <button className={'btn ' + (
+                                (this.state.verbosity > 1) ? 'btn-primary active' : 'btn btn-default'
+                            )}
+                            onClick={() => {this.setState({verbosity: 2})}}>
+                            ON</button>
+                            <button className={'btn ' + (
+                                (this.state.verbosity <= 1) ? 'btn-primary active' : 'btn btn-default'
+                            )}
+                            onClick={() => {this.setState({verbosity: 1})}}>
+                            OFF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
 
         // Reset the outstanding request local property when state changes
         if (this.outstanding_request_from != sos_model_run_status.status) {
@@ -121,38 +164,38 @@ class SosModelRunConfig extends Component {
         case 'unknown':
             step = 0
             step_status = 'process'
-            controls = <CreateButton value='Start Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
-            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(1000)
+            controls.push(<CreateButton value='Start Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
+            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'queing':
             step = 1
             step_status = 'process'
-            controls = <DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>
+            controls.push(<DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>)
             this.setRenderInterval(100)
             break
         case 'running':
             step = 2
             step_status = 'process'
-            controls = <DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>
+            controls.push(<DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>)
             this.setRenderInterval(100)
             break
         case 'stopped':
             step = 2
             step_status = 'error'
-            controls = <SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
-            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(1000)
+            controls.push(<SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
+            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'done':
             step = 3
             step_status = 'process'
-            controls = <CreateButton value='Restart Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
-            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(1000)
+            controls.push(<CreateButton value='Restart Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
+            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'failed':
             step = 2
             step_status = 'error'
-            controls = <SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
-            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(1000)
+            controls.push(<SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
+            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         }
 
@@ -186,20 +229,19 @@ class SosModelRunConfig extends Component {
                                         )}
                                         <div className="cont" ref={(ref) => this.newData = ref}/>
                                     </div>
-                                    <div className={'col-1' + ((this.followConsole) ? ' align-self-end' : '')}>
+                                    <div className={'col-1' + ((this.state.followConsole) ? ' align-self-end' : '')}>
                                         <button
                                             type="button"
-                                            className="btn btn-outline-dark"
+                                            className="btn btn-outline-dark btn-margin"
                                             onClick={() => {
-                                                this.followConsole = !this.followConsole
-                                                if ( this.followConsole) {
+                                                this.setState({followConsole: !this.state.followConsole})
+                                                if ( !this.state.followConsole) {
                                                     this.newData.scrollIntoView({behavior: 'instant'})
                                                 } else {
                                                     window.scrollTo(0, 0)
                                                 }
-                                                this.forceUpdate()
                                             }}>
-                                            {this.followConsole ? (
+                                            {this.state.followConsole ? (
                                                 <FaAngleDoubleUp/>
                                             ) : (
                                                 <FaAngleDoubleDown/>
@@ -229,6 +271,18 @@ class SosModelRunConfig extends Component {
                             </div>
                             <div className="card-body">
                                 <SosModelRunSummary sosModelRun={sos_model_run} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="row">
+                    <div className="col-sm">
+                        <div className="card">
+                            <div className="card-header">
+                                Controls
+                            </div>
+                            <div className="card-body">
                                 {controls}
                             </div>
                         </div>

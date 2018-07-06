@@ -95,7 +95,7 @@ class SosModelRunItem extends Component {
                                     <td hidden={resultLink==undefined} className="col-action">
                                         <button
                                             type="button"
-                                            className="btn btn-outline-dark"
+                                            className="btn btn-outline-dark btn-margin"
                                             value={itemname}
                                             name={item.name}
                                             onClick={this.onStartHandler}>
@@ -105,7 +105,7 @@ class SosModelRunItem extends Component {
                                     <td hidden={itemLink==undefined} className="col-action">
                                         <button
                                             type="button"
-                                            className="btn btn-outline-dark"
+                                            className="btn btn-outline-dark btn-margin"
                                             value={itemname}
                                             name={item.name}
                                             onClick={this.onDeleteHandler}>

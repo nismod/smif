@@ -75,8 +75,11 @@ class SosModelRunAPI(MethodView):
             data = request.get_json() or request.form
             data_interface.write_sos_model_run(data)
         elif action == 'start':
+            data = request.get_json() or request.form
+            print(data)
             args = {
-                'directory': data_interface.base_folder
+                'directory': data_interface.base_folder,
+                'verbosity': data['verbosity']
             }
             current_app.config.scheduler.add(sos_model_run_name, args)
         elif action == 'kill':

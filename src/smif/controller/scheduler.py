@@ -39,8 +39,16 @@ class Scheduler(object):
         touches the filesystem or other shared resources.
         """
         if self._status[model_run_name] is not 'running':
+
+            smif_call = (
+                'exec smif ' + 
+                '-'*(int(args['verbosity']) > 0) + 'v'*int(args['verbosity']) + 
+                ' run' + ' ' + model_run_name + ' ' + 
+                '-d' + ' ' + args['directory']
+            )
+
             self._process[model_run_name] = subprocess.Popen(
-                'exec smif run' + ' ' + model_run_name + ' ' + '-d' + ' ' + args['directory'],
+                smif_call,
                 shell=True,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )

@@ -9,7 +9,7 @@ import PropTypes from 'prop-types'
 const CreateButton = (props) => (
     <input
         id={props.id}
-        className="btn btn-success"
+        className="btn btn-success btn-margin"
         type="button"
         value={props.value? props.value : 'Add'}
         onClick={props.onClick} />
@@ -29,7 +29,7 @@ CreateButton.propTypes = {
 const SaveButton = (props) => (
     <input
         id={props.id}
-        className="btn btn-primary"
+        className="btn btn-primary btn-margin"
         type="submit"
         value={props.value? props.value : 'Save'}
         onClick={props.onClick} />
@@ -49,7 +49,7 @@ SaveButton.propTypes = {
 const CancelButton = (props) => (
     <input
         id={props.id}
-        className="btn btn-outline-secondary"
+        className="btn btn-outline-secondary btn-margin"
         type="button"
         value={props.value? props.value : 'Cancel'}
         onClick={props.onClick} />
@@ -69,7 +69,7 @@ CancelButton.propTypes = {
 const DangerButton = (props) => (
     <input
         id={props.id}
-        className="btn btn-danger"
+        className="btn btn-danger btn-margin"
         type="button"
         value={props.value? props.value : 'Delete'}
         onClick={props.onClick} />

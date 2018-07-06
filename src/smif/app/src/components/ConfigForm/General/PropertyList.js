@@ -78,7 +78,7 @@ class PropertyList extends Component {
         if (active) {
             return (
                 <td width='8%' >
-                    <button type="button" className="btn btn-outline-dark" key={itemNumber} value={itemNumber} name='edit' onClick={this.onEditHandler}>
+                    <button type="button" className="btn btn-outline-dark btn-margin" key={itemNumber} value={itemNumber} name='edit' onClick={this.onEditHandler}>
                         <FaPencil/>
                     </button>
                 </td>
@@ -91,7 +91,7 @@ class PropertyList extends Component {
         if (active) {
             return (
                 <td width='8%'>
-                    <button type="button" className="btn btn-outline-dark" key={itemname} value={itemname} name={configname} onClick={this.onDeleteHandler}>
+                    <button type="button" className="btn btn-outline-dark btn-margin" key={itemname} value={itemname} name={configname} onClick={this.onDeleteHandler}>
                         <FaTrash/>
                     </button>
                 </td>

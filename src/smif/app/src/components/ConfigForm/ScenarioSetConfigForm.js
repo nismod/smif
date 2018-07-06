@@ -313,7 +313,7 @@ class ScenarioSetConfigForm extends Component {
                     <div className="card-header">Facets</div>
                     <div className="card-body">
                         <PropertyList itemsName="Facet" items={selectedScenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.openDeletePopup} />
-                        <input className="btn btn-secondary btn-lg btn-block" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
+                        <input className="btn btn-secondary btn-lg btn-block btn-margin" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
                     </div>
                 </div>
 
@@ -322,7 +322,7 @@ class ScenarioSetConfigForm extends Component {
                         <div className="card-header">Scenarios</div>
                         <div className="card-body">
                             <PropertyList itemsName="Scenario" items={selectedScenarios} columns={{name: 'Name', description: 'Description'}} enableWarnings={true} rowWarning={scenarioWarnings} editButton={true} deleteButton={true} onEdit={this.openEditScenarioPopup} onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Add Scenario" onClick={this.openAddScenarioPopup}/>
+                            <input className="btn btn-secondary btn-lg btn-block btn-margin" name="createScenario" type="button" value="Add Scenario" onClick={this.openAddScenarioPopup}/>
                         </div>
                     </div>
                 </div>

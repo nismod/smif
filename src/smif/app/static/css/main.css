@@ -38,10 +38,15 @@ body {
     font-size: 1.125rem;
     font-weight: 300;
 }
-.btn,
+.btn-margin,
 select {
     margin: 0 0.5em 0.5em 0;
 }
+
+.btn-group {
+    margin-bottom: 1em;
+}
+
 .card {
     margin-bottom: 1em;
 }

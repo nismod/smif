@@ -71,7 +71,7 @@ class DeleteForm extends Component {
                                     <div key={conf.name}>
                                         <Link
                                             to={conf.link + conf.name}
-                                            className="btn btn-outline-dark">
+                                            className="btn btn-outline-dark btn-margin">
                                             <FaPencil/>
                                         </Link>
                                         {conf.name}
