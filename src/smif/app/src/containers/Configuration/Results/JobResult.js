@@ -68,12 +68,14 @@ class SosModelRunConfig extends Component {
 
     startJob(modelrun_name) {
         const { dispatch } = this.props
+        this.outstanding_request_from = this.props.sos_model_run_status.status
         dispatch(startSosModelRun(modelrun_name))
         dispatch(fetchSosModelRunStatus(this.modelrun_name))
     }
 
     stopJob(modelrun_name) {
         const { dispatch } = this.props
+        this.outstanding_request_from = this.props.sos_model_run_status.status
         dispatch(stopSosModelRun(modelrun_name))
         dispatch(fetchSosModelRunStatus(this.modelrun_name))
     }
@@ -110,12 +112,17 @@ class SosModelRunConfig extends Component {
         var step_status
         var controls
 
+        // Reset the outstanding request local property when state changes
+        if (this.outstanding_request_from != sos_model_run_status.status) {
+            this.outstanding_request_from = null
+        }
+
         switch (sos_model_run_status.status) {
         case 'unknown':
             step = 0
             step_status = 'process'
             controls = <CreateButton value='Start Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
-            this.setRenderInterval(1000)
+            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(1000)
             break
         case 'queing':
             step = 1
@@ -133,13 +140,13 @@ class SosModelRunConfig extends Component {
             step = 3
             step_status = 'process'
             controls = <CreateButton value='Restart Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
-            this.setRenderInterval(1000)
+            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(1000)
             break
         case 'failed':
             step = 2
             step_status = 'error'
             controls = <SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>
-            this.setRenderInterval(1000)
+            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(1000)
             break
         }
 

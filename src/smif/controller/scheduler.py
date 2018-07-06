@@ -39,13 +39,14 @@ class Scheduler(object):
         touches the filesystem or other shared resources.
         """
         if self._status[model_run_name] is not 'running':
-            self._output[model_run_name] = ""
-            self._output[model_run_name] = ""
             self._process[model_run_name] = subprocess.Popen(
                 'smif -v run' + ' ' + model_run_name + ' ' + '-d' + ' ' + args['directory'],
                 shell=True,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )
+            self._output[model_run_name] = "\x1b[1;34mModelrun \x1b \x1b[0m" + model_run_name + "\n"
+            self._output[model_run_name] += "\x1b[1;34mPID" + " \x1b"*7 + "[0m" + str(self._process[model_run_name].pid) + "\n"
+            self._output[model_run_name] += "-" * 100 + "\n"
             self._status[model_run_name] = 'running'
         else:
             raise Exception('Model is already running.')
