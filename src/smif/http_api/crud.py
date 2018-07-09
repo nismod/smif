@@ -76,7 +76,6 @@ class SosModelRunAPI(MethodView):
             data_interface.write_sos_model_run(data)
         elif action == 'start':
             data = request.get_json() or request.form
-            print(data)
             args = {
                 'directory': data_interface.base_folder,
                 'verbosity': data['args']['verbosity'],
