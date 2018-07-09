@@ -117,7 +117,7 @@ describe('<ProjectOverviewItem />', () => {
             items={items}
             itemLink={itemlink}
             onDelete={onDeleteSpy} />)
-        wrapper.find('button[name="item_2"]').simulate('click')
+        wrapper.find('button[id="btn_delete_item_2"]').simulate('click')
         expect(onDeleteSpy.calledOnce).to.be.true
         expect(onDeleteSpy.calledWith({
             target: {

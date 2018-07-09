@@ -46,7 +46,7 @@ class JobsOverview extends Component {
 
                 <div hidden={ isFetching }>
                     <div>
-                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/jobs/result/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/jobs/runner/" onDelete={this.openDeletePopup} />
                     </div>
                 </div>
             </div>

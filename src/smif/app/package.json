@@ -8,7 +8,7 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "nyc mocha --require babel-polyfill --compilers js:babel-register --require ./test/helpers.js --recursive",
+    "test": "NODE_PATH=./src nyc mocha --require babel-polyfill --compilers js:babel-register --require ./test/helpers.js --recursive",
     "report": "nyc report --reporter=lcov > coverage.lcov",
     "build": "webpack",
     "watch": "webpack --progress --watch",

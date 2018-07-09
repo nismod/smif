@@ -94,16 +94,18 @@ class SosModelRunItem extends Component {
                                     </td>
                                     <td hidden={resultLink==undefined} className="col-action">
                                         <button
+                                            id={'btn_start_' + item.name}
                                             type="button"
                                             className="btn btn-outline-dark btn-margin"
                                             value={itemname}
-                                            name={'btn_start_' + item.name}
+                                            name={item.name}
                                             onClick={this.onStartHandler}>
                                             <FaPlay/>
                                         </button>
                                     </td>
                                     <td hidden={itemLink==undefined} className="col-action">
                                         <button
+                                            id={'btn_delete_' + item.name}
                                             type="button"
                                             className="btn btn-outline-dark btn-margin"
                                             value={itemname}

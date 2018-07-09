@@ -333,7 +333,7 @@ class ProjectOverview extends Component {
                         <IntroBlock title="Model Runs" intro="A model run brings together a system-of-systems model definition with timesteps over which planning takes place, and a choice of scenarios and narratives to population the placeholder scenario sets in the system-of-systems model.">
                             <input className="btn btn-success btn-margin" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                         </IntroBlock>
-                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" resultLink="/jobs/result/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" resultLink="/jobs/runner/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='sos-models'}>
