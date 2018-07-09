@@ -97,7 +97,7 @@ class SosModelRunItem extends Component {
                                             type="button"
                                             className="btn btn-outline-dark btn-margin"
                                             value={itemname}
-                                            name={item.name}
+                                            name={'btn_start_' + item.name}
                                             onClick={this.onStartHandler}>
                                             <FaPlay/>
                                         </button>
