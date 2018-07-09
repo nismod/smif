@@ -3,14 +3,11 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import Ansi from 'ansi-to-react'
 import Steps, { Step } from 'rc-steps'
 import 'rc-steps/assets/index.css'
 import 'rc-steps/assets/iconfont.css'
 
-import stripAnsi from 'strip-ansi'
-import moment from 'moment'
-import { FaAngleDoubleUp, FaAngleDoubleDown, FaFloppyO } from 'react-icons/lib/fa'
+import ConsoleDisplay from 'components/Simulation/ConsoleDisplay'
 
 import { CreateButton, DangerButton, SaveButton, ToggleButton } from 'components/ConfigForm/General/Buttons'
 import {fetchSosModelRun, fetchSosModelRunStatus, startSosModelRun, killSosModelRun, saveSosModelRun} from 'actions/actions.js'
@@ -54,11 +51,6 @@ class JobRunner extends Component {
             this.modelrun_name = this.props.match.params.name
             dispatch(fetchSosModelRun(this.modelrun_name))
         }
-
-        // Scroll the console output down during running status
-        if (this.newData != undefined && this.props.sos_model_run_status.status == 'running' && this.state.followConsole) {
-            this.newData.scrollIntoView({ behavior: 'instant' })
-        }
     }
 
     setRenderInterval(interval) {
@@ -89,19 +81,6 @@ class JobRunner extends Component {
         this.outstanding_request_from = this.props.sos_model_run_status.status
         dispatch(killSosModelRun(modelrun_name))
         dispatch(fetchSosModelRunStatus(this.modelrun_name))
-    }
-
-    download(filename, text) {
-        var element = document.createElement('a')
-        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
-        element.setAttribute('download', filename)
-      
-        element.style.display = 'none'
-        document.body.appendChild(element)
-      
-        element.click()
-      
-        document.body.removeChild(element)
     }
 
     saveSosModelRun(sosModelRun) {
@@ -257,42 +236,7 @@ class JobRunner extends Component {
                                 Console Output
                             </div>
                             <div className="card-body">
-                                <div className="row">
-                                    <div className="col-10">
-                                        {sos_model_run_status.output.split(/\r?\n/).map((status_output, i) =>
-                                            <div key={'st_out_line_' + i}><Ansi>{status_output}</Ansi></div>
-                                        )}
-                                        <div className="cont" ref={(ref) => this.newData = ref}/>
-                                    </div>
-                                    <div className={'col-2' + ((this.state.followConsole) ? ' align-self-end' : '')}>
-
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-dark btn-margin"
-                                            onClick={() => {
-                                                this.download(moment().format('YMMDD_hmm') + '_' + sos_model_run.name, stripAnsi(sos_model_run_status.output))
-                                            }}>
-                                            <FaFloppyO/>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-dark btn-margin"
-                                            onClick={() => {
-                                                this.setState({followConsole: !this.state.followConsole})
-                                                if ( !this.state.followConsole) {
-                                                    this.newData.scrollIntoView({behavior: 'instant'})
-                                                } else {
-                                                    window.scrollTo(0, 0)
-                                                }
-                                            }}>
-                                            {this.state.followConsole ? (
-                                                <FaAngleDoubleUp/>
-                                            ) : (
-                                                <FaAngleDoubleDown/>
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
+                                <ConsoleDisplay name={sos_model_run.name} output={sos_model_run_status.output} status={sos_model_run_status.status}/>
                             </div>
                         </div>
                     </div>
