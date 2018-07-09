@@ -201,14 +201,14 @@ export function deleteSosModelRun(sosModelRunName){
     }
 }
 
-export function startSosModelRun(sosModelRunName, verbosity){
+export function startSosModelRun(sosModelRunName, args){
     return function () {
 
         // make API request, returning a promise
         return fetch('/api/v1/sos_model_runs/' + sosModelRunName + '/start', {
             method: 'post',
             body: JSON.stringify({
-                verbosity: verbosity
+                args: args
             }),
 
             headers: {

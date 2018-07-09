@@ -44,7 +44,9 @@ class Scheduler(object):
                 'exec smif ' + 
                 '-'*(int(args['verbosity']) > 0) + 'v'*int(args['verbosity']) + 
                 ' run' + ' ' + model_run_name + ' ' + 
-                '-d' + ' ' + args['directory']
+                '-d' + ' ' + args['directory'] + ' ' +
+                '-w'*args['warm_start'] + ' '*args['warm_start'] +
+                '-i' + ' ' + args['output_format']
             )
 
             self._process[model_run_name] = subprocess.Popen(
@@ -56,6 +58,9 @@ class Scheduler(object):
                                            model_run_name + "\n"
             self._output[model_run_name] += "\x1b[1;34mPID" + " \x1b"*7 + "[0m" + \
                                             str(self._process[model_run_name].pid) + "\n"
+            self._output[model_run_name] += "\x1b[1;34mCommand" + " \x1b"*3 + "[0m" + \
+                                            smif_call + "\n"
+                                            
             self._output[model_run_name] += "-" * 100 + "\n"
             self._status[model_run_name] = 'running'
         else:

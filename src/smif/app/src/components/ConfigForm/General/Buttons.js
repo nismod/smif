@@ -81,9 +81,41 @@ DangerButton.propTypes = {
     onClick: PropTypes.func
 }
 
+
+/** 
+ * ToggleButton
+ * 
+ * Button for toggle actions
+ */
+
+const ToggleButton = (props) => (
+    <div>
+        <button className={'btn ' + (
+            (props.active1) ? 'btn-primary active' : 'btn btn-default'
+        )}
+        onClick={props.action1}>
+            {props.label1}</button>
+        <button className={'btn ' + (
+            (props.active2) ? 'btn-primary active' : 'btn btn-default'
+        )}
+        onClick={props.action2}>
+            {props.label2}</button>
+    </div>
+)
+
+ToggleButton.propTypes = {
+    label1: PropTypes.string,
+    label2: PropTypes.string,
+    action1: PropTypes.func,
+    action2: PropTypes.func,
+    active1: PropTypes.bool,
+    active2: PropTypes.bool,
+}
+
 export {
     CreateButton,
     SaveButton,
     CancelButton,
-    DangerButton
+    DangerButton,
+    ToggleButton
 }

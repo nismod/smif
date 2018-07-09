@@ -79,7 +79,9 @@ class SosModelRunAPI(MethodView):
             print(data)
             args = {
                 'directory': data_interface.base_folder,
-                'verbosity': data['verbosity']
+                'verbosity': data['args']['verbosity'],
+                'warm_start': data['args']['warm_start'],
+                'output_format': data['args']['output_format']
             }
             current_app.config.scheduler.add(sos_model_run_name, args)
         elif action == 'kill':

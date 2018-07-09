@@ -21,6 +21,7 @@
     "codecov": "^3.0.0",
     "immutability-helper": "^2.5.1",
     "isomorphic-fetch": "^2.2.1",
+    "moment": "^2.22.2",
     "prop-types": "^15.6.0",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
@@ -31,7 +32,8 @@
     "reactstrap": "^6.1.0",
     "redux": "^4.0.0",
     "redux-logger": "^3.0.6",
-    "redux-thunk": "^2.2.0"
+    "redux-thunk": "^2.2.0",
+    "strip-ansi": "^4.0.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",

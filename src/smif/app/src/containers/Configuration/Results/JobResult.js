@@ -13,11 +13,13 @@ import Ansi from 'ansi-to-react-with-options'
 import Steps, { Step } from 'rc-steps'
 import 'rc-steps/assets/index.css'
 import 'rc-steps/assets/iconfont.css'
-import { CreateButton, DangerButton, SaveButton } from '../../../components/ConfigForm/General/Buttons'
+import { CreateButton, DangerButton, SaveButton, ToggleButton } from '../../../components/ConfigForm/General/Buttons'
+import stripAnsi from 'strip-ansi'
+import moment from 'moment'
 
 import { SosModelRunSummary } from '../../../components/Results/ConfigSummary'
 
-import { FaAngleDoubleUp, FaAngleDoubleDown } from 'react-icons/lib/fa'
+import { FaAngleDoubleUp, FaAngleDoubleDown, FaFloppyO } from 'react-icons/lib/fa'
 
 class SosModelRunConfig extends Component {
     constructor(props) {
@@ -31,6 +33,8 @@ class SosModelRunConfig extends Component {
 
         this.state = {
             verbosity: 0,
+            warm_start: false,
+            output_format: 'local_binary',
             followConsole: false
         }
     }
@@ -75,7 +79,12 @@ class SosModelRunConfig extends Component {
     startJob(modelrun_name) {
         const { dispatch } = this.props
         this.outstanding_request_from = this.props.sos_model_run_status.status
-        dispatch(startSosModelRun(modelrun_name, this.state.verbosity))
+        dispatch(startSosModelRun(modelrun_name, 
+            {
+                verbosity: this.state.verbosity, 
+                warm_start: this.state.warm_start,
+                output_format: this.state.output_format
+            }))
         dispatch(fetchSosModelRunStatus(this.modelrun_name))
     }
 
@@ -84,6 +93,19 @@ class SosModelRunConfig extends Component {
         this.outstanding_request_from = this.props.sos_model_run_status.status
         dispatch(killSosModelRun(modelrun_name))
         dispatch(fetchSosModelRunStatus(this.modelrun_name))
+    }
+
+    download(filename, text) {
+        var element = document.createElement('a')
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
+        element.setAttribute('download', filename)
+      
+        element.style.display = 'none'
+        document.body.appendChild(element)
+      
+        element.click()
+      
+        document.body.removeChild(element)
     }
 
     saveSosModelRun(sosModelRun) {
@@ -122,34 +144,51 @@ class SosModelRunConfig extends Component {
             <div>
                 <div className="form-group row">
                     <label className="col-sm-3 col-form-label">Info messages</label>
-                    <div className="col-sm-9">
-                        <div className="btn-group btn-toggle"> 
-                            <button className={'btn ' + (
-                                (this.state.verbosity > 0) ? 'btn-primary active' : 'btn btn-default'
-                            )}
-                            onClick={() => {this.setState({verbosity: 1})}}>
-                            ON</button>
-                            <button className={'btn ' + (
-                                (this.state.verbosity <= 0) ? 'btn-primary active' : 'btn btn-default'
-                            )}
-                            onClick={() => {this.setState({verbosity: 0})}}>
-                            OFF</button>
-                        </div>
+                    <div className="col-sm-9 btn-group">
+                        <ToggleButton 
+                            label1="ON" 
+                            label2="OFF" 
+                            action1={() => {this.setState({verbosity: 1})}}
+                            action2={() => {this.setState({verbosity: 0})}}
+                            active1={(this.state.verbosity > 0)} 
+                            active2={(this.state.verbosity <= 0)} 
+                        />
                     </div>
+                    <br/>
                     <label className="col-sm-3 col-form-label">Debug messages</label>
-                    <div className="col-sm-9">
-                        <div className="btn-group btn-toggle"> 
-                            <button className={'btn ' + (
-                                (this.state.verbosity > 1) ? 'btn-primary active' : 'btn btn-default'
-                            )}
-                            onClick={() => {this.setState({verbosity: 2})}}>
-                            ON</button>
-                            <button className={'btn ' + (
-                                (this.state.verbosity <= 1) ? 'btn-primary active' : 'btn btn-default'
-                            )}
-                            onClick={() => {this.setState({verbosity: 1})}}>
-                            OFF</button>
-                        </div>
+                    <div className="col-sm-9 btn-group">
+                        <ToggleButton 
+                            label1="ON" 
+                            label2="OFF" 
+                            action1={() => {this.setState({verbosity: 2})}}
+                            action2={() => {this.setState({verbosity: 1})}}
+                            active1={(this.state.verbosity > 1)} 
+                            active2={(this.state.verbosity <= 1)} 
+                        />
+                    </div>
+                    <br/>
+                    <label className="col-sm-3 col-form-label">Warm start</label>
+                    <div className="col-sm-9 btn-group">
+                        <ToggleButton 
+                            label1="ON" 
+                            label2="OFF" 
+                            action1={() => {this.setState({warm_start: true})}}
+                            action2={() => {this.setState({warm_start: false})}}
+                            active1={(this.state.warm_start)} 
+                            active2={(!this.state.warm_start)} 
+                        />
+                    </div>
+                    <br/>
+                    <label className="col-sm-3 col-form-label">Output format</label>
+                    <div className="col-sm-9 btn-group">
+                        <ToggleButton 
+                            label1="Binary" 
+                            label2="CSV" 
+                            action1={() => {this.setState({output_format: 'local_binary'})}}
+                            action2={() => {this.setState({output_format: 'local_csv'})}}
+                            active1={(this.state.output_format == 'local_binary')} 
+                            active2={(this.state.output_format == 'local_csv')} 
+                        />
                     </div>
                 </div>
             </div>
@@ -223,13 +262,22 @@ class SosModelRunConfig extends Component {
                             </div>
                             <div className="card-body">
                                 <div className="row">
-                                    <div className="col-11">
+                                    <div className="col-10">
                                         {sos_model_run_status.output.split(/\r?\n/).map((status_output, i) =>
                                             <div key={'st_out_line_' + i}><Ansi>{status_output}</Ansi></div>
                                         )}
                                         <div className="cont" ref={(ref) => this.newData = ref}/>
                                     </div>
-                                    <div className={'col-1' + ((this.state.followConsole) ? ' align-self-end' : '')}>
+                                    <div className={'col-2' + ((this.state.followConsole) ? ' align-self-end' : '')}>
+
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-dark btn-margin"
+                                            onClick={() => {
+                                                this.download(moment().format('YMMDD_hmm') + '_' + sos_model_run.name, stripAnsi(sos_model_run_status.output))
+                                            }}>
+                                            <FaFloppyO/>
+                                        </button>
                                         <button
                                             type="button"
                                             className="btn btn-outline-dark btn-margin"
