@@ -3,16 +3,16 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchScenarios } from '../../../actions/actions.js'
-import { saveScenario } from '../../../actions/actions.js'
-import { createScenario } from '../../../actions/actions.js'
-import { deleteScenario } from '../../../actions/actions.js'
-import { fetchScenarioSet } from '../../../actions/actions.js'
-import { saveScenarioSet } from '../../../actions/actions.js'
-import { fetchSosModelRuns } from '../../../actions/actions.js'
-import { fetchSosModels } from '../../../actions/actions.js'
+import { fetchScenarios } from 'actions/actions.js'
+import { saveScenario } from 'actions/actions.js'
+import { createScenario } from 'actions/actions.js'
+import { deleteScenario } from 'actions/actions.js'
+import { fetchScenarioSet } from 'actions/actions.js'
+import { saveScenarioSet } from 'actions/actions.js'
+import { fetchSosModelRuns } from 'actions/actions.js'
+import { fetchSosModels } from 'actions/actions.js'
 
-import ScenarioSetConfigForm from '../../../components/ConfigForm/ScenarioSetConfigForm.js'
+import ScenarioSetConfigForm from 'components/ConfigForm/ScenarioSetConfigForm.js'
 
 class ScenarioSetConfig extends Component {
     constructor(props) {

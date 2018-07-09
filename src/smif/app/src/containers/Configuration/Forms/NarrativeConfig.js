@@ -3,12 +3,12 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchNarrative } from '../../../actions/actions.js'
-import { fetchNarrativeSets } from '../../../actions/actions.js'
+import { fetchNarrative } from 'actions/actions.js'
+import { fetchNarrativeSets } from 'actions/actions.js'
 
-import { saveNarrative } from '../../../actions/actions.js'
+import { saveNarrative } from 'actions/actions.js'
 
-import NarrativeConfigForm from '../../../components/ConfigForm/NarrativeConfigForm.js'
+import NarrativeConfigForm from 'components/ConfigForm/NarrativeConfigForm.js'
 
 class NarrativeConfig extends Component {
     constructor(props) {

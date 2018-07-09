@@ -3,8 +3,8 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 import { NavLink, Route } from 'react-router-dom'
-import Footer from '../containers/Footer'
-import {fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives} from '../actions/actions.js'
+import Footer from 'containers/Footer'
+import {fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives} from 'actions/actions.js'
 
 import {FaHome, FaTasks, FaSliders, FaSitemap, FaCode, FaBarChart} from 'react-icons/lib/fa'
 import { Badge } from 'reactstrap'

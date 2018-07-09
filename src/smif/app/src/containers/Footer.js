@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchSmifDetails } from '../actions/actions.js'
+import { fetchSmifDetails } from 'actions/actions.js'
 
 class Footer extends Component {
 

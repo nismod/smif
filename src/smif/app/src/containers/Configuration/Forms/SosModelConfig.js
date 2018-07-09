@@ -3,16 +3,16 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchSosModel } from '../../../actions/actions.js'
-import { fetchSectorModels } from '../../../actions/actions.js'
-import { fetchScenarioSets } from '../../../actions/actions.js'
-import { fetchScenarios } from '../../../actions/actions.js'
-import { fetchNarrativeSets } from '../../../actions/actions.js'
-import { fetchNarratives } from '../../../actions/actions.js'
+import { fetchSosModel } from 'actions/actions.js'
+import { fetchSectorModels } from 'actions/actions.js'
+import { fetchScenarioSets } from 'actions/actions.js'
+import { fetchScenarios } from 'actions/actions.js'
+import { fetchNarrativeSets } from 'actions/actions.js'
+import { fetchNarratives } from 'actions/actions.js'
 
-import { saveSosModel } from '../../../actions/actions.js'
+import { saveSosModel } from 'actions/actions.js'
 
-import SosModelConfigForm from '../../../components/ConfigForm/SosModelConfigForm.js'
+import SosModelConfigForm from 'components/ConfigForm/SosModelConfigForm.js'
 
 class SosModelConfig extends Component {
     constructor(props) {

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import IntroBlock from './ConfigForm/General/IntroBlock.js'
+import IntroBlock from 'components/ConfigForm/General/IntroBlock.js'
 
 const Welcome = () => (
     <IntroBlock title="Welcome to smif" intro="smif (a simulation modelling integration framework) is designed to support the creation and running of system-of-systems models.">

@@ -3,25 +3,21 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchSosModelRun } from '../../../actions/actions.js'
-import { fetchSosModelRunStatus } from '../../../actions/actions.js'
-import { startSosModelRun, killSosModelRun } from '../../../actions/actions.js'
-
-import { saveSosModelRun } from '../../../actions/actions.js'
-
 import Ansi from 'ansi-to-react'
 import Steps, { Step } from 'rc-steps'
 import 'rc-steps/assets/index.css'
 import 'rc-steps/assets/iconfont.css'
-import { CreateButton, DangerButton, SaveButton, ToggleButton } from '../../../components/ConfigForm/General/Buttons'
+
 import stripAnsi from 'strip-ansi'
 import moment from 'moment'
-
-import { SosModelRunSummary } from '../../../components/Results/ConfigSummary'
-
 import { FaAngleDoubleUp, FaAngleDoubleDown, FaFloppyO } from 'react-icons/lib/fa'
 
-class SosModelRunConfig extends Component {
+import { CreateButton, DangerButton, SaveButton, ToggleButton } from 'components/ConfigForm/General/Buttons'
+import {fetchSosModelRun, fetchSosModelRunStatus, startSosModelRun, killSosModelRun, saveSosModelRun} from 'actions/actions.js'
+import { SosModelRunSummary } from 'components/Simulation/ConfigSummary'
+
+
+class JobRunner extends Component {
     constructor(props) {
         super(props)
         this.init = true
@@ -354,7 +350,7 @@ class SosModelRunConfig extends Component {
     }
 }
 
-SosModelRunConfig.propTypes = {
+JobRunner.propTypes = {
     sos_model_run: PropTypes.object.isRequired,
     sos_model_run_status: PropTypes.object.isRequired,
     sos_models: PropTypes.array.isRequired,
@@ -383,4 +379,4 @@ function mapStateToProps(state) {
     }
 }
 
-export default connect(mapStateToProps)(SosModelRunConfig)
+export default connect(mapStateToProps)(JobRunner)

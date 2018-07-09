@@ -3,15 +3,15 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from '../../../actions/actions.js'
-import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createNarrativeSet, createNarrative } from '../../../actions/actions.js'
-import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteNarrativeSet, deleteNarrative } from '../../../actions/actions.js'
+import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from 'actions/actions.js'
+import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createNarrativeSet, createNarrative } from 'actions/actions.js'
+import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteNarrativeSet, deleteNarrative } from 'actions/actions.js'
 
-import IntroBlock from '../../../components/ConfigForm/General/IntroBlock.js'
-import Popup from '../../../components/ConfigForm/General/Popup.js'
-import ProjectOverviewItem from '../../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
-import CreateConfigForm from '../../../components/ConfigForm/ProjectOverview/CreateConfigForm.js'
-import DeleteForm from '../../../components/ConfigForm/General/DeleteForm.js'
+import IntroBlock from 'components/ConfigForm/General/IntroBlock.js'
+import Popup from 'components/ConfigForm/General/Popup.js'
+import ProjectOverviewItem from 'components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
+import CreateConfigForm from 'components/ConfigForm/ProjectOverview/CreateConfigForm.js'
+import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
 
 class ProjectOverview extends Component {
     constructor() {

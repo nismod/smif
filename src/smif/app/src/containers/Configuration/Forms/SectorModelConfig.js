@@ -3,11 +3,11 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchSectorModel } from '../../../actions/actions.js'
-import { saveSectorModel } from '../../../actions/actions.js'
-import { fetchSosModels } from '../../../actions/actions.js'
+import { fetchSectorModel } from 'actions/actions.js'
+import { saveSectorModel } from 'actions/actions.js'
+import { fetchSosModels } from 'actions/actions.js'
 
-import SectorModelConfigForm from '../../../components/ConfigForm/SectorModelConfigForm.js'
+import SectorModelConfigForm from 'components/ConfigForm/SectorModelConfigForm.js'
 
 class SectorModelConfig extends Component {
     constructor(props) {

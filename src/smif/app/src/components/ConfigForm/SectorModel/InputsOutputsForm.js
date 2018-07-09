@@ -2,8 +2,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import Popup from '../General/Popup.js'
-import { SaveButton, CancelButton, CreateButton } from '../General/Buttons'
+import Popup from 'components/ConfigForm/General/Popup.js'
+import { SaveButton, CancelButton, CreateButton } from 'components/ConfigForm/General/Buttons'
 
 class InputsOutputsForm extends Component {
     constructor(props) {

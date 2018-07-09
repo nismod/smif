@@ -3,8 +3,8 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchSosModelRuns } from '../../../actions/actions.js'
-import ProjectOverviewItem from '../../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
+import { fetchSosModelRuns } from 'actions/actions.js'
+import ProjectOverviewItem from 'components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
 
 class JobsOverview extends Component {
     constructor(props) {

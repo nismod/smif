@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import { SaveButton, CancelButton } from '../General/Buttons'
+import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
 class CreateConfigForm extends Component {
     constructor(props) {

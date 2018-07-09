@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { SaveButton, CancelButton } from '../General/Buttons'
+import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
 class ScenarioConfigForm extends Component {
     constructor(props) {

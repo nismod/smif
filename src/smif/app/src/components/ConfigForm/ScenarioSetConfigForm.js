@@ -2,12 +2,12 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import Popup from './General/Popup.js'
-import PropertyList from './General/PropertyList.js'
-import ScenarioConfigForm from './ScenarioSet/ScenarioConfigForm.js'
-import FacetConfigForm from './ScenarioSet/FacetConfigForm.js'
-import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
-import { SaveButton, CancelButton } from './General/Buttons'
+import Popup from 'components/ConfigForm/General/Popup.js'
+import PropertyList from 'components/ConfigForm/General/PropertyList.js'
+import ScenarioConfigForm from 'components/ConfigForm/ScenarioSet/ScenarioConfigForm.js'
+import FacetConfigForm from 'components/ConfigForm/ScenarioSet/FacetConfigForm.js'
+import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
+import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
 class ScenarioSetConfigForm extends Component {
     constructor(props) {

@@ -2,12 +2,12 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import Popup from './General/Popup.js'
-import InputsOutputsForm from './SectorModel/InputsOutputsForm.js'
-import ParameterSelector from './SectorModel/ParameterSelector.js'
-import PropertyList from './General/PropertyList.js'
-import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
-import { SaveButton, CancelButton } from './General/Buttons'
+import Popup from 'components/ConfigForm/General/Popup.js'
+import InputsOutputsForm from 'components/ConfigForm/SectorModel/InputsOutputsForm.js'
+import ParameterSelector from 'components/ConfigForm/SectorModel/ParameterSelector.js'
+import PropertyList from 'components/ConfigForm/General/PropertyList.js'
+import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
+import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
 class SectorModelConfigForm extends Component {
     constructor(props) {
