@@ -9,7 +9,7 @@ import { startSosModelRun, killSosModelRun } from '../../../actions/actions.js'
 
 import { saveSosModelRun } from '../../../actions/actions.js'
 
-import Ansi from 'ansi-to-react-with-options'
+import Ansi from 'ansi-to-react'
 import Steps, { Step } from 'rc-steps'
 import 'rc-steps/assets/index.css'
 import 'rc-steps/assets/iconfont.css'
