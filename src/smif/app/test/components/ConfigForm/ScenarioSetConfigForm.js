@@ -1,25 +1,21 @@
 import React from 'react'
 import sinon from 'sinon'
-import { expect } from 'chai'
-import { mount, shallow } from 'enzyme'
+import {expect} from 'chai'
+import {mount, shallow} from 'enzyme'
+import {describe, it} from 'mocha'
 
 import ScenarioSetConfigForm from '../../../src/components/ConfigForm/ScenarioSetConfigForm.js'
 
 import {scenario_set, scenarios} from '../../helpers.js'
-import {empty_object, empty_array} from '../../helpers.js'
+import {empty_array} from '../../helpers.js'
 
 describe('<ScenarioSetConfigForm />', () => {
 
     const correctRender = shallow(<ScenarioSetConfigForm
-            sosModelRuns={empty_array}
-            sosModels={empty_array}
-            scenarioSet={scenario_set}
-            scenarios={scenarios} />)
-    const dataMissingRender = shallow(<ScenarioSetConfigForm
-            sosModelRuns={empty_array}
-            sosModels={empty_array}
-            scenarioSet={empty_object}
-            scenarios={empty_array}/>)
+        sosModelRuns={empty_array}
+        sosModels={empty_array}
+        scenarioSet={scenario_set}
+        scenarios={scenarios} />)
 
     it('renders scenario_set.name', () => {
         const scenario_set_name = correctRender.find('[id="scenario_set_name"]')

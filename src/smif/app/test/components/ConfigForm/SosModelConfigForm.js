@@ -1,6 +1,8 @@
 import React from 'react'
-import { expect } from 'chai'
-import { shallow } from 'enzyme'
+import {expect} from 'chai'
+import {shallow} from 'enzyme'
+import {describe, it} from 'mocha'
+
 import SosModelConfigForm from '../../../src/components/ConfigForm/SosModelConfigForm.js'
 
 import {sos_model, sector_models, scenario_sets, narrative_sets} from '../../helpers.js'
@@ -18,7 +20,7 @@ describe('<SosModelConfigForm />', () => {
 
     it('renders sos_model.name when data missing', () => {
         const sos_model_name = dataMissingRender.find('[id="sos_model_name"]')
-        expect(sos_model_name.html()).to.contain(`id="sos_model_name"`)
+        expect(sos_model_name.html()).to.contain('id="sos_model_name"')
     })
 
     it('renders sos_model.description', () => {
@@ -28,6 +30,6 @@ describe('<SosModelConfigForm />', () => {
 
     it('renders sos_model.description when data missing', () => {
         const sos_model_description = dataMissingRender.find('[id="sos_model_description"]')
-        expect(sos_model_description.html()).to.contain(`id="sos_model_description"`)
+        expect(sos_model_description.html()).to.contain('id="sos_model_description"')
     })
 })

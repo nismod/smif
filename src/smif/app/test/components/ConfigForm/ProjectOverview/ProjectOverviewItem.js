@@ -1,8 +1,8 @@
 import React from 'react'
-import { expect } from 'chai'
-import { shallow, mount } from 'enzyme'
-import { describe, it } from 'mocha'
-import { MemoryRouter, Route, Switch } from 'react-router-dom'
+import {expect} from 'chai'
+import {shallow, mount} from 'enzyme'
+import {describe, it} from 'mocha'
+import {MemoryRouter, Route, Switch} from 'react-router-dom'
 import sinon from 'sinon'
 
 import ProjectOverviewItem from '../../../../src/components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'

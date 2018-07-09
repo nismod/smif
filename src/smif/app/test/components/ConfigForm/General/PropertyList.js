@@ -1,11 +1,10 @@
 import React from 'react'
-import { expect } from 'chai'
-import { shallow } from 'enzyme'
+import {expect} from 'chai'
+import {shallow} from 'enzyme'
+import {describe, it} from 'mocha'
 import PropertyList from '../../../../src/components/ConfigForm/General/PropertyList.js'
 
-
 import {sos_model} from '../../../helpers.js'
-import {empty_object, empty_array} from '../../../helpers.js'
 
 describe('<PropertyList />', () => {
 

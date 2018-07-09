@@ -1,6 +1,8 @@
 import React from 'react'
-import { expect } from 'chai'
-import { shallow } from 'enzyme'
+import {expect} from 'chai'
+import {shallow} from 'enzyme'
+import {describe, it} from 'mocha'
+
 import SosModelSelector from '../../../../src/components/ConfigForm/SosModelRun/SosModelSelector.js'
 
 import {sos_model_run, sos_models} from '../../../helpers.js'

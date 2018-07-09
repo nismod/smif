@@ -1,7 +1,8 @@
 import React from 'react'
 import sinon from 'sinon'
-import { expect } from 'chai'
-import { mount, shallow } from 'enzyme'
+import {expect} from 'chai'
+import {mount, shallow} from 'enzyme'
+import {describe, it} from 'mocha'
 
 import CreateConfigForm from '../../../../src/components/ConfigForm/ProjectOverview/CreateConfigForm.js'
 

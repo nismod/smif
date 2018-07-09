@@ -1,10 +1,12 @@
 import React from 'react'
 import sinon from 'sinon'
-import { expect } from 'chai'
-import { mount, shallow } from 'enzyme'
+import {expect} from 'chai'
+import {mount, shallow} from 'enzyme'
+import {describe, it} from 'mocha'
+
 import NarrativeSelector from '../../../../src/components/ConfigForm/SosModelRun/NarrativeSelector.js'
 
-import {sos_model_run, sos_models, narratives, sos_model} from '../../../helpers.js'
+import {sos_model_run, sos_models, narratives} from '../../../helpers.js'
 import {empty_object, empty_array} from '../../../helpers.js'
 
 var render, warning

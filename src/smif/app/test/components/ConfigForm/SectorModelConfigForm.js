@@ -1,9 +1,11 @@
 import React from 'react'
-import { expect } from 'chai'
-import { shallow } from 'enzyme'
+import {expect} from 'chai'
+import {shallow} from 'enzyme'
+import {describe, it} from 'mocha'
+
 import SectorModelConfigForm from '../../../src/components/ConfigForm/SectorModelConfigForm.js'
 
-import {sector_model, sector_models, scenario_sets, narrative_sets} from '../../helpers.js'
+import {sector_model} from '../../helpers.js'
 import {empty_object, empty_array} from '../../helpers.js'
 
 describe('<SectorModelConfigForm />', () => {
@@ -22,7 +24,7 @@ describe('<SectorModelConfigForm />', () => {
 
     it('renders sector_model.name when data missing', () => {
         const sector_model_name = dataMissingRender.find('[id="sector_model_name"]')
-        expect(sector_model_name.html()).to.contain(`id="sector_model_name"`)
+        expect(sector_model_name.html()).to.contain('id="sector_model_name"')
     })
 
     it('renders sector_model.description', () => {
@@ -32,6 +34,6 @@ describe('<SectorModelConfigForm />', () => {
 
     it('renders sector_model.description when data missing', () => {
         const sector_model_description = dataMissingRender.find('[id="sector_model_description"]')
-        expect(sector_model_description.html()).to.contain(`id="sector_model_description"`)
+        expect(sector_model_description.html()).to.contain('id="sector_model_description"')
     })
 })

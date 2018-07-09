@@ -1,17 +1,16 @@
 import React from 'react'
 import sinon from 'sinon'
-import { expect } from 'chai'
-import { mount, shallow, render } from 'enzyme'
+import {expect} from 'chai'
+import {mount, shallow} from 'enzyme'
+import {describe, it} from 'mocha'
 
 import ScenarioConfigForm from '../../../../src/components/ConfigForm/ScenarioSet/ScenarioConfigForm.js'
 
 import {scenario, scenario_set} from '../../../helpers.js'
-import {empty_object, empty_array} from '../../../helpers.js'
 
 describe('<ScenarioConfigForm />', () => {
 
     const correctRender = shallow(<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} />)
-    const dataMissingRender = shallow(<ScenarioConfigForm scenario={empty_object} scenarioSet={empty_object} />)
 
     it('renders scenario.name', () => {
         const scenario_name = correctRender.find('[id="scenario_name"]')
@@ -71,7 +70,7 @@ describe('<ScenarioConfigForm />', () => {
         // To check the rendered output use:
         // console.log(nodes.debug())
         nodes.simulate('click')
-        expect(onCancelClick.calledOnce).to.equal(true);
+        expect(onCancelClick.calledOnce).to.equal(true)
     })
 
     it('unmount', () => {
