@@ -35,6 +35,9 @@ Bugs:
   being able to find previous modelrun results
 - Fixes loading modelruns interactively, resolve error when loading duplicate 
   region/interval definitions
+- Fixes region and interval columns of scenario data files are read as integers 
+  from csv but IDs of regions and intervals could be read as strings or integers 
+  from shapefiles and csvs respectively raising validation errors
 
 
 Version 0.6
