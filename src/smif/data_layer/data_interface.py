@@ -274,6 +274,7 @@ class DataInterface(metaclass=ABCMeta):
         DataInterface._validate_observation_meta(observations, region_names, 'region')
         DataInterface._validate_observation_meta(observations, interval_names, 'interval')
 
+
     @staticmethod
     def _validate_observation_keys(observations):
         for obs in observations:
@@ -290,9 +291,9 @@ class DataInterface(metaclass=ABCMeta):
     @staticmethod
     def _validate_observation_meta(observations, meta_list, meta_name):
         observed = set()
-        for obs in observations:
+        for line, obs in enumerate(observations):
             if obs[meta_name] not in meta_list:
-                raise ValueError("Unknown {} '{}'".format(meta_name, obs[meta_name]))
+                raise ValueError("Unknown {} '{}' in row {}".format(meta_name, obs[meta_name], line))
             else:
                 observed.add(obs[meta_name])
         missing = set(meta_list) - observed
