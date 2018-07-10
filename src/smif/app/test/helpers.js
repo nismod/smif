@@ -1,8 +1,8 @@
 // setup used by all tests
-import { configure } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
+import { configure } from 'enzyme'
+import Adapter from 'enzyme-adapter-react-16'
 
-configure({ adapter: new Adapter() });
+configure({ adapter: new Adapter() })
 
 // data used by all tests
 export const empty_object = {}
