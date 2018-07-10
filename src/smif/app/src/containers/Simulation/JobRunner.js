@@ -1,17 +1,16 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
+import {connect} from 'react-redux'
 
-import { connect } from 'react-redux'
-
-import Steps, { Step } from 'rc-steps'
+import Steps, {Step} from 'rc-steps'
 import 'rc-steps/assets/index.css'
 import 'rc-steps/assets/iconfont.css'
 
 import ConsoleDisplay from 'components/Simulation/ConsoleDisplay'
-
-import { CreateButton, DangerButton, SaveButton, ToggleButton } from 'components/ConfigForm/General/Buttons'
+import JobRunControls from 'components/Simulation/JobRunControls'
+import {CreateButton, DangerButton, SaveButton} from 'components/ConfigForm/General/Buttons'
 import {fetchSosModelRun, fetchSosModelRunStatus, startSosModelRun, killSosModelRun, saveSosModelRun} from 'actions/actions.js'
-import { SosModelRunSummary } from 'components/Simulation/ConfigSummary'
+import {SosModelRunSummary} from 'components/Simulation/ConfigSummary'
 
 
 class JobRunner extends Component {
@@ -25,9 +24,6 @@ class JobRunner extends Component {
         this.modelrun_name = this.props.match.params.name
 
         this.state = {
-            verbosity: 0,
-            warm_start: false,
-            output_format: 'local_binary',
             followConsole: false
         }
     }
@@ -69,9 +65,9 @@ class JobRunner extends Component {
         this.outstanding_request_from = this.props.sos_model_run_status.status
         dispatch(startSosModelRun(modelrun_name, 
             {
-                verbosity: this.state.verbosity, 
-                warm_start: this.state.warm_start,
-                output_format: this.state.output_format
+                verbosity: this.controls.state.verbosity, 
+                warm_start: this.controls.state.warm_start,
+                output_format: this.controls.state.output_format
             }))
         dispatch(fetchSosModelRunStatus(this.modelrun_name))
     }
@@ -117,55 +113,7 @@ class JobRunner extends Component {
 
         controls.push(
             <div>
-                <div className="form-group row">
-                    <label className="col-sm-3 col-form-label">Info messages</label>
-                    <div className="col-sm-9 btn-group">
-                        <ToggleButton 
-                            label1="ON" 
-                            label2="OFF" 
-                            action1={() => {this.setState({verbosity: 1})}}
-                            action2={() => {this.setState({verbosity: 0})}}
-                            active1={(this.state.verbosity > 0)} 
-                            active2={(this.state.verbosity <= 0)} 
-                        />
-                    </div>
-                    <br/>
-                    <label className="col-sm-3 col-form-label">Debug messages</label>
-                    <div className="col-sm-9 btn-group">
-                        <ToggleButton 
-                            label1="ON" 
-                            label2="OFF" 
-                            action1={() => {this.setState({verbosity: 2})}}
-                            action2={() => {this.setState({verbosity: 1})}}
-                            active1={(this.state.verbosity > 1)} 
-                            active2={(this.state.verbosity <= 1)} 
-                        />
-                    </div>
-                    <br/>
-                    <label className="col-sm-3 col-form-label">Warm start</label>
-                    <div className="col-sm-9 btn-group">
-                        <ToggleButton 
-                            label1="ON" 
-                            label2="OFF" 
-                            action1={() => {this.setState({warm_start: true})}}
-                            action2={() => {this.setState({warm_start: false})}}
-                            active1={(this.state.warm_start)} 
-                            active2={(!this.state.warm_start)} 
-                        />
-                    </div>
-                    <br/>
-                    <label className="col-sm-3 col-form-label">Output format</label>
-                    <div className="col-sm-9 btn-group">
-                        <ToggleButton 
-                            label1="Binary" 
-                            label2="CSV" 
-                            action1={() => {this.setState({output_format: 'local_binary'})}}
-                            action2={() => {this.setState({output_format: 'local_csv'})}}
-                            active1={(this.state.output_format == 'local_binary')} 
-                            active2={(this.state.output_format == 'local_csv')} 
-                        />
-                    </div>
-                </div>
+                <JobRunControls ref={(ref) => this.controls = ref}/>
             </div>
         )
 
