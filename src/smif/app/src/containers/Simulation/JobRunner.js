@@ -2,10 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import {connect} from 'react-redux'
 
-import Steps, {Step} from 'rc-steps'
-import 'rc-steps/assets/index.css'
-import 'rc-steps/assets/iconfont.css'
-
+import Stepper from 'components/Simulation/Stepper'
 import ConsoleDisplay from 'components/Simulation/ConsoleDisplay'
 import JobRunControls from 'components/Simulation/JobRunControls'
 import {CreateButton, DangerButton, SaveButton} from 'components/ConfigForm/General/Buttons'
@@ -107,8 +104,6 @@ class JobRunner extends Component {
 
     renderSosModelConfig(sos_model_run, sos_model_run_status) {
 
-        var step
-        var step_status
         var controls = []
 
         controls.push(
@@ -124,53 +119,28 @@ class JobRunner extends Component {
 
         switch (sos_model_run_status.status) {
         case 'unknown':
-            step = 0
-            step_status = 'process'
             controls.push(<CreateButton value='Start Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
             this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'queing':
-            step = 1
-            step_status = 'process'
             controls.push(<DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>)
             this.setRenderInterval(100)
             break
         case 'running':
-            step = 2
-            step_status = 'process'
             controls.push(<DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>)
             this.setRenderInterval(100)
             break
         case 'stopped':
-            step = 2
-            step_status = 'error'
             controls.push(<SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
             this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'done':
-            step = 3
-            step_status = 'process'
             controls.push(<CreateButton value='Restart Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
             this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'failed':
-            step = 2
-            step_status = 'error'
             controls.push(<SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
             this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
-            break
-        }
-
-        var run_message = null
-        switch (sos_model_run_status.status) {
-        case 'stopped':
-            run_message = 'Modelrun stopped by user'
-            break
-        case 'failed':
-            run_message = 'Modelrun stopped because of error'
-            break
-        default:
-            run_message = 'Modelrun is being executed'
             break
         }
 
@@ -198,12 +168,7 @@ class JobRunner extends Component {
                     <div className="col-sm">
                         <div className="card">
                             <div className="card-header">
-                                <Steps current={step} status={step_status}>
-                                    <Step title="Ready" description="Modelrun is ready to be started" />
-                                    <Step title="Queuing" description="Waiting in the queue" />
-                                    <Step title="Running" description={run_message} />
-                                    <Step title="Completed" description="Modelrun has completed" />
-                                </Steps>
+                                <Stepper status={sos_model_run_status.status}/>
                             </div>
                             <div className="card-body">
                                 <SosModelRunSummary sosModelRun={sos_model_run} />
