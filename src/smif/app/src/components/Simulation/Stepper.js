@@ -2,8 +2,6 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import Steps, {Step} from 'rc-steps'
-import 'rc-steps/assets/index.css'
-import 'rc-steps/assets/iconfont.css'
 
 class Stepper extends Component {
 
