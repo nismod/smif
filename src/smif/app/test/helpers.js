@@ -495,3 +495,7 @@ export const narrative = {
     name: 'High Tech Demand Side Management',
     narrative_set: 'technology'
 }
+
+// This is necessary to get components/Simulations/ConsoleDisplay running
+window.HTMLElement.prototype.scrollIntoView = function() {}
+window.scrollTo = function() {}

@@ -10,6 +10,8 @@ class ConsoleDisplay extends Component {
 
     constructor(props) {
         super(props)
+
+        this.anchor = React.createRef()
         
         this.state = {
             followConsole: false
@@ -20,8 +22,8 @@ class ConsoleDisplay extends Component {
         const {status} = this.props
 
         // Scroll the console output down during running status
-        if (this.newData != undefined && status == 'running' && this.state.followConsole) {
-            this.newData.scrollIntoView({ behavior: 'instant' })
+        if (this.anchor.current != undefined && status == 'running' && this.state.followConsole) {
+            this.anchor.current.scrollIntoView({ behavior: 'instant' })
         }
     }
 
@@ -46,11 +48,12 @@ class ConsoleDisplay extends Component {
                     {output.split(/\r?\n/).map((status_output, i) =>
                         <div key={'st_out_line_' + i}><Ansi>{status_output}</Ansi></div>
                     )}
-                    <div className="cont" ref={(ref) => this.newData = ref}/>
+                    <div className="cont" ref={this.anchor}/>
                 </div>
                 <div className={'col-2' + ((this.state.followConsole) ? ' align-self-end' : '')}>
 
                     <button
+                        id="btn_download"
                         type="button"
                         className="btn btn-outline-dark btn-margin"
                         onClick={() => {
@@ -59,12 +62,13 @@ class ConsoleDisplay extends Component {
                         <FaFloppyO/>
                     </button>
                     <button
+                        id="btn_toggle_scroll"
                         type="button"
                         className="btn btn-outline-dark btn-margin"
                         onClick={() => {
                             this.setState({followConsole: !this.state.followConsole})
                             if ( !this.state.followConsole) {
-                                this.newData.scrollIntoView({behavior: 'instant'})
+                                this.anchor.current.scrollIntoView({behavior: 'instant'})
                             } else {
                                 window.scrollTo(0, 0)
                             }
