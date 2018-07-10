@@ -5,10 +5,6 @@ import Steps, {Step} from 'rc-steps'
 
 class Stepper extends Component {
 
-    constructor(props) {
-        super(props)
-    }
-
     render() {
         var step
         var step_status
@@ -56,10 +52,10 @@ class Stepper extends Component {
         return (
             <div>
                 <Steps current={step} status={step_status}>
-                    <Step title="Ready" description="Modelrun is ready to be started" />
-                    <Step title="Queuing" description="Waiting in the queue" />
-                    <Step title="Running" description={run_message} />
-                    <Step title="Completed" description="Modelrun has completed" />
+                    <Step id="step_ready" title="Ready" description="Modelrun is ready to be started" />
+                    <Step id="step_queuing" title="Queuing" description="Waiting in the queue" />
+                    <Step id="step_running" title="Running" description={run_message} />
+                    <Step id="step_completed" title="Completed" description="Modelrun has completed" />
                 </Steps>
             </div>
         )
