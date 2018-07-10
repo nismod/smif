@@ -10,7 +10,6 @@ class ConsoleDisplay extends Component {
 
     constructor(props) {
         super(props)
-
         /* istanbul ignore next */
         this.anchor = React.createRef()
         

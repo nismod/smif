@@ -6,7 +6,7 @@ class JobRunControls extends Component {
 
     constructor(props) {
         super(props)
-        
+        /* istanbul ignore next */
         this.state = {
             verbosity: 0,
             warm_start: false,
@@ -20,7 +20,8 @@ class JobRunControls extends Component {
                 <div className="form-group row">
                     <label className="col-sm-3 col-form-label">Info messages</label>
                     <div className="col-sm-9 btn-group">
-                        <ToggleButton 
+                        <ToggleButton
+                            id="btn_toggle_info" 
                             label1="ON" 
                             label2="OFF" 
                             action1={() => {this.setState({verbosity: 1})}}
@@ -33,6 +34,7 @@ class JobRunControls extends Component {
                     <label className="col-sm-3 col-form-label">Debug messages</label>
                     <div className="col-sm-9 btn-group">
                         <ToggleButton 
+                            id="btn_toggle_debug" 
                             label1="ON" 
                             label2="OFF" 
                             action1={() => {this.setState({verbosity: 2})}}
@@ -45,6 +47,7 @@ class JobRunControls extends Component {
                     <label className="col-sm-3 col-form-label">Warm start</label>
                     <div className="col-sm-9 btn-group">
                         <ToggleButton 
+                            id="btn_toggle_warm_start" 
                             label1="ON" 
                             label2="OFF" 
                             action1={() => {this.setState({warm_start: true})}}
@@ -57,6 +60,7 @@ class JobRunControls extends Component {
                     <label className="col-sm-3 col-form-label">Output format</label>
                     <div className="col-sm-9 btn-group">
                         <ToggleButton 
+                            id="btn_toggle_output_format" 
                             label1="Binary" 
                             label2="CSV" 
                             action1={() => {this.setState({output_format: 'local_binary'})}}
