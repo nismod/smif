@@ -49,7 +49,7 @@ class TestDataInterface():
                 'year': 2015
             }
         ]
-        msg = "Unknown region 'missing'"
+        msg = "Unknown region 'missing' in row 0"
         with raises(ValueError) as ex:
             DataInterface.data_list_to_ndarray(
                 data,

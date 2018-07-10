@@ -494,6 +494,8 @@ class TestDimensions:
                                              annual_intervals_csv,
                                              annual_intervals,
                                              get_handler):
+        """Ids are cast to integer if digits
+        """
         path = os.path.join(str(setup_folder_structure), 'data',
                             'interval_definitions',
                             'annual.csv')
@@ -503,7 +505,7 @@ class TestDimensions:
             w.writerows(annual_intervals_csv)
 
         actual = get_handler.read_interval_definition_data('annual')
-        expected = annual_intervals
+        expected = [(1, [('P0Y', 'P1Y')])]
         assert actual == expected
 
     def test_project_region_definitions(self, get_handler):
