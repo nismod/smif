@@ -102,7 +102,7 @@ class JobRunner extends Component {
         )
     }
 
-    renderSosModelConfig(sos_model_run, sos_model_run_status) {
+    renderJobRunner(sos_model_run, sos_model_run_status) {
 
         var controls = []
 
@@ -202,7 +202,7 @@ class JobRunner extends Component {
             return this.renderLoading()
         } else {
             this.init = false
-            return this.renderSosModelConfig(sos_model_run, sos_model_run_status)
+            return this.renderJobRunner(sos_model_run, sos_model_run_status)
         }
     }
 }
