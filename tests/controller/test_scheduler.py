@@ -7,10 +7,15 @@ from smif.controller.scheduler import Scheduler
 @patch('smif.controller.scheduler.subprocess.Popen')
 def test_single_modelrun(mock_popen):
     my_scheduler = Scheduler()
-    my_scheduler.add('my_model_run', {'directory': 'mock/dir'})
+    my_scheduler.add('my_model_run', {
+        'directory': 'mock/dir',
+        'verbosity': 0, 
+        'warm_start': False, 
+        'output_format': 'local_csv'
+    })
 
     mock_popen.assert_called_with(
-        'exec smif run my_model_run -d mock/dir',
+        'exec smif  run my_model_run -d mock/dir -i local_csv',
         shell=True,
         stderr=-2, stdout=-1
     )
@@ -36,7 +41,12 @@ def test_status_model_started(mock_popen):
     mock_popen.return_value = process_mock
 
     my_scheduler = Scheduler()
-    my_scheduler.add('my_model_run', {'directory': 'mock/dir'})
+    my_scheduler.add('my_model_run', {
+        'directory': 'mock/dir',
+        'verbosity': 0, 
+        'warm_start': False, 
+        'output_format': 'local_csv'
+    })
     my_scheduler.lock = True
     status = my_scheduler.get_status('my_model_run')
     assert status['status'] == 'running'
@@ -55,7 +65,12 @@ def test_status_model_done(mock_popen):
     mock_popen.return_value = process_mock
 
     my_scheduler = Scheduler()
-    my_scheduler.add('my_model_run', {'directory': 'mock/dir'})
+    my_scheduler.add('my_model_run', {
+        'directory': 'mock/dir',
+        'verbosity': 0, 
+        'warm_start': False, 
+        'output_format': 'local_csv'
+    })
     my_scheduler.lock = True
     response = my_scheduler.get_status('my_model_run')
 
@@ -75,7 +90,13 @@ def test_status_model_failed(mock_popen):
     mock_popen.return_value = process_mock
 
     my_scheduler = Scheduler()
-    my_scheduler.add('my_model_run', {'directory': 'mock/dir'})
+    my_scheduler.add('my_model_run', {
+        'directory': 'mock/dir',
+        'verbosity': 0, 
+        'warm_start': False, 
+        'output_format': 
+        'local_csv'
+    })
     my_scheduler.lock = True
     response = my_scheduler.get_status('my_model_run')
 
@@ -95,7 +116,13 @@ def test_status_model_stopped(mock_popen):
     mock_popen.return_value = process_mock
 
     my_scheduler = Scheduler()
-    my_scheduler.add('my_model_run', {'directory': 'mock/dir'})
+    my_scheduler.add('my_model_run', {
+        'directory': 'mock/dir', 
+        'verbosity': 0, 
+        'warm_start': False, 
+        'output_format': 
+        'local_csv'
+    })
     my_scheduler.lock = True
     my_scheduler.kill('my_model_run')
     response = my_scheduler.get_status('my_model_run')
