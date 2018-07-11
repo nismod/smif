@@ -60,7 +60,7 @@ class SosModelRunItem extends Component {
         }
     }
 
-    renderItems(itemname, items, itemLink, resultLink) {
+    renderItems(itemname, items, itemLink, resultLink, onDelete) {
 
         if (this.state.redirect) {
             return <Redirect push to={this.state.redirect_to}/>
@@ -73,7 +73,7 @@ class SosModelRunItem extends Component {
                             <th className="col-name" scope="col">Name</th>
                             <th className="col-desc" scope="col">Description</th>
                             <th hidden={resultLink==undefined} className="col-action" scope="col"></th>
-                            <th hidden={itemLink==undefined} className="col-action" scope="col"></th>
+                            <th hidden={onDelete==undefined} className="col-action" scope="col"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -103,7 +103,7 @@ class SosModelRunItem extends Component {
                                             <FaPlay/>
                                         </button>
                                     </td>
-                                    <td hidden={itemLink==undefined} className="col-action">
+                                    <td hidden={onDelete==undefined} className="col-action">
                                         <button
                                             id={'btn_delete_' + item.name}
                                             type="button"
@@ -140,7 +140,7 @@ class SosModelRunItem extends Component {
     }
 
     render() {
-        const {itemname, items, itemLink, resultLink} = this.props
+        const {itemname, items, itemLink, resultLink, onDelete} = this.props
 
         if (itemname == '' || itemname == undefined || itemname == null) {
             return this.renderDanger('There is no itemname configured')
@@ -149,7 +149,7 @@ class SosModelRunItem extends Component {
         } else if (items == null || items == undefined || items.length == 0) {
             return this.renderInfo('There are no items in this list')
         } else {
-            return this.renderItems(itemname, items, itemLink, resultLink)
+            return this.renderItems(itemname, items, itemLink, resultLink, onDelete)
         }
     }
 }

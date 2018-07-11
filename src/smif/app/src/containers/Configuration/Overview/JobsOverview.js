@@ -49,7 +49,7 @@ class JobsOverview extends Component {
                 <div hidden={ isFetching }>
                     <div>
                         <IntroBlock title="Jobs" intro="A job brings together a system-of-systems modelrun configuration and the simulation execution. Each job provides controls to start, stop or restart a modelrun configuration and provides real-time results about its execution. Jobs can be filtered by status by using the navigation pane on the left."/>
-                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/jobs/runner/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/jobs/runner/" />
                     </div>
                 </div>
             </div>
