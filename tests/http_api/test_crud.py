@@ -28,6 +28,10 @@ def mock_scheduler():
             return {
                 'status': 'done',
             }
+        elif arg in ('unique_model_run_name'):
+            return {
+                'status': 'running',
+            }
 
     attrs = {
         'get_status.side_effect': get_status
@@ -170,6 +174,15 @@ def test_get_sos_model_runs(client, get_sos_model_run):
     assert data == [get_sos_model_run]
 
 
+def test_get_sos_model_runs_filtered_running(client, get_sos_model_run):
+    """GET all model runs
+    """
+    response = client.get('/api/v1/sos_model_runs/?status=running')
+
+    assert response.status_code == 200
+    data = parse_json(response)
+    assert data == [get_sos_model_run]
+
 def test_get_sos_model_run(client, get_sos_model_run):
     """GET single model run
     """
@@ -191,10 +204,10 @@ def test_get_sos_model_run_missing(client):
     assert data['message'] == "sos_model_run 'does_not_exist' not found"
 
 
-def test_create_sos_model_run(client, get_sos_model_run):
+def test_post_sos_model_run(client, get_sos_model_run):
     """POST model run
     """
-    name = 'test_create_sos_model_run'
+    name = 'test_post_sos_model_run'
     get_sos_model_run['name'] = name
     send = serialise_json(get_sos_model_run)
     response = client.post(
@@ -202,10 +215,36 @@ def test_create_sos_model_run(client, get_sos_model_run):
         data=send,
         content_type='application/json')
     current_app.config.data_interface.write_sos_model_run.assert_called_with(get_sos_model_run)
-
+    
     data = parse_json(response)
     assert response.status_code == 201
     assert data['message'] == 'success'
+
+
+def test_put_sos_model_run(client, get_sos_model_run):
+    """PUT model run
+    """
+    send = serialise_json(get_sos_model_run)
+    response = client.put(
+        '/api/v1/sos_model_runs/' + get_sos_model_run['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.update_sos_model_run.assert_called_with(get_sos_model_run['name'], get_sos_model_run)
+
+    assert response.status_code == 200
+
+
+def test_delete_sos_model_run(client, get_sos_model_run):
+    """DELETE sos_model_run
+    """
+    send = serialise_json(get_sos_model_run)
+    response = client.delete(
+        '/api/v1/sos_model_runs/' + get_sos_model_run['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.delete_sos_model_run.assert_called_with(get_sos_model_run['name'])
+
+    assert response.status_code == 200
 
 
 def test_start_sos_model_run(client):
@@ -222,9 +261,31 @@ def test_start_sos_model_run(client):
         '/api/v1/sos_model_runs/20170918_energy_water/start',
         data=send,
         content_type='application/json')
+
+    call = (current_app.config.scheduler.add.call_args)
+    assert call[0][0] == '20170918_energy_water'
+    assert call[0][1]['verbosity'] == 0
+    assert call[0][1]['warm_start'] == False
+    assert call[0][1]['output_format'] == 'local_csv'
+
     data = parse_json(response)
     assert response.status_code == 201
     assert data['message'] == 'success'
+
+
+def test_kill_sos_model_run(client):
+    """POST model run START
+    """
+    # Kill a sos_model_run
+    response = client.post(
+        '/api/v1/sos_model_runs/20170918_energy_water/kill',
+        data={},
+        content_type='application/json')
+    data = parse_json(response)
+    assert response.status_code == 201
+    assert data['message'] == 'success'
+
+    current_app.config.scheduler.kill.assert_called_with('20170918_energy_water')
 
 
 def test_get_modelrun_status_modelrun_never_started(client):
@@ -295,10 +356,10 @@ def test_get_sos_model_missing(client):
     assert data['message'] == "sos_model 'does_not_exist' not found"
 
 
-def test_create_sos_model(client, get_sos_model):
+def test_post_sos_model(client, get_sos_model):
     """POST system-of-systems model
     """
-    name = 'test_create_sos_model'
+    name = 'test_post_sos_model'
     get_sos_model['name'] = name
     send = serialise_json(get_sos_model)
     response = client.post(
@@ -310,6 +371,32 @@ def test_create_sos_model(client, get_sos_model):
     data = parse_json(response)
     assert response.status_code == 201
     assert data['message'] == 'success'
+
+
+def test_put_sos_model(client, get_sos_model):
+    """PUT sos_model
+    """
+    send = serialise_json(get_sos_model)
+    response = client.put(
+        '/api/v1/sos_models/' + get_sos_model['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.update_sos_model.assert_called_with(get_sos_model['name'], get_sos_model)
+    
+    assert response.status_code == 200
+
+
+def test_delete_sos_model(client, get_sos_model):
+    """DELETE sos_model
+    """
+    send = serialise_json(get_sos_model)
+    response = client.delete(
+        '/api/v1/sos_models/' + get_sos_model['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.delete_sos_model.assert_called_with(get_sos_model['name'])
+
+    assert response.status_code == 200
 
 
 def test_get_sector_models(client, get_sector_model):
@@ -344,10 +431,10 @@ def test_get_sector_model_missing(client):
     assert data['message'] == "sector_model 'does_not_exist' not found"
 
 
-def test_create_sector_model(client, get_sector_model):
-    """POST model run
+def test_post_sector_model(client, get_sector_model):
+    """POST sector model
     """
-    name = 'test_create_sector_model'
+    name = 'test_post_sector_model'
     get_sector_model['name'] = name
     send = serialise_json(get_sector_model)
     response = client.post(
@@ -359,6 +446,32 @@ def test_create_sector_model(client, get_sector_model):
     data = parse_json(response)
     assert response.status_code == 201
     assert data['message'] == 'success'
+
+
+def test_put_sector_model(client, get_sector_model):
+    """PUT sector_model
+    """
+    send = serialise_json(get_sector_model)
+    response = client.put(
+        '/api/v1/sector_models/' + get_sector_model['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.update_sector_model.assert_called_with(get_sector_model['name'], get_sector_model)
+    
+    assert response.status_code == 200
+
+
+def test_delete_sector_model(client, get_sector_model):
+    """DELETE sector_model
+    """
+    send = serialise_json(get_sector_model)
+    response = client.delete(
+        '/api/v1/sector_models/' + get_sector_model['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.delete_sector_model.assert_called_with(get_sector_model['name'])
+
+    assert response.status_code == 200
 
 
 def test_get_scenario_sets(client, get_scenario_set):
@@ -393,10 +506,10 @@ def test_get_scenario_set_missing(client):
     assert data['message'] == "scenario_set 'does_not_exist' not found"
 
 
-def test_create_scenario_set(client, get_scenario_set):
+def test_post_scenario_set(client, get_scenario_set):
     """POST system-of-systems model
     """
-    name = 'test_create_scenario_set'
+    name = 'test_post_scenario_set'
     get_scenario_set['name'] = name
     send = serialise_json(get_scenario_set)
     response = client.post(
@@ -408,6 +521,32 @@ def test_create_scenario_set(client, get_scenario_set):
     data = parse_json(response)
     assert response.status_code == 201
     assert data['message'] == 'success'
+
+
+def test_delete_scenario_set(client, get_scenario_set):
+    """DELETE scenario_set
+    """
+    send = serialise_json(get_scenario_set)
+    response = client.delete(
+        '/api/v1/scenario_sets/' + get_scenario_set['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.delete_scenario_set.assert_called_with(get_scenario_set['name'])
+
+    assert response.status_code == 200
+
+
+def test_put_scenario_set(client, get_scenario_set):
+    """PUT scenario set
+    """
+    send = serialise_json(get_scenario_set)
+    response = client.put(
+        '/api/v1/scenario_sets/' + get_scenario_set['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.update_scenario_set.assert_called_with(get_scenario_set['name'], get_scenario_set)
+    
+    assert response.status_code == 200
 
 
 def test_get_scenarios(client, get_scenario):
@@ -442,10 +581,10 @@ def test_get_scenario_missing(client):
     assert data['message'] == "scenario 'does_not_exist' not found"
 
 
-def test_create_scenario(client, get_scenario):
+def test_post_scenario(client, get_scenario):
     """POST system-of-systems model
     """
-    name = 'test_create_scenario'
+    name = 'test_post_scenario'
     get_scenario['name'] = name
     send = serialise_json(get_scenario)
     response = client.post(
@@ -457,6 +596,32 @@ def test_create_scenario(client, get_scenario):
     data = parse_json(response)
     assert response.status_code == 201
     assert data['message'] == 'success'
+
+
+def test_delete_scenario(client, get_scenario):
+    """DELETE scenario
+    """
+    send = serialise_json(get_scenario)
+    response = client.delete(
+        '/api/v1/scenarios/' + get_scenario['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.delete_scenario.assert_called_with(get_scenario['name'])
+
+    assert response.status_code == 200
+
+
+def test_put_scenario(client, get_scenario):
+    """PUT scenario
+    """
+    send = serialise_json(get_scenario)
+    response = client.put(
+        '/api/v1/scenarios/' + get_scenario['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.update_scenario.assert_called_with(get_scenario['name'], get_scenario)
+    
+    assert response.status_code == 200
 
 
 def test_get_narrative_sets(client, get_narrative_set):
@@ -491,10 +656,10 @@ def test_get_narrative_set_missing(client):
     assert data['message'] == "narrative_set 'does_not_exist' not found"
 
 
-def test_create_narrative_set(client, get_narrative_set):
+def test_post_narrative_set(client, get_narrative_set):
     """POST system-of-systems model
     """
-    name = 'test_create_narrative_set'
+    name = 'test_post_narrative_set'
     get_narrative_set['name'] = name
     send = serialise_json(get_narrative_set)
     response = client.post(
@@ -506,6 +671,32 @@ def test_create_narrative_set(client, get_narrative_set):
     data = parse_json(response)
     assert response.status_code == 201
     assert data['message'] == 'success'
+
+
+def test_put_narrative_set(client, get_narrative_set):
+    """PUT narrative_set
+    """
+    send = serialise_json(get_narrative_set)
+    response = client.put(
+        '/api/v1/narrative_sets/' + get_narrative_set['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.update_narrative_set.assert_called_with(get_narrative_set['name'], get_narrative_set)
+    
+    assert response.status_code == 200
+
+
+def test_delete_narrative_set(client, get_narrative_set):
+    """DELETE narrative_set
+    """
+    send = serialise_json(get_narrative_set)
+    response = client.delete(
+        '/api/v1/narrative_sets/' + get_narrative_set['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.delete_narrative_set.assert_called_with(get_narrative_set['name'])
+
+    assert response.status_code == 200
 
 
 def test_get_narratives(client, get_narrative):
@@ -540,10 +731,10 @@ def test_get_narrative_missing(client):
     assert data['message'] == "narrative 'does_not_exist' not found"
 
 
-def test_create_narrative(client, get_narrative):
+def test_post_narrative(client, get_narrative):
     """POST system-of-systems model
     """
-    name = 'test_create_narrative'
+    name = 'test_post_narrative'
     get_narrative['name'] = name
     send = serialise_json(get_narrative)
     response = client.post(
@@ -555,3 +746,29 @@ def test_create_narrative(client, get_narrative):
     data = parse_json(response)
     assert response.status_code == 201
     assert data['message'] == 'success'
+
+
+def test_put_narrative(client, get_narrative):
+    """PUT narrative
+    """
+    send = serialise_json(get_narrative)
+    response = client.put(
+        '/api/v1/narratives/' + get_narrative['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.update_narrative.assert_called_with(get_narrative['name'], get_narrative)
+    
+    assert response.status_code == 200
+
+
+def test_delete_narrative(client, get_narrative):
+    """DELETE narrative
+    """
+    send = serialise_json(get_narrative)
+    response = client.delete(
+        '/api/v1/narratives/' + get_narrative['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.delete_narrative.assert_called_with(get_narrative['name'])
+
+    assert response.status_code == 200
