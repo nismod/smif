@@ -212,9 +212,15 @@ def test_start_sos_model_run(client):
     """POST model run START
     """
     # Start a sos_model_run
+    send = serialise_json({
+            'args': {
+                'verbosity': 0,
+                'warm_start': False,
+                'output_format': 'local_csv'
+            }})    
     response = client.post(
         '/api/v1/sos_model_runs/20170918_energy_water/start',
-        data={},
+        data=send,
         content_type='application/json')
     data = parse_json(response)
     assert response.status_code == 201
