@@ -73,13 +73,28 @@ def get_model_run_definition(directory, modelrun):
     sos_model_config['scenario_sets'] = scenario_objects
 
     strategies = []
+
+    # Add pre-specified planning strategy for all initial conditions
+    for sector_model in sector_model_objects:
+        if sector_model.initial_conditions:
+            strategy = {}
+            strategy['model_name'] = sector_model.name
+            strategy['description'] = 'historical_decisions'
+            strategy['strategy'] = 'pre-specified-planning'
+            decisions = sector_model.initial_conditions
+            strategy['interventions'] = decisions
+            LOGGER.info("Added %s pre-specified historical decisions to %s",
+                         len(decisions), strategy['model_name'])
+            strategies.append(strategy)
+
+    # Build pre-specified planning strategies for future investments
     for strategy in model_run_config['strategies']:
         if strategy['strategy'] == 'pre-specified-planning':
-            interventions = handler.read_strategies(strategy['filename'])
+            decisions = handler.read_strategies(strategy['filename'])
             del strategy['filename']
-            strategy['interventions'] = interventions
-            LOGGER.debug("Added %s pre-specified planning interventions to %s",
-                         len(interventions), strategy['model_name'])
+            strategy['interventions'] = decisions
+            LOGGER.info("Added %s pre-specified planning interventions to %s",
+                         len(decisions), strategy['model_name'])
         strategies.append(strategy)
     sos_model_config['strategies'] = strategies
 
