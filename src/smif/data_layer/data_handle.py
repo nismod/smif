@@ -30,10 +30,11 @@ class DataHandle(object):
             Name of the current modelrun
         model : Model
             Model which will use this DataHandle
-        modelset_iteration :
+        modelset_iteration : int, default=None
             ID of the current ModelSet iteration
-        decision_iteration :
+        decision_iteration : int, default=None
             ID of the current Decision iteration
+        state : list, default=None
         """
         self.logger = getLogger(__name__)
         self._store = store
@@ -129,7 +130,13 @@ class DataHandle(object):
         )
         # here could (should?) filter list for interventions applicable to a model
         # and look up full intervention (not just name,build_year)
-        return sos_state
+        
+        model_state = []
+        for decision in sos_state:
+            intervention = self._model.register.get_interventions(decision[0])
+            intervention.build_year = decision[1]
+            model_state.append(intervention)
+        return model_state
 
     def get_data(self, input_name, timestep=None):
         """Get data required for model inputs

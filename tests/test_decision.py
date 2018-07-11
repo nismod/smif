@@ -55,23 +55,23 @@ class TestPreSpecified:
 
         assert actual == expected
 
-    def test_get_state(self, plan):
+    def test_get_decision(self, plan):
 
         timesteps = [2010, 2015, 2020]
         dm = PreSpecified(timesteps, plan)
 
-        actual = dm.get_state(2010)
+        actual = dm.get_decision(2010)
         expected = [('small_pumping_station_oxford', 2010)]
         assert actual == expected
 
-        actual = dm.get_state(2015)
+        actual = dm.get_decision(2015)
         expected = [
             ('small_pumping_station_oxford', 2010),
             ('small_pumping_station_abingdon', 2015),
         ]
         assert actual == expected
 
-        actual = dm.get_state(2020)
+        actual = dm.get_decision(2020)
         expected = [
             ('small_pumping_station_oxford', 2010),
             ('small_pumping_station_abingdon', 2015),
@@ -144,9 +144,9 @@ class TestDecisionManager():
         with raises(ValueError):
             dm.buildable(2015, 2014)
 
-    def test_get_state(self, get_strategies):
+    def test_get_decision(self, get_strategies):
         dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
-        actual = dm.get_state(2010)
+        actual = dm.get_decision(2010)
         expected = [
             ('carrington_retire', 2011),
             ('nuclear_large', 2012),
@@ -155,11 +155,11 @@ class TestDecisionManager():
         # we don't mind the order
         assert sorted(actual) == sorted(expected)
 
-        # actual = dm.get_state(2015)
+        # actual = dm.get_decision(2015)
         # expected = [('carrington_retire', 2011)]
         # assert actual == expected
 
-        actual = dm.get_state(2015)
+        actual = dm.get_decision(2015)
         expected = [
             ('carrington_retire', 2011),
             ('nuclear_large', 2012),

@@ -158,6 +158,8 @@ class ModelRunner(object):
         self.logger.debug("Initialising the decision manager")
         decision_manager = DecisionManager(model_run.model_horizon, model_run.strategies)
 
+        register = model_run.sos_model.interventions
+
         # Solve the model run: decision loop generates a series of bundles of independent
         # decision iterations, each with a number of timesteps to run
         self.logger.debug("Solving the models over all timesteps: %s", model_run.model_horizon)
@@ -175,7 +177,12 @@ class ModelRunner(object):
                     # setting state may be pushed down into the responsibility of
                     # DecisionManager/Module sets state for each timestep, iteration
                     # - SosModel/Model then calls through DataHandle to access 'current' state
-                    state = decision_manager.get_state(timestep, iteration)
+                    decisions = decision_manager.get_decision(timestep, iteration)
+                    state = []
+                    for name, model in decisions:
+                        intervention = register.get_intervention(name, model)
+                        state.append(intervention)
+
                     store.write_state(state, model_run.name, timestep, iteration)
 
                     data_handle = DataHandle(
@@ -186,6 +193,7 @@ class ModelRunner(object):
                         model=model_run.sos_model,
                         decision_iteration=iteration
                     )
+
                     model_run.sos_model.simulate(data_handle)
         return data_handle
 
