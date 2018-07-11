@@ -127,4 +127,21 @@ describe('<ProjectOverviewItem />', () => {
             }
         })).to.be.true
     })
+
+    it('forwards to resultLink on result click', () => {
+        const wrapper = mount(<MemoryRouter
+            initialIndex={0}
+            initialEntries={['/']}>
+            <Switch>
+                <Route path='/to/results/item_2' render={()=><div id="redirected"></div>} />
+                <ProjectOverviewItem
+                    itemname={itemname}
+                    items={items}
+                    itemLink={itemlink}
+                    resultLink={'/to/results/'} />
+            </Switch>
+        </MemoryRouter>)
+        wrapper.find('[id="btn_start_item_2"]').first().simulate('click')
+        expect(wrapper.find('#redirected')).to.have.length(1)
+    })
 })
