@@ -4,16 +4,16 @@
 gui_host="http://localhost:8080/"
 
 declare -A screenshots
-# screenshots['welcome']=$gui_host
+screenshots['welcome']=$gui_host
 screenshots['jobs']=$gui_host"jobs"
 screenshots['jobs-runner']=$gui_host"jobs/runner/20170918_energy_water_short"
-# screenshots['configure']=$gui_host"configure/sos-model-run"
-# screenshots['configure-sos-model-run']=$gui_host"configure/sos-model-run/20170918_energy_water"
-# screenshots['configure-sos-models']=$gui_host"configure/sos-models/energy_waste"
-# screenshots['configure-sector-models']=$gui_host"configure/sector-models/water_supply"
-# screenshots['configure-scenario-set']=$gui_host"configure/scenario-set/population"
-# screenshots['configure-narrative-set']=$gui_host"configure/narrative-set/technology"
-# screenshots['configure-narratives']=$gui_host"configure/narratives/High%20Tech%20Demand%20Side%20Management"
+screenshots['configure']=$gui_host"configure/sos-model-run"
+screenshots['configure-sos-model-run']=$gui_host"configure/sos-model-run/20170918_energy_water"
+screenshots['configure-sos-models']=$gui_host"configure/sos-models/energy_waste"
+screenshots['configure-sector-models']=$gui_host"configure/sector-models/water_supply"
+screenshots['configure-scenario-set']=$gui_host"configure/scenario-set/population"
+screenshots['configure-narrative-set']=$gui_host"configure/narrative-set/technology"
+screenshots['configure-narratives']=$gui_host"configure/narratives/High%20Tech%20Demand%20Side%20Management"
 
 # If argument provided, only process the key supplied
 if [ $# -ne 0 ]
