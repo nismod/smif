@@ -35,7 +35,7 @@ class WaterSupplySectorModel(SectorModel):
                 - decisions, e.g. asset build instructions, demand-side interventions to apply
         """
         # State
-        self.logger.debug("State: %s", data.get_state())
+        print("Current state of {} is {}".format(self.name, data.get_state()))
         number_of_treatment_plants = 2
 
         # Inputs

@@ -15,6 +15,8 @@ class EDMWrapper(SectorModel):
         self.logger.info("EDMWrapper received inputs in %s",
                          now)
 
+        print("Current state of {} is {}".format(self.name, data.get_state()))
+
         # Demonstrates how to get the value for a model parameter
         parameter_value = data.get_parameter('smart_meter_savings')
         self.logger.info('Smart meter savings: %s', parameter_value)
