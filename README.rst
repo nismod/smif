@@ -17,6 +17,9 @@ Simulation Modelling Integration Framework
     :target: https://codecov.io/gh/nismod/smif?branch=master
     :alt: Code Coverage
 
+.. image:: https://zenodo.org/badge/67128476.svg
+   :target: https://zenodo.org/badge/latestdoi/67128476
+
 Description
 ===========
 
