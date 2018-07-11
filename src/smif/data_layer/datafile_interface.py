@@ -428,10 +428,17 @@ class DatafileInterface(DataInterface):
     def read_region_names(self, region_definition_name):
         """Return the set of unique region names in region set `region_definition_name`
         """
-        return [
-            feature['properties']['name']
-            for feature in self.read_region_definition_data(region_definition_name)
-        ]
+        names = []
+        for feature in self.read_region_definition_data(region_definition_name):
+            if isinstance(feature['properties']['name'], str):
+                if feature['properties']['name'].isdigit():
+                    names.append(int(feature['properties']['name']))
+                else:
+                    names.append(feature['properties']['name'])
+            else:
+                names.append(feature['properties']['name'])
+    
+        return names
 
     def write_region_definition(self, region_definition):
         """Write region_definition to project configuration
@@ -527,7 +534,10 @@ class DatafileInterface(DataInterface):
             data = []
             for interval in reader:
 
-                name = interval['id']
+                if interval['id'].isdigit():
+                    name = int(interval['id'])
+                else:
+                    name = interval['id']
                 interval_tuple = (interval['start'], interval['end'])
                 if name in names:
                     # Append duration to existing entry
@@ -1558,11 +1568,28 @@ class DatafileInterface(DataInterface):
         scenario_data = []
         with open(filepath, 'r') as csvfile:
             reader = csv.DictReader(csvfile)
-
             scenario_data = []
             for row in reader:
-                scenario_data.append(row)
+                converted_row = {}
+                
+                converted_row['region'] = DatafileInterface._cast_str_to_int(row['region'])
+                converted_row['interval'] = DatafileInterface._cast_str_to_int(row['interval'])
+                
+                if 'year' in row.keys():
+                    converted_row['year'] = row['year']
+                converted_row['value'] = row['value']
+                
+                scenario_data.append(converted_row)
+
         return scenario_data
+
+    @staticmethod
+    def _cast_str_to_int(value):
+        if value.isdigit():
+            return int(value)
+        else:
+            return value
+                        
 
     @staticmethod
     def _write_data_to_csv(filepath, data):
