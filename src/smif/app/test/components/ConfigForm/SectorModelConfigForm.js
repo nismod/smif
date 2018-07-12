@@ -99,4 +99,92 @@ describe('<SectorModelConfigForm />', () => {
         // confirm input was deleted
         expect(wrapper.state().selectedSectorModel.inputs[2]).to.equal(undefined)
     })
+
+    it('add and delete output', () => {
+        let wrapper = mount(<SectorModelConfigForm
+            sosModels={sos_models}
+            sectorModel={sector_model} />
+        )
+
+        // Open the Add input popup
+        wrapper.find('input#btn_add_output').simulate('click')
+
+        // Check if the form opens
+        let popup_add_output = wrapper.find('[id="popup_add_output"]')
+        expect(popup_add_output.exists()).to.equal(true)
+        
+        // Fill in form
+        wrapper.find('input#output_name').simulate('change', { target: { name: 'name', value: 'test_name'} })
+        wrapper.find('input#output_units').simulate('change', { target: { name: 'units', value: 'test_units'} })
+        wrapper.find('input#output_spatial_res').simulate('change', { target: { name: 'spatial_resolution', value: 'test_spatial_resolution'} })
+        wrapper.find('input#output_temporal_res').simulate('change', { target: { name: 'temporal_resolution', value: 'test_temporal_resolution'} })
+
+        // Submit form
+        wrapper.find('input#btn_output_save').simulate('submit')
+
+        // Check if outputs were added
+        expect(wrapper.state().selectedSectorModel.outputs[2].name).to.equal('test_name')
+        expect(wrapper.state().selectedSectorModel.outputs[2].units).to.equal('test_units')
+        expect(wrapper.state().selectedSectorModel.outputs[2].spatial_resolution).to.equal('test_spatial_resolution')
+        expect(wrapper.state().selectedSectorModel.outputs[2].temporal_resolution).to.equal('test_temporal_resolution')
+
+        // delete the entry that was added
+        wrapper.find('[id="outputs_property_2"]').find('button').simulate('click')
+
+        // check if the popup shows the name of the output (test_name)
+        expect(wrapper.find('[id="popup_delete_form"]').html()).to.contain('test_name')
+
+        // confirm delete
+        wrapper.find('[id="popup_delete_form"]').find('input#deleteButton').simulate('click')
+
+        // confirm output was deleted
+        expect(wrapper.state().selectedSectorModel.outputs[2]).to.equal(undefined)
+    })
+
+    it('add and delete parameter', () => {
+        let wrapper = mount(<SectorModelConfigForm
+            sosModels={sos_models}
+            sectorModel={sector_model} />
+        )
+
+        // Open the Add input popup
+        wrapper.find('input#btn_add_parameter').simulate('click')
+
+        // Check if the form opens
+        let popup_add_parameter = wrapper.find('[id="popup_add_parameter"]')
+        expect(popup_add_parameter.exists()).to.equal(true)
+        
+        // Fill in form
+        wrapper.find('input#parameter_name').simulate('change', { target: { name: 'name', value: 'test_name'}})
+        wrapper.find('input#parameter_description').simulate('change', { target: { name: 'description', value: 'test_description'}})
+        wrapper.find('input#parameter_default_value').simulate('change', { target: { name: 'default_value', value: 23}})
+        wrapper.find('input#parameter_units').simulate('change', { target: { name: 'units', value: 'test_unit'}})
+        wrapper.find('input#parameter_absolute_range_low').simulate('change', { target: { name: 'absolute_range_min', value: 3}})
+        wrapper.find('input#parameter_absolute_range_high').simulate('change', { target: { name: 'absolute_range_max', value: 1}})
+        wrapper.find('input#parameter_suggested_range_low').simulate('change', { target: { name: 'suggested_range_min', value: 2}})
+        wrapper.find('input#parameter_suggested_range_high').simulate('change', { target: { name: 'suggested_range_max', value: 4}})
+
+        // Submit form
+        wrapper.find('input#btn_parameter_save').simulate('submit')
+
+        // Check if parameters were added
+        expect(wrapper.state().selectedSectorModel.parameters[1].name).to.equal('test_name')
+        expect(wrapper.state().selectedSectorModel.parameters[1].description).to.equal('test_description')
+        expect(wrapper.state().selectedSectorModel.parameters[1].default_value).to.equal(23)
+        expect(wrapper.state().selectedSectorModel.parameters[1].units).to.equal('test_unit')
+        expect(wrapper.state().selectedSectorModel.parameters[1].absolute_range).to.equal('(3, 1)')
+        expect(wrapper.state().selectedSectorModel.parameters[1].suggested_range).to.equal('(2, 4)')
+
+        // delete the entry that was added
+        wrapper.find('[id="parameters_property_1"]').find('button').simulate('click')
+
+        // check if the popup shows the name of the parameter (test_name)
+        expect(wrapper.find('[id="popup_delete_form"]').html()).to.contain('test_name')
+
+        // confirm delete
+        wrapper.find('[id="popup_delete_form"]').find('input#deleteButton').simulate('click')
+
+        // confirm parameter was deleted
+        expect(wrapper.state().selectedSectorModel.parameters[1]).to.equal(undefined)
+    })
 })
