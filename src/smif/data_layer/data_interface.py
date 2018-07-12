@@ -173,7 +173,7 @@ class DataInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):
-        """state is a list of (intervention_name, build_year), output of decision module/s
+        """state is a list of Intervention objects with a build_year attribute, output of decision module/s
         """
         raise NotImplementedError()
 

@@ -107,6 +107,9 @@ class Intervention(object):
 
         self._validate(['name', 'location'], ['build_date'])
 
+    def as_dict(self):
+        return self.data
+
     def _validate(self, required_attributes, omitted_attributes):
         """Ensures location is present and no build date is specified
 

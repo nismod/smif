@@ -131,12 +131,7 @@ class DataHandle(object):
         # here could (should?) filter list for interventions applicable to a model
         # and look up full intervention (not just name,build_year)
         
-        model_state = []
-        for decision in sos_state:
-            intervention = self._model.register.get_interventions(decision[0])
-            intervention.build_year = decision[1]
-            model_state.append(intervention)
-        return model_state
+        return sos_state
 
     def get_data(self, input_name, timestep=None):
         """Get data required for model inputs

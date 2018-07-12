@@ -147,12 +147,10 @@ class TestSectorModelBuilder():
         assets = [
             {
                 'name': 'water_asset_a',
-                'type': 'water_pump',
-                'attributes': {
-                    'capital_cost': 1000,
-                    'economic_lifetime': 25,
-                    'operational_lifetime': 25
-                }
+                'capital_cost': 1000,
+                'economic_lifetime': 25,
+                'operational_lifetime': 25,
+                'location': 'Narnia'
             }
         ]
         builder.add_interventions(assets)
@@ -165,7 +163,6 @@ class TestSectorModelBuilder():
 
         assert model.name == 'water_supply'
         assert model.intervention_names == ['water_asset_a']
-        assert model.interventions == assets
 
     def test_path_not_found(self):
         builder = SectorModelBuilder('water_supply', Mock())
@@ -209,11 +206,14 @@ class TestInputs:
 class TestSectorModel(object):
 
     def test_interventions_names(self):
-        assets = [
-            {'name': 'water_asset_a'},
-            {'name': 'water_asset_b'},
-            {'name': 'water_asset_c'}
-        ]
+        mock_asset_a = Mock()
+        mock_asset_a.name = 'water_asset_a'
+        mock_asset_b = Mock()
+        mock_asset_b.name = 'water_asset_b'
+        mock_asset_c = Mock()
+        mock_asset_c.name = 'water_asset_c'
+        
+        assets = [mock_asset_a, mock_asset_b, mock_asset_c]
         model = EmptySectorModel('test_model')
         model.interventions = assets
 
@@ -223,35 +223,6 @@ class TestSectorModel(object):
         assert 'water_asset_a' in intervention_names
         assert 'water_asset_b' in intervention_names
         assert 'water_asset_c' in intervention_names
-
-    def test_interventions(self):
-        interventions = [
-            {
-                'name': 'water_asset_a',
-                'capital_cost': 1000,
-                'economic_lifetime': 25,
-                'operational_lifetime': 25
-            },
-            {
-                'name': 'water_asset_b',
-                'capital_cost': 1500,
-            },
-            {
-                'name': 'water_asset_c',
-                'capital_cost': 3000,
-            }
-        ]
-        model = EmptySectorModel('test_model')
-        model.interventions = interventions
-        actual = model.interventions
-
-        assert actual == interventions
-
-        assert sorted(model.intervention_names) == [
-            'water_asset_a',
-            'water_asset_b',
-            'water_asset_c'
-        ]
 
 
 class TestParameters():

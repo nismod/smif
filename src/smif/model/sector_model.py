@@ -42,6 +42,7 @@ from abc import ABCMeta, abstractmethod
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
 from smif.model import Model
+from smif.intervention import Intervention
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -97,6 +98,32 @@ class SectorModel(Model, metaclass=ABCMeta):
 
         self.logger = logging.getLogger(__name__)
 
+
+    def get_current_interventions(self, state):
+        """Get the interventions the exist in the current state
+
+        Arguments
+        ---------
+        state : list
+            A list of tuples that represent the state of the system in the
+            current planning timestep
+
+        Returns
+        -------
+        list of intervention dicts with build_year attribute
+        """
+        
+        interventions = []
+        for name, build_year in state:
+            if name in self.intervention_names:
+                for intervention in self.interventions:
+                    if intervention.name == name:
+                        serialised = intervention.as_dict()
+                        serialised['build_year'] = build_year
+                        interventions.append(serialised)
+        
+        return interventions
+
     def as_dict(self):
         """Serialize the SectorModel object as a dictionary
 
@@ -112,7 +139,7 @@ class SectorModel(Model, metaclass=ABCMeta):
             'inputs': [inp.as_dict() for inp in self.inputs.values()],
             'outputs': [out.as_dict() for out in self.outputs.values()],
             'parameters': self.parameters.as_list(),
-            'interventions': self.interventions,
+            'interventions': [inter.as_dict() for inter in self.interventions],
             'initial_conditions': self.initial_conditions
         }
         return config
@@ -177,7 +204,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         list
             A list of the names of the interventions
         """
-        return [intervention['name'] for intervention in self.interventions]
+        return [intervention.name for intervention in self.interventions]
 
     def before_model_run(self, data):
         """Implement this method to conduct pre-model run tasks
@@ -453,8 +480,9 @@ class SectorModelBuilder(object):
         """
         msg = "Sector model must be loaded before adding interventions"
         assert self._sector_model is not None, msg
-
-        self._sector_model.interventions = intervention_list
+        for intervention in intervention_list:
+            intervention_obj = Intervention(data=intervention, sector=self._sector_model_name)
+            self._sector_model.interventions.append(intervention_obj)
 
     def validate(self):
         """Check and/or assert that the sector model is correctly set up

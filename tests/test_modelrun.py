@@ -29,8 +29,8 @@ def get_model_run_config_data():
                         'description': 'build_nuclear',
                         'model_name': 'energy_supply',
                         'interventions': [
-                            {'name': 'nuclear_large', 'build_year': 2012},
-                            {'name': 'carrington_retire', 'build_year': 2011}]
+                            ('nuclear_large', 2012),
+                            ('carrington_retire', 2011)]
                         }]
     }
     return config

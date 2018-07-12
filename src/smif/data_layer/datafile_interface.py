@@ -376,7 +376,8 @@ class DatafileInterface(DataInterface):
             The name of the intervention yml file to read in
         """
         filepath = self.file_dir['interventions']
-        return self._read_yaml_file(filepath, filename, extension='')
+        data = self._read_yaml_file(filepath, filename, extension='')
+        return list(data)
 
     def read_sector_model_interventions(self, sector_model_name):
         """Read a SectorModel's interventions
@@ -406,7 +407,11 @@ class DatafileInterface(DataInterface):
             The name of the strategy yml file to read in
         """
         filepath = self.file_dir['strategies']
-        return self._read_yaml_file(filepath, filename, extension='')
+        strategy = self._read_yaml_file(filepath, filename, extension='')
+        data = []
+        for strategy in strategy:
+            data.append((strategy['name'], strategy['build_year']))
+        return data
 
     def read_initial_conditions(self, filename):
         """Read the initial conditions from filename

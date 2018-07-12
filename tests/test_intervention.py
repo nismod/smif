@@ -83,6 +83,24 @@ class TestIntervention:
         actual = Intervention(data=build_intervention_ws)
         assert actual.location == "POINT(51.1 -1.7)"
 
+    def test_serialisation(self, build_intervention_ws):
+        actual = Intervention(data=build_intervention_ws).as_dict()
+        
+        expected = {
+            'sector': 'water_supply',
+            'name': 'oxford treatment plant',
+            'capacity': {
+                'units': 'ML/day',
+                'value': 450
+                },
+            'capital_cost': {
+                'units': 'M£',
+                'value': 500
+            },
+            'location': "POINT(51.1 -1.7)"
+            }
+
+        assert actual == expected
 
 class TestInterventionRegister:
 
