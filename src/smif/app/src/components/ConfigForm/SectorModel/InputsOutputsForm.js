@@ -45,7 +45,7 @@ class InputsOutputsForm extends Component {
         const {inputs, className} = this.state
 
         let inputOk = true
-
+        
         // Check if all inputs have a value
         Object.keys(inputs).forEach(function(input) {
             if (inputs[input] == '') {
@@ -112,23 +112,23 @@ class InputsOutputsForm extends Component {
 
         return (
             <div>
-                <CreateButton value={'Add ' + type} onClick={this.openCreateDependencyPopup} />
+                <CreateButton id={'btn_add_' + type} value={'Add ' + type} onClick={this.openCreateDependencyPopup} />
 
-                <Popup onRequestOpen={this.state.CreateDependencypopupIsOpen}>
+                <Popup name={'popup_add_' + type} onRequestOpen={this.state.CreateDependencypopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit()}}>
                         <h2 ref={subtitle => this.subtitle = subtitle}>{'Add a new ' + type}</h2>
                         <div className="container">
                             <div className="row">
                                 <div className="col">
                                     <label>Name</label>
-                                    <input autoFocus type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
+                                    <input id={type + '_name'} autoFocus type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
                                 </div>
                                 <div className="col">
                                     <label>Units</label>
-                                    <input type="text" className={this.state.className.units} name="units" onChange={this.handleChange}/>
+                                    <input id={type + '_units'} type="text" className={this.state.className.units} name="units" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
@@ -137,14 +137,14 @@ class InputsOutputsForm extends Component {
                             <div className="row">
                                 <div className="col">
                                     <label>Spatial Resolution</label>
-                                    <input type="text" className={this.state.className.spatial_resolution} name="spatial_resolution" onChange={this.handleChange}/>
+                                    <input id={type + '_spatial_res'}  type="text" className={this.state.className.spatial_resolution} name="spatial_resolution" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
                                 </div>
                                 <div className="col">
                                     <label>Temporal Resolution</label>
-                                    <input type="text" className={this.state.className.temporal_resolution} name="temporal_resolution" onChange={this.handleChange}/>
+                                    <input id={type + '_temporal_res'}  type="text" className={this.state.className.temporal_resolution} name="temporal_resolution" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
@@ -152,8 +152,8 @@ class InputsOutputsForm extends Component {
                             </div>
                         </div>
 
-                        <SaveButton />
-                        <CancelButton onClick={this.closeCreateDependencyPopup}/>
+                        <SaveButton id={'btn_' + type + '_save'}  />
+                        <CancelButton id={'btn_' + type + '_cancel'} onClick={this.closeCreateDependencyPopup}/>
                     </form>
                 </Popup>
             </div>

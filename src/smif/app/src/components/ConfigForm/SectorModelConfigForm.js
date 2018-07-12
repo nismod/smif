@@ -121,7 +121,7 @@ class SectorModelConfigForm extends Component {
         this.setState({deletePopupIsOpen: false})
     }
 
-    render() {
+    renderSectorModelConfigForm() {
         const {selectedSectorModel} = this.state
 
         return (
@@ -155,14 +155,14 @@ class SectorModelConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Class Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="classname" type="text" defaultValue={selectedSectorModel.classname} onChange={this.handleChange}/>
+                                    <input id="sector_model_classname" className="form-control" name="classname" type="text" defaultValue={selectedSectorModel.classname} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Path</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="path" type="text" defaultValue={selectedSectorModel.path} onChange={this.handleChange}/>
+                                    <input id="sector_model_path" className="form-control" name="path" type="text" defaultValue={selectedSectorModel.path} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -194,7 +194,7 @@ class SectorModelConfigForm extends Component {
                     </div>
                 </form>
 
-                <Popup onRequestOpen={this.state.deletePopupIsOpen}>
+                <Popup name="popup_delete_form" onRequestOpen={this.state.deletePopupIsOpen}>
                     <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
                 </Popup>
 
@@ -205,6 +205,27 @@ class SectorModelConfigForm extends Component {
             </div>
         )
     }
+
+    renderDanger(message) {
+        return (
+            <div>
+                <div id="alert-danger" className="alert alert-danger">
+                    {message}
+                </div>
+                <CancelButton onClick={this.handleCancel} />
+            </div>
+        )
+    }
+
+    render() {
+        const {selectedSectorModel} = this.state
+
+        if (selectedSectorModel.name == undefined) {
+            return this.renderDanger('This Scenario Set does not exist.')
+        } else {
+            return this.renderSectorModelConfigForm()
+        }
+    }
 }
 
 SectorModelConfigForm.propTypes = {
@@ -212,6 +233,11 @@ SectorModelConfigForm.propTypes = {
     sectorModel: PropTypes.object.isRequired,
     saveSectorModel: PropTypes.func,
     cancelSectorModel: PropTypes.func
+}
+
+SectorModelConfigForm.defaultProps = {
+    sosModels: [],
+    sectorModel: {},
 }
 
 export default SectorModelConfigForm

@@ -124,7 +124,7 @@ class ParameterSelector extends Component {
             <div>
                 <CreateButton value="Add Parameter" onClick={this.openCreatePopup} />
 
-                <Popup onRequestOpen={this.state.CreatePopupIsOpen}>
+                <Popup name="popup_parameter_selector" onRequestOpen={this.state.CreatePopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit()}}>
                         <h2 ref={subtitle => this.subtitle = subtitle}>Add a new Parameter</h2>
                         <div className="container">

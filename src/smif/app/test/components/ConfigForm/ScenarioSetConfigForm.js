@@ -1,10 +1,10 @@
 import React from 'react'
 import sinon from 'sinon'
 import {expect} from 'chai'
-import {mount, ReactWrapper} from 'enzyme'
+import {mount} from 'enzyme'
 import {describe, it} from 'mocha'
 
-import ReactModal from 'react-modal';
+import ReactModal from 'react-modal'
 import ScenarioSetConfigForm from '../../../src/components/ConfigForm/ScenarioSetConfigForm.js'
 
 import {scenario_set, scenarios} from '../../helpers.js'
