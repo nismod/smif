@@ -128,7 +128,7 @@ class PropertyList extends Component {
                         {
                             Object.keys(items).map((item, i) => (
 
-                                <tr id={'property_' + i} key={i}>
+                                <tr id={name + '_property_' + i} key={i}>
                                     {this.getWarning(enableWarnings, item)}
                                     {
                                         Object.keys(columns).map((column, k) => (

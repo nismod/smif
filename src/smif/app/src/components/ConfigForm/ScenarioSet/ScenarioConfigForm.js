@@ -34,7 +34,7 @@ class ScenarioConfigForm extends Component {
         document.removeEventListener('keydown', this.handleKeyPress, false)
     }
 
-    handleKeyPress(){
+    handleKeyPress(event){
         if(event.keyCode === 27) {
             this.handleCancel()
         }
