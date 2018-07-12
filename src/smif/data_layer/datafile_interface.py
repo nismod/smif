@@ -472,7 +472,7 @@ class DatafileInterface(DataInterface):
         return state
 
     def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):
-        """Write state (list of intervention_name, build_date) to file
+        """Write state, a list of decision tuples (name, build_date) to file
         """
         fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
         with open(fname, 'w') as file_handle:
@@ -482,7 +482,7 @@ class DatafileInterface(DataInterface):
             ))
             writer.writeheader()
             for row in state:
-                writer.writerow(row)
+                writer.writerow({'name': row[0], 'build_date': row[1]})
 
     def _get_state_filename(self, modelrun_name, timestep=None, decision_iteration=None):
         """Compose a unique filename for state file:
