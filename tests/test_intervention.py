@@ -166,18 +166,24 @@ class TestInterventionRegister:
 
         for asset in register:
             assert asset.sha1sum() == asset_one.sha1sum()
+       
 
-    def test_add_duplicate_intervention(self, get_intervention):
-        """Tests that only unique interventions are retained
+    def test_adding_duplicate_intervention_raises_warning(self, get_intervention):
+        """Tests that adding a duplicate intervention raises a warning
 
         """
         asset_one = get_intervention
         asset_two = get_intervention
         register = InterventionRegister()
         register.register(asset_one)
-        register.register(asset_two)
+        
+        with raises(ValueError) as excinfo:
+            register.register(asset_two)
+
+        assert str(excinfo.value) == "Attempted registering of duplicate intervention: 'water_treatment_plant' for 'water_supply'"
 
         assert len(register) == 1
+
 
     def test_register_len_one(self, build_intervention_ws):
         water = Intervention(data=build_intervention_ws)

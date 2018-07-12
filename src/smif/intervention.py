@@ -62,7 +62,7 @@ class Intervention(object):
     Parameters
     ==========
     name : str, default=""
-        The type of intervention, which should be unique across all sectors
+        The name of the intervention, which should be unique across all sectors
     data : dict, default=None
         The dictionary of intervention attributes
     sector : str, default=""
@@ -297,6 +297,9 @@ class InterventionRegister(object):
 
             self._numeric_keys.append(numeric_intervention)
             self._names[intervention.name] = numeric_intervention
+        else:
+            msg = "Attempted registering of duplicate intervention: '{}' for '{}'"
+            raise ValueError(msg.format(intervention.name, intervention.sector))
 
     def _register_attribute(self, key, value):
         """Add a new attribute and its possible value to the register (or, if
