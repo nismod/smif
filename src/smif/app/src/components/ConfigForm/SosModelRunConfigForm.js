@@ -2,11 +2,11 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import SosModelSelector from './SosModelRun/SosModelSelector.js'
-import ScenarioSelector from './SosModelRun/ScenarioSelector.js'
-import NarrativeSelector from './SosModelRun/NarrativeSelector.js'
-import TimestepSelector from './SosModelRun/TimestepSelector.js'
-import { SaveButton, CancelButton } from './General/Buttons'
+import SosModelSelector from 'components/ConfigForm/SosModelRun/SosModelSelector.js'
+import ScenarioSelector from 'components/ConfigForm/SosModelRun/ScenarioSelector.js'
+import NarrativeSelector from 'components/ConfigForm/SosModelRun/NarrativeSelector.js'
+import TimestepSelector from 'components/ConfigForm/SosModelRun/TimestepSelector.js'
+import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
 class SosModelRunConfigForm extends Component {
     constructor(props) {
@@ -43,7 +43,7 @@ class SosModelRunConfigForm extends Component {
      */
         const { scenarios } = this.state.selectedSosModelRun
 
-        if (scenario == "") {
+        if (scenario == '') {
             delete scenarios[scenario_set]
         } else {
             scenarios[scenario_set] = scenario
@@ -65,8 +65,6 @@ class SosModelRunConfigForm extends Component {
      * active:
      *     The new state of this narrative
      */
-        const {narratives} = this.state.selectedSosModelRun
-
         let obj = this.state.selectedSosModelRun.narratives
 
         if (active) {

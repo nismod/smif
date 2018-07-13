@@ -1,10 +1,11 @@
 import React from 'react'
-import { expect } from 'chai'
-import { shallow, mount } from 'enzyme'
+import {expect} from 'chai'
+import {shallow} from 'enzyme'
+import {describe, it} from 'mocha'
+
 import DependencySelector from '../../../../src/components/ConfigForm/SosModel/DependencySelector.js'
 
 import {sector_models, scenario_sets, sos_model} from '../../../helpers.js'
-import {empty_object, empty_array} from '../../../helpers.js'
 
 var wrapper
 

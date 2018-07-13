@@ -23,7 +23,8 @@ class IntroBlock extends Component {
 
 IntroBlock.propTypes = {
     title: PropTypes.string.isRequired,
-    intro: PropTypes.string.isRequired
+    intro: PropTypes.string.isRequired,
+    children: PropTypes.element.isRequired
 }
 
 export default IntroBlock

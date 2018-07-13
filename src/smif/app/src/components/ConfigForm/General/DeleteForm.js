@@ -1,11 +1,9 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import update from 'immutability-helper'
-
-import FaPencil from 'react-icons/lib/fa/pencil'
 
 import { Link } from 'react-router-dom'
 
+import { FaPencil } from 'react-icons/lib/fa'
 import { CancelButton, DangerButton } from './Buttons'
 
 class DeleteForm extends Component {
@@ -18,11 +16,11 @@ class DeleteForm extends Component {
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
+        document.addEventListener('keydown', this.handleKeyPress, false)
     }
 
     componentWillUnmount(){
-        document.removeEventListener("keydown", this.handleKeyPress, false)
+        document.removeEventListener('keydown', this.handleKeyPress, false)
     }
 
     handleKeyPress(event){
@@ -73,7 +71,7 @@ class DeleteForm extends Component {
                                     <div key={conf.name}>
                                         <Link
                                             to={conf.link + conf.name}
-                                            className="btn btn-outline-dark">
+                                            className="btn btn-outline-dark btn-margin">
                                             <FaPencil/>
                                         </Link>
                                         {conf.name}

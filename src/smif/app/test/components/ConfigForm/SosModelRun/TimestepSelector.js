@@ -1,11 +1,13 @@
 import React from 'react'
 import sinon from 'sinon'
-import { expect } from 'chai'
-import { mount, shallow } from 'enzyme'
+import {expect} from 'chai'
+import {mount, shallow} from 'enzyme'
+import {describe, it} from 'mocha'
+
 import TimestepSelector from '../../../../src/components/ConfigForm/SosModelRun/TimestepSelector.js'
 
 import {sos_model_run} from '../../../helpers.js'
-import {empty_object, empty_array} from '../../../helpers.js'
+import {empty_array} from '../../../helpers.js'
 
 var render, warning, select_resolution, select_baseyear, select_endyear
 

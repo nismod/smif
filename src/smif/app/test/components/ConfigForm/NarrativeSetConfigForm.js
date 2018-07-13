@@ -1,11 +1,13 @@
 import React from 'react'
 import sinon from 'sinon'
-import { expect } from 'chai'
-import { mount, shallow } from 'enzyme'
+import {expect} from 'chai'
+import {mount, shallow} from 'enzyme'
+import {describe, it} from 'mocha'
+
 import NarrativeSetConfigForm from '../../../src/components/ConfigForm/NarrativeSetConfigForm.js'
 
 import {narrative_set} from '../../helpers.js'
-import {empty_object, empty_array} from '../../helpers.js'
+import {empty_object} from '../../helpers.js'
 
 describe('<NarrativeSetConfigForm />', () => {
 
@@ -19,7 +21,7 @@ describe('<NarrativeSetConfigForm />', () => {
 
     it('renders narrative_set.name when data missing', () => {
         const narrative_set_name = dataMissingRender.find('[id="narrative_set_name"]')
-        expect(narrative_set_name.html()).to.contain(`id="narrative_set_name"`)
+        expect(narrative_set_name.html()).to.contain('id="narrative_set_name"')
     })
 
     it('renders narrative_set.description', () => {
@@ -29,7 +31,7 @@ describe('<NarrativeSetConfigForm />', () => {
 
     it('renders narrative_set.description when data missing', () => {
         const narrative_set_description = dataMissingRender.find('[id="narrative_set_description"]')
-        expect(narrative_set_description.html()).to.contain(`id="narrative_set_description"`)
+        expect(narrative_set_description.html()).to.contain('id="narrative_set_description"')
     })
 
     it('loads properties ', () => {

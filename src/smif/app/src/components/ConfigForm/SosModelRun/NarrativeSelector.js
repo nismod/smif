@@ -113,7 +113,7 @@ class NarrativeSelector extends Component {
                                         selectedNarratives[narrativeSet].map((narrative) => (
                                             <div className="form-check" key={narrative.name}>
                                                 <label className="form-check-label">
-                                                    <input id={narrative.name} className="form-check-input" type="checkbox" name={narrativeSet} key={narrative.name} value={narrative.name} defaultChecked={narrative.active} onClick={(event) => {this.handleChange(event, narrative.name);}}></input>
+                                                    <input id={narrative.name} className="form-check-input" type="checkbox" name={narrativeSet} key={narrative.name} value={narrative.name} defaultChecked={narrative.active} onClick={(event) => {this.handleChange(event, narrative.name)}}></input>
                                                     {narrative.name}
                                                 </label>
                                             </div>
@@ -165,7 +165,7 @@ class NarrativeSelector extends Component {
             return this.renderDanger('There are no SosModels configured')
         } else if (narratives == null || narratives == undefined || narratives[0] == null) {
             return this.renderDanger('There are no Narratives configured')
-        } else if (sosModelRun.sos_model == "" || sosModelRun.sos_model == null || sosModelRun.sos_model == undefined) {
+        } else if (sosModelRun.sos_model == '' || sosModelRun.sos_model == null || sosModelRun.sos_model == undefined) {
             return this.renderDanger('There is no SosModel configured in the SosModelRun')
         } else {
             selectedSosModel = this.pickSosModelByName(sosModelRun.sos_model, sosModels)

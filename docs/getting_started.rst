@@ -222,6 +222,46 @@ This interface builds upon the specifications explained in :ref:`A Model Run Fil
 
     :app: Click on the "Save" button [A] to save changes to this configuration. Click on the "Cancel" button to leave the configuration without saving.
 
+Job Runner
+~~~~~~~~~~~~~~~~~~~~~~~
+The Job Runner helps to execute a Model Run, this interface builds upon the command line interface.
+
+.. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
+.. figure:: gui/jobs-runner.png
+    :width: 200px
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+    The Job Runner
+
+.. csv-table::
+   :header:  "#", "Attribute", "Notes"
+   :widths: 5, 15, 40
+
+   1, Stepper, "Displays the status of the Modelrun job"
+   2, Modelrun Configuation, "Provides an overview of the Modelrun configuration"
+   3, Controls, "Provides run settings and a start/stop button for the Modelrun job"
+   4, Console Output, "Real-time output from the Job runner process"
+
+.. topic:: Hints
+
+    Change Modelrun Job settings
+
+    :app: Click on the "Toggle" buttons [A] to change the verbosity or output format of the Job Runner.
+
+    Start / Restart or Stop a Modelrun Job
+
+    :app: Click on the "Start Modelrun / Restart Modelrun / Stop Modelrun" button [B] to control the Job.
+
+    Save the console output to disk
+
+    :app: Click on the "Save" button [C] to download the console output to disk.
+
+    Folow the console output
+
+    :app: Click on the "ArrowDown" button [D] to follow the console output as the job is running.
+
 Project Configuration
 ---------------------
 

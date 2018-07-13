@@ -2,9 +2,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
-import { Link, Router } from 'react-router-dom'
 
-import { fetchSmifDetails } from '../actions/actions.js'
+import { fetchSmifDetails } from 'actions/actions.js'
 
 class Footer extends Component {
 
@@ -58,15 +57,17 @@ class Footer extends Component {
 }
 
 Footer.propTypes = {
-    smif: PropTypes.object.isRequired
+    smif: PropTypes.object.isRequired,
+    isFetching: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired
 }
 
 function mapStateToProps(state) {
     const { smif } = state
 
     return {
-        smif: state.smif.item,
-        isFetching: (state.smif.isFetching)
+        smif: smif.item,
+        isFetching: (smif.isFetching)
     }
 }
 

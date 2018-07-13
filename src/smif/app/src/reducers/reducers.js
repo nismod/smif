@@ -6,6 +6,8 @@ import {
     RECEIVE_SOS_MODEL_RUNS,
     REQUEST_SOS_MODEL_RUN,
     RECEIVE_SOS_MODEL_RUN,
+    REQUEST_SOS_MODEL_RUN_STATUS,
+    RECEIVE_SOS_MODEL_RUN_STATUS,
     REQUEST_SOS_MODELS,
     RECEIVE_SOS_MODELS,
     REQUEST_SOS_MODEL,
@@ -94,6 +96,29 @@ function sos_model_run(
         return Object.assign({}, state, {
             isFetching: false,
             item: action.sos_model_run,
+            lastUpdated: action.receivedAt
+        })
+    default:
+        return state
+    }
+}
+
+function sos_model_run_status(
+    state = {
+        isFetching: true,
+        item: {}
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_SOS_MODEL_RUN_STATUS:
+        return Object.assign({}, state, {
+            isFetching: true
+        })
+    case RECEIVE_SOS_MODEL_RUN_STATUS:
+        return Object.assign({}, state, {
+            isFetching: false,
+            item: action.sos_model_run_status,
             lastUpdated: action.receivedAt
         })
     default:
@@ -381,6 +406,7 @@ const rootReducer = combineReducers({
     smif,
     sos_model_runs,
     sos_model_run,
+    sos_model_run_status,
     sos_models,
     sos_model,
     sector_models,

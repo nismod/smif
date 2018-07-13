@@ -1,7 +1,8 @@
 import React from 'react'
-import sinon from 'sinon'
-import { expect } from 'chai'
-import { mount, shallow } from 'enzyme'
+import {expect} from 'chai'
+import {mount, shallow} from 'enzyme'
+import {describe, it} from 'mocha'
+
 import SosModelRunConfigForm from '../../../src/components/ConfigForm/SosModelRunConfigForm.js'
 
 import {sos_model_run, sos_models, scenarios, narratives} from '../../helpers.js'
@@ -19,7 +20,7 @@ describe('<SosModelRunConfigForm />', () => {
 
     it('renders sos_model_run.name when data missing', () => {
         const sos_model_run_name = dataMissingRender.find('[id="sos_model_run_name"]')
-        expect(sos_model_run_name.html()).to.contain(`id="sos_model_run_name"`)
+        expect(sos_model_run_name.html()).to.contain('id="sos_model_run_name"')
     })
 
     it('renders sos_model_run.description', () => {
@@ -29,7 +30,7 @@ describe('<SosModelRunConfigForm />', () => {
 
     it('renders sos_model_run.description when data missing', () => {
         const sos_model_run_description = dataMissingRender.find('[id="sos_model_run_description"]')
-        expect(sos_model_run_description.html()).to.contain(`id="sos_model_run_description"`)
+        expect(sos_model_run_description.html()).to.contain('id="sos_model_run_description"')
     })
 
     it('loads properties ', () => {
@@ -45,11 +46,11 @@ describe('<SosModelRunConfigForm />', () => {
         expect(wrapper.find('[id="radio_population_Central Population (Low)"]').props().checked).to.equal(false)
         expect(wrapper.find('[id="radio_population_Central Population (Medium)"]').props().checked).to.equal(true)
         expect(wrapper.find('[id="radio_population_Central Population (High)"]').props().checked).to.equal(false)
-        expect(wrapper.state()['selectedSosModelRun']['scenarios']['population']).to.equal("Central Population (Medium)")
+        expect(wrapper.state()['selectedSosModelRun']['scenarios']['population']).to.equal('Central Population (Medium)')
 
         // Change scenario
-        wrapper.find('[id="radio_population_Central Population (High)"]').simulate('change', { target: { name: 'population', value: "Central Population (High)"}})
-        expect(wrapper.state()['selectedSosModelRun']['scenarios']['population']).to.equal("Central Population (High)")
+        wrapper.find('[id="radio_population_Central Population (High)"]').simulate('change', { target: { name: 'population', value: 'Central Population (High)'}})
+        expect(wrapper.state()['selectedSosModelRun']['scenarios']['population']).to.equal('Central Population (High)')
     })
 
     it('narratives correctly managed', () => {

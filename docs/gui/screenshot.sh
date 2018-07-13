@@ -5,6 +5,8 @@ gui_host="http://localhost:8080/"
 
 declare -A screenshots
 screenshots['welcome']=$gui_host
+screenshots['jobs']=$gui_host"jobs"
+screenshots['jobs-runner']=$gui_host"jobs/runner/20170918_energy_water_short"
 screenshots['configure']=$gui_host"configure/sos-model-run"
 screenshots['configure-sos-model-run']=$gui_host"configure/sos-model-run/20170918_energy_water"
 screenshots['configure-sos-models']=$gui_host"configure/sos-models/energy_waste"
@@ -39,7 +41,7 @@ done
 
 # Add numbers
 add_label () {
-	convert -draw 'text '$1','$2'"'$3'" ' -fill red -font Ubuntu -undercolor grey -stroke black -strokewidth 1 -pointsize $4 $5 $5
+	convert -draw 'text '$1','$2'"'$3'" ' -fill '#0008' -font Ubuntu -undercolor grey -stroke black -strokewidth 1 -pointsize $4 $5 $5
 }
 
 for screenshot in ${!screenshots[@]}
@@ -52,6 +54,29 @@ do
 		add_label 320 245 "C" 35 ${screenshots[${screenshot}]}
 		add_label 320 285 "D" 35 ${screenshots[${screenshot}]}
 		add_label 320 325 "E" 35 ${screenshots[${screenshot}]}
+	fi
+
+	if [ "${screenshot}" == "jobs" ]
+	then
+		echo 'Add labels to: '${screenshots[${screenshot}]}
+		add_label 220 170 "A" 35 ${screenshots[${screenshot}]}
+		add_label 220 205 "B" 35 ${screenshots[${screenshot}]}
+		add_label 220 240 "C" 35 ${screenshots[${screenshot}]}
+		add_label 330 365 "D" 50 ${screenshots[${screenshot}]}
+	fi
+
+	if [ "${screenshot}" == "jobs-runner" ]
+	then
+		echo 'Add labels to: '${screenshots[${screenshot}]}
+		add_label 344 80 "1" 50 ${screenshots[${screenshot}]}
+		add_label 344 200 "2" 50 ${screenshots[${screenshot}]}
+		add_label 344 595 "3" 50 ${screenshots[${screenshot}]}
+		add_label 344 970 "4" 50 ${screenshots[${screenshot}]}
+
+		add_label 600 595 "A" 50 ${screenshots[${screenshot}]}
+		add_label 600 825 "B" 50 ${screenshots[${screenshot}]}
+		add_label 1350 970 "C" 50 ${screenshots[${screenshot}]}
+		add_label 1510 970 "D" 50 ${screenshots[${screenshot}]}
 	fi
 
 	if [ "${screenshot}" == "configure" ]

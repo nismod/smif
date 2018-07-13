@@ -1,8 +1,9 @@
 import React from 'react'
 import sinon from 'sinon'
-import { expect } from 'chai'
-import { mount, shallow } from 'enzyme'
-import { MemoryRouter } from 'react-router-dom'
+import {expect} from 'chai'
+import {mount, shallow} from 'enzyme'
+import {describe, it} from 'mocha'
+import {MemoryRouter} from 'react-router-dom'
 
 import DeleteForm from '../../../../src/components/ConfigForm/General/DeleteForm.js'
 
@@ -18,35 +19,35 @@ describe('<DeleteForm />', () => {
 
     it('refuses if the configuration is in use', () => {
         const form = shallow(<MemoryRouter>
-                <DeleteForm
-                    config_name={'testname'}
-                    config_type={'testconfig'}
-                    existing_names={[]}
-                    in_use_by={[
-                        {
-                            name: 'Test',
-                            link: 'test_link',
-                            type: 'test_type'
-                        }
-                    ]} />
-            </MemoryRouter>)
+            <DeleteForm
+                config_name={'testname'}
+                config_type={'testconfig'}
+                existing_names={[]}
+                in_use_by={[
+                    {
+                        name: 'Test',
+                        link: 'test_link',
+                        type: 'test_type'
+                    }
+                ]} />
+        </MemoryRouter>)
         expect(form.html()).to.contain('It is not possible to delete <b>testconfig</b>')
     })
 
     it('links to the configuration dependency', () => {
         const form = mount(<MemoryRouter>
-                <DeleteForm
-                    config_name={'testname'}
-                    config_type={'testconfig'}
-                    existing_names={[]}
-                    in_use_by={[
-                        {
-                            name: 'Test',
-                            link: 'test_link/',
-                            type: 'test_type'
-                        }
-                    ]} />
-            </MemoryRouter>)
+            <DeleteForm
+                config_name={'testname'}
+                config_type={'testconfig'}
+                existing_names={[]}
+                in_use_by={[
+                    {
+                        name: 'Test',
+                        link: 'test_link/',
+                        type: 'test_type'
+                    }
+                ]} />
+        </MemoryRouter>)
         const link = form.find('a[href*="test_link/Test"]')
         expect(link.length).to.equal(1)
     })

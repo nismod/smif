@@ -3,12 +3,12 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchNarrative } from '../../../actions/actions.js'
-import { fetchNarrativeSets } from '../../../actions/actions.js'
+import { fetchNarrative } from 'actions/actions.js'
+import { fetchNarrativeSets } from 'actions/actions.js'
 
-import { saveNarrative } from '../../../actions/actions.js'
+import { saveNarrative } from 'actions/actions.js'
 
-import NarrativeConfigForm from '../../../components/ConfigForm/NarrativeConfigForm.js'
+import NarrativeConfigForm from 'components/ConfigForm/NarrativeConfigForm.js'
 
 class NarrativeConfig extends Component {
     constructor(props) {
@@ -86,7 +86,10 @@ class NarrativeConfig extends Component {
 NarrativeConfig.propTypes = {
     narrative: PropTypes.object.isRequired,
     narrative_sets: PropTypes.array.isRequired,
-    isFetching: PropTypes.bool.isRequired
+    isFetching: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    match: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {

@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
-import PropTypes, { string } from 'prop-types'
-import update from 'immutability-helper'
+import PropTypes from 'prop-types'
 
 import FaTrash from 'react-icons/lib/fa/trash'
 import FaPencil from 'react-icons/lib/fa/pencil'
@@ -17,9 +16,7 @@ class PropertyList extends Component {
 
     onEditHandler(event) {
         const {onEdit} = this.props
-        
         const target = event.currentTarget
-        const name = target.name
 
         onEdit(target.value)
     }
@@ -81,7 +78,7 @@ class PropertyList extends Component {
         if (active) {
             return (
                 <td width='8%' >
-                    <button type="button" className="btn btn-outline-dark" key={itemNumber} value={itemNumber} name='edit' onClick={this.onEditHandler}>
+                    <button type="button" className="btn btn-outline-dark btn-margin" key={itemNumber} value={itemNumber} name='edit' onClick={this.onEditHandler}>
                         <FaPencil/>
                     </button>
                 </td>
@@ -94,7 +91,7 @@ class PropertyList extends Component {
         if (active) {
             return (
                 <td width='8%'>
-                    <button type="button" className="btn btn-outline-dark" key={itemname} value={itemname} name={configname} onClick={this.onDeleteHandler}>
+                    <button type="button" className="btn btn-outline-dark btn-margin" key={itemname} value={itemname} name={configname} onClick={this.onDeleteHandler}>
                         <FaTrash/>
                     </button>
                 </td>
@@ -131,7 +128,7 @@ class PropertyList extends Component {
                         {
                             Object.keys(items).map((item, i) => (
 
-                                <tr id={'property_' + i} key={i}>
+                                <tr id={name + '_property_' + i} key={i}>
                                     {this.getWarning(enableWarnings, item)}
                                     {
                                         Object.keys(columns).map((column, k) => (

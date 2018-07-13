@@ -2,16 +2,15 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
-import { Link, Router } from 'react-router-dom'
 
-import { fetchSosModelRun } from '../../../actions/actions.js'
-import { fetchSosModels } from '../../../actions/actions.js'
-import { fetchScenarios } from '../../../actions/actions.js'
-import { fetchNarratives } from '../../../actions/actions.js'
+import { fetchSosModelRun } from 'actions/actions.js'
+import { fetchSosModels } from 'actions/actions.js'
+import { fetchScenarios } from 'actions/actions.js'
+import { fetchNarratives } from 'actions/actions.js'
 
-import { saveSosModelRun } from '../../../actions/actions.js'
+import { saveSosModelRun } from 'actions/actions.js'
 
-import SosModelRunConfigForm from '../../../components/ConfigForm/SosModelRunConfigForm.js'
+import SosModelRunConfigForm from 'components/ConfigForm/SosModelRunConfigForm.js'
 
 class SosModelRunConfig extends Component {
     constructor(props) {
@@ -92,7 +91,10 @@ SosModelRunConfig.propTypes = {
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
-    isFetching: PropTypes.bool.isRequired
+    isFetching: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    match: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {

@@ -1,6 +1,8 @@
 import React from 'react'
 import { expect } from 'chai'
 import { render } from 'enzyme'
+import { describe, it } from 'mocha'
+
 import Welcome from '../../src/components/Welcome.js'
 
 describe('<Welcome />', () => {

@@ -2,18 +2,16 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
-import { Link } from 'react-router-dom'
 
-import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from '../../../actions/actions.js'
-import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createScenario, createNarrativeSet, createNarrative } from '../../../actions/actions.js'
-import { saveSosModelRun,   saveSosModel,   saveSectorModel,   saveScenarioSet,   saveScenario,   saveNarrativeSet,   saveNarrative   } from '../../../actions/actions.js'
-import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteScenario, deleteNarrativeSet, deleteNarrative } from '../../../actions/actions.js'
+import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from 'actions/actions.js'
+import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createNarrativeSet, createNarrative } from 'actions/actions.js'
+import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteNarrativeSet, deleteNarrative } from 'actions/actions.js'
 
-import IntroBlock from '../../../components/ConfigForm/General/IntroBlock.js'
-import Popup from '../../../components/ConfigForm/General/Popup.js'
-import ProjectOverviewItem from '../../../components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
-import CreateConfigForm from '../../../components/ConfigForm/ProjectOverview/CreateConfigForm.js'
-import DeleteForm from '../../../components/ConfigForm/General/DeleteForm.js'
+import IntroBlock from 'components/ConfigForm/General/IntroBlock.js'
+import Popup from 'components/ConfigForm/General/Popup.js'
+import ProjectOverviewItem from 'components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
+import CreateConfigForm from 'components/ConfigForm/ProjectOverview/CreateConfigForm.js'
+import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
 
 class ProjectOverview extends Component {
     constructor() {
@@ -103,8 +101,8 @@ class ProjectOverview extends Component {
                     'scenario_sets': [],
                     'dependencies': [],
                     'max_iterations': 1,
-                    'convergence_absolute_tolerance': "1e-05",
-                    'convergence_relative_tolerance': "1e-05"
+                    'convergence_absolute_tolerance': '1e-05',
+                    'convergence_relative_tolerance': '1e-05'
                 }
             ))
             break
@@ -162,98 +160,98 @@ class ProjectOverview extends Component {
         let target_in_use_by = []
 
         switch(event.target.name) {
-            case 'SosModel':
-                this.props.sos_model_runs.forEach(function(sos_model_run) {
-                    if (sos_model_run.sos_model == event.target.value) {
+        case 'SosModel':
+            this.props.sos_model_runs.forEach(function(sos_model_run) {
+                if (sos_model_run.sos_model == event.target.value) {
+                    target_in_use_by.push({
+                        name: sos_model_run.name,
+                        link: '/configure/sos-model-run/',
+                        type: 'SosModelRun'
+                    })
+                }
+            })
+            break
+
+        case 'SectorModel':
+            this.props.sos_models.forEach(function(sos_model) {
+
+                sos_model.sector_models.forEach(function(sector_model) {
+                    if (sector_model == event.target.value) {
                         target_in_use_by.push({
-                            name: sos_model_run.name,
-                            link: '/configure/sos-model-run/',
-                            type: 'SosModelRun'
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
                         })
                     }
                 })
-                break
+            })
+            break
 
-            case 'SectorModel':
-                this.props.sos_models.forEach(function(sos_model) {
+        case 'ScenarioSet':
+            this.props.sos_models.forEach(function(sos_model) {
 
-                    sos_model.sector_models.forEach(function(sector_model) {
-                        if (sector_model == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
-                })
-                break
-
-            case 'ScenarioSet':
-                this.props.sos_models.forEach(function(sos_model) {
-
-                    sos_model.scenario_sets.forEach(function(scenario_set) {
-                        if (scenario_set == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
-
-                    sos_model.dependencies.forEach(function(dependency) {
-                        if (dependency.source_model == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
-                })
-                break
-
-            case 'NarrativeSet':
-                this.props.sos_models.forEach(function(sos_model) {
-
-                    sos_model.narrative_sets.forEach(function(narrative_set) {
-                        if (narrative_set == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
-                })
-
-                this.props.narratives.forEach(function(narrative) {
-                    if (narrative.narrative_set == event.target.value) {
+                sos_model.scenario_sets.forEach(function(scenario_set) {
+                    if (scenario_set == event.target.value) {
                         target_in_use_by.push({
-                            name: narrative.name,
-                            link: '/configure/narratives/',
-                            type: 'Narrative'
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
                         })
                     }
                 })
-                break
 
-            case 'Narrative':
-                this.props.sos_model_runs.forEach(function(sos_model_run) {
-                    Object.keys(sos_model_run.narratives).forEach(function(narrative_sets) {
-                        sos_model_run.narratives[narrative_sets].forEach(function(narrative) {
-                            if (narrative == event.target.value) {
-                                target_in_use_by.push({
-                                    name: sos_model_run.name,
-                                    link: '/configure/sos-model-run/',
-                                    type: 'SosModelRun'
-                                })
-                            }
+                sos_model.dependencies.forEach(function(dependency) {
+                    if (dependency.source_model == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
                         })
+                    }
+                })
+            })
+            break
+
+        case 'NarrativeSet':
+            this.props.sos_models.forEach(function(sos_model) {
+
+                sos_model.narrative_sets.forEach(function(narrative_set) {
+                    if (narrative_set == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
+                        })
+                    }
+                })
+            })
+
+            this.props.narratives.forEach(function(narrative) {
+                if (narrative.narrative_set == event.target.value) {
+                    target_in_use_by.push({
+                        name: narrative.name,
+                        link: '/configure/narratives/',
+                        type: 'Narrative'
+                    })
+                }
+            })
+            break
+
+        case 'Narrative':
+            this.props.sos_model_runs.forEach(function(sos_model_run) {
+                Object.keys(sos_model_run.narratives).forEach(function(narrative_sets) {
+                    sos_model_run.narratives[narrative_sets].forEach(function(narrative) {
+                        if (narrative == event.target.value) {
+                            target_in_use_by.push({
+                                name: sos_model_run.name,
+                                link: '/configure/sos-model-run/',
+                                type: 'SosModelRun'
+                            })
+                        }
                     })
                 })
-                break
+            })
+            break
         }
 
         this.setState({
@@ -267,7 +265,6 @@ class ProjectOverview extends Component {
     handleDelete() {
 
         const {deletePopupType, deletePopupConfigName} = this.state
-        const { scenarios } = this.props
         const { dispatch } = this.props
 
         this.closeDeletePopup(deletePopupType)
@@ -316,7 +313,7 @@ class ProjectOverview extends Component {
     }
 
     render () {
-        const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching } = this.props
+        const { sos_model_runs, sos_models, sector_models, scenario_sets, narrative_sets, narratives, isFetching } = this.props
         const { name } = this.props.match.params
 
         let used_identifiers = this.collectIdentifiers()
@@ -334,42 +331,42 @@ class ProjectOverview extends Component {
                 <div hidden={ isFetching }>
                     <div hidden={name!='sos-model-run'}>
                         <IntroBlock title="Model Runs" intro="A model run brings together a system-of-systems model definition with timesteps over which planning takes place, and a choice of scenarios and narratives to population the placeholder scenario sets in the system-of-systems model.">
-                            <input className="btn btn-success" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                         </IntroBlock>
-                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" resultLink="/jobs/runner/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='sos-models'}>
                         <IntroBlock title="System-of-Systems Models" intro="A system-of-systems model collects together scenario sets and simulation models. Users define dependencies between scenario and simulation models.">
-                            <input className="btn btn-success" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='sector-models'}>
                         <IntroBlock title="Model Wrappers" intro="To integrate a new sector model into the system-of-systems model it is necessary to write a Python wrapper function. The wrapper acts as an interface between the simulation modelling integration framework and the simulation model, keeping all the code necessary to implement the conversion of data types in one place.">
-                            <input className="btn btn-success" name="SectorModel" type="button" value="Add a new Wrapper" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="SectorModel" type="button" value="Add a new Wrapper" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='scenario-set'}>
                         <IntroBlock title="Scenario Sets" intro="Scenarios allows to define static sources for simulation model dependencies. Scenario sets are the categories in which scenario data are organised.">
-                            <input className="btn btn-success" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/scenario-set/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='narrative-set'}>
                         <IntroBlock title="Narrative Sets" intro="Narrative sets are the categories in which narrative data are organised.">
-                            <input className="btn btn-success" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/narrative-set/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='narrative-set'}>
                         <IntroBlock title="Narratives" intro="Narratives are configurations that target the files which contain narrative data">
-                            <input className="btn btn-success" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
                         </IntroBlock>
                         <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/narratives/" onDelete={this.openDeletePopup} />
                     </div>
@@ -398,6 +395,7 @@ ProjectOverview.propTypes = {
     narrative_sets: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
+    match: PropTypes.object.isRequired,
     dispatch: PropTypes.func.isRequired
 }
 

@@ -2,18 +2,17 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
-import { Link, Router } from 'react-router-dom'
 
-import { fetchScenarios } from '../../../actions/actions.js'
-import { saveScenario } from '../../../actions/actions.js'
-import { createScenario } from '../../../actions/actions.js'
-import { deleteScenario } from '../../../actions/actions.js'
-import { fetchScenarioSet } from '../../../actions/actions.js'
-import { saveScenarioSet } from '../../../actions/actions.js'
-import { fetchSosModelRuns } from '../../../actions/actions.js'
-import { fetchSosModels } from '../../../actions/actions.js'
+import { fetchScenarios } from 'actions/actions.js'
+import { saveScenario } from 'actions/actions.js'
+import { createScenario } from 'actions/actions.js'
+import { deleteScenario } from 'actions/actions.js'
+import { fetchScenarioSet } from 'actions/actions.js'
+import { saveScenarioSet } from 'actions/actions.js'
+import { fetchSosModelRuns } from 'actions/actions.js'
+import { fetchSosModels } from 'actions/actions.js'
 
-import ScenarioSetConfigForm from '../../../components/ConfigForm/ScenarioSetConfigForm.js'
+import ScenarioSetConfigForm from 'components/ConfigForm/ScenarioSetConfigForm.js'
 
 class ScenarioSetConfig extends Component {
     constructor(props) {
@@ -130,7 +129,10 @@ ScenarioSetConfig.propTypes = {
     sos_models: PropTypes.array.isRequired,
     scenario_set: PropTypes.object.isRequired,
     scenarios: PropTypes.array.isRequired,
-    isFetching: PropTypes.bool.isRequired
+    isFetching: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    match: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {

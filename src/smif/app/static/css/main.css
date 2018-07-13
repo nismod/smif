@@ -1,6 +1,12 @@
+@import '../../node_modules/rc-steps/assets/index.css';
+@import '../../node_modules/rc-steps/assets/iconfont.css'
+
 /**
  * Top-level and utility
  */
+html {
+    overflow-y: scroll;
+}
 body {
     font-size: .875rem;
 }
@@ -35,14 +41,24 @@ body {
     font-size: 1.125rem;
     font-weight: 300;
 }
-.btn,
+.btn-margin,
 select {
     margin: 0 0.5em 0.5em 0;
 }
+
+.btn-group {
+    margin-bottom: 1em;
+}
+
 .card {
     margin-bottom: 1em;
 }
 
+.console-output {
+    position: relative;
+    overflow-y: scroll;
+    height: 400px
+}
 /*
  * Sidebar
  */

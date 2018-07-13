@@ -2,8 +2,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import Popup from '../General/Popup.js'
-import { SaveButton, CancelButton, CreateButton } from '../General/Buttons'
+import Popup from 'components/ConfigForm/General/Popup.js'
+import { SaveButton, CancelButton, CreateButton } from 'components/ConfigForm/General/Buttons'
 
 class ParameterSelector extends Component {
     constructor(props) {
@@ -73,7 +73,7 @@ class ParameterSelector extends Component {
 
         // Submit change
         if (inputOk) {
-
+            
             let newParameter = {
                 name: inputs.name,
                 description: inputs.description,
@@ -85,7 +85,7 @@ class ParameterSelector extends Component {
 
             let newParameters = parameters
             newParameters.push(newParameter)
-
+            
             onChange(
                 {
                     target: {
@@ -122,22 +122,22 @@ class ParameterSelector extends Component {
 
         return (
             <div>
-                <CreateButton value="Add Parameter" onClick={this.openCreatePopup} />
+                <CreateButton id={'btn_add_parameter'} value="Add Parameter" onClick={this.openCreatePopup} />
 
-                <Popup onRequestOpen={this.state.CreatePopupIsOpen}>
+                <Popup name="popup_add_parameter" onRequestOpen={this.state.CreatePopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit()}}>
                         <h2 ref={subtitle => this.subtitle = subtitle}>Add a new Parameter</h2>
                         <div className="container">
                             <div className="row">
                                 <div className="col">
                                     <label>Name</label>
-                                    <input autoFocus type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
+                                    <input id="parameter_name" autoFocus type="text" className={this.state.className.name} name="name" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
                                     </div>
 
                                     <label>Description</label>
-                                    <input type="text" className={this.state.className.description} name="description" onChange={this.handleChange}/>
+                                    <input id="parameter_description" type="text" className={this.state.className.description} name="description" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
                                     </div>
@@ -154,13 +154,13 @@ class ParameterSelector extends Component {
                             </div>
                             <div className="row">
                                 <div className="col">
-                                    <input type="number" className={this.state.className.default_value} name="default_value" onChange={this.handleChange}/>
+                                    <input id="parameter_default_value" type="number" className={this.state.className.default_value} name="default_value" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
                                     </div>
                                 </div>
                                 <div className="col">
-                                    <input type="text" className={this.state.className.units} name="units" onChange={this.handleChange}/>
+                                    <input id="parameter_units" type="text" className={this.state.className.units} name="units" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                     Please provide a valid input.
                                     </div>
@@ -170,13 +170,13 @@ class ParameterSelector extends Component {
                             <label>Absolute Range</label>
                             <div className="row">
                                 <div className="col">
-                                    <input type="number" className={this.state.className.absolute_range_min} name="absolute_range_min" placeholder="Minimum" onChange={this.handleChange}/>
+                                    <input id="parameter_absolute_range_low" type="number" className={this.state.className.absolute_range_min} name="absolute_range_min" placeholder="Minimum" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
                                 </div>
                                 <div className="col">
-                                    <input type="number" className={this.state.className.absolute_range_max} name="absolute_range_max" placeholder="Maximum" onChange={this.handleChange}/>
+                                    <input id="parameter_absolute_range_high" type="number" className={this.state.className.absolute_range_max} name="absolute_range_max" placeholder="Maximum" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
@@ -186,13 +186,13 @@ class ParameterSelector extends Component {
                             <label>Suggested Range</label>
                             <div className="row">
                                 <div className="col">
-                                    <input type="number" className={this.state.className.suggested_range_min} name="suggested_range_min" placeholder="Minimum" onChange={this.handleChange}/>
+                                    <input id="parameter_suggested_range_low" type="number" className={this.state.className.suggested_range_min} name="suggested_range_min" placeholder="Minimum" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
                                 </div>
                                 <div className="col">
-                                    <input type="number" className={this.state.className.suggested_range_max} name="suggested_range_max" placeholder="Maximum" onChange={this.handleChange}/>
+                                    <input id="parameter_suggested_range_high" type="number" className={this.state.className.suggested_range_max} name="suggested_range_max" placeholder="Maximum" onChange={this.handleChange}/>
                                     <div className="invalid-feedback">
                                             Please provide a valid input.
                                     </div>
@@ -200,8 +200,8 @@ class ParameterSelector extends Component {
                             </div>
                         </div>
 
-                        <SaveButton />
-                        <CancelButton onClick={this.closeCreatePopup}/>
+                        <SaveButton id='btn_parameter_save' />
+                        <CancelButton id='btn_parameter_cancel' onClick={this.closeCreatePopup}/>
                     </form>
 
                 </Popup>

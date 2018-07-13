@@ -1,6 +1,8 @@
 import React from 'react'
-import { expect } from 'chai'
-import { shallow } from 'enzyme'
+import {expect} from 'chai'
+import {shallow} from 'enzyme'
+import {describe, it} from 'mocha'
+
 import ScenarioSelector from '../../../../src/components/ConfigForm/SosModelRun/ScenarioSelector.js'
 
 import {sos_model_run, sos_models, scenarios} from '../../../helpers.js'

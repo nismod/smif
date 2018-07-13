@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import { SaveButton, CancelButton } from '../General/Buttons'
+import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
 class CreateConfigForm extends Component {
     constructor(props) {
@@ -12,7 +12,7 @@ class CreateConfigForm extends Component {
         this.handleChange = this.handleChange.bind(this)
         this.handleSubmit = this.handleSubmit.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
-        this.onDismiss = this.onDismiss.bind(this);
+        this.onDismiss = this.onDismiss.bind(this)
 
         this.state = {}
         this.state.createConfig = {name: '', description: ''}
@@ -22,11 +22,11 @@ class CreateConfigForm extends Component {
     }
 
     componentDidMount(){
-        document.addEventListener("keydown", this.handleKeyPress, false)
+        document.addEventListener('keydown', this.handleKeyPress, false)
     }
 
     componentWillUnmount(){
-        document.removeEventListener("keydown", this.handleKeyPress, false)
+        document.removeEventListener('keydown', this.handleKeyPress, false)
     }
 
     handleKeyPress(){

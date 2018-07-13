@@ -2,18 +2,17 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
-import { Link, Router } from 'react-router-dom'
 
-import { fetchSosModel } from '../../../actions/actions.js'
-import { fetchSectorModels } from '../../../actions/actions.js'
-import { fetchScenarioSets } from '../../../actions/actions.js'
-import { fetchScenarios } from '../../../actions/actions.js'
-import { fetchNarrativeSets } from '../../../actions/actions.js'
-import { fetchNarratives } from '../../../actions/actions.js'
+import { fetchSosModel } from 'actions/actions.js'
+import { fetchSectorModels } from 'actions/actions.js'
+import { fetchScenarioSets } from 'actions/actions.js'
+import { fetchScenarios } from 'actions/actions.js'
+import { fetchNarrativeSets } from 'actions/actions.js'
+import { fetchNarratives } from 'actions/actions.js'
 
-import { saveSosModel } from '../../../actions/actions.js'
+import { saveSosModel } from 'actions/actions.js'
 
-import SosModelConfigForm from '../../../components/ConfigForm/SosModelConfigForm.js'
+import SosModelConfigForm from 'components/ConfigForm/SosModelConfigForm.js'
 
 class SosModelConfig extends Component {
     constructor(props) {
@@ -99,7 +98,10 @@ SosModelConfig.propTypes = {
     scenarios: PropTypes.array.isRequired,
     narrative_sets: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
-    isFetching: PropTypes.bool.isRequired
+    isFetching: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    match: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {

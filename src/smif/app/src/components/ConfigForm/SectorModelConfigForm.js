@@ -2,13 +2,12 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import Popup from './General/Popup.js'
-import PropertySelector from './General/PropertySelector.js'
-import InputsOutputsForm from './SectorModel/InputsOutputsForm.js'
-import ParameterSelector from './SectorModel/ParameterSelector.js'
-import PropertyList from './General/PropertyList.js'
-import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
-import { SaveButton, CancelButton } from './General/Buttons'
+import Popup from 'components/ConfigForm/General/Popup.js'
+import InputsOutputsForm from 'components/ConfigForm/SectorModel/InputsOutputsForm.js'
+import ParameterSelector from 'components/ConfigForm/SectorModel/ParameterSelector.js'
+import PropertyList from 'components/ConfigForm/General/PropertyList.js'
+import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
+import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
 class SectorModelConfigForm extends Component {
     constructor(props) {
@@ -43,26 +42,26 @@ class SectorModelConfigForm extends Component {
         const {deletePopupType, selectedSectorModel} = this.state
 
         switch(deletePopupType) {
-            case 'inputs':
-                for (let i = 0; i < selectedSectorModel.inputs.length; i++) {
-                    if (selectedSectorModel.inputs[i].name == config)
-                        selectedSectorModel.inputs.splice(i, 1)
-                }
-                break
+        case 'inputs':
+            for (let i = 0; i < selectedSectorModel.inputs.length; i++) {
+                if (selectedSectorModel.inputs[i].name == config)
+                    selectedSectorModel.inputs.splice(i, 1)
+            }
+            break
 
-            case 'outputs':
-                for (let i = 0; i < selectedSectorModel.outputs.length; i++) {
-                    if (selectedSectorModel.outputs[i].name == config)
-                        selectedSectorModel.outputs.splice(i, 1)
-                }
-                break
+        case 'outputs':
+            for (let i = 0; i < selectedSectorModel.outputs.length; i++) {
+                if (selectedSectorModel.outputs[i].name == config)
+                    selectedSectorModel.outputs.splice(i, 1)
+            }
+            break
 
-            case 'parameters':
-                for (let i = 0; i < selectedSectorModel.parameters.length; i++) {
-                    if (selectedSectorModel.parameters[i].name == config)
-                        selectedSectorModel.parameters.splice(i, 1)
-                }
-                break
+        case 'parameters':
+            for (let i = 0; i < selectedSectorModel.parameters.length; i++) {
+                if (selectedSectorModel.parameters[i].name == config)
+                    selectedSectorModel.parameters.splice(i, 1)
+            }
+            break
         }
 
         this.forceUpdate()
@@ -82,32 +81,32 @@ class SectorModelConfigForm extends Component {
         let target_in_use_by = []
 
         switch(event.target.name) {
-            case 'inputs' || 'parameters':
-                this.props.sosModels.forEach(function(sos_model) {
-                    sos_model.dependencies.forEach(function(dependency) {
-                        if (dependency.sink_model_input == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
+        case 'inputs' || 'parameters':
+            this.props.sosModels.forEach(function(sos_model) {
+                sos_model.dependencies.forEach(function(dependency) {
+                    if (dependency.sink_model_input == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
+                        })
+                    }
                 })
-                break
-            case 'outputs':
-                this.props.sosModels.forEach(function(sos_model) {
-                    sos_model.dependencies.forEach(function(dependency) {
-                        if (dependency.source_model_output == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
+            })
+            break
+        case 'outputs':
+            this.props.sosModels.forEach(function(sos_model) {
+                sos_model.dependencies.forEach(function(dependency) {
+                    if (dependency.source_model_output == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
+                        })
+                    }
                 })
-                break
+            })
+            break
         }
 
         this.setState({
@@ -122,7 +121,7 @@ class SectorModelConfigForm extends Component {
         this.setState({deletePopupIsOpen: false})
     }
 
-    render() {
+    renderSectorModelConfigForm() {
         const {selectedSectorModel} = this.state
 
         return (
@@ -156,14 +155,14 @@ class SectorModelConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Class Name</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="classname" type="text" defaultValue={selectedSectorModel.classname} onChange={this.handleChange}/>
+                                    <input id="sector_model_classname" className="form-control" name="classname" type="text" defaultValue={selectedSectorModel.classname} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Path</label>
                                 <div className="col-sm-10">
-                                    <input className="form-control" name="path" type="text" defaultValue={selectedSectorModel.path} onChange={this.handleChange}/>
+                                    <input id="sector_model_path" className="form-control" name="path" type="text" defaultValue={selectedSectorModel.path} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -195,7 +194,7 @@ class SectorModelConfigForm extends Component {
                     </div>
                 </form>
 
-                <Popup onRequestOpen={this.state.deletePopupIsOpen}>
+                <Popup name="popup_delete_form" onRequestOpen={this.state.deletePopupIsOpen}>
                     <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
                 </Popup>
 
@@ -206,6 +205,27 @@ class SectorModelConfigForm extends Component {
             </div>
         )
     }
+
+    renderDanger(message) {
+        return (
+            <div>
+                <div id="alert-danger" className="alert alert-danger">
+                    {message}
+                </div>
+                <CancelButton onClick={this.handleCancel} />
+            </div>
+        )
+    }
+
+    render() {
+        const {selectedSectorModel} = this.state
+
+        if (selectedSectorModel.name == undefined) {
+            return this.renderDanger('This Scenario Set does not exist.')
+        } else {
+            return this.renderSectorModelConfigForm()
+        }
+    }
 }
 
 SectorModelConfigForm.propTypes = {
@@ -213,6 +233,11 @@ SectorModelConfigForm.propTypes = {
     sectorModel: PropTypes.object.isRequired,
     saveSectorModel: PropTypes.func,
     cancelSectorModel: PropTypes.func
+}
+
+SectorModelConfigForm.defaultProps = {
+    sosModels: [],
+    sectorModel: {},
 }
 
 export default SectorModelConfigForm

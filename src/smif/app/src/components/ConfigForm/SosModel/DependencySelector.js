@@ -2,8 +2,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import Popup from '../General/Popup.js'
-import { SaveButton, CancelButton, CreateButton } from '../General/Buttons'
+import Popup from 'components/ConfigForm/General/Popup.js'
+import { SaveButton, CancelButton, CreateButton } from 'components/ConfigForm/General/Buttons'
 
 class DependencySelector extends Component {
     constructor(props) {
@@ -181,13 +181,6 @@ class DependencySelector extends Component {
                         <option key={'source_output_' + output['name']} value={output['name']}>{output['name']}</option>
                     )
                 )
-
-                // set state for default selection
-                if (sectormodel_source_outputs[0].outputs.length > 0) {
-                    this.state.inputs.SourceOutput = sectormodel_source_outputs[0].outputs[0].name
-                } else {
-                    this.state.inputs.SourceOutput = ''
-                }
 
             } else if (scenarioset_source_outputs.length == 1 && sectormodel_source_outputs.length == 0) {
                 scenarioset_source_outputs[0].facets.map(facet =>

@@ -2,10 +2,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { Redirect } from 'react-router-dom'
-import { Link } from 'react-router-dom'
 
-import FaPencil from 'react-icons/lib/fa/pencil'
-import FaTrash from 'react-icons/lib/fa/trash'
+import {FaTrash, FaPlay} from 'react-icons/lib/fa'
 
 class SosModelRunItem extends Component {
     constructor(props) {
@@ -18,6 +16,7 @@ class SosModelRunItem extends Component {
 
         this.onEditHandler = this.onEditHandler.bind(this)
         this.onDeleteHandler = this.onDeleteHandler.bind(this)
+        this.onStartHandler = this.onStartHandler.bind(this)
     }
 
     onEditHandler(event) {
@@ -48,7 +47,20 @@ class SosModelRunItem extends Component {
         })
     }
 
-    renderItems(itemname, items, itemLink) {
+    onStartHandler(event) {
+        const {resultLink} = this.props
+        const target = event.currentTarget
+        const name = target.name
+
+        if (name != undefined) {
+            this.setState({
+                redirect: true,
+                redirect_to: resultLink + name
+            })
+        }
+    }
+
+    renderItems(itemname, items, itemLink, resultLink, onDelete) {
 
         if (this.state.redirect) {
             return <Redirect push to={this.state.redirect_to}/>
@@ -60,37 +72,50 @@ class SosModelRunItem extends Component {
                         <tr>
                             <th className="col-name" scope="col">Name</th>
                             <th className="col-desc" scope="col">Description</th>
-                            <th className="col-action" scope="col"></th>
+                            <th hidden={resultLink==undefined} className="col-action" scope="col"></th>
+                            <th hidden={onDelete==undefined} className="col-action" scope="col"></th>
                         </tr>
                     </thead>
                     <tbody>
                         {
-                        items.map((item, i) => (
-                            <tr id={"row_" + item.name} key={i}>
-                                <td
-                                    data-name={item.name}
-                                    className="col-name"
-                                    onClick={(e) => this.onEditHandler(e)}>
-                                    {item.name}
-                                </td>
-                                <td
-                                    data-name={item.name}
-                                    className="col-desc"
-                                    onClick={(e) => this.onEditHandler(e)}>
-                                    {item.description}
-                                </td>
-                                <td className="col-action">
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline-dark"
-                                        value={itemname}
-                                        name={item.name}
-                                        onClick={this.onDeleteHandler}>
-                                        <FaTrash/>
-                                    </button>
-                                </td>
-                            </tr>
-                        ))
+                            items.map((item, i) => (
+                                <tr id={'row_' + item.name} key={i}>
+                                    <td
+                                        data-name={item.name}
+                                        className="col-name"
+                                        onClick={(e) => this.onEditHandler(e)}>
+                                        {item.name}
+                                    </td>
+                                    <td
+                                        data-name={item.name}
+                                        className="col-desc"
+                                        onClick={(e) => this.onEditHandler(e)}>
+                                        {item.description}
+                                    </td>
+                                    <td hidden={resultLink==undefined} className="col-action">
+                                        <button
+                                            id={'btn_start_' + item.name}
+                                            type="button"
+                                            className="btn btn-outline-dark btn-margin"
+                                            value={itemname}
+                                            name={item.name}
+                                            onClick={this.onStartHandler}>
+                                            <FaPlay/>
+                                        </button>
+                                    </td>
+                                    <td hidden={onDelete==undefined} className="col-action">
+                                        <button
+                                            id={'btn_delete_' + item.name}
+                                            type="button"
+                                            className="btn btn-outline-dark btn-margin"
+                                            value={itemname}
+                                            name={item.name}
+                                            onClick={this.onDeleteHandler}>
+                                            <FaTrash/>
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
                         }
                     </tbody>
                 </table>
@@ -115,16 +140,16 @@ class SosModelRunItem extends Component {
     }
 
     render() {
-        const {itemname, items, itemLink} = this.props
+        const {itemname, items, itemLink, resultLink, onDelete} = this.props
 
-        if (itemname == "" || itemname == undefined || itemname == null) {
+        if (itemname == '' || itemname == undefined || itemname == null) {
             return this.renderDanger('There is no itemname configured')
-        } else if (itemLink == "" || itemLink == undefined || itemLink == null) {
+        } else if (itemLink == '' || itemLink == undefined || itemLink == null) {
             return this.renderDanger('There is no itemLink configured')
         } else if (items == null || items == undefined || items.length == 0) {
             return this.renderInfo('There are no items in this list')
         } else {
-            return this.renderItems(itemname, items, itemLink)
+            return this.renderItems(itemname, items, itemLink, resultLink, onDelete)
         }
     }
 }
@@ -133,6 +158,7 @@ SosModelRunItem.propTypes = {
     itemname: PropTypes.string,
     items: PropTypes.array,
     itemLink: PropTypes.string,
+    resultLink: PropTypes.string,
     onDelete: PropTypes.func
 }
 

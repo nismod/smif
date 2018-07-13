@@ -2,12 +2,12 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import Popup from './General/Popup.js'
-import PropertyList from './General/PropertyList.js'
-import ScenarioConfigForm from './ScenarioSet/ScenarioConfigForm.js'
-import FacetConfigForm from './ScenarioSet/FacetConfigForm.js'
-import DeleteForm from '../../components/ConfigForm/General/DeleteForm.js'
-import { SaveButton, CancelButton } from './General/Buttons'
+import Popup from 'components/ConfigForm/General/Popup.js'
+import PropertyList from 'components/ConfigForm/General/PropertyList.js'
+import ScenarioConfigForm from 'components/ConfigForm/ScenarioSet/ScenarioConfigForm.js'
+import FacetConfigForm from 'components/ConfigForm/ScenarioSet/FacetConfigForm.js'
+import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
+import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
 class ScenarioSetConfigForm extends Component {
     constructor(props) {
@@ -31,6 +31,7 @@ class ScenarioSetConfigForm extends Component {
         this.openDeletePopup = this.openDeletePopup.bind(this)
         this.closeDeletePopup = this.closeDeletePopup.bind(this)
         this.deletePopupSubmit = this.deletePopupSubmit.bind(this)
+
 
         this.state = {
             scenarios: this.props.scenarios,
@@ -86,13 +87,11 @@ class ScenarioSetConfigForm extends Component {
     }
 
     handleScenarioSave(saveScenario) {
-        var newScenarios = []
         this.props.saveScenario(saveScenario)
         this.closeScenarioPopup()
     }
 
     handleScenarioCreate(scenario) {
-        let {selectedScenarios} = this.state
         this.props.createScenario(scenario)
         this.closeScenarioPopup()
     }
@@ -180,10 +179,14 @@ class ScenarioSetConfigForm extends Component {
                 })
             }
         }
-        this.state.selectedScenarios[id].facets = new_facets
+
+        let new_selectedScenarios = update(
+            this.state.selectedScenarios, {[id]: {facets: {$set: new_facets}}}
+        )
+        this.setState({selectedScenarios: new_selectedScenarios})
 
         // load scenario
-        this.setState({selectedScenario: Object.assign({}, this.state.selectedScenarios[id])})
+        this.setState({selectedScenario: Object.assign({}, new_selectedScenarios[id])})
         this.setState({editScenarioPopupIsOpen: true})
     }
 
@@ -192,33 +195,33 @@ class ScenarioSetConfigForm extends Component {
         let target_in_use_by = []
 
         switch(event.target.name) {
-            case 'Facet':
-                this.props.sosModels.forEach(function(sos_model) {
-                    sos_model.dependencies.forEach(function(dependency) {
-                        if (event.target.value == dependency.source_model_output) {
-                            target_in_use_by.push({
-                                name: sos_model.name,
-                                link: '/configure/sos-models/',
-                                type: 'SosModel'
-                            })
-                        }
-                    })
+        case 'Facet':
+            this.props.sosModels.forEach(function(sos_model) {
+                sos_model.dependencies.forEach(function(dependency) {
+                    if (event.target.value == dependency.source_model_output) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
+                        })
+                    }
                 })
-                break
+            })
+            break
 
-            case 'Scenario':
-                this.props.sosModelRuns.forEach(function(sos_model_run) {
-                    Object.keys(sos_model_run.scenarios).forEach(function(key) {
-                        if (event.target.value == sos_model_run.scenarios[key]) {
-                            target_in_use_by.push({
-                                name: sos_model_run.name,
-                                link: '/configure/sos-model-run/',
-                                type: 'SosModelRun'
-                            })
-                        }
-                    })
+        case 'Scenario':
+            this.props.sosModelRuns.forEach(function(sos_model_run) {
+                Object.keys(sos_model_run.scenarios).forEach(function(key) {
+                    if (event.target.value == sos_model_run.scenarios[key]) {
+                        target_in_use_by.push({
+                            name: sos_model_run.name,
+                            link: '/configure/sos-model-run/',
+                            type: 'SosModelRun'
+                        })
+                    }
                 })
-                break
+            })
+            break
         }
 
         this.setState({
@@ -231,22 +234,20 @@ class ScenarioSetConfigForm extends Component {
 
     deletePopupSubmit() {
 
-        const {deletePopupType, deletePopupConfigName, selectedScenarioSet, selectedScenarios} = this.state
-        const { scenarios } = this.props
-        const { dispatch } = this.props
+        const {deletePopupType, deletePopupConfigName, selectedScenarioSet} = this.state
 
         switch(deletePopupType) {
-            case 'Facet':
-                for (let i = 0; i < Object.keys(selectedScenarioSet.facets).length; i++) {
-                    if (selectedScenarioSet.facets[i].name == deletePopupConfigName) {
-                        selectedScenarioSet.facets.splice(i, 1)
-                    }
+        case 'Facet':
+            for (let i = 0; i < Object.keys(selectedScenarioSet.facets).length; i++) {
+                if (selectedScenarioSet.facets[i].name == deletePopupConfigName) {
+                    selectedScenarioSet.facets.splice(i, 1)
                 }
-                break
+            }
+            break
 
-            case 'Scenario':
-                this.props.deleteScenario(deletePopupConfigName)
-                break
+        case 'Scenario':
+            this.props.deleteScenario(deletePopupConfigName)
+            break
         }
 
         this.closeDeletePopup(deletePopupType)
@@ -293,7 +294,7 @@ class ScenarioSetConfigForm extends Component {
                     <div className="card-body">
 
                         <div className="form-group row">
-                            <label className="col-sm-2 col-form-lathis.closeScenarioPopup()bel">Name</label>
+                            <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
                                 <input id="scenario_set_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedScenarioSet.name} onChange={this.handleChange}/>
                             </div>
@@ -312,8 +313,8 @@ class ScenarioSetConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Facets</div>
                     <div className="card-body">
-                        <PropertyList itemsName="Facet" items={selectedScenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.openDeletePopup} />
-                        <input className="btn btn-secondary btn-lg btn-block" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
+                        <PropertyList itemsName="facets" items={selectedScenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.openDeletePopup} />
+                        <input className="btn btn-secondary btn-lg btn-block btn-margin" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
                     </div>
                 </div>
 
@@ -321,26 +322,26 @@ class ScenarioSetConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Scenarios</div>
                         <div className="card-body">
-                            <PropertyList itemsName="Scenario" items={selectedScenarios} columns={{name: 'Name', description: 'Description'}} enableWarnings={true} rowWarning={scenarioWarnings} editButton={true} deleteButton={true} onEdit={this.openEditScenarioPopup} onDelete={this.openDeletePopup} />
-                            <input className="btn btn-secondary btn-lg btn-block" name="createScenario" type="button" value="Add Scenario" onClick={this.openAddScenarioPopup}/>
+                            <PropertyList itemsName="scenarios" items={selectedScenarios} columns={{name: 'Name', description: 'Description'}} enableWarnings={true} rowWarning={scenarioWarnings} editButton={true} deleteButton={true} onEdit={this.openEditScenarioPopup} onDelete={this.openDeletePopup} />
+                            <input id="btn_createScenario" className="btn btn-secondary btn-lg btn-block btn-margin" name="createScenario" type="button" value="Add Scenario" onClick={this.openAddScenarioPopup}/>
                         </div>
                     </div>
                 </div>
 
-                <SaveButton id="saveScenarioSet" onClick={this.handleSave} />
-                <CancelButton id="cancelScenarioSet" onClick={this.handleCancel} />
+                <SaveButton id="btn_saveScenarioSet" onClick={this.handleSave} />
+                <CancelButton id="btn_cancelScenarioSet" onClick={this.handleCancel} />
 
-                <Popup onRequestOpen={this.state.deletePopupIsOpen}>
+                <Popup name='dsasa' onRequestOpen={this.state.deletePopupIsOpen}>
                     <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
                 </Popup>
 
-                <Popup onRequestOpen={this.state.addFacetPopupIsOpen}>
+                <Popup name='fdssd' onRequestOpen={this.state.addFacetPopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation()}}>
                         <FacetConfigForm facet={selectedFacet} saveFacet={this.handleFacetSave} cancelFacet={this.closeFacetPopup}/>
                     </form>
                 </Popup>
 
-                <Popup onRequestOpen={this.state.editScenarioPopupIsOpen}>
+                <Popup name='popup_scenario_config_form' onRequestOpen={this.state.editScenarioPopupIsOpen}>
                     <form onSubmit={(e) => {e.preselectedScenarioventDefault(); e.stopPropagation()}}>
                         <ScenarioConfigForm scenario={selectedScenario} scenarioSet={selectedScenarioSet} createScenario={this.handleScenarioCreate} saveScenario={this.handleScenarioSave} cancelScenario={this.closeScenarioPopup}/>
                     </form>
@@ -360,41 +361,18 @@ class ScenarioSetConfigForm extends Component {
         )
     }
 
-    renderWarning(message) {
-        return (
-            <div>
-                <div id="alert-warning" className="alert alert-warning">
-                    {message}
-                </div>
-                <CancelButton onClick={this.handleCancel} />
-            </div>
-        )
-    }
-
-    renderInfo(message) {
-        return (
-            <div>
-                <div id="alert-info" className="alert alert-info">
-                    {message}
-                </div>
-                <CancelButton onClick={this.handleCancel} />
-            </div>
-        )
-    }
-
     render() {
         const {selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet} = this.state
 
-        if (selectedScenarioSet == null || selectedScenarioSet == undefined) {
-            return this.renderDanger('The selectedScenarioSet are not initialised')
-        } else if (selectedScenarioSet.facets == null || selectedScenarioSet.facets == undefined) {
-            return this.renderDanger('The selectedScenarioSet.facets is not initialised')
-        } else if (selectedScenarios == null || selectedScenarios == undefined) {
-            return this.renderDanger('The selectedScenarios is not initialised')
-        } else if (selectedScenario == null || selectedScenario == undefined) {
-            return this.renderDanger('The selectedScenario is not initialised')
-        } else if (selectedFacet == null || selectedFacet == undefined) {
-            return this.renderDanger('The selectedFacet is not initialised')
+        // Auto-fixable problems with configuration
+        if (selectedScenarioSet.facets == null || selectedScenarioSet.facets == undefined) {
+            // The scenarioSet does not have a scenarioSet.facets array
+            // this will crash the code, and is therefore fixed by this line
+            selectedScenarioSet.facets = []
+        }
+
+        if (selectedScenarioSet.name == undefined) {
+            return this.renderDanger('This Scenario Set does not exist.')
         } else {
             return this.renderScenarioSetConfigForm(selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet)
         }
@@ -411,6 +389,13 @@ ScenarioSetConfigForm.propTypes = {
     saveScenario: PropTypes.func,
     deleteScenario: PropTypes.func,
     cancelScenarioSet: PropTypes.func
+}
+
+ScenarioSetConfigForm.defaultProps = {
+    sosModelRuns: [],
+    sosModels: [],
+    scenarioSet: {},
+    scenarios: []
 }
 
 export default ScenarioSetConfigForm

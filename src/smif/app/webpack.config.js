@@ -61,6 +61,15 @@ module.exports = {
             }
         ]
     },
+    resolve: {
+        alias: {
+            actions: path.resolve('src', 'actions'),
+            components: path.resolve('src', 'components'),
+            containers: path.resolve('src', 'containers'),
+            reducers: path.resolve('src', 'reducers'),
+            store: path.resolve('src', 'store'),
+        }
+    },
     plugins: [
         // Extract all common code to 'common' js/css files
         new webpack.optimize.CommonsChunkPlugin({
@@ -93,5 +102,5 @@ module.exports = {
         // Clean the `dist` directory on each run to ensure all files are
         // generated and old generated files are cleaned out.
         new CleanWebpackPlugin(['dist'])
-    ]
+    ],
 };

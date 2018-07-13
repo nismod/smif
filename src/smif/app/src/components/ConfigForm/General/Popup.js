@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
-import Modal from 'react-modal'
+import ReactModal from 'react-modal'
 
 const customStyles = {
     content : {
@@ -34,27 +34,29 @@ class Popup extends Component {
         this.setState({popupIsOpen: false})
     }
 
-    componentWillMount() {
-        Modal.setAppElement('body')
+    componentDidMount() {
+        ReactModal.setAppElement('body')
     }
 
     render() {
-        const {onRequestOpen, onRequestClose} = this.props
+        const {onRequestOpen, name} = this.props
 
         return (
             <div>
-                <Modal isOpen={onRequestOpen} style={customStyles} contentLabel="Example CreateSosModelRunPopup">
-                    <div>
+                <ReactModal isOpen={onRequestOpen} style={customStyles} contentLabel="Example CreateSosModelRunPopup">
+                    <div id={name}>
                         {this.props.children}
                     </div>
-                </Modal>
+                </ReactModal>
             </div>
         )
     }
 }
 
 Popup.propTypes = {
-    onRequestOpen: PropTypes.bool.isRequired
+    name: PropTypes.string.isRequired,
+    onRequestOpen: PropTypes.bool.isRequired,
+    children: PropTypes.element.isRequired
 }
 
 export default Popup
