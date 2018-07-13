@@ -57,7 +57,7 @@ class ConsoleDisplay extends Component {
                         type="button"
                         className="btn btn-outline-dark btn-margin"
                         onClick={() => {
-                            this.download(moment().format('YMMDD_HHmm') + '_' + name, stripAnsi(output))
+                            this.download(moment().format('YMMDD_HHmm') + '_' + name + '.log', stripAnsi(output))
                         }}>
                         <FaFloppyO/>
                     </button>
