@@ -73,6 +73,8 @@ except ImportError:
 import logging
 import logging.config
 import os
+import signal
+import sys
 import pkg_resources
 
 try:
@@ -133,7 +135,20 @@ def _run_server(args):
         data_interface=DatafileInterface(args.directory),
         scheduler=Scheduler()
     )
-    app.run(host='0.0.0.0', port=5000, threaded=True)
+    signal.signal(signal.SIGINT, _stop_server)
+
+    port = 5000
+    while True:
+        try:
+            print("        http://localhost:" + str(port) + "\n")
+            app.run(host='0.0.0.0', port=port, threaded=True)
+        except OSError:
+            print(" * Error: Adress in use, try the next port")
+            port += 1
+
+
+def _stop_server(sig, frame):
+    sys.exit(0)
 
 
 def run_app(args):
