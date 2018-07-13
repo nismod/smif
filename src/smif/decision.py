@@ -284,7 +284,7 @@ class PreSpecified(DecisionModule):
         assert isinstance(self._planned, list)
 
         for intervention in self._planned:
-            build_year = intervention[1]
+            build_year = int(intervention['build_year'])
             if self.buildable(build_year, timestep):
                 decisions.append(intervention)
         return decisions
@@ -296,6 +296,8 @@ class PreSpecified(DecisionModule):
         [2005, 2010, 2015, 2020] then buildable returns True for timesteps
         2010, 2015 and 2020 and False for 2005.
         """
+        if not isinstance(build_year, (int, float)):
+            raise TypeError("Build Year should be an integer but is a {}".format(type(build_year)))
         if timestep not in self.timesteps:
             raise ValueError("Timestep not in model timesteps")
         index = self.timesteps.index(timestep)
@@ -304,7 +306,7 @@ class PreSpecified(DecisionModule):
         else:
             next_year = self.timesteps[index + 1]
 
-        if build_year < next_year:
+        if int(build_year) < next_year:
             return True
         else:
             return False

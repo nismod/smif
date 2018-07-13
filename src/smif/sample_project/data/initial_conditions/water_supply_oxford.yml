@@ -1,4 +1,4 @@
 # list of actually installed assets as initial conditions
 # - rely on interventions definitions to define data
 - name: large_pumping_station
-  build_date: 1975
+  build_year: 1975

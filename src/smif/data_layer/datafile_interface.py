@@ -399,36 +399,29 @@ class DatafileInterface(DataInterface):
         return intervention_list
 
     def read_strategies(self, filename):
-        """Read the strategy data from filename
+        return self._read_planned_interventions(filename, 'strategies')
+
+    def read_initial_conditions(self, filename):
+        return self._read_planned_interventions(filename, 'initial_conditions')
+
+    def _read_planned_interventions(self, filename, filedir):
+        """Read the planned intervention data from a file
 
         Arguments
         ---------
         filename: str
             The name of the strategy yml file to read in
-        """
-        filepath = self.file_dir['strategies']
-        strategy = self._read_yaml_file(filepath, filename, extension='')
-        data = []
-        for strategy in strategy:
-            data.append((strategy['name'], strategy['build_year']))
-        return data
+        filedir: str
+            The key of the filedir e.g. ``strategies`` or ``initial_conditions``
 
-    def read_initial_conditions(self, filename):
-        """Read the initial conditions from filename
-
-        Arguments
-        ---------
-        filename: str
-            The name of the initial conditions yml file to read in
         """
-        filepath = self.file_dir['initial_conditions']
+        filepath = self.file_dir[filedir]
         _, ext = os.path.splitext(filename)
         if ext == '.csv':
-            initial_conditions = self._read_state_file(os.path.join(filepath, filename))
+            strategies = self._read_state_file(os.path.join(filepath, filename))
         else:
-            dicts = self._read_yaml_file(filepath, filename, extension='')
-            initial_conditions = [(d['name'], d['build_date']) for d in dicts]
-        return initial_conditions
+            strategies = self._read_yaml_file(filepath, filename, extension='')
+        return strategies
 
     def read_sector_model_initial_conditions(self, sector_model_name):
         """Read a SectorModel's initial conditions
@@ -445,12 +438,12 @@ class DatafileInterface(DataInterface):
         initial_condition_files = sector_model['initial_conditions']
         initial_condition_list = []
         for initial_condition_file in initial_condition_files:
-            initial_conditions = self.read_initial_conditions(initial_condition_file)
+            initial_conditions = self._read_planned_interventions(initial_condition_file, 'initial_conditions')
             initial_condition_list.extend(initial_conditions)
         return initial_condition_list
 
     def read_state(self, modelrun_name, timestep=None, decision_iteration=None):
-        """Read list of (intervention_name, build_date) for a given modelrun, timestep,
+        """Read list of (name, build_year) for a given modelrun, timestep,
         decision
         """
         fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
@@ -464,7 +457,7 @@ class DatafileInterface(DataInterface):
                 sos_model = self.read_sos_model(sos_model_run['sos_model'])
                 for sector_model_name in sos_model['sector_models']:
                     ics = self.read_sector_model_initial_conditions(sector_model_name)
-                    state.extend([(ic['name'], ic['build_date']) for ic in ics])
+                    state.extend([(ic['name'], ic['build_year']) for ic in ics])
                 # rewrite initial state to file
                 self.write_state(state, modelrun_name, timestep, decision_iteration)
         else:
@@ -472,17 +465,17 @@ class DatafileInterface(DataInterface):
         return state
 
     def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):
-        """Write state, a list of decision tuples (name, build_date) to file
+        """Write state, a list of decision tuples (name, build_year) to file
         """
         fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
         with open(fname, 'w') as file_handle:
             writer = csv.DictWriter(file_handle, fieldnames=(
                 'name',
-                'build_date'
+                'build_year'
             ))
             writer.writeheader()
             for row in state:
-                writer.writerow({'name': row[0], 'build_date': row[1]})
+                writer.writerow(row)
 
     def _get_state_filename(self, modelrun_name, timestep=None, decision_iteration=None):
         """Compose a unique filename for state file:
@@ -506,14 +499,10 @@ class DatafileInterface(DataInterface):
 
     @staticmethod
     def _read_state_file(fname):
-        """Read list of intervention_name, build_date from state file
+        """Read list of name, build_year from state file
         """
         with open(fname, 'r') as file_handle:
-            reader = csv.reader(file_handle)
-            header = next(reader)
-            if header != ['name', 'build_date']:
-                raise DataMismatchError(
-                    'Expected state file to have header (name, build_date), got %s' % header)
+            reader = csv.DictReader(file_handle)
             state = list(reader)
         return state
 

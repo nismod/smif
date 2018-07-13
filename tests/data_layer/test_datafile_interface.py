@@ -879,9 +879,19 @@ class TestNarratives:
                                      get_handler):
         path = os.path.join(str(setup_folder_structure), 'data', 'initial_conditions',
                             'system.yml')
-        dump([{'name': n, 'build_date': d} for n, d in initial_system], path)
+        dump(initial_system, path)
         actual = get_handler.read_initial_conditions('system.yml')
         assert actual == initial_system
+
+
+    def test_read_strategies(self, setup_folder_structure, initial_system,
+                                     get_handler):
+        path = os.path.join(str(setup_folder_structure), 'data', 'strategies',
+                            'a_strategy.yml')
+        dump(initial_system, path)
+        actual = get_handler.read_strategies('a_strategy.yml')
+        assert actual == initial_system
+
 
     def test_project_narrative_sets(self, get_handler):
         """ Test to read and write the project configuration

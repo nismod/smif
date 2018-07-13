@@ -5,9 +5,9 @@ from smif.decision import DecisionManager, PreSpecified, RuleBased
 @fixture(scope='function')
 def plan():
     planned_interventions = [
-        ('small_pumping_station_oxford', 2010),
-        ('small_pumping_station_abingdon', 2015),
-        ('large_pumping_station_oxford', 2020)
+        {'name': 'small_pumping_station_oxford', 'build_year': 2010},
+        {'name': 'small_pumping_station_abingdon', 'build_year': 2015},
+        {'name': 'large_pumping_station_oxford', 'build_year': 2020}
     ]
 
     return planned_interventions
@@ -17,8 +17,9 @@ def plan():
 def get_strategies():
     strategies = [{'strategy': 'pre-specified-planning',
                    'description': 'build_nuclear',
-                   'interventions': [('nuclear_large', 2012),
-                                     ('carrington_retire', 2011)]
+                   'interventions': [
+                       {'name': 'nuclear_large', 'build_year': 2012},
+                       {'name': 'carrington_retire', 'build_year': 2011}]
                    }]
 
     return strategies
@@ -51,34 +52,34 @@ class TestPreSpecified:
         dm = PreSpecified(timesteps, plan)
 
         actual = dm.get_decision(2010)
-        expected = [('small_pumping_station_oxford', 2010)]
+        expected = [
+        {'name': 'small_pumping_station_oxford', 'build_year': 2010}]
         assert actual == expected
 
         actual = dm.get_decision(2015)
         expected = [
-            ('small_pumping_station_oxford', 2010),
-            ('small_pumping_station_abingdon', 2015),
-        ]
+        {'name': 'small_pumping_station_oxford', 'build_year': 2010},
+        {'name': 'small_pumping_station_abingdon', 'build_year': 2015}]
         assert actual == expected
 
         actual = dm.get_decision(2020)
         expected = [
-            ('small_pumping_station_oxford', 2010),
-            ('small_pumping_station_abingdon', 2015),
-            ('large_pumping_station_oxford', 2020),
-        ]
+        {'name': 'small_pumping_station_oxford', 'build_year': 2010},
+        {'name': 'small_pumping_station_abingdon', 'build_year': 2015},
+        {'name': 'large_pumping_station_oxford', 'build_year': 2020}
+    ]
         assert actual == expected
 
     def test_get_decision_two(self, get_strategies):
         dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
         actual = dm.get_decision(2010)
         expected = [
-            ('carrington_retire', 2011),
-            ('nuclear_large', 2012),
+             {'name': 'nuclear_large', 'build_year': 2012},
+            {'name': 'carrington_retire', 'build_year': 2011}
         ]
         # assert actual == expected
         # we don't mind the order
-        assert sorted(actual) == sorted(expected)
+        assert (actual) == (expected)
 
         # actual = dm.get_decision(2015)
         # expected = [('carrington_retire', 2011)]
@@ -86,10 +87,10 @@ class TestPreSpecified:
 
         actual = dm.get_decision(2015)
         expected = [
-            ('carrington_retire', 2011),
-            ('nuclear_large', 2012),
+            {'name': 'nuclear_large', 'build_year': 2012},
+            {'name': 'carrington_retire', 'build_year': 2011}
         ]
-        assert sorted(actual) == sorted(expected)
+        assert (actual) == (expected)
 
 
 

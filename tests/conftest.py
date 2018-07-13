@@ -117,9 +117,9 @@ def initial_system():
     """Initial system (interventions with build_date)
     """
     return [
-        ('water_asset_a', 2017),
-        ('water_asset_b', 2017),
-        ('water_asset_c', 2017),
+        {'name': 'water_asset_a', 'build_year': 2017},
+        {'name': 'water_asset_b', 'build_year': 2017},
+        {'name': 'water_asset_c', 'build_year': 2017},
     ]
 
 
@@ -127,9 +127,7 @@ def initial_system():
 def initial_system_bis():
     """An extra intervention for the initial system
     """
-    return [
-        ('water_asset_d', 2017)
-    ]
+    return [{'name': 'water_asset_d', 'build_year': 2017}]
 
 
 @fixture
