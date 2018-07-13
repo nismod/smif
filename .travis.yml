@@ -3,6 +3,14 @@ language: python
 notifications:
   email: false
 
+os:
+  - linux
+  - osx
+
+matrix:
+  allow_failures:
+    - os: osx
+
 cache:
   pip: true
   directories:
