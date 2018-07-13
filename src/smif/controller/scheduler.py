@@ -1,5 +1,6 @@
 import subprocess
 from collections import defaultdict
+from datetime import datetime
 
 
 class Scheduler(object):
@@ -41,9 +42,9 @@ class Scheduler(object):
         if self._status[model_run_name] is not 'running':
 
             smif_call = (
-                'exec smif ' + 
-                '-'*(int(args['verbosity']) > 0) + 'v'*int(args['verbosity']) + 
-                ' run' + ' ' + model_run_name + ' ' + 
+                'exec smif ' +
+                '-'*(int(args['verbosity']) > 0) + 'v'*int(args['verbosity']) +
+                ' run' + ' ' + model_run_name + ' ' +
                 '-d' + ' ' + args['directory'] + ' ' +
                 '-w'*args['warm_start'] + ' '*args['warm_start'] +
                 '-i' + ' ' + args['output_format']
@@ -56,11 +57,14 @@ class Scheduler(object):
             )
             self._output[model_run_name] = "\x1b[1;34mModelrun \x1b \x1b[0m" + \
                                            model_run_name + "\n"
+            self._output[model_run_name] += "\x1b[1;34mTime \x1b \x1b " \
+                                            "\x1b \x1b \x1b \x1b[0m" + \
+                                            datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "\n"
             self._output[model_run_name] += "\x1b[1;34mPID" + " \x1b"*7 + "[0m" + \
                                             str(self._process[model_run_name].pid) + "\n"
             self._output[model_run_name] += "\x1b[1;34mCommand" + " \x1b"*3 + "[0m" + \
                                             smif_call + "\n"
-                                            
+
             self._output[model_run_name] += "-" * 100 + "\n"
             self._status[model_run_name] = 'running'
         else:
