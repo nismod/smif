@@ -8,8 +8,8 @@ import Stepper from 'components/Simulation/Stepper'
 
 describe('<Stepper />', () => {
 
-    it('step unknown', () => {
-        let wrapper = mount(<Stepper status='unknown'/>)
+    it('step unstarted', () => {
+        let wrapper = mount(<Stepper status='unstarted'/>)
         expect(wrapper.find('[id="step_ready"]').at(0).html()).to.include('rc-steps-item-process')
         expect(wrapper.find('[id="step_queuing"]').at(0).html()).to.include('rc-steps-item-wait')
         expect(wrapper.find('[id="step_running"]').at(0).html()).to.include('rc-steps-item-wait')

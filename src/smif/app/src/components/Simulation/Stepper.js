@@ -10,7 +10,7 @@ class Stepper extends Component {
         var step_status
 
         switch (this.props.status) {
-        case 'unknown':
+        case 'unstarted':
             step = 0
             step_status = 'process'
             break

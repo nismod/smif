@@ -18,7 +18,7 @@ def mock_scheduler():
     def get_status(arg):
         if arg == 'model_never_started':
             return {
-                'status': 'unknown'
+                'status': 'unstarted'
             }
         elif arg == 'model_started_and_running':
             return {
@@ -297,7 +297,7 @@ def test_get_modelrun_status_modelrun_never_started(client):
     )
     data = parse_json(response)
     assert response.status_code == 200
-    assert data['status'] == 'unknown'
+    assert data['status'] == 'unstarted'
 
 
 def test_get_modelrun_status_modelrun_running(client):

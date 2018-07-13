@@ -64,7 +64,7 @@ class Nav extends Component {
     }
 
     renderNav(sos_model_runs, sos_models, sector_models, scenario_sets, narrative_sets, narratives) {
-        var job_status = ['running', 'stopped', 'done', 'failed']
+        var job_status = ['unstarted', 'running', 'stopped', 'done', 'failed']
 
         return (
             <nav className="col-12 col-md-3 col-xl-2 bg-light sidebar">

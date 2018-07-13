@@ -118,7 +118,7 @@ class JobRunner extends Component {
         }
 
         switch (sos_model_run_status.status) {
-        case 'unknown':
+        case 'unstarted':
             controls.push(<CreateButton value='Start Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
             this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break

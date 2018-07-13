@@ -8,7 +8,7 @@ class Scheduler(object):
     is done or has failed.
     """
     def __init__(self):
-        self._status = defaultdict(lambda: 'unknown')
+        self._status = defaultdict(lambda: 'unstarted')
         self._process = {}
         self._output = defaultdict(str)
         self._err = {}
@@ -96,7 +96,7 @@ class Scheduler(object):
         -----
         Possible status:
 
-        unknown:
+        unstarted:
             Model run was not started
         queing:
             Model run is waiting to be executed

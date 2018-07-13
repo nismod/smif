@@ -24,7 +24,7 @@ def test_single_modelrun(mock_popen):
 def test_status_modelrun_never_added():
     my_scheduler = Scheduler()
     status = my_scheduler.get_status('my_model_run')
-    assert status['status'] == 'unknown'
+    assert status['status'] == 'unstarted'
 
 
 @patch('smif.controller.scheduler.subprocess.Popen')
