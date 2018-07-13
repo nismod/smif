@@ -73,6 +73,8 @@ except ImportError:
 import logging
 import logging.config
 import os
+import socket
+import errno
 import pkg_resources
 
 try:
@@ -133,7 +135,26 @@ def _run_server(args):
         data_interface=DatafileInterface(args.directory),
         scheduler=Scheduler()
     )
-    app.run(host='0.0.0.0', port=5000, threaded=True)
+
+    port = 5000
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while True:
+        try:
+            s.bind(("0.0.0.0", port))
+            break
+        except socket.error as e:
+            if e.errno == errno.EADDRINUSE:
+                port += 1
+            else:
+                raise Exception('Smif app server error')
+    s.close()
+
+    print("    Opening smif app\n")
+    print("    Copy/paste this URL into your web browser to connect:")
+    print("        http://localhost:" + str(port) + "\n")
+    # add flush to ensure that text is printed before server thread starts
+    print("    Close your browser then type Control-C here to quit.", flush=True)
+    app.run(host='0.0.0.0', port=port, threaded=True)
 
 
 def run_app(args):
@@ -143,12 +164,6 @@ def run_app(args):
     ----------
     args
     """
-    print("    Opening smif app\n")
-    print("    Copy/paste this URL into your web browser to connect:")
-    print("        http://localhost:5000\n")
-    # add flush to ensure that text is printed before server thread starts
-    print("    Close your browser then type Control-C here to quit.", flush=True)
-
     # avoid one of two error messages from 'forrtl error(200)' when running
     # on windows cmd - seems related to scipy's underlying Fortran
     os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = 'T'
