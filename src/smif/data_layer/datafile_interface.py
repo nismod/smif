@@ -484,16 +484,16 @@ class DatafileInterface(DataInterface):
         results_dir = self.file_dir['results']
         if timestep is None and decision_iteration is None:
             fname = os.path.join(
-                results_dir, 'state_0000.csv')
+                results_dir, modelrun_name, 'state_0000.csv')
         elif timestep is not None and decision_iteration is None:
             fname = os.path.join(
-                results_dir, 'state_{}.csv'.format(timestep))
+                results_dir, modelrun_name, 'state_{}.csv'.format(timestep))
         elif timestep is None and decision_iteration is not None:
             fname = os.path.join(
-                results_dir, 'state_0000_decision_{}.csv'.format(decision_iteration))
+                results_dir, modelrun_name, 'state_0000_decision_{}.csv'.format(decision_iteration))
         else:
             fname = os.path.join(
-                results_dir, 'state_{}_decision_{}.csv'.format(timestep, decision_iteration))
+                results_dir, modelrun_name, 'state_{}_decision_{}.csv'.format(timestep, decision_iteration))
 
         return fname
 
