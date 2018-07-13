@@ -113,7 +113,7 @@ class ScenarioSelector extends Component {
                         <div key={scenarioSet}>
                             <div className="card">
                                 <div className="card-body">
-                                    <label className="card-title">{scenarioSet}</label>
+                                    <h6 className="card-title">{scenarioSet}</h6>
                                     {
                                         selectedScenarios[scenarioSet].map((scenario) => (
                                             <div className="form-check" key={scenario.name}>
