@@ -8,6 +8,8 @@ from unittest.mock import call, patch
 
 import pkg_resources
 
+from pytest import fixture
+
 import smif
 from smif.cli import confirm, parse_arguments, setup_project_folder
 from smif.controller.build import get_narratives
@@ -37,32 +39,38 @@ def test_parse_arguments():
         assert args.func.__name__ == 'setup_project_folder'
 
 
-def test_fixture_single_run():
+def test_fixture_single_run(tmp_sample_project):
     """Test running the (default) binary-filesystem-based single_run fixture
     """
-    config_dir = pkg_resources.resource_filename('smif', 'sample_project')
+    config_dir = tmp_sample_project
     output = subprocess.run(["smif", "-v", "run", "-d", config_dir,
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert "Running 20170918_energy_water_short" in str(output.stderr)
     assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
 
+@fixture()
+def tmp_sample_project(tmpdir_factory):
+    test_folder = tmpdir_factory.mktemp("smif")
+    output = subprocess.run(["smif", "-v", "setup", "-d", str(test_folder)],
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return str(test_folder)
 
-def test_fixture_single_run_csv():
+def test_fixture_single_run_csv(tmp_sample_project):
     """Test running the csv-filesystem-based single_run fixture
     """
-    config_dir = pkg_resources.resource_filename('smif', 'sample_project')
-    output = subprocess.run(["smif", "-v", "run", "-i", "local_csv", "-d", config_dir,
+    
+    output = subprocess.run(["smif", "-v", "run", "-i", "local_csv", "-d", tmp_sample_project,
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert "Running 20170918_energy_water_short" in str(output.stderr)
     assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
 
 
-def test_fixture_single_run_warm():
+def test_fixture_single_run_warm(tmp_sample_project):
     """Test running the (default) single_run fixture with warm setting enabled
     """
-    config_dir = pkg_resources.resource_filename('smif', 'sample_project')
+    config_dir = tmp_sample_project
     output = subprocess.run(["smif", "-v", "run", "-w", "-d", config_dir,
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -70,10 +78,10 @@ def test_fixture_single_run_warm():
     assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
 
 
-def test_fixture_batch_run():
+def test_fixture_batch_run(tmp_sample_project):
     """Test running the multiple modelruns using the batch_run option
     """
-    config_dir = pkg_resources.resource_filename('smif', 'sample_project')
+    config_dir = tmp_sample_project
     output = subprocess.run(["smif", "-v", "run", "-b", "-d", config_dir,
                              os.path.join(config_dir, "batchfile")],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -83,10 +91,10 @@ def test_fixture_batch_run():
     assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
 
 
-def test_fixture_list_runs():
+def test_fixture_list_runs(tmp_sample_project):
     """Test running the filesystem-based single_run fixture
     """
-    config_dir = pkg_resources.resource_filename('smif', 'sample_project')
+    config_dir = tmp_sample_project
     output = subprocess.run(["smif", "list", "-d", config_dir], stdout=subprocess.PIPE)
     assert "20170918_energy_water" in str(output.stdout)
     assert "20170918_energy_water_short" in str(output.stdout)
@@ -176,10 +184,10 @@ def test_verbose_info(setup_folder_structure):
 
 class TestRunSosModelRunComponents():
 
-    def test_get_narratives(self):
+    def test_get_narratives(self, tmp_sample_project):
         """should load a list of narratives with parameter value data
         """
-        config_dir = pkg_resources.resource_filename('smif', 'sample_project')
+        config_dir = tmp_sample_project
         handler = DatafileInterface(config_dir, 'local_csv')
         narratives = {'technology': ['High Tech Demand Side Management']}
         actual = get_narratives(handler, narratives)
