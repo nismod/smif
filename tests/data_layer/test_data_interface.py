@@ -1,8 +1,12 @@
 """Test data interface
 """
+import os
+import csv
 import numpy as np
 from pytest import raises
-from smif.data_layer import DataMismatchError
+import json
+import pyarrow as pa
+from smif.data_layer import DataMismatchError, DataExistsError, DataNotFoundError
 from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.load import dump
@@ -629,7 +633,7 @@ class TestDatafileInterface():
                                      get_handler):
         path = os.path.join(str(setup_folder_structure), 'data', 'initial_conditions',
                             'system.yml')
-        dump([{'name': n, 'build_date': d} for n, d in initial_system], path)
+        dump(initial_system, path)
         actual = get_handler.read_initial_conditions('system.yml')
         assert actual == initial_system
 
@@ -682,7 +686,7 @@ class TestDatafileInterface():
             w.writerows(annual_intervals_csv)
 
         actual = get_handler.read_interval_definition_data('annual')
-        expected = annual_intervals
+        expected = [(1, [('P0Y', 'P1Y')])]
         assert actual == expected
 
     def test_project_region_definitions(self, get_handler):
@@ -1083,7 +1087,7 @@ class TestDatafileInterface():
         # 1. case with neither modelset nor decision
         expected = np.array([[[1.0]]])
         csv_contents = "region,interval,value\noxford,1,1.0\n"
-        binary_contents = get_handler_binary.ndarray_to_buffer(expected)
+        binary_contents = pa.serialize(expected).to_buffer()
 
         path = os.path.join(
             str(setup_folder_structure),
@@ -1117,7 +1121,7 @@ class TestDatafileInterface():
         decision_iteration = 1
         expected = np.array([[[2.0]]])
         csv_contents = "region,interval,value\noxford,1,2.0\n"
-        binary_contents = get_handler_binary.ndarray_to_buffer(expected)
+        binary_contents = pa.serialize(expected).to_buffer()
 
         path = os.path.join(
             str(setup_folder_structure),
@@ -1154,7 +1158,7 @@ class TestDatafileInterface():
         modelset_iteration = 1
         expected = np.array([[[3.0]]])
         csv_contents = "region,interval,value\noxford,1,3.0\n"
-        binary_contents = get_handler_binary.ndarray_to_buffer(expected)
+        binary_contents = pa.serialize(expected).to_buffer()
         path = os.path.join(
             str(setup_folder_structure),
             "results",
@@ -1189,7 +1193,7 @@ class TestDatafileInterface():
         # 4. case with both decision and modelset
         expected = np.array([[[4.0]]])
         csv_contents = "region,interval,value\noxford,1,4.0\n"
-        binary_contents = get_handler_binary.ndarray_to_buffer(expected)
+        binary_contents = pa.serialize(expected).to_buffer()
         path = os.path.join(
             str(setup_folder_structure),
             "results",
