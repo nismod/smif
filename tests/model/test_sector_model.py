@@ -47,11 +47,14 @@ def get_sector_model_config(setup_folder_structure, setup_runpy_file, setup_regi
                 'units': 'megaliter'
             }
         ],
-        "initial_conditions": [],
+        "initial_conditions": [
+            {"name": "water_asset_a", "build_year": 2010},
+            {"name": "water_asset_b", "build_year": 2010},
+            {"name": "water_asset_c", "build_year": 2010}],
         "interventions": [
             {"name": "water_asset_a", "location": "oxford"},
             {"name": "water_asset_b", "location": "oxford"},
-            {"name": "water_asset_c", "location": "oxford"},
+            {"name": "water_asset_c", "location": "oxford"}
         ],
         "parameters": [
             {
@@ -203,7 +206,7 @@ class TestInputs:
         assert actual_inputs == []
 
 
-class TestSectorModel(object):
+class TestSectorModelInterventions(object):
 
     def test_interventions_names(self):
         mock_asset_a = Mock()
@@ -212,17 +215,37 @@ class TestSectorModel(object):
         mock_asset_b.name = 'water_asset_b'
         mock_asset_c = Mock()
         mock_asset_c.name = 'water_asset_c'
-        
+
         assets = [mock_asset_a, mock_asset_b, mock_asset_c]
         model = EmptySectorModel('test_model')
         model.interventions = assets
 
-        intervention_names = model.intervention_names
+        actual = model.intervention_names
+        expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
 
-        assert len(intervention_names) == 3
-        assert 'water_asset_a' in intervention_names
-        assert 'water_asset_b' in intervention_names
-        assert 'water_asset_c' in intervention_names
+        assert len(actual) == 3
+        assert actual == expected
+
+    def test_get_interventions(self):
+        mock_asset_a = Mock()
+        mock_asset_a.name = 'water_asset_a'
+        mock_asset_a.as_dict = Mock(return_value={'name': 'water_asset_a'})
+        mock_asset_b = Mock()
+        mock_asset_b.name = 'water_asset_b'
+        mock_asset_b.as_dict = Mock(return_value={'name': 'water_asset_b'})
+        mock_asset_c = Mock()
+        mock_asset_c.name = 'water_asset_c'
+
+        assets = [mock_asset_a, mock_asset_b, mock_asset_c]
+        model = EmptySectorModel('test_model')
+        model.interventions = assets
+
+        state = [{'name': 'water_asset_a', 'build_year': 2010},
+                 {'name': 'water_asset_b', 'build_year': 2015}]
+        actual = model.get_current_interventions(state)
+        expected = [{'name': 'water_asset_a', 'build_year': 2010},
+                    {'name': 'water_asset_b', 'build_year': 2015}]
+        assert actual == expected
 
 
 class TestParameters():

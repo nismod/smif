@@ -41,8 +41,8 @@ from abc import ABCMeta, abstractmethod
 
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
-from smif.model import Model
 from smif.intervention import Intervention
+from smif.model import Model
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -98,7 +98,6 @@ class SectorModel(Model, metaclass=ABCMeta):
 
         self.logger = logging.getLogger(__name__)
 
-
     def get_current_interventions(self, state):
         """Get the interventions the exist in the current state
 
@@ -112,16 +111,18 @@ class SectorModel(Model, metaclass=ABCMeta):
         -------
         list of intervention dicts with build_year attribute
         """
-        
+
         interventions = []
-        for name, build_year in state:
+        for decision in state:
+            name = decision['name']
+            build_year = decision['build_year']
             if name in self.intervention_names:
                 for intervention in self.interventions:
                     if intervention.name == name:
                         serialised = intervention.as_dict()
                         serialised['build_year'] = build_year
                         interventions.append(serialised)
-        
+
         return interventions
 
     def as_dict(self):
