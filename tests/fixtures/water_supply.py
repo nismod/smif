@@ -33,8 +33,8 @@ Around each of the above simulation models, subclassed wrappers based on
 
 import logging
 import math
-import numpy as np
 
+import numpy as np
 from pytest import fixture
 from smif.model.sector_model import SectorModel
 
@@ -90,9 +90,6 @@ class WaterSupplySectorModel(SectorModel):
     using one of the toy water models below to simulate the water supply
     system.
     """
-    def initialise(self, initial_conditions):
-        pass
-
     def simulate(self, timestep, data):
         """
 

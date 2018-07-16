@@ -272,8 +272,7 @@ def test_invalid_initial_conditions(get_initial_condition):
     msg = "Expected a initial condition data point"
     assert msg in str(ex)
 
-    required_keys = ["name", "location", "capital_cost", "operational_lifetime",
-                     "economic_lifetime"]
+    required_keys = ["name", "build_date"]
     for key in required_keys:
         datum = get_initial_condition
         del datum[key]

@@ -34,8 +34,6 @@ A more comprehensive example with one scenario and one scenario model:
 >>> class EnergyModel(SectorModel):
 ...   def extract_obj(self):
 ...     pass
-...   def initialise(self):
-...     pass
 ...   def simulate(self, timestep, data):
 ...     return {self.name: {'cost': data['input'] * 2}}
 ...

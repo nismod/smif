@@ -43,33 +43,17 @@ def get_model_run_definition(directory, modelrun):
     sos_model_config = handler.read_sos_model(model_run_config['sos_model'])
 
     sector_model_objects = []
-    for sector_model in sos_model_config['sector_models']:
-        sector_model_config = handler.read_sector_model(sector_model)
+    for sector_model_name in sos_model_config['sector_models']:
+        sector_model_config = handler.read_sector_model(sector_model_name)
 
-        absolute_path = os.path.join(directory,
-                                     sector_model_config['path'])
-        sector_model_config['path'] = absolute_path
+        sector_model_builder = SectorModelBuilder(sector_model_name)
+        # absolute path to be crystal clear for SectorModelBuilder when loading python class
+        sector_model_config['path'] = os.path.normpath(
+            os.path.join(handler.base_folder, sector_model_config['path'])
+        )
+        sector_model_builder.construct(sector_model_config, model_run_config['timesteps'])
 
-        intervention_files = sector_model_config['interventions']
-        intervention_list = []
-        for intervention_file in intervention_files:
-            interventions = handler.read_interventions(intervention_file)
-            intervention_list.extend(interventions)
-        sector_model_config['interventions'] = intervention_list
-
-        initial_condition_files = sector_model_config['initial_conditions']
-        initial_condition_list = []
-        for initial_condition_file in initial_condition_files:
-            initial_conditions = handler.read_initial_conditions(initial_condition_file)
-            initial_condition_list.extend(initial_conditions)
-        sector_model_config['initial_conditions'] = initial_condition_list
-
-        sector_model_builder = SectorModelBuilder(sector_model_config['name'])
-        # LOGGER.debug("Sector model config: %s", sector_model_config)
-        sector_model_builder.construct(sector_model_config,
-                                       model_run_config['timesteps'])
         sector_model_object = sector_model_builder.finish()
-
         sector_model_objects.append(sector_model_object)
         LOGGER.debug("Model inputs: %s", sector_model_object.inputs.names)
 

@@ -18,7 +18,7 @@ class DataHandle(object):
     """Get/set model parameters and data
     """
     def __init__(self, store, modelrun_name, current_timestep, timesteps, model,
-                 modelset_iteration=None, decision_iteration=None, state=None):
+                 modelset_iteration=None, decision_iteration=None):
         """Create a DataHandle for a Model to access data, parameters and state, and to
         communicate results.
 
@@ -49,11 +49,6 @@ class DataHandle(object):
         self._dependencies = model.deps
         self._model = model
 
-        if state is None:
-            self._state = {}
-        else:
-            self._state = state
-
         configured_parameters = self._store.read_parameters(
             self._modelrun_name, self._model_name)
         self._parameters = model.parameters.overridden(configured_parameters)
@@ -73,8 +68,7 @@ class DataHandle(object):
             timesteps=list(self.timesteps),
             model=model,
             modelset_iteration=self._modelset_iteration,
-            decision_iteration=self._decision_iteration,
-            state=self._state
+            decision_iteration=self._decision_iteration
         )
 
     def __getitem__(self, key):
@@ -128,16 +122,14 @@ class DataHandle(object):
         -------
         A list of interventions installed at the current timestep
         """
-        model_state = []
-        model = self._model
-        sos_state = self._state
-        for build_year, names in sos_state.items():
-            for name in names:
-                intervention = model.interventions.get_intervention(name)
-                if intervention.sector == model.name:
-                    intervention.build_year = build_year
-                    model_state.append(intervention)
-        return model_state
+        sos_state = self._store.read_state(
+            self._modelrun_name,
+            self._current_timestep,
+            self._decision_iteration
+        )
+        # here could (should?) filter list for interventions applicable to a model
+        # and look up full intervention (not just name,build_year)
+        return sos_state
 
     def get_data(self, input_name, timestep=None):
         """Get data required for model inputs
@@ -386,6 +378,12 @@ class RelativeTimestep(Enum):
 
 class TimestepResolutionError(Exception):
     """Raise when timestep cannot be resolved
+    """
+    pass
+
+
+class DataError(Exception):
+    """Raise on attempts at invalid data access (get/set)
     """
     pass
 
