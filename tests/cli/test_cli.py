@@ -7,7 +7,6 @@ from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
 import pkg_resources
-
 from pytest import fixture
 
 import smif
@@ -46,20 +45,23 @@ def test_fixture_single_run(tmp_sample_project):
     output = subprocess.run(["smif", "-v", "run", "-d", config_dir,
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print(output.stdout)
+    print(output.stderr)
+    raise Exception()
     assert "Running 20170918_energy_water_short" in str(output.stderr)
     assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
 
 @fixture()
 def tmp_sample_project(tmpdir_factory):
     test_folder = tmpdir_factory.mktemp("smif")
-    output = subprocess.run(["smif", "-v", "setup", "-d", str(test_folder)],
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.run(["smif", "-v", "setup", "-d", str(test_folder)],
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return str(test_folder)
 
 def test_fixture_single_run_csv(tmp_sample_project):
     """Test running the csv-filesystem-based single_run fixture
     """
-    
+
     output = subprocess.run(["smif", "-v", "run", "-i", "local_csv", "-d", tmp_sample_project,
                              "20170918_energy_water_short"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
