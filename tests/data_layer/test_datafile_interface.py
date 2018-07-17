@@ -502,6 +502,32 @@ class TestSectorModel:
             config_handler.delete_sector_model('missing_name')
         assert "sector_model 'missing_name' not found" in str(ex)
 
+    def test_read_sector_model_interventions(self,
+                                             get_sector_model,
+                                             get_handler):
+        config_handler = get_handler
+
+        sector_model = get_sector_model
+        sector_model['name'] = 'sector_model'
+        sector_model['interventions'] = ['energy_demand.csv']
+        config_handler.write_sector_model(sector_model)
+
+        config_handler.read_interventions = Mock(return_value=[{'name': '_an_intervention'}])
+
+        config_handler.read_sector_model_interventions('sector_model')
+        assert config_handler.read_interventions.called_with('energy_demand.csv')
+
+    def test_read_interventions(self, get_handler):
+        config_handler = get_handler
+        config_handler._read_state_file = Mock()
+        config_handler._read_yaml_file = Mock()
+
+        config_handler.read_interventions('filename.csv')
+        assert config_handler._read_state_file.called_with('filename.csv')
+
+        config_handler.read_interventions('filename.yml')
+        assert config_handler._read_yaml_file.called_with('filename.yml')
+
 
 class TestDimensions:
     """Dimension definitions (regions, intervals) should be readable. May move to make it

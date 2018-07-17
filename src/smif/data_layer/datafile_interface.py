@@ -376,8 +376,13 @@ class DatafileInterface(DataInterface):
             The name of the intervention yml file to read in
         """
         filepath = self.file_dir['interventions']
-        data = self._read_yaml_file(filepath, filename, extension='')
-        return list(data)
+        _, ext = os.path.splitext(filename)
+        if ext == '.csv':
+            data = self._read_state_file(os.path.join(filepath, filename))
+        else:
+            data = self._read_yaml_file(filepath, filename, extension='')
+
+        return data
 
     def read_sector_model_interventions(self, sector_model_name):
         """Read a SectorModel's interventions
@@ -406,6 +411,20 @@ class DatafileInterface(DataInterface):
 
     def _read_planned_interventions(self, filename, filedir):
         """Read the planned intervention data from a file
+
+        Planned interventions are stored either a csv or yaml file. In the case
+        of the former, the file should look like this::
+
+            name,build_year
+            asset_a,2010
+            asset_b,2015
+
+        In the case of a yaml, file, the format is as follows::
+
+            - name: asset_a
+              build_year: 2010
+            - name: asset_b
+              build_year: 2015
 
         Arguments
         ---------
@@ -493,6 +512,11 @@ class DatafileInterface(DataInterface):
     @staticmethod
     def _read_state_file(fname):
         """Read list of name, build_year from state file
+
+        Returns
+        -------
+        dict
+            Keys of dict are header names from csv file
         """
         with open(fname, 'r') as file_handle:
             reader = csv.DictReader(file_handle)
