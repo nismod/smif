@@ -438,7 +438,8 @@ class DatafileInterface(DataInterface):
         initial_condition_files = sector_model['initial_conditions']
         initial_condition_list = []
         for initial_condition_file in initial_condition_files:
-            initial_conditions = self._read_planned_interventions(initial_condition_file, 'initial_conditions')
+            initial_conditions = self._read_planned_interventions(
+                initial_condition_file, 'initial_conditions')
             initial_condition_list.extend(initial_conditions)
         return initial_condition_list
 
@@ -468,7 +469,8 @@ class DatafileInterface(DataInterface):
         """Write state, a list of decision tuples (name, build_year) to file
         """
         fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
-        with open(fname, 'w') as file_handle:
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
+        with open(fname, 'w+') as file_handle:
             writer = csv.DictWriter(file_handle, fieldnames=(
                 'name',
                 'build_year'
@@ -490,10 +492,12 @@ class DatafileInterface(DataInterface):
                 results_dir, modelrun_name, 'state_{}.csv'.format(timestep))
         elif timestep is None and decision_iteration is not None:
             fname = os.path.join(
-                results_dir, modelrun_name, 'state_0000_decision_{}.csv'.format(decision_iteration))
+                results_dir, modelrun_name,
+                'state_0000_decision_{}.csv'.format(decision_iteration))
         else:
             fname = os.path.join(
-                results_dir, modelrun_name, 'state_{}_decision_{}.csv'.format(timestep, decision_iteration))
+                results_dir, modelrun_name,
+                'state_{}_decision_{}.csv'.format(timestep, decision_iteration))
 
         return fname
 
@@ -567,7 +571,7 @@ class DatafileInterface(DataInterface):
                     names.append(feature['properties']['name'])
             else:
                 names.append(feature['properties']['name'])
-    
+
         return names
 
     def write_region_definition(self, region_definition):
@@ -1701,14 +1705,14 @@ class DatafileInterface(DataInterface):
             scenario_data = []
             for row in reader:
                 converted_row = {}
-                
+
                 converted_row['region'] = DatafileInterface._cast_str_to_int(row['region'])
                 converted_row['interval'] = DatafileInterface._cast_str_to_int(row['interval'])
-                
+
                 if 'year' in row.keys():
                     converted_row['year'] = row['year']
                 converted_row['value'] = row['value']
-                
+
                 scenario_data.append(converted_row)
 
         return scenario_data
@@ -1719,7 +1723,6 @@ class DatafileInterface(DataInterface):
             return int(value)
         else:
             return value
-                        
 
     @staticmethod
     def _write_data_to_csv(filepath, data):
