@@ -382,6 +382,7 @@ class DatafileInterface(DataInterface):
         else:
             data = self._read_yaml_file(filepath, filename, extension='')
 
+        print(data)
         return data
 
     def read_sector_model_interventions(self, sector_model_name):
