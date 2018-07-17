@@ -20,10 +20,11 @@ __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
+from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
-from abc import ABCMeta, abstractmethod
 from smif.intervention import InterventionRegister
+
 
 class DecisionManager(object):
     """A DecisionManager is initialised with one or more model run strategies that refer to
@@ -73,7 +74,6 @@ class DecisionManager(object):
                 msg = "Only pre-specified planning strategies are implemented"
                 raise NotImplementedError(msg)
 
-
     def decision_loop(self):
         """Generate bundles of simulation steps to run.
 
@@ -101,8 +101,8 @@ class DecisionManager(object):
             yield {0: self._timesteps}
 
     def get_decision(self, timestep, iteration):
-        """Return all interventions built in the given timestep 
-        
+        """Return all interventions built in the given timestep
+
         for the given decision
         iteration.
 
@@ -238,9 +238,9 @@ class PreSpecified(DecisionModule):
         super().__init__(timesteps)
 
         self._planned = planned_interventions
-        
+
     def _get_next_decision_iteration(self):
-        return {0: self.timesteps}
+        return {0: [x for x in self.timesteps]}
 
     def _set_state(self, timestep, decision_iteration):
         """Pre-specified planning interventions are loaded during initialisation
@@ -297,7 +297,8 @@ class PreSpecified(DecisionModule):
         2010, 2015 and 2020 and False for 2005.
         """
         if not isinstance(build_year, (int, float)):
-            raise TypeError("Build Year should be an integer but is a {}".format(type(build_year)))
+            msg = "Build Year should be an integer but is a {}"
+            raise TypeError(msg.format(type(build_year)))
         if timestep not in self.timesteps:
             raise ValueError("Timestep not in model timesteps")
         index = self.timesteps.index(timestep)
