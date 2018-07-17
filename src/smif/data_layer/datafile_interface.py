@@ -443,26 +443,15 @@ class DatafileInterface(DataInterface):
             initial_condition_list.extend(initial_conditions)
         return initial_condition_list
 
-    def read_state(self, modelrun_name, timestep=None, decision_iteration=None):
+    def read_state(self, modelrun_name, timestep, decision_iteration=None):
         """Read list of (name, build_year) for a given modelrun, timestep,
         decision
         """
         fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
-        sos_model_run = self.read_sos_model_run(modelrun_name)
-        if timestep is None:
-            if os.path.exists(fname):
-                state = self._read_state_file(fname)
-            else:
-                # round-about way of getting to interventions for a given model run
-                state = []
-                sos_model = self.read_sos_model(sos_model_run['sos_model'])
-                for sector_model_name in sos_model['sector_models']:
-                    ics = self.read_sector_model_initial_conditions(sector_model_name)
-                    state.extend([(ic['name'], ic['build_year']) for ic in ics])
-                # rewrite initial state to file
-                self.write_state(state, modelrun_name, timestep, decision_iteration)
-        else:
-            state = self._read_state_file(fname)
+        if not os.path.exists(fname):
+            msg = "State file does not exist for timestep {} and iteration {}"
+            raise ValueError(msg.format(timestep, decision_iteration))
+        state = self._read_state_file(fname)
         return state
 
     def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):

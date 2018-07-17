@@ -4,6 +4,7 @@ import csv
 import json
 import os
 from tempfile import TemporaryDirectory
+from unittest.mock import Mock
 
 import numpy as np
 import pyarrow as pa
@@ -13,9 +14,9 @@ from smif.data_layer import (DataExistsError, DataMismatchError,
 from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.load import dump
 
+from ..convert.conftest import remap_months, remap_months_csv
 from ..convert.conftest import twenty_four_hours as hourly_day
 from ..convert.conftest import twenty_four_hours_csv as hourly_day_csv
-from ..convert.conftest import remap_months, remap_months_csv
 
 
 class TestUnits():
@@ -52,6 +53,84 @@ class TestUnits():
 
         actual = config_handler.read_units_file_name()
         expected = os.path.join(str(basefolder), 'data', 'user_units.txt')
+        assert actual == expected
+
+
+class TestReadState:
+
+    def test_read_state(self, get_handler):
+        handler = get_handler
+
+        handler._read_state_file = Mock(return_value='state_data')
+
+        modelrun_name = 'a modelrun'
+        timestep = 2010
+        decision_iteration = 0
+
+        with raises(ValueError):
+            handler.read_state(modelrun_name, timestep, decision_iteration)
+
+    def test_get_state_filename_all(self, get_handler):
+
+        handler = get_handler
+
+        modelrun_name = 'a modelrun'
+        timestep = 2010
+        decision_iteration = 0
+
+        actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
+
+        expected = os.path.join(
+                handler.file_dir['results'], modelrun_name,
+                'state_2010_decision_0.csv')
+
+        assert actual == expected
+
+    def test_get_state_filename_none_iteration(self, get_handler):
+
+        handler = get_handler
+
+        modelrun_name = 'a modelrun'
+        timestep = 2010
+        decision_iteration = None
+
+        actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
+
+        expected = os.path.join(
+            handler.file_dir['results'], modelrun_name, 'state_2010.csv')
+
+        assert actual == expected
+
+    def test_get_state_filename_both_none(self, get_handler):
+
+        handler = get_handler
+
+        modelrun_name = 'a modelrun'
+        timestep = None
+        decision_iteration = None
+
+        actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
+
+        expected = os.path.join(
+            handler.file_dir['results'], modelrun_name, 'state_0000.csv')
+
+        assert actual == expected
+
+    def test_get_state_filename_timestep_none(self, get_handler):
+
+        handler = get_handler
+
+        modelrun_name = 'a modelrun'
+        timestep = None
+        decision_iteration = 0
+
+        actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
+
+        expected = os.path.join(
+            handler.file_dir['results'],
+            modelrun_name,
+            'state_0000_decision_0.csv')
+
         assert actual == expected
 
 
@@ -883,15 +962,14 @@ class TestNarratives:
         actual = get_handler.read_initial_conditions('system.yml')
         assert actual == initial_system
 
-
-    def test_read_strategies(self, setup_folder_structure, initial_system,
-                                     get_handler):
+    def test_read_strategies(self, setup_folder_structure,
+                             initial_system,
+                             get_handler):
         path = os.path.join(str(setup_folder_structure), 'data', 'strategies',
                             'a_strategy.yml')
         dump(initial_system, path)
         actual = get_handler.read_strategies('a_strategy.yml')
         assert actual == initial_system
-
 
     def test_project_narrative_sets(self, get_handler):
         """ Test to read and write the project configuration
