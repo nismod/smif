@@ -257,8 +257,7 @@ def validate_initial_condition(datum, file_path):
         VALIDATION_ERRORS.append(ValidationError(fmt.format(datum, file_path)))
         return
 
-    required_keys = ["name", "location", "capital_cost", "operational_lifetime",
-                     "economic_lifetime"]
+    required_keys = ["name", "build_date"]
     for key in required_keys:
         if key not in datum:
             fmt = "Expected a value for '{}' in each data point in a initial condition, " + \

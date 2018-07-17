@@ -16,6 +16,10 @@ inputs:
   spatial_resolution: national
   temporal_resolution: annual
   units: Ml
+- name: reservoir_level
+  spatial_resolution: national
+  temporal_resolution: annual
+  units: Ml
 outputs:
 - name: cost
   spatial_resolution: national
@@ -26,6 +30,10 @@ outputs:
   temporal_resolution: annual
   units: kWh
 - name: water
+  spatial_resolution: national
+  temporal_resolution: annual
+  units: Ml
+- name: reservoir_level
   spatial_resolution: national
   temporal_resolution: annual
   units: Ml

@@ -5,19 +5,9 @@ from smif.decision import DecisionManager, PreSpecified, RuleBased
 @fixture(scope='function')
 def plan():
     planned_interventions = [
-        {
-         'name': 'small_pumping_station_oxford',
-         'build_year': 2010
-        },
-        {
-         'name': 'small_pumping_station_abingdon',
-         'build_year': 2015
-
-        },
-        {
-         'name': 'large_pumping_station_oxford',
-         'build_year': 2020
-        }
+        {'name': 'small_pumping_station_oxford', 'build_year': 2010},
+        {'name': 'small_pumping_station_abingdon', 'build_year': 2015},
+        {'name': 'large_pumping_station_oxford', 'build_year': 2020}
     ]
 
     return planned_interventions
@@ -27,9 +17,9 @@ def plan():
 def get_strategies():
     strategies = [{'strategy': 'pre-specified-planning',
                    'description': 'build_nuclear',
-                   'model_name': 'energy_supply',
-                   'interventions': [{'name': 'nuclear_large', 'build_year': 2012},
-                                     {'name': 'carrington_retire', 'build_year': 2011}]
+                   'interventions': [
+                       {'name': 'nuclear_large', 'build_year': 2012},
+                       {'name': 'carrington_retire', 'build_year': 2011}]
                    }]
 
     return strategies
@@ -40,6 +30,7 @@ class TestPreSpecified:
     def test_initialisation(self, plan):
 
         timesteps = [2010, 2015, 2020]
+        
         actual = PreSpecified(timesteps, plan)
 
         assert actual.timesteps == timesteps
@@ -51,29 +42,69 @@ class TestPreSpecified:
 
         actual = next(dm)
 
-        expected = {1: timesteps}
+        expected = {0: timesteps}
 
         assert actual == expected
 
-    def test_get_state(self, plan):
+    def test_get_decision(self, plan):
 
         timesteps = [2010, 2015, 2020]
         dm = PreSpecified(timesteps, plan)
 
-        actual = dm.get_state(2010)
-        expected = {2010: ['small_pumping_station_oxford']}
+        actual = dm.get_decision(2010)
+        expected = [
+        {'name': 'small_pumping_station_oxford', 'build_year': 2010}]
         assert actual == expected
 
-        actual = dm.get_state(2015)
-        expected = {2010: ['small_pumping_station_oxford'],
-                    2015: ['small_pumping_station_abingdon']}
+        actual = dm.get_decision(2015)
+        expected = [
+        {'name': 'small_pumping_station_oxford', 'build_year': 2010},
+        {'name': 'small_pumping_station_abingdon', 'build_year': 2015}]
         assert actual == expected
 
-        actual = dm.get_state(2020)
-        expected = {2010: ['small_pumping_station_oxford'],
-                    2015: ['small_pumping_station_abingdon'],
-                    2020: ['large_pumping_station_oxford']}
+        actual = dm.get_decision(2020)
+        expected = [
+        {'name': 'small_pumping_station_oxford', 'build_year': 2010},
+        {'name': 'small_pumping_station_abingdon', 'build_year': 2015},
+        {'name': 'large_pumping_station_oxford', 'build_year': 2020}
+    ]
         assert actual == expected
+
+    def test_get_decision_two(self, get_strategies):
+        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
+        actual = dm.get_decision(2010)
+        expected = [
+             {'name': 'nuclear_large', 'build_year': 2012},
+            {'name': 'carrington_retire', 'build_year': 2011}
+        ]
+        # assert actual == expected
+        # we don't mind the order
+        assert (actual) == (expected)
+
+        # actual = dm.get_decision(2015)
+        # expected = [('carrington_retire', 2011)]
+        # assert actual == expected
+
+        actual = dm.get_decision(2015)
+        expected = [
+            {'name': 'nuclear_large', 'build_year': 2012},
+            {'name': 'carrington_retire', 'build_year': 2011}
+        ]
+        assert (actual) == (expected)
+
+
+
+    def test_buildable(self, get_strategies):
+        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
+        assert dm.timesteps == [2010, 2015]
+        assert dm.buildable(2010, 2010) is True
+        assert dm.buildable(2011, 2010) is True
+
+    def test_buildable_raises(self, get_strategies):
+        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
+        with raises(ValueError):
+            dm.buildable(2015, 2014)
+
 
 
 class TestRuleBased:
@@ -113,8 +144,7 @@ class TestRuleBased:
 class TestDecisionManager():
 
     def test_null_strategy(self):
-        strategy = []
-        df = DecisionManager([2010, 2015], strategy)
+        df = DecisionManager([2010, 2015], [], [])
         dm = df.decision_loop()
         bundle = next(dm)
         assert bundle == {0: [2010, 2015]}
@@ -122,36 +152,9 @@ class TestDecisionManager():
             next(dm)
 
     def test_decision_manager_init(self, get_strategies):
-        df = DecisionManager([2010, 2015], get_strategies)
+        df = DecisionManager([2010, 2015], get_strategies, [])
         dm = df.decision_loop()
         bundle = next(dm)
         assert bundle == {0: [2010, 2015]}
         with raises(StopIteration):
             next(dm)
-
-    def test_buildable(self, get_strategies):
-        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
-        assert dm.timesteps == [2010, 2015]
-        assert dm.buildable(2010, 2010) is True
-        assert dm.buildable(2011, 2010) is True
-
-    def test_buildable_raises(self, get_strategies):
-        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
-        with raises(ValueError):
-            dm.buildable(2015, 2014)
-
-    def test_get_state(self, get_strategies):
-        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
-        actual = dm.get_state(2010)
-        expected = {2011: ['carrington_retire'],
-                    2012: ['nuclear_large']}
-        assert actual == expected
-
-        # actual = dm.get_state(2015)
-        # expected = {2011: ['carrington_retire']}
-        # assert actual == expected
-
-        actual = dm.get_state(2015)
-        expected = {2011: ['carrington_retire'],
-                    2012: ['nuclear_large']}
-        assert actual == expected

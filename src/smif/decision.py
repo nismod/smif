@@ -20,8 +20,10 @@ __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
-
 from abc import ABCMeta, abstractmethod
+from logging import getLogger
+
+from smif.intervention import InterventionRegister
 
 
 class DecisionManager(object):
@@ -48,24 +50,29 @@ class DecisionManager(object):
     strategies: list
     """
 
-    def __init__(self, timesteps, strategies):
+    def __init__(self, timesteps, strategies, interventions):
+
+        self.logger = getLogger(__name__)
+
         self._timesteps = timesteps
         self._strategies = strategies
         self._decision_modules = []
 
         self._set_up_decision_modules()
 
+        self.register = InterventionRegister()
+        for intervention in interventions:
+            self.register.register(intervention)
+
     def _set_up_decision_modules(self):
-        interventions = []
 
         for strategy in self._strategies:
             if strategy['strategy'] == 'pre-specified-planning':
-                interventions.extend(strategy['interventions'])
+                self._decision_modules.append(
+                    PreSpecified(self._timesteps, strategy['interventions']))
             else:
                 msg = "Only pre-specified planning strategies are implemented"
                 raise NotImplementedError(msg)
-
-        self._decision_modules = [PreSpecified(self._timesteps, interventions)]
 
     def decision_loop(self):
         """Generate bundles of simulation steps to run.
@@ -87,17 +94,30 @@ class DecisionManager(object):
         multiple timesteps, they can also be parallelised, so long as there are no temporal
         dependencies.
         """
-        assert len(self._decision_modules) == 1
-        assert isinstance(self._decision_modules[0], PreSpecified)
-        yield {0: self._timesteps}
+        if len(self._decision_modules) > 0:
+            for module in self._decision_modules:
+                yield module._get_next_decision_iteration()
+        else:
+            yield {0: self._timesteps}
 
-    def get_state(self, timestep, iteration):
-        """Return all interventions built in the given timestep for the given decision
+    def get_decision(self, timestep, iteration):
+        """Return all interventions built in the given timestep
+
+        for the given decision
         iteration.
 
-        Deprecated - to be pushed down into DataHandle
+        Arguments
+        ---------
+        timestep : int
+            A timestep (planning year)
+        iteration : int
+            A decision iteration
+
         """
-        self._decision_modules[0].get_state(timestep, iteration)
+        decisions = []
+        for module in self._decision_modules:
+            decisions.extend(module.get_decision(timestep, iteration))
+        return decisions
 
 
 class DecisionModule(metaclass=ABCMeta):
@@ -107,7 +127,7 @@ class DecisionModule(metaclass=ABCMeta):
     Multi-objective Optimisation.
 
     This class provides two main public methods, ``__next__`` which is normally
-    called implicitly as a call to the class as an iterator, and ``get_state()``
+    called implicitly as a call to the class as an iterator, and ``get_decision()``
     which takes as arguments a smif.model.Model object, and ``timestep`` and
     ``decision_iteration`` integers. The first of these returns a dict of
     decision_iterations and timesteps over which a SosModel should be iterated.
@@ -120,9 +140,8 @@ class DecisionModule(metaclass=ABCMeta):
         A list of planning timesteps
 
     """
-    def __init__(self, timesteps, register):
+    def __init__(self, timesteps):
         self.timesteps = timesteps
-        self.register = register
 
     def __next__(self):
         return self._get_next_decision_iteration()
@@ -140,13 +159,13 @@ class DecisionModule(metaclass=ABCMeta):
         Returns
         -------
         dict
-            A dictionary keyed by decision iteration (int) whose values contain
+            Yields a dictionary keyed by decision iteration (int) whose values contain
             a list of timesteps
         """
         raise NotImplementedError
 
     @abstractmethod
-    def get_state(self, timestep, iteration):
+    def get_decision(self, timestep, iteration):
         """Return decisions for a given timestep and decision iteration
         """
         raise NotImplementedError
@@ -163,7 +182,7 @@ class DecisionModule(metaclass=ABCMeta):
         -------
         numpy.ndarray
         """
-        return self.get_state(timestep.PREVIOUS, decision_iteration)
+        return self.get_decision(timestep.PREVIOUS, decision_iteration)
 
     def _set_post_decision_state(self, timestep, decision_iteration, decision):
         """Sets the post-decision state
@@ -206,13 +225,22 @@ class DecisionModule(metaclass=ABCMeta):
 
 class PreSpecified(DecisionModule):
     """Pre-specified planning
+
+    Arguments
+    ---------
+    timesteps : list
+    planned_interventions : list
+        A list of tuples ``('intervention_name', build_year)`` representing
+        historical or planned interventions
     """
 
-    def __init__(self, timesteps, register):
-        super().__init__(timesteps, register)
+    def __init__(self, timesteps, planned_interventions):
+        super().__init__(timesteps)
+
+        self._planned = planned_interventions
 
     def _get_next_decision_iteration(self):
-        return {1: [year for year in self.timesteps]}
+        return {0: [x for x in self.timesteps]}
 
     def _set_state(self, timestep, decision_iteration):
         """Pre-specified planning interventions are loaded during initialisation
@@ -220,35 +248,46 @@ class PreSpecified(DecisionModule):
         Pre-specified planning interventions are loaded during initialisation
         of a model run. This method just needs to copy the existing system state
         to the correct decision iteration reference.
+
+        Arguments
+        ---------
+        timestep : int
+            A timestep (planning year)
+        iteration : int
+            A decision iteration
         """
         pass
 
-    def get_state(self, timestep, iteration=None):
+    def get_decision(self, timestep, iteration=None):
         """Return a dict of intervention names built in timestep
+
+        Arguments
+        ---------
+        timestep : int
+            A timestep (planning year)
+        iteration : int
+            A decision iteration
 
         Returns
         -------
-        dict
+        list of tuples
 
         Examples
         --------
-        >>> dm = PreSpecified([2010, 2015], [{'name': 'intervention_a', 'build_year': 2010}])
-        >>> dm.get_state(2010)
-        {2010: ['intervention_a']}
+        >>> dm = PreSpecified([2010, 2015], [('intervention_a', 2010)])
+        >>> dm.get_decision(2010)
+        [('intervention_a', 2010)]
 
         """
-        state = {}
+        decisions = []
 
-        for intervention in self.register:
-            build_year = intervention['build_year']
-            name = intervention['name']
+        assert isinstance(self._planned, list)
+
+        for intervention in self._planned:
+            build_year = int(intervention['build_year'])
             if self.buildable(build_year, timestep):
-                if build_year in state:
-                    state[build_year].append(name)
-                else:
-                    state[build_year] = [name]
-
-        return state
+                decisions.append(intervention)
+        return decisions
 
     def buildable(self, build_year, timestep):
         """Interventions are deemed available if build_year is less than next timestep
@@ -257,6 +296,9 @@ class PreSpecified(DecisionModule):
         [2005, 2010, 2015, 2020] then buildable returns True for timesteps
         2010, 2015 and 2020 and False for 2005.
         """
+        if not isinstance(build_year, (int, float)):
+            msg = "Build Year should be an integer but is a {}"
+            raise TypeError(msg.format(type(build_year)))
         if timestep not in self.timesteps:
             raise ValueError("Timestep not in model timesteps")
         index = self.timesteps.index(timestep)
@@ -265,7 +307,7 @@ class PreSpecified(DecisionModule):
         else:
             next_year = self.timesteps[index + 1]
 
-        if build_year < next_year:
+        if int(build_year) < next_year:
             return True
         else:
             return False
@@ -276,7 +318,7 @@ class RuleBased(DecisionModule):
     """
 
     def __init__(self, timesteps):
-        super().__init__(timesteps, register=None)
+        super().__init__(timesteps)
         self.satisfied = False
         self.current_timestep_index = 0
         self.current_iteration = 0
@@ -293,8 +335,8 @@ class RuleBased(DecisionModule):
                 self.current_iteration += 1
                 return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
 
-    def get_state(self, timestep, iteration):
-        return {}
+    def get_decision(self, timestep, iteration):
+        return []
 
     def _set_state(self, timestep, decision_iteration):
         raise NotImplementedError

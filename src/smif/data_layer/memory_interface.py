@@ -20,6 +20,7 @@ class MemoryInterface(DataInterface):
         self._results = {}
         self._coefficients = {}
         self._strategies = {}
+        self._state = {}
 
     def read_strategies(self):
         return self._strategies.items()
@@ -139,6 +140,16 @@ class MemoryInterface(DataInterface):
 
     def update_narrative(self, narrative):
         self._narratives[narrative['name']] = narrative
+
+    def read_state(self, modelrun_name, timestep=None, decision_iteration=None):
+        """state is a list of (intervention_name, build_year), output of decision module/s
+        """
+        return self._state[(modelrun_name, timestep, decision_iteration)]
+
+    def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):
+        """state is a list of (intervention_name, build_year), output of decision module/s
+        """
+        self._state[(modelrun_name, timestep, decision_iteration)] = state
 
     def read_results(self, modelrun_name, model_name, output_name, spatial_resolution,
                      temporal_resolution, timestep=None, modelset_iteration=None,

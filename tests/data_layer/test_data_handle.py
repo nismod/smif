@@ -273,6 +273,28 @@ class TestDataHandle():
             'remap_months')
 
 
+class TestDataHandleState():
+    """Test handling of initial conditions, decision interventions and intervention state.
+    """
+    def test_get_state(self, mock_store, mock_model):
+        """should get decision module state for given timestep/decision_iteration
+        """
+        mock_store.read_state = Mock(return_value=[('test', 2010)])
+        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+        expected = [('test', 2010)]
+        actual = data_handle.get_state()
+        assert actual == expected
+
+    def test_get_initial_conditions(self, mock_store, mock_model):
+        """should get initial conditions before any timestep
+        """
+        mock_store.read_state = Mock(return_value=[('test', 2010)])
+        data_handle = DataHandle(mock_store, 1, None, [2015, 2020], mock_model)
+        expected = [('test', 2010)]
+        actual = data_handle.get_state()
+        assert actual == expected
+
+
 class TestDataHandleTimesteps():
     """Test timestep helper properties
     """

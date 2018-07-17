@@ -21,6 +21,7 @@ from logging import getLogger
 
 from smif.data_layer import DataHandle
 from smif.decision import DecisionManager
+from smif.model.sector_model import SectorModel
 
 
 class ModelRun(object):
@@ -141,6 +142,7 @@ class ModelRunner(object):
         Arguments
         ---------
         model_run : :class:`smif.modelrun.ModelRun`
+        store : :class:`smif.data_layer.DataInterface`
         """
         # Initialise each of the sector models
         self.logger.info("Initialising each of the sector models")
@@ -153,9 +155,14 @@ class ModelRunner(object):
         )
         model_run.sos_model.before_model_run(data_handle)
 
+        interventions = []
+        for model in model_run.sos_model.models:
+            if isinstance(model, SectorModel):
+                interventions.extend(model.interventions)
+
         # Initialise the decision manager (and hence decision modules)
         self.logger.debug("Initialising the decision manager")
-        decision_manager = DecisionManager(model_run.model_horizon, model_run.strategies)
+        decision_manager = DecisionManager(model_run.model_horizon, model_run.strategies, interventions)
 
         # Solve the model run: decision loop generates a series of bundles of independent
         # decision iterations, each with a number of timesteps to run
@@ -171,11 +178,12 @@ class ModelRunner(object):
                 for timestep in timesteps:
                     self.logger.info('Running timestep %s', timestep)
 
-                    # this should be pushed down into the responsibility of DataHandle and
-                    # DataInterface
-                    # - DecisionManager/Module sets state for each timestep, iteration
-                    # - SosModel/Model calls through DataHandle to access 'current' state
-                    state = decision_manager.get_state(timestep, iteration)
+                    # setting state may be pushed down into the responsibility of
+                    # DecisionManager/Module sets state for each timestep, iteration
+                    # - SosModel/Model then calls through DataHandle to access 'current' state
+                    decisions = decision_manager.get_decision(timestep, iteration)
+
+                    store.write_state(decisions, model_run.name, timestep, iteration)
 
                     data_handle = DataHandle(
                         store=store,
@@ -183,9 +191,9 @@ class ModelRunner(object):
                         current_timestep=timestep,
                         timesteps=model_run.model_horizon,
                         model=model_run.sos_model,
-                        decision_iteration=iteration,
-                        state=state
+                        decision_iteration=iteration
                     )
+
                     model_run.sos_model.simulate(data_handle)
         return data_handle
 

@@ -43,33 +43,17 @@ def get_model_run_definition(directory, modelrun):
     sos_model_config = handler.read_sos_model(model_run_config['sos_model'])
 
     sector_model_objects = []
-    for sector_model in sos_model_config['sector_models']:
-        sector_model_config = handler.read_sector_model(sector_model)
+    for sector_model_name in sos_model_config['sector_models']:
+        sector_model_config = handler.read_sector_model(sector_model_name)
 
-        absolute_path = os.path.join(directory,
-                                     sector_model_config['path'])
-        sector_model_config['path'] = absolute_path
+        sector_model_builder = SectorModelBuilder(sector_model_name)
+        # absolute path to be crystal clear for SectorModelBuilder when loading python class
+        sector_model_config['path'] = os.path.normpath(
+            os.path.join(handler.base_folder, sector_model_config['path'])
+        )
+        sector_model_builder.construct(sector_model_config, model_run_config['timesteps'])
 
-        intervention_files = sector_model_config['interventions']
-        intervention_list = []
-        for intervention_file in intervention_files:
-            interventions = handler.read_interventions(intervention_file)
-            intervention_list.extend(interventions)
-        sector_model_config['interventions'] = intervention_list
-
-        initial_condition_files = sector_model_config['initial_conditions']
-        initial_condition_list = []
-        for initial_condition_file in initial_condition_files:
-            initial_conditions = handler.read_initial_conditions(initial_condition_file)
-            initial_condition_list.extend(initial_conditions)
-        sector_model_config['initial_conditions'] = initial_condition_list
-
-        sector_model_builder = SectorModelBuilder(sector_model_config['name'])
-        # LOGGER.debug("Sector model config: %s", sector_model_config)
-        sector_model_builder.construct(sector_model_config,
-                                       model_run_config['timesteps'])
         sector_model_object = sector_model_builder.finish()
-
         sector_model_objects.append(sector_model_object)
         LOGGER.debug("Model inputs: %s", sector_model_object.inputs.names)
 
@@ -89,13 +73,28 @@ def get_model_run_definition(directory, modelrun):
     sos_model_config['scenario_sets'] = scenario_objects
 
     strategies = []
+
+    # Add pre-specified planning strategy for all initial conditions
+    for sector_model in sector_model_objects:
+        if sector_model.initial_conditions:
+            strategy = {}
+            strategy['model_name'] = sector_model.name
+            strategy['description'] = 'historical_decisions'
+            strategy['strategy'] = 'pre-specified-planning'
+            decisions = sector_model.initial_conditions
+            strategy['interventions'] = decisions
+            LOGGER.info("Added %s pre-specified historical decisions to %s",
+                         len(decisions), strategy['model_name'])
+            strategies.append(strategy)
+
+    # Build pre-specified planning strategies for future investments
     for strategy in model_run_config['strategies']:
         if strategy['strategy'] == 'pre-specified-planning':
-            interventions = handler.read_strategies(strategy['filename'])
+            decisions = handler.read_strategies(strategy['filename'])
             del strategy['filename']
-            strategy['interventions'] = interventions
-            LOGGER.debug("Added %s pre-specified planning interventions to %s",
-                         len(interventions), strategy['model_name'])
+            strategy['interventions'] = decisions
+            LOGGER.info("Added %s pre-specified planning interventions to %s",
+                         len(decisions), strategy['model_name'])
         strategies.append(strategy)
     sos_model_config['strategies'] = strategies
 

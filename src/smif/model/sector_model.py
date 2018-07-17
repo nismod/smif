@@ -38,11 +38,10 @@ import importlib
 import logging
 import os
 from abc import ABCMeta, abstractmethod
-from collections import defaultdict
 
-from smif import StateData
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
+from smif.intervention import Intervention
 from smif.model import Model
 
 __author__ = "Will Usher, Tom Russell"
@@ -68,11 +67,14 @@ class SectorModel(Model, metaclass=ABCMeta):
     provide an interface to the simulation model, which can then be called
     upon by the framework.
 
-    The key methods in the SectorModel class which need to be overridden are:
+    The key methods in the SectorModel class which must be overridden are:
 
-    - :py:meth:`SectorModel.initialise`
     - :py:meth:`SectorModel.simulate`
     - :py:meth:`SectorModel.extract_obj`
+
+    An implementation may also override:
+
+    - :py:meth:`SectorModel.before_model_run`
 
     A number of utility methods are included to ease the integration of a
     SectorModel wrapper within a System of Systems model.  These include:
@@ -91,10 +93,37 @@ class SectorModel(Model, metaclass=ABCMeta):
         super().__init__(name)
 
         self.path = ''
-        self._initial_state = defaultdict(dict)
+        self.initial_conditions = []
         self.interventions = []
 
         self.logger = logging.getLogger(__name__)
+
+    def get_current_interventions(self, state):
+        """Get the interventions the exist in the current state
+
+        Arguments
+        ---------
+        state : list
+            A list of tuples that represent the state of the system in the
+            current planning timestep
+
+        Returns
+        -------
+        list of intervention dicts with build_year attribute
+        """
+
+        interventions = []
+        for decision in state:
+            name = decision['name']
+            build_year = decision['build_year']
+            if name in self.intervention_names:
+                for intervention in self.interventions:
+                    if intervention.name == name:
+                        serialised = intervention.as_dict()
+                        serialised['build_year'] = build_year
+                        interventions.append(serialised)
+
+        return interventions
 
     def as_dict(self):
         """Serialize the SectorModel object as a dictionary
@@ -111,8 +140,8 @@ class SectorModel(Model, metaclass=ABCMeta):
             'inputs': [inp.as_dict() for inp in self.inputs.values()],
             'outputs': [out.as_dict() for out in self.outputs.values()],
             'parameters': self.parameters.as_list(),
-            'interventions': self.interventions,
-            'initial_conditions': self._initial_state
+            'interventions': [inter.as_dict() for inter in self.interventions],
+            'initial_conditions': self.initial_conditions
         }
         return config
 
@@ -176,22 +205,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         list
             A list of the names of the interventions
         """
-        return [intervention['name'] for intervention in self.interventions]
-
-    @abstractmethod
-    def initialise(self, initial_conditions):
-        """Implement this method to set up the model system
-
-        This method is called as the SectorModel is constructed, and prior to
-        establishment of dependencies and other data links.
-
-        Arguments
-        ---------
-        initial_conditions: list
-            A list of past Interventions, with build dates and locations as
-            necessary to specify the infrastructure system to be modelled.
-        """
-        pass
+        return [intervention.name for intervention in self.interventions]
 
     def before_model_run(self, data):
         """Implement this method to conduct pre-model run tasks
@@ -201,6 +215,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         data: smif.data_layer.DataHandle
             Access parameter values (before any model is run, no dependency
             input data or state is guaranteed to be available)
+            Access decision/system state (i.e. initial_conditions)
         """
         pass
 
@@ -354,7 +369,6 @@ class SectorModelBuilder(object):
         self.add_inputs(sector_model_config['inputs'])
         self.add_outputs(sector_model_config['outputs'])
         self.add_interventions(sector_model_config['interventions'])
-        self.create_initial_system(sector_model_config['initial_conditions'])
         self.add_initial_conditions(sector_model_config['initial_conditions'])
         self.add_parameters(sector_model_config['parameters'])
 
@@ -392,19 +406,7 @@ class SectorModelBuilder(object):
     def add_initial_conditions(self, initial_conditions):
         """Adds initial conditions (state) for a model
         """
-        state_data = filter(
-            lambda d: len(d.data) > 0,
-            [self.intervention_state_from_data(datum) for datum in initial_conditions]
-        )
-        self._sector_model._initial_state = list(state_data)
-
-    def create_initial_system(self, initial_conditions):
-        """Set up model with initial system
-        """
-        msg = "Sector model must be loaded before creating initial system"
-        assert self._sector_model is not None, msg
-
-        self._sector_model.initialise(initial_conditions)
+        self._sector_model.initial_conditions = initial_conditions
 
     def add_parameters(self, parameter_config):
         """Add parameter configuration to sector model
@@ -479,24 +481,9 @@ class SectorModelBuilder(object):
         """
         msg = "Sector model must be loaded before adding interventions"
         assert self._sector_model is not None, msg
-
-        self._sector_model.interventions = intervention_list
-
-    @staticmethod
-    def intervention_state_from_data(intervention_data):
-        """Unpack an intervention from the initial system to extract StateData
-        """
-        target = None
-        data = {}
-        for key, value in intervention_data.items():
-            if key == "name":
-                target = value
-
-            if isinstance(value, dict) and "is_state" in value and value["is_state"]:
-                del value["is_state"]
-                data[key] = value
-
-        return StateData(target, data)
+        for intervention in intervention_list:
+            intervention_obj = Intervention(data=intervention, sector=self._sector_model_name)
+            self._sector_model.interventions.append(intervention_obj)
 
     def validate(self):
         """Check and/or assert that the sector model is correctly set up

@@ -59,33 +59,25 @@ class Intervention(object):
     a :class:`smif.controller.SosModel` is instantiated by the controller at
     runtime.
 
-    Parameters
-    ==========
-    name : str, default=""
-        The type of intervention, which should be unique across all sectors
-    data : dict, default=None
-        The dictionary of intervention attributes
-    sector : str, default=""
-        The sector associated with the intervention
-
     An intervention's data is set up to be a flexible, plain data structure.
 
     Parameters
-    ----------
+    ==========
     name : str, default=""
-        The type of intervention, which should be unique across all sectors
+        The name of the intervention, which should be unique across all sectors
     data : dict, default=None
         The dictionary of intervention attributes
     sector : str, default=""
         The sector associated with the intervention
+    location : str, default=None
+        The location of the intervention
 
     """
-    def __init__(self, name="", data=None, sector=""):
-
-        assert isinstance(name, str)
+    def __init__(self, name="", data=None, sector="", location=None):
 
         if data is None:
             data = {}
+        assert isinstance(name, str)
 
         if name == "" and "name" in data:
             # allow data to set name if none given
@@ -94,18 +86,26 @@ class Intervention(object):
             # otherwise rely on name arg
             data["name"] = name
 
-        self.name = name
-        self.data = data
-
         if sector == "" and "sector" in data:
             # sector is required, may be None
             sector = data["sector"]
         else:
             data["sector"] = sector
 
+        if location is None and "location" in data:
+            # location is required
+            location = data["location"]
+        else:
+            data["location"] = location
+
+        self.data = data
+        self.name = name
         self.sector = sector
 
-        self._validate(['name', 'location'], ['build_date'])
+        assert self._validate(['name', 'location'], ['build_date'])
+
+    def as_dict(self):
+        return self.data
 
     def _validate(self, required_attributes, omitted_attributes):
         """Ensures location is present and no build date is specified
@@ -121,6 +121,8 @@ class Intervention(object):
             if omitted in keys:
                 msg = "Validation failed due to extra attribute: '{}' in {}"
                 raise ValueError(msg.format(omitted, str(self)))
+
+        return True
 
     def sha1sum(self):
         """Compute the SHA1 hash of this intervention's data
@@ -297,6 +299,9 @@ class InterventionRegister(object):
 
             self._numeric_keys.append(numeric_intervention)
             self._names[intervention.name] = numeric_intervention
+        else:
+            msg = "Attempted registering of duplicate intervention: '{}' for '{}'"
+            raise ValueError(msg.format(intervention.name, intervention.sector))
 
     def _register_attribute(self, key, value):
         """Add a new attribute and its possible value to the register (or, if

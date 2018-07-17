@@ -33,8 +33,6 @@ def get_sector_model():
         def extract_obj(self):
             pass
 
-        def initialise(self):
-            pass
     return SectorModel
 
 
@@ -77,9 +75,6 @@ def get_water_sector_model():
         def extract_obj(self):
             pass
 
-        def initialise(self):
-            pass
-
     water_model = SectorModel('water_supply_model')
     water_model.add_input('fluffyness',
                           water_model.regions.get_entry('LSOA'),
@@ -108,9 +103,6 @@ def get_energy_sector_model():
             return data_handle
 
         def extract_obj(self):
-            pass
-
-        def initialise(self):
             pass
 
     energy_model = SectorModel('energy_sector_model')

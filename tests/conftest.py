@@ -15,10 +15,10 @@ import os
 from copy import copy
 
 from pytest import fixture
-from smif.convert.area import RegionSet
 from smif.convert.area import get_register as get_region_register
-from smif.convert.interval import IntervalSet
+from smif.convert.area import RegionSet
 from smif.convert.interval import get_register as get_interval_register
+from smif.convert.interval import IntervalSet
 from smif.convert.unit import get_register as get_unit_register
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
@@ -102,9 +102,6 @@ def setup_runpy_file(setup_folder_structure):
 from smif.model.sector_model import SectorModel
 
 class WaterSupplySectorModel(SectorModel):
-    def initialise(self, initial_conditions):
-        pass
-
     def simulate(self, timestep, data=None):
         return {self.name: data}
 
@@ -120,69 +117,9 @@ def initial_system():
     """Initial system (interventions with build_date)
     """
     return [
-        {
-            'name': 'water_asset_a',
-            'capacity': {
-                'value': 5,
-                'units': 'GW'
-            },
-            'operational_lifetime': {
-                'value': 150,
-                'units': "years"
-            },
-            'economic_lifetime': {
-                'value': 50,
-                'units': "years"
-            },
-            'capital_cost': {
-                'value': 50,
-                'units': "million £/km"
-            },
-            'location': 'oxford',
-            'build_date': 2017
-        },
-        {
-            'name': 'water_asset_b',
-            'capacity': {
-                'value': 15,
-                'units': 'GW'
-            },
-            'operational_lifetime': {
-                'value': 150,
-                'units': "years"
-            },
-            'economic_lifetime': {
-                'value': 50,
-                'units': "years"
-            },
-            'capital_cost': {
-                'value': 50,
-                'units': "million £/km"
-            },
-            'location': 'oxford',
-            'build_date': 2017
-        },
-        {
-            'name': 'water_asset_c',
-            'capacity': {
-                'value': 25,
-                'units': 'GW'
-            },
-            'operational_lifetime': {
-                'value': 150,
-                'units': "years"
-            },
-            'economic_lifetime': {
-                'value': 50,
-                'units': "years"
-            },
-            'capital_cost': {
-                'value': 50,
-                'units': "million £/km"
-            },
-            'location': 'oxford',
-            'build_date': 2017
-        }
+        {'name': 'water_asset_a', 'build_year': 2017},
+        {'name': 'water_asset_b', 'build_year': 2017},
+        {'name': 'water_asset_c', 'build_year': 2017},
     ]
 
 
@@ -190,28 +127,7 @@ def initial_system():
 def initial_system_bis():
     """An extra intervention for the initial system
     """
-    return [
-        {
-            'name': 'water_asset_d',
-            'capacity': {
-                'value': 15,
-                'units': 'GW'
-            },
-            'operational_lifetime': {
-                'value': 150,
-                'units': "years"
-            },
-            'economic_lifetime': {
-                'value': 50,
-                'units': "years"
-            },
-            'capital_cost': {
-                'value': 50,
-                'units': "million £/km"
-            },
-            'location': 'oxford'
-        }
-    ]
+    return [{'name': 'water_asset_d', 'build_year': 2017}]
 
 
 @fixture

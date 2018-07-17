@@ -268,12 +268,16 @@ class DatafileInterface(DataInterface):
 
         return sector_models
 
-    def _sector_model_exists(self, name):
-        file_name = name + '.yml'
+    def _get_sector_model_filepath(self, sector_model_name):
+        file_name = '{}.yml'.format(sector_model_name)
         file_dir = self.file_dir['sector_models']
+        return os.path.join(file_dir, file_name)
 
-        if os.path.exists(os.path.join(file_dir, file_name)):
-            return self._read_yaml_file(file_dir, name)
+    def _sector_model_exists(self, sector_model_name):
+        return os.path.exists(self._get_sector_model_filepath(sector_model_name))
+
+    def _read_sector_model_file(self, sector_model_name):
+        return self._read_yaml_file(self._get_sector_model_filepath(sector_model_name))
 
     def read_sector_model(self, sector_model_name):
         """Read a sector model
@@ -288,9 +292,13 @@ class DatafileInterface(DataInterface):
         sector_model: dict
             A sector_model dictionary
         """
-        sector_model = self._sector_model_exists(sector_model_name)
-        if sector_model is None:
+        if not self._sector_model_exists(sector_model_name):
             raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+
+        sector_model = self._read_sector_model_file(sector_model_name)
+
+        sector_model['interventions'] = \
+            self.read_sector_model_interventions(sector_model_name)
 
         return sector_model
 
@@ -304,6 +312,10 @@ class DatafileInterface(DataInterface):
         """
         if self._sector_model_exists(sector_model['name']):
             raise DataExistsError("sector_model '%s' already exists" % sector_model['name'])
+
+        if sector_model['interventions']:
+            self.logger.warning("Ignoring interventions")
+            sector_model['interventions'] = []
 
         self._write_yaml_file(
             self.file_dir['sector_models'], sector_model['name'], sector_model)
@@ -326,6 +338,18 @@ class DatafileInterface(DataInterface):
 
         if not self._sector_model_exists(sector_model_name):
             raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+
+        # ignore interventions and initial conditions which the app doesn't handle
+        if sector_model['interventions'] or sector_model['initial_conditions']:
+            old_sector_model = self._read_sector_model_file(sector_model['name'])
+
+        if sector_model['interventions']:
+            self.logger.warning("Ignoring interventions write")
+            sector_model['interventions'] = old_sector_model['interventions']
+
+        if sector_model['initial_conditions']:
+            self.logger.warning("Ignoring initial conditions write")
+            sector_model['initial_conditions'] = old_sector_model['initial_conditions']
 
         self._write_yaml_file(self.file_dir['sector_models'],
                               sector_model['name'], sector_model)
@@ -352,29 +376,128 @@ class DatafileInterface(DataInterface):
             The name of the intervention yml file to read in
         """
         filepath = self.file_dir['interventions']
-        return self._read_yaml_file(filepath, filename, extension='')
+        data = self._read_yaml_file(filepath, filename, extension='')
+        return list(data)
+
+    def read_sector_model_interventions(self, sector_model_name):
+        """Read a SectorModel's interventions
+
+        Arguments
+        ---------
+        sector_model_name: str
+        """
+        if not self._sector_model_exists(sector_model_name):
+            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+
+        sector_model = self._read_sector_model_file(sector_model_name)
+
+        intervention_files = sector_model['interventions']
+        intervention_list = []
+        for intervention_file in intervention_files:
+            interventions = self.read_interventions(intervention_file)
+            intervention_list.extend(interventions)
+        return intervention_list
 
     def read_strategies(self, filename):
-        """Read the strategy data from filename
+        return self._read_planned_interventions(filename, 'strategies')
+
+    def read_initial_conditions(self, filename):
+        return self._read_planned_interventions(filename, 'initial_conditions')
+
+    def _read_planned_interventions(self, filename, filedir):
+        """Read the planned intervention data from a file
 
         Arguments
         ---------
         filename: str
             The name of the strategy yml file to read in
-        """
-        filepath = self.file_dir['strategies']
-        return self._read_yaml_file(filepath, filename, extension='')
+        filedir: str
+            The key of the filedir e.g. ``strategies`` or ``initial_conditions``
 
-    def read_initial_conditions(self, filename):
-        """Read the initial conditions from filename
+        """
+        filepath = self.file_dir[filedir]
+        _, ext = os.path.splitext(filename)
+        if ext == '.csv':
+            strategies = self._read_state_file(os.path.join(filepath, filename))
+        else:
+            strategies = self._read_yaml_file(filepath, filename, extension='')
+        return strategies
+
+    def read_sector_model_initial_conditions(self, sector_model_name):
+        """Read a SectorModel's initial conditions
 
         Arguments
         ---------
-        filename: str
-            The name of the initial conditions yml file to read in
+        sector_model_name: str
         """
-        filepath = self.file_dir['initial_conditions']
-        return self._read_yaml_file(filepath, filename, extension='')
+        if not self._sector_model_exists(sector_model_name):
+            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
+
+        sector_model = self._read_sector_model_file(sector_model_name)
+
+        initial_condition_files = sector_model['initial_conditions']
+        initial_condition_list = []
+        for initial_condition_file in initial_condition_files:
+            initial_conditions = self._read_planned_interventions(
+                initial_condition_file, 'initial_conditions')
+            initial_condition_list.extend(initial_conditions)
+        return initial_condition_list
+
+    def read_state(self, modelrun_name, timestep, decision_iteration=None):
+        """Read list of (name, build_year) for a given modelrun, timestep,
+        decision
+        """
+        fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
+        if not os.path.exists(fname):
+            msg = "State file does not exist for timestep {} and iteration {}"
+            raise ValueError(msg.format(timestep, decision_iteration))
+        state = self._read_state_file(fname)
+        return state
+
+    def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):
+        """Write state, a list of decision tuples (name, build_year) to file
+        """
+        fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
+        with open(fname, 'w+') as file_handle:
+            writer = csv.DictWriter(file_handle, fieldnames=(
+                'name',
+                'build_year'
+            ))
+            writer.writeheader()
+            for row in state:
+                writer.writerow(row)
+
+    def _get_state_filename(self, modelrun_name, timestep=None, decision_iteration=None):
+        """Compose a unique filename for state file:
+                state_{timestep|0000}[_decision_{iteration}].csv
+        """
+        results_dir = self.file_dir['results']
+        if timestep is None and decision_iteration is None:
+            fname = os.path.join(
+                results_dir, modelrun_name, 'state_0000.csv')
+        elif timestep is not None and decision_iteration is None:
+            fname = os.path.join(
+                results_dir, modelrun_name, 'state_{}.csv'.format(timestep))
+        elif timestep is None and decision_iteration is not None:
+            fname = os.path.join(
+                results_dir, modelrun_name,
+                'state_0000_decision_{}.csv'.format(decision_iteration))
+        else:
+            fname = os.path.join(
+                results_dir, modelrun_name,
+                'state_{}_decision_{}.csv'.format(timestep, decision_iteration))
+
+        return fname
+
+    @staticmethod
+    def _read_state_file(fname):
+        """Read list of name, build_year from state file
+        """
+        with open(fname, 'r') as file_handle:
+            reader = csv.DictReader(file_handle)
+            state = list(reader)
+        return state
 
     def read_region_definitions(self):
         """Read region_definitions from project configuration
@@ -437,7 +560,7 @@ class DatafileInterface(DataInterface):
                     names.append(feature['properties']['name'])
             else:
                 names.append(feature['properties']['name'])
-    
+
         return names
 
     def write_region_definition(self, region_definition):
@@ -1571,14 +1694,14 @@ class DatafileInterface(DataInterface):
             scenario_data = []
             for row in reader:
                 converted_row = {}
-                
+
                 converted_row['region'] = DatafileInterface._cast_str_to_int(row['region'])
                 converted_row['interval'] = DatafileInterface._cast_str_to_int(row['interval'])
-                
+
                 if 'year' in row.keys():
                     converted_row['year'] = row['year']
                 converted_row['value'] = row['value']
-                
+
                 scenario_data.append(converted_row)
 
         return scenario_data
@@ -1589,7 +1712,6 @@ class DatafileInterface(DataInterface):
             return int(value)
         else:
             return value
-                        
 
     @staticmethod
     def _write_data_to_csv(filepath, data):
@@ -1621,7 +1743,7 @@ class DatafileInterface(DataInterface):
             )
 
     @staticmethod
-    def _read_yaml_file(path, filename, extension='.yml'):
+    def _read_yaml_file(path, filename=None, extension='.yml'):
         """Read a Data dict from a Yaml file
 
         Arguments
@@ -1638,12 +1760,15 @@ class DatafileInterface(DataInterface):
         dict
             The data of the Yaml file `filename` in `path`
         """
-        filename = filename + extension
-        filepath = os.path.join(path, filename)
+        if filename is not None:
+            filename = filename + extension
+            filepath = os.path.join(path, filename)
+        else:
+            filepath = path
         return load(filepath)
 
     @staticmethod
-    def _write_yaml_file(path, filename, data, extension='.yml'):
+    def _write_yaml_file(path, filename=None, data=None, extension='.yml'):
         """Write a data dict to a Yaml file
 
         Arguments
@@ -1657,6 +1782,9 @@ class DatafileInterface(DataInterface):
         extension: str, default='.yml'
             The file extension
         """
-        filename = filename + extension
-        filepath = os.path.join(path, filename)
+        if filename is not None:
+            filename = filename + extension
+            filepath = os.path.join(path, filename)
+        else:
+            filepath = path
         dump(data, filepath)
