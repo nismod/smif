@@ -382,10 +382,28 @@ class DatafileInterface(DataInterface):
         _, ext = os.path.splitext(filename)
         if ext == '.csv':
             data = self._read_state_file(os.path.join(filepath, filename))
+            data = self._reshape_csv_interventions(data)
+
         else:
             data = self._read_yaml_file(filepath, filename, extension='')
 
         return data
+
+    def _reshape_csv_interventions(self, data):
+        new_data = []
+        for element in data:
+            reshaped_data = {}
+            for key, value in element.items():
+                if key.split("_")[-1] in ['value', 'unit']:
+                    new_key, sub_key = key.split("_")
+                    if new_key in reshaped_data:
+                        reshaped_data[new_key].update({sub_key: value})
+                    else:
+                        reshaped_data[new_key] = {sub_key: value}
+                else:
+                    reshaped_data[key] = value
+            new_data.append(reshaped_data)
+        return new_data
 
     def read_sector_model_interventions(self, sector_model_name):
         """Read a SectorModel's interventions

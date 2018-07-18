@@ -519,14 +519,23 @@ class TestSectorModel:
 
     def test_read_interventions(self, get_handler):
         config_handler = get_handler
-        config_handler._read_state_file = Mock()
-        config_handler._read_yaml_file = Mock()
+        config_handler._read_state_file = Mock(return_value=[])
+        config_handler._read_yaml_file = Mock(return_value=[])
 
         config_handler.read_interventions('filename.csv')
         assert config_handler._read_state_file.called_with('filename.csv')
 
         config_handler.read_interventions('filename.yml')
         assert config_handler._read_yaml_file.called_with('filename.yml')
+
+    def test_reshape_csv_interventions(self, get_handler):
+        handler = get_handler
+
+        data = [{'capacity_value': 12, 'capacity_unit': 'GW'}]
+        expected = [{'capacity': {'value': 12, 'unit': 'GW'}}]
+
+        actual = handler._reshape_csv_interventions(data)
+        assert actual == expected
 
     def test_sector_model_read_initial_conditions(self, get_handler, get_sector_model):
         config_handler = get_handler
