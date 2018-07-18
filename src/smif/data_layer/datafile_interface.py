@@ -382,8 +382,10 @@ class DatafileInterface(DataInterface):
         _, ext = os.path.splitext(filename)
         if ext == '.csv':
             data = self._read_state_file(os.path.join(filepath, filename))
-            data = self._reshape_csv_interventions(data)
-
+            try:
+                data = self._reshape_csv_interventions(data)
+            except ValueError:
+                raise ValueError("Error reshaping data for {}".format(filename))
         else:
             data = self._read_yaml_file(filepath, filename, extension='')
 
@@ -397,7 +399,11 @@ class DatafileInterface(DataInterface):
                 if key.endswith(('_value', '_unit')):
                     new_key, sub_key = key.rsplit(sep="_", maxsplit=1)
                     if new_key in reshaped_data:
-                        reshaped_data[new_key].update({sub_key: value})
+                        if not isinstance(reshaped_data[new_key], dict):
+                            msg = "Duplicate heading in csv data: {}"
+                            raise ValueError(msg.format(new_key))
+                        else:
+                            reshaped_data[new_key].update({sub_key: value})
                     else:
                         reshaped_data[new_key] = {sub_key: value}
                 else:
