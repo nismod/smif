@@ -66,8 +66,13 @@ class DecisionManager(object):
 
     def _set_up_decision_modules(self):
 
-        for strategy in self._strategies:
+        self.logger.info("%s strategies found", len(self._strategies))
+        for index, strategy in enumerate(self._strategies):
             if strategy['strategy'] == 'pre-specified-planning':
+
+                msg = "Adding %s interventions to pre-specified-planning %s"
+                self.logger.info(msg, len(strategy['interventions']), index)
+
                 self._decision_modules.append(
                     PreSpecified(self._timesteps, strategy['interventions']))
             else:
