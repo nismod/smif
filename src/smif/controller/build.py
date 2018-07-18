@@ -72,19 +72,20 @@ def get_model_run_definition(directory, modelrun):
     LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
     sos_model_config['scenario_sets'] = scenario_objects
 
+    sos_model_builder = SosModelBuilder()
+    sos_model_builder.construct(sos_model_config)
+    sos_model_object = sos_model_builder.finish()
+
+    LOGGER.debug("Model list: %s", list(sos_model_object.models.keys()))
+
     strategies = get_initial_conditions_strategies(sector_model_objects)
 
     pre_spec_strategies = get_pre_specified_planning_strategies(
         model_run_config, handler)
     strategies.extend(pre_spec_strategies)
 
-    sos_model_config['strategies'] = strategies
-
-    sos_model_builder = SosModelBuilder()
-    sos_model_builder.construct(sos_model_config)
-    sos_model_object = sos_model_builder.finish()
-
-    LOGGER.debug("Model list: %s", list(sos_model_object.models.keys()))
+    model_run_config['strategies'] = strategies
+    LOGGER.info("Added %s strategies to model run config", len(strategies))
 
     model_run_config['sos_model'] = sos_model_object
     narrative_objects = get_narratives(handler,
