@@ -72,8 +72,7 @@ def get_model_run_definition(directory, modelrun):
     LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
     sos_model_config['scenario_sets'] = scenario_objects
 
-    strategies = get_initial_conditions_strategies(
-        handler, sector_model_objects)
+    strategies = get_initial_conditions_strategies(sector_model_objects)
 
     pre_spec_strategies = get_pre_specified_planning_strategies(
         model_run_config, handler)
@@ -120,13 +119,11 @@ def get_pre_specified_planning_strategies(model_run_config, handler):
     return strategies
 
 
-def get_initial_conditions_strategies(handler, sector_model_objects):
+def get_initial_conditions_strategies(sector_model_objects):
     """Add pre-specified planning strategy for all initial conditions
 
     Arguments
     ---------
-    handler : smif.data_layer.DataInterface
-        An instance of the data interface
     sector_model_objects : list
         A list of :class:`~smif.model.SectorModel`
 
@@ -141,10 +138,10 @@ def get_initial_conditions_strategies(handler, sector_model_objects):
             strategy['model_name'] = sector_model.name
             strategy['description'] = 'historical_decisions'
             strategy['strategy'] = 'pre-specified-planning'
-            decisions = sector_model.initial_conditions
-            strategy['interventions'] = decisions
+            strategy['interventions'] = sector_model.initial_conditions
             LOGGER.info("Added %s pre-specified historical decisions to %s",
-                        len(decisions), strategy['model_name'])
+                        len(sector_model.initial_conditions),
+                        strategy['model_name'])
         strategies.append(strategy)
     return strategies
 

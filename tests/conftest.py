@@ -550,11 +550,7 @@ def get_sos_model_run():
         'strategies': [{'strategy': 'pre-specified-planning',
                         'description': 'description of the strategy',
                         'model_name': 'energy_supply',
-                        'interventions': [
-                           {'name': 'nuclear_large', 'build_year': 2030},
-                           {'name': 'carrington_return', 'build_year': 2030}
-                           ]
-                        }],
+                        'filename': 'energy_supply.csv'}],
         'narratives': {
             'technology': [
                 'Energy Demand - High Tech'
