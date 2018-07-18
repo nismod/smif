@@ -285,14 +285,11 @@ class TestDataHandleState():
         actual = data_handle.get_state()
         assert actual == expected
 
-    def test_get_initial_conditions(self, mock_store, mock_model):
-        """should get initial conditions before any timestep
-        """
-        mock_store.read_state = Mock(return_value=[('test', 2010)])
+    def test_get_state_raises_when_timestep_is_none(self, mock_store, mock_model):
+
         data_handle = DataHandle(mock_store, 1, None, [2015, 2020], mock_model)
-        expected = [('test', 2010)]
-        actual = data_handle.get_state()
-        assert actual == expected
+        with raises(ValueError):
+            data_handle.get_state()
 
 
 class TestDataHandleTimesteps():

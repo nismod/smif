@@ -123,6 +123,8 @@ class DataHandle(object):
         -------
         A list of interventions installed at the current timestep
         """
+        if self._current_timestep is None:
+            raise ValueError("Cannot get state when timestep is None")
         sos_state = self._store.read_state(
             self._modelrun_name,
             self._current_timestep,
@@ -130,7 +132,7 @@ class DataHandle(object):
         )
         # here could (should?) filter list for interventions applicable to a model
         # and look up full intervention (not just name,build_year)
-        
+
         return sos_state
 
     def get_data(self, input_name, timestep=None):
