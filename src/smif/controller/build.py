@@ -42,33 +42,13 @@ def get_model_run_definition(directory, modelrun):
     LOGGER.debug("Model Run: %s", model_run_config)
     sos_model_config = handler.read_sos_model(model_run_config['sos_model'])
 
-    sector_model_objects = []
-    for sector_model_name in sos_model_config['sector_models']:
-        sector_model_config = handler.read_sector_model(sector_model_name)
-
-        sector_model_builder = SectorModelBuilder(sector_model_name)
-        # absolute path to be crystal clear for SectorModelBuilder when loading python class
-        sector_model_config['path'] = os.path.normpath(
-            os.path.join(handler.base_folder, sector_model_config['path'])
-        )
-        sector_model_builder.construct(sector_model_config, model_run_config['timesteps'])
-
-        sector_model_object = sector_model_builder.finish()
-        sector_model_objects.append(sector_model_object)
-        LOGGER.debug("Model inputs: %s", sector_model_object.inputs.names)
-
+    sector_model_objects = get_sector_model_objects(
+        sos_model_config, handler, model_run_config['timesteps'])
     LOGGER.debug("Sector models: %s", sector_model_objects)
     sos_model_config['sector_models'] = sector_model_objects
 
-    scenario_objects = []
-    for scenario_set, scenario_name in model_run_config['scenarios'].items():
-        scenario_definition = handler.read_scenario_definition(scenario_name)
-        LOGGER.debug("Scenario definition: %s", scenario_definition)
-
-        scenario_model_builder = ScenarioModelBuilder(scenario_set)
-        scenario_model_builder.construct(scenario_definition)
-        scenario_objects.append(scenario_model_builder.finish())
-
+    scenario_objects = get_scenario_objects(
+        model_run_config['scenarios'], handler)
     LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
     sos_model_config['scenario_sets'] = scenario_objects
 
@@ -88,6 +68,47 @@ def get_model_run_definition(directory, modelrun):
     model_run_config['narratives'] = narrative_objects
 
     return model_run_config
+
+
+def get_scenario_objects(scenarios, handler):
+    """
+    Arguments
+    ---------
+    scenarios : dict
+    handler : smif.data_layer.DataInterface
+
+    Returns
+    -------
+    list
+    """
+    scenario_objects = []
+    for scenario_set, scenario_name in scenarios.items():
+        scenario_definition = handler.read_scenario_definition(scenario_name)
+        LOGGER.debug("Scenario definition: %s", scenario_definition)
+
+        scenario_model_builder = ScenarioModelBuilder(scenario_set)
+        scenario_model_builder.construct(scenario_definition)
+        scenario_objects.append(scenario_model_builder.finish())
+    return scenario_objects
+
+
+def get_sector_model_objects(sos_model_config, handler,
+                             timesteps):
+    sector_model_objects = []
+    for sector_model_name in sos_model_config['sector_models']:
+        sector_model_config = handler.read_sector_model(sector_model_name)
+
+        sector_model_builder = SectorModelBuilder(sector_model_name)
+        # absolute path to be crystal clear for SectorModelBuilder when loading python class
+        sector_model_config['path'] = os.path.normpath(
+            os.path.join(handler.base_folder, sector_model_config['path'])
+        )
+        sector_model_builder.construct(sector_model_config, timesteps)
+
+        sector_model_object = sector_model_builder.finish()
+        sector_model_objects.append(sector_model_object)
+        LOGGER.debug("Model inputs: %s", sector_model_object.inputs.names)
+    return sector_model_objects
 
 
 def get_strategies(sector_model_objects, model_run_config, handler):
