@@ -79,11 +79,11 @@ def setup_folder_structure(tmpdir_factory, oxford_region,
     intervals_file.write("id,start,end\n1,PT0H,PT1H\n")
 
     initial_conditions_file = test_folder.join('data', 'initial_conditions', 'init_system.yml')
-    dump(initial_system, initial_conditions_file)
+    dump(initial_system, str(initial_conditions_file))
 
     planned_interventions_file = test_folder.join(
         'data', 'interventions', 'planned_interventions.yml')
-    dump(planned_interventions, planned_interventions_file)
+    dump(planned_interventions, str(planned_interventions_file))
 
     data = remap_months_csv()
     intervals_file = test_folder.join(
