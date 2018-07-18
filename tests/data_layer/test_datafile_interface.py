@@ -537,6 +537,15 @@ class TestSectorModel:
         actual = handler._reshape_csv_interventions(data)
         assert actual == expected
 
+    def test_reshape_csv_interventions_underscore_in_name(self, get_handler):
+        handler = get_handler
+
+        data = [{'mega_capacity_value': 12, 'mega_capacity_unit': 'GW'}]
+        expected = [{'mega_capacity': {'value': 12, 'unit': 'GW'}}]
+
+        actual = handler._reshape_csv_interventions(data)
+        assert actual == expected
+
     def test_sector_model_read_initial_conditions(self, get_handler, get_sector_model):
         config_handler = get_handler
         config_handler._sector_model_exists = Mock()

@@ -394,8 +394,8 @@ class DatafileInterface(DataInterface):
         for element in data:
             reshaped_data = {}
             for key, value in element.items():
-                if key.split("_")[-1] in ['value', 'unit']:
-                    new_key, sub_key = key.split("_")
+                if key.endswith(('_value', '_unit')):
+                    new_key, sub_key = key.rsplit(sep="_", maxsplit=1)
                     if new_key in reshaped_data:
                         reshaped_data[new_key].update({sub_key: value})
                     else:
