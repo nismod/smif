@@ -67,17 +67,24 @@ class DecisionManager(object):
     def _set_up_decision_modules(self):
 
         self.logger.info("%s strategies found", len(self._strategies))
+        interventions = []
+
         for index, strategy in enumerate(self._strategies):
             if strategy['strategy'] == 'pre-specified-planning':
 
                 msg = "Adding %s interventions to pre-specified-planning %s"
                 self.logger.info(msg, len(strategy['interventions']), index)
 
-                self._decision_modules.append(
-                    PreSpecified(self._timesteps, strategy['interventions']))
+                interventions.extend(strategy['interventions'])
+
             else:
                 msg = "Only pre-specified planning strategies are implemented"
                 raise NotImplementedError(msg)
+
+        if interventions:
+            self._decision_modules.append(
+                PreSpecified(self._timesteps, interventions)
+                )
 
     def decision_loop(self):
         """Generate bundles of simulation steps to run.
