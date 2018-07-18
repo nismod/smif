@@ -162,7 +162,9 @@ class ModelRunner(object):
 
         # Initialise the decision manager (and hence decision modules)
         self.logger.debug("Initialising the decision manager")
-        decision_manager = DecisionManager(model_run.model_horizon, model_run.strategies, interventions)
+        decision_manager = DecisionManager(model_run.model_horizon,
+                                           model_run.strategies,
+                                           interventions)
 
         # Solve the model run: decision loop generates a series of bundles of independent
         # decision iterations, each with a number of timesteps to run
@@ -183,6 +185,10 @@ class ModelRunner(object):
                     # - SosModel/Model then calls through DataHandle to access 'current' state
                     decisions = decision_manager.get_decision(timestep, iteration)
 
+                    self.logger.debug(
+                        "Writing state for timestep %s and interation %s",
+                        timestep,
+                        iteration)
                     store.write_state(decisions, model_run.name, timestep, iteration)
 
                     data_handle = DataHandle(

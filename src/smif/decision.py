@@ -117,6 +117,9 @@ class DecisionManager(object):
         decisions = []
         for module in self._decision_modules:
             decisions.extend(module.get_decision(timestep, iteration))
+        self.logger.debug(
+            "Retrieved %s decisions from %s",
+            len(decisions), str(self._decision_modules))
         return decisions
 
 

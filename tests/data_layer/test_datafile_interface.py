@@ -528,6 +528,18 @@ class TestSectorModel:
         config_handler.read_interventions('filename.yml')
         assert config_handler._read_yaml_file.called_with('filename.yml')
 
+    def test_sector_model_read_initial_conditions(self, get_handler, get_sector_model):
+        config_handler = get_handler
+        config_handler._sector_model_exists = Mock()
+        config_handler._read_sector_model_file = Mock(return_value=get_sector_model)
+        config_handler.read_sector_model_interventions = Mock()
+        config_handler.read_sector_model_initial_conditions = Mock()
+
+        config_handler.read_sector_model('test_model')
+        assert config_handler._sector_model_exists.called_with('test_model')
+        assert config_handler.read_sector_model_interventions.called_with('test_model')
+        assert config_handler.read_sector_model_initial_conditions.called_with('test_model')
+
 
 class TestDimensions:
     """Dimension definitions (regions, intervals) should be readable. May move to make it

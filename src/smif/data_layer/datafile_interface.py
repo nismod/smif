@@ -300,6 +300,9 @@ class DatafileInterface(DataInterface):
         sector_model['interventions'] = \
             self.read_sector_model_interventions(sector_model_name)
 
+        sector_model['initial_conditions'] = \
+            self.read_sector_model_initial_conditions(sector_model_name)
+
         return sector_model
 
     def write_sector_model(self, sector_model):
