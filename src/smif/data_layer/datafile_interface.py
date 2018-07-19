@@ -1078,7 +1078,13 @@ class DatafileInterface(DataInterface):
         region_names = self.read_region_names(spatial_resolution)
         interval_names = self.read_interval_names(temporal_resolution)
 
-        return self.data_list_to_ndarray(data, region_names, interval_names)
+        try:
+            array = self.data_list_to_ndarray(data, region_names, interval_names)
+        except DataMismatchError:
+            msg = "DataMismatch in scenario: '{}' and facet:'{}'"
+            raise DataMismatchError(msg.format(scenario_name, facet_name))
+        else:
+            return array
 
     def read_narrative_sets(self):
         """Read narrative sets from project configuration
