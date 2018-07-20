@@ -237,7 +237,7 @@ class DatafileInterface(DataInterface):
                               sos_model['name'], sos_model)
 
     def delete_sos_model(self, sos_model_name):
-        """Delete a system-of-system model run
+        """Delete a system-of-system model
 
         Arguments
         ---------
@@ -298,10 +298,10 @@ class DatafileInterface(DataInterface):
         sector_model = self._read_sector_model_file(sector_model_name)
 
         sector_model['interventions'] = \
-            self.read_sector_model_interventions(sector_model_name)
+            self._read_sector_model_interventions(sector_model_name)
 
         sector_model['initial_conditions'] = \
-            self.read_sector_model_initial_conditions(sector_model_name)
+            self._read_sector_model_initial_conditions(sector_model_name)
 
         return sector_model
 
@@ -376,7 +376,12 @@ class DatafileInterface(DataInterface):
         Arguments
         ---------
         filename: str
-            The name of the intervention yml file to read in
+            The name of the intervention yml/csv file to read in
+
+        Returns
+        -------
+        list
+            A list of intervention dictionaries
         """
         filepath = self.file_dir['interventions']
         _, ext = os.path.splitext(filename)
@@ -411,12 +416,17 @@ class DatafileInterface(DataInterface):
             new_data.append(reshaped_data)
         return new_data
 
-    def read_sector_model_interventions(self, sector_model_name):
+    def _read_sector_model_interventions(self, sector_model_name):
         """Read a SectorModel's interventions
 
         Arguments
         ---------
         sector_model_name: str
+
+        Returns
+        -------
+        list
+            A list of intervention dictionaries
         """
         if not self._sector_model_exists(sector_model_name):
             raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
@@ -469,7 +479,7 @@ class DatafileInterface(DataInterface):
             strategies = self._read_yaml_file(filepath, filename, extension='')
         return strategies
 
-    def read_sector_model_initial_conditions(self, sector_model_name):
+    def _read_sector_model_initial_conditions(self, sector_model_name):
         """Read a SectorModel's initial conditions
 
         Arguments
@@ -1196,7 +1206,7 @@ class DatafileInterface(DataInterface):
         return project_config['narratives']
 
     def read_narrative(self, narrative_name):
-        """Read all narratives from a certain narrative
+        """Read all narrative data from a certain narrative
 
         Arguments
         ---------
@@ -1206,7 +1216,7 @@ class DatafileInterface(DataInterface):
         Returns
         -------
         list
-            A narrative dictionary
+            A narrative data dictionary
         """
         project_config = self._read_project_config()
         for narrative_data in project_config['narratives']:
@@ -1340,6 +1350,19 @@ class DatafileInterface(DataInterface):
 
         Coefficients are uniquely identified by their source/destination names
 
+        Arguments
+        ---------
+        source_name : str
+            The name of a ResolutionSet
+        destination_name : str
+            The name of a ResolutionSet
+
+        Notes
+        -----
+        Both `source_name` and `destination_name` should reference names of
+        elements from the same ResolutionSet (e.g. both spatial or temporal
+        resolutions)
+
         """
         results_path = self._get_coefficients_path(source_name, destination_name)
         if os.path.isfile(results_path):
@@ -1354,6 +1377,19 @@ class DatafileInterface(DataInterface):
 
         Coefficients are uniquely identified by their source/destination names
 
+        Arguments
+        ---------
+        source_name : str
+            The name of a ResolutionSet
+        destination_name : str
+            The name of a ResolutionSet
+        data : numpy.ndarray
+
+        Notes
+        -----
+        Both `source_name` and `destination_name` should reference names of
+        elements from the same ResolutionSet (e.g. both spatial or temporal
+        resolutions)
         """
         results_path = self._get_coefficients_path(source_name, destination_name)
         self._write_data_to_native_file(results_path, data)
@@ -1367,7 +1403,7 @@ class DatafileInterface(DataInterface):
     def read_results(self, modelrun_id, model_name, output_name, spatial_resolution,
                      temporal_resolution, timestep=None, modelset_iteration=None,
                      decision_iteration=None):
-        """Return path to text file for a given output
+        """Return results of a `model_name` in `modelrun_name`
 
         Parameters
         ----------
@@ -1404,7 +1440,7 @@ class DatafileInterface(DataInterface):
     def write_results(self, modelrun_id, model_name, output_name, data, spatial_resolution,
                       temporal_resolution, timestep=None, modelset_iteration=None,
                       decision_iteration=None):
-        """Return path to text file for a given output
+        """Write results of a `model_name` in `modelrun_name` for a given `output_name`
 
         Parameters
         ----------
@@ -1446,7 +1482,7 @@ class DatafileInterface(DataInterface):
                 "region x interval data"
             )
 
-    def results_exist(self, modelrun_name):
+    def _results_exist(self, modelrun_name):
         """Checks whether modelrun results exists on the filesystem
         for a particular modelrun_name
 
@@ -1468,13 +1504,20 @@ class DatafileInterface(DataInterface):
     def prepare_warm_start(self, modelrun_id):
         """Copy the results from the previous modelrun if available
 
+        The method allows a previous unsuccessful modelrun to 'warm start' a new
+        model run from a later timestep. Model results are recovered from the
+        timestep that the previous modelrun was run until, and the new model
+        run runs from the returned timestep
+
         Parameters
         ----------
         modelrun_id: str
+            The name of the modelrun to recover
 
         Returns
         -------
-        num: The timestep where the data store was recovered to
+        int
+            The timestep to which the data store was recovered
         """
         results_dir = os.path.join(self.file_dir['results'], modelrun_id)
 
@@ -1485,7 +1528,7 @@ class DatafileInterface(DataInterface):
             return None
 
         # Return if no results exist in last modelrun
-        if not self.results_exist(modelrun_id):
+        if not self._results_exist(modelrun_id):
             self.logger.info("Warm start not possible because the "
                              "modelrun does not have any results")
             return None
