@@ -2,6 +2,27 @@
 Changelog
 =========
 
+Version 0.8
+===========
+
+Functionality
+
+- GUI redesiged to include sidebar, jobs, modelrun scheduler
+- Decision architecture reaches maturity
+  - Initial conditions and pre-specified planning concepts merged
+  - Pre-Specified Planning strategies can be defined in model run
+  - Strategy contains a list of planning decisions (name, build_year) tuples
+  - Interventions file contains list of interventions
+- Interventions can be defined in yml or csv format
+  - CSV format is parsed so that <attribute_name>_value and <attribute_name>_unit 
+    suffixes to column names populate a nested dict 
+    ``{attribute_name: {'value': x, 'unit': y}}`` in memory
+  - yml format is declared using ``attribute_name: {'value': x, 'unit': y}}`` 
+    structure
+- CLI code refactored out to seperate build, execute, load and setup modules in 
+  a new ``smif.controller`` subpackage
+
+
 Version 0.7
 ===========
 
