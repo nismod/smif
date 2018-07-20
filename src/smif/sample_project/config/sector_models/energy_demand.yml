@@ -22,6 +22,7 @@ outputs:
   units: Ml
 interventions:
 - energy_supply.yml
+- energy_supply.csv
 initial_conditions: []
 parameters:
 - name: smart_meter_savings

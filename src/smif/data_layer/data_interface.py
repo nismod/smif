@@ -172,8 +172,18 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):
-        """state is a list of decision tuples with name and build_year attributes, output from the DecisionManager
+    def write_state(self, state, modelrun_name, timestep,
+                    decision_iteration=None):
+        """State is a list of decision dicts with name and build_year keys,
+
+        State is output from the DecisionManager
+
+        Arguments
+        ---------
+        state : list
+        modelrun_name : str
+        timestep: int
+        decision_iteration : int, default=None
         """
         raise NotImplementedError()
 
@@ -259,6 +269,9 @@ class DataInterface(metaclass=ABCMeta):
         DataNotFoundError
             If the observations don't include data for any region/interval
             combination
+        DataMismatchError
+            If the region_names and interval_names do not
+            match the observations
         """
         # Check that the list of region and interval names are unique
         assert len(region_names) == len(set(region_names))
@@ -286,7 +299,6 @@ class DataInterface(metaclass=ABCMeta):
         DataInterface._validate_observation_meta(observations, region_names, 'region')
         DataInterface._validate_observation_meta(observations, interval_names, 'interval')
 
-
     @staticmethod
     def _validate_observation_keys(observations):
         for obs in observations:
@@ -305,12 +317,14 @@ class DataInterface(metaclass=ABCMeta):
         observed = set()
         for line, obs in enumerate(observations):
             if obs[meta_name] not in meta_list:
-                raise ValueError("Unknown {} '{}' in row {}".format(meta_name, obs[meta_name], line))
+                raise ValueError("Unknown {} '{}' in row {}".format(
+                    meta_name, obs[meta_name], line))
             else:
                 observed.add(obs[meta_name])
         missing = set(meta_list) - observed
         if missing:
-            raise DataNotFoundError("Missing values for %ss: %s", meta_name, list(missing))
+            raise DataNotFoundError(
+                "Missing values for %ss: %s", meta_name, list(missing))
 
 
 class DataNotFoundError(Exception):

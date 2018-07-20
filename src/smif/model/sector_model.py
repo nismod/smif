@@ -123,6 +123,9 @@ class SectorModel(Model, metaclass=ABCMeta):
                         serialised['build_year'] = build_year
                         interventions.append(serialised)
 
+        msg = "State matched with %s interventions"
+        self.logger.info(msg, len(interventions))
+
         return interventions
 
     def as_dict(self):

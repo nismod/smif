@@ -15,10 +15,10 @@ import os
 from copy import copy
 
 from pytest import fixture
-from smif.convert.area import get_register as get_region_register
 from smif.convert.area import RegionSet
-from smif.convert.interval import get_register as get_interval_register
+from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import IntervalSet
+from smif.convert.interval import get_register as get_interval_register
 from smif.convert.unit import get_register as get_unit_register
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
@@ -36,7 +36,9 @@ logging.basicConfig(filename='test_logs.log',
 
 
 @fixture(scope='function')
-def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
+def setup_folder_structure(tmpdir_factory, oxford_region,
+                           annual_intervals, initial_system,
+                           planned_interventions):
     """
 
     Returns
@@ -76,8 +78,16 @@ def setup_folder_structure(tmpdir_factory, oxford_region, annual_intervals):
     intervals_file = test_folder.join('data', 'interval_definitions', 'hourly.csv')
     intervals_file.write("id,start,end\n1,PT0H,PT1H\n")
 
+    initial_conditions_file = test_folder.join('data', 'initial_conditions', 'init_system.yml')
+    dump(initial_system, str(initial_conditions_file))
+
+    planned_interventions_file = test_folder.join(
+        'data', 'interventions', 'planned_interventions.yml')
+    dump(planned_interventions, str(planned_interventions_file))
+
     data = remap_months_csv()
-    intervals_file = test_folder.join('data', 'interval_definitions', 'remap.csv')
+    intervals_file = test_folder.join(
+        'data', 'interval_definitions', 'remap.csv')
     keys = data[0].keys()
     with open(str(intervals_file), 'w+') as open_csv_file:
         dict_writer = csv.DictWriter(open_csv_file, keys)
@@ -151,58 +161,22 @@ def planned_interventions():
     return [
         {
             'name': 'water_asset_a',
-            'build_date': 2010,
-            'attributes': [
-                {
-                    'key': 'new_capacity',
-                    'value': 6
-                },
-                {
-                    'key': 'description',
-                    'value': 'Existing water treatment plants'
-                },
-                {
-                    'key': 'location',
-                    'value': {'lat': 51.74556, 'lon': -1.240528}
-                }
-            ]
+            'capacity': {'value': 6, 'unit': 'Ml'},
+            'description': 'Existing water treatment plants',
+            'location': {'lat': 51.74556, 'lon': -1.240528}
         },
         {
             'name': 'water_asset_b',
-            'build_date': 2010,
-            'attributes': [
-                {
-                    'key': 'new_capacity',
-                    'value': 6
-                },
-                {
-                    'key': 'description',
-                    'value': 'Existing water treatment plants'
-                },
-                {
-                    'key': 'location',
-                    'value': {'lat': 51.74556, 'lon': -1.240528}
-                }
-            ]
+            'capacity':  {'value': 6, 'unit': 'Ml'},
+            'description': 'Existing water treatment plants',
+            'location': {'lat': 51.74556, 'lon': -1.240528}
         },
         {
             'name': 'water_asset_c',
-            'build_date': 2010,
-            'attributes': [
-                {
-                    'key': 'new_capacity',
-                    'value': 6
-                },
-                {
-                    'key': 'description',
-                    'value': 'Existing water treatment plants'
-                },
-                {
-                    'key': 'location',
-                    'value': {'lat': 51.74556, 'lon': -1.240528}
-                }
-            ]
-        }
+            'capacity': {'value': 6, 'unit': 'Ml'},
+            'description': 'Existing water treatment plants',
+            'location': {'lat': 51.74556, 'lon': -1.240528}
+        },
     ]
 
 
@@ -576,11 +550,7 @@ def get_sos_model_run():
         'strategies': [{'strategy': 'pre-specified-planning',
                         'description': 'description of the strategy',
                         'model_name': 'energy_supply',
-                        'interventions': [
-                           {'name': 'nuclear_large', 'build_year': 2030},
-                           {'name': 'carrington_return', 'build_year': 2030}
-                           ]
-                        }],
+                        'filename': 'energy_supply.csv'}],
         'narratives': {
             'technology': [
                 'Energy Demand - High Tech'
@@ -664,8 +634,8 @@ def get_sector_model():
                 'units': 'percentage'
             }
         ],
-        'interventions': ['energy_demand.yml'],
-        'initial_conditions': ['energy_demand_init.yml']
+        'interventions': ['planned_interventions.yml'],
+        'initial_conditions': ['init_system.yml']
     }
 
 

@@ -42,6 +42,58 @@ def get_model_run_definition(directory, modelrun):
     LOGGER.debug("Model Run: %s", model_run_config)
     sos_model_config = handler.read_sos_model(model_run_config['sos_model'])
 
+    sector_model_objects = get_sector_model_objects(
+        sos_model_config, handler, model_run_config['timesteps'])
+    LOGGER.debug("Sector models: %s", sector_model_objects)
+    sos_model_config['sector_models'] = sector_model_objects
+
+    scenario_objects = get_scenario_objects(
+        model_run_config['scenarios'], handler)
+    LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
+    sos_model_config['scenario_sets'] = scenario_objects
+
+    sos_model_builder = SosModelBuilder()
+    sos_model_builder.construct(sos_model_config)
+    sos_model_object = sos_model_builder.finish()
+    model_run_config['sos_model'] = sos_model_object
+    LOGGER.debug("Model list: %s", list(sos_model_object.models.keys()))
+
+    strategies = get_strategies(sector_model_objects,
+                                model_run_config, handler)
+    model_run_config['strategies'] = strategies
+    LOGGER.info("Added %s strategies to model run config", len(strategies))
+
+    narrative_objects = get_narratives(handler,
+                                       model_run_config['narratives'])
+    model_run_config['narratives'] = narrative_objects
+
+    return model_run_config
+
+
+def get_scenario_objects(scenarios, handler):
+    """
+    Arguments
+    ---------
+    scenarios : dict
+    handler : smif.data_layer.DataInterface
+
+    Returns
+    -------
+    list
+    """
+    scenario_objects = []
+    for scenario_set, scenario_name in scenarios.items():
+        scenario_definition = handler.read_scenario_definition(scenario_name)
+        LOGGER.debug("Scenario definition: %s", scenario_definition)
+
+        scenario_model_builder = ScenarioModelBuilder(scenario_set)
+        scenario_model_builder.construct(scenario_definition)
+        scenario_objects.append(scenario_model_builder.finish())
+    return scenario_objects
+
+
+def get_sector_model_objects(sos_model_config, handler,
+                             timesteps):
     sector_model_objects = []
     for sector_model_name in sos_model_config['sector_models']:
         sector_model_config = handler.read_sector_model(sector_model_name)
@@ -51,65 +103,78 @@ def get_model_run_definition(directory, modelrun):
         sector_model_config['path'] = os.path.normpath(
             os.path.join(handler.base_folder, sector_model_config['path'])
         )
-        sector_model_builder.construct(sector_model_config, model_run_config['timesteps'])
+        sector_model_builder.construct(sector_model_config, timesteps)
 
         sector_model_object = sector_model_builder.finish()
         sector_model_objects.append(sector_model_object)
         LOGGER.debug("Model inputs: %s", sector_model_object.inputs.names)
+    return sector_model_objects
 
-    LOGGER.debug("Sector models: %s", sector_model_objects)
-    sos_model_config['sector_models'] = sector_model_objects
 
-    scenario_objects = []
-    for scenario_set, scenario_name in model_run_config['scenarios'].items():
-        scenario_definition = handler.read_scenario_definition(scenario_name)
-        LOGGER.debug("Scenario definition: %s", scenario_definition)
-
-        scenario_model_builder = ScenarioModelBuilder(scenario_set)
-        scenario_model_builder.construct(scenario_definition)
-        scenario_objects.append(scenario_model_builder.finish())
-
-    LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
-    sos_model_config['scenario_sets'] = scenario_objects
+def get_strategies(sector_model_objects, model_run_config, handler):
 
     strategies = []
+    initial_conditions = get_initial_conditions_strategies(sector_model_objects)
 
-    # Add pre-specified planning strategy for all initial conditions
-    for sector_model in sector_model_objects:
-        if sector_model.initial_conditions:
-            strategy = {}
-            strategy['model_name'] = sector_model.name
-            strategy['description'] = 'historical_decisions'
-            strategy['strategy'] = 'pre-specified-planning'
-            decisions = sector_model.initial_conditions
-            strategy['interventions'] = decisions
-            LOGGER.info("Added %s pre-specified historical decisions to %s",
-                         len(decisions), strategy['model_name'])
-            strategies.append(strategy)
+    strategies.extend(initial_conditions)
 
-    # Build pre-specified planning strategies for future investments
+    pre_spec_strategies = get_pre_specified_planning_strategies(
+        model_run_config, handler)
+    strategies.extend(pre_spec_strategies)
+
+    return strategies
+
+
+def get_pre_specified_planning_strategies(model_run_config, handler):
+    """Build pre-specified planning strategies for future investments
+
+    Arguments
+    ---------
+    model_run_config : dict
+    handler : smif.data_layer.DataInterface
+        An instance of the data interface
+
+    Returns
+    -------
+    list
+    """
+    strategies = []
     for strategy in model_run_config['strategies']:
         if strategy['strategy'] == 'pre-specified-planning':
             decisions = handler.read_strategies(strategy['filename'])
             del strategy['filename']
             strategy['interventions'] = decisions
             LOGGER.info("Added %s pre-specified planning interventions to %s",
-                         len(decisions), strategy['model_name'])
+                        len(decisions), strategy['model_name'])
         strategies.append(strategy)
-    sos_model_config['strategies'] = strategies
+    return strategies
 
-    sos_model_builder = SosModelBuilder()
-    sos_model_builder.construct(sos_model_config)
-    sos_model_object = sos_model_builder.finish()
 
-    LOGGER.debug("Model list: %s", list(sos_model_object.models.keys()))
+def get_initial_conditions_strategies(sector_model_objects):
+    """Add pre-specified planning strategy for all initial conditions
 
-    model_run_config['sos_model'] = sos_model_object
-    narrative_objects = get_narratives(handler,
-                                       model_run_config['narratives'])
-    model_run_config['narratives'] = narrative_objects
+    Arguments
+    ---------
+    sector_model_objects : list
+        A list of :class:`~smif.model.SectorModel`
 
-    return model_run_config
+    Returns
+    -------
+    list
+    """
+    strategies = []
+    for sector_model in sector_model_objects:
+        if sector_model.initial_conditions:
+            strategy = {}
+            strategy['model_name'] = sector_model.name
+            strategy['description'] = 'historical_decisions'
+            strategy['strategy'] = 'pre-specified-planning'
+            strategy['interventions'] = sector_model.initial_conditions
+            LOGGER.info("Added %s pre-specified historical decisions to %s",
+                        len(sector_model.initial_conditions),
+                        strategy['model_name'])
+        strategies.append(strategy)
+    return strategies
 
 
 def get_narratives(handler, narrative_config):

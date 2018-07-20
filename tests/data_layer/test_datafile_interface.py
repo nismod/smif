@@ -502,6 +502,73 @@ class TestSectorModel:
             config_handler.delete_sector_model('missing_name')
         assert "sector_model 'missing_name' not found" in str(ex)
 
+    def test_read_sector_model_interventions(self,
+                                             get_sector_model,
+                                             get_handler):
+        config_handler = get_handler
+
+        sector_model = get_sector_model
+        sector_model['name'] = 'sector_model'
+        sector_model['interventions'] = ['energy_demand.csv']
+        config_handler.write_sector_model(sector_model)
+
+        config_handler.read_interventions = Mock(return_value=[{'name': '_an_intervention'}])
+
+        config_handler.read_sector_model_interventions('sector_model')
+        assert config_handler.read_interventions.called_with('energy_demand.csv')
+
+    def test_read_interventions(self, get_handler):
+        config_handler = get_handler
+        config_handler._read_state_file = Mock(return_value=[])
+        config_handler._read_yaml_file = Mock(return_value=[])
+
+        config_handler.read_interventions('filename.csv')
+        assert config_handler._read_state_file.called_with('filename.csv')
+
+        config_handler.read_interventions('filename.yml')
+        assert config_handler._read_yaml_file.called_with('filename.yml')
+
+    def test_reshape_csv_interventions(self, get_handler):
+        handler = get_handler
+
+        data = [{'capacity_value': 12, 'capacity_unit': 'GW'}]
+        expected = [{'capacity': {'value': 12, 'unit': 'GW'}}]
+
+        actual = handler._reshape_csv_interventions(data)
+        assert actual == expected
+
+    def test_reshape_csv_interventions_duplicate_field(
+            self, get_handler):
+        handler = get_handler
+
+        data = [{'capacity': 23,
+                 'capacity_value': 12,
+                 'capacity_unit': 'GW'}]
+
+        with raises(ValueError):
+            handler._reshape_csv_interventions(data)
+
+    def test_reshape_csv_interventions_underscore_in_name(self, get_handler):
+        handler = get_handler
+
+        data = [{'mega_capacity_value': 12, 'mega_capacity_unit': 'GW'}]
+        expected = [{'mega_capacity': {'value': 12, 'unit': 'GW'}}]
+
+        actual = handler._reshape_csv_interventions(data)
+        assert actual == expected
+
+    def test_sector_model_read_initial_conditions(self, get_handler, get_sector_model):
+        config_handler = get_handler
+        config_handler._sector_model_exists = Mock()
+        config_handler._read_sector_model_file = Mock(return_value=get_sector_model)
+        config_handler.read_sector_model_interventions = Mock()
+        config_handler.read_sector_model_initial_conditions = Mock()
+
+        config_handler.read_sector_model('test_model')
+        assert config_handler._sector_model_exists.called_with('test_model')
+        assert config_handler.read_sector_model_interventions.called_with('test_model')
+        assert config_handler.read_sector_model_initial_conditions.called_with('test_model')
+
 
 class TestDimensions:
     """Dimension definitions (regions, intervals) should be readable. May move to make it

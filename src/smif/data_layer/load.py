@@ -21,13 +21,13 @@ def dump(data, file_path):
 
     Parameters
     ----------
-    file_path : str
-        The path of the configuration file to write
     data
         Data to write (should be lists, dicts and simple values)
+    file_path : str
+        The path of the configuration file to write
     """
     with open(file_path, 'w') as file_handle:
         yaml = YAML()
-        yaml.default_flow_style=False
-        yaml.allow_unicode=True
+        yaml.default_flow_style = False
+        yaml.allow_unicode = True
         return yaml.dump(data, file_handle)

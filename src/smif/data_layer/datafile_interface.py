@@ -300,6 +300,9 @@ class DatafileInterface(DataInterface):
         sector_model['interventions'] = \
             self.read_sector_model_interventions(sector_model_name)
 
+        sector_model['initial_conditions'] = \
+            self.read_sector_model_initial_conditions(sector_model_name)
+
         return sector_model
 
     def write_sector_model(self, sector_model):
@@ -376,8 +379,37 @@ class DatafileInterface(DataInterface):
             The name of the intervention yml file to read in
         """
         filepath = self.file_dir['interventions']
-        data = self._read_yaml_file(filepath, filename, extension='')
-        return list(data)
+        _, ext = os.path.splitext(filename)
+        if ext == '.csv':
+            data = self._read_state_file(os.path.join(filepath, filename))
+            try:
+                data = self._reshape_csv_interventions(data)
+            except ValueError:
+                raise ValueError("Error reshaping data for {}".format(filename))
+        else:
+            data = self._read_yaml_file(filepath, filename, extension='')
+
+        return data
+
+    def _reshape_csv_interventions(self, data):
+        new_data = []
+        for element in data:
+            reshaped_data = {}
+            for key, value in element.items():
+                if key.endswith(('_value', '_unit')):
+                    new_key, sub_key = key.rsplit(sep="_", maxsplit=1)
+                    if new_key in reshaped_data:
+                        if not isinstance(reshaped_data[new_key], dict):
+                            msg = "Duplicate heading in csv data: {}"
+                            raise ValueError(msg.format(new_key))
+                        else:
+                            reshaped_data[new_key].update({sub_key: value})
+                    else:
+                        reshaped_data[new_key] = {sub_key: value}
+                else:
+                    reshaped_data[key] = value
+            new_data.append(reshaped_data)
+        return new_data
 
     def read_sector_model_interventions(self, sector_model_name):
         """Read a SectorModel's interventions
@@ -406,6 +438,20 @@ class DatafileInterface(DataInterface):
 
     def _read_planned_interventions(self, filename, filedir):
         """Read the planned intervention data from a file
+
+        Planned interventions are stored either a csv or yaml file. In the case
+        of the former, the file should look like this::
+
+            name,build_year
+            asset_a,2010
+            asset_b,2015
+
+        In the case of a yaml, file, the format is as follows::
+
+            - name: asset_a
+              build_year: 2010
+            - name: asset_b
+              build_year: 2015
 
         Arguments
         ---------
@@ -493,6 +539,11 @@ class DatafileInterface(DataInterface):
     @staticmethod
     def _read_state_file(fname):
         """Read list of name, build_year from state file
+
+        Returns
+        -------
+        dict
+            Keys of dict are header names from csv file
         """
         with open(fname, 'r') as file_handle:
             reader = csv.DictReader(file_handle)
@@ -1027,7 +1078,13 @@ class DatafileInterface(DataInterface):
         region_names = self.read_region_names(spatial_resolution)
         interval_names = self.read_interval_names(temporal_resolution)
 
-        return self.data_list_to_ndarray(data, region_names, interval_names)
+        try:
+            array = self.data_list_to_ndarray(data, region_names, interval_names)
+        except DataMismatchError:
+            msg = "DataMismatch in scenario: '{}' and facet:'{}'"
+            raise DataMismatchError(msg.format(scenario_name, facet_name))
+        else:
+            return array
 
     def read_narrative_sets(self):
         """Read narrative sets from project configuration

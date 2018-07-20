@@ -41,7 +41,7 @@ interventions:
   - water_supply.yml
 initial_conditions:
   - water_supply_oxford.yml
-  - reservoirs.yml
+  - reservoirs.csv
 parameters:
 - name: clever_water_meter_savings
   description: The savings from smart water meters

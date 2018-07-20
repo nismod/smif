@@ -66,13 +66,25 @@ class DecisionManager(object):
 
     def _set_up_decision_modules(self):
 
-        for strategy in self._strategies:
+        self.logger.info("%s strategies found", len(self._strategies))
+        interventions = []
+
+        for index, strategy in enumerate(self._strategies):
             if strategy['strategy'] == 'pre-specified-planning':
-                self._decision_modules.append(
-                    PreSpecified(self._timesteps, strategy['interventions']))
+
+                msg = "Adding %s interventions to pre-specified-planning %s"
+                self.logger.info(msg, len(strategy['interventions']), index)
+
+                interventions.extend(strategy['interventions'])
+
             else:
                 msg = "Only pre-specified planning strategies are implemented"
                 raise NotImplementedError(msg)
+
+        if interventions:
+            self._decision_modules.append(
+                PreSpecified(self._timesteps, interventions)
+                )
 
     def decision_loop(self):
         """Generate bundles of simulation steps to run.
@@ -98,7 +110,7 @@ class DecisionManager(object):
             for module in self._decision_modules:
                 yield module._get_next_decision_iteration()
         else:
-            yield {0: self._timesteps}
+            yield {0: [x for x in self._timesteps]}
 
     def get_decision(self, timestep, iteration):
         """Return all interventions built in the given timestep
@@ -117,6 +129,9 @@ class DecisionManager(object):
         decisions = []
         for module in self._decision_modules:
             decisions.extend(module.get_decision(timestep, iteration))
+        self.logger.debug(
+            "Retrieved %s decisions from %s",
+            len(decisions), str(self._decision_modules))
         return decisions
 
 
@@ -230,8 +245,8 @@ class PreSpecified(DecisionModule):
     ---------
     timesteps : list
     planned_interventions : list
-        A list of tuples ``('intervention_name', build_year)`` representing
-        historical or planned interventions
+        A list of dicts ``{'name': 'intervention_name', 'build_year': 2010}``
+        representing historical or planned interventions
     """
 
     def __init__(self, timesteps, planned_interventions):
@@ -274,10 +289,9 @@ class PreSpecified(DecisionModule):
 
         Examples
         --------
-        >>> dm = PreSpecified([2010, 2015], [('intervention_a', 2010)])
+        >>> dm = PreSpecified([2010, 2015], [{'name': 'intervention_a', 'build_year': 2010}])
         >>> dm.get_decision(2010)
-        [('intervention_a', 2010)]
-
+        [{'name': intervention_a', 'build_year': 2010}]
         """
         decisions = []
 
