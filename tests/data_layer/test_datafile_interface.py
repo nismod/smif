@@ -514,7 +514,7 @@ class TestSectorModel:
 
         config_handler.read_interventions = Mock(return_value=[{'name': '_an_intervention'}])
 
-        config_handler.read_sector_model_interventions('sector_model')
+        config_handler._read_sector_model_interventions('sector_model')
         assert config_handler.read_interventions.called_with('energy_demand.csv')
 
     def test_read_interventions(self, get_handler):
@@ -561,12 +561,12 @@ class TestSectorModel:
         config_handler = get_handler
         config_handler._sector_model_exists = Mock()
         config_handler._read_sector_model_file = Mock(return_value=get_sector_model)
-        config_handler.read_sector_model_interventions = Mock()
+        config_handler._read_sector_model_interventions = Mock()
         config_handler.read_sector_model_initial_conditions = Mock()
 
         config_handler.read_sector_model('test_model')
         assert config_handler._sector_model_exists.called_with('test_model')
-        assert config_handler.read_sector_model_interventions.called_with('test_model')
+        assert config_handler._read_sector_model_interventions.called_with('test_model')
         assert config_handler.read_sector_model_initial_conditions.called_with('test_model')
 
 
@@ -1003,14 +1003,14 @@ class TestNarratives:
     def test_read_narrative_definition(self, setup_folder_structure, get_handler,
                                        project_config):
         expected = project_config['narratives'][0]
-        actual = get_handler.read_narrative_definition(expected['name'])
+        actual = get_handler.read_narrative(expected['name'])
         assert actual == expected
 
     def test_read_narrative_definition_missing(self, get_handler):
         """Should raise a DataNotFoundError if narrative not defined
         """
         with raises(DataNotFoundError) as ex:
-            get_handler.read_narrative_definition('missing')
+            get_handler.read_narrative('missing')
         assert "Narrative 'missing' not found" in str(ex)
 
     def test_read_interventions(self, setup_folder_structure, water_interventions_abc,

@@ -657,22 +657,6 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_narrative_definition(self, narrative_name):
-        """Read the narrative definition
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the narrative
-
-        Returns
-        -------
-        dict
-
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
     def read_coefficients(self, source_name, destination_name):
         """Reads coefficients from file on disk
 

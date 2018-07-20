@@ -22,6 +22,21 @@ class MemoryInterface(DataInterface):
         self._strategies = {}
         self._state = {}
 
+    def prepare_warm_start(self, modelrun_id):
+        return self._sos_model_runs[modelrun_id]['timesteps'][0]
+
+    def read_scenario_definition(self, scenario_name):
+        return self._scenarios[scenario_name]
+
+    def read_scenario_set_scenario_definitions(self):
+        return self._scenario_sets
+
+    def read_scenarios(self):
+        return self._scenarios
+
+    def read_sos_model(self, sos_model_name):
+        return self._sos_models[sos_model_name]
+
     def read_strategies(self):
         return self._strategies.items()
 
@@ -52,6 +67,9 @@ class MemoryInterface(DataInterface):
     def update_sos_model(self, sos_model_name, sos_model):
         self._sos_models[sos_model_name] = sos_model
 
+    def delete_sos_model(self, sos_model_name):
+        del self._sos_models[sos_model_name]
+
     def read_sector_models(self):
         return self._sector_models.values()
 
@@ -63,6 +81,9 @@ class MemoryInterface(DataInterface):
 
     def update_sector_model(self, sector_model_name, sector_model):
         self._sector_models[sector_model_name] = sector_model
+
+    def delete_sector_model(self, sector_model_name):
+        del self._sector_models[sector_model_name]
 
     def read_region_definitions(self):
         return self._regions.values()
@@ -100,6 +121,9 @@ class MemoryInterface(DataInterface):
     def update_scenario_set(self, scenario_set):
         self._scenario_sets[scenario_set['name']] = scenario_set
 
+    def delete_scenario_set(self, scenario_set_name):
+        del self._scenario_sets[scenario_set_name]
+
     def read_scenario_data(self, scenario_name, parameter_name,
                            spatial_resolution, temporal_resolution, timestep):
         return self._scenarios[(
@@ -114,11 +138,17 @@ class MemoryInterface(DataInterface):
             temporal_resolution, timestep
         )] = data
 
+    def read_scenario(self, scenario_name):
+        return self._scenarios[scenario_name]
+
     def write_scenario(self, scenario):
         self._scenarios[scenario['name']] = scenario
 
     def update_scenario(self, scenario):
         self._scenarios[scenario['name']] = scenario
+
+    def delete_scenario(self, scenario_name):
+        del self._scenarios[scenario_name]
 
     def read_narrative_sets(self):
         return self._narrative_sets.values()
@@ -132,7 +162,13 @@ class MemoryInterface(DataInterface):
     def update_narrative_set(self, narrative_set):
         self._narrative_sets[narrative_set['name']] = narrative_set
 
-    def read_narrative_data(self, narrative_name):
+    def delete_narrative_set(self, narrative_set_name):
+        del self._narrative_sets[narrative_set_name]
+
+    def read_narratives(self):
+        return self._narratives
+
+    def read_narrative(self, narrative_name):
         return self._narratives[narrative_name]
 
     def write_narrative(self, narrative):
@@ -140,6 +176,12 @@ class MemoryInterface(DataInterface):
 
     def update_narrative(self, narrative):
         self._narratives[narrative['name']] = narrative
+
+    def delete_narrative(self, narrative_name):
+        del self._narratives[narrative_name]
+
+    def read_narrative_data(self, narrative_name):
+        return self._narratives[narrative_name]['data']
 
     def read_state(self, modelrun_name, timestep=None, decision_iteration=None):
         """state is a list of (intervention_name, build_year), output of decision module/s

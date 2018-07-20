@@ -1206,7 +1206,7 @@ class DatafileInterface(DataInterface):
         return project_config['narratives']
 
     def read_narrative(self, narrative_name):
-        """Read all narrative data from a certain narrative
+        """Read all narrative configuration data
 
         Arguments
         ---------
@@ -1219,16 +1219,11 @@ class DatafileInterface(DataInterface):
             A narrative data dictionary
         """
         project_config = self._read_project_config()
-        for narrative_data in project_config['narratives']:
-            if narrative_data['name'] == narrative_name:
-                return narrative_data
-        raise DataNotFoundError("narrative '%s' not found" % narrative_name)
-
-    def _narrative_exists(self, narrative_name):
-        project_config = self._read_project_config()
         for narrative in project_config['narratives']:
             if narrative['name'] == narrative_name:
                 return narrative
+        msg = "Narrative '%s' not found"
+        raise DataNotFoundError(msg % narrative_name)
 
     def write_narrative(self, narrative):
         """Write narrative to project configuration
@@ -1238,12 +1233,14 @@ class DatafileInterface(DataInterface):
         narrative: dict
             A narrative dict
         """
-        if self._narrative_exists(narrative['name']):
-            raise DataExistsError("narrative '%s' already exists" % narrative['name'])
-        else:
+        try:
+            self.read_narrative(narrative['name'])
+        except DataNotFoundError:
             project_config = self._read_project_config()
             project_config['narratives'].append(narrative)
             self._write_project_config(project_config)
+        else:
+            raise DataExistsError("narrative '%s' already exists" % narrative['name'])
 
     def update_narrative(self, narrative_name, narrative):
         """Update narrative to project configuration
@@ -1255,7 +1252,7 @@ class DatafileInterface(DataInterface):
         narrative: dict
             The updated narrative dict
         """
-        if not self._narrative_exists(narrative_name):
+        if not self.read_narrative(narrative_name):
             raise DataNotFoundError("narrative '%s' not found" % narrative_name)
 
         project_config = self._read_project_config()
@@ -1279,7 +1276,7 @@ class DatafileInterface(DataInterface):
         narrative_name: str
             A narrative name
         """
-        if not self._narrative_exists(narrative_name):
+        if not self.read_narrative(narrative_name):
             raise DataNotFoundError("narrative '%s' not found" % narrative_name)
 
         project_config = self._read_project_config()
@@ -1292,7 +1289,7 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def read_narrative_data(self, narrative_name):
-        """Read narrative data file
+        """Read narrative data file from the 'filename' key in the narrative configuration
 
         Arguments
         ---------
@@ -1305,45 +1302,14 @@ class DatafileInterface(DataInterface):
             A list with dictionaries containing the contents of 'narrative_name' data file
         """
         # Find filename for this narrative
-        filename = None
-        project_config = self._read_project_config()
-        for narrative in project_config['narratives']:
-            if narrative['name'] == narrative_name:
-                filename = narrative['filename']
-                break
-
-        if filename is None:
-            raise DataNotFoundError(
-                'Narrative \'{}\' has no data defined'.format(narrative_name))
-
-        # Read the narrative data from file
         try:
+            filename = self.read_narrative(narrative_name)['filename']
             narrative_data = load(os.path.join(self.file_dir['narratives'], filename))
-        except FileNotFoundError:
+        except (FileNotFoundError, DataNotFoundError):
             raise DataNotFoundError(
                 'Narrative \'{}\' has no data defined'.format(narrative_name))
 
         return narrative_data
-
-    def read_narrative_definition(self, narrative_name):
-        """Read the narrative definition
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the narrative
-
-        Returns
-        -------
-        dict
-
-        """
-        project_config = self._read_project_config()
-        for narrative in project_config['narratives']:
-            if narrative['name'] == narrative_name:
-                return narrative
-
-        raise DataNotFoundError('Narrative \'{}\' not found'.format(narrative_name))
 
     def read_coefficients(self, source_name, destination_name):
         """Reads coefficients from file on disk
