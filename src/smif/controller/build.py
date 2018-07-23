@@ -146,7 +146,7 @@ def get_pre_specified_planning_strategies(model_run_config, handler):
             strategy['interventions'] = decisions
             LOGGER.info("Added %s pre-specified planning interventions to %s",
                         len(decisions), strategy['model_name'])
-        strategies.append(strategy)
+            strategies.append(strategy)
     return strategies
 
 
@@ -173,7 +173,7 @@ def get_initial_conditions_strategies(sector_model_objects):
             LOGGER.info("Added %s pre-specified historical decisions to %s",
                         len(sector_model.initial_conditions),
                         strategy['model_name'])
-        strategies.append(strategy)
+            strategies.append(strategy)
     return strategies
 
 
