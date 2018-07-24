@@ -42,7 +42,7 @@ class Scheduler(object):
         if self._status[model_run_name] is not 'running':
 
             smif_call = (
-                'exec smif ' +
+                'smif ' +
                 '-'*(int(args['verbosity']) > 0) + 'v'*int(args['verbosity']) +
                 ' run' + ' ' + model_run_name + ' ' +
                 '-d' + ' ' + args['directory'] + ' ' +
