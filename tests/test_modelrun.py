@@ -16,7 +16,6 @@ def get_model_run_config_data():
         'name': 'unique_model_run_name',
         'stamp': '2017-09-20T12:53:23+00:00',
         'description': 'a description of what the model run contains',
-        'decision_module': None,
         'timesteps': [2010, 2011, 2012],
         'sos_model': sos_model,
         'scenarios':
