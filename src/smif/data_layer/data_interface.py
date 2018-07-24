@@ -1,4 +1,17 @@
-"""Common data interface
+"""This module provides a common data interface to smif
+
+
+
+Raises
+------
+DataNotFoundError
+    If data cannot be found in the store when try to read from the store
+DataExistsError
+    If data already exists in the store when trying to write to the store
+    (use an update method instead)
+DataMismatchError
+    Data presented to read, write and update methods is in the
+    incorrect format or of wrong dimensions to that expected
 """
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
@@ -14,6 +27,13 @@ class DataInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def read_units_file_name(self):
+        """Reads the unit definition file name from the store
+
+        Returns
+        -------
+        str
+            Path to the units file
+        """
         raise NotImplementedError()
 
     @abstractmethod
@@ -85,7 +105,7 @@ class DataInterface(metaclass=ABCMeta):
         Returns
         -------
         list
-            A list of sos_models dicts
+            A list of sos_model dicts
         """
         raise NotImplementedError()
 
@@ -257,6 +277,21 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
+    def read_region_names(self, region_definition_name):
+        """Return the set of unique region names in region set `region_definition_name`
+
+        Arguments
+        ---------
+        region_definition_name: str
+            Name of the region_definition
+
+        Returns
+        -------
+        list
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
     def write_region_definition(self, region_definition):
         """Write region_definition to project configuration
 
@@ -317,6 +352,20 @@ class DataInterface(metaclass=ABCMeta):
         Expects headings of `id`, `start`, `end`
         """
         raise NotImplementedError()
+
+    @abstractmethod
+    def read_interval_names(self, interval_definition_name):
+        """Reads the unique set of interval names
+
+        Arguments
+        ---------
+        interval_definition_name: str
+
+        Returns
+        -------
+        list
+
+        """
 
     @abstractmethod
     def write_interval_definition(self, interval_definition):
@@ -474,10 +523,26 @@ class DataInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def write_scenario(self, scenario):
+        """Write scenario to project configuration
+
+        Arguments
+        ---------
+        scenario: dict
+            A scenario dict
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def update_scenario(self, scenario):
+        """Update scenario to project configuration
+
+        Arguments
+        ---------
+        scenario_name: str
+            Name of the (original) entry
+        scenario: dict
+            The updated scenario dict
+        """
         raise NotImplementedError()
 
     @abstractmethod
@@ -658,9 +723,11 @@ class DataInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def read_coefficients(self, source_name, destination_name):
-        """Reads coefficients from file on disk
+        """Reads coefficients from the store
 
-        Coefficients are uniquely identified by their source/destination names
+        Coefficients are uniquely identified by their source/destination names.
+        This method and `write_coefficients` implement caching of conversion
+        coefficients between dimensions.
 
         Arguments
         ---------
@@ -682,9 +749,11 @@ class DataInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def write_coefficients(self, source_name, destination_name, data):
-        """Writes coefficients to file on disk
+        """Writes coefficients to the store
 
-        Coefficients are uniquely identified by their source/destination names
+Coefficients are uniquely identified by their source/destination names.
+        This method and `read_coefficients` implement caching of conversion
+        coefficients between dimensions.
 
         Arguments
         ---------

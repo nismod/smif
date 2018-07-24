@@ -73,17 +73,7 @@ class DatafileInterface(DataInterface):
             return None
 
     def read_sos_model_runs(self):
-        """Read all system-of-system model runs from Yaml files
-
-        sos_model_runs.yml
-
-        Returns
-        -------
-        list
-            A list of sos_model_run dicts
-        """
         sos_model_runs = []
-
         sos_model_run_names = self._read_filenames_in_dir(self.file_dir['sos_model_runs'],
                                                           '.yml')
         for sos_model_run_name in sos_model_run_names:
@@ -93,18 +83,6 @@ class DatafileInterface(DataInterface):
         return sos_model_runs
 
     def read_sos_model_run(self, sos_model_run_name):
-        """Read a system-of-system model run
-
-        Arguments
-        ---------
-        sos_model_run_name: str
-            A sos_model_run name
-
-        Returns
-        -------
-        sos_model_run: dict
-            A sos_model_run dictionary
-        """
         if not self._sos_model_run_exists(sos_model_run_name):
             raise DataNotFoundError("sos_model_run '%s' not found" % sos_model_run_name)
         return self._read_yaml_file(self.file_dir['sos_model_runs'], sos_model_run_name)
@@ -114,13 +92,6 @@ class DatafileInterface(DataInterface):
             os.path.join(self.file_dir['sos_model_runs'], name + '.yml'))
 
     def write_sos_model_run(self, sos_model_run):
-        """Write system-of-system model run to Yaml file
-
-        Arguments
-        ---------
-        sos_model_run: dict
-            A sos_model_run dictionary
-        """
         if self._sos_model_run_exists(sos_model_run['name']):
             raise DataExistsError("sos_model_run '%s' already exists" % sos_model_run['name'])
         else:
@@ -128,15 +99,6 @@ class DatafileInterface(DataInterface):
                                   sos_model_run['name'], sos_model_run)
 
     def update_sos_model_run(self, sos_model_run_name, sos_model_run):
-        """Update system-of-system model run in Yaml file
-
-        Arguments
-        ---------
-        sos_model_run_name: str
-            A sos_model_run name
-        sos_model_run: dict
-            A sos_model_run dictionary
-        """
         if sos_model_run_name != sos_model_run['name']:
             raise DataMismatchError(
                 "sos_model_run name '{}' must match '{}'".format(
@@ -149,26 +111,12 @@ class DatafileInterface(DataInterface):
                               sos_model_run['name'], sos_model_run)
 
     def delete_sos_model_run(self, sos_model_run_name):
-        """Delete a system-of-system model run
-
-        Arguments
-        ---------
-        sos_model_run_name: str
-            A sos_model_run name
-        """
         if not self._sos_model_run_exists(sos_model_run_name):
             raise DataNotFoundError("sos_model_run '%s' not found" % sos_model_run_name)
 
         os.remove(os.path.join(self.file_dir['sos_model_runs'], sos_model_run_name + '.yml'))
 
     def read_sos_models(self):
-        """Read all system-of-system models from Yaml files
-
-        Returns
-        -------
-        list
-            A list of sos_models dicts
-        """
         sos_models = []
 
         sos_model_names = self._read_filenames_in_dir(self.file_dir['sos_models'], '.yml')
@@ -178,18 +126,6 @@ class DatafileInterface(DataInterface):
         return sos_models
 
     def read_sos_model(self, sos_model_name):
-        """Read a specific system-of-system model
-
-        Arguments
-        ---------
-        sos_model_name: str
-            A sos_model name
-
-        Returns
-        -------
-        sos_model: dict
-            A sos_model dictionary
-        """
         if not self._sos_model_exists(sos_model_name):
             raise DataNotFoundError("sos_model '%s' not found" % sos_model_name)
         return self._read_yaml_file(self.file_dir['sos_models'], sos_model_name)
@@ -199,13 +135,6 @@ class DatafileInterface(DataInterface):
             os.path.join(self.file_dir['sos_models'], name + '.yml'))
 
     def write_sos_model(self, sos_model):
-        """Write system-of-system model to Yaml file
-
-        Arguments
-        ---------
-        sos_model: dict
-            A sos_model dictionary
-        """
         if self._sos_model_exists(sos_model['name']):
             raise DataExistsError("sos_model '%s' already exists" % sos_model['name'])
         else:
@@ -216,15 +145,6 @@ class DatafileInterface(DataInterface):
             )
 
     def update_sos_model(self, sos_model_name, sos_model):
-        """Update system-of-system model in Yaml file
-
-        Arguments
-        ---------
-        sos_model_name: str
-            A sos_model name
-        sos_model: dict
-            A sos_model dictionary
-        """
         if sos_model_name != sos_model['name']:
             raise DataMismatchError(
                 "sos_model name '{}' must match '{}'".format(
@@ -237,28 +157,12 @@ class DatafileInterface(DataInterface):
                               sos_model['name'], sos_model)
 
     def delete_sos_model(self, sos_model_name):
-        """Delete a system-of-system model
-
-        Arguments
-        ---------
-        sos_model_name: str
-            A sos_model name
-        """
         if not self._sos_model_exists(sos_model_name):
             raise DataNotFoundError("sos_model '%s' not found" % sos_model_name)
 
         os.remove(os.path.join(self.file_dir['sos_models'], sos_model_name + '.yml'))
 
     def read_sector_models(self):
-        """Read all sector models from Yaml files
-
-        sector_models.yml
-
-        Returns
-        -------
-        list
-            A list of sector_model dicts
-        """
         sector_models = []
         file_dir = self.file_dir['sector_models']
 
@@ -280,18 +184,6 @@ class DatafileInterface(DataInterface):
         return self._read_yaml_file(self._get_sector_model_filepath(sector_model_name))
 
     def read_sector_model(self, sector_model_name):
-        """Read a sector model
-
-        Arguments
-        ---------
-        sector_model_name: str
-            A sector_model name
-
-        Returns
-        -------
-        sector_model: dict
-            A sector_model dictionary
-        """
         if not self._sector_model_exists(sector_model_name):
             raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
 
@@ -306,13 +198,6 @@ class DatafileInterface(DataInterface):
         return sector_model
 
     def write_sector_model(self, sector_model):
-        """Write sector model to Yaml file
-
-        Arguments
-        ---------
-        sector_model: dict
-            A sector_model dictionary
-        """
         if self._sector_model_exists(sector_model['name']):
             raise DataExistsError("sector_model '%s' already exists" % sector_model['name'])
 
@@ -324,15 +209,6 @@ class DatafileInterface(DataInterface):
             self.file_dir['sector_models'], sector_model['name'], sector_model)
 
     def update_sector_model(self, sector_model_name, sector_model):
-        """Update sector model in Yaml file
-
-        Arguments
-        ---------
-        sector_model_name: str
-            A sector_model name
-        sector_model: dict
-            A sector_model dictionary
-        """
         if sector_model_name != sector_model['name']:
             raise DataMismatchError(
                 "sector_model name '{}' must match '{}'".format(
@@ -358,31 +234,12 @@ class DatafileInterface(DataInterface):
                               sector_model['name'], sector_model)
 
     def delete_sector_model(self, sector_model_name):
-        """Delete a sector model
-
-        Arguments
-        ---------
-        sector_model_name: str
-            A sector_model name
-        """
         if not self._sector_model_exists(sector_model_name):
             raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
 
         os.remove(os.path.join(self.file_dir['sector_models'], sector_model_name + '.yml'))
 
     def read_interventions(self, filename):
-        """Read the interventions from filename
-
-        Arguments
-        ---------
-        filename: str
-            The name of the intervention yml/csv file to read in
-
-        Returns
-        -------
-        list
-            A list of intervention dictionaries
-        """
         filepath = self.file_dir['interventions']
         _, ext = os.path.splitext(filename)
         if ext == '.csv':
@@ -417,17 +274,6 @@ class DatafileInterface(DataInterface):
         return new_data
 
     def _read_sector_model_interventions(self, sector_model_name):
-        """Read a SectorModel's interventions
-
-        Arguments
-        ---------
-        sector_model_name: str
-
-        Returns
-        -------
-        list
-            A list of intervention dictionaries
-        """
         if not self._sector_model_exists(sector_model_name):
             raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
 
@@ -500,9 +346,6 @@ class DatafileInterface(DataInterface):
         return initial_condition_list
 
     def read_state(self, modelrun_name, timestep, decision_iteration=None):
-        """Read list of (name, build_year) for a given modelrun, timestep,
-        decision
-        """
         fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
         if not os.path.exists(fname):
             msg = "State file does not exist for timestep {} and iteration {}"
@@ -511,8 +354,6 @@ class DatafileInterface(DataInterface):
         return state
 
     def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):
-        """Write state, a list of decision tuples (name, build_year) to file
-        """
         fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
         os.makedirs(os.path.dirname(fname), exist_ok=True)
         with open(fname, 'w+') as file_handle:
@@ -561,13 +402,6 @@ class DatafileInterface(DataInterface):
         return state
 
     def read_region_definitions(self):
-        """Read region_definitions from project configuration
-
-        Returns
-        -------
-        list
-            A list of region_definition dicts
-        """
         project_config = self._read_project_config()
         return project_config['region_definitions']
 
@@ -577,21 +411,6 @@ class DatafileInterface(DataInterface):
                 return region_definition
 
     def read_region_definition_data(self, region_definition_name):
-        """Read region_definition data file into a Fiona feature collection
-
-        The file format must be possible to parse with GDAL, and must contain
-        an attribute "name" to use as an identifier for the region_definition.
-
-        Arguments
-        ---------
-        region_definition_name: str
-            Name of the region_definition
-
-        Returns
-        -------
-        list
-            A list of data from the specified file in a fiona formatted dict
-        """
         # Find filename for this region_definition_name
         region_definition = self._region_definition_exists(region_definition_name)
 
@@ -625,14 +444,6 @@ class DatafileInterface(DataInterface):
         return names
 
     def write_region_definition(self, region_definition):
-        """Write region_definition to project configuration
-
-        Arguments
-        ---------
-        region_definition: dict
-            A region_definition dict
-        """
-
         if self._region_definition_exists(region_definition['name']):
             raise DataExistsError(
                 "region_definition '%s' already exists" % region_definition['name'])
@@ -642,15 +453,6 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def update_region_definition(self, region_definition_name, region_definition):
-        """Update region_definition to project configuration
-
-        Arguments
-        ---------
-        region_definition_name: str
-            Name of the (original) entry
-        region_definition: dict
-            The updated region_definition dict
-        """
         previous_region_definition = self._region_definition_exists(region_definition_name)
         if previous_region_definition is None:
             raise DataNotFoundError(
@@ -671,13 +473,6 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def read_interval_definitions(self):
-        """Read interval_definition sets from project configuration
-
-        Returns
-        -------
-        list
-            A list of interval_definition set dicts
-        """
         project_config = self._read_project_config()
         return project_config['interval_definitions']
 
@@ -741,13 +536,6 @@ class DatafileInterface(DataInterface):
         ]
 
     def write_interval_definition(self, interval_definition):
-        """Write interval_definition to project configuration
-
-        Arguments
-        ---------
-        interval_definition: dict
-            A interval_definition dict
-        """
         if self._interval_definition_exists(interval_definition['name']):
             raise DataExistsError(
                 "Interval definition '%s' already exists" % interval_definition['name'])
@@ -757,15 +545,6 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def update_interval_definition(self, interval_definition_name, interval_definition):
-        """Update interval_definition to project configuration
-
-        Arguments
-        ---------
-        interval_definition_name: str
-            Name of the (original) entry
-        interval_definition: dict
-            The updated interval_definition dict
-        """
         if not self._interval_definition_exists(interval_definition_name):
             raise DataNotFoundError(
                 "Interval definition '%s' does not exist" % interval_definition_name)
@@ -784,31 +563,15 @@ class DatafileInterface(DataInterface):
 
         self._write_project_config(project_config)
 
-    def read_scenario_definitions(self):
-        project_config = self._read_project_config()
-        return project_config['scenarios']
-
     def _scenario_definition_exists(self, scenario_name):
-        for scenario in self.read_scenario_definitions():
+        for scenario in self.read_scenarios():
             if scenario['name'] == scenario_name:
                 return scenario
 
     def read_scenario_set_scenario_definitions(self, scenario_set_name):
-        """Read all scenarios from a certain scenario_set
-
-        Arguments
-        ---------
-        scenario_set_name: str
-            Name of the scenario_set
-
-        Returns
-        -------
-        list
-            A list of scenarios within the specified 'scenario_set_name'
-        """
         # Filter only the scenarios of the selected scenario_set_name
         filtered_scenario_data = [
-            data for data in self.read_scenario_definitions()
+            data for data in self.read_scenarios()
             if data['scenario_set'] == scenario_set_name
         ]
 
@@ -819,18 +582,6 @@ class DatafileInterface(DataInterface):
         return filtered_scenario_data
 
     def read_scenario_definition(self, scenario_name):
-        """Read scenario definition data
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the scenario
-
-        Returns
-        -------
-        dict
-            The scenario definition
-        """
         scenario_definition = self._scenario_definition_exists(scenario_name)
 
         if scenario_definition is None:
@@ -840,13 +591,6 @@ class DatafileInterface(DataInterface):
         return scenario_definition
 
     def read_scenario_sets(self):
-        """Read scenario sets from project configuration
-
-        Returns
-        -------
-        list
-            A list of scenario set dicts
-        """
         project_config = self._read_project_config()
         return project_config['scenario_sets']
 
@@ -856,18 +600,6 @@ class DatafileInterface(DataInterface):
                 return scenario_set
 
     def read_scenario_set(self, scenario_set_name):
-        """Read a scenario_set
-
-        Arguments
-        ---------
-        scenario_set_name: str
-            Name of the scenario_set
-
-        Returns
-        -------
-        dict
-            Scenario set definition
-        """
         scenario_set = self._scenario_set_exists(scenario_set_name)
 
         if scenario_set is None:
@@ -877,13 +609,6 @@ class DatafileInterface(DataInterface):
         return scenario_set
 
     def write_scenario_set(self, scenario_set):
-        """Write scenario_set to project configuration
-
-        Arguments
-        ---------
-        scenario_set: dict
-            A scenario_set dict
-        """
         if self._scenario_set_exists(scenario_set['name']):
             raise DataExistsError("scenario_set '%s' already exists" % scenario_set['name'])
 
@@ -892,15 +617,6 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def update_scenario_set(self, scenario_set_name, scenario_set):
-        """Update scenario_set to project configuration
-
-        Arguments
-        ---------
-        scenario_set_name: str
-            Name of the (original) entry
-        scenario_set: dict
-            The updated scenario_set dict
-        """
         if not self._scenario_set_exists(scenario_set_name):
             raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
 
@@ -918,14 +634,6 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def delete_scenario_set(self, scenario_set_name):
-        """Delete scenario_set from project configuration
-        and all scenarios within scenario_set
-
-        Arguments
-        ---------
-        scenario_set_name: str
-            A scenario_set name
-        """
         if not self._scenario_set_exists(scenario_set_name):
             raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
 
@@ -944,29 +652,10 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def read_scenarios(self):
-        """Read scenarios from project configuration
-
-        Returns
-        -------
-        list
-            A list of scenario dicts
-        """
         project_config = self._read_project_config()
         return project_config['scenarios']
 
     def read_scenario(self, scenario_name):
-        """Read a scenario
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the scenario
-
-        Returns
-        -------
-        dict
-            A scenario dictionary
-        """
         project_config = self._read_project_config()
         for scenario_data in project_config['scenarios']:
             if scenario_data['name'] == scenario_name:
@@ -980,13 +669,6 @@ class DatafileInterface(DataInterface):
                 return scenario
 
     def write_scenario(self, scenario):
-        """Write scenario to project configuration
-
-        Arguments
-        ---------
-        scenario: dict
-            A scenario dict
-        """
         if self._scenario_exists(scenario['name']):
             raise DataExistsError("scenario '%s' already exists" % scenario['name'])
         else:
@@ -995,15 +677,6 @@ class DatafileInterface(DataInterface):
             self._write_project_config(project_config)
 
     def update_scenario(self, scenario_name, scenario):
-        """Update scenario to project configuration
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the (original) entry
-        scenario: dict
-            The updated scenario dict
-        """
         if not self._scenario_exists(scenario_name):
             raise DataNotFoundError("scenario '%s' not found" % scenario_name)
 
@@ -1021,13 +694,6 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def delete_scenario(self, scenario_name):
-        """Delete scenario from project configuration
-
-        Arguments
-        ---------
-        scenario_name: str
-            A scenario name
-        """
         if not self._scenario_exists(scenario_name):
             raise DataNotFoundError("scenario '%s' not found" % scenario_name)
 
@@ -1042,23 +708,6 @@ class DatafileInterface(DataInterface):
 
     def read_scenario_data(self, scenario_name, facet_name,
                            spatial_resolution, temporal_resolution, timestep):
-        """Read scenario data file
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the scenario
-        facet_name: str
-            Name of the scenario facet to read
-        spatial_resolution : str
-        temporal_resolution : str
-        timestep: int
-
-        Returns
-        -------
-        data: numpy.ndarray
-
-        """
         # Find filenames for this scenario
         filename = None
         project_config = self._read_project_config()
@@ -1097,30 +746,11 @@ class DatafileInterface(DataInterface):
             return array
 
     def read_narrative_sets(self):
-        """Read narrative sets from project configuration
-
-        Returns
-        -------
-        list
-            A list of narrative set dicts
-        """
         # Find filename for this narrative
         project_config = self._read_project_config()
         return project_config['narrative_sets']
 
     def read_narrative_set(self, narrative_set_name):
-        """Read all narratives from a certain narrative_set
-
-        Arguments
-        ---------
-        narrative_set_name: str
-            Name of the narrative_set
-
-        Returns
-        -------
-        list
-            A narrative_set dictionary
-        """
         project_config = self._read_project_config()
         for narrative_data in project_config['narrative_sets']:
             if narrative_data['name'] == narrative_set_name:
@@ -1134,13 +764,6 @@ class DatafileInterface(DataInterface):
                 return narrative_set
 
     def write_narrative_set(self, narrative_set):
-        """Write narrative_set to project configuration
-
-        Arguments
-        ---------
-        narrative_set: dict
-            A narrative_set dict
-        """
         if self._narrative_set_exists(narrative_set['name']):
             raise DataExistsError("narrative_set '%s' already exists" % narrative_set['name'])
         else:
@@ -1149,15 +772,6 @@ class DatafileInterface(DataInterface):
             self._write_project_config(project_config)
 
     def update_narrative_set(self, narrative_set_name, narrative_set):
-        """Update narrative_set to project configuration
-
-        Arguments
-        ---------
-        narrative_set_name: str
-            Name of the (original) entry
-        narrative_set: dict
-            The updated narrative_set dict
-        """
         if not self._narrative_set_exists(narrative_set_name):
             raise DataNotFoundError("narrative_set '%s' not found" % narrative_set_name)
 
@@ -1175,13 +789,6 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def delete_narrative_set(self, narrative_set_name):
-        """Delete narrative_set from project configuration
-
-        Arguments
-        ---------
-        narrative_set_name: str
-            A narrative_set name
-        """
         if not self._narrative_set_exists(narrative_set_name):
             raise DataNotFoundError("narrative_set '%s' not found" % narrative_set_name)
 
@@ -1195,29 +802,10 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def read_narratives(self):
-        """Read narrative sets from project configuration
-
-        Returns
-        -------
-        list
-            A list of narrative set dicts
-        """
         project_config = self._read_project_config()
         return project_config['narratives']
 
     def read_narrative(self, narrative_name):
-        """Read all narrative configuration data
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the narrative
-
-        Returns
-        -------
-        list
-            A narrative data dictionary
-        """
         project_config = self._read_project_config()
         for narrative in project_config['narratives']:
             if narrative['name'] == narrative_name:
@@ -1226,13 +814,6 @@ class DatafileInterface(DataInterface):
         raise DataNotFoundError(msg % narrative_name)
 
     def write_narrative(self, narrative):
-        """Write narrative to project configuration
-
-        Arguments
-        ---------
-        narrative: dict
-            A narrative dict
-        """
         try:
             self.read_narrative(narrative['name'])
         except DataNotFoundError:
@@ -1243,15 +824,6 @@ class DatafileInterface(DataInterface):
             raise DataExistsError("narrative '%s' already exists" % narrative['name'])
 
     def update_narrative(self, narrative_name, narrative):
-        """Update narrative to project configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the (original) entry
-        narrative: dict
-            The updated narrative dict
-        """
         if not self.read_narrative(narrative_name):
             raise DataNotFoundError("narrative '%s' not found" % narrative_name)
 
@@ -1269,13 +841,6 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def delete_narrative(self, narrative_name):
-        """Delete narrative from project configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            A narrative name
-        """
         if not self.read_narrative(narrative_name):
             raise DataNotFoundError("narrative '%s' not found" % narrative_name)
 
@@ -1289,18 +854,6 @@ class DatafileInterface(DataInterface):
         self._write_project_config(project_config)
 
     def read_narrative_data(self, narrative_name):
-        """Read narrative data file from the 'filename' key in the narrative configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the narrative
-
-        Returns
-        -------
-        list
-            A list with dictionaries containing the contents of 'narrative_name' data file
-        """
         # Find filename for this narrative
         try:
             filename = self.read_narrative(narrative_name)['filename']
@@ -1312,24 +865,6 @@ class DatafileInterface(DataInterface):
         return narrative_data
 
     def read_coefficients(self, source_name, destination_name):
-        """Reads coefficients from file on disk
-
-        Coefficients are uniquely identified by their source/destination names
-
-        Arguments
-        ---------
-        source_name : str
-            The name of a ResolutionSet
-        destination_name : str
-            The name of a ResolutionSet
-
-        Notes
-        -----
-        Both `source_name` and `destination_name` should reference names of
-        elements from the same ResolutionSet (e.g. both spatial or temporal
-        resolutions)
-
-        """
         results_path = self._get_coefficients_path(source_name, destination_name)
         if os.path.isfile(results_path):
             return self._get_data_from_native_file(results_path)
@@ -1339,24 +874,6 @@ class DatafileInterface(DataInterface):
             return None
 
     def write_coefficients(self, source_name, destination_name, data):
-        """Writes coefficients to file on disk
-
-        Coefficients are uniquely identified by their source/destination names
-
-        Arguments
-        ---------
-        source_name : str
-            The name of a ResolutionSet
-        destination_name : str
-            The name of a ResolutionSet
-        data : numpy.ndarray
-
-        Notes
-        -----
-        Both `source_name` and `destination_name` should reference names of
-        elements from the same ResolutionSet (e.g. both spatial or temporal
-        resolutions)
-        """
         results_path = self._get_coefficients_path(source_name, destination_name)
         self._write_data_to_native_file(results_path, data)
 
@@ -1369,24 +886,7 @@ class DatafileInterface(DataInterface):
     def read_results(self, modelrun_id, model_name, output_name, spatial_resolution,
                      temporal_resolution, timestep=None, modelset_iteration=None,
                      decision_iteration=None):
-        """Return results of a `model_name` in `modelrun_name`
 
-        Parameters
-        ----------
-        modelrun_id : str
-        model_name : str
-        output_name : str
-        spatial_resolution : str
-        temporal_resolution : str
-        timestep : int, optional
-        modelset_iteration : int, optional
-        decision_iteration : int, optional
-
-        Returns
-        -------
-        data: numpy.ndarray
-
-        """
         if timestep is None:
             raise NotImplementedError
 
@@ -1406,20 +906,7 @@ class DatafileInterface(DataInterface):
     def write_results(self, modelrun_id, model_name, output_name, data, spatial_resolution,
                       temporal_resolution, timestep=None, modelset_iteration=None,
                       decision_iteration=None):
-        """Write results of a `model_name` in `modelrun_name` for a given `output_name`
 
-        Parameters
-        ----------
-        modelrun_id : str
-        model_name : str
-        output_name : str
-        data : numpy.ndarray
-        spatial_resolution : str
-        temporal_resolution : str
-        timestep : int, optional
-        modelset_iteration : int, optional
-        decision_iteration : int, optional
-        """
         if timestep is None:
             raise NotImplementedError
 
@@ -1468,23 +955,7 @@ class DatafileInterface(DataInterface):
         return len(results) > 0
 
     def prepare_warm_start(self, modelrun_id):
-        """Copy the results from the previous modelrun if available
 
-        The method allows a previous unsuccessful modelrun to 'warm start' a new
-        model run from a later timestep. Model results are recovered from the
-        timestep that the previous modelrun was run until, and the new model
-        run runs from the returned timestep
-
-        Parameters
-        ----------
-        modelrun_id: str
-            The name of the modelrun to recover
-
-        Returns
-        -------
-        int
-            The timestep to which the data store was recovered
-        """
         results_dir = os.path.join(self.file_dir['results'], modelrun_id)
 
         # Return if path to previous modelruns does not exist
