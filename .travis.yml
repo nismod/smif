@@ -12,8 +12,6 @@ before_cache:
 
 env:
   global:
-    - SKIP_GENERATE_AUTHORS=1
-    - SKIP_WRITE_GIT_CHANGELOG=1
     - DISTRIB="conda"
   matrix:
     - PYTHON_VERSION="3.5" COVERAGE="false"

@@ -91,6 +91,19 @@ class MemoryInterface(DataInterface):
     def read_region_definition_data(self, region_name):
         return self._regions[region_name]
 
+    def read_region_names(self, region_definition_name):
+        names = []
+        for feature in self._regions[region_definition_name]:
+            if isinstance(feature['properties']['name'], str):
+                if feature['properties']['name'].isdigit():
+                    names.append(int(feature['properties']['name']))
+                else:
+                    names.append(feature['properties']['name'])
+            else:
+                names.append(feature['properties']['name'])
+
+        return names
+
     def write_region_definition(self, region):
         self._regions[region['name']] = region
 
@@ -102,6 +115,13 @@ class MemoryInterface(DataInterface):
 
     def read_interval_definition_data(self, interval_name):
         return self._intervals[interval_name]
+
+    def read_interval_names(self, interval_definition_name):
+        return [
+                    interval[0]
+                    for interval
+                    in self._intervals[interval_definition_name]
+                ]
 
     def write_interval_definition(self, interval):
         self._intervals[interval['name']] = interval
