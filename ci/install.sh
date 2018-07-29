@@ -41,9 +41,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         rtree \
         scikit-optimize \
         shapely \
-        fiona
-
-    source activate testenv
+        fiona && source activate testenv
 fi
 
 # conda install --yes --file requirements.txt -c conda-forge
