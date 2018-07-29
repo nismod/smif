@@ -1,6 +1,6 @@
 """Memory-backed data interface
 """
-from smif.data_layer.data_interface import DataInterface
+from smif.data_layer.data_interface import DataExistsError, DataInterface
 
 
 class MemoryInterface(DataInterface):
@@ -44,7 +44,7 @@ class MemoryInterface(DataInterface):
         return self._units.values()
 
     def read_sos_model_runs(self):
-        return self._sos_model_runs.values()
+        return [x for x in self._sos_model_runs.values()]
 
     def read_sos_model_run(self, sos_model_run_name):
         return self._sos_model_runs[sos_model_run_name]
@@ -55,13 +55,15 @@ class MemoryInterface(DataInterface):
     def update_sos_model_run(self, sos_model_run_name, sos_model_run):
         self._sos_model_runs[sos_model_run_name] = sos_model_run
 
-    def delete_sos_model_run(self, sos_model_run):
-        del self._sos_model_runs[sos_model_run['name']]
+    def delete_sos_model_run(self, sos_model_run_name):
+        del self._sos_model_runs[sos_model_run_name]
 
     def read_sos_models(self):
-        return self._sos_models.values()
+        return [x for x in self._sos_models.values()]
 
     def write_sos_model(self, sos_model):
+        if sos_model['name'] in self._sos_models:
+            raise DataExistsError()
         self._sos_models[sos_model['name']] = sos_model
 
     def update_sos_model(self, sos_model_name, sos_model):
