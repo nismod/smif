@@ -541,6 +541,17 @@ class TestSectorModel:
             self, get_handler):
         handler = get_handler
 
+        data = [{'capacity_value': 12,
+                 'capacity_unit': 'GW',
+                 'capacity': 23}]
+
+        with raises(ValueError):
+            handler._reshape_csv_interventions(data)
+
+    def test_reshape_csv_interventions_duplicate_field_inv(
+            self, get_handler):
+        handler = get_handler
+
         data = [{'capacity': 23,
                  'capacity_value': 12,
                  'capacity_unit': 'GW'}]

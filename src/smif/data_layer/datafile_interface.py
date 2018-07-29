@@ -269,7 +269,11 @@ class DatafileInterface(DataInterface):
                     else:
                         reshaped_data[new_key] = {sub_key: value}
                 else:
-                    reshaped_data[key] = value
+                    if key in reshaped_data:
+                        msg = "Duplicate heading in csv data: {}"
+                        raise ValueError(msg.format(new_key))
+                    else:
+                        reshaped_data[key] = value
             new_data.append(reshaped_data)
         return new_data
 
