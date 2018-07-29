@@ -6,7 +6,6 @@ timesteps:
 - 2015
 - 2020
 sos_model: energy_water
-decision_module: ''
 scenarios:
   population: Central Population (Medium)
   rainfall: Central Rainfall

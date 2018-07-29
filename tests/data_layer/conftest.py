@@ -1,8 +1,13 @@
 import os
 
 from pytest import fixture
-from smif.data_layer import DatafileInterface
+from smif.data_layer import DatafileInterface, MemoryInterface
 from smif.data_layer.load import dump
+
+
+@fixture(scope='function')
+def get_memory_handler():
+    return MemoryInterface()
 
 
 @fixture(scope='function')

@@ -80,7 +80,6 @@ class ModelRun(object):
             'stamp': self.timestamp,
             'timesteps': self._model_horizon,
             'sos_model': self.sos_model.name,
-            'decision_module': None,
             'scenarios': self.scenarios,
             'narratives': self.narratives,
             'strategies': self.strategies

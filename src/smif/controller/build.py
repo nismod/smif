@@ -199,7 +199,7 @@ def get_narratives(handler, narrative_config):
                     narrative_set)
         for narrative_name in narrative_names:
             LOGGER.debug("Adding narrative entry '%s'", narrative_name)
-            definition = handler.read_narrative_definition(narrative_name)
+            definition = handler.read_narrative(narrative_name)
             narrative = Narrative(
                 narrative_name,
                 definition['description'],
