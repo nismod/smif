@@ -15,7 +15,7 @@ def test_single_modelrun(mock_popen):
     })
 
     mock_popen.assert_called_with(
-        'exec smif  run my_model_run -d mock/dir -i local_csv',
+        'smif  run my_model_run -d mock/dir -i local_csv',
         shell=True,
         stderr=-2, stdout=-1
     )
