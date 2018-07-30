@@ -21,13 +21,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
     chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda -f
     export PATH=$HOME/miniconda/bin:$PATH
     rm miniconda.sh -f
-    conda update --yes conda
 
+    conda update --yes conda -c conda-forge
+
+    conda config --add channels conda-forge
     # Configure the conda environment and put it in the path using the
     # provided versions
-    conda config --add channels conda-forge
     conda create -n testenv --yes python=$PYTHON_VERSION \
-        fiona \
         flask \
         isodate \
         networkx \
@@ -40,12 +40,11 @@ if [[ "$DISTRIB" == "conda" ]]; then
         ruamel.yaml \
         rtree \
         scikit-optimize \
-        shapely
-    source activate testenv
+        shapely \
+        fiona && source activate testenv
 fi
 
-# Pip install by default
-pip install -r requirements.txt
+# conda install --yes --file requirements.txt -c conda-forge
 python setup.py develop
 
 # Install node and npm dependencies

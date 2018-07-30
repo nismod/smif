@@ -543,7 +543,6 @@ def get_sos_model_run():
             2025
         ],
         'sos_model': 'energy',
-        'decision_module': 'energy_moea.py',
         'scenarios': {
             'population': 'High Population (ONS)'
         },
