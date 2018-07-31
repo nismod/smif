@@ -52,6 +52,50 @@ describe('<ScenarioSetConfigForm />', () => {
         expect(wrapper.html()).to.contain('There are no facets configured')
     })
 
+    it('add / remove Facet', () => {
+        let wrapper = mount(<ScenarioSetConfigForm
+            sosModelRuns={empty_array}
+            sosModels={empty_array}
+            scenarioSet={scenario_set}
+            scenarios={empty_array} />)
+
+        // Check if facet is not there
+        expect(wrapper.find('tr#facets_property_1').exists()).to.equal(false)
+
+        // Open the Add facets input popup
+        wrapper.find('input#btn_add_facet').simulate('click')
+
+        // Check if the form opens
+        let popup_add_facet = wrapper.find('[id="popup_add_facet"]')
+        expect(popup_add_facet.exists()).to.equal(true)
+
+        // Fill in form
+        wrapper.find('input#facet_name').simulate('change', { target: { name: 'name', value: 'test_name'} })
+        wrapper.find('textarea#facet_description').simulate('change', { target: { name: 'description', value: 'test_description'} })
+
+        // Submit form
+        wrapper.find('input#btn_facet_save').simulate('click')
+
+        // Check if facet was added
+        expect(wrapper.state().selectedScenarioSet.facets[1].name).to.equal('test_name')
+        expect(wrapper.state().selectedScenarioSet.facets[1].description).to.equal('test_description')
+        
+        // Check if facet appears in list
+        expect(wrapper.find('tr#facets_property_1').exists()).to.equal(true)
+        expect(wrapper.find('tr#facets_property_1').html()).to.include('test_name')
+        expect(wrapper.find('tr#facets_property_1').html()).to.include('test_description')
+
+        // Remove the facet
+        wrapper.find('tr#facets_property_1').find('button#btn_del_test_name').simulate('click')
+        let popup_delete = wrapper.find('[id="popup_delete"]')
+        expect(popup_delete.exists()).to.equal(true)
+        wrapper.find('input#deleteButton').simulate('click')
+
+        // Check if facet was removed
+        expect(wrapper.find('tr#facets_property_1').exists()).to.equal(false)
+
+    })
+
     it('create Scenario', () => {
         let wrapper = mount(<ScenarioSetConfigForm
             sosModelRuns={empty_array}

@@ -237,7 +237,7 @@ class ScenarioSetConfigForm extends Component {
         const {deletePopupType, deletePopupConfigName, selectedScenarioSet} = this.state
 
         switch(deletePopupType) {
-        case 'Facet':
+        case 'facets':
             for (let i = 0; i < Object.keys(selectedScenarioSet.facets).length; i++) {
                 if (selectedScenarioSet.facets[i].name == deletePopupConfigName) {
                     selectedScenarioSet.facets.splice(i, 1)
@@ -245,7 +245,7 @@ class ScenarioSetConfigForm extends Component {
             }
             break
 
-        case 'Scenario':
+        case 'scenarios':
             this.props.deleteScenario(deletePopupConfigName)
             break
         }
@@ -314,7 +314,7 @@ class ScenarioSetConfigForm extends Component {
                     <div className="card-header">Facets</div>
                     <div className="card-body">
                         <PropertyList itemsName="facets" items={selectedScenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.openDeletePopup} />
-                        <input className="btn btn-secondary btn-lg btn-block btn-margin" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
+                        <input id='btn_add_facet' className="btn btn-secondary btn-lg btn-block btn-margin" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
                     </div>
                 </div>
 
@@ -331,11 +331,11 @@ class ScenarioSetConfigForm extends Component {
                 <SaveButton id="btn_saveScenarioSet" onClick={this.handleSave} />
                 <CancelButton id="btn_cancelScenarioSet" onClick={this.handleCancel} />
 
-                <Popup name='dsasa' onRequestOpen={this.state.deletePopupIsOpen}>
+                <Popup name='popup_delete' onRequestOpen={this.state.deletePopupIsOpen}>
                     <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
                 </Popup>
 
-                <Popup name='fdssd' onRequestOpen={this.state.addFacetPopupIsOpen}>
+                <Popup name='popup_add_facet' onRequestOpen={this.state.addFacetPopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation()}}>
                         <FacetConfigForm facet={selectedFacet} saveFacet={this.handleFacetSave} cancelFacet={this.closeFacetPopup}/>
                     </form>
