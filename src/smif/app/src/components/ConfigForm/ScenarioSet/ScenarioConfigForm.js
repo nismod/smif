@@ -126,7 +126,7 @@ class ScenarioConfigForm extends Component {
                             <div className="row">
                                 <div className="col">
                                     <label>Name</label>
-                                    <input className='form-control' type="text" name="facet_name" value={selectedScenario.facets[currentFacet].name} onChange={this.handleChange}/>
+                                    <input id='scenario_facet_name' className='form-control' type="text" name="facet_name" value={selectedScenario.facets[currentFacet].name} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -140,10 +140,10 @@ class ScenarioConfigForm extends Component {
                             </div>
                             <div className="row">
                                 <div className="col">
-                                    <input type="text" className='form-control' name="facet_filename" value={selectedScenario.facets[currentFacet].filename} onChange={this.handleChange}/>
+                                    <input id='scenario_filename' type="text" className='form-control' name="facet_filename" value={selectedScenario.facets[currentFacet].filename} onChange={this.handleChange}/>
                                 </div>
                                 <div className="col">
-                                    <input type="text" className='form-control' name="facet_units" value={selectedScenario.facets[currentFacet].units} onChange={this.handleChange}/>
+                                    <input id='scenario_units' type="text" className='form-control' name="facet_units" value={selectedScenario.facets[currentFacet].units} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
@@ -157,10 +157,10 @@ class ScenarioConfigForm extends Component {
                             </div>
                             <div className="row">
                                 <div className="col">
-                                    <input type="text" className='form-control' name="facet_spatial_resolution" value={selectedScenario.facets[currentFacet].spatial_resolution} onChange={this.handleChange}/>
+                                    <input id='scenario_spatial_res' type="text" className='form-control' name="facet_spatial_resolution" value={selectedScenario.facets[currentFacet].spatial_resolution} onChange={this.handleChange}/>
                                 </div>
                                 <div className="col">
-                                    <input type="text" className='form-control' name="facet_temporal_resolution" value={selectedScenario.facets[currentFacet].temporal_resolution} onChange={this.handleChange}/>
+                                    <input id='scenario_temp_res' type="text" className='form-control' name="facet_temporal_resolution" value={selectedScenario.facets[currentFacet].temporal_resolution} onChange={this.handleChange}/>
                                 </div>
                             </div>
                         </div>
@@ -178,8 +178,8 @@ class ScenarioConfigForm extends Component {
                     {this.state.alert_message}
                 </div>
 
-                <SaveButton id="saveScenario" onClick={this.handleSave} />
-                <CancelButton id="cancelScenario" onClick={this.handleCancel} />
+                <SaveButton id="btn_save_scenario" onClick={this.handleSave} />
+                <CancelButton id="btn_cancel_scenario" onClick={this.handleCancel} />
             </div>
         )
     }
