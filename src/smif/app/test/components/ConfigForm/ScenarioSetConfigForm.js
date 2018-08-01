@@ -52,7 +52,7 @@ describe('<ScenarioSetConfigForm />', () => {
         expect(wrapper.html()).to.contain('There are no facets configured')
     })
 
-    it('add / remove Facet', () => {
+    it('add / edit / remove Facet', () => {
         let wrapper = mount(<ScenarioSetConfigForm
             sosModelRuns={empty_array}
             sosModels={empty_array}
@@ -85,6 +85,12 @@ describe('<ScenarioSetConfigForm />', () => {
         expect(wrapper.find('tr#facets_property_1').html()).to.include('test_name')
         expect(wrapper.find('tr#facets_property_1').html()).to.include('test_description')
 
+        // Edit facet
+        wrapper.find('button#btn_edit_test_name').simulate('click')
+        wrapper.find('textarea#facet_description').simulate('change', { target: { name: 'description', value: 'edited_test_description'} })
+        wrapper.find('input#btn_facet_save').simulate('click')
+        expect(wrapper.find('tr#facets_property_1').html()).to.include('edited_test_description')
+
         // Remove the facet
         wrapper.find('tr#facets_property_1').find('button#btn_del_test_name').simulate('click')
         let popup_delete = wrapper.find('[id="popup_delete"]')
@@ -95,9 +101,10 @@ describe('<ScenarioSetConfigForm />', () => {
         expect(wrapper.find('tr#facets_property_1').exists()).to.equal(false)
     })
 
-    it('add / remove Scenario', () => {
+    it('add / edit / remove Scenario', () => {
         const createScenario = sinon.spy()
         const deleteScenario = sinon.spy()
+        const saveScenario = sinon.spy()
 
         let wrapper = mount(<ScenarioSetConfigForm
             sosModelRuns={empty_array}
@@ -105,7 +112,8 @@ describe('<ScenarioSetConfigForm />', () => {
             scenarioSet={scenario_set}
             scenarios={empty_array}
             createScenario={createScenario}
-            deleteScenario={deleteScenario} />)
+            deleteScenario={deleteScenario}
+            saveScenario={saveScenario} />)
 
         // Check if facet is not there
         expect(wrapper.find('tr#facets_property_1').exists()).to.equal(false)
@@ -154,12 +162,20 @@ describe('<ScenarioSetConfigForm />', () => {
             scenarioSet={scenario_set}
             scenarios={[my_scenario]}
             createScenario={createScenario}
-            deleteScenario={deleteScenario} />)
+            deleteScenario={deleteScenario}
+            saveScenario={saveScenario} />)
 
         // Check if facet appears in list
         expect(wrapper.find('tr#scenarios_property_0').exists()).to.equal(true)
         expect(wrapper.find('tr#scenarios_property_0').html()).to.include(my_scenario.name)
         expect(wrapper.find('tr#scenarios_property_0').html()).to.include(my_scenario.description)
+
+        // Edit the scenario
+        wrapper.find('button#btn_edit_test_scenario_name').simulate('click')
+        wrapper.find('textarea#scenario_description').simulate('change', { target: { name: 'description', value: 'edited_scenario_test_description'} })
+        wrapper.find('input#btn_save_scenario').simulate('click')
+        my_scenario.description = 'edited_scenario_test_description'
+        expect(saveScenario.args[0][0]).to.deep.equal(my_scenario)
 
         // Remove the Scenario
         wrapper.find('tr#scenarios_property_0').find('button#btn_del_' + my_scenario.name).simulate('click')

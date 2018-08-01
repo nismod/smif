@@ -691,10 +691,10 @@ export function saveScenario(scenario){
             }}
         )
             .then (
-                response => response.json()
-            )
-            .then (
-                dispatch(fetchScenarios())
+                function() {
+                    response => response.json()
+                    dispatch(fetchScenarios())
+                }
             )
     }
 }

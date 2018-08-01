@@ -37,6 +37,7 @@ class ScenarioSetConfigForm extends Component {
             scenarioSet: this.props.scenarioSet,
             selectedFacet: {},
             selectedScenario: {},
+            selectedScenarios: this.props.scenarios.filter(scenario => scenario.scenario_set == this.props.scenarioSet.name),
             addFacetPopupIsOpen: false,
             editScenarioPopupIsOpen: false,
             deletePopupIsOpen: false
@@ -148,14 +149,12 @@ class ScenarioSetConfigForm extends Component {
 
     openEditScenarioPopup(name) {
 
-        const { selectedScenarios } = this.state
-        const { scenarioSet} = this.props
-        
+        const { scenarioSet, scenarios} = this.props
 
         // Get id
         let id
-        for (let i = 0; i < selectedScenarios.length; i++) {
-            if (selectedScenarios[i].name == name) {
+        for (let i = 0; i < scenarios.length; i++) {
+            if (scenarios[i].name == name) {
                 id = i
             }
         }
@@ -164,10 +163,10 @@ class ScenarioSetConfigForm extends Component {
         let new_facets = []
 
         for (let set_facet of scenarioSet.facets) {
-            if(selectedScenarios[id].facets.filter(scenario_facet => scenario_facet.name == set_facet.name).length) {
+            if(scenarios[id].facets.filter(scenario_facet => scenario_facet.name == set_facet.name).length) {
                 // copy existing settings
-                for (let i = 0; i < selectedScenarios[id].facets.length; i++) {
-                    if (selectedScenarios[id].facets[i].name == set_facet.name) new_facets.push(selectedScenarios[id].facets[i])
+                for (let i = 0; i < scenarios[id].facets.length; i++) {
+                    if (scenarios[id].facets[i].name == set_facet.name) new_facets.push(scenarios[id].facets[i])
                 }
             } else {
                 new_facets.push({
@@ -179,14 +178,10 @@ class ScenarioSetConfigForm extends Component {
                 })
             }
         }
-
-        let new_selectedScenarios = update(
-            this.state.selectedScenarios, {[id]: {facets: {$set: new_facets}}}
-        )
-        this.setState({selectedScenarios: new_selectedScenarios})
+        scenarios[id].facets = new_facets
 
         // load scenario
-        this.setState({selectedScenario: Object.assign({}, new_selectedScenarios[id])})
+        this.setState({selectedScenario: Object.assign({}, scenarios[id])})
         this.setState({editScenarioPopupIsOpen: true})
     }
 
