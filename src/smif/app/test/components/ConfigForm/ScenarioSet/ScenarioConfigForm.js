@@ -31,7 +31,7 @@ describe('<ScenarioConfigForm />', () => {
         const onSaveClick = sinon.spy()
         const wrapper = mount(<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} saveScenario={onSaveClick} />)
 
-        wrapper.find('input#saveScenario').simulate('click')
+        wrapper.find('input#btn_save_scenario').simulate('click')
         expect(onSaveClick).to.have.property('callCount', 1)
         expect(onSaveClick.args[0][0]).to.equal(scenario)
     })
@@ -52,7 +52,7 @@ describe('<ScenarioConfigForm />', () => {
         wrapper.find('#scenario_name').simulate('change', { target: { name: 'description', value: changed_scenario['description'] } })
         wrapper.find('#scenario_name').simulate('change', { target: { name: 'filename', value: changed_scenario['filename'] } })
         wrapper.find('#scenario_name').simulate('change', { target: { name: 'scenario_set', value: changed_scenario['scenario_set'] } })
-        wrapper.find('input#saveScenario').simulate('click')
+        wrapper.find('input#btn_save_scenario').simulate('click')
 
         expect(onSaveClick).to.have.property('callCount', 1)
         expect(onSaveClick.args[0][0]).to.deep.equal(changed_scenario)
@@ -62,7 +62,7 @@ describe('<ScenarioConfigForm />', () => {
         const onCancelClick = sinon.spy()
         const wrapper = mount(<ScenarioConfigForm scenario={scenario} scenarioSet={scenario_set} cancelScenario={onCancelClick} />)
 
-        const nodes = wrapper.find('input#cancelScenario')
+        const nodes = wrapper.find('input#btn_cancel_scenario')
         // Need to specify element is input (not just by id)
         // and only find the actual button
         // calling hostNodes would also filter out React Components
