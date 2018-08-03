@@ -14,10 +14,10 @@ class DependencySelector extends Component {
         }
 
         this.state.inputs = {
-            SourceModel: '',
-            SourceOutput: '',
-            SinkModel: '',
-            SinkInput: ''
+            SourceModel: 'none',
+            SourceOutput: 'none',
+            SinkModel: 'none',
+            SinkInput: 'none'
         }
 
         this.state.className = {
@@ -42,14 +42,14 @@ class DependencySelector extends Component {
             this.setState({
                 inputs: update(this.state.inputs, {
                     SourceModel: {$set: event.target.value},
-                    SourceOutput: {$set: ''}
+                    SourceOutput: {$set: 'none'}
                 })
             })
         } else if (event.target.name == 'SinkModel'){
             this.setState({
                 inputs: update(this.state.inputs, {
                     SinkModel: {$set: event.target.value},
-                    SinkInput: {$set: ''}
+                    SinkInput: {$set: 'none'}
                 })
             })
         } else {
@@ -79,7 +79,7 @@ class DependencySelector extends Component {
         // Submit change
         if (inputOk) {
             let newDependencies = dependencies
-
+    
             newDependencies.push({
                 source_model: SourceModel,
                 source_model_output: SourceOutput,
@@ -99,8 +99,6 @@ class DependencySelector extends Component {
 
             this.closeCreateDependencyPopup()
         }
-
-        this.forceUpdate()
     }
 
     openCreateDependencyPopup() {
@@ -118,14 +116,13 @@ class DependencySelector extends Component {
             className[input] = 'form-control'
         })
         this.setState({
-            inputs: {SourceModel: '', SinkModel: '', SourceOutput: '', SinkInput: ''}
+            inputs: {SourceModel: 'none', SinkModel: 'none', SourceOutput: 'none', SinkInput: 'none'}
         })
     }
 
     renderDependencySelector(sectorModels, scenarioSets, dependencies, selectedSectorModels, selectedScenarioSets) {
 
         const {inputs} = this.state
-
         let source_selector = []
         let sink_selector = []
 
@@ -169,7 +166,7 @@ class DependencySelector extends Component {
 
         // Prepare options for source output selector
         let source_output_selector = []
-        if (inputs.SourceModel != '') {
+        if (inputs.SourceModel != 'none') {
             source_output_selector.push(<option key={'source_output_selector_info'} disabled="disabled" value="none">Please select a source output</option>)
 
             let sectormodel_source_outputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SourceModel)
@@ -201,7 +198,7 @@ class DependencySelector extends Component {
         // Prepare options for sink input selector
         let sink_input_selector = []
 
-        if (inputs.SinkModel != '') {
+        if (inputs.SinkModel != 'none') {
             sink_input_selector.push(<option key={'sink_input_selector_info'} disabled="disabled" value="none">Please select a sink input</option>)
 
             let sectormodel_sink_inputs = sectorModels.filter(sectorModel => sectorModel.name == inputs.SinkModel)
@@ -216,15 +213,15 @@ class DependencySelector extends Component {
 
         return (
             <div>
-                <CreateButton value="Add Dependency" onClick={this.openCreateDependencyPopup} />
-                <Popup onRequestOpen={this.state.CreateDependencypopupIsOpen}>
+                <CreateButton id='btn_add_dependency' value="Add Dependency" onClick={this.openCreateDependencyPopup} />
+                <Popup name='popup_add_dependency' onRequestOpen={this.state.CreateDependencypopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit()}}>
                         <h2 ref={subtitle => this.subtitle = subtitle}>Add a new Dependency</h2>
 
                         <div className="row">
                             <div className="col">
                                 <label>Source</label>
-                                <select autoFocus className={this.state.className.SourceModel} name="SourceModel" value={this.state.inputs.SourceModel} onChange={this.handleChange}>
+                                <select id='select_source' autoFocus className={this.state.className.SourceModel} name="SourceModel" value={this.state.inputs.SourceModel} onChange={this.handleChange}>
                                     {source_selector}
                                 </select>
                                 <div className="invalid-feedback">
@@ -233,7 +230,7 @@ class DependencySelector extends Component {
                             </div>
                             <div className="col">
                                 <label>Sink</label>
-                                <select className={this.state.className.SinkModel} name="SinkModel" value={this.state.inputs.SinkModel} onChange={this.handleChange}>
+                                <select id='select_sink' className={this.state.className.SinkModel} name="SinkModel" value={this.state.inputs.SinkModel} onChange={this.handleChange}>
                                     {sink_selector}
                                 </select>
                                 <div className="invalid-feedback">
@@ -243,7 +240,7 @@ class DependencySelector extends Component {
                         </div>
                         <div className="row">
                             <div className="col">
-                                <select className={this.state.className.SourceOutput} name="SourceOutput" value={this.state.inputs.SourceOutput} onChange={this.handleChange}>
+                                <select id='select_source_output' className={this.state.className.SourceOutput} name="SourceOutput" value={this.state.inputs.SourceOutput} onChange={this.handleChange}>
                                     {source_output_selector}
                                 </select>
                                 <div className="invalid-feedback">
@@ -251,7 +248,7 @@ class DependencySelector extends Component {
                                 </div>
                             </div>
                             <div className="col">
-                                <select className={this.state.className.SinkInput} name="SinkInput" value={this.state.inputs.SinkInput} onChange={this.handleChange}>
+                                <select id='select_sink_input' className={this.state.className.SinkInput} name="SinkInput" value={this.state.inputs.SinkInput} onChange={this.handleChange}>
                                     {sink_input_selector}
                                 </select>
                                 <div className="invalid-feedback">
