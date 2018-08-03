@@ -33,7 +33,7 @@ describe('<PropertyList />', () => {
                 expectedRow += '<td width="23%">' + sos_model.dependencies[i][key] + '</td>'
             })
             expect(wrapper.find('[id="dependencies_property_'+ i +'"]').html()).to.contain(expectedRow)
-            expect(wrapper.find('[id="dependencies_property_'+ i +'"]').html()).to.contain('<td width="8%"><button type="button" class="btn btn-outline-dark btn-margin" name="edit">')
+            expect(wrapper.find('[id="dependencies_property_'+ i +'"]').html()).to.contain('<button id="btn_edit_undefined" type="button" class="btn btn-outline-dark btn-margin" name="edit">')
         }
     })
 
@@ -48,7 +48,7 @@ describe('<PropertyList />', () => {
                 expectedRow += '<td width="23%">' + sos_model.dependencies[i][key] + '</td>'
             })
             expect(wrapper.find('[id="dependencies_property_'+ i +'"]').html()).to.contain(expectedRow)
-            expect(wrapper.find('[id="dependencies_property_'+ i +'"]').html()).to.contain('<button type="button" class="btn btn-outline-dark btn-margin" value="dependencies">')
+            expect(wrapper.find('[id="dependencies_property_'+ i +'"]').html()).to.contain('<button id="btn_del_undefined" type="button" class="btn btn-outline-dark btn-margin" value="dependencies">')
         }
     })
 
