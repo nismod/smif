@@ -34,10 +34,9 @@ class ScenarioSetConfigForm extends Component {
 
 
         this.state = {
-            scenarios: this.props.scenarios,
+            scenarioSet: this.props.scenarioSet,
             selectedFacet: {},
             selectedScenario: {},
-            selectedScenarioSet: this.props.scenarioSet,
             selectedScenarios: this.props.scenarios.filter(scenario => scenario.scenario_set == this.props.scenarioSet.name),
             addFacetPopupIsOpen: false,
             editScenarioPopupIsOpen: false,
@@ -56,18 +55,18 @@ class ScenarioSetConfigForm extends Component {
             })
         } else {
             this.setState({
-                selectedScenarioSet: update(this.state.selectedScenarioSet, {[name]: {$set: value}})
+                scenarioSet: update(this.state.scenarioSet, {[name]: {$set: value}})
             })
         }
     }
 
     handleSave() {
         // save the scenario set
-        this.props.saveScenarioSet(this.state.selectedScenarioSet)
+        this.props.saveScenarioSet(this.state.scenarioSet)
     }
 
     handleFacetSave(facet) {
-        const {facets} = this.state.selectedScenarioSet
+        const {facets} = this.props.scenarioSet
 
         if (facets.filter(curr_facet => curr_facet.name == facet.name).length > 0) {
             for (let i = 0; i < facets.length; i++) {
@@ -81,8 +80,8 @@ class ScenarioSetConfigForm extends Component {
     }
 
     handleFacetCreate(facet) {
-        let {selectedScenarioSet} = this.state
-        selectedScenarioSet.facets.push(facet)
+        let {scenarioSet} = this.state
+        scenarioSet.facets.push(facet)
         this.closeFacetPopup()
     }
 
@@ -110,27 +109,27 @@ class ScenarioSetConfigForm extends Component {
     }
 
     openEditFacetPopup(name) {
-        const {selectedScenarioSet} = this.state
+        const { scenarioSet} = this.props
 
         // Get id
         let id
-        for (let i = 0; i < selectedScenarioSet.facets.length; i++) {
-            if (selectedScenarioSet.facets[i].name == name) {
+        for (let i = 0; i < scenarioSet.facets.length; i++) {
+            if (scenarioSet.facets[i].name == name) {
                 id = i
             }
         }
 
-        this.setState({selectedFacet: Object.assign({}, selectedScenarioSet.facets[id])})
+        this.setState({selectedFacet: Object.assign({}, scenarioSet.facets[id])})
         this.setState({addFacetPopupIsOpen: true})
     }
 
     openAddScenarioPopup() {
-        const { selectedScenarioSet} = this.state
+        const { scenarioSet} = this.props
 
         // prepare facets
         let new_facets = []
 
-        for (let set_facet of selectedScenarioSet.facets) {
+        for (let set_facet of scenarioSet.facets) {
             new_facets.push({
                 'name': set_facet.name,
                 'filename': '',
@@ -140,7 +139,7 @@ class ScenarioSetConfigForm extends Component {
             })
         }
 
-        this.setState({selectedScenario: { name: undefined, description: '', 'facets': new_facets, 'scenario_set': this.state.selectedScenarioSet['name'] }})
+        this.setState({selectedScenario: { name: undefined, description: '', 'facets': new_facets, 'scenario_set': scenarioSet['name'] }})
         this.setState({editScenarioPopupIsOpen: true})
     }
 
@@ -150,12 +149,12 @@ class ScenarioSetConfigForm extends Component {
 
     openEditScenarioPopup(name) {
 
-        const { selectedScenarios, selectedScenarioSet} = this.state
+        const { scenarioSet, scenarios} = this.props
 
         // Get id
         let id
-        for (let i = 0; i < selectedScenarios.length; i++) {
-            if (selectedScenarios[i].name == name) {
+        for (let i = 0; i < scenarios.length; i++) {
+            if (scenarios[i].name == name) {
                 id = i
             }
         }
@@ -163,11 +162,11 @@ class ScenarioSetConfigForm extends Component {
         // update facets
         let new_facets = []
 
-        for (let set_facet of selectedScenarioSet.facets) {
-            if(selectedScenarios[id].facets.filter(scenario_facet => scenario_facet.name == set_facet.name).length) {
+        for (let set_facet of scenarioSet.facets) {
+            if(scenarios[id].facets.filter(scenario_facet => scenario_facet.name == set_facet.name).length) {
                 // copy existing settings
-                for (let i = 0; i < selectedScenarios[id].facets.length; i++) {
-                    if (selectedScenarios[id].facets[i].name == set_facet.name) new_facets.push(selectedScenarios[id].facets[i])
+                for (let i = 0; i < scenarios[id].facets.length; i++) {
+                    if (scenarios[id].facets[i].name == set_facet.name) new_facets.push(scenarios[id].facets[i])
                 }
             } else {
                 new_facets.push({
@@ -179,14 +178,10 @@ class ScenarioSetConfigForm extends Component {
                 })
             }
         }
-
-        let new_selectedScenarios = update(
-            this.state.selectedScenarios, {[id]: {facets: {$set: new_facets}}}
-        )
-        this.setState({selectedScenarios: new_selectedScenarios})
+        scenarios[id].facets = new_facets
 
         // load scenario
-        this.setState({selectedScenario: Object.assign({}, new_selectedScenarios[id])})
+        this.setState({selectedScenario: Object.assign({}, scenarios[id])})
         this.setState({editScenarioPopupIsOpen: true})
     }
 
@@ -234,18 +229,19 @@ class ScenarioSetConfigForm extends Component {
 
     deletePopupSubmit() {
 
-        const {deletePopupType, deletePopupConfigName, selectedScenarioSet} = this.state
+        const {deletePopupType, deletePopupConfigName } = this.state
+        const {scenarioSet} = this.props
 
         switch(deletePopupType) {
-        case 'Facet':
-            for (let i = 0; i < Object.keys(selectedScenarioSet.facets).length; i++) {
-                if (selectedScenarioSet.facets[i].name == deletePopupConfigName) {
-                    selectedScenarioSet.facets.splice(i, 1)
+        case 'facets':
+            for (let i = 0; i < Object.keys(scenarioSet.facets).length; i++) {
+                if (scenarioSet.facets[i].name == deletePopupConfigName) {
+                    scenarioSet.facets.splice(i, 1)
                 }
             }
             break
 
-        case 'Scenario':
+        case 'scenarios':
             this.props.deleteScenario(deletePopupConfigName)
             break
         }
@@ -258,11 +254,11 @@ class ScenarioSetConfigForm extends Component {
         this.setState({deletePopupIsOpen: false})
     }
 
-    renderScenarioSetConfigForm(selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet) {
+    renderScenarioSetConfigForm(scenarioSet, selectedScenarios, selectedScenario, selectedFacet) {
 
         // Do not show scenarios when there are no facets configured
         let scenarioCardState = 'collapse show'
-        if (selectedScenarioSet.facets.length == 0) {
+        if (scenarioSet.facets.length == 0) {
             scenarioCardState = 'collapse'
         }
 
@@ -271,7 +267,7 @@ class ScenarioSetConfigForm extends Component {
         let scenarioWarnings = []
 
         let facetlist = []
-        for (let facet of selectedScenarioSet.facets) {
+        for (let facet of scenarioSet.facets) {
             facetlist.push(facet['name'])
         }
         for (let scenario in selectedScenarios) {
@@ -296,14 +292,14 @@ class ScenarioSetConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input id="scenario_set_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedScenarioSet.name} onChange={this.handleChange}/>
+                                <input id="scenario_set_name" className="form-control" name="name" type="text" disabled="true" defaultValue={scenarioSet.name} onChange={this.handleChange}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea id="scenario_set_description" className="form-control" name="description" rows="5" defaultValue={selectedScenarioSet.description} onChange={this.handleChange}/>
+                                <textarea id="scenario_set_description" className="form-control" name="description" rows="5" defaultValue={scenarioSet.description} onChange={this.handleChange}/>
                             </div>
                         </div>
 
@@ -313,8 +309,8 @@ class ScenarioSetConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Facets</div>
                     <div className="card-body">
-                        <PropertyList itemsName="facets" items={selectedScenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.openDeletePopup} />
-                        <input className="btn btn-secondary btn-lg btn-block btn-margin" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
+                        <PropertyList itemsName="facets" items={scenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.openDeletePopup} />
+                        <input id='btn_add_facet' className="btn btn-secondary btn-lg btn-block btn-margin" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
                     </div>
                 </div>
 
@@ -331,11 +327,11 @@ class ScenarioSetConfigForm extends Component {
                 <SaveButton id="btn_saveScenarioSet" onClick={this.handleSave} />
                 <CancelButton id="btn_cancelScenarioSet" onClick={this.handleCancel} />
 
-                <Popup name='dsasa' onRequestOpen={this.state.deletePopupIsOpen}>
+                <Popup name='popup_delete' onRequestOpen={this.state.deletePopupIsOpen}>
                     <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.deletePopupSubmit} cancel={this.closeDeletePopup}/>
                 </Popup>
 
-                <Popup name='fdssd' onRequestOpen={this.state.addFacetPopupIsOpen}>
+                <Popup name='popup_add_facet' onRequestOpen={this.state.addFacetPopupIsOpen}>
                     <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation()}}>
                         <FacetConfigForm facet={selectedFacet} saveFacet={this.handleFacetSave} cancelFacet={this.closeFacetPopup}/>
                     </form>
@@ -343,7 +339,7 @@ class ScenarioSetConfigForm extends Component {
 
                 <Popup name='popup_scenario_config_form' onRequestOpen={this.state.editScenarioPopupIsOpen}>
                     <form onSubmit={(e) => {e.preselectedScenarioventDefault(); e.stopPropagation()}}>
-                        <ScenarioConfigForm scenario={selectedScenario} scenarioSet={selectedScenarioSet} createScenario={this.handleScenarioCreate} saveScenario={this.handleScenarioSave} cancelScenario={this.closeScenarioPopup}/>
+                        <ScenarioConfigForm scenario={selectedScenario} scenarioSet={scenarioSet} createScenario={this.handleScenarioCreate} saveScenario={this.handleScenarioSave} cancelScenario={this.closeScenarioPopup}/>
                     </form>
                 </Popup>
             </div>
@@ -362,19 +358,22 @@ class ScenarioSetConfigForm extends Component {
     }
 
     render() {
-        const {selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet} = this.state
+        const {scenarioSet, selectedScenario, selectedFacet} = this.state
+        
+
+        let selectedScenarios = this.props.scenarios.filter(scenario => scenario.scenario_set == this.props.scenarioSet.name)
 
         // Auto-fixable problems with configuration
-        if (selectedScenarioSet.facets == null || selectedScenarioSet.facets == undefined) {
+        if (scenarioSet.facets == null || scenarioSet.facets == undefined) {
             // The scenarioSet does not have a scenarioSet.facets array
             // this will crash the code, and is therefore fixed by this line
-            selectedScenarioSet.facets = []
+            scenarioSet.facets = []
         }
 
-        if (selectedScenarioSet.name == undefined) {
+        if (scenarioSet.name == undefined) {
             return this.renderDanger('This Scenario Set does not exist.')
         } else {
-            return this.renderScenarioSetConfigForm(selectedScenarioSet, selectedScenarios, selectedScenario, selectedFacet)
+            return this.renderScenarioSetConfigForm(scenarioSet, selectedScenarios, selectedScenario, selectedFacet)
         }
     }
 }

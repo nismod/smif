@@ -98,7 +98,7 @@ class FacetConfigForm extends Component {
                     {this.state.alert_message}
                 </div>
 
-                <SaveButton onClick={this.handleSave} />
+                <SaveButton id='btn_facet_save' onClick={this.handleSave} />
                 <CancelButton onClick={this.handleCancel} />
             </div>
         )

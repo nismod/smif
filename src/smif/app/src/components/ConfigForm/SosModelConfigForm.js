@@ -52,7 +52,6 @@ class SosModelConfigForm extends Component {
             this.state.selectedSosModel.dependencies.splice(config, 1)
         }
 
-        this.forceUpdate()
         this.closeDeletePopup()
     }
 
@@ -203,7 +202,7 @@ class SosModelConfigForm extends Component {
                     </div>
                 </form>
 
-                <Popup onRequestOpen={this.state.deletePopupIsOpen}>
+                <Popup name='popup_dependency_selector' onRequestOpen={this.state.deletePopupIsOpen}>
                     <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
                 </Popup>
 
