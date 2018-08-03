@@ -257,8 +257,8 @@ class DependencySelector extends Component {
                             </div>
                         </div>
 
-                        <SaveButton />
-                        <CancelButton onClick={this.closeCreateDependencyPopup}/>
+                        <SaveButton id="btn_save_dependency"/>
+                        <CancelButton id="" onClick={this.closeCreateDependencyPopup}/>
                     </form>
 
                 </Popup>
