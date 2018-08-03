@@ -52,7 +52,6 @@ class SosModelConfigForm extends Component {
             this.state.selectedSosModel.dependencies.splice(config, 1)
         }
 
-        this.forceUpdate()
         this.closeDeletePopup()
     }
 
