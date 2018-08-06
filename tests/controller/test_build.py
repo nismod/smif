@@ -24,6 +24,14 @@ class TestStrategies:
         assert actual[0]['strategy'] == 'pre-specified-planning'
         assert actual[0]['model_name'] == 'energy_supply'
 
+    def test_get_empty_pre_specified_planning_strategies(self, get_sos_model_run, initial_system):
+
+        handler = Mock()
+        handler.read_strategies = Mock(return_value=None)
+
+        actual = get_pre_specified_planning_strategies(get_sos_model_run, handler)
+        assert actual[0]['interventions'] == []
+
     def test_get_initial_conditions_strategies(self, initial_system):
 
         sector_model = Mock()

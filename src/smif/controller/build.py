@@ -142,6 +142,7 @@ def get_pre_specified_planning_strategies(model_run_config, handler):
     for strategy in model_run_config['strategies']:
         if strategy['strategy'] == 'pre-specified-planning':
             decisions = handler.read_strategies(strategy['filename'])
+            if decisions is None: decisions = []
             del strategy['filename']
             strategy['interventions'] = decisions
             LOGGER.info("Added %s pre-specified planning interventions to %s",
