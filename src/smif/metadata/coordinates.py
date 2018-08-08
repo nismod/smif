@@ -15,6 +15,10 @@ class Coordinates(object):
         self._elements = None
         self.elements = elements
 
+    def __eq__(self, other):
+        return self.name == other.name \
+            and self.elements == other.elements
+
     @property
     def elements(self):
         """Elements are a list of dicts

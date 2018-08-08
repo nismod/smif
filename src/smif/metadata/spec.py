@@ -106,3 +106,35 @@ class Spec(object):
         """The number of dimensions of the data that this spec describes.
         """
         return len(self._coords)
+
+    @property
+    def dims(self):
+        """Names for each dimension
+
+        Returns
+        -------
+        list of str
+        """
+        return self._dims
+
+    @property
+    def coords(self):
+        """Coordinate labels for each dimension.
+
+        Returns
+        -------
+        list of Coordinates
+        """
+        return self._coords
+
+    @property
+    def unit(self):
+        """The unit for all data points.
+        """
+        return self._unit
+
+    def __eq__(self, other):
+        return self.dtype == other.dtype \
+            and self.dims == other.dims \
+            and self.coords == other.coords \
+            and self.unit == other.unit
