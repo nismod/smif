@@ -12,7 +12,7 @@ class UnitRegister(Register):
 
     def __init__(self):
         self._register = UnitRegistry(on_redefinition='raise')
-        self.LOGGER = logging.getLogger()
+        self.logger = logging.getLogger()
         self.axis = None
 
     @property
@@ -23,12 +23,12 @@ class UnitRegister(Register):
         """Load unit definitions into the registry
         """
         self._register.load_definitions(unit_file)
-        self.LOGGER.info("Finished registering user defined units")
+        self.logger.info("Finished registering user defined units")
 
         with open(unit_file, 'r') as readonlyfile:
-            self.LOGGER.info("Imported user units:")
+            self.logger.info("Imported user units:")
             for line in readonlyfile:
-                self.LOGGER.info("    %s", line.split('=')[0])
+                self.logger.info("    %s", line.split('=')[0])
 
     def get_entry(self, name):
         pass
@@ -86,7 +86,7 @@ class UnitRegister(Register):
         try:
             unit = self._register.parse_units(unit_string)
         except UndefinedUnitError:
-            self.LOGGER.warning("Unrecognised unit: %s", unit_string)
+            self.logger.warning("Unrecognised unit: %s", unit_string)
             unit = None
         return unit
 
