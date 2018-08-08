@@ -104,6 +104,10 @@ class Intervention(object):
 
         assert self._validate(['name', 'location'], ['build_date'])
 
+    @classmethod
+    def from_dict(cls, data):
+        return cls(data)
+
     def as_dict(self):
         return self.data
 
