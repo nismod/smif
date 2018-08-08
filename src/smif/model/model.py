@@ -82,7 +82,7 @@ class Model(metaclass=ABCMeta):
 
         return {name: self.inputs[name] for name in free_input_names}
 
-    def add_dependency(self, source_model, source_output_name, sink_input_name, function=None):
+    def add_dependency(self, source_model, source_output_name, sink_input_name):
         """Adds a dependency to the current `Model` object
 
         Arguments
@@ -110,14 +110,10 @@ class Model(metaclass=ABCMeta):
             raise ValueError(
                 msg.format(sink_input_name, self.deps[sink_input_name], self.name))
 
-        source = source_model.outputs[source_output_name]
-        sink = self.inputs[sink_input_name]
-        self.deps[sink_input_name] = Dependency(
-            source_model,
-            source,
-            sink,
-            function
-        )
+        source_spec = source_model.outputs[source_output_name]
+        sink_spec = self.inputs[sink_input_name]
+        self.deps[sink_input_name] = Dependency(source_model, source_spec, self, sink_spec)
+
         msg = "Added dependency from '%s:%s' to '%s:%s'"
         self.logger.debug(
             msg, source_model.name, source_output_name, self.name, sink_input_name)
