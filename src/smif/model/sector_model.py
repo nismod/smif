@@ -34,9 +34,7 @@ The key functions include:
   approaches
 
 """
-import importlib
 import logging
-import os
 from abc import ABCMeta, abstractmethod
 
 from smif.intervention import Intervention
@@ -250,74 +248,3 @@ class SectorModel(Model, metaclass=ABCMeta):
 
         """
         pass
-
-
-class SectorModelBuilder(object):
-    """Build SectorModel from config
-
-    Parameters
-    ----------
-    name : str
-        The name of the sector model
-    sector_model : smif.model.SectorModel, default=None
-        The sector model object
-
-    Examples
-    --------
-    Call :py:meth:`SectorModelBuilder.construct` to create, load and return a
-    :class:`SectorModel` object.
-
-    >>> builder = SectorModelBuilder(name)
-    >>> sector_model = builder.construct(config_data)
-    >>> sector_model_b = builder.construct(config_data_b)
-    """
-
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
-
-    def construct(self, config):
-        """Constructs the sector model
-
-        Arguments
-        ---------
-        config : dict
-            The sector model configuration data
-
-        Returns
-        -------
-        :class:`~smif.sector_model.SectorModel`
-        """
-        klass = self.load_model_class(config['name'], config['path'], config['classname'])
-        return klass.from_dict(config)
-
-    def load_model_class(self, model_name, model_path, classname):
-        """Dynamically load model class
-
-        Arguments
-        ---------
-        model_name : str
-            The name used internally to identify the SectorModel
-        model_path : str
-            The path to the python module which contains the SectorModel
-            implementation
-        classname : str
-            The name of the class of the SectorModel implementation
-
-        Returns
-        -------
-        class
-            The SectorModel implementation
-        """
-        if not os.path.exists(model_path):
-            msg = "Cannot find '{}' for the '{}' model".format(model_path, model_name)
-            raise FileNotFoundError(msg)
-
-        msg = "Importing model %s as class %s from module at %s"
-        self.logger.info(msg, model_name, classname, model_path)
-
-        spec = importlib.util.spec_from_file_location(model_name, model_path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-
-        klass = module.__dict__[classname]
-        return klass
