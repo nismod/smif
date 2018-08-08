@@ -4,8 +4,8 @@ adapters.
 
 # import classes for access like ::
 #         from smif.metadata import Coordinates
-from smif.metadatum.coordinates import Coordinates
-from smif.metadatum.spec import Spec
+from smif.metadata.coordinates import Coordinates
+from smif.metadata.spec import Spec
 
 # Define what should be imported as * ::
 #         from smif.metadata import *

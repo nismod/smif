@@ -1,7 +1,7 @@
 """Test Coordinates metadata
 """
 from pytest import raises
-from smif.metadatum import Coordinates
+from smif.metadata import Coordinates
 
 
 class TestCoordinates():
