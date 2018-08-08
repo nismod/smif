@@ -178,3 +178,14 @@ class CompositeModel(Model, metaclass=ABCMeta):
                 outputs[(model.name, output_name)] = output_spec
 
         return outputs
+
+    @abstractmethod
+    def simulate(self, data):
+        """Override to implement the generation of model results within the composite
+
+        Arguments
+        ---------
+        data: smif.data_layer.DataHandle
+            Access state, parameter values, dependency inputs.
+        """
+        pass
