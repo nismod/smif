@@ -67,17 +67,25 @@ class ModelRunScheduler(object):
                 shell=True,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )
-            self._output[model_run_name] = "\x1b[1;34mModelrun \x1b \x1b[0m" + \
-                                           model_run_name + "\n"
-            self._output[model_run_name] += "\x1b[1;34mTime \x1b \x1b " \
-                                            "\x1b \x1b \x1b \x1b[0m" + \
-                                            datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "\n"
-            self._output[model_run_name] += "\x1b[1;34mPID" + " \x1b"*7 + "[0m" + \
-                                            str(self._process[model_run_name].pid) + "\n"
-            self._output[model_run_name] += "\x1b[1;34mCommand" + " \x1b"*3 + "[0m" + \
-                                            smif_call + "\n"
-
-            self._output[model_run_name] += "-" * 100 + "\n"
+            format_args = {
+                'model_run_name': model_run_name,
+                'datetime': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'pid': str(self._process[model_run_name].pid),
+                'smif_call': smif_call,
+                'colour': "\x1b[1;34m",
+                'reset': "\x1b[0m",
+                'space': " \x1b"
+            }
+            format_str = """\
+{colour}Modelrun{reset} {model_run_name}
+{colour}Time{reset}     {datetime}
+{colour}PID{reset}      {pid}
+{colour}Command{reset}  {smif_call}
+"""
+            format_str.replace(" ", "{space}")
+            output = format_str.format(**format_args)
+            output += "-" * 100 + "\n"
+            self._output[model_run_name] = output
             self._status[model_run_name] = 'running'
         else:
             raise Exception('Model is already running.')
