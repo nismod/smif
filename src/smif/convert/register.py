@@ -16,8 +16,17 @@ class LogMixin(object):
 
     @property
     def logger(self):
-        name = '.'.join([__name__, self.__class__.__name__])
-        return logging.getLogger(name)
+        try:
+            logger = self._logger
+        except AttributeError:
+            name = '.'.join([__name__, self.__class__.__name__])
+            logger = logging.getLogger(name)
+            self._logger = logger
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        self._logger = logger
 
 
 class Register(LogMixin, metaclass=ABCMeta):
@@ -79,7 +88,7 @@ class Register(LogMixin, metaclass=ABCMeta):
             converted = np.dot(data, coefficients)
 
         self.logger.debug("Converting from %s to %s.", from_set_name, to_set_name)
-        self.logger.debug("Converted value from %s to %s", data.sum(), converted.sum() )
+        self.logger.debug("Converted value from %s to %s", data.sum(), converted.sum())
 
         return converted
 

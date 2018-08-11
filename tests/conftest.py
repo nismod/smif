@@ -22,7 +22,6 @@ from smif.convert.interval import get_register as get_interval_register
 from smif.convert.unit import get_register as get_unit_register
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
-from smif.parameters import Narrative
 
 from .convert.conftest import (months, one_day, remap_months, remap_months_csv,
                                seasons, twenty_four_hours)
@@ -737,9 +736,9 @@ def get_handler(setup_folder_structure, project_config):
 
 @fixture
 def get_narrative_obj():
-    narrative = Narrative('Energy Demand - High Tech',
-                          'A description',
-                          'technology')
+    narrative = ('Energy Demand - High Tech',
+                 'A description',
+                 'technology')
     return narrative
 
 
