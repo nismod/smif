@@ -2,8 +2,8 @@ import logging
 
 from smif.controller.build import build_model_run, get_model_run_definition
 from smif.controller.load import load_resolution_sets
+from smif.controller.modelrun import ModelRunError
 from smif.data_layer import DatafileInterface
-from smif.modelrun import ModelRunError
 
 LOGGER = logging.getLogger(__name__)
 

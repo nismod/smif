@@ -37,7 +37,7 @@ The key functions include:
 import logging
 from abc import ABCMeta, abstractmethod
 
-from smif.intervention import Intervention
+from smif.decision.intervention import Intervention
 from smif.metadata import Spec
 from smif.model.model import Model
 

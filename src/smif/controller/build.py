@@ -3,11 +3,11 @@ import os
 import sys
 import traceback
 
+from smif.controller.modelrun import ModelRunBuilder
 from smif.data_layer import DatafileInterface, DataNotFoundError
 from smif.data_layer.model_loader import ModelLoader
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sos_model import SosModel
-from smif.modelrun import ModelRunBuilder
 
 LOGGER = logging.getLogger(__name__)
 
@@ -185,7 +185,7 @@ def build_model_run(model_run_config):
 
     Returns
     -------
-    `smif.modelrun.ModelRun`
+    `smif.controller.modelrun.ModelRun`
     """
     try:
         builder = ModelRunBuilder()

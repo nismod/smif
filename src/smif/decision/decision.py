@@ -6,7 +6,7 @@ The choices made in the three planning levels influence the set of interventions
 and assets available within a model run.
 
 The interventions available in a model run are stored in the
-:class:`~smif.intervention.InterventionRegister`.
+:class:`~smif.decision.intervention.InterventionRegister`.
 
 When pre-specified planning are declared, each of the corresponding
 interventions in the InterventionRegister are moved to the BuiltInterventionRegister.
@@ -23,7 +23,7 @@ __license__ = "mit"
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
-from smif.intervention import InterventionRegister
+from smif.decision.intervention import InterventionRegister
 
 
 class DecisionManager(object):
