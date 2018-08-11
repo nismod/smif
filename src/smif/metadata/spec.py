@@ -66,7 +66,7 @@ class Spec(object):
             dims=data['dims'],
             coords=data['coords'],
             dtype=data['dtype'],
-            default=data['dtype'],
+            default=data['default'],
             abs_range=data['abs_range'],
             exp_range=data['exp_range'],
             unit=data['unit']
@@ -98,6 +98,12 @@ class Spec(object):
         """The dtype of the data that this spec describes.
         """
         return self._dtype
+
+    @property
+    def default(self):
+        """The default value of data that this spec describes.
+        """
+        return self._default
 
     @property
     def abs_range(self):

@@ -10,31 +10,30 @@ class ScenarioModel(Model):
     Arguments
     ---------
     name : str
-        The unique name of this scenario
+        The name of this scenario (scenario set/abstract
+        scenario/scenario group) - like sector model name
 
     Attributes
     ----------
     name : str
         Name of this scenario
-    scenario_set : str
-        Scenario set to which this scenario belongs
-    scenario_name : str
-        Scenario represented
+    scenario : str
+        Instance of scenario (concrete instance)
     """
     def __init__(self, name):
         super().__init__(name)
-        self.scenario_set = None
-        self.scenario_name = None
+        self.scenario = None
 
     @classmethod
     def from_dict(cls, data):
         """Create ScenarioModel from dict serialisation
         """
         scenario = cls(data['name'])
-        scenario.scenario_set = data['scenario_set']
-        scenario.scenario_name = data['scenario_name']
-        for facet in data['facets']:
-            spec = Spec.from_dict(facet)
+        scenario.scenario = data['scenario']
+        if 'description' in data:
+            scenario.description = data['description']
+        for output in data['outputs']:
+            spec = Spec.from_dict(output)
             scenario.add_output(spec)
 
         return scenario
@@ -45,8 +44,8 @@ class ScenarioModel(Model):
         config = {
             'name': self.name,
             'description': self.description,
-            'scenario_set': self.scenario_set,
-            'facets': [
+            'scenario': self.scenario,
+            'outputs': [
                 output.as_dict()
                 for output in self.outputs.values()
             ]

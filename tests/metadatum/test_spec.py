@@ -72,6 +72,7 @@ class TestSpec():
         assert spec.abs_range == (0, float('inf'))
         assert spec.exp_range == (10e6, 10e9)
         assert spec.dtype == 'int'
+        assert spec.default == 0
         assert spec.shape == (2, 2)
         assert spec.ndim == 2
         assert spec.dims == ['countries', 'age']
