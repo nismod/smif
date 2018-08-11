@@ -90,3 +90,24 @@ class TestCoordinates():
         with raises(ValueError) as ex:
             Coordinates('natural_numbers', elements)
         assert "must be finite" in str(ex)
+
+    def test_eq(self):
+        """Equality based on equivalent name and elements
+        """
+        a = Coordinates('name', [1, 2, 3])
+        b = Coordinates('name', [
+            {'id': 1},
+            {'id': 2},
+            {'id': 3}
+        ])
+        c = Coordinates('another', [1, 2, 3])
+        d = Coordinates('name', [2, 3, 4])
+        e = Coordinates('name', [
+            {'id': 1, 'note': 'meta'},
+            {'id': 2, 'note': 'meta'},
+            {'id': 3, 'note': 'meta'}
+        ])
+        assert a == b
+        assert a != c
+        assert a != d
+        assert a != e

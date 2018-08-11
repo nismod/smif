@@ -23,6 +23,10 @@ class Spec(object):
             if dims is None:
                 msg = "Spec.dims must be specified if coords are provided as a dict"
                 raise ValueError(msg)
+            if sorted(dims) != sorted(coords.keys()):
+                msg = "Spec.dims must match the keys in coords"
+                raise ValueError(msg)
+
             coords = [
                 Coordinates(dim, coords[dim])
                 for dim in dims
@@ -94,6 +98,18 @@ class Spec(object):
         """The dtype of the data that this spec describes.
         """
         return self._dtype
+
+    @property
+    def abs_range(self):
+        """The absolute range of data values that this spec describes.
+        """
+        return self._abs_range
+
+    @property
+    def exp_range(self):
+        """The expected range of data values that this spec describes.
+        """
+        return self._exp_range
 
     @property
     def shape(self):
