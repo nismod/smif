@@ -16,8 +16,8 @@ convergence.
 """
 
 import numpy as np
-from smif.data_layer import DataHandle
-from smif.model import CompositeModel, element_before
+from smif.data_layer import DataHandle, TimestepResolutionError
+from smif.model.model import CompositeModel
 
 
 class ModelSet(CompositeModel):
@@ -137,11 +137,8 @@ class ModelSet(CompositeModel):
         -------
         data_handle : smif.data_layer.DataHandle
         """
-        timestep_before = element_before(
-            data_handle.current_timestep,
-            data_handle.timesteps
-        )
-        if timestep_before is not None:
+        try:
+            timestep_before = data_handle.previous_timestep
             # last iteration of previous timestep results
             print(timestep_before)
             for output in model.outputs.metadata:
@@ -149,7 +146,7 @@ class ModelSet(CompositeModel):
                     output.name,
                     data_handle.get_results(output.name, timestep=timestep_before)
                 )
-        else:
+        except TimestepResolutionError:
             # generate zero-values for each parameter/region/interval combination
             for output in model.outputs.metadata:
                 regions = output.get_region_names()
