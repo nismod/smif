@@ -5,6 +5,7 @@ import glob
 import os
 import re
 from csv import DictReader
+from functools import lru_cache
 
 import fiona
 import pyarrow as pa
@@ -432,6 +433,7 @@ class DatafileInterface(DataInterface):
 
         return data
 
+    @lru_cache(maxsize=32)
     def read_region_names(self, region_definition_name):
         """Return the set of unique region names in region set `region_definition_name`
         """
@@ -1185,6 +1187,7 @@ class DatafileInterface(DataInterface):
                 results.setdefault('intervals', []).append(element)
         return results
 
+    @lru_cache(maxsize=4)
     def _read_project_config(self):
         """Read the project configuration
 
