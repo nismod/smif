@@ -12,8 +12,9 @@ class Spec(object):
     In practice, this looks a lot like an xarray.DataArray with no data.
     """
     def __init__(self, name=None, dims=None, coords=None, dtype=None, default=None,
-                 abs_range=None, exp_range=None, unit=None):
+                 abs_range=None, exp_range=None, unit=None, description=None):
         self._name = name
+        self._description = description
 
         if not coords:
             raise ValueError("Spec.coords must be provided")
@@ -63,6 +64,7 @@ class Spec(object):
         data.update(data_provided)
         spec = Spec(
             name=data['name'],
+            description=data['description'],
             dims=data['dims'],
             coords=data['coords'],
             dtype=data['dtype'],
@@ -78,6 +80,7 @@ class Spec(object):
         """
         return {
             'name': self.name,
+            'description': self.description,
             'dims': self._dims,
             'coords': {c.name: c.ids for c in self._coords},
             'dtype': self._dtype,
@@ -92,6 +95,12 @@ class Spec(object):
         """The name of the data that this spec describes.
         """
         return self._name
+
+    @property
+    def description(self):
+        """A human-friendly description
+        """
+        return self._description
 
     @property
     def dtype(self):

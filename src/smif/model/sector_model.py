@@ -35,6 +35,7 @@ The key functions include:
 
 """
 import logging
+import sys
 from abc import ABCMeta, abstractmethod
 
 from smif.decision.intervention import Intervention
@@ -89,11 +90,91 @@ class SectorModel(Model, metaclass=ABCMeta):
     def __init__(self, name):
         super().__init__(name)
 
-        self.path = ''
         self.initial_conditions = []
-        self.interventions = []
+        self._interventions = {}
 
         self.logger = logging.getLogger(__name__)
+
+    @classmethod
+    def from_dict(cls, config):
+        model = cls(config['name'])
+        model.description = config['description']
+        model.path = config['path']
+        for input_ in config['inputs']:
+            model.add_input(Spec.from_dict(input_))
+        for output in config['outputs']:
+            model.add_output(Spec.from_dict(output))
+        for param in config['parameters']:
+            model.add_parameter(Spec.from_dict(param))
+        model.add_interventions(
+            Intervention.from_dict(intervention_config)
+            for intervention_config in config['interventions']
+        )
+        model.initial_conditions = config['initial_conditions']
+        return model
+
+    def as_dict(self):
+        """Serialize the SectorModel object as a dictionary
+
+        Returns
+        -------
+        dict
+        """
+        config = {
+            'name': self.name,
+            'description': self.description,
+            'path': sys.modules[self.__module__].__file__,
+            'classname': self.__class__.__name__,
+            'inputs': [inp.as_dict() for inp in self.inputs.values()],
+            'outputs': [out.as_dict() for out in self.outputs.values()],
+            'parameters': [param.as_dict() for param in self.parameters.values()],
+            'interventions': [
+                inter.as_dict() for inter in self._interventions.values()],
+            'initial_conditions': self.initial_conditions
+        }
+        return config
+
+    def add_input(self, spec):
+        """Add an input to the sector model
+
+        Arguments
+        ---------
+        spec: smif.metadata.Spec
+        """
+        self.logger.debug("Adding input %s to %s", spec.name, self.name)
+        self.inputs[spec.name] = spec
+
+    def add_parameter(self, spec):
+        """Add a parameter to the sector model
+
+        Arguments
+        ---------
+        spec: smif.metadata.Spec
+        """
+        self.logger.debug("Adding parameter %s to %s", spec.name, self.name)
+        self.parameters[spec.name] = spec
+
+    def add_output(self, spec):
+        """Add an output to the sector model
+
+        Arguments
+        ---------
+        spec: smif.metadata.Spec
+        """
+        self.logger.debug("Adding output %s to %s", spec.name, self.name)
+        self.outputs[spec.name] = spec
+
+    def add_interventions(self, interventions):
+        """Add potential interventions to the model
+
+        Arguments
+        ---------
+        interventions : list of Intervention
+        """
+        for i in interventions:
+            msg = "Model interventions must be smif.decision.Intervention"
+            assert isinstance(i, Intervention), msg
+            self._interventions[i.name] = i
 
     def get_current_interventions(self, state):
         """Get the interventions the exist in the current state
@@ -113,82 +194,24 @@ class SectorModel(Model, metaclass=ABCMeta):
         for decision in state:
             name = decision['name']
             build_year = decision['build_year']
-            if name in self.intervention_names:
-                for intervention in self.interventions:
-                    if intervention.name == name:
-                        serialised = intervention.as_dict()
-                        serialised['build_year'] = build_year
-                        interventions.append(serialised)
+            try:
+                serialised = self._interventions[name].as_dict()
+                serialised['build_year'] = build_year
+                interventions.append(serialised)
+            except KeyError:
+                # ignore if intervention is not in current set
+                pass
 
         msg = "State matched with %s interventions"
         self.logger.info(msg, len(interventions))
 
         return interventions
 
-    @classmethod
-    def from_dict(cls, config):
-        model = cls(config['name'])
-        model.description = config['description']
-        model.path = config['path']
-        for input_ in config['inputs']:
-            model.add_input(Spec.from_dict(input_))
-        for output in config['outputs']:
-            model.add_input(Spec.from_dict(output))
-        for param in config['parameters']:
-            model.add_input(Spec.from_dict(param))
-        model.interventions = [
-            Intervention.from_dict(intervention_config)
-            for intervention_config in config['interventions']
-        ]
-        model.initial_conditions = config['initial_conditions']
-        return model
-
-    def as_dict(self):
-        """Serialize the SectorModel object as a dictionary
-
-        Returns
-        -------
-        dict
+    @property
+    def interventions(self):
+        """Model interventions
         """
-        config = {
-            'name': self.name,
-            'description': self.description,
-            'path': self.path,
-            'classname': self.__class__.__name__,
-            'inputs': [inp.as_dict() for inp in self.inputs.values()],
-            'outputs': [out.as_dict() for out in self.outputs.values()],
-            'parameters': [param.as_dict() for param in self.parameters.values()],
-            'interventions': [inter.as_dict() for inter in self.interventions],
-            'initial_conditions': self.initial_conditions
-        }
-        return config
-
-    def add_input(self, spec):
-        """Add an input to the sector model
-
-        The inputs should be specified in a list.  For example::
-
-                - name: electricity_price
-                  spatial_resolution: GB
-                  temporal_resolution: annual
-                  units: £/kWh
-
-        Arguments
-        ---------
-        spec: smif.metadata.Spec
-        """
-        self.logger.debug("Adding input %s to %s", spec.name, self.name)
-        self.inputs[spec.name] = spec
-
-    def add_output(self, spec):
-        """Add an output to the sector model
-
-        Arguments
-        ---------
-        spec: smif.metadata.Spec
-        """
-        self.logger.debug("Adding output %s to %s", spec.name, self.name)
-        self.outputs[spec.name] = spec
+        return list(self._interventions.values())
 
     @property
     def intervention_names(self):
@@ -199,7 +222,7 @@ class SectorModel(Model, metaclass=ABCMeta):
         list
             A list of the names of the interventions
         """
-        return [intervention.name for intervention in self.interventions]
+        return list(self._interventions.keys())
 
     def before_model_run(self, data):
         """Implement this method to conduct pre-model run tasks

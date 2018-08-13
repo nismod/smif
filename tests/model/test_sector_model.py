@@ -1,50 +1,56 @@
 """Test SectorModel and SectorModelBuilder
 """
-from copy import copy
-from unittest.mock import Mock
-
-from pytest import fixture, raises
-from smif.convert.area import get_register
-from smif.metadata import Metadata, MetadataSet
-from smif.model.sector_model import SectorModel, SectorModelBuilder
-from smif.parameters import ParameterList
+import smif.sample_project.models.water_supply
+from pytest import fixture, mark
+from smif.decision.intervention import Intervention
+from smif.metadata import Spec
+from smif.model.sector_model import SectorModel
+from smif.sample_project.models.water_supply import WaterSupplySectorModel
 
 
 @fixture(scope='function')
-def get_sector_model_config(setup_folder_structure, setup_runpy_file, setup_registers):
-
-    path = setup_folder_structure
-    water_supply_wrapper_path = str(
-        path.join(
-            'models', 'water_supply', '__init__.py'
-        )
-    )
-
+def sector_model_dict():
+    path = smif.sample_project.models.water_supply.__file__
     config = {
         "name": "water_supply",
         "description": 'a description',
-        "path": water_supply_wrapper_path,
+        "path": path,
         "classname": "WaterSupplySectorModel",
         "inputs": [
             {
                 'name': 'raininess',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'milliliter'
+                'description': None,
+                'abs_range': None,
+                'exp_range': None,
+                'default': None,
+                'dims': ['LSOA'],
+                'coords': {'LSOA': [1, 2, 3]},
+                'dtype': 'float',
+                'unit': 'milliliter'
             }
         ],
         "outputs": [
             {
                 'name': 'cost',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'million GBP'
+                'description': None,
+                'abs_range': None,
+                'exp_range': None,
+                'default': None,
+                'dims': ['LSOA'],
+                'coords': {'LSOA': [1, 2, 3]},
+                'dtype': 'float',
+                'unit': 'million GBP'
             },
             {
                 'name': 'water',
-                'spatial_resolution': 'LSOA',
-                'temporal_resolution': 'annual',
-                'units': 'megaliter'
+                'description': None,
+                'abs_range': None,
+                'exp_range': None,
+                'default': None,
+                'dims': ['LSOA'],
+                'coords': {'LSOA': [1, 2, 3]},
+                'dtype': 'float',
+                'unit': 'megaliter'
             }
         ],
         "initial_conditions": [
@@ -52,261 +58,322 @@ def get_sector_model_config(setup_folder_structure, setup_runpy_file, setup_regi
             {"name": "water_asset_b", "build_year": 2010},
             {"name": "water_asset_c", "build_year": 2010}],
         "interventions": [
-            {"name": "water_asset_a", "location": "oxford"},
-            {"name": "water_asset_b", "location": "oxford"},
-            {"name": "water_asset_c", "location": "oxford"}
+            {"name": "water_asset_a", "location": "oxford", "sector": ""},
+            {"name": "water_asset_b", "location": "oxford", "sector": ""},
+            {"name": "water_asset_c", "location": "oxford", "sector": ""}
         ],
         "parameters": [
             {
                 'name': 'assump_diff_floorarea_pp',
-                'description': 'Difference in floor area per person \
-                                in end year compared to base year',
-                'absolute_range': (0.5, 2),
-                'suggested_range': (0.5, 2),
-                'default_value': 1,
-                'units': '%'
+                'description': 'Difference in floor area per person',
+                'dims': ['national'],
+                'coords': {'national': ['GB']},
+                'abs_range': (0.5, 2),
+                'exp_range': (0.5, 2),
+                'dtype': 'float',
+                'default': 1,
+                'unit': '%'
             }
         ]
     }
-
     return config
+
+
+@fixture(scope='function')
+def sector_model():
+    model = WaterSupplySectorModel('water_supply')
+    model.description = 'a description'
+    model.add_input(
+        Spec.from_dict({
+            'name': 'raininess',
+            'dims': ['LSOA'],
+            'coords': {'LSOA': [1, 2, 3]},
+            'dtype': 'float',
+            'unit': 'milliliter'
+        })
+    )
+    model.add_parameter(
+        Spec.from_dict({
+            'name': 'assump_diff_floorarea_pp',
+            'description': 'Difference in floor area per person',
+            'dims': ['national'],
+            'coords': {'national': ['GB']},
+            'abs_range': (0.5, 2),
+            'exp_range': (0.5, 2),
+            'dtype': 'float',
+            'default': 1,
+            'unit': '%'
+        })
+    )
+    model.add_output(
+        Spec.from_dict({
+            'name': 'cost',
+            'dims': ['LSOA'],
+            'coords': {'LSOA': [1, 2, 3]},
+            'dtype': 'float',
+            'unit': 'million GBP'
+        })
+    )
+    model.add_output(
+        Spec.from_dict({
+            'name': 'water',
+            'dims': ['LSOA'],
+            'coords': {'LSOA': [1, 2, 3]},
+            'dtype': 'float',
+            'unit': 'megaliter'
+        })
+    )
+    model.initial_conditions = [
+        {"name": "water_asset_a", "build_year": 2010},
+        {"name": "water_asset_b", "build_year": 2010},
+        {"name": "water_asset_c", "build_year": 2010}
+    ]
+    model.add_interventions([
+        Intervention.from_dict({"name": "water_asset_a", "location": "oxford"}),
+        Intervention.from_dict({"name": "water_asset_b", "location": "oxford"}),
+        Intervention.from_dict({"name": "water_asset_c", "location": "oxford"})
+    ])
+    return model
 
 
 class EmptySectorModel(SectorModel):
     """Simulate nothing
     """
-    def simulate(self, timestep, data=None):
-        return {}
-
-    def extract_obj(self, results):
-        return 0
+    def simulate(self, data):
+        return data
 
 
-class TestCompositeSectorModel():
-
-    def test_add_input(self):
-
-        model = EmptySectorModel('test_model')
-        model.add_input('input_name', [], [], 'units')
-
-        inputs = model.inputs
-
-        assert inputs.names == ['input_name']
-        assert inputs.units == ['units']
-
-        assert inputs['input_name'] == Metadata('input_name', [], [], 'units')
-
-    def test_add_output(self):
-
-        model = EmptySectorModel('test_model')
-        model.add_output('output_name', Mock(), Mock(), 'units')
-
-        outputs = model.outputs
-
-        assert outputs.names == ['output_name']
-        assert outputs.units == ['units']
-
-    def test_run_sector_model(self):
-
-        model = EmptySectorModel('test_model')
-        model.add_input('input_name', [], [], 'units')
-        data = {'input_name': [0]}
-        actual = model.simulate(2010, data)
-        assert actual == {}
+@fixture(scope='function')
+def empty_sector_model():
+    return EmptySectorModel('test_model')
 
 
-class TestSectorModelBuilder():
+class TestSectorModel():
+    """A SectorModel has inputs, outputs, and an implementation
+    of simulate
+    """
+    def test_construct(self, sector_model):
+        assert sector_model.description == 'a description'
+        assert sector_model.inputs == {
+            'raininess': Spec.from_dict({
+                'name': 'raininess',
+                'dims': ['LSOA'],
+                'coords': {'LSOA': [1, 2, 3]},
+                'dtype': 'float',
+                'unit': 'milliliter'
+            })
+        }
+        assert sector_model.parameters == {
+            'assump_diff_floorarea_pp': Spec.from_dict({
+                'name': 'assump_diff_floorarea_pp',
+                'description': 'Difference in floor area per person',
+                'dims': ['national'],
+                'coords': {'national': ['GB']},
+                'abs_range': (0.5, 2),
+                'exp_range': (0.5, 2),
+                'dtype': 'float',
+                'default': 1,
+                'unit': '%'
+            })
+        }
+        assert sector_model.outputs == {
+            'cost': Spec.from_dict({
+                'name': 'cost',
+                'dims': ['LSOA'],
+                'coords': {'LSOA': [1, 2, 3]},
+                'dtype': 'float',
+                'unit': 'million GBP'
+            }),
+            'water': Spec.from_dict({
+                'name': 'water',
+                'dims': ['LSOA'],
+                'coords': {'LSOA': [1, 2, 3]},
+                'dtype': 'float',
+                'unit': 'megaliter'
+            })
+        }
+        assert sector_model.initial_conditions == [
+            {"name": "water_asset_a", "build_year": 2010},
+            {"name": "water_asset_b", "build_year": 2010},
+            {"name": "water_asset_c", "build_year": 2010}
+        ]
+        assert sector_model.interventions == [
+            Intervention.from_dict(
+                {"name": "water_asset_a", "location": "oxford"}
+            ),
+            Intervention.from_dict(
+                {"name": "water_asset_b", "location": "oxford"}
+            ),
+            Intervention.from_dict(
+                {"name": "water_asset_c", "location": "oxford"}
+            )
+        ]
 
-    def test_add_inputs(self, setup_folder_structure, setup_runpy_file):
+    def test_from_dict(self, sector_model_dict):
+        """Create using classmethod from config
+        """
+        sector_model = EmptySectorModel.from_dict(sector_model_dict)
+        assert sector_model.name == 'water_supply'
 
-        model_path = str(setup_folder_structure.join('models', 'water_supply',
-                                                     '__init__.py'))
+    def test_from_dict_no_inputs(self, sector_model_dict):
+        """Default sensibly with missing config values
+        """
+        sector_model_dict['inputs'] = []
+        model = EmptySectorModel.from_dict(sector_model_dict)
+        assert model.inputs == {}
 
-        builder = SectorModelBuilder('test')
-        builder.load_model(model_path, 'WaterSupplySectorModel')
+    def test_as_dict(self, sector_model, sector_model_dict):
+        """Serialise back to dict
+        """
+        actual = sector_model.as_dict()
+        # indifferent up to order of inputs/outputs
+        actual['inputs'].sort(key=lambda m: m['name'])
+        actual['outputs'].sort(key=lambda m: m['name'])
+        actual['parameters'].sort(key=lambda m: m['name'])
+        actual['interventions'].sort(key=lambda m: m['name'])
+        assert actual == sector_model_dict
 
-        inputs = [{'name': 'an_input',
-                   'spatial_resolution': 'LSOA',
-                   'temporal_resolution': 'annual',
-                   'units': 'tonnes'}]
+    def test_add_input(self, empty_sector_model):
+        """Add an input spec
+        """
+        spec = Spec(
+            name='input_name',
+            dims=['dim'],
+            coords={'dim': [0]},
+            dtype='int'
+        )
+        empty_sector_model.add_input(spec)
+        assert empty_sector_model.inputs == {'input_name': spec}
 
-        builder.add_inputs(inputs)
+    def test_add_output(self, empty_sector_model):
+        """Add an output spec
+        """
+        spec = Spec(
+            name='output_name',
+            dims=['dim'],
+            coords={'dim': [0]},
+            dtype='int'
+        )
+        empty_sector_model.add_output(spec)
+        assert empty_sector_model.outputs == {'output_name': spec}
 
-        assert 'an_input' in builder._sector_model.inputs.names
+    def test_add_parameter(self, empty_sector_model):
+        """Adding a parameter adds a reference to the parameter list entry to
+        the model that contains it.
+        """
+        spec = Spec.from_dict({
+            'name': 'smart_meter_savings',
+            'description': 'The savings from smart meters',
+            'abs_range': (0, 100),
+            'exp_range': (3, 10),
+            'dims': ['national'],
+            'coords': {'national': ['GB']},
+            'dtype': 'float',
+            'default': 3,
+            'unit': '%'
+        })
+        empty_sector_model.add_parameter(spec)
+        assert empty_sector_model.parameters['smart_meter_savings'] == spec
 
-    def test_sector_model_builder(self, setup_folder_structure, setup_runpy_file):
-        model_path = str(setup_folder_structure.join('models', 'water_supply',
-                                                     '__init__.py'))
+    def test_simulate_exists(self, empty_sector_model):
+        """Call simulate
+        """
+        empty_sector_model.simulate(None)
 
-        register = Mock()
-        register.get_entry = Mock(return_value='a_resolution_set')
 
-        registers = {'regions': register,
-                     'intervals': register}
-
-        builder = SectorModelBuilder('water_supply', registers)
-        builder.load_model(model_path, 'WaterSupplySectorModel')
-
+class TestSectorModelInterventions(object):
+    """Interventions can be attached to a model
+    - interventions are possible/potential
+    - initial_conditions are the initial set of interventions
+    """
+    def test_add_interventions(self, empty_sector_model):
+        """Add interventions
+        """
         assets = [
-            {
+            Intervention.from_dict({
                 'name': 'water_asset_a',
                 'capital_cost': 1000,
                 'economic_lifetime': 25,
                 'operational_lifetime': 25,
                 'location': 'Narnia'
+            })
+        ]
+        empty_sector_model.add_interventions(assets)
+        assert empty_sector_model.intervention_names == ['water_asset_a']
+
+    def test_interventions_names(self, empty_sector_model):
+        """Access list of names
+        """
+        a = Intervention('water_asset_a')
+        b = Intervention('water_asset_b')
+        c = Intervention('water_asset_c')
+        empty_sector_model.add_interventions([a, b, c])
+
+        actual = sorted(empty_sector_model.intervention_names)
+        expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
+        assert actual == expected
+
+    def test_get_interventions(self, empty_sector_model):
+        a = Intervention.from_dict({
+            'name': 'water_asset_a',
+            'capacity': 50
+        })
+        b = Intervention.from_dict({
+            'name': 'water_asset_b',
+            'capacity': 150
+        })
+        c = Intervention.from_dict({
+            'name': 'water_asset_c',
+            'capacity': 100
+        })
+        empty_sector_model.add_interventions([a, b, c])
+
+        state = [
+            {'name': 'water_asset_a', 'build_year': 2010},
+            {'name': 'water_asset_b', 'build_year': 2015}
+        ]
+        actual = empty_sector_model.get_current_interventions(state)
+        actual.sort(key=lambda m: m['name'])
+        expected = [
+            {
+                'name': 'water_asset_a',
+                'build_year': 2010,
+                'capacity': 50,
+                'location': None,
+                'sector': ''
+            },
+            {
+                'name': 'water_asset_b',
+                'build_year': 2015,
+                'capacity': 150,
+                'location': None,
+                'sector': ''
             }
         ]
-        builder.add_interventions(assets)
-
-        # builder.add_inputs(inputs)
-        # builder.add_outputs(outputs)
-
-        model = builder.finish()
-        assert isinstance(model, SectorModel)
-
-        assert model.name == 'water_supply'
-        assert model.intervention_names == ['water_asset_a']
-
-    def test_path_not_found(self):
-        builder = SectorModelBuilder('water_supply', Mock())
-        with raises(FileNotFoundError) as ex:
-            builder.load_model('/fictional/path/to/model.py', 'WaterSupplySectorModel')
-        msg = "Cannot find '/fictional/path/to/model.py' for the 'water_supply' model"
-        assert msg in str(ex.value)
-
-    def test_build_from_config(self, get_sector_model_config):
-        config = get_sector_model_config
-        builder = SectorModelBuilder('test_sector_model')
-        timesteps = [2015, 2020]
-        builder.construct(config, timesteps)
-        sector_model = builder.finish()
-        assert sector_model.name == 'water_supply'
-        assert sector_model.timesteps == timesteps
-
-        actual = sector_model.as_dict()
-        # sort to match expected output
-        actual['inputs'].sort(key=lambda m: m['name'])
-        actual['outputs'].sort(key=lambda m: m['name'])
-        assert actual == config
-
-
-class TestInputs:
-
-    def test_add_no_inputs(self, setup_folder_structure, setup_runpy_file):
-        model_path = str(setup_folder_structure.join('models', 'water_supply', '__init__.py'))
-        registers = {'regions': Mock(),
-                     'intervals': Mock()}
-
-        builder = SectorModelBuilder('water_supply_test', registers)
-        builder.load_model(model_path, 'WaterSupplySectorModel')
-        builder.add_inputs(None)
-        sector_model = builder.finish()
-        assert isinstance(sector_model.inputs, MetadataSet)
-        actual_inputs = sector_model.inputs.names
-        assert actual_inputs == []
-
-
-class TestSectorModelInterventions(object):
-
-    def test_interventions_names(self):
-        mock_asset_a = Mock()
-        mock_asset_a.name = 'water_asset_a'
-        mock_asset_b = Mock()
-        mock_asset_b.name = 'water_asset_b'
-        mock_asset_c = Mock()
-        mock_asset_c.name = 'water_asset_c'
-
-        assets = [mock_asset_a, mock_asset_b, mock_asset_c]
-        model = EmptySectorModel('test_model')
-        model.interventions = assets
-
-        actual = model.intervention_names
-        expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
-
-        assert len(actual) == 3
-        assert actual == expected
-
-    def test_get_interventions(self):
-        mock_asset_a = Mock()
-        mock_asset_a.name = 'water_asset_a'
-        mock_asset_a.as_dict = Mock(return_value={'name': 'water_asset_a'})
-        mock_asset_b = Mock()
-        mock_asset_b.name = 'water_asset_b'
-        mock_asset_b.as_dict = Mock(return_value={'name': 'water_asset_b'})
-        mock_asset_c = Mock()
-        mock_asset_c.name = 'water_asset_c'
-
-        assets = [mock_asset_a, mock_asset_b, mock_asset_c]
-        model = EmptySectorModel('test_model')
-        model.interventions = assets
-
-        state = [{'name': 'water_asset_a', 'build_year': 2010},
-                 {'name': 'water_asset_b', 'build_year': 2015}]
-        actual = model.get_current_interventions(state)
-        expected = [{'name': 'water_asset_a', 'build_year': 2010},
-                    {'name': 'water_asset_b', 'build_year': 2015}]
         assert actual == expected
 
 
-class TestParameters():
-
-    def test_add_parameter(self):
-        """Adding a parameter adds a reference to the parameter list entry to
-        the model that contains it.
-        """
-
-        model = copy(EmptySectorModel('test_model'))
-        model.simulate = lambda x, y: {'savings': y['smart_meter_savings']}
-
-        param_config = {'name': 'smart_meter_savings',
-                        'description': 'The savings from smart meters',
-                        'absolute_range': (0, 100),
-                        'suggested_range': (3, 10),
-                        'default_value': 3,
-                        'units': '%'}
-        model.add_parameter(param_config)
-
-        assert isinstance(model.parameters, ParameterList)
-        assert model.parameters['smart_meter_savings'].as_dict() == param_config
-
-        actual = model.simulate(2010, {'smart_meter_savings': 3})
-        expected = {'savings': 3}
-        assert actual == expected
-
-
-class TestSectorModelIntervals():
-    """SectorModels should have access to intervals (name)
+@mark.xfail()
+class TestSectorModelDimensions():
+    """SectorModels should have access to dimension metadata, including regions
+    (name, geometry and centroid) and intervals.
     """
-
-    def test_access_region_names(self):
+    def test_access_intervals(self, empty_sector_model):
         """Access names
         """
-        model = EmptySectorModel('region_test')
-        interval_names = model.get_interval_names('annual')
+        interval_names = empty_sector_model.get_interval_names('annual')
         assert interval_names == ['1']
 
-
-class TestSectorModelRegions():
-    """SectorModels should have access to regions (name, geometry and centroid)
-    """
-    def get_model(self):
-        """Get a model with region register as setup in conftest
-        """
-        rreg = get_register()
-        model = EmptySectorModel('region_test')
-        model.regions = rreg
-        return model
-
-    def test_access_region_names(self):
+    def test_access_region_names(self, empty_sector_model):
         """Access names
         """
-        model = self.get_model()
-        region_names = model.get_region_names('half_squares')
+        region_names = empty_sector_model.get_region_names('half_squares')
         assert region_names == ['a', 'b']
 
-    def test_access_region_geometries(self):
-        model = self.get_model()
-        actual = model.get_regions('half_squares')
+    def test_access_region_geometries(self, empty_sector_model):
+        """Access geometries
+        """
+        actual = empty_sector_model.get_regions('half_squares')
 
         expected = [
             {
@@ -330,9 +397,10 @@ class TestSectorModelRegions():
         ]
         assert actual == expected
 
-    def test_access_region_centroids(self):
-        model = self.get_model()
-        actual = model.get_region_centroids('half_squares')
+    def test_access_region_centroids(self, empty_sector_model):
+        """Access geometry centroids
+        """
+        actual = empty_sector_model.get_region_centroids('half_squares')
 
         expected = [
             {
@@ -350,6 +418,6 @@ class TestSectorModelRegions():
                     'type': 'Point',
                     'coordinates': (0.5, 1.5)
                 }
-            },
+            }
         ]
         assert actual == expected
