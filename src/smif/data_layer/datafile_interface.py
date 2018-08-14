@@ -1270,7 +1270,7 @@ class DatafileInterface(DataInterface):
 
     @staticmethod
     def _write_data_to_csv(filepath, data):
-        with open(filepath, 'w') as csvfile:
+        with open(filepath, 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=(
                 'timestep',
                 'region',
