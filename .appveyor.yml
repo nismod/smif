@@ -26,7 +26,7 @@ install:
         scikit-optimize \
         shapely \
         fiona"
-  - conda activate testenv
+  - activate testenv
   - python setup.py develop
 test_script:
   - pytest
