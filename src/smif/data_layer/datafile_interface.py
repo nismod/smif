@@ -1,10 +1,12 @@
 """File-backed data interface
 """
+import copy
 import csv
 import glob
 import os
 import re
 from csv import DictReader
+from functools import lru_cache
 
 import fiona
 import pyarrow as pa
@@ -36,6 +38,11 @@ class DatafileInterface(DataInterface):
         self.file_dir = {}
         self.file_dir['project'] = os.path.join(base_folder, 'config')
         self.file_dir['results'] = os.path.join(base_folder, 'results')
+
+        # cache results of reading project_config (invalidate on write)
+        self._project_config_cache_invalid = True
+        # MUST ONLY access through self._read_project_config()
+        self._project_config_cache = None
 
         config_folders = {
             'sos_model_runs': 'config',
@@ -432,6 +439,7 @@ class DatafileInterface(DataInterface):
 
         return data
 
+    @lru_cache(maxsize=32)
     def read_region_names(self, region_definition_name):
         """Return the set of unique region names in region set `region_definition_name`
         """
@@ -1193,7 +1201,11 @@ class DatafileInterface(DataInterface):
         dict
             The project configuration
         """
-        return self._read_yaml_file(self.file_dir['project'], 'project')
+        if self._project_config_cache_invalid:
+            self._project_config_cache = self._read_yaml_file(
+                self.file_dir['project'], 'project')
+            self._project_config_cache_invalid = False
+        return copy.deepcopy(self._project_config_cache)
 
     def _write_project_config(self, data):
         """Write the project configuration
@@ -1203,6 +1215,8 @@ class DatafileInterface(DataInterface):
         data: dict
             The project configuration
         """
+        self._project_config_cache_invalid = True
+        self._project_config_cache = None
         self._write_yaml_file(self.file_dir['project'], 'project', data)
 
     @staticmethod
@@ -1256,7 +1270,7 @@ class DatafileInterface(DataInterface):
 
     @staticmethod
     def _write_data_to_csv(filepath, data):
-        with open(filepath, 'w') as csvfile:
+        with open(filepath, 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=(
                 'timestep',
                 'region',
