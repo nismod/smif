@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from smif.controller.build import build_model_run, get_model_run_definition
 from smif.controller.load import load_resolution_sets
@@ -42,3 +43,4 @@ def execute_model_run(model_run_ids, directory, interface='local_binary', warm=F
             exit(1)
 
         print("Model run '" + modelrun.name + "' complete")
+        sys.stdout.flush()
