@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
-from smif.metadata import Metadata, MetadataSet
+from smif.metadata import Spec
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel as AbstractSectorModel
 from smif.model.sos_model import ModelSet, SosModel
@@ -327,7 +327,7 @@ class TestNestedModels():
             'name': 'electricity_demand_input',
             'spatial_resolution': Mock(),
             'temporal_resolution': Mock(),
-            'units': 'unit'
+            'unit': 'unit'
         }
 
         energy_model._inputs = MetadataSet([input_metadata])
@@ -338,7 +338,7 @@ class TestNestedModels():
         expected = Metadata(input_metadata['name'],
                             input_metadata['spatial_resolution'],
                             input_metadata['temporal_resolution'],
-                            input_metadata['units'])
+                            input_metadata['unit'])
 
         assert energy_model.free_inputs.names == ['electricity_demand_input']
         assert sos_model_lo.free_inputs.names == ['electricity_demand_input']
@@ -367,7 +367,7 @@ class TestNestedModels():
         input_metadata = {'name': 'electricity_demand_input',
                           'spatial_resolution': Mock(),
                           'temporal_resolution': Mock(),
-                          'units': 'unit'}
+                          'unit': 'unit'}
 
         energy_model._inputs = MetadataSet([input_metadata])
 

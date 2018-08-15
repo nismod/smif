@@ -62,7 +62,7 @@ class ModelSet(CompositeModel):
             for sink, dep in model.deps.items():
                 if dep.source_model not in self.models.values():
                     self.deps[sink] = dep
-                    self.inputs.add_metadata(model.inputs[sink])
+                    self.add_input(model.inputs[sink])
 
     def simulate(self, data_handle):
         """Runs a set of one or more models
@@ -141,19 +141,17 @@ class ModelSet(CompositeModel):
             timestep_before = data_handle.previous_timestep
             # last iteration of previous timestep results
             print(timestep_before)
-            for output in model.outputs.metadata:
+            for output in model.outputs.values():
                 data_handle.set_results(
                     output.name,
                     data_handle.get_results(output.name, timestep=timestep_before)
                 )
         except TimestepResolutionError:
             # generate zero-values for each parameter/region/interval combination
-            for output in model.outputs.metadata:
-                regions = output.get_region_names()
-                intervals = output.get_interval_names()
+            for output in model.outputs.values():
                 data_handle.set_results(
                     output.name,
-                    np.zeros((len(regions), len(intervals)))
+                    np.zeros(output.shape)
                 )
         return data_handle
 
@@ -224,10 +222,10 @@ class ModelSet(CompositeModel):
         )
         return all(
             np.allclose(
-                data_handle.get_data(param.name),
-                prev_data_handle.get_data(param.name),
+                data_handle.get_data(spec.name),
+                prev_data_handle.get_data(spec.name),
                 rtol=self.relative_tolerance,
                 atol=self.absolute_tolerance
             )
-            for param in model.inputs.metadata
+            for spec in model.inputs.values()
         )

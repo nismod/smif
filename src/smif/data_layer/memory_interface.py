@@ -120,10 +120,10 @@ class MemoryInterface(DataInterface):
 
     def read_interval_names(self, interval_definition_name):
         return [
-                    interval[0]
-                    for interval
-                    in self._intervals[interval_definition_name]
-                ]
+            interval[0]
+            for interval
+            in self._intervals[interval_definition_name]
+        ]
 
     def write_interval_definition(self, interval):
         self._intervals[interval['name']] = interval
@@ -146,19 +146,11 @@ class MemoryInterface(DataInterface):
     def delete_scenario_set(self, scenario_set_name):
         del self._scenario_sets[scenario_set_name]
 
-    def read_scenario_data(self, scenario_name, parameter_name,
-                           spatial_resolution, temporal_resolution, timestep):
-        return self._scenarios[(
-                scenario_name, parameter_name, spatial_resolution,
-                temporal_resolution, timestep
-            )]
+    def read_scenario_data(self, scenario_name, parameter_name, spec, timestep):
+        return self._scenarios[(scenario_name, parameter_name, timestep)]
 
-    def write_scenario_data(self, scenario_name, parameter_name, data,
-                            spatial_resolution, temporal_resolution, timestep):
-        self._scenarios[(
-            scenario_name, parameter_name, spatial_resolution,
-            temporal_resolution, timestep
-        )] = data
+    def write_scenario_data(self, scenario_name, parameter_name, data, spec, timestep):
+        self._scenarios[(scenario_name, parameter_name, timestep)] = data
 
     def read_scenario(self, scenario_name):
         return self._scenarios[scenario_name]
@@ -215,23 +207,19 @@ class MemoryInterface(DataInterface):
         """
         self._state[(modelrun_name, timestep, decision_iteration)] = state
 
-    def read_results(self, modelrun_name, model_name, output_name, spatial_resolution,
-                     temporal_resolution, timestep=None, modelset_iteration=None,
-                     decision_iteration=None):
+    def read_results(self, modelrun_name, model_name, output_name, spec, timestep=None,
+                     modelset_iteration=None, decision_iteration=None):
         return self._results[
             (
-                modelrun_name, model_name, output_name, spatial_resolution,
-                temporal_resolution, timestep, modelset_iteration,
+                modelrun_name, model_name, output_name, timestep, modelset_iteration,
                 decision_iteration
             )]
 
-    def write_results(self, modelrun_name, model_name, output_name, data, spatial_resolution,
-                      temporal_resolution, timestep=None, modelset_iteration=None,
-                      decision_iteration=None):
+    def write_results(self, modelrun_name, model_name, output_name, data, spec, timestep=None,
+                      modelset_iteration=None, decision_iteration=None):
         self._results[
             (
-                modelrun_name, model_name, output_name, spatial_resolution,
-                temporal_resolution, timestep, modelset_iteration,
+                modelrun_name, model_name, output_name, timestep, modelset_iteration,
                 decision_iteration
             )] = data
 

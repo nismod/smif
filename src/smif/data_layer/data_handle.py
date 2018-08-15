@@ -52,7 +52,10 @@ class DataHandle(object):
 
         configured_parameters = self._store.read_parameters(
             self._modelrun_name, self._model_name)
-        self._parameters = model.parameters.overridden(configured_parameters)
+        default_parameters = {}
+        for parameter in model.parameters:
+            default_parameters[parameter.name] = parameter.default
+        self._parameters = default_parameters.update(configured_parameters)
 
     def derive_for(self, model):
         """Derive a new DataHandle configured for the given Model
@@ -165,7 +168,6 @@ class DataHandle(object):
         source_model = self._dependencies[input_name].source_model
         source_model_name = source_model.name
         source_output_name = self._dependencies[input_name].source.name
-        conversion = self._dependencies[input_name].convert
         if self._modelset_iteration is not None:
             i = self._modelset_iteration - 1  # read from previous
         else:
@@ -174,12 +176,14 @@ class DataHandle(object):
         self.logger.debug(
             "Read %s %s %s %s", source_model_name, source_output_name, timestep, i)
 
+        spec = self._inputs[input_name]
+
         if isinstance(source_model, ScenarioModel):
             data = self._store.read_scenario_data(
-                source_model.scenario_name,  # read from scenario
+                source_model_name,
+                source_model.scenario,  # read from given scenario
                 source_output_name,  # using output (parameter) name
-                self._inputs[input_name].spatial_resolution.name,
-                self._inputs[input_name].temporal_resolution.name,
+                spec,
                 timestep
             )
         else:
@@ -187,14 +191,13 @@ class DataHandle(object):
                 self._modelrun_name,
                 source_model_name,  # read from source model
                 source_output_name,  # using source model output name
-                self._inputs[input_name].spatial_resolution.name,
-                self._inputs[input_name].temporal_resolution.name,
+                spec,
                 timestep,
                 i,
                 self._decision_iteration
             )
 
-        return conversion(data)
+        return data
 
     def get_base_timestep_data(self, input_name):
         """Get data from the base timestep as required for model inputs
@@ -274,14 +277,13 @@ class DataHandle(object):
             "Write %s %s %s %s", self._model_name, output_name, self._current_timestep,
             self._modelset_iteration)
 
-        num_regions = len(self._outputs[output_name].spatial_resolution)
-        num_intervals = len(self._outputs[output_name].temporal_resolution)
-        expected_shape = (num_regions, num_intervals)
-        if data.shape != expected_shape:
+        spec = self._outputs[output_name]
+
+        if data.shape != spec.shape:
             raise ValueError(
                 "Tried to set results with shape {}, expected {} for {}:{}".format(
                     data.shape,
-                    expected_shape,
+                    spec.shape,
                     self._model_name,
                     output_name
                 )
@@ -292,8 +294,7 @@ class DataHandle(object):
             self._model_name,
             output_name,
             data,
-            self._outputs[output_name].spatial_resolution.name,
-            self._outputs[output_name].temporal_resolution.name,
+            spec,
             self._current_timestep,
             self._modelset_iteration,
             self._decision_iteration
@@ -311,6 +312,7 @@ class DataHandle(object):
         decision_iteration : int or None
         timestep : int or RelativeTimestep or None
         """
+        print(self._outputs.keys())
         if output_name not in self._outputs:
             raise KeyError(
                 "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
@@ -323,8 +325,13 @@ class DataHandle(object):
         else:
             assert isinstance(timestep, int) and timestep <= self._current_timestep
 
+        spec = self._outputs[output_name]
+
         if model_name is None:
             model_name = self._model_name
+        else:
+            # output names are tuples if accessed via composite models, so use final value
+            output_name = output_name[-1]
         if modelset_iteration is None:
             modelset_iteration = self._modelset_iteration
         if decision_iteration is None:
@@ -338,8 +345,7 @@ class DataHandle(object):
             self._modelrun_name,
             model_name,
             output_name,
-            self._outputs[output_name].spatial_resolution.name,
-            self._outputs[output_name].temporal_resolution.name,
+            spec,
             timestep,
             modelset_iteration,
             decision_iteration
