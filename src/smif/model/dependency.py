@@ -23,8 +23,19 @@ class Dependency(object):
     def __init__(self, source_model, source, sink_model, sink):
         # Insist on identical metadata - conversions must be explicit
         if source != sink:
-            raise ValueError("Dependencies must connect inputs and outputs with identical " +
-                             "metadata (up to variable name).")
+            diff = ""
+            if source.dtype != sink.dtype:
+                diff += "dtype(%s!=%s) " % (source.dtype, sink.dtype)
+            if source.dims != sink.dims:
+                diff += "dims(%s!=%s) " % (source.dims, sink.dims)
+            if source.coords != sink.coords:
+                diff += "coords(%s!=%s) " % (source.coords, sink.coords)
+            if source.unit != sink.unit:
+                diff += "unit(%s!=%s) " % (source.unit, sink.unit)
+            msg = "Dependencies must connect identical metadata (up to variable name). " + \
+                "Connecting %s:%s->%s:%s with mismatched %s"
+            raise ValueError(
+                msg % (source_model.name, source.name, sink_model.name, sink.name, diff))
 
         self.source_model = source_model
         self.source = source
