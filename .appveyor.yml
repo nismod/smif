@@ -25,10 +25,10 @@ install:
         rtree \
         scikit-optimize \
         shapely \
-        libgdal==2.2.2 \
-        gdal==2.2.2 \
-        fiona==1.7.10"
+        libgdal \
+        gdal \
+        fiona"
   - activate testenv
   - python setup.py develop
 test_script:
-  - pytest
+  - python -m pytest
