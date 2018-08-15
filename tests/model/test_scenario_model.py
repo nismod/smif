@@ -41,7 +41,8 @@ def scenario_model_dict():
                 'unit': 'people',
                 'abs_range': None,
                 'exp_range': None,
-                'default': None
+                'default': None,
+                'description': None
             }
         ]
     }
@@ -104,7 +105,8 @@ class TestScenarioModel(object):
             'unit': 'people / kilometer ** 2',
             'abs_range': None,
             'exp_range': None,
-            'default': None
+            'default': None,
+            'description': None
         })
 
         actual = scenario_model.as_dict()
