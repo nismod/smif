@@ -63,7 +63,7 @@ class Model(metaclass=ABCMeta):
         -------
         dict of {input_name: smif.model.Dependency}
         """
-        return self._outputs
+        return self._deps
 
     @property
     def free_inputs(self):
@@ -81,6 +81,33 @@ class Model(metaclass=ABCMeta):
         free_input_names = all_input_names - dep_input_names
 
         return {name: self.inputs[name] for name in free_input_names}
+
+    def add_input(self, spec):
+        """Add an input
+
+        Arguments
+        ---------
+        spec: smif.metadata.Spec
+        """
+        self.inputs[spec.name] = spec
+
+    def add_parameter(self, spec):
+        """Add a parameter
+
+        Arguments
+        ---------
+        spec: smif.metadata.Spec
+        """
+        self.parameters[spec.name] = spec
+
+    def add_output(self, spec):
+        """Add an output
+
+        Arguments
+        ---------
+        spec: smif.metadata.Spec
+        """
+        self.outputs[spec.name] = spec
 
     def add_dependency(self, source_model, source_output_name, sink_input_name):
         """Adds a dependency to the current `Model` object

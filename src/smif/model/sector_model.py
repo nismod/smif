@@ -134,36 +134,6 @@ class SectorModel(Model, metaclass=ABCMeta):
         }
         return config
 
-    def add_input(self, spec):
-        """Add an input to the sector model
-
-        Arguments
-        ---------
-        spec: smif.metadata.Spec
-        """
-        self.logger.debug("Adding input %s to %s", spec.name, self.name)
-        self.inputs[spec.name] = spec
-
-    def add_parameter(self, spec):
-        """Add a parameter to the sector model
-
-        Arguments
-        ---------
-        spec: smif.metadata.Spec
-        """
-        self.logger.debug("Adding parameter %s to %s", spec.name, self.name)
-        self.parameters[spec.name] = spec
-
-    def add_output(self, spec):
-        """Add an output to the sector model
-
-        Arguments
-        ---------
-        spec: smif.metadata.Spec
-        """
-        self.logger.debug("Adding output %s to %s", spec.name, self.name)
-        self.outputs[spec.name] = spec
-
     def add_interventions(self, interventions):
         """Add potential interventions to the model
 
