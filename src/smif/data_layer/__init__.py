@@ -9,10 +9,11 @@ from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.data_interface import (DataExistsError, DataMismatchError,
                                             DataNotFoundError)
 
-from smif.data_layer.data_handle import DataHandle
+from smif.data_layer.data_handle import DataHandle, TimestepResolutionError
 from smif.data_layer.memory_interface import MemoryInterface
 
 # Define what should be imported as * ::
 #         from smif.data_layer import *
 __all__ = ['DatabaseInterface', 'DatafileInterface', 'DataExistsError',
-           'DataMismatchError', 'DataNotFoundError', 'DataHandle', 'MemoryInterface']
+           'DataMismatchError', 'DataNotFoundError', 'DataHandle', 'MemoryInterface',
+           'TimestepResolutionError']

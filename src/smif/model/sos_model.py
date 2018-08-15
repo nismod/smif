@@ -64,10 +64,13 @@ class SosModel(CompositeModel):
             'name': self.name,
             'description': self.description,
             'scenario_sets': [
-                scenario.scenario_set
+                scenario.name
                 for scenario in self.scenario_models.values()
             ],
-            'sector_models': list(self.sector_models.keys()),
+            'sector_models': [
+                model.name
+                for model in self.sector_models.values()
+            ],
             'dependencies': dependencies,
             'max_iterations': self.max_iterations,
             'convergence_absolute_tolerance': self.convergence_absolute_tolerance,
@@ -109,17 +112,17 @@ class SosModel(CompositeModel):
             sos_model.convergence_relative_tolerance = data['convergence_relative_tolerance']
 
         # models
-        if models is not None:
+        if models:
             for model in models:
                 sos_model.add_model(model)
 
             for dep in data['dependencies']:
                 sink = sos_model.models[dep['sink_model']]
                 source = sos_model.models[dep['source_model']]
-                source_output = dep['source_model_output']
-                sink_input = dep['sink_model_input']
+                source_output_name = dep['source_model_output']
+                sink_input_name = dep['sink_model_input']
 
-                sink.add_dependency(source, source_output, sink_input)
+                sink.add_dependency(source, source_output_name, sink_input_name)
             sos_model.check_dependencies()
         return sos_model
 
@@ -264,7 +267,9 @@ class SosModel(CompositeModel):
         if self.free_inputs:
             msg = "A SosModel must have all inputs linked to dependencies. " \
                   "Define dependencies for {}"
-            raise NotImplementedError(msg.format(", ".join(self.free_inputs.keys())))
+            raise NotImplementedError(msg.format(", ".join(
+                str(key) for key in self.free_inputs.keys()
+            )))
 
         for model in self.models.values():
             if isinstance(model, CompositeModel):
