@@ -16,10 +16,7 @@ class Spec(object):
         self._name = name
         self._description = description
 
-        if not coords:
-            raise ValueError("Spec.coords must be provided")
-
-        # Either as a dict, in which case dims must be provided to define order
+        # Coords may come as a dict, in which case dims must be provided to define order
         if isinstance(coords, dict):
             if dims is None:
                 msg = "Spec.dims must be specified if coords are provided as a dict"
@@ -33,7 +30,7 @@ class Spec(object):
                 for dim in dims
             ]
         # Or as a list of Coordinates, in which case dims must not be provided
-        else:
+        elif isinstance(coords, list):
             for coord in coords:
                 if not isinstance(coord, Coordinates):
                     raise ValueError("Spec.coords may be a dict of {dim: elements} or a " +
@@ -42,6 +39,10 @@ class Spec(object):
                 raise ValueError("Spec.dims are derived from Spec.coords if provided as a " +
                                  "list of Coordinates")
             dims = [coord.dim for coord in coords]
+        # Or if None, this spec describes a zero-dimensional parameter - single value
+        else:
+            coords = {}
+            dims = []
 
         self._dims = dims
         self._coords = coords
