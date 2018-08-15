@@ -6,9 +6,8 @@ import numpy as np
 from pytest import fixture, raises
 from smif.data_layer import DataHandle
 from smif.data_layer.data_handle import TimestepResolutionError
-from smif.metadata import Metadata, MetadataSet
-from smif.model.dependency import Dependency
-from smif.parameters import ParameterList
+from smif.metadata import Spec
+from smif.model import SectorModel
 
 
 @fixture(scope='function')
@@ -18,78 +17,80 @@ def mock_store():
     return store
 
 
+class EmptySectorModel(SectorModel):
+    """Sector Model implementation
+    """
+    def simulate(self, data_handle):
+        return data_handle
+
+
 @fixture(scope='function')
 def mock_model():
-    model = Mock()
-    model.name = 'test_model'
-    model.parameters = ParameterList()
-    model.parameters.add_parameter(
-        {
-            'name': 'smart_meter_savings',
-            'description': 'The savings from smart meters',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%',
-            'parent': None
-        }
-    )
-    regions = Mock()
-    regions.name = 'half_squares'
-    regions.__len__ = lambda self: 1
-    intervals = Mock()
-    intervals.name = 'remap_months'
-    intervals.__len__ = lambda self: 1
-    model.inputs = MetadataSet([
-        Metadata('test', regions, intervals, 'm')
-    ])
-    model.outputs = MetadataSet([
-        Metadata('test', regions, intervals, 'm')
-    ])
-    source_model = Mock()
-    source_model.name = 'test_source'
-    model.deps = {
-        'test': Dependency(
-            source_model,
-            Metadata('test_output', regions, intervals, 'm'),
-            Metadata('test', regions, intervals, 'm')
+    model = EmptySectorModel('test_model')
+    model.add_parameter(
+        Spec(
+            name='smart_meter_savings',
+            description='The savings from smart meters',
+            abs_range=(0, 100),
+            exp_range=(3, 10),
+            default=3,
+            unit='%',
+            dtype='float'
         )
-    }
+    )
+
+    spec = Spec(
+        name='test',
+        dtype='float',
+        dims=['region', 'interval'],
+        coords={'region': [1, 2], 'interval': ['a', 'b']}
+    )
+    model.add_input(spec)
+    model.add_output(spec)
+
+    source_model = EmptySectorModel('test_source')
+    source_model.add_output(spec)
+    model.add_dependency(source_model, 'test', 'test')
+
     return model
 
 
 @fixture(scope='function')
 def mock_model_with_conversion():
-    model = Mock()
-    model.name = 'test_model'
-    model.parameters = ParameterList()
-    model.parameters.add_parameter(
-        {
-            'name': 'smart_meter_savings',
-            'description': 'The savings from smart meters',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%',
-            'parent': None
-        }
-    )
-    regions = Mock()
-    regions.name = 'half_squares'
-    intervals = Mock()
-    intervals.name = 'remap_months'
-    model.inputs = MetadataSet([
-        Metadata('test', regions, intervals, 'liters')
-    ])
-    source_model = Mock()
-    source_model.name = 'test_source'
-    model.deps = {
-        'test': Dependency(
-            source_model,
-            Metadata('test_output', regions, intervals, 'milliliters'),
-            Metadata('test', regions, intervals, 'liters')
+    model = EmptySectorModel('test_model')
+    model.add_parameter(
+        Spec(
+            name='smart_meter_savings',
+            description='The savings from smart meters',
+            abs_range=(0, 100),
+            exp_range=(3, 10),
+            default=3,
+            unit='%',
+            dtype='float'
         )
-    }
+    )
+
+    spec = Spec(
+        name='test',
+        dtype='float',
+        dims=['half_squares', 'remap_months'],
+        coords={'half_squares': [1, 2], 'remap_months': ['jan', 'feb']},
+        unit='ml'  # millilitres to convert
+    )
+    model.add_input(spec)
+    model.add_output(spec)
+
+    source_model = EmptySectorModel('test_source')
+    output_spec = Spec(
+        name='test',
+        dtype='float',
+        dims=['half_squares', 'remap_months'],
+        coords={'half_squares': [1, 2], 'remap_months': ['jan', 'feb']},
+        unit='l'  # litres convert to
+    )
+    source_model.add_output(output_spec)
+    model.add_dependency(source_model, 'test', 'test')
+
     return model
 
 
@@ -111,8 +112,7 @@ class TestDataHandle():
             1,
             'test_source',  # read from source model
             'test_output',  # using source model output name
-            'half_squares',
-            'remap_months',
+            mock_model.inputs['test'],  # input spec
             2015,
             None,
             None
@@ -130,8 +130,7 @@ class TestDataHandle():
             1,
             'test_source',  # read from source model
             'test_output',  # using source model output name
-            'half_squares',
-            'remap_months',
+            mock_model_with_conversion.inputs['test'],
             2015,
             None,
             None
@@ -149,8 +148,7 @@ class TestDataHandle():
             1,
             'test_source',  # read from source model
             'test_output',  # using source model output name
-            'half_squares',
-            'remap_months',
+            mock_model.inputs['test'],
             2015,  # base timetep
             None,
             None
@@ -168,8 +166,7 @@ class TestDataHandle():
             1,
             'test_source',  # read from source model
             'test_output',  # using source model output name
-            'half_squares',
-            'remap_months',
+            mock_model.inputs['test'],
             2020,  # previous timetep
             None,
             None
@@ -187,8 +184,7 @@ class TestDataHandle():
             1,
             'test_source',  # read from source model
             'test_output',  # using source model output name
-            'half_squares',
-            'remap_months',
+            mock_model.inputs['test'],
             2015,
             None,
             None
@@ -208,8 +204,7 @@ class TestDataHandle():
             'test_model',
             'test',
             expected,
-            'half_squares',
-            'remap_months',
+            mock_model.inputs['test'],
             2015,
             None,
             None
@@ -241,8 +236,7 @@ class TestDataHandle():
             'test_model',
             'test',
             expected,
-            'half_squares',
-            'remap_months',
+            mock_model.inputs['test'],
             2015,
             None,
             None

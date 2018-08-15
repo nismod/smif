@@ -1,7 +1,8 @@
 from unittest.mock import Mock
 
 from pytest import fixture, raises
-from smif.modelrun import ModelRunBuilder, ModelRunError, ModelRunner
+from smif.controller.modelrun import (ModelRunBuilder, ModelRunError,
+                                      ModelRunner)
 
 
 @fixture(scope='function')

@@ -1,5 +1,5 @@
 from pytest import fixture, raises
-from smif.decision import DecisionManager, PreSpecified, RuleBased
+from smif.decision.decision import DecisionManager, PreSpecified, RuleBased
 
 
 @fixture(scope='function')

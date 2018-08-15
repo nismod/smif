@@ -1,5 +1,5 @@
 from pytest import fixture, raises
-from smif.intervention import Intervention, InterventionRegister
+from smif.decision.intervention import Intervention, InterventionRegister
 
 
 @fixture(scope='function')

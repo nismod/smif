@@ -1,7 +1,7 @@
 """Tests the definition and solution of the planning problem optimisation
 """
 from skopt import dummy_minimize
-from smif.optimisation import OptimizerTemplate
+from smif.decision.optimisation import OptimizerTemplate
 
 
 class Optimizer(OptimizerTemplate):
