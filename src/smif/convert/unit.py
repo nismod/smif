@@ -89,12 +89,3 @@ class UnitRegister(Register):
             self.logger.warning("Unrecognised unit: %s", unit_string)
             unit = None
         return unit
-
-
-__REGISTER = UnitRegister()
-
-
-def get_register():
-    """Returns a reference to the unit registry
-    """
-    return __REGISTER

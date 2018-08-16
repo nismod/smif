@@ -15,11 +15,9 @@ import os
 from copy import copy
 
 from pytest import fixture
-from smif.convert.area import RegionSet
-from smif.convert.area import get_register as get_region_register
-from smif.convert.interval import IntervalSet
-from smif.convert.interval import get_register as get_interval_register
-from smif.convert.unit import get_register as get_unit_register
+from smif.convert.area import RegionRegister, RegionSet
+from smif.convert.interval import IntervalSet, TimeIntervalRegister
+from smif.convert.unit import UnitRegister
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
 
@@ -94,7 +92,11 @@ def setup_folder_structure(tmpdir_factory, oxford_region,
         dict_writer.writerows(data)
 
     units_file = test_folder.join('data', 'user_units.txt')
-    units_file.write("blobbiness = m^3 * 10^6\n")
+    with open(units_file, 'w') as units_fh:
+        units_fh.write("blobbiness = m^3 * 10^6\n")
+        units_fh.write("people = [people]\n")
+        units_fh.write("mcm = 10^6 * m^3\n")
+        units_fh.write("GBP=[currency]\n")
 
     return test_folder
 
@@ -398,12 +400,12 @@ def water_interventions_abc():
     ]
 
 
-@fixture(scope="session", autouse=True)
+@fixture(scope="session")
 def setup_registers(oxford_region, annual_intervals, tmpdir_factory):
     """One-time setup: load all the fixture region and interval
     sets into the module-level registers.
     """
-    regions = get_region_register()
+    regions = RegionRegister()
     lsoa = RegionSet('LSOA', oxford_region['features'])
     regions.register(lsoa)
     regions.register(regions_half_squares())
@@ -416,7 +418,7 @@ def setup_registers(oxford_region, annual_intervals, tmpdir_factory):
     regions_rect_alt.name = 'rect_alt'
     regions.register(regions_rect_alt)
 
-    intervals = get_interval_register()
+    intervals = TimeIntervalRegister()
     intervals.register(IntervalSet('annual', annual_intervals))
     intervals.register(IntervalSet('months', months()))
     intervals.register(IntervalSet('seasons', seasons()))
@@ -427,10 +429,11 @@ def setup_registers(oxford_region, annual_intervals, tmpdir_factory):
     test_folder = tmpdir_factory.mktemp("smif")
 
     units_file = test_folder.join('user_units.txt')
-    units_file.write("mcm = 10^6 * m^3\nGBP=[currency]\npeople=[people]\n")
 
-    units = get_unit_register()
+    units = UnitRegister()
     units.register(str(units_file))
+
+    return regions, intervals, units
 
 
 @fixture(scope='function')

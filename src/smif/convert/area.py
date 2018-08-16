@@ -153,12 +153,3 @@ class RegionRegister(NDimensionalRegister):
     """
     def __init__(self):
         super().__init__(axis=0)
-
-
-__REGISTER = RegionRegister()
-
-
-def get_register():
-    """Return single copy of RegionRegister
-    """
-    return __REGISTER

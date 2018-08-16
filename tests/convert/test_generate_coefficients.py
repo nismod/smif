@@ -7,7 +7,6 @@ import numpy as np
 from pytest import fixture, mark
 from smif.convert.area import RegionRegister
 from smif.convert.interval import TimeIntervalRegister
-from smif.convert.interval import get_register as get_interval_register
 from smif.convert.register import Register
 
 
@@ -99,7 +98,7 @@ class TestAggregationCoefficient:
 
     def test_aggregation(self, month_to_season_coefficients):
 
-        intervals = get_interval_register()
+        intervals = TimeIntervalRegister()
         actual = intervals.get_coefficients('months', 'seasons')
         expected = month_to_season_coefficients
         np.testing.assert_allclose(actual, expected)
@@ -121,7 +120,7 @@ class TestRegisterCaching:
     def test_read_coefficients(self, month_to_season_coefficients,
                                patch_register_data_interface):
 
-        interval = get_interval_register()
+        interval = TimeIntervalRegister()
 
         mock_interface = patch_register_data_interface
         mock_interface.read_coefficients = Mock()
@@ -139,7 +138,7 @@ class TestRegisterCaching:
 
         data = np.array(month_to_season_coefficients, dtype=np.float)
 
-        interval = get_interval_register()
+        interval = TimeIntervalRegister()
 
         mock_data_interface = patch_register_data_interface
 

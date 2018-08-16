@@ -1,18 +1,16 @@
 import logging
 
-from smif.convert.area import RegionSet
-from smif.convert.area import get_register as get_region_register
-from smif.convert.interval import IntervalSet
-from smif.convert.interval import get_register as get_interval_register
+from smif.convert.area import RegionRegister, RegionSet
+from smif.convert.interval import IntervalSet, TimeIntervalRegister
 from smif.convert.register import Register
-from smif.convert.unit import get_register as get_unit_register
+from smif.convert.unit import UnitRegister
 from smif.data_layer import DatafileInterface
 
 LOGGER = logging.getLogger(__name__)
 
-REGIONS = get_region_register()
-INTERVALS = get_interval_register()
-UNITS = get_unit_register()
+REGIONS = RegionRegister()
+INTERVALS = TimeIntervalRegister()
+UNITS = UnitRegister()
 
 
 def load_region_sets(handler):

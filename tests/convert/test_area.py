@@ -2,7 +2,7 @@
 """
 import numpy as np
 from pytest import fixture, raises
-from smif.convert.area import RegionRegister, RegionSet, get_register
+from smif.convert.area import RegionRegister, RegionSet
 
 
 @fixture(scope='function')
@@ -267,14 +267,14 @@ class TestRegionRegister():
         assert "ResolutionSet 'nonexistent' not registered" in str(ex)
 
     def test_convert_equal(self):
-        rreg = get_register()
+        rreg = RegionRegister()
 
         data = np.ones(1)
         converted = rreg.convert(data, 'rect', 'rect_alt')
         np.testing.assert_equal(data, converted)
 
     def test_convert_to_half(self):
-        rreg = get_register()
+        rreg = RegionRegister()
 
         data = np.ones(1)
         converted = rreg.convert(data, 'rect', 'half_squares')
@@ -282,7 +282,7 @@ class TestRegionRegister():
         np.testing.assert_equal(converted, expected)
 
     def test_convert_from_half(self):
-        rreg = get_register()
+        rreg = RegionRegister()
 
         data = np.ones(2) / 2
         converted = rreg.convert(data, 'half_squares', 'rect')
@@ -295,21 +295,21 @@ class TestRegionRegister():
         np.testing.assert_equal(converted, expected)
 
     def test_coverage_half(self):
-        rreg = get_register()
+        rreg = RegionRegister()
         half_covered = rreg.get_entry('single_half_square')
         actual = half_covered.coverage
         expected = 1.0
         assert actual == expected
 
     def test_coverage_whole(self):
-        rreg = get_register()
+        rreg = RegionRegister()
         rect = rreg.get_entry('rect')
         actual = rect.coverage
         expected = 2.0
         assert actual == expected
 
     def test_convert_to_half_not_covered(self, caplog):
-        rreg = get_register()
+        rreg = RegionRegister()
 
         data = np.array([3])
 
@@ -321,7 +321,7 @@ class TestRegionRegister():
         assert expected in caplog.text
 
     def test_convert_from_half_not_covered(self, caplog):
-        rreg = get_register()
+        rreg = RegionRegister()
 
         data = np.array([3])
         rreg.convert(data, 'single_half_square', 'rect')
@@ -332,7 +332,7 @@ class TestRegionRegister():
         assert expected in caplog.text
 
     def test_convert_square_to_triangle(self):
-        rreg = get_register()
+        rreg = RegionRegister()
 
         data = np.array([1, 1])
         converted = rreg.convert(data, 'half_squares', 'half_triangles')
@@ -345,7 +345,7 @@ class TestRegionRegister():
         np.testing.assert_equal(converted, expected)
 
     def test_convert_triangle_to_square(self):
-        rreg = get_register()
+        rreg = RegionRegister()
 
         data = np.array([1, 1])
         converted = rreg.convert(data, 'half_triangles', 'half_squares')
@@ -361,7 +361,7 @@ class TestRegionRegister():
 class TestGetCoefficients:
 
     def test_get_coefficients(self):
-        rreg = get_register()
+        rreg = RegionRegister()
         actual = rreg.get_coefficients('half_triangles',
                                        'half_squares')
         expected = np.array([[0.75, 0.25],
@@ -369,7 +369,7 @@ class TestGetCoefficients:
         np.testing.assert_equal(actual, expected)
 
     def test_coefs_should_map_to_themselves(self):
-        rreg = get_register()
+        rreg = RegionRegister()
         actual = rreg.get_coefficients('half_triangles',
                                        'half_triangles')
         expected = np.array([[1, 0],
