@@ -5,38 +5,46 @@ path: models/water_supply.py   # path to python file
 classname: WaterSupplySectorModel # implements smif.SectorModel
 inputs:
 - name: raininess
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: Ml
+  dims:
+  - country
+  dtype: float
+  unit: Ml
 - name: population
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: people
+  dims:
+  - country
+  dtype: int
+  unit: people
 - name: water_demand
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: Ml
+  dims:
+  - country
+  dtype: float
+  unit: Ml
 - name: reservoir_level
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: Ml
+  dims:
+  - country
+  dtype: float
+  unit: Ml
 outputs:
 - name: cost
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: million GBP
+  dims:
+  - country
+  dtype: float
+  unit: million GBP
 - name: energy_demand
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: kWh
+  dims:
+  - country
+  dtype: float
+  unit: kWh
 - name: water
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: Ml
+  dims:
+  - country
+  dtype: float
+  unit: Ml
 - name: reservoir_level
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: Ml
+  dims:
+  - country
+  dtype: float
+  unit: Ml
 interventions:
   - water_supply.yml
 initial_conditions:
@@ -45,13 +53,23 @@ initial_conditions:
 parameters:
 - name: clever_water_meter_savings
   description: The savings from smart water meters
-  absolute_range: (0, 100)
-  suggested_range: (3, 10)
-  default_value: 3
-  units: '%'
+  abs_range:
+  - 0
+  - 100
+  exp_range:
+  - 3
+  - 10
+  default: 3
+  dtype: float
+  unit: '%'
 - name: per_capita_water_demand
   description: The assumed per capita demand for water
-  absolute_range: (0, 1.5)
-  suggested_range: (1, 1.3)
-  default_value: 1.1
-  units: 'liter/person'
+  abs_range:
+  - 0
+  - 1.5
+  exp_range:
+  - 1
+  - 1.3
+  default: 1.1
+  dtype: float
+  unit: 'liter/person'

@@ -1,69 +1,69 @@
 name: Test Project
-scenario_sets:
-- description: Growth in UK population
-  facets:
+scenarios:
+- name: population
+  description: Growth in UK population
+  provides:
   - name: population
     description: ''
-  name: population
-- description: Rainfall in the UK
-  facets:
-  - name: raininess
-    description: ''
-  name: rainfall
-narrative_sets:
-- description: Describes the evolution of technology
-  name: technology
-interval_definitions:
-- description: ''
-  filename: annual_intervals.csv
-  name: annual
+    dims:
+    - national
+    - annual
+    dtype: int
+    units: people
+  variants:
+  - scenario: Central Population (Low)
+    data:
+      population: population_low.csv
+  - scenario: Central Population (Medium)
+    data:
+      population: population_med.csv
+  - scenario: Central Population (High)
+    data:
+      population: population_high.csv
+- name: climate
+  description: UKCP09 Climate Projections
+  provides:
+  - name: precipitation
+    description: Rainfall in the UK
+    dims:
+    - nation
+    dtype: int
+    units: ml
+  variants:
+  - scenario: Central Rainfall
+    data:
+      rainfall: precipitation.csv
 narratives:
-- description: High penetration of SMART technology on the demand side
-  filename: high_tech_dsm.yml
-  name: High Tech Demand Side Management
-  narrative_set: technology
-region_definitions:
-- description: ''
-  filename: uk_nations_shp/regions.shp
-  name: national
-- description: ''
-  filename: oxfordshire/regions.geojson
-  name: oxfordshire
-scenarios:
-- description: ''
-  facets:
-  - filename: raininess.csv
-    name: raininess
-    spatial_resolution: national
-    temporal_resolution: annual
-    units: litre
-  name: Central Rainfall
-  scenario_set: rainfall
-- description: ''
-  facets:
-  - filename: population_low.csv
-    name: population
-    spatial_resolution: national
-    temporal_resolution: annual
-    units: people
-  name: Central Population (Low)
-  scenario_set: population
-- description: ''
-  facets:
-  - filename: population_med.csv
-    name: population
-    spatial_resolution: national
-    temporal_resolution: annual
-    units: people
-  name: Central Population (Medium)
-  scenario_set: population
-- description: ''
-  facets:
-  - filename: population_high.csv
-    name: population
-    spatial_resolution: national
-    temporal_resolution: annual
-    units: people
-  name: Central Population (High)
-  scenario_set: population
+- name: technology
+  description: Describes the evolution of technology
+  provides:
+  - name: smart_meter_savings
+    description: The savings from smart meters
+    dtype: float
+    unit: '%'
+  - name: clever_water_meter_savings
+    description: The savings from smart water meters
+    dtype: float
+    unit: '%'
+  - name: per_capita_water_demand
+    description: The assumed per capita demand for water
+    dtype: float
+    unit: liter/person
+  variants:
+  - name: High Tech Demand Side Management
+    description: High penetration of SMART technology on the demand side
+    data:
+      smart_meter_savings: high_tech_dsm.csv
+      clever_water_meter_savings: high_tech_dsm.csv
+      per_capita_water_demand: high_tech_dsm.csv
+dimension_coordinates:
+- dim: annual
+  description: Single annual interval of 8760 hours
+  elements: interval_definitions/annual_intervals.csv
+- dim: country
+  description: Each country in Great Britain
+  elements: region_definitions/uk_nations_shp/regions.shp
+- dim: oxfordshire
+  description: Local Authority Districts (2016) within Oxfordshire
+  elements: region_definitions/oxfordshire/regions.geojson
 units: units.txt

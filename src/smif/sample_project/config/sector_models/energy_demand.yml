@@ -4,22 +4,26 @@ path: models/energy_demand.py
 classname: EDMWrapper
 inputs:
 - name: population
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: people
+  dims:
+  - country
+  dtype: int
+  unit: people
 - name: energy_demand
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: kWh
+  dims:
+  - country
+  dtype: int
+  unit: kWh
 outputs:
 - name: cost
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: million GBP
+  dims:
+  - country
+  dtype: float
+  unit: million GBP
 - name: water_demand
-  spatial_resolution: national
-  temporal_resolution: annual
-  units: Ml
+  dims:
+  - country
+  dtype: float
+  unit: Ml
 interventions:
 - energy_supply.yml
 - energy_supply.csv
@@ -27,7 +31,12 @@ initial_conditions: []
 parameters:
 - name: smart_meter_savings
   description: The savings from smart meters
-  absolute_range: (0, 100)
-  suggested_range: (3, 10)
-  default_value: 3
-  units: '%'
+  abs_range:
+  - 0
+  - 100
+  exp_range:
+  - 3
+  - 10
+  default: 3
+  dtype: float
+  unit: '%'
