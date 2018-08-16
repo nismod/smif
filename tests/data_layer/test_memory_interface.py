@@ -3,32 +3,25 @@ from smif.data_layer import DataExistsError, MemoryInterface
 
 
 class TestScenarios():
-
+    """Read and write scenario data
+    """
     def test_write_scenario_data(self, get_remapped_scenario_data):
-
-        data = get_remapped_scenario_data
-
+        """Write to in-memory data
+        """
+        data, spec = get_remapped_scenario_data
         handler = MemoryInterface()
-        handler.write_scenario_data('test_scenario', 'parameter', data,
-                                    'spatial_resolution', 'temporal_resolution',
-                                    2010)
+        handler.write_scenario_data('test_scenario', 'parameter', data, spec, 2010)
 
-        assert handler._scenarios[('test_scenario', 'parameter',
-                                   'spatial_resolution', 'temporal_resolution',
-                                   2010)] == data
+        assert handler._scenarios[('test_scenario', 'parameter', spec, 2010)] == data
 
     def test_read_scenario_data(self, get_remapped_scenario_data):
-
-        data = get_remapped_scenario_data
-
+        """Read from in-memory data
+        """
+        data, spec = get_remapped_scenario_data
         handler = MemoryInterface()
+        handler._scenarios[('test_scenario', 'parameter', spec, 2010)] = data
 
-        handler._scenarios[('test_scenario', 'parameter', 'spatial_resolution',
-                            'temporal_resolution', 2010)] = data
-
-        assert handler.read_scenario_data('test_scenario', 'parameter',
-                                          'spatial_resolution', 'temporal_resolution',
-                                          2010) == data
+        assert handler.read_scenario_data('test_scenario', 'parameter', spec, 2010) == data
 
 
 class TestScenarioSets:

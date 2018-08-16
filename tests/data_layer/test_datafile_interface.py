@@ -817,7 +817,7 @@ class TestScenarios:
         The set of unique region or interval names can be used instead.
         """
         basefolder = setup_folder_structure
-        scenario_data = get_remapped_scenario_data
+        scenario_data, spec = get_remapped_scenario_data
 
         keys = scenario_data[0].keys()
         with open(os.path.join(str(basefolder), 'data', 'scenarios',

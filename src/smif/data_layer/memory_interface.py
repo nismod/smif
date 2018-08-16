@@ -147,10 +147,10 @@ class MemoryInterface(DataInterface):
         del self._scenario_sets[scenario_set_name]
 
     def read_scenario_data(self, scenario_name, parameter_name, spec, timestep):
-        return self._scenarios[(scenario_name, parameter_name, timestep)]
+        return self._scenarios[(scenario_name, parameter_name, spec, timestep)]
 
     def write_scenario_data(self, scenario_name, parameter_name, data, spec, timestep):
-        self._scenarios[(scenario_name, parameter_name, timestep)] = data
+        self._scenarios[(scenario_name, parameter_name, spec, timestep)] = data
 
     def read_scenario(self, scenario_name):
         return self._scenarios[scenario_name]

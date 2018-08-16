@@ -3,6 +3,7 @@ import os
 from pytest import fixture
 from smif.data_layer import DatafileInterface, MemoryInterface
 from smif.data_layer.load import dump
+from smif.metadata import Spec
 
 
 @fixture(scope='function')
@@ -32,7 +33,7 @@ def get_handler_binary(setup_folder_structure, project_config):
 def get_remapped_scenario_data():
     """Return sample scenario_data
     """
-    return [
+    data = [
         {
             'value': 100,
             'units': 'people',
@@ -90,3 +91,14 @@ def get_remapped_scenario_data():
             'year': 2016
         }
     ]
+    spec = Spec(
+        name='people',
+        unit='people',
+        dtype='int',
+        dims=['county', 'season'],
+        coords={
+            'county': ['oxford'],
+            'season': ['cold_month', 'spring_month', 'hot_month', 'fall_month']
+        }
+    )
+    return data, spec
