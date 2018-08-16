@@ -28,6 +28,7 @@ class TestSpec():
         """
         spec = Spec(
             name='population',
+            description='Population by age class',
             coords=[
                 Coordinates('countries', ["England", "Wales"]),
                 Coordinates('age', [">30", "<30"])
@@ -39,6 +40,7 @@ class TestSpec():
             unit='people'
         )
         assert spec.name == 'population'
+        assert spec.description == 'Population by age class'
         assert spec.unit == 'people'
         assert spec.abs_range == (0, float('inf'))
         assert spec.exp_range == (10e6, 10e9)
@@ -56,6 +58,7 @@ class TestSpec():
         """
         spec = Spec.from_dict({
             'name': 'population',
+            'description': 'Population by age class',
             'dims': ['countries', 'age'],
             'coords': {
                 'age': [">30", "<30"],
@@ -68,6 +71,7 @@ class TestSpec():
             'unit': 'people'
         })
         assert spec.name == 'population'
+        assert spec.description == 'Population by age class'
         assert spec.unit == 'people'
         assert spec.abs_range == (0, float('inf'))
         assert spec.exp_range == (10e6, 10e9)
@@ -85,27 +89,23 @@ class TestSpec():
         """classmethod to construct from serialisation
         """
         spec = Spec.from_dict({
-            'dims': ['countries'],
-            'coords': {
-                'countries': ["England", "Wales"]
-            },
             'dtype': 'int'
         })
         assert spec.name is None
+        assert spec.description is None
         assert spec.unit is None
         assert spec.abs_range is None
         assert spec.exp_range is None
         assert spec.dtype == 'int'
-        assert spec.shape == (2,)
-        assert spec.ndim == 1
-        assert spec.dims == ['countries']
-        assert spec.coords == [
-            Coordinates('countries', ["England", "Wales"])
-        ]
+        assert spec.shape == ()
+        assert spec.ndim == 0
+        assert spec.dims == []
+        assert spec.coords == []
 
     def test_to_dict(self):
         actual = Spec(
             name='population',
+            description='Population by age class',
             coords=[Coordinates('countries', ["England", "Wales"])],
             dtype='int',
             default=0,
@@ -115,6 +115,7 @@ class TestSpec():
         ).as_dict()
         expected = {
             'name': 'population',
+            'description': 'Population by age class',
             'dims': ['countries'],
             'coords': {'countries': ["England", "Wales"]},
             'dtype': 'int',
@@ -134,16 +135,6 @@ class TestSpec():
                 coords=[Coordinates('countries', ["England", "Wales"])]
             )
         assert "dtype must be provided" in str(ex)
-
-    def test_empty_coords_error(self):
-        """A Spec must be constructed with a list of Coordinates
-        """
-        with raises(ValueError) as ex:
-            Spec(
-                name='test',
-                dtype='int'
-            )
-        assert "coords must be provided" in str(ex)
 
     def test_coords_type_error(self):
         """A Spec must be constructed with a list of Coordinates

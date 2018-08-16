@@ -41,7 +41,7 @@ class Spec(object):
             dims = [coord.dim for coord in coords]
         # Or if None, this spec describes a zero-dimensional parameter - single value
         else:
-            coords = {}
+            coords = []
             dims = []
 
         self._dims = dims
