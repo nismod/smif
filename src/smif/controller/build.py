@@ -49,6 +49,8 @@ def get_model_run_definition(directory, modelrun):
 
     scenario_objects = get_scenario_objects(
         model_run_config['scenarios'], handler)
+    scenario_objects = [scenario_obj for scenario_obj in scenario_objects
+                        if scenario_obj.name in sos_model_config['scenario_sets']]
     LOGGER.debug("Scenario models: %s", [model.name for model in scenario_objects])
     sos_model_config['scenario_sets'] = scenario_objects
 
@@ -142,7 +144,8 @@ def get_pre_specified_planning_strategies(model_run_config, handler):
     for strategy in model_run_config['strategies']:
         if strategy['strategy'] == 'pre-specified-planning':
             decisions = handler.read_strategies(strategy['filename'])
-            if decisions is None: decisions = []
+            if decisions is None:
+                decisions = []
             del strategy['filename']
             strategy['interventions'] = decisions
             LOGGER.info("Added %s pre-specified planning interventions to %s",
