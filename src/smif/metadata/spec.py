@@ -19,11 +19,11 @@ class Spec(object):
         # Coords may come as a dict, in which case dims must be provided to define order
         if isinstance(coords, dict):
             if dims is None:
-                msg = "Spec.dims must be specified if coords are provided as a dict"
-                raise ValueError(msg)
+                msg = "Spec.dims must be specified if coords are provided as a dict, in {}"
+                raise ValueError(msg.format(self._name))
             if sorted(dims) != sorted(coords.keys()):
-                msg = "Spec.dims must match the keys in coords"
-                raise ValueError(msg)
+                msg = "Spec.dims must match the keys in coords, in {}"
+                raise ValueError(msg.format(self._name))
 
             coords = [
                 Coordinates(dim, coords[dim])
@@ -34,10 +34,10 @@ class Spec(object):
             for coord in coords:
                 if not isinstance(coord, Coordinates):
                     raise ValueError("Spec.coords may be a dict of {dim: elements} or a " +
-                                     "list of Coordinates")
+                                     "list of Coordinates, in {}".format(self._name))
             if dims is not None:
                 raise ValueError("Spec.dims are derived from Spec.coords if provided as a " +
-                                 "list of Coordinates")
+                                 "list of Coordinates, in {}".format(self._name))
             dims = [coord.dim for coord in coords]
         # Or if None, this spec describes a zero-dimensional parameter - single value
         else:
@@ -48,7 +48,7 @@ class Spec(object):
         self._coords = coords
 
         if dtype is None:
-            raise ValueError("Spec.dtype must be provided")
+            raise ValueError("Spec.dtype must be provided, in {}".format(self._name))
         self._dtype = dtype
 
         self._default = default
