@@ -613,7 +613,6 @@ class TestDimensions:
 
     def test_read_hourly_interval_definition_data(self,
                                                   setup_folder_structure,
-                                                  setup_registers,
                                                   get_handler):
         path = os.path.join(str(setup_folder_structure),
                             'data',
@@ -630,7 +629,6 @@ class TestDimensions:
 
     def test_read_remap_interval_definition_data(self,
                                                  setup_folder_structure,
-                                                 setup_registers,
                                                  get_handler):
         path = os.path.join(str(setup_folder_structure),
                             'data',

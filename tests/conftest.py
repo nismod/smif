@@ -12,19 +12,12 @@ import csv
 import json
 import logging
 import os
-from copy import copy
 
 from pytest import fixture
-from smif.convert.area import RegionRegister, RegionSet
-from smif.convert.interval import IntervalSet, TimeIntervalRegister
-from smif.convert.unit import UnitRegister
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
 
-from .convert.conftest import (months, one_day, remap_months, remap_months_csv,
-                               seasons, twenty_four_hours)
-from .convert.test_area import (regions_half_squares, regions_half_triangles,
-                                regions_rect, regions_single_half_square)
+from .convert.conftest import remap_months_csv
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
@@ -398,42 +391,6 @@ def water_interventions_abc():
             }
         }
     ]
-
-
-@fixture(scope="session")
-def setup_registers(oxford_region, annual_intervals, tmpdir_factory):
-    """One-time setup: load all the fixture region and interval
-    sets into the module-level registers.
-    """
-    regions = RegionRegister()
-    lsoa = RegionSet('LSOA', oxford_region['features'])
-    regions.register(lsoa)
-    regions.register(regions_half_squares())
-    regions.register(regions_single_half_square())
-    regions.register(regions_half_triangles())
-    regions.register(regions_rect())
-
-    # register alt rect (same area)
-    regions_rect_alt = copy(regions_rect())
-    regions_rect_alt.name = 'rect_alt'
-    regions.register(regions_rect_alt)
-
-    intervals = TimeIntervalRegister()
-    intervals.register(IntervalSet('annual', annual_intervals))
-    intervals.register(IntervalSet('months', months()))
-    intervals.register(IntervalSet('seasons', seasons()))
-    intervals.register(IntervalSet('hourly_day', twenty_four_hours()))
-    intervals.register(IntervalSet('one_day', one_day()))
-    intervals.register(IntervalSet('remap_months', remap_months()))
-
-    test_folder = tmpdir_factory.mktemp("smif")
-
-    units_file = test_folder.join('user_units.txt')
-
-    units = UnitRegister()
-    units.register(str(units_file))
-
-    return regions, intervals, units
 
 
 @fixture(scope='function')
