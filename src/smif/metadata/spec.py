@@ -145,9 +145,9 @@ class Spec(object):
 
         Returns
         -------
-        list of str
+        tuple of str
         """
-        return self._dims
+        return list(self._dims)
 
     @property
     def coords(self):
@@ -157,7 +157,7 @@ class Spec(object):
         -------
         list of Coordinates
         """
-        return self._coords
+        return list(self._coords)
 
     @property
     def unit(self):
@@ -166,7 +166,19 @@ class Spec(object):
         return self._unit
 
     def __eq__(self, other):
+        print("dtype", self.dtype, other.dtype, self.dtype == other.dtype)
+        print("dims", self.dims, other.dims, self.dims == other.dims)
+        print("coords", self.coords, other.coords, self.coords == other.coords)
+        print("unit", self.unit, other.unit, self.unit == other.unit)
         return self.dtype == other.dtype \
             and self.dims == other.dims \
             and self.coords == other.coords \
             and self.unit == other.unit
+
+    def __hash__(self):
+        return hash((
+            self.dtype,
+            tuple(self.dims),
+            tuple(self.coords),
+            self.unit
+        ))

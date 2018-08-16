@@ -11,22 +11,32 @@ class Coordinates(object):
     """
     def __init__(self, name, elements):
         self.name = name
-        self.ids = None
+        self._ids = None
         self._elements = None
-        self.elements = elements
+        self._set_elements(elements)
 
     def __eq__(self, other):
         return self.name == other.name \
             and self.elements == other.elements
 
+    def __hash__(self):
+        return hash(tuple(frozenset(e.items()) for e in self._elements))
+
     @property
     def elements(self):
-        """Elements are a list of dicts
+        """Elements are a list of dicts with at least an 'id' key
+
+        Coordinate elements should not be changed.
         """
         return self._elements
 
-    @elements.setter
-    def elements(self, elements):
+    @property
+    def ids(self):
+        """Element ids is a list of coordinate identifiers
+        """
+        return self._ids
+
+    def _set_elements(self, elements):
         """Set elements with a list of ids (string or numeric) or dicts (including key 'id')
         """
         if not elements:
@@ -42,10 +52,10 @@ class Coordinates(object):
                 raise KeyError("Coordinates.elements must have an id, or be a simple list " +
                                "of identifiers")
 
-            self.ids = [e['id'] for e in elements]
+            self._ids = [e['id'] for e in elements]
             self._elements = elements
         else:
-            self.ids = elements
+            self._ids = elements
             self._elements = [{"id": e} for e in elements]
 
     @property
