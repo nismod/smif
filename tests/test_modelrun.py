@@ -1,16 +1,21 @@
 from unittest.mock import Mock
 
 from pytest import fixture, raises
+from smif.model.scenario_model import ScenarioModel
+from smif.model.sector_model import SectorModel
+from smif.model.sos_model import SosModel
 from smif.modelrun import ModelRunBuilder, ModelRunError, ModelRunner
 
 
 @fixture(scope='function')
 def get_model_run_config_data():
 
-    sos_model = Mock()
-    energy_supply = Mock()
-    energy_supply.name = 'energy_supply'
-    sos_model.models = [energy_supply]
+    energy_supply = SectorModel('energy_supply')
+    raininess = ScenarioModel('raininess')
+
+    sos_model = SosModel('my_sos_model')
+    sos_model.add_model(raininess)
+    sos_model.add_model(energy_supply)
 
     config = {
         'name': 'unique_model_run_name',
@@ -18,8 +23,7 @@ def get_model_run_config_data():
         'description': 'a description of what the model run contains',
         'timesteps': [2010, 2011, 2012],
         'sos_model': sos_model,
-        'scenarios':
-            {'raininess': 'high_raininess'},
+        'scenarios': {'raininess': 'high_raininess'},
         'narratives':
             [Mock(data={'model_name': {'parameter_name': 0}}),
              Mock(data={'model_name': {'parameter_name': 0}})
@@ -63,6 +67,22 @@ class TestModelRunBuilder:
         assert modelrun.scenarios == {'raininess': 'high_raininess'}
         assert modelrun.narratives == config_data['narratives']
         assert modelrun.strategies == config_data['strategies']
+
+    def test_builder_scenario_sosmodelrun_not_in_sosmodel(self, get_model_run_config_data):
+
+        config_data = get_model_run_config_data
+        config_data['scenarios'] = {
+            'raininess': 'high_raininess',
+            'population': 'high_population'
+        }
+
+        builder = ModelRunBuilder()
+        builder.construct(config_data)
+
+        with raises(ModelRunError) as ex:
+            builder.finish()
+        assert "ScenarioSet 'population' is selected in the ModelRun " \
+               "configuration but not found in the SosModel configuration" in str(ex)
 
 
 class TestModelRun:
