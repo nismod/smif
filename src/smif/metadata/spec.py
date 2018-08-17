@@ -159,6 +159,14 @@ class Spec(object):
         """
         return list(self._coords)
 
+    def dim_coords(self, dim):
+        """Coordinates for a given dimension
+        """
+        for coord in self._coords:
+            if coord.dim == dim:
+                return coord
+        raise KeyError("Coords not found for dim {}, in {}".format(dim, self._name))
+
     @property
     def unit(self):
         """The unit for all data points.
