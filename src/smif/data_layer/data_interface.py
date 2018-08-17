@@ -881,8 +881,10 @@ class DataInterface(metaclass=ABCMeta):
         for obs in observations:
             indices = []
             for dim in spec.dims:
-                indices.append(obs[dim])
-            data[indices] = obs[spec.name]
+                key = obs[dim]  # name (id/label) of coordinate element along dimension
+                idx = spec.dim_coords(dim).ids.index(key)  # index of name in dim elements
+                indices.append(idx)
+            data[tuple(indices)] = obs[spec.name]
 
         return data
 
