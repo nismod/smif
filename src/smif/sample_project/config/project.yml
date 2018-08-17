@@ -1,69 +1,85 @@
 name: Test Project
 scenarios:
-- name: population
-  description: Growth in UK population
-  provides:
   - name: population
-    description: ''
-    dims:
-    - national
-    - annual
-    dtype: int
-    units: people
-  variants:
-  - scenario: Central Population (Low)
-    data:
-      population: population_low.csv
-  - scenario: Central Population (Medium)
-    data:
-      population: population_med.csv
-  - scenario: Central Population (High)
-    data:
-      population: population_high.csv
-- name: climate
-  description: UKCP09 Climate Projections
-  provides:
-  - name: precipitation
-    description: Rainfall in the UK
-    dims:
-    - nation
-    dtype: int
-    units: ml
-  variants:
-  - scenario: Central Rainfall
-    data:
-      rainfall: precipitation.csv
+    description: Growth in UK population
+    provides:
+      - name: population
+        description: ''
+        dims:
+        - country
+        dtype: int
+        units: people
+    variants:
+      - name: population_low
+        description: Central Population (Low)
+        data:
+          population: population_low.csv
+      - name: population_med
+        description: Central Population (Medium)
+        data:
+          population: population_med.csv
+      - name: population_high
+        description: Central Population (High)
+        data:
+          population: population_high.csv
+  - name: climate
+    description: UKCP09 Climate Projections
+    provides:
+      - name: precipitation
+        description: Rainfall in the UK
+        dims:
+        - country
+        dtype: float
+        units: ml
+    variants:
+      - name: central
+        description: Central Rainfall
+        data:
+          rainfall: precipitation.csv
+  - name: water_sector_energy_demand
+    description: Projected energy demand of the water sector
+    provides:
+      - name: energy_demand
+        dims:
+        - country
+        dtype: float
+        units: kWh
+    variants:
+      - name: central
+        description: Projected demand
+        data:
+          energy_demand: water_sector_energy_demand.csv
 narratives:
-- name: technology
-  description: Describes the evolution of technology
-  provides:
-  - name: smart_meter_savings
-    description: The savings from smart meters
-    dtype: float
-    unit: '%'
-  - name: clever_water_meter_savings
-    description: The savings from smart water meters
-    dtype: float
-    unit: '%'
-  - name: per_capita_water_demand
-    description: The assumed per capita demand for water
-    dtype: float
-    unit: liter/person
-  variants:
-  - name: High Tech Demand Side Management
-    description: High penetration of SMART technology on the demand side
-    data:
-      smart_meter_savings: high_tech_dsm.csv
-      clever_water_meter_savings: high_tech_dsm.csv
-      per_capita_water_demand: high_tech_dsm.csv
-dimension_coordinates:
-- dim: annual
-  description: Single annual interval of 8760 hours
-  elements: interval_definitions/annual_intervals.csv
-- dim: country
-  description: Each country in Great Britain
-  elements: region_definitions/uk_nations_shp/regions.shp
-- dim: oxfordshire
-  description: Local Authority Districts (2016) within Oxfordshire
-  elements: region_definitions/oxfordshire/regions.geojson
+  - name: technology
+    description: Describes the evolution of technology
+    provides:
+      - name: smart_meter_savings
+        description: The savings from smart meters
+        dtype: float
+        unit: '%'
+      - name: clever_water_meter_savings
+        description: The savings from smart water meters
+        dtype: float
+        unit: '%'
+      - name: per_capita_water_demand
+        description: The assumed per capita demand for water
+        dtype: float
+        unit: liter/person
+    variants:
+      - name: high_tech_dsm
+        description: High penetration of SMART technology on the demand side
+        data:
+          smart_meter_savings: high_tech_dsm.csv
+          clever_water_meter_savings: high_tech_dsm.csv
+          per_capita_water_demand: high_tech_dsm.csv
+dimensions:
+  - name: annual
+    description: Single annual interval of 8760 hours
+    elements: dimensions/annual_intervals.csv
+  - name: country
+    description: Each country in Great Britain
+    elements: dimensions/uk_nations_shp/regions.shp
+  - name: oxfordshire
+    description: Local Authority Districts (2016) within Oxfordshire
+    elements: dimensions/oxfordshire/regions.geojson
 units: units.txt

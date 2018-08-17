@@ -4,7 +4,7 @@ supply system'
 path: models/water_supply.py   # path to python file
 classname: WaterSupplySectorModel # implements smif.SectorModel
 inputs:
-- name: raininess
+- name: precipitation
   dims:
   - country
   dtype: float
