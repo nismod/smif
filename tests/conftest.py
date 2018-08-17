@@ -489,7 +489,7 @@ def project_config():
 
 
 @fixture(scope='function')
-def get_sos_model_run():
+def model_run():
     """Return sample sos_model_run
     """
     return {
