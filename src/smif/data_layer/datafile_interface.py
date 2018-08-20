@@ -35,7 +35,13 @@ def check_exists(dtype):
             if dtype in _nested_config_dtypes():
                 config = self.read_project_config()
                 _assert_nested_config_item_exists(config, dtype, primary, secondary)
+
+            if primary is None:
+                return func(self, name, *func_args, **func_kwargs)
+            elif secondary is None:
+                return func(self, name, primary, *func_args, **func_kwargs)
             return func(self, name, primary, secondary, *func_args, **func_kwargs)
+
         return wrapped
     return wrapper
 
@@ -58,6 +64,9 @@ def check_not_exists(dtype):
             if dtype in _nested_config_dtypes():
                 config = self.read_project_config()
                 _assert_nested_config_item_not_exists(config, dtype, primary, secondary)
+
+            if secondary is None:
+                return func(self, primary, *func_args, **func_kwargs)
             return func(self, primary, secondary, *func_args, **func_kwargs)
         return wrapped
     return wrapper
