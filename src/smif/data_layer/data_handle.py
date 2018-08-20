@@ -11,6 +11,7 @@ from enum import Enum
 from logging import getLogger
 from types import MappingProxyType
 
+from smif.metadata import Spec
 from smif.model.scenario_model import ScenarioModel
 
 
@@ -50,12 +51,22 @@ class DataHandle(object):
         self._dependencies = model.deps
         self._model = model
 
-        configured_parameters = self._store.read_parameters(
-            self._modelrun_name, self._model_name)
-        default_parameters = {}
+        self._parameters = {}
         for parameter in model.parameters:
-            default_parameters[parameter.name] = parameter.default
-        self._parameters = default_parameters.update(configured_parameters)
+            self._parameters[parameter.name] = parameter.default
+
+        modelrun = self._store.read_model_run(self._modelrun_name)
+        # modelrun['narratives'] is a dict of lists: {narrative_name: [variant_name, ...]}
+        # e.g. { 'technology': ['high_tech_dsm'] }
+        for narrative_name, variants in modelrun['narratives'].items():
+            narrative = self._store.read_narrative(narrative_name)
+            variable_specs = [Spec.from_dict(v) for v in narrative['provides']]
+            for variant_name in variants:
+                for variable in variable_specs:
+                    data = self._store.read_narrative_variant_data(
+                        narrative_name, variant_name, variable.name
+                    )
+                    self._parameters[variable.name] = data
 
     def derive_for(self, model):
         """Derive a new DataHandle configured for the given Model
@@ -290,10 +301,9 @@ class DataHandle(object):
             )
 
         self._store.write_results(
+            data,
             self._modelrun_name,
             self._model_name,
-            output_name,
-            data,
             spec,
             self._current_timestep,
             self._modelset_iteration,
@@ -344,7 +354,6 @@ class DataHandle(object):
         return self._store.read_results(
             self._modelrun_name,
             model_name,
-            output_name,
             spec,
             timestep,
             modelset_iteration,
