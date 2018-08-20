@@ -23,18 +23,9 @@ def check_exists(dtype):
         """Decorator specialised by dtype (class/item type)
         """
         @wraps(func)
-        def wrapped(self, *func_args, **func_kwargs):
+        def wrapped(self, name, primary=None, secondary=None, *func_args, **func_kwargs):
             """Wrapper to implement error checking
             """
-            if len(func_args) == 3:
-                name, primary, secondary = func_args
-            if len(func_args) == 2:
-                name, primary = func_args
-                secondary = None
-            if len(func_args) == 1:
-                name, = func_args
-                primary, secondary = None, None
-
             _assert_no_mismatch(dtype, name, primary, secondary)
             if dtype in _file_dtypes():
                 _assert_file_exists(self.file_dir, dtype, name)
@@ -44,7 +35,7 @@ def check_exists(dtype):
             if dtype in _nested_config_dtypes():
                 config = self.read_project_config()
                 _assert_nested_config_item_exists(config, dtype, primary, secondary)
-            return func(self, *func_args, *func_kwargs)
+            return func(self, name, primary, secondary, *func_args, **func_kwargs)
         return wrapped
     return wrapper
 
@@ -56,16 +47,9 @@ def check_not_exists(dtype):
         """Decorator specialised by dtype (class/item type)
         """
         @wraps(func)
-        def wrapped(self, *func_args, **func_kwargs):
+        def wrapped(self, primary, secondary=None, *func_args, **func_kwargs):
             """Wrapper to implement error checking
             """
-            if len(func_args) == 2:
-                primary, secondary = func_args
-                secondary = None
-            if len(func_args) == 1:
-                primary, = func_args
-                secondary = None
-
             if dtype in _file_dtypes():
                 _assert_file_not_exists(self.file_dir, dtype, primary['name'])
             if dtype in _config_dtypes():
@@ -74,7 +58,7 @@ def check_not_exists(dtype):
             if dtype in _nested_config_dtypes():
                 config = self.read_project_config()
                 _assert_nested_config_item_not_exists(config, dtype, primary, secondary)
-            return func(self, *func_args, *func_kwargs)
+            return func(self, primary, secondary, *func_args, **func_kwargs)
         return wrapped
     return wrapper
 
