@@ -200,21 +200,21 @@ class MemoryInterface(DataInterface):
     # region Results
     def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
                      modelset_iteration=None, decision_iteration=None):
-        return self._results[
-            (
-                modelrun_name, model_name, output_spec, timestep, modelset_iteration,
-                decision_iteration
-            )
-        ]
+        key = (
+            modelrun_name, model_name, output_spec, timestep, modelset_iteration,
+            decision_iteration
+        )
+        self.logger.debug("Get %s", key)
+        return self._results[key]
 
     def write_results(self, data, modelrun_name, model_name, output_spec, timestep=None,
                       modelset_iteration=None, decision_iteration=None):
-        self._results[
-            (
-                modelrun_name, model_name, output_spec, timestep, modelset_iteration,
-                decision_iteration
-            )
-        ] = data
+        key = (
+            modelrun_name, model_name, output_spec, timestep, modelset_iteration,
+            decision_iteration
+        )
+        self.logger.debug("Set %s", key)
+        self._results[key] = data
 
     def prepare_warm_start(self, modelrun_id):
         return self._model_runs[modelrun_id]['timesteps'][0]
