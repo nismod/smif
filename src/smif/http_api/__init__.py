@@ -16,7 +16,7 @@ Or if backend debug mode is not needed, just use the smif CLI::
 API commands can be operated without the front end
 
 GET commands can be performed by going to the requested url::
->>> firefox http://localhost:5000/api/v1/sos_model_runs
+>>> firefox http://localhost:5000/api/v1/model_runs
 
 POST/PUT commands on configurations can be performed by using the curl utilities under linux::
 >>> curl -d '{
@@ -26,7 +26,7 @@ POST/PUT commands on configurations can be performed by using the curl utilities
 ... }' -H "Content-Type: application/json" -X POST http://localhost:5000/api/v1/scenario_sets/
 
 Actions are triggered by sending an empty POST::
->>> curl -d '{}' http://localhost:5000/api/v1/sos_model_runs/20170918_energy_water/start
+>>> curl -d '{}' http://localhost:5000/api/v1/model_runs/20170918_energy_water/start
 """
 
 # import classes for access like ::

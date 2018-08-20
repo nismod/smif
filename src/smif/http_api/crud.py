@@ -21,59 +21,59 @@ class SmifAPI(MethodView):
         return jsonify(data)
 
 
-class SosModelRunAPI(MethodView):
-    """Implement CRUD operations for sos_model_run configuration data
+class ModelRunAPI(MethodView):
+    """Implement CRUD operations for model_run configuration data
     """
-    def get(self, sos_model_run_name=None, action=None):
-        """Get sos_model_runs
-        all: GET /api/v1/sos_model_runs/
-        one: GET /api/vi/sos_model_runs/name
+    def get(self, model_run_name=None, action=None):
+        """Get model_runs
+        all: GET /api/v1/model_runs/
+        one: GET /api/vi/model_runs/name
         """
         data_interface = current_app.config.data_interface
 
         if action is None:
-            if sos_model_run_name is None:
+            if model_run_name is None:
 
-                sos_model_runs = data_interface.read_sos_model_runs()
+                model_runs = data_interface.read_model_runs()
 
                 if 'status' in request.args.keys():
-                    # filtered: GET /api/v1/sos_model_runs?status=done
+                    # filtered: GET /api/v1/model_runs?status=done
                     data = []
-                    for sos_model_run in sos_model_runs:
-                        status = current_app.config.scheduler.get_status(sos_model_run['name'])
+                    for model_run in model_runs:
+                        status = current_app.config.scheduler.get_status(model_run['name'])
                         if status['status'] == request.args['status']:
-                            data.append(sos_model_run)
+                            data.append(model_run)
                 else:
-                    # all: GET /api/v1/sos_model_runs/
-                    data = sos_model_runs
+                    # all: GET /api/v1/model_runs/
+                    data = model_runs
             else:
-                # one: GET /api/vi/sos_model_runs/name
-                data = data_interface.read_sos_model_run(sos_model_run_name)
+                # one: GET /api/vi/model_runs/name
+                data = data_interface.read_model_run(model_run_name)
         elif action == 'status':
-            # action: GET /api/vi/sos_model_runs/name/status
-            data = current_app.config.scheduler.get_status(sos_model_run_name)
+            # action: GET /api/vi/model_runs/name/status
+            data = current_app.config.scheduler.get_status(model_run_name)
 
         return jsonify(data)
 
-    def post(self, sos_model_run_name=None, action=None):
+    def post(self, model_run_name=None, action=None):
         """
-        Create a sos_model_run:
-        - POST /api/v1/sos_model_runs
+        Create a model_run:
+        - POST /api/v1/model_runs
 
-        Perform an operation on a sos_model_run
-        - POST /api/v1/sos_model_runs/<sos_model_run_name>/<action>
+        Perform an operation on a model_run
+        - POST /api/v1/model_runs/<model_run_name>/<action>
 
         Available actions are
-        - start: Start the sos_model_run
-        - kill: Stop a sos_model_run that is currently running
-        - remove: Remove a sos_model_run that is waiting to be executed
-        - resume: Warm start a sos_model_run
+        - start: Start the model_run
+        - kill: Stop a model_run that is currently running
+        - remove: Remove a model_run that is waiting to be executed
+        - resume: Warm start a model_run
         """
         data_interface = current_app.config.data_interface
 
         if action is None:
             data = request.get_json() or request.form
-            data_interface.write_sos_model_run(data)
+            data_interface.write_model_run(data)
         elif action == 'start':
             data = request.get_json() or request.form
             args = {
@@ -82,36 +82,36 @@ class SosModelRunAPI(MethodView):
                 'warm_start': data['args']['warm_start'],
                 'output_format': data['args']['output_format']
             }
-            current_app.config.scheduler.add(sos_model_run_name, args)
+            current_app.config.scheduler.add(model_run_name, args)
         elif action == 'kill':
-            current_app.config.scheduler.kill(sos_model_run_name)
+            current_app.config.scheduler.kill(model_run_name)
         elif action == 'remove':
             raise NotImplementedError
         elif action == 'resume':
             raise NotImplementedError
         else:
-            raise SyntaxError("SosModelRun action '%s' does not exist" % action)
+            raise SyntaxError("ModelRun action '%s' does not exist" % action)
 
         response = jsonify({"message": "success"})
         response.status_code = 201
         return response
 
-    def put(self, sos_model_run_name):
-        """Update a sos_model_run:
-        PUT /api/v1/sos_model_runs
+    def put(self, model_run_name):
+        """Update a model_run:
+        PUT /api/v1/model_runs
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
-        data_interface.update_sos_model_run(sos_model_run_name, data)
+        data_interface.update_model_run(model_run_name, data)
         response = jsonify({})
         return response
 
-    def delete(self, sos_model_run_name):
-        """Delete a sos_model_run:
-        DELETE /api/v1/sos_model_runs
+    def delete(self, model_run_name):
+        """Delete a model_run:
+        DELETE /api/v1/model_runs
         """
         data_interface = current_app.config.data_interface
-        data_interface.delete_sos_model_run(sos_model_run_name)
+        data_interface.delete_model_run(model_run_name)
         response = jsonify({})
         return response
 
