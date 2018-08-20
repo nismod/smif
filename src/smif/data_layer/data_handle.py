@@ -190,19 +190,17 @@ class DataHandle(object):
         spec = self._inputs[input_name]
 
         if isinstance(source_model, ScenarioModel):
-            data = self._store.read_scenario_data(
-                source_model_name,
-                source_model.scenario,  # read from given scenario
-                source_output_name,  # using output (parameter) name
-                spec,
+            data = self._store.read_scenario_variant_data(
+                source_model_name,  # read from a given scenario model
+                source_model.scenario,  # with given scenario variant
+                source_output_name,  # using output (variable) name
                 timestep
             )
         else:
             data = self._store.read_results(
                 self._modelrun_name,
                 source_model_name,  # read from source model
-                source_output_name,  # using source model output name
-                spec,
+                spec,  # using source model output spec
                 timestep,
                 i,
                 self._decision_iteration
