@@ -50,7 +50,7 @@ def get_data_handle(model):
     """Return a data handle for the model
     """
     store = MemoryInterface()
-    store.write_sos_model_run({
+    store.write_model_run({
         'name': 'test',
         'narratives': {}
     })
@@ -95,9 +95,9 @@ class TestModelSet:
         # set up data as though from previous timestep simulation
         data_handle = get_data_handle(model_set)
         data_handle._store.write_results(
-            'test', 'water_supply', 'cost', expected['cost'], sector_model.outputs['cost'], 2010, 0)
+            expected['cost'], 'test', 'water_supply', sector_model.outputs['cost'], 2010, 0)
         data_handle._store.write_results(
-            'test', 'water_supply', 'water', expected['water'], sector_model.outputs['water'], 2010, 0)
+            expected['water'], 'test', 'water_supply', sector_model.outputs['water'], 2010, 0)
 
         data_handle._current_timestep = 2011
         model_set.simulate(data_handle)
