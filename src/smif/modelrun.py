@@ -21,7 +21,6 @@ from logging import getLogger
 
 from smif.data_layer import DataHandle
 from smif.decision import DecisionManager
-from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel
 
 
@@ -91,13 +90,8 @@ class ModelRun(object):
         """Validate that this ModelRun has been set up with sufficient data
         to run
         """
-        scenario_sets_possible = []
-        for model in self.sos_model.models:
-            if isinstance(self.sos_model.models[model], ScenarioModel):
-                scenario_sets_possible.append(model)
-
         for scenario in self.scenarios:
-            if scenario not in scenario_sets_possible:
+            if scenario not in [model.name for model in self.sos_model.scenario_models.values()]:
                 raise ModelRunError("ScenarioSet '{}' is selected in the ModelRun "
                                     "configuration but not found in the SosModel "
                                     "configuration".format(scenario))
