@@ -8,7 +8,7 @@ inputs:
   dims:
   - country
   dtype: float
-  unit: Ml
+  unit: ml
 - name: population
   dims:
   - country

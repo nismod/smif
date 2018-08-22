@@ -8,7 +8,7 @@ timesteps:
 sos_model: energy_water
 scenarios:
   population: population_med
-  rainfall: central
+  climate: central
 narratives:
   technology:
   - high_tech_dsm

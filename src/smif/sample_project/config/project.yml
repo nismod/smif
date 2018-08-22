@@ -35,7 +35,7 @@ scenarios:
       - name: central
         description: Central Rainfall
         data:
-          rainfall: precipitation.csv
+          precipitation: precipitation.csv
   - name: water_sector_energy_demand
     description: Projected energy demand of the water sector
     provides:
