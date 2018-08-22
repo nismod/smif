@@ -184,15 +184,14 @@ def test_verbose_info(setup_folder_structure):
     assert 'INFO' in str(output.stderr)
 
 
-class TestRunSosModelRunComponents():
+class TestRunModelRunComponents():
     @mark.xfail()
     def test_get_narratives(self, tmp_sample_project):
         """should load a list of narratives with parameter value data
         """
         config_dir = tmp_sample_project
         handler = DatafileInterface(config_dir, 'local_csv')
-        narratives = {'technology': ['High Tech Demand Side Management']}
-        actual = get_narratives(handler, narratives)
+        actual = handler.read_narrative_variants('technology')
 
         data = {
             'energy_demand': {
@@ -203,11 +202,15 @@ class TestRunSosModelRunComponents():
                 'per_capita_water_demand': 1.2
             }
         }
-        name = 'High Tech Demand Side Management'
+        name = 'technology'
+        variant = 'High Tech Demand Side Management'
         description = 'High penetration of SMART technology on the demand side'
-        narrative_set = 'technology'
 
-        narrative_object = Narrative(name, description, narrative_set)
-        narrative_object.data = data
+        narrative_variant = {
+            'name': name,
+            'variant': variant,
+            'description': description,
+        }
+        narrative_variant['data'] = data
 
-        assert actual == [narrative_object]
+        assert actual == [narrative_variant]

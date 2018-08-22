@@ -25,13 +25,13 @@ def get_model_run_definition(directory, modelrun):
     Returns
     -------
     dict
-        The complete sos_model_run configuration dictionary with contained
+        The complete model_run configuration dictionary with contained
         ScenarioModel, SosModel and SectorModel objects
 
     """
     handler = DatafileInterface(directory)
     try:
-        model_run_config = handler.read_sos_model_run(modelrun)
+        model_run_config = handler.read_model_run(modelrun)
     except DataNotFoundError:
         LOGGER.error("Model run %s not found. Run 'smif list' to see available model runs.",
                      modelrun)

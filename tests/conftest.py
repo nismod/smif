@@ -38,7 +38,7 @@ def setup_folder_structure(tmpdir_factory, oxford_region,
     """
     folder_list = [
         'config',
-        os.path.join('config', 'sos_model_runs'),
+        os.path.join('config', 'model_runs'),
         os.path.join('config', 'sos_models'),
         os.path.join('config', 'sector_models'),
         'data',
@@ -490,7 +490,7 @@ def project_config():
 
 @fixture(scope='function')
 def model_run():
-    """Return sample sos_model_run
+    """Return sample model_run
     """
     return {
         'name': 'unique_model_run_name',
