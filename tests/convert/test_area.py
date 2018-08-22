@@ -1,5 +1,7 @@
 """Test aggregation/disaggregation of data between sets of areas
 """
+from copy import copy
+
 import numpy as np
 from pytest import fixture, raises
 from smif.convert.area import RegionRegister, RegionSet
@@ -85,6 +87,22 @@ def regions_half_triangles():
             }
         },
     ])
+
+
+@fixture(scope='function')
+def register(regions_half_triangles, regions_half_squares, regions_single_half_square,
+             regions_rect):
+    """Region register with regions pre-registered
+    """
+    register = RegionRegister()
+    register.register(regions_half_triangles)
+    register.register(regions_half_squares)
+    register.register(regions_single_half_square)
+    register.register(regions_rect)
+    alt = copy(regions_rect)
+    alt.name = 'rect_alt'
+    register.register(alt)
+    return register
 
 
 def test_proportion(regions):
@@ -209,119 +227,97 @@ class TestRegionRegister():
     """Test creating registers, registering region sets, converting data
     """
     def test_create(self):
-        rreg = RegionRegister()
-        assert rreg.names == []
+        register = RegionRegister()
+        assert register.names == []
 
         with raises(ValueError) as ex:
-            rreg.get_entry('nonexistent')
+            register.get_entry('nonexistent')
         assert "ResolutionSet 'nonexistent' not registered" in str(ex)
 
-    def test_convert_equal(self):
-        rreg = RegionRegister()
-
+    def test_convert_equal(self, register):
         data = np.ones(1)
-        converted = rreg.convert(data, 'rect', 'rect_alt')
+        converted = register.convert(data, 'rect', 'rect_alt')
         np.testing.assert_equal(data, converted)
 
-    def test_convert_to_half(self):
-        rreg = RegionRegister()
-
+    def test_convert_to_half(self, register):
         data = np.ones(1)
-        converted = rreg.convert(data, 'rect', 'half_squares')
+        converted = register.convert(data, 'rect', 'half_squares')
         expected = np.array([0.5, 0.5])
         np.testing.assert_equal(converted, expected)
 
-    def test_convert_from_half(self):
-        rreg = RegionRegister()
-
+    def test_convert_from_half(self, register):
         data = np.ones(2) / 2
-        converted = rreg.convert(data, 'half_squares', 'rect')
+        converted = register.convert(data, 'half_squares', 'rect')
         expected = np.ones(1)
         np.testing.assert_equal(converted, expected)
 
         data = np.array([2, 3])
-        converted = rreg.convert(data, 'half_squares', 'rect')
+        converted = register.convert(data, 'half_squares', 'rect')
         expected = np.array([5])
         np.testing.assert_equal(converted, expected)
 
-    def test_coverage_half(self):
-        rreg = RegionRegister()
-        half_covered = rreg.get_entry('single_half_square')
+    def test_coverage_half(self, register):
+        half_covered = register.get_entry('single_half_square')
         actual = half_covered.coverage
         expected = 1.0
         assert actual == expected
 
-    def test_coverage_whole(self):
-        rreg = RegionRegister()
-        rect = rreg.get_entry('rect')
+    def test_coverage_whole(self, register):
+        rect = register.get_entry('rect')
         actual = rect.coverage
         expected = 2.0
         assert actual == expected
 
-    def test_convert_to_half_not_covered(self, caplog):
-        rreg = RegionRegister()
-
+    def test_convert_to_half_not_covered(self, register, caplog):
         data = np.array([3])
-
-        rreg.convert(data, 'rect', 'single_half_square')
-
+        register.convert(data, 'rect', 'single_half_square')
         expected = "Coverage for 'rect' is 2 and does not match " \
                    "coverage for 'single_half_square' which is 1"
 
         assert expected in caplog.text
 
-    def test_convert_from_half_not_covered(self, caplog):
-        rreg = RegionRegister()
-
+    def test_convert_from_half_not_covered(self, register, caplog):
         data = np.array([3])
-        rreg.convert(data, 'single_half_square', 'rect')
+        register.convert(data, 'single_half_square', 'rect')
 
         expected = "Coverage for 'single_half_square' is 1 and does not " \
                    "match coverage for 'rect' which is 2"
 
         assert expected in caplog.text
 
-    def test_convert_square_to_triangle(self):
-        rreg = RegionRegister()
-
+    def test_convert_square_to_triangle(self, register):
         data = np.array([1, 1])
-        converted = rreg.convert(data, 'half_squares', 'half_triangles')
+        converted = register.convert(data, 'half_squares', 'half_triangles')
         expected = np.array([1, 1])
         np.testing.assert_equal(converted, expected)
 
         data = np.array([0, 1])
-        converted = rreg.convert(data, 'half_squares', 'half_triangles')
+        converted = register.convert(data, 'half_squares', 'half_triangles')
         expected = np.array([0.25, 0.75])
         np.testing.assert_equal(converted, expected)
 
-    def test_convert_triangle_to_square(self):
-        rreg = RegionRegister()
-
+    def test_convert_triangle_to_square(self, register):
         data = np.array([1, 1])
-        converted = rreg.convert(data, 'half_triangles', 'half_squares')
+        converted = register.convert(data, 'half_triangles', 'half_squares')
         expected = np.array([1, 1])
         np.testing.assert_equal(converted, expected)
 
         data = np.array([0.25, 0.75])
-        converted = rreg.convert(data, 'half_triangles', 'half_squares')
+        converted = register.convert(data, 'half_triangles', 'half_squares')
         expected = np.array([0.375, 0.625])
         np.testing.assert_equal(converted, expected)
 
 
 class TestGetCoefficients:
 
-    def test_get_coefficients(self):
-        rreg = RegionRegister()
-        actual = rreg.get_coefficients('half_triangles',
-                                       'half_squares')
+    def test_get_coefficients(self, register):
+        actual = register.get_coefficients('half_triangles', 'half_squares')
         expected = np.array([[0.75, 0.25],
                              [0.25, 0.75]])
         np.testing.assert_equal(actual, expected)
 
-    def test_coefs_should_map_to_themselves(self):
-        rreg = RegionRegister()
-        actual = rreg.get_coefficients('half_triangles',
-                                       'half_triangles')
+    def test_coefs_should_map_to_themselves(self, register):
+        actual = register.get_coefficients('half_triangles', 'half_triangles')
         expected = np.array([[1, 0],
                              [0, 1]])
         np.testing.assert_equal(actual, expected)
