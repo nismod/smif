@@ -1,5 +1,7 @@
 """Energy demand dummy model
 """
+from itertools import product
+
 import numpy as np
 from smif.model.sector_model import SectorModel
 
@@ -52,20 +54,24 @@ class EDMWrapper(SectorModel):
         # Pretend to call the 'energy model'
         # This code prints out debug logging messages for each input
         # defined in the energy_demand configuration
-        for name in self.inputs.names:
-            time_intervals = self.inputs[name].get_interval_names()
-            regions = self.inputs[name].get_region_names()
-            for i, region in enumerate(regions):
-                for j, interval in enumerate(time_intervals):
-                    self.logger.info(
-                        "%s %s %s",
-                        interval,
-                        region,
-                        data.get_data(name)[i, j])
+        for name in self.inputs:
+            spec = self.inputs[name]
+
+            for idx in product(*[range(len(coord.ids)) for coord in spec.coords]):
+                label_idx = tuple([
+                    spec.coords[i].ids[j]
+                    for i, j in enumerate(idx)
+                ])
+                self.logger.info(
+                    "Read %s for %s at %s",
+                    data.get_data(name)[idx],
+                    name,
+                    label_idx
+                )
 
         # Write pretend results to data handler
-        data.set_results("cost", np.ones((3, 1)) * 3)
-        data.set_results("water_demand", np.ones((3, 1)) * 3)
+        data.set_results("cost", np.ones((3, )) * 3)
+        data.set_results("water_demand", np.ones((3, )) * 3)
 
         self.logger.info("EDMWrapper produced outputs in %s",
                          now)
