@@ -174,10 +174,6 @@ class Spec(object):
         return self._unit
 
     def __eq__(self, other):
-        print("dtype", self.dtype, other.dtype, self.dtype == other.dtype)
-        print("dims", self.dims, other.dims, self.dims == other.dims)
-        print("coords", self.coords, other.coords, self.coords == other.coords)
-        print("unit", self.unit, other.unit, self.unit == other.unit)
         return self.dtype == other.dtype \
             and self.dims == other.dims \
             and self.coords == other.coords \
