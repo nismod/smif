@@ -6,11 +6,17 @@ from smif.model.sector_model import SectorModel
 from smif.model.sos_model import SosModel
 from smif.modelrun import ModelRunBuilder, ModelRunError, ModelRunner
 
+class EmptySectorModel(SectorModel):
+    def simulate(self, data):
+        return data
+
+    def extract_obj(self, results):
+        pass
 
 @fixture(scope='function')
 def get_model_run_config_data():
 
-    energy_supply = SectorModel('energy_supply')
+    energy_supply = EmptySectorModel('energy_supply')
     raininess = ScenarioModel('raininess')
 
     sos_model = SosModel('my_sos_model')
