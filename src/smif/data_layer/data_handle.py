@@ -52,7 +52,7 @@ class DataHandle(object):
         self._model = model
 
         self._parameters = {}
-        for parameter in model.parameters:
+        for parameter in model.parameters.values():
             self._parameters[parameter.name] = parameter.default
 
         modelrun = self._store.read_model_run(self._modelrun_name)
