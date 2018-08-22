@@ -53,10 +53,10 @@ class SosModel(CompositeModel):
         for model in self.models.values():
             for dep in model.deps.values():
                 dep_config = {
-                    'source_model': dep.source_model.name,
-                    'source_model_output': dep.source.name,
-                    'sink_model': dep.sink_model.name,
-                    'sink_model_input': dep.sink.name
+                    'source': dep.source_model.name,
+                    'source_output': dep.source.name,
+                    'sink': dep.sink_model.name,
+                    'sink_input': dep.sink.name
                 }
                 dependencies.append(dep_config)
 
@@ -117,10 +117,10 @@ class SosModel(CompositeModel):
                 sos_model.add_model(model)
 
             for dep in data['dependencies']:
-                sink = sos_model.models[dep['sink_model']]
-                source = sos_model.models[dep['source_model']]
-                source_output_name = dep['source_model_output']
-                sink_input_name = dep['sink_model_input']
+                sink = sos_model.models[dep['sink']]
+                source = sos_model.models[dep['source']]
+                source_output_name = dep['source_output']
+                sink_input_name = dep['sink_input']
 
                 sink.add_dependency(source, source_output_name, sink_input_name)
             sos_model.check_dependencies()

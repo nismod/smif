@@ -155,10 +155,10 @@ def sos_model_dict(scenario_only_sos_model_dict):
     # ]
     sos_model_dict['dependencies'] = [
         {
-            'source_model': 'climate',
-            'source_model_output': 'precipitation',
-            'sink_model_input': 'precipitation',
-            'sink_model': 'water_supply'
+            'source': 'climate',
+            'source_output': 'precipitation',
+            'sink_input': 'precipitation',
+            'sink': 'water_supply'
         }
     ]
     return sos_model_dict
@@ -179,10 +179,10 @@ class TestSosModel():
                 'convergence_relative_tolerance': float,
                 'dependencies': [
                     {
-                        'source_model': str (Model.name),
-                        'source_model_output': str (Metadata.name),
-                        'sink_model': str (Model.name),
-                        'sink_model_output': str (Metadata.name)
+                        'source': str (Model.name),
+                        'source_output': str (Metadata.name),
+                        'sink': str (Model.name),
+                        'sink_output': str (Metadata.name)
                     }
                 ]
             }
@@ -209,10 +209,10 @@ class TestSosModel():
             'scenario_sets': ['climate'],
             'sector_models': ['water_supply'],
             'dependencies': [{
-                'source_model': 'climate',
-                'source_model_output': 'precipitation',
-                'sink_model': 'water_supply',
-                'sink_model_input': 'precipitation'
+                'source': 'climate',
+                'source_output': 'precipitation',
+                'sink': 'water_supply',
+                'sink_input': 'precipitation'
             }],
             'max_iterations': 25,
             'convergence_absolute_tolerance': 1e-8,

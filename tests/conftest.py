@@ -540,16 +540,16 @@ def get_sos_model():
         ],
         'dependencies': [
             {
-                'source_model': 'population',
-                'source_model_output': 'count',
-                'sink_model': 'energy_demand',
-                'sink_model_input': 'population'
+                'source': 'population',
+                'source_output': 'count',
+                'sink': 'energy_demand',
+                'sink_input': 'population'
             },
             {
-                'source_model': 'energy_demand',
-                'source_model_output': 'gas_demand',
-                'sink_model': 'energy_supply',
-                'sink_model_input': 'natural_gas_demand'
+                'source': 'energy_demand',
+                'source_output': 'gas_demand',
+                'sink': 'energy_supply',
+                'sink_input': 'natural_gas_demand'
             }
         ]
     }
