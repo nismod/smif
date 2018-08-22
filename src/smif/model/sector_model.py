@@ -37,6 +37,7 @@ The key functions include:
 import importlib
 import logging
 import os
+from abc import ABCMeta, abstractmethod
 
 from smif.convert.area import get_register as get_region_register
 from smif.convert.interval import get_register as get_interval_register
@@ -48,7 +49,7 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-class SectorModel(Model):
+class SectorModel(Model, metaclass=ABCMeta):
     """A representation of the sector model with inputs and outputs
 
     Implement this class to enable integration of the wrapped simulation model
@@ -221,6 +222,7 @@ class SectorModel(Model):
         """
         pass
 
+    @abstractmethod
     def simulate(self, data):
         """Implement this method to run the model
 
@@ -256,6 +258,7 @@ class SectorModel(Model):
         """
         pass
 
+    @abstractmethod
     def extract_obj(self, results):
         """Implement this method to return a scalar value objective function
 
