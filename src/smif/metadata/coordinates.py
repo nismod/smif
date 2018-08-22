@@ -22,6 +22,9 @@ class Coordinates(object):
     def __hash__(self):
         return hash(tuple(frozenset(e.items()) for e in self._elements))
 
+    def __repr__(self):
+        return "<Coordinates name='{}' elements={}>".format(self.name, self.ids)
+
     @property
     def elements(self):
         """Elements are a list of dicts with at least an 'id' key
@@ -48,11 +51,11 @@ class Coordinates(object):
             raise ValueError("Coordinate.elements must be finite in length")
 
         if isinstance(elements[0], dict):
-            if "id" not in elements[0]:
-                raise KeyError("Coordinates.elements must have an id, or be a simple list " +
-                               "of identifiers")
+            if "name" not in elements[0]:
+                raise KeyError("Coordinates.elements must have a name field, or be a " +
+                               "simple list of identifiers")
 
-            self._ids = [e['id'] for e in elements]
+            self._ids = [e['name'] for e in elements]
             self._elements = elements
         else:
             self._ids = elements

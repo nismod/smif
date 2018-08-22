@@ -186,3 +186,6 @@ class Spec(object):
             tuple(self.coords),
             self.unit
         ))
+
+    def __repr__(self):
+        return "<Spec name='{}' dims='{}' unit='{}'>".format(self.name, self.dims, self.unit)
