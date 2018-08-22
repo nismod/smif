@@ -34,7 +34,7 @@ def check_exists(dtype):
                 _assert_config_item_exists(config, dtype, name)
             if dtype in _nested_config_dtypes():
                 config = self.read_project_config()
-                _assert_nested_config_item_exists(config, dtype, primary, secondary)
+                _assert_nested_config_item_exists(config, dtype, name, primary)
 
             if primary is None:
                 return func(self, name, *func_args, **func_kwargs)
@@ -174,6 +174,9 @@ class DatafileInterface(DataInterface):
     @check_exists(dtype='sector_model')
     def read_sector_model(self, sector_model_name):
         sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+        self._set_list_coords(sector_model['inputs'])
+        self._set_list_coords(sector_model['outputs'])
+        self._set_list_coords(sector_model['parameters'])
         sector_model['interventions'] = self._read_interventions_files(
             sector_model['interventions'], 'interventions')
         sector_model['initial_conditions'] = self._read_interventions_files(
@@ -354,6 +357,7 @@ class DatafileInterface(DataInterface):
         project_config = self.read_project_config()
         for dim in project_config['dimensions']:
             dim['elements'] = self._read_dimension_file(dim['elements'])
+        return project_config['dimensions']
 
     @check_exists(dtype='dimension')
     def read_dimension(self, dimension_name):
@@ -362,12 +366,27 @@ class DatafileInterface(DataInterface):
         dim['elements'] = self._read_dimension_file(dim['elements'])
         return dim
 
+    def _set_list_coords(self, list_):
+        for item in list_:
+            self._set_item_coords(item)
+
+    def _set_item_coords(self, item):
+        if 'dims' in item:
+            item['coords'] = {
+                dim: self.read_dimension(dim)['elements']
+                for dim in item['dims']
+            }
+
     def _read_dimension_file(self, filename):
-        # TODO replace with yaml/csv option
+        # TODO include yaml/csv option
         filepath = os.path.join(self.file_dir['dimensions'], filename)
         with fiona.drivers():
             with fiona.open(filepath) as src:
-                data = [f for f in src]
+                data = []
+                for f in src:
+                    element = f['properties']
+                    # element['geometry'] = f['geometry']
+                    data.append(element)
         return data
 
     @check_not_exists(dtype='dimension')
@@ -428,7 +447,9 @@ class DatafileInterface(DataInterface):
     @check_exists(dtype='scenario')
     def read_scenario(self, scenario_name):
         project_config = self.read_project_config()
-        return _pick_from_list(project_config['scenarios'], scenario_name)
+        scenario = _pick_from_list(project_config['scenarios'], scenario_name)
+        self._set_list_coords(scenario['provides'])
+        return scenario
 
     @check_not_exists(dtype='scenario')
     def write_scenario(self, scenario):
@@ -496,7 +517,7 @@ class DatafileInterface(DataInterface):
         try:
             array = self.data_list_to_ndarray(data, spec)
         except DataMismatchError as ex:
-            msg = "DataMismatch in scenario: {}:{}, {}, from {}"
+            msg = "DataMismatch in scenario: {}:{}.{}, from {}"
             raise DataMismatchError(
                 msg.format(scenario_name, variant_name, variable, str(ex))
             ) from ex
@@ -525,7 +546,7 @@ class DatafileInterface(DataInterface):
         # Read spec from scenario->provides->variable
         scenario = self.read_scenario(scenario_name)
         spec = _pick_from_list(scenario['provides'], variable)
-        spec['dims'] = [self.read_dimension(dim) for dim in spec['dims']]
+        self._set_item_coords(spec)
         return Spec.from_dict(spec)
     # endregion
 
@@ -568,7 +589,8 @@ class DatafileInterface(DataInterface):
     @check_exists(dtype='narrative_variant')
     def read_narrative_variant(self, narrative_name, variant_name):
         project_config = self.read_project_config()
-        variants = project_config['narratives'][narrative_name]['variants']
+        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
+        variants = project_config['narratives'][n_idx]['variants']
         return _pick_from_list(variants, variant_name)
 
     @check_not_exists(dtype='narrative_variant')
@@ -635,7 +657,7 @@ class DatafileInterface(DataInterface):
         # Read spec from narrative->provides->variable
         narrative = self.read_narrative(narrative_name)
         spec = _pick_from_list(narrative['provides'], variable)
-        spec['dims'] = [self.read_dimension(dim) for dim in spec['dims']]
+        self._set_item_coords(spec)
         return Spec.from_dict(spec)
     # endregion
 

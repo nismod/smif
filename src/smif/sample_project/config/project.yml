@@ -75,11 +75,11 @@ narratives:
 dimensions:
   - name: annual
     description: Single annual interval of 8760 hours
-    elements: dimensions/annual_intervals.csv
+    elements: annual_intervals.csv
   - name: country
     description: Each country in Great Britain
-    elements: dimensions/uk_nations_shp/regions.shp
+    elements: uk_nations_shp/regions.shp
   - name: oxfordshire
     description: Local Authority Districts (2016) within Oxfordshire
-    elements: dimensions/oxfordshire/regions.geojson
+    elements: oxfordshire/regions.geojson
 units: units.txt
