@@ -39,10 +39,10 @@ def test_fixture_single_run(tmp_sample_project):
     """
     config_dir = tmp_sample_project
     output = subprocess.run(["smif", "-v", "run", "-d", config_dir,
-                             "20170918_energy_water_short"],
+                             "energy_central"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+    assert "Running energy_central" in str(output.stderr)
+    assert "Model run 'energy_central' complete" in str(output.stdout)
 
 
 @fixture()
@@ -61,12 +61,12 @@ def test_fixture_single_run_csv(tmp_sample_project):
     """
     output = subprocess.run(
         ["smif", "-v", "run", "-i", "local_csv", "-d", tmp_sample_project,
-         "20170918_energy_water_short"],
+         "energy_central"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-    assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+    assert "Running energy_central" in str(output.stderr)
+    assert "Model run 'energy_central' complete" in str(output.stdout)
 
 
 def test_fixture_single_run_warm(tmp_sample_project):
@@ -74,10 +74,10 @@ def test_fixture_single_run_warm(tmp_sample_project):
     """
     config_dir = tmp_sample_project
     output = subprocess.run(["smif", "-v", "run", "-w", "-d", config_dir,
-                             "20170918_energy_water_short"],
+                             "energy_central"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+    assert "Running energy_central" in str(output.stderr)
+    assert "Model run 'energy_central' complete" in str(output.stdout)
 
 
 def test_fixture_batch_run(tmp_sample_project):
@@ -87,10 +87,10 @@ def test_fixture_batch_run(tmp_sample_project):
     output = subprocess.run(["smif", "-v", "run", "-b", "-d", config_dir,
                              os.path.join(config_dir, "batchfile")],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert "Running 20170918_energy_water" in str(output.stderr)
-    assert "Model run '20170918_energy_water' complete" in str(output.stdout)
-    assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+    assert "Running energy_water_cp_cr" in str(output.stderr)
+    assert "Model run 'energy_water_cp_cr' complete" in str(output.stdout)
+    assert "Running energy_central" in str(output.stderr)
+    assert "Model run 'energy_central' complete" in str(output.stdout)
 
 
 def test_fixture_list_runs(tmp_sample_project):
@@ -98,8 +98,8 @@ def test_fixture_list_runs(tmp_sample_project):
     """
     config_dir = tmp_sample_project
     output = subprocess.run(["smif", "list", "-d", config_dir], stdout=subprocess.PIPE)
-    assert "20170918_energy_water" in str(output.stdout)
-    assert "20170918_energy_water_short" in str(output.stdout)
+    assert "energy_water_cp_cr" in str(output.stdout)
+    assert "energy_central" in str(output.stdout)
 
 
 def test_setup_project_folder():
