@@ -8,7 +8,7 @@ scenarios:
         dims:
         - country
         dtype: int
-        units: people
+        unit: people
     variants:
       - name: population_low
         description: Central Population (Low)
@@ -30,7 +30,7 @@ scenarios:
         dims:
         - country
         dtype: float
-        units: ml
+        unit: ml
     variants:
       - name: central
         description: Central Rainfall
@@ -43,7 +43,7 @@ scenarios:
         dims:
         - country
         dtype: float
-        units: kWh
+        unit: kWh
     variants:
       - name: central
         description: Projected demand

@@ -71,8 +71,16 @@ def get_scenario_models(scenarios, handler):
     list of ScenarioModel
     """
     scenario_models = []
-    for scenario_name in scenarios.values():
-        scenario_definition = handler.read_scenario_definition(scenario_name)
+    for scenario_name, variant_name in scenarios.items():
+        scenario_definition = handler.read_scenario(scenario_name)
+
+        # assign variant name to definition
+        scenario_definition['scenario'] = variant_name
+
+        # rename provides => outputs
+        scenario_definition['outputs'] = scenario_definition['provides']
+        del scenario_definition['provides']
+
         LOGGER.debug("Scenario definition: %s", scenario_definition)
 
         scenario_model = ScenarioModel.from_dict(scenario_definition)
