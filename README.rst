@@ -8,6 +8,11 @@ Simulation Modelling Integration Framework
 
 .. image:: https://travis-ci.org/nismod/smif.svg?branch=master
     :target: https://travis-ci.org/nismod/smif
+    :alt: Build status (Linux/OSX)
+
+.. image:: https://ci.appveyor.com/api/projects/status/g1x12yfwb4q9kjad/branch/master?svg=true
+    :target: https://ci.appveyor.com/project/tomalrussell/smif/branch/master
+    :alt: Build status (Windows)
 
 .. image:: https://readthedocs.org/projects/smif/badge/?version=latest
     :target: http://smif.readthedocs.io/en/latest/?badge=latest

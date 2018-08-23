@@ -14,6 +14,10 @@ def config_data():
     sos_model.name = "test_sos_model"
     sos_model.parameters = {}
 
+    climate_scenario = Mock()
+    climate_scenario.name = 'climate'
+    sos_model.scenario_models = {'climate': climate_scenario}
+
     energy_supply = Mock()
     energy_supply.name = 'energy_supply'
     sos_model.models = [energy_supply]
@@ -25,7 +29,7 @@ def config_data():
         'timesteps': [2010, 2011, 2012],
         'sos_model': sos_model,
         'scenarios': {
-            'raininess': 'high_raininess'
+            'climate': 'RCP4.5'
         },
         'narratives': [
             Mock(data={'model_name': {'parameter_name': 0}}),
@@ -93,9 +97,24 @@ class TestModelRunBuilder:
         assert modelrun.timestamp == '2017-09-20T12:53:23+00:00'
         assert modelrun.model_horizon == [2010, 2011, 2012]
         assert modelrun.status == 'Built'
-        assert modelrun.scenarios == {'raininess': 'high_raininess'}
+        assert modelrun.scenarios == {'climate': 'RCP4.5'}
         assert modelrun.narratives == config_data['narratives']
         assert modelrun.strategies == config_data['strategies']
+
+    def test_builder_scenario_sosmodelrun_not_in_sosmodel(self, config_data):
+        """Error from unused scenarios
+        """
+        config_data['scenarios'] = {
+            'climate': 'RCP4.5',
+            'population': 'high_population'
+        }
+        builder = ModelRunBuilder()
+        builder.construct(config_data)
+
+        with raises(ModelRunError) as ex:
+            builder.finish()
+        assert "ScenarioSet 'population' is selected in the ModelRun " \
+               "configuration but not found in the SosModel configuration" in str(ex)
 
 
 class TestModelRun:

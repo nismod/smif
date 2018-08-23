@@ -25,11 +25,6 @@ class UnitRegister(Register):
         self._register.load_definitions(unit_file)
         self.logger.info("Finished registering user defined units")
 
-        with open(unit_file, 'r') as readonlyfile:
-            self.logger.info("Imported user units:")
-            for line in readonlyfile:
-                self.logger.info("    %s", line.split('=')[0])
-
     def get_entry(self, name):
         pass
 

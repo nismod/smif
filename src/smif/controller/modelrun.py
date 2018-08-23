@@ -86,6 +86,16 @@ class ModelRun(object):
         }
         return config
 
+    def validate(self):
+        """Validate that this ModelRun has been set up with sufficient data
+        to run
+        """
+        for scenario in self.scenarios:
+            if scenario not in self.sos_model.scenario_models.keys():
+                raise ModelRunError("ScenarioSet '{}' is selected in the ModelRun "
+                                    "configuration but not found in the SosModel "
+                                    "configuration".format(scenario))
+
     @property
     def model_horizon(self):
         """Returns the list of timesteps
@@ -229,11 +239,20 @@ class ModelRunBuilder(object):
 
         self.model_run.status = 'Built'
 
+    def validate(self):
+        """Check and/or assert that the modelrun is correctly set up
+        - should raise errors if invalid
+        """
+        assert self.model_run is not None, "Sector model not loaded"
+        self.model_run.validate()
+        return True
+
     def finish(self):
         """Returns a configured model run ready for operation
 
         """
         if self.model_run.status == 'Built':
+            self.validate()
             return self.model_run
         else:
             raise RuntimeError("Run construct() method before finish().")
