@@ -79,13 +79,13 @@ def setup_folder_structure(tmpdir_factory, oxford_region,
     intervals_file = test_folder.join(
         'data', 'interval_definitions', 'remap.csv')
     keys = data[0].keys()
-    with open(str(intervals_file), 'w+') as open_csv_file:
-        dict_writer = csv.DictWriter(open_csv_file, keys)
+    with intervals_file.open(mode='w+') as intervals_fh:
+        dict_writer = csv.DictWriter(intervals_fh, keys)
         dict_writer.writeheader()
         dict_writer.writerows(data)
 
     units_file = test_folder.join('data', 'user_units.txt')
-    with open(units_file, 'w') as units_fh:
+    with units_file.open(mode='w') as units_fh:
         units_fh.write("blobbiness = m^3 * 10^6\n")
         units_fh.write("people = [people]\n")
         units_fh.write("mcm = 10^6 * m^3\n")
