@@ -10,7 +10,7 @@ class TestCoordinates():
     Equivalent to an Element Set (OpenMI)
     Can be passed as coords to DataSpec or DataArray
     """
-    def test_construct_with_element_ids(self):
+    def test_construct_with_element_names(self):
         """Create a Coordinates with name and elements (list of ids)
         """
         name = 'building_categories'
@@ -21,9 +21,9 @@ class TestCoordinates():
         assert building_sectors.name == name
         assert building_sectors.ids == element_ids
         assert building_sectors.elements == [
-            {'id': 'residential'},
-            {'id': 'commercial'},
-            {'id': 'industrial'}
+            {'name': 'residential'},
+            {'name': 'commercial'},
+            {'name': 'industrial'}
         ]
 
     def test_construct_with_elements(self):
@@ -31,9 +31,9 @@ class TestCoordinates():
         """
         name = 'building_categories'
         elements = [
-            {'id': 'residential', 'sector': True},
-            {'id': 'commercial', 'sector': True},
-            {'id': 'industrial', 'sector': True}
+            {'name': 'residential', 'sector': True},
+            {'name': 'commercial', 'sector': True},
+            {'name': 'industrial', 'sector': True}
         ]
 
         building_sectors = Coordinates(name, elements)
@@ -64,17 +64,17 @@ class TestCoordinates():
             Coordinates('zero_d', [])
         assert "must not be empty" in str(ex)
 
-    def test_elements_must_have_id(self):
-        """Coordinates elements must have "id"
+    def test_elements_must_have_name(self):
+        """Coordinates elements must have "name"
         """
         elements = [
-            {"name": "Petrol", "state": "liquid"},
-            {"name": "Diesel", "state": "liquid"},
-            {"name": "Coal", "state": "solid"},
+            {"description": "Petrol", "state": "liquid"},
+            {"description": "Diesel", "state": "liquid"},
+            {"description": "Coal", "state": "solid"},
         ]
         with raises(KeyError) as ex:
             Coordinates('fossil_fuels', elements)
-        assert "must have an id" in str(ex)
+        assert "must have a name" in str(ex)
 
     def test_elements_must_be_finite(self):
         """Only accept finite Coordinatess
@@ -96,16 +96,16 @@ class TestCoordinates():
         """
         a = Coordinates('name', [1, 2, 3])
         b = Coordinates('name', [
-            {'id': 1},
-            {'id': 2},
-            {'id': 3}
+            {'name': 1},
+            {'name': 2},
+            {'name': 3}
         ])
         c = Coordinates('another', [1, 2, 3])
         d = Coordinates('name', [2, 3, 4])
         e = Coordinates('name', [
-            {'id': 1, 'note': 'meta'},
-            {'id': 2, 'note': 'meta'},
-            {'id': 3, 'note': 'meta'}
+            {'name': 1, 'note': 'meta'},
+            {'name': 2, 'note': 'meta'},
+            {'name': 3, 'note': 'meta'}
         ])
         assert a == b
         assert a != c

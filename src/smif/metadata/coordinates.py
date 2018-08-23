@@ -59,7 +59,7 @@ class Coordinates(object):
             self._elements = elements
         else:
             self._ids = elements
-            self._elements = [{"id": e} for e in elements]
+            self._elements = [{"name": e} for e in elements]
 
     @property
     def dim(self):
