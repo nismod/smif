@@ -192,12 +192,17 @@ class TestSectorModel():
                 'unit': 'megaliter'
             })
         }
-        assert sector_model.initial_conditions == [
+
+        actual = sorted(sector_model.initial_conditions, key=lambda k: k['name'])
+        expected = [
             {"name": "water_asset_a", "build_year": 2010},
             {"name": "water_asset_b", "build_year": 2010},
             {"name": "water_asset_c", "build_year": 2010}
         ]
-        assert sector_model.interventions == [
+        assert actual == expected
+
+        actual = sorted(sector_model.interventions, key=lambda k: k.name)
+        expected = [
             Intervention.from_dict(
                 {"name": "water_asset_a", "location": "oxford"}
             ),
@@ -208,6 +213,7 @@ class TestSectorModel():
                 {"name": "water_asset_c", "location": "oxford"}
             )
         ]
+        assert actual == expected
 
     def test_from_dict(self, sector_model_dict):
         """Create using classmethod from config

@@ -191,8 +191,8 @@ class TestDependencyGraph:
 
         # Builds the dependency graph
         graph = SosModel.make_dependency_graph(sos_model.models)
-        nodes = [node.name for node in graph.nodes()]
-        models = list(sos_model.models.keys())
+        nodes = sorted(node.name for node in graph.nodes())
+        models = sorted(list(sos_model.models.keys()))
         assert nodes == models
 
         assert list(graph.edges()) == [(scenario_model, energy_model)]
