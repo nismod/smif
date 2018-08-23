@@ -48,8 +48,8 @@ class SosModel(CompositeModel):
         -------
         dict
         """
-
-        dependencies = []
+        scenario_dependencies = []
+        model_dependencies = []
         for model in self.models.values():
             for dep in model.deps.values():
                 dep_config = {
@@ -58,7 +58,10 @@ class SosModel(CompositeModel):
                     'sink': dep.sink_model.name,
                     'sink_input': dep.sink.name
                 }
-                dependencies.append(dep_config)
+                if isinstance(dep.source_model, ScenarioModel):
+                    scenario_dependencies.append(dep_config)
+                else:
+                    model_dependencies.append(dep_config)
 
         config = {
             'name': self.name,
@@ -71,7 +74,8 @@ class SosModel(CompositeModel):
                 model.name
                 for model in self.sector_models.values()
             ],
-            'dependencies': dependencies,
+            'scenario_dependencies': scenario_dependencies,
+            'model_dependencies': model_dependencies,
             'max_iterations': self.max_iterations,
             'convergence_absolute_tolerance': self.convergence_absolute_tolerance,
             'convergence_relative_tolerance': self.convergence_relative_tolerance
@@ -116,7 +120,7 @@ class SosModel(CompositeModel):
             for model in models:
                 sos_model.add_model(model)
 
-            for dep in data['dependencies']:
+            for dep in _collect_dependencies(data):
                 sink = sos_model.models[dep['sink']]
                 source = sos_model.models[dep['source']]
                 source_output_name = dep['source_output']
@@ -275,3 +279,16 @@ class SosModel(CompositeModel):
             if isinstance(model, CompositeModel):
                 msg = "Nesting of CompositeModels (including SosModels) is not supported"
                 raise NotImplementedError(msg)
+
+
+def _collect_dependencies(data):
+    """Return all dependencies from a SosModel config dict
+    """
+    deps = []
+    if 'dependencies' in data:
+        deps = deps + data['dependencies']
+    if 'model_dependencies' in data:
+        deps = deps + data['model_dependencies']
+    if 'scenario_dependencies' in data:
+        deps = deps + data['scenario_dependencies']
+    return deps

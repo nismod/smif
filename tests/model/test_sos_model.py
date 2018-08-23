@@ -153,7 +153,7 @@ def sos_model_dict(scenario_only_sos_model_dict):
     #         ]
     #     }
     # ]
-    sos_model_dict['dependencies'] = [
+    sos_model_dict['scenario_dependencies'] = [
         {
             'source': 'climate',
             'source_output': 'precipitation',
@@ -208,12 +208,13 @@ class TestSosModel():
             'description': '',
             'scenario_sets': ['climate'],
             'sector_models': ['water_supply'],
-            'dependencies': [{
+            'scenario_dependencies': [{
                 'source': 'climate',
                 'source_output': 'precipitation',
                 'sink': 'water_supply',
                 'sink_input': 'precipitation'
             }],
+            'model_dependencies': [],
             'max_iterations': 25,
             'convergence_absolute_tolerance': 1e-8,
             'convergence_relative_tolerance': 1e-5
@@ -382,7 +383,8 @@ class TestSosModelDependencies(object):
         """Raise a NotImplementedError if an input is defined but no dependency links
         it to a data source
         """
-        sos_model_dict['dependencies'] = []
+        sos_model_dict['scenario_dependencies'] = []
+        sos_model_dict['model_dependencies'] = []
         with raises(NotImplementedError):
             SosModel.from_dict(sos_model_dict, [sector_model])
 

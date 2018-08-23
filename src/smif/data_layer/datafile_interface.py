@@ -147,9 +147,6 @@ class DatafileInterface(DataInterface):
     @check_exists(dtype='sos_model')
     def read_sos_model(self, sos_model_name):
         data = self._read_yaml_file(self.file_dir['sos_models'], sos_model_name)
-        data['dependencies'] = data['model_dependencies'] + data['scenario_dependencies']
-        del data['model_dependencies']
-        del data['scenario_dependencies']
         return data
 
     @check_not_exists(dtype='sos_model')
