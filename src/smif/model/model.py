@@ -169,6 +169,9 @@ class CompositeModel(Model, metaclass=ABCMeta):
         super().__init__(name)
         self.models = {}
 
+    def add_dependency(self, source_model, source_output_name, sink_input_name):
+        raise NotImplementedError("Dependencies cannot be added to a CompositeModel")
+
     @property
     def free_inputs(self):
         """Returns the free inputs not linked to a dependency at this layer

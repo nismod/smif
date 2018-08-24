@@ -174,15 +174,37 @@ class TestModelSet:
 
 
 class TestBasics:
+    def test_dependency_duplicate(self, scenario_model, energy_model):
+        energy_model.add_dependency(
+            scenario_model, 'electricity_demand_output', 'electricity_demand_input')
+
+        with raises(ValueError) as ex:
+            energy_model.add_dependency(
+                scenario_model, 'electricity_demand_output', 'electricity_demand_input')
+        assert "dependency already defined" in str(ex)
 
     def test_dependency_not_present(self, scenario_model, energy_model):
-        with raises(ValueError):
+        """Should fail with missing input/output
+        """
+        with raises(ValueError) as ex:
             energy_model.add_dependency(
                 scenario_model, 'not_present', 'electricity_demand_input')
+        msg = "Output 'not_present' is not defined in '{}'".format(scenario_model.name)
+        assert msg in str(ex)
 
-        with raises(ValueError):
+        with raises(ValueError) as ex:
             energy_model.add_dependency(
                 scenario_model, 'electricity_demand_output', 'not_correct_input_name')
+        msg = "Input 'not_correct_input_name' is not defined in '{}'".format(energy_model.name)
+        assert msg in str(ex)
+
+    def test_composite_dependency(self, scenario_model):
+        """No dependencies on CompositeModels
+        """
+        sos_model = SosModel('test')
+        with raises(NotImplementedError) as ex:
+            sos_model.add_dependency(scenario_model, 'a', 'b')
+        assert "Dependencies cannot be added to a CompositeModel" in str(ex)
 
 
 class TestDependencyGraph:
