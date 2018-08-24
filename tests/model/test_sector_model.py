@@ -1,7 +1,7 @@
 """Test SectorModel and SectorModelBuilder
 """
 import smif.sample_project.models.water_supply
-from pytest import fixture, mark
+from pytest import fixture, mark, raises
 from smif.decision.intervention import Intervention
 from smif.metadata import Spec
 from smif.model.sector_model import SectorModel
@@ -152,6 +152,11 @@ class TestSectorModel():
     """A SectorModel has inputs, outputs, and an implementation
     of simulate
     """
+    def test_abstract(self):
+        with raises(TypeError) as ex:
+            SectorModel('cannot_instantiate')
+        assert "Can't instantiate abstract class" in str(ex)
+
     def test_construct(self, sector_model):
         assert sector_model.description == 'a description'
         assert sector_model.inputs == {
@@ -286,6 +291,11 @@ class TestSectorModel():
         """
         empty_sector_model.simulate(None)
 
+    def test_before_model_run_exists(self, empty_sector_model):
+        """Call before_model_run
+        """
+        empty_sector_model.before_model_run(None)
+
 
 class TestSectorModelInterventions(object):
     """Interventions can be attached to a model
@@ -352,6 +362,23 @@ class TestSectorModelInterventions(object):
                 'name': 'water_asset_b',
                 'build_year': 2015,
                 'capacity': 150,
+                'location': None,
+                'sector': ''
+            }
+        ]
+        assert actual == expected
+
+        # ignore unrecognised interventions
+        state = [
+            {'name': 'water_asset_a', 'build_year': 2010},
+            {'name': 'energy_asset_unexpected', 'build_year': 2015}
+        ]
+        actual = empty_sector_model.get_current_interventions(state)
+        expected = [
+            {
+                'name': 'water_asset_a',
+                'build_year': 2010,
+                'capacity': 50,
                 'location': None,
                 'sector': ''
             }

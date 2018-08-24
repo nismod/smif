@@ -156,7 +156,6 @@ class Model(metaclass=ABCMeta):
         data: smif.data_layer.DataHandle
             Access state, parameter values, dependency inputs.
         """
-        pass
 
 
 class CompositeModel(Model, metaclass=ABCMeta):
@@ -214,4 +213,3 @@ class CompositeModel(Model, metaclass=ABCMeta):
         data: smif.data_layer.DataHandle
             Access state, parameter values, dependency inputs.
         """
-        pass

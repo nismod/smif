@@ -240,4 +240,3 @@ class SectorModel(Model, metaclass=ABCMeta):
         decision_iteration=None, timestep=None)``.
 
         """
-        pass
