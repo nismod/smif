@@ -1,6 +1,8 @@
+import sys
+from itertools import count
 
 import numpy as np
-from pytest import fixture
+from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
 from smif.metadata import Spec
 from smif.model.sos_model import ModelSet, SectorModel
@@ -12,6 +14,21 @@ class EmptySectorModel(SectorModel):
     def simulate(self, data):
         data['cost'] = np.array([[2]])
         data['water'] = np.array([[0.5]])
+        return data
+
+
+class CountingSectorModel(SectorModel):
+    """Non-converging model
+    """
+    def __init__(self, name):
+        super().__init__(name)
+        self.counter = count(start=10, step=10)
+
+    def simulate(self, data):
+        val = next(self.counter)
+        print("Counter", val)
+        sys.stdout.flush()
+        data['cost'] = np.array([val])
         return data
 
 
@@ -43,6 +60,29 @@ def sector_model(empty_sector_model):
         unit='Ml'
     ))
 
+    return model
+
+
+@fixture(scope='function')
+def counting_sector_model():
+    """Return model configured with two outputs, no inputs
+    """
+    model = CountingSectorModel('counter')
+    model.add_input(Spec(
+        name='cost',
+        dims=['annual'],
+        coords={'annual': [1]},
+        dtype='float',
+        unit='million GBP'
+    ))
+    model.add_output(Spec(
+        name='cost',
+        dims=['annual'],
+        coords={'annual': [1]},
+        dtype='float',
+        unit='million GBP'
+    ))
+    model.add_dependency(model, 'cost', 'cost')
     return model
 
 
@@ -127,3 +167,20 @@ class TestModelSet:
         # 1: returned values
         # 2: returned identical values
         assert model_set.max_iteration == 2
+
+    def test_timeout(self, counting_sector_model):
+        """Should raise TimeoutError on failling to converge
+        """
+        sector_model = counting_sector_model
+        model_set = ModelSet({sector_model.name: sector_model})
+
+        # no max iteration before running
+        assert model_set.max_iteration is None
+
+        data_handle = get_data_handle(model_set)
+        with raises(TimeoutError) as ex:
+            model_set.simulate(data_handle)
+        assert "Model evaluation exceeded max iterations" in str(ex)
+
+        # no max iteration after failing to converge
+        assert model_set.max_iteration is None
