@@ -320,7 +320,6 @@ class DataHandle(object):
         decision_iteration : int or None
         timestep : int or RelativeTimestep or None
         """
-        print(self._outputs.keys())
         if output_name not in self._outputs:
             raise KeyError(
                 "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
