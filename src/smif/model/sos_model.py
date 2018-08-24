@@ -66,14 +66,14 @@ class SosModel(CompositeModel):
         config = {
             'name': self.name,
             'description': self.description,
-            'scenario_sets': [
+            'scenarios': sorted(
                 scenario.name
                 for scenario in self.scenario_models.values()
-            ],
-            'sector_models': [
+            ),
+            'sector_models': sorted(
                 model.name
                 for model in self.sector_models.values()
-            ],
+            ),
             'scenario_dependencies': scenario_dependencies,
             'model_dependencies': model_dependencies,
             'max_iterations': self.max_iterations,
@@ -140,6 +140,11 @@ class SosModel(CompositeModel):
 
         """
         assert isinstance(model, Model)
+
+        if isinstance(model, CompositeModel):
+            msg = "Nesting of CompositeModels (including SosModels) is not supported"
+            raise NotImplementedError(msg)
+
         self.logger.info("Loading model: %s", model.name)
         self.models[model.name] = model
 
@@ -165,7 +170,13 @@ class SosModel(CompositeModel):
             Access model outputs
 
         """
-        run_order = self._get_model_sets_in_run_order()
+        graph = SosModel.make_dependency_graph(self.models)
+        run_order = SosModel.get_model_sets_in_run_order(
+            graph,
+            self.max_iterations,
+            self.convergence_relative_tolerance,
+            self.convergence_absolute_tolerance
+        )
         self.logger.info("Determined run order as %s", [x.name for x in run_order])
         for model in run_order:
             self.logger.info("*** Running the %s model ***", model.name)
@@ -190,7 +201,9 @@ class SosModel(CompositeModel):
                 )
         return dependency_graph
 
-    def _get_model_sets_in_run_order(self):
+    @staticmethod
+    def get_model_sets_in_run_order(graph, max_iterations, convergence_relative_tolerance,
+                                    convergence_absolute_tolerance):
         """Returns a list of :class:`Model` in a runnable order.
 
         If a set contains more than one model, there is an interdependency and
@@ -201,7 +214,6 @@ class SosModel(CompositeModel):
         list
             A list of `smif.model.Model` objects
         """
-        graph = SosModel.make_dependency_graph(self.models)
         if networkx.is_directed_acyclic_graph(graph):
             # topological sort gives a single list from directed graph, currently
             # ignoring opportunities to run independent models in parallel
@@ -228,9 +240,9 @@ class SosModel(CompositeModel):
                     ordered_sets.append(
                         ModelSet(
                             {model.name: model for model in models},
-                            max_iterations=self.max_iterations,
-                            relative_tolerance=self.convergence_relative_tolerance,
-                            absolute_tolerance=self.convergence_absolute_tolerance
+                            max_iterations=max_iterations,
+                            relative_tolerance=convergence_relative_tolerance,
+                            absolute_tolerance=convergence_absolute_tolerance
                         )
                     )
 
@@ -274,11 +286,6 @@ class SosModel(CompositeModel):
             raise NotImplementedError(msg.format(", ".join(
                 str(key) for key in self.free_inputs.keys()
             )))
-
-        for model in self.models.values():
-            if isinstance(model, CompositeModel):
-                msg = "Nesting of CompositeModels (including SosModels) is not supported"
-                raise NotImplementedError(msg)
 
 
 def _collect_dependencies(data):

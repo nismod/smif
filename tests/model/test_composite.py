@@ -210,19 +210,55 @@ class TestBasics:
 class TestDependencyGraph:
 
     def test_simple_graph(self, sos_model, scenario_model, energy_model):
-
-        # Builds the dependency graph
+        """Build the dependency graph
+        """
         graph = SosModel.make_dependency_graph(sos_model.models)
         nodes = sorted(node.name for node in graph.nodes())
         models = sorted(list(sos_model.models.keys()))
         assert nodes == models
-
         assert list(graph.edges()) == [(scenario_model, energy_model)]
 
     def test_get_model_set_simple_order(self, sos_model, scenario_model, energy_model):
-        actual = sos_model._get_model_sets_in_run_order()
+        """Single dependency edge order
+        """
+        graph = SosModel.make_dependency_graph(sos_model.models)
+        actual = SosModel.get_model_sets_in_run_order(graph, 1, 1, 1)
         expected = [scenario_model, energy_model]
         assert actual == expected
+
+    def test_complex_order(self):
+        """Single models upstream and downstream of an interdependency
+        """
+        a = ExampleSectorModel('a')
+        a.add_output(Spec(name='a_out', dtype='bool'))
+
+        b = ExampleSectorModel('b')
+        b.add_input(Spec(name='b_in', dtype='bool'))
+        b.add_input(Spec(name='b_in_from_c', dtype='bool'))
+        b.add_output(Spec(name='b_out', dtype='bool'))
+        b.add_dependency(a, 'a_out', 'b_in')
+
+        c = ExampleSectorModel('c')
+        c.add_input(Spec(name='c_in_from_b', dtype='bool'))
+        c.add_output(Spec(name='c_out', dtype='bool'))
+        c.add_dependency(b, 'b_out', 'c_in_from_b')
+        b.add_dependency(c, 'c_out', 'b_in_from_c')
+
+        d = ExampleSectorModel('d')
+        d.add_input(Spec(name='d_in', dtype='bool'))
+        d.add_output(Spec(name='d_out', dtype='bool'))
+        d.add_dependency(c, 'c_out', 'd_in')
+
+        graph = SosModel.make_dependency_graph({'a': a, 'b': b, 'c': c, 'd': d})
+        actual = SosModel.get_model_sets_in_run_order(graph, 1, 1, 1)
+        # two sets
+        assert len(actual) == 3
+        # first is just a
+        assert actual[0] == a
+        # second is the modelset containing interdependent b and c
+        assert sorted(actual[1].models.keys()) == ['b', 'c']
+        # third is just d
+        assert actual[2] == d
 
 
 class TestCompositeIntegration:
@@ -276,7 +312,8 @@ class TestNestedModels():
             ('energy_model', 'electricity_demand_input')]
 
         sos_model_high = SosModel('higher')
-        sos_model_high.add_model(sos_model_lo)
+        # work around add_model, which would fail as nesting is not fully implemented
+        sos_model_high.models[sos_model_lo.name] = sos_model_lo
         actual = list(sos_model_high.free_inputs.keys())
         expected = [('lower', ('energy_model', 'electricity_demand_input'))]
 
