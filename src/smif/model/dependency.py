@@ -43,9 +43,11 @@ class Dependency(object):
         self.sink = sink
 
     def __repr__(self):
-        return "<Dependency({}, {}, {})>".format(self.source_model, self.source, self.sink)
+        return "<Dependency({}, {}, {}, {})>".format(
+            self.source_model, self.source, self.sink_model, self.sink)
 
     def __eq__(self, other):
         return self.source_model == other.source_model \
             and self.source == other.source \
+            and self.sink_model == other.sink_model \
             and self.sink == other.sink
