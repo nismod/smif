@@ -360,7 +360,7 @@ class TestSosModel():
         empty_sector_model.before_model_run = Mock()
         sos_model.add_model(empty_sector_model)
         sos_model.before_model_run(Mock())
-        empty_sector_model.before_model_run.assert_called_once()
+        assert empty_sector_model.before_model_run.call_count == 1
 
     def test_run_sequential(self, sos_model):
         """Simulate should exist

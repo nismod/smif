@@ -1,7 +1,7 @@
 """Tests functionality of NDimensionalRegister class that computes coefficients for
 different operations
 """
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import numpy as np
 from pytest import fixture, mark
@@ -129,7 +129,8 @@ class TestNDimensionalRegisterCaching:
         """Reading will check cache
         """
         register.get_coefficients('months', 'seasons')
-        register.data_interface.read_coefficients.assert_called_once_with('months', 'seasons')
+        assert register.data_interface.read_coefficients.call_count == 1
+        assert register.data_interface.read_coefficients.call_args == call('months', 'seasons')
 
     def test_write_coefficients(self, month_to_season_coefficients, register):
         """Reading will update cache if empty
