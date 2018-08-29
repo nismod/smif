@@ -1,32 +1,62 @@
-"""Dimensions are always finite, and data which has a given dimension can be indexed by a
-set of coordinates
+"""Each dimension of a multi-dimensional dataset can be indexed by a set of coordinates.
 
-Dimensions might be indexed over a grid::
+Dimensions might be represented as Euclidean coordinates over a grid::
 
 >>> x = Coordinates('x', range(0, 100))
 >>> y = Coordinates('y', range(0, 100))
 
-A dimension might be a subset of Local Authority Districts in England::
+A subset of Local Authority Districts in England would be a region-based spatial dimension::
 
 >>> local_authority_districts = Coordinates('LADs', ['E07000128', 'E07000180'])
 
-Or each of the economic sectors from the International Standard Industrial Classification of
-All Economic Activities (ISIC), revision 4::
+The hours of an average annual day would be a temporal dimension::
 
->>> economic_sector = Coordinates('ISICrev4', [
-    {'name': 'A', 'short_desc': 'Agriculture, forestry and fishing'},
-    {'name': 'B', 'short_desc': 'Mining and quarrying'},
-    {'name': 'C', 'short_desc': 'Manufacturing'},
-    {'name': 'D', 'short_desc': 'Electricity, gas, steam and air conditioning supply'}
-])
+        >>> hours = Coordinates('daily_hours', [
+        ...     {'name': 0, 'represents': '00:00-00:59:59'}
+        ...     {'name': 1, 'represents': '01:00-01:59:59'}
+        ...     {'name': 2, 'represents': '02:00-02:59:59'}
+        ... ])
+
+The economic sectors from the International Standard Industrial Classification of All Economic
+Activities (ISIC), revision 4 would be a categorical dimension::
+
+        >>> economic_sector = Coordinates('ISICrev4', [
+        ...     {'name': 'A', 'desc': 'Agriculture, forestry and fishing'},
+        ...     {'name': 'B', 'desc': 'Mining and quarrying'},
+        ...     {'name': 'C', 'desc': 'Manufacturing'},
+        ...     {'name': 'D', 'desc': 'Electricity, gas, steam and air conditioning supply'}
+        ... ])
+
 """
 
 
 class Coordinates(object):
-    """Coordinates index a dimension
+    """Coordinates provide the labels to index a dimension, along with metadata that may be
+    useful to describe, visualise or convert between dimensions.
 
-    A dict of {Coordinates.dim: Coordinates.ids} can be passed to a Spec (or
-    xarray.DataArray)
+    Coordinate element names are used to label each position along a finite dimension.
+
+    A dict mapping dimension name to list of coordinate elements can be passed to a
+    :class:`~smif.metadata.spec.Spec` (or :class:`xarray.DataArray`) as `coords`.
+
+    Attributes
+    ----------
+    name : str
+        Dimension name
+    dim : str
+        Alias for dimension name
+    ids : list
+        List of labels
+    elements : list[dict]
+        List of labels with metadata
+
+    Parameters
+    ----------
+    name : str
+        Name to identify the dimension that these coordinates index
+    elements : list
+        List of simple data types (used to identify elements), or a list of dicts with 'name'
+        key and other metadata
     """
     def __init__(self, name, elements):
         self.name = name
@@ -46,7 +76,7 @@ class Coordinates(object):
 
     @property
     def elements(self):
-        """Elements are a list of dicts with at least an 'id' key
+        """Elements are a list of dicts with at least a 'name' key
 
         Coordinate elements should not be changed.
         """

@@ -1,4 +1,6 @@
-"""Data is typically multi-dimensional, a Spec provides metadata to label it.
+"""Data is typically multi-dimensional. :class:`~smif.metadata.spec.Spec` is used to describe
+each dataset which is supplied to - or output from - each :class:`~smif.model.model.Model` in a
+:class:`~smif.model.model.CompositeModel`
 """
 from collections import defaultdict
 
@@ -6,10 +8,62 @@ from smif.metadata.coordinates import Coordinates
 
 
 class Spec(object):
-    """A Spec is a data contract, it describes the shape of inputs and parameters to be
-    provided to or output from each model or process.
+    """N-dimensional metadata.
 
-    In practice, this looks a lot like an xarray.DataArray with no data.
+    Spec labels each dimension with coordinates and enforces data type, units and absolute and
+    expected ranges.
+
+    The API here is modelled on :class:`xarray.DataArray`: dtype and shape describe a
+    :class:`numpy.ndarray`; dims and coords follow the xarray conventions for labelled axes;
+    and unit, default, abs_range and exp_range are introduced as supplementary metadata to
+    help validate connections between models.
+
+    Attributes
+    ----------
+    name : str
+        The name of the data that this spec describes
+    description : str
+        A human-friendly description
+    dtype : str
+        Data type for data values
+    default : object
+        Default data value
+    abs_range : tuple
+        Absolute range of data values
+    exp_range : tuple
+        Expected range of data values
+    shape : tuple[int]
+        Tuple of dimension sizes
+    ndim : int
+        Number of dimensions
+    dims : list[str]
+        Dimension names
+    coords : list[Coordinates]
+        Dimension coordinate labels
+    unit : str
+        Units of data values
+
+    Parameters
+    ----------
+    name : str, optional
+        Name to identifiy the variable described (typically an input, output or parameter)
+    description : str, optional
+        Short description
+    dims : list[str], optional
+        List of dimension names, must be provided if coords is a dict
+    coords : list[Coordinates] or dict[str, list], optional
+        A list of :class`Coordinates` or a dict mapping each dimension name to a list of names
+        which label that dimension.
+    dtype : str
+        String suitable for contructing a simple :class:`numpy.dtype`
+    default : object, optional
+        Value to be used as default
+    abs_range : tuple, optional
+        (min, max) absolute range for numeric values - can be used to raise errors
+    exp_range : tuple, optional
+        (min, max) expected range for numeric values - can be used to raise warnings
+    unit : str, optional
+        Unit to be used for data values
     """
     def __init__(self, name=None, dims=None, coords=None, dtype=None, default=None,
                  abs_range=None, exp_range=None, unit=None, description=None):
@@ -129,7 +183,7 @@ class Spec(object):
 
     @property
     def shape(self):
-        """The shape of the data that this spec describes.
+        """Tuple of dimension sizes. The shape of the data that this spec describes.
         """
         return tuple(len(c.ids) for c in self._coords)
 
@@ -142,20 +196,12 @@ class Spec(object):
     @property
     def dims(self):
         """Names for each dimension
-
-        Returns
-        -------
-        tuple of str
         """
         return list(self._dims)
 
     @property
     def coords(self):
         """Coordinate labels for each dimension.
-
-        Returns
-        -------
-        list of Coordinates
         """
         return list(self._coords)
 
