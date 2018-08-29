@@ -90,8 +90,15 @@ class Spec(object):
         self._dtype = dtype
 
         self._default = default
+
+        if abs_range is not None:
+            self._check_range(abs_range)
         self._abs_range = abs_range
+
+        if exp_range is not None:
+            self._check_range(exp_range)
         self._exp_range = exp_range
+
         self._unit = unit
 
     def _coords_from_list(self, coords, dims):
@@ -259,3 +266,24 @@ class Spec(object):
 
     def __repr__(self):
         return "<Spec name='{}' dims='{}' unit='{}'>".format(self.name, self.dims, self.unit)
+
+    def _check_range(self, range_):
+        """Error if range is not a [min, max] list or tuple
+        """
+        if not _is_sequence(range_):
+            msg = "Spec range must be a list or tuple, got {} for {}"
+            raise TypeError(msg.format(range_, self._name))
+        if len(range_) != 2:
+            msg = "Spec range must have min and max values only, got {} for {}"
+            raise ValueError(msg.format(range_, self._name))
+        min_, max_ = range_
+        if max_ < min_:
+            msg = "Spec range min value must be smaller than max value, got {} for {}"
+            raise ValueError(msg.format(range_, self._name))
+
+
+def _is_sequence(obj):
+    """Check for iterable object that is not a string ('strip' is a method on str)
+    """
+    return not hasattr(obj, "strip") \
+        and (hasattr(obj, "__getitem__") or hasattr(obj, "__iter__"))

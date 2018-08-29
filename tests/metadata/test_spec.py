@@ -225,6 +225,57 @@ class TestSpec():
             )
         assert "dims are derived" in str(ex)
 
+    def test_ranges_must_be_list_like(self):
+        """Absolute and expected ranges must be list or tuple
+        """
+        with raises(TypeError) as ex:
+            Spec(
+                dtype='int',
+                abs_range='string should fail'
+            )
+        assert "range must be a list or tuple" in str(ex)
+
+        with raises(TypeError) as ex:
+            Spec(
+                dtype='int',
+                exp_range='string should fail'
+            )
+        assert "range must be a list or tuple" in str(ex)
+
+    def test_ranges_must_be_len_two(self):
+        """Absolute and expected ranges must be length two (min and max)
+        """
+        with raises(ValueError) as ex:
+            Spec(
+                dtype='int',
+                abs_range=[0]
+            )
+        assert "range must have min and max values only" in str(ex)
+
+        with raises(ValueError) as ex:
+            Spec(
+                dtype='int',
+                exp_range=[0, 1, 2]
+            )
+        assert "range must have min and max values only" in str(ex)
+
+    def test_ranges_must_be_min_max(self):
+        """Absolute and expected ranges must be in order
+        """
+        with raises(ValueError) as ex:
+            Spec(
+                dtype='int',
+                abs_range=[2, 1]
+            )
+        assert "min value must be smaller than max value" in str(ex)
+
+        with raises(ValueError) as ex:
+            Spec(
+                dtype='int',
+                exp_range=[2, 1]
+            )
+        assert "min value must be smaller than max value" in str(ex)
+
     def test_eq(self):
         """Equality based on equivalent dtype, dims, coords, unit
         """
