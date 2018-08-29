@@ -1,5 +1,6 @@
 import numpy as np
 from pytest import fixture
+from smif.convert.area import RegionSet
 
 
 @fixture(scope='module')
@@ -324,3 +325,53 @@ def remap_month_data_as_months():
         30.666666666
     ]])
     return data
+
+
+@fixture(scope='function')
+def regions_rect():
+    """Return single region covering 2x1 area::
+
+        |```````|
+        |   0   |
+        |.......|
+
+    """
+    return RegionSet('rect', [
+        {
+            'type': 'Feature',
+            'properties': {'name': 'zero'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
+            }
+        }
+    ])
+
+
+@fixture(scope='function')
+def regions_half_squares():
+    """Return two adjacent square regions::
+
+        |```|```|
+        | A | B |
+        |...|...|
+
+    """
+    return RegionSet('half_squares', [
+        {
+            'type': 'Feature',
+            'properties': {'name': 'a'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            }
+        },
+        {
+            'type': 'Feature',
+            'properties': {'name': 'b'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
+            }
+        },
+    ])

@@ -270,11 +270,12 @@ latex_documents = [
 # -- External mapping ------------------------------------------------------------
 python_version = '.'.join(map(str, sys.version_info[0:2]))
 intersphinx_mapping = {
-    'sphinx': ('http://www.sphinx-doc.org/en/stable/', None),
-    'python': ('https://docs.python.org/' + python_version, None),
     'matplotlib': ('http://matplotlib.org/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-    'sklearn': ('http://scikit-learn.org/stable/', None),
     'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
+    'python': ('https://docs.python.org/' + python_version, None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'sklearn': ('http://scikit-learn.org/stable/', None),
+    'sphinx': ('http://www.sphinx-doc.org/en/stable/', None),
+    'xarray': ('http://xarray.pydata.org/en/stable/', None),
 }

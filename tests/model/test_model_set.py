@@ -1,55 +1,96 @@
+import sys
+from itertools import count
 
 import numpy as np
-from pytest import fixture
+from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
+from smif.metadata import Spec
 from smif.model.sos_model import ModelSet, SectorModel
 
 
+class EmptySectorModel(SectorModel):
+    """Static water supply model
+    """
+    def simulate(self, data):
+        data['cost'] = np.array([[2]])
+        data['water'] = np.array([[0.5]])
+        return data
+
+
+class CountingSectorModel(SectorModel):
+    """Non-converging model
+    """
+    def __init__(self, name):
+        super().__init__(name)
+        self.counter = count(start=10, step=10)
+
+    def simulate(self, data):
+        val = next(self.counter)
+        print("Counter", val)
+        sys.stdout.flush()
+        data['cost'] = np.array([val])
+        return data
+
+
 @fixture(scope='function')
-def get_empty_sector_model():
+def empty_sector_model():
     """Return model with static outputs
     """
-    class EmptySectorModel(SectorModel):
-        """Static water supply model
-        """
-        def simulate(self, data):
-            data['cost'] = np.array([[2]])
-            data['water'] = np.array([[0.5]])
-            return data
-
-        def extract_obj(self, results):
-            return 0
-
-    return EmptySectorModel
+    return EmptySectorModel('water_supply')
 
 
 @fixture(scope='function')
-def get_sector_model_object(get_empty_sector_model):
+def sector_model(empty_sector_model):
     """Return model configured with two outputs, no inputs
     """
-    sector_model = get_empty_sector_model('water_supply')
+    model = empty_sector_model
+    model.add_output(Spec(
+        name='cost',
+        dims=['LSOA', 'annual'],
+        coords={'LSOA': [1], 'annual': [1]},
+        dtype='float',
+        unit='million GBP'
+    ))
 
-    regions = sector_model.regions
-    intervals = sector_model.intervals
+    model.add_output(Spec(
+        name='water',
+        dims=['LSOA', 'annual'],
+        coords={'LSOA': [1], 'annual': [1]},
+        dtype='float',
+        unit='Ml'
+    ))
 
-    sector_model.add_output('cost',
-                            regions.get_entry('LSOA'),
-                            intervals.get_entry('annual'),
-                            'million GBP')
+    return model
 
-    sector_model.add_output('water',
-                            regions.get_entry('LSOA'),
-                            intervals.get_entry('annual'),
-                            'Ml')
 
-    return sector_model
+@fixture(scope='function')
+def counting_sector_model():
+    """Return model configured with two outputs, no inputs
+    """
+    model = CountingSectorModel('counter')
+    model.add_input(Spec(
+        name='cost',
+        dims=['annual'],
+        coords={'annual': [1]},
+        dtype='float',
+        unit='million GBP'
+    ))
+    model.add_output(Spec(
+        name='cost',
+        dims=['annual'],
+        coords={'annual': [1]},
+        dtype='float',
+        unit='million GBP'
+    ))
+    model.add_dependency(model, 'cost', 'cost')
+    return model
 
 
 def get_data_handle(model):
     """Return a data handle for the model
     """
     store = MemoryInterface()
-    store.write_sos_model_run({
+    store.write_model_run({
         'name': 'test',
         'narratives': {}
     })
@@ -65,11 +106,10 @@ def get_data_handle(model):
 class TestModelSet:
     """Test public interface to ModelSet, with side effects in DataHandle
     """
-    def test_guess_outputs_zero(self, get_sector_model_object):
+    def test_guess_outputs_zero(self, sector_model):
         """If no previous timestep has results, guess outputs as zero
         """
-        ws_model = get_sector_model_object
-        model_set = ModelSet({ws_model.name: ws_model})
+        model_set = ModelSet({sector_model.name: sector_model})
         data_handle = get_data_handle(model_set)
         model_set.simulate(data_handle)
         expected = {
@@ -77,16 +117,15 @@ class TestModelSet:
             "water": np.zeros((1, 1))
         }
         actual = {
-            "cost": data_handle.get_results('cost', ws_model.name, 0),
-            "water": data_handle.get_results('water', ws_model.name, 0)
+            "cost": data_handle.get_results(('water_supply', 'cost'), sector_model.name, 0),
+            "water": data_handle.get_results(('water_supply', 'water'), sector_model.name, 0)
         }
         assert actual == expected
 
-    def test_guess_outputs_last_year(self, get_sector_model_object):
+    def test_guess_outputs_last_year(self, sector_model):
         """If a previous timestep has results, guess outputs as identical
         """
-        ws_model = get_sector_model_object
-        model_set = ModelSet({ws_model.name: ws_model})
+        model_set = ModelSet({sector_model.name: sector_model})
 
         expected = {
             "cost": np.array([[3.14]]),
@@ -96,37 +135,52 @@ class TestModelSet:
         # set up data as though from previous timestep simulation
         data_handle = get_data_handle(model_set)
         data_handle._store.write_results(
-            'test', 'water_supply', 'cost', expected['cost'], 'LSOA', 'annual', 2010, 0)
+            expected['cost'], 'test', 'water_supply', sector_model.outputs['cost'], 2010, 0)
         data_handle._store.write_results(
-            'test', 'water_supply', 'water', expected['water'], 'LSOA', 'annual', 2010, 0)
+            expected['water'], 'test', 'water_supply', sector_model.outputs['water'], 2010, 0)
 
         data_handle._current_timestep = 2011
         model_set.simulate(data_handle)
         actual = {
-            "cost": data_handle.get_results('cost', ws_model.name, 0),
-            "water": data_handle.get_results('water', ws_model.name, 0)
+            "cost": data_handle.get_results(('water_supply', 'cost'), sector_model.name, 0),
+            "water": data_handle.get_results(('water_supply', 'water'), sector_model.name, 0)
         }
         assert actual == expected
 
-    def test_converged_first_iteration(self, get_sector_model_object):
+    def test_converged_first_iteration(self, sector_model):
         """Should not report convergence after a single iteration
         """
-        ws_model = get_sector_model_object
-        model_set = ModelSet({ws_model.name: ws_model})
+        model_set = ModelSet({sector_model.name: sector_model})
         data_handle = get_data_handle(model_set)
         model_set.simulate(data_handle)
         assert model_set.max_iteration > 0
 
-    def test_converged_two_identical(self, get_sector_model_object):
+    def test_converged_two_identical(self, sector_model):
         """Should report converged if the last two output sets are identical
         """
-        ws_model = get_sector_model_object
-        model_set = ModelSet({ws_model.name: ws_model})
+        model_set = ModelSet({sector_model.name: sector_model})
 
         data_handle = get_data_handle(model_set)
         model_set.simulate(data_handle)
-        # ws_model will always return identical results, so we expect:
+        # sector_model will always return identical results, so we expect:
         # 0: guessed zeroes
         # 1: returned values
         # 2: returned identical values
         assert model_set.max_iteration == 2
+
+    def test_timeout(self, counting_sector_model):
+        """Should raise TimeoutError on failling to converge
+        """
+        sector_model = counting_sector_model
+        model_set = ModelSet({sector_model.name: sector_model})
+
+        # no max iteration before running
+        assert model_set.max_iteration is None
+
+        data_handle = get_data_handle(model_set)
+        with raises(TimeoutError) as ex:
+            model_set.simulate(data_handle)
+        assert "Model evaluation exceeded max iterations" in str(ex)
+
+        # no max iteration after failing to converge
+        assert model_set.max_iteration is None

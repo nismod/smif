@@ -556,12 +556,3 @@ class TimeIntervalRegister(NDimensionalRegister):
     """
     def __init__(self):
         super().__init__(axis=1)
-
-
-__REGISTER = TimeIntervalRegister()
-
-
-def get_register():
-    """Return single copy of TimeIntervalRegister
-    """
-    return __REGISTER

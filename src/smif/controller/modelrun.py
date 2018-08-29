@@ -20,7 +20,7 @@ ModeRun has attributes:
 from logging import getLogger
 
 from smif.data_layer import DataHandle
-from smif.decision import DecisionManager
+from smif.decision.decision import DecisionManager
 from smif.model.sector_model import SectorModel
 
 
@@ -64,10 +64,10 @@ class ModelRun(object):
         self.results = {}
 
     def as_dict(self):
-        """Serialises :class:`smif.modelrun.ModelRun`
+        """Serialises :class:`smif.controller.modelrun.ModelRun`
 
         Returns a dictionary definition of a ModelRun which is
-        equivalent to that required by :class:`smif.modelrun.ModelRunBuilder`
+        equivalent to that required by :class:`smif.controller.modelrun.ModelRunBuilder`
         to construct a new model run
 
         Returns
@@ -91,7 +91,7 @@ class ModelRun(object):
         to run
         """
         for scenario in self.scenarios:
-            if scenario not in [model.name for model in self.sos_model.scenario_models.values()]:
+            if scenario not in self.sos_model.scenario_models.keys():
                 raise ModelRunError("ScenarioSet '{}' is selected in the ModelRun "
                                     "configuration but not found in the SosModel "
                                     "configuration".format(scenario))
@@ -150,7 +150,7 @@ class ModelRunner(object):
 
         Arguments
         ---------
-        model_run : :class:`smif.modelrun.ModelRun`
+        model_run : :class:`smif.controller.modelrun.ModelRun`
         store : :class:`smif.data_layer.DataInterface`
         """
         # Initialise each of the sector models

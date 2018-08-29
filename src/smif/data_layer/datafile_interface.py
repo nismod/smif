@@ -5,8 +5,7 @@ import csv
 import glob
 import os
 import re
-from csv import DictReader
-from functools import lru_cache
+from functools import lru_cache, wraps
 
 import fiona
 import pyarrow as pa
@@ -14,6 +13,64 @@ from smif.data_layer.data_interface import (DataExistsError, DataInterface,
                                             DataMismatchError,
                                             DataNotFoundError)
 from smif.data_layer.load import dump, load
+from smif.metadata import Spec
+
+
+# Note: these decorators must be defined before being used below
+def check_exists(dtype):
+    """Decorator to check an item of dtype exists
+    """
+    def wrapper(func):
+        """Decorator specialised by dtype (class/item type)
+        """
+        @wraps(func)
+        def wrapped(self, name, primary=None, secondary=None, *func_args, **func_kwargs):
+            """Wrapper to implement error checking
+            """
+            _assert_no_mismatch(dtype, name, primary, secondary)
+            if dtype in _file_dtypes():
+                _assert_file_exists(self.file_dir, dtype, name)
+            if dtype in _config_dtypes():
+                config = self.read_project_config()
+                _assert_config_item_exists(config, dtype, name)
+            if dtype in _nested_config_dtypes():
+                config = self.read_project_config()
+                _assert_nested_config_item_exists(config, dtype, name, primary)
+
+            if primary is None:
+                return func(self, name, *func_args, **func_kwargs)
+            elif secondary is None:
+                return func(self, name, primary, *func_args, **func_kwargs)
+            return func(self, name, primary, secondary, *func_args, **func_kwargs)
+
+        return wrapped
+    return wrapper
+
+
+def check_not_exists(dtype):
+    """Decorator creator to check an item of dtype does not exist
+    """
+    def wrapper(func):
+        """Decorator specialised by dtype (class/item type)
+        """
+        @wraps(func)
+        def wrapped(self, primary, secondary=None, *func_args, **func_kwargs):
+            """Wrapper to implement error checking
+            """
+            if dtype in _file_dtypes():
+                _assert_file_not_exists(self.file_dir, dtype, primary['name'])
+            if dtype in _config_dtypes():
+                config = self.read_project_config()
+                _assert_config_item_not_exists(config, dtype, primary['name'])
+            if dtype in _nested_config_dtypes():
+                config = self.read_project_config()
+                _assert_nested_config_item_not_exists(config, dtype, primary, secondary)
+
+            if secondary is None:
+                return func(self, primary, *func_args, **func_kwargs)
+            return func(self, primary, secondary, *func_args, **func_kwargs)
+        return wrapped
+    return wrapper
 
 
 class DatafileInterface(DataInterface):
@@ -45,17 +102,16 @@ class DatafileInterface(DataInterface):
         self._project_config_cache = None
 
         config_folders = {
-            'sos_model_runs': 'config',
+            'model_runs': 'config',
             'sos_models': 'config',
             'sector_models': 'config',
-            'initial_conditions': 'data',
-            'interval_definitions': 'data',
+            'strategies': 'data',
             'interventions': 'data',
-            'narratives': 'data',
-            'region_definitions': 'data',
-            'scenarios': 'data',
+            'initial_conditions': 'data',
+            'dimensions': 'data',
             'coefficients': 'data',
-            'strategies': 'data'
+            'scenarios': 'data',
+            'narratives': 'data',
         }
 
         for category, folder in config_folders.items():
@@ -65,149 +121,73 @@ class DatafileInterface(DataInterface):
             # store dirname
             self.file_dir[category] = dirname
 
-    def read_units_file_name(self):
-        project_config = self._read_project_config()
-        filename = project_config['units']
-        self.logger.debug("Units filename is %s", filename)
-        if filename is not None:
-            path = os.path.join(self.base_folder, 'data')
-            units_file_path = os.path.join(path, filename)
-            if os.path.isfile(units_file_path):
-                return units_file_path
-            else:
-                return None
-        else:
-            return None
+    # region Model runs
+    def read_model_runs(self):
+        names = self._read_filenames_in_dir(self.file_dir['model_runs'], '.yml')
+        model_runs = [self.read_model_run(name) for name in names]
+        return model_runs
 
-    def read_sos_model_runs(self):
-        sos_model_runs = []
-        sos_model_run_names = self._read_filenames_in_dir(self.file_dir['sos_model_runs'],
-                                                          '.yml')
-        for sos_model_run_name in sos_model_run_names:
-            sos_model_runs.append(self._read_yaml_file(
-                self.file_dir['sos_model_runs'], sos_model_run_name))
+    @check_exists(dtype='model_run')
+    def read_model_run(self, model_run_name):
+        return self._read_yaml_file(self.file_dir['model_runs'], model_run_name)
 
-        return sos_model_runs
+    @check_not_exists(dtype='model_run')
+    def write_model_run(self, model_run):
+        self._write_yaml_file(self.file_dir['model_runs'], model_run['name'], model_run)
 
-    def read_sos_model_run(self, sos_model_run_name):
-        if not self._sos_model_run_exists(sos_model_run_name):
-            raise DataNotFoundError("sos_model_run '%s' not found" % sos_model_run_name)
-        return self._read_yaml_file(self.file_dir['sos_model_runs'], sos_model_run_name)
+    @check_exists(dtype='model_run')
+    def update_model_run(self, model_run_name, model_run):
+        self._write_yaml_file(self.file_dir['model_runs'], model_run['name'], model_run)
 
-    def _sos_model_run_exists(self, name):
-        return os.path.exists(
-            os.path.join(self.file_dir['sos_model_runs'], name + '.yml'))
+    @check_exists(dtype='model_run')
+    def delete_model_run(self, model_run_name):
+        os.remove(os.path.join(self.file_dir['model_runs'], model_run_name + '.yml'))
+    # endregion
 
-    def write_sos_model_run(self, sos_model_run):
-        if self._sos_model_run_exists(sos_model_run['name']):
-            raise DataExistsError("sos_model_run '%s' already exists" % sos_model_run['name'])
-        else:
-            self._write_yaml_file(self.file_dir['sos_model_runs'],
-                                  sos_model_run['name'], sos_model_run)
-
-    def update_sos_model_run(self, sos_model_run_name, sos_model_run):
-        if sos_model_run_name != sos_model_run['name']:
-            raise DataMismatchError(
-                "sos_model_run name '{}' must match '{}'".format(
-                    sos_model_run_name,
-                    sos_model_run['name']))
-
-        if not self._sos_model_run_exists(sos_model_run_name):
-            raise DataNotFoundError("sos_model_run '%s' not found" % sos_model_run_name)
-        self._write_yaml_file(self.file_dir['sos_model_runs'],
-                              sos_model_run['name'], sos_model_run)
-
-    def delete_sos_model_run(self, sos_model_run_name):
-        if not self._sos_model_run_exists(sos_model_run_name):
-            raise DataNotFoundError("sos_model_run '%s' not found" % sos_model_run_name)
-
-        os.remove(os.path.join(self.file_dir['sos_model_runs'], sos_model_run_name + '.yml'))
-
+    # region System-of-system models
     def read_sos_models(self):
-        sos_models = []
-
-        sos_model_names = self._read_filenames_in_dir(self.file_dir['sos_models'], '.yml')
-        for sos_model_name in sos_model_names:
-            sos_models.append(self._read_yaml_file(self.file_dir['sos_models'],
-                                                   sos_model_name))
+        names = self._read_filenames_in_dir(self.file_dir['sos_models'], '.yml')
+        sos_models = [self.read_sos_model(name) for name in names]
         return sos_models
 
+    @check_exists(dtype='sos_model')
     def read_sos_model(self, sos_model_name):
-        if not self._sos_model_exists(sos_model_name):
-            raise DataNotFoundError("sos_model '%s' not found" % sos_model_name)
-        return self._read_yaml_file(self.file_dir['sos_models'], sos_model_name)
+        data = self._read_yaml_file(self.file_dir['sos_models'], sos_model_name)
+        return data
 
-    def _sos_model_exists(self, name):
-        return os.path.exists(
-            os.path.join(self.file_dir['sos_models'], name + '.yml'))
-
+    @check_not_exists(dtype='sos_model')
     def write_sos_model(self, sos_model):
-        if self._sos_model_exists(sos_model['name']):
-            raise DataExistsError("sos_model '%s' already exists" % sos_model['name'])
-        else:
-            self._write_yaml_file(
-                self.file_dir['sos_models'],
-                sos_model['name'],
-                sos_model
-            )
+        self._write_yaml_file(self.file_dir['sos_models'], sos_model['name'], sos_model)
 
+    @check_exists(dtype='sos_model')
     def update_sos_model(self, sos_model_name, sos_model):
-        if sos_model_name != sos_model['name']:
-            raise DataMismatchError(
-                "sos_model name '{}' must match '{}'".format(
-                    sos_model_name,
-                    sos_model['name']))
+        self._write_yaml_file(self.file_dir['sos_models'], sos_model['name'], sos_model)
 
-        if not self._sos_model_exists(sos_model_name):
-            raise DataNotFoundError("sos_model '%s' not found" % sos_model_name)
-        self._write_yaml_file(self.file_dir['sos_models'],
-                              sos_model['name'], sos_model)
-
+    @check_exists(dtype='sos_model')
     def delete_sos_model(self, sos_model_name):
-        if not self._sos_model_exists(sos_model_name):
-            raise DataNotFoundError("sos_model '%s' not found" % sos_model_name)
-
         os.remove(os.path.join(self.file_dir['sos_models'], sos_model_name + '.yml'))
+    # endregion
 
+    # region Sector models
     def read_sector_models(self):
-        sector_models = []
-        file_dir = self.file_dir['sector_models']
-
-        sector_model_names = self._read_filenames_in_dir(file_dir, '.yml')
-        for sector_model_name in sector_model_names:
-            sector_models.append(self._read_yaml_file(file_dir, sector_model_name))
-
+        names = self._read_filenames_in_dir(self.file_dir['sector_models'], '.yml')
+        sector_models = [self.read_sector_model(name) for name in names]
         return sector_models
 
-    def _get_sector_model_filepath(self, sector_model_name):
-        file_name = '{}.yml'.format(sector_model_name)
-        file_dir = self.file_dir['sector_models']
-        return os.path.join(file_dir, file_name)
-
-    def _sector_model_exists(self, sector_model_name):
-        return os.path.exists(self._get_sector_model_filepath(sector_model_name))
-
-    def _read_sector_model_file(self, sector_model_name):
-        return self._read_yaml_file(self._get_sector_model_filepath(sector_model_name))
-
+    @check_exists(dtype='sector_model')
     def read_sector_model(self, sector_model_name):
-        if not self._sector_model_exists(sector_model_name):
-            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
-
-        sector_model = self._read_sector_model_file(sector_model_name)
-
-        sector_model['interventions'] = \
-            self._read_sector_model_interventions(sector_model_name)
-
-        sector_model['initial_conditions'] = \
-            self._read_sector_model_initial_conditions(sector_model_name)
-
+        sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+        self._set_list_coords(sector_model['inputs'])
+        self._set_list_coords(sector_model['outputs'])
+        self._set_list_coords(sector_model['parameters'])
+        sector_model['interventions'] = self._read_interventions_files(
+            sector_model['interventions'], 'interventions')
+        sector_model['initial_conditions'] = self._read_interventions_files(
+            sector_model['initial_conditions'], 'initial_conditions')
         return sector_model
 
+    @check_not_exists(dtype='sector_model')
     def write_sector_model(self, sector_model):
-        if self._sector_model_exists(sector_model['name']):
-            raise DataExistsError("sector_model '%s' already exists" % sector_model['name'])
-
         if sector_model['interventions']:
             self.logger.warning("Ignoring interventions")
             sector_model['interventions'] = []
@@ -215,19 +195,12 @@ class DatafileInterface(DataInterface):
         self._write_yaml_file(
             self.file_dir['sector_models'], sector_model['name'], sector_model)
 
+    @check_exists(dtype='sector_model')
     def update_sector_model(self, sector_model_name, sector_model):
-        if sector_model_name != sector_model['name']:
-            raise DataMismatchError(
-                "sector_model name '{}' must match '{}'".format(
-                    sector_model_name,
-                    sector_model['name']))
-
-        if not self._sector_model_exists(sector_model_name):
-            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
-
         # ignore interventions and initial conditions which the app doesn't handle
         if sector_model['interventions'] or sector_model['initial_conditions']:
-            old_sector_model = self._read_sector_model_file(sector_model['name'])
+            old_sector_model = self._read_yaml_file(
+                self.file_dir['sector_models'], sector_model['name'])
 
         if sector_model['interventions']:
             self.logger.warning("Ignoring interventions write")
@@ -237,17 +210,45 @@ class DatafileInterface(DataInterface):
             self.logger.warning("Ignoring initial conditions write")
             sector_model['initial_conditions'] = old_sector_model['initial_conditions']
 
-        self._write_yaml_file(self.file_dir['sector_models'],
-                              sector_model['name'], sector_model)
+        self._write_yaml_file(
+            self.file_dir['sector_models'], sector_model['name'], sector_model)
 
+    @check_exists(dtype='sector_model')
     def delete_sector_model(self, sector_model_name):
-        if not self._sector_model_exists(sector_model_name):
-            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
-
         os.remove(os.path.join(self.file_dir['sector_models'], sector_model_name + '.yml'))
 
-    def read_interventions(self, filename):
-        filepath = self.file_dir['interventions']
+    def _read_interventions_files(self, filenames, dirname):
+        intervention_list = []
+        for filename in filenames:
+            interventions = self._read_interventions_file(filename, dirname)
+            intervention_list.extend(interventions)
+        return intervention_list
+
+    def _read_interventions_file(self, filename, dirname):
+        """Read the planned intervention data from a file
+
+        Planned interventions are stored either a csv or yaml file. In the case
+        of the former, the file should look like this::
+
+            name,build_year
+            asset_a,2010
+            asset_b,2015
+
+        In the case of a yaml, file, the format is as follows::
+
+            - name: asset_a
+              build_year: 2010
+            - name: asset_b
+              build_year: 2015
+
+        Arguments
+        ---------
+        filename: str
+            The name of the strategy yml file to read in
+        dirname: str
+            The key of the dirname e.g. ``strategies`` or ``initial_conditions``
+        """
+        filepath = self.file_dir[dirname]
         _, ext = os.path.splitext(filename)
         if ext == '.csv':
             data = self._read_state_file(os.path.join(filepath, filename))
@@ -283,84 +284,19 @@ class DatafileInterface(DataInterface):
                         reshaped_data[key] = value
             new_data.append(reshaped_data)
         return new_data
+    # endregion
 
-    def _read_sector_model_interventions(self, sector_model_name):
-        if not self._sector_model_exists(sector_model_name):
-            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
-
-        sector_model = self._read_sector_model_file(sector_model_name)
-
-        intervention_files = sector_model['interventions']
-        intervention_list = []
-        for intervention_file in intervention_files:
-            interventions = self.read_interventions(intervention_file)
-            intervention_list.extend(interventions)
-        return intervention_list
-
+    # region Strategies
     def read_strategies(self, filename):
-        return self._read_planned_interventions(filename, 'strategies')
+        return self._read_interventions_file(filename, 'strategies')
+    # endregion
 
-    def read_initial_conditions(self, filename):
-        return self._read_planned_interventions(filename, 'initial_conditions')
-
-    def _read_planned_interventions(self, filename, filedir):
-        """Read the planned intervention data from a file
-
-        Planned interventions are stored either a csv or yaml file. In the case
-        of the former, the file should look like this::
-
-            name,build_year
-            asset_a,2010
-            asset_b,2015
-
-        In the case of a yaml, file, the format is as follows::
-
-            - name: asset_a
-              build_year: 2010
-            - name: asset_b
-              build_year: 2015
-
-        Arguments
-        ---------
-        filename: str
-            The name of the strategy yml file to read in
-        filedir: str
-            The key of the filedir e.g. ``strategies`` or ``initial_conditions``
-
-        """
-        filepath = self.file_dir[filedir]
-        _, ext = os.path.splitext(filename)
-        if ext == '.csv':
-            strategies = self._read_state_file(os.path.join(filepath, filename))
-        else:
-            strategies = self._read_yaml_file(filepath, filename, extension='')
-        return strategies
-
-    def _read_sector_model_initial_conditions(self, sector_model_name):
-        """Read a SectorModel's initial conditions
-
-        Arguments
-        ---------
-        sector_model_name: str
-        """
-        if not self._sector_model_exists(sector_model_name):
-            raise DataNotFoundError("sector_model '%s' not found" % sector_model_name)
-
-        sector_model = self._read_sector_model_file(sector_model_name)
-
-        initial_condition_files = sector_model['initial_conditions']
-        initial_condition_list = []
-        for initial_condition_file in initial_condition_files:
-            initial_conditions = self._read_planned_interventions(
-                initial_condition_file, 'initial_conditions')
-            initial_condition_list.extend(initial_conditions)
-        return initial_condition_list
-
+    # region State
     def read_state(self, modelrun_name, timestep, decision_iteration=None):
         fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
         if not os.path.exists(fname):
             msg = "State file does not exist for timestep {} and iteration {}"
-            raise ValueError(msg.format(timestep, decision_iteration))
+            raise DataNotFoundError(msg.format(timestep, decision_iteration))
         state = self._read_state_file(fname)
         return state
 
@@ -368,10 +304,7 @@ class DatafileInterface(DataInterface):
         fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
         os.makedirs(os.path.dirname(fname), exist_ok=True)
         with open(fname, 'w+') as file_handle:
-            writer = csv.DictWriter(file_handle, fieldnames=(
-                'name',
-                'build_year'
-            ))
+            writer = csv.DictWriter(file_handle, fieldnames=('name', 'build_year'))
             writer.writeheader()
             for row in state:
                 writer.writerow(row)
@@ -381,571 +314,390 @@ class DatafileInterface(DataInterface):
                 state_{timestep|0000}[_decision_{iteration}].csv
         """
         results_dir = self.file_dir['results']
-        if timestep is None and decision_iteration is None:
-            fname = os.path.join(
-                results_dir, modelrun_name, 'state_0000.csv')
-        elif timestep is not None and decision_iteration is None:
-            fname = os.path.join(
-                results_dir, modelrun_name, 'state_{}.csv'.format(timestep))
-        elif timestep is None and decision_iteration is not None:
-            fname = os.path.join(
-                results_dir, modelrun_name,
-                'state_0000_decision_{}.csv'.format(decision_iteration))
+
+        if timestep is None:
+            timestep = '0000'
+
+        if decision_iteration is None:
+            separator = ''
+            decision_iteration = ''
         else:
-            fname = os.path.join(
-                results_dir, modelrun_name,
-                'state_{}_decision_{}.csv'.format(timestep, decision_iteration))
+            separator = '_decision_'
+
+        fmt = 'state_{}{}{}.csv'
+        fname = os.path.join(
+            results_dir, modelrun_name, fmt.format(timestep, separator, decision_iteration))
 
         return fname
 
     @staticmethod
     def _read_state_file(fname):
-        """Read list of name, build_year from state file
-
-        Returns
-        -------
-        dict
-            Keys of dict are header names from csv file
+        """Read list of {name, build_year} dicts from state file
         """
         with open(fname, 'r') as file_handle:
             reader = csv.DictReader(file_handle)
             state = list(reader)
         return state
+    # endregion
 
-    def read_region_definitions(self):
-        project_config = self._read_project_config()
-        return project_config['region_definitions']
-
-    def _region_definition_exists(self, region_definition_name):
-        for region_definition in self.read_region_definitions():
-            if region_definition['name'] == region_definition_name:
-                return region_definition
-
-    def read_region_definition_data(self, region_definition_name):
-        # Find filename for this region_definition_name
-        region_definition = self._region_definition_exists(region_definition_name)
-
-        if region_definition is None:
-            raise DataNotFoundError(
-                "Region definition '{}' not found".format(region_definition_name))
+    # region Units
+    def read_unit_definitions(self):
+        project_config = self.read_project_config()
+        filename = project_config['units']
+        if filename is not None:
+            path = os.path.join(self.base_folder, 'data', filename)
+            try:
+                with open(path, 'r') as units_fh:
+                    return [line.strip() for line in units_fh]
+            except FileNotFoundError as ex:
+                raise DataNotFoundError('Units file not found:' + str(ex)) from ex
         else:
-            filename = region_definition['filename']
+            return []
+    # endregion
 
-        # Read the region data from file
-        filepath = os.path.join(self.file_dir['region_definitions'], filename)
-        with fiona.drivers():
-            with fiona.open(filepath) as src:
-                data = [f for f in src]
+    # region Dimensions
+    def read_dimensions(self):
+        project_config = self.read_project_config()
+        for dim in project_config['dimensions']:
+            dim['elements'] = self._read_dimension_file(dim['elements'])
+        return project_config['dimensions']
 
-        return data
+    @check_exists(dtype='dimension')
+    def read_dimension(self, dimension_name):
+        project_config = self.read_project_config()
+        dim = _pick_from_list(project_config['dimensions'], dimension_name)
+        dim['elements'] = self._read_dimension_file(dim['elements'])
+        return dim
+
+    def _set_list_coords(self, list_):
+        for item in list_:
+            self._set_item_coords(item)
+
+    def _set_item_coords(self, item):
+        if 'dims' in item:
+            item['coords'] = {
+                dim: self.read_dimension(dim)['elements']
+                for dim in item['dims']
+            }
 
     @lru_cache(maxsize=32)
-    def read_region_names(self, region_definition_name):
-        """Return the set of unique region names in region set `region_definition_name`
-        """
-        names = []
-        for feature in self.read_region_definition_data(region_definition_name):
-            if isinstance(feature['properties']['name'], str):
-                if feature['properties']['name'].isdigit():
-                    names.append(int(feature['properties']['name']))
-                else:
-                    names.append(feature['properties']['name'])
-            else:
-                names.append(feature['properties']['name'])
-
-        return names
-
-    def write_region_definition(self, region_definition):
-        if self._region_definition_exists(region_definition['name']):
-            raise DataExistsError(
-                "region_definition '%s' already exists" % region_definition['name'])
-
-        project_config = self._read_project_config()
-        project_config['region_definitions'].append(region_definition)
-        self._write_project_config(project_config)
-
-    def update_region_definition(self, region_definition_name, region_definition):
-        previous_region_definition = self._region_definition_exists(region_definition_name)
-        if previous_region_definition is None:
-            raise DataNotFoundError(
-                "region_definition '%s' does not exist" % region_definition_name)
-
-        # Update
-        project_config = self._read_project_config()
-
-        idx = None
-        for i, existing_region_definition in enumerate(project_config['region_definitions']):
-            if existing_region_definition['name'] == region_definition_name:
-                # Guaranteed to match thanks to existence check above
-                idx = i
-                break
-
-        project_config['region_definitions'][idx] = region_definition
-
-        self._write_project_config(project_config)
-
-    def read_interval_definitions(self):
-        project_config = self._read_project_config()
-        return project_config['interval_definitions']
-
-    def _interval_definition_exists(self, interval_definition_name):
-        for interval_definition in self.read_interval_definitions():
-            if interval_definition['name'] == interval_definition_name:
-                return interval_definition
-
-    def read_interval_definition_data(self, interval_definition_name):
-        """Read data for an interval definition
-
-        Arguments
-        ---------
-        interval_definition_name: str
-
-        Returns
-        -------
-        dict
-            Interval definition data
-
-        Notes
-        -----
-        Expects csv file to contain headings of `id`, `start`, `end`
-        """
-        interval_definition = self._interval_definition_exists(interval_definition_name)
-
-        if interval_definition is None:
-            raise DataNotFoundError("Interval set definition '{}' does not exist".format(
-                interval_definition_name))
-
-        filename = interval_definition['filename']
-        filepath = os.path.join(self.file_dir['interval_definitions'], filename)
-
-        names = {}
-
-        with open(filepath, 'r') as csvfile:
-            reader = DictReader(csvfile)
-            data = []
-            for interval in reader:
-
-                if interval['id'].isdigit():
-                    name = int(interval['id'])
-                else:
-                    name = interval['id']
-                interval_tuple = (interval['start'], interval['end'])
-                if name in names:
-                    # Append duration to existing entry
-                    data[names[name]][1].append(interval_tuple)
-                else:
-                    # Make a new entry
-                    data.append((name, [interval_tuple]))
-                    names[name] = len(data) - 1
-
+    def _read_dimension_file(self, filename):
+        # TODO include yaml/csv option
+        filepath = os.path.join(self.file_dir['dimensions'], filename)
+        with fiona.drivers():
+            with fiona.open(filepath) as src:
+                data = []
+                for f in src:
+                    element = f['properties']
+                    # element['geometry'] = f['geometry']
+                    data.append(element)
         return data
 
-    def read_interval_names(self, interval_definition_name):
-        return [
-            interval[0]
-            for interval
-            in self.read_interval_definition_data(interval_definition_name)
-        ]
-
-    def write_interval_definition(self, interval_definition):
-        if self._interval_definition_exists(interval_definition['name']):
-            raise DataExistsError(
-                "Interval definition '%s' already exists" % interval_definition['name'])
-
-        project_config = self._read_project_config()
-        project_config['interval_definitions'].append(interval_definition)
+    @check_not_exists(dtype='dimension')
+    def write_dimension(self, dimension):
+        project_config = self.read_project_config()
+        project_config['dimensions'].append(dimension)
+        # TODO write elements file
         self._write_project_config(project_config)
 
-    def update_interval_definition(self, interval_definition_name, interval_definition):
-        if not self._interval_definition_exists(interval_definition_name):
-            raise DataNotFoundError(
-                "Interval definition '%s' does not exist" % interval_definition_name)
-
-        project_config = self._read_project_config()
-
-        # Create updated list
-        idx = None
-        for i, existing_interval_def in enumerate(project_config['interval_definitions']):
-            if existing_interval_def['name'] == interval_definition_name:
-                # Guaranteed to match thanks to existence check above
-                idx = i
-                break
-
-        project_config['interval_definitions'][idx] = interval_definition
-
+    @check_exists(dtype='dimension')
+    def update_dimension(self, dimension_name, dimension):
+        project_config = self.read_project_config()
+        idx = _idx_in_list(project_config['dimensions'], dimension_name)
+        project_config['dimensions'][idx] = dimension
+        # TODO update elements file
         self._write_project_config(project_config)
 
-    def _scenario_definition_exists(self, scenario_name):
-        for scenario in self.read_scenarios():
-            if scenario['name'] == scenario_name:
-                return scenario
-
-    def read_scenario_set_scenario_definitions(self, scenario_set_name):
-        # Filter only the scenarios of the selected scenario_set_name
-        filtered_scenario_data = [
-            data for data in self.read_scenarios()
-            if data['scenario_set'] == scenario_set_name
-        ]
-
-        if not filtered_scenario_data:
-            self.logger.warning(
-                "Scenario set '%s' has no scenarios defined", scenario_set_name)
-
-        return filtered_scenario_data
-
-    def read_scenario_definition(self, scenario_name):
-        scenario_definition = self._scenario_definition_exists(scenario_name)
-
-        if scenario_definition is None:
-            raise DataNotFoundError(
-                "Scenario definition '{}' not found".format(scenario_name))
-
-        return scenario_definition
-
-    def read_scenario_sets(self):
-        project_config = self._read_project_config()
-        return project_config['scenario_sets']
-
-    def _scenario_set_exists(self, scenario_set_name):
-        for scenario_set in self.read_scenario_sets():
-            if scenario_set['name'] == scenario_set_name:
-                return scenario_set
-
-    def read_scenario_set(self, scenario_set_name):
-        scenario_set = self._scenario_set_exists(scenario_set_name)
-
-        if scenario_set is None:
-            raise DataNotFoundError(
-                "Scenario set '{}' not found".format(scenario_set_name))
-
-        return scenario_set
-
-    def write_scenario_set(self, scenario_set):
-        if self._scenario_set_exists(scenario_set['name']):
-            raise DataExistsError("scenario_set '%s' already exists" % scenario_set['name'])
-
-        project_config = self._read_project_config()
-        project_config['scenario_sets'].append(scenario_set)
+    @check_exists(dtype='dimension')
+    def delete_dimension(self, dimension_name, dimension):
+        project_config = self.read_project_config()
+        idx = _idx_in_list(project_config['dimensions'], dimension_name)
+        del project_config['dimensions'][idx]
+        # TODO delete elements file
         self._write_project_config(project_config)
+    # endregion
 
-    def update_scenario_set(self, scenario_set_name, scenario_set):
-        if not self._scenario_set_exists(scenario_set_name):
-            raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
-
-        project_config = self._read_project_config()
-
-        idx = None
-        for i, existing_scenario_set in enumerate(project_config['scenario_sets']):
-            if existing_scenario_set['name'] == scenario_set_name:
-                # Guaranteed to find a match thanks to existence assertion above
-                idx = i
-                break
-
-        project_config['scenario_sets'][idx] = scenario_set
-
-        self._write_project_config(project_config)
-
-    def delete_scenario_set(self, scenario_set_name):
-        if not self._scenario_set_exists(scenario_set_name):
-            raise DataNotFoundError("scenario_set '%s' not found" % scenario_set_name)
-
-        project_config = self._read_project_config()
-
-        project_config['scenarios'] = [
-            entry for entry in project_config['scenarios']
-            if entry['scenario_set'] != scenario_set_name
-        ]
-
-        project_config['scenario_sets'] = [
-            entry for entry in project_config['scenario_sets']
-            if (entry['name'] != scenario_set_name)
-        ]
-
-        self._write_project_config(project_config)
-
-    def read_scenarios(self):
-        project_config = self._read_project_config()
-        return project_config['scenarios']
-
-    def read_scenario(self, scenario_name):
-        project_config = self._read_project_config()
-        for scenario_data in project_config['scenarios']:
-            if scenario_data['name'] == scenario_name:
-                return scenario_data
-        raise DataNotFoundError("scenario '%s' not found" % scenario_name)
-
-    def _scenario_exists(self, scenario_name):
-        project_config = self._read_project_config()
-        for scenario in project_config['scenarios']:
-            if scenario['name'] == scenario_name:
-                return scenario
-
-    def write_scenario(self, scenario):
-        if self._scenario_exists(scenario['name']):
-            raise DataExistsError("scenario '%s' already exists" % scenario['name'])
-        else:
-            project_config = self._read_project_config()
-            project_config['scenarios'].append(scenario)
-            self._write_project_config(project_config)
-
-    def update_scenario(self, scenario_name, scenario):
-        if not self._scenario_exists(scenario_name):
-            raise DataNotFoundError("scenario '%s' not found" % scenario_name)
-
-        project_config = self._read_project_config()
-
-        idx = None
-        for i, existing_scenario in enumerate(project_config['scenarios']):
-            if existing_scenario['name'] == scenario_name:
-                # Guaranteed to match given existence check above
-                idx = i
-                break
-
-        project_config['scenarios'][idx] = scenario
-
-        self._write_project_config(project_config)
-
-    def delete_scenario(self, scenario_name):
-        if not self._scenario_exists(scenario_name):
-            raise DataNotFoundError("scenario '%s' not found" % scenario_name)
-
-        project_config = self._read_project_config()
-
-        project_config['scenarios'] = [
-            entry for entry in project_config['scenarios']
-            if (entry['name'] != scenario_name)
-        ]
-
-        self._write_project_config(project_config)
-
-    def read_scenario_data(self, scenario_name, facet_name,
-                           spatial_resolution, temporal_resolution, timestep):
-        # Find filenames for this scenario
-        filename = None
-        project_config = self._read_project_config()
-        for scenario_data in project_config['scenarios']:
-            if scenario_data['name'] == scenario_name:
-                for facet in scenario_data['facets']:
-                    if facet['name'] == facet_name:
-                        filename = facet['filename']
-                        break
-                break
-
-        if filename is None:
-            raise DataNotFoundError(
-                "Scenario '{}' with facet '{}' not found".format(
-                    scenario_name, facet_name))
-
-        # Read the scenario data from file
-        filepath = os.path.join(self.file_dir['scenarios'], filename)
-        data = [
-            datum for datum in
-            self._get_data_from_csv(filepath)
-            if int(datum['year']) == timestep
-        ]
-
-        # Position of names in these lists dictates position of
-        # data in data array
-        region_names = self.read_region_names(spatial_resolution)
-        interval_names = self.read_interval_names(temporal_resolution)
-
-        try:
-            array = self.data_list_to_ndarray(data, region_names, interval_names)
-        except DataMismatchError:
-            msg = "DataMismatch in scenario: '{}' and facet:'{}'"
-            raise DataMismatchError(msg.format(scenario_name, facet_name))
-        else:
-            return array
-
-    def read_narrative_sets(self):
-        # Find filename for this narrative
-        project_config = self._read_project_config()
-        return project_config['narrative_sets']
-
-    def read_narrative_set(self, narrative_set_name):
-        project_config = self._read_project_config()
-        for narrative_data in project_config['narrative_sets']:
-            if narrative_data['name'] == narrative_set_name:
-                return narrative_data
-        raise DataNotFoundError("narrative_set '%s' not found" % narrative_set_name)
-
-    def _narrative_set_exists(self, narrative_set_name):
-        project_config = self._read_project_config()
-        for narrative_set in project_config['narrative_sets']:
-            if narrative_set['name'] == narrative_set_name:
-                return narrative_set
-
-    def write_narrative_set(self, narrative_set):
-        if self._narrative_set_exists(narrative_set['name']):
-            raise DataExistsError("narrative_set '%s' already exists" % narrative_set['name'])
-        else:
-            project_config = self._read_project_config()
-            project_config['narrative_sets'].append(narrative_set)
-            self._write_project_config(project_config)
-
-    def update_narrative_set(self, narrative_set_name, narrative_set):
-        if not self._narrative_set_exists(narrative_set_name):
-            raise DataNotFoundError("narrative_set '%s' not found" % narrative_set_name)
-
-        project_config = self._read_project_config()
-
-        idx = None
-        for i, existing_narrative_set in enumerate(project_config['narrative_sets']):
-            if existing_narrative_set['name'] == narrative_set_name:
-                # Guaranteed to match thanks to existence check above
-                idx = i
-                break
-
-        project_config['narrative_sets'][idx] = narrative_set
-
-        self._write_project_config(project_config)
-
-    def delete_narrative_set(self, narrative_set_name):
-        if not self._narrative_set_exists(narrative_set_name):
-            raise DataNotFoundError("narrative_set '%s' not found" % narrative_set_name)
-
-        project_config = self._read_project_config()
-
-        project_config['narrative_sets'] = [
-            entry for entry in project_config['narrative_sets']
-            if (entry['name'] != narrative_set_name)
-        ]
-
-        self._write_project_config(project_config)
-
-    def read_narratives(self):
-        project_config = self._read_project_config()
-        return project_config['narratives']
-
-    def read_narrative(self, narrative_name):
-        project_config = self._read_project_config()
-        for narrative in project_config['narratives']:
-            if narrative['name'] == narrative_name:
-                return narrative
-        msg = "Narrative '%s' not found"
-        raise DataNotFoundError(msg % narrative_name)
-
-    def write_narrative(self, narrative):
-        try:
-            self.read_narrative(narrative['name'])
-        except DataNotFoundError:
-            project_config = self._read_project_config()
-            project_config['narratives'].append(narrative)
-            self._write_project_config(project_config)
-        else:
-            raise DataExistsError("narrative '%s' already exists" % narrative['name'])
-
-    def update_narrative(self, narrative_name, narrative):
-        if not self.read_narrative(narrative_name):
-            raise DataNotFoundError("narrative '%s' not found" % narrative_name)
-
-        project_config = self._read_project_config()
-
-        idx = None
-        for i, existing_narrative in enumerate(project_config['narratives']):
-            if existing_narrative['name'] == narrative_name:
-                # Guaranteed to match given existence check
-                idx = i
-                break
-
-        project_config['narratives'][idx] = narrative
-
-        self._write_project_config(project_config)
-
-    def delete_narrative(self, narrative_name):
-        if not self.read_narrative(narrative_name):
-            raise DataNotFoundError("narrative '%s' not found" % narrative_name)
-
-        project_config = self._read_project_config()
-
-        project_config['narratives'] = [
-            entry for entry in project_config['narratives']
-            if (entry['name'] != narrative_name)
-        ]
-
-        self._write_project_config(project_config)
-
-    def read_narrative_data(self, narrative_name):
-        # Find filename for this narrative
-        try:
-            filename = self.read_narrative(narrative_name)['filename']
-            narrative_data = load(os.path.join(self.file_dir['narratives'], filename))
-        except (FileNotFoundError, DataNotFoundError):
-            raise DataNotFoundError(
-                'Narrative \'{}\' has no data defined'.format(narrative_name))
-
-        return narrative_data
-
-    def read_coefficients(self, source_name, destination_name):
-        results_path = self._get_coefficients_path(source_name, destination_name)
+    # region Conversion coefficients
+    def read_coefficients(self, source_spec, destination_spec):
+        results_path = self._get_coefficients_path(source_spec, destination_spec)
         if os.path.isfile(results_path):
             return self._get_data_from_native_file(results_path)
-        else:
-            msg = "Could not find the coefficients file for %s to %s"
-            self.logger.warning(msg, source_name, destination_name)
-            return None
 
-    def write_coefficients(self, source_name, destination_name, data):
-        results_path = self._get_coefficients_path(source_name, destination_name)
+        msg = "Could not find the coefficients file for %s to %s"
+        self.logger.warning(msg, source_spec, destination_spec)
+        return None
+
+    def write_coefficients(self, source_spec, destination_spec, data):
+        results_path = self._get_coefficients_path(source_spec, destination_spec)
         self._write_data_to_native_file(results_path, data)
 
-    def _get_coefficients_path(self, source_name, destination_name):
-
+    def _get_coefficients_path(self, source_spec, destination_spec):
         results_dir = self.file_dir['coefficients']
-        path = os.path.join(results_dir, source_name + '_' + destination_name)
-        return path + '.dat'
+        path = os.path.join(
+            results_dir,
+            "{}_{}.{}_{}.dat".format(
+                source_spec.name, "-".join(source_spec.dims),
+                destination_spec.name, "-".join(destination_spec.dims)
+            )
+        )
+        return path
+    # endregion
 
-    def read_results(self, modelrun_id, model_name, output_name, spatial_resolution,
-                     temporal_resolution, timestep=None, modelset_iteration=None,
-                     decision_iteration=None):
+    # region Scenarios
+    def read_scenarios(self):
+        project_config = self.read_project_config()
+        return project_config['scenarios']
 
+    @check_exists(dtype='scenario')
+    def read_scenario(self, scenario_name):
+        project_config = self.read_project_config()
+        scenario = _pick_from_list(project_config['scenarios'], scenario_name)
+        self._set_list_coords(scenario['provides'])
+        return scenario
+
+    @check_not_exists(dtype='scenario')
+    def write_scenario(self, scenario):
+        project_config = self.read_project_config()
+        project_config['scenarios'].append(scenario)
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='scenario')
+    def update_scenario(self, scenario_name, scenario):
+        project_config = self.read_project_config()
+        idx = _idx_in_list(project_config['scenarios'], scenario_name)
+        project_config['scenarios'][idx] = scenario
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='scenario')
+    def delete_scenario(self, scenario_name):
+        project_config = self.read_project_config()
+        idx = _idx_in_list(project_config['scenarios'], scenario_name)
+        del project_config['scenarios'][idx]
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='scenario')
+    def read_scenario_variants(self, scenario_name):
+        project_config = self.read_project_config()
+        scenario = _pick_from_list(project_config['scenarios'], scenario_name)
+        return scenario['variants']
+
+    @check_exists(dtype='scenario_variant')
+    def read_scenario_variant(self, scenario_name, variant_name):
+        variants = self.read_scenario_variants(scenario_name)
+        return _pick_from_list(variants, variant_name)
+
+    @check_not_exists(dtype='scenario_variant')
+    def write_scenario_variant(self, scenario_name, variant):
+        project_config = self.read_project_config()
+        s_idx = _idx_in_list(project_config['scenarios'], scenario_name)
+        project_config['scenarios'][s_idx]['variants'].append(variant)
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='scenario_variant')
+    def update_scenario_variant(self, scenario_name, variant_name, variant):
+        project_config = self.read_project_config()
+        s_idx = _idx_in_list(project_config['scenarios'], scenario_name)
+        v_idx = _idx_in_list(project_config['scenarios'][s_idx]['variants'], variant_name)
+        project_config['scenarios'][s_idx]['variants'][v_idx] = variant
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='scenario_variant')
+    def delete_scenario_variant(self, scenario_name, variant_name):
+        project_config = self.read_project_config()
+        s_idx = _idx_in_list(project_config['scenarios'], scenario_name)
+        v_idx = _idx_in_list(project_config['scenarios'][s_idx]['variants'], variant_name)
+        del project_config['scenarios'][s_idx]['variants'][v_idx]
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='scenario_variant')
+    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
+        spec = self._read_scenario_variable_spec(scenario_name, variable)
+        filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
+        data = self._get_data_from_csv(filepath)
+
+        if timestep is not None:
+            data = [datum for datum in data if int(datum['timestep']) == timestep]
+
+        try:
+            array = self.data_list_to_ndarray(data, spec)
+        except DataMismatchError as ex:
+            msg = "DataMismatch in scenario: {}:{}.{}, from {}"
+            raise DataMismatchError(
+                msg.format(scenario_name, variant_name, variable, str(ex))
+            ) from ex
+
+        return array
+
+    @check_exists(dtype='scenario_variant')
+    def write_scenario_variant_data(self, data, scenario_name, variant_name, variable,
+                                    timestep=None):
+        spec = self._read_scenario_variable_spec(scenario_name, variable)
+        data = self.ndarray_to_data_list(data, spec)
+        filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
+        self._write_data_to_csv(filepath, data, spec)
+
+    def _get_scenario_variant_filepath(self, scenario_name, variant_name, variable):
+        variant = self.read_scenario_variant(scenario_name, variant_name)
+        if 'data' not in variant or variable not in variant['data']:
+            raise DataNotFoundError(
+                "Scenario data file not defined for {}:{}, {}".format(
+                    scenario_name, variant_name, variable)
+            )
+        filename = variant['data'][variable]
+        return os.path.join(self.file_dir['scenarios'], filename)
+
+    def _read_scenario_variable_spec(self, scenario_name, variable):
+        # Read spec from scenario->provides->variable
+        scenario = self.read_scenario(scenario_name)
+        spec = _pick_from_list(scenario['provides'], variable)
+        self._set_item_coords(spec)
+        return Spec.from_dict(spec)
+    # endregion
+
+    # region Narratives
+    def read_narratives(self):
+        # Find filename for this narrative
+        project_config = self.read_project_config()
+        return project_config['narratives']
+
+    @check_exists(dtype='narrative')
+    def read_narrative(self, narrative_name):
+        project_config = self.read_project_config()
+        return _pick_from_list(project_config['narratives'], narrative_name)
+
+    @check_not_exists(dtype='narrative')
+    def write_narrative(self, narrative):
+        project_config = self.read_project_config()
+        project_config['narratives'].append(narrative)
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='narrative')
+    def update_narrative(self, narrative_name, narrative):
+        project_config = self.read_project_config()
+        idx = _idx_in_list(project_config['narratives'], narrative_name)
+        project_config['narratives'][idx] = narrative
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='narrative')
+    def delete_narrative(self, narrative_name):
+        project_config = self.read_project_config()
+        idx = _idx_in_list(project_config['narratives'], narrative_name)
+        del project_config['narratives'][idx]
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='narrative')
+    def read_narrative_variants(self, narrative_name):
+        project_config = self.read_project_config()
+        return project_config['narratives'][narrative_name]['variants']
+
+    @check_exists(dtype='narrative_variant')
+    def read_narrative_variant(self, narrative_name, variant_name):
+        project_config = self.read_project_config()
+        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
+        variants = project_config['narratives'][n_idx]['variants']
+        return _pick_from_list(variants, variant_name)
+
+    @check_not_exists(dtype='narrative_variant')
+    def write_narrative_variant(self, narrative_name, variant):
+        project_config = self.read_project_config()
+        project_config['narratives'][narrative_name]['variants'].append(variant)
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='narrative_variant')
+    def update_narrative_variant(self, narrative_name, variant_name, variant):
+        project_config = self.read_project_config()
+        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
+        v_idx = _idx_in_list(project_config['narratives'][n_idx]['variants'], variant_name)
+        project_config['narratives'][n_idx]['variants'][v_idx] = variant
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='narrative_variant')
+    def delete_narrative_variant(self, narrative_name, variant_name):
+        project_config = self.read_project_config()
+        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
+        v_idx = _idx_in_list(project_config['narratives'][n_idx]['variants'], variant_name)
+        del project_config['narratives'][n_idx]['variants'][v_idx]
+        self._write_project_config(project_config)
+
+    @check_exists(dtype='narrative_variant')
+    def read_narrative_variant_data(self, narrative_name, variant_name, variable,
+                                    timestep=None):
+        spec = self._read_narrative_variable_spec(narrative_name, variable)
+        filepath = self._get_narrative_variant_filepath(narrative_name, variant_name, variable)
+        data = self._get_data_from_csv(filepath)
+
+        if timestep is not None:
+            data = [datum for datum in data if int(datum['timestep']) == timestep]
+
+        try:
+            array = self.data_list_to_ndarray(data, spec)
+        except DataMismatchError as ex:
+            msg = "DataMismatch in narrative: {}:{}, {}, from {}"
+            raise DataMismatchError(
+                msg.format(narrative_name, variant_name, variable, str(ex))
+            ) from ex
+
+        return array
+
+    @check_exists(dtype='narrative_variant')
+    def write_narrative_variant_data(self, data, narrative_name, variant_name, variable,
+                                     timestep=None):
+        spec = self._read_narrative_variable_spec(narrative_name, variable)
+        data = self.ndarray_to_data_list(data, spec)
+        filepath = self._get_narrative_variant_filepath(narrative_name, variant_name, variable)
+        self._write_data_to_csv(filepath, data, spec)
+
+    def _get_narrative_variant_filepath(self, narrative_name, variant_name, variable):
+        variant = self.read_narrative_variant(narrative_name, variant_name)
+        if 'data' not in variant or variable not in variant['data']:
+            raise DataNotFoundError(
+                "narrative data file not defined for {}:{}, {}".format(
+                    narrative_name, variant_name, variable)
+            )
+        filename = variant['data'][variable]
+        return os.path.join(self.file_dir['narratives'], filename)
+
+    def _read_narrative_variable_spec(self, narrative_name, variable):
+        # Read spec from narrative->provides->variable
+        narrative = self.read_narrative(narrative_name)
+        spec = _pick_from_list(narrative['provides'], variable)
+        self._set_item_coords(spec)
+        return Spec.from_dict(spec)
+    # endregion
+
+    # region Results
+    def read_results(self, modelrun_id, model_name, output_spec, timestep=None,
+                     modelset_iteration=None, decision_iteration=None):
         if timestep is None:
-            raise NotImplementedError
+            raise NotImplementedError()
 
         results_path = self._get_results_path(
-            modelrun_id, model_name, output_name, spatial_resolution,
-            temporal_resolution,
-            timestep, modelset_iteration, decision_iteration)
+            modelrun_id, model_name, output_spec.name,
+            timestep, modelset_iteration, decision_iteration
+        )
 
         if self.storage_format == 'local_csv':
-            csv_data = self._get_data_from_csv(results_path)
-            region_names = self.read_region_names(spatial_resolution)
-            interval_names = self.read_interval_names(temporal_resolution)
-            return self.data_list_to_ndarray(csv_data, region_names, interval_names)
-        elif self.storage_format == 'local_binary':
+            data = self._get_data_from_csv(results_path)
+            return self.data_list_to_ndarray(data, output_spec)
+        if self.storage_format == 'local_binary':
             return self._get_data_from_native_file(results_path)
 
-    def write_results(self, modelrun_id, model_name, output_name, data, spatial_resolution,
-                      temporal_resolution, timestep=None, modelset_iteration=None,
-                      decision_iteration=None):
-
+    def write_results(self, data, modelrun_id, model_name, output_spec, timestep=None,
+                      modelset_iteration=None, decision_iteration=None):
         if timestep is None:
-            raise NotImplementedError
+            raise NotImplementedError()
 
         results_path = self._get_results_path(
-            modelrun_id, model_name, output_name, spatial_resolution,
-            temporal_resolution,
-            timestep, modelset_iteration, decision_iteration)
+            modelrun_id, model_name, output_spec.name,
+            timestep, modelset_iteration, decision_iteration
+        )
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
-        if data.ndim == 3:
-            raise NotImplementedError
-        elif data.ndim == 2:
-            region_names = self.read_region_names(spatial_resolution)
-            interval_names = self.read_interval_names(temporal_resolution)
-            assert data.shape == (len(region_names), len(interval_names))
-
-            if self.storage_format == 'local_csv':
-                csv_data = self.ndarray_to_data_list(
-                    data, region_names, interval_names, timestep=timestep)
-                self._write_data_to_csv(results_path, csv_data)
-            elif self.storage_format == 'local_binary':
-                self._write_data_to_native_file(results_path, data)
-        else:
-            raise DataMismatchError(
-                "Expected to write either timestep x region x interval or " +
-                "region x interval data"
-            )
+        if self.storage_format == 'local_csv':
+            data = self.ndarray_to_data_list(data, output_spec)
+            self._write_data_to_csv(results_path, data, output_spec)
+        if self.storage_format == 'local_binary':
+            self._write_data_to_native_file(results_path, data)
 
     def _results_exist(self, modelrun_name):
         """Checks whether modelrun results exists on the filesystem
@@ -959,15 +711,11 @@ class DatafileInterface(DataInterface):
         -------
         bool: True when results exist for this modelrun_name
         """
-        previous_results_dir = os.path.join(self.file_dir['results'],
-                                            modelrun_name)
-        results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'),
-                                  recursive=True))
-
-        return len(results) > 0
+        previous_results_dir = os.path.join(self.file_dir['results'], modelrun_name)
+        return list(
+            glob.iglob(os.path.join(previous_results_dir, '**/*.*'), recursive=True))
 
     def prepare_warm_start(self, modelrun_id):
-
         results_dir = os.path.join(self.file_dir['results'], modelrun_id)
 
         # Return if path to previous modelruns does not exist
@@ -987,73 +735,59 @@ class DatafileInterface(DataInterface):
         results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'),
                                   recursive=True))
         for filename in results:
-            if (
-                    (self.storage_format == 'local_csv' and
-                        not filename.endswith(".csv")) or
-                    (self.storage_format == 'local_binary' and
-                        not filename.endswith(".dat"))
-                        ):
+            warn = (self.storage_format == 'local_csv' and not filename.endswith(".csv")) or \
+                   (self.storage_format == 'local_binary' and not filename.endswith(".dat"))
+            if warn:
                 self.logger.info("Warm start not possible because a different "
                                  "storage mode was used in the previous run")
                 return None
 
         # Perform warm start
-        self.logger.info("Warm start " + modelrun_id)
+        self.logger.info("Warm start %s", modelrun_id)
 
         # Get metadata for all results
         result_metadata = []
-        for filename in glob.iglob(os.path.join(results_dir, '**/*.*'),
-                                   recursive=True):
+        for filename in glob.iglob(os.path.join(results_dir, '**/*.*'), recursive=True):
             result_metadata.append(self._parse_results_path(
                 filename.replace(self.file_dir['results'], '')[1:]))
 
         # Find latest timestep
-        result_metadata = sorted(result_metadata, key=lambda k: k['timestep'],
-                                 reverse=True)
+        result_metadata = sorted(result_metadata, key=lambda k: k['timestep'], reverse=True)
         latest_timestep = result_metadata[0]['timestep']
 
         # Remove all results with this timestep
-        results_to_remove = \
-            [result for result in result_metadata
-             if result['timestep'] == latest_timestep]
+        results_to_remove = [
+            result for result in result_metadata
+            if result['timestep'] == latest_timestep
+        ]
 
         for result in results_to_remove:
-            os.remove(self._get_results_path(result['modelrun_id'],
-                      result['model_name'],
-                      result['output_name'],
-                      result['spatial_resolution'],
-                      result['temporal_resolution'],
-                      result['timestep'],
-                      result['modelset_iteration'],
-                      result['decision_iteration']))
+            os.remove(
+                self._get_results_path(
+                    result['modelrun_id'],
+                    result['model_name'],
+                    result['output_name'],
+                    result['timestep'],
+                    result['modelset_iteration'],
+                    result['decision_iteration']))
 
-        self.logger.info("Warm start will resume at timestep %s",
-                         latest_timestep)
+        self.logger.info("Warm start will resume at timestep %s", latest_timestep)
         return latest_timestep
 
-    def _get_results_path(self, modelrun_id, model_name, output_name,
-                          spatial_resolution,
-                          temporal_resolution, timestep, modelset_iteration=None,
-                          decision_iteration=None):
+    def _get_results_path(self, modelrun_id, model_name, output_name, timestep,
+                          modelset_iteration=None, decision_iteration=None):
         """Return path to filename for a given output without file extension
 
         On the pattern of:
-            results/
-            <modelrun_name>/
-            <model_name>/
-            decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/ or none
-                output_<output_name>_
-                timestep_<timestep>_
-                regions_<spatial_resolution>_
-                intervals_<temporal_resolution>.csv
+            results/<modelrun_name>/<model_name>/
+            decision_<id>_modelset_<id>/
+            output_<output_name>_timestep_<timestep>.csv
 
         Parameters
         ----------
         modelrun_id : str
         model_name : str
         output_name : str
-        spatial_resolution : str
-        temporal_resolution : str
         timestep : str or int
         modelset_iteration : int, optional
         decision_iteration : int, optional
@@ -1063,77 +797,33 @@ class DatafileInterface(DataInterface):
         path : strs
         """
         results_dir = self.file_dir['results']
-        if modelset_iteration is None and decision_iteration is None:
-            path = os.path.join(
-                results_dir,
-                modelrun_id,
-                model_name,
-                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
-                    output_name,
-                    timestep,
-                    spatial_resolution,
-                    temporal_resolution
-                )
-            )
-        elif modelset_iteration is None and decision_iteration is not None:
-            path = os.path.join(
-                results_dir,
-                modelrun_id,
-                model_name,
-                "decision_{}".format(decision_iteration),
-                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
-                    output_name,
-                    timestep,
-                    spatial_resolution,
-                    temporal_resolution
-                )
-            )
-        elif modelset_iteration is not None and decision_iteration is None:
-            path = os.path.join(
-                results_dir,
-                modelrun_id,
-                model_name,
-                "modelset_{}".format(modelset_iteration),
-                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
-                    output_name,
-                    timestep,
-                    spatial_resolution,
-                    temporal_resolution
-                )
-            )
-        else:
-            path = os.path.join(
-                results_dir,
-                modelrun_id,
-                model_name,
-                "decision_{}_modelset_{}".format(decision_iteration, modelset_iteration),
-                "output_{}_timestep_{}_regions_{}_intervals_{}".format(
-                    output_name,
-                    timestep,
-                    spatial_resolution,
-                    temporal_resolution
-                )
-            )
+
+        if modelset_iteration is None:
+            modelset_iteration = 'none'
+        if decision_iteration is None:
+            decision_iteration = 'none'
 
         if self.storage_format == 'local_csv':
-            path += '.csv'
+            ext = 'csv'
         elif self.storage_format == 'local_binary':
-            path += '.dat'
+            ext = 'dat'
+        else:
+            ext = 'unknown'
 
+        path = os.path.join(
+            results_dir, modelrun_id, model_name,
+            "decision_{}_modelset_{}".format(decision_iteration, modelset_iteration),
+            "output_{}_timestep_{}.{}".format(output_name, timestep, ext)
+        )
         return path
 
     def _parse_results_path(self, path):
         """Return result metadata for a given result path
 
         On the pattern of:
-            results/
-            <modelrun_name>/
-            <model_name>/
-            decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/ or none
-                output_<output_name>_
-                timestep_<timestep>_
-                regions_<spatial_resolution>_
-                intervals_<temporal_resolution>.csv
+            results/<modelrun_name>/<model_name>/
+            decision_<id>_modelset_<id>/
+            output_<output_name>_timestep_<timestep>.csv
 
         Parameters
         ----------
@@ -1167,8 +857,6 @@ class DatafileInterface(DataInterface):
             'modelrun_id': data[0],
             'model_name': data[1],
             'output_name': '_'.join(results['output']),
-            'spatial_resolution': '_'.join(results['regions']),
-            'temporal_resolution': '_'.join(results['intervals']),
             'timestep': results['timestep'],
             'modelset_iteration': modelset_iteration,
             'decision_iteration': decision_iteration,
@@ -1192,8 +880,10 @@ class DatafileInterface(DataInterface):
             elif parse_element == 'intervals':
                 results.setdefault('intervals', []).append(element)
         return results
+    # endregion
 
-    def _read_project_config(self):
+    # region Common methods
+    def read_project_config(self):
         """Read the project configuration
 
         Returns
@@ -1243,59 +933,31 @@ class DatafileInterface(DataInterface):
 
     @staticmethod
     def _get_data_from_csv(filepath):
-        scenario_data = []
         with open(filepath, 'r') as csvfile:
             reader = csv.DictReader(csvfile)
-            scenario_data = []
-            for row in reader:
-                converted_row = {}
-
-                converted_row['region'] = DatafileInterface._cast_str_to_int(row['region'])
-                converted_row['interval'] = DatafileInterface._cast_str_to_int(row['interval'])
-
-                if 'year' in row.keys():
-                    converted_row['year'] = row['year']
-                converted_row['value'] = row['value']
-
-                scenario_data.append(converted_row)
-
+            scenario_data = list(reader)
         return scenario_data
 
     @staticmethod
-    def _cast_str_to_int(value):
-        if value.isdigit():
-            return int(value)
-        else:
-            return value
-
-    @staticmethod
-    def _write_data_to_csv(filepath, data):
-        with open(filepath, 'w', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=(
-                'timestep',
-                'region',
-                'interval',
-                'value'
-            ))
+    def _write_data_to_csv(filepath, data, spec):
+        with open(filepath, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=tuple(spec.dims) + (spec.name, ))
             writer.writeheader()
             for row in data:
                 writer.writerow(row)
 
     @staticmethod
     def _get_data_from_native_file(filepath):
-        with pa.memory_map(filepath, 'rb') as f:
-            f.seek(0)
-            buf = f.read_buffer()
-
+        with pa.memory_map(filepath, 'rb') as native_file:
+            native_file.seek(0)
+            buf = native_file.read_buffer()
             data = pa.deserialize(buf)
         return data
 
     @staticmethod
     def _write_data_to_native_file(filepath, data):
-        with pa.OSFile(filepath, 'wb') as f:
-            f.write(
-                pa.serialize(data).to_buffer()
-            )
+        with pa.OSFile(filepath, 'wb') as native_file:
+            native_file.write(pa.serialize(data).to_buffer())
 
     @staticmethod
     def _read_yaml_file(path, filename=None, extension='.yml'):
@@ -1313,7 +975,6 @@ class DatafileInterface(DataInterface):
         Returns
         -------
         dict
-            The data of the Yaml file `filename` in `path`
         """
         if filename is not None:
             filename = filename + extension
@@ -1343,3 +1004,96 @@ class DatafileInterface(DataInterface):
         else:
             filepath = path
         dump(data, filepath)
+    # endregion
+
+
+def _file_dtypes():
+    return ('model_run', 'sos_model', 'sector_model')
+
+
+def _config_dtypes():
+    return ('dimension', 'narrative', 'scenario')
+
+
+def _nested_config_dtypes():
+    return ('narrative_variant', 'scenario_variant')
+
+
+def _assert_no_mismatch(dtype, name, obj, secondary=None):
+    if obj is not None and 'name' in obj and name != obj['name']:
+        raise DataMismatchError("%s name '%s' must match '%s'" % (dtype, name, obj['name']))
+
+
+def _file_exists(file_dir, dtype, name):
+    dir_key = "%ss" % dtype
+    return os.path.exists(os.path.join(file_dir[dir_key], name + '.yml'))
+
+
+def _assert_file_exists(file_dir, dtype, name):
+    if not _file_exists(file_dir, dtype, name):
+        raise DataNotFoundError("%s '%s' not found" % (dtype, name))
+
+
+def _assert_file_not_exists(file_dir, dtype, name):
+    if _file_exists(file_dir, dtype, name):
+        raise DataExistsError("%s '%s' already exists" % (dtype, name))
+
+
+def _config_item_exists(config, dtype, name):
+    key = "%ss" % dtype
+    return key in config and _name_in_list(config[key], name)
+
+
+def _nested_config_item_exists(config, dtype, parent_name, child_name):
+    keys = dtype.split("_")
+    parent_key = "%ss" % keys[0]
+    child_key = "%ss" % keys[1]
+    if parent_key not in config:
+        return False
+    parent_idx = _idx_in_list(config[parent_key], parent_name)
+    if parent_idx is None:
+        return False
+    if child_key not in config[parent_key][parent_idx]:
+        return False
+    return _name_in_list(config[parent_key][parent_idx][child_key], child_name)
+
+
+def _name_in_list(list_of_dicts, name):
+    for item in list_of_dicts:
+        if 'name' in item and item['name'] == name:
+            return True
+    return False
+
+
+def _pick_from_list(list_of_dicts, name):
+    for item in list_of_dicts:
+        if 'name' in item and item['name'] == name:
+            return item
+    return None
+
+
+def _idx_in_list(list_of_dicts, name):
+    for i, item in enumerate(list_of_dicts):
+        if 'name' in item and item['name'] == name:
+            return i
+    return None
+
+
+def _assert_config_item_exists(config, dtype, name):
+    if not _config_item_exists(config, dtype, name):
+        raise DataNotFoundError("%s '%s' not found" % (dtype, name))
+
+
+def _assert_config_item_not_exists(config, dtype, name):
+    if _config_item_exists(config, dtype, name):
+        raise DataExistsError("%s '%s' already exists" % (dtype, name))
+
+
+def _assert_nested_config_item_exists(config, dtype, primary, secondary):
+    if not _nested_config_item_exists(config, dtype, primary, secondary):
+        raise DataNotFoundError("%s '%s:%s' not found" % (dtype, primary, secondary))
+
+
+def _assert_nested_config_item_not_exists(config, dtype, primary, secondary):
+    if _nested_config_item_exists(config, dtype, primary, secondary):
+        raise DataExistsError("%s '%s:%s' already exists" % (dtype, primary, secondary))

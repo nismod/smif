@@ -23,7 +23,7 @@ supply and an energy demand model::
             water_supply.yml
         /sos_models
             energy_water.yml
-        /sos_model_runs
+        /model_runs
             run_to_2050.yml
             short_test_run.yml
             ...
@@ -105,7 +105,7 @@ def list_model_runs(args):
     """List the model runs defined in the config
     """
     handler = DatafileInterface(args.directory)
-    model_run_configs = handler.read_sos_model_runs()
+    model_run_configs = handler.read_model_runs()
     for run in model_run_configs:
         print(run['name'])
 

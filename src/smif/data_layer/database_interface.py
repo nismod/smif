@@ -10,10 +10,10 @@ class DatabaseInterface(DataInterface):
     def __init__(self, config_path):
         raise NotImplementedError()
 
-    def read_sos_model_runs(self):
+    def read_model_runs(self):
         raise NotImplementedError()
 
-    def write_sos_model_run(self, sos_model_run):
+    def write_model_run(self, model_run):
         raise NotImplementedError()
 
     def read_sos_models(self):

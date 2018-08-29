@@ -3,182 +3,328 @@
 from copy import copy
 from unittest.mock import Mock
 
-import numpy as np
-import pytest
 from pytest import fixture, raises
-from smif.metadata import MetadataSet
+from smif.metadata import Spec
 from smif.model.dependency import Dependency
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel
-from smif.model.sos_model import SosModel, SosModelBuilder
-
-from ..fixtures.water_supply import WaterSupplySectorModel
+from smif.model.sos_model import SosModel
 
 
-@fixture(scope='function')
-def get_scenario_model_object():
-
-    scenario_model = ScenarioModel('test_scenario_model')
-    scenario_model.add_output('raininess',
-                              scenario_model.regions.get_entry('LSOA'),
-                              scenario_model.intervals.get_entry('annual'),
-                              'ml')
-    scenario_model.scenario_set = 'raininess'
-    return scenario_model
+class EmptySectorModel(SectorModel):
+    """Simulate nothing
+    """
+    def simulate(self, data):
+        return data
 
 
 @fixture(scope='function')
-def get_sector_model_object(get_empty_sector_model):
-
-    sector_model = get_empty_sector_model('water_supply')
-
-    regions = sector_model.regions
-    intervals = sector_model.intervals
-
-    sector_model.add_input('raininess',
-                           regions.get_entry('LSOA'),
-                           intervals.get_entry('annual'),
-                           'ml')
-
-    sector_model.add_output('cost',
-                            regions.get_entry('LSOA'),
-                            intervals.get_entry('annual'),
-                            'million GBP')
-
-    sector_model.add_output('water',
-                            regions.get_entry('LSOA'),
-                            intervals.get_entry('annual'),
-                            'Ml')
-
-    return sector_model
+def empty_sector_model():
+    """SectorModel ready for customisation
+    """
+    return EmptySectorModel('test')
 
 
 @fixture(scope='function')
-def get_sos_model_object(get_sector_model_object,
-                         get_scenario_model_object):
+def scenario_model():
+    """ScenarioModel providing precipitation
+    """
+    model = ScenarioModel('climate')
+    model.add_output(
+        Spec.from_dict({
+            'name': 'precipitation',
+            'dims': ['LSOA'],
+            'coords': {'LSOA': [1, 2, 3]},
+            'dtype': 'float',
+            'unit': 'ml'
+        })
+    )
+    model.scenario = 'UKCP09 High emissions'
+    return model
 
+
+@fixture(scope='function')
+def sector_model():
+    """SectorModel requiring precipitation and cost, providing water
+    """
+    model = EmptySectorModel('water_supply')
+    model.add_input(
+        Spec.from_dict({
+            'name': 'precipitation',
+            'dims': ['LSOA'],
+            'coords': {'LSOA': [1, 2, 3]},
+            'dtype': 'float',
+            'unit': 'ml'
+        })
+    )
+    model.add_input(
+        Spec.from_dict({
+            'name': 'rGVA',
+            'dims': ['LSOA'],
+            'coords': {'LSOA': [1, 2, 3]},
+            'dtype': 'float',
+            'unit': 'million GBP'
+        })
+    )
+    model.add_output(
+        Spec.from_dict({
+            'name': 'water',
+            'dims': ['LSOA'],
+            'coords': {'LSOA': [1, 2, 3]},
+            'dtype': 'float',
+            'unit': 'Ml'
+        })
+    )
+    return model
+
+
+@fixture(scope='function')
+def economic_model():
+    """SectorModel requiring precipitation and cost, providing water
+    """
+    model = EmptySectorModel('economic_model')
+    model.add_output(
+        Spec.from_dict({
+            'name': 'gva',
+            'dims': ['LSOA'],
+            'coords': {'LSOA': [1, 2, 3]},
+            'dtype': 'float',
+            'unit': 'million GBP'
+        })
+    )
+    return model
+
+
+@fixture(scope='function')
+def sos_model(sector_model, scenario_model, economic_model):
+    """SosModel with one scenario and one sector model
+    """
     sos_model = SosModel('test_sos_model')
-    sector_model = get_sector_model_object
-    scenario_model = get_scenario_model_object
-    sos_model.add_model(sector_model)
     sos_model.add_model(scenario_model)
-    sector_model.add_dependency(scenario_model, 'raininess', 'raininess')
-
+    sos_model.add_model(economic_model)
+    sos_model.add_model(sector_model)
+    sector_model.add_dependency(
+        scenario_model, 'precipitation', 'precipitation')
+    sector_model.add_dependency(
+        economic_model, 'gva', 'rGVA')
     return sos_model
 
 
 @fixture(scope='function')
-def get_sos_model_with_summed_dependency(oxford_region):
-    scenario_model = get_scenario_model_object
-
-    builder = SosModelBuilder()
-    builder.load_scenario_models([scenario_model])
-
-    sos_model = builder.finish()
-
-    region_register = sos_model.regions
-    interval_register = sos_model.intervals
-
-    raininess_model = sos_model.models['raininess']
-
-    ws = WaterSupplySectorModel('water_supply')
-    ws.add_input(
-        'raininess',
-        region_register.get_entry('LSOA'),
-        interval_register.get_entry('annual'),
-        'ml')
-    ws.add_output(
-        'water',
-        region_register.get_entry('LSOA'),
-        interval_register.get_entry('annual'),
-        'Ml')
-    ws.add_dependency(raininess_model, 'raininess', 'raininess')
-    sos_model.add_model(ws)
-
-    ws2 = WaterSupplySectorModel('water_supply_2')
-    ws2.add_input(
-        'raininess',
-        region_register.get_entry('LSOA'),
-        interval_register.get_entry('annual'),
-        'ml')
-    ws2.add_output(
-        'water',
-        region_register.get_entry('LSOA'),
-        interval_register.get_entry('annual'),
-        'Ml')
-    ws2.add_dependency(raininess_model, 'raininess', 'raininess')
-    sos_model.add_model(ws2)
-
-    ws3 = WaterSupplySectorModel('water_supply_3')
-    ws3.add_input(
-        'water',
-        region_register.get_entry('LSOA'),
-        interval_register.get_entry('annual'),
-        'Ml')
-    # TODO implement summed dependency
-    # ws3.add_dependency(ws, 'water', 'water')
-    ws3.add_dependency(ws2, 'water', 'water')
-    sos_model.add_model(ws3)
-
-    return sos_model
+def scenario_only_sos_model_dict():
+    """Config for a SosModel with one scenario
+    """
+    return {
+        'name': 'test_sos_model',
+        'description': 'Readable description of the sos model',
+        'scenarios': [
+            {
+                'name': 'climate',
+                'scenario': 'UKCP09 High emissions',
+                'outputs': [
+                    {
+                        'name': 'precipitation',
+                        'dims': ['LSOA'],
+                        'coords': {'LSOA': [1, 2, 3]},
+                        'dtype': 'float',
+                        'unit': 'ml'
+                    }
+                ]
+            }
+        ],
+        'sector_models': [],
+        'dependencies': []
+    }
 
 
 @fixture(scope='function')
-def get_empty_sector_model():
-
-    class EmptySectorModel(SectorModel):
-        """Simulate nothing
-        """
-        def simulate(self, data):
-            return data
-
-        def extract_obj(self, results):
-            return 0
-
-    return EmptySectorModel
-
-
-class TestSosModelProperties():
-
-    def test_model_inputs_property(self, get_sos_model_object):
-        sos_model = get_sos_model_object
-
-        expected = {'raininess': 'water_supply'}
-
-        for key, value in expected.items():
-            inputs = sos_model.models[value].inputs
-            assert isinstance(inputs, MetadataSet)
-            assert key in inputs.names
-
-    def test_model_outputs_property(self, get_sos_model_object):
-        sos_model = get_sos_model_object
-
-        expected = {'cost': 'water_supply'}
-
-        for key, value in expected.items():
-            outputs = sos_model.models[value].outputs
-            assert isinstance(outputs, MetadataSet)
-            assert key in outputs.names
+def sos_model_dict(scenario_only_sos_model_dict):
+    """Config for a SosModel with one scenario and one sector model
+    """
+    config = scenario_only_sos_model_dict
+    config['sector_models'] = [
+        {
+            'name': 'economic_model',
+            'inputs': [],
+            'parameters': [],
+            'outputs': [
+                {
+                    'name': 'gva',
+                    'dims': ['LSOA'],
+                    'coords': {'LSOA': [1, 2, 3]},
+                    'dtype': 'float',
+                    'unit': 'million GBP'
+                }
+            ]
+        },
+        {
+            'name': 'water_supply',
+            'inputs': [
+                {
+                    'name': 'precipitation',
+                    'dims': ['LSOA'],
+                    'coords': {'LSOA': [1, 2, 3]},
+                    'dtype': 'float',
+                    'unit': 'ml'
+                },
+                {
+                    'name': 'rGVA',
+                    'dims': ['LSOA'],
+                    'coords': {'LSOA': [1, 2, 3]},
+                    'dtype': 'float',
+                    'unit': 'million GBP'
+                }
+            ],
+            'parameters': [],
+            'outputs': [
+                {
+                    'name': 'water',
+                    'dims': ['LSOA'],
+                    'coords': {'LSOA': [1, 2, 3]},
+                    'dtype': 'float',
+                    'unit': 'Ml'
+                }
+            ]
+        }
+    ]
+    config['scenario_dependencies'] = [
+        {
+            'source': 'climate',
+            'source_output': 'precipitation',
+            'sink_input': 'precipitation',
+            'sink': 'water_supply'
+        }
+    ]
+    config['model_dependencies'] = [
+        {
+            'source': 'economic_model',
+            'source_output': 'gva',
+            'sink_input': 'rGVA',
+            'sink': 'water_supply'
+        }
+    ]
+    return config
 
 
 class TestSosModel():
+    """Construct from config or compose from objects
+    """
+    def test_construct(self, sos_model_dict, scenario_model, sector_model, economic_model):
+        """Constructing from config of the form::
 
-    def test_serialise_configuration(self, get_sos_model_object):
-        """Tests that as_dict function correctly returns configuration
-        as a dictionary
+            {
+                'name': 'sos_model_name',
+                'description': 'friendly description of the sos model',
+                'max_iterations': int,
+                'convergence_absolute_tolerance': float,
+                'convergence_relative_tolerance': float,
+                'dependencies': [
+                    {
+                        'source': str (Model.name),
+                        'source_output': str (Metadata.name),
+                        'sink': str (Model.name),
+                        'sink_output': str (Metadata.name)
+                    }
+                ]
+            }
+
+        With list of child SectorModel/ScenarioModel instances passed in alongside.
         """
-        sos_model = get_sos_model_object
+        sos_model = SosModel.from_dict(
+            sos_model_dict, [scenario_model, sector_model, economic_model])
+
+        assert isinstance(sos_model, SosModel)
+        assert list(sos_model.scenario_models.keys()) == ['climate']
+        assert isinstance(sos_model.models['climate'], ScenarioModel)
+        assert sorted(list(sos_model.sector_models.keys())) == \
+            ['economic_model', 'water_supply']
+        assert isinstance(sos_model.models['economic_model'], SectorModel)
+        assert isinstance(sos_model.models['water_supply'], SectorModel)
+
+    def test_optional_description(self, sos_model_dict):
+        """Default to empty description
+        """
+        del sos_model_dict['description']
+        sos_model = SosModel.from_dict(sos_model_dict)
+        assert sos_model.description == ''
+
+    def test_dependencies_fields(self, sos_model_dict, scenario_model, sector_model,
+                                 economic_model):
+        """Compose dependencies from scenario- and model- fields
+        """
+        a = {
+            'source': 'climate',
+            'source_output': 'precipitation',
+            'sink_input': 'precipitation',
+            'sink': 'water_supply'
+        }
+        b = {
+            'source': 'economic_model',
+            'source_output': 'gva',
+            'sink_input': 'rGVA',
+            'sink': 'water_supply'
+        }
+
+        del sos_model_dict['dependencies']
+        sos_model_dict['scenario_dependencies'] = [a]
+        sos_model_dict['model_dependencies'] = [b]
+        sos_model = SosModel.from_dict(
+            sos_model_dict, [scenario_model, sector_model, economic_model])
+        actual = sos_model.as_dict()
+        assert actual['scenario_dependencies'] == [a]
+        assert actual['model_dependencies'] == [b]
+
+    def test_dependencies_fields_alt(self, sos_model_dict, scenario_model, sector_model,
+                                     economic_model):
+        """Draw dependencies from single field
+        """
+        a = {
+            'source': 'climate',
+            'source_output': 'precipitation',
+            'sink_input': 'precipitation',
+            'sink': 'water_supply'
+        }
+        b = {
+            'source': 'economic_model',
+            'source_output': 'gva',
+            'sink_input': 'rGVA',
+            'sink': 'water_supply'
+        }
+        sos_model_dict['dependencies'] = [a, b]
+        del sos_model_dict['scenario_dependencies']
+        del sos_model_dict['model_dependencies']
+        sos_model = SosModel.from_dict(
+            sos_model_dict, [scenario_model, sector_model, economic_model])
+        actual = sos_model.as_dict()
+        assert actual['scenario_dependencies'] == [a]
+        assert actual['model_dependencies'] == [b]
+
+    def test_compose(self, sos_model):
+        with raises(NotImplementedError) as ex:
+            sos_model.add_model(SosModel('test'))
+        assert "Nesting of CompositeModels (including SosModels) is not supported" in str(ex)
+
+    def test_as_dict(self, sos_model):
+        """as_dict correctly returns configuration as a dictionary, with child models as_dict
+        similarly
+        """
         actual = sos_model.as_dict()
         expected = {
             'name': 'test_sos_model',
             'description': '',
-            'scenario_sets': ['raininess'],
-            'sector_models': ['water_supply'],
-            'dependencies': [{
-                'source_model': 'test_scenario_model',
-                'source_model_output': 'raininess',
-                'sink_model': 'water_supply',
-                'sink_model_input': 'raininess'
+            'scenarios': ['climate'],
+            'sector_models': ['economic_model', 'water_supply'],
+            'scenario_dependencies': [{
+                'source': 'climate',
+                'source_output': 'precipitation',
+                'sink': 'water_supply',
+                'sink_input': 'precipitation'
+            }],
+            'model_dependencies': [{
+                'source': 'economic_model',
+                'source_output': 'gva',
+                'sink': 'water_supply',
+                'sink_input': 'rGVA'
             }],
             'max_iterations': 25,
             'convergence_absolute_tolerance': 1e-8,
@@ -186,105 +332,44 @@ class TestSosModel():
         }
         assert actual == expected
 
-    def test_run_with_global_parameters(self, get_sos_model_object):
-        sos_model = get_sos_model_object
-        sos_model.add_parameter({
-            'name': 'sos_model_param',
-            'description': 'A global parameter passed to all contained models',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%'
-        })
-        assert 'sos_model_param' in sos_model.parameters
+    def test_add_dependency(self, empty_sector_model):
+        """Add models, connect via dependency
+        """
+        spec = Spec(
+            name='hourly_value',
+            dims=['hours'],
+            coords={'hours': range(24)},
+            dtype='int'
+        )
+        sink_model = copy(empty_sector_model)
+        sink_model.add_input(spec)
 
-    def test_run_with_sector_parameters(self, get_sos_model_object):
-        sos_model = get_sos_model_object
-        sector_model = sos_model.models['water_supply']
-        sector_model.add_parameter({
-            'name': 'sector_model_param',
-            'description': 'A model parameter passed to a specific model',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%'
-        })
-        assert 'sector_model_param' in sector_model.parameters
+        source_model = copy(empty_sector_model)
+        source_model.add_output(spec)
 
-    def test_add_parameters(self, get_empty_sector_model):
-        sos_model = SosModel('global')
-        sos_model_param = {
-            'name': 'sos_model_param',
-            'description': 'A global parameter passed to all contained models',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%'
-        }
-        sos_model.add_parameter(sos_model_param)
-        expected = sos_model_param
-
-        assert sos_model.parameters['sos_model_param'].as_dict() == expected
-        assert sos_model.parameters.names == ['sos_model_param']
-
-        sector_model = get_empty_sector_model('source_model')
-        sector_model.add_parameter({
-            'name': 'sector_model_param',
-            'description': 'Required for the sectormodel',
-            'absolute_range': (0, 100),
-            'suggested_range': (3, 10),
-            'default_value': 3,
-            'units': '%'
-        })
-        sos_model.add_model(sector_model)
-
-        # SosModel contains only its own parameters
-        assert 'sos_model_param' in sos_model.parameters.names
-
-        # SectorModel has its own ParameterList, gettable by param name
-        assert 'sector_model_param' in sector_model.parameters.names
-
-    def test_add_dependency(self, get_empty_sector_model):
-
-        regions = Mock()
-        regions.name = 'test_regions'
-        intervals = Mock()
-        intervals.name = 'test_intervals'
-        units = 'test_units'
-
-        sink_model = get_empty_sector_model('sink_model')
-        sink_model.add_input('input_name', regions, intervals, units)
-
-        source_model = get_empty_sector_model('source_model')
-        source_model.add_output('output_name', regions, intervals, units)
-
-        sink_model.add_dependency(source_model, 'output_name', 'input_name')
+        sink_model.add_dependency(source_model, 'hourly_value', 'hourly_value')
 
         sos_model = SosModel('test')
         sos_model.add_model(source_model)
         sos_model.add_model(sink_model)
 
-    def test_timestep_before(self):
+    def test_before_model_run(self, empty_sector_model):
+        """Before model run calls into each model
+        """
         sos_model = SosModel('test')
-        sos_model.timesteps = [2010, 2011, 2012]
-        assert sos_model.timestep_before(2010) is None
-        assert sos_model.timestep_before(2011) == 2010
-        assert sos_model.timestep_before(2012) == 2011
-        assert sos_model.timestep_before(2013) is None
+        empty_sector_model.before_model_run = Mock()
+        sos_model.add_model(empty_sector_model)
+        sos_model.before_model_run(Mock())
+        assert empty_sector_model.before_model_run.call_count == 1
 
-    def test_timestep_after(self):
-        sos_model = SosModel('test')
-        sos_model.timesteps = [2010, 2011, 2012]
-        assert sos_model.timestep_after(2010) == 2011
-        assert sos_model.timestep_after(2011) == 2012
-        assert sos_model.timestep_after(2012) is None
-        assert sos_model.timestep_after(2013) is None
-
-    def test_run_sequential(self, get_sos_model_object):
-        sos_model = get_sos_model_object
+    def test_run_sequential(self, sos_model):
+        """Simulate should exist
+        """
+        sos_model = sos_model
         data_handle = Mock()
-        data_handle.get_state = Mock(return_value={})
         data_handle.timesteps = [2010, 2011, 2012]
+        data_handle.get_state = Mock(return_value={})
+
         data_handle._current_timestep = 2010
         sos_model.simulate(data_handle)
         data_handle._current_timestep = 2011
@@ -292,260 +377,162 @@ class TestSosModel():
         data_handle._current_timestep = 2012
         sos_model.simulate(data_handle)
 
-    @pytest.mark.xfail(reason="Summed dependencies not yet implemented")
-    def test_dependency_aggregation(self, get_sos_model_with_summed_dependency):
-        sos_model = get_sos_model_with_summed_dependency
 
-        data = {
-            2010: {
-                'decisions': [],
-                'raininess': np.array([[1, 1]]),
-                'water': np.array([2, 2])
-            }
-        }
+class TestSosModelProperties():
+    """SosModel has inputs, outputs, parameters
 
-        sos_model.simulate(2010, data)
+    Convergence settings (should perhaps move to runner)
+    """
 
+    def test_model_inputs(self, sos_model):
+        spec = sos_model.models['water_supply'].inputs['precipitation']
+        assert isinstance(spec, Spec)
 
-@fixture(scope='function')
-def get_sos_model_config(get_scenario_model_object):
+    def test_model_outputs(self, sos_model):
+        spec = sos_model.models['water_supply'].outputs['water']
+        assert isinstance(spec, Spec)
 
-    scenario_model = get_scenario_model_object
-    config_data = {
-        'name': 'energy_sos_model',
-        'description': 'description of a sos model',
-        'scenario_sets': [scenario_model],
-        'sector_models': [],
-        'dependencies': []
-    }
+    def test_run_with_global_parameters(self, sos_model):
+        sos_model = sos_model
+        sos_model.add_parameter(Spec.from_dict({
+            'name': 'sos_model_param',
+            'description': 'A global parameter passed to all contained models',
+            'abs_range': (0, 100),
+            'exp_range': (3, 10),
+            'default': 3,
+            'dtype': 'float',
+            'unit': '%'
+        }))
+        assert 'sos_model_param' in sos_model.parameters
 
-    return config_data
+    def test_run_with_sector_parameters(self, sos_model):
+        sos_model = sos_model
+        sector_model = sos_model.models['water_supply']
+        sector_model.add_parameter(Spec.from_dict({
+            'name': 'sector_model_param',
+            'description': 'A model parameter passed to a specific model',
+            'abs_range': (0, 100),
+            'exp_range': (3, 10),
+            'dtype': 'float',
+            'default': 3,
+            'unit': '%'
+        }))
+        assert 'sector_model_param' in sector_model.parameters
 
+    def test_add_parameters(self, sos_model, sector_model):
+        expected = Spec.from_dict({
+            'name': 'sos_model_param',
+            'description': 'A global parameter passed to all contained models',
+            'abs_range': (0, 100),
+            'exp_range': (3, 10),
+            'dtype': 'float',
+            'default': 3,
+            'unit': '%'
+        })
+        sos_model.add_parameter(expected)
 
-@fixture
-def get_sos_model_config_with_dep(get_sos_model_config,
-                                  get_sector_model_object):
+        assert sos_model.parameters['sos_model_param'] == expected
+        assert list(sos_model.parameters.keys()) == ['sos_model_param']
 
-    sector_model = get_sector_model_object
-    dependency_config = [{'source_model': 'test_scenario_model',
-                          'source_model_output': 'raininess',
-                          'sink_model': 'water_supply',
-                          'sink_model_input': 'raininess'}]
+        sector_model.add_parameter(Spec.from_dict({
+            'name': 'sector_model_param',
+            'description': 'Required for the sectormodel',
+            'abs_range': (0, 100),
+            'exp_range': (3, 10),
+            'default': 3,
+            'dtype': 'float',
+            'unit': '%'
+        }))
+        sos_model.add_model(sector_model)
 
-    config_data = get_sos_model_config
-    config_data['sector_models'].append(sector_model)
-    config_data['dependencies'] = dependency_config
+        # SosModel contains only its own parameters
+        assert 'sos_model_param' in sos_model.parameters.keys()
 
-    return config_data
+        # SectorModel has its own ParameterList, gettable by param name
+        assert 'sector_model_param' in sector_model.parameters.keys()
 
-
-@fixture
-def get_sos_model_config_with_summed_dependency(get_sos_model_config, get_sector_model_object):
-
-    config = get_sos_model_config
-
-    water_model_one = get_sector_model_object
-    config['sector_models'].append(water_model_one)
-
-    water_model_two = copy(config['sector_models'][0])
-    water_model_two.name = 'water_supply_two'
-
-    regions = water_model_two.regions
-    intervals = water_model_two.intervals
-
-    water_model_three = copy(config['sector_models'][0])
-    water_model_three.name = 'water_supply_three'
-
-    water_model_three.add_input('water',
-                                regions.get_entry('LSOA'),
-                                intervals.get_entry('annual'),
-                                'Ml')
-    config['dependencies'] = [{'source_model': 'water_supply',
-                               'source_model_output': 'water',
-                               'sink_model': 'water_supply_three',
-                               'sink_model_input': 'water'},
-                              {'source_model': 'water_supply_two',
-                               'source_model_output': 'water',
-                               'sink_model': 'water_supply_three',
-                               'sink_model_input': 'water'},
-                              {'source_model': 'test_scenario_model',
-                               'source_model_output': 'raininess',
-                               'sink_model': 'water_supply',
-                               'sink_model_input': 'raininess'},
-                              {'source_model': 'test_scenario_model',
-                               'source_model_output': 'raininess',
-                               'sink_model': 'water_supply_two',
-                               'sink_model_input': 'raininess'}]
-    config['sector_models'].append(water_model_two)
-    config['sector_models'].append(water_model_three)
-    return config
-
-
-class TestSosModelBuilderComponents():
-
-    def test_construct(self, get_sos_model_config):
+    def test_set_max_iterations(self, sos_model_dict):
         """Test constructing from single dict config
         """
-        config = get_sos_model_config
-        builder = SosModelBuilder()
-        builder.construct(config)
-        sos_model = builder.finish()
-
-        assert isinstance(sos_model, SosModel)
-        assert list(sos_model.scenario_models.keys()) == ['test_scenario_model']
-        assert isinstance(sos_model.models['test_scenario_model'], ScenarioModel)
-
-    def test_set_max_iterations(self, get_sos_model_config):
-        """Test constructing from single dict config
-        """
-        config = get_sos_model_config
-        config['max_iterations'] = 125
-        builder = SosModelBuilder()
-        builder.construct(config)
-        sos_model = builder.finish()
+        sos_model_dict['max_iterations'] = 125
+        sos_model = SosModel.from_dict(sos_model_dict)
         assert sos_model.max_iterations == 125
 
-    def test_set_convergence_absolute_tolerance(self, get_sos_model_config):
+    def test_set_convergence_absolute_tolerance(self, sos_model_dict):
         """Test constructing from single dict config
         """
-        config = get_sos_model_config
-        config['convergence_absolute_tolerance'] = 0.0001
-        builder = SosModelBuilder()
-        builder.construct(config)
-        sos_model = builder.finish()
+        sos_model_dict['convergence_absolute_tolerance'] = 0.0001
+        sos_model = SosModel.from_dict(sos_model_dict)
         assert sos_model.convergence_absolute_tolerance == 0.0001
 
-    def test_set_convergence_relative_tolerance(self, get_sos_model_config):
+    def test_set_convergence_relative_tolerance(self, sos_model_dict):
         """Test constructing from single dict config
         """
-        config = get_sos_model_config
-        config['convergence_relative_tolerance'] = 0.1
-        builder = SosModelBuilder()
-        builder.construct(config)
-        sos_model = builder.finish()
+        sos_model_dict['convergence_relative_tolerance'] = 0.1
+        sos_model = SosModel.from_dict(sos_model_dict)
         assert sos_model.convergence_relative_tolerance == 0.1
 
 
-class TestSosModelBuilder():
-    """Tests that the correct SosModel structure is created from a configuration
-    dictionary::
-
-        {
-            'name': 'sos_model_name',
-            'description': 'friendly description of the sos model',
-            'sector_models': list of Model,
-            'scenario_sets': list of ScenarioModel,
-            'max_iterations': int,
-            'convergence_absolute_tolerance': float,
-            'convergence_relative_tolerance': float,
-            'dependencies': [
-                {
-                    'source_model': str (Model.name),
-                    'source_model_output': str (Metadata.name),
-                    'sink_model': str (Model.name),
-                    'sink_model_output': str (Metadata.name)
-                }
-            ]
-        }
-
+class TestSosModelDependencies(object):
+    """SosModel can represent data flow as defined by model dependencies
     """
-    def test_scenarios(self, get_sos_model_config):
-        """Test constructing from single dict config
+    def test_simple_dependency(self, sos_model):
+        """Dependency graph construction
         """
-        config = get_sos_model_config
-        builder = SosModelBuilder()
-        builder.construct(config)
-        sos_model = builder.finish()
+        graph = SosModel.make_dependency_graph(sos_model.models)
 
-        assert isinstance(sos_model, SosModel)
-        assert isinstance(sos_model.models['test_scenario_model'], ScenarioModel)
-
-    def test_simple_dependency(self, get_sos_model_config_with_dep):
-
-        config_data = get_sos_model_config_with_dep
-
-        builder = SosModelBuilder()
-        builder.construct(config_data)
-        sos_model = builder.finish()
-
-        sos_model.make_dependency_graph()
-        graph = sos_model.dependency_graph
-
-        scenario = sos_model.models['test_scenario_model']
+        scenario = sos_model.models['climate']
         model = sos_model.models['water_supply']
 
-        assert 'water_supply' in sos_model.models
-        assert sos_model.models['water_supply'] in graph.nodes()
-        deps = sos_model.models['water_supply'].deps
-        assert 'raininess' in deps.keys()
+        assert scenario in graph.nodes()
+        assert model in graph.nodes()
+
+        actual = sos_model.models['water_supply'].deps['precipitation']
         expected = Dependency(
             scenario,
-            scenario.outputs['raininess'],
-            model.inputs['raininess']
+            scenario.outputs['precipitation'],
+            model,
+            model.inputs['precipitation']
         )
-        assert deps['raininess'] == expected
+        assert actual == expected
 
-        assert 'test_scenario_model' in sos_model.models
-        assert sos_model.models['test_scenario_model'] in graph.nodes()
-
-    def test_data_not_present(self, get_sos_model_config_with_dep):
+    def test_data_not_present(self, sos_model_dict, sector_model):
         """Raise a NotImplementedError if an input is defined but no dependency links
         it to a data source
         """
-        config_data = get_sos_model_config_with_dep
-        config_data['scenario_sets'] = []
-        config_data['dependencies'] = []
+        sos_model_dict['scenario_dependencies'] = []
+        sos_model_dict['model_dependencies'] = []
         with raises(NotImplementedError):
-            builder = SosModelBuilder()
-            builder.construct(config_data)
-            builder.finish()
+            SosModel.from_dict(sos_model_dict, [sector_model])
 
-    def test_undefined_unit_conversion(self, get_sos_model_config_with_dep):
-
-        config_data = get_sos_model_config_with_dep
-        sector_model = config_data['sector_models'][0]
-        sector_model.inputs['raininess'].units = 'incompatible'
+    def test_undefined_unit_conversion(self, sos_model_dict, sector_model, scenario_model,
+                                       economic_model):
+        """Error on invalid dependency
+        """
+        sector_model.inputs['precipitation'] = Spec(
+            name='precipitation',
+            dims=['LSOA'],
+            coords={'LSOA': [1, 2, 3]},
+            dtype='float',
+            unit='incompatible'
+        )
 
         with raises(ValueError) as ex:
-            builder = SosModelBuilder()
-            builder.construct(config_data)
-            builder.finish()
+            SosModel.from_dict(sos_model_dict, [sector_model, scenario_model, economic_model])
+        assert "ml!=incompatible" in str(ex)
 
-        assert "Cannot convert to undefined unit 'incompatible'" in str(ex.value)
-
-    def test_invalid_unit_conversion(self, get_sos_model_config_with_dep):
-
-        config_data = get_sos_model_config_with_dep
-        scenario = config_data['scenario_sets'][0]
-
-        scenario.outputs['raininess'].units = 'meter'
+    def test_invalid_unit_conversion(self, sos_model_dict, sector_model, scenario_model,
+                                     economic_model):
+        """Error on invalid dependency
+        """
+        scenario_model.outputs['precipitation'] = Spec(
+            name='precipitation',
+            dims=['LSOA'],
+            coords={'LSOA': [1, 2, 3]},
+            dtype='float',
+            unit='meter'
+        )
 
         with raises(ValueError) as ex:
-            builder = SosModelBuilder()
-            builder.construct(config_data)
-            builder.finish()
-
-        assert "Cannot convert from meter to milliliter" in str(ex.value)
-
-    def test_cyclic_dependencies(self, get_sos_model_config_with_summed_dependency):
-        config_data = get_sos_model_config_with_summed_dependency
-
-        builder = SosModelBuilder()
-
-        with raises(NotImplementedError):
-            builder.construct(config_data)
-        # sos_model = builder.finish()
-        # sos_model.check_dependencies()
-        # graph = sos_model.dependency_graph
-
-        # scenario = sos_model.models['raininess']
-        # water_one = sos_model.models['water_supply']
-        # water_two = sos_model.models['water_supply_two']
-        # water_three = sos_model.models['water_supply_three']
-
-        # print(graph.edges())
-
-        # assert (scenario, water_one) in graph.edges()
-        # assert (scenario, water_two) in graph.edges()
-        # assert (water_one, water_three) in graph.edges()
-        # assert (water_two, water_three) in graph.edges()
+            SosModel.from_dict(sos_model_dict, [sector_model, scenario_model, economic_model])
+        assert "meter!=ml" in str(ex.value)

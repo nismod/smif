@@ -16,8 +16,17 @@ class LogMixin(object):
 
     @property
     def logger(self):
-        name = '.'.join([__name__, self.__class__.__name__])
-        return logging.getLogger(name)
+        try:
+            logger = self._logger
+        except AttributeError:
+            name = '.'.join([__name__, self.__class__.__name__])
+            logger = logging.getLogger(name)
+            self._logger = logger
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        self._logger = logger
 
 
 class Register(LogMixin, metaclass=ABCMeta):
@@ -62,24 +71,41 @@ class Register(LogMixin, metaclass=ABCMeta):
 
         """
         coefficients = self.get_coefficients(from_set_name, to_set_name)
+        converted = Register.convert_with_coefficients(data, coefficients, self.axis)
 
-        if self.axis is not None:
-            data_count = data.shape[self.axis]
+        self.logger.debug("Converting from %s to %s.", from_set_name, to_set_name)
+        self.logger.debug("Converted value from %s to %s", data.sum(), converted.sum())
+
+        return converted
+
+    @staticmethod
+    def convert_with_coefficients(data, coefficients, axis=None):
+        """Convert an array of data using given coefficients, along a given axis
+
+        Parameters
+        ----------
+        data: numpy.ndarray
+        coefficients: numpy.ndarray
+        axis: integer, optional
+
+        Returns
+        -------
+        numpy.ndarray
+
+        """
+        if axis is not None:
+            data_count = data.shape[axis]
             if coefficients.shape[0] != data_count:
                 msg = "Size of coefficient array does not match source " \
                       "resolution set from data matrix: %s != %s"
-                raise ValueError(msg, coefficients.shape[self.axis],
-                                 data_count)
+                raise ValueError(msg, coefficients.shape[axis], data_count)
 
-        if self.axis == 0:
+        if axis == 0:
             converted = np.dot(coefficients.T, data)
-        elif self.axis == 1:
+        elif axis == 1:
             converted = np.dot(data, coefficients)
         else:
             converted = np.dot(data, coefficients)
-
-        self.logger.debug("Converting from %s to %s.", from_set_name, to_set_name)
-        self.logger.debug("Converted value from %s to %s", data.sum(), converted.sum() )
 
         return converted
 
@@ -150,9 +176,7 @@ class NDimensionalRegister(Register):
 
     def _write_coefficients(self, source, destination, data):
         if self.data_interface:
-            self.data_interface.write_coefficients(source,
-                                                   destination,
-                                                   data)
+            self.data_interface.write_coefficients(source, destination, data)
         else:
             msg = "Data interface not available to write coefficients"
             self.logger.warning(msg)
@@ -183,8 +207,7 @@ class NDimensionalRegister(Register):
         if self.data_interface:
 
             self.logger.info("Using data interface to load coefficients")
-            coefficients = self.data_interface.read_coefficients(source,
-                                                                 destination)
+            coefficients = self.data_interface.read_coefficients(source, destination)
 
             if coefficients is None:
                 msg = "Coefficients not found, generating coefficients for %s to %s"

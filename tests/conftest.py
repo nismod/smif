@@ -12,22 +12,12 @@ import csv
 import json
 import logging
 import os
-from copy import copy
 
 from pytest import fixture
-from smif.convert.area import RegionSet
-from smif.convert.area import get_register as get_region_register
-from smif.convert.interval import IntervalSet
-from smif.convert.interval import get_register as get_interval_register
-from smif.convert.unit import get_register as get_unit_register
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
-from smif.parameters import Narrative
 
-from .convert.conftest import (months, one_day, remap_months, remap_months_csv,
-                               seasons, twenty_four_hours)
-from .convert.test_area import (regions_half_squares, regions_half_triangles,
-                                regions_rect, regions_single_half_square)
+from .convert.conftest import remap_months_csv
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
@@ -48,7 +38,7 @@ def setup_folder_structure(tmpdir_factory, oxford_region,
     """
     folder_list = [
         'config',
-        os.path.join('config', 'sos_model_runs'),
+        os.path.join('config', 'model_runs'),
         os.path.join('config', 'sos_models'),
         os.path.join('config', 'sector_models'),
         'data',
@@ -89,13 +79,17 @@ def setup_folder_structure(tmpdir_factory, oxford_region,
     intervals_file = test_folder.join(
         'data', 'interval_definitions', 'remap.csv')
     keys = data[0].keys()
-    with open(str(intervals_file), 'w+') as open_csv_file:
-        dict_writer = csv.DictWriter(open_csv_file, keys)
+    with intervals_file.open(mode='w+') as intervals_fh:
+        dict_writer = csv.DictWriter(intervals_fh, keys)
         dict_writer.writeheader()
         dict_writer.writerows(data)
 
     units_file = test_folder.join('data', 'user_units.txt')
-    units_file.write("blobbiness = m^3 * 10^6\n")
+    with units_file.open(mode='w') as units_fh:
+        units_fh.write("blobbiness = m^3 * 10^6\n")
+        units_fh.write("people = [people]\n")
+        units_fh.write("mcm = 10^6 * m^3\n")
+        units_fh.write("GBP=[currency]\n")
 
     return test_folder
 
@@ -399,41 +393,6 @@ def water_interventions_abc():
     ]
 
 
-@fixture(scope="session", autouse=True)
-def setup_registers(oxford_region, annual_intervals, tmpdir_factory):
-    """One-time setup: load all the fixture region and interval
-    sets into the module-level registers.
-    """
-    regions = get_region_register()
-    lsoa = RegionSet('LSOA', oxford_region['features'])
-    regions.register(lsoa)
-    regions.register(regions_half_squares())
-    regions.register(regions_single_half_square())
-    regions.register(regions_half_triangles())
-    regions.register(regions_rect())
-
-    # register alt rect (same area)
-    regions_rect_alt = copy(regions_rect())
-    regions_rect_alt.name = 'rect_alt'
-    regions.register(regions_rect_alt)
-
-    intervals = get_interval_register()
-    intervals.register(IntervalSet('annual', annual_intervals))
-    intervals.register(IntervalSet('months', months()))
-    intervals.register(IntervalSet('seasons', seasons()))
-    intervals.register(IntervalSet('hourly_day', twenty_four_hours()))
-    intervals.register(IntervalSet('one_day', one_day()))
-    intervals.register(IntervalSet('remap_months', remap_months()))
-
-    test_folder = tmpdir_factory.mktemp("smif")
-
-    units_file = test_folder.join('user_units.txt')
-    units_file.write("mcm = 10^6 * m^3\nGBP=[currency]\npeople=[people]\n")
-
-    units = get_unit_register()
-    units.register(str(units_file))
-
-
 @fixture(scope='function')
 def project_config():
     """Return sample project configuration
@@ -530,8 +489,8 @@ def project_config():
 
 
 @fixture(scope='function')
-def get_sos_model_run():
-    """Return sample sos_model_run
+def model_run():
+    """Return sample model_run
     """
     return {
         'name': 'unique_model_run_name',
@@ -581,16 +540,16 @@ def get_sos_model():
         ],
         'dependencies': [
             {
-                'source_model': 'population',
-                'source_model_output': 'count',
-                'sink_model': 'energy_demand',
-                'sink_model_input': 'population'
+                'source': 'population',
+                'source_output': 'count',
+                'sink': 'energy_demand',
+                'sink_input': 'population'
             },
             {
-                'source_model': 'energy_demand',
-                'source_model_output': 'gas_demand',
-                'sink_model': 'energy_supply',
-                'sink_model_input': 'natural_gas_demand'
+                'source': 'energy_demand',
+                'source_output': 'gas_demand',
+                'sink': 'energy_supply',
+                'sink_input': 'natural_gas_demand'
             }
         ]
     }
@@ -737,9 +696,9 @@ def get_handler(setup_folder_structure, project_config):
 
 @fixture
 def get_narrative_obj():
-    narrative = Narrative('Energy Demand - High Tech',
-                          'A description',
-                          'technology')
+    narrative = ('Energy Demand - High Tech',
+                 'A description',
+                 'technology')
     return narrative
 
 

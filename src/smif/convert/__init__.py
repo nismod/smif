@@ -8,9 +8,9 @@ The :meth:`~SpaceTimeConvertor.convert` method returns a new
 """
 import logging
 
-from smif.convert.area import get_register as get_region_register
-from smif.convert.interval import get_register as get_interval_register
-from smif.convert.unit import get_register as get_unit_register
+from smif.convert.area import RegionRegister
+from smif.convert.interval import TimeIntervalRegister
+from smif.convert.unit import UnitRegister
 
 __author__ = "Will Usher, Tom Russell, Roald Schoenmakers"
 __copyright__ = "Will Usher, Tom Russell, Roald Schoenmakers"
@@ -31,9 +31,9 @@ class SpaceTimeUnitConvertor(object):
     """
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.regions = get_region_register()
-        self.intervals = get_interval_register()
-        self.units = get_unit_register()
+        self.regions = RegionRegister()
+        self.intervals = TimeIntervalRegister()
+        self.units = UnitRegister()
 
     def convert(self, data,
                 from_spatial, to_spatial,

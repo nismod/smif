@@ -104,6 +104,17 @@ class Intervention(object):
 
         assert self._validate(['name', 'location'], ['build_date'])
 
+    def __eq__(self, other):
+        """
+        """
+        return self.name == other.name \
+            and self.sector == other.sector \
+            and self.data == other.data
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(data=data)
+
     def as_dict(self):
         return self.data
 

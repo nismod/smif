@@ -16,8 +16,8 @@ convergence.
 """
 
 import numpy as np
-from smif.data_layer import DataHandle
-from smif.model import CompositeModel, element_before
+from smif.data_layer import DataHandle, TimestepResolutionError
+from smif.model.model import CompositeModel
 
 
 class ModelSet(CompositeModel):
@@ -62,7 +62,7 @@ class ModelSet(CompositeModel):
             for sink, dep in model.deps.items():
                 if dep.source_model not in self.models.values():
                     self.deps[sink] = dep
-                    self.inputs.add_metadata(model.inputs[sink])
+                    self.add_input(model.inputs[sink])
 
     def simulate(self, data_handle):
         """Runs a set of one or more models
@@ -78,6 +78,7 @@ class ModelSet(CompositeModel):
         # - stop iterating according to near-equality condition
         for i in range(self.max_iterations):
             self._current_iteration = i
+            self.logger.debug("Iteration %s", i)
             if self._converged(data_handle):
                 self._did_converge = True
                 break
@@ -137,26 +138,22 @@ class ModelSet(CompositeModel):
         -------
         data_handle : smif.data_layer.DataHandle
         """
-        timestep_before = element_before(
-            data_handle.current_timestep,
-            data_handle.timesteps
-        )
-        if timestep_before is not None:
+        try:
+            timestep_before = data_handle.previous_timestep
             # last iteration of previous timestep results
-            print(timestep_before)
-            for output in model.outputs.metadata:
+            self.logger.debug("Values from timestep %s", timestep_before)
+            for output in model.outputs.values():
                 data_handle.set_results(
                     output.name,
                     data_handle.get_results(output.name, timestep=timestep_before)
                 )
-        else:
+        except TimestepResolutionError:
             # generate zero-values for each parameter/region/interval combination
-            for output in model.outputs.metadata:
-                regions = output.get_region_names()
-                intervals = output.get_interval_names()
+            self.logger.debug("Guessing zeros")
+            for output in model.outputs.values():
                 data_handle.set_results(
                     output.name,
-                    np.zeros((len(regions), len(intervals)))
+                    np.zeros(output.shape)
                 )
         return data_handle
 
@@ -175,6 +172,7 @@ class ModelSet(CompositeModel):
         """
         if self._current_iteration < 2:
             # must have at least two result sets per model to assess convergence
+            self.logger.debug("Not converged - more iterations needed")
             return False
 
         # each data output is a dict with
@@ -182,6 +180,7 @@ class ModelSet(CompositeModel):
         #       np.ndarray value (regions x intervals)
         converged = []
         for model in self.models.values():
+            self.logger.debug("Checking %s for convergence", model.name)
             model_data_handle = DataHandle(
                 data_handle._store,
                 data_handle._modelrun_name,
@@ -195,10 +194,11 @@ class ModelSet(CompositeModel):
 
         if all(converged):
             # if all most recent are almost equal to penultimate, must have converged
+            self.logger.debug("All converged")
             return True
 
         # TODO check for divergence and raise error
-
+        self.logger.debug("Not converged")
         return False
 
     def _model_converged(self, model, data_handle):
@@ -225,12 +225,13 @@ class ModelSet(CompositeModel):
             self._current_iteration - 1,  # access previous iteration
             data_handle._decision_iteration
         )
-        return all(
-            np.allclose(
-                data_handle.get_data(param.name),
-                prev_data_handle.get_data(param.name),
-                rtol=self.relative_tolerance,
-                atol=self.absolute_tolerance
-            )
-            for param in model.inputs.metadata
-        )
+        close = []
+        for spec in model.inputs.values():
+            curr = data_handle.get_data(spec.name)
+            prev = prev_data_handle.get_data(spec.name)
+            is_close = np.allclose(
+                curr, prev, rtol=self.relative_tolerance, atol=self.absolute_tolerance)
+            self.logger.debug("Input %s converged? %s", spec.name, is_close)
+            close.append(is_close)
+        all_close = all(close)
+        return all_close

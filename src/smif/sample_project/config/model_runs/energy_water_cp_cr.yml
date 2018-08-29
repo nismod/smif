@@ -1,5 +1,5 @@
-name: 20170918_energy_water
-description: Combined energy and water under central scenario
+name: energy_water_cp_cr
+description: Combined energy and water under central scenarios
 stamp: "2017-09-18T12:53:23+00:00"
 timesteps:
 - 2010
@@ -7,11 +7,11 @@ timesteps:
 - 2020
 sos_model: energy_water
 scenarios:
-  population: Central Population (Medium)
-  rainfall: Central Rainfall
+  population: population_med
+  climate: central
 narratives:
   technology:
-  - High Tech Demand Side Management
+  - high_tech_dsm
 strategies:
 - strategy: pre-specified-planning
   description: build_nuclear

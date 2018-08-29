@@ -1,37 +1,38 @@
 name: energy_water
 description: 'The future supply and demand of energy and water for the UK'
-scenario_sets: # Select 0 or more of the scenario sets
+scenarios: # Select 0 or more of the scenario sets
 - population
-- rainfall
-narrative_sets: []
+- climate
+narratives: []
 sector_models: # Select 1 or more of the sector models
 - water_supply
 - energy_demand
-dependencies:
-- source_model: rainfall
-  source_model_output: raininess
-  sink_model: water_supply
-  sink_model_input: raininess
-- source_model: population
-  source_model_output: population
-  sink_model: water_supply
-  sink_model_input: population
-- source_model: water_supply
-  source_model_output: energy_demand
-  sink_model: energy_demand
-  sink_model_input: energy_demand
-- source_model: population
-  source_model_output: population
-  sink_model: energy_demand
-  sink_model_input: population
-- source_model: energy_demand
-  source_model_output: water_demand
-  sink_model: water_supply
-  sink_model_input: water_demand
-- source_model: water_supply
-  source_model_output: reservoir_level
-  sink_model: water_supply
-  sink_model_input: reservoir_level
+scenario_dependencies:
+- source: climate
+  source_output: precipitation
+  sink: water_supply
+  sink_input: precipitation
+- source: population
+  source_output: population
+  sink: water_supply
+  sink_input: population
+- source: population
+  source_output: population
+  sink: energy_demand
+  sink_input: population
+model_dependencies:
+- source: water_supply
+  source_output: energy_demand
+  sink: energy_demand
+  sink_input: energy_demand
+- source: energy_demand
+  source_output: water_demand
+  sink: water_supply
+  sink_input: water_demand
+- source: water_supply
+  source_output: reservoir_level
+  sink: water_supply
+  sink_input: reservoir_level
   timestep_offset: -1  # suggested declaration of inter-timestep dep.
 max_iterations: 100
 convergence_absolute_tolerance: 1e-05
