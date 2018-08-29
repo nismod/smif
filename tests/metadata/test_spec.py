@@ -145,7 +145,7 @@ class TestSpec():
                 dtype='int',
                 coords=["England", "Wales"]
             )
-        assert "coords may be a dict of {dim: elements} or a list of Coordinate" in str(ex)
+        assert "coords may be a dict[str,list] or a list[Coordinates]" in str(ex)
 
     def test_coords_from_dict(self):
         """A Spec may be constructed with a dict
@@ -157,8 +157,8 @@ class TestSpec():
             coords={'countries': ["England", "Wales"]}
         )
         assert spec.shape == (2,)
-        assert spec._coords[0].name == 'countries'
-        assert spec._coords[0].ids == ["England", "Wales"]
+        assert spec.coords[0].name == 'countries'
+        assert spec.coords[0].ids == ["England", "Wales"]
 
     def test_coords_from_dict_error(self):
         """A Spec constructed with a dict must have dims
@@ -191,6 +191,27 @@ class TestSpec():
                 }
             )
         assert "dims must match the keys in coords" in str(ex)
+
+    def test_duplicate_dims_error(self):
+        """A Spec must not have duplicate dimension names
+        """
+        with raises(ValueError) as ex:
+            Spec(
+                dtype='int',
+                dims=['countries', 'countries'],
+                coords={'countries': ["Scotland", "Northern Ireland"]}
+            )
+        assert "duplicate dims" in str(ex)
+
+        with raises(ValueError) as ex:
+            Spec(
+                dtype='int',
+                coords=[
+                    Coordinates('countries', ['Scotland', 'Northern Ireland']),
+                    Coordinates('countries', ['Scotland', 'Northern Ireland']),
+                ]
+            )
+        assert "duplicate dims" in str(ex)
 
     def test_coords_from_list_error(self):
         """A Spec constructed with a dict must have dims

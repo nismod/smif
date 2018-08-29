@@ -72,31 +72,15 @@ class Spec(object):
 
         # Coords may come as a dict, in which case dims must be provided to define order
         if isinstance(coords, dict):
-            if dims is None:
-                msg = "Spec.dims must be specified if coords are provided as a dict, in {}"
-                raise ValueError(msg.format(self._name))
-            if sorted(dims) != sorted(coords.keys()):
-                msg = "Spec.dims must match the keys in coords, in {}"
-                raise ValueError(msg.format(self._name))
+            coords, dims = self._coords_from_dict(coords, dims)
 
-            coords = [
-                Coordinates(dim, coords[dim])
-                for dim in dims
-            ]
         # Or as a list of Coordinates, in which case dims must not be provided
         elif isinstance(coords, list):
-            for coord in coords:
-                if not isinstance(coord, Coordinates):
-                    raise ValueError("Spec.coords may be a dict of {dim: elements} or a " +
-                                     "list of Coordinates, in {}".format(self._name))
-            if dims is not None:
-                raise ValueError("Spec.dims are derived from Spec.coords if provided as a " +
-                                 "list of Coordinates, in {}".format(self._name))
-            dims = [coord.dim for coord in coords]
+            coords, dims = self._coords_from_list(coords, dims)
+
         # Or if None, this spec describes a zero-dimensional parameter - single value
         else:
-            coords = []
-            dims = []
+            coords, dims = [], []
 
         self._dims = dims
         self._coords = coords
@@ -109,6 +93,46 @@ class Spec(object):
         self._abs_range = abs_range
         self._exp_range = exp_range
         self._unit = unit
+
+    def _coords_from_list(self, coords, dims):
+        """Set up coords and dims, checking for consistency
+        """
+        for coord in coords:
+            if not isinstance(coord, Coordinates):
+                msg = "Spec.coords may be a dict[str,list] or a list[Coordinates], in {}"
+                raise ValueError(msg.format(self._name))
+
+        if dims is not None:
+            msg = "Spec.dims are derived from Spec.coords if provided as a list of " + \
+                  "Coordinates, in {}"
+            raise ValueError(msg.format(self._name))
+
+        dims = [coord.dim for coord in coords]
+
+        if len(dims) != len(set(dims)):
+            msg = "Spec cannot be created with duplicate dims, in {}"
+            raise ValueError(msg.format(self._name))
+
+        return coords, dims
+
+    def _coords_from_dict(self, coords, dims):
+        """Set up coords and dims, checking for consistency
+        """
+        if dims is None:
+            msg = "Spec.dims must be specified if coords are provided as a dict, in {}"
+            raise ValueError(msg.format(self._name))
+
+        if len(dims) != len(set(dims)):
+            msg = "Spec cannot be created with duplicate dims, in {}"
+            raise ValueError(msg.format(self._name))
+
+        if sorted(dims) != sorted(coords.keys()):
+            msg = "Spec.dims must match the keys in coords, in {}"
+            raise ValueError(msg.format(self._name))
+
+        coords = [Coordinates(dim, coords[dim]) for dim in dims]
+
+        return coords, dims
 
     @classmethod
     def from_dict(cls, data_provided):
