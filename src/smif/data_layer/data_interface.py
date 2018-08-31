@@ -996,3 +996,11 @@ class DataMismatchError(Exception):
     the id provided separately.
     """
     pass
+
+
+class DataReadError(Exception):
+    """Raise when unable to read data
+
+    E.g. unable to handle file type or connect to database
+    """
+    pass

@@ -7,13 +7,18 @@ import os
 import re
 from functools import lru_cache, wraps
 
-import fiona
 import pyarrow as pa
 from smif.data_layer.data_interface import (DataExistsError, DataInterface,
                                             DataMismatchError,
-                                            DataNotFoundError)
+                                            DataNotFoundError, DataReadError)
 from smif.data_layer.load import dump, load
 from smif.metadata import Spec
+
+# Import fiona if available (optional dependency)
+try:
+    import fiona
+except ImportError:
+    pass
 
 
 # Note: these decorators must be defined before being used below
@@ -427,16 +432,22 @@ class DatafileInterface(DataInterface):
 
     @lru_cache(maxsize=32)
     def _read_dimension_file(self, filename):
-        # TODO include yaml/csv option
         filepath = os.path.join(self.file_dir['dimensions'], filename)
-        with fiona.drivers():
-            with fiona.open(filepath) as src:
-                data = []
-                for f in src:
-                    element = f['properties']
-                    # element['geometry'] = f['geometry']
-                    data.append(element)
+        _, ext = os.path.splitext(filename)
+        if ext in ('yml', 'yaml'):
+            data = self._read_yaml_file(filepath)
+        elif ext == 'csv':
+            data = self._get_data_from_csv(filepath)
+        elif ext in ('geojson', 'shp'):
+            data = self._read_spatial_file(filepath)
+        else:
+            msg = "Extension {} not recognised, expected one of ('csv', 'yml', 'yaml', "
+            msg += "'geojson', 'shp') when reading {}"
+            raise DataReadError(msg.format(ext, filepath))
         return data
+
+    def _delete_dimension_file(self, filename):
+        os.remove(os.path.join(self.file_dir['dimensions'], filename))
 
     @check_not_exists(dtype='dimension')
     def write_dimension(self, dimension):
@@ -1049,6 +1060,28 @@ class DatafileInterface(DataInterface):
         else:
             filepath = path
         dump(data, filepath)
+
+    @staticmethod
+    def _read_spatial_file(filepath):
+        try:
+            with fiona.drivers():
+                with fiona.open(filepath) as src:
+                    data = []
+                    for f in src:
+                        element = {
+                            'name': f['properties']['name'],
+                            'feature': f
+                        }
+                        data.append(element)
+            return data
+        except NameError as ex:
+            msg = "Could not read spatial dimension definition. Please install fiona to read"
+            msg += "geographic data files. Try running: \n"
+            msg += "    pip install smif[spatial]\n"
+            msg += "or:\n"
+            msg += "    conda install fiona shapely rtree\n"
+            raise DataReadError(msg) from ex
+
     # endregion
 
 
