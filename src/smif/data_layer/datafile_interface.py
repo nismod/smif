@@ -434,15 +434,34 @@ class DatafileInterface(DataInterface):
     def _read_dimension_file(self, filename):
         filepath = os.path.join(self.file_dir['dimensions'], filename)
         _, ext = os.path.splitext(filename)
-        if ext in ('yml', 'yaml'):
+        if ext in ('.yml', '.yaml'):
             data = self._read_yaml_file(filepath)
-        elif ext == 'csv':
+        elif ext == '.csv':
             data = self._get_data_from_csv(filepath)
-        elif ext in ('geojson', 'shp'):
+        elif ext in ('.geojson', '.shp'):
             data = self._read_spatial_file(filepath)
         else:
-            msg = "Extension {} not recognised, expected one of ('csv', 'yml', 'yaml', "
-            msg += "'geojson', 'shp') when reading {}"
+            msg = "Extension '{}' not recognised, expected one of ('.csv', '.yml', '.yaml', "
+            msg += "'.geojson', '.shp') when reading {}"
+            raise DataReadError(msg.format(ext, filepath))
+        return data
+
+    def _write_dimension_file(self, filename, data):
+        # lru_cache may now be invalid, so clear it
+        self._read_dimension_file.cache_clear()
+
+        filepath = os.path.join(self.file_dir['dimensions'], filename)
+        _, ext = os.path.splitext(filename)
+        if ext in ('.yml', '.yaml'):
+            self._write_yaml_file(filepath, data=data)
+        elif ext == '.csv':
+            self._write_data_to_csv(filepath, data)
+        elif ext in ('.geojson', '.shp'):
+            raise NotImplementedError("Writing spatial dimensions not yet supported")
+            # self._write_spatial_file(filepath)
+        else:
+            msg = "Extension '{}' not recognised, expected one of ('.csv', '.yml', '.yaml', "
+            msg += "'.geojson', '.shp') when writing {}"
             raise DataReadError(msg.format(ext, filepath))
         return data
 
@@ -452,24 +471,43 @@ class DatafileInterface(DataInterface):
     @check_not_exists(dtype='dimension')
     def write_dimension(self, dimension):
         project_config = self.read_project_config()
+
+        # write elements to yml file (by default, can handle any nested data)
+        filename = "{}.yml".format(dimension['name'])
+        elements = dimension['elements']
+        self._write_dimension_file(filename, elements)
+
+        # refer to elements by filename and add to config
+        dimension['elements'] = filename
         project_config['dimensions'].append(dimension)
-        # TODO write elements file
         self._write_project_config(project_config)
 
     @check_exists(dtype='dimension')
     def update_dimension(self, dimension_name, dimension):
         project_config = self.read_project_config()
         idx = _idx_in_list(project_config['dimensions'], dimension_name)
+
+        # look up project-config filename and write elements
+        filename = project_config['dimensions'][idx]['elements']
+        elements = dimension['elements']
+        self._write_dimension_file(filename, elements)
+
+        # refer to elements by filename and update config
+        dimension['elements'] = filename
         project_config['dimensions'][idx] = dimension
-        # TODO update elements file
         self._write_project_config(project_config)
 
     @check_exists(dtype='dimension')
-    def delete_dimension(self, dimension_name, dimension):
+    def delete_dimension(self, dimension_name):
         project_config = self.read_project_config()
         idx = _idx_in_list(project_config['dimensions'], dimension_name)
+
+        # look up project-config filename and delete file
+        filename = project_config['dimensions'][idx]['elements']
+        self._delete_dimension_file(filename)
+
+        # delete from config
         del project_config['dimensions'][idx]
-        # TODO delete elements file
         self._write_project_config(project_config)
     # endregion
 
@@ -590,7 +628,7 @@ class DatafileInterface(DataInterface):
         spec = self._read_scenario_variable_spec(scenario_name, variable)
         data = self.ndarray_to_data_list(data, spec)
         filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
-        self._write_data_to_csv(filepath, data, spec)
+        self._write_data_to_csv(filepath, data, spec=spec)
 
     def _get_scenario_variant_filepath(self, scenario_name, variant_name, variable):
         variant = self.read_scenario_variant(scenario_name, variant_name)
@@ -701,7 +739,7 @@ class DatafileInterface(DataInterface):
         spec = self._read_narrative_variable_spec(narrative_name, variable)
         data = self.ndarray_to_data_list(data, spec)
         filepath = self._get_narrative_variant_filepath(narrative_name, variant_name, variable)
-        self._write_data_to_csv(filepath, data, spec)
+        self._write_data_to_csv(filepath, data, spec=spec)
 
     def _get_narrative_variant_filepath(self, narrative_name, variant_name, variable):
         variant = self.read_narrative_variant(narrative_name, variant_name)
@@ -751,7 +789,7 @@ class DatafileInterface(DataInterface):
 
         if self.storage_format == 'local_csv':
             data = self.ndarray_to_data_list(data, output_spec)
-            self._write_data_to_csv(results_path, data, output_spec)
+            self._write_data_to_csv(results_path, data, spec=output_spec)
         if self.storage_format == 'local_binary':
             self._write_data_to_native_file(results_path, data)
 
@@ -995,9 +1033,16 @@ class DatafileInterface(DataInterface):
         return scenario_data
 
     @staticmethod
-    def _write_data_to_csv(filepath, data, spec):
+    def _write_data_to_csv(filepath, data, spec=None, fieldnames=None):
+        if fieldnames is not None:
+            pass
+        elif spec is not None:
+            fieldnames = tuple(spec.dims) + (spec.name, )
+        else:
+            fieldnames = tuple(data[0].keys())
+
         with open(filepath, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=tuple(spec.dims) + (spec.name, ))
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for row in data:
                 writer.writerow(row)
@@ -1081,7 +1126,6 @@ class DatafileInterface(DataInterface):
             msg += "or:\n"
             msg += "    conda install fiona shapely rtree\n"
             raise DataReadError(msg) from ex
-
     # endregion
 
 
