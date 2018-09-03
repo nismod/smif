@@ -287,7 +287,7 @@ class PreSpecified(DecisionModule):
 
         Returns
         -------
-        list of tuples
+        dict of tuples
 
         Examples
         --------
