@@ -102,6 +102,6 @@ describe('<DeleteForm />', () => {
             config_type={'testconfig'} />)
 
         wrapper = wrapper.unmount()
-        expect(wrapper.html()).to.be.null
+        expect(wrapper.length).to.equal(0)
     })
 })
