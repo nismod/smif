@@ -19,7 +19,7 @@ class EDMWrapper(SectorModel):
 
         # State
 
-        current_interventions = data.get_state()
+        current_interventions = data.get_current_interventions()
 
         print("Current interventions: {}".format(current_interventions))
 
