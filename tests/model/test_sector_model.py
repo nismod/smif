@@ -2,7 +2,6 @@
 """
 import smif.sample_project.models.water_supply
 from pytest import fixture, mark, raises
-from smif.decision.intervention import Intervention
 from smif.metadata import Spec
 from smif.model.sector_model import SectorModel
 from smif.sample_project.models.water_supply import WaterSupplySectorModel
@@ -52,15 +51,6 @@ def sector_model_dict():
                 'dtype': 'float',
                 'unit': 'megaliter'
             }
-        ],
-        "initial_conditions": [
-            {"name": "water_asset_a", "build_year": 2010},
-            {"name": "water_asset_b", "build_year": 2010},
-            {"name": "water_asset_c", "build_year": 2010}],
-        "interventions": [
-            {"name": "water_asset_a", "location": "oxford", "sector": ""},
-            {"name": "water_asset_b", "location": "oxford", "sector": ""},
-            {"name": "water_asset_c", "location": "oxford", "sector": ""}
         ],
         "parameters": [
             {
@@ -123,16 +113,6 @@ def sector_model():
             'unit': 'megaliter'
         })
     )
-    model.initial_conditions = [
-        {"name": "water_asset_a", "build_year": 2010},
-        {"name": "water_asset_b", "build_year": 2010},
-        {"name": "water_asset_c", "build_year": 2010}
-    ]
-    model.add_interventions([
-        Intervention.from_dict({"name": "water_asset_a", "location": "oxford"}),
-        Intervention.from_dict({"name": "water_asset_b", "location": "oxford"}),
-        Intervention.from_dict({"name": "water_asset_c", "location": "oxford"})
-    ])
     return model
 
 
@@ -198,28 +178,6 @@ class TestSectorModel():
             })
         }
 
-        actual = sorted(sector_model.initial_conditions, key=lambda k: k['name'])
-        expected = [
-            {"name": "water_asset_a", "build_year": 2010},
-            {"name": "water_asset_b", "build_year": 2010},
-            {"name": "water_asset_c", "build_year": 2010}
-        ]
-        assert actual == expected
-
-        actual = sorted(sector_model.interventions, key=lambda k: k.name)
-        expected = [
-            Intervention.from_dict(
-                {"name": "water_asset_a", "location": "oxford"}
-            ),
-            Intervention.from_dict(
-                {"name": "water_asset_b", "location": "oxford"}
-            ),
-            Intervention.from_dict(
-                {"name": "water_asset_c", "location": "oxford"}
-            )
-        ]
-        assert actual == expected
-
     def test_from_dict(self, sector_model_dict):
         """Create using classmethod from config
         """
@@ -241,7 +199,6 @@ class TestSectorModel():
         actual['inputs'].sort(key=lambda m: m['name'])
         actual['outputs'].sort(key=lambda m: m['name'])
         actual['parameters'].sort(key=lambda m: m['name'])
-        actual['interventions'].sort(key=lambda m: m['name'])
         assert actual == sector_model_dict
 
     def test_add_input(self, empty_sector_model):
@@ -295,39 +252,6 @@ class TestSectorModel():
         """Call before_model_run
         """
         empty_sector_model.before_model_run(None)
-
-
-class TestSectorModelInterventions(object):
-    """Interventions can be attached to a model
-    - interventions are possible/potential
-    - initial_conditions are the initial set of interventions
-    """
-    def test_add_interventions(self, empty_sector_model):
-        """Add interventions
-        """
-        assets = [
-            Intervention.from_dict({
-                'name': 'water_asset_a',
-                'capital_cost': 1000,
-                'economic_lifetime': 25,
-                'operational_lifetime': 25,
-                'location': 'Narnia'
-            })
-        ]
-        empty_sector_model.add_interventions(assets)
-        assert empty_sector_model.intervention_names == ['water_asset_a']
-
-    def test_interventions_names(self, empty_sector_model):
-        """Access list of names
-        """
-        a = Intervention('water_asset_a')
-        b = Intervention('water_asset_b')
-        c = Intervention('water_asset_c')
-        empty_sector_model.add_interventions([a, b, c])
-
-        actual = sorted(empty_sector_model.intervention_names)
-        expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
-        assert actual == expected
 
 
 @mark.xfail()

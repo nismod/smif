@@ -38,7 +38,6 @@ import logging
 import sys
 from abc import ABCMeta, abstractmethod
 
-from smif.decision.intervention import Intervention
 from smif.metadata import Spec
 from smif.model.model import Model
 
@@ -106,7 +105,6 @@ class SectorModel(Model, metaclass=ABCMeta):
             model.add_output(Spec.from_dict(output))
         for param in config['parameters']:
             model.add_parameter(Spec.from_dict(param))
-        model.initial_conditions = config['initial_conditions']
         return model
 
     def as_dict(self):
@@ -123,41 +121,9 @@ class SectorModel(Model, metaclass=ABCMeta):
             'classname': self.__class__.__name__,
             'inputs': [inp.as_dict() for inp in self.inputs.values()],
             'outputs': [out.as_dict() for out in self.outputs.values()],
-            'parameters': [param.as_dict() for param in self.parameters.values()],
-            'interventions': [
-                inter.as_dict() for inter in self._interventions.values()],
-            'initial_conditions': self.initial_conditions
+            'parameters': [param.as_dict() for param in self.parameters.values()]
         }
         return config
-
-    def add_interventions(self, interventions):
-        """Add potential interventions to the model
-
-        Arguments
-        ---------
-        interventions : list of Intervention
-        """
-        for i in interventions:
-            msg = "Model interventions must be smif.decision.Intervention"
-            assert isinstance(i, Intervention), msg
-            self._interventions[i.name] = i
-
-    @property
-    def interventions(self):
-        """Model interventions
-        """
-        return list(self._interventions.values())
-
-    @property
-    def intervention_names(self):
-        """The names of the interventions
-
-        Returns
-        =======
-        list
-            A list of the names of the interventions
-        """
-        return list(self._interventions.keys())
 
     def before_model_run(self, data):
         """Implement this method to conduct pre-model run tasks
@@ -203,5 +169,8 @@ class SectorModel(Model, metaclass=ABCMeta):
         ``get_parameters()`` and
         ``get_results(output_name, model_name=None, modelset_iteration=None,
         decision_iteration=None, timestep=None)``.
+
+        ``data.get_state()`` returns a list of intervention dict for the
+        current timestep
 
         """
