@@ -22,6 +22,7 @@ class MemoryInterface(DataInterface):
         self._narrative_data = {}
         self._results = {}
         self._interventions = {}
+        self._initial_conditions = []
 
     # region Model runs
     def read_model_runs(self):
@@ -82,8 +83,12 @@ class MemoryInterface(DataInterface):
     # endregion
 
     # region Strategies
-    def read_strategies(self):
-        return self._strategies.values()
+    def read_strategies(self, modelrun_name):
+        return self._strategies[modelrun_name]
+
+    def read_initial_conditions(self, sector_model_name):
+        return self._initial_conditions[sector_model_name]
+
     # endregion
 
     # region State

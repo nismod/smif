@@ -221,8 +221,13 @@ class DataInterface(metaclass=ABCMeta):
 
     # region Strategies
     @abstractmethod
-    def read_strategies(self):
+    def read_strategies(self, model_run_name):
         """Read strategies
+
+        Arguments
+        ---------
+        model_run_name : str
+            Name of the model run for which to read the strategies
 
         Returns
         -------
@@ -230,6 +235,33 @@ class DataInterface(metaclass=ABCMeta):
             List of strategy definition dicts
         """
         raise NotImplementedError()
+
+    @abstractmethod
+    def read_initial_conditions(self, sector_model_name):
+        """Read historical interventions for `sector_model_name`
+
+        Returns
+        -------
+        list
+            A list of historical interventions
+        """
+        raise NotImplementedError()
+
+    def read_all_initial_conditions(self, model_run_name):
+        """A list of all historical interventions
+
+        Returns
+        -------
+        list
+        """
+        historical_interventions = []
+        sos_model_name = self.read_model_run(model_run_name)['sos_model']
+        sector_models = self.read_sos_model(sos_model_name)['sector_models']
+        for sector_model_name in sector_models:
+            historical_interventions.extend(
+                self.read_initial_conditions(sector_model_name)
+            )
+        return historical_interventions
     # endregion
 
     # region State

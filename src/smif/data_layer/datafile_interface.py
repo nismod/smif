@@ -180,10 +180,6 @@ class DatafileInterface(DataInterface):
         self._set_list_coords(sector_model['inputs'])
         self._set_list_coords(sector_model['outputs'])
         self._set_list_coords(sector_model['parameters'])
-        sector_model['interventions'] = self._read_interventions_files(
-            sector_model['interventions'], 'interventions')
-        sector_model['initial_conditions'] = self._read_interventions_files(
-            sector_model['initial_conditions'], 'initial_conditions')
         return sector_model
 
     @check_not_exists(dtype='sector_model')
@@ -223,6 +219,12 @@ class DatafileInterface(DataInterface):
         i_list = self._read_interventions_files(
             sector_model['interventions'], 'interventions')
         return {item['name']: item for item in i_list}
+
+    @check_exists(dtype='sector_model')
+    def read_initial_conditions(self, sector_model_name):
+        sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+        return self._read_interventions_files(
+            sector_model['initial_conditions'], 'initial_conditions')
 
     def _read_interventions_files(self, filenames, dirname):
         intervention_list = []
@@ -294,8 +296,20 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Strategies
-    def read_strategies(self, filename):
-        return self._read_interventions_file(filename, 'strategies')
+    def read_strategies(self, model_run_name):
+        strategies = []
+        model_run_config = self.read_model_run(model_run_name)
+        for strategy in model_run_config['strategies']:
+            if strategy['strategy'] == 'pre-specified-planning':
+                decisions = self._read_interventions_file(strategy['filename'], 'strategies')
+                if decisions is None:
+                    decisions = []
+                del strategy['filename']
+                strategy['interventions'] = decisions
+                self.logger.info("Added %s pre-specified planning interventions to %s",
+                                 len(decisions), strategy['model_name'])
+                strategies.append(strategy)
+        return strategies
     # endregion
 
     # region State

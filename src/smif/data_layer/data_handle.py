@@ -134,35 +134,56 @@ class DataHandle(object):
     def get_state(self):
         """The current state of the model
 
+        If the DataHandle instance has a timestep, then state is
+        established from the state file.
+
+        If the DataHandle instance has a timestep of None, then this
+        method returns all the pre-specified (planned) and historical interventions
+
         Returns
         -------
         A list of interventions installed at the current timestep
         """
         if self._current_timestep is None:
-            raise ValueError("Cannot get state when timestep is None")
-        sos_state = self._store.read_state(
-            self._modelrun_name,
-            self._current_timestep,
-            self._decision_iteration
-        )
-        # here could (should?) filter list for interventions applicable to a model
-        # and look up full intervention (not just name,build_year)
+            store = self._store
+            modelrun_name = self._modelrun_name
 
-        return self.get_current_interventions(sos_state)
+            # Read in the historical interventions (initial conditions) directly
+            initial_conditions = store.read_all_initial_conditions(modelrun_name)
 
-    def get_current_interventions(self, state):
+            # Read in strategies
+            strategies = store.read_strategies(modelrun_name)
+
+            self.logger.info("%s strategies found", len(strategies))
+            sos_state = []
+            sos_state.extend(initial_conditions)
+
+            for index, strategy in enumerate(strategies):
+                # Extract pre-specified planning interventions
+                if strategy['strategy'] == 'pre-specified-planning':
+
+                    msg = "Adding %s planned interventions to pre-specified-planning %s"
+                    self.logger.info(msg, len(strategy['interventions']), index)
+
+                    sos_state.extend(strategy['interventions'])
+        else:
+
+            sos_state = self._store.read_state(
+                self._modelrun_name,
+                self._current_timestep,
+                self._decision_iteration
+            )
+
+        return sos_state
+
+    def get_current_interventions(self):
         """Get the interventions the exist in the current state
-
-        Arguments
-        ---------
-        state : list
-            A list of tuples that represent the state of the system in the
-            current planning timestep
 
         Returns
         -------
         list of intervention dicts with build_year attribute
         """
+        state = self.get_state()
 
         current_interventions = []
         all_interventions = self._store.read_interventions(self._model_name)
