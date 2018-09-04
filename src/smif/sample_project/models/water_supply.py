@@ -36,11 +36,8 @@ class WaterSupplySectorModel(SectorModel):
         """
         # State
 
-        state = data.get_state()
+        current_interventions = data.get_state()
 
-        current_interventions = self.get_current_interventions(state)
-
-        print("Current state of {} is {}".format(self.name, state))
         print("Current interventions: {}".format(current_interventions))
         number_of_treatment_plants = 2
 

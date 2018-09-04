@@ -21,6 +21,7 @@ class MemoryInterface(DataInterface):
         self._narratives = {}
         self._narrative_data = {}
         self._results = {}
+        self._interventions = {}
 
     # region Model runs
     def read_model_runs(self):
@@ -73,6 +74,11 @@ class MemoryInterface(DataInterface):
 
     def delete_sector_model(self, sector_model_name):
         del self._sector_models[sector_model_name]
+    # endregion
+
+    # region Interventions
+    def read_interventions(self, sector_model_name):
+        return {item['name']: item for item in self._interventions[sector_model_name]}
     # endregion
 
     # region Strategies

@@ -106,10 +106,6 @@ class SectorModel(Model, metaclass=ABCMeta):
             model.add_output(Spec.from_dict(output))
         for param in config['parameters']:
             model.add_parameter(Spec.from_dict(param))
-        model.add_interventions(
-            Intervention.from_dict(intervention_config)
-            for intervention_config in config['interventions']
-        )
         model.initial_conditions = config['initial_conditions']
         return model
 
@@ -145,37 +141,6 @@ class SectorModel(Model, metaclass=ABCMeta):
             msg = "Model interventions must be smif.decision.Intervention"
             assert isinstance(i, Intervention), msg
             self._interventions[i.name] = i
-
-    def get_current_interventions(self, state):
-        """Get the interventions the exist in the current state
-
-        Arguments
-        ---------
-        state : list
-            A list of tuples that represent the state of the system in the
-            current planning timestep
-
-        Returns
-        -------
-        list of intervention dicts with build_year attribute
-        """
-
-        interventions = []
-        for decision in state:
-            name = decision['name']
-            build_year = decision['build_year']
-            try:
-                serialised = self._interventions[name].as_dict()
-                serialised['build_year'] = build_year
-                interventions.append(serialised)
-            except KeyError:
-                # ignore if intervention is not in current set
-                pass
-
-        msg = "State matched with %s interventions"
-        self.logger.info(msg, len(interventions))
-
-        return interventions
 
     @property
     def interventions(self):

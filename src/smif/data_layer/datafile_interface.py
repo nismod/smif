@@ -217,6 +217,13 @@ class DatafileInterface(DataInterface):
     def delete_sector_model(self, sector_model_name):
         os.remove(os.path.join(self.file_dir['sector_models'], sector_model_name + '.yml'))
 
+    @check_exists(dtype='sector_model')
+    def read_interventions(self, sector_model_name):
+        sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+        i_list = self._read_interventions_files(
+            sector_model['interventions'], 'interventions')
+        return {item['name']: item for item in i_list}
+
     def _read_interventions_files(self, filenames, dirname):
         intervention_list = []
         for filename in filenames:

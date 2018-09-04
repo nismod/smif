@@ -275,9 +275,16 @@ class TestDataHandleState():
     def test_get_state(self, mock_store, mock_model):
         """should get decision module state for given timestep/decision_iteration
         """
-        mock_store.read_state = Mock(return_value=[('test', 2010)])
+        mock_store.read_state = Mock(return_value=[
+            {'name': 'test', 'build_year': 2010}])
+        mock_store._interventions['test_model'] = [
+            {'name': 'test',
+             'capital_cost': {'value': 2500, 'unit': '£/GW'}
+             }]
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-        expected = [('test', 2010)]
+        expected = [{'name': 'test',
+                     'capital_cost': {'value': 2500, 'unit': '£/GW'},
+                     'build_year': 2010}]
         actual = data_handle.get_state()
         assert actual == expected
 
@@ -286,6 +293,68 @@ class TestDataHandleState():
         data_handle = DataHandle(mock_store, 1, None, [2015, 2020], mock_model)
         with raises(ValueError):
             data_handle.get_state()
+
+    def test_get_interventions(self, mock_store, mock_model):
+        a = {'name': 'water_asset_a',
+             'build_year': 2010,
+             'capacity': 50,
+             'location': None,
+             'sector': ''}
+        b = {'name': 'water_asset_b',
+             'build_year': 2015,
+             'capacity': 150,
+             'location': None,
+             'sector': ''}
+        c = {'name': 'water_asset_c',
+             'capacity': 100,
+             'build_year': 2015,
+             'location': None,
+             'sector': ''}
+
+        mock_store._interventions['test_model'] = [a, b, c]
+
+        data_handle = DataHandle(mock_store, 1, None, [2015, 2020], mock_model)
+
+        state = [
+            {'name': 'water_asset_a', 'build_year': 2010},
+            {'name': 'water_asset_b', 'build_year': 2015}
+        ]
+        actual = data_handle.get_current_interventions(state)
+        actual.sort(key=lambda m: m['name'])
+        expected = [
+            {
+                'name': 'water_asset_a',
+                'build_year': 2010,
+                'capacity': 50,
+                'location': None,
+                'sector': ''
+            },
+            {
+                'name': 'water_asset_b',
+                'build_year': 2015,
+                'capacity': 150,
+                'location': None,
+                'sector': ''
+            }
+        ]
+        assert actual == expected
+
+        # ignore unrecognised interventions
+        state = [
+            {'name': 'water_asset_a', 'build_year': 2010},
+            {'name': 'energy_asset_unexpected', 'build_year': 2015}
+        ]
+        actual = data_handle.get_current_interventions(state)
+        expected = [
+            {
+                'name': 'water_asset_a',
+                'build_year': 2010,
+                'capacity': 50,
+                'location': None,
+                'sector': ''
+            }
+        ]
+        assert actual == expected
 
 
 class TestDataHandleTimesteps():

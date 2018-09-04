@@ -329,62 +329,6 @@ class TestSectorModelInterventions(object):
         expected = ['water_asset_a', 'water_asset_b', 'water_asset_c']
         assert actual == expected
 
-    def test_get_interventions(self, empty_sector_model):
-        a = Intervention.from_dict({
-            'name': 'water_asset_a',
-            'capacity': 50
-        })
-        b = Intervention.from_dict({
-            'name': 'water_asset_b',
-            'capacity': 150
-        })
-        c = Intervention.from_dict({
-            'name': 'water_asset_c',
-            'capacity': 100
-        })
-        empty_sector_model.add_interventions([a, b, c])
-
-        state = [
-            {'name': 'water_asset_a', 'build_year': 2010},
-            {'name': 'water_asset_b', 'build_year': 2015}
-        ]
-        actual = empty_sector_model.get_current_interventions(state)
-        actual.sort(key=lambda m: m['name'])
-        expected = [
-            {
-                'name': 'water_asset_a',
-                'build_year': 2010,
-                'capacity': 50,
-                'location': None,
-                'sector': ''
-            },
-            {
-                'name': 'water_asset_b',
-                'build_year': 2015,
-                'capacity': 150,
-                'location': None,
-                'sector': ''
-            }
-        ]
-        assert actual == expected
-
-        # ignore unrecognised interventions
-        state = [
-            {'name': 'water_asset_a', 'build_year': 2010},
-            {'name': 'energy_asset_unexpected', 'build_year': 2015}
-        ]
-        actual = empty_sector_model.get_current_interventions(state)
-        expected = [
-            {
-                'name': 'water_asset_a',
-                'build_year': 2010,
-                'capacity': 50,
-                'location': None,
-                'sector': ''
-            }
-        ]
-        assert actual == expected
-
 
 @mark.xfail()
 class TestSectorModelDimensions():

@@ -148,7 +148,40 @@ class DataHandle(object):
         # here could (should?) filter list for interventions applicable to a model
         # and look up full intervention (not just name,build_year)
 
-        return sos_state
+        return self.get_current_interventions(sos_state)
+
+    def get_current_interventions(self, state):
+        """Get the interventions the exist in the current state
+
+        Arguments
+        ---------
+        state : list
+            A list of tuples that represent the state of the system in the
+            current planning timestep
+
+        Returns
+        -------
+        list of intervention dicts with build_year attribute
+        """
+
+        current_interventions = []
+        all_interventions = self._store.read_interventions(self._model_name)
+
+        for decision in state:
+            name = decision['name']
+            build_year = decision['build_year']
+            try:
+                serialised = all_interventions[name]
+                serialised['build_year'] = build_year
+                current_interventions.append(serialised)
+            except KeyError:
+                # ignore if intervention is not in current set
+                pass
+
+        msg = "State matched with %s interventions"
+        self.logger.info(msg, len(current_interventions))
+
+        return current_interventions
 
     def get_data(self, input_name, timestep=None):
         """Get data required for model inputs
