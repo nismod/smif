@@ -36,7 +36,7 @@ class DecisionManager(object):
     form of a generator which allows the model runner to iterate over the collection of
     independent simulations required at each step.
 
-    (Not yet implemented.) A DecisionManager collates the output of the decision algorithms and
+    A DecisionManager collates the output of the decision algorithms and
     writes the post-decision state through a DataHandle. This allows Models to access a given
     decision state (identified uniquely by timestep and decision iteration id).
 
@@ -48,16 +48,14 @@ class DecisionManager(object):
     ---------
     data_handle: smif.data_layer.data_handle.DataHandle
         An instance of a data handle activated for the SosModel
-    strategies: list
     """
 
-    def __init__(self, data_handle, strategies):
+    def __init__(self, data_handle):
 
         self.logger = getLogger(__name__)
 
         self._data_handle = data_handle
         self._timesteps = data_handle.timesteps
-        self._strategies = strategies
         self._decision_modules = []
 
         self._set_up_decision_modules()
@@ -68,24 +66,12 @@ class DecisionManager(object):
 
     def _set_up_decision_modules(self):
 
-        self.logger.info("%s strategies found", len(self._strategies))
-        interventions = []
-
-        for index, strategy in enumerate(self._strategies):
-            if strategy['strategy'] == 'pre-specified-planning':
-
-                msg = "Adding %s interventions to pre-specified-planning %s"
-                self.logger.info(msg, len(strategy['interventions']), index)
-
-                interventions.extend(strategy['interventions'])
-
-            else:
-                msg = "Only pre-specified planning strategies are implemented"
-                raise NotImplementedError(msg)
-
-        if interventions:
+        # Create a Pre-Specified planning decision module with all
+        # the planned interventions
+        planned_interventions = self._data_handle.get_state()
+        if planned_interventions:
             self._decision_modules.append(
-                PreSpecified(self._timesteps, interventions)
+                PreSpecified(self._timesteps, planned_interventions)
                 )
 
     def decision_loop(self):
