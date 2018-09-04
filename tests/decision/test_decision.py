@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 from pytest import fixture, raises
 from smif.decision.decision import DecisionManager, PreSpecified, RuleBased
 
@@ -153,7 +155,9 @@ class TestRuleBased:
 class TestDecisionManager():
 
     def test_null_strategy(self):
-        df = DecisionManager([2010, 2015], [], [])
+        handle = Mock(timesteps=(2010, 2015))
+        handle.interventions = []
+        df = DecisionManager(handle, [])
         dm = df.decision_loop()
         bundle = next(dm)
         assert bundle == {0: [2010, 2015]}
@@ -161,7 +165,9 @@ class TestDecisionManager():
             next(dm)
 
     def test_decision_manager_init(self, get_strategies):
-        df = DecisionManager([2010, 2015], get_strategies, [])
+        handle = Mock(timesteps=(2010, 2015))
+        handle.interventions = []
+        df = DecisionManager(handle, get_strategies)
         dm = df.decision_loop()
         bundle = next(dm)
         assert bundle == {0: [2010, 2015]}

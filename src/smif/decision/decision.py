@@ -40,28 +40,30 @@ class DecisionManager(object):
     writes the post-decision state through a DataHandle. This allows Models to access a given
     decision state (identified uniquely by timestep and decision iteration id).
 
-    (Not yet implemented.) A DecisionManager may also pass a DataHandle down to a
+    A DecisionManager passes a DataHandle down to a
     DecisionModule, allowing the DecisionModule to access model results from previous timesteps
     and decision iterations when making decisions.
 
     Arguments
     ---------
-    timesteps: list
+    data_handle: smif.data_layer.data_handle.DataHandle
+        An instance of a data handle activated for the SosModel
     strategies: list
     """
 
-    def __init__(self, timesteps, strategies, interventions):
+    def __init__(self, data_handle, strategies):
 
         self.logger = getLogger(__name__)
 
-        self._timesteps = timesteps
+        self._data_handle = data_handle
+        self._timesteps = data_handle.timesteps
         self._strategies = strategies
         self._decision_modules = []
 
         self._set_up_decision_modules()
 
         self.register = InterventionRegister()
-        for intervention in interventions:
+        for intervention in data_handle.interventions:
             self.register.register(intervention)
 
     def _set_up_decision_modules(self):
@@ -132,7 +134,15 @@ class DecisionManager(object):
         self.logger.debug(
             "Retrieved %s decisions from %s",
             len(decisions), str(self._decision_modules))
-        return decisions
+
+        self.logger.debug(
+            "Writing state for timestep %s and interation %s",
+            timestep,
+            iteration)
+        store = self._data_handle._store
+        store.write_state(decisions,
+                          self._data_handle._modelrun_name,
+                          timestep, iteration)
 
 
 class DecisionModule(metaclass=ABCMeta):
@@ -214,7 +224,7 @@ class DecisionModule(metaclass=ABCMeta):
         """
         state = self._get_previous_state(timestep, decision_iteration)
         post_decision_state = state.bitwise_or(decision)
-        self.register.set_state(timestep, decision_iteration, post_decision_state)
+        return post_decision_state
 
     @abstractmethod
     def _set_state(self, timestep, decision_iteration):

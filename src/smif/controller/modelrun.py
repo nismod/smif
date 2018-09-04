@@ -21,7 +21,6 @@ from logging import getLogger
 
 from smif.data_layer import DataHandle
 from smif.decision.decision import DecisionManager
-from smif.model.sector_model import SectorModel
 
 
 class ModelRun(object):
@@ -164,16 +163,10 @@ class ModelRunner(object):
         )
         model_run.sos_model.before_model_run(data_handle)
 
-        interventions = []
-        for model in model_run.sos_model.models:
-            if isinstance(model, SectorModel):
-                interventions.extend(model.interventions)
-
         # Initialise the decision manager (and hence decision modules)
         self.logger.debug("Initialising the decision manager")
-        decision_manager = DecisionManager(model_run.model_horizon,
-                                           model_run.strategies,
-                                           interventions)
+        decision_manager = DecisionManager(data_handle,
+                                           model_run.strategies)
 
         # Solve the model run: decision loop generates a series of bundles of independent
         # decision iterations, each with a number of timesteps to run
@@ -189,16 +182,8 @@ class ModelRunner(object):
                 for timestep in timesteps:
                     self.logger.info('Running timestep %s', timestep)
 
-                    # setting state may be pushed down into the responsibility of
-                    # DecisionManager/Module sets state for each timestep, iteration
-                    # - SosModel/Model then calls through DataHandle to access 'current' state
-                    decisions = decision_manager.get_decision(timestep, iteration)
-
-                    self.logger.debug(
-                        "Writing state for timestep %s and interation %s",
-                        timestep,
-                        iteration)
-                    store.write_state(decisions, model_run.name, timestep, iteration)
+                    # Write decisions for current timestep to state
+                    decision_manager.get_decision(timestep, iteration)
 
                     data_handle = DataHandle(
                         store=store,

@@ -13,6 +13,7 @@ from types import MappingProxyType
 
 from smif.metadata import Spec
 from smif.model.scenario_model import ScenarioModel
+from smif.model.sector_model import SectorModel
 
 
 class DataHandle(object):
@@ -356,6 +357,31 @@ class DataHandle(object):
             modelset_iteration,
             decision_iteration
         )
+
+    @property
+    def interventions(self):
+        """A list of all interventions from the current model
+        """
+        return self._get_all_interventions()
+
+    def _get_all_interventions(self):
+        """Return all intervention from the current model
+
+        Returns
+        -------
+        list
+            A list of interventions
+        """
+
+        interventions = []
+        if isinstance(self._model, SectorModel):
+            interventions.extend(self._model.interventions)
+        else:
+            for sub_model in self._model.models:
+                if isinstance(sub_model, SectorModel):
+                    interventions.extend(sub_model.interventions)
+
+        return interventions
 
 
 class RelativeTimestep(Enum):
