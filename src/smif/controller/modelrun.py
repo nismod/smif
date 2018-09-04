@@ -165,8 +165,7 @@ class ModelRunner(object):
 
         # Initialise the decision manager (and hence decision modules)
         self.logger.debug("Initialising the decision manager")
-        decision_manager = DecisionManager(data_handle,
-                                           model_run.strategies)
+        decision_manager = DecisionManager(data_handle)
 
         # Solve the model run: decision loop generates a series of bundles of independent
         # decision iterations, each with a number of timesteps to run

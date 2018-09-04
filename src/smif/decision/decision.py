@@ -23,6 +23,7 @@ __license__ = "mit"
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
+from smif.data_layer.data_handle import DataHandle
 from smif.decision.intervention import InterventionRegister
 
 
@@ -114,9 +115,18 @@ class DecisionManager(object):
             A decision iteration
 
         """
+        data_handle = DataHandle(
+            self._data_handle._store,
+            self._data_handle._modelrun_name,
+            timestep,
+            self._data_handle._timesteps,
+            self._data_handle._model,
+            decision_iteration=iteration
+        )
+
         decisions = []
         for module in self._decision_modules:
-            decisions.extend(module.get_decision(timestep, iteration))
+            decisions.extend(module.get_decision(data_handle, timestep, iteration))
         self.logger.debug(
             "Retrieved %s decisions from %s",
             len(decisions), str(self._decision_modules))
@@ -176,7 +186,7 @@ class DecisionModule(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_decision(self, timestep, iteration):
+    def get_decision(self, data_handle, timestep, iteration):
         """Return decisions for a given timestep and decision iteration
         """
         raise NotImplementedError
@@ -269,7 +279,7 @@ class PreSpecified(DecisionModule):
         """
         pass
 
-    def get_decision(self, timestep, iteration=None):
+    def get_decision(self, data_handle, timestep, iteration=None):
         """Return a dict of intervention names built in timestep
 
         Arguments
@@ -345,7 +355,7 @@ class RuleBased(DecisionModule):
                 self.current_iteration += 1
                 return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
 
-    def get_decision(self, timestep, iteration):
+    def get_decision(self, data_handle, timestep, iteration):
         return []
 
     def _set_state(self, timestep, decision_iteration):
