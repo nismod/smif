@@ -133,6 +133,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 from isodate import parse_duration
+from smif.convert.adaptor import Adaptor
 from smif.convert.register import NDimensionalRegister, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
@@ -143,6 +144,45 @@ __license__ = "mit"
 """Used as the reference year for computing time intervals
 """
 BASE_YEAR = 2010
+
+
+class IntervalAdaptor(Adaptor):
+    """Convert intervals, assuming uniform distributions where necessary
+    """
+    def generate_coefficients(self, from_spec, to_spec):
+        """Generate conversion coefficients for interval dimensions
+
+        Assumes that the Coordinates elements contain an 'interval' key whose value corresponds
+        to :class:`Interval` data, that is a `tuple(interval_id, list of interval tuples)`.
+
+        For example, intervals covering each hour of a period ::
+
+                ('first_hour', [('PT0H', 'PT1H')])
+                ('second_hour', [('PT1H', 'PT2H')])
+                ...
+
+        Or intervals corresponding to repeating hours for each day of a period ::
+
+                ('midnight', [('PT0H', 'PT1H'), ('PT24H', 'PT25H'), ('PT48H', 'PT49H'), ...])
+                ('one_am', [('PT1H', 'PT2H'), ('PT25H', 'PT26H'), ('PT49H', 'PT50H'), ...])
+                ...
+
+        """
+        # find dimensions to convert
+        from_dim, to_dim = self.get_convert_dims(from_spec, to_spec)
+        # get dimension coordinates
+        from_coords = from_spec.dim_coords(from_dim)
+        to_coords = to_spec.dim_coords(to_dim)
+        # create IntervalSets from Coordinates
+        from_set = IntervalSet(from_dim, [e['interval'] for e in from_coords.elements])
+        to_set = IntervalSet(to_dim, [e['interval'] for e in to_coords.elements])
+        # register IntervalSets
+        register = NDimensionalRegister()
+        register.register(from_set)
+        register.register(to_set)
+        # use NDimensionalRegister to get coefficients
+        coefficients = register.get_coefficients(from_dim, to_dim)
+        return coefficients
 
 
 class Interval(object):
@@ -363,7 +403,7 @@ class IntervalSet(ResolutionSet):
 
     def __init__(self, name, data, base_year=2010):
         self._data = []
-        super().__init__()
+        self.logger = logging.getLogger(__name__)
         self.name = name
         self._base_year = base_year
         self.data = data
@@ -544,16 +584,3 @@ class IntervalSet(ResolutionSet):
 
     def __len__(self):
         return len(self._data)
-
-
-class TimeIntervalRegister(NDimensionalRegister):
-    """Holds the set of time-intervals used by the SectorModels
-
-    Notes
-    -----
-    The argument ``axis=1`` refers to the dimension of the data array that is
-    associated with the intervals dimension.
-
-    """
-    def __init__(self):
-        super().__init__(axis=1)

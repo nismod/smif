@@ -1,92 +1,13 @@
 """Test aggregation/disaggregation of data between sets of areas
 """
 from copy import copy
+from unittest.mock import Mock
 
 import numpy as np
 from pytest import fixture, raises
-from smif.convert.area import RegionRegister, RegionSet
-
-
-@fixture(scope='function')
-def regions():
-    """Return data structure for test regions/shapes
-    """
-    return [
-        {
-            'type': 'Feature',
-            'properties': {'name': 'unit'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
-            }
-        },
-        {
-            'type': 'Feature',
-            'properties': {'name': 'half'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 0.5], [1, 0.5], [1, 0]]]
-            }
-        },
-        {
-            'type': 'Feature',
-            'properties': {'name': 'two'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
-            }
-        }
-    ]
-
-
-@fixture(scope='function')
-def regions_single_half_square():
-    """Return single half-size square region::
-
-        |```|
-        | A |
-        |...|
-
-    """
-    return RegionSet('single_half_square', [
-        {
-            'type': 'Feature',
-            'properties': {'name': 'a'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
-            }
-        }
-    ])
-
-
-@fixture(scope='function')
-def regions_half_triangles():
-    """Return regions split diagonally::
-
-        |``````/|
-        | 0 / 1 |
-        |/......|
-
-    """
-    return RegionSet('half_triangles', [
-        {
-            'type': 'Feature',
-            'properties': {'name': 'zero'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 2], [1, 0]]]
-            }
-        },
-        {
-            'type': 'Feature',
-            'properties': {'name': 'one'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 2], [1, 2], [1, 0]]]
-            }
-        },
-    ])
+from smif.convert.region import RegionAdaptor, RegionSet
+from smif.convert.register import NDimensionalRegister
+from smif.metadata import Spec
 
 
 @fixture(scope='function')
@@ -94,15 +15,106 @@ def register(regions_half_triangles, regions_half_squares, regions_single_half_s
              regions_rect):
     """Region register with regions pre-registered
     """
-    register = RegionRegister()
-    register.register(regions_half_triangles)
-    register.register(regions_half_squares)
-    register.register(regions_single_half_square)
-    register.register(regions_rect)
+    register = NDimensionalRegister()
+    register.register(RegionSet('half_triangles', regions_half_triangles))
+    register.register(RegionSet('half_squares', regions_half_squares))
+    register.register(RegionSet('single_half_square', regions_single_half_square))
+    register.register(RegionSet('rect', regions_rect))
     alt = copy(regions_rect)
-    alt.name = 'rect_alt'
-    register.register(alt)
+    register.register(RegionSet('rect_alt', alt))
     return register
+
+
+class TestRegionAdaptor:
+    """Converting between region sets, assuming uniform distribution as necessary
+    """
+    def test_aggregate_region(self, regions_rect, regions_half_squares):
+        """Two regions aggregated to one, one interval
+        """
+        adaptor = RegionAdaptor('test-square-half')
+        from_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['half_squares'],
+            coords={
+                'half_squares': [
+                    {'name': f['properties']['name'], 'feature': f}
+                    for f in regions_half_squares
+                ]
+            }
+        )
+        adaptor.add_input(from_spec)
+        to_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['rect'],
+            coords={
+                'rect': [
+                    {'name': f['properties']['name'], 'feature': f}
+                    for f in regions_rect
+                ]
+            }
+        )
+        adaptor.add_output(to_spec)
+
+        actual_coefficients = adaptor.generate_coefficients(from_spec, to_spec)
+        expected = np.ones((2, 1))  # aggregating coefficients
+        np.testing.assert_allclose(actual_coefficients, expected, rtol=1e-3)
+
+        data = np.array([24, 24])  # area a,b
+        data_handle = Mock()
+        data_handle.get_data = Mock(return_value=data)
+        data_handle.read_coefficients = Mock(return_value=actual_coefficients)
+        adaptor.simulate(data_handle)
+
+        actual = data_handle.set_results.call_args[0][1]
+        expected = np.array([48])  # area zero
+        assert np.allclose(actual, expected)
+
+    def test_half_to_one_region_pass_through_time(self, regions_rect, regions_half_squares):
+        """Convert from half a region to one region, pass through time
+        """
+        adaptor = RegionAdaptor('test-square-half')
+        from_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['rect', 'months'],
+            coords={
+                'rect': [
+                    {'name': f['properties']['name'], 'feature': f}
+                    for f in regions_rect
+                ],
+                'months': list(range(12))
+            }
+        )
+        adaptor.add_input(from_spec)
+        to_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['half_squares', 'months'],
+            coords={
+                'half_squares': [
+                    {'name': f['properties']['name'], 'feature': f}
+                    for f in regions_half_squares
+                ],
+                'months': list(range(12))
+            }
+        )
+        adaptor.add_output(to_spec)
+
+        actual_coefficients = adaptor.generate_coefficients(from_spec, to_spec)
+        expected = np.ones((1, 2)) / 2  # disaggregating coefficients
+        np.testing.assert_allclose(actual_coefficients, expected, rtol=1e-3)
+
+        data = np.ones((1, 12))  # area zero, months 1-12
+        data_handle = Mock()
+        data_handle.get_data = Mock(return_value=data)
+        data_handle.read_coefficients = Mock(return_value=actual_coefficients)
+        adaptor.simulate(data_handle)
+
+        actual = data_handle.set_results.call_args[0][1]
+        expected = np.ones((2, 12)) / 2  # areas a-b, months 1-12
+        assert np.allclose(actual, expected)
 
 
 def test_proportion(regions):
@@ -110,8 +122,7 @@ def test_proportion(regions):
     """
     region_set = RegionSet('regions', regions)
 
-    assert region_set.get_proportion(0,
-                                     region_set[0]) == 1
+    assert region_set.get_proportion(0, region_set[0]) == 1
 
     assert region_set.get_proportion(0, region_set[1]) == 0.5
     assert region_set.get_proportion(1, region_set[0]) == 1
@@ -152,15 +163,17 @@ class TestRegionSet():
     def test_as_features(self, regions_half_squares):
         """Retrieve regions as feature dicts
         """
-        actual = regions_half_squares.as_features()
+        rset = RegionSet('test', regions_half_squares)
+        actual = rset.as_features()
         expected = [
             {
                 'type': 'Feature',
                 'properties': {'name': 'a'},
                 'geometry': {
                     'type': 'Polygon',
-                    'coordinates': (((0.0, 0.0), (0.0, 1.0), (1.0, 1.0),
-                                     (1.0, 0.0), (0.0, 0.0),),)
+                    'coordinates': (
+                        ((0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)),
+                    )
                 }
             },
             {
@@ -168,17 +181,18 @@ class TestRegionSet():
                 'properties': {'name': 'b'},
                 'geometry': {
                     'type': 'Polygon',
-                    'coordinates': (((0.0, 1.0), (0.0, 2.0), (1.0, 2.0),
-                                     (1.0, 1.0), (0.0, 1.0),),)
+                    'coordinates': (
+                        ((0.0, 1.0), (0.0, 2.0), (1.0, 2.0), (1.0, 1.0), (0.0, 1.0)),
+                    )
                 }
-            },
+            }
         ]
         assert actual == expected
 
     def test_centroids_as_features(self, regions_half_squares):
         """Retrieve centroids
         """
-        actual = regions_half_squares.centroids_as_features()
+        actual = RegionSet('test', regions_half_squares).centroids_as_features()
         expected = [
             {
                 'type': 'Feature',
@@ -217,7 +231,7 @@ class TestRegionSet():
                         'type': 'Polygon',
                         'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
                     }
-                },
+                }
             ])
 
         assert 'Region set must have uniquely named regions' in str(ex)
@@ -227,7 +241,7 @@ class TestRegionRegister():
     """Test creating registers, registering region sets, converting data
     """
     def test_create(self):
-        register = RegionRegister()
+        register = NDimensionalRegister()
         assert register.names == []
 
         with raises(ValueError) as ex:
