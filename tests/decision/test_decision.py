@@ -154,33 +154,13 @@ class TestRuleBased:
 
 
 class TestDecisionManager():
-
-    def test_null_strategy(self):
-        handle = Mock(timesteps=(2010, 2015))
-        handle.interventions = []
-        store = MemoryInterface()
-        store._model_runs = {'test': {'sos_model': 'test_sos_model'}}
-        store._sos_models = {'test_sos_model': {'sector_models': []}}
-        store._strategies = {'test': []}
-        handle._store = store
-        handle._modelrun_name = 'test'
-        df = DecisionManager(handle)
-        dm = df.decision_loop()
-        bundle = next(dm)
-        assert bundle == {0: [2010, 2015]}
-        with raises(StopIteration):
-            next(dm)
-
     def test_decision_manager_init(self):
-        handle = Mock(timesteps=(2010, 2015))
-        handle.interventions = []
         store = MemoryInterface()
         store._model_runs = {'test': {'sos_model': 'test_sos_model'}}
         store._sos_models = {'test_sos_model': {'sector_models': []}}
         store._strategies = {'test': []}
-        handle._store = store
-        handle._modelrun_name = 'test'
-        df = DecisionManager(handle)
+
+        df = DecisionManager(store, [2010, 2015], 'test', 'test_sos_model')
         dm = df.decision_loop()
         bundle = next(dm)
         assert bundle == {0: [2010, 2015]}

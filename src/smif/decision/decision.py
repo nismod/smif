@@ -23,7 +23,6 @@ __license__ = "mit"
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
-from smif.data_layer.data_handle import DataHandle
 from smif.decision.intervention import InterventionRegister
 
 
@@ -47,29 +46,52 @@ class DecisionManager(object):
 
     Arguments
     ---------
-    data_handle: smif.data_layer.data_handle.DataHandle
+    store: smif.data_layer.data_interface.DataInterface
         An instance of a data handle activated for the SosModel
     """
 
-    def __init__(self, data_handle):
+    def __init__(self, store, timesteps, modelrun_name, sos_model_name):
 
         self.logger = getLogger(__name__)
 
-        self._data_handle = data_handle
-        self._timesteps = data_handle.timesteps
+        self._store = store
+        self._modelrun_name = modelrun_name
+        self._timesteps = timesteps
         self._decision_modules = []
-
-        self._set_up_decision_modules()
+        self._set_up_decision_modules(modelrun_name)
 
         self.register = InterventionRegister()
-        for intervention in data_handle.interventions:
-            self.register.register(intervention)
+        self._set_up_interventions(sos_model_name)
 
-    def _set_up_decision_modules(self):
+    def _set_up_interventions(self, sos_model_name):
+        for sector_model in self._store.read_sos_model(sos_model_name)['sector_models']:
+            for intervention in self._store.read_interventions(sector_model):
+                self.register.register(intervention)
+
+    def _set_up_decision_modules(self, modelrun_name):
+
+        # Read in the historical interventions (initial conditions) directly
+        initial_conditions = self._store.read_all_initial_conditions(modelrun_name)
+
+        # Read in strategies
+        strategies = self._store.read_strategies(modelrun_name)
+
+        self.logger.info("%s strategies found", len(strategies))
+        planned_interventions = []
+        planned_interventions.extend(initial_conditions)
+
+        for index, strategy in enumerate(strategies):
+            # Extract pre-specified planning interventions
+            if strategy['strategy'] == 'pre-specified-planning':
+
+                msg = "Adding %s planned interventions to pre-specified-planning %s"
+                self.logger.info(msg, len(strategy['interventions']), index)
+
+                planned_interventions.extend(strategy['interventions'])
 
         # Create a Pre-Specified planning decision module with all
         # the planned interventions
-        planned_interventions = self._data_handle.get_state()
+
         if planned_interventions:
             self._decision_modules.append(
                 PreSpecified(self._timesteps, planned_interventions)
@@ -101,7 +123,7 @@ class DecisionManager(object):
         else:
             yield {0: [x for x in self._timesteps]}
 
-    def get_decision(self, timestep, iteration):
+    def get_decision(self, data_handle, timestep, iteration):
         """Return all interventions built in the given timestep
 
         for the given decision
@@ -109,21 +131,13 @@ class DecisionManager(object):
 
         Arguments
         ---------
+        data_handle : smif.data_layer.data_handle.DataHandle
         timestep : int
             A timestep (planning year)
         iteration : int
             A decision iteration
 
         """
-        data_handle = DataHandle(
-            self._data_handle._store,
-            self._data_handle._modelrun_name,
-            timestep,
-            self._data_handle._timesteps,
-            self._data_handle._model,
-            decision_iteration=iteration
-        )
-
         decisions = []
         for module in self._decision_modules:
             decisions.extend(module.get_decision(data_handle, timestep, iteration))
@@ -135,10 +149,9 @@ class DecisionManager(object):
             "Writing state for timestep %s and interation %s",
             timestep,
             iteration)
-        store = self._data_handle._store
-        store.write_state(decisions,
-                          self._data_handle._modelrun_name,
-                          timestep, iteration)
+        self._store.write_state(decisions,
+                                data_handle._modelrun_name,
+                                timestep, iteration)
 
 
 class DecisionModule(metaclass=ABCMeta):
