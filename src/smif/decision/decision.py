@@ -23,7 +23,7 @@ __license__ = "mit"
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
-from smif.decision.intervention import InterventionRegister
+from smif.decision.intervention import Intervention, InterventionRegister
 
 
 class DecisionManager(object):
@@ -65,8 +65,12 @@ class DecisionManager(object):
 
     def _set_up_interventions(self, sos_model_name):
         for sector_model in self._store.read_sos_model(sos_model_name)['sector_models']:
-            for intervention in self._store.read_interventions(sector_model):
-                self.register.register(intervention)
+            for name, intervention in self._store.read_interventions(sector_model).items():
+                self.register.register(
+                    Intervention(
+                        name,
+                        data=intervention,
+                        sector=sector_model))
 
     def _set_up_decision_modules(self, modelrun_name):
 

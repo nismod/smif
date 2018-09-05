@@ -13,7 +13,6 @@ from types import MappingProxyType
 
 from smif.metadata import Spec
 from smif.model.scenario_model import ScenarioModel
-from smif.model.sector_model import SectorModel
 
 
 class DataHandle(object):
@@ -145,27 +144,7 @@ class DataHandle(object):
         A list of interventions installed at the current timestep
         """
         if self._current_timestep is None:
-            store = self._store
-            modelrun_name = self._modelrun_name
-
-            # Read in the historical interventions (initial conditions) directly
-            initial_conditions = store.read_all_initial_conditions(modelrun_name)
-
-            # Read in strategies
-            strategies = store.read_strategies(modelrun_name)
-
-            self.logger.info("%s strategies found", len(strategies))
-            sos_state = []
-            sos_state.extend(initial_conditions)
-
-            for index, strategy in enumerate(strategies):
-                # Extract pre-specified planning interventions
-                if strategy['strategy'] == 'pre-specified-planning':
-
-                    msg = "Adding %s planned interventions to pre-specified-planning %s"
-                    self.logger.info(msg, len(strategy['interventions']), index)
-
-                    sos_state.extend(strategy['interventions'])
+            raise ValueError("You must pass a timestep value to get state")
         else:
 
             sos_state = self._store.read_state(
@@ -411,31 +390,6 @@ class DataHandle(object):
             modelset_iteration,
             decision_iteration
         )
-
-    @property
-    def interventions(self):
-        """A list of all interventions from the current model
-        """
-        return self._get_all_interventions()
-
-    def _get_all_interventions(self):
-        """Return all intervention from the current model
-
-        Returns
-        -------
-        list
-            A list of interventions
-        """
-
-        interventions = []
-        if isinstance(self._model, SectorModel):
-            interventions.extend(self._model.interventions)
-        else:
-            for sub_model in self._model.models:
-                if isinstance(sub_model, SectorModel):
-                    interventions.extend(sub_model.interventions)
-
-        return interventions
 
 
 class RelativeTimestep(Enum):
