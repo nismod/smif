@@ -1,5 +1,7 @@
 """Memory-backed data interface
 """
+from collections import OrderedDict
+
 from smif.data_layer.data_interface import DataExistsError, DataInterface
 
 
@@ -8,25 +10,25 @@ class MemoryInterface(DataInterface):
     """
     def __init__(self):
         super().__init__()
-        self._model_runs = {}
-        self._sos_models = {}
-        self._sector_models = {}
-        self._strategies = {}
-        self._state = {}
-        self._units = {}
-        self._dimensions = {}
-        self._coefficients = {}
-        self._scenarios = {}
-        self._scenario_data = {}
-        self._narratives = {}
-        self._narrative_data = {}
-        self._results = {}
-        self._interventions = {}
+        self._model_runs = OrderedDict()
+        self._sos_models = OrderedDict()
+        self._sector_models = OrderedDict()
+        self._strategies = OrderedDict()
+        self._state = OrderedDict()
+        self._units = OrderedDict()
+        self._dimensions = OrderedDict()
+        self._coefficients = OrderedDict()
+        self._scenarios = OrderedDict()
+        self._scenario_data = OrderedDict()
+        self._narratives = OrderedDict()
+        self._narrative_data = OrderedDict()
+        self._results = OrderedDict()
+        self._interventions = OrderedDict()
         self._initial_conditions = []
 
     # region Model runs
     def read_model_runs(self):
-        return [x for x in self._model_runs.values()]
+        return list(self._model_runs.values())
 
     def read_model_run(self, model_run_name):
         return self._model_runs[model_run_name]
@@ -43,7 +45,7 @@ class MemoryInterface(DataInterface):
 
     # region System-of-systems models
     def read_sos_models(self):
-        return [x for x in self._sos_models.values()]
+        return list(self._sos_models.values())
 
     def read_sos_model(self, sos_model_name):
         return self._sos_models[sos_model_name]
@@ -62,7 +64,7 @@ class MemoryInterface(DataInterface):
 
     # region Sector models
     def read_sector_models(self):
-        return self._sector_models.values()
+        return list(self._sector_models.values())
 
     def read_sector_model(self, sector_model_name):
         return self._sector_models[sector_model_name]
@@ -100,12 +102,12 @@ class MemoryInterface(DataInterface):
 
     # region Units
     def read_unit_definitions(self):
-        return self._units.values()
+        return list(self._units.values())
     # endregion
 
     # region Dimensions
     def read_dimensions(self):
-        return self._dimensions.values()
+        return list(self._dimensions.values())
 
     def read_dimension(self, dimension_name):
         return self._dimensions[dimension_name]
@@ -130,7 +132,7 @@ class MemoryInterface(DataInterface):
 
     # region Scenarios
     def read_scenarios(self):
-        return self._scenarios.values()
+        return list(self._scenarios.values())
 
     def read_scenario(self, scenario_name):
         return self._scenarios[scenario_name]
@@ -145,10 +147,10 @@ class MemoryInterface(DataInterface):
         del self._scenarios[scenario_name]
 
     def read_scenario_variants(self, scenario_name):
-        return self._scenarios.values()
+        return list(self._scenarios[scenario_name]['variants'].values())
 
     def read_scenario_variant(self, scenario_name, variant_name):
-        return self._scenarios[scenario_name]
+        return self._scenarios[scenario_name]['variants'][variant_name]
 
     def write_scenario_variant(self, scenario_name, variant):
         self._scenarios[scenario_name]['variants'][variant['name']] = variant
@@ -169,7 +171,7 @@ class MemoryInterface(DataInterface):
 
     # region Narratives
     def read_narratives(self):
-        return self._narratives.values()
+        return list(self._narratives.values())
 
     def read_narrative(self, narrative_name):
         return self._narratives[narrative_name]
@@ -184,7 +186,7 @@ class MemoryInterface(DataInterface):
         del self._narratives[narrative_name]
 
     def read_narrative_variants(self, narrative_name):
-        return self._narratives[narrative_name]['variants'].values()
+        return list(self._narratives[narrative_name]['variants'].values())
 
     def read_narrative_variant(self, narrative_name, variant_name):
         return self._narratives[narrative_name]['variants'][variant_name]
