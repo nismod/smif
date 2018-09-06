@@ -79,7 +79,7 @@ describe('<ScenarioSetConfigForm />', () => {
         // Check if facet was added
         expect(wrapper.state().scenarioSet.facets[1].name).to.equal('test_name')
         expect(wrapper.state().scenarioSet.facets[1].description).to.equal('test_description')
-        
+
         // Check if facet appears in list
         expect(wrapper.find('tr#facets_property_1').exists()).to.equal(true)
         expect(wrapper.find('tr#facets_property_1').html()).to.include('test_name')
@@ -258,6 +258,6 @@ describe('<ScenarioSetConfigForm />', () => {
             scenarios={scenarios} />)
 
         wrapper = wrapper.unmount()
-        expect(wrapper.html()).to.be.null
+        expect(wrapper.length).to.equal(0)
     })
 })

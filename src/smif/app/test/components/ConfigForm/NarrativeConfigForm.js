@@ -81,6 +81,6 @@ describe('<NarrativeConfigForm />', () => {
         var wrapper = mount((<NarrativeConfigForm narrative={narrative} narrativeSets={narrative_sets} />))
 
         wrapper = wrapper.unmount()
-        expect(wrapper.html()).to.be.null
+        expect(wrapper.length).to.equal(0)
     })
 })
