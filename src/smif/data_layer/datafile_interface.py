@@ -103,7 +103,7 @@ class DatafileInterface(DataInterface):
 
         # cache results of reading project_config (invalidate on write)
         self._project_config_cache_invalid = True
-        # MUST ONLY access through self._read_project_config()
+        # MUST ONLY access through self.read_project_config()
         self._project_config_cache = None
 
         config_folders = {
@@ -125,6 +125,13 @@ class DatafileInterface(DataInterface):
             os.makedirs(dirname, exist_ok=True)
             # store dirname
             self.file_dir[category] = dirname
+
+        # ensure project config file exists
+        try:
+            self.read_project_config()
+        except FileNotFoundError:
+            # write empty config if none found
+            self._write_project_config({})
 
     # region Model runs
     def read_model_runs(self):
@@ -386,31 +393,48 @@ class DatafileInterface(DataInterface):
         """
         with open(fname, 'r') as file_handle:
             reader = csv.DictReader(file_handle)
-            state = list(reader)
+            state = [
+                {
+                    'name': line['name'],
+                    'build_year': int(line['build_year'])
+                }
+                for line in reader
+            ]
         return state
     # endregion
 
     # region Units
+    def write_unit_definitions(self, units):
+        project_config = self.read_project_config()
+        filename = 'user-defined-units.txt'
+        path = os.path.join(self.base_folder, 'data', filename)
+        with open(path, 'w') as units_fh:
+            units_fh.writelines(units)
+        project_config['units'] = filename
+        self._write_project_config(project_config)
+
     def read_unit_definitions(self):
         project_config = self.read_project_config()
-        filename = project_config['units']
-        if filename is not None:
+        try:
+            filename = project_config['units']
             path = os.path.join(self.base_folder, 'data', filename)
             try:
                 with open(path, 'r') as units_fh:
                     return [line.strip() for line in units_fh]
             except FileNotFoundError as ex:
                 raise DataNotFoundError('Units file not found:' + str(ex)) from ex
-        else:
+        except KeyError:
             return []
     # endregion
 
     # region Dimensions
     def read_dimensions(self):
         project_config = self.read_project_config()
+        dimensions = []
         for dim in project_config['dimensions']:
             dim['elements'] = self._read_dimension_file(dim['elements'])
-        return project_config['dimensions']
+            dimensions.append(dim)
+        return dimensions
 
     @check_exists(dtype='dimension')
     def read_dimension(self, dimension_name):
@@ -478,8 +502,14 @@ class DatafileInterface(DataInterface):
         self._write_dimension_file(filename, elements)
 
         # refer to elements by filename and add to config
-        dimension['elements'] = filename
-        project_config['dimensions'].append(dimension)
+        dimension_with_ref = {
+            'name': dimension['name'],
+            'elements': filename
+        }
+        try:
+            project_config['dimensions'].append(dimension_with_ref)
+        except KeyError:
+            project_config['dimensions'] = [dimension_with_ref]
         self._write_project_config(project_config)
 
     @check_exists(dtype='dimension')
@@ -493,8 +523,11 @@ class DatafileInterface(DataInterface):
         self._write_dimension_file(filename, elements)
 
         # refer to elements by filename and update config
-        dimension['elements'] = filename
-        project_config['dimensions'][idx] = dimension
+        dimension_with_ref = {
+            'name': dimension['name'],
+            'elements': filename
+        }
+        project_config['dimensions'][idx] = dimension_with_ref
         self._write_project_config(project_config)
 
     @check_exists(dtype='dimension')
@@ -552,7 +585,10 @@ class DatafileInterface(DataInterface):
     @check_not_exists(dtype='scenario')
     def write_scenario(self, scenario):
         project_config = self.read_project_config()
-        project_config['scenarios'].append(scenario)
+        try:
+            project_config['scenarios'].append(scenario)
+        except KeyError:
+            project_config['scenarios'] = [scenario]
         self._write_project_config(project_config)
 
     @check_exists(dtype='scenario')
@@ -662,7 +698,10 @@ class DatafileInterface(DataInterface):
     @check_not_exists(dtype='narrative')
     def write_narrative(self, narrative):
         project_config = self.read_project_config()
-        project_config['narratives'].append(narrative)
+        try:
+            project_config['narratives'].append(narrative)
+        except KeyError:
+            project_config['narratives'] = [narrative]
         self._write_project_config(project_config)
 
     @check_exists(dtype='narrative')
@@ -682,7 +721,8 @@ class DatafileInterface(DataInterface):
     @check_exists(dtype='narrative')
     def read_narrative_variants(self, narrative_name):
         project_config = self.read_project_config()
-        return project_config['narratives'][narrative_name]['variants']
+        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
+        return project_config['narratives'][n_idx]['variants']
 
     @check_exists(dtype='narrative_variant')
     def read_narrative_variant(self, narrative_name, variant_name):
@@ -694,7 +734,8 @@ class DatafileInterface(DataInterface):
     @check_not_exists(dtype='narrative_variant')
     def write_narrative_variant(self, narrative_name, variant):
         project_config = self.read_project_config()
-        project_config['narratives'][narrative_name]['variants'].append(variant)
+        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
+        project_config['narratives'][n_idx]['variants'].append(variant)
         self._write_project_config(project_config)
 
     @check_exists(dtype='narrative_variant')

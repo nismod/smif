@@ -25,17 +25,8 @@ logging.basicConfig(filename='test_logs.log',
                     filemode='w')
 
 
-@fixture(scope='function')
-def setup_folder_structure(tmpdir_factory, oxford_region,
-                           annual_intervals, initial_system,
-                           planned_interventions):
-    """
-
-    Returns
-    -------
-    :class:`LocalPath`
-        Path to the temporary folder
-    """
+@fixture
+def setup_empty_folder_structure(tmpdir_factory):
     folder_list = [
         'config',
         os.path.join('config', 'model_runs'),
@@ -58,6 +49,22 @@ def setup_folder_structure(tmpdir_factory, oxford_region,
 
     for folder in folder_list:
         test_folder.mkdir(folder)
+
+    return test_folder
+
+
+@fixture
+def setup_folder_structure(setup_empty_folder_structure, oxford_region,
+                           annual_intervals, initial_system,
+                           planned_interventions):
+    """
+
+    Returns
+    -------
+    :class:`LocalPath`
+        Path to the temporary folder
+    """
+    test_folder = setup_empty_folder_structure
 
     region_file = test_folder.join('data', 'region_definitions', 'test_region.json')
     region_file.write(json.dumps(oxford_region))
@@ -592,8 +599,8 @@ def get_sector_model():
                 'units': 'percentage'
             }
         ],
-        'interventions': ['planned_interventions.yml'],
-        'initial_conditions': ['init_system.yml']
+        'interventions': [],
+        'initial_conditions': []
     }
 
 

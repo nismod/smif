@@ -1,6 +1,7 @@
 """Memory-backed data interface
 """
 from collections import OrderedDict
+from copy import copy
 
 from smif.data_layer.data_interface import DataExistsError, DataInterface
 
@@ -15,7 +16,7 @@ class MemoryInterface(DataInterface):
         self._sector_models = OrderedDict()
         self._strategies = OrderedDict()
         self._state = OrderedDict()
-        self._units = OrderedDict()
+        self._units = []  # list[str] of pint definitions
         self._dimensions = OrderedDict()
         self._coefficients = OrderedDict()
         self._scenarios = OrderedDict()
@@ -101,8 +102,11 @@ class MemoryInterface(DataInterface):
     # endregion
 
     # region Units
+    def write_unit_definitions(self, units):
+        self._units = units
+
     def read_unit_definitions(self):
-        return list(self._units.values())
+        return self._units
     # endregion
 
     # region Dimensions
@@ -132,15 +136,18 @@ class MemoryInterface(DataInterface):
 
     # region Scenarios
     def read_scenarios(self):
-        return list(self._scenarios.values())
+        return [_variant_dict_to_list(s) for s in self._scenarios.values()]
 
     def read_scenario(self, scenario_name):
-        return self._scenarios[scenario_name]
+        scenario = self._scenarios[scenario_name]
+        return _variant_dict_to_list(scenario)
 
     def write_scenario(self, scenario):
+        scenario = _variant_list_to_dict(scenario)
         self._scenarios[scenario['name']] = scenario
 
     def update_scenario(self, scenario_name, scenario):
+        scenario = _variant_list_to_dict(scenario)
         self._scenarios[scenario_name] = scenario
 
     def delete_scenario(self, scenario_name):
@@ -171,15 +178,18 @@ class MemoryInterface(DataInterface):
 
     # region Narratives
     def read_narratives(self):
-        return list(self._narratives.values())
+        return [_variant_dict_to_list(n) for n in self._narratives.values()]
 
     def read_narrative(self, narrative_name):
-        return self._narratives[narrative_name]
+        narrative = self._narratives[narrative_name]
+        return _variant_dict_to_list(narrative)
 
     def write_narrative(self, narrative):
+        narrative = _variant_list_to_dict(narrative)
         self._narratives[narrative['name']] = narrative
 
     def update_narrative(self, narrative_name, narrative):
+        narrative = _variant_list_to_dict(narrative)
         self._narratives[narrative_name] = narrative
 
     def delete_narrative(self, narrative_name):
@@ -228,6 +238,29 @@ class MemoryInterface(DataInterface):
         self.logger.debug("Set %s", key)
         self._results[key] = data
 
-    def prepare_warm_start(self, modelrun_id):
-        return self._model_runs[modelrun_id]['timesteps'][0]
+    def prepare_warm_start(self, modelrun_name):
+        results_keys = [k for k in self._results.keys() if k[0] == modelrun_name]
+        if results_keys:
+            return max(k[3] for k in results_keys)  # max timestep reached
+        return None
     # endregion
+
+
+def _variant_list_to_dict(config):
+    config = copy(config)
+    try:
+        list_ = config['variants']
+    except KeyError:
+        list_ = []
+    config['variants'] = {variant['name']: variant for variant in list_}
+    return config
+
+
+def _variant_dict_to_list(config):
+    config = copy(config)
+    try:
+        dict_ = config['variants']
+    except KeyError:
+        dict_ = {}
+    config['variants'] = list(dict_.values())
+    return config
