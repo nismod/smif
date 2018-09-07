@@ -88,7 +88,6 @@ class MemoryInterface(DataInterface):
 
     def read_initial_conditions(self, sector_model_name):
         return self._initial_conditions[sector_model_name]
-
     # endregion
 
     # region State

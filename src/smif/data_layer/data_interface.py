@@ -235,6 +235,21 @@ class DataInterface(metaclass=ABCMeta):
             List of strategy definition dicts
         """
         raise NotImplementedError()
+    # endregion
+
+    # region Interventions
+    @abstractmethod
+    def read_interventions(self, sector_model_name):
+        """Read interventions data for `sector_model_name`
+
+        Returns
+        -------
+        dict of dict
+            A dict of intervention dictionaries containing intervention
+            attributes
+        """
+        raise NotImplementedError()
+    # endregion
 
     @abstractmethod
     def read_initial_conditions(self, sector_model_name):

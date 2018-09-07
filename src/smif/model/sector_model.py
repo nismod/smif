@@ -144,11 +144,12 @@ class SectorModel(Model, metaclass=ABCMeta):
         Arguments
         ---------
         data: smif.data_layer.DataHandle
-            Access state, parameter values, dependency inputs
+            Access state, parameter values, dependency inputs, results and
+            interventions
 
         Notes
         -----
-        See docs on :class:`smif.data_layer.DataHandle` for details of how to
+        See docs on :class:`~smif.data_layer.data_handle.DataHandle` for details of how to
         access inputs, parameters and state and how to set results.
 
         ``interval``
@@ -159,18 +160,21 @@ class SectorModel(Model, metaclass=ABCMeta):
             the output parameter, as specified in model configuration
 
         To obtain simulation model data in this method,
-        use the data_handle methods such as::
+        use the methods such as::
 
             parameter_value = data.get_parameter('my_parameter_name')
 
-        Other useful methods are ``get_base_timestep_data(input_name)``,
-        ``get_previous_timestep_data(input_name)``,
-        ``get_parameter(parameter_name)``, ``get_data(input_name, timestep=None)``,
-        ``get_parameters()`` and
-        ``get_results(output_name, model_name=None, modelset_iteration=None,
-        decision_iteration=None, timestep=None)``.
+        Other useful methods are
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_base_timestep_data`,
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_previous_timestep_data`,
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_parameter`,
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_data`,
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_parameters` and
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_results`.
 
-        ``data.get_state()`` returns a list of intervention dict for the
-        current timestep
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_state` returns a list
+        of intervention dict for the current timestep
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_current_interventions`
+        returns a list of dict where each dict is an intervention
 
         """

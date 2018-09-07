@@ -136,12 +136,15 @@ class DataHandle(object):
         If the DataHandle instance has a timestep, then state is
         established from the state file.
 
-        If the DataHandle instance has a timestep of None, then this
-        method returns all the pre-specified (planned) and historical interventions
-
         Returns
         -------
-        A list of interventions installed at the current timestep
+        list of tuple
+            A list of (intervention name, build_year) installed in the current timestep
+
+        Raises
+        ------
+        ValueError
+            If self._current_timestep is None an error is raised.
         """
         if self._current_timestep is None:
             raise ValueError("You must pass a timestep value to get state")
@@ -156,11 +159,12 @@ class DataHandle(object):
         return sos_state
 
     def get_current_interventions(self):
-        """Get the interventions the exist in the current state
+        """Get the interventions that exist in the current state
 
         Returns
         -------
-        list of intervention dicts with build_year attribute
+        list of dicts
+            A list of intervention dicts with build_year attribute
         """
         state = self.get_state()
 
