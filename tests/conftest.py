@@ -8,7 +8,6 @@
 """
 from __future__ import absolute_import, division, print_function
 
-import csv
 import json
 import logging
 import os
@@ -67,11 +66,17 @@ def setup_folder_structure(setup_empty_folder_structure, oxford_region, remap_mo
     region_file = test_folder.join('data', 'dimensions', 'test_region.geojson')
     region_file.write(json.dumps(oxford_region))
 
-    intervals_file = test_folder.join('data', 'interval_definitions', 'annual.csv')
-    intervals_file.write("id,start,end\n1,P0Y,P1Y\n")
+    intervals_file = test_folder.join('data', 'dimensions', 'annual.yml')
+    intervals_file.write("""\
+- name: '1'
+  interval: [[P0Y, P1Y]]
+""")
 
-    intervals_file = test_folder.join('data', 'interval_definitions', 'hourly.csv')
-    intervals_file.write("id,start,end\n1,PT0H,PT1H\n")
+    intervals_file = test_folder.join('data', 'dimensions', 'hourly.yml')
+    intervals_file.write("""\
+- name: '1'
+  interval: [[PT0H, PT1H]]
+""")
 
     initial_conditions_file = test_folder.join('data', 'initial_conditions', 'init_system.yml')
     dump(initial_system, str(initial_conditions_file))
@@ -80,14 +85,9 @@ def setup_folder_structure(setup_empty_folder_structure, oxford_region, remap_mo
         'data', 'interventions', 'planned_interventions.yml')
     dump(planned_interventions, str(planned_interventions_file))
 
-    data = remap_months_csv()
-    intervals_file = test_folder.join(
-        'data', 'interval_definitions', 'remap.csv')
-    keys = data[0].keys()
-    with intervals_file.open(mode='w+') as intervals_fh:
-        dict_writer = csv.DictWriter(intervals_fh, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(data)
+    remap_months_file = test_folder.join('data', 'dimensions', 'remap.yml')
+    data = remap_months
+    dump(data, str(remap_months_file))
 
     units_file = test_folder.join('data', 'user_units.txt')
     with units_file.open(mode='w') as units_fh:
@@ -215,23 +215,13 @@ def water_outputs():
     ]
 
 
-@fixture(scope='session')
-def annual_intervals_csv():
-    return [
-        {
-            "start": "P0Y",
-            "end": "P1Y",
-            "id": '1'
-        }
-    ]
-
-
-@fixture(scope='session')
+@fixture
 def annual_intervals():
     return [
-        (
-         '1', [("P0Y", "P1Y")]
-        )
+        {
+            "name": '1',
+            "interval": [["P0Y", "P1Y"]],
+        }
     ]
 
 
@@ -441,7 +431,8 @@ def project_config():
                 'variants': [
                     {
                         'name': 'Energy Demand - High Tech',
-                        'description': 'High penetration of SMART technology on the demand side',
+                        'description': 'High penetration of SMART technology on the demand ' +
+                                       'side',
                         'data': {
                             '': 'energy_demand_high_tech.yml',
                         }
@@ -455,8 +446,8 @@ def project_config():
                 'variants': [
                     {
                         'name': 'Central Planning',
-                        'description': 'Stronger role for central government in planning ' + \
-                                       'and regulation, less emphasis on market-based ' + \
+                        'description': 'Stronger role for central government in planning ' +
+                                       'and regulation, less emphasis on market-based ' +
                                        'solutions',
                         'data': {
                             '': 'central_planning.yml',
