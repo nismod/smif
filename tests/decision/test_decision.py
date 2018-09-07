@@ -28,20 +28,29 @@ def get_strategies():
     return strategies
 
 
+@fixture(scope='function')
+def get_register():
+    register = Mock()
+    mock_intervention = Mock()
+    mock_intervention.as_dict = Mock(return_value={'technical_lifetime': {'value': 99}})
+    register.get_intervention = Mock(return_value=mock_intervention)
+    return register
+
+
 class TestPreSpecified:
 
     def test_initialisation(self, plan):
 
         timesteps = [2010, 2015, 2020]
 
-        actual = PreSpecified(timesteps, plan)
+        actual = PreSpecified(timesteps, Mock(), plan)
 
         assert actual.timesteps == timesteps
 
     def test_generator(self, plan):
 
         timesteps = [2010, 2015, 2020]
-        dm = PreSpecified(timesteps, plan)
+        dm = PreSpecified(timesteps, Mock(), plan)
 
         actual = next(dm)
 
@@ -49,10 +58,12 @@ class TestPreSpecified:
 
         assert actual == expected
 
-    def test_get_decision(self, plan):
+    def test_get_decision(self, plan, get_register):
+
+        register = get_register
 
         timesteps = [2010, 2015, 2020]
-        dm = PreSpecified(timesteps, plan)
+        dm = PreSpecified(timesteps, register, plan)
 
         actual = dm.get_decision(Mock(), 2010)
         expected = [
@@ -79,8 +90,9 @@ class TestPreSpecified:
         ]
         assert actual == expected
 
-    def test_get_decision_two(self, get_strategies):
-        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
+    def test_get_decision_two(self, get_strategies, get_register):
+        register = get_register
+        dm = PreSpecified([2010, 2015], register, get_strategies[0]['interventions'])
         actual = dm.get_decision(Mock(), 2010)
         expected = [
             {'name': 'nuclear_large', 'build_year': 2012},
@@ -102,21 +114,37 @@ class TestPreSpecified:
         assert (actual) == (expected)
 
     def test_buildable(self, get_strategies):
-        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
+        dm = PreSpecified([2010, 2015], Mock(), get_strategies[0]['interventions'])
         assert dm.timesteps == [2010, 2015]
         assert dm.buildable(2010, 2010) is True
         assert dm.buildable(2011, 2010) is True
 
     def test_historical_intervention_buildable(self, get_strategies):
-        dm = PreSpecified([2020, 2030], get_strategies[0]['interventions'])
+        dm = PreSpecified([2020, 2030], Mock(), get_strategies[0]['interventions'])
         assert dm.timesteps == [2020, 2030]
         assert dm.buildable(1980, 2020) is True
         assert dm.buildable(1990, 2020) is True
 
     def test_buildable_raises(self, get_strategies):
-        dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
+        dm = PreSpecified([2010, 2015], Mock(), get_strategies[0]['interventions'])
         with raises(ValueError):
             dm.buildable(2015, 2014)
+
+    def test_within_lifetime(self):
+        dm = PreSpecified([2010, 2015], Mock(), [])
+        assert dm.within_lifetime(2010, 2010, 1)
+
+    def test_within_lifetime_does_not_check_start(self):
+        """Note that the ``within_lifetime`` method does not check
+        that the build year is compatible with timestep
+        """
+        dm = PreSpecified([2010, 2015], Mock(), [])
+        assert dm.within_lifetime(2011, 2010, 1)
+
+    def test_negative_lifetime_raises(self):
+        dm = PreSpecified([2010, 2015], Mock(), [])
+        with raises(ValueError):
+            dm.within_lifetime(2010, 2010, -1)
 
 
 class TestRuleBased:
@@ -124,7 +152,7 @@ class TestRuleBased:
     def test_initialisation(self):
 
         timesteps = [2010, 2015, 2020]
-        dm = RuleBased(timesteps)
+        dm = RuleBased(timesteps, Mock())
         assert dm.timesteps == timesteps
         assert dm.satisfied is False
         assert dm.current_timestep_index == 0
@@ -133,7 +161,7 @@ class TestRuleBased:
     def test_generator(self):
 
         timesteps = [2010, 2015, 2020]
-        dm = RuleBased(timesteps)
+        dm = RuleBased(timesteps, Mock())
 
         actual = next(dm)
         assert actual == {1: [2010]}

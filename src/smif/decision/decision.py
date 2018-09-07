@@ -58,10 +58,10 @@ class DecisionManager(object):
         self._modelrun_name = modelrun_name
         self._timesteps = timesteps
         self._decision_modules = []
-        self._set_up_decision_modules(modelrun_name)
-
         self.register = InterventionRegister()
         self._set_up_interventions(sos_model_name)
+
+        self._set_up_decision_modules(modelrun_name)
 
     def _set_up_interventions(self, sos_model_name):
         for sector_model in self._store.read_sos_model(sos_model_name)['sector_models']:
@@ -98,7 +98,7 @@ class DecisionManager(object):
 
         if planned_interventions:
             self._decision_modules.append(
-                PreSpecified(self._timesteps, planned_interventions)
+                PreSpecified(self._timesteps, self.register, planned_interventions)
                 )
 
     def decision_loop(self):
@@ -176,10 +176,13 @@ class DecisionModule(metaclass=ABCMeta):
     ---------
     timesteps : list
         A list of planning timesteps
+    intervention_register : smif.interventions.InterventionRegister
+        Reference to a fully populated intervention register
 
     """
-    def __init__(self, timesteps):
+    def __init__(self, timesteps, intervention_register):
         self.timesteps = timesteps
+        self.intervention_register = intervention_register
 
     def __next__(self):
         return self._get_next_decision_iteration()
@@ -272,9 +275,8 @@ class PreSpecified(DecisionModule):
         representing historical or planned interventions
     """
 
-    def __init__(self, timesteps, planned_interventions):
-        super().__init__(timesteps)
-
+    def __init__(self, timesteps, intervention_register, planned_interventions):
+        super().__init__(timesteps, intervention_register)
         self._planned = planned_interventions
 
     def _get_next_decision_iteration(self):
@@ -301,6 +303,8 @@ class PreSpecified(DecisionModule):
 
         Arguments
         ---------
+        data_handle : smif.data_layer.data_handle.DataHandle
+            A reference to a smif data handle
         timestep : int
             A timestep (planning year)
         iteration : int
@@ -308,12 +312,13 @@ class PreSpecified(DecisionModule):
 
         Returns
         -------
-        list of tuples
+        dict of tuples
 
         Examples
         --------
-        >>> dm = PreSpecified([2010, 2015], [{'name': 'intervention_a', 'build_year': 2010}])
-        >>> dm.get_decision(2010)
+        >>> dm = PreSpecified([2010, 2015], register,
+        [{'name': 'intervention_a', 'build_year': 2010}])
+        >>> dm.get_decision(handle, 2010)
         [{'name': intervention_a', 'build_year': 2010}]
         """
         decisions = []
@@ -322,7 +327,15 @@ class PreSpecified(DecisionModule):
 
         for intervention in self._planned:
             build_year = int(intervention['build_year'])
-            if self.buildable(build_year, timestep):
+
+            data = self.intervention_register.get_intervention(intervention['name'])
+
+            data_dict = data.as_dict()
+
+            lifetime = data_dict['technical_lifetime']['value']
+
+            if self.buildable(build_year, timestep) and \
+               self.within_lifetime(build_year, timestep, lifetime):
                 decisions.append(intervention)
         return decisions
 
@@ -349,13 +362,35 @@ class PreSpecified(DecisionModule):
         else:
             return False
 
+    def within_lifetime(self, build_year, timestep, lifetime):
+        """Interventions are deemed active if build_year + lifetime >= timestep
+
+        Arguments
+        ---------
+        build_year : int
+        timestep : int
+        lifetime : int
+        """
+        if not isinstance(build_year, (int, float)):
+            msg = "Build Year should be an integer but is a {}"
+            raise TypeError(msg.format(type(build_year)))
+        build_year = int(build_year)
+        lifetime = int(lifetime)
+        if lifetime < 0:
+            msg = "The value of lifetime cannot be negative"
+            raise ValueError(msg)
+        if timestep <= build_year + lifetime:
+            return True
+        else:
+            return False
+
 
 class RuleBased(DecisionModule):
     """Rule-base decision modules
     """
 
-    def __init__(self, timesteps):
-        super().__init__(timesteps)
+    def __init__(self, timesteps, register):
+        super().__init__(timesteps, register)
         self.satisfied = False
         self.current_timestep_index = 0
         self.current_iteration = 0
