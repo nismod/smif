@@ -94,12 +94,12 @@ class DatafileInterface(DataInterface):
     def __init__(self, base_folder, storage_format='local_binary'):
         super().__init__()
 
-        self.base_folder = base_folder
+        self.base_folder = str(base_folder)
         self.storage_format = storage_format
 
         self.file_dir = {}
-        self.file_dir['project'] = os.path.join(base_folder, 'config')
-        self.file_dir['results'] = os.path.join(base_folder, 'results')
+        self.file_dir['project'] = os.path.join(self.base_folder, 'config')
+        self.file_dir['results'] = os.path.join(self.base_folder, 'results')
 
         # cache results of reading project_config (invalidate on write)
         self._project_config_cache_invalid = True
@@ -120,7 +120,7 @@ class DatafileInterface(DataInterface):
         }
 
         for category, folder in config_folders.items():
-            dirname = os.path.join(base_folder, folder, category)
+            dirname = os.path.join(self.base_folder, folder, category)
             # ensure each directory exists
             os.makedirs(dirname, exist_ok=True)
             # store dirname
@@ -438,16 +438,18 @@ class DatafileInterface(DataInterface):
     def read_dimensions(self):
         project_config = self.read_project_config()
         dimensions = []
-        for dim in project_config['dimensions']:
-            dim['elements'] = self._read_dimension_file(dim['elements'])
+        for dim_with_ref in project_config['dimensions']:
+            dim = copy.copy(dim_with_ref)
+            dim['elements'] = self._read_dimension_file(dim_with_ref['elements'])
             dimensions.append(dim)
         return dimensions
 
     @check_exists(dtype='dimension')
     def read_dimension(self, dimension_name):
         project_config = self.read_project_config()
-        dim = _pick_from_list(project_config['dimensions'], dimension_name)
-        dim['elements'] = self._read_dimension_file(dim['elements'])
+        dim_with_ref = _pick_from_list(project_config['dimensions'], dimension_name)
+        dim = copy.copy(dim_with_ref)
+        dim['elements'] = self._read_dimension_file(dim_with_ref['elements'])
         return dim
 
     def _set_list_coords(self, list_):
@@ -509,10 +511,8 @@ class DatafileInterface(DataInterface):
         self._write_dimension_file(filename, elements)
 
         # refer to elements by filename and add to config
-        dimension_with_ref = {
-            'name': dimension['name'],
-            'elements': filename
-        }
+        dimension_with_ref = copy.copy(dimension)
+        dimension_with_ref['elements'] = filename
         try:
             project_config['dimensions'].append(dimension_with_ref)
         except KeyError:
@@ -530,10 +530,8 @@ class DatafileInterface(DataInterface):
         self._write_dimension_file(filename, elements)
 
         # refer to elements by filename and update config
-        dimension_with_ref = {
-            'name': dimension['name'],
-            'elements': filename
-        }
+        dimension_with_ref = copy.copy(dimension)
+        dimension_with_ref['elements'] = filename
         project_config['dimensions'][idx] = dimension_with_ref
         self._write_project_config(project_config)
 
@@ -554,12 +552,12 @@ class DatafileInterface(DataInterface):
     # region Conversion coefficients
     def read_coefficients(self, source_spec, destination_spec):
         results_path = self._get_coefficients_path(source_spec, destination_spec)
-        if os.path.isfile(results_path):
+        try:
             return self._get_data_from_native_file(results_path)
-
-        msg = "Could not find the coefficients file for %s to %s"
-        self.logger.warning(msg, source_spec, destination_spec)
-        return None
+        except (FileNotFoundError, pa.lib.ArrowIOError):
+            msg = "Could not find the coefficients file for %s to %s"
+            self.logger.warning(msg, source_spec, destination_spec)
+            raise DataNotFoundError(msg.format(source_spec, destination_spec))
 
     def write_coefficients(self, source_spec, destination_spec, data):
         results_path = self._get_coefficients_path(source_spec, destination_spec)
