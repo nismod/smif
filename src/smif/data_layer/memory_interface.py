@@ -79,7 +79,7 @@ class MemoryInterface(DataInterface):
 
     # region Interventions
     def read_interventions(self, sector_model_name):
-        return {item['name']: item for item in self._interventions[sector_model_name]}
+        return self._interventions[sector_model_name]
     # endregion
 
     # region Strategies

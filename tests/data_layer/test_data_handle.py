@@ -23,6 +23,22 @@ def mock_store():
         'name': 'test_sos_model',
         'sector_models': ['sector_model_test']})
     store._initial_conditions = {'sector_model_test': []}
+    data = {'water_asset_a': {
+                    'build_year': 2010,
+                    'capacity': 50,
+                    'location': None,
+                    'sector': ''},
+            'water_asset_b': {
+                    'build_year': 2015,
+                    'capacity': 150,
+                    'location': None,
+                    'sector': ''},
+            'water_asset_c': {
+                    'capacity': 100,
+                    'build_year': 2015,
+                    'location': None,
+                    'sector': ''}}
+    store._interventions['test_model'] = data
     return store
 
 
@@ -300,27 +316,10 @@ class TestDataHandleState():
         """
 
         A call to the ``get_current_interventions`` method of the data_handle
-        returns a list of interventions from the current state filtered by the
+        returns a dict of interventions from the current state filtered by the
         current model
 
         """
-        a = {'name': 'water_asset_a',
-             'build_year': 2010,
-             'capacity': 50,
-             'location': None,
-             'sector': ''}
-        b = {'name': 'water_asset_b',
-             'build_year': 2015,
-             'capacity': 150,
-             'location': None,
-             'sector': ''}
-        c = {'name': 'water_asset_c',
-             'capacity': 100,
-             'build_year': 2015,
-             'location': None,
-             'sector': ''}
-
-        mock_store._interventions['test_model'] = [a, b, c]
         state = [
             {'name': 'water_asset_a', 'build_year': 2010},
             {'name': 'water_asset_b', 'build_year': 2015}
@@ -331,23 +330,18 @@ class TestDataHandleState():
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
 
         actual = data_handle.get_current_interventions()
-        actual.sort(key=lambda m: m['name'])
-        expected = [
-            {
-                'name': 'water_asset_a',
-                'build_year': 2010,
-                'capacity': 50,
-                'location': None,
-                'sector': ''
-            },
-            {
-                'name': 'water_asset_b',
-                'build_year': 2015,
-                'capacity': 150,
-                'location': None,
-                'sector': ''
+        expected = {
+            'water_asset_a':
+                {'build_year': 2010,
+                 'capacity': 50,
+                 'location': None,
+                 'sector': ''},
+            'water_asset_b':
+                {'build_year': 2015,
+                 'capacity': 150,
+                 'location': None,
+                 'sector': ''}
             }
-        ]
         assert actual == expected
 
     def test_interventions_sector_model_ignore_unrecog(self, mock_store, mock_model):
@@ -357,24 +351,6 @@ class TestDataHandleState():
         intervention list are ignored
 
         """
-        a = {'name': 'water_asset_a',
-             'build_year': 2010,
-             'capacity': 50,
-             'location': None,
-             'sector': ''}
-        b = {'name': 'water_asset_b',
-             'build_year': 2015,
-             'capacity': 150,
-             'location': None,
-             'sector': ''}
-        c = {'name': 'water_asset_c',
-             'capacity': 100,
-             'build_year': 2015,
-             'location': None,
-             'sector': ''}
-
-        mock_store._interventions['test_model'] = [a, b, c]
-
         state = [
             {'name': 'water_asset_a', 'build_year': 2010},
             {'name': 'energy_asset_unexpected', 'build_year': 2015}
@@ -384,15 +360,13 @@ class TestDataHandleState():
 
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         actual = data_handle.get_current_interventions()
-        expected = [
-            {
-                'name': 'water_asset_a',
+        expected = {'water_asset_a': {
                 'build_year': 2010,
                 'capacity': 50,
                 'location': None,
                 'sector': ''
             }
-        ]
+        }
         assert actual == expected
 
     def test_pass_none_to_timestep_raises(self, mock_store, mock_model):

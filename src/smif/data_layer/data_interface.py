@@ -246,7 +246,7 @@ class DataInterface(metaclass=ABCMeta):
         -------
         dict of dict
             A dict of intervention dictionaries containing intervention
-            attributes
+            attributes keyed by intervention name
         """
         raise NotImplementedError()
     # endregion
