@@ -58,10 +58,10 @@ class DecisionManager(object):
         self._modelrun_name = modelrun_name
         self._timesteps = timesteps
         self._decision_modules = []
-        self._set_up_decision_modules(modelrun_name)
-
         self.register = InterventionRegister()
         self._set_up_interventions(sos_model_name)
+
+        self._set_up_decision_modules(modelrun_name)
 
     def _set_up_interventions(self, sos_model_name):
         for sector_model in self._store.read_sos_model(sos_model_name)['sector_models']:
@@ -98,7 +98,7 @@ class DecisionManager(object):
 
         if planned_interventions:
             self._decision_modules.append(
-                PreSpecified(self._timesteps, planned_interventions)
+                PreSpecified(self._timesteps, self.register, planned_interventions)
                 )
 
     def decision_loop(self):
@@ -314,8 +314,9 @@ class PreSpecified(DecisionModule):
 
         Examples
         --------
-        >>> dm = PreSpecified([2010, 2015], [{'name': 'intervention_a', 'build_year': 2010}])
-        >>> dm.get_decision(2010)
+        >>> dm = PreSpecified([2010, 2015], register,
+        [{'name': 'intervention_a', 'build_year': 2010}])
+        >>> dm.get_decision(handle, 2010)
         [{'name': intervention_a', 'build_year': 2010}]
         """
         decisions = []
@@ -326,7 +327,10 @@ class PreSpecified(DecisionModule):
             build_year = int(intervention['build_year'])
 
             data = self.intervention_register.get_intervention(intervention['name'])
-            lifetime = data['lifetime']
+
+            data_dict = data.as_dict()
+
+            lifetime = data_dict['technical_lifetime']['value']
 
             if self.buildable(build_year, timestep) and \
                self.within_lifetime(build_year, timestep, lifetime):
@@ -365,7 +369,12 @@ class PreSpecified(DecisionModule):
         timestep : int
         lifetime : int
         """
-        if build_year + lifetime <= timestep:
+        if not isinstance(build_year, (int, float)):
+            msg = "Build Year should be an integer but is a {}"
+            raise TypeError(msg.format(type(build_year)))
+        build_year = int(build_year)
+        lifetime = int(lifetime)
+        if timestep <= build_year + lifetime:
             return True
         else:
             return False
@@ -375,8 +384,8 @@ class RuleBased(DecisionModule):
     """Rule-base decision modules
     """
 
-    def __init__(self, timesteps):
-        super().__init__(timesteps)
+    def __init__(self, timesteps, register):
+        super().__init__(timesteps, register)
         self.satisfied = False
         self.current_timestep_index = 0
         self.current_iteration = 0
