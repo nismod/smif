@@ -1,22 +1,18 @@
 """Test data file interface
 """
 import csv
-import json
 import os
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock
 
 import numpy as np
 import pyarrow as pa
-from pytest import mark, raises
+from pytest import fixture, mark, raises
 from smif.data_layer import (DataExistsError, DataMismatchError,
                              DataNotFoundError)
 from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.load import dump
-
-from ..convert.conftest import remap_months, remap_months_csv
-from ..convert.conftest import twenty_four_hours as hourly_day
-from ..convert.conftest import twenty_four_hours_csv as hourly_day_csv
+from smif.metadata import Spec
 
 
 class TestUnits():
@@ -570,197 +566,6 @@ class TestSectorModel:
 
         actual = handler._reshape_csv_interventions(data)
         assert actual == expected
-
-    # initial conditions should be tested as read from files via read_sector_model
-    @mark.xfail
-    def test_sector_model_read_initial_conditions(self, get_handler, get_sector_model):
-        config_handler = get_handler
-        config_handler._sector_model_exists = Mock()
-        config_handler._read_sector_model_file = Mock(return_value=get_sector_model)
-        config_handler._read_sector_model_interventions = Mock()
-        config_handler.read_sector_model_initial_conditions = Mock()
-
-        config_handler.read_sector_model('test_model')
-        assert config_handler._sector_model_exists.called_with('test_model')
-        assert config_handler._read_sector_model_interventions.called_with('test_model')
-        assert config_handler.read_sector_model_initial_conditions.called_with('test_model')
-
-
-# need to test with spec and new methods
-@mark.xfail
-class TestDimensions:
-    """Dimension definitions (regions, intervals) should be readable. May move to make it
-    possible to import/edit/write these definitions.
-    """
-    def test_region_definition_data(self, setup_folder_structure, oxford_region,
-                                    get_handler):
-        """ Test to dump a region_definition_set (GeoJSON) data-file and then read the data
-        using the datafile interface. Finally check if the data shows up in the
-        returned dictionary.
-        """
-        basefolder = setup_folder_structure
-        region_definition_data = oxford_region
-
-        with open(os.path.join(str(basefolder), 'data', 'region_definitions',
-                               'test_region.json'), 'w+') as region_definition_file:
-            json.dump(region_definition_data, region_definition_file)
-
-        config_handler = get_handler
-        test_region_definition = config_handler.read_region_definition_data(
-            'lad')
-
-        assert test_region_definition[0]['properties']['name'] == 'oxford'
-
-    def test_missing_region_definition_data(self, setup_folder_structure, get_handler):
-        """Should raise error if region definition not found
-        """
-        with raises(DataNotFoundError) as ex:
-            get_handler.read_region_definition_data('missing')
-        assert "Region definition 'missing' not found" in str(ex)
-
-    def test_read_hourly_interval_definition_data(self,
-                                                  setup_folder_structure,
-                                                  get_handler):
-        path = os.path.join(str(setup_folder_structure),
-                            'data',
-                            'interval_definitions',
-                            'hourly.csv')
-        with open(path, 'w') as fh:
-            w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
-            w.writeheader()
-            w.writerows(hourly_day_csv())
-
-        actual = get_handler.read_interval_definition_data('hourly')
-        expected = hourly_day()
-        assert actual == expected
-
-    def test_read_remap_interval_definition_data(self,
-                                                 setup_folder_structure,
-                                                 get_handler):
-        path = os.path.join(str(setup_folder_structure),
-                            'data',
-                            'interval_definitions',
-                            'remap.csv')
-        with open(path, 'w') as fh:
-            w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
-            w.writeheader()
-            w.writerows(remap_months_csv())
-
-        actual = get_handler.read_interval_definition_data('remap_months')
-
-        expected = remap_months()
-        assert actual == expected
-
-    def test_read_annual_interval_definition(self,
-                                             setup_folder_structure,
-                                             annual_intervals_csv,
-                                             annual_intervals,
-                                             get_handler):
-        """Ids are cast to integer if digits
-        """
-        path = os.path.join(str(setup_folder_structure), 'data',
-                            'interval_definitions',
-                            'annual.csv')
-        with open(path, 'w') as fh:
-            w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
-            w.writeheader()
-            w.writerows(annual_intervals_csv)
-
-        actual = get_handler.read_interval_definition_data('annual')
-        expected = [(1, [('P0Y', 'P1Y')])]
-        assert actual == expected
-
-    def test_project_region_definitions(self, get_handler):
-        """ Test to read and write the project configuration
-        """
-        config_handler = get_handler
-
-        # region_definition sets / read existing (from fixture)
-        region_definitions = config_handler.read_region_definitions()
-        assert region_definitions[0]['name'] == 'lad'
-        assert len(region_definitions) == 1
-
-        # region_definition sets / add
-        region_definition = {
-            'name': 'lad_NL',
-            'description': 'Local authority districts for the Netherlands',
-            'filename': 'lad_NL.csv'
-        }
-        config_handler.write_region_definition(region_definition)
-        region_definitions = config_handler.read_region_definitions()
-        assert len(region_definitions) == 2
-        for region_definition in region_definitions:
-            if region_definition['name'] == 'lad_NL':
-                assert region_definition['filename'] == 'lad_NL.csv'
-
-        # region_definition sets / modify
-        region_definition = {
-            'name': 'lad_NL',
-            'description': 'Local authority districts for the Netherlands',
-            'filename': 'lad_NL_V2.csv'
-        }
-        config_handler.update_region_definition('lad_NL', region_definition)
-        region_definitions = config_handler.read_region_definitions()
-        assert len(region_definitions) == 2
-        for region_definition in region_definitions:
-            if region_definition['name'] == 'lad_NL':
-                assert region_definition['filename'] == 'lad_NL_V2.csv'
-
-        # region_definition sets / modify unique identifier (name)
-        region_definition['name'] = 'name_change'
-        config_handler.update_region_definition('lad_NL', region_definition)
-        region_definitions = config_handler.read_region_definitions()
-        assert len(region_definitions) == 2
-        for region_definition in region_definitions:
-            if region_definition['name'] == 'name_change':
-                assert region_definition['filename'] == 'lad_NL_V2.csv'
-
-    def test_project_interval_definitions(self, get_handler):
-        """ Test to read and write the project configuration
-        """
-        config_handler = get_handler
-
-        # interval_definitions / read existing (from fixture)
-        interval_definitions = config_handler.read_interval_definitions()
-        assert interval_definitions[0]['name'] == 'hourly'
-        assert len(interval_definitions) == 3
-
-        # interval_definition sets / add
-        interval_definition = {
-            'name': 'monthly',
-            'description': 'The 12 months of the year',
-            'filename': 'monthly.csv'
-        }
-        config_handler.write_interval_definition(interval_definition)
-        interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 4
-        for interval_definition in interval_definitions:
-            if interval_definition['name'] == 'monthly':
-                assert interval_definition['filename'] == 'monthly.csv'
-
-        # interval_definition sets / modify
-        interval_definition = {
-            'name': 'monthly',
-            'description': 'The 12 months of the year',
-            'filename': 'monthly_V2.csv'
-        }
-        config_handler.update_interval_definition(
-            interval_definition['name'], interval_definition)
-        interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 4
-        for interval_definition in interval_definitions:
-            if interval_definition['name'] == 'monthly':
-                assert interval_definition['filename'] == 'monthly_V2.csv'
-
-        # region_definition sets / modify unique identifier (name)
-        interval_definition['name'] = 'name_change'
-        config_handler.update_interval_definition(
-            'monthly', interval_definition)
-        interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 4
-        for interval_definition in interval_definitions:
-            if interval_definition['name'] == 'name_change':
-                assert interval_definition['filename'] == 'monthly_V2.csv'
 
 
 # need to test with spec and new methods
@@ -1540,46 +1345,35 @@ class TestWarmStart:
         assert len(os.listdir(current_results_path)) == 0
 
 
-# need to read/write with from_spec and to_spec
-@mark.xfail
 class TestCoefficients:
     """Dimension conversion coefficients should be cached to disk and read if available.
     """
-    def test_write(self, get_handler):
-        data = np.eye(100)
-        handler = get_handler
-        handler.write_coefficients('from_set_name', 'to_set_name', data)
+    @fixture
+    def from_spec(self):
+        return Spec(name='from_test_coef', dtype='int')
 
-        expected_file = os.path.join(handler.base_folder, 'data',
-                                     'coefficients',
-                                     'from_set_name_to_set_name.dat')
+    @fixture
+    def to_spec(self):
+        return Spec(name='to_test_coef', dtype='int')
 
-        assert os.path.exists(expected_file)
-
-    def test_read(self, get_handler):
-
+    def test_read_write(self, from_spec, to_spec, get_handler):
         data = np.eye(1000)
         handler = get_handler
-        handler.write_coefficients('from_set_name', 'to_set_name', data)
+        handler.write_coefficients(from_spec, to_spec, data)
+        actual = handler.read_coefficients(from_spec, to_spec)
+        np.testing.assert_equal(actual, data)
 
-        actual = handler.read_coefficients('from_set_name', 'to_set_name')
-        expected = np.eye(1000)
-
-        np.testing.assert_equal(actual, expected)
-
-    def test_read_raises(self, get_handler):
-
+    def test_read_raises(self, from_spec, to_spec, get_handler):
         handler = get_handler
+        missing_spec = Spec(name='missing_coef', dtype='int')
+        with raises(DataNotFoundError):
+            handler.read_coefficients(missing_spec, to_spec)
 
-        actual = handler.read_coefficients('doesnotexist', 'to_set_name')
-
-        assert actual is None
-
-    def test_write_success_if_folder_missing(self):
+    def test_write_success_if_folder_missing(self, from_spec, to_spec):
         """Ensure we can write files, even if project directory starts empty
         """
         with TemporaryDirectory() as tmpdirname:
             # start with empty project (no data/coefficients subdirectory)
             handler = DatafileInterface(tmpdirname, 'local_binary')
             data = np.eye(10)
-            handler.write_coefficients('from_set_name', 'to_set_name', data)
+            handler.write_coefficients(from_spec, to_spec, data)
