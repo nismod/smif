@@ -72,10 +72,10 @@ class TestReadState:
         path = os.path.join(dir_, 'state_2010_decision_0.csv')
         os.makedirs(dir_, exist_ok=True)
         with open(path, 'w') as state_fh:
-            state_fh.write("build_year,intervention\n2010,power_station")
+            state_fh.write("build_year,name\n2010,power_station")
 
         actual = handler.read_state(modelrun_name, timestep, decision_iteration)
-        expected = [{'build_year': '2010', 'intervention': 'power_station'}]
+        expected = [{'build_year': 2010, 'name': 'power_station'}]
         assert actual == expected
 
     def test_get_state_filename_all(self, get_handler):

@@ -1,4 +1,4 @@
 - name: M40 toll
   type: major_road_segment
-  build_date: 2020
+  build_year: 2020
   location: "LINE(51.1 -1.7,51.2 -1.6)"

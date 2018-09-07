@@ -285,7 +285,7 @@ class DatafileInterface(DataInterface):
         filepath = self.file_dir[dirname]
         _, ext = os.path.splitext(filename)
         if ext == '.csv':
-            data = self._read_state_file(os.path.join(filepath, filename))
+            data = self._get_data_from_csv(os.path.join(filepath, filename))
             try:
                 data = self._reshape_csv_interventions(data)
             except ValueError:
@@ -393,13 +393,18 @@ class DatafileInterface(DataInterface):
         """
         with open(fname, 'r') as file_handle:
             reader = csv.DictReader(file_handle)
-            state = [
-                {
-                    'name': line['name'],
-                    'build_year': int(line['build_year'])
-                }
-                for line in reader
-            ]
+            state = []
+            for line in reader:
+                try:
+                    item = {
+                        'name': line['name'],
+                        'build_year': int(line['build_year'])
+                    }
+                except KeyError:
+                    msg = "Interventions must have name and build year, got {} in {}"
+                    raise DataReadError(msg.format(line, fname))
+                state.append(item)
+
         return state
     # endregion
 
@@ -417,6 +422,8 @@ class DatafileInterface(DataInterface):
         project_config = self.read_project_config()
         try:
             filename = project_config['units']
+            if filename is None:
+                return []
             path = os.path.join(self.base_folder, 'data', filename)
             try:
                 with open(path, 'r') as units_fh:
