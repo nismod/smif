@@ -1,4 +1,7 @@
+from unittest.mock import Mock
+
 from pytest import fixture, raises
+from smif.data_layer.memory_interface import MemoryInterface
 from smif.decision.decision import DecisionManager, PreSpecified, RuleBased
 
 
@@ -51,13 +54,13 @@ class TestPreSpecified:
         timesteps = [2010, 2015, 2020]
         dm = PreSpecified(timesteps, plan)
 
-        actual = dm.get_decision(2010)
+        actual = dm.get_decision(Mock(), 2010)
         expected = [
             {'name': 'small_pumping_station_oxford',
              'build_year': 2010}]
         assert actual == expected
 
-        actual = dm.get_decision(2015)
+        actual = dm.get_decision(Mock(), 2015)
         expected = [
             {'name': 'small_pumping_station_oxford',
              'build_year': 2010},
@@ -65,7 +68,7 @@ class TestPreSpecified:
              'build_year': 2015}]
         assert actual == expected
 
-        actual = dm.get_decision(2020)
+        actual = dm.get_decision(Mock(), 2020)
         expected = [
             {'name': 'small_pumping_station_oxford',
              'build_year': 2010},
@@ -78,7 +81,7 @@ class TestPreSpecified:
 
     def test_get_decision_two(self, get_strategies):
         dm = PreSpecified([2010, 2015], get_strategies[0]['interventions'])
-        actual = dm.get_decision(2010)
+        actual = dm.get_decision(Mock(), 2010)
         expected = [
             {'name': 'nuclear_large', 'build_year': 2012},
             {'name': 'carrington_retire', 'build_year': 2011}
@@ -91,7 +94,7 @@ class TestPreSpecified:
         # expected = [('carrington_retire', 2011)]
         # assert actual == expected
 
-        actual = dm.get_decision(2015)
+        actual = dm.get_decision(Mock(), 2015)
         expected = [
             {'name': 'nuclear_large', 'build_year': 2012},
             {'name': 'carrington_retire', 'build_year': 2011}
@@ -151,17 +154,13 @@ class TestRuleBased:
 
 
 class TestDecisionManager():
+    def test_decision_manager_init(self):
+        store = MemoryInterface()
+        store._model_runs = {'test': {'sos_model': 'test_sos_model'}}
+        store._sos_models = {'test_sos_model': {'sector_models': []}}
+        store._strategies = {'test': []}
 
-    def test_null_strategy(self):
-        df = DecisionManager([2010, 2015], [], [])
-        dm = df.decision_loop()
-        bundle = next(dm)
-        assert bundle == {0: [2010, 2015]}
-        with raises(StopIteration):
-            next(dm)
-
-    def test_decision_manager_init(self, get_strategies):
-        df = DecisionManager([2010, 2015], get_strategies, [])
+        df = DecisionManager(store, [2010, 2015], 'test', 'test_sos_model')
         dm = df.decision_loop()
         bundle = next(dm)
         assert bundle == {0: [2010, 2015]}

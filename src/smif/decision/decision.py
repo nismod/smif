@@ -23,7 +23,7 @@ __license__ = "mit"
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
-from smif.decision.intervention import InterventionRegister
+from smif.decision.intervention import Intervention, InterventionRegister
 
 
 class DecisionManager(object):
@@ -36,54 +36,69 @@ class DecisionManager(object):
     form of a generator which allows the model runner to iterate over the collection of
     independent simulations required at each step.
 
-    (Not yet implemented.) A DecisionManager collates the output of the decision algorithms and
+    A DecisionManager collates the output of the decision algorithms and
     writes the post-decision state through a DataHandle. This allows Models to access a given
     decision state (identified uniquely by timestep and decision iteration id).
 
-    (Not yet implemented.) A DecisionManager may also pass a DataHandle down to a
+    A DecisionManager passes a DataHandle down to a
     DecisionModule, allowing the DecisionModule to access model results from previous timesteps
     and decision iterations when making decisions.
 
     Arguments
     ---------
-    timesteps: list
-    strategies: list
+    store: smif.data_layer.data_interface.DataInterface
+        An instance of a data handle activated for the SosModel
     """
 
-    def __init__(self, timesteps, strategies, interventions):
+    def __init__(self, store, timesteps, modelrun_name, sos_model_name):
 
         self.logger = getLogger(__name__)
 
+        self._store = store
+        self._modelrun_name = modelrun_name
         self._timesteps = timesteps
-        self._strategies = strategies
         self._decision_modules = []
-
-        self._set_up_decision_modules()
+        self._set_up_decision_modules(modelrun_name)
 
         self.register = InterventionRegister()
-        for intervention in interventions:
-            self.register.register(intervention)
+        self._set_up_interventions(sos_model_name)
 
-    def _set_up_decision_modules(self):
+    def _set_up_interventions(self, sos_model_name):
+        for sector_model in self._store.read_sos_model(sos_model_name)['sector_models']:
+            for name, intervention in self._store.read_interventions(sector_model).items():
+                self.register.register(
+                    Intervention(
+                        name,
+                        data=intervention,
+                        sector=sector_model))
 
-        self.logger.info("%s strategies found", len(self._strategies))
-        interventions = []
+    def _set_up_decision_modules(self, modelrun_name):
 
-        for index, strategy in enumerate(self._strategies):
+        # Read in the historical interventions (initial conditions) directly
+        initial_conditions = self._store.read_all_initial_conditions(modelrun_name)
+
+        # Read in strategies
+        strategies = self._store.read_strategies(modelrun_name)
+
+        self.logger.info("%s strategies found", len(strategies))
+        planned_interventions = []
+        planned_interventions.extend(initial_conditions)
+
+        for index, strategy in enumerate(strategies):
+            # Extract pre-specified planning interventions
             if strategy['strategy'] == 'pre-specified-planning':
 
-                msg = "Adding %s interventions to pre-specified-planning %s"
+                msg = "Adding %s planned interventions to pre-specified-planning %s"
                 self.logger.info(msg, len(strategy['interventions']), index)
 
-                interventions.extend(strategy['interventions'])
+                planned_interventions.extend(strategy['interventions'])
 
-            else:
-                msg = "Only pre-specified planning strategies are implemented"
-                raise NotImplementedError(msg)
+        # Create a Pre-Specified planning decision module with all
+        # the planned interventions
 
-        if interventions:
+        if planned_interventions:
             self._decision_modules.append(
-                PreSpecified(self._timesteps, interventions)
+                PreSpecified(self._timesteps, planned_interventions)
                 )
 
     def decision_loop(self):
@@ -112,7 +127,7 @@ class DecisionManager(object):
         else:
             yield {0: [x for x in self._timesteps]}
 
-    def get_decision(self, timestep, iteration):
+    def get_decision(self, data_handle, timestep, iteration):
         """Return all interventions built in the given timestep
 
         for the given decision
@@ -120,6 +135,7 @@ class DecisionManager(object):
 
         Arguments
         ---------
+        data_handle : smif.data_layer.data_handle.DataHandle
         timestep : int
             A timestep (planning year)
         iteration : int
@@ -128,11 +144,18 @@ class DecisionManager(object):
         """
         decisions = []
         for module in self._decision_modules:
-            decisions.extend(module.get_decision(timestep, iteration))
+            decisions.extend(module.get_decision(data_handle, timestep, iteration))
         self.logger.debug(
             "Retrieved %s decisions from %s",
             len(decisions), str(self._decision_modules))
-        return decisions
+
+        self.logger.debug(
+            "Writing state for timestep %s and interation %s",
+            timestep,
+            iteration)
+        self._store.write_state(decisions,
+                                data_handle._modelrun_name,
+                                timestep, iteration)
 
 
 class DecisionModule(metaclass=ABCMeta):
@@ -180,7 +203,7 @@ class DecisionModule(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_decision(self, timestep, iteration):
+    def get_decision(self, data_handle, timestep, iteration):
         """Return decisions for a given timestep and decision iteration
         """
         raise NotImplementedError
@@ -214,7 +237,7 @@ class DecisionModule(metaclass=ABCMeta):
         """
         state = self._get_previous_state(timestep, decision_iteration)
         post_decision_state = state.bitwise_or(decision)
-        self.register.set_state(timestep, decision_iteration, post_decision_state)
+        return post_decision_state
 
     @abstractmethod
     def _set_state(self, timestep, decision_iteration):
@@ -273,7 +296,7 @@ class PreSpecified(DecisionModule):
         """
         pass
 
-    def get_decision(self, timestep, iteration=None):
+    def get_decision(self, data_handle, timestep, iteration=None):
         """Return a dict of intervention names built in timestep
 
         Arguments
@@ -349,7 +372,7 @@ class RuleBased(DecisionModule):
                 self.current_iteration += 1
                 return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
 
-    def get_decision(self, timestep, iteration):
+    def get_decision(self, data_handle, timestep, iteration):
         return []
 
     def _set_state(self, timestep, decision_iteration):

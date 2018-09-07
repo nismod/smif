@@ -38,7 +38,6 @@ import logging
 import sys
 from abc import ABCMeta, abstractmethod
 
-from smif.decision.intervention import Intervention
 from smif.metadata import Spec
 from smif.model.model import Model
 
@@ -106,11 +105,6 @@ class SectorModel(Model, metaclass=ABCMeta):
             model.add_output(Spec.from_dict(output))
         for param in config['parameters']:
             model.add_parameter(Spec.from_dict(param))
-        model.add_interventions(
-            Intervention.from_dict(intervention_config)
-            for intervention_config in config['interventions']
-        )
-        model.initial_conditions = config['initial_conditions']
         return model
 
     def as_dict(self):
@@ -127,72 +121,9 @@ class SectorModel(Model, metaclass=ABCMeta):
             'classname': self.__class__.__name__,
             'inputs': [inp.as_dict() for inp in self.inputs.values()],
             'outputs': [out.as_dict() for out in self.outputs.values()],
-            'parameters': [param.as_dict() for param in self.parameters.values()],
-            'interventions': [
-                inter.as_dict() for inter in self._interventions.values()],
-            'initial_conditions': self.initial_conditions
+            'parameters': [param.as_dict() for param in self.parameters.values()]
         }
         return config
-
-    def add_interventions(self, interventions):
-        """Add potential interventions to the model
-
-        Arguments
-        ---------
-        interventions : list of Intervention
-        """
-        for i in interventions:
-            msg = "Model interventions must be smif.decision.Intervention"
-            assert isinstance(i, Intervention), msg
-            self._interventions[i.name] = i
-
-    def get_current_interventions(self, state):
-        """Get the interventions the exist in the current state
-
-        Arguments
-        ---------
-        state : list
-            A list of tuples that represent the state of the system in the
-            current planning timestep
-
-        Returns
-        -------
-        list of intervention dicts with build_year attribute
-        """
-
-        interventions = []
-        for decision in state:
-            name = decision['name']
-            build_year = decision['build_year']
-            try:
-                serialised = self._interventions[name].as_dict()
-                serialised['build_year'] = build_year
-                interventions.append(serialised)
-            except KeyError:
-                # ignore if intervention is not in current set
-                pass
-
-        msg = "State matched with %s interventions"
-        self.logger.info(msg, len(interventions))
-
-        return interventions
-
-    @property
-    def interventions(self):
-        """Model interventions
-        """
-        return list(self._interventions.values())
-
-    @property
-    def intervention_names(self):
-        """The names of the interventions
-
-        Returns
-        =======
-        list
-            A list of the names of the interventions
-        """
-        return list(self._interventions.keys())
 
     def before_model_run(self, data):
         """Implement this method to conduct pre-model run tasks
@@ -213,11 +144,12 @@ class SectorModel(Model, metaclass=ABCMeta):
         Arguments
         ---------
         data: smif.data_layer.DataHandle
-            Access state, parameter values, dependency inputs
+            Access state, parameter values, dependency inputs, results and
+            interventions
 
         Notes
         -----
-        See docs on :class:`smif.data_layer.DataHandle` for details of how to
+        See docs on :class:`~smif.data_layer.data_handle.DataHandle` for details of how to
         access inputs, parameters and state and how to set results.
 
         ``interval``
@@ -228,15 +160,21 @@ class SectorModel(Model, metaclass=ABCMeta):
             the output parameter, as specified in model configuration
 
         To obtain simulation model data in this method,
-        use the data_handle methods such as::
+        use the methods such as::
 
             parameter_value = data.get_parameter('my_parameter_name')
 
-        Other useful methods are ``get_base_timestep_data(input_name)``,
-        ``get_previous_timestep_data(input_name)``,
-        ``get_parameter(parameter_name)``, ``get_data(input_name, timestep=None)``,
-        ``get_parameters()`` and
-        ``get_results(output_name, model_name=None, modelset_iteration=None,
-        decision_iteration=None, timestep=None)``.
+        Other useful methods are
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_base_timestep_data`,
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_previous_timestep_data`,
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_parameter`,
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_data`,
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_parameters` and
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_results`.
+
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_state` returns a list
+        of intervention dict for the current timestep
+        :meth:`~smif.data_layer.data_handle.DataHandle.get_current_interventions`
+        returns a list of dict where each dict is an intervention
 
         """

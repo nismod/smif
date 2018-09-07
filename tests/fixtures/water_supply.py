@@ -32,10 +32,8 @@ Around each of the above simulation models, subclassed wrappers based on
 """
 
 import logging
-import math
 
 import numpy as np
-from pytest import fixture
 from smif.model.sector_model import SectorModel
 
 __author__ = "Will Usher, Tom Russell"
@@ -43,28 +41,6 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 logger = logging.getLogger(__name__)
-
-
-@fixture(scope='function')
-def raininess_oracle(timestep):
-    """Mimics an external data source for raininess
-
-    Arguments
-    =========
-    timestep : int
-        Requires a year between 2010 and 2050
-
-    Returns
-    =======
-    raininess : int
-
-    """
-    msg = "timestep {} is outside of the range [2010, 2050]".format(timestep)
-    assert timestep in [x for x in range(2010, 2051, 1)], msg
-
-    raininess = math.floor((timestep - 2000) / 10)
-
-    return raininess
 
 
 def process_results(output):

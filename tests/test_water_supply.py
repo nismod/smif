@@ -2,15 +2,38 @@
 
 
 """
+import math
 import os
 import subprocess
 import sys
 
-from pytest import raises
+from pytest import fixture, raises
 
 from .fixtures.water_supply import (ExampleWaterSupplySimulationModel,
                                     ExampleWaterSupplySimulationModelWithReservoir,
-                                    process_results, raininess_oracle)
+                                    process_results)
+
+
+@fixture(scope='function')
+def raininess_oracle(timestep):
+    """Mimics an external data source for raininess
+
+    Arguments
+    =========
+    timestep : int
+        Requires a year between 2010 and 2050
+
+    Returns
+    =======
+    raininess : int
+
+    """
+    msg = "timestep {} is outside of the range [2010, 2050]".format(timestep)
+    assert timestep in [x for x in range(2010, 2051, 1)], msg
+
+    raininess = math.floor((timestep - 2000) / 10)
+
+    return raininess
 
 
 def test_water_supply_with_reservoir():

@@ -17,8 +17,12 @@ def mock_store():
     store = MemoryInterface()
     store.write_model_run({
         'name': 1,
-        'narratives': {}
-    })
+        'narratives': {},
+        'sos_model': 'test_sos_model'})
+    store.write_sos_model({
+        'name': 'test_sos_model',
+        'sector_models': ['sector_model_test']})
+    store._initial_conditions = {'sector_model_test': []}
     return store
 
 
@@ -274,15 +278,124 @@ class TestDataHandleState():
     """
     def test_get_state(self, mock_store, mock_model):
         """should get decision module state for given timestep/decision_iteration
+
+        A call to ``get_state`` method on the data handle calls the read_state
+        method of the data_interface with arguments for model run name, current
+        timestep and decision iteration.
         """
-        mock_store.read_state = Mock(return_value=[('test', 2010)])
+        mock_store.read_state = Mock(return_value=[
+            {'name': 'test', 'build_year': 2010}])
+        mock_store._interventions['test_model'] = [
+            {'name': 'test',
+             'capital_cost': {'value': 2500, 'unit': '£/GW'}
+             }]
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-        expected = [('test', 2010)]
+        expected = [{'name': 'test',
+                     'build_year': 2010}]
         actual = data_handle.get_state()
+        mock_store.read_state.assert_called_with(1, 2015, None)
         assert actual == expected
 
-    def test_get_state_raises_when_timestep_is_none(self, mock_store, mock_model):
+    def test_get_interventions_for_sector_model(self, mock_store, mock_model):
+        """
 
+        A call to the ``get_current_interventions`` method of the data_handle
+        returns a list of interventions from the current state filtered by the
+        current model
+
+        """
+        a = {'name': 'water_asset_a',
+             'build_year': 2010,
+             'capacity': 50,
+             'location': None,
+             'sector': ''}
+        b = {'name': 'water_asset_b',
+             'build_year': 2015,
+             'capacity': 150,
+             'location': None,
+             'sector': ''}
+        c = {'name': 'water_asset_c',
+             'capacity': 100,
+             'build_year': 2015,
+             'location': None,
+             'sector': ''}
+
+        mock_store._interventions['test_model'] = [a, b, c]
+        state = [
+            {'name': 'water_asset_a', 'build_year': 2010},
+            {'name': 'water_asset_b', 'build_year': 2015}
+        ]
+        mock_store._state[(1, 2015, None)] = state
+        # mock_store._strategies[1] = []
+
+        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+
+        actual = data_handle.get_current_interventions()
+        actual.sort(key=lambda m: m['name'])
+        expected = [
+            {
+                'name': 'water_asset_a',
+                'build_year': 2010,
+                'capacity': 50,
+                'location': None,
+                'sector': ''
+            },
+            {
+                'name': 'water_asset_b',
+                'build_year': 2015,
+                'capacity': 150,
+                'location': None,
+                'sector': ''
+            }
+        ]
+        assert actual == expected
+
+    def test_interventions_sector_model_ignore_unrecog(self, mock_store, mock_model):
+        """Ignore unrecognised interventions
+
+        Interventions that are listed in state, but not included in the
+        intervention list are ignored
+
+        """
+        a = {'name': 'water_asset_a',
+             'build_year': 2010,
+             'capacity': 50,
+             'location': None,
+             'sector': ''}
+        b = {'name': 'water_asset_b',
+             'build_year': 2015,
+             'capacity': 150,
+             'location': None,
+             'sector': ''}
+        c = {'name': 'water_asset_c',
+             'capacity': 100,
+             'build_year': 2015,
+             'location': None,
+             'sector': ''}
+
+        mock_store._interventions['test_model'] = [a, b, c]
+
+        state = [
+            {'name': 'water_asset_a', 'build_year': 2010},
+            {'name': 'energy_asset_unexpected', 'build_year': 2015}
+        ]
+
+        mock_store._state[(1, 2015, None)] = state
+
+        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+        actual = data_handle.get_current_interventions()
+        expected = [
+            {
+                'name': 'water_asset_a',
+                'build_year': 2010,
+                'capacity': 50,
+                'location': None,
+                'sector': ''
+            }
+        ]
+        assert actual == expected
+
+    def test_pass_none_to_timestep_raises(self, mock_store, mock_model):
         data_handle = DataHandle(mock_store, 1, None, [2015, 2020], mock_model)
         with raises(ValueError):
             data_handle.get_state()
