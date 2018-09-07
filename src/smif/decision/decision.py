@@ -26,13 +26,13 @@ class DecisionManager(object):
     form of a generator which allows the model runner to iterate over the collection of
     independent simulations required at each step.
 
-    A DecisionManager collates the output of the decision algorithms and
+    The DecisionManager collates the output of the decision algorithms and
     writes the post-decision state through a DataHandle. This allows Models to access a given
     decision state (identified uniquely by timestep and decision iteration id).
 
-    A DecisionManager passes a DataHandle down to a
-    DecisionModule, allowing the DecisionModule to access model results from previous timesteps
-    and decision iterations when making decisions.
+    The DecisionManager passes a DataHandle down to a DecisionModule,
+    allowing the DecisionModule to access model results from previous timesteps
+    and decision iterations when making decisions
 
     Arguments
     ---------
@@ -193,58 +193,6 @@ class DecisionModule(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def _get_previous_state(self, data_handle, timestep, decision_iteration):
-        """Gets state of the previous `timestep` for `decision_iteration`
-
-        Arguments
-        ---------
-        timestep : int
-        decision_iteration : int
-
-        Returns
-        -------
-        numpy.ndarray
-        """
-        return self.get_decision(data_handle, timestep.PREVIOUS, decision_iteration)
-
-    def _set_post_decision_state(self, timestep, decision_iteration, decision):
-        """Sets the post-decision state
-
-        Arguments
-        ---------
-        timestep : int
-        decision_iteration : int
-        decision : numpy.ndarray
-
-        Notes
-        -----
-        `decision` should contain only the newly decided interventions
-        """
-        state = self._get_previous_state(timestep, decision_iteration)
-        post_decision_state = state.bitwise_or(decision)
-        return post_decision_state
-
-    @abstractmethod
-    def _set_state(self, timestep, decision_iteration):
-        """Implement to set the current state of a Model
-
-        Arguments
-        ---------
-        timestep : int
-        decision_iteration : int
-
-        Notes
-        -----
-        1. Get state at previous timestep
-        2. Compute decisions (interventions at current timestep)
-        3. Accumulate to create current state
-        4. Write this via the DataHandle to DataInterface
-
-        This is a candidate for memoization
-
-        """
-        raise NotImplementedError
-
 
 class PreSpecified(DecisionModule):
     """Pre-specified planning
@@ -388,6 +336,3 @@ class RuleBased(DecisionModule):
 
     def get_decision(self, data_handle, timestep, iteration):
         return []
-
-    def _set_state(self, timestep, decision_iteration):
-        raise NotImplementedError
