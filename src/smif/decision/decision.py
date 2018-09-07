@@ -5,15 +5,7 @@ Currently, only pre-specified planning is implemented.
 The choices made in the three planning levels influence the set of interventions
 and assets available within a model run.
 
-The interventions available in a model run are stored in the
-:class:`~smif.decision.intervention.InterventionRegister`.
-
-When pre-specified planning are declared, each of the corresponding
-interventions in the InterventionRegister are moved to the BuiltInterventionRegister.
-
-Once pre-specified planning is instantiated, the action space for rule-based and
-optimisation approaches can be generated from the remaining Interventions in the
-InterventionRegister.
+The interventions available in a model run are stored in a dict keyed by name.
 
 """
 __author__ = "Will Usher, Tom Russell"
@@ -167,9 +159,8 @@ class DecisionModule(metaclass=ABCMeta):
     ---------
     timesteps : list
         A list of planning timesteps
-    register : smif.interventions.InterventionRegister
-        Reference to a fully populated intervention register
-
+    register : dict
+        Reference to a dict of iterventions
     """
     def __init__(self, timesteps, register):
         self.timesteps = timesteps
