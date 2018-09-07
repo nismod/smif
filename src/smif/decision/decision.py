@@ -176,10 +176,13 @@ class DecisionModule(metaclass=ABCMeta):
     ---------
     timesteps : list
         A list of planning timesteps
+    intervention_register : smif.interventions.InterventionRegister
+        Reference to a fully populated intervention register
 
     """
-    def __init__(self, timesteps):
+    def __init__(self, timesteps, intervention_register):
         self.timesteps = timesteps
+        self.intervention_register = intervention_register
 
     def __next__(self):
         return self._get_next_decision_iteration()
@@ -272,9 +275,8 @@ class PreSpecified(DecisionModule):
         representing historical or planned interventions
     """
 
-    def __init__(self, timesteps, planned_interventions):
-        super().__init__(timesteps)
-
+    def __init__(self, timesteps, intervention_register, planned_interventions):
+        super().__init__(timesteps, intervention_register)
         self._planned = planned_interventions
 
     def _get_next_decision_iteration(self):
@@ -308,7 +310,7 @@ class PreSpecified(DecisionModule):
 
         Returns
         -------
-        list of tuples
+        dict of tuples
 
         Examples
         --------
@@ -322,7 +324,12 @@ class PreSpecified(DecisionModule):
 
         for intervention in self._planned:
             build_year = int(intervention['build_year'])
-            if self.buildable(build_year, timestep):
+
+            data = self.intervention_register.get_intervention(intervention['name'])
+            lifetime = data['lifetime']
+
+            if self.buildable(build_year, timestep) and \
+               self.within_lifetime(build_year, timestep, lifetime):
                 decisions.append(intervention)
         return decisions
 
@@ -345,6 +352,20 @@ class PreSpecified(DecisionModule):
             next_year = self.timesteps[index + 1]
 
         if int(build_year) < next_year:
+            return True
+        else:
+            return False
+
+    def within_lifetime(self, build_year, timestep, lifetime):
+        """Interventions are deemed active if build_year + lifetime <= timestep
+
+        Arguments
+        ---------
+        build_year : int
+        timestep : int
+        lifetime : int
+        """
+        if build_year + lifetime <= timestep:
             return True
         else:
             return False
