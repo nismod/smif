@@ -130,6 +130,22 @@ class TestPreSpecified:
         with raises(ValueError):
             dm.buildable(2015, 2014)
 
+    def test_within_lifetime(self):
+        dm = PreSpecified([2010, 2015], Mock(), [])
+        assert dm.within_lifetime(2010, 2010, 1)
+
+    def test_within_lifetime_does_not_check_start(self):
+        """Note that the ``within_lifetime`` method does not check
+        that the build year is compatible with timestep
+        """
+        dm = PreSpecified([2010, 2015], Mock(), [])
+        assert dm.within_lifetime(2011, 2010, 1)
+
+    def test_negative_lifetime_raises(self):
+        dm = PreSpecified([2010, 2015], Mock(), [])
+        with raises(ValueError):
+            dm.within_lifetime(2010, 2010, -1)
+
 
 class TestRuleBased:
 

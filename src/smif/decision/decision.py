@@ -303,6 +303,8 @@ class PreSpecified(DecisionModule):
 
         Arguments
         ---------
+        data_handle : smif.data_layer.data_handle.DataHandle
+            A reference to a smif data handle
         timestep : int
             A timestep (planning year)
         iteration : int
@@ -361,7 +363,7 @@ class PreSpecified(DecisionModule):
             return False
 
     def within_lifetime(self, build_year, timestep, lifetime):
-        """Interventions are deemed active if build_year + lifetime <= timestep
+        """Interventions are deemed active if build_year + lifetime >= timestep
 
         Arguments
         ---------
@@ -374,6 +376,9 @@ class PreSpecified(DecisionModule):
             raise TypeError(msg.format(type(build_year)))
         build_year = int(build_year)
         lifetime = int(lifetime)
+        if lifetime < 0:
+            msg = "The value of lifetime cannot be negative"
+            raise ValueError(msg)
         if timestep <= build_year + lifetime:
             return True
         else:
