@@ -17,5 +17,5 @@ strategies:
   model_name: energy_supply
 - strategy: agent
   description: reduce emissions
-  filename: energyagent.py
-  class_name: EnergyAgent
+  path: energyagent.py
+  classname: EnergyAgent
