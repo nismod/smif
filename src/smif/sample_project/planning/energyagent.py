@@ -44,11 +44,11 @@ class EnergyAgent(DecisionModule):
 
     def run_regulator(self, data_handle):
         output_name = 'total_emissions'
-        iteration = data_handle.current_iteration
+        iteration = data_handle.decision_iteration
         data_handle.get_results(output_name,
                                 model_name=self.model_name,
                                 decision_iteration=iteration,
                                 timestep='PREVIOUS')
 
     def run_power_producer(self, data_handle):
-        data_handle.write_state()
+        return []
