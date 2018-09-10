@@ -372,11 +372,11 @@ class DatafileInterface(DataInterface):
         model_run['strategies'] = []
         for i, strategy in enumerate(strategies):
             if strategy['strategy'] == 'pre-specified-planning':
-                interventions = strategy['interventions']
+                decisions = strategy['interventions']
                 del strategy['interventions']
                 filename = 'strategy-{}.yml'.format(i)
                 strategy['filename'] = filename
-                self._write_interventions_file(filename, 'strategies', interventions)
+                self._write_interventions_file(filename, 'strategies', decisions)
 
             model_run['strategies'].append(strategy)
         self._overwrite_model_run(model_run_name, model_run)
