@@ -130,6 +130,10 @@ class DataHandle(object):
         """
         return tuple(self._timesteps)
 
+    @property
+    def decision_iteration(self):
+        return self._decision_iteration
+
     def get_state(self):
         """The current state of the model
 

@@ -110,7 +110,7 @@ class DecisionManager(object):
         else:
             yield {0: [x for x in self._timesteps]}
 
-    def get_decision(self, data_handle, timestep, iteration):
+    def get_decision(self, data_handle):
         """Return all interventions built in the given timestep
 
         for the given decision
@@ -125,9 +125,11 @@ class DecisionManager(object):
             A decision iteration
 
         """
+        timestep = data_handle.current_timestep
+        iteration = data_handle.decision_iteration
         decisions = []
         for module in self._decision_modules:
-            decisions.extend(module.get_decision(data_handle, timestep, iteration))
+            decisions.extend(module.get_decision(data_handle))
         self.logger.debug(
             "Retrieved %s decisions from %s",
             len(decisions), str(self._decision_modules))
@@ -188,7 +190,7 @@ class DecisionModule(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_decision(self, data_handle, timestep, iteration):
+    def get_decision(self, data_handle):
         """Return decisions for a given timestep and decision iteration
         """
         raise NotImplementedError
@@ -228,7 +230,7 @@ class PreSpecified(DecisionModule):
         """
         pass
 
-    def get_decision(self, data_handle, timestep, iteration=None):
+    def get_decision(self, data_handle):
         """Return a dict of intervention names built in timestep
 
         Arguments
@@ -248,10 +250,11 @@ class PreSpecified(DecisionModule):
         --------
         >>> dm = PreSpecified([2010, 2015], register,
         [{'name': 'intervention_a', 'build_year': 2010}])
-        >>> dm.get_decision(handle, 2010)
+        >>> dm.get_decision(handle)
         [{'name': intervention_a', 'build_year': 2010}]
         """
         decisions = []
+        timestep = data_handle.current_timestep
 
         assert isinstance(self._planned, list)
 
@@ -334,5 +337,5 @@ class RuleBased(DecisionModule):
                 self.current_iteration += 1
                 return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
 
-    def get_decision(self, data_handle, timestep, iteration):
+    def get_decision(self, data_handle):
         return []
