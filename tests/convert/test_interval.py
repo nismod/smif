@@ -25,10 +25,7 @@ class TestTimeRegisterConversion:
             dtype='float',
             dims=['months'],
             coords={
-                'months':  [
-                    {'name': interval[0], 'interval': interval}
-                    for interval in months
-                ]
+                'months':  months
             }
         )
         adaptor.add_input(from_spec)
@@ -37,10 +34,7 @@ class TestTimeRegisterConversion:
             dtype='float',
             dims=['seasons'],
             coords={
-                'seasons':  [
-                    {'name': interval[0], 'interval': interval}
-                    for interval in seasons
-                ]
+                'seasons':  seasons
             }
         )
         adaptor.add_output(to_spec)
@@ -67,10 +61,7 @@ class TestTimeRegisterConversion:
             dtype='float',
             dims=['hourly_day'],
             coords={
-                'hourly_day': [
-                    {'name': interval[0], 'interval': interval}
-                    for interval in twenty_four_hours
-                ]
+                'hourly_day': twenty_four_hours
             }
         )
         adaptor.add_input(from_spec)
@@ -79,10 +70,7 @@ class TestTimeRegisterConversion:
             dtype='float',
             dims=['one_day'],
             coords={
-                'one_day': [
-                    {'name': interval[0], 'interval': interval}
-                    for interval in one_day
-                ]
+                'one_day': one_day
             }
         )
         adaptor.add_output(to_spec)
@@ -107,10 +95,7 @@ class TestTimeRegisterConversion:
             dtype='float',
             dims=['months'],
             coords={
-                'months': [
-                    {'name': interval[0], 'interval': interval}
-                    for interval in months
-                ]
+                'months': months
             }
         )
         adaptor.add_input(from_spec)
@@ -119,10 +104,7 @@ class TestTimeRegisterConversion:
             dtype='float',
             dims=['seasons'],
             coords={
-                'seasons': [
-                    {'name': interval[0], 'interval': interval}
-                    for interval in seasons
-                ]
+                'seasons': seasons
             }
         )
         adaptor.add_output(to_spec)
@@ -147,10 +129,7 @@ class TestTimeRegisterConversion:
             dtype='float',
             dims=['seasons'],
             coords={
-                'seasons': [
-                    {'name': interval[0], 'interval': interval}
-                    for interval in seasons
-                ]
+                'seasons': seasons
             }
         )
         adaptor.add_input(from_spec)
@@ -159,10 +138,7 @@ class TestTimeRegisterConversion:
             dtype='float',
             dims=['months'],
             coords={
-                'months': [
-                    {'name': interval[0], 'interval': interval}
-                    for interval in months
-                ]
+                'months': months
             }
         )
         adaptor.add_output(to_spec)
@@ -189,10 +165,7 @@ class TestTimeRegisterConversion:
             dtype='float',
             dims=['months'],
             coords={
-                'months': [
-                    {'name': interval[0], 'interval': interval}
-                    for interval in months
-                ]
+                'months': months
             }
         )
         adaptor.add_input(from_spec)
@@ -201,10 +174,7 @@ class TestTimeRegisterConversion:
             dtype='float',
             dims=['remap_months'],
             coords={
-                'remap_months': [
-                    {'name': interval[0], 'interval': interval}
-                    for interval in remap_months
-                ]
+                'remap_months': remap_months
             }
         )
         adaptor.add_output(to_spec)

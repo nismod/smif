@@ -153,18 +153,29 @@ class IntervalAdaptor(Adaptor):
         """Generate conversion coefficients for interval dimensions
 
         Assumes that the Coordinates elements contain an 'interval' key whose value corresponds
-        to :class:`Interval` data, that is a `tuple(interval_id, list of interval tuples)`.
+        to :class:`Interval` data, that is a `{'name': interval_id, 'interval': list of
+        interval extents}`.
 
         For example, intervals covering each hour of a period ::
 
-                ('first_hour', [('PT0H', 'PT1H')])
-                ('second_hour', [('PT1H', 'PT2H')])
+                { 'name': 'first_hour', 'interval': [('PT0H', 'PT1H')] }
+                { 'name': ''second_hour', 'interval': [('PT1H', 'PT2H')] }
                 ...
 
         Or intervals corresponding to repeating hours for each day of a period ::
 
-                ('midnight', [('PT0H', 'PT1H'), ('PT24H', 'PT25H'), ('PT48H', 'PT49H'), ...])
-                ('one_am', [('PT1H', 'PT2H'), ('PT25H', 'PT26H'), ('PT49H', 'PT50H'), ...])
+                {
+                    'name': midnight',
+                    'interval': [
+                        ('PT0H', 'PT1H'), ('PT24H', 'PT25H'), ('PT48H', 'PT49H'), ...
+                    ]
+                },
+                {
+                    'name': ''one_am',
+                    'interval': [
+                        ('PT1H', 'PT2H'), ('PT25H', 'PT26H'), ('PT49H', 'PT50H'), ...
+                    ]
+                }
                 ...
 
         """
@@ -174,8 +185,8 @@ class IntervalAdaptor(Adaptor):
         from_coords = from_spec.dim_coords(from_dim)
         to_coords = to_spec.dim_coords(to_dim)
         # create IntervalSets from Coordinates
-        from_set = IntervalSet(from_dim, [e['interval'] for e in from_coords.elements])
-        to_set = IntervalSet(to_dim, [e['interval'] for e in to_coords.elements])
+        from_set = IntervalSet(from_dim, from_coords.elements)
+        to_set = IntervalSet(to_dim, to_coords.elements)
         # register IntervalSets
         register = NDimensionalRegister()
         register.register(from_set)
