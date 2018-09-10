@@ -409,6 +409,10 @@ class DataHandle(object):
         if decision_iteration is None:
             decision_iteration = self._decision_iteration
 
+        if output_name not in self._outputs:
+            raise KeyError(
+                "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
+
         self.logger.debug(
             "Read %s %s %s %s", model_name, output_name, timestep,
             modelset_iteration)
