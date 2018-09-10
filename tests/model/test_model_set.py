@@ -117,8 +117,12 @@ class TestModelSet:
             "water": np.zeros((1, 1))
         }
         actual = {
-            "cost": data_handle.get_results(('water_supply', 'cost'), sector_model.name, 0),
-            "water": data_handle.get_results(('water_supply', 'water'), sector_model.name, 0)
+            "cost": data_handle.get_results('cost',
+                                            model_name=sector_model.name,
+                                            modelset_iteration=0),
+            "water": data_handle.get_results('water',
+                                             model_name=sector_model.name,
+                                             modelset_iteration=0)
         }
         assert actual == expected
 
@@ -142,8 +146,12 @@ class TestModelSet:
         data_handle._current_timestep = 2011
         model_set.simulate(data_handle)
         actual = {
-            "cost": data_handle.get_results(('water_supply', 'cost'), sector_model.name, 0),
-            "water": data_handle.get_results(('water_supply', 'water'), sector_model.name, 0)
+            "cost": data_handle.get_results('cost',
+                                            model_name=sector_model.name,
+                                            modelset_iteration=0),
+            "water": data_handle.get_results('water',
+                                             model_name=sector_model.name,
+                                             modelset_iteration=0)
         }
         assert actual == expected
 
