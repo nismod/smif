@@ -9,7 +9,7 @@ and the dependencies between the models.
 import logging
 
 import networkx
-from smif.model.model import CompositeModel, Model
+from smif.model.model import CompositeModel, Model, ModelOperations
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel
@@ -159,14 +159,14 @@ class SosModel(CompositeModel):
         Returns
         -------
         networkx.DiGraph
-            A graph with `smif.model.Model` Model, `smif.data_layer.DataHandle` 
+            A graph with `smif.model.Model` Model, `smif.data_layer.DataHandle`
             Data Handle and `string` operation attributes.
         """
         sos_model_graph = networkx.DiGraph()
         for model in self.sector_models.values():
             # get custom data handle for the Model
             sos_model_graph.add_node("before_model_run_%s" % model.name,
-                                     model=model, operation='simulate',
+                                     model=model, operation=ModelOperations.before_model_run,
                                      data_handle=data_handle.derive_for(model))
         return sos_model_graph
 
@@ -181,11 +181,12 @@ class SosModel(CompositeModel):
         Returns
         -------
         networkx.DiGraph
-            A graph with `smif.model.Model` Model, `smif.data_layer.DataHandle` 
+            A graph with `smif.model.Model` Model, `smif.data_layer.DataHandle`
             Data Handle and `string` operation attributes.
         """
         dependency_graph = SosModel.make_dependency_graph(self.models)
-        step_id = ('simulate_%s_%s') % (data_handle._current_timestep, data_handle._decision_iteration)
+        step_id = ('simulate_%s_%s') % (data_handle._current_timestep,
+                                        data_handle._decision_iteration)
 
         job_graph = SosModel.get_model_sets_in_job_graph(
             dependency_graph,
@@ -225,7 +226,7 @@ class SosModel(CompositeModel):
         Returns
         -------
         networkx.DiGraph
-            A graph with `smif.model.Model` Model, `smif.data_layer.DataHandle` 
+            A graph with `smif.model.Model` Model, `smif.data_layer.DataHandle`
             Data Handle and `string` operation attributes.
         """
         job_graph = networkx.DiGraph()
@@ -233,7 +234,7 @@ class SosModel(CompositeModel):
         if networkx.is_directed_acyclic_graph(graph):
             for model in graph.nodes:
                 job_graph.add_node(step_id + "_%s" % model.name,
-                                   model=model, operation='simulate',
+                                   model=model, operation=ModelOperations.simulate,
                                    data_handle=data_handle.derive_for(model))
                 for neighbor in graph.neighbors(model):
                     job_graph.add_edge(step_id + "_%s" % model.name,
