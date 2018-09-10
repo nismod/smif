@@ -12,8 +12,11 @@ __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
+import os
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
+
+from smif.data_layer.model_loader import ModelLoader
 
 
 class DecisionManager(object):
@@ -62,19 +65,31 @@ class DecisionManager(object):
 
         # Read in strategies
         strategies = self._store.read_strategies(modelrun_name)
-
         self.logger.info("%s strategies found", len(strategies))
         planned_interventions = []
         planned_interventions.extend(initial_conditions)
 
         for index, strategy in enumerate(strategies):
             # Extract pre-specified planning interventions
-            if strategy['strategy'] == 'pre-specified-planning':
+            if strategy['name'] == 'pre-specified-planning':
 
                 msg = "Adding %s planned interventions to pre-specified-planning %s"
                 self.logger.info(msg, len(strategy['interventions']), index)
 
                 planned_interventions.extend(strategy['interventions'])
+
+            else:
+                loader = ModelLoader()
+
+                # absolute path to be crystal clear for ModelLoader when loading python class
+                strategy['path'] = os.path.normpath(
+                    os.path.join(self._store.base_folder, strategy['path']))
+                strategy['timesteps'] = self._timesteps
+                strategy['register'] = self.register
+
+                self.logger.debug("Trying to load strategy: %s", strategy)
+                decision_module = loader.load(strategy)
+                self._decision_modules.append(decision_module)
 
         # Create a Pre-Specified planning decision module with all
         # the planned interventions
@@ -202,6 +217,9 @@ class PreSpecified(DecisionModule):
     Arguments
     ---------
     timesteps : list
+        A list of the timesteps included in the model horizon
+    register : dict
+        A dict of intervention dictionaries keyed by unique intervention name
     planned_interventions : list
         A list of dicts ``{'name': 'intervention_name', 'build_year': 2010}``
         representing historical or planned interventions
@@ -237,14 +255,10 @@ class PreSpecified(DecisionModule):
         ---------
         data_handle : smif.data_layer.data_handle.DataHandle
             A reference to a smif data handle
-        timestep : int
-            A timestep (planning year)
-        iteration : int
-            A decision iteration
 
         Returns
         -------
-        dict of tuples
+        list of dict
 
         Examples
         --------

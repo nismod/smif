@@ -26,6 +26,12 @@ class EnergyAgent(DecisionModule):
         self.current_iteration = 0
         self.model_name = 'energy_supply'
 
+    @staticmethod
+    def from_dict(config):
+        timesteps = config['timesteps']
+        register = config['register']
+        return EnergyAgent(timesteps, register)
+
     def _get_next_decision_iteration(self):
             if self.converged and self.current_timestep_index == len(self.timesteps) - 1:
                 return None
@@ -41,14 +47,16 @@ class EnergyAgent(DecisionModule):
     def get_decision(self, data_handle):
         self.run_regulator(data_handle)
         self.run_power_producer(data_handle)
+        return []
 
     def run_regulator(self, data_handle):
-        output_name = 'total_emissions'
+        output_name = 'cost'
         iteration = data_handle.decision_iteration
-        data_handle.get_results(output_name,
-                                model_name=self.model_name,
-                                decision_iteration=iteration,
-                                timestep='PREVIOUS')
+        if data_handle.current_timestep > data_handle.base_timestep:
+            data_handle.get_results(output_name,
+                                    model_name='energy_demand',
+                                    decision_iteration=iteration,
+                                    timestep=data_handle.previous_timestep)
 
     def run_power_producer(self, data_handle):
         return []

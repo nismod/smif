@@ -324,7 +324,7 @@ class DatafileInterface(DataInterface):
         strategies = []
         model_run_config = self.read_model_run(model_run_name)
         for strategy in model_run_config['strategies']:
-            if strategy['strategy'] == 'pre-specified-planning':
+            if strategy['name'] == 'pre-specified-planning':
                 decisions = self._read_interventions_file(strategy['filename'], 'strategies')
                 if decisions is None:
                     decisions = []
@@ -332,6 +332,8 @@ class DatafileInterface(DataInterface):
                 strategy['interventions'] = decisions
                 self.logger.info("Added %s pre-specified planning interventions to %s",
                                  len(decisions), strategy['model_name'])
+                strategies.append(strategy)
+            else:
                 strategies.append(strategy)
         return strategies
     # endregion

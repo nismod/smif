@@ -11,11 +11,11 @@ narratives:
   technology:
   - high_tech_dsm
 strategies:
-- strategy: pre-specified-planning
+- name: pre-specified-planning
   description: build_nuclear
   filename: build_nuke.yml
   model_name: energy_supply
-- strategy: agent
+- name: agent
   description: reduce emissions
-  path: energyagent.py
+  path: planning/energyagent.py
   classname: EnergyAgent
