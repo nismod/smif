@@ -230,8 +230,8 @@ class TestDependencyGraph:
                 'simulate_2010_0_energy_model': {}
             }
         })
-        assert list(actual.nodes) == list(expected.nodes)
-        assert list(actual.edges) == list(expected.edges)
+        assert sorted(list(actual.nodes)) == sorted(list(expected.nodes))
+        assert sorted(list(actual.edges)) == sorted(list(expected.edges))
 
     @pytest.mark.xfail(reason="Only acyclic graphs are implemented")
     def test_complex_order(self):
