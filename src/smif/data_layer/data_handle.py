@@ -389,7 +389,6 @@ class DataHandle(object):
                 spec = self._outputs[output_name]
 
         elif model_name in self._model.models:
-            output_name = output_name
             contained_model = self._model.models[model_name]
 
             if output_name not in contained_model.outputs:
@@ -408,10 +407,6 @@ class DataHandle(object):
             modelset_iteration = self._modelset_iteration
         if decision_iteration is None:
             decision_iteration = self._decision_iteration
-
-        if output_name not in self._outputs:
-            raise KeyError(
-                "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
 
         self.logger.debug(
             "Read %s %s %s %s", model_name, output_name, timestep,
