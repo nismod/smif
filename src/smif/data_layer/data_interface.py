@@ -222,7 +222,7 @@ class DataInterface(metaclass=ABCMeta):
     # region Strategies
     @abstractmethod
     def read_strategies(self, model_run_name):
-        """Read strategies
+        """Read strategies for a given model_run
 
         Arguments
         ---------
@@ -235,6 +235,18 @@ class DataInterface(metaclass=ABCMeta):
             List of strategy definition dicts
         """
         raise NotImplementedError()
+
+    @abstractmethod
+    def write_strategies(self, model_run_name, strategies):
+        """Write strategies for a given model_run
+
+        Arguments
+        ---------
+        model_run_name : str
+            Name of the model run for which to read the strategies
+        strategies : list[dict]
+            List of strategy definitions
+        """
     # endregion
 
     # region Interventions

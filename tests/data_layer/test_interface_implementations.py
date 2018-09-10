@@ -27,13 +27,14 @@ def init_handler(request, setup_empty_folder_structure):
 
 
 @fixture
-def handler(init_handler, model_run, get_sos_model, get_sector_model, unit_definitions,
-            dimension, source_spec, sink_spec, coefficients, scenario, narrative):
+def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies,
+            unit_definitions, dimension, source_spec, sink_spec, coefficients, scenario,
+            narrative):
     handler = init_handler
     handler.write_model_run(model_run)
     handler.write_sos_model(get_sos_model)
     handler.write_sector_model(get_sector_model)
-    # could write strategies
+    handler.write_strategies('test_modelrun', strategies)
     # could write state
     handler.write_unit_definitions(unit_definitions)
     handler.write_dimension(dimension)
@@ -54,7 +55,16 @@ def model_run():
 
 @fixture
 def strategies():
-    return []
+    return [
+        {
+            'strategy': 'pre-specified-planning',
+            'model_name': 'test_model',
+            'interventions': [
+                {'name': 'a', 'build_year': 2020},
+                {'name': 'b', 'build_year': 2025},
+            ]
+        }
+    ]
 
 
 @fixture

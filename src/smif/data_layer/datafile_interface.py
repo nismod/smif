@@ -139,17 +139,30 @@ class DatafileInterface(DataInterface):
         model_runs = [self.read_model_run(name) for name in names]
         return model_runs
 
-    @check_exists(dtype='model_run')
     def read_model_run(self, model_run_name):
+        modelrun_config = self._read_model_run(model_run_name)
+        del modelrun_config['strategies']
+        return modelrun_config
+
+    @check_exists(dtype='model_run')
+    def _read_model_run(self, model_run_name):
         return self._read_yaml_file(self.file_dir['model_runs'], model_run_name)
+
+    def _overwrite_model_run(self, model_run_name, model_run):
+        self._write_yaml_file(self.file_dir['model_runs'], model_run_name, model_run)
 
     @check_not_exists(dtype='model_run')
     def write_model_run(self, model_run):
-        self._write_yaml_file(self.file_dir['model_runs'], model_run['name'], model_run)
+        config = copy.copy(model_run)
+        config['strategies'] = []
+        self._write_yaml_file(self.file_dir['model_runs'], config['name'], config)
 
     @check_exists(dtype='model_run')
     def update_model_run(self, model_run_name, model_run):
-        self._write_yaml_file(self.file_dir['model_runs'], model_run['name'], model_run)
+        prev = self._read_model_run(model_run_name)
+        config = copy.copy(model_run)
+        config['strategies'] = prev['strategies']
+        self._overwrite_model_run(model_run_name, config)
 
     @check_exists(dtype='model_run')
     def delete_model_run(self, model_run_name):
@@ -295,6 +308,10 @@ class DatafileInterface(DataInterface):
 
         return data
 
+    def _write_interventions_file(self, filename, dirname, data):
+        filepath = self.file_dir[dirname]
+        self._write_yaml_file(filepath, filename=filename, data=data, extension='')
+
     def _reshape_csv_interventions(self, data):
         """
 
@@ -333,19 +350,39 @@ class DatafileInterface(DataInterface):
 
     # region Strategies
     def read_strategies(self, model_run_name):
-        strategies = []
-        model_run_config = self.read_model_run(model_run_name)
-        for strategy in model_run_config['strategies']:
+        output = []
+        model_run_config = self._read_model_run(model_run_name)
+        strategies = copy.deepcopy(model_run_config['strategies'])
+
+        for strategy in strategies:
+            print(strategy)
             if strategy['strategy'] == 'pre-specified-planning':
                 decisions = self._read_interventions_file(strategy['filename'], 'strategies')
+                print(decisions)
                 if decisions is None:
                     decisions = []
                 del strategy['filename']
                 strategy['interventions'] = decisions
                 self.logger.info("Added %s pre-specified planning interventions to %s",
                                  len(decisions), strategy['model_name'])
-                strategies.append(strategy)
-        return strategies
+                output.append(strategy)
+        return output
+
+    def write_strategies(self, model_run_name, strategies):
+        strategies = copy.deepcopy(strategies)
+        model_run = self._read_model_run(model_run_name)
+        model_run['strategies'] = []
+        for i, strategy in enumerate(strategies):
+            if strategy['strategy'] == 'pre-specified-planning':
+                interventions = strategy['interventions']
+                print("Write interventions", interventions)
+                del strategy['interventions']
+                filename = 'strategy-{}.yml'.format(i)
+                strategy['filename'] = filename
+                self._write_interventions_file(filename, 'strategies', interventions)
+
+            model_run['strategies'].append(strategy)
+        self._overwrite_model_run(model_run_name, model_run)
     # endregion
 
     # region State
@@ -1128,6 +1165,7 @@ class DatafileInterface(DataInterface):
             filepath = os.path.join(path, filename)
         else:
             filepath = path
+        print("Reading", filepath)
         return load(filepath)
 
     @staticmethod
@@ -1150,6 +1188,7 @@ class DatafileInterface(DataInterface):
             filepath = os.path.join(path, filename)
         else:
             filepath = path
+        print("Writing", filepath, data)
         dump(data, filepath)
 
     @staticmethod

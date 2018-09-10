@@ -89,6 +89,9 @@ class MemoryInterface(DataInterface):
     def read_strategies(self, modelrun_name):
         return self._strategies[modelrun_name]
 
+    def write_strategies(self, modelrun_name, strategies):
+        self._strategies[modelrun_name] = strategies
+
     def read_initial_conditions(self, sector_model_name):
         return self._initial_conditions[sector_model_name]
     # endregion
