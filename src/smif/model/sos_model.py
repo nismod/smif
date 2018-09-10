@@ -149,15 +149,7 @@ class SosModel(CompositeModel):
         self.models[model.name] = model
 
     def before_model_run(self, data_handle):
-        """Initialise each model (passing in parameter data only)
-        """
-        for model in self.sector_models.values():
-            # get custom data handle for the Model
-            model_data_handle = data_handle.derive_for(model)
-            model.before_model_run(model_data_handle)
-
-    def simulate(self, data_handle):
-        """Run the SosModel
+        """Initialise each model (passing in parameter data only) and return the job graph
 
         Arguments
         ---------
@@ -166,24 +158,44 @@ class SosModel(CompositeModel):
 
         Returns
         -------
-        results : smif.data_layer.DataHandle
-            Access model outputs
-
+        networkx.DiGraph
+            A graph with `smif.model.Model` Model, `smif.data_layer.DataHandle` 
+            Data Handle and `string` operation attributes.
         """
-        graph = SosModel.make_dependency_graph(self.models)
-        run_order = SosModel.get_model_sets_in_run_order(
-            graph,
+        sos_model_graph = networkx.DiGraph()
+        for model in self.sector_models.values():
+            # get custom data handle for the Model
+            sos_model_graph.add_node("before_model_run_%s" % model.name,
+                                     model=model, operation='simulate',
+                                     data_handle=data_handle.derive_for(model))
+        return sos_model_graph
+
+    def simulate(self, data_handle):
+        """Build a JobGraph for the SosModel
+
+        Arguments
+        ---------
+        data_handle: smif.data_layer.DataHandle
+            Access state, parameter values, dependency inputs
+
+        Returns
+        -------
+        networkx.DiGraph
+            A graph with `smif.model.Model` Model, `smif.data_layer.DataHandle` 
+            Data Handle and `string` operation attributes.
+        """
+        dependency_graph = SosModel.make_dependency_graph(self.models)
+        step_id = ('simulate_%s_%s') % (data_handle._current_timestep, data_handle._decision_iteration)
+
+        job_graph = SosModel.get_model_sets_in_job_graph(
+            dependency_graph,
+            step_id,
+            data_handle,
             self.max_iterations,
             self.convergence_relative_tolerance,
             self.convergence_absolute_tolerance
         )
-        self.logger.info("Determined run order as %s", [x.name for x in run_order])
-        for model in run_order:
-            self.logger.info("*** Running the %s model ***", model.name)
-            # Pass simulate access to a DataHandle derived for the particular
-            # model
-            model.simulate(data_handle.derive_for(model))
-        return data_handle
+        return job_graph
 
     @staticmethod
     def make_dependency_graph(models):
@@ -202,51 +214,37 @@ class SosModel(CompositeModel):
         return dependency_graph
 
     @staticmethod
-    def get_model_sets_in_run_order(graph, max_iterations, convergence_relative_tolerance,
+    def get_model_sets_in_job_graph(graph, step_id, data_handle, max_iterations,
+                                    convergence_relative_tolerance,
                                     convergence_absolute_tolerance):
-        """Returns a list of :class:`Model` in a runnable order.
+        """Returns a JobGraph of :class:`Model` in a runnable shape.
 
         If a set contains more than one model, there is an interdependency and
         and we attempt to run the models to convergence.
 
         Returns
         -------
-        list
-            A list of `smif.model.Model` objects
+        networkx.DiGraph
+            A graph with `smif.model.Model` Model, `smif.data_layer.DataHandle` 
+            Data Handle and `string` operation attributes.
         """
+        job_graph = networkx.DiGraph()
+
         if networkx.is_directed_acyclic_graph(graph):
-            # topological sort gives a single list from directed graph, currently
-            # ignoring opportunities to run independent models in parallel
-            run_order = networkx.topological_sort(graph)
-
-            # list of Models (typically ScenarioModel and SectorModel)
-            ordered_sets = list(run_order)
-
+            for model in graph.nodes:
+                job_graph.add_node(step_id + "_%s" % model.name,
+                                   model=model, operation='simulate',
+                                   data_handle=data_handle.derive_for(model))
+                for neighbor in graph.neighbors(model):
+                    job_graph.add_edge(step_id + "_%s" % model.name,
+                                       step_id + "_%s" % neighbor.name)
         else:
             # contract the strongly connected components (subgraphs which
             # contain cycles) into single nodes, producing the 'condensation'
             # of the graph, where each node maps to one or more sector models
-            condensation = networkx.condensation(graph)
+            raise NotImplementedError
 
-            # topological sort of the condensation gives an ordering of the
-            # contracted nodes, whose 'members' attribute refers back to the
-            # original dependency graph
-            ordered_sets = []
-            for node_id in networkx.topological_sort(condensation):
-                models = condensation.node[node_id]['members']
-                if len(models) == 1:
-                    ordered_sets.append(models.pop())
-                else:
-                    ordered_sets.append(
-                        ModelSet(
-                            {model.name: model for model in models},
-                            max_iterations=max_iterations,
-                            relative_tolerance=convergence_relative_tolerance,
-                            absolute_tolerance=convergence_absolute_tolerance
-                        )
-                    )
-
-        return ordered_sets
+        return job_graph
 
     @property
     def sector_models(self):
