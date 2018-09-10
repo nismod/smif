@@ -221,7 +221,11 @@ class DatafileInterface(DataInterface):
             sector_model['interventions'], 'interventions')
         for entry in interventions:
             name = entry.pop('name')
-            all_interventions[name] = entry
+            if name in all_interventions:
+                msg = "An entry for intervention {} already exists"
+                raise ValueError(msg.format(name))
+            else:
+                all_interventions[name] = entry
         return all_interventions
 
     @check_exists(dtype='sector_model')
