@@ -355,10 +355,8 @@ class DatafileInterface(DataInterface):
         strategies = copy.deepcopy(model_run_config['strategies'])
 
         for strategy in strategies:
-            print(strategy)
             if strategy['strategy'] == 'pre-specified-planning':
                 decisions = self._read_interventions_file(strategy['filename'], 'strategies')
-                print(decisions)
                 if decisions is None:
                     decisions = []
                 del strategy['filename']
@@ -375,7 +373,6 @@ class DatafileInterface(DataInterface):
         for i, strategy in enumerate(strategies):
             if strategy['strategy'] == 'pre-specified-planning':
                 interventions = strategy['interventions']
-                print("Write interventions", interventions)
                 del strategy['interventions']
                 filename = 'strategy-{}.yml'.format(i)
                 strategy['filename'] = filename
@@ -1165,7 +1162,6 @@ class DatafileInterface(DataInterface):
             filepath = os.path.join(path, filename)
         else:
             filepath = path
-        print("Reading", filepath)
         return load(filepath)
 
     @staticmethod
@@ -1188,7 +1184,6 @@ class DatafileInterface(DataInterface):
             filepath = os.path.join(path, filename)
         else:
             filepath = path
-        print("Writing", filepath, data)
         dump(data, filepath)
 
     @staticmethod
