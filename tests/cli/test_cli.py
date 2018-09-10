@@ -7,6 +7,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
 import smif
+import pytest
 from pytest import fixture, mark
 from smif.cli import confirm, parse_arguments, setup_project_folder
 from smif.data_layer import DatafileInterface
@@ -80,6 +81,7 @@ def test_fixture_single_run_warm(tmp_sample_project):
     assert "Model run 'energy_central' complete" in str(output.stdout)
 
 
+@pytest.mark.xfail(reason="Only acyclic graphs are implemented")
 def test_fixture_batch_run(tmp_sample_project):
     """Test running the multiple modelruns using the batch_run option
     """

@@ -233,6 +233,7 @@ class TestDependencyGraph:
         assert list(actual.nodes) == list(expected.nodes)
         assert list(actual.edges) == list(expected.edges)
 
+    @pytest.mark.xfail(reason="Only acyclic graphs are implemented")
     def test_complex_order(self):
         """Single models upstream and downstream of an interdependency
         """
@@ -288,6 +289,7 @@ class TestCompositeIntegration:
         no_inputs.simulate(data_handle)
         data_handle.assert_not_called()
 
+    @pytest.mark.xfail(reason="JobRunner not yet implemented")
     def test_sector_model_one_input(self, sos_model):
         data_handle = get_data_handle(sos_model)
         results = sos_model.simulate(data_handle)
@@ -407,6 +409,7 @@ class TestNestedModels():
 
 class TestCircularDependency:
 
+    @pytest.mark.xfail(reason="JobRunner not yet implemented")
     def test_loop(self, energy_model, water_model):
         """Fails because no functionality to deal with loops
         """
