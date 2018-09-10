@@ -213,7 +213,7 @@ class ModelRunner(object):
                         decision_iteration=iteration
                     )
 
-                    node_id = "simulate_%s_%s" % (iteration, timestep)
+                    node_id = "%s_%s" % (iteration, timestep)
 
                     sub_job_graph = model_run.sos_model.simulate(node_id, data_handle)
                     connect_to = [node for node in sub_job_graph.nodes if sub_job_graph.in_degree(node) == 0]
