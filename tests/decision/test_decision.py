@@ -30,10 +30,13 @@ def get_strategies():
 
 @fixture(scope='function')
 def get_register():
-    register = Mock()
-    mock_intervention = Mock()
-    mock_intervention.as_dict = Mock(return_value={'technical_lifetime': {'value': 99}})
-    register.get_intervention = Mock(return_value=mock_intervention)
+    lifetime = {'technical_lifetime': {'value': 99}}
+    register = {'nuclear_large': lifetime,
+                'carrington_retire': lifetime,
+                'small_pumping_station_oxford': lifetime,
+                'small_pumping_station_abingdon': lifetime,
+                'large_pumping_station_oxford': lifetime
+                }
     return register
 
 

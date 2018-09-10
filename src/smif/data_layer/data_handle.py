@@ -163,12 +163,12 @@ class DataHandle(object):
 
         Returns
         -------
-        list of dicts
-            A list of intervention dicts with build_year attribute
+        dict of dicts
+            A dict of intervention dicts with build_year attribute keyed by name
         """
         state = self.get_state()
 
-        current_interventions = []
+        current_interventions = {}
         all_interventions = self._store.read_interventions(self._model_name)
 
         for decision in state:
@@ -177,7 +177,7 @@ class DataHandle(object):
             try:
                 serialised = all_interventions[name]
                 serialised['build_year'] = build_year
-                current_interventions.append(serialised)
+                current_interventions[name] = serialised
             except KeyError:
                 # ignore if intervention is not in current set
                 pass

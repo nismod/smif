@@ -215,10 +215,18 @@ class DatafileInterface(DataInterface):
 
     @check_exists(dtype='sector_model')
     def read_interventions(self, sector_model_name):
+        all_interventions = {}
         sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
-        i_list = self._read_interventions_files(
+        interventions = self._read_interventions_files(
             sector_model['interventions'], 'interventions')
-        return {item['name']: item for item in i_list}
+        for entry in interventions:
+            name = entry.pop('name')
+            if name in all_interventions:
+                msg = "An entry for intervention {} already exists"
+                raise ValueError(msg.format(name))
+            else:
+                all_interventions[name] = entry
+        return all_interventions
 
     @check_exists(dtype='sector_model')
     def read_initial_conditions(self, sector_model_name):
@@ -253,9 +261,14 @@ class DatafileInterface(DataInterface):
         Arguments
         ---------
         filename: str
-            The name of the strategy yml file to read in
+            The name of the strategy yml or csv file to read in
         dirname: str
             The key of the dirname e.g. ``strategies`` or ``initial_conditions``
+
+        Returns
+        -------
+        dict of dict
+            Dict of intervention attribute dicts, keyed by intervention name
         """
         filepath = self.file_dir[dirname]
         _, ext = os.path.splitext(filename)
@@ -271,6 +284,17 @@ class DatafileInterface(DataInterface):
         return data
 
     def _reshape_csv_interventions(self, data):
+        """
+
+        Arguments
+        ---------
+        data : list of dict
+            A list of dicts containing intervention data
+
+        Returns
+        -------
+        dict of dicts
+        """
         new_data = []
         for element in data:
             reshaped_data = {}

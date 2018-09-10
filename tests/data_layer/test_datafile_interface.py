@@ -532,8 +532,8 @@ class TestSectorModel:
     def test_reshape_csv_interventions(self, get_handler):
         handler = get_handler
 
-        data = [{'capacity_value': 12, 'capacity_unit': 'GW'}]
-        expected = [{'capacity': {'value': 12, 'unit': 'GW'}}]
+        data = [{'name': 'test', 'capacity_value': 12, 'capacity_unit': 'GW'}]
+        expected = [{'name': 'test', 'capacity': {'value': 12, 'unit': 'GW'}}]
 
         actual = handler._reshape_csv_interventions(data)
         assert actual == expected
@@ -542,7 +542,8 @@ class TestSectorModel:
             self, get_handler):
         handler = get_handler
 
-        data = [{'capacity_value': 12,
+        data = [{'name': 'test',
+                 'capacity_value': 12,
                  'capacity_unit': 'GW',
                  'capacity': 23}]
 
@@ -553,7 +554,8 @@ class TestSectorModel:
             self, get_handler):
         handler = get_handler
 
-        data = [{'capacity': 23,
+        data = [{'name': 'test',
+                 'capacity': 23,
                  'capacity_value': 12,
                  'capacity_unit': 'GW'}]
 
@@ -563,8 +565,8 @@ class TestSectorModel:
     def test_reshape_csv_interventions_underscore_in_name(self, get_handler):
         handler = get_handler
 
-        data = [{'mega_capacity_value': 12, 'mega_capacity_unit': 'GW'}]
-        expected = [{'mega_capacity': {'value': 12, 'unit': 'GW'}}]
+        data = [{'name': 'test', 'mega_capacity_value': 12, 'mega_capacity_unit': 'GW'}]
+        expected = [{'name': 'test', 'mega_capacity': {'value': 12, 'unit': 'GW'}}]
 
         actual = handler._reshape_csv_interventions(data)
         assert actual == expected

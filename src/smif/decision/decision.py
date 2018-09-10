@@ -5,15 +5,7 @@ Currently, only pre-specified planning is implemented.
 The choices made in the three planning levels influence the set of interventions
 and assets available within a model run.
 
-The interventions available in a model run are stored in the
-:class:`~smif.decision.intervention.InterventionRegister`.
-
-When pre-specified planning are declared, each of the corresponding
-interventions in the InterventionRegister are moved to the BuiltInterventionRegister.
-
-Once pre-specified planning is instantiated, the action space for rule-based and
-optimisation approaches can be generated from the remaining Interventions in the
-InterventionRegister.
+The interventions available in a model run are stored in a dict keyed by name.
 
 """
 __author__ = "Will Usher, Tom Russell"
@@ -22,8 +14,6 @@ __license__ = "mit"
 
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
-
-from smif.decision.intervention import Intervention, InterventionRegister
 
 
 class DecisionManager(object):
@@ -58,19 +48,12 @@ class DecisionManager(object):
         self._modelrun_name = modelrun_name
         self._timesteps = timesteps
         self._decision_modules = []
-        self.register = InterventionRegister()
-        self._set_up_interventions(sos_model_name)
+
+        self.register = {}
+        for sector_model in self._store.read_sos_model(sos_model_name)['sector_models']:
+            self.register.update(self._store.read_interventions(sector_model))
 
         self._set_up_decision_modules(modelrun_name)
-
-    def _set_up_interventions(self, sos_model_name):
-        for sector_model in self._store.read_sos_model(sos_model_name)['sector_models']:
-            for name, intervention in self._store.read_interventions(sector_model).items():
-                self.register.register(
-                    Intervention(
-                        name,
-                        data=intervention,
-                        sector=sector_model))
 
     def _set_up_decision_modules(self, modelrun_name):
 
@@ -176,13 +159,12 @@ class DecisionModule(metaclass=ABCMeta):
     ---------
     timesteps : list
         A list of planning timesteps
-    intervention_register : smif.interventions.InterventionRegister
-        Reference to a fully populated intervention register
-
+    register : dict
+        Reference to a dict of iterventions
     """
-    def __init__(self, timesteps, intervention_register):
+    def __init__(self, timesteps, register):
         self.timesteps = timesteps
-        self.intervention_register = intervention_register
+        self.register = register
 
     def __next__(self):
         return self._get_next_decision_iteration()
@@ -211,7 +193,7 @@ class DecisionModule(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def _get_previous_state(self, timestep, decision_iteration):
+    def _get_previous_state(self, data_handle, timestep, decision_iteration):
         """Gets state of the previous `timestep` for `decision_iteration`
 
         Arguments
@@ -223,7 +205,7 @@ class DecisionModule(metaclass=ABCMeta):
         -------
         numpy.ndarray
         """
-        return self.get_decision(timestep.PREVIOUS, decision_iteration)
+        return self.get_decision(data_handle, timestep.PREVIOUS, decision_iteration)
 
     def _set_post_decision_state(self, timestep, decision_iteration, decision):
         """Sets the post-decision state
@@ -275,8 +257,8 @@ class PreSpecified(DecisionModule):
         representing historical or planned interventions
     """
 
-    def __init__(self, timesteps, intervention_register, planned_interventions):
-        super().__init__(timesteps, intervention_register)
+    def __init__(self, timesteps, register, planned_interventions):
+        super().__init__(timesteps, register)
         self._planned = planned_interventions
 
     def _get_next_decision_iteration(self):
@@ -328,11 +310,8 @@ class PreSpecified(DecisionModule):
         for intervention in self._planned:
             build_year = int(intervention['build_year'])
 
-            data = self.intervention_register.get_intervention(intervention['name'])
-
-            data_dict = data.as_dict()
-
-            lifetime = data_dict['technical_lifetime']['value']
+            data = self.register[intervention['name']]
+            lifetime = data['technical_lifetime']['value']
 
             if self.buildable(build_year, timestep) and \
                self.within_lifetime(build_year, timestep, lifetime):
