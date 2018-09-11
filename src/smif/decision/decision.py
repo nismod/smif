@@ -207,6 +207,17 @@ class DecisionModule(metaclass=ABCMeta):
     @abstractmethod
     def get_decision(self, data_handle):
         """Return decisions for a given timestep and decision iteration
+
+        Returns
+        -------
+        list of dict
+
+        Examples
+        --------
+        >>> register = {'intervention_a': {'capital_cost': {'value': 1234}}}
+        >>> dm = DecisionModule([2010, 2015], register)
+        >>> dm.get_decision(data_handle)
+        [{'name': 'intervention_a', 'build_year': 2010}])
         """
         raise NotImplementedError
 

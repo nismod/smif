@@ -1,3 +1,5 @@
+from copy import copy
+
 from smif.decision.decision import DecisionModule
 
 
@@ -46,8 +48,8 @@ class EnergyAgent(DecisionModule):
 
     def get_decision(self, data_handle):
         budget = self.run_regulator(data_handle)
-        self.run_power_producer(data_handle, budget)
-        return []
+        decisions = self.run_power_producer(data_handle, budget)
+        return decisions
 
     def run_regulator(self, data_handle):
         """
@@ -60,9 +62,9 @@ class EnergyAgent(DecisionModule):
         if data_handle.current_timestep > data_handle.base_timestep:
             output_name = 'cost'
             cost = data_handle.get_results(output_name,
-                                    model_name='energy_demand',
-                                    decision_iteration=iteration,
-                                    timestep=data_handle.previous_timestep)
+                                           model_name='energy_demand',
+                                           decision_iteration=iteration,
+                                           timestep=data_handle.previous_timestep)
             budget -= cost
 
         return budget
@@ -72,5 +74,17 @@ class EnergyAgent(DecisionModule):
         data_handle
         budget : float
         """
-        cheapest_first = sorted(self.register, lambda x: x['capital_cost']['value'], reverse=True)
-        return [(cheapest_first[0]['name'], data_handle.current_timestep)]
+        cheapest_first = []
+        for name, item in self.register.items():
+            cheapest_first.append((name, item['capital_cost']['value']))
+        sorted(cheapest_first, key=lambda x: float(x[1]), reverse=True)
+
+        within_budget = []
+        remaining_budget = copy(budget)
+        for intervention in cheapest_first:
+            if intervention[1] <= remaining_budget:
+                within_budget.append({'name': intervention[0],
+                                      'build_year': data_handle.current_timestep})
+                remaining_budget -= intervention[1]
+
+        return within_budget
