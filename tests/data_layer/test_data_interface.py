@@ -1,4 +1,4 @@
-"""Test data interface
+"""Test data interface classmethods
 """
 import numpy as np
 from pytest import raises

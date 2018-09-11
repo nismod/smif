@@ -7,13 +7,18 @@ import os
 import re
 from functools import lru_cache, wraps
 
-import fiona
 import pyarrow as pa
 from smif.data_layer.data_interface import (DataExistsError, DataInterface,
                                             DataMismatchError,
-                                            DataNotFoundError)
+                                            DataNotFoundError, DataReadError)
 from smif.data_layer.load import dump, load
 from smif.metadata import Spec
+
+# Import fiona if available (optional dependency)
+try:
+    import fiona
+except ImportError:
+    pass
 
 
 # Note: these decorators must be defined before being used below
@@ -89,16 +94,16 @@ class DatafileInterface(DataInterface):
     def __init__(self, base_folder, storage_format='local_binary'):
         super().__init__()
 
-        self.base_folder = base_folder
+        self.base_folder = str(base_folder)
         self.storage_format = storage_format
 
         self.file_dir = {}
-        self.file_dir['project'] = os.path.join(base_folder, 'config')
-        self.file_dir['results'] = os.path.join(base_folder, 'results')
+        self.file_dir['project'] = os.path.join(self.base_folder, 'config')
+        self.file_dir['results'] = os.path.join(self.base_folder, 'results')
 
         # cache results of reading project_config (invalidate on write)
         self._project_config_cache_invalid = True
-        # MUST ONLY access through self._read_project_config()
+        # MUST ONLY access through self.read_project_config()
         self._project_config_cache = None
 
         config_folders = {
@@ -115,11 +120,18 @@ class DatafileInterface(DataInterface):
         }
 
         for category, folder in config_folders.items():
-            dirname = os.path.join(base_folder, folder, category)
+            dirname = os.path.join(self.base_folder, folder, category)
             # ensure each directory exists
             os.makedirs(dirname, exist_ok=True)
             # store dirname
             self.file_dir[category] = dirname
+
+        # ensure project config file exists
+        try:
+            self.read_project_config()
+        except FileNotFoundError:
+            # write empty config if none found
+            self._write_project_config({})
 
     # region Model runs
     def read_model_runs(self):
@@ -127,17 +139,30 @@ class DatafileInterface(DataInterface):
         model_runs = [self.read_model_run(name) for name in names]
         return model_runs
 
-    @check_exists(dtype='model_run')
     def read_model_run(self, model_run_name):
+        modelrun_config = self._read_model_run(model_run_name)
+        del modelrun_config['strategies']
+        return modelrun_config
+
+    @check_exists(dtype='model_run')
+    def _read_model_run(self, model_run_name):
         return self._read_yaml_file(self.file_dir['model_runs'], model_run_name)
+
+    def _overwrite_model_run(self, model_run_name, model_run):
+        self._write_yaml_file(self.file_dir['model_runs'], model_run_name, model_run)
 
     @check_not_exists(dtype='model_run')
     def write_model_run(self, model_run):
-        self._write_yaml_file(self.file_dir['model_runs'], model_run['name'], model_run)
+        config = copy.copy(model_run)
+        config['strategies'] = []
+        self._write_yaml_file(self.file_dir['model_runs'], config['name'], config)
 
     @check_exists(dtype='model_run')
     def update_model_run(self, model_run_name, model_run):
-        self._write_yaml_file(self.file_dir['model_runs'], model_run['name'], model_run)
+        prev = self._read_model_run(model_run_name)
+        config = copy.copy(model_run)
+        config['strategies'] = prev['strategies']
+        self._overwrite_model_run(model_run_name, config)
 
     @check_exists(dtype='model_run')
     def delete_model_run(self, model_run_name):
@@ -273,7 +298,7 @@ class DatafileInterface(DataInterface):
         filepath = self.file_dir[dirname]
         _, ext = os.path.splitext(filename)
         if ext == '.csv':
-            data = self._read_state_file(os.path.join(filepath, filename))
+            data = self._get_data_from_csv(os.path.join(filepath, filename))
             try:
                 data = self._reshape_csv_interventions(data)
             except ValueError:
@@ -282,6 +307,10 @@ class DatafileInterface(DataInterface):
             data = self._read_yaml_file(filepath, filename, extension='')
 
         return data
+
+    def _write_interventions_file(self, filename, dirname, data):
+        filepath = self.file_dir[dirname]
+        self._write_yaml_file(filepath, filename=filename, data=data, extension='')
 
     def _reshape_csv_interventions(self, data):
         """
@@ -321,10 +350,12 @@ class DatafileInterface(DataInterface):
 
     # region Strategies
     def read_strategies(self, model_run_name):
-        strategies = []
-        model_run_config = self.read_model_run(model_run_name)
-        for strategy in model_run_config['strategies']:
-            if strategy['name'] == 'pre-specified-planning':
+        output = []
+        model_run_config = self._read_model_run(model_run_name)
+        strategies = copy.deepcopy(model_run_config['strategies'])
+
+        for strategy in strategies:
+            if strategy['strategy'] == 'pre-specified-planning':
                 decisions = self._read_interventions_file(strategy['filename'], 'strategies')
                 if decisions is None:
                     decisions = []
@@ -332,10 +363,25 @@ class DatafileInterface(DataInterface):
                 strategy['interventions'] = decisions
                 self.logger.info("Added %s pre-specified planning interventions to %s",
                                  len(decisions), strategy['model_name'])
-                strategies.append(strategy)
+                output.append(strategy)
             else:
-                strategies.append(strategy)
-        return strategies
+                output.append(strategy)
+        return output
+
+    def write_strategies(self, model_run_name, strategies):
+        strategies = copy.deepcopy(strategies)
+        model_run = self._read_model_run(model_run_name)
+        model_run['strategies'] = []
+        for i, strategy in enumerate(strategies):
+            if strategy['strategy'] == 'pre-specified-planning':
+                decisions = strategy['interventions']
+                del strategy['interventions']
+                filename = 'strategy-{}.yml'.format(i)
+                strategy['filename'] = filename
+                self._write_interventions_file(filename, 'strategies', decisions)
+
+            model_run['strategies'].append(strategy)
+        self._overwrite_model_run(model_run_name, model_run)
     # endregion
 
     # region State
@@ -383,37 +429,63 @@ class DatafileInterface(DataInterface):
         """
         with open(fname, 'r') as file_handle:
             reader = csv.DictReader(file_handle)
-            state = list(reader)
+            state = []
+            for line in reader:
+                try:
+                    item = {
+                        'name': line['name'],
+                        'build_year': int(line['build_year'])
+                    }
+                except KeyError:
+                    msg = "Interventions must have name and build year, got {} in {}"
+                    raise DataReadError(msg.format(line, fname))
+                state.append(item)
+
         return state
     # endregion
 
     # region Units
+    def write_unit_definitions(self, units):
+        project_config = self.read_project_config()
+        filename = 'user-defined-units.txt'
+        path = os.path.join(self.base_folder, 'data', filename)
+        with open(path, 'w') as units_fh:
+            units_fh.writelines(units)
+        project_config['units'] = filename
+        self._write_project_config(project_config)
+
     def read_unit_definitions(self):
         project_config = self.read_project_config()
-        filename = project_config['units']
-        if filename is not None:
+        try:
+            filename = project_config['units']
+            if filename is None:
+                return []
             path = os.path.join(self.base_folder, 'data', filename)
             try:
                 with open(path, 'r') as units_fh:
                     return [line.strip() for line in units_fh]
             except FileNotFoundError as ex:
                 raise DataNotFoundError('Units file not found:' + str(ex)) from ex
-        else:
+        except KeyError:
             return []
     # endregion
 
     # region Dimensions
     def read_dimensions(self):
         project_config = self.read_project_config()
-        for dim in project_config['dimensions']:
-            dim['elements'] = self._read_dimension_file(dim['elements'])
-        return project_config['dimensions']
+        dimensions = []
+        for dim_with_ref in project_config['dimensions']:
+            dim = copy.copy(dim_with_ref)
+            dim['elements'] = self._read_dimension_file(dim_with_ref['elements'])
+            dimensions.append(dim)
+        return dimensions
 
     @check_exists(dtype='dimension')
     def read_dimension(self, dimension_name):
         project_config = self.read_project_config()
-        dim = _pick_from_list(project_config['dimensions'], dimension_name)
-        dim['elements'] = self._read_dimension_file(dim['elements'])
+        dim_with_ref = _pick_from_list(project_config['dimensions'], dimension_name)
+        dim = copy.copy(dim_with_ref)
+        dim['elements'] = self._read_dimension_file(dim_with_ref['elements'])
         return dim
 
     def _set_list_coords(self, list_):
@@ -429,50 +501,99 @@ class DatafileInterface(DataInterface):
 
     @lru_cache(maxsize=32)
     def _read_dimension_file(self, filename):
-        # TODO include yaml/csv option
         filepath = os.path.join(self.file_dir['dimensions'], filename)
-        with fiona.drivers():
-            with fiona.open(filepath) as src:
-                data = []
-                for f in src:
-                    element = f['properties']
-                    # element['geometry'] = f['geometry']
-                    data.append(element)
+        _, ext = os.path.splitext(filename)
+        if ext in ('.yml', '.yaml'):
+            data = self._read_yaml_file(filepath)
+        elif ext == '.csv':
+            data = self._get_data_from_csv(filepath)
+        elif ext in ('.geojson', '.shp'):
+            data = self._read_spatial_file(filepath)
+        else:
+            msg = "Extension '{}' not recognised, expected one of ('.csv', '.yml', '.yaml', "
+            msg += "'.geojson', '.shp') when reading {}"
+            raise DataReadError(msg.format(ext, filepath))
         return data
+
+    def _write_dimension_file(self, filename, data):
+        # lru_cache may now be invalid, so clear it
+        self._read_dimension_file.cache_clear()
+
+        filepath = os.path.join(self.file_dir['dimensions'], filename)
+        _, ext = os.path.splitext(filename)
+        if ext in ('.yml', '.yaml'):
+            self._write_yaml_file(filepath, data=data)
+        elif ext == '.csv':
+            self._write_data_to_csv(filepath, data)
+        elif ext in ('.geojson', '.shp'):
+            raise NotImplementedError("Writing spatial dimensions not yet supported")
+            # self._write_spatial_file(filepath)
+        else:
+            msg = "Extension '{}' not recognised, expected one of ('.csv', '.yml', '.yaml', "
+            msg += "'.geojson', '.shp') when writing {}"
+            raise DataReadError(msg.format(ext, filepath))
+        return data
+
+    def _delete_dimension_file(self, filename):
+        os.remove(os.path.join(self.file_dir['dimensions'], filename))
 
     @check_not_exists(dtype='dimension')
     def write_dimension(self, dimension):
         project_config = self.read_project_config()
-        project_config['dimensions'].append(dimension)
-        # TODO write elements file
+
+        # write elements to yml file (by default, can handle any nested data)
+        filename = "{}.yml".format(dimension['name'])
+        elements = dimension['elements']
+        self._write_dimension_file(filename, elements)
+
+        # refer to elements by filename and add to config
+        dimension_with_ref = copy.copy(dimension)
+        dimension_with_ref['elements'] = filename
+        try:
+            project_config['dimensions'].append(dimension_with_ref)
+        except KeyError:
+            project_config['dimensions'] = [dimension_with_ref]
         self._write_project_config(project_config)
 
     @check_exists(dtype='dimension')
     def update_dimension(self, dimension_name, dimension):
         project_config = self.read_project_config()
         idx = _idx_in_list(project_config['dimensions'], dimension_name)
-        project_config['dimensions'][idx] = dimension
-        # TODO update elements file
+
+        # look up project-config filename and write elements
+        filename = project_config['dimensions'][idx]['elements']
+        elements = dimension['elements']
+        self._write_dimension_file(filename, elements)
+
+        # refer to elements by filename and update config
+        dimension_with_ref = copy.copy(dimension)
+        dimension_with_ref['elements'] = filename
+        project_config['dimensions'][idx] = dimension_with_ref
         self._write_project_config(project_config)
 
     @check_exists(dtype='dimension')
-    def delete_dimension(self, dimension_name, dimension):
+    def delete_dimension(self, dimension_name):
         project_config = self.read_project_config()
         idx = _idx_in_list(project_config['dimensions'], dimension_name)
+
+        # look up project-config filename and delete file
+        filename = project_config['dimensions'][idx]['elements']
+        self._delete_dimension_file(filename)
+
+        # delete from config
         del project_config['dimensions'][idx]
-        # TODO delete elements file
         self._write_project_config(project_config)
     # endregion
 
     # region Conversion coefficients
     def read_coefficients(self, source_spec, destination_spec):
         results_path = self._get_coefficients_path(source_spec, destination_spec)
-        if os.path.isfile(results_path):
+        try:
             return self._get_data_from_native_file(results_path)
-
-        msg = "Could not find the coefficients file for %s to %s"
-        self.logger.warning(msg, source_spec, destination_spec)
-        return None
+        except (FileNotFoundError, pa.lib.ArrowIOError):
+            msg = "Could not find the coefficients file for %s to %s"
+            self.logger.warning(msg, source_spec, destination_spec)
+            raise DataNotFoundError(msg.format(source_spec, destination_spec))
 
     def write_coefficients(self, source_spec, destination_spec, data):
         results_path = self._get_coefficients_path(source_spec, destination_spec)
@@ -505,7 +626,10 @@ class DatafileInterface(DataInterface):
     @check_not_exists(dtype='scenario')
     def write_scenario(self, scenario):
         project_config = self.read_project_config()
-        project_config['scenarios'].append(scenario)
+        try:
+            project_config['scenarios'].append(scenario)
+        except KeyError:
+            project_config['scenarios'] = [scenario]
         self._write_project_config(project_config)
 
     @check_exists(dtype='scenario')
@@ -581,7 +705,7 @@ class DatafileInterface(DataInterface):
         spec = self._read_scenario_variable_spec(scenario_name, variable)
         data = self.ndarray_to_data_list(data, spec)
         filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
-        self._write_data_to_csv(filepath, data, spec)
+        self._write_data_to_csv(filepath, data, spec=spec)
 
     def _get_scenario_variant_filepath(self, scenario_name, variant_name, variable):
         variant = self.read_scenario_variant(scenario_name, variant_name)
@@ -615,7 +739,10 @@ class DatafileInterface(DataInterface):
     @check_not_exists(dtype='narrative')
     def write_narrative(self, narrative):
         project_config = self.read_project_config()
-        project_config['narratives'].append(narrative)
+        try:
+            project_config['narratives'].append(narrative)
+        except KeyError:
+            project_config['narratives'] = [narrative]
         self._write_project_config(project_config)
 
     @check_exists(dtype='narrative')
@@ -635,7 +762,8 @@ class DatafileInterface(DataInterface):
     @check_exists(dtype='narrative')
     def read_narrative_variants(self, narrative_name):
         project_config = self.read_project_config()
-        return project_config['narratives'][narrative_name]['variants']
+        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
+        return project_config['narratives'][n_idx]['variants']
 
     @check_exists(dtype='narrative_variant')
     def read_narrative_variant(self, narrative_name, variant_name):
@@ -647,7 +775,8 @@ class DatafileInterface(DataInterface):
     @check_not_exists(dtype='narrative_variant')
     def write_narrative_variant(self, narrative_name, variant):
         project_config = self.read_project_config()
-        project_config['narratives'][narrative_name]['variants'].append(variant)
+        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
+        project_config['narratives'][n_idx]['variants'].append(variant)
         self._write_project_config(project_config)
 
     @check_exists(dtype='narrative_variant')
@@ -692,7 +821,7 @@ class DatafileInterface(DataInterface):
         spec = self._read_narrative_variable_spec(narrative_name, variable)
         data = self.ndarray_to_data_list(data, spec)
         filepath = self._get_narrative_variant_filepath(narrative_name, variant_name, variable)
-        self._write_data_to_csv(filepath, data, spec)
+        self._write_data_to_csv(filepath, data, spec=spec)
 
     def _get_narrative_variant_filepath(self, narrative_name, variant_name, variable):
         variant = self.read_narrative_variant(narrative_name, variant_name)
@@ -742,7 +871,7 @@ class DatafileInterface(DataInterface):
 
         if self.storage_format == 'local_csv':
             data = self.ndarray_to_data_list(data, output_spec)
-            self._write_data_to_csv(results_path, data, output_spec)
+            self._write_data_to_csv(results_path, data, spec=output_spec)
         if self.storage_format == 'local_binary':
             self._write_data_to_native_file(results_path, data)
 
@@ -986,9 +1115,16 @@ class DatafileInterface(DataInterface):
         return scenario_data
 
     @staticmethod
-    def _write_data_to_csv(filepath, data, spec):
+    def _write_data_to_csv(filepath, data, spec=None, fieldnames=None):
+        if fieldnames is not None:
+            pass
+        elif spec is not None:
+            fieldnames = tuple(spec.dims) + (spec.name, )
+        else:
+            fieldnames = tuple(data[0].keys())
+
         with open(filepath, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=tuple(spec.dims) + (spec.name, ))
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for row in data:
                 writer.writerow(row)
@@ -1051,6 +1187,27 @@ class DatafileInterface(DataInterface):
         else:
             filepath = path
         dump(data, filepath)
+
+    @staticmethod
+    def _read_spatial_file(filepath):
+        try:
+            with fiona.drivers():
+                with fiona.open(filepath) as src:
+                    data = []
+                    for f in src:
+                        element = {
+                            'name': f['properties']['name'],
+                            'feature': f
+                        }
+                        data.append(element)
+            return data
+        except NameError as ex:
+            msg = "Could not read spatial dimension definition. Please install fiona to read"
+            msg += "geographic data files. Try running: \n"
+            msg += "    pip install smif[spatial]\n"
+            msg += "or:\n"
+            msg += "    conda install fiona shapely rtree\n"
+            raise DataReadError(msg) from ex
     # endregion
 
 

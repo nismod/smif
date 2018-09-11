@@ -8,7 +8,6 @@
 """
 from __future__ import absolute_import, division, print_function
 
-import csv
 import json
 import logging
 import os
@@ -17,7 +16,7 @@ from pytest import fixture
 from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
 
-from .convert.conftest import remap_months_csv
+from .convert.conftest import remap_months
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
@@ -25,17 +24,8 @@ logging.basicConfig(filename='test_logs.log',
                     filemode='w')
 
 
-@fixture(scope='function')
-def setup_folder_structure(tmpdir_factory, oxford_region,
-                           annual_intervals, initial_system,
-                           planned_interventions):
-    """
-
-    Returns
-    -------
-    :class:`LocalPath`
-        Path to the temporary folder
-    """
+@fixture
+def setup_empty_folder_structure(tmpdir_factory):
     folder_list = [
         'config',
         os.path.join('config', 'model_runs'),
@@ -43,10 +33,9 @@ def setup_folder_structure(tmpdir_factory, oxford_region,
         os.path.join('config', 'sector_models'),
         'data',
         os.path.join('data', 'initial_conditions'),
-        os.path.join('data', 'interval_definitions'),
         os.path.join('data', 'interventions'),
         os.path.join('data', 'narratives'),
-        os.path.join('data', 'region_definitions'),
+        os.path.join('data', 'dimensions'),
         os.path.join('data', 'scenarios'),
         os.path.join('data', 'coefficients'),
         os.path.join('data', 'strategies'),
@@ -59,14 +48,35 @@ def setup_folder_structure(tmpdir_factory, oxford_region,
     for folder in folder_list:
         test_folder.mkdir(folder)
 
-    region_file = test_folder.join('data', 'region_definitions', 'test_region.json')
+    return test_folder
+
+
+@fixture
+def setup_folder_structure(setup_empty_folder_structure, oxford_region, remap_months,
+                           annual_intervals, initial_system, planned_interventions):
+    """
+
+    Returns
+    -------
+    :class:`LocalPath`
+        Path to the temporary folder
+    """
+    test_folder = setup_empty_folder_structure
+
+    region_file = test_folder.join('data', 'dimensions', 'test_region.geojson')
     region_file.write(json.dumps(oxford_region))
 
-    intervals_file = test_folder.join('data', 'interval_definitions', 'annual.csv')
-    intervals_file.write("id,start,end\n1,P0Y,P1Y\n")
+    intervals_file = test_folder.join('data', 'dimensions', 'annual.yml')
+    intervals_file.write("""\
+- name: '1'
+  interval: [[P0Y, P1Y]]
+""")
 
-    intervals_file = test_folder.join('data', 'interval_definitions', 'hourly.csv')
-    intervals_file.write("id,start,end\n1,PT0H,PT1H\n")
+    intervals_file = test_folder.join('data', 'dimensions', 'hourly.yml')
+    intervals_file.write("""\
+- name: '1'
+  interval: [[PT0H, PT1H]]
+""")
 
     initial_conditions_file = test_folder.join('data', 'initial_conditions', 'init_system.yml')
     dump(initial_system, str(initial_conditions_file))
@@ -75,14 +85,9 @@ def setup_folder_structure(tmpdir_factory, oxford_region,
         'data', 'interventions', 'planned_interventions.yml')
     dump(planned_interventions, str(planned_interventions_file))
 
-    data = remap_months_csv()
-    intervals_file = test_folder.join(
-        'data', 'interval_definitions', 'remap.csv')
-    keys = data[0].keys()
-    with intervals_file.open(mode='w+') as intervals_fh:
-        dict_writer = csv.DictWriter(intervals_fh, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(data)
+    remap_months_file = test_folder.join('data', 'dimensions', 'remap.yml')
+    data = remap_months
+    dump(data, str(remap_months_file))
 
     units_file = test_folder.join('data', 'user_units.txt')
     with units_file.open(mode='w') as units_fh:
@@ -210,23 +215,13 @@ def water_outputs():
     ]
 
 
-@fixture(scope='session')
-def annual_intervals_csv():
-    return [
-        {
-            "start": "P0Y",
-            "end": "P1Y",
-            "id": '1'
-        }
-    ]
-
-
-@fixture(scope='session')
+@fixture
 def annual_intervals():
     return [
-        (
-         '1', [("P0Y", "P1Y")]
-        )
+        {
+            "name": '1',
+            "interval": [["P0Y", "P1Y"]],
+        }
     ]
 
 
@@ -399,92 +394,91 @@ def project_config():
     """
     return {
         'project_name': 'NISMOD v2.0',
-        'scenario_sets': [
+        'scenarios': [
             {
-                'description': 'The annual change in UK population',
                 'name': 'population',
-                'facets': {'name': "population_count",
-                           'description': "The count of population"}
-            }
-        ],
-        'narrative_sets': [
-            {
-                'description': 'Defines the rate and nature of technological change',
-                'name': 'technology'
-            },
-            {
-                'description': 'Defines the nature of governance and influence upon decisions',
-                'name': 'governance'
-            }
-        ],
-        'region_definitions': [
-            {
-                'description': 'Local authority districts for the UK',
-                'filename': 'test_region.json',
-                'name': 'lad'
-            }
-        ],
-        'interval_definitions': [
-            {
-                'description': 'The 8760 hours in the year named by hour',
-                'filename': 'hourly.csv', 'name': 'hourly'
-            },
-            {
-                'description': 'One annual timestep, used for aggregate yearly data',
-                'filename': 'annual.csv', 'name': 'annual'
-            },
-            {
-                'description': 'Remapped months to four representative months',
-                'filename': 'remap.csv', 'name': 'remap_months'
-            }
-        ],
-        'units': 'user_units.txt',
-        'scenarios':
-        [
-            {
-                'description': 'The High ONS Forecast for UK population out to 2050',
-                'name': 'High Population (ONS)',
-                'facets': [
+                'description': 'The annual change in UK population',
+                'provides': [
                     {
-                        'name': 'population_count',
-                        'filename': 'population_high.csv',
-                        'spatial_resolution': 'lad',
-                        'temporal_resolution': 'annual',
-                        'units': 'people',
-                    }
+                        'name': "population_count",
+                        'description': "The count of population",
+                        'dtype': 'int'
+                    },
                 ],
-                'scenario_set': 'population',
-            },
-            {
-                'description': 'The Low ONS Forecast for UK population out to 2050',
-                'name': 'Low Population (ONS)',
-                'facets': [
+                'variants': [
                     {
-                        'name': 'population_count',
-                        'filename': 'population_low.csv',
-                        'spatial_resolution': 'lad',
-                        'temporal_resolution': 'annual',
-                        'units': 'people',
-                    }
+                        'name': 'High Population (ONS)',
+                        'description': 'The High ONS Forecast for UK population out to 2050',
+                        'data': {
+                            'population_count': 'population_high.csv',
+                        },
+                    },
+                    {
+                        'name': 'Low Population (ONS)',
+                        'description': 'The Low ONS Forecast for UK population out to 2050',
+                        'data': {
+                            'population_count': 'population_low.csv',
+                        },
+                    },
                 ],
-                'scenario_set': 'population',
-            }
+            },
         ],
         'narratives': [
             {
-                'description': 'High penetration of SMART technology on the demand side',
-                'filename': 'energy_demand_high_tech.yml',
-                'name': 'Energy Demand - High Tech',
-                'narrative_set': 'technology',
+                'name': 'technology',
+                'description': 'Defines the rate and nature of technological change',
+                'provides': [],
+                'variants': [
+                    {
+                        'name': 'Energy Demand - High Tech',
+                        'description': 'High penetration of SMART technology on the demand ' +
+                                       'side',
+                        'data': {
+                            '': 'energy_demand_high_tech.yml',
+                        }
+                    },
+                ],
             },
             {
-                'description': 'Stronger role for central government in planning and ' +
-                               'regulation, less emphasis on market-based solutions',
-                'filename': 'central_planning.yml',
-                'name': 'Central Planning',
-                'narrative_set': 'governance',
-            }
-        ]
+                'name': 'governance',
+                'description': 'Defines the nature of governance and influence upon decisions',
+                'provides': [],
+                'variants': [
+                    {
+                        'name': 'Central Planning',
+                        'description': 'Stronger role for central government in planning ' +
+                                       'and regulation, less emphasis on market-based ' +
+                                       'solutions',
+                        'data': {
+                            '': 'central_planning.yml',
+                        },
+                    },
+                ],
+            },
+        ],
+        'dimensions': [
+            {
+                'name': 'lad',
+                'description': 'Local authority districts for the UK',
+                'elements': 'test_region.geojson',
+            },
+            {
+                'name': 'hourly',
+                'description': 'The 8760 hours in the year named by hour',
+                'elements': 'hourly.yml',
+            },
+            {
+                'name': 'annual',
+                'description': 'One annual timestep, used for aggregate yearly data',
+                'elements': 'annual.yml',
+            },
+            {
+                'name': 'remap_months',
+                'description': 'Remapped months to four representative months',
+                'elements': 'remap.yml',
+            },
+        ],
+        'units': 'user_units.txt',
     }
 
 
@@ -592,8 +586,8 @@ def get_sector_model():
                 'units': 'percentage'
             }
         ],
-        'interventions': ['planned_interventions.yml'],
-        'initial_conditions': ['init_system.yml']
+        'interventions': [],
+        'initial_conditions': []
     }
 
 

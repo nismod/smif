@@ -177,7 +177,7 @@ class TestIntervalRegister():
         """Pass a time-interval definition into the register
 
         """
-        data = [('1_1', [('PT0H', 'PT1H')])]
+        data = [{'name': '1_1', 'interval': [('PT0H', 'PT1H')]}]
 
         register = TimeIntervalRegister()
         register.register(IntervalSet('energy_supply_hourly', data))
@@ -337,7 +337,7 @@ class TestValidation:
 
     def test_validate_intervals_fails(self, remap_months):
         data = remap_months
-        data.append(('5', [('PT0H', 'PT1H')]))
+        data.append({'name': '5', 'interval': [('PT0H', 'PT1H')]})
         with raises(ValueError) as excinfo:
             IntervalSet('remap_months', data)
         assert "Duplicate entry for hour 0 in interval set remap_months." in str(excinfo.value)

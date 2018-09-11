@@ -1,5 +1,8 @@
 """Memory-backed data interface
 """
+from collections import OrderedDict
+from copy import copy
+
 from smif.data_layer.data_interface import DataExistsError, DataInterface
 
 
@@ -8,25 +11,25 @@ class MemoryInterface(DataInterface):
     """
     def __init__(self):
         super().__init__()
-        self._model_runs = {}
-        self._sos_models = {}
-        self._sector_models = {}
-        self._strategies = {}
-        self._state = {}
-        self._units = {}
-        self._dimensions = {}
-        self._coefficients = {}
-        self._scenarios = {}
-        self._scenario_data = {}
-        self._narratives = {}
-        self._narrative_data = {}
-        self._results = {}
-        self._interventions = {}
+        self._model_runs = OrderedDict()
+        self._sos_models = OrderedDict()
+        self._sector_models = OrderedDict()
+        self._strategies = OrderedDict()
+        self._state = OrderedDict()
+        self._units = []  # list[str] of pint definitions
+        self._dimensions = OrderedDict()
+        self._coefficients = OrderedDict()
+        self._scenarios = OrderedDict()
+        self._scenario_data = OrderedDict()
+        self._narratives = OrderedDict()
+        self._narrative_data = OrderedDict()
+        self._results = OrderedDict()
+        self._interventions = OrderedDict()
         self._initial_conditions = []
 
     # region Model runs
     def read_model_runs(self):
-        return [x for x in self._model_runs.values()]
+        return list(self._model_runs.values())
 
     def read_model_run(self, model_run_name):
         return self._model_runs[model_run_name]
@@ -43,7 +46,7 @@ class MemoryInterface(DataInterface):
 
     # region System-of-systems models
     def read_sos_models(self):
-        return [x for x in self._sos_models.values()]
+        return list(self._sos_models.values())
 
     def read_sos_model(self, sos_model_name):
         return self._sos_models[sos_model_name]
@@ -62,7 +65,7 @@ class MemoryInterface(DataInterface):
 
     # region Sector models
     def read_sector_models(self):
-        return self._sector_models.values()
+        return list(self._sector_models.values())
 
     def read_sector_model(self, sector_model_name):
         return self._sector_models[sector_model_name]
@@ -86,6 +89,9 @@ class MemoryInterface(DataInterface):
     def read_strategies(self, modelrun_name):
         return self._strategies[modelrun_name]
 
+    def write_strategies(self, modelrun_name, strategies):
+        self._strategies[modelrun_name] = strategies
+
     def read_initial_conditions(self, sector_model_name):
         return self._initial_conditions[sector_model_name]
     # endregion
@@ -99,13 +105,16 @@ class MemoryInterface(DataInterface):
     # endregion
 
     # region Units
+    def write_unit_definitions(self, units):
+        self._units = units
+
     def read_unit_definitions(self):
-        return self._units.values()
+        return self._units
     # endregion
 
     # region Dimensions
     def read_dimensions(self):
-        return self._dimensions.values()
+        return list(self._dimensions.values())
 
     def read_dimension(self, dimension_name):
         return self._dimensions[dimension_name]
@@ -130,25 +139,28 @@ class MemoryInterface(DataInterface):
 
     # region Scenarios
     def read_scenarios(self):
-        return self._scenarios.values()
+        return [_variant_dict_to_list(s) for s in self._scenarios.values()]
 
     def read_scenario(self, scenario_name):
-        return self._scenarios[scenario_name]
+        scenario = self._scenarios[scenario_name]
+        return _variant_dict_to_list(scenario)
 
     def write_scenario(self, scenario):
+        scenario = _variant_list_to_dict(scenario)
         self._scenarios[scenario['name']] = scenario
 
     def update_scenario(self, scenario_name, scenario):
+        scenario = _variant_list_to_dict(scenario)
         self._scenarios[scenario_name] = scenario
 
     def delete_scenario(self, scenario_name):
         del self._scenarios[scenario_name]
 
     def read_scenario_variants(self, scenario_name):
-        return self._scenarios.values()
+        return list(self._scenarios[scenario_name]['variants'].values())
 
     def read_scenario_variant(self, scenario_name, variant_name):
-        return self._scenarios[scenario_name]
+        return self._scenarios[scenario_name]['variants'][variant_name]
 
     def write_scenario_variant(self, scenario_name, variant):
         self._scenarios[scenario_name]['variants'][variant['name']] = variant
@@ -169,22 +181,25 @@ class MemoryInterface(DataInterface):
 
     # region Narratives
     def read_narratives(self):
-        return self._narratives.values()
+        return [_variant_dict_to_list(n) for n in self._narratives.values()]
 
     def read_narrative(self, narrative_name):
-        return self._narratives[narrative_name]
+        narrative = self._narratives[narrative_name]
+        return _variant_dict_to_list(narrative)
 
     def write_narrative(self, narrative):
+        narrative = _variant_list_to_dict(narrative)
         self._narratives[narrative['name']] = narrative
 
     def update_narrative(self, narrative_name, narrative):
+        narrative = _variant_list_to_dict(narrative)
         self._narratives[narrative_name] = narrative
 
     def delete_narrative(self, narrative_name):
         del self._narratives[narrative_name]
 
     def read_narrative_variants(self, narrative_name):
-        return self._narratives[narrative_name]['variants'].values()
+        return list(self._narratives[narrative_name]['variants'].values())
 
     def read_narrative_variant(self, narrative_name, variant_name):
         return self._narratives[narrative_name]['variants'][variant_name]
@@ -226,6 +241,29 @@ class MemoryInterface(DataInterface):
         self.logger.debug("Set %s", key)
         self._results[key] = data
 
-    def prepare_warm_start(self, modelrun_id):
-        return self._model_runs[modelrun_id]['timesteps'][0]
+    def prepare_warm_start(self, modelrun_name):
+        results_keys = [k for k in self._results.keys() if k[0] == modelrun_name]
+        if results_keys:
+            return max(k[3] for k in results_keys)  # max timestep reached
+        return None
     # endregion
+
+
+def _variant_list_to_dict(config):
+    config = copy(config)
+    try:
+        list_ = config['variants']
+    except KeyError:
+        list_ = []
+    config['variants'] = {variant['name']: variant for variant in list_}
+    return config
+
+
+def _variant_dict_to_list(config):
+    config = copy(config)
+    try:
+        dict_ = config['variants']
+    except KeyError:
+        dict_ = {}
+    config['variants'] = list(dict_.values())
+    return config

@@ -176,14 +176,6 @@ def test_verbose_debug_alt():
     assert 'DEBUG' in str(output.stderr)
 
 
-def test_verbose_info(setup_folder_structure):
-    """Expect info message from `smif -v validate <config_file>`
-    """
-    config_file = os.path.join(str(setup_folder_structure))
-    output = subprocess.run(['smif', '-v', 'run', config_file], stderr=subprocess.PIPE)
-    assert 'INFO' in str(output.stderr)
-
-
 class TestRunModelRunComponents():
     @mark.xfail()
     def test_get_narratives(self, tmp_sample_project):
