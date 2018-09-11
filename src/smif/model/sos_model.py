@@ -170,7 +170,7 @@ class SosModel(CompositeModel):
             Access model outputs
 
         """
-        graph = SosModel.make_dependency_graph(self.models)
+        graph = self.get_dependency_graph()
         run_order = SosModel.get_model_sets_in_run_order(
             graph,
             self.max_iterations,
@@ -179,25 +179,24 @@ class SosModel(CompositeModel):
         )
         self.logger.info("Determined run order as %s", [x.name for x in run_order])
         for model in run_order:
-            self.logger.info("*** Running the %s model ***", model.name)
+            self.logger.info("*** Running the %s model ***", model['model'].name)
             # Pass simulate access to a DataHandle derived for the particular
             # model
-            model.simulate(data_handle.derive_for(model))
+            model['model'].simulate(data_handle.derive_for(model['model']))
         return data_handle
 
-    @staticmethod
-    def make_dependency_graph(models):
+    def get_dependency_graph(self):
         """Build a networkx DiGraph from models (as nodes) and dependencies (as edges)
         """
         dependency_graph = networkx.DiGraph()
-        for model in models.values():
-            dependency_graph.add_node(model, name=model.name)
+        for model in self.models.values():
+            dependency_graph.add_node(model.name, model=model)
 
-        for model in models.values():
+        for model in self.models.values():
             for dependency in model.deps.values():
                 dependency_graph.add_edge(
-                    dependency.source_model,
-                    dependency.sink_model
+                    dependency.source_model.name,
+                    dependency.sink_model.name
                 )
         return dependency_graph
 
