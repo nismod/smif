@@ -56,7 +56,7 @@ class EnergyAgent(DecisionModule):
         data_handle
         """
 
-        budget = 5e6
+        budget = 100
 
         iteration = data_handle.decision_iteration
         if data_handle.current_timestep > data_handle.base_timestep:
@@ -76,7 +76,7 @@ class EnergyAgent(DecisionModule):
         """
         cheapest_first = []
         for name, item in self.register.items():
-            cheapest_first.append((name, item['capital_cost']['value']))
+            cheapest_first.append((name, float(item['capital_cost']['value'])))
         sorted(cheapest_first, key=lambda x: float(x[1]), reverse=True)
 
         within_budget = []
