@@ -377,28 +377,21 @@ class DataHandle(object):
 
         if model_name is None:  # Accessing results in the current model
             model_name = self._model_name
-
-            if output_name not in self._outputs:
-                msg = "'{}' not recognised as output for '{}'"
-                raise KeyError(msg.format(output_name, self._model_name))
-            else:
-                spec = self._outputs[output_name]
-
-        elif model_name in self._model.models:
-            output_name = output_name
-            contained_model = self._model.models[model_name]
-
-            if output_name not in contained_model.outputs:
-                msg = "'{}' not recognised as output for '{}'"
-                raise KeyError(msg.format(output_name, model_name))
-            else:
-                spec = contained_model.outputs[output_name]
+            results_model = self._model
+        elif model_name in self._model.models:  # Accessing a contained model
+            results_model = self._model.models[model_name]
         else:
             raise KeyError(
-                '{} is not available in the current model'.format(
+                '{} is not contained in the current model'.format(
                     model_name
                 )
             )
+
+        try:
+            spec = results_model.outputs[output_name]
+        except KeyError:
+            msg = "'{}' not recognised as output for '{}'"
+            raise KeyError(msg.format(output_name, model_name))
 
         if modelset_iteration is None:
             modelset_iteration = self._modelset_iteration
