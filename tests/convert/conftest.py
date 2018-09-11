@@ -1,6 +1,7 @@
+"""Conversion data fixtures
+"""
 import numpy as np
 from pytest import fixture
-from smif.convert.area import RegionSet
 
 
 @fixture(scope='module')
@@ -9,15 +10,12 @@ def year_to_month_coefficients():
 
     (apportions)
     """
-
-    month_lengths = np.array([[31, 28, 31, 30, 31, 31, 30, 30, 31, 31, 30, 31]],
-                             dtype=np.float).T
-    return month_lengths / 365
+    return np.array([[31, 28, 31, 30, 31, 31, 30, 30, 31, 31, 30, 31]], dtype=np.float).T / 365
 
 
 @fixture(scope='module')
 def month_to_year_coefficients():
-    """
+    """From 12 months to one year
     """
     return np.ones((1, 12), dtype=np.float)
 
@@ -33,8 +31,8 @@ def month_to_season_coefficients():
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # winter
         [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],  # spring
         [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],  # summer
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0]])  # autumn
-
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0]  # autumn
+    ])
     return coef.T
 
 
@@ -183,7 +181,7 @@ def one_year():
 def monthly_data():
     """[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     """
-    data = np.array([[
+    data = np.array([
         31,
         28,
         31,
@@ -195,36 +193,36 @@ def monthly_data():
         30,
         31,
         30,
-        31,
-    ]])
+        31
+    ])
     return data
 
 
 @fixture(scope='function')
 def monthly_data_as_seasons():
-    return np.array([[
+    return np.array([
         31+31+28,
         31+30+31,
         30+31+31,
         30+31+30
-    ]], dtype=float)
+    ], dtype=float)
 
 
 @fixture(scope='function')
 def remap_month_data():
-    data = np.array([[
+    data = np.array([
         31+31+28,  # Dec, Jan, Feb
         31+30+31,  # Mar, Apr, May
         30+31+31,  # Jun, Jul, Aug
         30+31+30  # Sep, Oct, Nov
-    ]], dtype=float) / 3
+    ], dtype=float) / 3
 
     return data
 
 
 @fixture(scope='function')
 def remap_month_data_as_months():
-    data = np.array([[
+    data = np.array([
         30.666666666,
         29.666666666,
         29.666666666,
@@ -237,7 +235,7 @@ def remap_month_data_as_months():
         30.666666666,
         30.666666666,
         30.666666666
-    ]])
+    ])
     return data
 
 
@@ -250,7 +248,7 @@ def regions_rect():
         |.......|
 
     """
-    return RegionSet('rect', [
+    return [
         {
             'type': 'Feature',
             'properties': {'name': 'zero'},
@@ -259,7 +257,7 @@ def regions_rect():
                 'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
             }
         }
-    ])
+    ]
 
 
 @fixture(scope='function')
@@ -271,7 +269,7 @@ def regions_half_squares():
         |...|...|
 
     """
-    return RegionSet('half_squares', [
+    return [
         {
             'type': 'Feature',
             'properties': {'name': 'a'},
@@ -287,5 +285,87 @@ def regions_half_squares():
                 'type': 'Polygon',
                 'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
             }
+        }
+    ]
+
+
+@fixture(scope='function')
+def regions():
+    """Return data structure for test regions/shapes
+    """
+    return [
+        {
+            'type': 'Feature',
+            'properties': {'name': 'unit'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            }
         },
-    ])
+        {
+            'type': 'Feature',
+            'properties': {'name': 'half'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 0], [0, 0.5], [1, 0.5], [1, 0]]]
+            }
+        },
+        {
+            'type': 'Feature',
+            'properties': {'name': 'two'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
+            }
+        }
+    ]
+
+
+@fixture(scope='function')
+def regions_single_half_square():
+    """Return single half-size square region::
+
+        |```|
+        | A |
+        |...|
+
+    """
+    return [
+        {
+            'type': 'Feature',
+            'properties': {'name': 'a'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            }
+        }
+    ]
+
+
+@fixture(scope='function')
+def regions_half_triangles():
+    """Return regions split diagonally::
+
+        |``````/|
+        | 0 / 1 |
+        |/......|
+
+    """
+    return [
+        {
+            'type': 'Feature',
+            'properties': {'name': 'zero'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 0], [0, 2], [1, 0]]]
+            }
+        },
+        {
+            'type': 'Feature',
+            'properties': {'name': 'one'},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[[0, 2], [1, 2], [1, 0]]]
+            }
+        }
+    ]

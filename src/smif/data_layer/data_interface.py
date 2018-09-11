@@ -426,7 +426,7 @@ class DataInterface(metaclass=ABCMeta):
 
         Notes
         -----
-        To be called from smif.convert DefaultConverter
+        To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
 
         """
         raise NotImplementedError
@@ -447,7 +447,7 @@ class DataInterface(metaclass=ABCMeta):
 
         Notes
         -----
-        To be called from smif.convert.register
+        To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
         """
         raise NotImplementedError()
     # endregion

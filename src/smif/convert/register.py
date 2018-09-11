@@ -1,9 +1,8 @@
-"""Register, NDimensionalRegister and ResolutionSet
-abstract classes to contain area, interval and unit metadata.
+"""Register, ResolutionSet abstract classes to contain metadata and generate conversion
+coefficients.
 
-Implemented by :class:`smif.convert.interval.TimeIntervalRegister`,
-:class:`smif.convert.area.RegionRegister` and
-:class:`smif.convert.unit.UnitRegister`.
+NDimensionalRegister is used in :class:`smif.convert.interval.IntervalAdaptor` and
+:class:`smif.convert.region.RegionAdaptor`.
 """
 import logging
 from abc import ABCMeta, abstractmethod
@@ -59,6 +58,9 @@ class Register(LogMixin, metaclass=ABCMeta):
     def convert(self, data, from_set_name, to_set_name):
         """Convert a list of data points for a given set to another set
 
+        .. deprecated
+                Usage superceded by Adaptor.convert
+
         Parameters
         ----------
         data: numpy.ndarray
@@ -81,6 +83,9 @@ class Register(LogMixin, metaclass=ABCMeta):
     @staticmethod
     def convert_with_coefficients(data, coefficients, axis=None):
         """Convert an array of data using given coefficients, along a given axis
+
+        .. deprecated
+                Usage superceded by Adaptor.convert
 
         Parameters
         ----------
@@ -204,28 +209,24 @@ class NDimensionalRegister(Register):
             self.logger.warning(log_msg, from_set.name, from_set.coverage,
                                 to_set.name, to_set.coverage)
 
-        if self.data_interface:
-
-            self.logger.info("Using data interface to load coefficients")
-            coefficients = self.data_interface.read_coefficients(source, destination)
-
-            if coefficients is None:
-                msg = "Coefficients not found, generating coefficients for %s to %s"
-                self.logger.info(msg, source, destination)
-
-                coefficients = self._obtain_coefficients(from_set, to_set)
-                self._write_coefficients(source, destination, coefficients)
-
-        else:
-
-            msg = "No data interface specified, generating coefficients for %s to %s"
-            self.logger.info(msg, source, destination)
-            coefficients = self._obtain_coefficients(from_set, to_set)
+        coefficients = self.generate_coefficients(from_set, to_set)
 
         return coefficients
 
-    def _obtain_coefficients(self, from_set, to_set):
-        """
+    def generate_coefficients(self, from_set, to_set):
+        """Generate coefficients for converting between two :class:`ResolutionSet`s
+
+        Coefficients for converting a single dimension will always be 2D, of shape
+        (len(from_set), len(to_set)).
+
+        Parameters
+        ----------
+        from_set : ResolutionSet
+        to_set : ResolutionSet
+
+        Returns
+        -------
+        numpy.ndarray
         """
         coefficients = np.zeros((len(from_set), len(to_set)), dtype=np.float)
         self.logger.debug("Coefficients array is of shape %s for %s to %s",
@@ -234,15 +235,17 @@ class NDimensionalRegister(Register):
         from_names = from_set.get_entry_names()
         for to_idx, to_entry in enumerate(to_set):
             for from_idx in from_set.intersection(to_entry):
-
+                from_entry = from_set.data[from_idx]
                 proportion = from_set.get_proportion(from_idx, to_entry)
 
-                self.logger.debug("%i percent of %s is in %s",
+                self.logger.debug("%i percent of %s (#%s) is in %s (#%s)",
                                   proportion * 100,
-                                  to_entry.name, from_set.data[from_idx].name)
-                from_idx = from_names.index(from_set.data[from_idx].name)
+                                  to_entry.name, to_idx,
+                                  from_entry.name, from_idx)
+                from_idx = from_names.index(from_entry.name)
 
                 coefficients[from_idx, to_idx] = proportion
+        self.logger.debug("Generated %s", coefficients)
         return coefficients
 
 

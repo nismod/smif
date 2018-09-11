@@ -5,11 +5,39 @@ from collections import namedtuple
 from rtree import index
 from shapely.geometry import mapping, shape
 from shapely.validation import explain_validity
+from smif.convert.adaptor import Adaptor
 from smif.convert.register import NDimensionalRegister, ResolutionSet
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
+
+
+class RegionAdaptor(Adaptor):
+    """Convert regions, assuming uniform distributions where necessary
+    """
+    def generate_coefficients(self, from_spec, to_spec):
+        """Generate conversion coefficients for spatial dimensions
+
+        Assumes that the Coordinates elements contain a 'feature' key whose value corresponds
+        to a GDAL vector feature represented as a dict, for example as returned by a `fiona`
+        reader.
+        """
+        # find dimensions to convert
+        from_dim, to_dim = self.get_convert_dims(from_spec, to_spec)
+        # get dimension coordinates
+        from_coords = from_spec.dim_coords(from_dim)
+        to_coords = to_spec.dim_coords(to_dim)
+        # create RegionSets from Coordinates
+        from_set = RegionSet(from_dim, [e['feature'] for e in from_coords.elements])
+        to_set = RegionSet(to_dim, [e['feature'] for e in to_coords.elements])
+        # register RegionSets
+        register = NDimensionalRegister()
+        register.register(from_set)
+        register.register(to_set)
+        # use NDimensionalRegister to get coefficients
+        coefficients = register.get_coefficients(from_dim, to_dim)
+        return coefficients
 
 
 NamedShape = namedtuple('NamedShape', ['name', 'shape'])
@@ -48,8 +76,8 @@ class RegionSet(ResolutionSet):
         for region in value:
             name = region['properties']['name']
             if name in names:
-                raise AssertionError(
-                    "Region set must have uniquely named regions - %s duplicated", name)
+                msg = "Region set must have uniquely named regions - {} duplicated"
+                raise AssertionError(msg.format(name))
             names[name] = True
             self._regions.append(
                 NamedShape(
@@ -140,16 +168,3 @@ class RegionSet(ResolutionSet):
 
     def __len__(self):
         return len(self._regions)
-
-
-class RegionRegister(NDimensionalRegister):
-    """Holds the sets of regions used by the SectorModels and provides conversion
-    between data values relating to compatible sets of regions.
-
-    Notes
-    -----
-    The argument ``axis=0`` refers to the dimension of the data array that is
-    associated with the regions dimension.
-    """
-    def __init__(self):
-        super().__init__(axis=0)
