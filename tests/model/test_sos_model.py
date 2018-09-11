@@ -353,14 +353,21 @@ class TestSosModel():
         sos_model.add_model(source_model)
         sos_model.add_model(sink_model)
 
-    def test_before_model_run(self, empty_sector_model):
-        """Before model run calls into each model
+    def test_before_model_run(self):
+        """Before model run returns JobGraph with operation for each model
         """
-        sos_model = SosModel('test')
+        sos_model = SosModel('test_sos_model')
         empty_sector_model.before_model_run = Mock()
-        sos_model.add_model(empty_sector_model)
-        sos_model.before_model_run(Mock())
-        assert empty_sector_model.before_model_run.call_count == 1
+
+        sos_model.add_model(EmptySectorModel('test_a'))
+        sos_model.add_model(EmptySectorModel('test_b'))
+
+        job_graph = sos_model.before_model_run(Mock())
+
+        assert list(job_graph.predecessors('before_model_run_test_a')) == []
+        assert list(job_graph.successors('before_model_run_test_a')) == []
+        assert list(job_graph.predecessors('before_model_run_test_b')) == []
+        assert list(job_graph.successors('before_model_run_test_b')) == []
 
     def test_run_sequential(self, sos_model):
         """Simulate should exist
@@ -370,13 +377,18 @@ class TestSosModel():
         data_handle.timesteps = [2010, 2011, 2012]
         data_handle.get_state = Mock(return_value={})
 
+        data_handle._decision_iteration = 0
         data_handle._current_timestep = 2010
-        sos_model.simulate(data_handle)
-        data_handle._current_timestep = 2011
-        sos_model.simulate(data_handle)
-        data_handle._current_timestep = 2012
-        sos_model.simulate(data_handle)
+        job_graph = sos_model.simulate(data_handle)
 
+        assert list(job_graph.predecessors('simulate_2010_0_climate')) == []
+        assert list(job_graph.successors('simulate_2010_0_climate')) == ['simulate_2010_0_water_supply']
+
+        assert list(job_graph.predecessors('simulate_2010_0_economic_model')) == []
+        assert list(job_graph.successors('simulate_2010_0_economic_model')) == ['simulate_2010_0_water_supply']
+
+        assert sorted(list(job_graph.predecessors('simulate_2010_0_water_supply'))) == sorted(['simulate_2010_0_climate', 'simulate_2010_0_economic_model'])
+        assert list(job_graph.successors('simulate_2010_0_water_supply')) == []
 
 class TestSosModelProperties():
     """SosModel has inputs, outputs, parameters

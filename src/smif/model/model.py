@@ -1,9 +1,17 @@
 """Model abstract class
 """
 from abc import ABCMeta, abstractmethod
+from enum import Enum
 from logging import getLogger
 
 from smif.model.dependency import Dependency
+
+
+class ModelOperations(Enum):
+    """ Enumerate that describes the possible operations on Models
+    """
+    before_model_run = 1
+    simulate = 2
 
 
 class Model(metaclass=ABCMeta):

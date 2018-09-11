@@ -22,6 +22,8 @@ from logging import getLogger
 from smif.data_layer import DataHandle
 from smif.decision.decision import DecisionManager
 
+import networkx
+import itertools
 
 class ModelRun(object):
     """Collects timesteps, scenarios , narratives and a SosModel together
@@ -161,7 +163,9 @@ class ModelRunner(object):
             timesteps=model_run.model_horizon,
             model=model_run.sos_model
         )
-        model_run.sos_model.before_model_run(data_handle)
+
+        job_graph = model_run.sos_model.before_model_run(data_handle)
+        connect_from = [node for node in job_graph.nodes if job_graph.out_degree(node) == 0] 
 
         # Initialise the decision manager (and hence decision modules)
         self.logger.debug("Initialising the decision manager")
@@ -196,8 +200,14 @@ class ModelRunner(object):
                     )
                     decision_manager.get_decision(data_handle, timestep, iteration)
 
-                    model_run.sos_model.simulate(data_handle)
-        return data_handle
+                    sub_job_graph = model_run.sos_model.simulate(data_handle)
+                    connect_to = [node for node in sub_job_graph.nodes if sub_job_graph.in_degree(node) == 0]
+
+                    job_graph = networkx.compose(job_graph, sub_job_graph)
+                    for from_node, to_node in itertools.product(connect_from, connect_to):
+                        job_graph.add_edge(from_node, to_node)
+
+        return job_graph
 
 
 class ModelRunBuilder(object):
