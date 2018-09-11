@@ -57,13 +57,20 @@ def model_run():
 def strategies():
     return [
         {
-            'strategy': 'pre-specified-planning',
+            'name': 'pre-specified-planning',
+            'description': 'a description',
             'model_name': 'test_model',
             'interventions': [
                 {'name': 'a', 'build_year': 2020},
                 {'name': 'b', 'build_year': 2025},
             ]
-        }
+         },
+        {
+            'name': 'agent',
+            'description': 'reduce emissions',
+            'path': 'planning/energyagent.py',
+            'classname': 'EnergyAgent'
+         }
     ]
 
 
