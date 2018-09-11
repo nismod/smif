@@ -1,6 +1,7 @@
 from copy import copy
 from unittest.mock import Mock
 
+import networkx as nx
 from pytest import fixture, raises
 from smif.controller.modelrun import (ModelRunBuilder, ModelRunError,
                                       ModelRunner)
@@ -21,6 +22,10 @@ def config_data():
     energy_supply = Mock()
     energy_supply.name = 'energy_supply'
     sos_model.models = [energy_supply]
+
+    graph = nx.DiGraph()
+    graph.add_node('energy_supply', model=climate_scenario)
+    sos_model.get_dependency_graph = Mock(return_value=graph)
 
     config = {
         'name': 'unique_model_run_name',
@@ -66,11 +71,14 @@ def mock_model_run():
     sos_model = Mock()
     sos_model.parameters = {}
     sos_model.models = []
+    sos_model.get_dependency_graph = Mock(return_value=nx.DiGraph())
+
     modelrun = Mock()
     modelrun.strategies = []
     modelrun.sos_model = sos_model
     modelrun.narratives = []
-    modelrun.model_horizon = [1, 2]
+    modelrun.model_horizon = [1]
+    modelrun.initialised = False
     return modelrun
 
 
@@ -155,19 +163,136 @@ class TestModelRun:
         assert expected == model_run.as_dict()
 
 
-class TestModelRunner():
-    """ModelRunner should call into sos_model
+class TestModelRunnerJobGraphs():
+    """Cover all JobGraph corner cases
     """
-    def test_call_before_model_run(self, mock_store, mock_model_run):
-        """Call once
+    def test_jobgraph_single_timestep(self, mock_store, mock_model_run):
         """
-        runner = ModelRunner()
-        runner.solve_model(mock_model_run, mock_store)
-        assert mock_model_run.sos_model.before_model_run.call_count == 1
+        a[before]
+        |
+        v
+        a[sim]
+        """
+        model_a = Mock()
+        model_a.name = 'model_a'
+        mock_model_run.sos_model.models = [model_a]
 
-    def test_call_simulate(self, mock_store, mock_model_run):
-        """Call once per timestep
-        """
+        dep_graph = nx.DiGraph()
+        dep_graph.add_node(model_a.name, model=model_a)
+        mock_model_run.sos_model.get_dependency_graph = Mock(return_value=dep_graph)
+
         runner = ModelRunner()
-        runner.solve_model(mock_model_run, mock_store)
-        assert mock_model_run.sos_model.simulate.call_count == 2
+        job_graph = runner.solve_model(mock_model_run, mock_store)
+
+        actual = list(job_graph.predecessors('before_model_run_model_a'))
+        expected = []
+        assert actual == expected
+
+        actual = list(job_graph.successors('before_model_run_model_a'))
+        expected = ['simulate_1_0_model_a']
+        assert actual == expected
+
+        actual = list(job_graph.predecessors('simulate_1_0_model_a'))
+        expected = ['before_model_run_model_a']
+        assert actual == expected
+
+        actual = list(job_graph.successors('simulate_1_0_model_a'))
+        expected = []
+        assert actual == expected
+
+    def test_jobgraph_multiple_timesteps(self, mock_store, mock_model_run):
+        """
+        a[before]
+        |        |
+        v        V
+        a[sim]  a[sim]
+        t=1     t=2
+        """
+        model_a = Mock()
+        model_a.name = 'model_a'
+        mock_model_run.sos_model.models = [model_a]
+
+        dep_graph = nx.DiGraph()
+        dep_graph.add_node(model_a.name, model=model_a)
+        mock_model_run.sos_model.get_dependency_graph = Mock(return_value=dep_graph)
+
+        mock_model_run.model_horizon = [1, 2]
+
+        runner = ModelRunner()
+        job_graph = runner.solve_model(mock_model_run, mock_store)
+
+        actual = list(job_graph.predecessors('before_model_run_model_a'))
+        expected = []
+        assert actual == expected
+
+        actual = list(job_graph.successors('before_model_run_model_a'))
+        expected = ['simulate_1_0_model_a', 'simulate_2_0_model_a']
+        assert sorted(actual) == sorted(expected)
+
+        actual = list(job_graph.predecessors('simulate_1_0_model_a'))
+        expected = ['before_model_run_model_a']
+        assert actual == expected
+
+        actual = list(job_graph.successors('simulate_1_0_model_a'))
+        expected = []
+        assert actual == expected
+
+        actual = list(job_graph.predecessors('simulate_2_0_model_a'))
+        expected = ['before_model_run_model_a']
+        assert actual == expected
+
+        actual = list(job_graph.successors('simulate_2_0_model_a'))
+        expected = []
+        assert actual == expected
+
+    def test_jobgraph_multiple_models(self, mock_store, mock_model_run):
+        """
+        a[before]   b[before]   c[before]
+        |           |           |
+        v           V           V
+        a[sim] ---> b[sim] ---> c[sim]
+           |------------------>
+        """
+        model_a = Mock()
+        model_b = Mock()
+        model_c = Mock()
+        model_a.name = 'model_a'
+        model_b.name = 'model_b'
+        model_c.name = 'model_c'
+        mock_model_run.sos_model.models = [model_a, model_b, model_c]
+
+        dep_graph = nx.DiGraph()
+        dep_graph.add_node(model_a.name, model=model_a)
+        dep_graph.add_node(model_b.name, model=model_b)
+        dep_graph.add_node(model_c.name, model=model_c)
+        dep_graph.add_edge(model_a.name, model_b.name)
+        dep_graph.add_edge(model_b.name, model_c.name)
+        dep_graph.add_edge(model_a.name, model_c.name)
+        mock_model_run.sos_model.get_dependency_graph = Mock(return_value=dep_graph)
+
+        runner = ModelRunner()
+        job_graph = runner.solve_model(mock_model_run, mock_store)
+
+        actual = list(job_graph.predecessors('simulate_1_0_model_a'))
+        expected = ['before_model_run_model_a']
+        assert actual == expected
+
+        actual = list(job_graph.successors('simulate_1_0_model_a'))
+        expected = ['simulate_1_0_model_b', 'simulate_1_0_model_c']
+        assert sorted(actual) == sorted(expected)
+
+        actual = list(job_graph.predecessors('simulate_1_0_model_b'))
+        expected = ['before_model_run_model_b', 'simulate_1_0_model_a']
+        assert sorted(actual) == sorted(expected)
+
+        actual = list(job_graph.successors('simulate_1_0_model_b'))
+        expected = ['simulate_1_0_model_c']
+        assert actual == expected
+
+        actual = list(job_graph.predecessors('simulate_1_0_model_c'))
+        expected = ['before_model_run_model_c', 'simulate_1_0_model_a', 'simulate_1_0_model_b']
+        assert sorted(actual) == sorted(expected)
+
+        actual = list(job_graph.successors('simulate_1_0_model_c'))
+        expected = []
+        assert actual == expected
