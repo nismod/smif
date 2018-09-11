@@ -45,18 +45,32 @@ class EnergyAgent(DecisionModule):
                 return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
 
     def get_decision(self, data_handle):
-        self.run_regulator(data_handle)
-        self.run_power_producer(data_handle)
+        budget = self.run_regulator(data_handle)
+        self.run_power_producer(data_handle, budget)
         return []
 
     def run_regulator(self, data_handle):
-        output_name = 'cost'
+        """
+        data_handle
+        """
+
+        budget = 5e6
+
         iteration = data_handle.decision_iteration
         if data_handle.current_timestep > data_handle.base_timestep:
-            data_handle.get_results(output_name,
+            output_name = 'cost'
+            cost = data_handle.get_results(output_name,
                                     model_name='energy_demand',
                                     decision_iteration=iteration,
                                     timestep=data_handle.previous_timestep)
+            budget -= cost
 
-    def run_power_producer(self, data_handle):
-        return []
+        return budget
+
+    def run_power_producer(self, data_handle, budget):
+        """
+        data_handle
+        budget : float
+        """
+        cheapest_first = sorted(self.register, lambda x: x['capital_cost']['value'], reverse=True)
+        return [(cheapest_first[0]['name'], data_handle.current_timestep)]
