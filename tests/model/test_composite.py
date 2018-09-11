@@ -286,7 +286,7 @@ class TestCompositeIntegration:
         results = sos_model.simulate(data_handle)
 
         expected = np.array([0.819,  1.638])
-        actual = results.get_results(('energy_model', 'fluffiness'), 'energy_model')
+        actual = results.get_results('fluffiness', 'energy_model')
         np.testing.assert_allclose(actual, expected, rtol=1e-5)
 
 
@@ -431,12 +431,13 @@ class TestCircularDependency:
         results = sos_model.simulate(data_handle)
 
         expected = np.array([0.13488114, 0.13488114], dtype=np.float)
-        actual = results.get_results(
-            ('energy_model', 'fluffiness'), model_name='energy_model', modelset_iteration=35)
+        actual = results.get_results('fluffiness',
+                                     model_name='energy_model',
+                                     modelset_iteration=35)
         np.testing.assert_allclose(actual, expected, rtol=1e-5)
 
         expected = np.array([0.16469004, 0.16469004], dtype=np.float)
-        actual = results.get_results(
-            ('water_supply_model', 'electricity_demand'),
-            model_name='water_supply_model', modelset_iteration=35)
+        actual = results.get_results('electricity_demand',
+                                     model_name='water_supply_model',
+                                     modelset_iteration=35)
         np.testing.assert_allclose(actual, expected, rtol=1e-5)

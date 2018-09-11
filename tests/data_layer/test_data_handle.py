@@ -1,6 +1,6 @@
 """Test ModelData
 """
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, PropertyMock
 
 import numpy as np
 from pytest import fixture, raises
@@ -403,3 +403,68 @@ class TestDataHandleTimesteps():
         with raises(TimestepResolutionError) as ex:
             data_handle.previous_timestep
         assert 'no previous timestep' in str(ex)
+
+
+class TestDataHandleGetResults:
+
+    @fixture(scope='function')
+    def mock_sector_model(self):
+        mock_sector_model = MagicMock()
+        type(mock_sector_model).outputs = PropertyMock(return_value={'test_output': 'spec'})
+        type(mock_sector_model).name = PropertyMock(return_value='test_sector_model')
+        return mock_sector_model
+
+    @fixture(scope='function')
+    def mock_sos_model(self, mock_sector_model):
+        mock_sos_model = MagicMock(outputs=[('test_sector_model', 'test_output')])
+        mock_sos_model.name = 'test_sos_model'
+        mock_sos_model.models = {'test_sector_model': mock_sector_model}
+        return mock_sos_model
+
+    def test_get_results_sectormodel(self, mock_store,
+                                     mock_sector_model):
+        """Get results from a sector model
+        """
+        store = mock_store
+        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None, None)
+
+        dh = DataHandle(mock_store, 1, 2010, [2010], mock_sector_model)
+        actual = dh.get_results('test_output')
+        expected = 42
+        assert actual == expected
+
+    def test_get_results_sos_model(self, mock_store,
+                                   mock_sector_model,
+                                   mock_sos_model):
+        """Get results from a sector model within a sos model
+        """
+        store = mock_store
+        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None, None)
+
+        dh = DataHandle(mock_store, 1, 2010, [2010], mock_sos_model)
+        actual = dh.get_results('test_output',
+                                model_name='test_sector_model')
+        expected = 42
+        assert actual == expected
+
+    def test_get_results_no_output_sos(self, mock_store,
+                                       mock_sos_model):
+        with raises(KeyError):
+            dh = DataHandle(mock_store, 1, 2010, [2010], mock_sos_model)
+            dh.get_results('no_such_output',
+                           model_name='test_sector_model')
+
+    def test_get_results_no_output_sector(self, mock_store,
+                                          mock_sector_model):
+
+        with raises(KeyError):
+            dh = DataHandle(mock_store, 1, 2010, [2010], mock_sector_model)
+            dh.get_results('no_such_output')
+
+    def test_get_results_wrong_name_sos(self,
+                                        mock_store,
+                                        mock_sos_model):
+        with raises(KeyError):
+            dh = DataHandle(mock_store, 1, 2010, [2010], mock_sos_model)
+            dh.get_results('test_output',
+                           model_name='no_such_model')

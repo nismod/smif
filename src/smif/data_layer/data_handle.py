@@ -353,14 +353,19 @@ class DataHandle(object):
         Parameters
         ----------
         output_name : str
-        model_name : str or None
-        modelset_iteration : int or None
-        decision_iteration : int or None
-        timestep : int or RelativeTimestep or None
+            The name of an output for `model_name`
+        model_name : str, default=None
+            The name of a model contained in the composite model,
+            or ``None`` if accessing results in the current model
+        modelset_iteration : int, default=None
+        decision_iteration : int, default=None
+        timestep : int or RelativeTimestep, default=None
+
+        Notes
+        -----
+        Access to model results is only granted to models contained
+        within self._model if self._model is a  smif.model.model.CompositeModel
         """
-        if output_name not in self._outputs:
-            raise KeyError(
-                "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
 
         # resolve timestep
         if timestep is None:
@@ -370,13 +375,24 @@ class DataHandle(object):
         else:
             assert isinstance(timestep, int) and timestep <= self._current_timestep
 
-        spec = self._outputs[output_name]
-
-        if model_name is None:
+        if model_name is None:  # Accessing results in the current model
             model_name = self._model_name
+            results_model = self._model
+        elif model_name in self._model.models:  # Accessing a contained model
+            results_model = self._model.models[model_name]
         else:
-            # output names are tuples if accessed via composite models, so use final value
-            output_name = output_name[-1]
+            raise KeyError(
+                '{} is not contained in the current model'.format(
+                    model_name
+                )
+            )
+
+        try:
+            spec = results_model.outputs[output_name]
+        except KeyError:
+            msg = "'{}' not recognised as output for '{}'"
+            raise KeyError(msg.format(output_name, model_name))
+
         if modelset_iteration is None:
             modelset_iteration = self._modelset_iteration
         if decision_iteration is None:
