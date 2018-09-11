@@ -1,4 +1,4 @@
-name: energy_waste
+name: energy
 description: The future demand of energy for the UK
 scenarios: # Select 0 or more of the scenario sets
 - population

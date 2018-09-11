@@ -51,10 +51,6 @@ def get_model_run_definition(directory, modelrun):
     model_run_config['sos_model'] = sos_model
     LOGGER.debug("Model list: %s", list(sos_model.models.keys()))
 
-    strategies = get_strategies(sector_models, model_run_config, handler)
-    model_run_config['strategies'] = strategies
-    LOGGER.info("Added %s strategies to model run config", len(strategies))
-
     return model_run_config
 
 
@@ -113,74 +109,6 @@ def get_sector_models(sector_model_names, handler):
         sector_models.append(sector_model)
         LOGGER.debug("Model inputs: %s", sector_model.inputs.keys())
     return sector_models
-
-
-def get_strategies(sector_models, model_run_config, handler):
-
-    strategies = []
-    initial_conditions = get_initial_conditions_strategies(sector_models)
-
-    strategies.extend(initial_conditions)
-
-    pre_spec_strategies = get_pre_specified_planning_strategies(
-        model_run_config, handler)
-    strategies.extend(pre_spec_strategies)
-
-    return strategies
-
-
-def get_pre_specified_planning_strategies(model_run_config, handler):
-    """Build pre-specified planning strategies for future investments
-
-    Arguments
-    ---------
-    model_run_config : dict
-    handler : smif.data_layer.DataInterface
-        An instance of the data interface
-
-    Returns
-    -------
-    list
-    """
-    strategies = []
-    for strategy in model_run_config['strategies']:
-        if strategy['strategy'] == 'pre-specified-planning':
-            decisions = handler.read_strategies(strategy['filename'])
-            if decisions is None:
-                decisions = []
-            del strategy['filename']
-            strategy['interventions'] = decisions
-            LOGGER.info("Added %s pre-specified planning interventions to %s",
-                        len(decisions), strategy['model_name'])
-            strategies.append(strategy)
-    return strategies
-
-
-def get_initial_conditions_strategies(sector_models):
-    """Add pre-specified planning strategy for all initial conditions
-
-    Arguments
-    ---------
-    sector_models : list
-        A list of :class:`~smif.model.SectorModel`
-
-    Returns
-    -------
-    list
-    """
-    strategies = []
-    for sector_model in sector_models:
-        if sector_model.initial_conditions:
-            strategy = {}
-            strategy['model_name'] = sector_model.name
-            strategy['description'] = 'historical_decisions'
-            strategy['strategy'] = 'pre-specified-planning'
-            strategy['interventions'] = sector_model.initial_conditions
-            LOGGER.info("Added %s pre-specified historical decisions to %s",
-                        len(sector_model.initial_conditions),
-                        strategy['model_name'])
-            strategies.append(strategy)
-    return strategies
 
 
 def build_model_run(model_run_config):

@@ -180,10 +180,6 @@ class DatafileInterface(DataInterface):
         self._set_list_coords(sector_model['inputs'])
         self._set_list_coords(sector_model['outputs'])
         self._set_list_coords(sector_model['parameters'])
-        sector_model['interventions'] = self._read_interventions_files(
-            sector_model['interventions'], 'interventions')
-        sector_model['initial_conditions'] = self._read_interventions_files(
-            sector_model['initial_conditions'], 'initial_conditions')
         return sector_model
 
     @check_not_exists(dtype='sector_model')
@@ -217,6 +213,27 @@ class DatafileInterface(DataInterface):
     def delete_sector_model(self, sector_model_name):
         os.remove(os.path.join(self.file_dir['sector_models'], sector_model_name + '.yml'))
 
+    @check_exists(dtype='sector_model')
+    def read_interventions(self, sector_model_name):
+        all_interventions = {}
+        sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+        interventions = self._read_interventions_files(
+            sector_model['interventions'], 'interventions')
+        for entry in interventions:
+            name = entry.pop('name')
+            if name in all_interventions:
+                msg = "An entry for intervention {} already exists"
+                raise ValueError(msg.format(name))
+            else:
+                all_interventions[name] = entry
+        return all_interventions
+
+    @check_exists(dtype='sector_model')
+    def read_initial_conditions(self, sector_model_name):
+        sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+        return self._read_interventions_files(
+            sector_model['initial_conditions'], 'initial_conditions')
+
     def _read_interventions_files(self, filenames, dirname):
         intervention_list = []
         for filename in filenames:
@@ -244,9 +261,14 @@ class DatafileInterface(DataInterface):
         Arguments
         ---------
         filename: str
-            The name of the strategy yml file to read in
+            The name of the strategy yml or csv file to read in
         dirname: str
             The key of the dirname e.g. ``strategies`` or ``initial_conditions``
+
+        Returns
+        -------
+        dict of dict
+            Dict of intervention attribute dicts, keyed by intervention name
         """
         filepath = self.file_dir[dirname]
         _, ext = os.path.splitext(filename)
@@ -262,6 +284,17 @@ class DatafileInterface(DataInterface):
         return data
 
     def _reshape_csv_interventions(self, data):
+        """
+
+        Arguments
+        ---------
+        data : list of dict
+            A list of dicts containing intervention data
+
+        Returns
+        -------
+        dict of dicts
+        """
         new_data = []
         for element in data:
             reshaped_data = {}
@@ -287,8 +320,20 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Strategies
-    def read_strategies(self, filename):
-        return self._read_interventions_file(filename, 'strategies')
+    def read_strategies(self, model_run_name):
+        strategies = []
+        model_run_config = self.read_model_run(model_run_name)
+        for strategy in model_run_config['strategies']:
+            if strategy['strategy'] == 'pre-specified-planning':
+                decisions = self._read_interventions_file(strategy['filename'], 'strategies')
+                if decisions is None:
+                    decisions = []
+                del strategy['filename']
+                strategy['interventions'] = decisions
+                self.logger.info("Added %s pre-specified planning interventions to %s",
+                                 len(decisions), strategy['model_name'])
+                strategies.append(strategy)
+        return strategies
     # endregion
 
     # region State

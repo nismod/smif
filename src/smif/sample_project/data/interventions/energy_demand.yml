@@ -6,7 +6,7 @@
   operational_lifetime:
     value: 40
     units: years
-  economic_lifetime:
+  technical_lifetime:
     value: 25
     units: years
   capital_cost:
@@ -20,7 +20,7 @@
   operational_lifetime:
     value: 0
     units: years
-  economic_lifetime:
+  technical_lifetime:
     value: 0
     units: years
   capital_cost:

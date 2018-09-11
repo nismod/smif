@@ -133,21 +133,59 @@ class DataHandle(object):
     def get_state(self):
         """The current state of the model
 
+        If the DataHandle instance has a timestep, then state is
+        established from the state file.
+
         Returns
         -------
-        A list of interventions installed at the current timestep
+        list of tuple
+            A list of (intervention name, build_year) installed in the current timestep
+
+        Raises
+        ------
+        ValueError
+            If self._current_timestep is None an error is raised.
         """
         if self._current_timestep is None:
-            raise ValueError("Cannot get state when timestep is None")
-        sos_state = self._store.read_state(
-            self._modelrun_name,
-            self._current_timestep,
-            self._decision_iteration
-        )
-        # here could (should?) filter list for interventions applicable to a model
-        # and look up full intervention (not just name,build_year)
+            raise ValueError("You must pass a timestep value to get state")
+        else:
+
+            sos_state = self._store.read_state(
+                self._modelrun_name,
+                self._current_timestep,
+                self._decision_iteration
+            )
 
         return sos_state
+
+    def get_current_interventions(self):
+        """Get the interventions that exist in the current state
+
+        Returns
+        -------
+        dict of dicts
+            A dict of intervention dicts with build_year attribute keyed by name
+        """
+        state = self.get_state()
+
+        current_interventions = {}
+        all_interventions = self._store.read_interventions(self._model_name)
+
+        for decision in state:
+            name = decision['name']
+            build_year = decision['build_year']
+            try:
+                serialised = all_interventions[name]
+                serialised['build_year'] = build_year
+                current_interventions[name] = serialised
+            except KeyError:
+                # ignore if intervention is not in current set
+                pass
+
+        msg = "State matched with %s interventions"
+        self.logger.info(msg, len(current_interventions))
+
+        return current_interventions
 
     def get_data(self, input_name, timestep=None):
         """Get data required for model inputs

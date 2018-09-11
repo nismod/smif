@@ -17,12 +17,12 @@ On the command line, from within the project directory, type the following
 command to list the available model runs::
 
   $ smif list
-  20170918_energy_water_short
-  20170918_energy_water
+    energy_central
+    energy_water_cp_cr
 
 To run a model run, type the following command::
 
-  $ smif run 20170918_energy_water
+  $ smif run energy_central
   Model run complete
 
 Note that the ``-d`` directory flag can be used to point to the project folder,
@@ -37,8 +37,8 @@ Groups of model runs can run as a batches by using the ``-b`` flag and a path to
 
 A batchfile is a textfile with a list modelrun names, each on a new line, like::
 
-  20170918_energy_water_short
-  20170918_energy_water
+    energy_central
+    energy_water_cp_cr
 
 User Interface
 ---------------------
@@ -680,6 +680,20 @@ in the ``project/data/interventions`` For example:
 .. literalinclude:: ../src/smif/sample_project/data/interventions/water_supply.yml
    :language: yaml
    :lines: 6-19
+
+Alternatively define all possible interventions in an ``*.csv`` file
+in the ``project/data/interventions`` For example:
+
+.. literalinclude:: ../src/smif/sample_project/data/interventions/energy_supply.csv
+   :language: csv
+   :lines: 1-5
+
+Note that the ``_value`` and ``_unit`` suffixes of the column names are used to unpack the data internally.
+
+Some attributes are required:
+
+- technical_lifetime
+  (years are assumed as unit and can be omitted)
 
 Narratives
 ~~~~~~~~~~

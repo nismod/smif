@@ -96,6 +96,12 @@ def mock_store():
     """
     store = Mock()
     store.read_model_run = Mock(return_value={'narratives': {}})
+    store.read_strategies = Mock(return_value=[])
+    store.read_all_initial_conditions = Mock(return_value=[])
+
+    store.read_sos_model = Mock(return_value={'sector_models': ['sector_model_test']})
+    store.read_interventions = Mock(return_value={})
+
     return store
 
 

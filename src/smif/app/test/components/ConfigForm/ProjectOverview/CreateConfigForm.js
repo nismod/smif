@@ -66,6 +66,6 @@ describe('<CreateConfigForm />', () => {
         var wrapper = mount((<CreateConfigForm config_type={'testconfig'} existing_names={[]} />))
 
         wrapper = wrapper.unmount()
-        expect(wrapper.html()).to.be.null
+        expect(wrapper.length).to.equal(0)
     })
 })
