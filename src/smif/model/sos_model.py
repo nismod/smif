@@ -222,28 +222,7 @@ class SosModel(CompositeModel):
             ordered_sets = list([graph.nodes[run]['model'] for run in run_order])
 
         else:
-            # contract the strongly connected components (subgraphs which
-            # contain cycles) into single nodes, producing the 'condensation'
-            # of the graph, where each node maps to one or more sector models
-            condensation = networkx.condensation(graph)
-
-            # topological sort of the condensation gives an ordering of the
-            # contracted nodes, whose 'members' attribute refers back to the
-            # original dependency graph
-            ordered_sets = []
-            for node_id in networkx.topological_sort(condensation):
-                models = condensation.node[node_id]['members']
-                if len(models) == 1:
-                    ordered_sets.append(models.pop())
-                else:
-                    ordered_sets.append(
-                        ModelSet(
-                            {model.name: model for model in models},
-                            max_iterations=max_iterations,
-                            relative_tolerance=convergence_relative_tolerance,
-                            absolute_tolerance=convergence_absolute_tolerance
-                        )
-                    )
+            raise NotImplementedError
 
         return ordered_sets
 
