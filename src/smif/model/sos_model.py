@@ -179,10 +179,10 @@ class SosModel(CompositeModel):
         )
         self.logger.info("Determined run order as %s", [x.name for x in run_order])
         for model in run_order:
-            self.logger.info("*** Running the %s model ***", model['model'].name)
+            self.logger.info("*** Running the %s model ***", model.name)
             # Pass simulate access to a DataHandle derived for the particular
             # model
-            model['model'].simulate(data_handle.derive_for(model['model']))
+            model.simulate(data_handle.derive_for(model))
         return data_handle
 
     def get_dependency_graph(self):
@@ -219,7 +219,7 @@ class SosModel(CompositeModel):
             run_order = networkx.topological_sort(graph)
 
             # list of Models (typically ScenarioModel and SectorModel)
-            ordered_sets = list(run_order)
+            ordered_sets = list([graph.nodes[run]['model'] for run in run_order])
 
         else:
             # contract the strongly connected components (subgraphs which

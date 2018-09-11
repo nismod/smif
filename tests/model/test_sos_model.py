@@ -479,13 +479,13 @@ class TestSosModelDependencies(object):
     def test_simple_dependency(self, sos_model):
         """Dependency graph construction
         """
-        graph = SosModel.make_dependency_graph(sos_model.models)
+        graph = sos_model.get_dependency_graph()
 
         scenario = sos_model.models['climate']
         model = sos_model.models['water_supply']
 
-        assert scenario in graph.nodes()
-        assert model in graph.nodes()
+        assert scenario in [node[1]['model'] for node in graph.nodes.data()]
+        assert model in [node[1]['model'] for node in graph.nodes.data()]
 
         actual = sos_model.models['water_supply'].deps['precipitation']
         expected = Dependency(
