@@ -37,6 +37,7 @@ def get_sos_model_config():
                 ]
             }
         ],
+        "dependencies": [],
         "timesteps": "timesteps.yaml",
         "scenario_data": [
             {
@@ -225,6 +226,18 @@ def test_modelrun_config_invalid():
         ex = VALIDATION_ERRORS.pop()
         msg = "Main config file should contain setup data"
         assert msg in str(ex)
+
+
+def test_missing_dependencies(get_sos_model_config):
+    """
+    """
+    data = get_sos_model_config
+    del data['dependencies']
+
+    validate_sos_model_config(data)
+    ex = VALIDATION_ERRORS.pop()
+    msg = "No 'dependencies' specified"
+    assert msg in str(ex)
 
 
 def test_invalid_timesteps_file(get_sos_model_config):

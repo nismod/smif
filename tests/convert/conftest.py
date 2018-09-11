@@ -78,47 +78,26 @@ def season_to_month_coefficients():
 
 
 @fixture(scope='function')
-def months_csv():
-    data = [
-        {'id': 'jan', 'start': 'P0M', 'end': 'P1M'},
-        {'id': 'feb', 'start': 'P1M', 'end': 'P2M'},
-        {'id': 'mar', 'start': 'P2M', 'end': 'P3M'},
-        {'id': 'apr', 'start': 'P3M', 'end': 'P4M'},
-        {'id': 'may', 'start': 'P4M', 'end': 'P5M'},
-        {'id': 'jun', 'start': 'P5M', 'end': 'P6M'},
-        {'id': 'jul', 'start': 'P6M', 'end': 'P7M'},
-        {'id': 'aug', 'start': 'P7M', 'end': 'P8M'},
-        {'id': 'sep', 'start': 'P8M', 'end': 'P9M'},
-        {'id': 'oct', 'start': 'P9M', 'end': 'P10M'},
-        {'id': 'nov', 'start': 'P10M', 'end': 'P11M'},
-        {'id': 'dec', 'start': 'P11M', 'end': 'P12M'}
-    ]
-
-    return data
-
-
-@fixture(scope='function')
 def months():
     data = [
-        ('jan', [('P0M', 'P1M')]),
-        ('feb', [('P1M', 'P2M')]),
-        ('mar', [('P2M', 'P3M')]),
-        ('apr', [('P3M', 'P4M')]),
-        ('may', [('P4M', 'P5M')]),
-        ('jun', [('P5M', 'P6M')]),
-        ('jul', [('P6M', 'P7M')]),
-        ('aug', [('P7M', 'P8M')]),
-        ('sep', [('P8M', 'P9M')]),
-        ('oct', [('P9M', 'P10M')]),
-        ('nov', [('P10M', 'P11M')]),
-        ('dec', [('P11M', 'P12M')])
+        {'name': 'jan', 'interval': [['P0M', 'P1M']]},
+        {'name': 'feb', 'interval': [['P1M', 'P2M']]},
+        {'name': 'mar', 'interval': [['P2M', 'P3M']]},
+        {'name': 'apr', 'interval': [['P3M', 'P4M']]},
+        {'name': 'may', 'interval': [['P4M', 'P5M']]},
+        {'name': 'jun', 'interval': [['P5M', 'P6M']]},
+        {'name': 'jul', 'interval': [['P6M', 'P7M']]},
+        {'name': 'aug', 'interval': [['P7M', 'P8M']]},
+        {'name': 'sep', 'interval': [['P8M', 'P9M']]},
+        {'name': 'oct', 'interval': [['P9M', 'P10M']]},
+        {'name': 'nov', 'interval': [['P10M', 'P11M']]},
+        {'name': 'dec', 'interval': [['P11M', 'P12M']]},
     ]
-
     return data
 
 
-@fixture(scope='function')
-def remap_months_csv():
+@fixture
+def remap_months():
     """Remapping four representative months to months across the year
 
     In this case we have a model which represents the seasons through
@@ -132,136 +111,71 @@ def remap_months_csv():
     data will be averaged and aggregated.
 
     """
-    data = [{'id': 'cold_month', 'start': 'P0M', 'end': 'P1M'},
-            {'id': 'cold_month', 'start': 'P1M', 'end': 'P2M'},
-            {'id': 'spring_month', 'start': 'P2M', 'end': 'P3M'},
-            {'id': 'spring_month', 'start': 'P3M', 'end': 'P4M'},
-            {'id': 'spring_month', 'start': 'P4M', 'end': 'P5M'},
-            {'id': 'hot_month', 'start': 'P5M', 'end': 'P6M'},
-            {'id': 'hot_month', 'start': 'P6M', 'end': 'P7M'},
-            {'id': 'hot_month', 'start': 'P7M', 'end': 'P8M'},
-            {'id': 'fall_month', 'start': 'P8M', 'end': 'P9M'},
-            {'id': 'fall_month', 'start': 'P9M', 'end': 'P10M'},
-            {'id': 'fall_month', 'start': 'P10M', 'end': 'P11M'},
-            {'id': 'cold_month', 'start': 'P11M', 'end': 'P12M'}]
-    return data
-
-
-@fixture(scope='function')
-def remap_months():
     data = [
-        ('cold_month', [('P0M', 'P1M'), ('P1M', 'P2M'), ('P11M', 'P12M')]),
-        ('spring_month', [('P2M', 'P3M'), ('P3M', 'P4M'), ('P4M', 'P5M')]),
-        ('hot_month', [('P5M', 'P6M'), ('P6M', 'P7M'), ('P7M', 'P8M')]),
-        ('fall_month', [('P8M', 'P9M'), ('P9M', 'P10M'), ('P10M', 'P11M')])
-        ]
+        {'name': 'cold_month', 'interval': [['P0M', 'P1M'], ['P1M', 'P2M'], ['P11M', 'P12M']]},
+        {'name': 'spring_month', 'interval': [['P2M', 'P3M'], ['P3M', 'P4M'], ['P4M', 'P5M']]},
+        {'name': 'hot_month', 'interval': [['P5M', 'P6M'], ['P6M', 'P7M'], ['P7M', 'P8M']]},
+        {'name': 'fall_month', 'interval': [['P8M', 'P9M'], ['P9M', 'P10M'], ['P10M', 'P11M']]}
+    ]
     return data
 
 
-@fixture(scope='function')
-def seasons_csv():
-    # NB "winter" is split into two pieces around the year end
-    data = [{'id': 'winter', 'start': 'P0M', 'end': 'P2M'},
-            {'id': 'spring', 'start': 'P2M', 'end': 'P5M'},
-            {'id': 'summer', 'start': 'P5M', 'end': 'P8M'},
-            {'id': 'autumn', 'start': 'P8M', 'end': 'P11M'},
-            {'id': 'winter', 'start': 'P11M', 'end': 'P12M'}]
-    return data
-
-
-@fixture(scope='function')
+@fixture
 def seasons():
     # NB "winter" is split into two pieces around the year end
-    data = [('winter', [('P0M', 'P2M'), ('P11M', 'P12M')]),
-            ('spring', [('P2M', 'P5M')]),
-            ('summer', [('P5M', 'P8M')]),
-            ('autumn', [('P8M', 'P11M')])]
-    return data
-
-
-@fixture(scope='function')
-def twenty_four_hours_csv():
     data = [
-        {'id': '1_0', 'start': 'PT0H', 'end': 'PT1H'},
-        {'id': '1_1', 'start': 'PT1H', 'end': 'PT2H'},
-        {'id': '1_2', 'start': 'PT2H', 'end': 'PT3H'},
-        {'id': '1_3', 'start': 'PT3H', 'end': 'PT4H'},
-        {'id': '1_4', 'start': 'PT4H', 'end': 'PT5H'},
-        {'id': '1_5', 'start': 'PT5H', 'end': 'PT6H'},
-        {'id': '1_6', 'start': 'PT6H', 'end': 'PT7H'},
-        {'id': '1_7', 'start': 'PT7H', 'end': 'PT8H'},
-        {'id': '1_8', 'start': 'PT8H', 'end': 'PT9H'},
-        {'id': '1_9', 'start': 'PT9H', 'end': 'PT10H'},
-        {'id': '1_10', 'start': 'PT10H', 'end': 'PT11H'},
-        {'id': '1_11', 'start': 'PT11H', 'end': 'PT12H'},
-        {'id': '1_12', 'start': 'PT12H', 'end': 'PT13H'},
-        {'id': '1_13', 'start': 'PT13H', 'end': 'PT14H'},
-        {'id': '1_14', 'start': 'PT14H', 'end': 'PT15H'},
-        {'id': '1_15', 'start': 'PT15H', 'end': 'PT16H'},
-        {'id': '1_16', 'start': 'PT16H', 'end': 'PT17H'},
-        {'id': '1_17', 'start': 'PT17H', 'end': 'PT18H'},
-        {'id': '1_18', 'start': 'PT18H', 'end': 'PT19H'},
-        {'id': '1_19', 'start': 'PT19H', 'end': 'PT20H'},
-        {'id': '1_20', 'start': 'PT20H', 'end': 'PT21H'},
-        {'id': '1_21', 'start': 'PT21H', 'end': 'PT22H'},
-        {'id': '1_22', 'start': 'PT22H', 'end': 'PT23H'},
-        {'id': '1_23', 'start': 'PT23H', 'end': 'PT24H'}
+        {'name': 'winter', 'interval': [['P0M', 'P2M'], ['P11M', 'P12M']]},
+        {'name': 'spring', 'interval': [['P2M', 'P5M']]},
+        {'name': 'summer', 'interval': [['P5M', 'P8M']]},
+        {'name': 'autumn', 'interval': [['P8M', 'P11M']]},
     ]
     return data
 
 
 @fixture(scope='function')
 def twenty_four_hours():
-
     data = [
-            ('1_0', [('PT0H', 'PT1H')]),
-            ('1_1', [('PT1H', 'PT2H')]),
-            ('1_2', [('PT2H', 'PT3H')]),
-            ('1_3', [('PT3H', 'PT4H')]),
-            ('1_4', [('PT4H', 'PT5H')]),
-            ('1_5', [('PT5H', 'PT6H')]),
-            ('1_6', [('PT6H', 'PT7H')]),
-            ('1_7', [('PT7H', 'PT8H')]),
-            ('1_8', [('PT8H', 'PT9H')]),
-            ('1_9', [('PT9H', 'PT10H')]),
-            ('1_10', [('PT10H', 'PT11H')]),
-            ('1_11', [('PT11H', 'PT12H')]),
-            ('1_12', [('PT12H', 'PT13H')]),
-            ('1_13', [('PT13H', 'PT14H')]),
-            ('1_14', [('PT14H', 'PT15H')]),
-            ('1_15', [('PT15H', 'PT16H')]),
-            ('1_16', [('PT16H', 'PT17H')]),
-            ('1_17', [('PT17H', 'PT18H')]),
-            ('1_18', [('PT18H', 'PT19H')]),
-            ('1_19', [('PT19H', 'PT20H')]),
-            ('1_20', [('PT20H', 'PT21H')]),
-            ('1_21', [('PT21H', 'PT22H')]),
-            ('1_22', [('PT22H', 'PT23H')]),
-            ('1_23', [('PT23H', 'PT24H')])]
-    return data
-
-
-@fixture(scope='function')
-def one_day_csv():
-    data = [{'id': 'one_day', 'start': 'P0D', 'end': 'P1D'}]
+        {'name': '1_0', 'interval': [['PT0H', 'PT1H']]},
+        {'name': '1_1', 'interval': [['PT1H', 'PT2H']]},
+        {'name': '1_2', 'interval': [['PT2H', 'PT3H']]},
+        {'name': '1_3', 'interval': [['PT3H', 'PT4H']]},
+        {'name': '1_4', 'interval': [['PT4H', 'PT5H']]},
+        {'name': '1_5', 'interval': [['PT5H', 'PT6H']]},
+        {'name': '1_6', 'interval': [['PT6H', 'PT7H']]},
+        {'name': '1_7', 'interval': [['PT7H', 'PT8H']]},
+        {'name': '1_8', 'interval': [['PT8H', 'PT9H']]},
+        {'name': '1_9', 'interval': [['PT9H', 'PT10H']]},
+        {'name': '1_10', 'interval': [['PT10H', 'PT11H']]},
+        {'name': '1_11', 'interval': [['PT11H', 'PT12H']]},
+        {'name': '1_12', 'interval': [['PT12H', 'PT13H']]},
+        {'name': '1_13', 'interval': [['PT13H', 'PT14H']]},
+        {'name': '1_14', 'interval': [['PT14H', 'PT15H']]},
+        {'name': '1_15', 'interval': [['PT15H', 'PT16H']]},
+        {'name': '1_16', 'interval': [['PT16H', 'PT17H']]},
+        {'name': '1_17', 'interval': [['PT17H', 'PT18H']]},
+        {'name': '1_18', 'interval': [['PT18H', 'PT19H']]},
+        {'name': '1_19', 'interval': [['PT19H', 'PT20H']]},
+        {'name': '1_20', 'interval': [['PT20H', 'PT21H']]},
+        {'name': '1_21', 'interval': [['PT21H', 'PT22H']]},
+        {'name': '1_22', 'interval': [['PT22H', 'PT23H']]},
+        {'name': '1_23', 'interval': [['PT23H', 'PT24H']]},
+    ]
     return data
 
 
 @fixture(scope='function')
 def one_day():
-    data = [('one_day', [('P0D', 'P1D')])]
-    return data
-
-
-@fixture(scope='function')
-def one_year_csv():
-    data = [{'id': 'one_year', 'start': 'P0Y', 'end': 'P1Y'}]
+    data = [
+        {'name': 'one_day', 'interval': [['P0D', 'P1D']]},
+    ]
     return data
 
 
 @fixture(scope='function')
 def one_year():
-    data = [('one_year', [('P0Y', 'P1Y')])]
+    data = [
+        {'name': 'one_year', 'interval': [['P0Y', 'P1Y']]},
+    ]
     return data
 
 

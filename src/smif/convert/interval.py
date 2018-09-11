@@ -506,12 +506,13 @@ class IntervalSet(ResolutionSet):
         Arguments
         ---------
         interval_data : list
-            A list of tuples containing (interval_id, list of interval tuples)
+            A list of dicts containing {name: interval_id, interval: list of interval tuples)
         """
         names = {}
 
         for interval in interval_data:
-            name, interval_list = interval
+            name = interval['name']
+            interval_list = [tuple(i) for i in interval['interval']]
             self._data.append(
                 Interval(name, interval_list, self._base_year))
             names[name] = len(self._data) - 1

@@ -9,6 +9,7 @@
 """
 
 import sys
+
 from setuptools import setup
 
 
@@ -18,7 +19,7 @@ def setup_package():
     setup(setup_requires=['pyscaffold>=3.0a0,<3.1a0'] + sphinx,
           entry_points={
               'console_scripts': [
-                   'smif = smif.cli:main'
+                  'smif = smif.cli:main'
               ]
           },
           use_pyscaffold=True)
