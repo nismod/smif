@@ -199,6 +199,19 @@ class ModelRunner(object):
 
         Build and return the job graph for an entire bundle, including
         before_model_run jobs when the models were not yet initialised.
+
+        Arguments
+        ---------
+        model_run: :class:`smif.controller.modelrun.ModelRun`
+        store: :class:`smif.data_layer.DataInterface`
+        bundle: :class:`dict`
+        decision_manager: :class:`smif.decision.decision.DecisionManager`
+
+        Returns
+        -------
+        :class:`networkx.Graph`
+            A populated job graph with edges showing dependencies
+            between different operations and timesteps
         """
         # Initialise each of the sector models
         if not model_run.initialised:
@@ -237,6 +250,22 @@ class ModelRunner(object):
         Build and return the graph for a single job and populate the node
         attributes with a :class:`smif.data_layer.DataHandle` data_handle
         and :class:`smif.model.ModelOperation` operation.
+
+        Arguments
+        ---------
+        model_run: :class:`smif.controller.modelrun.ModelRun`
+        store: :class:`smif.data_layer.DataInterface`
+        operation: :enum:`ModelOperation`
+        iteration: :class:`int`
+        timestep: :class:`int`
+        decision_manager: :class:`smif.decision.decision.DecisionManager`
+
+        Returns
+        -------
+        :class:`networkx.Graph`
+            A populated job for a single timestep, iteration with edges
+            showing dependencies and attributes for model, data_handle
+            and operation
         """
         # Build job based on dependency graph
         dep_graph = model_run.sos_model.get_dependency_graph()
