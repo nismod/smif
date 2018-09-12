@@ -1,5 +1,5 @@
 from copy import copy
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import networkx as nx
 from pytest import fixture, raises
@@ -166,7 +166,8 @@ class TestModelRun:
 class TestModelRunnerJobGraphs():
     """Cover all JobGraph corner cases
     """
-    def test_jobgraph_single_timestep(self, mock_store, mock_model_run):
+    @patch('smif.controller.modelrun.JobScheduler.add')
+    def test_jobgraph_single_timestep(self, mock_add, mock_store, mock_model_run):
         """
         a[before]
         |
@@ -182,7 +183,10 @@ class TestModelRunnerJobGraphs():
         mock_model_run.sos_model.get_dependency_graph = Mock(return_value=dep_graph)
 
         runner = ModelRunner()
-        job_graph = runner.solve_model(mock_model_run, mock_store)
+        runner.solve_model(mock_model_run, mock_store)
+
+        call_args = mock_add.call_args
+        job_graph = call_args[0][0]
 
         actual = list(job_graph.predecessors('before_model_run_model_a'))
         expected = []
@@ -200,7 +204,8 @@ class TestModelRunnerJobGraphs():
         expected = []
         assert actual == expected
 
-    def test_jobgraph_multiple_timesteps(self, mock_store, mock_model_run):
+    @patch('smif.controller.modelrun.JobScheduler.add')
+    def test_jobgraph_multiple_timesteps(self, mock_add, mock_store, mock_model_run):
         """
         a[before]
         |        |
@@ -219,7 +224,10 @@ class TestModelRunnerJobGraphs():
         mock_model_run.model_horizon = [1, 2]
 
         runner = ModelRunner()
-        job_graph = runner.solve_model(mock_model_run, mock_store)
+        runner.solve_model(mock_model_run, mock_store)
+
+        call_args = mock_add.call_args
+        job_graph = call_args[0][0]
 
         actual = list(job_graph.predecessors('before_model_run_model_a'))
         expected = []
@@ -245,7 +253,8 @@ class TestModelRunnerJobGraphs():
         expected = []
         assert actual == expected
 
-    def test_jobgraph_multiple_models(self, mock_store, mock_model_run):
+    @patch('smif.controller.modelrun.JobScheduler.add')
+    def test_jobgraph_multiple_models(self, mock_add, mock_store, mock_model_run):
         """
         a[before]   b[before]   c[before]
         |           |           |
@@ -271,7 +280,10 @@ class TestModelRunnerJobGraphs():
         mock_model_run.sos_model.get_dependency_graph = Mock(return_value=dep_graph)
 
         runner = ModelRunner()
-        job_graph = runner.solve_model(mock_model_run, mock_store)
+        runner.solve_model(mock_model_run, mock_store)
+
+        call_args = mock_add.call_args
+        job_graph = call_args[0][0]
 
         actual = list(job_graph.predecessors('simulate_1_0_model_a'))
         expected = ['before_model_run_model_a']

@@ -25,6 +25,21 @@ from smif.decision.decision import DecisionManager
 from smif.model import ModelOperation
 
 
+class JobScheduler(object):
+    """A schedule of ModelRun jobs. The object takes JobGraphs and schedules
+    and runs the containing ModelRuns taking their dependencies into account
+    """
+
+    def add(self, job_graph):
+        """Add a JobGraph to the JobScheduler queue
+
+        Arguments
+        ---------
+        job_graph: :class:`networkx.graph`
+        """
+        pass
+
+
 class ModelRun(object):
     """Collects timesteps, scenarios , narratives and a SosModel together
 
@@ -164,6 +179,10 @@ class ModelRunner(object):
                                            model_run.name,
                                            model_run.sos_model.name)
 
+        # Initialise the job scheduler
+        self.logger.debug("Initialising the job scheduler")
+        job_scheduler = JobScheduler()
+
         for bundle in decision_manager.decision_loop():
             # each iteration is independent at this point, so the following loop is a
             # candidate for running in parallel
@@ -173,7 +192,7 @@ class ModelRunner(object):
             if not nx.is_directed_acyclic_graph(job_graph):
                 raise NotImplementedError
 
-        return job_graph
+            job_scheduler.add(job_graph)
 
     def build_job_graph(self, model_run, store, bundle, decision_manager):
         """ Build a job graph
