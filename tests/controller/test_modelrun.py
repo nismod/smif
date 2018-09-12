@@ -176,6 +176,7 @@ class TestModelRunnerJobGraphs():
         v
         a[sim]
         """
+        mock_add.return_value = (0, None)
         model_a = Mock()
         model_a.name = 'model_a'
         model_a.deps = {}
@@ -216,6 +217,7 @@ class TestModelRunnerJobGraphs():
         a[sim]  a[sim]
         t=1     t=2
         """
+        mock_add.return_value = (0, None)
         model_a = Mock()
         model_a.name = 'model_a'
         model_a.deps = {}
@@ -266,6 +268,7 @@ class TestModelRunnerJobGraphs():
         a[sim] ---> b[sim] ---> c[sim]
            |------------------>
         """
+        mock_add.return_value = (0, None)
         model_a = Mock()
         model_b = Mock()
         model_c = Mock()
@@ -341,6 +344,7 @@ class TestModelRunnerJobGraphs():
         a[sim] ---> b[sim]
                <---
         """
+        mock_add.return_value = (0, None)
         model_a = Mock()
         model_b = Mock()
         model_a.name = 'model_a'
@@ -376,6 +380,7 @@ class TestModelRunnerJobGraphs():
         """
         a[sim]
         """
+        mock_add.return_value = (0, None)
         model_a = Mock()
         model_a.name = 'model_a'
         model_a.deps = {}

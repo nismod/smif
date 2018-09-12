@@ -6,9 +6,13 @@ or individual models to be called in series.
 Future implementations may interface with common schedulers to queue
 up models to run in parallel and/or distributed.
 """
+import itertools
 import subprocess
 from collections import defaultdict
 from datetime import datetime
+
+import networkx
+from smif.model import ModelOperation
 
 
 class ModelRunScheduler(object):
@@ -141,15 +145,108 @@ class ModelRunScheduler(object):
 
 
 class JobScheduler(object):
-    """A schedule of ModelRun jobs. The object takes JobGraphs and schedules
-    and runs the containing ModelRuns taking their dependencies into account
+    """Run JobGraphs produced by a :class:`~smif.controller.modelrun.ModelRun`
     """
+    def __init__(self):
+        self._status = defaultdict(lambda: 'unstarted')
+        self._id_counter = itertools.count()
 
     def add(self, job_graph):
-        """Add a JobGraph to the JobScheduler queue
+        """Add a JobGraph to the JobScheduler and run directly
 
         Arguments
         ---------
         job_graph: :class:`networkx.graph`
         """
-        pass
+        job_graph_id = self._next_id()
+        try:
+            self._run(job_graph, job_graph_id)
+        except Exception as ex:
+            # raise ex
+            return job_graph_id, ex
+
+        return job_graph_id, None
+
+    def kill(self, job_graph_id):
+        """Kill a job_graph that is already running - not implemented
+
+        Parameters
+        ----------
+        job_graph_id: int
+        """
+        raise NotImplementedError
+
+    def get_status(self, job_graph_id):
+        """Get job graph status
+
+        Parameters
+        ----------
+        job_graph_id: int
+
+        Returns
+        -------
+        dict: A message containing the status
+
+        Notes
+        -----
+        Possible statuses:
+
+        unstarted:
+            Job graph has not yet started
+        running:
+            Job graph is running
+        done:
+            Job graph was completed succesfully
+        failed:
+            Job graph completed running with an exit code
+        """
+        return {'status': self._status[job_graph_id]}
+
+    def _run(self, job_graph, job_graph_id):
+        """Run a job graph
+        - sort the jobs into a single list
+        - unpack model, data_handle and operation from each node
+        """
+        self._status[job_graph_id] = 'running'
+
+        try:
+            for job in self._get_run_order(job_graph):
+                print(job)
+                model = job['model']
+                data_handle = job['data_handle']
+                operation = job['operation']
+                if operation is ModelOperation.BEFORE_MODEL_RUN:
+                    model.before_model_run(data_handle)
+                elif operation is ModelOperation.SIMULATE:
+                    model.simulate(data_handle)
+                else:
+                    raise ValueError("Unrecognised operation: {}".format(operation))
+        except Exception as ex:
+            self._status[job_graph_id] = 'failed'
+            raise ex
+
+        self._status[job_graph_id] = 'done'
+
+    def _next_id(self):
+        return next(self._id_counter)
+
+    @staticmethod
+    def _get_run_order(graph):
+        """Returns a list of jobs in a runnable order.
+
+        Returns
+        -------
+        list
+            A list of job nodes
+        """
+        try:
+            # topological sort gives a single list from directed graph,
+            # ignoring opportunities to run independent models in parallel
+            run_order = networkx.topological_sort(graph)
+
+            # list of Models (typically ScenarioModel and SectorModel)
+            ordered_jobs = [graph.nodes[run] for run in run_order]
+        except networkx.NetworkXUnfeasible:
+            raise NotImplementedError("Job graphs must not contain cycles")
+
+        return ordered_jobs

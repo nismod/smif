@@ -178,8 +178,12 @@ class ModelRunner(object):
             if not nx.is_directed_acyclic_graph(job_graph):
                 raise NotImplementedError
 
-            job_id = job_scheduler.add(job_graph)
+            job_id, err = job_scheduler.add(job_graph)
             self.logger.debug("Running job %s", job_id)
+            if err is not None:
+                status = job_scheduler.get_status(job_id)
+                self.logger.debug("Job %s %s", job_id, status['status'])
+                raise err
 
     def build_job_graph(self, model_run, store, bundle, decision_manager):
         """ Build a job graph
