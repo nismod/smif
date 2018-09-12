@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import datetime
 
 
-class Scheduler(object):
+class ModelRunScheduler(object):
     """The scheduler can run instances of smif as a subprocess
     and can provide information whether the modelrun is running,
     is done or has failed.

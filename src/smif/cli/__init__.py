@@ -88,7 +88,7 @@ from argparse import ArgumentParser
 import smif
 import smif.cli.log
 
-from smif.controller import copy_project_folder, execute_model_run, Scheduler
+from smif.controller import copy_project_folder, execute_model_run, ModelRunScheduler
 from smif.http_api import create_app
 from smif.data_layer import DatafileInterface
 
@@ -133,7 +133,7 @@ def _run_server(args):
         static_folder=app_folder,
         template_folder=app_folder,
         data_interface=DatafileInterface(args.directory),
-        scheduler=Scheduler()
+        scheduler=ModelRunScheduler()
     )
 
     port = 5000

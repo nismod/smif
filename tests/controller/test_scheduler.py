@@ -1,16 +1,16 @@
 
 from unittest.mock import Mock, patch
 
-from smif.controller.scheduler import Scheduler
+from smif.controller.scheduler import ModelRunScheduler
 
 
 @patch('smif.controller.scheduler.subprocess.Popen')
 def test_single_modelrun(mock_popen):
-    my_scheduler = Scheduler()
+    my_scheduler = ModelRunScheduler()
     my_scheduler.add('my_model_run', {
         'directory': 'mock/dir',
-        'verbosity': 0, 
-        'warm_start': False, 
+        'verbosity': 0,
+        'warm_start': False,
         'output_format': 'local_csv'
     })
 
@@ -22,7 +22,7 @@ def test_single_modelrun(mock_popen):
 
 
 def test_status_modelrun_never_added():
-    my_scheduler = Scheduler()
+    my_scheduler = ModelRunScheduler()
     status = my_scheduler.get_status('my_model_run')
     assert status['status'] == 'unstarted'
 
@@ -40,11 +40,11 @@ def test_status_model_started(mock_popen):
     process_mock = Mock(**attrs)
     mock_popen.return_value = process_mock
 
-    my_scheduler = Scheduler()
+    my_scheduler = ModelRunScheduler()
     my_scheduler.add('my_model_run', {
         'directory': 'mock/dir',
-        'verbosity': 0, 
-        'warm_start': False, 
+        'verbosity': 0,
+        'warm_start': False,
         'output_format': 'local_csv'
     })
     my_scheduler.lock = True
@@ -64,11 +64,11 @@ def test_status_model_done(mock_popen):
     process_mock = Mock(**attrs)
     mock_popen.return_value = process_mock
 
-    my_scheduler = Scheduler()
+    my_scheduler = ModelRunScheduler()
     my_scheduler.add('my_model_run', {
         'directory': 'mock/dir',
-        'verbosity': 0, 
-        'warm_start': False, 
+        'verbosity': 0,
+        'warm_start': False,
         'output_format': 'local_csv'
     })
     my_scheduler.lock = True
@@ -89,12 +89,12 @@ def test_status_model_failed(mock_popen):
     process_mock = Mock(**attrs)
     mock_popen.return_value = process_mock
 
-    my_scheduler = Scheduler()
+    my_scheduler = ModelRunScheduler()
     my_scheduler.add('my_model_run', {
         'directory': 'mock/dir',
-        'verbosity': 0, 
-        'warm_start': False, 
-        'output_format': 
+        'verbosity': 0,
+        'warm_start': False,
+        'output_format':
         'local_csv'
     })
     my_scheduler.lock = True
@@ -115,12 +115,12 @@ def test_status_model_stopped(mock_popen):
     process_mock = Mock(**attrs)
     mock_popen.return_value = process_mock
 
-    my_scheduler = Scheduler()
+    my_scheduler = ModelRunScheduler()
     my_scheduler.add('my_model_run', {
-        'directory': 'mock/dir', 
-        'verbosity': 0, 
-        'warm_start': False, 
-        'output_format': 
+        'directory': 'mock/dir',
+        'verbosity': 0,
+        'warm_start': False,
+        'output_format':
         'local_csv'
     })
     my_scheduler.lock = True
