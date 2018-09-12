@@ -216,9 +216,6 @@ class TestSosModel():
             {
                 'name': 'sos_model_name',
                 'description': 'friendly description of the sos model',
-                'max_iterations': int,
-                'convergence_absolute_tolerance': float,
-                'convergence_relative_tolerance': float,
                 'dependencies': [
                     {
                         'source': str (Model.name),
@@ -326,10 +323,7 @@ class TestSosModel():
                 'source_output': 'gva',
                 'sink': 'water_supply',
                 'sink_input': 'rGVA'
-            }],
-            'max_iterations': 25,
-            'convergence_absolute_tolerance': 1e-8,
-            'convergence_relative_tolerance': 1e-5
+            }]
         }
         assert actual == expected
 
@@ -441,27 +435,6 @@ class TestSosModelProperties():
 
         # SectorModel has its own ParameterList, gettable by param name
         assert 'sector_model_param' in sector_model.parameters.keys()
-
-    def test_set_max_iterations(self, sos_model_dict):
-        """Test constructing from single dict config
-        """
-        sos_model_dict['max_iterations'] = 125
-        sos_model = SosModel.from_dict(sos_model_dict)
-        assert sos_model.max_iterations == 125
-
-    def test_set_convergence_absolute_tolerance(self, sos_model_dict):
-        """Test constructing from single dict config
-        """
-        sos_model_dict['convergence_absolute_tolerance'] = 0.0001
-        sos_model = SosModel.from_dict(sos_model_dict)
-        assert sos_model.convergence_absolute_tolerance == 0.0001
-
-    def test_set_convergence_relative_tolerance(self, sos_model_dict):
-        """Test constructing from single dict config
-        """
-        sos_model_dict['convergence_relative_tolerance'] = 0.1
-        sos_model = SosModel.from_dict(sos_model_dict)
-        assert sos_model.convergence_relative_tolerance == 0.1
 
 
 class TestSosModelDependencies(object):

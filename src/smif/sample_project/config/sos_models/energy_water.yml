@@ -34,6 +34,3 @@ model_dependencies:
   sink: water_supply
   sink_input: reservoir_level
   timestep_offset: -1  # suggested declaration of inter-timestep dep.
-max_iterations: 100
-convergence_absolute_tolerance: 1e-05
-convergence_relative_tolerance: 1e-05

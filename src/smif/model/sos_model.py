@@ -32,12 +32,6 @@ class SosModel(CompositeModel):
         # housekeeping
         super().__init__(name)
         self.logger = logging.getLogger(__name__)
-        self.max_iterations = 25
-        self.convergence_relative_tolerance = 1e-05
-        self.convergence_absolute_tolerance = 1e-08
-
-        # models - includes types of SectorModel and ScenarioModel
-        self.dependency_graph = None
 
     def as_dict(self):
         """Serialize the SosModel object
@@ -73,10 +67,7 @@ class SosModel(CompositeModel):
                 for model in self.sector_models.values()
             ),
             'scenario_dependencies': scenario_dependencies,
-            'model_dependencies': model_dependencies,
-            'max_iterations': self.max_iterations,
-            'convergence_absolute_tolerance': self.convergence_absolute_tolerance,
-            'convergence_relative_tolerance': self.convergence_relative_tolerance
+            'model_dependencies': model_dependencies
         }
 
         return config
@@ -88,8 +79,7 @@ class SosModel(CompositeModel):
         Arguments
         ---------
         data: dict
-            Configuration data. Must include name. May include description, max_iterations,
-            convergence_absolute_tolerance, convergence_relative_tolerance. If models are
+            Configuration data. Must include name. May include description. If models are
             provided, must include dependencies.
         models: list of Model
             Optional. If provided, must include each ScenarioModel and SectorModel referred to
@@ -105,15 +95,6 @@ class SosModel(CompositeModel):
         if test('description', data):
             sos_model.description = data['description']
 
-        # convergence settings - eventually hoist to model runner with dataflow implementation
-        if test('max_iterations', data):
-            sos_model.max_iterations = data['max_iterations']
-        if test('convergence_absolute_tolerance', data):
-            sos_model.convergence_absolute_tolerance = data['convergence_absolute_tolerance']
-        if test('convergence_relative_tolerance', data):
-            sos_model.convergence_relative_tolerance = data['convergence_relative_tolerance']
-
-        # models
         if models:
             for model in models:
                 sos_model.add_model(model)

@@ -175,31 +175,6 @@ class SosModelConfigForm extends Component {
                             <DependencySelector sectorModels={sectorModels} scenarioSets={scenarioSets} dependencies={selectedSosModel.dependencies} selectedSectorModels={selectedSosModel.sector_models} selectedScenarioSets={selectedSosModel.scenario_sets} onChange={this.handleChange}/>
                         </div>
                     </div>
-
-                    <div className="card">
-                        <div className="card-header">Iteration Settings</div>
-                        <div className="card-body">
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Maximum Iterations</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" name="max_iterations" type="number" min="1" defaultValue={selectedSosModel.max_iterations} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Absolute Convergence Tolerance</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" name="convergence_absolute_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_absolute_tolerance} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Relative Convergence Tolerance</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" name="convergence_relative_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_relative_tolerance} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </form>
 
                 <Popup name='popup_dependency_selector' onRequestOpen={this.state.deletePopupIsOpen}>

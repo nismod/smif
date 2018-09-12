@@ -99,10 +99,7 @@ class ProjectOverview extends Component {
                     'sector_models': [],
                     'narrative_sets': [],
                     'scenario_sets': [],
-                    'dependencies': [],
-                    'max_iterations': 1,
-                    'convergence_absolute_tolerance': '1e-05',
-                    'convergence_relative_tolerance': '1e-05'
+                    'dependencies': []
                 }
             ))
             break
