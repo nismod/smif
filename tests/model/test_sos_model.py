@@ -354,29 +354,19 @@ class TestSosModel():
         sos_model.add_model(source_model)
         sos_model.add_model(sink_model)
 
-    def test_before_model_run(self, empty_sector_model):
-        """Before model run calls into each model
+    def test_before_model_run_fails(self, sos_model):
+        """Before model run should raise
         """
-        sos_model = SosModel('test')
-        empty_sector_model.before_model_run = Mock()
-        sos_model.add_model(empty_sector_model)
-        sos_model.before_model_run(Mock())
-        assert empty_sector_model.before_model_run.call_count == 1
-
-    def test_run_sequential(self, sos_model):
-        """Simulate should exist
-        """
-        sos_model = sos_model
         data_handle = Mock()
-        data_handle.timesteps = [2010, 2011, 2012]
-        data_handle.get_state = Mock(return_value={})
+        with raises(NotImplementedError):
+            sos_model.before_model_run(data_handle)
 
-        data_handle._current_timestep = 2010
-        sos_model.simulate(data_handle)
-        data_handle._current_timestep = 2011
-        sos_model.simulate(data_handle)
-        data_handle._current_timestep = 2012
-        sos_model.simulate(data_handle)
+    def test_simulate_fails(self, sos_model):
+        """Simulate should raise
+        """
+        data_handle = Mock()
+        with raises(NotImplementedError):
+            sos_model.simulate(data_handle)
 
 
 class TestSosModelProperties():

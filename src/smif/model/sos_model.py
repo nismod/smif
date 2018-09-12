@@ -8,10 +8,7 @@ and the dependencies between the models.
 """
 import logging
 
-import networkx
-from smif.controller.modelrun import ModelRunner
 from smif.model.model import CompositeModel, Model
-from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel
 
@@ -150,67 +147,14 @@ class SosModel(CompositeModel):
         self.models[model.name] = model
 
     def before_model_run(self, data_handle):
-        """Initialise each model (passing in parameter data only)
+        """Not implemented - use ModelRunner and a JobScheduler to execute
         """
-        for model in self.sector_models.values():
-            # get custom data handle for the Model
-            model_data_handle = data_handle.derive_for(model)
-            model.before_model_run(model_data_handle)
+        raise NotImplementedError("SosModel must be run by a scheduler")
 
     def simulate(self, data_handle):
-        """Run the SosModel
-
-        Arguments
-        ---------
-        data_handle: smif.data_layer.DataHandle
-            Access state, parameter values, dependency inputs
-
-        Returns
-        -------
-        results : smif.data_layer.DataHandle
-            Access model outputs
-
+        """Not implemented - use ModelRunner and a JobScheduler to execute
         """
-        graph = ModelRunner.get_dependency_graph(self.models)
-        run_order = SosModel.get_model_sets_in_run_order(
-            graph,
-            self.max_iterations,
-            self.convergence_relative_tolerance,
-            self.convergence_absolute_tolerance
-        )
-        self.logger.info("Determined run order as %s", [x.name for x in run_order])
-        for model in run_order:
-            self.logger.info("*** Running the %s model ***", model.name)
-            # Pass simulate access to a DataHandle derived for the particular
-            # model
-            model.simulate(data_handle.derive_for(model))
-        return data_handle
-
-    @staticmethod
-    def get_model_sets_in_run_order(graph, max_iterations, convergence_relative_tolerance,
-                                    convergence_absolute_tolerance):
-        """Returns a list of :class:`Model` in a runnable order.
-
-        If a set contains more than one model, there is an interdependency and
-        and we attempt to run the models to convergence.
-
-        Returns
-        -------
-        list
-            A list of `smif.model.Model` objects
-        """
-        if networkx.is_directed_acyclic_graph(graph):
-            # topological sort gives a single list from directed graph, currently
-            # ignoring opportunities to run independent models in parallel
-            run_order = networkx.topological_sort(graph)
-
-            # list of Models (typically ScenarioModel and SectorModel)
-            ordered_sets = list([graph.nodes[run]['model'] for run in run_order])
-
-        else:
-            raise NotImplementedError
-
-        return ordered_sets
+        raise NotImplementedError("SosModel must be run by a scheduler")
 
     @property
     def sector_models(self):
