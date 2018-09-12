@@ -30,6 +30,10 @@ Simulation Modelling Integration Framework
    :target: https://zenodo.org/badge/latestdoi/67128476
    :alt: Archive
 
+.. image:: https://readthedocs.org/projects/smif/badge/?version=latest
+   :target: https://smif.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
 **smif** is a framework for handling the creation, management and running of 
 system-of-systems models.
 
