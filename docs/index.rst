@@ -313,19 +313,19 @@ Citation
 
 If you use **smif** for research, please cite the software directly:
 
-* Usher, W., Russell, T. and Schoenmakers, R. (2018). smif: simulation modelling
-  integration framework (v0.7.6) [Software]. Available online:
-  https://github.com/nismod/smif
+* Will Usher, Tom Russell, & Roald Schoenmakers. (2018, August 15). nismod/smif 
+  vX.Y.Z (Version vX.Y.Z). Zenodo. http://doi.org/10.5281/zenodo.1309336
 
 Here's an example BibTeX entry::
 
-        @Misc{,
-            author = {Will Usher, Tom Russell and Roald Schoenmakers},
-            title = {{smif}: simulation modelling integration framework},
-            year = {2018},
-            url = "https://github.com/nismod/smif",
-            note = {[Online; accessed <today>]}
-        }
+        @misc{smif,
+              author       = {Will Usher and Tom Russell and Roald Schoenmakers},
+              title        = {nismod/smif v0.8.2},
+              month        = Aug,
+              year         = 2018,
+              doi          = {10.5281/zenodo.1309336},
+              url          = {https://doi.org/10.5281/zenodo.1309336}
+            }
 
 
 A word from our sponsors
