@@ -57,7 +57,7 @@ def model_run():
 def strategies():
     return [
         {
-            'name': 'pre-specified-planning',
+            'type': 'pre-specified-planning',
             'description': 'a description',
             'model_name': 'test_model',
             'interventions': [
@@ -66,7 +66,7 @@ def strategies():
             ]
          },
         {
-            'name': 'agent',
+            'type': 'rule-based',
             'description': 'reduce emissions',
             'path': 'planning/energyagent.py',
             'classname': 'EnergyAgent'

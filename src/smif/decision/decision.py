@@ -33,7 +33,7 @@ class DecisionManager(object):
     writes the post-decision state through a DataHandle. This allows Models to access a given
     decision state (identified uniquely by timestep and decision iteration id).
 
-    The DecisionManager passes a DataHandle down to a DecisionModule,
+    The :py:meth:`get_decisions` method passes a DataHandle down to a DecisionModule,
     allowing the DecisionModule to access model results from previous timesteps
     and decision iterations when making decisions
 
@@ -71,7 +71,7 @@ class DecisionManager(object):
 
         for index, strategy in enumerate(strategies):
             # Extract pre-specified planning interventions
-            if strategy['name'] == 'pre-specified-planning':
+            if strategy['type'] == 'pre-specified-planning':
 
                 msg = "Adding %s planned interventions to pre-specified-planning %s"
                 self.logger.info(msg, len(strategy['interventions']), index)
@@ -87,6 +87,8 @@ class DecisionManager(object):
                 strategy['timesteps'] = self._timesteps
                 strategy['register'] = self.register
 
+                strategy['name'] = strategy['classname'] + '_' + strategy['type']
+
                 self.logger.debug("Trying to load strategy: %s", strategy)
                 decision_module = loader.load(strategy)
                 self._decision_modules.append(decision_module)
@@ -100,12 +102,17 @@ class DecisionManager(object):
                 )
 
     def decision_loop(self):
-        """Generate bundles of simulation steps to run.
+        """Generate bundles of simulation steps to run
 
-        Each iteration returns a dict: {decision_iteration (int) => list of timesteps (int)}
+        Each call to this method returns a dict:
 
-        With only pre-specified planning, there is a single step in the loop, with a single
-        decision iteration with timesteps covering the entire model horizon.
+            {decision_iteration (int) => list of timesteps (int)}
+
+        A bundle is composed differently according to the implementation of the
+        contained DecisionModule.  For example:
+
+        With only pre-specified planning, there is a single step in the loop,
+        with a single decision iteration with timesteps covering the entire model horizon.
 
         With a rule based approach, there might be many steps in the loop, each with a single
         decision iteration and single timestep, moving on once some threshold is satisfied.
@@ -126,18 +133,17 @@ class DecisionManager(object):
             yield {0: [x for x in self._timesteps]}
 
     def get_decision(self, data_handle):
-        """Return all interventions built in the given timestep
+        """Writes decisions for given timestep to state
 
-        for the given decision
-        iteration.
+        Calls each of the contained DecisionModule for the given timestep and
+        decision iteration in the `data_handle`, retrieving a list of decision
+        dicts (keyed by intervention name and build year).
+
+        These decisions are then written to a state file using the data store.
 
         Arguments
         ---------
         data_handle : smif.data_layer.data_handle.DataHandle
-        timestep : int
-            A timestep (planning year)
-        iteration : int
-            A decision iteration
 
         """
         timestep = data_handle.current_timestep
@@ -159,18 +165,14 @@ class DecisionManager(object):
 
 
 class DecisionModule(metaclass=ABCMeta):
-    """Abstract class which provides the interface to decision mechanisms.
+    """Abstract class which provides the interface to user defined decision modules.
 
-    These mechanisms including Pre-Specified Planning, a Rule-based Approach and
-    Multi-objective Optimisation.
+    These mechanisms could include a Rule-based Approach or Multi-objective Optimisation.
 
-    This class provides two main public methods, ``__next__`` which is normally
+    This class provides two main methods, ``__next__`` which is normally
     called implicitly as a call to the class as an iterator, and ``get_decision()``
     which takes as arguments a smif.model.Model object, and ``timestep`` and
-    ``decision_iteration`` integers. The first of these returns a dict of
-    decision_iterations and timesteps over which a SosModel should be iterated.
-    The latter provides a means to furnish the structure of contained Model
-    objects through a list of historical and recent interventions.
+    ``decision_iteration`` integers.
 
     Arguments
     ---------
@@ -235,29 +237,12 @@ class PreSpecified(DecisionModule):
         A list of dicts ``{'name': 'intervention_name', 'build_year': 2010}``
         representing historical or planned interventions
     """
-
     def __init__(self, timesteps, register, planned_interventions):
         super().__init__(timesteps, register)
         self._planned = planned_interventions
 
     def _get_next_decision_iteration(self):
         return {0: [x for x in self.timesteps]}
-
-    def _set_state(self, timestep, decision_iteration):
-        """Pre-specified planning interventions are loaded during initialisation
-
-        Pre-specified planning interventions are loaded during initialisation
-        of a model run. This method just needs to copy the existing system state
-        to the correct decision iteration reference.
-
-        Arguments
-        ---------
-        timestep : int
-            A timestep (planning year)
-        iteration : int
-            A decision iteration
-        """
-        pass
 
     def get_decision(self, data_handle):
         """Return a dict of intervention names built in timestep
