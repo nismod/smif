@@ -30,9 +30,6 @@ Simulation Modelling Integration Framework
    :target: https://zenodo.org/badge/latestdoi/67128476
    :alt: Archive
 
-Description
-===========
-
 **smif** is a framework for handling the creation, management and running of 
 system-of-systems models.
 
@@ -72,6 +69,12 @@ There are number of practical limits imposed by the implementation of **smif**.
 These are a result of a conscious design decision that stems from the requirements of
 coupling the infrastructure system models to create the next generation 
 National Infrastructure System Model (NISMOD2).
+
+The discussion below may help you determine whether **smif** is an appropriate
+tool for you.
+
+- **smif** *is not* a scheduler, but has been designed to make performing
+  system-of-systems analyses with a scheduler easier
 
 - Geographical extent is expected to be defined explicitly by a vector geometry 
 
