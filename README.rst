@@ -6,21 +6,25 @@ smif
 
 Simulation Modelling Integration Framework
 
+.. image:: https://img.shields.io/badge/github-nismod%2Fsmif-brightgreen.svg
+    :target: https://github.com/nismod/smif/
+    :alt: nismod/smif on github
+
 .. image:: https://travis-ci.org/nismod/smif.svg?branch=master
     :target: https://travis-ci.org/nismod/smif
-    :alt: Build status (Linux/OSX)
-
-.. image:: https://ci.appveyor.com/api/projects/status/g1x12yfwb4q9kjad/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/tomalrussell/smif/branch/master
-    :alt: Build status (Windows)
-
-.. image:: https://readthedocs.org/projects/smif/badge/?version=latest
-    :target: http://smif.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
+    :alt: Travis CI build status
 
 .. image:: https://img.shields.io/codecov/c/github/nismod/smif/master.svg
     :target: https://codecov.io/gh/nismod/smif?branch=master
     :alt: Code Coverage
+
+.. image:: https://img.shields.io/pypi/v/smif.svg
+    :target: https://pypi.python.org/pypi/smif
+    :alt: PyPI package
+
+.. image:: https://img.shields.io/conda/vn/conda-forge/smif.svg
+    :target: https://anaconda.org/conda-forge/smif
+    :alt: conda-forge package
 
 .. image:: https://zenodo.org/badge/67128476.svg
    :target: https://zenodo.org/badge/latestdoi/67128476
@@ -28,21 +32,70 @@ Simulation Modelling Integration Framework
 Description
 ===========
 
-**smif** is a framework for handling the creation of system-of-systems
-models.  The framework handles inputs and outputs, dependencies between models,
-persistence of data and the communication of state across years.
+**smif** is a framework for handling the creation, management and running of 
+system-of-systems models.
 
-This early version of the framework handles simulation models that simulate the
-operation of a system within a year.
-**smif** exposes an interface to a planning module which will allows different
-algorithms to be used against a common API.
+A system-of-systems model is a collection of system simulation models that are 
+coupled through dependencies on data produced by each other.  
+
+**smif** provides a user with the ability to 
+
+- create system-of-systems models
+  - add simulation models to a system-of-systems model
+  - create dependencies between models by linking model inputs and outputs
+  - pick from a library of data adapters which perform common data conversions 
+    across dependencies
+  - create user-defined data adapters for more special cases
+  - add scenario data sources and link those to model inputs within a system-of-systems
+- add a simulation model to a library of models
+  - write a simulation model wrapper which allows **smif** to run the model
+  - define multi-dimensional model inputs, outputs and parameters and appropriate metadata
+- run system-of-systems models
+  - link concrete scenario data sets to a system-of-systems model
+  - define one or more decision modules that operate across the system-of-systems
+  - define a narrative to parameterise the contained models
+  - persist intermediate data for each model output, and write results to a data store
+    for subsequent analysis
+
+In summary, the framework facilitates the hard coupling of complex systems models into a system-of-systems.
+
+Should I use **smif**?
+======================
+
+There are number of practical limits imposed by the implementation of **smif**.
+These are a result of a conscious design decision that stems from the requirements of
+coupling the infrastructure system models to create the next generation national infrastructure system model (NISMOD2).
+
+- Geographical extent is expected to be defined explicitly by a vector geometry 
+  - smif is not set up ideally for models which simulate on a grid, 
+    though they could be shoehorned into the framework.
+- Inputs and outputs are exchanged at the ‘planning timestep’ resolution 
+  - smif makes a distinction between simulation of operation 
+    (which happens at some model-defined timestep resolution) and application of 
+    planning decisions (which happens at a timestep which is synchronised 
+    between all models, currently assumed to be annual).
+    **smif** is not focussed on tight coupling between models which need to exchange 
+    data at every simulation timestep (running in lockstep).
+
+There are also conceptual assumptions that relate to the style of model we’re 
+developing for NISMOD (the National Infrastructure Simulation Model). 
+
+These are bottom-up, engineering simulation models built to simulate the operation 
+of a given infrastructure system which give up responsibility for structural changes 
+to the system to one or more planning modules (a process that produces a series 
+of planning decisions which determine the state of the system to be simulated)
+
+This means that we’ve not thought so much about:
+
+- discrete event system simulation models (e.g. queuing systems)
+- dynamical system models (e.g. predator/prey)
+- equilibrium models without explicit timesteps (e.g. Land-Use Transport Interaction)
 
 Setup and Configuration
 =======================
 
 **smif** is written in Python (Python>=3.5) and has a number of dependencies.
 See `requirements.txt` for a full list.
-
 
 Using conda
 -----------
