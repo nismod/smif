@@ -264,31 +264,37 @@ class ModelRunner(object):
         if operation is ModelOperation.BEFORE_MODEL_RUN:
             job_id = operation.value
             job = nx.DiGraph()
-            for node in dep_graph.nodes(data=True):
-                job.add_node('%s_%s' % (job_id, node[0]), model=node[1]['model'])
+            for node_id, node_data in dep_graph.nodes(data=True):
+                job.add_node(
+                    '%s_%s' % (job_id, node_id),
+                    model=node_data['model']
+                )
 
         elif operation is ModelOperation.SIMULATE:
             job_id = '%s_%s_%s' % (operation.value, timestep, iteration)
-            mapping = {dep_node: '%s_%s' % (job_id, dep_node) for dep_node in dep_graph.nodes}
+            mapping = {
+                dep_node: '%s_%s' % (job_id, dep_node)
+                for dep_node in dep_graph.nodes
+            }
             job = nx.relabel_nodes(dep_graph, mapping)
         else:
             raise ValueError
 
         # Populate node attributes with configured data_handle and operation
-        for node in job.nodes.data():
+        for node_id, node_data in job.nodes.data():
             data_handle = DataHandle(
                 store=store,
                 modelrun_name=model_run.name,
                 current_timestep=timestep,
                 timesteps=model_run.model_horizon,
-                model=node[1]['model'],
+                model=node_data['model'],
                 decision_iteration=iteration
             )
             if operation is ModelOperation.SIMULATE:
                 decision_manager.get_decision(data_handle)
 
-            node[1]['data_handle'] = data_handle
-            node[1]['operation'] = operation
+            node_data['data_handle'] = data_handle
+            node_data['operation'] = operation
 
         return job
 
