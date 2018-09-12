@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, PropertyMock
 
 from pytest import fixture, raises
 from smif.data_layer.memory_interface import MemoryInterface
@@ -68,13 +68,16 @@ class TestPreSpecified:
         timesteps = [2010, 2015, 2020]
         dm = PreSpecified(timesteps, register, plan)
 
-        actual = dm.get_decision(Mock(), 2010)
+        mock_handle = Mock()
+        type(mock_handle).current_timestep = PropertyMock(return_value=2010)
+        actual = dm.get_decision(mock_handle)
         expected = [
             {'name': 'small_pumping_station_oxford',
              'build_year': 2010}]
         assert actual == expected
 
-        actual = dm.get_decision(Mock(), 2015)
+        type(mock_handle).current_timestep = PropertyMock(return_value=2015)
+        actual = dm.get_decision(mock_handle)
         expected = [
             {'name': 'small_pumping_station_oxford',
              'build_year': 2010},
@@ -82,7 +85,8 @@ class TestPreSpecified:
              'build_year': 2015}]
         assert actual == expected
 
-        actual = dm.get_decision(Mock(), 2020)
+        type(mock_handle).current_timestep = PropertyMock(return_value=2020)
+        actual = dm.get_decision(mock_handle)
         expected = [
             {'name': 'small_pumping_station_oxford',
              'build_year': 2010},
@@ -96,7 +100,10 @@ class TestPreSpecified:
     def test_get_decision_two(self, get_strategies, get_register):
         register = get_register
         dm = PreSpecified([2010, 2015], register, get_strategies[0]['interventions'])
-        actual = dm.get_decision(Mock(), 2010)
+
+        mock_handle = Mock()
+        type(mock_handle).current_timestep = PropertyMock(return_value=2010)
+        actual = dm.get_decision(mock_handle)
         expected = [
             {'name': 'nuclear_large', 'build_year': 2012},
             {'name': 'carrington_retire', 'build_year': 2011}
@@ -109,7 +116,8 @@ class TestPreSpecified:
         # expected = [('carrington_retire', 2011)]
         # assert actual == expected
 
-        actual = dm.get_decision(Mock(), 2015)
+        type(mock_handle).current_timestep = PropertyMock(return_value=2015)
+        actual = dm.get_decision(mock_handle)
         expected = [
             {'name': 'nuclear_large', 'build_year': 2012},
             {'name': 'carrington_retire', 'build_year': 2011}

@@ -52,7 +52,7 @@ def get_model_run_definition(directory, modelrun):
     LOGGER.debug("Model list: %s", list(sos_model.models.keys()))
 
     model_run_config['strategies'] = handler.read_strategies(model_run_config['name'])
-    LOGGER.debug("Strategies: %s", [s['strategy'] for s in model_run_config['strategies']])
+    LOGGER.debug("Strategies: %s", [s['type'] for s in model_run_config['strategies']])
 
     return model_run_config
 

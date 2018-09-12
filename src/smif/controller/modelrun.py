@@ -194,7 +194,7 @@ class ModelRunner(object):
                         model=model_run.sos_model,
                         decision_iteration=iteration
                     )
-                    decision_manager.get_decision(data_handle, timestep, iteration)
+                    decision_manager.get_decision(data_handle)
 
                     model_run.sos_model.simulate(data_handle)
         return data_handle

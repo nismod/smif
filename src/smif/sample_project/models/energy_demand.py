@@ -21,7 +21,7 @@ class EDMWrapper(SectorModel):
 
         current_interventions = data.get_current_interventions()
 
-        print("Current interventions: {}".format(current_interventions))
+        print("Current interventions: {}".format(current_interventions.keys()))
 
         # Demonstrates how to get the value for a model parameter
         parameter_value = data.get_parameter('smart_meter_savings')
