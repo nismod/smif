@@ -2,6 +2,7 @@ from copy import copy
 from unittest.mock import Mock, patch
 
 import networkx as nx
+import pytest
 from pytest import fixture, raises
 from smif.controller.modelrun import (ModelRunBuilder, ModelRunError,
                                       ModelRunner)
@@ -330,3 +331,42 @@ class TestModelRunnerJobGraphs():
         actual = list(job_graph.successors('simulate_1_0_model_c'))
         expected = []
         assert actual == expected
+
+    @patch('smif.controller.modelrun.JobScheduler.add')
+    def test_jobgraph_interdependency(self, mock_add, mock_store, mock_model_run):
+        """
+        a[before]   b[before]
+        |           |
+        v           V
+        a[sim] ---> b[sim]
+               <---
+        """
+        model_a = Mock()
+        model_b = Mock()
+        model_a.name = 'model_a'
+        model_b.name = 'model_b'
+        model_a.parameters = {}
+        model_b.parameters = {}
+
+        dep_a_b = Mock()
+        dep_a_b.source_model.name = 'model_a'
+        dep_a_b.sink_model.name = 'model_b'
+        dep_b_a = Mock()
+        dep_b_a.source_model.name = 'model_b'
+        dep_b_a.sink_model.name = 'model_a'
+
+        model_a.deps = {
+            'model_a': dep_a_b
+        }
+        model_b.deps = {
+            'model_b': dep_b_a
+        }
+
+        mock_model_run.sos_model.models = {
+            model_a.name: model_a,
+            model_b.name: model_b,
+        }
+
+        runner = ModelRunner()
+        with pytest.raises(NotImplementedError):
+            runner.solve_model(mock_model_run, mock_store)
