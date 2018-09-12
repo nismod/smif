@@ -3,6 +3,7 @@
 
 import os
 import subprocess
+import sys
 from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
@@ -42,6 +43,8 @@ def test_fixture_single_run(tmp_sample_project):
     output = subprocess.run(["smif", "-v", "run", "-d", config_dir,
                              "energy_central"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
     assert "Running energy_central" in str(output.stderr)
     assert "Model run 'energy_central' complete" in str(output.stdout)
 
@@ -66,6 +69,8 @@ def test_fixture_single_run_csv(tmp_sample_project):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
     assert "Running energy_central" in str(output.stderr)
     assert "Model run 'energy_central' complete" in str(output.stdout)
 
@@ -77,6 +82,8 @@ def test_fixture_single_run_warm(tmp_sample_project):
     output = subprocess.run(["smif", "-v", "run", "-w", "-d", config_dir,
                              "energy_central"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
     assert "Running energy_central" in str(output.stderr)
     assert "Model run 'energy_central' complete" in str(output.stdout)
 
@@ -89,6 +96,8 @@ def test_fixture_batch_run(tmp_sample_project):
     output = subprocess.run(["smif", "-v", "run", "-b", "-d", config_dir,
                              os.path.join(config_dir, "batchfile")],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
     assert "Running energy_water_cp_cr" in str(output.stderr)
     assert "Model run 'energy_water_cp_cr' complete" in str(output.stdout)
     assert "Running energy_central" in str(output.stderr)

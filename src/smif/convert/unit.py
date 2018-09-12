@@ -1,71 +1,39 @@
 """Handles conversion between units used in the `SosModel`
-
-First implementation delegates to pint.
 """
-import logging
-
 from pint import DimensionalityError, UndefinedUnitError, UnitRegistry
-from smif.convert.register import Register
+from smif.convert.adaptor import Adaptor
 
 
-class UnitRegister(Register):
+class UnitAdaptor(Adaptor):
+    """Scalar conversion of units
+    """
+    def __init__(self, name):
+        self._register = UnitRegistry()
+        super().__init__(name)
 
-    def __init__(self):
-        self._register = UnitRegistry(on_redefinition='raise')
-        self.logger = logging.getLogger()
-        self.axis = None
+    def convert(self, data, from_spec, to_spec, coefficients):
+        try:
+            quantity = self._register.Quantity(data, from_spec.unit)
+        except UndefinedUnitError:
+            raise ValueError('Cannot convert from undefined unit {}'.format(from_spec.unit))
 
-    @property
-    def names(self):
-        return list(self._register.__dict__['_units'].keys())
+        try:
+            converted_quantity = quantity.to(to_spec.unit)
+        except UndefinedUnitError as ex:
+            raise ValueError('Cannot convert undefined unit {}'.format(to_spec.unit)) from ex
+        except DimensionalityError as ex:
+            msg = 'Cannot convert unit from {} to {}'
+            raise ValueError(msg.format(from_spec.unit, to_spec.unit)) from ex
 
-    def register(self, unit_file):
-        """Load unit definitions into the registry
-        """
-        self._register.load_definitions(unit_file)
-        self.logger.info("Finished registering user defined units")
+        return converted_quantity.magnitude
 
-    def get_entry(self, name):
+    def get_coefficients(self, data_handle, from_spec, to_spec):
+        # override with no-op - all the work is done in convert with scalar operations
         pass
 
-    def get_coefficients(self, source, destination):
-        return self.convert_old(1, source, destination)
-
-    def convert_old(self, data, from_unit, to_unit):
-        """Convert the data from one unit to another unit
-
-        Parameters
-        ----------
-        data: numpy.ndarray
-            An array of values with dimensions regions x intervals
-        from_unit: str
-            The name of the unit of the data
-        to_unit: str
-            The name of the required unit
-
-        Returns
-        -------
-        numpy.ndarray
-            An array of data with dimensions regions x intervals
-
-        Raises
-        ------
-        ValueError
-            If the units are not in the unit register or conversion is not possible
-        """
-        try:
-            Q_ = self._register.Quantity(data, from_unit)
-        except UndefinedUnitError:
-            raise ValueError('Cannot convert from undefined unit ' + from_unit)
-
-        try:
-            result = Q_.to(to_unit).magnitude
-        except UndefinedUnitError:
-            raise ValueError('Cannot convert to undefined unit ' + to_unit)
-        except DimensionalityError:
-            raise ValueError('Cannot convert from ' + from_unit + ' to ' + to_unit)
-
-        return result
+    def generate_coefficients(self, from_spec, to_spec):
+        # override with no-op - all the work is done in convert with scalar operations
+        pass
 
     def parse_unit(self, unit_string):
         """Parse a unit string (abbreviation or full) into a Unit object
