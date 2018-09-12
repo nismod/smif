@@ -370,3 +370,33 @@ class TestModelRunnerJobGraphs():
         runner = ModelRunner()
         with pytest.raises(NotImplementedError):
             runner.solve_model(mock_model_run, mock_store)
+
+    @patch('smif.controller.modelrun.JobScheduler.add')
+    def test_jobgraph_with_models_initialised(self, mock_add, mock_store, mock_model_run):
+        """
+        a[sim]
+        """
+        model_a = Mock()
+        model_a.name = 'model_a'
+        model_a.deps = {}
+        model_a.parameters = {}
+
+        mock_model_run.sos_model.models = {
+            model_a.name: model_a
+        }
+
+        mock_model_run.initialised = True
+
+        runner = ModelRunner()
+        runner.solve_model(mock_model_run, mock_store)
+
+        call_args = mock_add.call_args
+        job_graph = call_args[0][0]
+
+        actual = list(job_graph.predecessors('simulate_1_0_model_a'))
+        expected = []
+        assert actual == expected
+
+        actual = list(job_graph.successors('simulate_1_0_model_a'))
+        expected = []
+        assert actual == expected
