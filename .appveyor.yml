@@ -21,7 +21,6 @@ install:
         python-dateutil \
         ruamel.yaml \
         rtree \
-        scikit-optimize \
         shapely \
         libgdal \
         gdal \

@@ -12,5 +12,4 @@ python-dateutil>=2.6
 pywin32; sys_platform == 'win32'
 Rtree>=0.7
 ruamel.yaml==0.15.50
-scikit-optimize>=0.3
 shapely>=1.3

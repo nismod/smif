@@ -21,7 +21,6 @@ dependencies:
 - python-dateutil
 - ruamel.yaml
 - rtree
-- scikit-optimize
 - shapely
 - sphinx  # docs
 - pip:
