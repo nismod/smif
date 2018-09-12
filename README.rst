@@ -146,18 +146,6 @@ Finally install ``smif``::
     conda install smif
 
 
-GLPK
-----
-
-The optimisation routines currently use GLPK - the GNU Linear Programming Kit.
-To install the **glpk** solver:
-
-* on Linux or Mac OSX, you can likely use a package manager, e.g. ``apt install
-  python-glpk glpk-utils`` for Ubuntu or ``brew install glpk`` for OSX.
-* on Windows, `GLPK for Windows <http://winglpk.sourceforge.net/>`_ provide
-  executables. For 64bit Windows, download and unzip the distribution files then
-  add the ``w64`` folder to your ``PATH``.
-
 fiona, GDAL and GEOS
 --------------------
 
