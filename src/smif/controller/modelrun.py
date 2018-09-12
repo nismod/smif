@@ -20,24 +20,10 @@ ModeRun has attributes:
 from logging import getLogger
 
 import networkx as nx
+from smif.controller.scheduler import JobScheduler
 from smif.data_layer import DataHandle
 from smif.decision.decision import DecisionManager
 from smif.model import ModelOperation
-
-
-class JobScheduler(object):
-    """A schedule of ModelRun jobs. The object takes JobGraphs and schedules
-    and runs the containing ModelRuns taking their dependencies into account
-    """
-
-    def add(self, job_graph):
-        """Add a JobGraph to the JobScheduler queue
-
-        Arguments
-        ---------
-        job_graph: :class:`networkx.graph`
-        """
-        pass
 
 
 class ModelRun(object):
@@ -192,7 +178,8 @@ class ModelRunner(object):
             if not nx.is_directed_acyclic_graph(job_graph):
                 raise NotImplementedError
 
-            job_scheduler.add(job_graph)
+            job_id = job_scheduler.add(job_graph)
+            self.logger.debug("Running job %s", job_id)
 
     def build_job_graph(self, model_run, store, bundle, decision_manager):
         """ Build a job graph

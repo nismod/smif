@@ -168,7 +168,7 @@ class TestModelRun:
 class TestModelRunnerJobGraphs():
     """Cover all JobGraph corner cases
     """
-    @patch('smif.controller.modelrun.JobScheduler.add')
+    @patch('smif.controller.scheduler.JobScheduler.add')
     def test_jobgraph_single_timestep(self, mock_add, mock_store, mock_model_run):
         """
         a[before]
@@ -207,7 +207,7 @@ class TestModelRunnerJobGraphs():
         expected = []
         assert actual == expected
 
-    @patch('smif.controller.modelrun.JobScheduler.add')
+    @patch('smif.controller.scheduler.JobScheduler.add')
     def test_jobgraph_multiple_timesteps(self, mock_add, mock_store, mock_model_run):
         """
         a[before]
@@ -257,7 +257,7 @@ class TestModelRunnerJobGraphs():
         expected = []
         assert actual == expected
 
-    @patch('smif.controller.modelrun.JobScheduler.add')
+    @patch('smif.controller.scheduler.JobScheduler.add')
     def test_jobgraph_multiple_models(self, mock_add, mock_store, mock_model_run):
         """
         a[before]   b[before]   c[before]
@@ -332,7 +332,7 @@ class TestModelRunnerJobGraphs():
         expected = []
         assert actual == expected
 
-    @patch('smif.controller.modelrun.JobScheduler.add')
+    @patch('smif.controller.scheduler.JobScheduler.add')
     def test_jobgraph_interdependency(self, mock_add, mock_store, mock_model_run):
         """
         a[before]   b[before]
@@ -371,7 +371,7 @@ class TestModelRunnerJobGraphs():
         with pytest.raises(NotImplementedError):
             runner.solve_model(mock_model_run, mock_store)
 
-    @patch('smif.controller.modelrun.JobScheduler.add')
+    @patch('smif.controller.scheduler.JobScheduler.add')
     def test_jobgraph_with_models_initialised(self, mock_add, mock_store, mock_model_run):
         """
         a[sim]

@@ -1,3 +1,11 @@
+"""Schedulers are used to run models.
+
+The defaults provided allow model runs to be scheduled as subprocesses,
+or individual models to be called in series.
+
+Future implementations may interface with common schedulers to queue
+up models to run in parallel and/or distributed.
+"""
 import subprocess
 from collections import defaultdict
 from datetime import datetime
@@ -130,3 +138,18 @@ class ModelRunScheduler(object):
             'status': self._status[model_run_name],
             'output': self._output[model_run_name]
         }
+
+
+class JobScheduler(object):
+    """A schedule of ModelRun jobs. The object takes JobGraphs and schedules
+    and runs the containing ModelRuns taking their dependencies into account
+    """
+
+    def add(self, job_graph):
+        """Add a JobGraph to the JobScheduler queue
+
+        Arguments
+        ---------
+        job_graph: :class:`networkx.graph`
+        """
+        pass
