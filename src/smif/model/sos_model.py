@@ -9,6 +9,7 @@ and the dependencies between the models.
 import logging
 
 import networkx
+from smif.controller.modelrun import ModelRunner
 from smif.model.model import CompositeModel, Model
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
@@ -170,7 +171,7 @@ class SosModel(CompositeModel):
             Access model outputs
 
         """
-        graph = self.get_dependency_graph()
+        graph = ModelRunner.get_dependency_graph(self.models)
         run_order = SosModel.get_model_sets_in_run_order(
             graph,
             self.max_iterations,
@@ -184,21 +185,6 @@ class SosModel(CompositeModel):
             # model
             model.simulate(data_handle.derive_for(model))
         return data_handle
-
-    def get_dependency_graph(self):
-        """Build a networkx DiGraph from models (as nodes) and dependencies (as edges)
-        """
-        dependency_graph = networkx.DiGraph()
-        for model in self.models.values():
-            dependency_graph.add_node(model.name, model=model)
-
-        for model in self.models.values():
-            for dependency in model.deps.values():
-                dependency_graph.add_edge(
-                    dependency.source_model.name,
-                    dependency.sink_model.name
-                )
-        return dependency_graph
 
     @staticmethod
     def get_model_sets_in_run_order(graph, max_iterations, convergence_relative_tolerance,

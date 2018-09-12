@@ -4,6 +4,7 @@ import networkx
 import numpy as np
 import pytest
 from pytest import fixture, raises
+from smif.controller.modelrun import ModelRunner
 from smif.data_layer import DataHandle, MemoryInterface
 from smif.metadata import Spec
 from smif.model.scenario_model import ScenarioModel
@@ -212,7 +213,7 @@ class TestDependencyGraph:
     def test_simple_graph(self, sos_model, scenario_model, energy_model):
         """Build the dependency graph
         """
-        graph = sos_model.get_dependency_graph()
+        graph = ModelRunner.get_dependency_graph(sos_model.models)
         nodes = sorted(node[1]['model'].name for node in graph.nodes.data())
         models = sorted(list(sos_model.models.keys()))
         assert nodes == models
@@ -220,7 +221,7 @@ class TestDependencyGraph:
     def test_get_model_set_simple_order(self, sos_model, scenario_model, energy_model):
         """Single dependency edge order
         """
-        graph = sos_model.get_dependency_graph()
+        graph = ModelRunner.get_dependency_graph(sos_model.models)
         actual = SosModel.get_model_sets_in_run_order(graph, 1, 1, 1)
         expected = [scenario_model, energy_model]
         assert actual == expected

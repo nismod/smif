@@ -4,6 +4,7 @@ from copy import copy
 from unittest.mock import Mock
 
 from pytest import fixture, raises
+from smif.controller.modelrun import ModelRunner
 from smif.metadata import Spec
 from smif.model.dependency import Dependency
 from smif.model.scenario_model import ScenarioModel
@@ -479,7 +480,7 @@ class TestSosModelDependencies(object):
     def test_simple_dependency(self, sos_model):
         """Dependency graph construction
         """
-        graph = sos_model.get_dependency_graph()
+        graph = ModelRunner.get_dependency_graph(sos_model.models)
 
         scenario = sos_model.models['climate']
         model = sos_model.models['water_supply']

@@ -39,7 +39,8 @@ Use the Scheduler to run a system-of-systems model::
 from smif.controller.scheduler import Scheduler
 from smif.controller.execute import execute_model_run
 from smif.controller.setup import copy_project_folder
+from smif.controller.modelrun import ModelRunner
 
 # Define what should be imported as * ::
 #         from smif.controller import *
-__all__ = ['Scheduler', 'execute_model_run', 'copy_project_folder']
+__all__ = ['ModelRunner', 'Scheduler', 'execute_model_run', 'copy_project_folder']

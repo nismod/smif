@@ -17,15 +17,16 @@ def config_data():
 
     climate_scenario = Mock()
     climate_scenario.name = 'climate'
+    climate_scenario.deps = {}
     sos_model.scenario_models = {'climate': climate_scenario}
 
     energy_supply = Mock()
     energy_supply.name = 'energy_supply'
-    sos_model.models = [energy_supply]
+    energy_supply.deps = {}
+    sos_model.models = {'energy_supply': energy_supply}
 
     graph = nx.DiGraph()
     graph.add_node('energy_supply', model=climate_scenario)
-    sos_model.get_dependency_graph = Mock(return_value=graph)
 
     config = {
         'name': 'unique_model_run_name',
@@ -71,7 +72,6 @@ def mock_model_run():
     sos_model = Mock()
     sos_model.parameters = {}
     sos_model.models = []
-    sos_model.get_dependency_graph = Mock(return_value=nx.DiGraph())
 
     modelrun = Mock()
     modelrun.strategies = []
@@ -176,11 +176,11 @@ class TestModelRunnerJobGraphs():
         """
         model_a = Mock()
         model_a.name = 'model_a'
-        mock_model_run.sos_model.models = [model_a]
+        model_a.deps = {}
 
-        dep_graph = nx.DiGraph()
-        dep_graph.add_node(model_a.name, model=model_a)
-        mock_model_run.sos_model.get_dependency_graph = Mock(return_value=dep_graph)
+        mock_model_run.sos_model.models = {
+            model_a.name: model_a
+        }
 
         runner = ModelRunner()
         runner.solve_model(mock_model_run, mock_store)
@@ -215,11 +215,11 @@ class TestModelRunnerJobGraphs():
         """
         model_a = Mock()
         model_a.name = 'model_a'
-        mock_model_run.sos_model.models = [model_a]
+        model_a.deps = {}
 
-        dep_graph = nx.DiGraph()
-        dep_graph.add_node(model_a.name, model=model_a)
-        mock_model_run.sos_model.get_dependency_graph = Mock(return_value=dep_graph)
+        mock_model_run.sos_model.models = {
+            model_a.name: model_a
+        }
 
         mock_model_run.model_horizon = [1, 2]
 
@@ -268,16 +268,32 @@ class TestModelRunnerJobGraphs():
         model_a.name = 'model_a'
         model_b.name = 'model_b'
         model_c.name = 'model_c'
-        mock_model_run.sos_model.models = [model_a, model_b, model_c]
 
-        dep_graph = nx.DiGraph()
-        dep_graph.add_node(model_a.name, model=model_a)
-        dep_graph.add_node(model_b.name, model=model_b)
-        dep_graph.add_node(model_c.name, model=model_c)
-        dep_graph.add_edge(model_a.name, model_b.name)
-        dep_graph.add_edge(model_b.name, model_c.name)
-        dep_graph.add_edge(model_a.name, model_c.name)
-        mock_model_run.sos_model.get_dependency_graph = Mock(return_value=dep_graph)
+        dep_a_b = Mock()
+        dep_a_b.source_model.name = 'model_a'
+        dep_a_b.sink_model.name = 'model_b'
+        dep_b_c = Mock()
+        dep_b_c.source_model.name = 'model_b'
+        dep_b_c.sink_model.name = 'model_c'
+        dep_a_c = Mock()
+        dep_a_c.source_model.name = 'model_a'
+        dep_a_c.sink_model.name = 'model_c'
+
+        model_a.deps = {
+            'model_a': dep_a_b
+        }
+        model_b.deps = {
+            'model_b': dep_b_c
+        }
+        model_c.deps = {
+            'model_c': dep_a_c
+        }
+
+        mock_model_run.sos_model.models = {
+            model_a.name: model_a,
+            model_b.name: model_b,
+            model_c.name: model_c
+        }
 
         runner = ModelRunner()
         runner.solve_model(mock_model_run, mock_store)

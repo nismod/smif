@@ -268,7 +268,7 @@ class ModelRunner(object):
             and operation
         """
         # Build job based on dependency graph
-        dep_graph = model_run.sos_model.get_dependency_graph()
+        dep_graph = self.get_dependency_graph(model_run.sos_model.models)
 
         if operation is ModelOperation.BEFORE_MODEL_RUN:
             job_id = operation.value
@@ -298,6 +298,33 @@ class ModelRunner(object):
             node[1]['operation'] = operation
 
         return job
+
+    @staticmethod
+    def get_dependency_graph(models):
+        """Build a networkx DiGraph from models (as nodes) and dependencies (as edges)
+
+        Arguments
+        ---------
+        models: :class:`dict` with key :class:`string` model name and value
+                :class:`smif.model.Model`
+
+        Returns
+        -------
+        :class:`networkx.graph`
+            Graph with model names as nodes and dependencies as edges, populated model
+            attribute with the :class:`smif.model.Model`
+        """
+        dependency_graph = nx.DiGraph()
+        for model in models.values():
+            dependency_graph.add_node(model.name, model=model)
+
+        for model in models.values():
+            for dependency in model.deps.values():
+                dependency_graph.add_edge(
+                    dependency.source_model.name,
+                    dependency.sink_model.name
+                )
+        return dependency_graph
 
 
 class ModelRunBuilder(object):
