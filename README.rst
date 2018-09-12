@@ -99,7 +99,7 @@ National Infrastructure System Model (NISMOD2).
   - **smif** *provides* a mechanism for passing information from the system-of-systems
     level (at planning timesteps scale) to the contained models
 
-- **smif** probably is not appropriate for 
+- **smif** is probably not appropriate for 
 
   - discrete event system simulation models (e.g. queuing systems)
   - dynamical system models (e.g. predator/prey)
