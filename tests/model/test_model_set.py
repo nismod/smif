@@ -5,7 +5,8 @@ import numpy as np
 from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
 from smif.metadata import Spec
-from smif.model.sos_model import ModelSet, SectorModel
+from smif.model.model_set import ModelSet
+from smif.model.sector_model import SectorModel
 
 
 class EmptySectorModel(SectorModel):
