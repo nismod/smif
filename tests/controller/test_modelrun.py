@@ -23,6 +23,7 @@ def config_data():
     energy_supply = Mock()
     energy_supply.name = 'energy_supply'
     energy_supply.deps = {}
+    energy_supply.parameters = {}
     sos_model.models = {'energy_supply': energy_supply}
 
     graph = nx.DiGraph()
@@ -177,6 +178,7 @@ class TestModelRunnerJobGraphs():
         model_a = Mock()
         model_a.name = 'model_a'
         model_a.deps = {}
+        model_a.parameters = {}
 
         mock_model_run.sos_model.models = {
             model_a.name: model_a
@@ -216,6 +218,7 @@ class TestModelRunnerJobGraphs():
         model_a = Mock()
         model_a.name = 'model_a'
         model_a.deps = {}
+        model_a.parameters = {}
 
         mock_model_run.sos_model.models = {
             model_a.name: model_a
@@ -268,6 +271,9 @@ class TestModelRunnerJobGraphs():
         model_a.name = 'model_a'
         model_b.name = 'model_b'
         model_c.name = 'model_c'
+        model_a.parameters = {}
+        model_b.parameters = {}
+        model_c.parameters = {}
 
         dep_a_b = Mock()
         dep_a_b.source_model.name = 'model_a'

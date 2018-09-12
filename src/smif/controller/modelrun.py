@@ -272,8 +272,10 @@ class ModelRunner(object):
 
         if operation is ModelOperation.BEFORE_MODEL_RUN:
             job_id = operation.value
-            mapping = {'%s_%s' % (job_id, dep_node): {} for dep_node in dep_graph.nodes}
-            job = nx.DiGraph(mapping)
+            job = nx.DiGraph()
+            for node in dep_graph.nodes(data=True):
+                job.add_node('%s_%s' % (job_id, node[0]), model=node[1]['model'])
+
         elif operation is ModelOperation.SIMULATE:
             job_id = '%s_%s_%s' % (operation.value, timestep, iteration)
             mapping = {dep_node: '%s_%s' % (job_id, dep_node) for dep_node in dep_graph.nodes}
@@ -288,7 +290,7 @@ class ModelRunner(object):
                 modelrun_name=model_run.name,
                 current_timestep=timestep,
                 timesteps=model_run.model_horizon,
-                model=model_run.sos_model,
+                model=node[1]['model'],
                 decision_iteration=iteration
             )
             if operation is ModelOperation.SIMULATE:
