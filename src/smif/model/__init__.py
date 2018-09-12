@@ -50,10 +50,10 @@ A more comprehensive example with one scenario and one scenario model:
 
 # import classes for access like ::
 #         from smif.model import Model
-from smif.model.model import Model
+from smif.model.model import Model, ModelOperation
 from smif.model.sector_model import SectorModel
 
 
 # Define what should be imported as * ::
 #         from smif.model import *
-__all__ = ['Model', 'SectorModel']
+__all__ = ['Model', 'ModelOperation', 'SectorModel']

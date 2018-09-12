@@ -19,8 +19,25 @@ ModeRun has attributes:
 """
 from logging import getLogger
 
+import networkx as nx
 from smif.data_layer import DataHandle
 from smif.decision.decision import DecisionManager
+from smif.model import ModelOperation
+
+
+class JobScheduler(object):
+    """A schedule of ModelRun jobs. The object takes JobGraphs and schedules
+    and runs the containing ModelRuns taking their dependencies into account
+    """
+
+    def add(self, job_graph):
+        """Add a JobGraph to the JobScheduler queue
+
+        Arguments
+        ---------
+        job_graph: :class:`networkx.graph`
+        """
+        pass
 
 
 class ModelRun(object):
@@ -142,26 +159,18 @@ class ModelRunner(object):
     def solve_model(self, model_run, store):
         """Solve a ModelRun
 
-        This method first calls :func:`smif.model.SosModel.before_model_run`
-        with parameter data, then steps through the model horizon, calling
-        :func:`smif.model.SosModel.simulate` with parameter data at each
-        timestep.
+        This method steps through the model horizon, building
+        a job graph and submitting this to the scheduler
+        at each decision loop.
 
         Arguments
         ---------
         model_run : :class:`smif.controller.modelrun.ModelRun`
         store : :class:`smif.data_layer.DataInterface`
         """
-        # Initialise each of the sector models
-        self.logger.info("Initialising each of the sector models")
-        data_handle = DataHandle(
-            store=store,
-            modelrun_name=model_run.name,
-            current_timestep=None,
-            timesteps=model_run.model_horizon,
-            model=model_run.sos_model
-        )
-        model_run.sos_model.before_model_run(data_handle)
+        # Solve the model run: decision loop generates a series of bundles of independent
+        # decision iterations, each with a number of timesteps to run
+        self.logger.debug("Solving the models over all timesteps: %s", model_run.model_horizon)
 
         # Initialise the decision manager (and hence decision modules)
         self.logger.debug("Initialising the decision manager")
@@ -170,34 +179,154 @@ class ModelRunner(object):
                                            model_run.name,
                                            model_run.sos_model.name)
 
-        # Solve the model run: decision loop generates a series of bundles of independent
-        # decision iterations, each with a number of timesteps to run
-        self.logger.debug("Solving the models over all timesteps: %s", model_run.model_horizon)
+        # Initialise the job scheduler
+        self.logger.debug("Initialising the job scheduler")
+        job_scheduler = JobScheduler()
+
         for bundle in decision_manager.decision_loop():
             # each iteration is independent at this point, so the following loop is a
             # candidate for running in parallel
-            for iteration, timesteps in bundle.items():
-                self.logger.info('Running decision iteration %s', iteration)
+            job_graph = self.build_job_graph(model_run, store, bundle, decision_manager)
 
-                # Each timestep *might* be able to be run in parallel - until we have an
-                # explicit way of declaring inter-timestep dependencies
-                for timestep in timesteps:
-                    self.logger.info('Running timestep %s', timestep)
+            # Protect user from running cyclic graphs
+            if not nx.is_directed_acyclic_graph(job_graph):
+                raise NotImplementedError
 
-                    # Write decisions for current timestep to state
+            job_scheduler.add(job_graph)
 
-                    data_handle = DataHandle(
-                        store=store,
-                        modelrun_name=model_run.name,
-                        current_timestep=timestep,
-                        timesteps=model_run.model_horizon,
-                        model=model_run.sos_model,
-                        decision_iteration=iteration
-                    )
-                    decision_manager.get_decision(data_handle)
+    def build_job_graph(self, model_run, store, bundle, decision_manager):
+        """ Build a job graph
 
-                    model_run.sos_model.simulate(data_handle)
-        return data_handle
+        Build and return the job graph for an entire bundle, including
+        before_model_run jobs when the models were not yet initialised.
+
+        Arguments
+        ---------
+        model_run: :class:`smif.controller.modelrun.ModelRun`
+        store: :class:`smif.data_layer.DataInterface`
+        bundle: :class:`dict`
+        decision_manager: :class:`smif.decision.decision.DecisionManager`
+
+        Returns
+        -------
+        :class:`networkx.Graph`
+            A populated job graph with edges showing dependencies
+            between different operations and timesteps
+        """
+        # Initialise each of the sector models
+        if not model_run.initialised:
+            self.logger.info("Initialising each of the sector models")
+
+            before_job = self.build_job(model_run, store, ModelOperation.BEFORE_MODEL_RUN)
+
+        # Solve the model run: decision loop generates a series of bundles of independent
+        # decision iterations, each with a number of timesteps to run
+        simulate_jobs = nx.DiGraph()
+        for iteration, timesteps in bundle.items():
+            self.logger.info('Running decision iteration %s', iteration)
+
+            for timestep in timesteps:
+                self.logger.info('Running timestep %s', timestep)
+
+                timestep_job = self.build_job(model_run, store, ModelOperation.SIMULATE,
+                                              iteration, timestep, decision_manager)
+                simulate_jobs = nx.compose(simulate_jobs, timestep_job)
+
+        # Connect the bits
+        if not model_run.initialised:
+            for node in simulate_jobs.nodes.data():
+                before_job.add_edge('before_model_run_' + node[1]['model'].name, node[0])
+                job_graph = nx.compose(before_job, simulate_jobs)
+            model_run.initialised = True
+        else:
+            job_graph = simulate_jobs
+
+        return job_graph
+
+    def build_job(self, model_run, store, operation, iteration=None,
+                  timestep=None, decision_manager=None):
+        """Build a job
+
+        Build and return the graph for a single job and populate the node
+        attributes with a :class:`smif.data_layer.DataHandle` data_handle
+        and :class:`smif.model.ModelOperation` operation.
+
+        Arguments
+        ---------
+        model_run: :class:`smif.controller.modelrun.ModelRun`
+        store: :class:`smif.data_layer.DataInterface`
+        operation: :enum:`ModelOperation`
+        iteration: :class:`int`
+        timestep: :class:`int`
+        decision_manager: :class:`smif.decision.decision.DecisionManager`
+
+        Returns
+        -------
+        :class:`networkx.Graph`
+            A populated job for a single timestep, iteration with edges
+            showing dependencies and attributes for model, data_handle
+            and operation
+        """
+        # Build job based on dependency graph
+        dep_graph = self.get_dependency_graph(model_run.sos_model.models)
+
+        if operation is ModelOperation.BEFORE_MODEL_RUN:
+            job_id = operation.value
+            job = nx.DiGraph()
+            for node in dep_graph.nodes(data=True):
+                job.add_node('%s_%s' % (job_id, node[0]), model=node[1]['model'])
+
+        elif operation is ModelOperation.SIMULATE:
+            job_id = '%s_%s_%s' % (operation.value, timestep, iteration)
+            mapping = {dep_node: '%s_%s' % (job_id, dep_node) for dep_node in dep_graph.nodes}
+            job = nx.relabel_nodes(dep_graph, mapping)
+        else:
+            raise ValueError
+
+        # Populate node attributes with configured data_handle and operation
+        for node in job.nodes.data():
+            data_handle = DataHandle(
+                store=store,
+                modelrun_name=model_run.name,
+                current_timestep=timestep,
+                timesteps=model_run.model_horizon,
+                model=node[1]['model'],
+                decision_iteration=iteration
+            )
+            if operation is ModelOperation.SIMULATE:
+                decision_manager.get_decision(data_handle)
+
+            node[1]['data_handle'] = data_handle
+            node[1]['operation'] = operation
+
+        return job
+
+    @staticmethod
+    def get_dependency_graph(models):
+        """Build a networkx DiGraph from models (as nodes) and dependencies (as edges)
+
+        Arguments
+        ---------
+        models: :class:`dict` with key :class:`string` model name and value
+                :class:`smif.model.Model`
+
+        Returns
+        -------
+        :class:`networkx.graph`
+            Graph with model names as nodes and dependencies as edges, populated model
+            attribute with the :class:`smif.model.Model`
+        """
+        dependency_graph = nx.DiGraph()
+        for model in models.values():
+            dependency_graph.add_node(model.name, model=model)
+
+        for model in models.values():
+            for dependency in model.deps.values():
+                dependency_graph.add_edge(
+                    dependency.source_model.name,
+                    dependency.sink_model.name
+                )
+        return dependency_graph
 
 
 class ModelRunBuilder(object):
@@ -218,6 +347,7 @@ class ModelRunBuilder(object):
         self.model_run.name = model_run_config['name']
         self.model_run.description = model_run_config['description']
         self.model_run.timestamp = model_run_config['stamp']
+        self.model_run.initialised = False
         self._add_timesteps(model_run_config['timesteps'])
         self._add_sos_model(model_run_config['sos_model'])
         self._add_scenarios(model_run_config['scenarios'])

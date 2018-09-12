@@ -9,6 +9,7 @@ and the dependencies between the models.
 import logging
 
 import networkx
+from smif.controller.modelrun import ModelRunner
 from smif.model.model import CompositeModel, Model
 from smif.model.model_set import ModelSet
 from smif.model.scenario_model import ScenarioModel
@@ -170,7 +171,7 @@ class SosModel(CompositeModel):
             Access model outputs
 
         """
-        graph = SosModel.make_dependency_graph(self.models)
+        graph = ModelRunner.get_dependency_graph(self.models)
         run_order = SosModel.get_model_sets_in_run_order(
             graph,
             self.max_iterations,
@@ -184,22 +185,6 @@ class SosModel(CompositeModel):
             # model
             model.simulate(data_handle.derive_for(model))
         return data_handle
-
-    @staticmethod
-    def make_dependency_graph(models):
-        """Build a networkx DiGraph from models (as nodes) and dependencies (as edges)
-        """
-        dependency_graph = networkx.DiGraph()
-        for model in models.values():
-            dependency_graph.add_node(model, name=model.name)
-
-        for model in models.values():
-            for dependency in model.deps.values():
-                dependency_graph.add_edge(
-                    dependency.source_model,
-                    dependency.sink_model
-                )
-        return dependency_graph
 
     @staticmethod
     def get_model_sets_in_run_order(graph, max_iterations, convergence_relative_tolerance,
@@ -220,31 +205,10 @@ class SosModel(CompositeModel):
             run_order = networkx.topological_sort(graph)
 
             # list of Models (typically ScenarioModel and SectorModel)
-            ordered_sets = list(run_order)
+            ordered_sets = list([graph.nodes[run]['model'] for run in run_order])
 
         else:
-            # contract the strongly connected components (subgraphs which
-            # contain cycles) into single nodes, producing the 'condensation'
-            # of the graph, where each node maps to one or more sector models
-            condensation = networkx.condensation(graph)
-
-            # topological sort of the condensation gives an ordering of the
-            # contracted nodes, whose 'members' attribute refers back to the
-            # original dependency graph
-            ordered_sets = []
-            for node_id in networkx.topological_sort(condensation):
-                models = condensation.node[node_id]['members']
-                if len(models) == 1:
-                    ordered_sets.append(models.pop())
-                else:
-                    ordered_sets.append(
-                        ModelSet(
-                            {model.name: model for model in models},
-                            max_iterations=max_iterations,
-                            relative_tolerance=convergence_relative_tolerance,
-                            absolute_tolerance=convergence_absolute_tolerance
-                        )
-                    )
+            raise NotImplementedError
 
         return ordered_sets
 
