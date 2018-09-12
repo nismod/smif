@@ -294,7 +294,7 @@ class ModelRunner(object):
                 decision_iteration=iteration
             )
             if operation is ModelOperation.SIMULATE:
-                decision_manager.get_decision(data_handle, timestep, iteration)
+                decision_manager.get_decision(data_handle)
 
             node[1]['data_handle'] = data_handle
             node[1]['operation'] = operation
