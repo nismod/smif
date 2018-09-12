@@ -274,11 +274,12 @@ class ModelRunner(object):
             job_id = operation.value
             mapping = {'%s_%s' % (job_id, dep_node): {} for dep_node in dep_graph.nodes}
             job = nx.DiGraph(mapping)
-
         elif operation is ModelOperation.SIMULATE:
             job_id = '%s_%s_%s' % (operation.value, timestep, iteration)
             mapping = {dep_node: '%s_%s' % (job_id, dep_node) for dep_node in dep_graph.nodes}
             job = nx.relabel_nodes(dep_graph, mapping)
+        else:
+            raise ValueError
 
         # Populate node attributes with configured data_handle and operation
         for node in job.nodes.data():
