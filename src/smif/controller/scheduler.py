@@ -7,6 +7,7 @@ Future implementations may interface with common schedulers to queue
 up models to run in parallel and/or distributed.
 """
 import itertools
+import logging
 import subprocess
 from collections import defaultdict
 from datetime import datetime
@@ -158,6 +159,7 @@ class JobScheduler(object):
     def __init__(self):
         self._status = defaultdict(lambda: 'unstarted')
         self._id_counter = itertools.count()
+        self.logger = logging.getLogger(__name__)
 
     def add(self, job_graph):
         """Add a JobGraph to the JobScheduler and run directly
@@ -218,8 +220,8 @@ class JobScheduler(object):
         self._status[job_graph_id] = 'running'
 
         try:
-            for job in self._get_run_order(job_graph):
-                print(job)
+            for job_node_id, job in self._get_run_order(job_graph):
+                self.logger.info("Job %s", job_node_id)
                 model = job['model']
                 data_handle = job['data_handle']
                 operation = job['operation']
@@ -259,7 +261,7 @@ class JobScheduler(object):
             run_order = networkx.topological_sort(graph)
 
             # list of Models (typically ScenarioModel and SectorModel)
-            ordered_jobs = [graph.nodes[run] for run in run_order]
+            ordered_jobs = [(run, graph.nodes[run]) for run in run_order]
         except networkx.NetworkXUnfeasible:
             raise NotImplementedError("Job graphs must not contain cycles")
 
