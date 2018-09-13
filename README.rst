@@ -105,12 +105,15 @@ tool for you.
 
   - **smif** *provides* a mechanism for passing information from the system-of-systems
     level (at planning timesteps scale) to the contained models
+  - **smif** *is* appropriate for coupling large complex models that exchange 
+    resources and information at relatively course timesteps
 
-- **smif** is probably not appropriate for 
+- **smif** is not appropriate for 
 
   - discrete event system simulation models (e.g. queuing systems)
   - dynamical system models (e.g. predator/prey)
   - equilibrium models without explicit timesteps (e.g. Land-Use Transport Interaction)
+  - for simulating 100s of small actor-scale entities within a system-level environment
 
 Setup and Configuration
 =======================
