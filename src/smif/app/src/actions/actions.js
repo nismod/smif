@@ -33,120 +33,120 @@ export function fetchSmifDetails(){
     }
 }
 
-export const REQUEST_SOS_MODEL_RUNS = 'REQUEST_SOS_MODEL_RUNS'
-function requestSosModelRuns(){
+export const REQUEST_MODEL_RUNS = 'REQUEST_MODEL_RUNS'
+function requestModelRuns(){
     return {
-        type: REQUEST_SOS_MODEL_RUNS
+        type: REQUEST_MODEL_RUNS
     }
 }
 
-export const RECEIVE_SOS_MODEL_RUNS = 'RECEIVE_SOS_MODEL_RUNS'
-function receiveSosModelRuns(json) {
+export const RECEIVE_MODEL_RUNS = 'RECEIVE_MODEL_RUNS'
+function receiveModelRuns(json) {
     return {
-        type: RECEIVE_SOS_MODEL_RUNS,
-        sos_model_runs: json,
+        type: RECEIVE_MODEL_RUNS,
+        model_runs: json,
         receivedAt: Date.now()
     }
 }
 
-export function fetchSosModelRuns(filter = undefined){
+export function fetchModelRuns(filter = undefined){
     return function (dispatch) {
 
         // inform the app that the API request is starting
-        dispatch(requestSosModelRuns())
+        dispatch(requestModelRuns())
 
         // make API request, returning a promise
         if (filter == undefined) {
-            return fetch('/api/v1/sos_model_runs/')
+            return fetch('/api/v1/model_runs/')
                 .then(
                     response => response.json()
                 )
                 .then(
-                    json => dispatch(receiveSosModelRuns(json))
+                    json => dispatch(receiveModelRuns(json))
                 )
         } else {
-            return fetch('/api/v1/sos_model_runs/?' + filter)
+            return fetch('/api/v1/model_runs/?' + filter)
                 .then(
                     response => response.json()
                 )
                 .then(
-                    json => dispatch(receiveSosModelRuns(json))
+                    json => dispatch(receiveModelRuns(json))
                 )
         }
     }
 }
 
-export const REQUEST_SOS_MODEL_RUN = 'REQUEST_SOS_MODEL_RUN'
-function requestSosModelRun(){
+export const REQUEST_MODEL_RUN = 'REQUEST_MODEL_RUN'
+function requestModelRun(){
     return {
-        type: REQUEST_SOS_MODEL_RUN
+        type: REQUEST_MODEL_RUN
     }
 }
 
-export const RECEIVE_SOS_MODEL_RUN = 'RECEIVE_SOS_MODEL_RUN'
-function receiveSosModelRun(json) {
+export const RECEIVE_MODEL_RUN = 'RECEIVE_MODEL_RUN'
+function receiveModelRun(json) {
     return {
-        type: RECEIVE_SOS_MODEL_RUN,
-        sos_model_run: json,
+        type: RECEIVE_MODEL_RUN,
+        model_run: json,
         receivedAt: Date.now()
     }
 }
 
-export function fetchSosModelRun(modelrunid){
+export function fetchModelRun(modelrunid){
     return function (dispatch) {
 
         // inform the app that the API request is starting
-        dispatch(requestSosModelRun())
+        dispatch(requestModelRun())
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + modelrunid)
+        return fetch('/api/v1/model_runs/' + modelrunid)
             .then(
                 response => response.json()
             )
             .then(
-                json => dispatch(receiveSosModelRun(json))
+                json => dispatch(receiveModelRun(json))
             )
     }
 }
 
-export const REQUEST_SOS_MODEL_RUN_STATUS = 'REQUEST_SOS_MODEL_RUN_STATUS'
-function requestSosModelRunStatus(){
+export const REQUEST_MODEL_RUN_STATUS = 'REQUEST_MODEL_RUN_STATUS'
+function requestModelRunStatus(){
     return {
-        type: REQUEST_SOS_MODEL_RUN_STATUS
+        type: REQUEST_MODEL_RUN_STATUS
     }
 }
 
-export const RECEIVE_SOS_MODEL_RUN_STATUS = 'RECEIVE_SOS_MODEL_RUN_STATUS'
-function receiveSosModelRunStatus(json) {
+export const RECEIVE_MODEL_RUN_STATUS = 'RECEIVE_MODEL_RUN_STATUS'
+function receiveModelRunStatus(json) {
     return {
-        type: RECEIVE_SOS_MODEL_RUN_STATUS,
-        sos_model_run_status: json,
+        type: RECEIVE_MODEL_RUN_STATUS,
+        model_run_status: json,
         receivedAt: Date.now()
     }
 }
 
-export function fetchSosModelRunStatus(modelrunid){
+export function fetchModelRunStatus(modelrunid){
     return function (dispatch) {
 
         // inform the app that the API request is starting
-        dispatch(requestSosModelRunStatus())
+        dispatch(requestModelRunStatus())
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + modelrunid + '/status')
+        return fetch('/api/v1/model_runs/' + modelrunid + '/status')
             .then(
                 response => response.json()
             )
             .then(
-                json => dispatch(receiveSosModelRunStatus(json))
+                json => dispatch(receiveModelRunStatus(json))
             )
     }
 }
 
-export function saveSosModelRun(modelrun){
+export function saveModelRun(modelrun){
     return function () {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + modelrun.name, {
+        return fetch('/api/v1/model_runs/' + modelrun.name, {
             method: 'put',
             body: JSON.stringify(modelrun),
 
@@ -160,13 +160,13 @@ export function saveSosModelRun(modelrun){
     }
 }
 
-export function createSosModelRun(sosModelRun){
+export function createModelRun(ModelRun){
     return function (dispatch) {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/', {
+        return fetch('/api/v1/model_runs/', {
             method: 'post',
-            body: JSON.stringify(sosModelRun),
+            body: JSON.stringify(ModelRun),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -175,17 +175,17 @@ export function createSosModelRun(sosModelRun){
             .then(
                 function() {
                     response => response.json()
-                    dispatch(fetchSosModelRuns())
+                    dispatch(fetchModelRuns())
                 }
             )
     }
 }
 
-export function deleteSosModelRun(sosModelRunName){
+export function deleteModelRun(ModelRunName){
     return function (dispatch) {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + sosModelRunName, {
+        return fetch('/api/v1/model_runs/' + ModelRunName, {
             method: 'delete',
 
             headers: {
@@ -195,17 +195,17 @@ export function deleteSosModelRun(sosModelRunName){
             .then(
                 function() {
                     response => response.json()
-                    dispatch(fetchSosModelRuns())
+                    dispatch(fetchModelRuns())
                 }
             )
     }
 }
 
-export function startSosModelRun(sosModelRunName, args){
+export function startModelRun(ModelRunName, args){
     return function () {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + sosModelRunName + '/start', {
+        return fetch('/api/v1/model_runs/' + ModelRunName + '/start', {
             method: 'post',
             body: JSON.stringify({
                 args: args
@@ -221,11 +221,11 @@ export function startSosModelRun(sosModelRunName, args){
     }
 }
 
-export function killSosModelRun(sosModelRunName){
+export function killModelRun(ModelRunName){
     return function () {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + sosModelRunName + '/kill', {
+        return fetch('/api/v1/model_runs/' + ModelRunName + '/kill', {
             method: 'post',
 
             headers: {

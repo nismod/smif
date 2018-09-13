@@ -121,8 +121,8 @@ class SosModelAPI(MethodView):
     """
     def get(self, sos_model_name):
         """Get sos_model
-        all: GET /api/v1/sos_model/
-        one: GET /api/vi/sos_model/name
+        all: GET /api/v1/sos_models/
+        one: GET /api/vi/sos_models/name
         """
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
@@ -137,7 +137,7 @@ class SosModelAPI(MethodView):
 
     def post(self):
         """Create a sos_model:
-        POST /api/v1/sos_model
+        POST /api/v1/sos_models
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
@@ -149,7 +149,7 @@ class SosModelAPI(MethodView):
 
     def put(self, sos_model_name):
         """Update a sos_model:
-        PUT /api/v1/sos_model
+        PUT /api/v1/sos_models
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
@@ -159,7 +159,7 @@ class SosModelAPI(MethodView):
 
     def delete(self, sos_model_name):
         """Delete a sos_model:
-        DELETE /api/v1/sos_model
+        DELETE /api/v1/sos_models
         """
         data_interface = current_app.config.data_interface
         data_interface.delete_sos_model(sos_model_name)
@@ -220,58 +220,6 @@ class SectorModelAPI(MethodView):
         return response
 
 
-class ScenarioSetAPI(MethodView):
-    """Implement CRUD operations for scenario_sets configuration data
-    """
-    def get(self, scenario_set_name):
-        """Get scenario_sets
-        all: GET /api/v1/scenario_sets/
-        one: GET /api/vi/scenario_sets/name
-        """
-        data_interface = current_app.config.data_interface
-        if scenario_set_name is None:
-            data = data_interface.read_scenario_sets()
-            response = jsonify(data)
-        else:
-            data = data_interface.read_scenario_set(scenario_set_name)
-            response = jsonify(data)
-
-        return response
-
-    def post(self):
-        """Create a scenario_set:
-        POST /api/v1/scenario_sets
-        """
-        data_interface = current_app.config.data_interface
-        data = request.get_json() or request.form
-        data = check_timestamp(data)
-
-        data_interface.write_scenario_set(data)
-        response = jsonify({"message": "success"})
-        response.status_code = 201
-        return response
-
-    def put(self, scenario_set_name):
-        """Update a scenario_set:
-        PUT /api/v1/scenario_sets
-        """
-        data_interface = current_app.config.data_interface
-        data = request.get_json() or request.form
-        data = check_timestamp(data)
-        data_interface.update_scenario_set(scenario_set_name, data)
-        response = jsonify({})
-        return response
-
-    def delete(self, scenario_set_name):
-        """Delete a scenario_set:
-        DELETE /api/v1/scenario_sets
-        """
-        data_interface = current_app.config.data_interface
-        data_interface.delete_scenario_set(scenario_set_name)
-        response = jsonify({})
-        return response
-
-
 class ScenarioAPI(MethodView):
     """Implement CRUD operations for scenarios configuration data
     """
@@ -321,59 +269,6 @@ class ScenarioAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data_interface.delete_scenario(scenario_name)
-        response = jsonify({})
-        return response
-
-
-class NarrativeSetAPI(MethodView):
-    """Implement CRUD operations for narrative_sets configuration data
-    """
-    def get(self, narrative_set_name):
-        """Get narrative_sets
-        all: GET /api/v1/narrative_sets/
-        one: GET /api/vi/narrative_sets/name
-        """
-        # return str(current_app.config)
-        data_interface = current_app.config.data_interface
-        if narrative_set_name is None:
-            data = data_interface.read_narrative_sets()
-            response = jsonify(data)
-        else:
-            data = data_interface.read_narrative_set(narrative_set_name)
-            response = jsonify(data)
-
-        return response
-
-    def post(self):
-        """Create a narrative_set:
-        POST /api/v1/narrative_sets
-        """
-        data_interface = current_app.config.data_interface
-        data = request.get_json() or request.form
-        data = check_timestamp(data)
-
-        data_interface.write_narrative_set(data)
-        response = jsonify({"message": "success"})
-        response.status_code = 201
-        return response
-
-    def put(self, narrative_set_name):
-        """Update a narrative_set:
-        PUT /api/v1/narrative_sets
-        """
-        data_interface = current_app.config.data_interface
-        data = request.get_json() or request.form
-        data = check_timestamp(data)
-        data_interface.update_narrative_set(narrative_set_name, data)
-        response = jsonify({})
-        return response
-
-    def delete(self, narrative_set_name):
-        """Delete a narrative_set:
-        DELETE /api/v1/narrative_sets
-        """
-        data_interface = current_app.config.data_interface
-        data_interface.delete_narrative_set(narrative_set_name)
         response = jsonify({})
         return response
 
