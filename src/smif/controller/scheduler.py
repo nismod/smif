@@ -224,9 +224,15 @@ class JobScheduler(object):
                 data_handle = job['data_handle']
                 operation = job['operation']
                 if operation is ModelOperation.BEFORE_MODEL_RUN:
-                    model.before_model_run(data_handle)
+                    # before_model_run may not be implemented by all jobs
+                    try:
+                        model.before_model_run(data_handle)
+                    except AttributeError as ex:
+                        self.logger.warning(ex)
+
                 elif operation is ModelOperation.SIMULATE:
                     model.simulate(data_handle)
+
                 else:
                     raise ValueError("Unrecognised operation: {}".format(operation))
         except Exception as ex:

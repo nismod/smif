@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import networkx
 from pytest import fixture, raises
 from smif.controller.scheduler import JobScheduler, ModelRunScheduler
-from smif.model import ModelOperation
+from smif.model import ModelOperation, ScenarioModel, SectorModel
 
 
 class TestModelRunScheduler():
@@ -132,13 +132,13 @@ class TestJobScheduler():
         G = networkx.DiGraph()
         G.add_node(
             'a',
-            model=Mock(),
+            model=Mock(spec=ScenarioModel),
             operation=ModelOperation.BEFORE_MODEL_RUN,
             data_handle=Mock()
         )
         G.add_node(
             'b',
-            model=Mock(),
+            model=Mock(spec=SectorModel),
             operation=ModelOperation.SIMULATE,
             data_handle=Mock()
         )
