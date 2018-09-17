@@ -493,7 +493,9 @@ class DatafileInterface(DataInterface):
             self._set_item_coords(item)
 
     def _set_item_coords(self, item):
-        if 'dims' in item:
+        """If dims exists and is not empty
+        """
+        if 'dims' in item and item['dims']:
             item['coords'] = {
                 dim: self.read_dimension(dim)['elements']
                 for dim in item['dims']

@@ -57,6 +57,14 @@ class Coordinates(object):
     elements : list
         List of simple data types (used to identify elements), or a list of dicts with 'name'
         key and other metadata
+
+    Raises
+    ------
+    ValueError
+        If the list of elements is empty, or infinite
+    KeyError
+        If the elements are not a list of simple data types
+        or a list of dicts with a 'name' key
     """
     def __init__(self, name, elements):
         self.name = name
@@ -101,8 +109,9 @@ class Coordinates(object):
 
         if isinstance(elements[0], dict):
             if "name" not in elements[0]:
-                raise KeyError("Coordinates.elements must have a name field, or be a " +
-                               "simple list of identifiers")
+                msg = "Elements in dimension '{}' must have a name field, " \
+                      "or be a simple list of identifiers"
+                raise KeyError(msg.format(self.name))
 
             self._ids = [e['name'] for e in elements]
             self._elements = elements
