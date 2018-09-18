@@ -216,9 +216,6 @@ class TestSosModel():
             {
                 'name': 'sos_model_name',
                 'description': 'friendly description of the sos model',
-                'max_iterations': int,
-                'convergence_absolute_tolerance': float,
-                'convergence_relative_tolerance': float,
                 'dependencies': [
                     {
                         'source': str (Model.name),
@@ -326,10 +323,7 @@ class TestSosModel():
                 'source_output': 'gva',
                 'sink': 'water_supply',
                 'sink_input': 'rGVA'
-            }],
-            'max_iterations': 25,
-            'convergence_absolute_tolerance': 1e-8,
-            'convergence_relative_tolerance': 1e-5
+            }]
         }
         assert actual == expected
 
@@ -354,29 +348,19 @@ class TestSosModel():
         sos_model.add_model(source_model)
         sos_model.add_model(sink_model)
 
-    def test_before_model_run(self, empty_sector_model):
-        """Before model run calls into each model
+    def test_before_model_run_fails(self, sos_model):
+        """Before model run should raise
         """
-        sos_model = SosModel('test')
-        empty_sector_model.before_model_run = Mock()
-        sos_model.add_model(empty_sector_model)
-        sos_model.before_model_run(Mock())
-        assert empty_sector_model.before_model_run.call_count == 1
-
-    def test_run_sequential(self, sos_model):
-        """Simulate should exist
-        """
-        sos_model = sos_model
         data_handle = Mock()
-        data_handle.timesteps = [2010, 2011, 2012]
-        data_handle.get_state = Mock(return_value={})
+        with raises(NotImplementedError):
+            sos_model.before_model_run(data_handle)
 
-        data_handle._current_timestep = 2010
-        sos_model.simulate(data_handle)
-        data_handle._current_timestep = 2011
-        sos_model.simulate(data_handle)
-        data_handle._current_timestep = 2012
-        sos_model.simulate(data_handle)
+    def test_simulate_fails(self, sos_model):
+        """Simulate should raise
+        """
+        data_handle = Mock()
+        with raises(NotImplementedError):
+            sos_model.simulate(data_handle)
 
 
 class TestSosModelProperties():
@@ -451,27 +435,6 @@ class TestSosModelProperties():
 
         # SectorModel has its own ParameterList, gettable by param name
         assert 'sector_model_param' in sector_model.parameters.keys()
-
-    def test_set_max_iterations(self, sos_model_dict):
-        """Test constructing from single dict config
-        """
-        sos_model_dict['max_iterations'] = 125
-        sos_model = SosModel.from_dict(sos_model_dict)
-        assert sos_model.max_iterations == 125
-
-    def test_set_convergence_absolute_tolerance(self, sos_model_dict):
-        """Test constructing from single dict config
-        """
-        sos_model_dict['convergence_absolute_tolerance'] = 0.0001
-        sos_model = SosModel.from_dict(sos_model_dict)
-        assert sos_model.convergence_absolute_tolerance == 0.0001
-
-    def test_set_convergence_relative_tolerance(self, sos_model_dict):
-        """Test constructing from single dict config
-        """
-        sos_model_dict['convergence_relative_tolerance'] = 0.1
-        sos_model = SosModel.from_dict(sos_model_dict)
-        assert sos_model.convergence_relative_tolerance == 0.1
 
 
 class TestSosModelDependencies(object):

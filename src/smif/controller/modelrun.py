@@ -20,24 +20,10 @@ ModeRun has attributes:
 from logging import getLogger
 
 import networkx as nx
+from smif.controller.scheduler import JobScheduler
 from smif.data_layer import DataHandle
 from smif.decision.decision import DecisionManager
 from smif.model import ModelOperation
-
-
-class JobScheduler(object):
-    """A schedule of ModelRun jobs. The object takes JobGraphs and schedules
-    and runs the containing ModelRuns taking their dependencies into account
-    """
-
-    def add(self, job_graph):
-        """Add a JobGraph to the JobScheduler queue
-
-        Arguments
-        ---------
-        job_graph: :class:`networkx.graph`
-        """
-        pass
 
 
 class ModelRun(object):
@@ -188,11 +174,12 @@ class ModelRunner(object):
             # candidate for running in parallel
             job_graph = self.build_job_graph(model_run, store, bundle, decision_manager)
 
-            # Protect user from running cyclic graphs
-            if not nx.is_directed_acyclic_graph(job_graph):
-                raise NotImplementedError
-
-            job_scheduler.add(job_graph)
+            job_id, err = job_scheduler.add(job_graph)
+            self.logger.debug("Running job %s", job_id)
+            if err is not None:
+                status = job_scheduler.get_status(job_id)
+                self.logger.debug("Job %s %s", job_id, status['status'])
+                raise err
 
     def build_job_graph(self, model_run, store, bundle, decision_manager):
         """ Build a job graph
@@ -273,31 +260,37 @@ class ModelRunner(object):
         if operation is ModelOperation.BEFORE_MODEL_RUN:
             job_id = operation.value
             job = nx.DiGraph()
-            for node in dep_graph.nodes(data=True):
-                job.add_node('%s_%s' % (job_id, node[0]), model=node[1]['model'])
+            for node_id, node_data in dep_graph.nodes(data=True):
+                job.add_node(
+                    '%s_%s' % (job_id, node_id),
+                    model=node_data['model']
+                )
 
         elif operation is ModelOperation.SIMULATE:
             job_id = '%s_%s_%s' % (operation.value, timestep, iteration)
-            mapping = {dep_node: '%s_%s' % (job_id, dep_node) for dep_node in dep_graph.nodes}
+            mapping = {
+                dep_node: '%s_%s' % (job_id, dep_node)
+                for dep_node in dep_graph.nodes
+            }
             job = nx.relabel_nodes(dep_graph, mapping)
         else:
             raise ValueError
 
         # Populate node attributes with configured data_handle and operation
-        for node in job.nodes.data():
+        for node_id, node_data in job.nodes.data():
             data_handle = DataHandle(
                 store=store,
                 modelrun_name=model_run.name,
                 current_timestep=timestep,
                 timesteps=model_run.model_horizon,
-                model=node[1]['model'],
+                model=node_data['model'],
                 decision_iteration=iteration
             )
             if operation is ModelOperation.SIMULATE:
                 decision_manager.get_decision(data_handle)
 
-            node[1]['data_handle'] = data_handle
-            node[1]['operation'] = operation
+            node_data['data_handle'] = data_handle
+            node_data['operation'] = operation
 
         return job
 
