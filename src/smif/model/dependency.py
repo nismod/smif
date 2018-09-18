@@ -28,8 +28,6 @@ class Dependency(object):
                 diff += "dtype(%s!=%s) " % (source.dtype, sink.dtype)
             if source.dims != sink.dims:
                 diff += "dims(%s!=%s) " % (source.dims, sink.dims)
-            if source.coords != sink.coords:
-                diff += "coords(%s!=%s) " % (source.coords, sink.coords)
             if source.unit != sink.unit:
                 diff += "unit(%s!=%s) " % (source.unit, sink.unit)
             msg = "Dependencies must connect identical metadata (up to variable name). " + \
