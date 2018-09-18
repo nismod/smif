@@ -72,7 +72,11 @@ class Spec(object):
 
         # Coords may come as a dict, in which case dims must be provided to define order
         if isinstance(coords, dict):
-            coords, dims = self._coords_from_dict(coords, dims)
+            try:
+                coords, dims = self._coords_from_dict(coords, dims)
+            except (ValueError, KeyError) as error:
+                msg = "Coordinate metadata incorrectly formatted for variable '{}': {}"
+                raise ValueError(msg.format(self.name, error))
 
         # Or as a list of Coordinates, in which case dims must not be provided
         elif isinstance(coords, list):
@@ -158,7 +162,7 @@ class Spec(object):
             abs_range=data['abs_range'],
             exp_range=data['exp_range'],
             unit=data['unit']
-        )
+            )
         return spec
 
     def as_dict(self):
