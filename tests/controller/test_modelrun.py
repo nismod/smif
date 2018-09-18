@@ -2,7 +2,6 @@ from copy import copy
 from unittest.mock import Mock, patch
 
 import networkx as nx
-import pytest
 from pytest import fixture, raises
 from smif.controller.modelrun import (ModelRunBuilder, ModelRunError,
                                       ModelRunner)
@@ -335,8 +334,7 @@ class TestModelRunnerJobGraphs():
         expected = []
         assert actual == expected
 
-    @patch('smif.controller.scheduler.JobScheduler.add')
-    def test_jobgraph_interdependency(self, mock_add, mock_store, mock_model_run):
+    def test_jobgraph_interdependency(self, mock_store, mock_model_run):
         """
         a[before]   b[before]
         |           |
@@ -344,7 +342,6 @@ class TestModelRunnerJobGraphs():
         a[sim] ---> b[sim]
                <---
         """
-        mock_add.return_value = (0, None)
         model_a = Mock()
         model_b = Mock()
         model_a.name = 'model_a'
@@ -372,7 +369,7 @@ class TestModelRunnerJobGraphs():
         }
 
         runner = ModelRunner()
-        with pytest.raises(NotImplementedError):
+        with raises(NotImplementedError):
             runner.solve_model(mock_model_run, mock_store)
 
     @patch('smif.controller.scheduler.JobScheduler.add')

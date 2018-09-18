@@ -172,7 +172,7 @@ class JobScheduler(object):
         try:
             self._run(job_graph, job_graph_id)
         except Exception as ex:
-            # raise ex
+            self._status[job_graph_id] = 'failed'
             return job_graph_id, ex
 
         return job_graph_id, None
@@ -219,27 +219,23 @@ class JobScheduler(object):
         """
         self._status[job_graph_id] = 'running'
 
-        try:
-            for job_node_id, job in self._get_run_order(job_graph):
-                self.logger.info("Job %s", job_node_id)
-                model = job['model']
-                data_handle = job['data_handle']
-                operation = job['operation']
-                if operation is ModelOperation.BEFORE_MODEL_RUN:
-                    # before_model_run may not be implemented by all jobs
-                    try:
-                        model.before_model_run(data_handle)
-                    except AttributeError as ex:
-                        self.logger.warning(ex)
+        for job_node_id, job in self._get_run_order(job_graph):
+            self.logger.info("Job %s", job_node_id)
+            model = job['model']
+            data_handle = job['data_handle']
+            operation = job['operation']
+            if operation is ModelOperation.BEFORE_MODEL_RUN:
+                # before_model_run may not be implemented by all jobs
+                try:
+                    model.before_model_run(data_handle)
+                except AttributeError as ex:
+                    self.logger.warning(ex)
 
-                elif operation is ModelOperation.SIMULATE:
-                    model.simulate(data_handle)
+            elif operation is ModelOperation.SIMULATE:
+                model.simulate(data_handle)
 
-                else:
-                    raise ValueError("Unrecognised operation: {}".format(operation))
-        except Exception as ex:
-            self._status[job_graph_id] = 'failed'
-            raise ex
+            else:
+                raise ValueError("Unrecognised operation: {}".format(operation))
 
         self._status[job_graph_id] = 'done'
 

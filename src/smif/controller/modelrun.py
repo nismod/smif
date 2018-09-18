@@ -174,10 +174,6 @@ class ModelRunner(object):
             # candidate for running in parallel
             job_graph = self.build_job_graph(model_run, store, bundle, decision_manager)
 
-            # Protect user from running cyclic graphs
-            if not nx.is_directed_acyclic_graph(job_graph):
-                raise NotImplementedError
-
             job_id, err = job_scheduler.add(job_graph)
             self.logger.debug("Running job %s", job_id)
             if err is not None:
