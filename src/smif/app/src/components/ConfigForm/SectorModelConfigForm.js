@@ -3,9 +3,8 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import Popup from 'components/ConfigForm/General/Popup.js'
-import InputsOutputsForm from 'components/ConfigForm/SectorModel/InputsOutputsForm.js'
 import ParameterSelector from 'components/ConfigForm/SectorModel/ParameterSelector.js'
-import PropertyList from 'components/ConfigForm/General/PropertyList.js'
+import SpecList from 'components/ConfigForm/General/SpecList.js'
 import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
 import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
@@ -172,24 +171,21 @@ class SectorModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Inputs</div>
                         <div className="card-body">
-                            <PropertyList itemsName="inputs" items={selectedSectorModel.inputs} columns={{name: 'Name', spatial_resolution: 'Spatial Resolution', temporal_resolution: 'Temporal Resolution', units: 'Units'}} editButton={false} deleteButton={true} onDelete={this.openDeletePopup} />
-                            <InputsOutputsForm items={selectedSectorModel.inputs} isInputs={true} onChange={this.handleChange}/>
+                            <SpecList name="input" specs={selectedSectorModel.inputs} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
                         </div>
                     </div>
 
                     <div className="card">
                         <div className="card-header">Outputs</div>
                         <div className="card-body">
-                            <PropertyList itemsName="outputs" items={selectedSectorModel.outputs} columns={{name: 'Name', spatial_resolution: 'Spatial Resolution', temporal_resolution: 'Temporal Resolution', units: 'Units'}} editButton={false} deleteButton={true} onDelete={this.openDeletePopup} />
-                            <InputsOutputsForm items={selectedSectorModel.outputs} isOutputs={true} onChange={this.handleChange}/>
+                            <SpecList name="output" specs={selectedSectorModel.outputs} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
                         </div>
                     </div>
 
                     <div className="card">
                         <div className="card-header">Parameters</div>
                         <div className="card-body">
-                            <PropertyList itemsName="parameters" items={selectedSectorModel.parameters} columns={{name: 'Name', description: 'Description', default_value: 'Default Value', units: 'Units', absolute_range: 'Absolute Range', suggested_range: 'Suggested Range'}} editButton={false} deleteButton={true} onDelete={this.openDeletePopup} />
-                            <ParameterSelector parameters={selectedSectorModel.parameters} onChange={this.handleChange}/>
+                            <SpecList name="parameter" specs={selectedSectorModel.parameters} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
                         </div>
                     </div>
                 </form>
