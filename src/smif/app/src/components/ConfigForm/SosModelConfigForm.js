@@ -5,7 +5,7 @@ import update from 'immutability-helper'
 import Popup from 'components/ConfigForm/General/Popup.js'
 import PropertySelector from 'components/ConfigForm/General/PropertySelector.js'
 import DependencySelector from 'components/ConfigForm/SosModel/DependencySelector.js'
-import PropertyList from 'components/ConfigForm/General/PropertyList.js'
+import SpecList from 'components/ConfigForm/General/SpecList.js'
 import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
 import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
@@ -171,7 +171,7 @@ class SosModelConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Dependencies</div>
                         <div className="card-body">
-                            <PropertyList itemsName="dependency" items={dependencies} columns={{source_model: 'Source', source_model_output: 'Output', sink_model: 'Sink', sink_model_input: 'Input'}} enableWarnings={true} rowWarning={this.state.dependencyWarning} editButton={false} deleteButton={true} onDelete={this.openDeletePopup} />
+                            <SpecList itemsName="dependency" items={dependencies} columns={{source_model: 'Source', source_model_output: 'Output', sink_model: 'Sink', sink_model_input: 'Input'}} enableWarnings={true} rowWarning={this.state.dependencyWarning} editButton={false} deleteButton={true} onDelete={this.openDeletePopup} />
                             <DependencySelector sectorModels={sectorModels} scenarioSets={scenarioSets} dependencies={selectedSosModel.dependencies} selectedSectorModels={selectedSosModel.sector_models} selectedScenarioSets={selectedSosModel.scenario_sets} onChange={this.handleChange}/>
                         </div>
                     </div>
