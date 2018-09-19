@@ -326,6 +326,58 @@ class NarrativeAPI(MethodView):
         return response
 
 
+class DimensionAPI(MethodView):
+    """Implement CRUD operations for dimensions configuration data
+    """
+    def get(self, dimension_name):
+        """Get dimensions
+        all: GET /api/v1/dimensions/
+        one: GET /api/vi/dimensions/name
+        """
+        # return str(current_app.config)
+        data_interface = current_app.config.data_interface
+        if dimension_name is None:
+            data = data_interface.read_dimensions()
+            response = jsonify(data)
+        else:
+            data = data_interface.read_dimension(dimension_name)
+            response = jsonify(data)
+
+        return response
+
+    def post(self):
+        """Create a dimension:
+        POST /api/v1/dimensions
+        """
+        data_interface = current_app.config.data_interface
+        data = request.get_json() or request.form
+        data = check_timestamp(data)
+
+        data_interface.write_dimension(data)
+        response = jsonify({"message": "success"})
+        response.status_code = 201
+        return response
+
+    def put(self, dimension_name):
+        """Update a dimension:
+        PUT /api/v1/dimensions
+        """
+        data_interface = current_app.config.data_interface
+        data = request.get_json() or request.form
+        data = check_timestamp(data)
+        data_interface.update_dimension(dimension_name, data)
+        response = jsonify({})
+        return response
+
+    def delete(self, dimension_name):
+        """Delete a dimension:
+        DELETE /api/v1/dimensions
+        """
+        data_interface = current_app.config.data_interface
+        data_interface.delete_dimension(dimension_name)
+        response = jsonify({})
+        return response
+
 def check_timestamp(data):
     """Check for timestamp and parse to datetime object
     """

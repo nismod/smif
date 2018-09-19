@@ -2,7 +2,7 @@ from flask import jsonify, render_template
 from smif.data_layer import (DataExistsError, DataMismatchError,
                              DataNotFoundError)
 from smif.http_api.crud import (ModelRunAPI, NarrativeAPI, ScenarioAPI, 
-                                SectorModelAPI, SmifAPI, SosModelAPI)
+                                SectorModelAPI, SmifAPI, SosModelAPI, DimensionAPI)
 
 
 def register_routes(app):
@@ -33,6 +33,8 @@ def register_api_endpoints(app):
                  key='scenario_name', key_type='string')
     register_api(app, NarrativeAPI, 'narrative_api', '/api/v1/narratives/',
                  key='narrative_name', key_type='string')
+    register_api(app, DimensionAPI, 'dimension_api', '/api/v1/dimensions/',
+                 key='dimension_name', key_type='string')
 
 
 def register_error_handlers(app):
