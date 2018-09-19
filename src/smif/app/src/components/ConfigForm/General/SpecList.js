@@ -154,9 +154,7 @@ class SpecList extends Component {
         return (
             <div>
                 <table className="table table-hover table-speclist">
-
                     <thead className="thead-light">
-
                         <tr>
                             {
                                 columns.map((column) => (

@@ -1,12 +1,9 @@
-import React, { Component } from 'react'
+import React, {Component} from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import Popup from 'components/ConfigForm/General/Popup.js'
-import ParameterSelector from 'components/ConfigForm/SectorModel/ParameterSelector.js'
 import SpecList from 'components/ConfigForm/General/SpecList.js'
-import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
-import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
+import {SaveButton, CancelButton} from 'components/ConfigForm/General/Buttons'
 
 class SectorModelConfigForm extends Component {
     constructor(props) {
@@ -18,7 +15,6 @@ class SectorModelConfigForm extends Component {
 
         this.state = {
             selectedSectorModel: this.props.sectorModel,
-            deletePopupIsOpen: false
         }
     }
 
@@ -45,70 +41,68 @@ class SectorModelConfigForm extends Component {
 
         return (
             <div>
-                <form>
-                    <div className="card">
-                        <div className="card-header">General</div>
-                        <div className="card-body">
+                <div className="card">
+                    <div className="card-header">General</div>
+                    <div className="card-body">
 
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Name</label>
-                                <div className="col-sm-10">
-                                    <input id="sector_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSectorModel.name} onChange={this.handleChange}/>
-                                </div>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Name</label>
+                            <div className="col-sm-10">
+                                <input id="sector_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSectorModel.name} onChange={this.handleChange}/>
                             </div>
+                        </div>
 
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Description</label>
-                                <div className="col-sm-10">
-                                    <textarea id="sector_model_description" className="form-control" name="description" rows="5" defaultValue={selectedSectorModel.description} onChange={this.handleChange}/>
-                                </div>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Description</label>
+                            <div className="col-sm-10">
+                                <textarea id="sector_model_description" className="form-control" name="description" rows="5" defaultValue={selectedSectorModel.description} onChange={this.handleChange}/>
                             </div>
-
                         </div>
+
                     </div>
+                </div>
 
-                    <div className="card">
-                        <div className="card-header">Environment</div>
-                        <div className="card-body">
+                <div className="card">
+                    <div className="card-header">Environment</div>
+                    <div className="card-body">
 
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Class Name</label>
-                                <div className="col-sm-10">
-                                    <input id="sector_model_classname" className="form-control" name="classname" type="text" defaultValue={selectedSectorModel.classname} onChange={this.handleChange}/>
-                                </div>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Class Name</label>
+                            <div className="col-sm-10">
+                                <input id="sector_model_classname" className="form-control" name="classname" type="text" defaultValue={selectedSectorModel.classname} onChange={this.handleChange}/>
                             </div>
+                        </div>
 
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Path</label>
-                                <div className="col-sm-10">
-                                    <input id="sector_model_path" className="form-control" name="path" type="text" defaultValue={selectedSectorModel.path} onChange={this.handleChange}/>
-                                </div>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Path</label>
+                            <div className="col-sm-10">
+                                <input id="sector_model_path" className="form-control" name="path" type="text" defaultValue={selectedSectorModel.path} onChange={this.handleChange}/>
                             </div>
-
                         </div>
-                    </div>
 
-                    <div className="card">
-                        <div className="card-header">Inputs</div>
-                        <div className="card-body">
-                            <SpecList name="input" specs={selectedSectorModel.inputs} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
-                        </div>
                     </div>
+                </div>
 
-                    <div className="card">
-                        <div className="card-header">Outputs</div>
-                        <div className="card-body">
-                            <SpecList name="output" specs={selectedSectorModel.outputs} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
-                        </div>
+                <div className="card">
+                    <div className="card-header">Inputs</div>
+                    <div className="card-body">
+                        <SpecList name="input" specs={selectedSectorModel.inputs} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
                     </div>
+                </div>
 
-                    <div className="card">
-                        <div className="card-header">Parameters</div>
-                        <div className="card-body">
-                            <SpecList name="parameter" specs={selectedSectorModel.parameters} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
-                        </div>
+                <div className="card">
+                    <div className="card-header">Outputs</div>
+                    <div className="card-body">
+                        <SpecList name="output" specs={selectedSectorModel.outputs} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
                     </div>
-                </form>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">Parameters</div>
+                    <div className="card-body">
+                        <SpecList name="parameter" specs={selectedSectorModel.parameters} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
+                    </div>
+                </div>
 
                 <SaveButton onClick={this.handleSave} />
                 <CancelButton onClick={this.handleCancel} />
@@ -130,13 +124,7 @@ class SectorModelConfigForm extends Component {
     }
 
     render() {
-        const {selectedSectorModel} = this.state
-
-        if (selectedSectorModel.name == undefined) {
-            return this.renderDanger('This Scenario Set does not exist.')
-        } else {
-            return this.renderSectorModelConfigForm()
-        }
+        return this.renderSectorModelConfigForm()
     }
 }
 
