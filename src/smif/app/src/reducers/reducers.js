@@ -24,6 +24,10 @@ import {
     RECEIVE_NARRATIVES,
     REQUEST_NARRATIVE,
     RECEIVE_NARRATIVE,
+    REQUEST_DIMENSIONS,
+    RECEIVE_DIMENSIONS,
+    REQUEST_DIMENSION,
+    RECEIVE_DIMENSION,
 } from '../actions/actions.js'
 
 function smif(
@@ -302,6 +306,52 @@ function narrative(
     }
 }
 
+function dimensions(
+    state = {
+        isFetching: true,
+        items: []
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_DIMENSIONS:
+        return Object.assign({}, state, {
+            isFetching: true
+        })
+    case RECEIVE_DIMENSIONS:
+        return Object.assign({}, state, {
+            isFetching: false,
+            items: action.dimensions,
+            lastUpdated: action.receivedAt
+        })
+    default:
+        return state
+    }
+}
+
+function dimension(
+    state = {
+        isFetching: true,
+        item: {}
+    },
+    action
+) {
+    switch (action.type){
+    case REQUEST_DIMENSION:
+        return Object.assign({}, state, {
+            isFetching: true
+        })
+    case RECEIVE_DIMENSION:
+        return Object.assign({}, state, {
+            isFetching: false,
+            item: action.dimension,
+            lastUpdated: action.receivedAt
+        })
+    default:
+        return state
+    }
+}
+
 const rootReducer = combineReducers({
     smif,
     model_runs,
@@ -314,7 +364,9 @@ const rootReducer = combineReducers({
     scenarios,
     scenario,
     narratives,
-    narrative
+    narrative,
+    dimensions,
+    dimension
 })
 
 export default rootReducer

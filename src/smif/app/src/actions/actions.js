@@ -740,3 +740,127 @@ export function deleteNarrative(narrativeName){
             )
     }
 }
+
+export const REQUEST_DIMENSIONS = 'REQUEST_DIMENSIONS'
+function requestDimensions(){
+    return {
+        type: REQUEST_DIMENSIONS
+    }
+}
+
+export const RECEIVE_DIMENSIONS = 'RECEIVE_DIMENSIONS'
+function receiveDimensions(json) {
+    return {
+        type: RECEIVE_DIMENSIONS,
+        dimensions: json,
+        receivedAt: Date.now()
+    }
+}
+
+export function fetchDimensions(){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestDimensions())
+
+        // make API request, returning a promise
+        return fetch('/api/v1/dimensions/')
+            .then(
+                response => response.json()
+            )
+            .then(
+                json => dispatch(receiveDimensions(json))
+            )
+    }
+}
+
+export const REQUEST_DIMENSION = 'REQUEST_DIMENSION'
+function requestDimension(){
+    return {
+        type: REQUEST_DIMENSION
+    }
+}
+
+export const RECEIVE_DIMENSION = 'RECEIVE_DIMENSION'
+function receiveDimension(json) {
+    return {
+        type: RECEIVE_DIMENSION,
+        dimension: json,
+        receivedAt: Date.now()
+    }
+}
+
+export function fetchDimension(dimension){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestDimension())
+
+        // make API request, returning a promise
+        return fetch('/api/v1/dimensions/' + dimension)
+            .then(
+                response => response.json()
+            )
+            .then(
+                json => dispatch(receiveDimension(json))
+            )
+    }
+}
+
+export function saveDimension(dimension){
+    return function () {
+        // inform the app that the API request is starting
+
+        // make API request, returning a promise
+        return fetch('/api/v1/dimensions/' + dimension.name, {
+            method: 'put',
+            body: JSON.stringify(dimension),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }}
+        )
+            .then (
+                response => response.json()
+            )
+    }
+}
+
+export function createDimension(dimension){
+    return function (dispatch) {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/dimensions/', {
+            method: 'post',
+            body: JSON.stringify(dimension),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchDimensions())
+                }
+            )
+    }
+}
+
+export function deleteDimension(dimension){
+    return function (dispatch) {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/dimensions/' + dimension, {
+            method: 'delete',
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchDimensions())
+                }
+            )
+    }
+}
