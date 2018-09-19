@@ -6,6 +6,7 @@ import { connect } from 'react-redux'
 import { fetchSectorModel } from 'actions/actions.js'
 import { saveSectorModel } from 'actions/actions.js'
 import { fetchSosModels } from 'actions/actions.js'
+import { fetchDimensions } from 'actions/actions.js'
 
 import SectorModelConfigForm from 'components/ConfigForm/SectorModelConfigForm.js'
 
@@ -25,6 +26,7 @@ class SectorModelConfig extends Component {
 
         dispatch(fetchSectorModel(this.config_name))
         dispatch(fetchSosModels())
+        dispatch(fetchDimensions())
     }
 
     componentDidUpdate() {
@@ -62,22 +64,22 @@ class SectorModelConfig extends Component {
         )
     }
 
-    renderSectorModelConfig(sector_model, sos_models) {
+    renderSectorModelConfig(sector_model, sos_models, dimensions) {
         return (
             <div key={sector_model.name}>
-                <SectorModelConfigForm sosModels={sos_models} sectorModel={sector_model} saveSectorModel={this.saveSectorModel} cancelSectorModel={this.returnToPreviousPage}/>
+                <SectorModelConfigForm sosModels={sos_models} sectorModel={sector_model} dimensions={dimensions} saveSectorModel={this.saveSectorModel} cancelSectorModel={this.returnToPreviousPage}/>
             </div>
         )
     }
 
     render () {
-        const {sector_model, sos_models, isFetching} = this.props
+        const {sector_model, sos_models, dimensions, isFetching} = this.props
 
         if (isFetching && this.init) {
             return this.renderLoading()
         } else {
             this.init = false
-            return this.renderSectorModelConfig(sector_model, sos_models)
+            return this.renderSectorModelConfig(sector_model, sos_models, dimensions)
         }
     }
 }
@@ -85,6 +87,7 @@ class SectorModelConfig extends Component {
 SectorModelConfig.propTypes = {
     sos_models: PropTypes.array.isRequired,
     sector_model: PropTypes.object.isRequired,
+    dimensions: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
@@ -95,9 +98,11 @@ function mapStateToProps(state) {
     return {
         sos_models: state.sos_models.items,
         sector_model: state.sector_model.item,
+        dimensions: state.dimensions.items,
         isFetching: (
             state.sos_models.isFetching ||
-            state.sector_model.isFetching
+            state.sector_model.isFetching ||
+            state.dimensions.isFetching
         )
     }
 }

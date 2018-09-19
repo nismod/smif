@@ -39,6 +39,11 @@ class SectorModelConfigForm extends Component {
     renderSectorModelConfigForm() {
         const {selectedSectorModel} = this.state
 
+        let dims = this.props.dimensions.map(dim => ({
+            value: dim.name,
+            label: dim.name
+        }))
+
         return (
             <div>
                 <div className="card">
@@ -86,21 +91,21 @@ class SectorModelConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Inputs</div>
                     <div className="card-body">
-                        <SpecList name="input" specs={selectedSectorModel.inputs} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
+                        <SpecList name="input" specs={selectedSectorModel.inputs} dims={dims} />
                     </div>
                 </div>
 
                 <div className="card">
                     <div className="card-header">Outputs</div>
                     <div className="card-body">
-                        <SpecList name="output" specs={selectedSectorModel.outputs} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
+                        <SpecList name="output" specs={selectedSectorModel.outputs} dims={dims} />
                     </div>
                 </div>
 
                 <div className="card">
                     <div className="card-header">Parameters</div>
                     <div className="card-body">
-                        <SpecList name="parameter" specs={selectedSectorModel.parameters} dims={[{value: 'country', label: 'country'}, {value: 'lad', label: 'lad'}]} />
+                        <SpecList name="parameter" specs={selectedSectorModel.parameters} dims={dims} />
                     </div>
                 </div>
 
@@ -130,7 +135,8 @@ class SectorModelConfigForm extends Component {
 
 SectorModelConfigForm.propTypes = {
     sosModels: PropTypes.array.isRequired,
-    sectorModel: PropTypes.object.isRequired,
+    sectorModel: PropTypes.array.isRequired,
+    dimensions: PropTypes.array.isRequired,
     saveSectorModel: PropTypes.func,
     cancelSectorModel: PropTypes.func
 }
