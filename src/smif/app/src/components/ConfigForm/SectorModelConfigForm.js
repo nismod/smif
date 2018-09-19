@@ -20,10 +20,6 @@ class SectorModelConfigForm extends Component {
             selectedSectorModel: this.props.sectorModel,
             deletePopupIsOpen: false
         }
-
-        this.closeDeletePopup = this.closeDeletePopup.bind(this)
-        this.openDeletePopup = this.openDeletePopup.bind(this)
-        this.handleDelete = this.handleDelete.bind(this)
     }
 
     handleChange(event) {
@@ -36,88 +32,12 @@ class SectorModelConfigForm extends Component {
         })
     }
 
-    handleDelete(config) {
-
-        const {deletePopupType, selectedSectorModel} = this.state
-
-        switch(deletePopupType) {
-        case 'inputs':
-            for (let i = 0; i < selectedSectorModel.inputs.length; i++) {
-                if (selectedSectorModel.inputs[i].name == config)
-                    selectedSectorModel.inputs.splice(i, 1)
-            }
-            break
-
-        case 'outputs':
-            for (let i = 0; i < selectedSectorModel.outputs.length; i++) {
-                if (selectedSectorModel.outputs[i].name == config)
-                    selectedSectorModel.outputs.splice(i, 1)
-            }
-            break
-
-        case 'parameters':
-            for (let i = 0; i < selectedSectorModel.parameters.length; i++) {
-                if (selectedSectorModel.parameters[i].name == config)
-                    selectedSectorModel.parameters.splice(i, 1)
-            }
-            break
-        }
-
-        this.forceUpdate()
-        this.closeDeletePopup()
-    }
-
     handleSave() {
         this.props.saveSectorModel(this.state.selectedSectorModel)
     }
 
     handleCancel() {
         this.props.cancelSectorModel()
-    }
-
-    openDeletePopup(event) {
-
-        let target_in_use_by = []
-
-        switch(event.target.name) {
-        case 'inputs' || 'parameters':
-            this.props.sosModels.forEach(function(sos_model) {
-                sos_model.dependencies.forEach(function(dependency) {
-                    if (dependency.sink_model_input == event.target.value) {
-                        target_in_use_by.push({
-                            name: sos_model.name,
-                            link: '/configure/sos-models/',
-                            type: 'SosModel'
-                        })
-                    }
-                })
-            })
-            break
-        case 'outputs':
-            this.props.sosModels.forEach(function(sos_model) {
-                sos_model.dependencies.forEach(function(dependency) {
-                    if (dependency.source_model_output == event.target.value) {
-                        target_in_use_by.push({
-                            name: sos_model.name,
-                            link: '/configure/sos-models/',
-                            type: 'SosModel'
-                        })
-                    }
-                })
-            })
-            break
-        }
-
-        this.setState({
-            deletePopupIsOpen: true,
-            deletePopupConfigName: event.target.value,
-            deletePopupType: event.target.name,
-            deletePopupInUseBy: target_in_use_by
-        })
-    }
-
-    closeDeletePopup() {
-        this.setState({deletePopupIsOpen: false})
     }
 
     renderSectorModelConfigForm() {
@@ -189,10 +109,6 @@ class SectorModelConfigForm extends Component {
                         </div>
                     </div>
                 </form>
-
-                <Popup name="popup_delete_form" onRequestOpen={this.state.deletePopupIsOpen}>
-                    <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
-                </Popup>
 
                 <SaveButton onClick={this.handleSave} />
                 <CancelButton onClick={this.handleCancel} />
