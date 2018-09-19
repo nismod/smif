@@ -56,7 +56,7 @@ class SpecList extends Component {
             }))            
         }
         if (this.state.spec.default != '') {
-            new_spec.default = parseInt(this.state.spec.default)
+            new_spec.default = parseFloat(this.state.spec.default)
         }
         if (this.state.spec.unit != '') {
             new_spec.unit = this.state.spec.unit
@@ -66,14 +66,14 @@ class SpecList extends Component {
         }
         if (this.state.spec.abs_range_min != '' && this.state.spec.abs_range_max != '') {
             new_spec.abs_range = [
-                parseInt(this.state.spec.abs_range_min),
-                parseInt(this.state.spec.abs_range_max)
+                parseFloat(this.state.spec.abs_range_min),
+                parseFloat(this.state.spec.abs_range_max)
             ]
         }
         if (this.state.spec.sug_range_min != '' && this.state.spec.sug_range_max != '') {
             new_spec.sug_range = [
-                parseInt(this.state.spec.sug_range_min),
-                parseInt(this.state.spec.sug_range_max)
+                parseFloat(this.state.spec.sug_range_min),
+                parseFloat(this.state.spec.sug_range_max)
             ]
         }
  
@@ -151,17 +151,17 @@ class SpecList extends Component {
 
     renderSpecList(name, specs) {
         var columns = ['Name', 'Dimensions', 'Default', 'Unit', 'DType', 'Range']
-
         return (
             <div>
-                <table className="table table-hover">
+                <table className="table table-hover table-speclist">
 
                     <thead className="thead-light">
 
                         <tr>
                             {
                                 columns.map((column) => (
-                                    <th key={name + '_column_' + column} scope="col">
+                                    <th className="col-text"
+                                        scope="col" key={name + '_column_' + column}>
                                         {column}
                                     </th> 
                                 ))
@@ -174,12 +174,12 @@ class SpecList extends Component {
                                 <tr key={spec.name}
                                     data-name={spec.name}
                                     onClick={(e) => this.handleEdit(e)}>
-                                    <td>
+                                    <td className="col-text">
                                         <div title={spec.description}>
                                             {spec.name}
                                         </div>
                                     </td>
-                                    <td>
+                                    <td className="col-text">
                                         {
                                             spec.dims != undefined ?
                                                 spec.dims.map((dim, idx) => 
@@ -187,16 +187,16 @@ class SpecList extends Component {
                                                 ) : null
                                         }
                                     </td>
-                                    <td>
+                                    <td className="col-text">
                                         {spec.default}
                                     </td>
-                                    <td>
+                                    <td className="col-text">
                                         {spec.unit}
                                     </td>
-                                    <td>
+                                    <td className="col-text">
                                         {spec.dtype}
                                     </td>
-                                    <td>
+                                    <td className="col-text">
                                         {
                                             spec.abs_range != undefined ?
                                                 'abs(' + spec.abs_range[0] + ', ' + spec.abs_range[1] + ')' : null
@@ -214,12 +214,12 @@ class SpecList extends Component {
 
                 <CreateButton id={'btn_add_' + name} value={'Add ' + name} onClick={() => this.handleCreate()} />
                 <Popup name={'popup_add_' + name} onRequestOpen={this.state.formPopupIsOpen}>
-                    <form onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit(e)}}>
+                    <form className="form-config" onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit(e)}}>
                         <div>
                             <div className="container">
                                 <div className="row">
                                     <div className="col">
-                                        <label>Name</label>
+                                        <label className='label'>Name</label>
                                         <input 
                                             id={name + '_spec_name'}
                                             className='form-control'
@@ -307,6 +307,7 @@ class SpecList extends Component {
                                             id="parameter_absolute_range_low" 
                                             className='form-control'
                                             type="number" 
+                                            step="any"
                                             name="abs_range_min" 
                                             value={this.state.spec.abs_range_min} 
                                             onChange={this.handleFormInput}
@@ -317,6 +318,7 @@ class SpecList extends Component {
                                             id="parameter_absolute_range_high" 
                                             className='form-control'
                                             type="number" 
+                                            step="any"
                                             name="abs_range_max" 
                                             value={this.state.spec.abs_range_max} 
                                             onChange={this.handleFormInput}
@@ -331,6 +333,7 @@ class SpecList extends Component {
                                             id="parameter_suggested_range_low" 
                                             className='form-control'
                                             type="number" 
+                                            step="any"
                                             name="sug_range_min" 
                                             value={this.state.spec.sug_range_min} 
                                             onChange={this.handleFormInput}
@@ -340,6 +343,7 @@ class SpecList extends Component {
                                         <input id="parameter_suggested_range_high" 
                                             type="number" 
                                             className='form-control'
+                                            step="any"
                                             name="sug_range_max" 
                                             value={this.state.spec.sug_range_max} 
                                             onChange={this.handleFormInput}
