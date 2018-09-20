@@ -209,7 +209,7 @@ def get_narratives(handler, narrative_config):
                 definition['description'],
                 narrative_set
             )
-            narrative.data = handler.read_narrative_data(narrative_name)
+            narrative.data = dict(handler.read_narrative_data(narrative_name))
             narrative_objects.append(narrative)
     return narrative_objects
 
