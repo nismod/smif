@@ -39,9 +39,9 @@ Run tests::
 Documentation
 -------------
 
-We use `better-apidoc <https://github.com/goerz/better-apidoc>`_ for building 
-documentation in reStructuredText under :code:`smif/docs` and the 
-`Numpy style docstrings <https://github.com/numpy/numpy/blob/master/doc/example.py>`_ 
+We use `better-apidoc <https://github.com/goerz/better-apidoc>`_ for building
+documentation in reStructuredText under :code:`smif/docs` and the
+`Numpy style docstrings <https://github.com/numpy/numpy/blob/master/doc/example.py>`_
 that are used throughout the codebase. Documentation is generated and hosted
 on `readthedocs <http://smif.readthedocs.org>`_.
 
@@ -92,6 +92,80 @@ Linting is handled by `pre-commit`_ hooks, which can be installed from the root
 of the repository using::
 
     pre-commit install
+
+
+Errors and messages
+-------------------
+
+As a general guideline, `smif`_ fails fast, with errors that users can understand in
+context, whether they call smif through the python api, CLI, HTTP API or GUI.
+
+When handling errors, we raise custom exceptions (with an informative name and
+message) which can be communicated out through STDERR, HTTP response or error box.
+
+In normal operations, we catch all errors from the standard library and other
+dependencies close to where they may arise, re-raising with a custom `SmifException` if it
+can't be handled directly.
+
+For example:
+
+.. code:: python
+
+    try:
+        networkx.topological_sort(graph)
+    except networkx.NetworkXUnfeasible as err:
+        raise SmifNotImplementedError("JobGraphs must not contain cycles") from err
+
+
+Error messages should contain concrete details from the immediate context if brief and
+relevant. This might include names and small values, but not lists or serialisations of large
+or even medium-sized data structures. Errors and messages can be extended with extra context
+if we catch and re-raise further up the stack.
+
+
+Error boundaries
+----------------
+
+There are three major boundaries where we catch and handle errors:
+- around a job (a call to `Model.simulate`) - independent jobs shouldn't cause others to fail
+- around a modelrun - independent modelruns shouldn't cause others to fail
+- around the smif process - errors should be reported, followed by a clean exit if the process
+  cannot continue.
+
+.. image:: uml/error_boundaries.png
+    :alt: smif error boundaries
+    :target: _images/error_boundaries.png
+
+At program boundaries, we catch anything inheriting from `SmifException` and pass on the
+message. Stack traces are only shown if running in debug mode, or as the result of a
+programming error (we missed something - it's a bug).
+
+
+Logging
+-------
+
+Log messages should be used sparingly, following the
+`python guidelines`<https://docs.python.org/3/howto/logging.html#when-to-use-logging>:
+
+- print() displays console output for ordinary usage of the CLI (respond with a message or
+  similar usual channel for API/GUI)
+- CRITICAL errors are the  last thing logged before a daemon is forced to quit (scheduler or
+  server process)
+- ERROR level errors are communicated to user, typically causing jobs, requests or batch
+  jobs to fail.
+- WARN indicates an event that a client may not be able or need to do anything about -
+  including error handling and unexpected events (failover, fallback). Use `warnings.warn`
+  if client code should be modified, for example if deprecating a method.
+- INFO reports on events that occur during normal operation (e.g. start/stop modelrun, jobs)
+- DEBUG records events at a finer grain. Prefer introducing debug statements temporarily for
+  debugging, but not to commit them without justification.
+
+CRITICAL, ERROR and WARN are shown with any verbosity level, and we should not typically expect
+to see any of them.
+
+INFO messages are shown at the first level of verbosity (`-v`).
+
+DEBUG messages are shown at the second level of verbosity (`-vv`).
 
 
 Module import relationship diagram
