@@ -41,7 +41,7 @@ def mock_scheduler():
 
 @pytest.fixture
 def mock_data_interface(model_run, get_sos_model, get_sector_model,
-                        get_scenario, get_scenario_set, get_narrative, get_narrative_set):
+                        get_scenario, get_narrative, get_dimension):
 
     def read_model_run(arg):
         _check_exist('model_run', arg)
@@ -59,17 +59,13 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         _check_exist('scenario', arg)
         return get_scenario
 
-    def read_scenario_set(arg):
-        _check_exist('scenario_set', arg)
-        return get_scenario_set
-
     def read_narrative(arg):
         _check_exist('narrative', arg)
         return get_narrative
 
-    def read_narrative_set(arg):
-        _check_exist('narrative_set', arg)
-        return get_narrative_set
+    def read_dimension(arg):
+        _check_exist('dimension', arg)
+        return get_dimension
 
     def _check_exist(config, name):
         if name == 'does_not_exist':
@@ -84,12 +80,10 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         'read_sector_model.side_effect':  read_sector_model,
         'read_scenarios.side_effect': [[get_scenario]],
         'read_scenario.side_effect':  read_scenario,
-        'read_scenario_sets.side_effect': [[get_scenario_set]],
-        'read_scenario_set.side_effect':  read_scenario_set,
         'read_narratives.side_effect': [[get_narrative]],
         'read_narrative.side_effect':  read_narrative,
-        'read_narrative_sets.side_effect': [[get_narrative_set]],
-        'read_narrative_set.side_effect':  read_narrative_set,
+        'read_dimensions.side_effect': [[get_dimension]],
+        'read_dimension.side_effect':  read_dimension,
     }
     return Mock(**attrs)
 
@@ -479,84 +473,6 @@ def test_delete_sector_model(client, get_sector_model):
 
     assert response.status_code == 200
 
-
-def test_get_scenario_sets(client, get_scenario_set):
-    """GET all scenario_sets
-    """
-    response = client.get('/api/v1/scenario_sets/')
-    assert current_app.config.data_interface.read_scenario_sets.called == 1
-
-    assert response.status_code == 200
-    data = parse_json(response)
-    assert data == [get_scenario_set]
-
-
-def test_get_scenario_set(client, get_scenario_set):
-    """GET single system-of-systems model
-    """
-    name = get_scenario_set['name']
-    response = client.get('/api/v1/scenario_sets/{}'.format(name))
-    current_app.config.data_interface.read_scenario_set.assert_called_with(name)
-
-    assert response.status_code == 200
-    data = parse_json(response)
-    assert data == get_scenario_set
-
-
-def test_get_scenario_set_missing(client):
-    """GET missing system-of-systems model
-    """
-    response = client.get('/api/v1/scenario_sets/does_not_exist')
-    assert response.status_code == 404
-    data = parse_json(response)
-    assert data['message'] == "scenario_set 'does_not_exist' not found"
-
-
-def test_post_scenario_set(client, get_scenario_set):
-    """POST system-of-systems model
-    """
-    name = 'test_post_scenario_set'
-    get_scenario_set['name'] = name
-    send = serialise_json(get_scenario_set)
-    response = client.post(
-        '/api/v1/scenario_sets/',
-        data=send,
-        content_type='application/json')
-    current_app.config.data_interface.write_scenario_set.assert_called_with(get_scenario_set)
-
-    data = parse_json(response)
-    assert response.status_code == 201
-    assert data['message'] == 'success'
-
-
-def test_delete_scenario_set(client, get_scenario_set):
-    """DELETE scenario_set
-    """
-    send = serialise_json(get_scenario_set)
-    response = client.delete(
-        '/api/v1/scenario_sets/' + get_scenario_set['name'],
-        data=send,
-        content_type='application/json')
-    current_app.config.data_interface.delete_scenario_set.assert_called_with(
-        get_scenario_set['name'])
-
-    assert response.status_code == 200
-
-
-def test_put_scenario_set(client, get_scenario_set):
-    """PUT scenario set
-    """
-    send = serialise_json(get_scenario_set)
-    response = client.put(
-        '/api/v1/scenario_sets/' + get_scenario_set['name'],
-        data=send,
-        content_type='application/json')
-    current_app.config.data_interface.update_scenario_set.assert_called_with(
-        get_scenario_set['name'], get_scenario_set)
-
-    assert response.status_code == 200
-
-
 def test_get_scenarios(client, get_scenario):
     """GET all scenarios
     """
@@ -629,84 +545,6 @@ def test_put_scenario(client, get_scenario):
         content_type='application/json')
     current_app.config.data_interface.update_scenario.assert_called_with(
         get_scenario['name'], get_scenario)
-
-    assert response.status_code == 200
-
-
-def test_get_narrative_sets(client, get_narrative_set):
-    """GET all narrative_sets
-    """
-    response = client.get('/api/v1/narrative_sets/')
-    assert current_app.config.data_interface.read_narrative_sets.called == 1
-
-    assert response.status_code == 200
-    data = parse_json(response)
-    assert data == [get_narrative_set]
-
-
-def test_get_narrative_set(client, get_narrative_set):
-    """GET single system-of-systems model
-    """
-    name = get_narrative_set['name']
-    response = client.get('/api/v1/narrative_sets/{}'.format(name))
-    current_app.config.data_interface.read_narrative_set.assert_called_with(name)
-
-    assert response.status_code == 200
-    data = parse_json(response)
-    assert data == get_narrative_set
-
-
-def test_get_narrative_set_missing(client):
-    """GET missing system-of-systems model
-    """
-    response = client.get('/api/v1/narrative_sets/does_not_exist')
-    assert response.status_code == 404
-    data = parse_json(response)
-    assert data['message'] == "narrative_set 'does_not_exist' not found"
-
-
-def test_post_narrative_set(client, get_narrative_set):
-    """POST system-of-systems model
-    """
-    name = 'test_post_narrative_set'
-    get_narrative_set['name'] = name
-    send = serialise_json(get_narrative_set)
-    response = client.post(
-        '/api/v1/narrative_sets/',
-        data=send,
-        content_type='application/json')
-    current_app.config.data_interface.write_narrative_set.assert_called_with(
-        get_narrative_set)
-
-    data = parse_json(response)
-    assert response.status_code == 201
-    assert data['message'] == 'success'
-
-
-def test_put_narrative_set(client, get_narrative_set):
-    """PUT narrative_set
-    """
-    send = serialise_json(get_narrative_set)
-    response = client.put(
-        '/api/v1/narrative_sets/' + get_narrative_set['name'],
-        data=send,
-        content_type='application/json')
-    current_app.config.data_interface.update_narrative_set.assert_called_with(
-        get_narrative_set['name'], get_narrative_set)
-
-    assert response.status_code == 200
-
-
-def test_delete_narrative_set(client, get_narrative_set):
-    """DELETE narrative_set
-    """
-    send = serialise_json(get_narrative_set)
-    response = client.delete(
-        '/api/v1/narrative_sets/' + get_narrative_set['name'],
-        data=send,
-        content_type='application/json')
-    current_app.config.data_interface.delete_narrative_set.assert_called_with(
-        get_narrative_set['name'])
 
     assert response.status_code == 200
 
@@ -784,5 +622,83 @@ def test_delete_narrative(client, get_narrative):
         content_type='application/json')
     current_app.config.data_interface.delete_narrative.assert_called_with(
         get_narrative['name'])
+
+    assert response.status_code == 200
+
+
+def test_get_dimensions(client, get_dimension):
+    """GET all dimensions
+    """
+    response = client.get('/api/v1/dimensions/')
+    assert current_app.config.data_interface.read_dimensions.called == 1
+
+    assert response.status_code == 200
+    data = parse_json(response)
+    assert data == [get_dimension]
+
+
+def test_get_dimension(client, get_dimension):
+    """GET single system-of-systems model
+    """
+    name = get_dimension['name']
+    response = client.get('/api/v1/dimensions/{}'.format(name))
+    current_app.config.data_interface.read_dimension.assert_called_with(name)
+
+    assert response.status_code == 200
+    data = parse_json(response)
+    assert data == get_dimension
+
+
+def test_get_dimension_missing(client):
+    """GET missing system-of-systems model
+    """
+    response = client.get('/api/v1/dimensions/does_not_exist')
+    assert response.status_code == 404
+    data = parse_json(response)
+    assert data['message'] == "dimension 'does_not_exist' not found"
+
+
+def test_post_dimension(client, get_dimension):
+    """POST system-of-systems model
+    """
+    name = 'test_post_dimension'
+    get_dimension['name'] = name
+    send = serialise_json(get_dimension)
+    response = client.post(
+        '/api/v1/dimensions/',
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.write_dimension.assert_called_with(
+        get_dimension)
+
+    data = parse_json(response)
+    assert response.status_code == 201
+    assert data['message'] == 'success'
+
+
+def test_put_dimension(client, get_dimension):
+    """PUT dimension
+    """
+    send = serialise_json(get_dimension)
+    response = client.put(
+        '/api/v1/dimensions/' + get_dimension['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.update_dimension.assert_called_with(
+        get_dimension['name'], get_dimension)
+
+    assert response.status_code == 200
+
+
+def test_delete_dimension(client, get_dimension):
+    """DELETE dimension
+    """
+    send = serialise_json(get_dimension)
+    response = client.delete(
+        '/api/v1/dimensions/' + get_dimension['name'],
+        data=send,
+        content_type='application/json')
+    current_app.config.data_interface.delete_dimension.assert_called_with(
+        get_dimension['name'])
 
     assert response.status_code == 200

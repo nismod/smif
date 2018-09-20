@@ -697,10 +697,18 @@ def get_narrative_obj():
 
 
 @fixture
-def get_narrative_set():
+def get_dimension():
     return {
-        'name': 'technology',
-        'description': 'Describes the evolution of technology'
+        "name":"annual",
+        "description": "Single annual interval of 8760 hours",
+        "elements":
+            [
+                {
+                    "end": "PT8760H",
+                    "id": "1",
+                    "start": "PT0H"
+                }
+            ]
     }
 
 
