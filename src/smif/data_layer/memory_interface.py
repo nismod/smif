@@ -64,11 +64,19 @@ class MemoryInterface(DataInterface):
     # endregion
 
     # region Sector models
-    def read_sector_models(self):
+    def read_sector_models(self, skip_coords=False):
+        if skip_coords:
+            return [
+                self._skip_coords(m, ('inputs', 'outputs', 'parameters'))
+                for m in self._sector_models.values()
+            ]
         return list(self._sector_models.values())
 
-    def read_sector_model(self, sector_model_name):
-        return self._sector_models[sector_model_name]
+    def read_sector_model(self, sector_model_name, skip_coords=False):
+        m = self._sector_models[sector_model_name]
+        if skip_coords:
+            return self._skip_coords(m, ('inputs', 'outputs', 'parameters'))
+        return m
 
     def write_sector_model(self, sector_model):
         self._sector_models[sector_model['name']] = sector_model
@@ -138,11 +146,19 @@ class MemoryInterface(DataInterface):
     # endregion
 
     # region Scenarios
-    def read_scenarios(self):
-        return [_variant_dict_to_list(s) for s in self._scenarios.values()]
+    def read_scenarios(self, skip_coords=False):
+        scenarios = self._scenarios.values()
+        if skip_coords:
+            scenarios = [
+                self._skip_coords(s, ['provides'])
+                for s in scenarios
+            ]
+        return [_variant_dict_to_list(s) for s in scenarios]
 
-    def read_scenario(self, scenario_name):
+    def read_scenario(self, scenario_name, skip_coords=False):
         scenario = self._scenarios[scenario_name]
+        if skip_coords:
+            scenario = self._skip_coords(scenario, ['provides'])
         return _variant_dict_to_list(scenario)
 
     def write_scenario(self, scenario):
@@ -180,11 +196,19 @@ class MemoryInterface(DataInterface):
     # endregion
 
     # region Narratives
-    def read_narratives(self):
-        return [_variant_dict_to_list(n) for n in self._narratives.values()]
+    def read_narratives(self, skip_coords=False):
+        narratives = self._narratives.values()
+        if skip_coords:
+            narratives = [
+                self._skip_coords(s, ['provides'])
+                for s in narratives
+            ]
+        return [_variant_dict_to_list(n) for n in narratives]
 
-    def read_narrative(self, narrative_name):
+    def read_narrative(self, narrative_name, skip_coords=False):
         narrative = self._narratives[narrative_name]
+        if skip_coords:
+            narrative = self._skip_coords(narrative, ['provides'])
         return _variant_dict_to_list(narrative)
 
     def write_narrative(self, narrative):

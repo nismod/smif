@@ -15,47 +15,6 @@ from smif.data_layer.load import dump
 from smif.metadata import Spec
 
 
-class TestUnits():
-    """Units definitions should be available as specified in the project
-    """
-    def test_units_blank(self, project_config, setup_folder_structure):
-        """If no units file specified, should return None
-        """
-        config = project_config
-        config['units'] = None
-
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder), 'local_csv')
-
-        actual = config_handler.read_unit_definitions()
-        expected = []
-        assert actual == expected
-
-    def test_units(self, project_config, setup_folder_structure):
-        """If units file specified, should return full path to file
-        """
-        config = project_config
-        config['units'] = 'user_units.txt'
-
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder), 'local_csv')
-
-        actual = config_handler.read_unit_definitions()
-        expected = [
-            "blobbiness = m^3 * 10^6",
-            "people = [people]",
-            "mcm = 10^6 * m^3",
-            "GBP=[currency]",
-        ]
-        assert actual == expected
-
-
 class TestReadState:
 
     def test_read_state(self, get_handler):
@@ -575,11 +534,11 @@ class TestScenarios:
     possible to import/edit/write data.
     """
     def test_read_scenario_definition(self, setup_folder_structure, get_handler,
-                                      project_config):
+                                      sample_scenarios):
         """Should read a scenario definition
         """
-        expected = project_config['scenarios'][1]
-        actual = get_handler.read_scenario_definition(project_config['scenarios'][1]['name'])
+        expected = sample_scenarios[1]
+        actual = get_handler.read_scenario_definition(expected['name'])
         assert actual == expected
 
     def test_missing_scenario_definition(self, setup_folder_structure, get_handler):
@@ -826,8 +785,8 @@ class TestNarratives:
         assert "Narrative 'missing' has no data defined" in str(ex)
 
     def test_read_narrative_definition(self, setup_folder_structure, get_handler,
-                                       project_config):
-        expected = project_config['narratives'][0]
+                                       sample_narratives):
+        expected = sample_narratives[0]
         actual = get_handler.read_narrative(expected['name'])
         assert actual == expected
 
@@ -1170,7 +1129,7 @@ class TestWarmStart:
     """If re-running a ModelRun with warm-start specified explicitly, results should be checked
     for existence and left in place.
     """
-    def test_prepare_warm_start(self, setup_folder_structure, project_config):
+    def test_prepare_warm_start(self, setup_folder_structure):
         """ Confirm that the warm start copies previous model results
         and reports the correct next timestep
         """
@@ -1228,8 +1187,7 @@ class TestWarmStart:
         assert 'output_electricity_demand_timestep_2025.csv' in warm_start_results
         assert 'output_electricity_demand_timestep_2030.csv' not in warm_start_results
 
-    def test_prepare_warm_start_other_local_storage(self, setup_folder_structure,
-                                                    project_config):
+    def test_prepare_warm_start_other_local_storage(self, setup_folder_structure):
         """ Confirm that the warm start does not work when previous
         results were saved using a different local storage type
         """
@@ -1275,8 +1233,7 @@ class TestWarmStart:
         # should continue
         assert current_timestep is None
 
-    def test_prepare_warm_start_no_previous_results(self, setup_folder_structure,
-                                                    project_config):
+    def test_prepare_warm_start_no_previous_results(self, setup_folder_structure):
         """ Confirm that the warm start does not work when no previous
         results were saved
         """
@@ -1314,8 +1271,7 @@ class TestWarmStart:
         os.makedirs(current_results_path, exist_ok=True)
         assert len(os.listdir(current_results_path)) == 0
 
-    def test_prepare_warm_start_no_previous_modelrun(self, setup_folder_structure,
-                                                     project_config):
+    def test_prepare_warm_start_no_previous_modelrun(self, setup_folder_structure):
         """ Confirm that the warm start does not work when no previous
         modelrun occured
         """

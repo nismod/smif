@@ -473,6 +473,7 @@ def test_delete_sector_model(client, get_sector_model):
 
     assert response.status_code == 200
 
+
 def test_get_scenarios(client, get_scenario):
     """GET all scenarios
     """

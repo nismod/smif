@@ -155,7 +155,7 @@ class DataInterface(metaclass=ABCMeta):
 
     # region Sector models
     @abstractmethod
-    def read_sector_models(self):
+    def read_sector_models(self, skip_coords=False):
         """Read all sector models
 
         sector_models.yml
@@ -168,7 +168,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_sector_model(self, sector_model_name):
+    def read_sector_model(self, sector_model_name, skip_coords=False):
         """Read a sector model
 
         Arguments
@@ -221,12 +221,12 @@ class DataInterface(metaclass=ABCMeta):
 
     # region Strategies
     @abstractmethod
-    def read_strategies(self, model_run_name):
+    def read_strategies(self, modelrun_name):
         """Read strategies for a given model_run
 
         Arguments
         ---------
-        model_run_name : str
+        modelrun_name : str
             Name of the model run for which to read the strategies
 
         Returns
@@ -237,12 +237,12 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_strategies(self, model_run_name, strategies):
+    def write_strategies(self, modelrun_name, strategies):
         """Write strategies for a given model_run
 
         Arguments
         ---------
-        model_run_name : str
+        modelrun_name : str
             Name of the model run for which to read the strategies
         strategies : list[dict]
             List of strategy definitions
@@ -263,6 +263,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
     # endregion
 
+    # region Initial Conditions
     @abstractmethod
     def read_initial_conditions(self, sector_model_name):
         """Read historical interventions for `sector_model_name`
@@ -454,7 +455,7 @@ class DataInterface(metaclass=ABCMeta):
 
     # region Scenarios
     @abstractmethod
-    def read_scenarios(self):
+    def read_scenarios(self, skip_coords=False):
         """Read scenarios from project configuration
 
         Returns
@@ -465,7 +466,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_scenario(self, scenario_name):
+    def read_scenario(self, scenario_name, skip_coords=False):
         """Read a scenario
 
         Arguments
@@ -628,7 +629,7 @@ class DataInterface(metaclass=ABCMeta):
 
     # region Narratives
     @abstractmethod
-    def read_narratives(self):
+    def read_narratives(self, skip_coords=False):
         """Read narratives from project configuration
 
         Returns
@@ -639,7 +640,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_narrative(self, narrative_name):
+    def read_narrative(self, narrative_name, skip_coords=False):
         """Read a certain narrative
 
         Arguments
@@ -986,6 +987,20 @@ class DataInterface(metaclass=ABCMeta):
         if missing:
             raise DataNotFoundError(
                 "Missing values for {}s: {}".format(meta_name, list(missing)))
+
+    @staticmethod
+    def _skip_coords(config, keys):
+        """Given a config dict and list of top-level keys for lists of specs,
+        delete coords from each spec in each list.
+        """
+        for key in keys:
+            for spec in config[key]:
+                try:
+                    del spec['coords']
+                except KeyError:
+                    pass
+        return config
+
     # endregion
 
 
