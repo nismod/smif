@@ -986,6 +986,20 @@ class DataInterface(metaclass=ABCMeta):
         if missing:
             raise DataNotFoundError(
                 "Missing values for {}s: {}".format(meta_name, list(missing)))
+
+    @staticmethod
+    def _skip_coords(config, keys):
+        """Given a config dict and list of top-level keys for lists of specs,
+        delete coords from each spec in each list.
+        """
+        for key in keys:
+            for spec in config[key]:
+                try:
+                    del spec['coords']
+                except KeyError:
+                    pass
+        return config
+
     # endregion
 
 

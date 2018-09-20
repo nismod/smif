@@ -194,30 +194,35 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Sector models
-    def read_sector_models(self):
+    def read_sector_models(self, skip_coords=False):
         names = self._read_filenames_in_dir(self.file_dir['sector_models'], '.yml')
-        sector_models = [self.read_sector_model(name) for name in names]
+        sector_models = [self.read_sector_model(name, skip_coords) for name in names]
         return sector_models
 
     @check_exists(dtype='sector_model')
-    def read_sector_model(self, sector_model_name):
+    def read_sector_model(self, sector_model_name, skip_coords=False):
         sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
-        self._set_list_coords(sector_model['inputs'])
-        self._set_list_coords(sector_model['outputs'])
-        self._set_list_coords(sector_model['parameters'])
+        if not skip_coords:
+            self._set_list_coords(sector_model['inputs'])
+            self._set_list_coords(sector_model['outputs'])
+            self._set_list_coords(sector_model['parameters'])
         return sector_model
 
     @check_not_exists(dtype='sector_model')
     def write_sector_model(self, sector_model):
+        sector_model = copy.deepcopy(sector_model)
         if sector_model['interventions']:
             self.logger.warning("Ignoring interventions")
             sector_model['interventions'] = []
+
+        sector_model = self._skip_coords(sector_model, ('inputs', 'outputs', 'parameters'))
 
         self._write_yaml_file(
             self.file_dir['sector_models'], sector_model['name'], sector_model)
 
     @check_exists(dtype='sector_model')
     def update_sector_model(self, sector_model_name, sector_model):
+        sector_model = copy.deepcopy(sector_model)
         # ignore interventions and initial conditions which the app doesn't handle
         if sector_model['interventions'] or sector_model['initial_conditions']:
             old_sector_model = self._read_yaml_file(
@@ -230,6 +235,8 @@ class DatafileInterface(DataInterface):
         if sector_model['initial_conditions']:
             self.logger.warning("Ignoring initial conditions write")
             sector_model['initial_conditions'] = old_sector_model['initial_conditions']
+
+        sector_model = self._skip_coords(sector_model, ('inputs', 'outputs', 'parameters'))
 
         self._write_yaml_file(
             self.file_dir['sector_models'], sector_model['name'], sector_model)
@@ -520,7 +527,6 @@ class DatafileInterface(DataInterface):
     def _write_dimension_file(self, filename, data):
         # lru_cache may now be invalid, so clear it
         self._read_dimension_file.cache_clear()
-
         filepath = os.path.join(self.file_dir['dimensions'], filename)
         _, ext = os.path.splitext(filename)
         if ext in ('.yml', '.yaml'):
@@ -1226,7 +1232,12 @@ def _nested_config_dtypes():
 
 
 def _assert_no_mismatch(dtype, name, obj, secondary=None):
-    if obj is not None and 'name' in obj and name != obj['name']:
+    try:
+        iter(obj)
+    except TypeError:
+        return
+
+    if 'name' in obj and name != obj['name']:
         raise DataMismatchError("%s name '%s' must match '%s'" % (dtype, name, obj['name']))
 
 

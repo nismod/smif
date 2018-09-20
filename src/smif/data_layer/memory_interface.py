@@ -64,11 +64,19 @@ class MemoryInterface(DataInterface):
     # endregion
 
     # region Sector models
-    def read_sector_models(self):
+    def read_sector_models(self, skip_coords=False):
+        if skip_coords:
+            return [
+                self._skip_coords(m, ('inputs', 'outputs', 'parameters'))
+                for m in self._sector_models.values()
+            ]
         return list(self._sector_models.values())
 
-    def read_sector_model(self, sector_model_name):
-        return self._sector_models[sector_model_name]
+    def read_sector_model(self, sector_model_name, skip_coords=False):
+        m = self._sector_models[sector_model_name]
+        if skip_coords:
+            return self._skip_coords(m, ('inputs', 'outputs', 'parameters'))
+        return m
 
     def write_sector_model(self, sector_model):
         self._sector_models[sector_model['name']] = sector_model

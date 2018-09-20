@@ -28,8 +28,8 @@ def init_handler(request, setup_empty_folder_structure):
 
 @fixture
 def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies,
-            unit_definitions, dimension, source_spec, sink_spec, coefficients, scenario,
-            narrative):
+            unit_definitions, dimension, sample_dimensions, source_spec, sink_spec,
+            coefficients, scenario, narrative):
     handler = init_handler
     handler.write_model_run(model_run)
     handler.write_sos_model(get_sos_model)
@@ -38,6 +38,8 @@ def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies
     # could write state
     handler.write_unit_definitions(unit_definitions)
     handler.write_dimension(dimension)
+    for dim in sample_dimensions:
+        handler.write_dimension(dim)
     handler.write_coefficients(source_spec, sink_spec, coefficients)
     handler.write_scenario(scenario)
     handler.write_narrative(narrative)
@@ -233,9 +235,21 @@ class TestSectorModel():
         expected = [get_sector_model]
         assert actual == expected
 
+    def test_read_sector_models_no_coords(self, handler, get_sector_model,
+                                          get_sector_model_no_coords):
+        actual = handler.read_sector_models(skip_coords=True)
+        expected = [get_sector_model_no_coords]
+        assert actual == expected
+
     def test_read_sector_model(self, handler, get_sector_model):
         actual = handler.read_sector_model(get_sector_model['name'])
         expected = get_sector_model
+        assert actual == expected
+
+    def test_read_sector_model_no_coords(self, handler, get_sector_model,
+                                         get_sector_model_no_coords):
+        actual = handler.read_sector_model(get_sector_model['name'], skip_coords=True)
+        expected = get_sector_model_no_coords
         assert actual == expected
 
     def test_write_sector_model(self, handler, get_sector_model):
@@ -249,7 +263,7 @@ class TestSectorModel():
     def test_update_sector_model(self, handler, get_sector_model):
         name = get_sector_model['name']
         expected = copy(get_sector_model)
-        expected['inputs'] = ['energy_use']
+        expected['description'] = ['Updated description']
         handler.update_sector_model(name, expected)
         actual = handler.read_sector_model(name)
         assert actual == expected
@@ -296,25 +310,26 @@ class TestUnits():
 class TestDimensions():
     """Read/write/update/delete dimensions
     """
-    def test_read_dimensions(self, handler, dimension):
-        assert handler.read_dimensions() == [dimension]
+    def test_read_dimensions(self, handler, dimension, sample_dimensions):
+        assert handler.read_dimensions() == [dimension] + sample_dimensions
 
     def test_read_dimension(self, handler, dimension):
         assert handler.read_dimension('category') == dimension
 
-    def test_write_dimension(self, handler, dimension):
+    def test_write_dimension(self, handler, dimension, sample_dimensions):
         another_dimension = {'name': '3rd', 'elements': ['a', 'b']}
         handler.write_dimension(another_dimension)
-        assert handler.read_dimensions() == [dimension, another_dimension]
+        assert handler.read_dimensions() == [dimension] + sample_dimensions + \
+                                            [another_dimension]
 
-    def test_update_dimension(self, handler, dimension):
+    def test_update_dimension(self, handler, dimension, sample_dimensions):
         another_dimension = {'name': 'category', 'elements': [4, 5, 6]}
         handler.update_dimension('category', another_dimension)
-        assert handler.read_dimensions() == [another_dimension]
+        assert handler.read_dimensions() == [another_dimension] + sample_dimensions
 
-    def test_delete_dimension(self, handler):
+    def test_delete_dimension(self, handler, sample_dimensions):
         handler.delete_dimension('category')
-        assert handler.read_dimensions() == []
+        assert handler.read_dimensions() == sample_dimensions
 
 
 class TestCoefficients():
