@@ -620,20 +620,27 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Scenarios
-    def read_scenarios(self):
+    def read_scenarios(self, skip_coords=False):
         project_config = self.read_project_config()
-        return project_config['scenarios']
+        scenarios = copy.deepcopy(project_config['scenarios'])
+        if not skip_coords:
+            for scenario in scenarios:
+                self._set_list_coords(scenario['provides'])
+        return scenarios
 
     @check_exists(dtype='scenario')
-    def read_scenario(self, scenario_name):
+    def read_scenario(self, scenario_name, skip_coords=False):
         project_config = self.read_project_config()
-        scenario = _pick_from_list(project_config['scenarios'], scenario_name)
-        self._set_list_coords(scenario['provides'])
+        scenario = copy.deepcopy(_pick_from_list(project_config['scenarios'], scenario_name))
+        if not skip_coords:
+            self._set_list_coords(scenario['provides'])
         return scenario
 
     @check_not_exists(dtype='scenario')
     def write_scenario(self, scenario):
         project_config = self.read_project_config()
+        scenario = copy.deepcopy(scenario)
+        scenario = self._skip_coords(scenario, ['provides'])
         try:
             project_config['scenarios'].append(scenario)
         except KeyError:
@@ -643,6 +650,8 @@ class DatafileInterface(DataInterface):
     @check_exists(dtype='scenario')
     def update_scenario(self, scenario_name, scenario):
         project_config = self.read_project_config()
+        scenario = copy.deepcopy(scenario)
+        scenario = self._skip_coords(scenario, ['provides'])
         idx = _idx_in_list(project_config['scenarios'], scenario_name)
         project_config['scenarios'][idx] = scenario
         self._write_project_config(project_config)
@@ -734,19 +743,29 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Narratives
-    def read_narratives(self):
+    def read_narratives(self, skip_coords=False):
         # Find filename for this narrative
         project_config = self.read_project_config()
-        return project_config['narratives']
+        narratives = copy.deepcopy(project_config['narratives'])
+        if not skip_coords:
+            for narrative in narratives:
+                self._set_list_coords(narrative['provides'])
+        return narratives
 
     @check_exists(dtype='narrative')
-    def read_narrative(self, narrative_name):
+    def read_narrative(self, narrative_name, skip_coords=False):
         project_config = self.read_project_config()
-        return _pick_from_list(project_config['narratives'], narrative_name)
+        narrative = copy.deepcopy(
+            _pick_from_list(project_config['narratives'], narrative_name))
+        if not skip_coords:
+            self._set_list_coords(narrative['provides'])
+        return narrative
 
     @check_not_exists(dtype='narrative')
     def write_narrative(self, narrative):
         project_config = self.read_project_config()
+        narrative = copy.deepcopy(narrative)
+        narrative = self._skip_coords(narrative, ['provides'])
         try:
             project_config['narratives'].append(narrative)
         except KeyError:
@@ -756,6 +775,8 @@ class DatafileInterface(DataInterface):
     @check_exists(dtype='narrative')
     def update_narrative(self, narrative_name, narrative):
         project_config = self.read_project_config()
+        narrative = copy.deepcopy(narrative)
+        narrative = self._skip_coords(narrative, ['provides'])
         idx = _idx_in_list(project_config['narratives'], narrative_name)
         project_config['narratives'][idx] = narrative
         self._write_project_config(project_config)

@@ -1,4 +1,4 @@
-from copy import copy
+from copy import copy, deepcopy
 
 import numpy as np
 from pytest import fixture, mark, param, raises
@@ -102,13 +102,17 @@ def coefficients():
 
 
 @fixture
-def scenario():
+def scenario(sample_dimensions):
     return {
         'name': 'mortality',
         'description': 'The annual mortality rate in UK population',
         'provides': [
             {
                 'name': 'mortality',
+                'dims': ['lad'],
+                'coords': {
+                    'lad': sample_dimensions[0]['elements']
+                },
                 'dtype': 'float',
             }
         ],
@@ -125,6 +129,17 @@ def scenario():
 
 
 @fixture
+def scenario_no_coords(scenario):
+    scenario = deepcopy(scenario)
+    for spec in scenario['provides']:
+        try:
+            del spec['coords']
+        except KeyError:
+            pass
+    return scenario
+
+
+@fixture
 def narrative():
     return {
         'name': 'technology',
@@ -132,6 +147,13 @@ def narrative():
         'provides': [
             {
                 'name': 'smart_meter_savings',
+                'dims': ['technology_type'],
+                'coords': {
+                    'technology_type': [
+                        {'name': 'water_meter'},
+                        {'name': 'electricity_meter'},
+                    ]
+                },
                 'dtype': 'float',
             }
         ],
@@ -145,6 +167,17 @@ def narrative():
             }
         ]
     }
+
+
+@fixture
+def narrative_no_coords(narrative):
+    narrative = deepcopy(narrative)
+    for spec in narrative['provides']:
+        try:
+            del spec['coords']
+        except KeyError:
+            pass
+    return narrative
 
 
 @fixture
@@ -353,14 +386,21 @@ class TestScenarios():
     def test_read_scenarios(self, scenario, handler):
         assert handler.read_scenarios() == [scenario]
 
+    def test_read_scenarios_no_coords(self, scenario_no_coords, handler):
+        assert handler.read_scenarios(skip_coords=True) == [scenario_no_coords]
+
     def test_read_scenario(self, scenario, handler):
         assert handler.read_scenario('mortality') == scenario
+
+    def test_read_scenario_no_coords(self, scenario_no_coords, handler):
+        assert handler.read_scenario('mortality', skip_coords=True) == scenario_no_coords
 
     def test_write_scenario(self, scenario, handler):
         another_scenario = {
             'name': 'fertility',
             'description': 'Projected annual fertility rates',
-            'variants': []
+            'variants': [],
+            'provides': []
         }
         handler.write_scenario(another_scenario)
         assert handler.read_scenarios() == [scenario, another_scenario]
@@ -369,7 +409,8 @@ class TestScenarios():
         another_scenario = {
             'name': 'mortality',
             'description': 'Projected annual mortality rates',
-            'variants': []
+            'variants': [],
+            'provides': []
         }
         handler.update_scenario('mortality', another_scenario)
         assert handler.read_scenarios() == [another_scenario]
@@ -443,14 +484,21 @@ class TestNarratives():
     def test_read_narratives(self, narrative, handler):
         assert handler.read_narratives() == [narrative]
 
+    def test_read_narratives_no_coords(self, narrative_no_coords, handler):
+        assert handler.read_narratives(skip_coords=True) == [narrative_no_coords]
+
     def test_read_narrative(self, narrative, handler):
         assert handler.read_narrative('technology') == narrative
+
+    def test_read_narrative_no_coords(self, narrative_no_coords, handler):
+        assert handler.read_narrative('technology', skip_coords=True) == narrative_no_coords
 
     def test_write_narrative(self, narrative, handler):
         another_narrative = {
             'name': 'policy',
             'description': 'Parameters decribing policy effects on demand',
-            'variants': []
+            'variants': [],
+            'provides': []
         }
         handler.write_narrative(another_narrative)
         assert handler.read_narratives() == [narrative, another_narrative]
@@ -459,7 +507,8 @@ class TestNarratives():
         another_narrative = {
             'name': 'technology',
             'description': 'Technology development, adoption and diffusion',
-            'variants': []
+            'variants': [],
+            'provides': []
         }
         handler.update_narrative('technology', another_narrative)
         assert handler.read_narratives() == [another_narrative]

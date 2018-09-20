@@ -542,6 +542,14 @@ def sample_dimensions(regions_half_squares, remap_months, hourly, annual):
             'description': 'Remapped months to four representative months',
             'elements': remap_months,
         },
+        {
+            'name': 'technology_type',
+            'description': 'Technology dimension for narrative fixture',
+            'elements': [
+                {'name': 'water_meter'},
+                {'name': 'electricity_meter'},
+            ]
+        }
     ]
 
 
