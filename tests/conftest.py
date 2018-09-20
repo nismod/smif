@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-    conftest.py for smif.
+conftest.py for smif.
 
-    Read more about conftest.py under:
-    https://pytest.org/latest/plugins.html
+Read more about conftest.py under:
+https://pytest.org/latest/plugins.html
 """
 from __future__ import absolute_import, division, print_function
 
+import copy
 import json
 import logging
 import os
 
 from pytest import fixture
-from smif.data_layer import DatafileInterface
 from smif.data_layer.load import dump
 
-from .convert.conftest import remap_months
+from .convert.conftest import regions_half_squares, remap_months
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
@@ -53,7 +53,7 @@ def setup_empty_folder_structure(tmpdir_factory):
 
 @fixture
 def setup_folder_structure(setup_empty_folder_structure, oxford_region, remap_months,
-                           annual_intervals, initial_system, planned_interventions):
+                           initial_system, planned_interventions):
     """
 
     Returns
@@ -99,29 +99,7 @@ def setup_folder_structure(setup_empty_folder_structure, oxford_region, remap_mo
     return test_folder
 
 
-@fixture(scope='function')
-def setup_runpy_file(setup_folder_structure):
-    """The python script should contain an instance of SectorModel which wraps
-    the sector model and allows it to be run.
-    """
-    base_folder = setup_folder_structure
-    # Write a file for the water_supply model
-    filename = base_folder.join('models', 'water_supply', '__init__.py')
-    contents = """
-from smif.model.sector_model import SectorModel
-
-class WaterSupplySectorModel(SectorModel):
-    def simulate(self, timestep, data=None):
-        return {self.name: data}
-
-    def extract_obj(self, results):
-        return 0
-
-"""
-    filename.write(contents, ensure=True)
-
-
-@fixture(scope='function')
+@fixture
 def initial_system():
     """Initial system (interventions with build_date)
     """
@@ -130,13 +108,6 @@ def initial_system():
         {'name': 'water_asset_b', 'build_year': 2017},
         {'name': 'water_asset_c', 'build_year': 2017},
     ]
-
-
-@fixture(scope='function')
-def initial_system_bis():
-    """An extra intervention for the initial system
-    """
-    return [{'name': 'water_asset_d', 'build_year': 2017}]
 
 
 @fixture
@@ -148,12 +119,12 @@ def parameters():
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
             'default_value': 3,
-            'units': '%'
+            'unit': '%'
         }
     ]
 
 
-@fixture(scope='function')
+@fixture
 def planned_interventions():
     """Return pre-specified planning intervention data
     """
@@ -179,53 +150,7 @@ def planned_interventions():
     ]
 
 
-@fixture(scope='function')
-def water_inputs():
-    return [
-        {
-            'name': 'reservoir pumpiness',
-            'spatial_resolution': 'LSOA',
-            'temporal_resolution': 'annual',
-            'units': 'magnitude'
-        }
-    ]
-
-
-@fixture(scope='function')
-def water_outputs():
-    return [
-        {
-            'name': 'storage_state',
-            'spatial_resolution': 'national',
-            'temporal_resolution': 'annual',
-            'units': 'Ml'
-        },
-        {
-            'name': 'storage_blobby',
-            'spatial_resolution': 'national',
-            'temporal_resolution': 'annual',
-            'units': 'Ml'
-        },
-        {
-            'name': 'total_water_demand',
-            'spatial_resolution': 'national',
-            'temporal_resolution': 'annual',
-            'units': 'Ml'
-        }
-    ]
-
-
 @fixture
-def annual_intervals():
-    return [
-        {
-            "name": '1',
-            "interval": [["P0Y", "P1Y"]],
-        }
-    ]
-
-
-@fixture(scope='session')
 def oxford_region():
     data = {
         "type": "FeatureCollection",
@@ -286,55 +211,7 @@ def oxford_region():
     return data
 
 
-@fixture(scope='function')
-def gb_ni_regions():
-    data = {
-        "type": "FeatureCollection",
-        "crs": {
-            "type": "name",
-            "properties": {
-                "name": "urn:ogc:def:crs:EPSG::27700"
-            }
-        },
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "name": "GB"
-                },
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [
-                        [
-                            [0, 1],
-                            [0, 1.1],
-                            [2, 3]
-                        ]
-                    ]
-                }
-            },
-            {
-                "type": "Feature",
-                "properties": {
-                    "name": "NI"
-                },
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [
-                        [
-                            [2, 3],
-                            [2, 3.2],
-                            [4, 5]
-                        ]
-                    ]
-                }
-            },
-        ]
-    }
-    return data
-
-
-@fixture(scope='function')
+@fixture
 def water_interventions_abc():
     return [
         {
@@ -388,101 +265,7 @@ def water_interventions_abc():
     ]
 
 
-@fixture(scope='function')
-def project_config():
-    """Return sample project configuration
-    """
-    return {
-        'project_name': 'NISMOD v2.0',
-        'scenarios': [
-            {
-                'name': 'population',
-                'description': 'The annual change in UK population',
-                'provides': [
-                    {
-                        'name': "population_count",
-                        'description': "The count of population",
-                        'dtype': 'int'
-                    },
-                ],
-                'variants': [
-                    {
-                        'name': 'High Population (ONS)',
-                        'description': 'The High ONS Forecast for UK population out to 2050',
-                        'data': {
-                            'population_count': 'population_high.csv',
-                        },
-                    },
-                    {
-                        'name': 'Low Population (ONS)',
-                        'description': 'The Low ONS Forecast for UK population out to 2050',
-                        'data': {
-                            'population_count': 'population_low.csv',
-                        },
-                    },
-                ],
-            },
-        ],
-        'narratives': [
-            {
-                'name': 'technology',
-                'description': 'Defines the rate and nature of technological change',
-                'provides': [],
-                'variants': [
-                    {
-                        'name': 'Energy Demand - High Tech',
-                        'description': 'High penetration of SMART technology on the demand ' +
-                                       'side',
-                        'data': {
-                            '': 'energy_demand_high_tech.yml',
-                        }
-                    },
-                ],
-            },
-            {
-                'name': 'governance',
-                'description': 'Defines the nature of governance and influence upon decisions',
-                'provides': [],
-                'variants': [
-                    {
-                        'name': 'Central Planning',
-                        'description': 'Stronger role for central government in planning ' +
-                                       'and regulation, less emphasis on market-based ' +
-                                       'solutions',
-                        'data': {
-                            '': 'central_planning.yml',
-                        },
-                    },
-                ],
-            },
-        ],
-        'dimensions': [
-            {
-                'name': 'lad',
-                'description': 'Local authority districts for the UK',
-                'elements': 'test_region.geojson',
-            },
-            {
-                'name': 'hourly',
-                'description': 'The 8760 hours in the year named by hour',
-                'elements': 'hourly.yml',
-            },
-            {
-                'name': 'annual',
-                'description': 'One annual timestep, used for aggregate yearly data',
-                'elements': 'annual.yml',
-            },
-            {
-                'name': 'remap_months',
-                'description': 'Remapped months to four representative months',
-                'elements': 'remap.yml',
-            },
-        ],
-        'units': 'user_units.txt',
-    }
-
-
-@fixture(scope='function')
+@fixture
 def model_run():
     """Return sample model_run
     """
@@ -499,10 +282,14 @@ def model_run():
         'scenarios': {
             'population': 'High Population (ONS)'
         },
-        'strategies': [{'type': 'pre-specified-planning',
-                        'description': 'description of the strategy',
-                        'model_name': 'energy_supply',
-                        'filename': 'energy_supply.csv'}],
+        'strategies': [
+            {
+                'type': 'pre-specified-planning',
+                'name': 'energy_supply',
+                'description': 'description of the strategy',
+                'model_name': 'energy_supply',
+            }
+        ],
         'narratives': {
             'technology': [
                 'Energy Demand - High Tech'
@@ -514,7 +301,7 @@ def model_run():
     }
 
 
-@fixture(scope='function')
+@fixture
 def get_sos_model():
     """Return sample sos_model
     """
@@ -549,8 +336,8 @@ def get_sos_model():
     }
 
 
-@fixture(scope='function')
-def get_sector_model():
+@fixture
+def get_sector_model(annual, hourly, regions_half_squares):
     """Return sample sector_model
     """
     return {
@@ -562,28 +349,38 @@ def get_sector_model():
         'inputs': [
             {
                 'name': 'population',
-                'spatial_resolution': 'lad',
-                'temporal_resolution': 'annual',
-                'units': 'people'
+                'dims': ['lad', 'annual'],
+                'coords': {
+                    'lad': regions_half_squares,
+                    'annual': annual
+                },
+                'absolute_range': [0, int(1e12)],
+                'expected_range': [0, 100000],
+                'unit': 'people'
             }
         ],
         'outputs': [
             {
                 'name': 'gas_demand',
-                'spatial_resolution': 'lad',
-                'temporal_resolution': 'hourly',
-                'units': 'GWh'
+                'dims': ['lad', 'hourly'],
+                'coords': {
+                    'lad': regions_half_squares,
+                    'hourly': hourly
+                },
+                'absolute_range': [0, float('inf')],
+                'expected_range': [0.01, 10],
+                'unit': 'GWh'
             }
         ],
         'parameters': [
             {
-                'absolute_range': '(0.5, 2)',
-                'default_value': 1,
+                'name': 'assump_diff_floorarea_pp',
                 'description': "Difference in floor area per person"
                                "in end year compared to base year",
-                'name': 'assump_diff_floorarea_pp',
-                'suggested_range': '(0.5, 2)',
-                'units': 'percentage'
+                'absolute_range': [0, float('inf')],
+                'expected_range': [0.5, 2],
+                'default': 1,
+                'unit': 'percentage'
             }
         ],
         'interventions': [],
@@ -591,36 +388,114 @@ def get_sector_model():
     }
 
 
-@fixture(scope='function')
-def get_scenario_set():
+@fixture
+def get_sector_model_no_coords(get_sector_model):
+    model = copy.deepcopy(get_sector_model)
+    for spec_group in ('inputs', 'outputs', 'parameters'):
+        for spec in model[spec_group]:
+            try:
+                del spec['coords']
+            except KeyError:
+                pass
+    return model
+
+
+@fixture
+def sample_scenarios():
     """Return sample scenario_set
     """
-    return {
-        "description": "Growth in UK economy",
-        "name": "economy",
-        "facets": {"name": "economy_low",
-                   "description": "a description"}
-    }
+    return [
+        {
+            'name': 'population',
+            'description': 'The annual change in UK population',
+            'provides': [
+                {
+                    'name': "population_count",
+                    'description': "The count of population",
+                    'dtype': 'int'
+                },
+            ],
+            'variants': [
+                {
+                    'name': 'High Population (ONS)',
+                    'description': 'The High ONS Forecast for UK population out to 2050',
+                    'data': {
+                        'population_count': 'population_high.csv',
+                    },
+                },
+                {
+                    'name': 'Low Population (ONS)',
+                    'description': 'The Low ONS Forecast for UK population out to 2050',
+                    'data': {
+                        'population_count': 'population_low.csv',
+                    },
+                },
+            ],
+        },
+    ]
 
 
-@fixture(scope='function')
+@fixture
 def get_scenario():
     """Return sample scenario
     """
     return {
-        "description": "Central Economy for the UK (High)",
-        "name": "Central Economy (High)",
-        "facets": [
+        "name": "Economy",
+        "description": "Economic projections for the UK",
+        "provides": [
             {
-                "filename": "economy_low.csv",
-                "name": "economy_low",
-                "spatial_resolution": "national",
-                "temporal_resolution": "annual",
-                "units": "million people"
+                'name': "gva",
+                'description': "GVA",
+                'dtype': "float",
+                'unit': "million GBP"
             }
         ],
-        "scenario_set": "economy"
+        "variants": [
+            {
+                "name": "Central Economy (High)",
+                "data": {
+                    "gva": "economy_high.csv",
+                }
+            }
+        ]
     }
+
+
+@fixture
+def sample_narratives():
+    """Return sample narratives
+    """
+    return [
+        {
+            'name': 'technology',
+            'description': 'Defines the rate and nature of technological change',
+            'provides': [],
+            'variants': [
+                {
+                    'name': 'Energy Demand - High Tech',
+                    'description': 'High penetration of SMART technology on the demand side',
+                    'data': {
+                        '': 'energy_demand_high_tech.yml',
+                    }
+                },
+            ],
+        },
+        {
+            'name': 'governance',
+            'description': 'Defines the nature of governance and influence upon decisions',
+            'provides': [],
+            'variants': [
+                {
+                    'name': 'Central Planning',
+                    'description': 'Stronger role for central government in planning and ' +
+                                   'regulation, less emphasis on market-based solutions',
+                    'data': {
+                        '': 'central_planning.yml',
+                    },
+                },
+            ],
+        },
+    ]
 
 
 @fixture(scope='function')
@@ -628,72 +503,46 @@ def get_narrative():
     """Return sample narrative
     """
     return {
-        "description": "High penetration of SMART technology on the demand side",
-        "filename": "high_tech_dsm.yml",
-        "name": "High Tech Demand Side Management",
-        "narrative_set": "technology"
+        "name": "technology",
+        "provides": [],
+        "variants": [
+            {
+                "name": "High Tech Demand Side Management",
+                "description": "High penetration of SMART technology on the demand side",
+                "data": {
+                    '': "high_tech_dsm.yml",
+                }
+            }
+        ]
     }
-
-
-@fixture(scope='function')
-def get_scenario_data():
-    """Return sample scenario_data
-    """
-    return [
-        {
-            'value': 100,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 1,
-            'year': 2015
-        },
-        {
-            'value': 150,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 1,
-            'year': 2016
-        },
-        {
-            'value': 200,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 1,
-            'year': 2017
-        }
-    ]
-
-
-@fixture(scope='function')
-def narrative_data():
-    """Return sample narrative_data
-    """
-    return {
-        'energy_demand': {
-            'smart_meter_savings': 8
-        },
-        'water_supply': {
-            'clever_water_meter_savings': 8
-        }
-    }
-
-
-@fixture(scope='function')
-def get_handler(setup_folder_structure, project_config):
-    basefolder = setup_folder_structure
-    project_config_path = os.path.join(
-        str(basefolder), 'config', 'project.yml')
-    dump(project_config, project_config_path)
-
-    return DatafileInterface(str(basefolder), 'local_binary')
 
 
 @fixture
-def get_narrative_obj():
-    narrative = ('Energy Demand - High Tech',
-                 'A description',
-                 'technology')
-    return narrative
+def sample_dimensions(regions_half_squares, remap_months, hourly, annual):
+    """Return sample dimensions
+    """
+    return [
+        {
+            'name': 'lad',
+            'description': 'Local authority districts for the UK',
+            'elements': regions_half_squares,
+        },
+        {
+            'name': 'hourly',
+            'description': 'The 8760 hours in the year named by hour',
+            'elements': hourly
+        },
+        {
+            'name': 'annual',
+            'description': 'One annual timestep, used for aggregate yearly data',
+            'elements': annual,
+        },
+        {
+            'name': 'remap_months',
+            'description': 'Remapped months to four representative months',
+            'elements': remap_months,
+        },
+    ]
 
 
 @fixture
@@ -713,24 +562,21 @@ def get_dimension():
 
 
 @fixture
-def remap_months():
-    """Remapping four representative months to months across the year
-
-    In this case we have a model which represents the seasons through
-    the year using one month for each season. We then map the four
-    model seasons 1, 2, 3 & 4 onto the months throughout the year that
-    they represent.
-
-    The data will be presented to the model using the four time intervals,
-    1, 2, 3 & 4. When converting to hours, the data will be replicated over
-    the year.  When converting from hours to the model time intervals,
-    data will be averaged and aggregated.
-
-    """
-    data = [
-        {'name': 'cold_month', 'interval': [['P0M', 'P1M'], ['P1M', 'P2M'], ['P11M', 'P12M']]},
-        {'name': 'spring_month', 'interval': [['P2M', 'P3M'], ['P3M', 'P4M'], ['P4M', 'P5M']]},
-        {'name': 'hot_month', 'interval': [['P5M', 'P6M'], ['P6M', 'P7M'], ['P7M', 'P8M']]},
-        {'name': 'fall_month', 'interval': [['P8M', 'P9M'], ['P9M', 'P10M'], ['P10M', 'P11M']]}
+def hourly():
+    return [
+        {
+            'name': str(n),
+            'interval': [['PT{}H'.format(n), 'PT{}H'.format(n+1)]]
+        }
+        for n in range(8)  # should be 8760
     ]
-    return data
+
+
+@fixture
+def annual():
+    return [
+        {
+            'name': '1',
+            'interval': [['PT0H', 'PT8760H']]
+        }
+    ]
