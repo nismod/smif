@@ -13,7 +13,6 @@ import SectorModelConfigForm from 'components/ConfigForm/SectorModelConfigForm.j
 class SectorModelConfig extends Component {
     constructor(props) {
         super(props)
-        this.init = true
 
         this.saveSectorModel = this.saveSectorModel.bind(this)
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
@@ -41,6 +40,7 @@ class SectorModelConfig extends Component {
     saveSectorModel(SectorModel) {
         const { dispatch } = this.props
         dispatch(saveSectorModel(SectorModel))
+
         this.returnToPreviousPage()
     }
 
@@ -56,14 +56,6 @@ class SectorModelConfig extends Component {
         )
     }
 
-    renderError() {
-        return (
-            <div className="alert alert-danger">
-                Error
-            </div>
-        )
-    }
-
     renderSectorModelConfig(sector_model, sos_models, dimensions) {
         return (
             <div key={sector_model.name}>
@@ -75,10 +67,9 @@ class SectorModelConfig extends Component {
     render () {
         const {sector_model, sos_models, dimensions, isFetching} = this.props
 
-        if (isFetching && this.init) {
+        if (isFetching) {
             return this.renderLoading()
         } else {
-            this.init = false
             return this.renderSectorModelConfig(sector_model, sos_models, dimensions)
         }
     }
