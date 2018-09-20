@@ -227,7 +227,7 @@ class SpecList extends Component {
                                             value={this.state.spec.name} 
                                             onChange={this.handleFormInput}
                                             autoFocus 
-                                        
+                                            required
                                         />
                                     </div>
                                     <div className="col">
@@ -239,6 +239,7 @@ class SpecList extends Component {
                                             name="description" 
                                             value={this.state.spec.description} 
                                             onChange={this.handleFormInput}
+                                            required
                                         />
                                     </div>
                                 </div>
@@ -272,6 +273,7 @@ class SpecList extends Component {
                                             name='default' 
                                             value={this.state.spec.default} 
                                             onChange={this.handleFormInput} 
+                                            required
                                         />
                                     </div>
                                     <div className="col">
@@ -283,6 +285,7 @@ class SpecList extends Component {
                                             name="unit" 
                                             value={this.state.spec.unit} 
                                             onChange={this.handleFormInput}
+                                            required
                                         />
                                     </div>
                                     <div className="col">
@@ -294,6 +297,7 @@ class SpecList extends Component {
                                             name='dtype' 
                                             value={this.state.spec.dtype} 
                                             onChange={this.handleFormInput}
+                                            required
                                         />
                                     </div>
                                 </div>
