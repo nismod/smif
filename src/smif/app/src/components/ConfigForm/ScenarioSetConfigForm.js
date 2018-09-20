@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import Popup from 'components/ConfigForm/General/Popup.js'
-import PropertyList from 'components/ConfigForm/General/PropertyList.js'
+import SpecList from 'components/ConfigForm/General/SpecList.js'
 import ScenarioConfigForm from 'components/ConfigForm/ScenarioSet/ScenarioConfigForm.js'
 import FacetConfigForm from 'components/ConfigForm/ScenarioSet/FacetConfigForm.js'
 import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
@@ -309,7 +309,7 @@ class ScenarioSetConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Facets</div>
                     <div className="card-body">
-                        <PropertyList itemsName="facets" items={scenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.openDeletePopup} />
+                        <SpecList itemsName="facets" items={scenarioSet.facets} columns={{name: 'Name', description: 'Description'}} editButton={true} deleteButton={true} onEdit={this.openEditFacetPopup} onDelete={this.openDeletePopup} />
                         <input id='btn_add_facet' className="btn btn-secondary btn-lg btn-block btn-margin" name="createFacet" type="button" value="Add Facet" onClick={this.openAddFacetPopup}/>
                     </div>
                 </div>
@@ -318,7 +318,7 @@ class ScenarioSetConfigForm extends Component {
                     <div className="card">
                         <div className="card-header">Scenarios</div>
                         <div className="card-body">
-                            <PropertyList itemsName="scenarios" items={selectedScenarios} columns={{name: 'Name', description: 'Description'}} enableWarnings={true} rowWarning={scenarioWarnings} editButton={true} deleteButton={true} onEdit={this.openEditScenarioPopup} onDelete={this.openDeletePopup} />
+                            <SpecList itemsName="scenarios" items={selectedScenarios} columns={{name: 'Name', description: 'Description'}} enableWarnings={true} rowWarning={scenarioWarnings} editButton={true} deleteButton={true} onEdit={this.openEditScenarioPopup} onDelete={this.openDeletePopup} />
                             <input id="btn_createScenario" className="btn btn-secondary btn-lg btn-block btn-margin" name="createScenario" type="button" value="Add Scenario" onClick={this.openAddScenarioPopup}/>
                         </div>
                     </div>

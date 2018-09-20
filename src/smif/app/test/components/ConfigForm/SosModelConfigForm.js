@@ -9,7 +9,7 @@ import SosModelConfigForm from '../../../src/components/ConfigForm/SosModelConfi
 import {sos_model, sector_models, scenario_sets, narrative_sets} from '../../helpers.js'
 import {empty_object, empty_array} from '../../helpers.js'
 
-describe('<SosModelConfigForm />', () => {
+describe.skip('<SosModelConfigForm />', () => {
 
     it('renders', () => {
         const correctRender = shallow(<SosModelConfigForm sosModel={sos_model} sectorModels={sector_models} scenarioSets={scenario_sets} narrativeSets={narrative_sets} />)

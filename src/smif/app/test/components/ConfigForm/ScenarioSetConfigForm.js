@@ -10,7 +10,7 @@ import ScenarioSetConfigForm from '../../../src/components/ConfigForm/ScenarioSe
 import {scenario_set, scenarios} from '../../helpers.js'
 import {empty_array} from '../../helpers.js'
 
-describe('<ScenarioSetConfigForm />', () => {
+describe.skip('<ScenarioSetConfigForm />', () => {
 
     it('renders scenario_set and scenarios', () => {
         let wrapper = mount(<ScenarioSetConfigForm
