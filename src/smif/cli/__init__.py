@@ -84,6 +84,7 @@ except ImportError:
     USE_WIN32 = False
 
 from argparse import ArgumentParser
+import sys
 
 import smif
 import smif.cli.log
@@ -320,6 +321,14 @@ def main(arguments=None):
     """
     parser = parse_arguments()
     args = parser.parse_args(arguments)
+
+    def exception_handler(exception_type, exception, traceback, debug_hook=sys.excepthook):
+        if args.verbose:
+            sys.debug_hook(exception_type, exception, traceback)
+        else:
+            print("{}: {}".format(exception_type.__name__, exception))
+
+    sys.excepthook = exception_handler
 
     if 'func' in args:
         args.func(args)
