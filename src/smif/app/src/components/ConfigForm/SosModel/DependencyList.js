@@ -106,7 +106,7 @@ class DependencyList extends Component {
     }
 
     handleDelete(name) {
-        delete this.props.dependencies[name]
+        this.props.dependencies.splice(name, 1)
         this.closeForm()
     }
 
