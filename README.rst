@@ -8,41 +8,118 @@ Simulation Modelling Integration Framework
 
 .. image:: https://travis-ci.org/nismod/smif.svg?branch=master
     :target: https://travis-ci.org/nismod/smif
-    :alt: Build status (Linux/OSX)
+    :alt: Travis CI build status
 
-.. image:: https://ci.appveyor.com/api/projects/status/g1x12yfwb4q9kjad/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/tomalrussell/smif/branch/master
-    :alt: Build status (Windows)
-
-.. image:: https://readthedocs.org/projects/smif/badge/?version=latest
-    :target: http://smif.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
+.. image:: https://ci.appveyor.com/api/projects/status/oxbixm7tca639vaj?svg=true
+    :target: https://ci.appveyor.com/project/willu47/smif)
+    :alt: Appveyor CI Build status
 
 .. image:: https://img.shields.io/codecov/c/github/nismod/smif/master.svg
     :target: https://codecov.io/gh/nismod/smif?branch=master
     :alt: Code Coverage
 
+.. image:: https://img.shields.io/pypi/v/smif.svg
+    :target: https://pypi.python.org/pypi/smif
+    :alt: PyPI package
+
+.. image:: https://img.shields.io/conda/vn/conda-forge/smif.svg
+    :target: https://anaconda.org/conda-forge/smif
+    :alt: conda-forge package
+
 .. image:: https://zenodo.org/badge/67128476.svg
    :target: https://zenodo.org/badge/latestdoi/67128476
+   :alt: Archive
 
-Description
-===========
+.. image:: https://readthedocs.org/projects/smif/badge/?version=latest
+   :target: https://smif.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
-**smif** is a framework for handling the creation of system-of-systems
-models.  The framework handles inputs and outputs, dependencies between models,
-persistence of data and the communication of state across years.
+**smif** is a framework for handling the creation, management and running of 
+system-of-systems models.
 
-This early version of the framework handles simulation models that simulate the
-operation of a system within a year.
-**smif** exposes an interface to a planning module which will allows different
-algorithms to be used against a common API.
+A system-of-systems model is a collection of system simulation models that are 
+coupled through dependencies on data produced by each other.  
+
+**smif** provides a user with the ability to 
+
+- create system-of-systems models
+
+  - add simulation models to a system-of-systems model
+  - create dependencies between models by linking model inputs and outputs
+  - pick from a library of data adapters which perform common data conversions 
+    across dependencies
+  - create user-defined data adapters for more special cases
+  - add scenario data sources and link those to model inputs within a system-of-systems
+
+- add a simulation model to a library of models
+
+  - write a simulation model wrapper which allows **smif** to run the model
+  - define multi-dimensional model inputs, outputs and parameters and appropriate metadata
+
+- run system-of-systems models
+
+  - link concrete scenario data sets to a system-of-systems model
+  - define one or more decision modules that operate across the system-of-systems
+  - define a narrative to parameterise the contained models
+  - persist intermediate data for each model output, and write results to a data store
+    for subsequent analysis
+
+In summary, the framework facilitates the hard coupling of complex systems models into a system-of-systems.
+
+Should I use **smif**?
+======================
+
+There are number of practical limits imposed by the implementation of **smif**.
+These are a result of a conscious design decision that stems from the requirements of
+coupling the infrastructure system models to create the next generation 
+National Infrastructure System Model (NISMOD2).
+
+The discussion below may help you determine whether **smif** is an appropriate
+tool for you.
+
+- **smif** *is not* a scheduler, but has been designed to make performing
+  system-of-systems analyses with a scheduler easier
+
+- Geographical extent is expected to be defined explicitly by a vector geometry 
+
+  - **smif** *is not* optimised for models which simulate on a grid, 
+    though they can be accomodated
+  - **smif** *is* designed for models that read and write spatial data 
+    defined over irregular grids or polygons using any spatial format readable 
+    by `fiona <https://github.com/Toblerity/Fiona>`_
+
+- Inputs and outputs are exchanged at the ‘planning timestep’ resolution
+
+  - **smif** makes a distinction between simulation of operation, which happens 
+    at a model-defined timestep resolution, and application of 
+    planning decisions which happens at a timestep which is synchronised 
+    between all models
+  - **smif** *is not* focussed on tight coupling between models which need to exchange 
+    data at every simulation timestep (running in lockstep)
+  - **smif** *does* accomodate individual models with different spatial and temporal 
+    (and other dimensions') resolutions, by providing data Adaptors to convert from one
+    resolution to another
+
+- **smif** has been designed to support the coupling of bottom-up, engineering 
+  simulation models built to simulate the operation of a given infrastructure system
+
+  - **smif** *provides* a mechanism for passing information from the system-of-systems
+    level (at planning timesteps scale) to the contained models
+  - **smif** *is* appropriate for coupling large complex models that exchange 
+    resources and information at relatively course timesteps
+
+- **smif** is not appropriate for 
+
+  - discrete event system simulation models (e.g. queuing systems)
+  - dynamical system models (e.g. predator/prey)
+  - equilibrium models without explicit timesteps (e.g. Land-Use Transport Interaction)
+  - for simulating 100s of small actor-scale entities within a system-level environment
 
 Setup and Configuration
 =======================
 
 **smif** is written in Python (Python>=3.5) and has a number of dependencies.
 See `requirements.txt` for a full list.
-
 
 Using conda
 -----------
@@ -71,18 +148,6 @@ Finally install ``smif``::
 
     conda install smif
 
-
-GLPK
-----
-
-The optimisation routines currently use GLPK - the GNU Linear Programming Kit.
-To install the **glpk** solver:
-
-* on Linux or Mac OSX, you can likely use a package manager, e.g. ``apt install
-  python-glpk glpk-utils`` for Ubuntu or ``brew install glpk`` for OSX.
-* on Windows, `GLPK for Windows <http://winglpk.sourceforge.net/>`_ provide
-  executables. For 64bit Windows, download and unzip the distribution files then
-  add the ``w64`` folder to your ``PATH``.
 
 fiona, GDAL and GEOS
 --------------------
@@ -176,19 +241,19 @@ Citation
 
 If you use **smif** for research, please cite the software directly:
 
-* Usher, W., Russell, T. and Schoenmakers, R. (2018). smif: simulation modelling
-  integration framework (v0.7.6) [Software]. Available online:
-  https://github.com/nismod/smif
+* Will Usher, Tom Russell, & Roald Schoenmakers. (2018, August 15). nismod/smif 
+  vX.Y.Z (Version vX.Y.Z). Zenodo. http://doi.org/10.5281/zenodo.1309336
 
 Here's an example BibTeX entry::
 
-        @Misc{,
-            author = {Will Usher and Tom Russell and Roald Schoenmakers},
-            title = {{smif}: simulation modelling integration framework (v0.7.6)},
-            year = {2018},
-            url = "https://github.com/nismod/smif",
-            note = {[Online; accessed <today>]}
-        }
+        @misc{smif,
+              author       = {Will Usher and Tom Russell and Roald Schoenmakers},
+              title        = {nismod/smif v0.8.2},
+              month        = Aug,
+              year         = 2018,
+              doi          = {10.5281/zenodo.1309336},
+              url          = {https://doi.org/10.5281/zenodo.1309336}
+            }
 
 
 A word from our sponsors
