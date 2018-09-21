@@ -1,9 +1,22 @@
+"""Schedulers are used to run models.
+
+The defaults provided allow model runs to be scheduled as subprocesses,
+or individual models to be called in series.
+
+Future implementations may interface with common schedulers to queue
+up models to run in parallel and/or distributed.
+"""
+import itertools
+import logging
 import subprocess
 from collections import defaultdict
 from datetime import datetime
 
+import networkx
+from smif.model import ModelOperation
 
-class Scheduler(object):
+
+class ModelRunScheduler(object):
     """The scheduler can run instances of smif as a subprocess
     and can provide information whether the modelrun is running,
     is done or has failed.
@@ -55,17 +68,25 @@ class Scheduler(object):
                 shell=True,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )
-            self._output[model_run_name] = "\x1b[1;34mModelrun \x1b \x1b[0m" + \
-                                           model_run_name + "\n"
-            self._output[model_run_name] += "\x1b[1;34mTime \x1b \x1b " \
-                                            "\x1b \x1b \x1b \x1b[0m" + \
-                                            datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "\n"
-            self._output[model_run_name] += "\x1b[1;34mPID" + " \x1b"*7 + "[0m" + \
-                                            str(self._process[model_run_name].pid) + "\n"
-            self._output[model_run_name] += "\x1b[1;34mCommand" + " \x1b"*3 + "[0m" + \
-                                            smif_call + "\n"
-
-            self._output[model_run_name] += "-" * 100 + "\n"
+            format_args = {
+                'model_run_name': model_run_name,
+                'datetime': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'pid': str(self._process[model_run_name].pid),
+                'smif_call': smif_call,
+                'colour': "\x1b[1;34m",
+                'reset': "\x1b[0m",
+                'space': " \x1b"
+            }
+            format_str = """\
+{colour}Modelrun{reset} {model_run_name}
+{colour}Time{reset}     {datetime}
+{colour}PID{reset}      {pid}
+{colour}Command{reset}  {smif_call}
+"""
+            format_str.replace(" ", "{space}")
+            output = format_str.format(**format_args)
+            output += "-" * 100 + "\n"
+            self._output[model_run_name] = output
             self._status[model_run_name] = 'running'
         else:
             raise Exception('Model is already running.')
@@ -130,3 +151,114 @@ class Scheduler(object):
             'status': self._status[model_run_name],
             'output': self._output[model_run_name]
         }
+
+
+class JobScheduler(object):
+    """Run JobGraphs produced by a :class:`~smif.controller.modelrun.ModelRun`
+    """
+    def __init__(self):
+        self._status = defaultdict(lambda: 'unstarted')
+        self._id_counter = itertools.count()
+        self.logger = logging.getLogger(__name__)
+
+    def add(self, job_graph):
+        """Add a JobGraph to the JobScheduler and run directly
+
+        Arguments
+        ---------
+        job_graph: :class:`networkx.graph`
+        """
+        job_graph_id = self._next_id()
+        try:
+            self._run(job_graph, job_graph_id)
+        except Exception as ex:
+            self._status[job_graph_id] = 'failed'
+            return job_graph_id, ex
+
+        return job_graph_id, None
+
+    def kill(self, job_graph_id):
+        """Kill a job_graph that is already running - not implemented
+
+        Parameters
+        ----------
+        job_graph_id: int
+        """
+        raise NotImplementedError
+
+    def get_status(self, job_graph_id):
+        """Get job graph status
+
+        Parameters
+        ----------
+        job_graph_id: int
+
+        Returns
+        -------
+        dict: A message containing the status
+
+        Notes
+        -----
+        Possible statuses:
+
+        unstarted:
+            Job graph has not yet started
+        running:
+            Job graph is running
+        done:
+            Job graph was completed succesfully
+        failed:
+            Job graph completed running with an exit code
+        """
+        return {'status': self._status[job_graph_id]}
+
+    def _run(self, job_graph, job_graph_id):
+        """Run a job graph
+        - sort the jobs into a single list
+        - unpack model, data_handle and operation from each node
+        """
+        self._status[job_graph_id] = 'running'
+
+        for job_node_id, job in self._get_run_order(job_graph):
+            self.logger.info("Job %s", job_node_id)
+            model = job['model']
+            data_handle = job['data_handle']
+            operation = job['operation']
+            if operation is ModelOperation.BEFORE_MODEL_RUN:
+                # before_model_run may not be implemented by all jobs
+                try:
+                    model.before_model_run(data_handle)
+                except AttributeError as ex:
+                    self.logger.warning(ex)
+
+            elif operation is ModelOperation.SIMULATE:
+                model.simulate(data_handle)
+
+            else:
+                raise ValueError("Unrecognised operation: {}".format(operation))
+
+        self._status[job_graph_id] = 'done'
+
+    def _next_id(self):
+        return next(self._id_counter)
+
+    @staticmethod
+    def _get_run_order(graph):
+        """Returns a list of jobs in a runnable order.
+
+        Returns
+        -------
+        list
+            A list of job nodes
+        """
+        try:
+            # topological sort gives a single list from directed graph,
+            # ignoring opportunities to run independent models in parallel
+            run_order = networkx.topological_sort(graph)
+
+            # list of Models (typically ScenarioModel and SectorModel)
+            ordered_jobs = [(run, graph.nodes[run]) for run in run_order]
+        except networkx.NetworkXUnfeasible:
+            raise NotImplementedError("Job graphs must not contain cycles")
+
+        return ordered_jobs

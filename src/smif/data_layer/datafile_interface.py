@@ -194,30 +194,35 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Sector models
-    def read_sector_models(self):
+    def read_sector_models(self, skip_coords=False):
         names = self._read_filenames_in_dir(self.file_dir['sector_models'], '.yml')
-        sector_models = [self.read_sector_model(name) for name in names]
+        sector_models = [self.read_sector_model(name, skip_coords) for name in names]
         return sector_models
 
     @check_exists(dtype='sector_model')
-    def read_sector_model(self, sector_model_name):
+    def read_sector_model(self, sector_model_name, skip_coords=False):
         sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
-        self._set_list_coords(sector_model['inputs'])
-        self._set_list_coords(sector_model['outputs'])
-        self._set_list_coords(sector_model['parameters'])
+        if not skip_coords:
+            self._set_list_coords(sector_model['inputs'])
+            self._set_list_coords(sector_model['outputs'])
+            self._set_list_coords(sector_model['parameters'])
         return sector_model
 
     @check_not_exists(dtype='sector_model')
     def write_sector_model(self, sector_model):
+        sector_model = copy.deepcopy(sector_model)
         if sector_model['interventions']:
             self.logger.warning("Ignoring interventions")
             sector_model['interventions'] = []
+
+        sector_model = self._skip_coords(sector_model, ('inputs', 'outputs', 'parameters'))
 
         self._write_yaml_file(
             self.file_dir['sector_models'], sector_model['name'], sector_model)
 
     @check_exists(dtype='sector_model')
     def update_sector_model(self, sector_model_name, sector_model):
+        sector_model = copy.deepcopy(sector_model)
         # ignore interventions and initial conditions which the app doesn't handle
         if sector_model['interventions'] or sector_model['initial_conditions']:
             old_sector_model = self._read_yaml_file(
@@ -230,6 +235,8 @@ class DatafileInterface(DataInterface):
         if sector_model['initial_conditions']:
             self.logger.warning("Ignoring initial conditions write")
             sector_model['initial_conditions'] = old_sector_model['initial_conditions']
+
+        sector_model = self._skip_coords(sector_model, ('inputs', 'outputs', 'parameters'))
 
         self._write_yaml_file(
             self.file_dir['sector_models'], sector_model['name'], sector_model)
@@ -493,7 +500,9 @@ class DatafileInterface(DataInterface):
             self._set_item_coords(item)
 
     def _set_item_coords(self, item):
-        if 'dims' in item:
+        """If dims exists and is not empty
+        """
+        if 'dims' in item and item['dims']:
             item['coords'] = {
                 dim: self.read_dimension(dim)['elements']
                 for dim in item['dims']
@@ -518,7 +527,6 @@ class DatafileInterface(DataInterface):
     def _write_dimension_file(self, filename, data):
         # lru_cache may now be invalid, so clear it
         self._read_dimension_file.cache_clear()
-
         filepath = os.path.join(self.file_dir['dimensions'], filename)
         _, ext = os.path.splitext(filename)
         if ext in ('.yml', '.yaml'):
@@ -612,20 +620,27 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Scenarios
-    def read_scenarios(self):
+    def read_scenarios(self, skip_coords=False):
         project_config = self.read_project_config()
-        return project_config['scenarios']
+        scenarios = copy.deepcopy(project_config['scenarios'])
+        if not skip_coords:
+            for scenario in scenarios:
+                self._set_list_coords(scenario['provides'])
+        return scenarios
 
     @check_exists(dtype='scenario')
-    def read_scenario(self, scenario_name):
+    def read_scenario(self, scenario_name, skip_coords=False):
         project_config = self.read_project_config()
-        scenario = _pick_from_list(project_config['scenarios'], scenario_name)
-        self._set_list_coords(scenario['provides'])
+        scenario = copy.deepcopy(_pick_from_list(project_config['scenarios'], scenario_name))
+        if not skip_coords:
+            self._set_list_coords(scenario['provides'])
         return scenario
 
     @check_not_exists(dtype='scenario')
     def write_scenario(self, scenario):
         project_config = self.read_project_config()
+        scenario = copy.deepcopy(scenario)
+        scenario = self._skip_coords(scenario, ['provides'])
         try:
             project_config['scenarios'].append(scenario)
         except KeyError:
@@ -635,6 +650,8 @@ class DatafileInterface(DataInterface):
     @check_exists(dtype='scenario')
     def update_scenario(self, scenario_name, scenario):
         project_config = self.read_project_config()
+        scenario = copy.deepcopy(scenario)
+        scenario = self._skip_coords(scenario, ['provides'])
         idx = _idx_in_list(project_config['scenarios'], scenario_name)
         project_config['scenarios'][idx] = scenario
         self._write_project_config(project_config)
@@ -726,19 +743,29 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Narratives
-    def read_narratives(self):
+    def read_narratives(self, skip_coords=False):
         # Find filename for this narrative
         project_config = self.read_project_config()
-        return project_config['narratives']
+        narratives = copy.deepcopy(project_config['narratives'])
+        if not skip_coords:
+            for narrative in narratives:
+                self._set_list_coords(narrative['provides'])
+        return narratives
 
     @check_exists(dtype='narrative')
-    def read_narrative(self, narrative_name):
+    def read_narrative(self, narrative_name, skip_coords=False):
         project_config = self.read_project_config()
-        return _pick_from_list(project_config['narratives'], narrative_name)
+        narrative = copy.deepcopy(
+            _pick_from_list(project_config['narratives'], narrative_name))
+        if not skip_coords:
+            self._set_list_coords(narrative['provides'])
+        return narrative
 
     @check_not_exists(dtype='narrative')
     def write_narrative(self, narrative):
         project_config = self.read_project_config()
+        narrative = copy.deepcopy(narrative)
+        narrative = self._skip_coords(narrative, ['provides'])
         try:
             project_config['narratives'].append(narrative)
         except KeyError:
@@ -748,6 +775,8 @@ class DatafileInterface(DataInterface):
     @check_exists(dtype='narrative')
     def update_narrative(self, narrative_name, narrative):
         project_config = self.read_project_config()
+        narrative = copy.deepcopy(narrative)
+        narrative = self._skip_coords(narrative, ['provides'])
         idx = _idx_in_list(project_config['narratives'], narrative_name)
         project_config['narratives'][idx] = narrative
         self._write_project_config(project_config)
@@ -1224,7 +1253,12 @@ def _nested_config_dtypes():
 
 
 def _assert_no_mismatch(dtype, name, obj, secondary=None):
-    if obj is not None and 'name' in obj and name != obj['name']:
+    try:
+        iter(obj)
+    except TypeError:
+        return
+
+    if 'name' in obj and name != obj['name']:
         raise DataMismatchError("%s name '%s' must match '%s'" % (dtype, name, obj['name']))
 
 
