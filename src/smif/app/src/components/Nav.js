@@ -251,7 +251,6 @@ Nav.propTypes = {
 
 function mapStateToProps(state) {
     const { model_runs, sos_models, sector_models, scenarios, narratives } = state
-    console.debug(state)
     return {
         model_runs: model_runs.items,
         sos_models: sos_models.items,
