@@ -1,0 +1,6 @@
+div.topic {
+    padding-bottom: 1em; /* pad topic box */
+}
+a.image-reference:hover {
+    border-bottom: none; /* no border on image links */
+}
