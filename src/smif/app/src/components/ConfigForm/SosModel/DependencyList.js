@@ -96,7 +96,38 @@ class DependencyList extends Component {
         const target = event.currentTarget
         const name = target.dataset.name
 
-        this.setState({dependency: this.props.dependencies[name]})
+        let dependency = Object.assign({}, this.props.dependencies[name])
+
+        // reset invalid dependencies to force user make a new selection
+        if (!this.props.source.map(source => source.name).includes(dependency.source)) {
+            dependency.source = ''
+            dependency.source_output = ''
+        }
+
+        if (dependency.source in this.props.source_output) {
+            if (!this.props.source_output[dependency.source].map(source_output => source_output.name).includes(dependency.source_output)) {
+                dependency.source_output = ''
+            }
+        }
+        else {
+            dependency.source_output = ''
+        }
+
+        if (!this.props.sink.map(sink => sink.name).includes(dependency.sink)) {
+            dependency.sink = ''
+            dependency.sink_input = ''
+        }
+
+        if (dependency.sink in this.props.sink_input) {
+            if (!this.props.sink_input[dependency.sink].map(sink_input => sink_input.name).includes(dependency.sink_input)) {
+                dependency.sink_input = ''
+            }
+        }
+        else {
+            dependency.sink_input = ''
+        }
+
+        this.setState({dependency: dependency})
         this.setState({
             formEditMode: true,
             formEditNumber: name
@@ -136,16 +167,36 @@ class DependencyList extends Component {
                                     data-name={idx}
                                     onClick={(e) => this.handleEdit(e)}>
                                     <td className="col-text">
-                                        {dependency.source}
+                                        {
+                                            this.props.source.map(source => source.name).includes(dependency.source) 
+                                                ? dependency.source 
+                                                : (<s>{dependency.source}</s>)
+                                        }
                                     </td>
                                     <td className="col-text">
-                                        {dependency.source_output}
+                                        {
+                                            dependency.source in this.props.source_output
+                                                ? this.props.source_output[dependency.source].map(source_output => source_output.name).includes(dependency.source_output) 
+                                                    ? dependency.source_output 
+                                                    : (<s>{dependency.source_output}</s>)
+                                                : (<s>{dependency.source_output}</s>)
+                                        }
                                     </td>
                                     <td className="col-text">
-                                        {dependency.sink}
+                                        {
+                                            this.props.sink.map(sink => sink.name).includes(dependency.sink) 
+                                                ? dependency.sink 
+                                                : (<s>{dependency.sink}</s>)
+                                        }
                                     </td>
                                     <td className="col-text">
-                                        {dependency.sink_input}
+                                        {
+                                            dependency.sink in this.props.sink_input
+                                                ? this.props.sink_input[dependency.sink].map(sink_input => sink_input.name).includes(dependency.sink_input) 
+                                                    ? dependency.sink_input 
+                                                    : (<s>{dependency.sink_input}</s>)
+                                                : (<s>{dependency.sink_input}</s>)
+                                        }
                                     </td>
                                 </tr>
                             ))

@@ -105,18 +105,26 @@ class SosModelConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Scenario Dependencies</div>
                     <div className="card-body">
-  
+
                         <DependencyList 
                             name="Scenario Dependency" 
                             dependencies={this.state.selectedSosModel.scenario_dependencies} 
-                            source={this.props.scenarios} 
+                            source={
+                                this.props.scenarios.filter(
+                                    scenario => this.state.selectedSosModel.scenarios.includes(scenario.name)
+                                )
+                            } 
                             source_output={
                                 this.props.scenarios.reduce(function(obj, item) {
                                     obj[item.name] = item.provides
                                     return obj}, {}
                                 )
                             }
-                            sink={this.props.sector_models}
+                            sink={
+                                this.props.sector_models.filter(
+                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                )
+                            }
                             sink_input={
                                 this.props.sector_models.reduce(function(obj, item) {
                                     obj[item.name] = item.inputs
@@ -134,14 +142,22 @@ class SosModelConfigForm extends Component {
                         <DependencyList 
                             name="Model Dependency" 
                             dependencies={this.state.selectedSosModel.model_dependencies} 
-                            source={this.props.sector_models} 
+                            source={
+                                this.props.sector_models.filter(
+                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                )
+                            }
                             source_output={
                                 this.props.sector_models.reduce(function(obj, item) {
                                     obj[item.name] = item.outputs
                                     return obj}, {}
                                 )
                             }
-                            sink={this.props.sector_models}
+                            sink={
+                                this.props.sector_models.filter(
+                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                )
+                            }
                             sink_input={
                                 this.props.sector_models.reduce(function(obj, item) {
                                     obj[item.name] = item.inputs

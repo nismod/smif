@@ -97,7 +97,7 @@ function mapStateToProps(state) {
         narratives: state.narratives.items,
         isFetching: (
             state.sos_model.isFetching || 
-            state.sos_models.isFetching || 
+            state.sector_models.isFetching || 
             state.scenarios.isFetching || 
             state.narratives.isFetching
         )
