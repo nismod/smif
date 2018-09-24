@@ -2,30 +2,30 @@
 
 Dimensions might be represented as Euclidean coordinates over a grid::
 
->>> x = Coordinates('x', range(0, 100))
->>> y = Coordinates('y', range(0, 100))
+    >>> x = Coordinates('x', range(0, 100))
+    >>> y = Coordinates('y', range(0, 100))
 
 A subset of Local Authority Districts in England would be a region-based spatial dimension::
 
->>> local_authority_districts = Coordinates('LADs', ['E07000128', 'E07000180'])
+    >>> local_authority_districts = Coordinates('LADs', ['E07000128', 'E07000180'])
 
 The hours of an average annual day would be a temporal dimension::
 
-        >>> hours = Coordinates('daily_hours', [
-        ...     {'name': 0, 'represents': '00:00-00:59:59'}
-        ...     {'name': 1, 'represents': '01:00-01:59:59'}
-        ...     {'name': 2, 'represents': '02:00-02:59:59'}
-        ... ])
+    >>> hours = Coordinates('daily_hours', [
+    ...     {'name': 0, 'represents': '00:00-00:59:59'}
+    ...     {'name': 1, 'represents': '01:00-01:59:59'}
+    ...     {'name': 2, 'represents': '02:00-02:59:59'}
+    ... ])
 
 The economic sectors from the International Standard Industrial Classification of All Economic
 Activities (ISIC), revision 4 would be a categorical dimension::
 
-        >>> economic_sector = Coordinates('ISICrev4', [
-        ...     {'name': 'A', 'desc': 'Agriculture, forestry and fishing'},
-        ...     {'name': 'B', 'desc': 'Mining and quarrying'},
-        ...     {'name': 'C', 'desc': 'Manufacturing'},
-        ...     {'name': 'D', 'desc': 'Electricity, gas, steam and air conditioning supply'}
-        ... ])
+    >>> economic_sector = Coordinates('ISICrev4', [
+    ...     {'name': 'A', 'desc': 'Agriculture, forestry and fishing'},
+    ...     {'name': 'B', 'desc': 'Mining and quarrying'},
+    ...     {'name': 'C', 'desc': 'Manufacturing'},
+    ...     {'name': 'D', 'desc': 'Electricity, gas, steam and air conditioning supply'}
+    ... ])
 
 """
 
