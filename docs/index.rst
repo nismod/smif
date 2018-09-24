@@ -19,7 +19,7 @@ Contents
    :maxdepth: 2
 
    Getting Started <getting_started>
-   Concept <concept>
+   Concepts <concepts>
 
 .. toctree::
    :maxdepth: 3
