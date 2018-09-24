@@ -103,20 +103,20 @@ class SosModelConfigForm extends Component {
                 </div>
 
                 <div className="card">
-                    <div className="card-header">Scenario Dependencies</div>
+                    <div className="card-header">Model Dependencies</div>
                     <div className="card-body">
-
+  
                         <DependencyList 
-                            name="Scenario Dependency" 
-                            dependencies={this.state.selectedSosModel.scenario_dependencies} 
+                            name="Model Dependency" 
+                            dependencies={this.state.selectedSosModel.model_dependencies} 
                             source={
-                                this.props.scenarios.filter(
-                                    scenario => this.state.selectedSosModel.scenarios.includes(scenario.name)
+                                this.props.sector_models.filter(
+                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
                                 )
-                            } 
+                            }
                             source_output={
-                                this.props.scenarios.reduce(function(obj, item) {
-                                    obj[item.name] = item.provides
+                                this.props.sector_models.reduce(function(obj, item) {
+                                    obj[item.name] = item.outputs
                                     return obj}, {}
                                 )
                             }
@@ -136,20 +136,20 @@ class SosModelConfigForm extends Component {
                 </div>
 
                 <div className="card">
-                    <div className="card-header">Model Dependencies</div>
+                    <div className="card-header">Scenario Dependencies</div>
                     <div className="card-body">
-  
+
                         <DependencyList 
-                            name="Model Dependency" 
-                            dependencies={this.state.selectedSosModel.model_dependencies} 
+                            name="Scenario Dependency" 
+                            dependencies={this.state.selectedSosModel.scenario_dependencies} 
                             source={
-                                this.props.sector_models.filter(
-                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                this.props.scenarios.filter(
+                                    scenario => this.state.selectedSosModel.scenarios.includes(scenario.name)
                                 )
-                            }
+                            } 
                             source_output={
-                                this.props.sector_models.reduce(function(obj, item) {
-                                    obj[item.name] = item.outputs
+                                this.props.scenarios.reduce(function(obj, item) {
+                                    obj[item.name] = item.provides
                                     return obj}, {}
                                 )
                             }
