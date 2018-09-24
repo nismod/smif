@@ -280,30 +280,34 @@ The basic folder structure looks like this::
             water_supply.yml
         /sos_models
             energy_water.yml
+            energy.yml
         /sos_model_runs
-            20170918_energy_water.yml
-            20170918_energy_water_short.yml
+            energy_central.yml
+            energy_water_cp_cr.yml
     /data
+        /dimensions
+            hourly.csv
+            annual.csv
+            lad.shp
         /initial_conditions
             energy_demand_existing.yml
             energy_supply_existing.yml
-        /interval_definitions
-            hourly.csv
-            annual.csv
         /interventions
             energy_demand.yml
+            energy_supply.yml
         /narratives
-            energy_demand_high_tech.yml
-            central_planning.yml
-        /region_definitions
-            lad.shp
+            energy_demand_high_tech.csv
+            central_planning.csv
         /scenarios
             population_high.csv
+            population_low.csv
+        /strategies
+            pipeline_2020.yml
     /models
         energy_demand.py
         water_supply.py
     /results
-        /20170918_energy_water_short
+        /energy_central
             /energy_demand
             /water_supply
 
