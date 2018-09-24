@@ -79,7 +79,7 @@ class DependencyList extends Component {
                 idx != parseInt(this.state.formEditNumber)
             )
         }).length > 0) {
-            alert('Cannot save dependency because it is already existing')
+            alert('Cannot save dependency because it already exists')
         }
         // Add dependency
         else {
