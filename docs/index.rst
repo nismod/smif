@@ -10,6 +10,7 @@ Simulation Modelling Integration Framework
 
 .. include:: ../README.rst
    :start-line: 8
+   :end-line: 36
 
 Contents
 ========
@@ -20,12 +21,10 @@ Contents
    Getting Started <getting_started>
    Concept <concept>
 
-
 .. toctree::
    :maxdepth: 3
 
    Reference <api/modules>
-
 
 .. toctree::
    :maxdepth: 1
@@ -35,6 +34,10 @@ Contents
    License <license>
    Authors <authors>
    Changelog <changelog>
+
+
+.. include:: ../README.rst
+   :start-line: 36
 
 
 Indices and tables
