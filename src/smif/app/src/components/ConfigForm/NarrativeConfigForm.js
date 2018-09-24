@@ -4,7 +4,7 @@ import update from 'immutability-helper'
 
 import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
-class NarrativeConfigForm extends Component {
+class NarrativeSetConfigForm extends Component {
     constructor(props) {
         super(props)
 
@@ -13,7 +13,7 @@ class NarrativeConfigForm extends Component {
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {}
-        this.state.selectedNarrative = this.props.narrative
+        this.state.selectedNarrativeSet = this.props.narrativeSet
     }
 
     handleChange(event) {
@@ -22,29 +22,20 @@ class NarrativeConfigForm extends Component {
         const name = target.name
 
         this.setState({
-            selectedNarrative: update(this.state.selectedNarrative, {[name]: {$set: value}})
+            selectedNarrativeSet: update(this.state.selectedNarrativeSet, {[name]: {$set: value}})
         })
     }
 
     handleSave() {
-        this.props.saveNarrative(this.state.selectedNarrative)
+        this.props.saveNarrativeSet(this.state.selectedNarrativeSet)
     }
 
     handleCancel() {
-        this.props.cancelNarrative()
+        this.props.cancelNarrativeSet()
     }
 
     render() {
-        const {narrativeSets} = this.props
-        const {selectedNarrative} = this.state
-
-        let selectedNarrativeSet = {name: '', description: ''}
-        let narrativeSetSelected = false
-
-        if (selectedNarrative.narrative_set != '') {
-            selectedNarrativeSet = narrativeSets.filter(narrativeSet => narrativeSet.name == selectedNarrative.narrative_set)[0]
-            narrativeSetSelected = true
-        }
+        const {selectedNarrativeSet} = this.state
 
         return (
             <div>
@@ -56,71 +47,32 @@ class NarrativeConfigForm extends Component {
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Name</label>
                                 <div className="col-sm-10">
-                                    <input id="narrative_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedNarrative.name} onChange={this.handleChange}/>
+                                    <input id="narrative_set_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedNarrativeSet.name} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
                             <div className="form-group row">
                                 <label className="col-sm-2 col-form-label">Description</label>
                                 <div className="col-sm-10">
-                                    <textarea id="narrative_description" className="form-control" name="description" rows="5" defaultValue={selectedNarrative.description} onChange={this.handleChange}/>
+                                    <textarea id="narrative_set_description" className="form-control" name="description" rows="5" defaultValue={selectedNarrativeSet.description} onChange={this.handleChange}/>
                                 </div>
                             </div>
 
-                        </div>
-                    </div>
-
-                    <div className="card">
-                        <div className="card-header">Settings</div>
-                        <div className="card-body">
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Narrative Set</label>
-                                <div className="col-sm-10">
-                                    <select className="form-control" name="narrative_set" defaultValue={selectedNarrative.narrative_set} onChange={this.handleChange}>
-                                        <option value="" >Please select a Narrative Set</option>
-                                        {
-                                            narrativeSets.map(narrativeSet =>
-                                                <option key={narrativeSet.name} value={narrativeSet.name}>{narrativeSet.name}</option>
-                                            )
-                                        }
-                                    </select>
-                                    <br/>
-
-                                    <div className="alert alert-dark" hidden={!narrativeSetSelected} role="alert">
-                                        {selectedNarrativeSet && selectedNarrativeSet.description}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="card">
-                        <div className="card-header">Parameters</div>
-                        <div className="card-body">
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Filename</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" name="filename" type="text" defaultValue={selectedNarrative.filename} onChange={this.handleChange}/>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </form>
 
-                <SaveButton id="saveNarrative" onClick={this.handleSave} />
-                <CancelButton id="cancelNarrative" onClick={this.handleCancel} />
+                <SaveButton id="saveNarrativeSet" onClick={this.handleSave} />
+                <CancelButton id="cancelNarrativeSet" onClick={this.handleCancel} />
             </div>
         )
     }
 }
 
-NarrativeConfigForm.propTypes = {
-    narrative: PropTypes.object.isRequired,
-    narrativeSets: PropTypes.array.isRequired,
-    saveNarrative: PropTypes.func,
-    cancelNarrative: PropTypes.func
+NarrativeSetConfigForm.propTypes = {
+    narrativeSet: PropTypes.object.isRequired,
+    saveNarrativeSet: PropTypes.func,
+    cancelNarrativeSet: PropTypes.func
 }
 
-export default NarrativeConfigForm
+export default NarrativeSetConfigForm

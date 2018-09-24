@@ -302,7 +302,7 @@ class ProjectOverview extends Component {
                         <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
                     </div>
 
-                    <div hidden={name!='scenario-set'}>
+                    <div hidden={name!='scenarios'}>
                         <IntroBlock title="Scenarios" intro="Scenarios are configurations that target the files which contain scenario data">
                             <input className="btn btn-success btn-margin" name="Scenario" type="button" value="Add a new Scenario" onClick={this.openCreatePopup}/>
                         </IntroBlock>
@@ -310,7 +310,7 @@ class ProjectOverview extends Component {
                     </div>
 
 
-                    <div hidden={name!='narrative-set'}>
+                    <div hidden={name!='narratives'}>
                         <IntroBlock title="Narratives" intro="Narratives are configurations that target the files which contain narrative data">
                             <input className="btn btn-success btn-margin" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
                         </IntroBlock>
