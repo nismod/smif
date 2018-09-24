@@ -1,19 +1,24 @@
 """Holds custom smif exception hierarchy
 
 Exception
-  +-- SmifDataError
-        +-- SmifDataNotFoundError
-        +-- SmifDataExistsError
-        +-- SmifDataMismatchError
-        +-- SmifDataReadError
-  +-- ModelRunError
-  +-- ValidationError
-
-
+  +-- SmifException
+        +-- SmifDataError
+              +-- SmifDataNotFoundError
+              +-- SmifDataExistsError
+              +-- SmifDataMismatchError
+              +-- SmifDataReadError
+        +-- ModelRunError
+        +-- ValidationError
 """
 
 
-class SmifDataError(Exception):
+class SmifException(Exception):
+    """The base class for all errors raised in smif
+    """
+    pass
+
+
+class SmifDataError(SmifException):
     """Errors raised by the DataInterface
     """
     pass
@@ -48,13 +53,13 @@ class SmifDataReadError(SmifDataError):
     pass
 
 
-class SmifModelRunError(Exception):
+class SmifModelRunError(SmifException):
     """Raise when model run requirements are not satisfied
     """
     pass
 
 
-class ValidationError(Exception):
+class ValidationError(SmifException):
     """Custom exception to use for parsing validation.
     """
     pass
