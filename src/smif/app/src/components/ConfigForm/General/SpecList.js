@@ -153,7 +153,7 @@ class SpecList extends Component {
         var columns = ['Name', 'Dimensions', 'Default', 'Unit', 'DType', 'Range']
         return (
             <div>
-                <table className="table table-hover table-speclist">
+                <table className="table table-hover table-list">
                     <thead className="thead-light">
                         <tr>
                             {

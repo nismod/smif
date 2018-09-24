@@ -95,9 +95,10 @@ class ProjectOverview extends Component {
                     'name': config.name,
                     'description': config.description,
                     'sector_models': [],
-                    'narrative_sets': [],
-                    'scenario_sets': [],
-                    'dependencies': []
+                    'narratives': [],
+                    'scenarios': [],
+                    'scenario_dependencies': [],
+                    'model_dependencies': []
                 }
             ))
             break
