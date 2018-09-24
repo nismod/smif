@@ -378,6 +378,7 @@ class DimensionAPI(MethodView):
         response = jsonify({})
         return response
 
+
 def check_timestamp(data):
     """Check for timestamp and parse to datetime object
     """

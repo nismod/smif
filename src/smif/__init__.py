@@ -14,7 +14,7 @@ __license__ = "mit"
 
 try:
     __version__ = pkg_resources.get_distribution(__name__).version
-except:
+except Exception:
     __version__ = 'unknown'
 
 # Filter out warnings arising from some installed combinations of scipy/numpy
