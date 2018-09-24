@@ -3,8 +3,8 @@ from unittest.mock import Mock, patch
 
 import networkx as nx
 from pytest import fixture, raises
-from smif.controller.modelrun import (ModelRunBuilder, ModelRunError,
-                                      ModelRunner)
+from smif.controller.modelrun import ModelRunBuilder, ModelRunner
+from smif.exception import SmifModelRunError
 
 
 @fixture(scope='function')
@@ -126,7 +126,7 @@ class TestModelRunBuilder:
         builder = ModelRunBuilder()
         builder.construct(config_data)
 
-        with raises(ModelRunError) as ex:
+        with raises(SmifModelRunError) as ex:
             builder.finish()
         assert "ScenarioSet 'population' is selected in the ModelRun " \
                "configuration but not found in the SosModel configuration" in str(ex)
@@ -148,7 +148,7 @@ class TestModelRun:
         builder.construct(config_data)
         model_run = builder.finish()
         store = Mock()
-        with raises(ModelRunError) as ex:
+        with raises(SmifModelRunError) as ex:
             model_run.run(store)
         assert 'No timesteps specified' in str(ex)
 

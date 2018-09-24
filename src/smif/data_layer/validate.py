@@ -2,14 +2,9 @@
 """Validate the correct format and presence of the config data
 for the system-of-systems model
 """
+from smif.exception import ValidationError
 
 VALIDATION_ERRORS = []
-
-
-class ValidationError(Exception):
-    """Custom exception to use for parsing validation.
-    """
-    pass
 
 
 def validate_sos_model_config(data):

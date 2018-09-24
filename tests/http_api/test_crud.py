@@ -8,7 +8,7 @@ from unittest.mock import Mock
 import pytest
 import smif
 from flask import current_app
-from smif.data_layer import DataNotFoundError
+from smif.exception import SmifDataNotFoundError
 from smif.http_api import create_app
 
 
@@ -69,7 +69,7 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
 
     def _check_exist(config, name):
         if name == 'does_not_exist':
-            raise DataNotFoundError("%s '%s' not found" % (config, name))
+            raise SmifDataNotFoundError("%s '%s' not found" % (config, name))
 
     attrs = {
         'read_model_runs.side_effect': [[model_run]],

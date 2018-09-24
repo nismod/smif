@@ -8,10 +8,10 @@ import re
 from functools import lru_cache, wraps
 
 import pyarrow as pa
-from smif.data_layer.data_interface import (DataExistsError, DataInterface,
-                                            DataMismatchError,
-                                            DataNotFoundError, DataReadError)
+from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.load import dump, load
+from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
+                            SmifDataNotFoundError, SmifDataReadError)
 from smif.metadata import Spec
 
 # Import fiona if available (optional dependency)
@@ -396,7 +396,7 @@ class DatafileInterface(DataInterface):
         fname = self._get_state_filename(modelrun_name, timestep, decision_iteration)
         if not os.path.exists(fname):
             msg = "State file does not exist for timestep {} and iteration {}"
-            raise DataNotFoundError(msg.format(timestep, decision_iteration))
+            raise SmifDataNotFoundError(msg.format(timestep, decision_iteration))
         state = self._read_state_file(fname)
         return state
 
@@ -445,7 +445,7 @@ class DatafileInterface(DataInterface):
                     }
                 except KeyError:
                     msg = "Interventions must have name and build year, got {} in {}"
-                    raise DataReadError(msg.format(line, fname))
+                    raise SmifDataReadError(msg.format(line, fname))
                 state.append(item)
 
         return state
@@ -472,7 +472,7 @@ class DatafileInterface(DataInterface):
                 with open(path, 'r') as units_fh:
                     return [line.strip() for line in units_fh]
             except FileNotFoundError as ex:
-                raise DataNotFoundError('Units file not found:' + str(ex)) from ex
+                raise SmifDataNotFoundError('Units file not found:' + str(ex)) from ex
         except KeyError:
             return []
     # endregion
@@ -521,7 +521,7 @@ class DatafileInterface(DataInterface):
         else:
             msg = "Extension '{}' not recognised, expected one of ('.csv', '.yml', '.yaml', "
             msg += "'.geojson', '.shp') when reading {}"
-            raise DataReadError(msg.format(ext, filepath))
+            raise SmifDataReadError(msg.format(ext, filepath))
         return data
 
     def _write_dimension_file(self, filename, data):
@@ -539,7 +539,7 @@ class DatafileInterface(DataInterface):
         else:
             msg = "Extension '{}' not recognised, expected one of ('.csv', '.yml', '.yaml', "
             msg += "'.geojson', '.shp') when writing {}"
-            raise DataReadError(msg.format(ext, filepath))
+            raise SmifDataReadError(msg.format(ext, filepath))
         return data
 
     def _delete_dimension_file(self, filename):
@@ -601,7 +601,7 @@ class DatafileInterface(DataInterface):
         except (FileNotFoundError, pa.lib.ArrowIOError):
             msg = "Could not find the coefficients file for %s to %s"
             self.logger.warning(msg, source_spec, destination_spec)
-            raise DataNotFoundError(msg.format(source_spec, destination_spec))
+            raise SmifDataNotFoundError(msg.format(source_spec, destination_spec))
 
     def write_coefficients(self, source_spec, destination_spec, data):
         results_path = self._get_coefficients_path(source_spec, destination_spec)
@@ -708,9 +708,9 @@ class DatafileInterface(DataInterface):
 
         try:
             array = self.data_list_to_ndarray(data, spec)
-        except DataMismatchError as ex:
+        except SmifDataMismatchError as ex:
             msg = "DataMismatch in scenario: {}:{}.{}, from {}"
-            raise DataMismatchError(
+            raise SmifDataMismatchError(
                 msg.format(scenario_name, variant_name, variable, str(ex))
             ) from ex
 
@@ -727,7 +727,7 @@ class DatafileInterface(DataInterface):
     def _get_scenario_variant_filepath(self, scenario_name, variant_name, variable):
         variant = self.read_scenario_variant(scenario_name, variant_name)
         if 'data' not in variant or variable not in variant['data']:
-            raise DataNotFoundError(
+            raise SmifDataNotFoundError(
                 "Scenario data file not defined for {}:{}, {}".format(
                     scenario_name, variant_name, variable)
             )
@@ -836,9 +836,9 @@ class DatafileInterface(DataInterface):
 
         try:
             array = self.data_list_to_ndarray(data, spec)
-        except DataMismatchError as ex:
+        except SmifDataMismatchError as ex:
             msg = "DataMismatch in narrative: {}:{}, {}, from {}"
-            raise DataMismatchError(
+            raise SmifDataMismatchError(
                 msg.format(narrative_name, variant_name, variable, str(ex))
             ) from ex
 
@@ -855,7 +855,7 @@ class DatafileInterface(DataInterface):
     def _get_narrative_variant_filepath(self, narrative_name, variant_name, variable):
         variant = self.read_narrative_variant(narrative_name, variant_name)
         if 'data' not in variant or variable not in variant['data']:
-            raise DataNotFoundError(
+            raise SmifDataNotFoundError(
                 "narrative data file not defined for {}:{}, {}".format(
                     narrative_name, variant_name, variable)
             )
@@ -1236,7 +1236,7 @@ class DatafileInterface(DataInterface):
             msg += "    pip install smif[spatial]\n"
             msg += "or:\n"
             msg += "    conda install fiona shapely rtree\n"
-            raise DataReadError(msg) from ex
+            raise SmifDataReadError(msg) from ex
     # endregion
 
 
@@ -1259,7 +1259,8 @@ def _assert_no_mismatch(dtype, name, obj, secondary=None):
         return
 
     if 'name' in obj and name != obj['name']:
-        raise DataMismatchError("%s name '%s' must match '%s'" % (dtype, name, obj['name']))
+        raise SmifDataMismatchError("%s name '%s' must match '%s'" %
+                                    (dtype, name, obj['name']))
 
 
 def _file_exists(file_dir, dtype, name):
@@ -1269,12 +1270,12 @@ def _file_exists(file_dir, dtype, name):
 
 def _assert_file_exists(file_dir, dtype, name):
     if not _file_exists(file_dir, dtype, name):
-        raise DataNotFoundError("%s '%s' not found" % (dtype, name))
+        raise SmifDataNotFoundError("%s '%s' not found" % (dtype, name))
 
 
 def _assert_file_not_exists(file_dir, dtype, name):
     if _file_exists(file_dir, dtype, name):
-        raise DataExistsError("%s '%s' already exists" % (dtype, name))
+        raise SmifDataExistsError("%s '%s' already exists" % (dtype, name))
 
 
 def _config_item_exists(config, dtype, name):
@@ -1319,19 +1320,19 @@ def _idx_in_list(list_of_dicts, name):
 
 def _assert_config_item_exists(config, dtype, name):
     if not _config_item_exists(config, dtype, name):
-        raise DataNotFoundError("%s '%s' not found" % (dtype, name))
+        raise SmifDataNotFoundError("%s '%s' not found" % (dtype, name))
 
 
 def _assert_config_item_not_exists(config, dtype, name):
     if _config_item_exists(config, dtype, name):
-        raise DataExistsError("%s '%s' already exists" % (dtype, name))
+        raise SmifDataExistsError("%s '%s' already exists" % (dtype, name))
 
 
 def _assert_nested_config_item_exists(config, dtype, primary, secondary):
     if not _nested_config_item_exists(config, dtype, primary, secondary):
-        raise DataNotFoundError("%s '%s:%s' not found" % (dtype, primary, secondary))
+        raise SmifDataNotFoundError("%s '%s:%s' not found" % (dtype, primary, secondary))
 
 
 def _assert_nested_config_item_not_exists(config, dtype, primary, secondary):
     if _nested_config_item_exists(config, dtype, primary, secondary):
-        raise DataExistsError("%s '%s:%s' already exists" % (dtype, primary, secondary))
+        raise SmifDataExistsError("%s '%s:%s' already exists" % (dtype, primary, secondary))

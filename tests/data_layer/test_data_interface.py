@@ -2,8 +2,8 @@
 """
 import numpy as np
 from pytest import raises
-from smif.data_layer import DataMismatchError
 from smif.data_layer.data_interface import DataInterface
+from smif.exception import SmifDataMismatchError
 from smif.metadata import Spec
 
 
@@ -86,7 +86,7 @@ class TestDataInterface():
             }
         ]
         msg = "Number of observations (2) is not equal to product of (1, 1)"
-        with raises(DataMismatchError) as ex:
+        with raises(SmifDataMismatchError) as ex:
             DataInterface.data_list_to_ndarray(
                 data,
                 Spec(

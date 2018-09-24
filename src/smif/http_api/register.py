@@ -1,8 +1,9 @@
 from flask import jsonify, render_template
-from smif.data_layer import (DataExistsError, DataMismatchError,
-                             DataNotFoundError)
-from smif.http_api.crud import (ModelRunAPI, NarrativeAPI, ScenarioAPI, 
-                                SectorModelAPI, SmifAPI, SosModelAPI, DimensionAPI)
+from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
+                            SmifDataNotFoundError)
+from smif.http_api.crud import (DimensionAPI, ModelRunAPI, NarrativeAPI,
+                                ScenarioAPI, SectorModelAPI, SmifAPI,
+                                SosModelAPI)
 
 
 def register_routes(app):
@@ -40,7 +41,7 @@ def register_api_endpoints(app):
 def register_error_handlers(app):
     """Handle expected errors
     """
-    @app.errorhandler(DataExistsError)
+    @app.errorhandler(SmifDataExistsError)
     def handle_exists(error):
         """Return 400 Bad Request if data to be created already exists
         """
@@ -48,7 +49,7 @@ def register_error_handlers(app):
         response.status_code = 400
         return response
 
-    @app.errorhandler(DataMismatchError)
+    @app.errorhandler(SmifDataMismatchError)
     def handle_mismatch(error):
         """Return 400 Bad Request if data and id/name are mismatched
         """
@@ -56,7 +57,7 @@ def register_error_handlers(app):
         response.status_code = 400
         return response
 
-    @app.errorhandler(DataNotFoundError)
+    @app.errorhandler(SmifDataNotFoundError)
     def handle_not_found(error):
         """Return 404 if data is not found
         """
