@@ -324,7 +324,7 @@ def main(arguments=None):
 
     def exception_handler(exception_type, exception, traceback, debug_hook=sys.excepthook):
         if args.verbose:
-            sys.debug_hook(exception_type, exception, traceback)
+            debug_hook(exception_type, exception, traceback)
         else:
             print("{}: {}".format(exception_type.__name__, exception))
 
