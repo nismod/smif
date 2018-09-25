@@ -56,10 +56,10 @@ This generates a local version in :code:`smif/docs/_build/html` that can be open
 Versioning
 ----------
 
-:code:`smif` is currently pre-1.0, so API and usage are liable to change. After
-releasing a first major version, we intend to follow `semantic versioning`_, with
+We intend to follow `semantic versioning`_, with
 major versions for any incompatible changes to the public API.
-
+Note that tags should follow `PEP440`_ which has stricter 
+constraints on tags than semantic versioning.
 
 Releases
 --------
@@ -223,6 +223,7 @@ attributes.
     :target: _images/data_handle.png
 
 
+.. _PEP440: https://www.python.org/dev/peps/pep-0440/
 .. _packaging: https://packaging.python.org/distributing/
 .. _github.com/nismod/smif: https://github.com/nismod/smif
 .. _pytest: http://doc.pytest.org/en/latest/
