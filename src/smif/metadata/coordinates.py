@@ -107,15 +107,16 @@ class Coordinates(object):
         except TypeError:
             raise ValueError("Coordinate.elements must be finite in length")
 
-        if isinstance(elements[0], dict):
-            if "name" not in elements[0]:
-                msg = "Elements in dimension '{}' must have a name field, " \
-                      "or be a simple list of identifiers"
-                raise KeyError(msg.format(self.name))
-
+        try:
             self._ids = [e['name'] for e in elements]
             self._elements = elements
-        else:
+        except KeyError:
+            # elements must have name
+            msg = "Elements in dimension '{}' must have a name field, " \
+                  "or be a simple list of identifiers"
+            raise KeyError(msg.format(self.name))
+        except TypeError:
+            # elements might not be dict-like - in which case, treat them as names
             self._ids = elements
             self._elements = [{"name": e} for e in elements]
 

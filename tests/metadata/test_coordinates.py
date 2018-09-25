@@ -1,7 +1,27 @@
 """Test Coordinates metadata
 """
-from pytest import raises
+from collections import OrderedDict
+
+from pytest import mark, raises
 from smif.metadata import Coordinates
+
+
+class CustomMapping():
+    """Custom mapping that doesn't inherit dict
+    """
+    def __init__(self, key_values):
+        self._data = {}
+        for key, value in key_values:
+            self._data[key] = value
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
 
 
 class TestCoordinates():
@@ -26,15 +46,27 @@ class TestCoordinates():
             {'name': 'industrial'}
         ]
 
-    def test_construct_with_elements(self):
+    @mark.parametrize("elements", [
+        [
+            {'name': 'residential', 'sector': True},
+            {'name': 'commercial', 'sector': True},
+            {'name': 'industrial', 'sector': True},
+        ],
+        [
+            OrderedDict([('name', 'residential'), ('sector', True)]),
+            OrderedDict([('name', 'commercial'), ('sector', True)]),
+            OrderedDict([('name', 'industrial'), ('sector', True)]),
+        ],
+        [
+            CustomMapping([('name', 'residential'), ('sector', True)]),
+            CustomMapping([('name', 'commercial'), ('sector', True)]),
+            CustomMapping([('name', 'industrial'), ('sector', True)]),
+        ]
+    ])
+    def test_construct_with_elements(self, elements):
         """Create a Coordinates with name and elements (list of dicts)
         """
         name = 'building_categories'
-        elements = [
-            {'name': 'residential', 'sector': True},
-            {'name': 'commercial', 'sector': True},
-            {'name': 'industrial', 'sector': True}
-        ]
 
         building_sectors = Coordinates(name, elements)
 
