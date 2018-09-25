@@ -35,7 +35,7 @@ body {
     table-layout: fixed;
 }
 .table-list .col-text {
-    width: 20%;
+    width: 100%;
 }
 .jumbotron {
   padding: 20px;
