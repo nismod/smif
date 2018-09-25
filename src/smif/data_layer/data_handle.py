@@ -237,17 +237,12 @@ class DataHandle(object):
         spec = self._inputs[input_name]
 
         if isinstance(source_model, ScenarioModel):
-            try:
-                data = self._store.read_scenario_variant_data(
-                    source_model_name,  # read from a given scenario model
-                    source_model.scenario,  # with given scenario variant
-                    source_output_name,  # using output (variable) name
-                    timestep
-                )
-            except KeyError as err:
-                msg = "Could not read in data for scenario variant '{}' " + \
-                      "from scenario '{}'. Missing key {}."
-                raise SmifDataError(msg.format(source_model.scenario, source_model_name, err))
+            data = self._store.read_scenario_variant_data(
+                source_model_name,  # read from a given scenario model
+                source_model.scenario,  # with given scenario variant
+                source_output_name,  # using output (variable) name
+                timestep
+            )
         else:
             data = self._store.read_results(
                 self._modelrun_name,
@@ -378,7 +373,7 @@ class DataHandle(object):
         Notes
         -----
         Access to model results is only granted to models contained
-        within self._model if self._model is a  smif.model.model.CompositeModel
+        within self._model if self._model is a smif.model.model.CompositeModel
         """
 
         # resolve timestep

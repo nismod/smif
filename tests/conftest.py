@@ -402,7 +402,7 @@ def get_sector_model_no_coords(get_sector_model):
 
 @fixture
 def sample_scenarios():
-    """Return sample scenario_set
+    """Return sample scenario
     """
     return [
         {
@@ -412,7 +412,17 @@ def sample_scenarios():
                 {
                     'name': "population_count",
                     'description': "The count of population",
-                    'dtype': 'int'
+                    'unit': 'people',
+                    'dtype': 'int',
+                    'dims': ['county', 'season'],
+                    'coords':
+                        {
+                        'county': [{'name': 'oxford'}],
+                        'season': [{'name': 'cold_month'},
+                                   {'name': 'spring_month'},
+                                   {'name': 'hot_month'},
+                                   {'name': 'fall_month'}]
+                        }
                 },
             ],
             'variants': [
@@ -526,22 +536,22 @@ def sample_dimensions(regions_half_squares, remap_months, hourly, annual):
             'name': 'lad',
             'description': 'Local authority districts for the UK',
             'elements': regions_half_squares,
-        },
+         },
         {
             'name': 'hourly',
             'description': 'The 8760 hours in the year named by hour',
             'elements': hourly
-        },
+         },
         {
             'name': 'annual',
             'description': 'One annual timestep, used for aggregate yearly data',
             'elements': annual,
-        },
+         },
         {
             'name': 'remap_months',
             'description': 'Remapped months to four representative months',
             'elements': remap_months,
-        },
+         },
         {
             'name': 'technology_type',
             'description': 'Technology dimension for narrative fixture',
@@ -549,14 +559,30 @@ def sample_dimensions(regions_half_squares, remap_months, hourly, annual):
                 {'name': 'water_meter'},
                 {'name': 'electricity_meter'},
             ]
-        }
+         },
+        {
+            'name': 'county',
+            'elements': [
+                {'name': 'oxford'}
+            ]
+         },
+        {
+            'name': 'season',
+            'elements': [
+                 {'name': 'cold_month'},
+                 {'name': 'spring_month'},
+                 {'name': 'hot_month'},
+                 {'name': 'fall_month'}
+            ]
+
+         }
     ]
 
 
 @fixture
 def get_dimension():
     return {
-        "name":"annual",
+        "name": "annual",
         "description": "Single annual interval of 8760 hours",
         "elements":
             [
