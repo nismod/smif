@@ -132,8 +132,8 @@ class ProjectOverview extends Component {
                 {
                     'name': config.name,
                     'description': config.description,
-                    'narrative_set': '',
-                    'filename': ''
+                    'provides': [],
+                    'variants': []
                 }
             ))
             break
