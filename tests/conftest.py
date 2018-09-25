@@ -414,15 +414,7 @@ def sample_scenarios():
                     'description': "The count of population",
                     'unit': 'people',
                     'dtype': 'int',
-                    'dims': ['county', 'season'],
-                    'coords':
-                        {
-                        'county': [{'name': 'oxford'}],
-                        'season': [{'name': 'cold_month'},
-                                   {'name': 'spring_month'},
-                                   {'name': 'hot_month'},
-                                   {'name': 'fall_month'}]
-                        }
+                    'dims': ['county', 'season']
                 },
             ],
             'variants': [

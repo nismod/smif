@@ -538,8 +538,7 @@ class TestScenarios:
         """Should read a scenario definition
         """
         expected = sample_scenarios[0]
-        actual = get_handler.read_scenario(expected['name'])
-        print(actual)
+        actual = get_handler.read_scenario(expected['name'], skip_coords=True)
         assert actual == expected
 
     def test_missing_scenario_definition(self, setup_folder_structure, get_handler):
