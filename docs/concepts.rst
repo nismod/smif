@@ -63,14 +63,14 @@ and insolation.
 Narratives
 ----------
 
-A narrative defines data which can be used to parameterise simulation models.
+A narrative defines data which can be used to provide parameters to simulation models.
 
 Like a scenario, a narrative has at least one variant. However, it is possible to compose
 multiple narrative variants, where values may be overridden as defined by the order in which
 variants are selected.
 
-If a model parameter is not provided by any narrative, **smif** will fall back to providing its
-default value.
+If a model parameter is not provided by any narrative, **smif** will fall back to providing the
+default value for that parameter, as defined by its :class:`~smif.metadata.spec.Spec`.
 
 
 Dependencies
