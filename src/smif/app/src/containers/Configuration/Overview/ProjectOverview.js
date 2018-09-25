@@ -122,8 +122,8 @@ class ProjectOverview extends Component {
                 {
                     'name': config.name,
                     'description': config.description,
-                    'scenario_set': '',
-                    'filename': ''
+                    'provides': [],
+                    'variants': []
                 }
             ))
             break
