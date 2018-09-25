@@ -15,11 +15,6 @@ from smif.metadata import Spec
 from smif.model.scenario_model import ScenarioModel
 
 
-class SmifDataError(Exception):
-
-    pass
-
-
 class DataHandle(object):
     """Get/set model parameters and data
     """
