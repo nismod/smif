@@ -3,15 +3,34 @@
 Getting Started
 ===============
 
-Once you have installed **smif**, the quickest way to get started is to use the
-included sample project. You can make a new directory and copy the sample
-project files there by running::
+Once you have installed **smif** (see :ref:`Installation and Configuration`), the quickest way
+to get started is to use the sample project.
 
-  $ mkdir sample_project
-  $ cd sample_project
-  $ smif setup
-  $ ls
-  config/ data/ models/ planning/ results/ smif.log
+This section walks through setting up the sample project and extending it to configure models
+and data.
+
+If you prefer to start with an overview of the concepts that **smif** uses, these are
+documented in :ref:`Concepts`.
+
+Setup
+-----
+
+Make a new directory and copy the sample project files there by running:
+
+
+.. code:: console
+
+    $ mkdir sample_project
+    $ cd sample_project
+    $ smif setup
+    $ ls
+    config/ data/ models/ planning/ results/ smif.log
+
+.. topic:: Command-line examples
+
+    Commands that can be run in a terminal or command line are written prefixed with a $. This
+    means you can copy the rest of the line to run - don't copy or type the $ itself.
+
 
 On the command line, from within the project directory, type the following
 command to list the available model runs::

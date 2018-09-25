@@ -115,8 +115,8 @@ tool for you.
   - equilibrium models without explicit timesteps (e.g. Land-Use Transport Interaction)
   - for simulating 100s of small actor-scale entities within a system-level environment
 
-Setup and Configuration
-=======================
+Installation and Configuration
+==============================
 
 **smif** is written in Python (Python>=3.5) and has a number of dependencies.
 See `requirements.txt` for a full list.
