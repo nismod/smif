@@ -1,6 +1,29 @@
 div.topic {
-    padding-bottom: 1em; /* pad topic box */
+    /* pad topic box, less gray */
+    padding: 0.5em 0.5em;
+    border-radius: 0.25em;
+    box-shadow: #000 0px 1px 3px -2px;
+    background: #faf8fa;
+}
+.topic-title:before {
+    /* add diamond to break-out box title */
+    content: '\2662';
+    margin-right: 0.25em;
 }
 a.image-reference:hover {
-    border-bottom: none; /* no border on image links */
+    /* no border on image links */
+    border-bottom: none;
+}
+div.highlight {
+    /* reset highlight blocks to pygments background */
+    background: #2f1e2e;
+}
+div.highlight pre {
+    /* fix code block padding, let pygments background show */
+    background: transparent;
+    padding: 0.5em 0.5em;
+}
+.highlight-yaml .l {
+    /* override YAML highlighting not to be mostly orange! */
+    color: #e7e9db;
 }
