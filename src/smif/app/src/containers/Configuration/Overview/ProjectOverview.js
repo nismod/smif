@@ -178,16 +178,25 @@ class ProjectOverview extends Component {
 
         case 'Scenario':
             this.props.model_runs.forEach(function(sos_model_run) {
-                Object.keys(sos_model_run.scenarios).forEach(function(scenario_sets) {
-                    sos_model_run.scenarios[scenario_sets].forEach(function(scenario) {
-                        if (scenario == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model_run.name,
-                                link: '/configure/sos-model-run/',
-                                type: 'ModelRun'
-                            })
-                        }
-                    })
+                Object.keys(sos_model_run.scenarios).forEach(function(scenario) {
+                    if (scenario == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model_run.name,
+                            link: '/configure/sos-model-run/',
+                            type: 'ModelRun'
+                        })
+                    }
+                })
+            })
+            this.props.sos_models.forEach(function(sos_model) {
+                sos_model.scenarios.forEach(function(scenario) {
+                    if (scenario == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
+                        })
+                    }
                 })
             })
             break
