@@ -528,7 +528,7 @@ class TestSectorModel:
 
 
 # need to test with spec and new methods
-@mark.xfail
+# @mark.xfail
 class TestScenarios:
     """Scenario data should be readable, metadata is currently editable. May move to make it
     possible to import/edit/write data.
@@ -537,16 +537,16 @@ class TestScenarios:
                                       sample_scenarios):
         """Should read a scenario definition
         """
-        expected = sample_scenarios[1]
-        actual = get_handler.read_scenario_definition(expected['name'])
+        expected = sample_scenarios[0]
+        actual = get_handler.read_scenario(expected['name'], skip_coords=True)
         assert actual == expected
 
     def test_missing_scenario_definition(self, setup_folder_structure, get_handler):
         """Should raise a SmifDataNotFoundError if scenario definition not found
         """
         with raises(SmifDataNotFoundError) as ex:
-            get_handler.read_scenario_definition('missing')
-        assert "Scenario definition 'missing' not found" in str(ex)
+            get_handler.read_scenario('missing')
+        assert "Scenario 'missing' not found" in str(ex)
 
     def test_scenario_data(self, setup_folder_structure, get_handler,
                            get_scenario_data):
@@ -565,15 +565,68 @@ class TestScenarios:
             dict_writer.writerows(scenario_data)
 
         config_handler = get_handler
-        expected = np.array([[200.0]])
-        actual = config_handler.read_scenario_data(
+        expected = np.array([[100, 150, 200, 210]])
+        actual = config_handler.read_scenario_variant_data(
+            'population',
             'High Population (ONS)',
             'population_count',
-            'lad',
-            'annual',
-            2017)
+            timestep=2017)
 
         np.testing.assert_almost_equal(actual, expected)
+
+    def test_scenario_data_raises(self, setup_folder_structure, get_handler,
+                                  get_faulty_scenario_data):
+        """If a scenario file has incorrect keys, raise a friendly error identifying
+        missing keys
+        """
+        basefolder = setup_folder_structure
+        scenario_data = get_faulty_scenario_data
+
+        keys = scenario_data[0].keys()
+        with open(os.path.join(str(basefolder), 'data', 'scenarios',
+                               'population_high.csv'), 'w+') as output_file:
+            dict_writer = csv.DictWriter(output_file, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(scenario_data)
+
+        config_handler = get_handler
+        with raises(SmifDataMismatchError):
+            config_handler.read_scenario_variant_data(
+                'population',
+                'High Population (ONS)',
+                'population_count',
+                timestep=2017)
+
+    def test_read_scenario_variable_spec(self, get_handler):
+        handler = get_handler
+        scenario_name = 'population'
+        variable = 'population_count'
+        spec = handler._read_scenario_variable_spec(scenario_name, variable)
+        assert spec.as_dict() == {'name': 'population_count',
+                                  'description': 'The count of population',
+                                  'unit': 'people',
+                                  'dtype': 'int',
+                                  'dims': ['county', 'season'],
+                                  'coords': {
+                                      'county': ['oxford'],
+                                      'season': ['cold_month', 'spring_month',
+                                                 'hot_month', 'fall_month']
+                                            },
+                                  'abs_range': None,
+                                  'default': None,
+                                  'exp_range': None}
+
+    def test_read_scenario_variable_spec_raises(self, get_handler):
+        handler = get_handler
+        scenario_name = 'does not exist'
+        variable = 'population_count'
+        with raises(SmifDataNotFoundError):
+            handler._read_scenario_variable_spec(scenario_name, variable)
+
+        scenario_name = 'population'
+        variable = 'does not exist'
+        with raises(SmifDataNotFoundError):
+            handler._read_scenario_variable_spec(scenario_name, variable)
 
     def test_scenario_data_validates(self, setup_folder_structure, get_handler,
                                      get_remapped_scenario_data):
@@ -600,15 +653,15 @@ class TestScenarios:
         config_handler = get_handler
 
         expected_data = np.array([[100, 150, 200, 210]], dtype=float)
-        actual = config_handler.read_scenario_data(
+        actual = config_handler.read_scenario_variant_data(
+            'population',
             'High Population (ONS)',
             'population_count',
-            'lad',
-            'remap_months',
-            2015)
+            timestep=2015)
 
         np.testing.assert_equal(actual, expected_data)
 
+    @mark.xfail
     def test_project_scenario_sets(self, get_handler):
         """ Test to read and write the project configuration
         """
@@ -658,13 +711,14 @@ class TestScenarios:
                 expected = 'The annual mortality rate in NL population'
                 assert scenario_set['description'] == expected
 
-    def test_read_scenario_set_missing(self, get_handler):
-        """Should raise a SmifDataNotFoundError if scenario set not found
+    def test_read_scenario_missing(self, get_handler):
+        """Should raise a SmifDataNotFoundError if scenario not found
         """
         with raises(SmifDataNotFoundError) as ex:
-            get_handler.read_scenario_set('missing')
-        assert "Scenario set 'missing' not found" in str(ex)
+            get_handler.read_scenario('missing')
+        assert "Scenario 'missing' not found" in str(ex)
 
+    @mark.xfail
     def test_project_scenarios(self, get_handler):
         """ Test to read and write the project configuration
         """
@@ -718,6 +772,7 @@ class TestScenarios:
             if scenario['name'] == 'name_change':
                 assert scenario['filename'] == 'population_medium_change.csv'
 
+    @mark.xfail
     def test_read_scenario_set_scenario_definitions(self, get_handler):
         """ Test to read all scenario definitions for a scenario
         """

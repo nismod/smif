@@ -368,7 +368,7 @@ class DataHandle(object):
         Notes
         -----
         Access to model results is only granted to models contained
-        within self._model if self._model is a  smif.model.model.CompositeModel
+        within self._model if self._model is a smif.model.model.CompositeModel
         """
 
         # resolve timestep

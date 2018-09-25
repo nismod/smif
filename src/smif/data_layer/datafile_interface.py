@@ -703,6 +703,12 @@ class DatafileInterface(DataInterface):
         filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
         data = self._get_data_from_csv(filepath)
 
+        if 'timestep' not in data[0].keys():
+            msg = "Could not read data for scenario variant {} for scenario {}. " + \
+                  "Header in '{}' missing 'timestep' key. Found {}"
+            raise SmifDataMismatchError(msg.format(variant_name, scenario_name,
+                                                   filepath, list(data[0].keys())))
+
         if timestep is not None:
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
@@ -738,8 +744,13 @@ class DatafileInterface(DataInterface):
         # Read spec from scenario->provides->variable
         scenario = self.read_scenario(scenario_name)
         spec = _pick_from_list(scenario['provides'], variable)
-        self._set_item_coords(spec)
-        return Spec.from_dict(spec)
+        if spec is not None:
+            self._set_item_coords(spec)
+            return Spec.from_dict(spec)
+        else:
+            msg = "Could not find spec definition for scenario '{}' " + \
+                  "and variable '{}'"
+            raise SmifDataNotFoundError(msg.format(scenario_name, variable))
     # endregion
 
     # region Narratives
@@ -1320,19 +1331,23 @@ def _idx_in_list(list_of_dicts, name):
 
 def _assert_config_item_exists(config, dtype, name):
     if not _config_item_exists(config, dtype, name):
-        raise SmifDataNotFoundError("%s '%s' not found" % (dtype, name))
+        raise SmifDataNotFoundError("%s '%s' not found" % (str(dtype).title(),
+                                    name))
 
 
 def _assert_config_item_not_exists(config, dtype, name):
     if _config_item_exists(config, dtype, name):
-        raise SmifDataExistsError("%s '%s' already exists" % (dtype, name))
+        raise SmifDataExistsError("%s '%s' already exists" % (str(dtype).title(),
+                                  name))
 
 
 def _assert_nested_config_item_exists(config, dtype, primary, secondary):
     if not _nested_config_item_exists(config, dtype, primary, secondary):
-        raise SmifDataNotFoundError("%s '%s:%s' not found" % (dtype, primary, secondary))
+        raise SmifDataNotFoundError("%s '%s:%s' not found" % (str(dtype).title(),
+                                    primary, secondary))
 
 
 def _assert_nested_config_item_not_exists(config, dtype, primary, secondary):
     if _nested_config_item_exists(config, dtype, primary, secondary):
-        raise SmifDataExistsError("%s '%s:%s' already exists" % (dtype, primary, secondary))
+        raise SmifDataExistsError("%s '%s:%s' already exists" % (str(dtype).title(),
+                                  primary, secondary))

@@ -927,10 +927,10 @@ class DataInterface(metaclass=ABCMeta):
             If an observation region or interval is not in region_names or
             interval_names
         SmifDataNotFoundError
-            If the observations don't include data for any region/interval
+            If the observations don't include data for any dimension
             combination
         SmifDataMismatchError
-            If the region_names and interval_names do not
+            If the dimension coordinate ids do not
             match the observations
         """
         DataInterface._validate_observations(observations, spec)

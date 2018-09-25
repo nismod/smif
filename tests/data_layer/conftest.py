@@ -45,26 +45,61 @@ def get_scenario_data():
     """
     return [
         {
-            'value': 100,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 1,
-            'year': 2015
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'timestep': 2017
         },
         {
-            'value': 150,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 1,
-            'year': 2016
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'timestep': 2017
         },
         {
-            'value': 200,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 1,
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'timestep': 2017
+        },
+        {
+            'population_count': 210,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'timestep': 2017
+        },
+    ]
+
+
+@fixture
+def get_faulty_scenario_data():
+    """Return faulty sample scenario_data
+    """
+    return [
+        {
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
             'year': 2017
-        }
+        },
+        {
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'year': 2017
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'year': 2017
+        },
+        {
+            'population_count': 210,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'year': 2017
+        },
     ]
 
 
@@ -74,60 +109,52 @@ def get_remapped_scenario_data():
     """
     data = [
         {
-            'value': 100,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 'cold_month',
-            'year': 2015
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'timestep': 2015
         },
         {
-            'value': 150,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 'spring_month',
-            'year': 2015
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'timestep': 2015
         },
         {
-            'value': 200,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 'hot_month',
-            'year': 2015
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'timestep': 2015
         },
         {
-            'value': 210,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 'fall_month',
-            'year': 2015
+            'population_count': 210,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'timestep': 2015
         },
         {
-            'value': 100,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 'cold_month',
-            'year': 2016
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'timestep': 2016
         },
         {
-            'value': 150,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 'spring_month',
-            'year': 2016
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'timestep': 2016
         },
         {
-            'value': 200,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 'hot_month',
-            'year': 2016
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'timestep': 2016
         },
         {
-            'value': 200,
-            'units': 'people',
-            'region': 'oxford',
-            'interval': 'fall_month',
-            'year': 2016
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'timestep': 2016
         }
     ]
     spec = Spec(
