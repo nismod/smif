@@ -4,8 +4,9 @@ import sys
 import traceback
 
 from smif.controller.modelrun import ModelRunBuilder
-from smif.data_layer import DatafileInterface, DataNotFoundError
+from smif.data_layer import DatafileInterface
 from smif.data_layer.model_loader import ModelLoader
+from smif.exception import SmifDataNotFoundError
 from smif.model.scenario_model import ScenarioModel
 from smif.model.sos_model import SosModel
 
@@ -32,7 +33,7 @@ def get_model_run_definition(directory, modelrun):
     handler = DatafileInterface(directory)
     try:
         model_run_config = handler.read_model_run(modelrun)
-    except DataNotFoundError:
+    except SmifDataNotFoundError:
         LOGGER.error("Model run %s not found. Run 'smif list' to see available model runs.",
                      modelrun)
         exit(-1)

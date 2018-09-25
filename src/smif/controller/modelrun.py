@@ -23,6 +23,7 @@ import networkx as nx
 from smif.controller.scheduler import JobScheduler
 from smif.data_layer import DataHandle
 from smif.decision.decision import DecisionManager
+from smif.exception import SmifModelRunError
 from smif.model import ModelOperation
 
 
@@ -94,9 +95,9 @@ class ModelRun(object):
         """
         for scenario in self.scenarios:
             if scenario not in self.sos_model.scenario_models.keys():
-                raise ModelRunError("ScenarioSet '{}' is selected in the ModelRun "
-                                    "configuration but not found in the SosModel "
-                                    "configuration".format(scenario))
+                raise SmifModelRunError("ScenarioSet '{}' is selected in the ModelRun "
+                                        "configuration but not found in the SosModel "
+                                        "configuration".format(scenario))
 
     @property
     def model_horizon(self):
@@ -123,7 +124,7 @@ class ModelRun(object):
         self.logger.debug("Running model run %s", self.name)
         if self.status == 'Built':
             if not self.model_horizon:
-                raise ModelRunError("No timesteps specified for model run")
+                raise SmifModelRunError("No timesteps specified for model run")
             if warm_start_timestep:
                 idx = self.model_horizon.index(warm_start_timestep)
                 self.model_horizon = self.model_horizon[idx:]
@@ -132,7 +133,7 @@ class ModelRun(object):
             modelrunner.solve_model(self, store)
             self.status = 'Successful'
         else:
-            raise ModelRunError("Model is not yet built.")
+            raise SmifModelRunError("Model is not yet built.")
 
 
 class ModelRunner(object):
@@ -416,9 +417,3 @@ class ModelRunBuilder(object):
             A list of strategies
         """
         self.model_run.strategies = strategies
-
-
-class ModelRunError(Exception):
-    """Raise when model run requirements are not satisfied
-    """
-    pass

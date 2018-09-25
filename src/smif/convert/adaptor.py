@@ -7,7 +7,7 @@ The method to override is `generate_coefficients`, which accepts two
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from smif.data_layer import DataNotFoundError
+from smif.exception import SmifDataNotFoundError
 from smif.model import Model
 
 
@@ -40,7 +40,7 @@ class Adaptor(Model, metaclass=ABCMeta):
         """
         try:
             coefficients = data_handle.read_coefficients(from_spec, to_spec)
-        except DataNotFoundError:
+        except SmifDataNotFoundError:
             msg = "Generating coefficients for %s to %s"
             self.logger.info(msg, from_spec, to_spec)
 

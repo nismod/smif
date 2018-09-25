@@ -2,8 +2,9 @@ from copy import copy, deepcopy
 
 import numpy as np
 from pytest import fixture, mark, param, raises
-from smif.data_layer import (DatabaseInterface, DataExistsError,
-                             DatafileInterface, MemoryInterface)
+from smif.data_layer import (DatabaseInterface, DatafileInterface,
+                             MemoryInterface)
+from smif.exception import SmifDataExistsError
 from smif.metadata import Spec
 
 
@@ -246,7 +247,7 @@ class TestSosModel:
 
     def test_write_existing_sos_model(self, handler):
         handler = handler
-        with raises(DataExistsError):
+        with raises(SmifDataExistsError):
             handler.write_sos_model({'name': 'energy'})
 
     def test_update_sos_model(self, handler, get_sos_model):

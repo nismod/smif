@@ -3,7 +3,8 @@
 from collections import OrderedDict
 from copy import copy
 
-from smif.data_layer.data_interface import DataExistsError, DataInterface
+from smif.data_layer.data_interface import DataInterface
+from smif.exception import SmifDataExistsError
 
 
 class MemoryInterface(DataInterface):
@@ -53,7 +54,7 @@ class MemoryInterface(DataInterface):
 
     def write_sos_model(self, sos_model):
         if sos_model['name'] in self._sos_models:
-            raise DataExistsError()
+            raise SmifDataExistsError()
         self._sos_models[sos_model['name']] = sos_model
 
     def update_sos_model(self, sos_model_name, sos_model):

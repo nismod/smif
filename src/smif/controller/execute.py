@@ -2,8 +2,8 @@ import logging
 import sys
 
 from smif.controller.build import build_model_run, get_model_run_definition
-from smif.controller.modelrun import ModelRunError
 from smif.data_layer import DatafileInterface
+from smif.exception import SmifModelRunError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def execute_model_run(model_run_ids, directory, interface='local_binary', warm=F
                 modelrun.run(store, store.prepare_warm_start(modelrun.name))
             else:
                 modelrun.run(store)
-        except ModelRunError as ex:
+        except SmifModelRunError as ex:
             LOGGER.exception(ex)
             exit(1)
 

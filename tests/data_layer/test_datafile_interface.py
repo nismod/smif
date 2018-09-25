@@ -8,10 +8,10 @@ from unittest.mock import Mock
 import numpy as np
 import pyarrow as pa
 from pytest import fixture, mark, raises
-from smif.data_layer import (DataExistsError, DataMismatchError,
-                             DataNotFoundError)
 from smif.data_layer.datafile_interface import DatafileInterface
 from smif.data_layer.load import dump
+from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
+                            SmifDataNotFoundError)
 from smif.metadata import Spec
 
 
@@ -119,7 +119,7 @@ class TestModelRun:
         model_run1['name'] = 'unique'
         config_handler.write_model_run(model_run1)
 
-        with raises(DataExistsError) as ex:
+        with raises(SmifDataExistsError) as ex:
             config_handler.write_model_run(model_run1)
         assert "model_run 'unique' already exists" in str(ex)
 
@@ -142,7 +142,7 @@ class TestModelRun:
     def test_model_run_read_missing(self, get_handler):
         """Test that reading a missing model_run fails.
         """
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             get_handler.read_model_run('missing_name')
         assert "model_run 'missing_name' not found" in str(ex)
 
@@ -169,7 +169,7 @@ class TestModelRun:
         model_run = model_run
 
         model_run['name'] = 'model_run'
-        with raises(DataMismatchError) as ex:
+        with raises(SmifDataMismatchError) as ex:
             config_handler.update_model_run('model_run2', model_run)
         assert "name 'model_run2' must match 'model_run'" in str(ex)
 
@@ -180,7 +180,7 @@ class TestModelRun:
         model_run = model_run
         model_run['name'] = 'missing_name'
 
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.update_model_run('missing_name', model_run)
         assert "model_run 'missing_name' not found" in str(ex)
 
@@ -203,7 +203,7 @@ class TestModelRun:
         """Test that updating a nonexistent model_run should fail
         """
         config_handler = get_handler
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_model_run('missing_name')
         assert "model_run 'missing_name' not found" in str(ex)
 
@@ -241,7 +241,7 @@ class TestSosModel:
         sos_model1['name'] = 'unique'
         config_handler.write_sos_model(sos_model1)
 
-        with raises(DataExistsError) as ex:
+        with raises(SmifDataExistsError) as ex:
             config_handler.write_sos_model(sos_model1)
         assert "sos_model 'unique' already exists" in str(ex)
 
@@ -265,7 +265,7 @@ class TestSosModel:
         """Test that reading a missing sos_model fails.
         """
         config_handler = get_handler
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.read_sos_model('missing_name')
         assert "sos_model 'missing_name' not found" in str(ex)
 
@@ -292,7 +292,7 @@ class TestSosModel:
         sos_model = get_sos_model
 
         sos_model['name'] = 'sos_model'
-        with raises(DataMismatchError) as ex:
+        with raises(SmifDataMismatchError) as ex:
             config_handler.update_sos_model('sos_model2', sos_model)
         assert "name 'sos_model2' must match 'sos_model'" in str(ex)
 
@@ -303,7 +303,7 @@ class TestSosModel:
         sos_model = get_sos_model
         sos_model['name'] = 'missing_name'
 
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.update_sos_model('missing_name', sos_model)
         assert "sos_model 'missing_name' not found" in str(ex)
 
@@ -326,7 +326,7 @@ class TestSosModel:
         """Test that updating a nonexistent sos_model should fail
         """
         config_handler = get_handler
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_sos_model('missing_name')
         assert "sos_model 'missing_name' not found" in str(ex)
 
@@ -365,7 +365,7 @@ class TestSectorModel:
         sector_model1['name'] = 'unique'
         config_handler.write_sector_model(sector_model1)
 
-        with raises(DataExistsError) as ex:
+        with raises(SmifDataExistsError) as ex:
             config_handler.write_sector_model(sector_model1)
         assert "sector_model 'unique' already exists" in str(ex)
 
@@ -389,7 +389,7 @@ class TestSectorModel:
         """Test that reading a missing sector_model fails.
         """
         config_handler = get_handler
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.read_sector_model('missing_name')
         assert "sector_model 'missing_name' not found" in str(ex)
 
@@ -416,7 +416,7 @@ class TestSectorModel:
         sector_model = get_sector_model
 
         sector_model['name'] = 'sector_model'
-        with raises(DataMismatchError) as ex:
+        with raises(SmifDataMismatchError) as ex:
             config_handler.update_sector_model('sector_model2', sector_model)
         assert "name 'sector_model2' must match 'sector_model'" in str(ex)
 
@@ -427,7 +427,7 @@ class TestSectorModel:
         sector_model = get_sector_model
         sector_model['name'] = 'missing_name'
 
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.update_sector_model('missing_name', sector_model)
         assert "sector_model 'missing_name' not found" in str(ex)
 
@@ -450,7 +450,7 @@ class TestSectorModel:
         """Test that updating a nonexistent sector_model should fail
         """
         config_handler = get_handler
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_sector_model('missing_name')
         assert "sector_model 'missing_name' not found" in str(ex)
 
@@ -542,9 +542,9 @@ class TestScenarios:
         assert actual == expected
 
     def test_missing_scenario_definition(self, setup_folder_structure, get_handler):
-        """Should raise a DataNotFoundError if scenario definition not found
+        """Should raise a SmifDataNotFoundError if scenario definition not found
         """
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             get_handler.read_scenario_definition('missing')
         assert "Scenario definition 'missing' not found" in str(ex)
 
@@ -659,9 +659,9 @@ class TestScenarios:
                 assert scenario_set['description'] == expected
 
     def test_read_scenario_set_missing(self, get_handler):
-        """Should raise a DataNotFoundError if scenario set not found
+        """Should raise a SmifDataNotFoundError if scenario set not found
         """
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             get_handler.read_scenario_set('missing')
         assert "Scenario set 'missing' not found" in str(ex)
 
@@ -778,9 +778,9 @@ class TestNarratives:
         assert test_narrative['energy_demand'] == {'smart_meter_savings': 8}
 
     def test_narrative_data_missing(self, get_handler):
-        """Should raise a DataNotFoundError if narrative has no data
+        """Should raise a SmifDataNotFoundError if narrative has no data
         """
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             get_handler.read_narrative_data('missing')
         assert "Narrative 'missing' has no data defined" in str(ex)
 
@@ -791,9 +791,9 @@ class TestNarratives:
         assert actual == expected
 
     def test_read_narrative_definition_missing(self, get_handler):
-        """Should raise a DataNotFoundError if narrative not defined
+        """Should raise a SmifDataNotFoundError if narrative not defined
         """
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             get_handler.read_narrative('missing')
         assert "Narrative 'missing' not found" in str(ex)
 
@@ -1322,7 +1322,7 @@ class TestCoefficients:
     def test_read_raises(self, from_spec, to_spec, get_handler):
         handler = get_handler
         missing_spec = Spec(name='missing_coef', dtype='int')
-        with raises(DataNotFoundError):
+        with raises(SmifDataNotFoundError):
             handler.read_coefficients(missing_spec, to_spec)
 
     def test_write_success_if_folder_missing(self, from_spec, to_spec):

@@ -4,20 +4,24 @@
 
 Raises
 ------
-DataNotFoundError
+SmifDataNotFoundError
     If data cannot be found in the store when try to read from the store
-DataExistsError
+SmifDataExistsError
     If data already exists in the store when trying to write to the store
     (use an update method instead)
-DataMismatchError
+SmifDataMismatchError
     Data presented to read, write and update methods is in the
     incorrect format or of wrong dimensions to that expected
+SmifDataReadError
+    When unable to read data e.g. unable to handle file type or connect
+    to database
 """
 from abc import ABCMeta, abstractmethod
 from functools import reduce
 from logging import getLogger
 
 import numpy as np
+from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
 
 
 class DataInterface(metaclass=ABCMeta):
@@ -922,10 +926,10 @@ class DataInterface(metaclass=ABCMeta):
         ValueError
             If an observation region or interval is not in region_names or
             interval_names
-        DataNotFoundError
+        SmifDataNotFoundError
             If the observations don't include data for any region/interval
             combination
-        DataMismatchError
+        SmifDataMismatchError
             If the region_names and interval_names do not
             match the observations
         """
@@ -952,7 +956,7 @@ class DataInterface(metaclass=ABCMeta):
     def _validate_observations(observations, spec):
         if len(observations) != reduce(lambda x, y: x * y, spec.shape, 1):
             msg = "Number of observations ({}) is not equal to product of {}"
-            raise DataMismatchError(
+            raise SmifDataMismatchError(
                 msg.format(len(observations), spec.shape)
             )
         DataInterface._validate_observation_keys(observations, spec)
@@ -985,7 +989,7 @@ class DataInterface(metaclass=ABCMeta):
                 observed.add(obs[meta_name])
         missing = set(meta_list) - observed
         if missing:
-            raise DataNotFoundError(
+            raise SmifDataNotFoundError(
                 "Missing values for {}s: {}".format(meta_name, list(missing)))
 
     @staticmethod
@@ -1002,32 +1006,3 @@ class DataInterface(metaclass=ABCMeta):
         return config
 
     # endregion
-
-
-class DataNotFoundError(Exception):
-    """Raise when some data is not found
-    """
-    pass
-
-
-class DataExistsError(Exception):
-    """Raise when some data is found unexpectedly
-    """
-    pass
-
-
-class DataMismatchError(Exception):
-    """Raise when some data doesn't match the context
-
-    E.g. when updating an object by id, the updated object's id must match
-    the id provided separately.
-    """
-    pass
-
-
-class DataReadError(Exception):
-    """Raise when unable to read data
-
-    E.g. unable to handle file type or connect to database
-    """
-    pass
