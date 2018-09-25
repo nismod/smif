@@ -2,9 +2,9 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import PropertySelector from 'components/ConfigForm/General/PropertySelector.js'
-import DependencyList from 'components/ConfigForm/SosModel/DependencyList.js'
 import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
+import SpecList from './General/SpecList'
+import VariantList from './General/VariantList'
 
 class ScenarioConfigForm extends Component {
     constructor(props) {
@@ -15,7 +15,7 @@ class ScenarioConfigForm extends Component {
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {
-            selectedSosModel: this.props.sos_model
+            selectedScenario: this.props.scenario
         }
     }
 
@@ -25,20 +25,27 @@ class ScenarioConfigForm extends Component {
         const name = target.name
 
         this.setState({
-            selectedSosModel: update(this.state.selectedSosModel, {[name]: {$set: value}})
+            selectedScenario: update(this.state.selectedScenario, {[name]: {$set: value}})
         })
     }
 
     handleSave() {
-        this.props.saveSosModel(this.state.selectedSosModel)
+        this.props.saveScenario(this.state.selectedScenario)
     }
 
     handleCancel() {
-        this.props.cancelSosModel()
+        this.props.cancelScenario()
     }
 
     render() {
-        const {selectedSosModel} = this.state
+        const {selectedScenario} = this.state
+
+        console.debug(selectedScenario)
+
+        let dims = this.props.dimensions.map(dim => ({
+            value: dim.name,
+            label: dim.name
+        }))
 
         return (
             <div>
@@ -49,19 +56,34 @@ class ScenarioConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input id="sos_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModel.name} onChange={this.handleChange}/>
+                                <input id="scenario_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedScenario.name} onChange={this.handleChange}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea id="sos_model_description" className="form-control" name="description" rows="5" defaultValue={selectedSosModel.description} onChange={this.handleChange}/>
+                                <textarea id="scenario_description" className="form-control" name="description" rows="5" defaultValue={selectedScenario.description} onChange={this.handleChange}/>
                             </div>
                         </div>
 
                     </div>
                 </div>
+
+                <div className="card">
+                    <div className="card-header">Provides</div>
+                    <div className="card-body">        
+                        <SpecList name="spec" specs={selectedScenario.provides} dims={dims} />
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">Variants</div>
+                    <div className="card-body">        
+                        <VariantList variants={selectedScenario.variants} provides={selectedScenario.provides} />
+                    </div>
+                </div>
+                {/* 
 
                 <div className="card">
                     <div className="card-header">Settings</div>
@@ -72,7 +94,7 @@ class ScenarioConfigForm extends Component {
                             <div className="col-sm-10">
                                 <PropertySelector 
                                     name="sector_models" 
-                                    activeProperties={selectedSosModel.sector_models} 
+                                    activeProperties={selectedScenario.sector_models} 
                                     availableProperties={this.props.sector_models} 
                                     onChange={this.handleChange} />
                             </div>
@@ -83,7 +105,7 @@ class ScenarioConfigForm extends Component {
                             <div className="col-sm-10">
                                 <PropertySelector 
                                     name="scenario_sets" 
-                                    activeProperties={selectedSosModel.scenarios} 
+                                    activeProperties={selectedScenario.scenarios} 
                                     availableProperties={this.props.scenarios} 
                                     onChange={this.handleChange} />
                             </div>
@@ -94,7 +116,7 @@ class ScenarioConfigForm extends Component {
                             <div className="col-sm-10">
                                 <PropertySelector 
                                     name="narrative_sets" 
-                                    activeProperties={selectedSosModel.narratives} 
+                                    activeProperties={selectedScenario.narratives} 
                                     availableProperties={this.props.narratives} 
                                     onChange={this.handleChange} />
                             </div>
@@ -108,7 +130,7 @@ class ScenarioConfigForm extends Component {
   
                         <DependencyList 
                             name="Scenario Dependency" 
-                            dependencies={this.state.selectedSosModel.scenario_dependencies} 
+                            dependencies={this.state.selectedScenario.scenario_dependencies} 
                             source={this.props.scenarios} 
                             source_output={
                                 this.props.scenarios.reduce(function(obj, item) {
@@ -133,7 +155,7 @@ class ScenarioConfigForm extends Component {
   
                         <DependencyList 
                             name="Model Dependency" 
-                            dependencies={this.state.selectedSosModel.model_dependencies} 
+                            dependencies={this.state.selectedScenario.model_dependencies} 
                             source={this.props.sector_models} 
                             source_output={
                                 this.props.sector_models.reduce(function(obj, item) {
@@ -158,20 +180,20 @@ class ScenarioConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Maximum Iterations</label>
                             <div className="col-sm-10">
-                                <input className="form-control" name="max_iterations" type="number" min="1" defaultValue={selectedSosModel.max_iterations} onChange={this.handleChange}/>
+                                <input className="form-control" name="max_iterations" type="number" min="1" defaultValue={selectedScenario.max_iterations} onChange={this.handleChange}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Absolute Convergence Tolerance</label>
                             <div className="col-sm-10">
-                                <input className="form-control" name="convergence_absolute_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_absolute_tolerance} onChange={this.handleChange}/>
+                                <input className="form-control" name="convergence_absolute_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedScenario.convergence_absolute_tolerance} onChange={this.handleChange}/>
                             </div>
                         </div>
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Relative Convergence Tolerance</label>
                             <div className="col-sm-10">
-                                <input className="form-control" name="convergence_relative_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_relative_tolerance} onChange={this.handleChange}/>
+                                <input className="form-control" name="convergence_relative_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedScenario.convergence_relative_tolerance} onChange={this.handleChange}/>
                             </div>
                         </div>
                     </div>
@@ -180,19 +202,17 @@ class ScenarioConfigForm extends Component {
                 <SaveButton onClick={this.handleSave} />
                 <CancelButton onClick={this.handleCancel} />
 
-                <br/>
+                <br/> */}
             </div>
         )
     }
 }
 
 ScenarioConfigForm.propTypes = {
-    sos_model: PropTypes.object.isRequired,
-    sector_models: PropTypes.array.isRequired,
-    scenarios: PropTypes.array.isRequired,
-    narratives: PropTypes.array.isRequired,
-    saveSosModel: PropTypes.func,
-    cancelSosModel: PropTypes.func
+    scenario: PropTypes.object.isRequired,
+    dimensions: PropTypes.array.isRequired,
+    saveScenario: PropTypes.func,
+    cancelScenario: PropTypes.func
 }
 
 export default ScenarioConfigForm
