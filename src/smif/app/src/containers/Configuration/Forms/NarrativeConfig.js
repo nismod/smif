@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
 import { fetchNarrative } from 'actions/actions.js'
+import { fetchDimensions } from 'actions/actions.js'
 import { saveNarrative } from 'actions/actions.js'
 
 import NarrativeConfigForm from 'components/ConfigForm/NarrativeConfigForm.js'
@@ -11,7 +12,6 @@ import NarrativeConfigForm from 'components/ConfigForm/NarrativeConfigForm.js'
 class NarrativeConfig extends Component {
     constructor(props) {
         super(props)
-        this.init = true
 
         this.saveNarrative = this.saveNarrative.bind(this)
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
@@ -23,6 +23,7 @@ class NarrativeConfig extends Component {
         const { dispatch } = this.props
 
         dispatch(fetchNarrative(this.config_name))
+        dispatch(fetchDimensions())
     }
 
     componentDidUpdate() {
@@ -34,14 +35,15 @@ class NarrativeConfig extends Component {
         }
     }
 
-    saveNarrative(Narrative) {
+    saveNarrative(narrative) {
         const { dispatch } = this.props
-        dispatch(saveNarrative(Narrative))
+        dispatch(saveNarrative(narrative))
+
         this.returnToPreviousPage()
     }
 
     returnToPreviousPage() {
-        this.props.history.push('/configure/narrative-set')
+        this.props.history.push('/configure/narratives')
     }
 
     renderLoading() {
@@ -52,36 +54,32 @@ class NarrativeConfig extends Component {
         )
     }
 
-    renderError() {
+    renderNarrativeConfig(narrative, dimensions) {
         return (
-            <div className="alert alert-danger">
-                Error
-            </div>
-        )
-    }
-
-    renderNarrativeConfig(narrative_set) {
-        return (
-            <div key={'narrative_set_' + narrative_set.name}>
-                <NarrativeConfigForm narrative={narrative_set} saveNarrative={this.saveNarrative} cancelNarrative={this.returnToPreviousPage}/>
+            <div>
+                <NarrativeConfigForm
+                    narrative={narrative}
+                    dimensions={dimensions}
+                    saveNarrative={this.saveNarrative}
+                    cancelNarrative={this.returnToPreviousPage}/>
             </div>
         )
     }
 
     render () {
-        const {narrative_set, isFetching} = this.props
+        const {narrative, dimensions, isFetching} = this.props
 
-        if (isFetching && this.init) {
+        if (isFetching) {
             return this.renderLoading()
         } else {
-            this.init = false
-            return this.renderNarrativeConfig(narrative_set)
+            return this.renderNarrativeConfig(narrative, dimensions)
         }
     }
 }
 
 NarrativeConfig.propTypes = {
-    narrative_set: PropTypes.object.isRequired,
+    narrative: PropTypes.object.isRequired,
+    dimensions: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
@@ -91,8 +89,12 @@ NarrativeConfig.propTypes = {
 function mapStateToProps(state) {
 
     return {
-        narrative_set: state.narrative_set.item,
-        isFetching: (state.narrative_set.isFetching)
+        narrative: state.narrative.item,
+        dimensions: state.dimensions.items,
+        isFetching: (
+            state.narrative.isFetching ||
+            state.dimensions.isFetching
+        )
     }
 }
 

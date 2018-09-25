@@ -3,8 +3,10 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
+import SpecList from './General/SpecList'
+import VariantList from './General/VariantList'
 
-class NarrativeSetConfigForm extends Component {
+class NarrativeConfigForm extends Component {
     constructor(props) {
         super(props)
 
@@ -12,8 +14,9 @@ class NarrativeSetConfigForm extends Component {
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
-        this.state = {}
-        this.state.selectedNarrativeSet = this.props.narrativeSet
+        this.state = {
+            selectedNarrative: this.props.narrative
+        }
     }
 
     handleChange(event) {
@@ -22,57 +25,77 @@ class NarrativeSetConfigForm extends Component {
         const name = target.name
 
         this.setState({
-            selectedNarrativeSet: update(this.state.selectedNarrativeSet, {[name]: {$set: value}})
+            selectedNarrative: update(this.state.selectedNarrative, {[name]: {$set: value}})
         })
     }
 
     handleSave() {
-        this.props.saveNarrativeSet(this.state.selectedNarrativeSet)
+        this.props.saveNarrative(this.state.selectedNarrative)
     }
 
     handleCancel() {
-        this.props.cancelNarrativeSet()
+        this.props.cancelNarrative()
     }
 
     render() {
-        const {selectedNarrativeSet} = this.state
+        const {selectedNarrative} = this.state
+
+        let dims = this.props.dimensions.map(dim => ({
+            value: dim.name,
+            label: dim.name
+        }))
 
         return (
             <div>
-                <form>
-                    <div className="card">
-                        <div className="card-header">General</div>
-                        <div className="card-body">
+                <div className="card">
+                    <div className="card-header">General</div>
+                    <div className="card-body">
 
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Name</label>
-                                <div className="col-sm-10">
-                                    <input id="narrative_set_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedNarrativeSet.name} onChange={this.handleChange}/>
-                                </div>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Name</label>
+                            <div className="col-sm-10">
+                                <input id="narrative_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedNarrative.name} onChange={this.handleChange}/>
                             </div>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Description</label>
-                                <div className="col-sm-10">
-                                    <textarea id="narrative_set_description" className="form-control" name="description" rows="5" defaultValue={selectedNarrativeSet.description} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-
                         </div>
-                    </div>
-                </form>
 
-                <SaveButton id="saveNarrativeSet" onClick={this.handleSave} />
-                <CancelButton id="cancelNarrativeSet" onClick={this.handleCancel} />
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Description</label>
+                            <div className="col-sm-10">
+                                <textarea id="narrative_description" className="form-control" name="description" rows="5" defaultValue={selectedNarrative.description} onChange={this.handleChange}/>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">Provides</div>
+                    <div className="card-body">        
+                        <SpecList name="spec" specs={selectedNarrative.provides} dims={dims} />
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">Variants</div>
+                    <div className="card-body">        
+                        <VariantList variants={selectedNarrative.variants} provides={selectedNarrative.provides} />
+                    </div>
+                </div>
+
+                <SaveButton onClick={this.handleSave} />
+                <CancelButton onClick={this.handleCancel} />
+
+                <br/>
             </div>
         )
     }
 }
 
-NarrativeSetConfigForm.propTypes = {
-    narrativeSet: PropTypes.object.isRequired,
-    saveNarrativeSet: PropTypes.func,
-    cancelNarrativeSet: PropTypes.func
+NarrativeConfigForm.propTypes = {
+    narrative: PropTypes.object.isRequired,
+    dimensions: PropTypes.array.isRequired,
+    saveNarrative: PropTypes.func,
+    cancelNarrative: PropTypes.func
 }
 
-export default NarrativeSetConfigForm
+export default NarrativeConfigForm
