@@ -61,7 +61,7 @@ class ScenarioConfig extends Component {
                     scenario={scenario}
                     dimensions={dimensions}
                     saveScenario={this.saveScenario}
-                    cancelScenarios={this.returnToPreviousPage}/>
+                    cancelScenario={this.returnToPreviousPage}/>
             </div>
         )
     }

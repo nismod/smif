@@ -91,6 +91,14 @@ class VariantList extends Component {
         
         let variant = JSON.parse(JSON.stringify(this.props.variants[name]))
 
+        // Clean keys that not exist in provides
+        Object.keys(variant.data).map(key =>
+        {
+            if(!this.props.provides.map(provide => provide.name).includes(key)) {
+                delete variant.data[key]
+            }
+        })
+
         // Create keys for all specs that it provides but not defined
         this.props.provides.map(provide => {
             if (variant.data[provide.name] == undefined) {
