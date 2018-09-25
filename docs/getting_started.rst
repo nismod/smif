@@ -16,26 +16,26 @@ project files there by running::
 On the command line, from within the project directory, type the following
 command to list the available model runs::
 
-  $ smif list
+    $ smif list
     energy_central
     energy_water_cp_cr
 
 To run a model run, type the following command::
 
-  $ smif run energy_central
-  Model run complete
+    $ smif run energy_central
+    Model run complete
 
 Note that the ``-d`` directory flag can be used to point to the project folder,
 so you can run smif commands explicitly::
 
-  $ smif list -d ~/projects/smif_sample_project/
-  ...
+    $ smif list -d ~/projects/smif_sample_project/
+    ...
 
 Groups of model runs can run as a batches by using the ``-b`` flag and a path to a batchfile::
 
-  $ smif run -b batchfile
+    $ smif run -b batchfile
 
-A batchfile is a textfile with a list modelrun names, each on a new line, like::
+A batchfile is a text file with a list of model run names, each on a new line, like::
 
     energy_central
     energy_water_cp_cr
@@ -44,7 +44,7 @@ User Interface
 ---------------------
 The smif app is a web-based user interface, which helps to manage project configurations.
 The app can be started within a project configuration directory or anywhere else by specifying the path to a project directory::
-  
+
   $ smif app
   $ smif app -d ~/projects/smif_sample_project/
 
@@ -60,7 +60,7 @@ This will automatically open the smif app welcome screen in the default configur
     The Smif app welcome screen
 
 .. topic:: Hints
-    
+
     View the system-of-systems model-run settings
 
     :app: Click the "Model Runs" button [A]
@@ -95,7 +95,7 @@ The configuration overview displays the configurations that are currently presen
     A configuration overview
 
 .. topic:: Hints
-    
+
     Create a new configuration
 
     :app: Click on the "Create a new ..." button [A] to create a new configuration
@@ -190,7 +190,7 @@ The System-of-Systems model configuration tool helps to view, edit or create a s
 
 Model Run Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~
-The Model Run configuration tool helps to view, edit or create a Model Run configuration. 
+The Model Run configuration tool helps to view, edit or create a Model Run configuration.
 This interface builds upon the specifications explained in :ref:`A Model Run File`.
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
@@ -280,30 +280,34 @@ The basic folder structure looks like this::
             water_supply.yml
         /sos_models
             energy_water.yml
+            energy.yml
         /sos_model_runs
-            20170918_energy_water.yml
-            20170918_energy_water_short.yml
+            energy_central.yml
+            energy_water_cp_cr.yml
     /data
+        /dimensions
+            hourly.csv
+            annual.csv
+            lad.shp
         /initial_conditions
             energy_demand_existing.yml
             energy_supply_existing.yml
-        /interval_definitions
-            hourly.csv
-            annual.csv
         /interventions
             energy_demand.yml
+            energy_supply.yml
         /narratives
-            energy_demand_high_tech.yml
-            central_planning.yml
-        /region_definitions
-            lad.shp
+            energy_demand_high_tech.csv
+            central_planning.csv
         /scenarios
             population_high.csv
+            population_low.csv
+        /strategies
+            pipeline_2020.yml
     /models
         energy_demand.py
         water_supply.py
     /results
-        /20170918_energy_water_short
+        /energy_central
             /energy_demand
             /water_supply
 
@@ -654,12 +658,12 @@ with a file containing the geographic data.
 Interventions
 ~~~~~~~~~~~~~
 
-Interventions are the atomic units which comprise the infrastructure systems 
+Interventions are the atomic units which comprise the infrastructure systems
 in the simulation models.
-Interventions can represent physical assets such as pipes, 
-and lines (edges in a network) or power stations and reservoirs 
+Interventions can represent physical assets such as pipes,
+and lines (edges in a network) or power stations and reservoirs
 (nodes in a network).
-Interventions can also represent intangibles which affects the operation 
+Interventions can also represent intangibles which affects the operation
 of a system, such as a policy.
 
 
@@ -699,9 +703,9 @@ Narratives
 ~~~~~~~~~~
 
 A narrative file contains references to 0 or more parameters defined in the
-simulation models, as well as special ``global`` parameters. Whereas model 
-parameters are available only to individual simulation models, 
-global parameters are available across all models. 
+simulation models, as well as special ``global`` parameters. Whereas model
+parameters are available only to individual simulation models,
+global parameters are available across all models.
 Use global paramaters for system-wide constants, such as emission coefficients,
 exchange rates, conversion factors etc.
 
@@ -771,11 +775,11 @@ is required:
 Wrapping a Sector Model: Overview
 ---------------------------------
 
-In addition to collecting the configuration data listed above, 
-to integrate a new sector model into the system-of-systems model 
+In addition to collecting the configuration data listed above,
+to integrate a new sector model into the system-of-systems model
 it is necessary to write a Python wrapper function.
 The template class :class:`smif.model.sector_model.SectorModel` enables a user
-to write a script which runs the wrapped model, passes in parameters and writes 
+to write a script which runs the wrapped model, passes in parameters and writes
 out results.
 
 The wrapper acts as an interface between the simulation modelling
@@ -787,7 +791,7 @@ inputs, parameters, state and pass this data into the wrapped model. After the
 :py:meth:`~smif.model.sector_model.SectorModel.simulate` has run, results from
 the sector model must be formatted and passed back into smif.
 
-The handling of data is aided through the use of a set of methods provided by 
+The handling of data is aided through the use of a set of methods provided by
 :class:`smif.data_layer.data_handle.DataHandle`, namely:
 
 - :py:meth:`~smif.data_layer.data_handle.DataHandle.get_data`
@@ -795,7 +799,7 @@ The handling of data is aided through the use of a set of methods provided by
 - :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameters`
 - :py:meth:`~smif.data_layer.data_handle.DataHandle.get_results`
 
-and 
+and
 
 - :py:meth:`~smif.data_layer.data_handle.DataHandle.set_results`
 
@@ -803,14 +807,14 @@ In this section, we describe the process necessary to correctly write this
 wrapper function, referring to the example project included with the package.
 
 It is difficult to provide exhaustive details for every type of sector model
-implementation - our decision to leave this largely up to the user 
+implementation - our decision to leave this largely up to the user
 is enabled by the flexibility afforded by python. The wrapper can write to a
-database or structured text file before running a model from a command line 
+database or structured text file before running a model from a command line
 prompt, or import a python sector model and pass in parameters values directly.
 As such, what follows is a recipe of components from which you can construct
 a wrapper to full integrate your simulation model within smif.
 
-For help or feature requests, please raise issues at the github repository [2]_ 
+For help or feature requests, please raise issues at the github repository [2]_
 and we will endeavour to provide assistance as resources allow.
 
 Example Wrapper
@@ -839,7 +843,7 @@ sector model configuration of the project.
 Wrapping a Sector Model: Simulate
 ---------------------------------
 
-The most common workflow that will need to be implemented in the simulate 
+The most common workflow that will need to be implemented in the simulate
 method is:
 
 1. Retrieve model input and parameter data from the data handler
@@ -851,7 +855,7 @@ method is:
 Accessing model parameter data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use the :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameter` or 
+Use the :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameter` or
 :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameters` method as shown in the
 example:
 
@@ -881,7 +885,7 @@ defaults to fetching the data for the current timestep.
 Accessing model input data for the base year
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To access model input data from the timestep prior to the current timestep, 
+To access model input data from the timestep prior to the current timestep,
 you can use the following argument:
 
 .. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
@@ -893,7 +897,7 @@ you can use the following argument:
 Accessing model input data for a previous year
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To access model input data from the timestep prior to the current timestep, 
+To access model input data from the timestep prior to the current timestep,
 you can use the following argument:
 
 .. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
@@ -913,20 +917,20 @@ import and instantiate the model, passing in data directly.
    :dedent: 8
 
 In this example, the example water supply simulation model is instantiated
-within the simulate method, data is written to properties of the instantiated 
-class and  the ``run()`` method of the simulation model is called. 
-Finally, (dummy) results are written back to the data handler using the 
+within the simulate method, data is written to properties of the instantiated
+class and  the ``run()`` method of the simulation model is called.
+Finally, (dummy) results are written back to the data handler using the
 :py:meth:`~smif.data_layer.data_handle.DataHandle.set_results` method.
 
-Alternatively, the wrapper could call the model via the command line 
+Alternatively, the wrapper could call the model via the command line
 (see below).
 
 Passing model data in as a command line argument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the model is fairly simple, or requires a parameter value or input data to
-be passed as an argument on the command line, 
-use the methods provided by :py:mod:`subprocess` to call out to the model 
+be passed as an argument on the command line,
+use the methods provided by :py:mod:`subprocess` to call out to the model
 from the wrapper::
 
     parameter = data.get_parameter('command_line_argument')
@@ -943,7 +947,7 @@ In the following example, we write some data to a comma-separated-values (.csv)
 file::
 
     with open(path_to_data_file, 'w') as open_file:
-        fieldnames = ['year', 'PETROL', 'DIESEL', 'LPG', 
+        fieldnames = ['year', 'PETROL', 'DIESEL', 'LPG',
                       'ELECTRICITY', 'HYDROGEN', 'HYBRID']
         writer = csv.DictWriter(open_file, fieldnames)
         writer.writeheader()
@@ -978,8 +982,8 @@ Writing data to a database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The exact implementation of writing input and parameter data will differ on a
-case-by-case basis. In the following example, we write model inputs 
-``energy_demand`` to a postgreSQL database table ``ElecLoad`` using the 
+case-by-case basis. In the following example, we write model inputs
+``energy_demand`` to a postgreSQL database table ``ElecLoad`` using the
 psycopg2 library [3]_ ::
 
     def simulate(self, data):
@@ -994,7 +998,7 @@ psycopg2 library [3]_ ::
         elec_data = data.get_data('electricity_demand')
 
         # Build the SQL string
-        sql = """INSERT INTO "ElecLoad" (Year, Interval, BusID, ElecLoad) 
+        sql = """INSERT INTO "ElecLoad" (Year, Interval, BusID, ElecLoad)
                  VALUES (%s, %s, %s, %s)"""
 
         # Get the time interval definitions associated with the input
@@ -1005,7 +1009,7 @@ psycopg2 library [3]_ ::
         # array holding the energy demand data and write each value into the table
         for i, region in enumerate(regions):
             for j, interval in enumerate(time_intervals):
-                # This line calls out to a helper method which associates 
+                # This line calls out to a helper method which associates
                 # electricity grid bus bars to energy demand regions
                 bus_number = get_bus_number(region)
                 # Build the tuple to write to the table
@@ -1025,16 +1029,16 @@ psycopg2 library [3]_ ::
 Writing model results to the data handler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Writing results back to the data handler is as simple as calling the 
+Writing results back to the data handler is as simple as calling the
 :py:meth:`~smif.data_layer.data_handle.DataHandle.set_results` method::
 
     data.set_results("cost", np.array([[1.23, 1.543, 2.355]])
 
-The expected format of the data is a 2-dimensional numpy array with the 
-dimensions described by the tuple ``(len(regions), len(intervals))`` 
+The expected format of the data is a 2-dimensional numpy array with the
+dimensions described by the tuple ``(len(regions), len(intervals))``
 as defined in the model's output configuration.
-Results are expected to be set for each of the model outputs defined in the 
-output configuration and a warning is raised if these are not present at 
+Results are expected to be set for each of the model outputs defined in the
+output configuration and a warning is raised if these are not present at
 runtime.
 
 The interval definitions associated with the output can be interrogated from

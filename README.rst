@@ -10,8 +10,8 @@ Simulation Modelling Integration Framework
     :target: https://travis-ci.org/nismod/smif
     :alt: Travis CI build status
 
-.. image:: https://ci.appveyor.com/api/projects/status/oxbixm7tca639vaj?svg=true
-    :target: https://ci.appveyor.com/project/willu47/smif)
+.. image:: https://ci.appveyor.com/api/projects/status/g1x12yfwb4q9kjad/branch/master?svg=true
+    :target: https://ci.appveyor.com/project/nismod/smif
     :alt: Appveyor CI Build status
 
 .. image:: https://img.shields.io/codecov/c/github/nismod/smif/master.svg
@@ -34,19 +34,19 @@ Simulation Modelling Integration Framework
    :target: https://smif.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-**smif** is a framework for handling the creation, management and running of 
+**smif** is a framework for handling the creation, management and running of
 system-of-systems models.
 
-A system-of-systems model is a collection of system simulation models that are 
-coupled through dependencies on data produced by each other.  
+A system-of-systems model is a collection of system simulation models that are
+coupled through dependencies on data produced by each other.
 
-**smif** provides a user with the ability to 
+**smif** provides a user with the ability to
 
 - create system-of-systems models
 
   - add simulation models to a system-of-systems model
   - create dependencies between models by linking model inputs and outputs
-  - pick from a library of data adapters which perform common data conversions 
+  - pick from a library of data adapters which perform common data conversions
     across dependencies
   - create user-defined data adapters for more special cases
   - add scenario data sources and link those to model inputs within a system-of-systems
@@ -71,7 +71,7 @@ Should I use **smif**?
 
 There are number of practical limits imposed by the implementation of **smif**.
 These are a result of a conscious design decision that stems from the requirements of
-coupling the infrastructure system models to create the next generation 
+coupling the infrastructure system models to create the next generation
 National Infrastructure System Model (NISMOD2).
 
 The discussion below may help you determine whether **smif** is an appropriate
@@ -80,35 +80,35 @@ tool for you.
 - **smif** *is not* a scheduler, but has been designed to make performing
   system-of-systems analyses with a scheduler easier
 
-- Geographical extent is expected to be defined explicitly by a vector geometry 
+- Geographical extent is expected to be defined explicitly by a vector geometry
 
-  - **smif** *is not* optimised for models which simulate on a grid, 
+  - **smif** *is not* optimised for models which simulate on a grid,
     though they can be accomodated
-  - **smif** *is* designed for models that read and write spatial data 
-    defined over irregular grids or polygons using any spatial format readable 
+  - **smif** *is* designed for models that read and write spatial data
+    defined over irregular grids or polygons using any spatial format readable
     by `fiona <https://github.com/Toblerity/Fiona>`_
 
 - Inputs and outputs are exchanged at the ‘planning timestep’ resolution
 
-  - **smif** makes a distinction between simulation of operation, which happens 
-    at a model-defined timestep resolution, and application of 
-    planning decisions which happens at a timestep which is synchronised 
+  - **smif** makes a distinction between simulation of operation, which happens
+    at a model-defined timestep resolution, and application of
+    planning decisions which happens at a timestep which is synchronised
     between all models
-  - **smif** *is not* focussed on tight coupling between models which need to exchange 
+  - **smif** *is not* focussed on tight coupling between models which need to exchange
     data at every simulation timestep (running in lockstep)
-  - **smif** *does* accomodate individual models with different spatial and temporal 
+  - **smif** *does* accomodate individual models with different spatial and temporal
     (and other dimensions') resolutions, by providing data Adaptors to convert from one
     resolution to another
 
-- **smif** has been designed to support the coupling of bottom-up, engineering 
+- **smif** has been designed to support the coupling of bottom-up, engineering
   simulation models built to simulate the operation of a given infrastructure system
 
   - **smif** *provides* a mechanism for passing information from the system-of-systems
     level (at planning timesteps scale) to the contained models
-  - **smif** *is* appropriate for coupling large complex models that exchange 
+  - **smif** *is* appropriate for coupling large complex models that exchange
     resources and information at relatively course timesteps
 
-- **smif** is not appropriate for 
+- **smif** is not appropriate for
 
   - discrete event system simulation models (e.g. queuing systems)
   - dynamical system models (e.g. predator/prey)
@@ -241,7 +241,7 @@ Citation
 
 If you use **smif** for research, please cite the software directly:
 
-* Will Usher, Tom Russell, & Roald Schoenmakers. (2018, August 15). nismod/smif 
+* Will Usher, Tom Russell, & Roald Schoenmakers. (2018, August 15). nismod/smif
   vX.Y.Z (Version vX.Y.Z). Zenodo. http://doi.org/10.5281/zenodo.1309336
 
 Here's an example BibTeX entry::
