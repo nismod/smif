@@ -27,8 +27,8 @@ A system-of-systems model is collection of connected simulation models, represen
 :class:`~smif.model.sos_model.SosModel`.
 
 
-Inputs, Outputs and Parameters
-------------------------------
+Inputs, Outputs and Parameters - Using 'Spec' for Metadata
+----------------------------------------------------------
 
 A simulation model receives inputs and parameters and produces outputs.
 
@@ -70,15 +70,20 @@ multiple narrative variants, where values may be overridden as defined by the or
 variants are selected.
 
 If a model parameter is not provided by any narrative, **smif** will fall back to providing the
-default value for that parameter, as defined by its :class:`~smif.metadata.spec.Spec`.
+default value for that parameter, as defined by its spec.
 
 
 Dependencies
 ------------
 
-A dependency represents the link between a data source and the place it is required. For
-example, a simulation model input might depend on the output of another simulation model, or
-on data from a scenario.
+A dependency represents the link between a data source and the place it is required. A
+simulation model input might depend on the output of another simulation model, or on data from
+a scenario.
+
+**smif** won't do any data processing behind the scenes, so dependencies can only link inputs
+and outputs where the metadata match exactly on units, dtype and dimensions. It is okay for
+names and suggested ranges not to match. For example, a model providing 'regional_gva' can be
+happily be connected to an input called 'rGVA' as long as the rest of the spec matches.
 
 
 Adaptors
