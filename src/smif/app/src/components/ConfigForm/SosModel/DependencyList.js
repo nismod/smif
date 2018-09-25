@@ -12,7 +12,7 @@ class DependencyList extends Component {
         this.state = {
             formPopupIsOpen: false,
             formEditMode: false,
-            formEditNumber: 0,
+            formEditNumber: -1,
             dependency: this.emptyForm()
         }
 
@@ -69,13 +69,28 @@ class DependencyList extends Component {
     handleSubmit(event) {
         event.preventDefault()
 
-        if (this.state.formEditMode) {
-            this.props.dependencies[this.state.formEditNumber] = this.state.dependency
+        // Prevent user from adding existing dependencies
+        if (this.props.dependencies.filter((dependency, idx) => {
+            return (
+                dependency.source == this.state.dependency.source &&
+                dependency.source_output == this.state.dependency.source_output &&
+                dependency.sink == this.state.dependency.sink &&
+                dependency.sink_input == this.state.dependency.sink_input &&
+                idx != parseInt(this.state.formEditNumber)
+            )
+        }).length > 0) {
+            alert('Cannot save dependency because it already exists')
         }
+        // Add dependency
         else {
-            this.props.dependencies.push(this.state.dependency)
+            if (this.state.formEditMode) {
+                this.props.dependencies[this.state.formEditNumber] = this.state.dependency
+            }
+            else {
+                this.props.dependencies.push(this.state.dependency)
+            }
+            this.closeForm()
         }
-        this.closeForm()
     }
 
     emptyForm() {
@@ -89,6 +104,7 @@ class DependencyList extends Component {
 
     handleCreate() {
         this.setState({dependency: this.emptyForm()})
+        this.setState({formEditNumber: -1})
         this.openForm()
     }
 
