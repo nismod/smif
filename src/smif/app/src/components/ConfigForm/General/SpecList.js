@@ -285,7 +285,6 @@ class SpecList extends Component {
                                             name='default' 
                                             value={this.state.spec.default} 
                                             onChange={this.handleFormInput} 
-                                            required
                                         />
                                     </div>
                                     <div className="col">
