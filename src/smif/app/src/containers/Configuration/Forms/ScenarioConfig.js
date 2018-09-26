@@ -7,7 +7,7 @@ import { fetchScenario } from 'actions/actions.js'
 import { fetchDimensions } from 'actions/actions.js'
 import { saveScenario } from 'actions/actions.js'
 
-import ScenarioConfigForm from 'components/ConfigForm/ScenarioConfigForm.js'
+import ScenarioNarrativeConfigForm from 'components/ConfigForm/ScenarioNarrativeConfigForm.js'
 
 class ScenarioConfig extends Component {
     constructor(props) {
@@ -57,8 +57,8 @@ class ScenarioConfig extends Component {
     renderScenarioConfig(scenario, dimensions) {
         return (
             <div>
-                <ScenarioConfigForm
-                    scenario={scenario}
+                <ScenarioNarrativeConfigForm
+                    scenario_narrative={scenario}
                     dimensions={dimensions}
                     saveScenario={this.saveScenario}
                     cancelScenario={this.returnToPreviousPage}/>

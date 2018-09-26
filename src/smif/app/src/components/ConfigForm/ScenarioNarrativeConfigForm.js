@@ -6,7 +6,7 @@ import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 import SpecList from './General/SpecList'
 import VariantList from './General/VariantList'
 
-class NarrativeConfigForm extends Component {
+class ScenarioConfigForm extends Component {
     constructor(props) {
         super(props)
 
@@ -15,7 +15,7 @@ class NarrativeConfigForm extends Component {
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {
-            selectedNarrative: this.props.narrative
+            selected: this.props.scenario_narrative
         }
     }
 
@@ -25,20 +25,20 @@ class NarrativeConfigForm extends Component {
         const name = target.name
 
         this.setState({
-            selectedNarrative: update(this.state.selectedNarrative, {[name]: {$set: value}})
+            selected: update(this.state.selected, {[name]: {$set: value}})
         })
     }
 
     handleSave() {
-        this.props.saveNarrative(this.state.selectedNarrative)
+        this.props.saveScenario(this.state.selected)
     }
 
     handleCancel() {
-        this.props.cancelNarrative()
+        this.props.cancelScenario()
     }
 
     render() {
-        const {selectedNarrative} = this.state
+        const {selected} = this.state
 
         let dims = this.props.dimensions.map(dim => ({
             value: dim.name,
@@ -54,14 +54,14 @@ class NarrativeConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input id="narrative_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedNarrative.name} onChange={this.handleChange}/>
+                                <input id="scenario_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selected.name} onChange={this.handleChange}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea id="narrative_description" className="form-control" name="description" rows="5" defaultValue={selectedNarrative.description} onChange={this.handleChange}/>
+                                <textarea id="scenario_description" className="form-control" name="description" rows="5" defaultValue={selected.description} onChange={this.handleChange}/>
                             </div>
                         </div>
 
@@ -71,14 +71,14 @@ class NarrativeConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Provides</div>
                     <div className="card-body">        
-                        <SpecList name="spec" specs={selectedNarrative.provides} dims={dims} />
+                        <SpecList name="spec" specs={selected.provides} dims={dims} />
                     </div>
                 </div>
 
                 <div className="card">
                     <div className="card-header">Variants</div>
                     <div className="card-body">        
-                        <VariantList variants={selectedNarrative.variants} provides={selectedNarrative.provides} />
+                        <VariantList variants={selected.variants} provides={selected.provides} />
                     </div>
                 </div>
 
@@ -91,11 +91,11 @@ class NarrativeConfigForm extends Component {
     }
 }
 
-NarrativeConfigForm.propTypes = {
-    narrative: PropTypes.object.isRequired,
+ScenarioConfigForm.propTypes = {
+    scenario_narrative: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
-    saveNarrative: PropTypes.func,
-    cancelNarrative: PropTypes.func
+    saveScenario: PropTypes.func,
+    cancelScenario: PropTypes.func
 }
 
-export default NarrativeConfigForm
+export default ScenarioConfigForm

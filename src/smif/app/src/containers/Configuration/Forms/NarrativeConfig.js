@@ -7,7 +7,7 @@ import { fetchNarrative } from 'actions/actions.js'
 import { fetchDimensions } from 'actions/actions.js'
 import { saveNarrative } from 'actions/actions.js'
 
-import NarrativeConfigForm from 'components/ConfigForm/NarrativeConfigForm.js'
+import ScenarioNarrativeConfigForm from 'components/ConfigForm/ScenarioNarrativeConfigForm.js'
 
 class NarrativeConfig extends Component {
     constructor(props) {
@@ -57,8 +57,8 @@ class NarrativeConfig extends Component {
     renderNarrativeConfig(narrative, dimensions) {
         return (
             <div>
-                <NarrativeConfigForm
-                    narrative={narrative}
+                <ScenarioNarrativeConfigForm
+                    scenario_narrative={narrative}
                     dimensions={dimensions}
                     saveNarrative={this.saveNarrative}
                     cancelNarrative={this.returnToPreviousPage}/>
