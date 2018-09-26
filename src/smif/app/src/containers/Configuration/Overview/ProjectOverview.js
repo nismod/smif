@@ -290,7 +290,7 @@ class ProjectOverview extends Component {
                 </div>
 
                 <div hidden={ isFetching }>
-                    <div hidden={name!='sos-model-run'}>
+                    <div hidden={name!='model-runs'}>
                         <IntroBlock title="Model Runs" intro="A model run brings together a system-of-systems model definition with timesteps over which planning takes place, and a choice of scenarios and narratives to population the placeholder scenario sets in the system-of-systems model.">
                             <input className="btn btn-success btn-margin" name="ModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                         </IntroBlock>
