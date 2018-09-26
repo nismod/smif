@@ -60,8 +60,8 @@ class ScenarioConfig extends Component {
                 <ScenarioNarrativeConfigForm
                     scenario_narrative={scenario}
                     dimensions={dimensions}
-                    saveScenario={this.saveScenario}
-                    cancelScenario={this.returnToPreviousPage}/>
+                    saveScenarioNarrative={this.saveScenario}
+                    cancelScenarioNarrative={this.returnToPreviousPage}/>
             </div>
         )
     }

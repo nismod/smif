@@ -30,11 +30,11 @@ class ScenarioConfigForm extends Component {
     }
 
     handleSave() {
-        this.props.saveScenario(this.state.selected)
+        this.props.saveScenarioNarrative(this.state.selected)
     }
 
     handleCancel() {
-        this.props.cancelScenario()
+        this.props.cancelScenarioNarrative()
     }
 
     render() {
@@ -102,8 +102,8 @@ class ScenarioConfigForm extends Component {
 ScenarioConfigForm.propTypes = {
     scenario_narrative: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
-    saveScenario: PropTypes.func,
-    cancelScenario: PropTypes.func
+    saveScenarioNarrative: PropTypes.func,
+    cancelScenarioNarrative: PropTypes.func
 }
 
 export default ScenarioConfigForm
