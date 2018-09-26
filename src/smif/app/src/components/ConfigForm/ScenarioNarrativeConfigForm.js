@@ -71,14 +71,20 @@ class ScenarioConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Provides</div>
                     <div className="card-body">        
-                        <SpecList name="spec" specs={selected.provides} dims={dims} />
+                        <SpecList 
+                            name="provides" 
+                            specs={selected.provides} 
+                            dims={dims} 
+                            onChange={this.handleChange} />
                     </div>
                 </div>
 
                 <div className="card">
                     <div className="card-header">Variants</div>
                     <div className="card-body">        
-                        <VariantList variants={selected.variants} provides={selected.provides} />
+                        <VariantList 
+                            variants={selected.variants} 
+                            provides={selected.provides} />
                     </div>
                 </div>
 

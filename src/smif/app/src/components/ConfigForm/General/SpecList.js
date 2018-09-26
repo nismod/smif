@@ -86,6 +86,12 @@ class SpecList extends Component {
             this.props.specs.push(new_spec)
         }
         this.closeForm()
+        this.props.onChange({
+            target: {
+                name: this.props.name,
+                value: this.props.specs
+            }
+        })
     }
 
     emptyForm() {
@@ -147,6 +153,12 @@ class SpecList extends Component {
     handleDelete(name) {
         this.props.specs.splice(this.props.specs.findIndex(spec => spec.name === name), 1)
         this.closeForm()
+        this.props.onChange({
+            target: {
+                name: this.props.name,
+                value: this.props.specs
+            }
+        })
     }
 
     renderSpecList(name, specs) {
@@ -381,6 +393,7 @@ class SpecList extends Component {
 
 SpecList.propTypes = {
     name: PropTypes.string.isRequired,
+    onChange: PropTypes.func,
     specs: PropTypes.array.isRequired,
     dims: PropTypes.array.isRequired
 }

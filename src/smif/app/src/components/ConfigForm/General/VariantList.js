@@ -65,7 +65,14 @@ class VariantList extends Component {
         else {
             this.props.variants.push(this.state.variant)
         }
+
         this.closeForm()
+        this.props.onChange({
+            target: {
+                name: this.props.name,
+                value: this.props.variants
+            }
+        })
     }
 
     emptyForm() {
@@ -117,12 +124,38 @@ class VariantList extends Component {
 
     handleDelete(name) {
         this.props.variants.splice(name, 1)
+        
         this.closeForm()
+        this.props.onChange({
+            target: {
+                name: this.props.name,
+                value: this.props.variants
+            }
+        })
     }
 
     render() {
         const { variants } = this.props
         var columns = ['Name', 'Description', 'Data' ]
+
+        // Sync variants with provides
+        this.props.variants.forEach((variant, idx) => {
+
+            // Remove old keys
+            Object.keys(variant.data).forEach((key) => {
+                if (!this.props.provides.map(provide => provide.name).includes(key)) {
+                    delete this.props.variants[idx].data[key]
+                }
+            })
+
+            // Add non-defined keys
+            this.props.provides.forEach(provide => {
+                if (!Object.keys(variant.data).includes(provide.name)) {
+                    this.props.variants[idx].data[provide.name] = ''
+                }
+            })
+
+        })
 
         return (
             <div>
@@ -243,8 +276,10 @@ class VariantList extends Component {
 }
 
 VariantList.propTypes = {
+    name: PropTypes.string.isRequired,
     variants: PropTypes.array.isRequired,
     provides: PropTypes.array.isRequired,
+    onChange: PropTypes.func
 }
 
 export default VariantList
