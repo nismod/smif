@@ -62,6 +62,7 @@ class NarrativeConfig extends Component {
                     dimensions={dimensions}
                     saveScenarioNarrative={this.saveNarrative}
                     cancelScenarioNarrative={this.returnToPreviousPage}/>
+                    
             </div>
         )
     }

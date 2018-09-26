@@ -86,7 +86,8 @@ class ScenarioConfigForm extends Component {
                             name="variants"
                             variants={selected.variants} 
                             provides={selected.provides} 
-                            onChange={this.handleChange} />
+                            onChange={this.handleChange}
+                            require_provide_full_config={this.props.require_provide_full_variant} />
                     </div>
                 </div>
 
@@ -103,7 +104,12 @@ ScenarioConfigForm.propTypes = {
     scenario_narrative: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
     saveScenarioNarrative: PropTypes.func,
+    require_provide_full_variant: PropTypes.bool,
     cancelScenarioNarrative: PropTypes.func
+}
+
+ScenarioConfigForm.defaultValue = {
+    require_provide_full_variant: false
 }
 
 export default ScenarioConfigForm

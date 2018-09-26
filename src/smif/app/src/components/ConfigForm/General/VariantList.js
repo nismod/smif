@@ -247,7 +247,7 @@ class VariantList extends Component {
                                                         name={provide.name} 
                                                         value={this.state.variant.data[provide.name]} 
                                                         onChange={this.handleFormInput}
-                                                        required
+                                                        required={this.props.require_provide_full_config}
                                                     />
                                                 </div>
                                             </div>
@@ -279,7 +279,12 @@ VariantList.propTypes = {
     name: PropTypes.string.isRequired,
     variants: PropTypes.array.isRequired,
     provides: PropTypes.array.isRequired,
+    require_provide_full_config: PropTypes.bool,
     onChange: PropTypes.func
+}
+
+VariantList.defaultProps = {
+    require_provide_full_config: false
 }
 
 export default VariantList
