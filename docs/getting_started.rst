@@ -71,7 +71,7 @@ This will automatically open the smif app welcome screen in the default configur
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/welcome.png
-    :width: 200px
+    :target: _images/welcome.png
     :align: center
     :alt: alternate text
     :figclass: align-center
@@ -106,7 +106,7 @@ The configuration overview displays the configurations that are currently presen
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure.png
-    :width: 200px
+    :target: _images/configure.png
     :align: center
     :alt: alternate text
     :figclass: align-center
@@ -133,7 +133,7 @@ The Model Wrapper configuration tool helps to view, edit or create a simulation 
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure-sector-models.png
-    :width: 200px
+    :target: _images/configure-sector-models.png
     :align: center
     :alt: alternate text
     :figclass: align-center
@@ -176,7 +176,7 @@ The System-of-Systems model configuration tool helps to view, edit or create a s
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure-sos-models.png
-    :width: 200px
+    :target: _images/configure-sos-models.png
     :align: center
     :alt: alternate text
     :figclass: align-center
@@ -214,7 +214,7 @@ This interface builds upon the specifications explained in :ref:`A Model Run Fil
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure-sos-model-run.png
-    :width: 200px
+    :target: _images/configure-sos-model-run.png
     :align: center
     :alt: alternate text
     :figclass: align-center
@@ -247,7 +247,7 @@ The Job Runner helps to execute a Model Run, this interface builds upon the comm
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/jobs-runner.png
-    :width: 200px
+    :target: _images/jobs-runner.png
     :align: center
     :alt: alternate text
     :figclass: align-center

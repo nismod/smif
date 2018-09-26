@@ -27,3 +27,14 @@ div.highlight pre {
     /* override YAML highlighting not to be mostly orange! */
     color: #e7e9db;
 }
+div.figure {
+    padding: 0; /* remove extra padding around img/figure */
+}
+.figure img {
+    border-radius: 0.25em;
+    box-shadow: #000 0px 1px 3px -2px;
+    border: 1px solid #faf8fa;
+}
+.caption {
+    margin: 0 auto 0.75em;
+}
