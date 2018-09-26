@@ -122,8 +122,8 @@ class ProjectOverview extends Component {
                 {
                     'name': config.name,
                     'description': config.description,
-                    'scenario_set': '',
-                    'filename': ''
+                    'provides': [],
+                    'variants': []
                 }
             ))
             break
@@ -132,8 +132,8 @@ class ProjectOverview extends Component {
                 {
                     'name': config.name,
                     'description': config.description,
-                    'narrative_set': '',
-                    'filename': ''
+                    'provides': [],
+                    'variants': []
                 }
             ))
             break
@@ -178,16 +178,25 @@ class ProjectOverview extends Component {
 
         case 'Scenario':
             this.props.model_runs.forEach(function(sos_model_run) {
-                Object.keys(sos_model_run.scenarios).forEach(function(scenario_sets) {
-                    sos_model_run.scenarios[scenario_sets].forEach(function(scenario) {
-                        if (scenario == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model_run.name,
-                                link: '/configure/sos-model-run/',
-                                type: 'ModelRun'
-                            })
-                        }
-                    })
+                Object.keys(sos_model_run.scenarios).forEach(function(scenario) {
+                    if (scenario == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model_run.name,
+                            link: '/configure/sos-model-run/',
+                            type: 'ModelRun'
+                        })
+                    }
+                })
+            })
+            this.props.sos_models.forEach(function(sos_model) {
+                sos_model.scenarios.forEach(function(scenario) {
+                    if (scenario == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model.name,
+                            link: '/configure/sos-models/',
+                            type: 'SosModel'
+                        })
+                    }
                 })
             })
             break
@@ -302,7 +311,7 @@ class ProjectOverview extends Component {
                         <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
                     </div>
 
-                    <div hidden={name!='scenario-set'}>
+                    <div hidden={name!='scenarios'}>
                         <IntroBlock title="Scenarios" intro="Scenarios are configurations that target the files which contain scenario data">
                             <input className="btn btn-success btn-margin" name="Scenario" type="button" value="Add a new Scenario" onClick={this.openCreatePopup}/>
                         </IntroBlock>
@@ -310,7 +319,7 @@ class ProjectOverview extends Component {
                     </div>
 
 
-                    <div hidden={name!='narrative-set'}>
+                    <div hidden={name!='narratives'}>
                         <IntroBlock title="Narratives" intro="Narratives are configurations that target the files which contain narrative data">
                             <input className="btn btn-success btn-margin" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
                         </IntroBlock>

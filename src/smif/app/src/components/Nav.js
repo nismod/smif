@@ -202,24 +202,20 @@ class Nav extends Component {
                         Narratives
                             <Badge color="secondary">{narratives.length}</Badge>
                         </NavLink>
-
-                        <Route path="/configure/narrative*" render={() =>
-                            <div>
-                                <span className="ml-4">Sets</span>
-                                <ul className="nav flex-column">
-                                    {narratives.map(narrative =>
-                                        <li key={'nav_narrativeset_' + narrative.name} className="nav-item">
-                                            <NavLink
-                                                key={'nav_' + narrative.name}
-                                                exact
-                                                className="nav-link"
-                                                to={'/configure/narrative-set/' + narrative.name} >
-                                                {narrative.name}
-                                            </NavLink>
-                                        </li>
-                                    )}
-                                </ul>
-                            </div>
+                        <Route path="/configure/narratives/" render={() =>
+                            <ul className="nav flex-column">
+                                {narratives.map(narrative =>
+                                    <li key={'nav_narrative_' + narrative.name} className="nav-item">
+                                        <NavLink
+                                            key={'nav_' + narrative.name}
+                                            exact
+                                            className="nav-link"
+                                            to={'/configure/narratives/' + narrative.name} >
+                                            {narrative.name}
+                                        </NavLink>
+                                    </li>
+                                )}
+                            </ul>
                         }/>
                     </li>
                 </ul>

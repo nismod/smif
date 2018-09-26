@@ -3,17 +3,17 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchNarrative } from 'actions/actions.js'
+import { fetchScenario } from 'actions/actions.js'
 import { fetchDimensions } from 'actions/actions.js'
-import { saveNarrative } from 'actions/actions.js'
+import { saveScenario } from 'actions/actions.js'
 
 import ScenarioNarrativeConfigForm from 'components/ConfigForm/ScenarioNarrativeConfigForm.js'
 
-class NarrativeConfig extends Component {
+class ScenarioConfig extends Component {
     constructor(props) {
         super(props)
 
-        this.saveNarrative = this.saveNarrative.bind(this)
+        this.saveScenario = this.saveScenario.bind(this)
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
 
         this.config_name = this.props.match.params.name
@@ -22,7 +22,7 @@ class NarrativeConfig extends Component {
     componentDidMount() {
         const { dispatch } = this.props
 
-        dispatch(fetchNarrative(this.config_name))
+        dispatch(fetchScenario(this.config_name))
         dispatch(fetchDimensions())
     }
 
@@ -31,19 +31,19 @@ class NarrativeConfig extends Component {
 
         if (this.config_name != this.props.match.params.name) {
             this.config_name = this.props.match.params.name
-            dispatch(fetchNarrative(this.config_name))
+            dispatch(fetchScenario(this.config_name))
         }
     }
 
-    saveNarrative(narrative) {
+    saveScenario(Scenario) {
         const { dispatch } = this.props
-        dispatch(saveNarrative(narrative))
+        dispatch(saveScenario(Scenario))
 
         this.returnToPreviousPage()
     }
 
     returnToPreviousPage() {
-        this.props.history.push('/configure/narratives')
+        this.props.history.push('/configure/scenarios')
     }
 
     renderLoading() {
@@ -54,32 +54,32 @@ class NarrativeConfig extends Component {
         )
     }
 
-    renderNarrativeConfig(narrative, dimensions) {
+    renderScenarioConfig(scenario, dimensions) {
         return (
             <div>
                 <ScenarioNarrativeConfigForm
-                    scenario_narrative={narrative}
+                    scenario_narrative={scenario}
                     dimensions={dimensions}
-                    saveScenarioNarrative={this.saveNarrative}
-                    cancelScenarioNarrative={this.returnToPreviousPage}/>
-                    
+                    saveScenarioNarrative={this.saveScenario}
+                    cancelScenarioNarrative={this.returnToPreviousPage}
+                    require_provide_full_variant />
             </div>
         )
     }
 
     render () {
-        const {narrative, dimensions, isFetching} = this.props
+        const {scenario, dimensions, isFetching} = this.props
 
         if (isFetching) {
             return this.renderLoading()
         } else {
-            return this.renderNarrativeConfig(narrative, dimensions)
+            return this.renderScenarioConfig(scenario, dimensions)
         }
     }
 }
 
-NarrativeConfig.propTypes = {
-    narrative: PropTypes.object.isRequired,
+ScenarioConfig.propTypes = {
+    scenario: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
@@ -90,13 +90,13 @@ NarrativeConfig.propTypes = {
 function mapStateToProps(state) {
 
     return {
-        narrative: state.narrative.item,
+        scenario: state.scenario.item,
         dimensions: state.dimensions.items,
         isFetching: (
-            state.narrative.isFetching ||
+            state.scenario.isFetching ||
             state.dimensions.isFetching
         )
     }
 }
 
-export default connect(mapStateToProps)(NarrativeConfig)
+export default connect(mapStateToProps)(ScenarioConfig)
