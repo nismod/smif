@@ -91,21 +91,33 @@ class SectorModelConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Inputs</div>
                     <div className="card-body">
-                        <SpecList name="input" specs={selectedSectorModel.inputs} dims={dims} />
+                        <SpecList 
+                            name="inputs" 
+                            specs={selectedSectorModel.inputs} 
+                            dims={dims}
+                            onChange={this.handleChange} />
                     </div>
                 </div>
 
                 <div className="card">
                     <div className="card-header">Outputs</div>
                     <div className="card-body">
-                        <SpecList name="output" specs={selectedSectorModel.outputs} dims={dims} />
+                        <SpecList 
+                            name="outputs" 
+                            specs={selectedSectorModel.outputs} 
+                            dims={dims} 
+                            onChange={this.handleChange} />
                     </div>
                 </div>
 
                 <div className="card">
                     <div className="card-header">Parameters</div>
                     <div className="card-body">
-                        <SpecList name="parameter" specs={selectedSectorModel.parameters} dims={dims} />
+                        <SpecList 
+                            name="parameters" 
+                            specs={selectedSectorModel.parameters} 
+                            dims={dims}
+                            onChange={this.handleChange} />
                     </div>
                 </div>
 
@@ -135,7 +147,7 @@ class SectorModelConfigForm extends Component {
 
 SectorModelConfigForm.propTypes = {
     sosModels: PropTypes.array.isRequired,
-    sectorModel: PropTypes.array.isRequired,
+    sectorModel: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
     saveSectorModel: PropTypes.func,
     cancelSectorModel: PropTypes.func
