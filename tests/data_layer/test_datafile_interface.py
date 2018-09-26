@@ -23,7 +23,7 @@ class TestReadState:
         modelrun_name = 'modelrun'
         timestep = 2010
         decision_iteration = 0
-        dir_ = os.path.join(handler.file_dir['results'], modelrun_name)
+        dir_ = os.path.join(handler.results_folder, modelrun_name)
         path = os.path.join(dir_, 'state_2010_decision_0.csv')
         os.makedirs(dir_, exist_ok=True)
         with open(path, 'w') as state_fh:
@@ -44,7 +44,7 @@ class TestReadState:
         actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
 
         expected = os.path.join(
-                handler.file_dir['results'], modelrun_name,
+                handler.results_folder, modelrun_name,
                 'state_2010_decision_0.csv')
 
         assert actual == expected
@@ -56,7 +56,7 @@ class TestReadState:
         decision_iteration = None
 
         actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
-        expected = os.path.join(handler.file_dir['results'], modelrun_name, 'state_2010.csv')
+        expected = os.path.join(handler.results_folder, modelrun_name, 'state_2010.csv')
 
         assert actual == expected
 
@@ -68,7 +68,7 @@ class TestReadState:
 
         actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
         expected = os.path.join(
-            handler.file_dir['results'], modelrun_name, 'state_0000.csv')
+            handler.results_folder, modelrun_name, 'state_0000.csv')
 
         assert actual == expected
 
@@ -81,7 +81,7 @@ class TestReadState:
 
         actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
         expected = os.path.join(
-            handler.file_dir['results'], modelrun_name, 'state_0000_decision_0.csv')
+            handler.results_folder, modelrun_name, 'state_0000_decision_0.csv')
 
         assert actual == expected
 
@@ -546,7 +546,7 @@ class TestScenarios:
         """
         with raises(SmifDataNotFoundError) as ex:
             get_handler.read_scenario('missing')
-        assert "Scenario 'missing' not found" in str(ex)
+        assert "scenario 'missing' not found" in str(ex)
 
     def test_scenario_data(self, setup_folder_structure, get_handler,
                            get_scenario_data):
@@ -716,7 +716,7 @@ class TestScenarios:
         """
         with raises(SmifDataNotFoundError) as ex:
             get_handler.read_scenario('missing')
-        assert "Scenario 'missing' not found" in str(ex)
+        assert "scenario 'missing' not found" in str(ex)
 
     @mark.xfail
     def test_project_scenarios(self, get_handler):
