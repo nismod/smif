@@ -17,7 +17,6 @@ Setup
 
 Make a new directory and copy the sample project files there by running:
 
-
 .. code:: console
 
     $ mkdir sample_project
@@ -45,29 +44,42 @@ To run a model run, type the following command::
     Model run complete
 
 Note that the ``-d`` directory flag can be used to point to the project folder,
-so you can run smif commands explicitly::
+so you can run smif commands from any directory::
 
     $ smif list -d ~/projects/smif_sample_project/
     ...
 
-Groups of model runs can run as a batches by using the ``-b`` flag and a path to a batchfile::
+Groups of model runs can run as a batches by using the ``-b`` flag and a path to a batch file::
 
     $ smif run -b batchfile
 
-A batchfile is a text file with a list of model run names, each on a new line, like::
+A batch file is a text file with a list of model run names, each on a new line, like::
 
     energy_central
     energy_water_cp_cr
 
+
 User Interface
----------------------
-The smif app is a web-based user interface, which helps to manage project configurations.
-The app can be started within a project configuration directory or anywhere else by specifying the path to a project directory::
+--------------
 
-  $ smif app
-  $ smif app -d ~/projects/smif_sample_project/
+The smif app is a web-based user interface, which helps to manage project configurations. The
+app can be started within a project configuration directory or anywhere else by specifying the
+path to a project directory::
 
-This will automatically open the smif app welcome screen in the default configured browser.
+    $ smif app
+    ...
+
+or::
+
+    $ smif app -d ~/projects/smif_sample_project/
+    Opening smif app
+
+    Copy/paste this URL into your web browser to connect:
+        http://localhost:5000
+
+    Close your browser then type Control-C here to quit.
+
+Copy/paste or type the URL ``http://localhost:5000`` into a web browser to open the app.
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/welcome.png
@@ -77,6 +89,7 @@ This will automatically open the smif app welcome screen in the default configur
     :figclass: align-center
 
     The Smif app welcome screen
+
 
 .. topic:: Hints
 
@@ -100,9 +113,13 @@ This will automatically open the smif app welcome screen in the default configur
 
     :app: Click the "Narratives" button [E]
 
+
 The Configuration Overview
-~~~~~~~~~~~~~~~~~~~~~~~~~
-The configuration overview displays the configurations that are currently present in the smif project. New configurations can be created and existing ones can be edited or removed. See also :ref:`Project Configuration`.
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The configuration overview displays the configurations that are currently present in the smif
+project. New configurations can be created and existing ones can be edited or removed. See also
+:ref:`Project Configuration`.
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure.png
@@ -112,6 +129,7 @@ The configuration overview displays the configurations that are currently presen
     :figclass: align-center
 
     A configuration overview
+
 
 .. topic:: Hints
 
@@ -127,9 +145,13 @@ The configuration overview displays the configurations that are currently presen
 
     :app: Click on the bin icon [C] to delete a configuration
 
+
 Model Wrapper Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The Model Wrapper configuration tool helps to view, edit or create a simulation model wrapper configuration. This interface builds upon the specifications explained in :ref:`A Simulation Model File`.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Model Wrapper configuration tool helps to view, edit or create a simulation model wrapper
+configuration. This interface builds upon the specifications explained in :ref:`A Simulation
+Model File`.
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure-sector-models.png
@@ -139,6 +161,7 @@ The Model Wrapper configuration tool helps to view, edit or create a simulation 
     :figclass: align-center
 
     The Model Wrapper configuration
+
 
 .. csv-table::
    :header:  "#", "Attribute", "Notes"
@@ -151,6 +174,7 @@ The Model Wrapper configuration tool helps to view, edit or create a simulation 
    5, Inputs, "The simulation model inputs with their name, units and temporal-spatial resolution. See also :ref:`Inputs`"
    6, Outputs, "The simulation model outputs with their name, units and temporal-spatial resolution. See also :ref:`Outputs`"
    7, Parameters, "The simulation model parameters. See also :ref:`Parameters`"
+
 
 .. topic:: Hints
 
@@ -168,11 +192,17 @@ The Model Wrapper configuration tool helps to view, edit or create a simulation 
 
     Save or cancel the configuration
 
-    :app: Click on the "Save" button [D] to save changes to this configuration. Click on the "Cancel" button to leave the configuration without saving.
+    :app: Click on the "Save" button [D] to save changes to this configuration. Click on the
+    "Cancel" button to leave the configuration without saving.
+
 
 System-of-Systems model configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The System-of-Systems model configuration tool helps to view, edit or create a system-of-systems model configuration. This interface builds upon the specifications explained in :ref:`A System-of-Systems Model File`.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The System-of-Systems model configuration tool helps to view, edit or create a
+system-of-systems model configuration. This interface builds upon the specifications explained
+in :ref:`A System-of-Systems Model File`.
+
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure-sos-models.png
@@ -182,6 +212,7 @@ The System-of-Systems model configuration tool helps to view, edit or create a s
     :figclass: align-center
 
     The System-of-System Model configuration
+
 
 .. csv-table::
    :header:  "#", "Attribute", "Notes"
@@ -197,6 +228,7 @@ The System-of-Systems model configuration tool helps to view, edit or create a s
    8, Absolute Convergence Tolerance,
    9, Relative Convergence Tolerance,
 
+
 .. topic:: Hints
 
     Add a System-of-Systems Model dependency
@@ -205,12 +237,16 @@ The System-of-Systems model configuration tool helps to view, edit or create a s
 
     Save or cancel the configuration
 
-    :app: Click on the "Save" button [B] to save changes to this configuration. Click on the "Cancel" button to leave the configuration without saving.
+    :app: Click on the "Save" button [B] to save changes to this configuration. Click on the
+    "Cancel" button to leave the configuration without saving.
+
 
 Model Run Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~
-The Model Run configuration tool helps to view, edit or create a Model Run configuration.
-This interface builds upon the specifications explained in :ref:`A Model Run File`.
+
+The Model Run configuration tool helps to view, edit or create a Model Run configuration. This
+interface builds upon the specifications explained in :ref:`A Model Run File`.
+
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/configure-sos-model-run.png
@@ -220,6 +256,7 @@ This interface builds upon the specifications explained in :ref:`A Model Run Fil
     :figclass: align-center
 
     The Model Run configuration
+
 
 .. csv-table::
    :header:  "#", "Attribute", "Notes"
@@ -235,15 +272,21 @@ This interface builds upon the specifications explained in :ref:`A Model Run Fil
    8, Base year, "The Timestep where this Model Run must start the simulation. See also :ref:`Timesteps`"
    9, End year, "The last Timestep that this Model Run must simulate. See also :ref:`Timesteps`"
 
+
 .. topic:: Hints
 
     Save or cancel the configuration
 
-    :app: Click on the "Save" button [A] to save changes to this configuration. Click on the "Cancel" button to leave the configuration without saving.
+    :app: Click on the "Save" button [A] to save changes to this configuration. Click on the
+    "Cancel" button to leave the configuration without saving.
+
 
 Job Runner
-~~~~~~~~~~~~~~~~~~~~~~~
-The Job Runner helps to execute a Model Run, this interface builds upon the command line interface.
+~~~~~~~~~~
+
+The Job Runner helps to execute a Model Run, this interface builds upon the command line
+interface.
+
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/jobs-runner.png
@@ -254,6 +297,7 @@ The Job Runner helps to execute a Model Run, this interface builds upon the comm
 
     The Job Runner
 
+
 .. csv-table::
    :header:  "#", "Attribute", "Notes"
    :widths: 5, 15, 40
@@ -263,15 +307,18 @@ The Job Runner helps to execute a Model Run, this interface builds upon the comm
    3, Controls, "Provides run settings and a start/stop button for the Modelrun job"
    4, Console Output, "Real-time output from the Job runner process"
 
+
 .. topic:: Hints
 
     Change Modelrun Job settings
 
-    :app: Click on the "Toggle" buttons [A] to change the verbosity or output format of the Job Runner.
+    :app: Click on the "Toggle" buttons [A] to change the verbosity or output format of the Job
+    Runner.
 
     Start / Restart or Stop a Modelrun Job
 
-    :app: Click on the "Start Modelrun / Restart Modelrun / Stop Modelrun" button [B] to control the Job.
+    :app: Click on the "Start Modelrun / Restart Modelrun / Stop Modelrun" button [B] to
+    control the Job.
 
     Save the console output to disk
 
@@ -279,7 +326,9 @@ The Job Runner helps to execute a Model Run, this interface builds upon the comm
 
     Folow the console output
 
-    :app: Click on the "ArrowDown" button [D] to follow the console output as the job is running.
+    :app: Click on the "ArrowDown" button [D] to follow the console output as the job is
+    running.
+
 
 Project Configuration
 ---------------------
@@ -292,8 +341,14 @@ to run models, configure simulation models and define system-of-system models.
 
 The basic folder structure looks like this::
 
+    project.yml
     /config
-        project.yml
+        /dimensions
+
+        /narratives
+
+        /scenarios
+
         /sector_models
             energy_demand.yml
             water_supply.yml
@@ -330,103 +385,74 @@ The basic folder structure looks like this::
             /energy_demand
             /water_supply
 
+
 The folder structure is divided into a ``config`` subfolder and a ``data``
 subfolder.
+
 
 The Configuration Folder
 ------------------------
 
-This folder holds configuration and metadata on simulation models,
-system-of-system models and model runs.
+This folder holds configuration and metadata on simulation models, system-of-system models and
+model runs.
+
 
 The Project File
 ~~~~~~~~~~~~~~~~
 
-This file holds all the project configuration.
+This file holds a small amount of project-level configuration.
 
-.. literalinclude:: ../src/smif/sample_project/config/project.yml
-   :caption: project.yml
-   :language: yaml
-
-We'll step through this configuration file section by section.
-
-The first line gives the project name, a unique identifier for this project.
-
-.. literalinclude:: ../src/smif/sample_project/config/project.yml
-   :language: yaml
-   :lines: 1
-
-One section lists the scenario sets. These give the categories into which
-scenarios are collected.
-
-.. literalinclude:: ../src/smif/sample_project/config/project.yml
-   :language: yaml
-   :lines: 2-7
-
-Narrative sets collect together the categories into which narrative files are
-collected.
-
-.. literalinclude:: ../src/smif/sample_project/config/project.yml
-   :language: yaml
-   :lines: 13-15
-
-Region definitions list the collection of region files and the mapping to a
-unique name which can be used in scenarios and sector models.
-Region definitions define the spatial resolution of data.
-
-.. literalinclude:: ../src/smif/sample_project/config/project.yml
-   :language: yaml
-   :lines: 25-28
-
-Interval definitions list the collection of interval files and the mapping to a
-unique name which can be used in scenarios and sector models.
-Interval definitions define the temporal resolution of data.
-
-.. literalinclude:: ../src/smif/sample_project/config/project.yml
-   :language: yaml
-   :lines: 16-19
+The project name is a unique identifier for this project.
 
 Unit definitions references a file containing custom units, not included in
 the Pint library default unit register (e.g. non-SI units).
 
-.. literalinclude:: ../src/smif/sample_project/config/project.yml
-   :language: yaml
-   :lines: 69
 
-The ``scenarios`` section lists the scenarios and corresponding collections of
-data associated with scenarios.
+Scenarios
+~~~~~~~~~
 
-.. literalinclude:: ../src/smif/sample_project/config/project.yml
-   :language: yaml
-   :lines: 32-41
+One section lists the scenario sets. These give the categories into which scenarios are
+collected.
 
-The ``narratives`` section lists the narratives and mapping to one or more
-narrative files
+The ``scenarios`` section lists the scenarios and corresponding collections of data associated
+with scenarios.
 
-.. literalinclude:: ../src/smif/sample_project/config/project.yml
-   :language: yaml
-   :lines: 20-24
 
-A Simulation Model File
-~~~~~~~~~~~~~~~~~~~~~~~
+Narratives
+~~~~~~~~~~
 
-A simulation model file contains all the configuration data necessary for smif
-to run the model, and link the model to data sources and sinks.
-This file also contains a list of parameters, the 'knobs and dials'
-the user wishes to expose to smif which can be adjusted in narratives.
-Intervention files and initial condition files contain the collections of data
-that are needed to expose the model to smif's decision making functionality.
+Narrative sets collect together the categories into which narrative files are collected.
 
-.. literalinclude:: ../src/smif/sample_project/config/sector_models/water_supply.yml
-   :language: yaml
+The ``narratives`` section lists the narratives and mapping to one or more narrative files
+
+
+Dimensions
+~~~~~~~~~~
+
+Region definitions list the collection of region files and the mapping to a unique name which
+can be used in scenarios and sector models. Region definitions define the spatial resolution of
+data.
+
+Interval definitions list the collection of interval files and the mapping to a unique name
+which can be used in scenarios and sector models. Interval definitions define the temporal
+resolution of data.
+
+
+Simulation Models
+~~~~~~~~~~~~~~~~~
+
+A model file contains all the configuration data necessary for smif to run the model, and link
+the model to data sources and sinks. This file also contains a list of parameters, the 'knobs
+and dials' the user wishes to expose to smif which can be adjusted in narratives. Intervention
+files and initial condition files contain the collections of data that are needed to expose the
+model to smif's decision making functionality.
+
 
 Inputs
 ^^^^^^
 
-Define the collection of inputs required from external sources
-to run the model.
-Inputs are defined with a name, spatial resolution,
-temporal-resolution and units.
+Define the collection of inputs required from external sources to run the model. Inputs are
+defined with a name, spatial resolution, temporal-resolution and units.
 
 .. literalinclude:: ../src/smif/sample_project/config/sector_models/water_supply.yml
    :language: yaml
@@ -441,12 +467,13 @@ temporal-resolution and units.
    temporal_resolution, string, "References an entry in the interval definitions"
    units, string, "References an entry in the unit definitions"
 
+
 Outputs
 ^^^^^^^
 
-Define the collection of output model parameters used for the purpose
-of metrics, for accounting purposes, such as operational cost and
-emissions, or as the source of a dependency in another model.
+Define the collection of output model parameters used for the purpose of metrics, for
+accounting purposes, such as operational cost and emissions, or as the source of a dependency
+in another model.
 
 .. literalinclude:: ../src/smif/sample_project/config/sector_models/water_supply.yml
    :language: yaml
@@ -460,6 +487,7 @@ emissions, or as the source of a dependency in another model.
    spatial_resolution, string, "References an entry in the region definitions"
    temporal_resolution, string, "References an entry in the interval definitions"
    units, string, "References an entry in the unit definitions"
+
 
 Parameters
 ^^^^^^^^^^
@@ -480,8 +508,9 @@ Parameters
    default_value,	float, "The default value for the parameter"
    units,	string,	""
 
-A System-of-Systems Model File
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+System-of-Systems Models
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 A system-of-systems model collects together scenario sets and simulation models.
 Users define dependencies between scenario and simulation models.
@@ -489,13 +518,13 @@ Users define dependencies between scenario and simulation models.
 .. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
 
-Scenario Sets
-^^^^^^^^^^^^^
 
-Scenario sets are the categories in which scenario data are organised.
-Choosing a scenario set at this points allows different scenario data
-to be chosen in model runs which share the same system-of-systems model
-configuration defintion.
+Scenarios
+^^^^^^^^^
+
+Scenario sets are the categories in which scenario data are organised. Choosing a scenario set
+at this points allows different scenario data to be chosen in model runs which share the same
+system-of-systems model configuration defintion.
 
 .. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
@@ -507,11 +536,12 @@ configuration defintion.
 
    names,	list,	 "A list of scenario set names"
 
+
 Simulation Models
 ^^^^^^^^^^^^^^^^^
 
-This section contains a list of pre-configured simulation models which exist in
-the current project.
+This section contains a list of pre-configured simulation models which exist in the current
+project.
 
 .. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
@@ -522,6 +552,7 @@ the current project.
    :widths: 15, 10, 30
 
    names,	list,	 "A list of simulation model names"
+
 
 Dependencies
 ^^^^^^^^^^^^
@@ -541,21 +572,23 @@ In this section, dependencies are defined between sources and sinks.
    sink_model,	string,	 "The model which depends on the source"
    sink_model_input,	string,	 "The input which should receive the data"
 
-A Model Run File
-~~~~~~~~~~~~~~~~
 
-A model run brings together a system-of-systems model definition with timesteps
-over which planning takes place, and a choice of scenarios and narratives to
-population the placeholder scenario sets in the system-of-systems model.
+Model Run
+~~~~~~~~~
+
+A model run brings together a system-of-systems model definition with timesteps over which
+planning takes place, and a choice of scenarios and narratives to population the placeholder
+scenario sets in the system-of-systems model.
 
 .. literalinclude:: ../src/smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
    :language: yaml
 
+
 Timesteps
 ^^^^^^^^^
 
-A list of timesteps define the years in which planning takes place,
-and the simulation models are executed.
+A list of timesteps define the years in which planning takes place, and the simulation models
+are executed.
 
 .. literalinclude:: ../src/smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
    :language: yaml
@@ -567,11 +600,12 @@ and the simulation models are executed.
 
    timesteps,	list,	 "A list of integer years"
 
+
 Scenarios
 ^^^^^^^^^
 
-For each scenario set available in the contained system-of-systems model,
-one scenario should be chosen.
+For each scenario set available in the contained system-of-systems model, one scenario should
+be chosen.
 
 .. literalinclude:: ../src/smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
    :language: yaml
@@ -583,20 +617,19 @@ one scenario should be chosen.
 
    scenarios,	list,	 "A list of tuples of scenario sets and scenarios"
 
+
 Narratives
 ^^^^^^^^^^
 
-For each narrative set available in the project, zero or more available
-narratives should be chosen.
+For each narrative set available in the project, any number of narratives can be
+chosen (or none at all).
 
 .. literalinclude:: ../src/smif/sample_project/config/sos_model_runs/20170918_energy_water.yml
    :language: yaml
    :lines: 13-15
 
-Note that narrative files override the values of parameters in specific
-simulation models.
-Selecting a narrative file which overrides parameters in an absent simulation
-model will have no effect.
+Narrative files override the values of parameters in specific simulation models. Selecting a
+narrative file which overrides parameters in an absent simulation model will have no effect.
 
 .. csv-table:: Model Run Narrative Attributes
    :header: "Attribute", "Type", "Notes"
@@ -604,12 +637,13 @@ model will have no effect.
 
    scenarios,	list,	 "A list of mappings between narrative sets and list of narrative files"
 
+
 Data Folder
 -----------
 
-This folder holds data like information to define the spatial and
-temporal resolution of data,
+This folder holds data like information to define the spatial and temporal resolution of data,
 as well as exogenous environmental data held in scenarios.
+
 
 Initial Conditions
 ~~~~~~~~~~~~~~~~~~
@@ -617,18 +651,22 @@ Initial Conditions
 .. literalinclude:: ../src/smif/sample_project/data/initial_conditions/reservoirs.yml
    :language: yaml
 
-Interval definitions
-~~~~~~~~~~~~~~~~~~~~
 
-The attribution of hours in a year to the temporal resolution used
-in the sectoral model.
+Dimensions
+~~~~~~~~~~
 
-Within-year time intervals are specified in yaml files, and as for regions,
-specified in the ``*.yml`` file in the ``project/data/intervals`` folder.
 
-This links a unique name with the definitions of the intervals in a yaml file.
-The data in the file specify the mapping of model timesteps to durations within a year
-(assume modelling 365 days: no extra day in leap years, no leap seconds)
+Temporal dimensions
+^^^^^^^^^^^^^^^^^^^
+
+The attribution of hours in a year to the temporal resolution used in the sectoral model.
+
+Within-year time intervals are specified in yaml files, and as for regions, specified in the
+``*.yml`` file in the ``project/data/intervals`` folder.
+
+This links a unique name with the definitions of the intervals in a yaml file. The data in the
+file specify the mapping of model timesteps to durations within a year (assume modelling 365
+days: no extra day in leap years, no leap seconds)
 
 Use ISO 8601 [1]_ duration format to specify periods::
 
@@ -639,8 +677,8 @@ For example:
 .. literalinclude:: ../src/smif/sample_project/data/interval_definitions/annual_intervals.csv
    :language: text
 
-In this example, the interval with id ``1`` begins in the first hour of the year
-and ends in the last hour of the year. This represents one, year-long interval.
+In this example, the interval with id ``1`` begins in the first hour of the year and ends in
+the last hour of the year. This represents one, year-long interval.
 
 .. csv-table:: Interval Attributes
    :header: "Attribute", "Type", "Notes"
@@ -650,114 +688,101 @@ and ends in the last hour of the year. This represents one, year-long interval.
    start_hour, string, "Period since beginning of year"
    end_hour, string, "Period since beginning of year"
 
-Region definitions
-~~~~~~~~~~~~~~~~~~
 
-Define the set of unique regions which are used within the model as polygons.
-The spatial resolution of the model may be implicit, and even a national model
-needs to have a national region defined.
-Inputs and outputs are assigned a model-specific geography from this list
+Spatial dimensions
+^^^^^^^^^^^^^^^^^^
+
+Define the set of unique regions which are used within the model as polygons. The spatial
+resolution of the model may be implicit, and even a national model needs to have a national
+region defined. Inputs and outputs are assigned a model-specific geography from this list
 allowing automatic conversion from and to these geographies.
 
 Model region files are stored in ``project/data/region_defintions``.
 
-The file format must be possible to parse with GDAL, and must contain
-an attribute "name" to use as an identifier for the region.
+The file format must be possible to parse with GDAL, and must contain an attribute "name" to
+use as an identifier for the region.
 
-The sets of geographic regions are specified in the project configuration file
-using a ``region_definitions`` attributes as shown below:
+The sets of geographic regions are specified in the project configuration file using a
+``region_definitions`` attributes as shown below:
 
 .. literalinclude:: ../src/smif/sample_project/config/project.yml
    :language: yaml
    :lines: 10,12-17
 
-This links a name, used elsewhere in the configuration with inputs, outputs and scenarios
-with a file containing the geographic data.
+This links a name, used elsewhere in the configuration with inputs, outputs and scenarios with
+a file containing the geographic data.
+
 
 Interventions
 ~~~~~~~~~~~~~
 
-Interventions are the atomic units which comprise the infrastructure systems
-in the simulation models.
-Interventions can represent physical assets such as pipes,
-and lines (edges in a network) or power stations and reservoirs
-(nodes in a network).
-Interventions can also represent intangibles which affects the operation
-of a system, such as a policy.
+Interventions are the atomic units which comprise the infrastructure systems in the simulation
+models. Interventions can represent physical assets such as pipes, and lines (edges in a
+network) or power stations and reservoirs (nodes in a network). Interventions can also
+represent intangibles which affects the operation of a system, such as a policy.
 
 
-An exhaustive list of the interventions (often infrastructure assets)
-should be defined.
-These are represented internally in the system-of-systems model,
-collected into a gazateer and allow the framework to reason on
-infrastructure assets across all sectors.
-Interventions are instances of :class:`~smif.intervention.Intervention` and are
-held in :class:`~smif.intervention.InterventionRegister`.
-Interventions include investments in assets,
-supply side efficiency improvements, but not demand side management (these
-are incorporated in the strategies).
+An exhaustive list of the interventions (often infrastructure assets) should be defined. These
+are represented internally in the system-of-systems model, collected into a gazateer and allow
+the framework to reason on infrastructure assets across all sectors.
 
-Define all possible interventions in an ``*.yml`` file
-in the ``project/data/interventions`` For example:
+Interventions are instances of :class:`~smif.intervention.Intervention` and are held in
+:class:`~smif.intervention.InterventionRegister`. Interventions include investments in assets,
+supply side efficiency improvements, but not demand side management (these are incorporated in
+the strategies).
+
+Define all possible interventions in an ``*.yml`` file in the ``project/data/interventions``
+For example:
 
 .. literalinclude:: ../src/smif/sample_project/data/interventions/water_supply.yml
    :language: yaml
    :lines: 6-19
 
-Alternatively define all possible interventions in an ``*.csv`` file
-in the ``project/data/interventions`` For example:
+Alternatively define all possible interventions in an ``*.csv`` file in the
+``project/data/interventions`` For example:
 
 .. literalinclude:: ../src/smif/sample_project/data/interventions/energy_supply.csv
    :language: csv
    :lines: 1-5
 
-Note that the ``_value`` and ``_unit`` suffixes of the column names are used to unpack the data internally.
+Note that the ``_value`` and ``_unit`` suffixes of the column names are used to unpack the data
+internally.
 
 Some attributes are required:
 
 - technical_lifetime
   (years are assumed as unit and can be omitted)
 
+
 Narratives
 ~~~~~~~~~~
 
-A narrative file contains references to 0 or more parameters defined in the
-simulation models, as well as special ``global`` parameters. Whereas model
-parameters are available only to individual simulation models,
-global parameters are available across all models.
-Use global paramaters for system-wide constants, such as emission coefficients,
-exchange rates, conversion factors etc.
+A narrative file contains references to 0 or more parameters defined in the simulation models,
+as well as special ``global`` parameters. Whereas model parameters are available only to
+individual simulation models, global parameters are available across all models. Use global
+paramaters for system-wide constants, such as emission coefficients, exchange rates, conversion
+factors etc.
 
-Value specified in the narrative file override the default values specified
-in the simulation model configuration. If more than one narrative file is
-selected in the sos model configuration, then values in later files override
-values in earlier files.
+Value specified in the narrative file override the default values specified in the simulation
+model configuration. If more than one narrative file is selected in the sos model
+configuration, then values in later files override values in earlier files.
 
 .. literalinclude:: ../src/smif/sample_project/data/narratives/high_tech_dsm.yml
    :language: yaml
 
+
 Scenarios
 ~~~~~~~~~
 
-The ``scenarios:`` section of the project configuration file allows
-you to define static sources for simulation model dependencies.
-
-In the case of the example project file shown earlier,
-the ``scenarios`` section lists the scenarios and corresponding collections of
-data associated with the scenario sets:
-
-.. literalinclude:: ../src/smif/sample_project/config/project.yml
-   :language: yaml
-   :lines: 24,26-43
+The ``scenarios`` config folder  allows you to define static sources for simulation model
+dependencies.
 
 The data files are stored in the ``project/data/scenarios`` folder.
 
-The metadata required to define a particular scenario are shown in the table
-below.
-It is possible to associate a number of different data sets with
-the same scenario, so that, for example, choosing the `High Population`
-scenario allows users to access both population count and density data
-in the same or different spatial and temporal resolutions.
+The metadata required to define a particular scenario are shown in the table below. It is
+possible to associate a number of different data sets with the same scenario, so that, for
+example, choosing the `High Population` scenario allows users to access both population count
+and density data in the same or different spatial and temporal resolutions.
 
 .. csv-table:: Scenario Attributes
    :header: "Attribute", "Type", "Notes"
@@ -767,6 +792,7 @@ in the same or different spatial and temporal resolutions.
    description, string ,
    scenario_set, string ,
    parameters, list ,
+
 
 Scenario Parameters
 ^^^^^^^^^^^^^^^^^^^
@@ -791,24 +817,23 @@ is required:
    units, string,
    filename, string,
 
+
 Wrapping a Sector Model: Overview
 ---------------------------------
 
-In addition to collecting the configuration data listed above,
-to integrate a new sector model into the system-of-systems model
-it is necessary to write a Python wrapper function.
-The template class :class:`smif.model.sector_model.SectorModel` enables a user
-to write a script which runs the wrapped model, passes in parameters and writes
-out results.
+In addition to collecting the configuration data listed above, to integrate a new sector model
+into the system-of-systems model it is necessary to write a Python wrapper function. The
+template class :class:`smif.model.sector_model.SectorModel` enables a user to write a script
+which runs the wrapped model, passes in parameters and writes out results.
 
-The wrapper acts as an interface between the simulation modelling
-integration framework and the simulation model, keeping all the code necessary
-to implement the conversion of data types in one place.
+The wrapper acts as an interface between the simulation modelling integration framework and the
+simulation model, keeping all the code necessary to implement the conversion of data types in
+one place.
 
-In particular, the wrapper must take the smif formatted data, which includes
-inputs, parameters, state and pass this data into the wrapped model. After the
-:py:meth:`~smif.model.sector_model.SectorModel.simulate` has run, results from
-the sector model must be formatted and passed back into smif.
+In particular, the wrapper must take the smif formatted data, which includes inputs,
+parameters, state and pass this data into the wrapped model. After the
+:py:meth:`~smif.model.sector_model.SectorModel.simulate` has run, results from the sector model
+must be formatted and passed back into smif.
 
 The handling of data is aided through the use of a set of methods provided by
 :class:`smif.data_layer.data_handle.DataHandle`, namely:
@@ -822,27 +847,26 @@ and
 
 - :py:meth:`~smif.data_layer.data_handle.DataHandle.set_results`
 
-In this section, we describe the process necessary to correctly write this
-wrapper function, referring to the example project included with the package.
+In this section, we describe the process necessary to correctly write this wrapper function,
+referring to the example project included with the package.
 
-It is difficult to provide exhaustive details for every type of sector model
-implementation - our decision to leave this largely up to the user
-is enabled by the flexibility afforded by python. The wrapper can write to a
-database or structured text file before running a model from a command line
-prompt, or import a python sector model and pass in parameters values directly.
-As such, what follows is a recipe of components from which you can construct
-a wrapper to full integrate your simulation model within smif.
+It is difficult to provide exhaustive details for every type of sector model implementation -
+our decision to leave this largely up to the user is enabled by the flexibility afforded by
+python. The wrapper can write to a database or structured text file before running a model from
+a command line prompt, or import a python sector model and pass in parameters values directly.
+As such, what follows is a recipe of components from which you can construct a wrapper to full
+integrate your simulation model within smif.
 
-For help or feature requests, please raise issues at the github repository [2]_
-and we will endeavour to provide assistance as resources allow.
+For help or feature requests, please raise issues at the github repository [2]_ and we will
+endeavour to provide assistance as resources allow.
 
 Example Wrapper
 ~~~~~~~~~~~~~~~
 
-Here's a reproduction of the example wrapper in the sample project included
-within smif. In this case, the wrapper doesn't actually call or run a separate
-model, but demonstrates calls to the data handler methods necessary to pass
-data into an external model, and send results back to smif.
+Here's a reproduction of the example wrapper in the sample project included within smif. In
+this case, the wrapper doesn't actually call or run a separate model, but demonstrates calls to
+the data handler methods necessary to pass data into an external model, and send results back
+to smif.
 
 .. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
    :language: python
@@ -854,22 +878,22 @@ The key methods in the SectorModel class which need to be overridden are:
 - :py:meth:`~smif.model.sector_model.SectorModel.simulate`
 - :py:meth:`~smif.model.sector_model.SectorModel.extract_obj`
 
-The wrapper should be written in a python file, e.g. ``water_supply.py``.
-The path to the location of this file should be entered in the
-sector model configuration of the project.
-(see A Simulation Model File above).
+The wrapper should be written in a python file, e.g. ``water_supply.py``. The path to the
+location of this file should be entered in the sector model configuration of the project. (see
+A Simulation Model File above).
+
 
 Wrapping a Sector Model: Simulate
 ---------------------------------
 
-The most common workflow that will need to be implemented in the simulate
-method is:
+The most common workflow that will need to be implemented in the simulate method is:
 
 1. Retrieve model input and parameter data from the data handler
 2. Write or pass this data to the wrapped model
 3. Run the model
 4. Retrieve results from the model
 5. Write results back to the data handler
+
 
 Accessing model parameter data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -884,16 +908,18 @@ example:
    :dedent: 8
 
 
-Note that the name argument passed to the :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameter` is that which is defined in
+Note that the name argument passed to the
+:py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameter` is that which is defined in
 the sector model configuration file.
+
 
 Accessing model input data for the current year
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The method :py:meth:`~smif.data_layer.data_handle.DataHandle.get_data()` allows a user to
-get the value for any model input that has been defined in the sector model's
-configuration.  In the example, the option year argument is omitted, and it
-defaults to fetching the data for the current timestep.
+The method :py:meth:`~smif.data_layer.data_handle.DataHandle.get_data()` allows a user to get
+the value for any model input that has been defined in the sector model's configuration.  In
+the example, the option year argument is omitted, and it defaults to fetching the data for the
+current timestep.
 
 .. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
    :language: python
@@ -904,8 +930,8 @@ defaults to fetching the data for the current timestep.
 Accessing model input data for the base year
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To access model input data from the timestep prior to the current timestep,
-you can use the following argument:
+To access model input data from the timestep prior to the current timestep, you can use the
+following argument:
 
 .. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
    :language: python
@@ -916,54 +942,53 @@ you can use the following argument:
 Accessing model input data for a previous year
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To access model input data from the timestep prior to the current timestep,
-you can use the following argument:
+To access model input data from the timestep prior to the current timestep, you can use the
+following argument:
 
 .. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
    :language: python
    :lines:  41
    :dedent: 8
 
+
 Passing model data directly to a Python model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the wrapped model is a python script or package, then the wrapper can
-import and instantiate the model, passing in data directly.
+If the wrapped model is a python script or package, then the wrapper can import and instantiate
+the model, passing in data directly.
 
 .. literalinclude:: ../src/smif/sample_project/models/water_supply.py
    :language: python
    :lines:  73-80
    :dedent: 8
 
-In this example, the example water supply simulation model is instantiated
-within the simulate method, data is written to properties of the instantiated
-class and  the ``run()`` method of the simulation model is called.
-Finally, (dummy) results are written back to the data handler using the
-:py:meth:`~smif.data_layer.data_handle.DataHandle.set_results` method.
+In this example, the example water supply simulation model is instantiated within the simulate
+method, data is written to properties of the instantiated class and  the ``run()`` method of
+the simulation model is called. Finally, (dummy) results are written back to the data handler
+using the :py:meth:`~smif.data_layer.data_handle.DataHandle.set_results` method.
 
-Alternatively, the wrapper could call the model via the command line
-(see below).
+Alternatively, the wrapper could call the model via the command line (see below).
+
 
 Passing model data in as a command line argument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the model is fairly simple, or requires a parameter value or input data to
-be passed as an argument on the command line,
-use the methods provided by :py:mod:`subprocess` to call out to the model
-from the wrapper::
+If the model is fairly simple, or requires a parameter value or input data to be passed as an
+argument on the command line, use the methods provided by :py:mod:`subprocess` to call out to
+the model from the wrapper::
 
     parameter = data.get_parameter('command_line_argument')
     arguments = ['path/to/model/executable',
                  '-my_argument={}'.format(parameter)]
     output = subprocess.run(arguments, check=True)
 
+
 Writing data to a text file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Again, the exact implementation of writing data to a text file for subsequent
-reading into the wrapped model will differ on a case-by-case basis.
-In the following example, we write some data to a comma-separated-values (.csv)
-file::
+Again, the exact implementation of writing data to a text file for subsequent reading into the
+wrapped model will differ on a case-by-case basis. In the following example, we write some data
+to a comma-separated-values (.csv) file::
 
     with open(path_to_data_file, 'w') as open_file:
         fieldnames = ['year', 'PETROL', 'DIESEL', 'LPG',
@@ -997,13 +1022,13 @@ file::
         writer.writerow(base_price_set)
         writer.writerow(current_price_set)
 
+
 Writing data to a database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The exact implementation of writing input and parameter data will differ on a
-case-by-case basis. In the following example, we write model inputs
-``energy_demand`` to a postgreSQL database table ``ElecLoad`` using the
-psycopg2 library [3]_ ::
+The exact implementation of writing input and parameter data will differ on a case-by-case
+basis. In the following example, we write model inputs ``energy_demand`` to a postgreSQL
+database table ``ElecLoad`` using the psycopg2 library [3]_ ::
 
     def simulate(self, data):
 
@@ -1045,6 +1070,7 @@ psycopg2 library [3]_ ::
         cur.close()
         conn.close()
 
+
 Writing model results to the data handler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1053,17 +1079,16 @@ Writing results back to the data handler is as simple as calling the
 
     data.set_results("cost", np.array([[1.23, 1.543, 2.355]])
 
-The expected format of the data is a 2-dimensional numpy array with the
-dimensions described by the tuple ``(len(regions), len(intervals))``
-as defined in the model's output configuration.
-Results are expected to be set for each of the model outputs defined in the
-output configuration and a warning is raised if these are not present at
-runtime.
+The expected format of the data is a 2-dimensional numpy array with the dimensions described by
+the tuple ``(len(regions), len(intervals))`` as defined in the model's output configuration.
+Results are expected to be set for each of the model outputs defined in the output
+configuration and a warning is raised if these are not present at runtime.
 
-The interval definitions associated with the output can be interrogated from
-within the SectorModel class using ``self.outputs[name].get_interval_names()``
-and the regions using ``self.outputs[name].get_region_names()`` and these can
-then be used to compose the numpy array.
+The interval definitions associated with the output can be interrogated from within the
+SectorModel class using ``self.outputs[name].get_interval_names()`` and the regions using
+``self.outputs[name].get_region_names()`` and these can then be used to compose the numpy
+array.
+
 
 References
 ----------
