@@ -7,8 +7,8 @@ Exception
               +-- SmifDataExistsError
               +-- SmifDataMismatchError
               +-- SmifDataReadError
-        +-- ModelRunError
-        +-- ValidationError
+        +-- SmifModelRunError
+        +-- SmifValidationError
 """
 
 
@@ -59,7 +59,7 @@ class SmifModelRunError(SmifException):
     pass
 
 
-class ValidationError(SmifException):
+class SmifValidationError(SmifException):
     """Custom exception to use for parsing validation.
     """
     pass
