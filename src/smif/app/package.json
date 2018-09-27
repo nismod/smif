@@ -26,6 +26,7 @@
     "jquery": "^3.3.1",
     "moment": "^2.22.2",
     "prop-types": "^15.6.0",
+    "rc-slider": "^8.6.3",
     "rc-steps": "^3.1.1",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",

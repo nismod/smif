@@ -3,6 +3,8 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
+import { Range } from 'rc-slider'
+import 'rc-slider/assets/index.css'
 
 class ModelRunConfigForm extends Component {
     constructor(props) {
@@ -12,8 +14,18 @@ class ModelRunConfigForm extends Component {
         this.handleSave = this.handleSave.bind(this)
         this.handleCancel = this.handleCancel.bind(this)
 
+        this.validateModelRun = this.validateModelRun.bind(this)
+
         this.state = {
             selected: this.props.model_run
+        }
+        this.form = {
+            timestep_base_year: this.props.model_run.timesteps[0],
+            timestep_size: (this.props.model_run.timesteps.length <= 1
+                ? 0
+                : this.props.model_run.timesteps[1] - this.props.model_run.timesteps[0]
+            ),
+            timestep_number: this.props.model_run.timesteps.length,
         }
     }
 
@@ -22,9 +34,57 @@ class ModelRunConfigForm extends Component {
         const value = target.type === 'checkbox' ? target.checked : target.value
         const name = target.name
 
-        this.setState({
-            selected: update(this.state.selected, {[name]: {$set: value}})
-        })
+        if (name.startsWith('scenarios_')) {
+            let newScenarios = Object.assign({}, this.state.selected.scenarios)
+            newScenarios[name.replace('scenarios_', '')] = event.target.value
+
+            this.setState({
+                selected: update(
+                    this.state.selected, 
+                    {scenarios: {$set: newScenarios}}
+                )
+            })
+        } 
+        else if (name.startsWith('narratives_')) {
+            let newNarratives = Object.assign({}, this.state.selected.narratives)
+            newNarratives[name.replace('narratives_', '')] = event.target.value
+
+            this.setState({
+                selected: update(
+                    this.state.selected, 
+                    {narratives: {$set: newNarratives}}
+                )
+            })
+        } 
+        else if (name.startsWith('timestep_')) {
+            if (name == 'timestep_size') {
+                this.form.timestep_size = parseInt(value)
+            }
+            if (name == 'timestep_base_year') {
+                this.form.timestep_base_year = parseInt(value)
+            }
+            if (name == 'timestep_number') {
+                this.form.timestep_number = parseInt(value)
+            }
+
+            let timesteps = Array.from(Array(this.form.timestep_number).keys()).map(
+                timestep => this.form.timestep_base_year + this.form.timestep_size * timestep
+            )
+
+            this.setState({
+                selected: update(
+                    this.state.selected, 
+                    {timesteps: {
+                        $set: timesteps
+                    }}
+                )
+            })
+        }
+        else {
+            this.setState({
+                selected: update(this.state.selected, {[name]: {$set: value}})
+            })
+        }
     }
 
     handleSave() {
@@ -35,8 +95,46 @@ class ModelRunConfigForm extends Component {
         this.props.cancelModelRun()
     }
 
+    validateModelRun() {
+        let scenarios = Object.assign({}, this.state.selected.scenarios)
+        let update_scenarios = false
+
+        // Get possible scenarios from sos_model
+        let possible_scenarios = this.props.sos_models.filter(
+            sos_model => sos_model.name == this.state.selected.sos_model
+        )[0].scenarios
+
+        // Make sure each scenario value is present
+        possible_scenarios.map(scenario => {
+            if (!Object.keys(this.state.selected.scenarios).includes(scenario)) {
+                scenarios[scenario] = ''
+                update_scenarios = true
+            }}
+        )
+
+        // Remove illegal keys
+        Object.keys(scenarios).forEach(
+            function(scenario_name) {
+                if (!possible_scenarios.includes(scenario_name)) {
+                    delete scenarios[scenario_name]
+                }
+            }
+        )
+
+        if (update_scenarios) {
+            this.setState({
+                selected: update(
+                    this.state.selected, 
+                    {scenarios: {$set: scenarios}}
+                )
+            })  
+        }
+    }
+
     render() {
         const {selected} = this.state
+
+        this.validateModelRun()
 
         return (
             <div>
@@ -58,115 +156,212 @@ class ModelRunConfigForm extends Component {
                             </div>
                         </div>
 
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Created</label>
+                            <div className="col-sm-10">
+                                <label id="sos_model_run_stamp" className="form-control">{selected.stamp}</label>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                {/* 
+                <div className="card">
+                    <div className="card-header">Model</div>
+                    <div className="card-body">
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">System-of-systems model</label>
+                            <div className="col-sm-10">
+                                <select 
+                                    id={name + '_source'}
+                                    className='form-control'
+                                    name="sos_model" 
+                                    value={this.state.selected.sos_model}
+                                    onChange={this.handleChange}
+                                    required>
+                                    <option
+                                        value=''
+                                        disabled>
+                                        Please select 
+                                    </option>
+                                    {
+                                        this.props.sos_models.map((sos_model) => (
+                                            <option 
+                                                key={sos_model.name}
+                                                value={sos_model.name}
+                                                title={sos_model.description}>
+                                                {sos_model.name}
+                                            </option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="card">
                     <div className="card-header">Settings</div>
                     <div className="card-body">
 
                         <div className="form-group row">
-                            <label className="col-sm-2 col-form-label">Sector Models</label>
-                            <div className="col-sm-10">
-                                <PropertySelector 
-                                    name="sector_models" 
-                                    activeProperties={selected.sector_models} 
-                                    availableProperties={this.props.sector_models} 
-                                    onChange={this.handleChange} />
-                            </div>
-                        </div>
-
-                        <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Scenarios</label>
                             <div className="col-sm-10">
-                                <PropertySelector 
-                                    name="scenario_sets" 
-                                    activeProperties={selected.scenarios} 
-                                    availableProperties={this.props.scenarios} 
-                                    onChange={this.handleChange} />
+                                {
+                                    this.props.sos_models.filter(
+                                        sos_model => sos_model.name == this.state.selected.sos_model
+                                    )[0].scenarios.map(
+                                        sos_model_scenario => (
+                                            <div key={sos_model_scenario} className="card">
+                                                <div className="card-body">
+                                                    <h6 className="card-title">{sos_model_scenario}</h6>
+                                                    {
+                                                        this.props.scenarios.filter(
+                                                            scenario => scenario.name == sos_model_scenario
+                                                        )[0].variants.map(variant => (
+                                                            <div className="form-check" 
+                                                                key={sos_model_scenario + '_' + variant.name}
+                                                                title={variant.description}>
+                                                                <label className="form-check-label">
+                                                                    <input
+                                                                        id={'radio_' + sos_model_scenario + '_' + variant.name}
+                                                                        className="form-check-input"
+                                                                        type="radio"
+                                                                        name={'scenarios_' + sos_model_scenario}
+                                                                        key={variant.name}
+                                                                        value={variant.name}
+                                                                        checked={
+                                                                            this.state.selected.scenarios[sos_model_scenario] == variant.name 
+                                                                                ? true : false
+                                                                        }
+                                                                        onChange={this.handleChange} />
+                                                                    {variant.name}
+                                                                </label>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            </div>
+                                        )
+                                    )
+                                }
+                            </div>
+
+                            <label className="col-sm-2 col-form-label">Narratives</label>
+                            <div className="col-sm-10">
+                                {
+                                    this.props.sos_models.filter(
+                                        sos_model => sos_model.name == this.state.selected.sos_model
+                                    )[0].narratives.map(
+                                        sos_model_narrative => (
+                                            <div key={sos_model_narrative} className="card">
+                                                <div className="card-body">
+                                                    <h6 className="card-title">{sos_model_narrative}</h6>
+                                                    {
+                                                        this.props.narratives.filter(
+                                                            narrative => narrative.name == sos_model_narrative
+                                                        )[0].variants.map(variant => (
+                                                            <div className="form-check" 
+                                                                key={sos_model_narrative + '_' + variant.name}
+                                                                title={variant.description}>
+                                                                <label className="form-check-label">
+                                                                    <input
+                                                                        id={'radio_' + sos_model_narrative + '_' + variant.name}
+                                                                        className="form-check-input"
+                                                                        type="radio"
+                                                                        name={'narratives_' + sos_model_narrative}
+                                                                        key={variant.name}
+                                                                        value={variant.name}
+                                                                        checked={
+                                                                            this.state.selected.narratives[sos_model_narrative] == variant.name 
+                                                                                ? true : false
+                                                                        }
+                                                                        onChange={this.handleChange} />
+                                                                    {variant.name}
+                                                                </label>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            </div>
+                                        )
+                                    )
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">Timesteps</div>
+                    <div className="card-body">
+                        
+                        <Range
+                            min={this.form.timestep_base_year - this.form.timestep_size} 
+                            max={this.form.timestep_base_year + (this.form.timestep_number * this.form.timestep_size)} 
+                            marks={
+                                this.state.selected.timesteps.reduce(function(acc, cur, i, arr) {
+                                    if (arr.length < 10 || (i % parseInt(arr.length / 10) == 0)) {
+                                        acc[cur] = cur
+                                    } else {
+                                        acc[cur] = ''
+                                    }
+                                    return acc
+                                    
+                                }, {})
+                            }
+                            value={this.state.selected.timesteps} />
+                        <br/>
+                        <br/>
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Base year</label>
+                            <div className="col-sm-10">
+                                <input 
+                                    className='form-control'
+                                    type="number"
+                                    name='timestep_base_year' 
+                                    min={2000}
+                                    max={2100}
+                                    value={this.form.timestep_base_year} 
+                                    onChange={this.handleChange} 
+                                />
                             </div>
                         </div>
 
                         <div className="form-group row">
-                            <label className="col-sm-2 col-form-label">Narratives</label>
+                            <label className="col-sm-2 col-form-label">Step size</label>
                             <div className="col-sm-10">
-                                <PropertySelector 
-                                    name="narrative_sets" 
-                                    activeProperties={selected.narratives} 
-                                    availableProperties={this.props.narratives} 
-                                    onChange={this.handleChange} />
+                                <input 
+                                    className='form-control'
+                                    type="number"
+                                    name='timestep_size' 
+                                    min={1}
+                                    max={10}
+                                    value={this.form.timestep_size}
+                                    onChange={this.handleChange} 
+                                />
                             </div>
                         </div>
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Number of steps</label>
+                            <div className="col-sm-10">
+                                <input 
+                                    className='form-control'
+                                    type="number"
+                                    name='timestep_number' 
+                                    min={1}
+                                    max={100}
+                                    value={this.form.timestep_number}
+                                    onChange={this.handleChange} 
+                                />
+                            </div>
+                        </div>
+
                     </div>
                 </div>
-
-                <div className="card">
-                    <div className="card-header">Model Dependencies</div>
-                    <div className="card-body">
-  
-                        <DependencyList 
-                            name="Model Dependency" 
-                            dependencies={this.state.selected.model_dependencies} 
-                            source={
-                                this.props.sector_models.filter(
-                                    sector_model => this.state.selected.sector_models.includes(sector_model.name)
-                                )
-                            }
-                            source_output={
-                                this.props.sector_models.reduce(function(obj, item) {
-                                    obj[item.name] = item.outputs
-                                    return obj}, {}
-                                )
-                            }
-                            sink={
-                                this.props.sector_models.filter(
-                                    sector_model => this.state.selected.sector_models.includes(sector_model.name)
-                                )
-                            }
-                            sink_input={
-                                this.props.sector_models.reduce(function(obj, item) {
-                                    obj[item.name] = item.inputs
-                                    return obj}, {}
-                                )
-                            } 
-                        />
-                    </div>
-                </div>
-
-                <div className="card">
-                    <div className="card-header">Scenario Dependencies</div>
-                    <div className="card-body">
-
-                        <DependencyList 
-                            name="Scenario Dependency" 
-                            dependencies={this.state.selected.scenario_dependencies} 
-                            source={
-                                this.props.scenarios.filter(
-                                    scenario => this.state.selected.scenarios.includes(scenario.name)
-                                )
-                            } 
-                            source_output={
-                                this.props.scenarios.reduce(function(obj, item) {
-                                    obj[item.name] = item.provides
-                                    return obj}, {}
-                                )
-                            }
-                            sink={
-                                this.props.sector_models.filter(
-                                    sector_model => this.state.selected.sector_models.includes(sector_model.name)
-                                )
-                            }
-                            sink_input={
-                                this.props.sector_models.reduce(function(obj, item) {
-                                    obj[item.name] = item.inputs
-                                    return obj}, {}
-                                )
-                            } 
-                        />
-                    </div>
-                </div> */}
 
                 <SaveButton onClick={this.handleSave} />
                 <CancelButton onClick={this.handleCancel} />
@@ -179,6 +374,9 @@ class ModelRunConfigForm extends Component {
 
 ModelRunConfigForm.propTypes = {
     model_run: PropTypes.object.isRequired,
+    sos_models: PropTypes.array.isRequired,
+    scenarios: PropTypes.array.isRequired,
+    narratives: PropTypes.array.isRequired,
     saveModelRun: PropTypes.func,
     cancelModelRun: PropTypes.func
 }
