@@ -16,6 +16,7 @@ SmifDataReadError
     When unable to read data e.g. unable to handle file type or connect
     to database
 """
+import copy
 from abc import ABCMeta, abstractmethod
 from functools import reduce
 from logging import getLogger
@@ -997,6 +998,7 @@ class DataInterface(metaclass=ABCMeta):
         """Given a config dict and list of top-level keys for lists of specs,
         delete coords from each spec in each list.
         """
+        config = copy.deepcopy(config)
         for key in keys:
             for spec in config[key]:
                 try:

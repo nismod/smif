@@ -1,0 +1,22 @@
+name: population
+description: Growth in UK population
+provides:
+  - name: population
+    description: ''
+    dims:
+    - country
+    dtype: int
+    unit: people
+variants:
+  - name: population_low
+    description: Central Population (Low)
+    data:
+      population: population_low.csv
+  - name: population_med
+    description: Central Population (Medium)
+    data:
+      population: population_med.csv
+  - name: population_high
+    description: Central Population (High)
+    data:
+      population: population_high.csv

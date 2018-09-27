@@ -11,7 +11,8 @@ import pyarrow as pa
 from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.load import dump, load
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
-                            SmifDataNotFoundError, SmifDataReadError)
+                            SmifDataNotFoundError, SmifDataReadError,
+                            SmifValidationError)
 from smif.metadata import Spec
 
 # Import fiona if available (optional dependency)
@@ -23,30 +24,17 @@ except ImportError:
 
 # Note: these decorators must be defined before being used below
 def check_exists(dtype):
-    """Decorator to check an item of dtype exists
+    """Decorator to check an item of dtype exists in a config file
     """
     def wrapper(func):
-        """Decorator specialised by dtype (class/item type)
-        """
         @wraps(func)
-        def wrapped(self, name, primary=None, secondary=None, *func_args, **func_kwargs):
-            """Wrapper to implement error checking
-            """
-            _assert_no_mismatch(dtype, name, primary, secondary)
-            if dtype in _file_dtypes():
-                _assert_file_exists(self.file_dir, dtype, name)
-            if dtype in _config_dtypes():
-                config = self.read_project_config()
-                _assert_config_item_exists(config, dtype, name)
-            if dtype in _nested_config_dtypes():
-                config = self.read_project_config()
-                _assert_nested_config_item_exists(config, dtype, name, primary)
-
-            if primary is None:
-                return func(self, name, *func_args, **func_kwargs)
-            elif secondary is None:
-                return func(self, name, primary, *func_args, **func_kwargs)
-            return func(self, name, primary, secondary, *func_args, **func_kwargs)
+        def wrapped(self, name, item=None, *func_args, **func_kwargs):
+            if item is not None:
+                _assert_no_mismatch(dtype, name, item)
+            _assert_file_exists(self.config_folders, dtype, name)
+            if item is not None:
+                return func(self, name, item, *func_args, **func_kwargs)
+            return func(self, name, *func_args, **func_kwargs)
 
         return wrapped
     return wrapper
@@ -56,24 +44,43 @@ def check_not_exists(dtype):
     """Decorator creator to check an item of dtype does not exist
     """
     def wrapper(func):
-        """Decorator specialised by dtype (class/item type)
-        """
         @wraps(func)
-        def wrapped(self, primary, secondary=None, *func_args, **func_kwargs):
-            """Wrapper to implement error checking
-            """
-            if dtype in _file_dtypes():
-                _assert_file_not_exists(self.file_dir, dtype, primary['name'])
-            if dtype in _config_dtypes():
-                config = self.read_project_config()
-                _assert_config_item_not_exists(config, dtype, primary['name'])
-            if dtype in _nested_config_dtypes():
-                config = self.read_project_config()
-                _assert_nested_config_item_not_exists(config, dtype, primary, secondary)
+        def wrapped(self, item, *func_args, **func_kwargs):
+            name = item['name']
+            _assert_file_not_exists(self.config_folders, dtype, name)
+            return func(self, item, *func_args, **func_kwargs)
+        return wrapped
+    return wrapper
 
-            if secondary is None:
-                return func(self, primary, *func_args, **func_kwargs)
-            return func(self, primary, secondary, *func_args, **func_kwargs)
+
+def check_exists_as_child(parent_dtype, child_dtype):
+    """Decorator to check an item of dtype exists in a list in a config file
+    """
+    def wrapper(func):
+        @wraps(func)
+        def wrapped(self, parent_name, name, item=None, *func_args, **func_kwargs):
+            if item is not None:
+                _assert_no_mismatch("{} {}".format(parent_dtype, child_dtype), name, item)
+            config = self._read_config(parent_dtype, parent_name)
+            _assert_config_item_exists(config, child_dtype, name)
+            if item is not None:
+                return func(self, parent_name, name, item, *func_args, **func_kwargs)
+            return func(self, parent_name, name, *func_args, **func_kwargs)
+
+        return wrapped
+    return wrapper
+
+
+def check_not_exists_as_child(parent_dtype, child_dtype):
+    """Decorator creator to check an item of dtype does not exist in a list in a config file
+    """
+    def wrapper(func):
+        @wraps(func)
+        def wrapped(self, parent_name, item, *func_args, **func_kwargs):
+            name = item['name']
+            config = self._read_config(parent_dtype, parent_name)
+            _assert_config_item_not_exists(config, child_dtype, name)
+            return func(self, parent_name, item, *func_args, **func_kwargs)
         return wrapped
     return wrapper
 
@@ -95,36 +102,49 @@ class DatafileInterface(DataInterface):
         super().__init__()
 
         self.base_folder = str(base_folder)
-        self.storage_format = storage_format
+        self.config_folder = str(os.path.join(self.base_folder, 'config'))
+        self.config_folders = {}
+        self.data_folder = str(os.path.join(self.base_folder, 'data'))
+        self.data_folders = {}
+        self.results_folder = str(os.path.join(self.base_folder, 'results'))
 
-        self.file_dir = {}
-        self.file_dir['project'] = os.path.join(self.base_folder, 'config')
-        self.file_dir['results'] = os.path.join(self.base_folder, 'results')
+        self.storage_format = storage_format
 
         # cache results of reading project_config (invalidate on write)
         self._project_config_cache_invalid = True
         # MUST ONLY access through self.read_project_config()
         self._project_config_cache = None
 
-        config_folders = {
-            'model_runs': 'config',
-            'sos_models': 'config',
-            'sector_models': 'config',
-            'strategies': 'data',
-            'interventions': 'data',
-            'initial_conditions': 'data',
-            'dimensions': 'data',
-            'coefficients': 'data',
-            'scenarios': 'data',
-            'narratives': 'data',
-        }
-
-        for category, folder in config_folders.items():
-            dirname = os.path.join(self.base_folder, folder, category)
+        config_folders = [
+            'dimensions',
+            'model_runs',
+            'narratives',
+            'scenarios',
+            'sector_models',
+            'sos_models',
+        ]
+        for folder in config_folders:
+            dirname = os.path.join(self.config_folder, folder)
             # ensure each directory exists
             os.makedirs(dirname, exist_ok=True)
-            # store dirname
-            self.file_dir[category] = dirname
+            self.config_folders[folder] = dirname
+
+        data_folders = [
+            'coefficients',
+            'dimensions',
+            'strategies',
+            'initial_conditions',
+            'initial_inputs',
+            'interventions',
+            'narratives',
+            'scenarios',
+            'strategies',
+        ]
+        for folder in data_folders:
+            dirname = os.path.join(self.data_folder, folder)
+            # ensure each directory exists
+            os.makedirs(dirname, exist_ok=True)
+            self.data_folders[folder] = dirname
 
         # ensure project config file exists
         try:
@@ -133,9 +153,20 @@ class DatafileInterface(DataInterface):
             # write empty config if none found
             self._write_project_config({})
 
+    def _read_config(self, config_type, config_name):
+        """Read config item - used by decorators for existence/consistency checks
+        """
+        if config_type == 'scenario':
+            return self.read_scenario(config_name)
+        elif config_type == 'narrative':
+            return self.read_narrative(config_name)
+        else:
+            raise NotImplementedError(
+                "Cannot read %s:%s through generic method." % (config_type, config_name))
+
     # region Model runs
     def read_model_runs(self):
-        names = self._read_filenames_in_dir(self.file_dir['model_runs'], '.yml')
+        names = self._read_filenames_in_dir(self.config_folders['model_runs'], '.yml')
         model_runs = [self.read_model_run(name) for name in names]
         return model_runs
 
@@ -144,71 +175,72 @@ class DatafileInterface(DataInterface):
         del modelrun_config['strategies']
         return modelrun_config
 
-    @check_exists(dtype='model_run')
+    @check_exists('model_run')
     def _read_model_run(self, model_run_name):
-        return self._read_yaml_file(self.file_dir['model_runs'], model_run_name)
+        return self._read_yaml_file(self.config_folders['model_runs'], model_run_name)
 
     def _overwrite_model_run(self, model_run_name, model_run):
-        self._write_yaml_file(self.file_dir['model_runs'], model_run_name, model_run)
+        self._write_yaml_file(self.config_folders['model_runs'], model_run_name, model_run)
 
-    @check_not_exists(dtype='model_run')
+    @check_not_exists('model_run')
     def write_model_run(self, model_run):
         config = copy.copy(model_run)
         config['strategies'] = []
-        self._write_yaml_file(self.file_dir['model_runs'], config['name'], config)
+        self._write_yaml_file(self.config_folders['model_runs'], config['name'], config)
 
-    @check_exists(dtype='model_run')
+    @check_exists('model_run')
     def update_model_run(self, model_run_name, model_run):
         prev = self._read_model_run(model_run_name)
         config = copy.copy(model_run)
         config['strategies'] = prev['strategies']
         self._overwrite_model_run(model_run_name, config)
 
-    @check_exists(dtype='model_run')
+    @check_exists('model_run')
     def delete_model_run(self, model_run_name):
-        os.remove(os.path.join(self.file_dir['model_runs'], model_run_name + '.yml'))
+        os.remove(os.path.join(self.config_folders['model_runs'], model_run_name + '.yml'))
     # endregion
 
     # region System-of-system models
     def read_sos_models(self):
-        names = self._read_filenames_in_dir(self.file_dir['sos_models'], '.yml')
+        names = self._read_filenames_in_dir(self.config_folders['sos_models'], '.yml')
         sos_models = [self.read_sos_model(name) for name in names]
         return sos_models
 
-    @check_exists(dtype='sos_model')
+    @check_exists('sos_model')
     def read_sos_model(self, sos_model_name):
-        data = self._read_yaml_file(self.file_dir['sos_models'], sos_model_name)
+        data = self._read_yaml_file(self.config_folders['sos_models'], sos_model_name)
         return data
 
-    @check_not_exists(dtype='sos_model')
+    @check_not_exists('sos_model')
     def write_sos_model(self, sos_model):
-        self._write_yaml_file(self.file_dir['sos_models'], sos_model['name'], sos_model)
+        self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
-    @check_exists(dtype='sos_model')
+    @check_exists('sos_model')
     def update_sos_model(self, sos_model_name, sos_model):
-        self._write_yaml_file(self.file_dir['sos_models'], sos_model['name'], sos_model)
+        self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
-    @check_exists(dtype='sos_model')
+    @check_exists('sos_model')
     def delete_sos_model(self, sos_model_name):
-        os.remove(os.path.join(self.file_dir['sos_models'], sos_model_name + '.yml'))
+        os.remove(os.path.join(self.config_folders['sos_models'], sos_model_name + '.yml'))
     # endregion
 
     # region Sector models
     def read_sector_models(self, skip_coords=False):
-        names = self._read_filenames_in_dir(self.file_dir['sector_models'], '.yml')
+        names = self._read_filenames_in_dir(self.config_folders['sector_models'], '.yml')
         sector_models = [self.read_sector_model(name, skip_coords) for name in names]
         return sector_models
 
-    @check_exists(dtype='sector_model')
+    @check_exists('sector_model')
     def read_sector_model(self, sector_model_name, skip_coords=False):
-        sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+        sector_model = self._read_yaml_file(
+            self.config_folders['sector_models'], sector_model_name)
         if not skip_coords:
             self._set_list_coords(sector_model['inputs'])
             self._set_list_coords(sector_model['outputs'])
             self._set_list_coords(sector_model['parameters'])
         return sector_model
 
-    @check_not_exists(dtype='sector_model')
+    @check_not_exists('sector_model')
     def write_sector_model(self, sector_model):
         sector_model = copy.deepcopy(sector_model)
         if sector_model['interventions']:
@@ -218,15 +250,15 @@ class DatafileInterface(DataInterface):
         sector_model = self._skip_coords(sector_model, ('inputs', 'outputs', 'parameters'))
 
         self._write_yaml_file(
-            self.file_dir['sector_models'], sector_model['name'], sector_model)
+            self.config_folders['sector_models'], sector_model['name'], sector_model)
 
-    @check_exists(dtype='sector_model')
+    @check_exists('sector_model')
     def update_sector_model(self, sector_model_name, sector_model):
         sector_model = copy.deepcopy(sector_model)
         # ignore interventions and initial conditions which the app doesn't handle
         if sector_model['interventions'] or sector_model['initial_conditions']:
             old_sector_model = self._read_yaml_file(
-                self.file_dir['sector_models'], sector_model['name'])
+                self.config_folders['sector_models'], sector_model['name'])
 
         if sector_model['interventions']:
             self.logger.warning("Ignoring interventions write")
@@ -239,18 +271,20 @@ class DatafileInterface(DataInterface):
         sector_model = self._skip_coords(sector_model, ('inputs', 'outputs', 'parameters'))
 
         self._write_yaml_file(
-            self.file_dir['sector_models'], sector_model['name'], sector_model)
+            self.config_folders['sector_models'], sector_model['name'], sector_model)
 
-    @check_exists(dtype='sector_model')
+    @check_exists('sector_model')
     def delete_sector_model(self, sector_model_name):
-        os.remove(os.path.join(self.file_dir['sector_models'], sector_model_name + '.yml'))
+        os.remove(
+            os.path.join(self.config_folders['sector_models'], sector_model_name + '.yml'))
 
-    @check_exists(dtype='sector_model')
+    @check_exists('sector_model')
     def read_interventions(self, sector_model_name):
         all_interventions = {}
-        sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+        sector_model = self._read_yaml_file(
+            self.config_folders['sector_models'], sector_model_name)
         interventions = self._read_interventions_files(
-            sector_model['interventions'], 'interventions')
+            sector_model['interventions'], self.data_folders['interventions'])
         for entry in interventions:
             name = entry.pop('name')
             if name in all_interventions:
@@ -260,11 +294,12 @@ class DatafileInterface(DataInterface):
                 all_interventions[name] = entry
         return all_interventions
 
-    @check_exists(dtype='sector_model')
+    @check_exists('sector_model')
     def read_initial_conditions(self, sector_model_name):
-        sector_model = self._read_yaml_file(self.file_dir['sector_models'], sector_model_name)
+        sector_model = self._read_yaml_file(
+            self.config_folders['sector_models'], sector_model_name)
         return self._read_interventions_files(
-            sector_model['initial_conditions'], 'initial_conditions')
+            sector_model['initial_conditions'], self.data_folders['initial_conditions'])
 
     def _read_interventions_files(self, filenames, dirname):
         intervention_list = []
@@ -302,22 +337,20 @@ class DatafileInterface(DataInterface):
         dict of dict
             Dict of intervention attribute dicts, keyed by intervention name
         """
-        filepath = self.file_dir[dirname]
         _, ext = os.path.splitext(filename)
         if ext == '.csv':
-            data = self._get_data_from_csv(os.path.join(filepath, filename))
+            data = self._get_data_from_csv(os.path.join(dirname, filename))
             try:
                 data = self._reshape_csv_interventions(data)
             except ValueError:
                 raise ValueError("Error reshaping data for {}".format(filename))
         else:
-            data = self._read_yaml_file(filepath, filename, extension='')
+            data = self._read_yaml_file(dirname, filename, extension='')
 
         return data
 
     def _write_interventions_file(self, filename, dirname, data):
-        filepath = self.file_dir[dirname]
-        self._write_yaml_file(filepath, filename=filename, data=data, extension='')
+        self._write_yaml_file(dirname, filename=filename, data=data, extension='')
 
     def _reshape_csv_interventions(self, data):
         """
@@ -356,14 +389,15 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Strategies
-    def read_strategies(self, model_run_name):
+    def read_strategies(self, modelrun_name):
         output = []
-        model_run_config = self._read_model_run(model_run_name)
+        model_run_config = self._read_model_run(modelrun_name)
         strategies = copy.deepcopy(model_run_config['strategies'])
 
         for strategy in strategies:
             if strategy['type'] == 'pre-specified-planning':
-                decisions = self._read_interventions_file(strategy['filename'], 'strategies')
+                decisions = self._read_interventions_file(
+                    strategy['filename'], self.data_folders['strategies'])
                 if decisions is None:
                     decisions = []
                 del strategy['filename']
@@ -375,9 +409,9 @@ class DatafileInterface(DataInterface):
                 output.append(strategy)
         return output
 
-    def write_strategies(self, model_run_name, strategies):
+    def write_strategies(self, modelrun_name, strategies):
         strategies = copy.deepcopy(strategies)
-        model_run = self._read_model_run(model_run_name)
+        model_run = self._read_model_run(modelrun_name)
         model_run['strategies'] = []
         for i, strategy in enumerate(strategies):
             if strategy['type'] == 'pre-specified-planning':
@@ -385,10 +419,11 @@ class DatafileInterface(DataInterface):
                 del strategy['interventions']
                 filename = 'strategy-{}.yml'.format(i)
                 strategy['filename'] = filename
-                self._write_interventions_file(filename, 'strategies', decisions)
+                self._write_interventions_file(
+                    filename, self.data_folders['strategies'], decisions)
 
             model_run['strategies'].append(strategy)
-        self._overwrite_model_run(model_run_name, model_run)
+        self._overwrite_model_run(modelrun_name, model_run)
     # endregion
 
     # region State
@@ -413,8 +448,6 @@ class DatafileInterface(DataInterface):
         """Compose a unique filename for state file:
                 state_{timestep|0000}[_decision_{iteration}].csv
         """
-        results_dir = self.file_dir['results']
-
         if timestep is None:
             timestep = '0000'
 
@@ -424,11 +457,10 @@ class DatafileInterface(DataInterface):
         else:
             separator = '_decision_'
 
-        fmt = 'state_{}{}{}.csv'
-        fname = os.path.join(
-            results_dir, modelrun_name, fmt.format(timestep, separator, decision_iteration))
+        filename = 'state_{}{}{}.csv'.format(timestep, separator, decision_iteration)
+        path = os.path.join(self.results_folder, modelrun_name, filename)
 
-        return fname
+        return path
 
     @staticmethod
     def _read_state_file(fname):
@@ -479,21 +511,52 @@ class DatafileInterface(DataInterface):
 
     # region Dimensions
     def read_dimensions(self):
-        project_config = self.read_project_config()
-        dimensions = []
-        for dim_with_ref in project_config['dimensions']:
-            dim = copy.copy(dim_with_ref)
-            dim['elements'] = self._read_dimension_file(dim_with_ref['elements'])
-            dimensions.append(dim)
-        return dimensions
+        dim_names = self._read_filenames_in_dir(self.config_folders['dimensions'], '.yml')
+        return [self.read_dimension(name) for name in dim_names]
 
-    @check_exists(dtype='dimension')
+    @check_exists('dimension')
     def read_dimension(self, dimension_name):
-        project_config = self.read_project_config()
-        dim_with_ref = _pick_from_list(project_config['dimensions'], dimension_name)
-        dim = copy.copy(dim_with_ref)
-        dim['elements'] = self._read_dimension_file(dim_with_ref['elements'])
+        dim = self._read_yaml_file(self.config_folders['dimensions'], dimension_name)
+        dim['elements'] = self._read_dimension_file(dim['elements'])
         return dim
+
+    @check_not_exists('dimension')
+    def write_dimension(self, dimension):
+        # write elements to yml file (by default, can handle any nested data)
+        elements_filename = "{}.yml".format(dimension['name'])
+        elements = dimension['elements']
+        self._write_dimension_file(elements_filename, elements)
+
+        # refer to elements by filename and add to config
+        dimension_with_ref = copy.copy(dimension)
+        dimension_with_ref['elements'] = elements_filename
+        self._write_yaml_file(
+            self.config_folders['dimensions'], dimension['name'], dimension_with_ref)
+
+    @check_exists('dimension')
+    def update_dimension(self, dimension_name, dimension):
+        # look up elements filename and write elements
+        old_dim = self._read_yaml_file(self.config_folders['dimensions'], dimension_name)
+        elements_filename = old_dim['elements']
+        elements = dimension['elements']
+        self._write_dimension_file(elements_filename, elements)
+
+        # refer to elements by filename and update config
+        dimension_with_ref = copy.copy(dimension)
+        dimension_with_ref['elements'] = elements_filename
+        self._write_yaml_file(
+            self.config_folders['dimensions'], dimension_name, dimension_with_ref)
+
+    @check_exists('dimension')
+    def delete_dimension(self, dimension_name):
+        # read to find filename
+        old_dim = self._read_yaml_file(self.config_folders['dimensions'], dimension_name)
+        elements_filename = old_dim['elements']
+        # remove elements data
+        os.remove(os.path.join(self.data_folders['dimensions'], elements_filename))
+        # remove description
+        os.remove(
+            os.path.join(self.config_folders['dimensions'], "{}.yml".format(dimension_name)))
 
     def _set_list_coords(self, list_):
         for item in list_:
@@ -510,7 +573,7 @@ class DatafileInterface(DataInterface):
 
     @lru_cache(maxsize=32)
     def _read_dimension_file(self, filename):
-        filepath = os.path.join(self.file_dir['dimensions'], filename)
+        filepath = os.path.join(self.data_folders['dimensions'], filename)
         _, ext = os.path.splitext(filename)
         if ext in ('.yml', '.yaml'):
             data = self._read_yaml_file(filepath)
@@ -527,7 +590,7 @@ class DatafileInterface(DataInterface):
     def _write_dimension_file(self, filename, data):
         # lru_cache may now be invalid, so clear it
         self._read_dimension_file.cache_clear()
-        filepath = os.path.join(self.file_dir['dimensions'], filename)
+        filepath = os.path.join(self.data_folders['dimensions'], filename)
         _, ext = os.path.splitext(filename)
         if ext in ('.yml', '.yaml'):
             self._write_yaml_file(filepath, data=data)
@@ -541,56 +604,6 @@ class DatafileInterface(DataInterface):
             msg += "'.geojson', '.shp') when writing {}"
             raise SmifDataReadError(msg.format(ext, filepath))
         return data
-
-    def _delete_dimension_file(self, filename):
-        os.remove(os.path.join(self.file_dir['dimensions'], filename))
-
-    @check_not_exists(dtype='dimension')
-    def write_dimension(self, dimension):
-        project_config = self.read_project_config()
-
-        # write elements to yml file (by default, can handle any nested data)
-        filename = "{}.yml".format(dimension['name'])
-        elements = dimension['elements']
-        self._write_dimension_file(filename, elements)
-
-        # refer to elements by filename and add to config
-        dimension_with_ref = copy.copy(dimension)
-        dimension_with_ref['elements'] = filename
-        try:
-            project_config['dimensions'].append(dimension_with_ref)
-        except KeyError:
-            project_config['dimensions'] = [dimension_with_ref]
-        self._write_project_config(project_config)
-
-    @check_exists(dtype='dimension')
-    def update_dimension(self, dimension_name, dimension):
-        project_config = self.read_project_config()
-        idx = _idx_in_list(project_config['dimensions'], dimension_name)
-
-        # look up project-config filename and write elements
-        filename = project_config['dimensions'][idx]['elements']
-        elements = dimension['elements']
-        self._write_dimension_file(filename, elements)
-
-        # refer to elements by filename and update config
-        dimension_with_ref = copy.copy(dimension)
-        dimension_with_ref['elements'] = filename
-        project_config['dimensions'][idx] = dimension_with_ref
-        self._write_project_config(project_config)
-
-    @check_exists(dtype='dimension')
-    def delete_dimension(self, dimension_name):
-        project_config = self.read_project_config()
-        idx = _idx_in_list(project_config['dimensions'], dimension_name)
-
-        # look up project-config filename and delete file
-        filename = project_config['dimensions'][idx]['elements']
-        self._delete_dimension_file(filename)
-
-        # delete from config
-        del project_config['dimensions'][idx]
-        self._write_project_config(project_config)
     # endregion
 
     # region Conversion coefficients
@@ -608,9 +621,8 @@ class DatafileInterface(DataInterface):
         self._write_data_to_native_file(results_path, data)
 
     def _get_coefficients_path(self, source_spec, destination_spec):
-        results_dir = self.file_dir['coefficients']
         path = os.path.join(
-            results_dir,
+            self.data_folders['coefficients'],
             "{}_{}.{}_{}.dat".format(
                 source_spec.name, "-".join(source_spec.dims),
                 destination_spec.name, "-".join(destination_spec.dims)
@@ -621,83 +633,61 @@ class DatafileInterface(DataInterface):
 
     # region Scenarios
     def read_scenarios(self, skip_coords=False):
-        project_config = self.read_project_config()
-        scenarios = copy.deepcopy(project_config['scenarios'])
-        if not skip_coords:
-            for scenario in scenarios:
-                self._set_list_coords(scenario['provides'])
-        return scenarios
+        scenario_names = self._read_filenames_in_dir(self.config_folders['scenarios'], '.yml')
+        return [self.read_scenario(name, skip_coords) for name in scenario_names]
 
-    @check_exists(dtype='scenario')
+    @check_exists('scenario')
     def read_scenario(self, scenario_name, skip_coords=False):
-        project_config = self.read_project_config()
-        scenario = copy.deepcopy(_pick_from_list(project_config['scenarios'], scenario_name))
+        scenario = self._read_yaml_file(self.config_folders['scenarios'], scenario_name)
         if not skip_coords:
             self._set_list_coords(scenario['provides'])
         return scenario
 
-    @check_not_exists(dtype='scenario')
+    @check_not_exists('scenario')
     def write_scenario(self, scenario):
-        project_config = self.read_project_config()
-        scenario = copy.deepcopy(scenario)
         scenario = self._skip_coords(scenario, ['provides'])
-        try:
-            project_config['scenarios'].append(scenario)
-        except KeyError:
-            project_config['scenarios'] = [scenario]
-        self._write_project_config(project_config)
+        self._write_yaml_file(self.config_folders['scenarios'], scenario['name'], scenario)
 
-    @check_exists(dtype='scenario')
+    @check_exists('scenario')
     def update_scenario(self, scenario_name, scenario):
-        project_config = self.read_project_config()
-        scenario = copy.deepcopy(scenario)
         scenario = self._skip_coords(scenario, ['provides'])
-        idx = _idx_in_list(project_config['scenarios'], scenario_name)
-        project_config['scenarios'][idx] = scenario
-        self._write_project_config(project_config)
+        self._write_yaml_file(self.config_folders['scenarios'], scenario['name'], scenario)
 
-    @check_exists(dtype='scenario')
+    @check_exists('scenario')
     def delete_scenario(self, scenario_name):
-        project_config = self.read_project_config()
-        idx = _idx_in_list(project_config['scenarios'], scenario_name)
-        del project_config['scenarios'][idx]
-        self._write_project_config(project_config)
+        os.remove(
+            os.path.join(self.config_folders['scenarios'], "{}.yml".format(scenario_name)))
 
-    @check_exists(dtype='scenario')
     def read_scenario_variants(self, scenario_name):
-        project_config = self.read_project_config()
-        scenario = _pick_from_list(project_config['scenarios'], scenario_name)
+        scenario = self.read_scenario(scenario_name, skip_coords=True)
         return scenario['variants']
 
-    @check_exists(dtype='scenario_variant')
+    @check_exists_as_child('scenario', 'variant')
     def read_scenario_variant(self, scenario_name, variant_name):
         variants = self.read_scenario_variants(scenario_name)
         return _pick_from_list(variants, variant_name)
 
-    @check_not_exists(dtype='scenario_variant')
+    @check_not_exists_as_child('scenario', 'variant')
     def write_scenario_variant(self, scenario_name, variant):
-        project_config = self.read_project_config()
-        s_idx = _idx_in_list(project_config['scenarios'], scenario_name)
-        project_config['scenarios'][s_idx]['variants'].append(variant)
-        self._write_project_config(project_config)
+        scenario = self.read_scenario(scenario_name, skip_coords=True)
+        scenario['variants'].append(variant)
+        self.update_scenario(scenario_name, scenario)
 
-    @check_exists(dtype='scenario_variant')
+    @check_exists_as_child('scenario', 'variant')
     def update_scenario_variant(self, scenario_name, variant_name, variant):
-        project_config = self.read_project_config()
-        s_idx = _idx_in_list(project_config['scenarios'], scenario_name)
-        v_idx = _idx_in_list(project_config['scenarios'][s_idx]['variants'], variant_name)
-        project_config['scenarios'][s_idx]['variants'][v_idx] = variant
-        self._write_project_config(project_config)
+        scenario = self.read_scenario(scenario_name, skip_coords=True)
+        v_idx = _idx_in_list(scenario['variants'], variant_name)
+        scenario['variants'][v_idx] = variant
+        self.update_scenario(scenario_name, scenario)
 
-    @check_exists(dtype='scenario_variant')
+    @check_exists_as_child('scenario', 'variant')
     def delete_scenario_variant(self, scenario_name, variant_name):
-        project_config = self.read_project_config()
-        s_idx = _idx_in_list(project_config['scenarios'], scenario_name)
-        v_idx = _idx_in_list(project_config['scenarios'][s_idx]['variants'], variant_name)
-        del project_config['scenarios'][s_idx]['variants'][v_idx]
-        self._write_project_config(project_config)
+        scenario = self.read_scenario(scenario_name, skip_coords=True)
+        v_idx = _idx_in_list(scenario['variants'], variant_name)
+        del scenario['variants'][v_idx]
+        self.update_scenario(scenario_name, scenario)
 
-    @check_exists(dtype='scenario_variant')
+    @check_exists_as_child('scenario', 'variant')
     def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
         spec = self._read_scenario_variable_spec(scenario_name, variable)
         filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
@@ -722,9 +712,8 @@ class DatafileInterface(DataInterface):
 
         return array
 
-    @check_exists(dtype='scenario_variant')
-    def write_scenario_variant_data(self, data, scenario_name, variant_name, variable,
-                                    timestep=None):
+    @check_exists_as_child('scenario', 'variant')
+    def write_scenario_variant_data(self, scenario_name, variant_name, variable, data):
         spec = self._read_scenario_variable_spec(scenario_name, variable)
         data = self.ndarray_to_data_list(data, spec)
         filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
@@ -738,7 +727,7 @@ class DatafileInterface(DataInterface):
                     scenario_name, variant_name, variable)
             )
         filename = variant['data'][variable]
-        return os.path.join(self.file_dir['scenarios'], filename)
+        return os.path.join(self.data_folders['scenarios'], filename)
 
     def _read_scenario_variable_spec(self, scenario_name, variable):
         # Read spec from scenario->provides->variable
@@ -755,87 +744,63 @@ class DatafileInterface(DataInterface):
 
     # region Narratives
     def read_narratives(self, skip_coords=False):
-        # Find filename for this narrative
-        project_config = self.read_project_config()
-        narratives = copy.deepcopy(project_config['narratives'])
-        if not skip_coords:
-            for narrative in narratives:
-                self._set_list_coords(narrative['provides'])
-        return narratives
+        narr_names = self._read_filenames_in_dir(self.config_folders['narratives'], '.yml')
+        return [self.read_narrative(name, skip_coords) for name in narr_names]
 
-    @check_exists(dtype='narrative')
+    @check_exists('narrative')
     def read_narrative(self, narrative_name, skip_coords=False):
-        project_config = self.read_project_config()
-        narrative = copy.deepcopy(
-            _pick_from_list(project_config['narratives'], narrative_name))
+        narrative = self._read_yaml_file(self.config_folders['narratives'], narrative_name)
         if not skip_coords:
             self._set_list_coords(narrative['provides'])
         return narrative
 
-    @check_not_exists(dtype='narrative')
+    @check_not_exists('narrative')
     def write_narrative(self, narrative):
-        project_config = self.read_project_config()
-        narrative = copy.deepcopy(narrative)
         narrative = self._skip_coords(narrative, ['provides'])
-        try:
-            project_config['narratives'].append(narrative)
-        except KeyError:
-            project_config['narratives'] = [narrative]
-        self._write_project_config(project_config)
+        self._write_yaml_file(
+            self.config_folders['narratives'], narrative['name'], narrative)
 
-    @check_exists(dtype='narrative')
+    @check_exists('narrative')
     def update_narrative(self, narrative_name, narrative):
-        project_config = self.read_project_config()
-        narrative = copy.deepcopy(narrative)
         narrative = self._skip_coords(narrative, ['provides'])
-        idx = _idx_in_list(project_config['narratives'], narrative_name)
-        project_config['narratives'][idx] = narrative
-        self._write_project_config(project_config)
+        self._write_yaml_file(
+            self.config_folders['narratives'], narrative_name, narrative)
 
-    @check_exists(dtype='narrative')
+    @check_exists('narrative')
     def delete_narrative(self, narrative_name):
-        project_config = self.read_project_config()
-        idx = _idx_in_list(project_config['narratives'], narrative_name)
-        del project_config['narratives'][idx]
-        self._write_project_config(project_config)
+        os.remove(
+            os.path.join(self.config_folders['narratives'], "{}.yml".format(narrative_name)))
 
-    @check_exists(dtype='narrative')
     def read_narrative_variants(self, narrative_name):
-        project_config = self.read_project_config()
-        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
-        return project_config['narratives'][n_idx]['variants']
+        narrative = self.read_narrative(narrative_name, skip_coords=True)
+        return narrative['variants']
 
-    @check_exists(dtype='narrative_variant')
+    @check_exists_as_child('narrative', 'variant')
     def read_narrative_variant(self, narrative_name, variant_name):
-        project_config = self.read_project_config()
-        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
-        variants = project_config['narratives'][n_idx]['variants']
+        variants = self.read_narrative_variants(narrative_name)
         return _pick_from_list(variants, variant_name)
 
-    @check_not_exists(dtype='narrative_variant')
+    @check_not_exists_as_child('narrative', 'variant')
     def write_narrative_variant(self, narrative_name, variant):
-        project_config = self.read_project_config()
-        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
-        project_config['narratives'][n_idx]['variants'].append(variant)
-        self._write_project_config(project_config)
+        narrative = self.read_narrative(narrative_name)
+        narrative['variants'].append(variant)
+        self.update_narrative(narrative_name, narrative)
 
-    @check_exists(dtype='narrative_variant')
+    @check_exists_as_child('narrative', 'variant')
     def update_narrative_variant(self, narrative_name, variant_name, variant):
-        project_config = self.read_project_config()
-        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
-        v_idx = _idx_in_list(project_config['narratives'][n_idx]['variants'], variant_name)
-        project_config['narratives'][n_idx]['variants'][v_idx] = variant
-        self._write_project_config(project_config)
+        narrative = self.read_narrative(narrative_name)
+        v_idx = _idx_in_list(narrative['variants'], variant_name)
+        narrative['variants'][v_idx] = variant
+        self.update_narrative(narrative_name, narrative)
 
-    @check_exists(dtype='narrative_variant')
+    @check_exists_as_child('narrative', 'variant')
     def delete_narrative_variant(self, narrative_name, variant_name):
-        project_config = self.read_project_config()
-        n_idx = _idx_in_list(project_config['narratives'], narrative_name)
-        v_idx = _idx_in_list(project_config['narratives'][n_idx]['variants'], variant_name)
-        del project_config['narratives'][n_idx]['variants'][v_idx]
-        self._write_project_config(project_config)
+        narrative = self.read_narrative(narrative_name)
+        v_idx = _idx_in_list(narrative['variants'], variant_name)
+        del narrative['variants'][v_idx]
+        self.update_narrative(narrative_name, narrative)
 
-    @check_exists(dtype='narrative_variant')
+    @check_exists_as_child('narrative', 'variant')
     def read_narrative_variant_data(self, narrative_name, variant_name, variable,
                                     timestep=None):
         spec = self._read_narrative_variable_spec(narrative_name, variable)
@@ -855,8 +820,8 @@ class DatafileInterface(DataInterface):
 
         return array
 
-    @check_exists(dtype='narrative_variant')
-    def write_narrative_variant_data(self, data, narrative_name, variant_name, variable,
+    @check_exists_as_child('narrative', 'variant')
+    def write_narrative_variant_data(self, narrative_name, variant_name, variable, data,
                                      timestep=None):
         spec = self._read_narrative_variable_spec(narrative_name, variable)
         data = self.ndarray_to_data_list(data, spec)
@@ -871,7 +836,7 @@ class DatafileInterface(DataInterface):
                     narrative_name, variant_name, variable)
             )
         filename = variant['data'][variable]
-        return os.path.join(self.file_dir['narratives'], filename)
+        return os.path.join(self.data_folders['narratives'], filename)
 
     def _read_narrative_variable_spec(self, narrative_name, variable):
         # Read spec from narrative->provides->variable
@@ -895,8 +860,10 @@ class DatafileInterface(DataInterface):
         if self.storage_format == 'local_csv':
             data = self._get_data_from_csv(results_path)
             return self.data_list_to_ndarray(data, output_spec)
-        if self.storage_format == 'local_binary':
+        elif self.storage_format == 'local_binary':
             return self._get_data_from_native_file(results_path)
+        else:
+            raise NotImplementedError("Unrecognised storage format: %s" % self.storage_format)
 
     def write_results(self, data, modelrun_id, model_name, output_spec, timestep=None,
                       modelset_iteration=None, decision_iteration=None):
@@ -912,8 +879,10 @@ class DatafileInterface(DataInterface):
         if self.storage_format == 'local_csv':
             data = self.ndarray_to_data_list(data, output_spec)
             self._write_data_to_csv(results_path, data, spec=output_spec)
-        if self.storage_format == 'local_binary':
+        elif self.storage_format == 'local_binary':
             self._write_data_to_native_file(results_path, data)
+        else:
+            raise NotImplementedError("Unrecognised storage format: %s" % self.storage_format)
 
     def _results_exist(self, modelrun_name):
         """Checks whether modelrun results exists on the filesystem
@@ -927,12 +896,12 @@ class DatafileInterface(DataInterface):
         -------
         bool: True when results exist for this modelrun_name
         """
-        previous_results_dir = os.path.join(self.file_dir['results'], modelrun_name)
+        previous_results_dir = os.path.join(self.results_folder, modelrun_name)
         return list(
             glob.iglob(os.path.join(previous_results_dir, '**/*.*'), recursive=True))
 
     def prepare_warm_start(self, modelrun_id):
-        results_dir = os.path.join(self.file_dir['results'], modelrun_id)
+        results_dir = os.path.join(self.results_folder, modelrun_id)
 
         # Return if path to previous modelruns does not exist
         if not os.path.isdir(results_dir):
@@ -947,7 +916,7 @@ class DatafileInterface(DataInterface):
             return None
 
         # Return if previous results were stored in a different format
-        previous_results_dir = os.path.join(self.file_dir['results'], modelrun_id)
+        previous_results_dir = os.path.join(self.results_folder, modelrun_id)
         results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'),
                                   recursive=True))
         for filename in results:
@@ -965,7 +934,7 @@ class DatafileInterface(DataInterface):
         result_metadata = []
         for filename in glob.iglob(os.path.join(results_dir, '**/*.*'), recursive=True):
             result_metadata.append(self._parse_results_path(
-                filename.replace(self.file_dir['results'], '')[1:]))
+                filename.replace(self.results_folder, '')[1:]))
 
         # Find latest timestep
         result_metadata = sorted(result_metadata, key=lambda k: k['timestep'], reverse=True)
@@ -1012,8 +981,6 @@ class DatafileInterface(DataInterface):
         -------
         path : strs
         """
-        results_dir = self.file_dir['results']
-
         if modelset_iteration is None:
             modelset_iteration = 'none'
         if decision_iteration is None:
@@ -1027,7 +994,7 @@ class DatafileInterface(DataInterface):
             ext = 'unknown'
 
         path = os.path.join(
-            results_dir, modelrun_id, model_name,
+            self.results_folder, modelrun_id, model_name,
             "decision_{}_modelset_{}".format(decision_iteration, modelset_iteration),
             "output_{}_timestep_{}.{}".format(output_name, timestep, ext)
         )
@@ -1109,7 +1076,7 @@ class DatafileInterface(DataInterface):
         """
         if self._project_config_cache_invalid:
             self._project_config_cache = self._read_yaml_file(
-                self.file_dir['project'], 'project')
+                self.base_folder, 'project')
             self._project_config_cache_invalid = False
         return copy.deepcopy(self._project_config_cache)
 
@@ -1123,7 +1090,7 @@ class DatafileInterface(DataInterface):
         """
         self._project_config_cache_invalid = True
         self._project_config_cache = None
-        self._write_yaml_file(self.file_dir['project'], 'project', data)
+        self._write_yaml_file(self.base_folder, 'project', data)
 
     @staticmethod
     def _read_filenames_in_dir(path, extension):
@@ -1251,27 +1218,15 @@ class DatafileInterface(DataInterface):
     # endregion
 
 
-def _file_dtypes():
-    return ('model_run', 'sos_model', 'sector_model')
-
-
-def _config_dtypes():
-    return ('dimension', 'narrative', 'scenario')
-
-
-def _nested_config_dtypes():
-    return ('narrative_variant', 'scenario_variant')
-
-
-def _assert_no_mismatch(dtype, name, obj, secondary=None):
+def _assert_no_mismatch(dtype, name, obj):
     try:
-        iter(obj)
+        if name != obj['name']:
+            raise SmifDataMismatchError(
+                "%s name '%s' must match '%s'" % (dtype, name, obj['name']))
+    except KeyError:
+        raise SmifValidationError("%s must have name defined" % dtype)
     except TypeError:
-        return
-
-    if 'name' in obj and name != obj['name']:
-        raise SmifDataMismatchError("%s name '%s' must match '%s'" %
-                                    (dtype, name, obj['name']))
+        pass
 
 
 def _file_exists(file_dir, dtype, name):
@@ -1292,20 +1247,6 @@ def _assert_file_not_exists(file_dir, dtype, name):
 def _config_item_exists(config, dtype, name):
     key = "%ss" % dtype
     return key in config and _name_in_list(config[key], name)
-
-
-def _nested_config_item_exists(config, dtype, parent_name, child_name):
-    keys = dtype.split("_")
-    parent_key = "%ss" % keys[0]
-    child_key = "%ss" % keys[1]
-    if parent_key not in config:
-        return False
-    parent_idx = _idx_in_list(config[parent_key], parent_name)
-    if parent_idx is None:
-        return False
-    if child_key not in config[parent_key][parent_idx]:
-        return False
-    return _name_in_list(config[parent_key][parent_idx][child_key], child_name)
 
 
 def _name_in_list(list_of_dicts, name):
@@ -1331,23 +1272,11 @@ def _idx_in_list(list_of_dicts, name):
 
 def _assert_config_item_exists(config, dtype, name):
     if not _config_item_exists(config, dtype, name):
-        raise SmifDataNotFoundError("%s '%s' not found" % (str(dtype).title(),
-                                    name))
+        raise SmifDataNotFoundError(
+            "%s '%s' not found in '%s'" % (str(dtype).title(), name, config['name']))
 
 
 def _assert_config_item_not_exists(config, dtype, name):
     if _config_item_exists(config, dtype, name):
-        raise SmifDataExistsError("%s '%s' already exists" % (str(dtype).title(),
-                                  name))
-
-
-def _assert_nested_config_item_exists(config, dtype, primary, secondary):
-    if not _nested_config_item_exists(config, dtype, primary, secondary):
-        raise SmifDataNotFoundError("%s '%s:%s' not found" % (str(dtype).title(),
-                                    primary, secondary))
-
-
-def _assert_nested_config_item_not_exists(config, dtype, primary, secondary):
-    if _nested_config_item_exists(config, dtype, primary, secondary):
-        raise SmifDataExistsError("%s '%s:%s' already exists" % (str(dtype).title(),
-                                  primary, secondary))
+        raise SmifDataExistsError(
+            "%s '%s' already exists in '%s'" % (str(dtype).title(), name, config['name']))

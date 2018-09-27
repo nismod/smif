@@ -1,0 +1,3 @@
+name: annual
+description: Single annual interval of 8760 hours
+elements: annual_intervals.csv

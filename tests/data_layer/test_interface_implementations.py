@@ -104,7 +104,7 @@ def coefficients():
 
 @fixture
 def scenario(sample_dimensions):
-    return {
+    return deepcopy({
         'name': 'mortality',
         'description': 'The annual mortality rate in UK population',
         'provides': [
@@ -126,7 +126,7 @@ def scenario(sample_dimensions):
                 },
             }
         ]
-    }
+    })
 
 
 @fixture
@@ -210,7 +210,7 @@ class TestModelRuns:
         handler.write_model_run(new_model_run)
         actual = handler.read_model_runs()
         expected = [model_run, new_model_run]
-        assert (actual == expected) or (list(reversed(actual)) == expected)
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_update_model_run(self, handler):
         updated_model_run = {
@@ -243,7 +243,7 @@ class TestSosModel:
         handler.write_sos_model(new_sos_model)
         actual = handler.read_sos_models()
         expected = [get_sos_model, new_sos_model]
-        assert (actual == expected) or (list(reversed(actual)) == expected)
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_write_existing_sos_model(self, handler):
         handler = handler
@@ -292,7 +292,7 @@ class TestSectorModel():
         handler.write_sector_model(new_sector_model)
         actual = handler.read_sector_models()
         expected = [get_sector_model, new_sector_model]
-        assert (actual == expected) or (list(reversed(actual)) == expected)
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_update_sector_model(self, handler, get_sector_model):
         name = get_sector_model['name']
@@ -315,7 +315,8 @@ class TestStrategies():
     def test_read_strategies(self, handler, strategies):
         expected = strategies
         actual = handler.read_strategies('test_modelrun')
-        assert actual == expected
+        assert sorted(actual, key=lambda d: d['description']) == \
+            sorted(expected, key=lambda d: d['description'])
 
 
 class TestState():
@@ -345,7 +346,9 @@ class TestDimensions():
     """Read/write/update/delete dimensions
     """
     def test_read_dimensions(self, handler, dimension, sample_dimensions):
-        assert handler.read_dimensions() == [dimension] + sample_dimensions
+        actual = handler.read_dimensions()
+        expected = [dimension] + sample_dimensions
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_read_dimension(self, handler, dimension):
         assert handler.read_dimension('category') == dimension
@@ -353,17 +356,22 @@ class TestDimensions():
     def test_write_dimension(self, handler, dimension, sample_dimensions):
         another_dimension = {'name': '3rd', 'elements': ['a', 'b']}
         handler.write_dimension(another_dimension)
-        assert handler.read_dimensions() == [dimension] + sample_dimensions + \
-                                            [another_dimension]
+        actual = handler.read_dimensions()
+        expected = [dimension, another_dimension] + sample_dimensions
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_update_dimension(self, handler, dimension, sample_dimensions):
         another_dimension = {'name': 'category', 'elements': [4, 5, 6]}
         handler.update_dimension('category', another_dimension)
-        assert handler.read_dimensions() == [another_dimension] + sample_dimensions
+        actual = handler.read_dimensions()
+        expected = [another_dimension] + sample_dimensions
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_delete_dimension(self, handler, sample_dimensions):
         handler.delete_dimension('category')
-        assert handler.read_dimensions() == sample_dimensions
+        actual = handler.read_dimensions()
+        expected = sample_dimensions
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
 
 class TestCoefficients():
@@ -385,7 +393,8 @@ class TestScenarios():
     """Read and write scenario data
     """
     def test_read_scenarios(self, scenario, handler):
-        assert handler.read_scenarios() == [scenario]
+        actual = handler.read_scenarios()
+        assert actual == [scenario]
 
     def test_read_scenarios_no_coords(self, scenario_no_coords, handler):
         assert handler.read_scenarios(skip_coords=True) == [scenario_no_coords]
@@ -404,7 +413,9 @@ class TestScenarios():
             'provides': []
         }
         handler.write_scenario(another_scenario)
-        assert handler.read_scenarios() == [scenario, another_scenario]
+        actual = handler.read_scenarios()
+        expected = [scenario, another_scenario]
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_update_scenario(self, scenario, handler):
         another_scenario = {
@@ -441,7 +452,7 @@ class TestScenarios():
         handler.write_scenario_variant('mortality', new_variant)
         actual = handler.read_scenario_variants('mortality')
         expected = [new_variant] + scenario['variants']
-        assert (actual == expected) or (actual == list(reversed(expected)))
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_update_scenario_variant(self, handler, scenario):
         new_variant = {
@@ -502,7 +513,9 @@ class TestNarratives():
             'provides': []
         }
         handler.write_narrative(another_narrative)
-        assert handler.read_narratives() == [narrative, another_narrative]
+        actual = handler.read_narratives()
+        expected = [narrative, another_narrative]
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_update_narrative(self, narrative, handler):
         another_narrative = {
@@ -539,7 +552,7 @@ class TestNarratives():
         handler.write_narrative_variant('technology', new_variant)
         actual = handler.read_narrative_variants('technology')
         expected = [new_variant] + narrative['variants']
-        assert (actual == expected) or (actual == list(reversed(expected)))
+        assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_update_narrative_variant(self, handler, narrative):
         new_variant = {
@@ -596,3 +609,9 @@ class TestResults():
         """
         start = handler.prepare_warm_start('test_modelrun')
         assert start is None
+
+
+def sorted_by_name(list_):
+    """Helper to sort lists-of-dicts
+    """
+    return sorted(list_, key=lambda d: d['name'])
