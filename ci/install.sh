@@ -43,7 +43,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
         fiona && source activate testenv
 fi
 
-# conda install --yes --file requirements.txt -c conda-forge
 python setup.py develop
 
 # Install node and npm dependencies
