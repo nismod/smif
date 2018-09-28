@@ -39,7 +39,7 @@ a command line prompt, or import a python sector model and pass in parameters va
 As such, what follows is a recipe of components from which you can construct a wrapper to full
 integrate your simulation model within smif.
 
-For help or feature requests, please raise issues at the github repository [2]_ and we will
+For help or feature requests, please raise issues at the github repository [1]_ and we will
 endeavour to provide assistance as resources allow.
 
 Example Wrapper
@@ -210,7 +210,7 @@ Writing data to a database
 
 The exact implementation of writing input and parameter data will differ on a case-by-case
 basis. In the following example, we write model inputs ``energy_demand`` to a postgreSQL
-database table ``ElecLoad`` using the psycopg2 library [3]_ ::
+database table ``ElecLoad`` using the psycopg2 library [2]_ ::
 
     def simulate(self, data):
 
@@ -270,3 +270,9 @@ The interval definitions associated with the output can be interrogated from wit
 SectorModel class using ``self.outputs[name].get_interval_names()`` and the regions using
 ``self.outputs[name].get_region_names()`` and these can then be used to compose the numpy
 array.
+
+
+References
+----------
+.. [1] https://github.com/nismod/smif/issues
+.. [2] http://initd.org/psycopg/
