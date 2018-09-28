@@ -4,7 +4,6 @@ import update from 'immutability-helper'
 
 import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 import { Range } from 'rc-slider'
-import 'rc-slider/assets/index.css'
 
 class ModelRunConfigForm extends Component {
     constructor(props) {
