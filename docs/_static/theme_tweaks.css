@@ -1,3 +1,7 @@
+.image-reference img {
+    /* fix distortion of sphinx_pyreverse UML */
+    height: auto !important;
+}
 div.topic {
     /* pad topic box, less gray */
     padding: 0.5em 0.5em;
@@ -18,6 +22,10 @@ div.highlight {
     /* reset highlight blocks to pygments background */
     background: #2f1e2e;
 }
+div.viewcode-block:target {
+    /* reset source block background */
+    background: #34273C;
+}
 div.highlight pre {
     /* fix code block padding, let pygments background show */
     background: transparent;
@@ -37,4 +45,20 @@ div.figure {
 }
 .caption {
     margin: 0 auto 0.75em;
+}
+/* sticky sidebar at non-mobile screen size */
+@media screen and (min-width: 876px) {
+    div.sphinxsidebar {
+        position: fixed;
+        float: none;
+        margin-left: 0;
+        top: 2em;
+        bottom: 0;
+        overflow: auto;
+    }
+}
+div.document,
+div.footer {
+    width: auto;
+    max-width: 940px;
 }

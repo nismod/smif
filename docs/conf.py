@@ -64,7 +64,6 @@ better_apidoc.main([
 
 # Extra styles, found in _static
 def setup(app):
-    app.add_stylesheet('image_fix.css')
     app.add_stylesheet('theme_tweaks.css')
 
 
