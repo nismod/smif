@@ -12,14 +12,27 @@ Simulation Modelling Integration Framework
    :start-line: 8
    :end-line: 36
 
+
+.. include:: ../README.rst
+   :start-line: 36
+   :end-line: 118
+
+
+.. include:: ../README.rst
+   :start-line: 241
+
+
 Contents
 ========
 
 .. toctree::
    :maxdepth: 2
 
+   Installation <installation>
    Getting Started <getting_started>
    Concepts <concepts>
+   Configuration <project_configuration>
+   Adding a Model <simulation_models>
 
 .. toctree::
    :maxdepth: 3
@@ -36,11 +49,7 @@ Contents
    Changelog <changelog>
 
 
-.. include:: ../README.rst
-   :start-line: 36
-
-
-Indices and tables
+Indexes and tables
 ==================
 
 * :ref:`genindex`

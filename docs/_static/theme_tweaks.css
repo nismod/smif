@@ -62,3 +62,15 @@ div.footer {
     width: auto;
     max-width: 940px;
 }
+/* simplify table style */
+table.docutils {
+    border: 0;
+    box-shadow: none;
+}
+table.docutils td, table.docutils th {
+    border: 0;
+    padding: 0.5em 0.5em;
+}
+table.docutils th {
+    border-bottom: 1px solid #888;
+}
