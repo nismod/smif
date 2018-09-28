@@ -66,6 +66,7 @@ div.footer {
 table.docutils {
     border: 0;
     box-shadow: none;
+    width: 100%;
 }
 table.docutils td, table.docutils th {
     border: 0;
