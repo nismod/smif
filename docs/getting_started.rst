@@ -48,6 +48,9 @@ You can also check which version is installed::
     means you can copy the rest of the line to run - don't copy or type the $ itself.
 
 
+Sample Project
+--------------
+
 Make a new directory and copy the sample project files there by running:
 
 .. code:: console
@@ -66,25 +69,11 @@ command to list the available model runs::
     energy_central
     energy_water_cp_cr
 
-To run a model run, type the following command::
-
-    $ smif run energy_central
-    Model run complete
-
 Note that the ``-d`` directory flag can be used to point to the project folder,
 so you can run smif commands from any directory::
 
     $ smif list -d ~/projects/smif_sample_project/
     ...
-
-Groups of model runs can run as a batches by using the ``-b`` flag and a path to a batch file::
-
-    $ smif run -b batchfile
-
-A batch file is a text file with a list of model run names, each on a new line, like::
-
-    energy_central
-    energy_water_cp_cr
 
 
 smif also comes with a web-based user interface, which helps to manage project configurations.
@@ -124,8 +113,25 @@ Copy/paste or type the URL ``http://localhost:5000`` into a web browser to open 
     [E] Narratives - combinations of parameters to configure models
 
 
-To execute a model run, go to the "Job Runner" screen. This has similar functionality to
-typing ``smif run ...`` on the command line.
+Run a model
+-----------
+
+To run a model run, type the following command::
+
+    $ smif run energy_central
+    Model run complete
+
+Groups of model runs can run as a batches by using the ``-b`` flag and a path to a batch file::
+
+    $ smif run -b batchfile
+
+A batch file is a text file with a list of model run names, each on a new line, like::
+
+    energy_central
+    energy_water_cp_cr
+
+
+Or, in the app, go to the "Job Runner" screen.
 
 .. <<This figure can be regenerated using the script in docs/gui/screenshot.sh>>
 .. figure:: gui/jobs-runner.png
@@ -158,14 +164,8 @@ typing ``smif run ...`` on the command line.
     [D] Click on the down-arrow button to follow the console output as the job runs
 
 
+View results
+------------
 
-
-
-
-
-
-References
-----------
-.. [1] https://en.wikipedia.org/wiki/ISO_8601#Durations
-.. [2] https://github.com/nismod/smif/issues
-.. [3] http://initd.org/psycopg/
+Results are saved to the filesystem (depending on the storage interface used) in the
+``results`` directory in the sample project.
