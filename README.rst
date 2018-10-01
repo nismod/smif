@@ -34,11 +34,11 @@ Simulation Modelling Integration Framework
    :target: https://smif.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-**smif** is a framework for handling the creation, management and running of
-system-of-systems models.
+**smif** is a framework for handling the creation, management and running of system-of-systems
+models.
 
-A system-of-systems model is a collection of system simulation models that are
-coupled through dependencies on data produced by each other.
+A system-of-systems model is a collection of system simulation models that are coupled through
+dependencies on data produced by each other.
 
 **smif** provides a user with the ability to
 
@@ -46,8 +46,8 @@ coupled through dependencies on data produced by each other.
 
   - add simulation models to a system-of-systems model
   - create dependencies between models by linking model inputs and outputs
-  - pick from a library of data adapters which perform common data conversions
-    across dependencies
+  - pick from a library of data adapters which perform common data conversions across
+    dependencies
   - create user-defined data adapters for more special cases
   - add scenario data sources and link those to model inputs within a system-of-systems
 
@@ -61,10 +61,11 @@ coupled through dependencies on data produced by each other.
   - link concrete scenario data sets to a system-of-systems model
   - define one or more decision modules that operate across the system-of-systems
   - define a narrative to parameterise the contained models
-  - persist intermediate data for each model output, and write results to a data store
-    for subsequent analysis
+  - persist intermediate data for each model output, and write results to a data store for
+    subsequent analysis
 
-In summary, the framework facilitates the hard coupling of complex systems models into a system-of-systems.
+In summary, the framework facilitates the hard coupling of complex systems models into a
+system-of-systems.
 
 Should I use **smif**?
 ======================
@@ -115,8 +116,8 @@ tool for you.
   - equilibrium models without explicit timesteps (e.g. Land-Use Transport Interaction)
   - for simulating 100s of small actor-scale entities within a system-level environment
 
-Setup and Configuration
-=======================
+Installation and Configuration
+==============================
 
 **smif** is written in Python (Python>=3.5) and has a number of dependencies.
 See `requirements.txt` for a full list.
@@ -125,9 +126,8 @@ Using conda
 -----------
 
 The recommended installation method is to use `conda
-<http://conda.pydata.org/miniconda.html>`_, which handles packages and virtual
-environments, along with the `conda-forge` channel which has a host of pre-built
-libraries and packages.
+<http://conda.pydata.org/miniconda.html>`_, which handles packages and virtual environments,
+along with the `conda-forge` channel which has a host of pre-built libraries and packages.
 
 Create a conda environment::
 
@@ -135,10 +135,7 @@ Create a conda environment::
 
 Activate it (run each time you switch projects)::
 
-    activate smif_env
-
-Note that you ``source activate smif_env`` on OSX and Linux (or e.g. Git Bash on
-Windows).
+    conda activate smif_env
 
 Add the conda-forge channel, which has smif available::
 
@@ -147,24 +144,6 @@ Add the conda-forge channel, which has smif available::
 Finally install ``smif``::
 
     conda install smif
-
-
-fiona, GDAL and GEOS
---------------------
-
-We use `fiona <https://github.com/Toblerity/Fiona>`_, which depends on GDAL and
-GEOS libraries.
-
-On Mac or Linux these can be installed with your OS package manager, then
-install the python packages as usual using::
-
-    # On debian/Ubuntu:
-    apt-get install gdal-bin libspatialindex-dev libgeos-dev
-
-    # or on Mac
-    brew install gdal
-    brew install spatialindex
-    brew install geos
 
 
 Installing `smif` with other methods
@@ -186,6 +165,29 @@ To install from the source code in development mode::
         python setup.py develop
 
 
+Spatial libraries
+-----------------
+
+``smif`` optionally depends on `fiona <https://github.com/Toblerity/Fiona>`_ and `shapely
+<https://github.com/Toblerity/Shapely>`_, which depend on the GDAL and GEOS libraries. These
+add support for reading and writing common spatial file formats and for spatial data
+conversions.
+
+If not using conda, on Mac or Linux these can be installed with your OS package manager::
+
+    # On debian/Ubuntu:
+    apt-get install gdal-bin libspatialindex-dev libgeos-dev
+
+    # or on Mac
+    brew install gdal
+    brew install spatialindex
+    brew install geos
+
+Then to install the python packages, run::
+
+    pip install smif[spatial]
+
+
 Running `smif` from the command line
 ====================================
 
@@ -203,7 +205,8 @@ To list available model runs::
         demo_model_run
         ...
 
-To start the smif app, a user-interface that helps to display, create and edit a configuration, run::
+To start the smif app, a user-interface that helps to display, create and edit a configuration,
+run::
 
         $ smif app
 
@@ -253,13 +256,12 @@ Here's an example BibTeX entry::
               year         = 2018,
               doi          = {10.5281/zenodo.1309336},
               url          = {https://doi.org/10.5281/zenodo.1309336}
-            }
+        }
 
 
 A word from our sponsors
 ========================
 
-**smif** was written and developed at the `Environmental Change Institute,
-University of Oxford <http://www.eci.ox.ac.uk>`_ within the
-EPSRC sponsored MISTRAL programme, as part of the `Infrastructure Transition
-Research Consortium <http://www.itrc.org.uk/>`_.
+**smif** was written and developed at the `Environmental Change Institute, University of Oxford
+<http://www.eci.ox.ac.uk>`_ within the EPSRC sponsored MISTRAL programme, as part of the
+`Infrastructure Transition Research Consortium <http://www.itrc.org.uk/>`_.

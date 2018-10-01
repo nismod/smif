@@ -28,14 +28,13 @@
 import inspect
 import os
 import sys
+from unittest.mock import MagicMock
 
 import better_apidoc
 
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
-
-
 __location__ = os.path.join(os.getcwd(), os.path.dirname(
     inspect.getfile(inspect.currentframe())))
 
@@ -43,6 +42,23 @@ __location__ = os.path.join(os.getcwd(), os.path.dirname(
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.join(__location__, '../src'))
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+
+# mock modules which we can avoid installing for docs-building
+mock_modules = [
+    'fiona',
+    'rtree',
+    'shapely',
+    'shapely.geometry',
+    'shapely.validation',
+]
+sys.modules.update((mod_name, Mock()) for mod_name in mock_modules)
 
 output_dir = os.path.join(__location__, "api")
 module_dir = os.path.join(__location__, "../src/smif")
@@ -64,7 +80,6 @@ better_apidoc.main([
 
 # Extra styles, found in _static
 def setup(app):
-    app.add_stylesheet('image_fix.css')
     app.add_stylesheet('theme_tweaks.css')
 
 
@@ -134,10 +149,10 @@ exclude_patterns = ['_build', '../tests/**']
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'paraiso-dark'
 
 # A list of ignored prefixes for module index sorting.
-# modindex_common_prefix = []
+modindex_common_prefix = ['smif.']
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 # keep_warnings = False
