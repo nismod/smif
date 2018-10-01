@@ -314,8 +314,16 @@ class PreSpecified(DecisionModule):
         if not isinstance(build_year, (int, float)):
             msg = "Build Year should be an integer but is a {}"
             raise TypeError(msg.format(type(build_year)))
-        build_year = int(build_year)
-        lifetime = int(lifetime)
+
+        try:
+            build_year = int(build_year)
+        except ValueError:
+            raise ValueError("A build year must be a valid integer. Received {}.".format(build_year))
+
+        try:
+            lifetime = int(lifetime)
+        except ValueError:
+            lifetime = float("inf")
         if lifetime < 0:
             msg = "The value of lifetime cannot be negative"
             raise ValueError(msg)
