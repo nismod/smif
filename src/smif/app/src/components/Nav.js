@@ -102,19 +102,19 @@ class Nav extends Component {
                     </li>
 
                     <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/configure/sos-model-run" >
+                        <NavLink exact className="nav-link" to="/configure/model-runs" >
                             <FaSliders size={20}/>
                         Model Runs
                             <Badge color="secondary">{model_runs.length}</Badge>
                         </NavLink>
-                        <Route path="/configure/sos-model-run/" render={() =>
+                        <Route path="/configure/model-runs/" render={() =>
                             <ul className="nav flex-column">
                                 {model_runs.map(model_run =>
-                                    <li key={'nav_sosmodelrun_' + model_run.name} className="nav-item">
+                                    <li key={'nav_modelrun_' + model_run.name} className="nav-item">
                                         <NavLink
                                             key={'nav_' + model_run.name}
                                             className="nav-link"
-                                            to={'/configure/sos-model-run/' + model_run.name} >
+                                            to={'/configure/model-runs/' + model_run.name} >
                                             {model_run.name}
                                         </NavLink>
                                     </li>
