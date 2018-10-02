@@ -7,11 +7,10 @@ data (at any computed or pre-computed timestep) and write access to output data
 (at the current timestep).
 """
 
-from enum import Enum
 from logging import getLogger
 from types import MappingProxyType
 
-from smif.metadata import Spec
+from smif.metadata import RelativeTimestep, Spec
 from smif.model.scenario_model import ScenarioModel
 
 
@@ -414,60 +413,3 @@ class DataHandle(object):
             modelset_iteration,
             decision_iteration
         )
-
-
-class RelativeTimestep(Enum):
-    """Specify current, previous or base year timestep
-    """
-    CURRENT = 1  # current planning timestep
-    PREVIOUS = 2  # previous planning timestep
-    BASE = 3  # base year planning timestep
-    ALL = 4  # all planning timesteps
-
-    def resolve_relative_to(self, timestep, timesteps):
-        """Resolve a relative timestep with respect to a given timestep and
-        sequence of timesteps.
-
-        Parameters
-        ----------
-        timestep : int
-        timesteps : list of int
-        """
-        if self.name == 'CURRENT':
-            return timestep
-
-        if self.name == 'PREVIOUS':
-            try:
-                return element_before(timestep, timesteps)
-            except ValueError:
-                raise TimestepResolutionError(
-                    "{} has no previous timestep in {}".format(timestep, timesteps))
-
-        if self.name == 'BASE':
-            return timesteps[0]
-
-        if self.name == 'ALL':
-            return None
-
-
-class TimestepResolutionError(Exception):
-    """Raise when timestep cannot be resolved
-    """
-    pass
-
-
-class DataError(Exception):
-    """Raise on attempts at invalid data access (get/set)
-    """
-    pass
-
-
-def element_before(element, list_):
-    """Return the element before a given element in a list, or None if the
-    given element is first or not in the list.
-    """
-    if element not in list_ or element == list_[0]:
-        raise ValueError("No element before {} in {}".format(element, list_))
-    else:
-        index = list_.index(element)
-        return list_[index - 1]
