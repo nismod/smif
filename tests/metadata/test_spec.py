@@ -53,6 +53,18 @@ class TestSpec():
             Coordinates('age', [">30", "<30"])
         ]
 
+        # dim_coords looks up coordinates for a dimension
+        assert spec.dim_coords('countries') == Coordinates('countries', ["England", "Wales"])
+        with raises(KeyError) as ex:
+            spec.dim_coords('missing')
+        assert "Coords not found for dim 'missing', in population" in str(ex)
+
+        # spec can be used as dict key
+        specs = {
+            spec: True
+        }
+        assert specs[spec]
+
     def test_from_dict(self):
         """classmethod to construct from serialisation
         """

@@ -246,7 +246,7 @@ class Spec(object):
         for coord in self._coords:
             if coord.dim == dim:
                 return coord
-        raise KeyError("Coords not found for dim {}, in {}".format(dim, self._name))
+        raise KeyError("Coords not found for dim '{}', in {}".format(dim, self._name))
 
     @property
     def unit(self):
