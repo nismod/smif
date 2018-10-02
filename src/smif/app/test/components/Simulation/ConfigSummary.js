@@ -3,13 +3,13 @@ import {expect} from 'chai'
 import {shallow} from 'enzyme'
 import {describe, it} from 'mocha'
 
-import {SosModelRunSummary} from '../../../src/components/Simulation/ConfigSummary'
+import {ModelRunSummary} from '../../../src/components/Simulation/ConfigSummary'
 import {sos_model_run} from '../../helpers.js'
 
-describe('<SosModelRunSummary />', () => {
+describe('<ModelRunSummary />', () => {
 
-    it('renders SosModelRunSummary', () => {
-        var wrapper = shallow(<SosModelRunSummary sosModelRun={sos_model_run} />)
+    it('renders ModelRunSummary', () => {
+        var wrapper = shallow(<ModelRunSummary ModelRun={sos_model_run} />)
 
         expect(wrapper.html()).to.contain(sos_model_run.decision_module)
         expect(wrapper.html()).to.contain(sos_model_run.name)
