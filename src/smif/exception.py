@@ -63,3 +63,9 @@ class SmifValidationError(SmifException):
     """Custom exception to use for parsing validation.
     """
     pass
+
+
+class SmifTimestepResolutionError(SmifException):
+    """Raise when timestep cannot be resolved
+    """
+    pass

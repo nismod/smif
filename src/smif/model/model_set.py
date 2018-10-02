@@ -16,7 +16,8 @@ convergence.
 """
 
 import numpy as np
-from smif.data_layer import DataHandle, TimestepResolutionError
+from smif.data_layer import DataHandle
+from smif.exception import SmifTimestepResolutionError
 from smif.model.model import CompositeModel
 
 
@@ -147,7 +148,7 @@ class ModelSet(CompositeModel):
                     output.name,
                     data_handle.get_results(output.name, timestep=timestep_before)
                 )
-        except TimestepResolutionError:
+        except SmifTimestepResolutionError:
             # generate zero-values for each parameter/region/interval combination
             self.logger.debug("Guessing zeros")
             for output in model.outputs.values():

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, Mock, PropertyMock
 import numpy as np
 from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
-from smif.data_layer.data_handle import TimestepResolutionError
+from smif.exception import SmifTimestepResolutionError
 from smif.metadata import Spec
 from smif.model import SectorModel
 
@@ -400,7 +400,7 @@ class TestDataHandleTimesteps():
         """should raise error if there's no previous timestep in the list
         """
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], empty_model)
-        with raises(TimestepResolutionError) as ex:
+        with raises(SmifTimestepResolutionError) as ex:
             data_handle.previous_timestep
         assert 'no previous timestep' in str(ex)
 
