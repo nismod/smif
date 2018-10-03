@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 from pytest import fixture
 from smif.metadata import Spec
-from smif.model.scenario_model import ScenarioModel
+from smif.model.model import ScenarioModel
 
 
 @fixture(scope='function')

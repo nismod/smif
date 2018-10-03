@@ -8,8 +8,7 @@ and the dependencies between the models.
 """
 import logging
 
-from smif.model.model import CompositeModel, Model
-from smif.model.scenario_model import ScenarioModel
+from smif.model.model import CompositeModel, Model, ScenarioModel
 from smif.model.sector_model import SectorModel
 
 __author__ = "Will Usher, Tom Russell"

@@ -11,7 +11,7 @@ from logging import getLogger
 from types import MappingProxyType
 
 from smif.metadata import RelativeTimestep, Spec
-from smif.model.scenario_model import ScenarioModel
+from smif.model.model import ScenarioModel
 
 
 class DataHandle(object):

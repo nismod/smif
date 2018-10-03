@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 from enum import Enum
 from logging import getLogger
 
+from smif.metadata import RelativeTimestep, Spec
 from smif.model.dependency import Dependency
 
 
@@ -117,7 +118,8 @@ class Model(metaclass=ABCMeta):
         """
         self.outputs[spec.name] = spec
 
-    def add_dependency(self, source_model, source_output_name, sink_input_name):
+    def add_dependency(self, source_model, source_output_name, sink_input_name,
+                       timestep=RelativeTimestep.CURRENT):
         """Adds a dependency to the current `Model` object
 
         Arguments
@@ -128,7 +130,8 @@ class Model(metaclass=ABCMeta):
             The name of the model_output defined in the `source_model`
         sink_name : string
             The name of a model_input defined in this object
-
+        timestep : smif.metadata.RelativeTimestep, optional
+            The relative timestep of the dependency, defaults to CURRENT, may be PREVIOUS.
         """
         if source_output_name not in source_model.outputs:
             msg = "Output '{}' is not defined in '{}' model"
@@ -138,7 +141,7 @@ class Model(metaclass=ABCMeta):
             msg = "Input '{}' is not defined in '{}' model"
             raise ValueError(msg.format(sink_input_name, self.name))
 
-        if sink_input_name not in self.free_inputs:
+        if not self._allow_adding_dependency(source_model, sink_input_name, timestep):
             msg = "Inputs: '%s'. Free inputs: '%s'."
             self.logger.debug(msg, self.inputs, self.free_inputs)
             msg = "Input '{}' dependency already defined as {} in {}"
@@ -147,11 +150,31 @@ class Model(metaclass=ABCMeta):
 
         source_spec = source_model.outputs[source_output_name]
         sink_spec = self.inputs[sink_input_name]
-        self.deps[sink_input_name] = Dependency(source_model, source_spec, self, sink_spec)
+        self.deps[sink_input_name] = Dependency(
+            source_model, source_spec, self, sink_spec, timestep=timestep)
 
         msg = "Added dependency from '%s:%s' to '%s:%s'"
         self.logger.debug(
             msg, source_model.name, source_output_name, self.name, sink_input_name)
+
+    def _allow_adding_dependency(self, source_model, sink_input_name, timestep):
+        if sink_input_name not in self.free_inputs:
+            other_dep = self.deps[sink_input_name]
+            other_model = other_dep.source_model
+            other_timestep = other_dep.timestep
+
+            other_is_previous = other_timestep == RelativeTimestep.PREVIOUS
+            other_is_scenario = isinstance(other_model, ScenarioModel)
+
+            new_is_previous = timestep == RelativeTimestep.PREVIOUS
+            new_is_scenario = isinstance(source_model, ScenarioModel)
+
+            allowable = (new_is_previous and other_is_scenario) or \
+                (other_is_previous and new_is_scenario)
+        else:
+            allowable = True
+
+        return allowable
 
     @abstractmethod
     def simulate(self, data):
@@ -221,3 +244,57 @@ class CompositeModel(Model, metaclass=ABCMeta):
         data: smif.data_layer.DataHandle
             Access state, parameter values, dependency inputs.
         """
+
+
+class ScenarioModel(Model):
+    """Represents exogenous scenario data
+
+    Arguments
+    ---------
+    name : str
+        The name of this scenario (scenario set/abstract
+        scenario/scenario group) - like sector model name
+
+    Attributes
+    ----------
+    name : str
+        Name of this scenario
+    scenario : str
+        Instance of scenario (concrete instance)
+    """
+    def __init__(self, name):
+        super().__init__(name)
+        self.scenario = None
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create ScenarioModel from dict serialisation
+        """
+        scenario = cls(data['name'])
+        scenario.scenario = data['scenario']
+        if 'description' in data:
+            scenario.description = data['description']
+        for output in data['outputs']:
+            spec = Spec.from_dict(output)
+            scenario.add_output(spec)
+
+        return scenario
+
+    def as_dict(self):
+        """Serialise ScenarioModel to dict
+        """
+        config = {
+            'name': self.name,
+            'description': self.description,
+            'scenario': self.scenario,
+            'outputs': [
+                output.as_dict()
+                for output in self.outputs.values()
+            ]
+        }
+        return config
+
+    def simulate(self, data):
+        """No-op, as the data is assumed to be already available in the store
+        """
+        return data

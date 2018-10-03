@@ -1,9 +1,9 @@
 import numpy as np
 from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
-from smif.metadata import Spec
+from smif.metadata import RelativeTimestep, Spec
+from smif.model.model import ScenarioModel
 from smif.model.model_set import ModelSet
-from smif.model.scenario_model import ScenarioModel
 from smif.model.sector_model import SectorModel
 from smif.model.sos_model import SosModel
 
@@ -171,6 +171,15 @@ class TestModelSet:
 
 
 class TestBasics:
+    def test_dependency_timestep(self, scenario_model, energy_model):
+        # add self-dependency on previous timestep output
+        energy_model.add_dependency(
+            energy_model, 'fluffiness', 'electricity_demand_input',
+            timestep=RelativeTimestep.PREVIOUS)
+        # add dependency on scenario (to satisfy initial timestep input requirement)
+        energy_model.add_dependency(
+            scenario_model, 'electricity_demand_output', 'electricity_demand_input')
+
     def test_dependency_duplicate(self, scenario_model, energy_model):
         energy_model.add_dependency(
             scenario_model, 'electricity_demand_output', 'electricity_demand_input')

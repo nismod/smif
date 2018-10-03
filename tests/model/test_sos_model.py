@@ -7,7 +7,7 @@ from pytest import fixture, raises
 from smif.controller.modelrun import ModelRunner
 from smif.metadata import Spec
 from smif.model.dependency import Dependency
-from smif.model.scenario_model import ScenarioModel
+from smif.model.model import ScenarioModel
 from smif.model.sector_model import SectorModel
 from smif.model.sos_model import SosModel
 

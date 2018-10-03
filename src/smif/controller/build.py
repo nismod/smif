@@ -7,8 +7,7 @@ from smif.controller.modelrun import ModelRunBuilder
 from smif.data_layer import DatafileInterface
 from smif.data_layer.model_loader import ModelLoader
 from smif.exception import SmifDataNotFoundError
-from smif.model.scenario_model import ScenarioModel
-from smif.model.sos_model import SosModel
+from smif.model import ScenarioModel, SosModel
 
 LOGGER = logging.getLogger(__name__)
 
