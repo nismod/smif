@@ -2,7 +2,8 @@
 """Validate the correct format and presence of the config data
 for the system-of-systems model
 """
-from smif.exception import SmifValidationError
+from smif.exception import (SmifDataError, SmifDataInputError,
+                            SmifValidationError)
 
 VALIDATION_ERRORS = []
 
@@ -10,59 +11,44 @@ VALIDATION_ERRORS = []
 def validate_sos_model_config(data):
     """Check expected values for data loaded from master config file
     """
+    errors = []
+
     if not isinstance(data, dict):
         msg = "Main config file should contain setup data, instead found: {}"
         err = SmifValidationError(msg.format(data))
-        VALIDATION_ERRORS.append(err)
+        errors.append(err)
         return
 
-    # check dependencies
-    if "dependencies" not in data:
-        VALIDATION_ERRORS.append(
-            SmifValidationError("No 'dependencies' specified in main config file.")
-        )
-
-    # check timesteps
-    if "timesteps" not in data:
-        VALIDATION_ERRORS.append(
-            SmifValidationError("No 'timesteps' file specified in main config file."))
+    # check description
+    if "description" not in data:
+        errors.append(
+            SmifValidationError("No 'description' specified in main config file."))
     else:
-        validate_path_to_timesteps(data["timesteps"])
+        if len(data['description']) < 5:
+            errors.append(
+                SmifDataInputError(
+                    'description',
+                    'Description must contain at least five characters',
+                    'We require a description so you can identify your system-of-systems ' +
+                    'configuration throughout your project.'))
 
     # check sector models
     if "sector_models" not in data:
-        VALIDATION_ERRORS.append(
+        errors.append(
             SmifValidationError("No 'sector_models' specified in main config file."))
-    else:
-        validate_sector_models_initial_config(data["sector_models"])
 
-    # check scenario data
-    if "scenario_data" not in data:
-        VALIDATION_ERRORS.append(
-            SmifValidationError("No 'scenario_data' specified in main config file."))
-    else:
-        validate_scenario_data_config(data["scenario_data"])
+    # check dependencies
+    if "model_dependencies" not in data:
+        errors.append(
+            SmifValidationError("No 'model dependencies' specified in main config file.")
+        )
+    if "scenario_dependencies" not in data:
+        errors.append(
+            SmifValidationError("No 'scenario dependencies' specified in main config file.")
+        )
 
-    # check planning
-    if "planning" not in data:
-        VALIDATION_ERRORS.append(
-            SmifValidationError("No 'planning' mode specified in main config file."))
-    else:
-        validate_planning_config(data["planning"])
-
-    # check region_sets
-    if "region_sets" not in data:
-        VALIDATION_ERRORS.append(
-            SmifValidationError("No 'region_sets' specified in main config file."))
-    else:
-        validate_region_sets_config(data["region_sets"])
-
-    # check interval_sets
-    if "interval_sets" not in data:
-        VALIDATION_ERRORS.append(
-            SmifValidationError("No 'interval_sets' specified in main config file."))
-    else:
-        validate_interval_sets_config(data["interval_sets"])
+    if errors:
+        raise SmifDataError(errors)
 
 
 def validate_path_to_timesteps(timesteps):

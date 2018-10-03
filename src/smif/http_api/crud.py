@@ -1,9 +1,13 @@
 """HTTP API endpoint
 """
+from collections import defaultdict
+
 import dateutil.parser
 import smif
 from flask import current_app, jsonify, request
 from flask.views import MethodView
+from smif.exception import (SmifDataError, SmifDataInputError,
+                            SmifValidationError)
 
 
 class SmifAPI(MethodView):
@@ -142,8 +146,17 @@ class SosModelAPI(MethodView):
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
 
-        data_interface.write_sos_model(data)
-        response = jsonify({"message": "success"})
+        try:
+            data_interface.write_sos_model(data)
+        except SmifDataError as err:
+            response = jsonify({
+                'message': 'failed',
+                'sos_model': data,
+                'error': parse_exception(err.args[0])
+            })
+        else:
+            response = jsonify({"message": "success"})
+
         response.status_code = 201
         return response
 
@@ -153,8 +166,19 @@ class SosModelAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
-        data_interface.update_sos_model(sos_model_name, data)
-        response = jsonify({})
+
+        try:
+            data_interface.update_sos_model(sos_model_name, data)
+        except SmifDataError as err:
+            response = jsonify({
+                'message': 'failed',
+                'sos_model': data,
+                'error': parse_exception(err.args[0])
+            })
+        else:
+            response = jsonify({"message": "success"})
+
+        response.status_code = 201
         return response
 
     def delete(self, sos_model_name):
@@ -388,3 +412,22 @@ def check_timestamp(data):
         except(ValueError):
             pass
     return data
+
+
+def parse_exception(exceptions):
+    """Parse an exception so that it can be sent over
+    the http-api
+    """
+    msg = defaultdict(list)
+    for ex in exceptions:
+        if type(ex) == SmifDataError:
+            msg['SmifDataError'].append(ex)
+        if type(ex) == SmifValidationError:
+            msg['SmifValidationError'].append(ex)
+        if type(ex) == SmifDataInputError:
+            msg['SmifDataInputError'].append({
+                'component': ex.component,
+                'error': ex.error,
+                'message': ex.message,
+            })
+    return msg
