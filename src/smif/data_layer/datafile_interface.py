@@ -213,10 +213,12 @@ class DatafileInterface(DataInterface):
 
     @check_not_exists('sos_model')
     def write_sos_model(self, sos_model):
+        super(DatafileInterface, self).write_sos_model(sos_model)
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     @check_exists('sos_model')
     def update_sos_model(self, sos_model_name, sos_model):
+        super(DatafileInterface, self).update_sos_model(sos_model_name, sos_model)
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     @check_exists('sos_model')
