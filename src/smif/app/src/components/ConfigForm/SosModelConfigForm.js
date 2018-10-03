@@ -40,6 +40,17 @@ class SosModelConfigForm extends Component {
     render() {
         const {selectedSosModel} = this.state
 
+        let errors = {}
+        if (this.props.error.SmifDataInputError != undefined) {
+            errors = this.props.error.SmifDataInputError.reduce(function(map, obj) {
+                map[obj.component] = {
+                    'error': obj.error,
+                    'message': obj.message
+                }
+                return map
+            }, {})
+        }
+        
         return (
             <div>
                 <div className="card">
@@ -56,7 +67,23 @@ class SosModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea id="sos_model_description" className="form-control" name="description" rows="5" defaultValue={selectedSosModel.description} onChange={this.handleChange}/>
+                                <textarea id="sos_model_description" 
+                                    className={
+                                        'description' in errors
+                                            ? 'form-control is-invalid'   
+                                            : 'form-control'
+                                    }
+                                    name="description" 
+                                    rows="5" 
+                                    defaultValue={selectedSosModel.description} 
+                                    onChange={this.handleChange}/>
+                                <div className="invalid-feedback">
+                                    {   
+                                        'description' in errors
+                                            ? errors.description.error
+                                            : ''
+                                    }
+                                </div>
                             </div>
                         </div>
 
@@ -72,9 +99,13 @@ class SosModelConfigForm extends Component {
                             <div className="col-sm-10">
                                 <PropertySelector 
                                     name="sector_models" 
+                                    className="custom-control is-invalid"
                                     activeProperties={selectedSosModel.sector_models} 
                                     availableProperties={this.props.sector_models} 
                                     onChange={this.handleChange} />
+                            </div>
+                            <div className="invalid-feedback">
+                                test message
                             </div>
                         </div>
 
@@ -182,6 +213,7 @@ SosModelConfigForm.propTypes = {
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
+    error: PropTypes.object.isRequired,
     saveSosModel: PropTypes.func,
     cancelSosModel: PropTypes.func
 }
