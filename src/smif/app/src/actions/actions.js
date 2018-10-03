@@ -287,6 +287,30 @@ function receiveSosModel(json) {
     }
 }
 
+export const SEND_SOS_MODEL = 'SEND_SOS_MODEL'
+function sendSosModel(){
+    return {
+        type: SEND_SOS_MODEL
+    }
+}
+
+export const REJECT_SOS_MODEL = 'REJECT_SOS_MODEL'
+function rejectSosModel(json){
+    return {
+        type: REJECT_SOS_MODEL,
+        sos_model: json['sos_model'],
+        error: json['error']
+    }
+}
+
+export const ACCEPT_SOS_MODEL = 'ACCEPT_SOS_MODEL'
+export function acceptSosModel(){
+    return {
+        type: ACCEPT_SOS_MODEL,
+        error: {}
+    }
+}
+
 export function fetchSosModel(modelid){
     return function (dispatch) {
 
@@ -305,7 +329,10 @@ export function fetchSosModel(modelid){
 }
 
 export function saveSosModel(model){
-    return function () {
+    return function (dispatch) {
+
+        // inform the app that the API is saving
+        dispatch(sendSosModel())
 
         // make API request, returning a promise
         return fetch('/api/v1/sos_models/' + model.name, {
@@ -314,10 +341,19 @@ export function saveSosModel(model){
 
             headers: {
                 'Content-Type': 'application/json'
-            }}
-        )
-            .then (
+            }})
+            .then(
                 response => response.json()
+            )
+            .then(
+                function(json) {
+                    if (json['message'] == 'failed') {
+                        dispatch(rejectSosModel(json))
+                    }
+                    else {
+                        dispatch(acceptSosModel())
+                    }
+                }
             )
     }
 }
