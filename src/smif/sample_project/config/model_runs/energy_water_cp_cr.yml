@@ -9,6 +9,7 @@ sos_model: energy_water
 scenarios:
   population: population_med
   climate: central
+  reservoir_level: historical
 narratives:
   technology:
   - high_tech_dsm
