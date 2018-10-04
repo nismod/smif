@@ -10,6 +10,7 @@ from functools import lru_cache, wraps
 import pyarrow as pa
 from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.load import dump, load
+from smif.data_layer.validate import validate_sos_model_config
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError, SmifDataReadError,
                             SmifValidationError)
@@ -213,12 +214,22 @@ class DatafileInterface(DataInterface):
 
     @check_not_exists('sos_model')
     def write_sos_model(self, sos_model):
-        super(DatafileInterface, self).write_sos_model(sos_model)
+        validate_sos_model_config(
+            sos_model,
+            self.read_sector_models(skip_coords=True),
+            self.read_scenarios(),
+            self.read_narratives()
+        )
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     @check_exists('sos_model')
     def update_sos_model(self, sos_model_name, sos_model):
-        super(DatafileInterface, self).update_sos_model(sos_model_name, sos_model)
+        validate_sos_model_config(
+            sos_model,
+            self.read_sector_models(skip_coords=True),
+            self.read_scenarios(),
+            self.read_narratives()
+        )
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     @check_exists('sos_model')

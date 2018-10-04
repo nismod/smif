@@ -22,7 +22,6 @@ from functools import reduce
 from logging import getLogger
 
 import numpy as np
-from smif.data_layer.validate import validate_sos_model_config
 from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
 
 
@@ -122,7 +121,9 @@ class DataInterface(metaclass=ABCMeta):
         sos_model: dict
             A sos_model dictionary
         """
+        raise NotImplementedError()
 
+    @abstractmethod
     def write_sos_model(self, sos_model):
         """Write system-of-system model
 
@@ -131,8 +132,9 @@ class DataInterface(metaclass=ABCMeta):
         sos_model: dict
             A sos_model dictionary
         """
-        validate_sos_model_config(sos_model)
+        raise NotImplementedError()
 
+    @abstractmethod
     def update_sos_model(self, sos_model_name, sos_model):
         """Update system-of-system model
 
@@ -143,7 +145,7 @@ class DataInterface(metaclass=ABCMeta):
         sos_model: dict
             A sos_model dictionary
         """
-        validate_sos_model_config(sos_model)
+        raise NotImplementedError()
 
     @abstractmethod
     def delete_sos_model(self, sos_model_name):
