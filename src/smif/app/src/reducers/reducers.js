@@ -165,6 +165,7 @@ function sos_model(
         return Object.assign({}, state, {
             isFetching: false,
             item: action.sos_model,
+            error: {}
         })
     case SEND_SOS_MODEL:
         return Object.assign({}, state, {

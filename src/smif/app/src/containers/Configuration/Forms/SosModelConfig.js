@@ -40,6 +40,7 @@ class SosModelConfig extends Component {
 
         if (this.config_name != this.props.match.params.name) {
             this.config_name = this.props.match.params.name
+            this.setState({closeSosmodel: false})
             dispatch(fetchSosModel(this.config_name))
         }
     }
@@ -51,6 +52,8 @@ class SosModelConfig extends Component {
     }
 
     cancelSosModel() {
+        const { dispatch } = this.props
+        dispatch(acceptSosModel())
         this.setState({closeSosmodel: true})
     }
 
