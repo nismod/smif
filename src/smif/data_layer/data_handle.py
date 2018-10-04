@@ -6,12 +6,11 @@ transparent access to the relevant data and parameters for the current
 data (at any computed or pre-computed timestep) and write access to output data
 (at the current timestep).
 """
-
 from logging import getLogger
 from types import MappingProxyType
 
+from smif.exception import SmifDataError
 from smif.metadata import RelativeTimestep, Spec
-from smif.model.model import ScenarioModel
 
 
 class DataHandle(object):
@@ -47,14 +46,51 @@ class DataHandle(object):
         self._model_name = model.name
         self._inputs = model.inputs
         self._outputs = model.outputs
-        self._dependencies = model.deps
         self._model = model
 
+        modelrun = self._store.read_model_run(self._modelrun_name)
+
+        self._scenario_dependencies = {}
+        self._model_dependencies = {}
+        self._load_dependencies(modelrun)
+        self.logger.debug(
+            "Create with %s model, %s scenario dependencies",
+            len(self._scenario_dependencies),
+            len(self._model_dependencies))
+
         self._parameters = {}
-        for parameter in model.parameters.values():
+        self._load_parameters(modelrun)
+
+    def _load_dependencies(self, modelrun):
+        """Load Model dependencies as a dict with {input_name: list[Dependency]}
+        """
+        scenario_variants = modelrun['scenarios']
+        sos_model = self._store.read_sos_model(modelrun['sos_model'])
+        for dep in sos_model['model_dependencies']:
+            if dep['sink'] == self._model_name:
+                input_name = dep['sink_input']
+                self._model_dependencies[input_name] = {
+                    'source_model_name': dep['source'],
+                    'source_output_name': dep['source_output'],
+                    'type': 'model'
+                }
+
+        for dep in sos_model['scenario_dependencies']:
+            if dep['sink'] == self._model_name:
+                input_name = dep['sink_input']
+                self._scenario_dependencies[input_name] = {
+                    'source_model_name': dep['source'],
+                    'source_output_name': dep['source_output'],
+                    'type': 'scenario',
+                    'variant': scenario_variants[dep['source']]
+                }
+
+    def _load_parameters(self, modelrun):
+        """Load parameter values for model run
+        """
+        for parameter in self._model.parameters.values():
             self._parameters[parameter.name] = parameter.default
 
-        modelrun = self._store.read_model_run(self._modelrun_name)
         # modelrun['narratives'] is a dict of lists: {narrative_name: [variant_name, ...]}
         # e.g. { 'technology': ['high_tech_dsm'] }
         for narrative_name, variants in modelrun['narratives'].items():
@@ -67,7 +103,7 @@ class DataHandle(object):
                     )
                     self._parameters[variable.name] = data
 
-    def derive_for(self, model):
+    def derive_for(self, model, modelset_iteration=None):
         """Derive a new DataHandle configured for the given Model
 
         Parameters
@@ -75,13 +111,16 @@ class DataHandle(object):
         model : Model
             Model which will use this DataHandle
         """
+        if modelset_iteration is None:
+            modelset_iteration = self._modelset_iteration
+
         return DataHandle(
             store=self._store,
             modelrun_name=self._modelrun_name,
             current_timestep=self._current_timestep,
             timesteps=list(self.timesteps),
             model=model,
-            modelset_iteration=self._modelset_iteration,
+            modelset_iteration=modelset_iteration,
             decision_iteration=self._decision_iteration
         )
 
@@ -94,7 +133,7 @@ class DataHandle(object):
             return self.get_results(key)
         else:
             raise KeyError(
-                "'%s' not recognised as input or parameter for '%s'", key, self._model_name)
+                "'%s' not recognised as input or parameter for '%s'" % (key, self._model_name))
 
     def __setitem__(self, key, value):
         self.set_results(key, value)
@@ -217,9 +256,10 @@ class DataHandle(object):
             assert isinstance(timestep, int) and timestep <= self._current_timestep
 
         # resolve source
-        source_model = self._dependencies[input_name].source_model
-        source_model_name = source_model.name
-        source_output_name = self._dependencies[input_name].source.name
+        dep = self._resolve_source(input_name)
+
+        source_model_name = dep['source_model_name']
+        source_output_name = dep['source_output_name']
         if self._modelset_iteration is not None:
             i = self._modelset_iteration - 1  # read from previous
         else:
@@ -230,10 +270,10 @@ class DataHandle(object):
 
         spec = self._inputs[input_name]
 
-        if isinstance(source_model, ScenarioModel):
+        if dep['type'] == 'scenario':
             data = self._store.read_scenario_variant_data(
                 source_model_name,  # read from a given scenario model
-                source_model.scenario,  # with given scenario variant
+                dep['variant'],  # with given scenario variant
                 source_output_name,  # using output (variable) name
                 timestep
             )
@@ -248,6 +288,36 @@ class DataHandle(object):
             )
 
         return data
+
+    def _resolve_source(self, input_name):
+        """Find best dependency to provide input data
+        """
+        try:
+            scenario_dep = self._scenario_dependencies[input_name]
+        except KeyError:
+            scenario_dep = None
+        try:
+            model_dep = self._model_dependencies[input_name]
+        except KeyError:
+            model_dep = None
+
+        if scenario_dep is not None and model_dep is not None:
+            # if multiple dependencies, use scenario for timestep 0, model for
+            # subsequent timesteps
+            if self._current_timestep == self._timesteps[0]:
+                dep = scenario_dep
+            else:
+                dep = model_dep
+        elif scenario_dep is not None:
+            # else assume single dependency per input
+            dep = scenario_dep
+        elif model_dep is not None:
+            dep = model_dep
+        else:
+            raise SmifDataError("Dependency not defined for input '{}' in model '{}'".format(
+                input_name, self._model_name
+            ))
+        return dep
 
     def get_base_timestep_data(self, input_name):
         """Get data from the base timestep as required for model inputs

@@ -18,26 +18,69 @@ def mock_store():
     store.write_model_run({
         'name': 1,
         'narratives': {},
-        'sos_model': 'test_sos_model'})
+        'sos_model': 'test_sos_model',
+        'scenarios': {}
+    })
     store.write_sos_model({
         'name': 'test_sos_model',
-        'sector_models': ['sector_model_test']})
+        'sector_models': ['sector_model_test'],
+        'scenario_dependencies': [],
+        'model_dependencies': [
+            {
+                'source': 'test_source',
+                'source_output': 'test',
+                'sink_input': 'test',
+                'sink': 'test_model'
+            }
+        ]
+    })
+    store.write_model_run({
+        'name': 2,
+        'narratives': {},
+        'sos_model': 'test_converting_sos_model',
+        'scenarios': {}
+    })
+    store.write_sos_model({
+        'name': 'test_converting_sos_model',
+        'sector_models': ['sector_model_test'],
+        'scenario_dependencies': [],
+        'model_dependencies': [
+            {
+                'source': 'test_source',
+                'source_output': 'test',
+                'sink_input': 'test',
+                'sink': 'test_convertor'
+            },
+            {
+                'source': 'test_convertor',
+                'source_output': 'test',
+                'sink_input': 'test',
+                'sink': 'test_model'
+            }
+        ]
+    })
+
     store._initial_conditions = {'sector_model_test': []}
-    data = {'water_asset_a': {
-                    'build_year': 2010,
-                    'capacity': 50,
-                    'location': None,
-                    'sector': ''},
-            'water_asset_b': {
-                    'build_year': 2015,
-                    'capacity': 150,
-                    'location': None,
-                    'sector': ''},
-            'water_asset_c': {
-                    'capacity': 100,
-                    'build_year': 2015,
-                    'location': None,
-                    'sector': ''}}
+    data = {
+        'water_asset_a': {
+            'build_year': 2010,
+            'capacity': 50,
+            'location': None,
+            'sector': ''
+        },
+        'water_asset_b': {
+            'build_year': 2015,
+            'capacity': 150,
+            'location': None,
+            'sector': ''
+        },
+        'water_asset_c': {
+            'capacity': 100,
+            'build_year': 2015,
+            'location': None,
+            'sector': ''
+        }
+    }
     store._interventions['test_model'] = data
     return store
 
@@ -45,6 +88,7 @@ def mock_store():
 class EmptySectorModel(SectorModel):
     """Sector Model implementation
     """
+
     def simulate(self, data):
         """no-op
         """
@@ -86,7 +130,6 @@ def mock_model():
 
     source_model = EmptySectorModel('test_source')
     source_model.add_output(spec)
-    model.add_dependency(source_model, 'test', 'test')
 
     return model
 
@@ -118,15 +161,13 @@ def mock_model_with_conversion():
     convertor.add_output(l_spec)
     model.add_input(l_spec)
 
-    convertor.add_dependency(source, 'test', 'test')
-    model.add_dependency(convertor, 'test', 'test')
-
     return model
 
 
 class TestDataHandle():
     """
     """
+
     def test_create(self, mock_model, mock_store):
         """should be created with a DataInterface
         """
@@ -153,11 +194,13 @@ class TestDataHandle():
     def test_get_data_with_conversion(self, mock_store, mock_model_with_conversion):
         """should convert liters to milliliters (1 -> 0.001)
         """
-        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model_with_conversion)
+        modelrun_name = 2
+        data_handle = DataHandle(
+            mock_store, modelrun_name, 2015, [2015, 2020], mock_model_with_conversion)
         expected = np.array([[0.001]])
         mock_store.write_results(
             expected,
-            1,
+            modelrun_name,
             'test_convertor',  # write results as though from convertor
             mock_model_with_conversion.inputs['test'],
             2015,
@@ -292,6 +335,7 @@ class TestDataHandle():
 class TestDataHandleState():
     """Test handling of initial conditions, decision interventions and intervention state.
     """
+
     def test_get_state(self, mock_store, mock_model):
         """should get decision module state for given timestep/decision_iteration
 
@@ -341,7 +385,7 @@ class TestDataHandleState():
                  'capacity': 150,
                  'location': None,
                  'sector': ''}
-            }
+        }
         assert actual == expected
 
     def test_interventions_sector_model_ignore_unrecog(self, mock_store, mock_model):
@@ -361,11 +405,11 @@ class TestDataHandleState():
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         actual = data_handle.get_current_interventions()
         expected = {'water_asset_a': {
-                'build_year': 2010,
-                'capacity': 50,
-                'location': None,
-                'sector': ''
-            }
+            'build_year': 2010,
+            'capacity': 50,
+            'location': None,
+            'sector': ''
+        }
         }
         assert actual == expected
 
@@ -378,6 +422,7 @@ class TestDataHandleState():
 class TestDataHandleTimesteps():
     """Test timestep helper properties
     """
+
     def test_current_timestep(self, empty_model, mock_store):
         """should return current timestep
         """
