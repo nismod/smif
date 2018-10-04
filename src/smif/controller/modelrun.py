@@ -93,11 +93,13 @@ class ModelRun(object):
         """Validate that this ModelRun has been set up with sufficient data
         to run
         """
-        for scenario in self.scenarios:
-            if scenario not in self.sos_model.scenario_models.keys():
-                raise SmifModelRunError("ScenarioSet '{}' is selected in the ModelRun "
-                                        "configuration but not found in the SosModel "
-                                        "configuration".format(scenario))
+        scenarios = set(self.scenarios)
+        model_scenarios = set(scenario.name for scenario in self.sos_model.scenario_models)
+        missing_scenarios = scenarios - model_scenarios
+        if missing_scenarios:
+            raise SmifModelRunError("ScenarioSets {} are selected in the ModelRun "
+                                    "configuration but not found in the SosModel "
+                                    "configuration".format(missing_scenarios))
 
     @property
     def model_horizon(self):
@@ -256,7 +258,7 @@ class ModelRunner(object):
                 job_graph.add_nodes_from(
                     self._make_simulate_job_nodes(
                         model_run.name,
-                        model_run.sos_model.models.values(),
+                        model_run.sos_model.models,
                         decision_iteration,
                         timestep,
                         model_run.model_horizon
@@ -266,7 +268,7 @@ class ModelRunner(object):
                 job_graph.add_edges_from(
                     self._make_current_simulate_job_edges(
                         model_run.name,
-                        model_run.sos_model.models.values(),
+                        model_run.sos_model.dependencies,
                         timestep,
                         decision_iteration
                     )
@@ -285,7 +287,7 @@ class ModelRunner(object):
                         job_graph.add_edges_from(
                             self._make_between_bundle_previous_simulate_job_edges(
                                 model_run.name,
-                                model_run.sos_model.models.values(),
+                                model_run.sos_model.dependencies,
                                 timestep,
                                 previous_timestep,
                                 decision_iteration,
@@ -298,7 +300,7 @@ class ModelRunner(object):
                         job_graph.add_edges_from(
                             self._make_initial_previous_simulate_job_edges(
                                 model_run.name,
-                                model_run.sos_model.models.values(),
+                                model_run.sos_model.dependencies,
                                 timestep,
                                 decision_iteration
                             )
@@ -310,7 +312,7 @@ class ModelRunner(object):
                     job_graph.add_edges_from(
                         self._make_within_bundle_previous_simulate_job_edges(
                             model_run.name,
-                            model_run.sos_model.models.values(),
+                            model_run.sos_model.dependencies,
                             timestep,
                             previous_timestep,
                             decision_iteration
@@ -323,7 +325,7 @@ class ModelRunner(object):
             job_graph.add_nodes_from(
                 self._make_before_model_run_job_nodes(
                     model_run.name,
-                    model_run.sos_model.models.values(),
+                    model_run.sos_model.models,
                     model_run.model_horizon
                 )
             )
@@ -333,7 +335,7 @@ class ModelRunner(object):
                     job_graph.add_edges_from(
                         self._make_before_model_run_job_edges(
                             model_run.name,
-                            model_run.sos_model.models.values(),
+                            model_run.sos_model.models,
                             timestep,
                             decision_iteration
                         )
@@ -396,67 +398,64 @@ class ModelRunner(object):
         ]
 
     @staticmethod
-    def _make_current_simulate_job_edges(modelrun_name, models, timestep, decision_iteration):
+    def _make_current_simulate_job_edges(modelrun_name, dependencies, timestep,
+                                         decision_iteration):
         edges = []
-        for model in models:
-            for dependency in model.deps.values():
-                if dependency.timestep != RelativeTimestep.PREVIOUS:
-                    from_id = ModelRunner._make_job_id(
-                        modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
-                        timestep, decision_iteration)
-                    to_id = ModelRunner._make_job_id(
-                        modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
-                        timestep, decision_iteration)
-                    edges.append((from_id, to_id))
+        for dependency in dependencies:
+            if dependency.timestep != RelativeTimestep.PREVIOUS:
+                from_id = ModelRunner._make_job_id(
+                    modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
+                    timestep, decision_iteration)
+                to_id = ModelRunner._make_job_id(
+                    modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
+                    timestep, decision_iteration)
+                edges.append((from_id, to_id))
         return edges
 
     @staticmethod
-    def _make_within_bundle_previous_simulate_job_edges(modelrun_name, models, timestep,
+    def _make_within_bundle_previous_simulate_job_edges(modelrun_name, dependencies, timestep,
                                                         previous_timestep, decision_iteration):
         edges = []
-        for model in models:
-            for dependency in model.deps.values():
-                if dependency.timestep == RelativeTimestep.PREVIOUS:
-                    from_id = ModelRunner._make_job_id(
-                        modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
-                        previous_timestep, decision_iteration)
-                    to_id = ModelRunner._make_job_id(
-                        modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
-                        timestep, decision_iteration)
-                    edges.append((from_id, to_id))
+        for dependency in dependencies:
+            if dependency.timestep == RelativeTimestep.PREVIOUS:
+                from_id = ModelRunner._make_job_id(
+                    modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
+                    previous_timestep, decision_iteration)
+                to_id = ModelRunner._make_job_id(
+                    modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
+                    timestep, decision_iteration)
+                edges.append((from_id, to_id))
         return edges
 
     @staticmethod
-    def _make_between_bundle_previous_simulate_job_edges(modelrun_name, models, timestep,
+    def _make_between_bundle_previous_simulate_job_edges(modelrun_name, dependencies, timestep,
                                                          previous_timestep, decision_iteration,
                                                          previous_decision_iteration):
         edges = []
-        for model in models:
-            for dependency in model.deps.values():
-                if dependency.timestep == RelativeTimestep.PREVIOUS:
-                    from_id = ModelRunner._make_job_id(
-                        modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
-                        previous_timestep, previous_decision_iteration)
-                    to_id = ModelRunner._make_job_id(
-                        modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
-                        timestep, decision_iteration)
-                    edges.append((from_id, to_id))
+        for dependency in dependencies:
+            if dependency.timestep == RelativeTimestep.PREVIOUS:
+                from_id = ModelRunner._make_job_id(
+                    modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
+                    previous_timestep, previous_decision_iteration)
+                to_id = ModelRunner._make_job_id(
+                    modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
+                    timestep, decision_iteration)
+                edges.append((from_id, to_id))
         return edges
 
     @staticmethod
-    def _make_initial_previous_simulate_job_edges(modelrun_name, models, timestep,
+    def _make_initial_previous_simulate_job_edges(modelrun_name, dependencies, timestep,
                                                   decision_iteration):
         edges = []
-        for model in models:
-            for dependency in model.deps.values():
-                if isinstance(dependency.source_model, ScenarioModel):
-                    from_id = ModelRunner._make_job_id(
-                        modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
-                        timestep, decision_iteration)
-                    to_id = ModelRunner._make_job_id(
-                        modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
-                        timestep, decision_iteration)
-                    edges.append((from_id, to_id))
+        for dependency in dependencies:
+            if isinstance(dependency.source_model, ScenarioModel):
+                from_id = ModelRunner._make_job_id(
+                    modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
+                    timestep, decision_iteration)
+                to_id = ModelRunner._make_job_id(
+                    modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
+                    timestep, decision_iteration)
+                edges.append((from_id, to_id))
         return edges
 
     @staticmethod

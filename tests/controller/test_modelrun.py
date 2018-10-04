@@ -64,9 +64,8 @@ def model_run(config_data):
 def mock_model_run():
     """Minimal mock ModelRun
     """
-    sos_model = Mock()
+    sos_model = SosModel('test_sos_model')
     sos_model.parameters = {}
-    sos_model.models = []
 
     modelrun = Mock()
     modelrun.name = 'test'
@@ -83,11 +82,19 @@ def mock_store():
     """Minimal mock store
     """
     store = Mock()
-    store.read_model_run = Mock(return_value={'narratives': {}})
+    store.read_model_run = Mock(return_value={
+        'sos_model': 'test_sos_model',
+        'narratives': {},
+        'scenarios': {}
+    })
+    store.read_sos_model = Mock(return_value={
+        'name': 'test_sos_model',
+        'model_dependencies': [],
+        'scenario_dependencies': [],
+        'sector_models': ['sector_model_test']
+    })
     store.read_strategies = Mock(return_value=[])
     store.read_all_initial_conditions = Mock(return_value=[])
-
-    store.read_sos_model = Mock(return_value={'sector_models': ['sector_model_test']})
     store.read_interventions = Mock(return_value={})
 
     return store
@@ -123,7 +130,7 @@ class TestModelRunBuilder:
 
         with raises(SmifModelRunError) as ex:
             builder.finish()
-        assert "ScenarioSet 'population' is selected in the ModelRun " \
+        assert "ScenarioSets {'population'} are selected in the ModelRun " \
                "configuration but not found in the SosModel configuration" in str(ex)
 
 
@@ -170,10 +177,7 @@ class TestModelRunnerJobGraphs():
         a[sim]
         """
         model_a = EmptySectorModel('model_a')
-
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a
-        }
+        mock_model_run.sos_model.add_model(model_a)
 
         runner = ModelRunner()
         bundle = {
@@ -208,10 +212,7 @@ class TestModelRunnerJobGraphs():
         t=1     t=2
         """
         model_a = EmptySectorModel('model_a')
-
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a
-        }
+        mock_model_run.sos_model.add_model(model_a)
 
         mock_model_run.model_horizon = [1, 2]
 
@@ -258,11 +259,11 @@ class TestModelRunnerJobGraphs():
         model_a.add_input(Spec('input', dtype='float'))
         model_a.add_output(Spec('output', dtype='float'))
 
-        model_a.add_dependency(model_a, 'output', 'input', RelativeTimestep.PREVIOUS)
-
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a
-        }
+        mock_model_run.sos_model.add_model(model_a)
+        mock_model_run.sos_model.add_dependency(
+            model_a, 'output',
+            model_a, 'input',
+            RelativeTimestep.PREVIOUS)
 
         mock_model_run.model_horizon = [1, 2]
 
@@ -300,15 +301,13 @@ class TestModelRunnerJobGraphs():
         model_c.add_input(Spec('a', dtype='float'))
         model_c.add_input(Spec('b', dtype='float'))
 
-        model_b.add_dependency(model_a, 'a', 'a')
-        model_c.add_dependency(model_a, 'a', 'a')
-        model_c.add_dependency(model_b, 'b', 'b')
+        mock_model_run.sos_model.add_model(model_a)
+        mock_model_run.sos_model.add_model(model_b)
+        mock_model_run.sos_model.add_model(model_c)
 
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a,
-            model_b.name: model_b,
-            model_c.name: model_c
-        }
+        mock_model_run.sos_model.add_dependency(model_a, 'a', model_b, 'a')
+        mock_model_run.sos_model.add_dependency(model_a, 'a', model_c, 'a')
+        mock_model_run.sos_model.add_dependency(model_b, 'b', model_c, 'b')
 
         runner = ModelRunner()
         bundle = {
@@ -358,13 +357,11 @@ class TestModelRunnerJobGraphs():
         model_b.add_input(Spec('a', dtype='float'))
         model_b.add_output(Spec('b', dtype='float'))
 
-        model_b.add_dependency(model_a, 'a', 'a')
-        model_a.add_dependency(model_b, 'b', 'b')
+        mock_model_run.sos_model.add_model(model_a)
+        mock_model_run.sos_model.add_model(model_b)
 
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a,
-            model_b.name: model_b,
-        }
+        mock_model_run.sos_model.add_dependency(model_a, 'a', model_b, 'a')
+        mock_model_run.sos_model.add_dependency(model_b, 'b', model_a, 'b')
 
         runner = ModelRunner()
         bundle = {
@@ -379,11 +376,7 @@ class TestModelRunnerJobGraphs():
         a[sim]
         """
         model_a = EmptySectorModel('model_a')
-
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a
-        }
-
+        mock_model_run.sos_model.add_model(model_a)
         mock_model_run.initialised = True
 
         runner = ModelRunner()
