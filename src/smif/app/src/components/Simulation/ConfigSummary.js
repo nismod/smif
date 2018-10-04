@@ -1,33 +1,33 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-const SosModelRunSummary = (props) => (
+const ModelRunSummary = (props) => (
     <dl className="row">
         <dt className="col-sm-3">Name</dt>
-        <dd className="col-sm-9">{props.sosModelRun.name}</dd>
+        <dd className="col-sm-9">{props.ModelRun.name}</dd>
                 
         <dt className="col-sm-3">Description</dt>
-        <dd className="col-sm-9">{props.sosModelRun.description}</dd>
+        <dd className="col-sm-9">{props.ModelRun.description}</dd>
 
         <dt className="col-sm-3">Created</dt>
-        <dd className="col-sm-9">{props.sosModelRun.stamp}</dd>
+        <dd className="col-sm-9">{props.ModelRun.stamp}</dd>
 
         <dt className="col-sm-3">Model</dt>
-        <dd className="col-sm-9">{props.sosModelRun.sos_model}</dd>
+        <dd className="col-sm-9">{props.ModelRun.sos_model}</dd>
 
         <dt className="col-sm-3">Scenarios</dt>
         <dd className="col-sm-9">
-            {Object.keys(props.sosModelRun.scenarios).map(
-                scen => <div key={'sum_scen_' + scen}>{scen}: {props.sosModelRun.scenarios[scen]}</div>
+            {Object.keys(props.ModelRun.scenarios).map(
+                scen => <div key={'sum_scen_' + scen}>{scen}: {props.ModelRun.scenarios[scen]}</div>
             )}
         </dd>
 
         <dt className="col-sm-3">Narratives</dt>
         <dd className="col-sm-9">
-            {Object.keys(props.sosModelRun.narratives).map(
+            {Object.keys(props.ModelRun.narratives).map(
                 nar_set => <div key={'sum_nar_set_' + nar_set}>{nar_set}: 
                     <ul>
-                        {props.sosModelRun.narratives[nar_set].map(
+                        {props.ModelRun.narratives[nar_set].map(
                             nar => <li key={'sum_nar_set_' + nar_set + '_nar_' + nar}>{nar}</li>
                         )}
                     </ul>
@@ -36,14 +36,14 @@ const SosModelRunSummary = (props) => (
         </dd>
 
         <dt className="col-sm-3">Timesteps</dt>
-        <dd className="col-sm-9">{props.sosModelRun.timesteps.map(timestep => <div key={'timestep_' + timestep}>{timestep}</div>)}</dd>
+        <dd className="col-sm-9">{props.ModelRun.timesteps.map(timestep => <div key={'timestep_' + timestep}>{timestep}</div>)}</dd>
     </dl>
 )
 
-SosModelRunSummary.propTypes = {
-    sosModelRun: PropTypes.object.isRequired,
+ModelRunSummary.propTypes = {
+    ModelRun: PropTypes.object.isRequired,
 }
 
 export {
-    SosModelRunSummary
+    ModelRunSummary
 }

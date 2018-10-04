@@ -1,6 +1,6 @@
 """Test metadata specification
 """
-from pytest import raises
+from pytest import fixture, raises
 from smif.metadata import Coordinates, Spec
 
 
@@ -13,19 +13,9 @@ class TestSpec():
     Quality (OpenMI) categorical
     Quantity (OpenMI) numeric
     """
-    def test_construct(self):
-        """A Spec has:
-        - coords: coordinates that label each point - list of Coordinates, one for each dim
-        - name
-        - default value
-        - dtype
-        - absolute range: (optional) for numerical types, to raise error if exceeded
-        - expected range: (optional) for numerical types, to raise warning if exceeded
-        - unit
-        - acceptable values
 
-        The DataArray it describes may be sparse
-        """
+    @fixture(scope='function')
+    def get_spec(self):
         spec = Spec(
             name='population',
             description='Population by age class',
@@ -39,6 +29,22 @@ class TestSpec():
             exp_range=(10e6, 10e9),
             unit='people'
         )
+        return spec
+
+    def test_construct(self, get_spec):
+        """A Spec has:
+        - coords: coordinates that label each point - list of Coordinates, one for each dim
+        - name
+        - default value
+        - dtype
+        - absolute range: (optional) for numerical types, to raise error if exceeded
+        - expected range: (optional) for numerical types, to raise warning if exceeded
+        - unit
+        - acceptable values
+
+        The DataArray it describes may be sparse
+        """
+        spec = get_spec
         assert spec.name == 'population'
         assert spec.description == 'Population by age class'
         assert spec.unit == 'people'
@@ -53,17 +59,24 @@ class TestSpec():
             Coordinates('age', [">30", "<30"])
         ]
 
-        # dim_coords looks up coordinates for a dimension
+    def test_dim_coords_method(self, get_spec):
+        spec = get_spec
         assert spec.dim_coords('countries') == Coordinates('countries', ["England", "Wales"])
-        with raises(KeyError) as ex:
-            spec.dim_coords('missing')
-        assert "Coords not found for dim 'missing', in population" in str(ex)
+        with raises(KeyError) as err:
+            spec.dim_coords('does not exist')
 
-        # spec can be used as dict key
-        specs = {
-            spec: True
-        }
-        assert specs[spec]
+        assert "Could not find dim 'does not exist' in Spec 'population'" in str(err)
+
+        with raises(TypeError) as err:
+            spec.dim_coords(['wrong type'])
+
+        assert "Expected string as argument, instead received <class 'list'>" in str(err)
+
+        spec._dims = ['countries', 'age', 'no coords']
+        with raises(KeyError) as err:
+            spec.dim_coords('no coords')
+
+        assert "Coords not found for dim 'no coords', in Spec 'population'" in str(err)
 
     def test_from_dict(self):
         """classmethod to construct from serialisation

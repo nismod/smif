@@ -243,10 +243,17 @@ class Spec(object):
     def dim_coords(self, dim):
         """Coordinates for a given dimension
         """
+        if not isinstance(dim, str):
+            msg = "Expected string as argument, instead received {}"
+            raise TypeError(msg.format(type(dim)))
+
+        if dim not in self.dims:
+            raise KeyError("Could not find dim '{}' in Spec '{}'".format(dim, self._name))
+
         for coord in self._coords:
             if coord.dim == dim:
                 return coord
-        raise KeyError("Coords not found for dim '{}', in {}".format(dim, self._name))
+        raise KeyError("Coords not found for dim '{}', in Spec '{}'".format(dim, self._name))
 
     @property
     def unit(self):
