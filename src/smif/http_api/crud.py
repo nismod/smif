@@ -423,7 +423,7 @@ def parse_exception(exceptions):
         if type(ex) == SmifDataError:
             msg['SmifDataError'].append(ex)
         if type(ex) == SmifValidationError:
-            msg['SmifValidationError'].append(ex)
+            msg['SmifValidationError'].append(ex.args[0])
         if type(ex) == SmifDataInputError:
             msg['SmifDataInputError'].append({
                 'component': ex.component,

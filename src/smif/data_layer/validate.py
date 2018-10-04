@@ -4,52 +4,214 @@ for the system-of-systems model
 """
 from smif.exception import (SmifDataError, SmifDataInputError,
                             SmifValidationError)
+import collections
 
 VALIDATION_ERRORS = []
 
 
-def validate_sos_model_config(data):
+def validate_sos_model_config(sos_model, sector_models, scenarios, narratives):
     """Check expected values for data loaded from master config file
     """
     errors = []
 
-    if not isinstance(data, dict):
+    if not isinstance(sos_model, dict):
         msg = "Main config file should contain setup data, instead found: {}"
-        err = SmifValidationError(msg.format(data))
+        err = SmifValidationError(msg.format(sos_model))
         errors.append(err)
         return
 
     # check description
-    if "description" not in data:
+    if "description" not in sos_model:
         errors.append(
-            SmifValidationError("No 'description' specified in main config file."))
+            SmifValidationError("No 'description' specified in sos-model-configuration: %s." % (sos_model['name'])))
     else:
-        if len(data['description']) < 5:
+        if len(sos_model['description']) > 255:
             errors.append(
                 SmifDataInputError(
                     'description',
-                    'Description must contain at least five characters',
-                    'We require a description so you can identify your system-of-systems ' +
-                    'configuration throughout your project.'))
+                    'Description must not contain more than 255 characters.',
+                    'A description should briefly outline a system-of-systems model.'))
 
     # check sector models
-    if "sector_models" not in data:
+    if "sector_models" not in sos_model:
         errors.append(
-            SmifValidationError("No 'sector_models' specified in main config file."))
+            SmifValidationError("No 'sector_models' specified in sos-model-configuration: %s." % (sos_model['name'])))
+    else:
+        if len(sos_model['sector_models']) == 0:
+            errors.append(
+                SmifDataInputError(
+                    'sector_models',
+                    'At least one sector model must be selected.',
+                    'A system-of-systems model requires to have at least one system ' + 
+                    'enabled to build a valid configuration.'))
+    
+        for sector_model in sos_model['sector_models']:
+            if sector_model not in [sector_model['name'] for sector_model in sector_models]:
+                errors.append(
+                    SmifDataInputError(
+                        'sector_models',
+                        '%s must have a valid sector_model configuration.' % (sector_model),
+                        'Smif refers to the sector_model-configurations to find ' + 
+                        'details about a selected sector_model.'))
+
+    # check scenarios
+    if "scenarios" not in sos_model:
+        errors.append(
+            SmifValidationError("No 'scenarios' specified in sos-model-configuration: %s." % (sos_model['name'])))
+    else:
+        for scenario in sos_model['scenarios']:
+            if scenario not in [scenario['name'] for scenario in scenarios]:
+                errors.append(
+                    SmifDataInputError(
+                        'scenarios',
+                        '%s must have a valid scenario configuration.' % (scenario),
+                        'Smif refers to the scenario-configurations to find ' + 
+                        'details about a selected scenario.'))
+
+    # check narratives
+    if "narratives" not in sos_model:
+        errors.append(
+            SmifValidationError("No 'narratives' specified in sos-model-configuration: %s." % (sos_model['name'])))
+    else:
+        for narrative in sos_model['narratives']:
+            if narrative not in [narrative['name'] for narrative in narratives]:
+                errors.append(
+                    SmifDataInputError(
+                        'narratives',
+                        '%s must have a valid narrative configuration.' % (narrative),
+                        'Smif refers to the narrative-configurations to find ' + 
+                        'details about a selected narrative.'))
 
     # check dependencies
-    if "model_dependencies" not in data:
+    if "model_dependencies" not in sos_model:
         errors.append(
-            SmifValidationError("No 'model dependencies' specified in main config file.")
+            SmifValidationError("No 'model_dependencies' specified in main config file.")
         )
-    if "scenario_dependencies" not in data:
+    else:
+        model_dependency_errors = validate_dependencies(
+            sos_model, 'model_dependencies', 
+            sector_models, 'sector_models', 
+            sector_models, 'sector_models'
+        )
+        errors.extend(model_dependency_errors)
+
+    if "scenario_dependencies" not in sos_model:
         errors.append(
-            SmifValidationError("No 'scenario dependencies' specified in main config file.")
+            SmifValidationError("No 'scenario_dependencies' specified in main config file.")
         )
+    else:
+        scenario_dependency_errors = validate_dependencies(
+            sos_model, 'scenario_dependencies', 
+            scenarios, 'scenarios', 
+            sector_models, 'sector_models'
+        )
+        errors.extend(scenario_dependency_errors)
 
     if errors:
         raise SmifDataError(errors)
 
+def validate_dependencies(configuration, conf_key, source, source_key, sink, sink_key):
+
+    errors = []
+    for idx, dependency in enumerate(configuration[conf_key]):
+
+        # Circular dependencies are not allowed
+        if dependency['source'] == dependency['sink']:
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Circular dependencies are not allowed.' % (idx + 1),
+                    'Smif does not support circular dependencies because this results in unnecessary loops in the model-run.'))
+
+        # Source / Sink must be enabled in sos_model config
+        if dependency['source'] not in configuration[source_key]:
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Source `%s` is not enabled.' % (idx + 1, dependency['source']),
+                    'Each dependency source must be enabled in the sos-model'))
+        elif dependency['sink'] not in configuration[sink_key]:
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Sink `%s` is not enabled.' % (idx + 1, dependency['sink']),
+                    'Each dependency sink must be enabled in the sos-model'))
+        
+        # Source and sink model configurations must exist
+        source_model = [model for model in source if model['name'] == dependency['source']]
+        sink_model = [model for model in sink if model['name'] == dependency['sink']]
+        if len(source_model) == 0:
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Source `%s` does not exist.' % (idx + 1, dependency['source']),
+                    'Each dependency source must have a `%s` configuration.' % (source_key)) )
+        elif len(sink_model) == 0:
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Sink  `%s` does not exist.' % (idx + 1, dependency['sink']),
+                    'Each dependency sink must have a `%s` configuration.' % (sink_key)))
+        if len(sink_model) == 0 or len(source_model) == 0:
+            # not worth doing further checks if source/sink does not exist
+            continue
+
+        # Source_output and sink_input must exist
+        if source_key == 'sector_models':
+            source_model_outputs = [output for output in source_model[0]['outputs'] if output['name'] == dependency['source_output']]
+        if source_key == 'scenarios':
+            source_model_outputs = [output for output in source_model[0]['provides'] if output['name'] == dependency['source_output']]
+        sink_model_inputs = [input for input in sink_model[0]['inputs'] if input['name'] == dependency['sink_input']]
+        if len(source_model_outputs) == 0:
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Source output `%s` does not exist.' % (idx + 1, dependency['source_output']),
+                    'Each dependency source output must exist in the `%s` configuration.' % (source_key)))
+        elif len(sink_model_inputs) == 0:
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Sink input `%s` does not exist.' % (idx + 1, dependency['sink_input']),
+                    'Each dependency sink input must exist in the `%s` configuration.' % (sink_key)))
+        if len(source_model_outputs) == 0 or len(sink_model_inputs) == 0:
+            # not worth doing further checks if source_output/sink_input does not exist
+            continue
+
+        # Source_output and sink_input must have matching specs
+        source_model_output = source_model_outputs[0]
+        sink_model_input = sink_model_inputs[0]
+        if (sorted(source_model_output['dims']) != sorted(sink_model_input['dims'])):
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Source output `%s` has different dimensions than sink input `%s` (%s != %s).' % (idx + 1, source_model_output['name'], sink_model_input['name'], source_model_output['dims'], sink_model_input['dims']),
+                    'Dependencies must have matching dimensions.'))
+        if (source_model_output['dtype'] != sink_model_input['dtype']):
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Source output `%s` has a different dtype than sink input `%s` (%s != %s).' % (idx + 1, source_model_output['name'], sink_model_input['name'], source_model_output['dtype'], sink_model_input['dtype']),
+                    'Dependencies must have matching data types.'))
+
+        # Sink can only have a single dependency
+        if [(dependency['sink'], dependency['sink_input']) for dependency in configuration[conf_key]].count((dependency['sink'], dependency['sink_input'])) > 1:   
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Sink input `%s` is driven by multiple sources.' % (idx + 1, dependency['sink_input']),
+                    'A model input can only be driven by a single model output.'))
+        
+    # Duplicate dependency
+    if len(configuration[conf_key]) != len(set([str(model) for model in configuration[conf_key]])):   
+        errors.append(
+            SmifDataInputError(
+                conf_key,
+                'Duplicate dependencies are not allowed.' % (dependency),
+                'To keep the configuration as clean as possible, Smif does not allow ' + 
+                'configuring the same dependency more than once.'))
+
+    return errors
 
 def validate_path_to_timesteps(timesteps):
     """Check timesteps is a path to timesteps file
