@@ -13,6 +13,7 @@ def dep():
     """Dependency with mocked models
     """
     source_model = Mock()
+    source_model.name = 'source_model'
     source_spec = Spec(
         name='source',
         dtype='float',
@@ -20,6 +21,7 @@ def dep():
         coords={'x': [0, 1], 'y': [0, 1]},
     )
     sink_model = Mock()
+    sink_model.name = 'sink_model'
     sink_spec = Spec(
         name='sink',
         dtype='float',
@@ -126,6 +128,16 @@ def test_repr(dep):
     expected = "<Dependency({}, {}, {}, {}, {})>".format(
         dep.source_model, dep.source, dep.sink_model, dep.sink, dep.timestep)
     assert actual == expected
+
+
+def test_as_dict(dep):
+    assert dep.as_dict() == {
+        'source': 'source_model',
+        'source_output': 'source',
+        'sink_input': 'sink',
+        'sink': 'sink_model',
+        'timestep': 'CURRENT'
+    }
 
 
 def test_equality(dep):

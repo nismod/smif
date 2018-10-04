@@ -51,6 +51,21 @@ class Dependency(object):
         self.sink = sink
         self.timestep = timestep
 
+    def as_dict(self):
+        """Serialise to dictionary representation
+        """
+        config = {
+            'source': self.source_model.name,
+            'source_output': self.source.name,
+            'sink': self.sink_model.name,
+            'sink_input': self.sink.name
+        }
+        try:
+            config['timestep'] = self.timestep.value
+        except AttributeError:
+            config['timestep'] = self.timestep
+        return config
+
     def __repr__(self):
         return "<Dependency({}, {}, {}, {}, {})>".format(
             self.source_model, self.source, self.sink_model, self.sink, self.timestep)
