@@ -58,10 +58,10 @@ class SmifDataInputError(SmifDataError):
     """Raise when unable to write data because it does not meet specification
     and can be addressed to a specific (user-interface) input field
 
-    E.g. 
+    E.g.
     - component: description
     - unable to write a description shorter than 5 characters
-    - We require a description so you can identify your system-of-systems 
+    - We require a description so you can identify your system-of-systems
       configuration throughout your project.
     """
     def __init__(self, component, error, message):
