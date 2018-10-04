@@ -46,8 +46,6 @@ class ModelSet(Model):
         name = "<->".join(sorted(model.name for model in models.values()))
         super().__init__(name)
         self.models = models
-        self._inputs = {}
-        self._parameters = {}
         self._model_names = list(models.keys())
         self._current_iteration = 0
         self._did_converge = False
@@ -56,44 +54,6 @@ class ModelSet(Model):
         # tolerance for convergence assessment - see numpy.allclose docs
         self.relative_tolerance = float(relative_tolerance)
         self.absolute_tolerance = float(absolute_tolerance)
-
-    @property
-    def inputs(self):
-        """All model inputs defined at this layer
-
-        Returns
-        -------
-        dict of {input_name: smif.metadata.Spec}
-        """
-        return self._inputs
-
-    @property
-    def parameters(self):
-        """Model parameters
-
-        Returns
-        -------
-        dict of {parameter_name: smif.metadata.Spec}
-        """
-        return self._parameters
-
-    def add_input(self, spec):
-        """Add an input
-
-        Arguments
-        ---------
-        spec: smif.metadata.Spec
-        """
-        self.inputs[spec.name] = spec
-
-    def add_parameter(self, spec):
-        """Add a parameter
-
-        Arguments
-        ---------
-        spec: smif.metadata.Spec
-        """
-        self.parameters[spec.name] = spec
 
     def simulate(self, data_handle):
         """Runs a set of one or more models

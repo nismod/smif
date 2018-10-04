@@ -87,46 +87,6 @@ class SectorModel(Model, metaclass=ABCMeta):
     """
     def __init__(self, name):
         super().__init__(name)
-        self._inputs = {}
-        self._parameters = {}
-
-    @property
-    def inputs(self):
-        """All model inputs defined at this layer
-
-        Returns
-        -------
-        dict of {input_name: smif.metadata.Spec}
-        """
-        return self._inputs
-
-    @property
-    def parameters(self):
-        """Model parameters
-
-        Returns
-        -------
-        dict of {parameter_name: smif.metadata.Spec}
-        """
-        return self._parameters
-
-    def add_input(self, spec):
-        """Add an input
-
-        Arguments
-        ---------
-        spec: smif.metadata.Spec
-        """
-        self.inputs[spec.name] = spec
-
-    def add_parameter(self, spec):
-        """Add a parameter
-
-        Arguments
-        ---------
-        spec: smif.metadata.Spec
-        """
-        self.parameters[spec.name] = spec
 
     @classmethod
     def from_dict(cls, config):
