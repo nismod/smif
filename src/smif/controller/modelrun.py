@@ -21,10 +21,10 @@ from logging import getLogger
 
 import networkx as nx
 from smif.controller.scheduler import JobScheduler
-from smif.data_layer import DataHandle
 from smif.decision.decision import DecisionManager
-from smif.exception import SmifModelRunError
-from smif.model import ModelOperation
+from smif.exception import SmifModelRunError, SmifTimestepResolutionError
+from smif.metadata import RelativeTimestep
+from smif.model import ModelOperation, ScenarioModel
 
 
 class ModelRun(object):
@@ -169,11 +169,12 @@ class ModelRunner(object):
         # Initialise the job scheduler
         self.logger.debug("Initialising the job scheduler")
         job_scheduler = JobScheduler()
+        job_scheduler.store = store
 
         for bundle in decision_manager.decision_loop():
             # each iteration is independent at this point, so the following loop is a
             # candidate for running in parallel
-            job_graph = self.build_job_graph(model_run, store, bundle, decision_manager)
+            job_graph = self.build_job_graph(model_run, bundle)
 
             job_id, err = job_scheduler.add(job_graph)
             self.logger.debug("Running job %s", job_id)
@@ -182,145 +183,291 @@ class ModelRunner(object):
                 self.logger.debug("Job %s %s", job_id, status['status'])
                 raise err
 
-    def build_job_graph(self, model_run, store, bundle, decision_manager):
+    def build_job_graph(self, model_run, bundle):
         """ Build a job graph
 
-        Build and return the job graph for an entire bundle, including
-        before_model_run jobs when the models were not yet initialised.
+        Build and return the job graph for an entire bundle, including before_model_run jobs
+        when the models were not yet initialised.
+
+        Constraints:
+        - Bundle must have keys: 'decision_iterations' and 'timesteps'
+        - Running a bundle runs each (decision iteration, timestep) pair specified by the
+          combinations of decision iterations and timesteps
+        - (decision iteration, timestep) pairs must be unique over an entire model run
+        - In a single bundle, timesteps must be a consecutive subset of the model horizon
+          timesteps
+
+        The first timestep in each decision iteration of a bundle is either:
+        - the first timestep in the model horizon and initialised from the model run starting
+          point with scenario data and initial-timestep interventions only
+        - or another timestep, picking up from where some previous (timestep, decision
+          iteration) left off, which is explicitly included in the bundle.
+
+        If a bundle's timesteps start from a timestep after the first one in the model horizon,
+        the bundle must provide 'decision_links', and bundle must start from the very next
+        timestep available in the model horizon.
+
+        Jobs need to be able to identify a point to pick up from, namely the (timestep,
+        decision iteration) which identifies the immediately preceding simulation state.
+
+        E.g. request running first two timesteps::
+
+            {
+                'decision_iterations': [0, 1],
+                'timesteps': [0, 1]
+            }
+
+        Run first two timesteps again, with an updated decision::
+
+            {
+                'decision_iterations': [1, 2],
+                'timesteps': [0, 1]
+            }
+
+        Results meet decision requirements, so run next two timesteps, linking this bundle's
+        decision iterations to previous decision iterations::
+
+            {
+                'decision_iterations': [3, 4],
+                'timesteps': [2, 3],
+                'decision_links': {3: 1, 4: 2}
+            }
+
 
         Arguments
         ---------
-        model_run: :class:`smif.controller.modelrun.ModelRun`
-        store: :class:`smif.data_layer.DataInterface`
-        bundle: :class:`dict`
-        decision_manager: :class:`smif.decision.decision.DecisionManager`
+        model_run: :class:`smif.controller.modelrun.ModelRun` bundle: :class:`dict`
 
         Returns
         -------
-        :class:`networkx.Graph`
-            A populated job graph with edges showing dependencies
-            between different operations and timesteps
+        :class:`networkx.Graph` A populated job graph with edges showing dependencies between
+            different operations and timesteps
         """
-        # Initialise each of the sector models
-        if not model_run.initialised:
-            self.logger.info("Initialising each of the sector models")
-
-            before_job = self.build_job(model_run, store, ModelOperation.BEFORE_MODEL_RUN)
+        job_graph = nx.DiGraph()
 
         # Solve the model run: decision loop generates a series of bundles of independent
         # decision iterations, each with a number of timesteps to run
-        simulate_jobs = nx.DiGraph()
-        for iteration, timesteps in bundle.items():
-            self.logger.info('Running decision iteration %s', iteration)
+        for decision_iteration in bundle['decision_iterations']:
+            self.logger.info('Running decision iteration %s', decision_iteration)
 
-            for timestep in timesteps:
+            for timestep_index, timestep in enumerate(bundle['timesteps']):
                 self.logger.info('Running timestep %s', timestep)
+                # one simulate job node per model
+                job_graph.add_nodes_from(
+                    self._make_simulate_job_nodes(
+                        model_run.name,
+                        model_run.sos_model.models.values(),
+                        decision_iteration,
+                        timestep,
+                        model_run.model_horizon
+                    )
+                )
+                # edges to match within-timestep dependencies
+                job_graph.add_edges_from(
+                    self._make_current_simulate_job_edges(
+                        model_run.name,
+                        model_run.sos_model.models.values(),
+                        timestep,
+                        decision_iteration
+                    )
+                )
 
-                timestep_job = self.build_job(model_run, store, ModelOperation.SIMULATE,
-                                              iteration, timestep, decision_manager)
-                simulate_jobs = nx.compose(simulate_jobs, timestep_job)
+                # connect any between-timestep dependencies
+                if timestep_index == 0:
+                    # first timestep in bundle
+                    try:
+                        # connect to outputs from a previous bundle
+                        relative = RelativeTimestep.PREVIOUS
+                        previous_timestep = relative.resolve_relative_to(
+                            timestep, model_run.model_horizon)
+                        previous_decision_iteration = \
+                            bundle['decision_links'][decision_iteration]
+                        job_graph.add_edges_from(
+                            self._make_between_bundle_previous_simulate_job_edges(
+                                model_run.name,
+                                model_run.sos_model.models.values(),
+                                timestep,
+                                previous_timestep,
+                                decision_iteration,
+                                previous_decision_iteration
+                            )
+                        )
+                    except SmifTimestepResolutionError:
+                        # no previous timestep, use scenarios to provide initial intertimestep
+                        # dependenciess
+                        job_graph.add_edges_from(
+                            self._make_initial_previous_simulate_job_edges(
+                                model_run.name,
+                                model_run.sos_model.models.values(),
+                                timestep,
+                                decision_iteration
+                            )
+                        )
 
-        # Connect the bits
+                else:
+                    # subsequent timestep in a bundle - connect to previous timestep
+                    previous_timestep = bundle['timesteps'][timestep_index - 1]
+                    job_graph.add_edges_from(
+                        self._make_within_bundle_previous_simulate_job_edges(
+                            model_run.name,
+                            model_run.sos_model.models.values(),
+                            timestep,
+                            previous_timestep,
+                            decision_iteration
+                        )
+                    )
+
         if not model_run.initialised:
-            for node in simulate_jobs.nodes.data():
-                before_job.add_edge('before_model_run_' + node[1]['model'].name, node[0])
-                job_graph = nx.compose(before_job, simulate_jobs)
+            # one before_model_run job per model
+            self.logger.info("Initialising each of the sector models")
+            job_graph.add_nodes_from(
+                self._make_before_model_run_job_nodes(
+                    model_run.name,
+                    model_run.sos_model.models.values(),
+                    model_run.model_horizon
+                )
+            )
+            # must run before any simulate jobs
+            for decision_iteration in bundle['decision_iterations']:
+                for timestep in bundle['timesteps']:
+                    job_graph.add_edges_from(
+                        self._make_before_model_run_job_edges(
+                            model_run.name,
+                            model_run.sos_model.models.values(),
+                            timestep,
+                            decision_iteration
+                        )
+                    )
             model_run.initialised = True
-        else:
-            job_graph = simulate_jobs
+
+        if not nx.is_directed_acyclic_graph(job_graph):
+            raise NotImplementedError(
+                "SosModel dependency graphs must not contain within-timestep cycles")
 
         return job_graph
 
-    def build_job(self, model_run, store, operation, iteration=None,
-                  timestep=None, decision_manager=None):
-        """Build a job
-
-        Build and return the graph for a single job and populate the node
-        attributes with a :class:`smif.data_layer.DataHandle` data_handle
-        and :class:`smif.model.ModelOperation` operation.
-
-        Arguments
-        ---------
-        model_run: :class:`smif.controller.modelrun.ModelRun`
-        store: :class:`smif.data_layer.DataInterface`
-        operation: :enum:`ModelOperation`
-        iteration: :class:`int`
-        timestep: :class:`int`
-        decision_manager: :class:`smif.decision.decision.DecisionManager`
-
-        Returns
-        -------
-        :class:`networkx.Graph`
-            A populated job for a single timestep, iteration with edges
-            showing dependencies and attributes for model, data_handle
-            and operation
-        """
-        # Build job based on dependency graph
-        dep_graph = self.get_dependency_graph(model_run.sos_model.models)
-
-        if operation is ModelOperation.BEFORE_MODEL_RUN:
-            job_id = operation.value
-            job = nx.DiGraph()
-            for node_id, node_data in dep_graph.nodes(data=True):
-                job.add_node(
-                    '%s_%s' % (job_id, node_id),
-                    model=node_data['model']
-                )
-
-        elif operation is ModelOperation.SIMULATE:
-            job_id = '%s_%s_%s' % (operation.value, timestep, iteration)
-            mapping = {
-                dep_node: '%s_%s' % (job_id, dep_node)
-                for dep_node in dep_graph.nodes
-            }
-            job = nx.relabel_nodes(dep_graph, mapping)
-        else:
-            raise ValueError
-
-        # Populate node attributes with configured data_handle and operation
-        for node_id, node_data in job.nodes.data():
-            data_handle = DataHandle(
-                store=store,
-                modelrun_name=model_run.name,
-                current_timestep=timestep,
-                timesteps=model_run.model_horizon,
-                model=node_data['model'],
-                decision_iteration=iteration
+    @staticmethod
+    def _make_before_model_run_job_nodes(modelrun_name, models, horizon):
+        return [
+            (
+                ModelRunner._make_job_id(
+                    modelrun_name, model.name, ModelOperation.BEFORE_MODEL_RUN),
+                {
+                    'model': model,
+                    'modelrun_name': modelrun_name,
+                    'current_timestep': None,
+                    'timesteps': horizon,
+                    'decision_iteration': None,
+                    'operation': ModelOperation.BEFORE_MODEL_RUN
+                }
             )
-            if operation is ModelOperation.SIMULATE:
-                decision_manager.get_decision(data_handle)
-
-            node_data['data_handle'] = data_handle
-            node_data['operation'] = operation
-
-        return job
+            for model in models
+        ]
 
     @staticmethod
-    def get_dependency_graph(models):
-        """Build a networkx DiGraph from models (as nodes) and dependencies (as edges)
+    def _make_before_model_run_job_edges(modelrun_name, models, timestep, decision_iteration):
+        edges = []
+        for model in models:
+            from_id = ModelRunner._make_job_id(
+                modelrun_name, model.name, ModelOperation.BEFORE_MODEL_RUN)
+            to_id = ModelRunner._make_job_id(
+                modelrun_name, model.name, ModelOperation.SIMULATE, timestep,
+                decision_iteration)
+            edges.append((from_id, to_id))
+        return edges
 
-        Arguments
-        ---------
-        models: :class:`dict` with key :class:`string` model name and value
-                :class:`smif.model.Model`
+    @staticmethod
+    def _make_simulate_job_nodes(modelrun_name, models, decision_iteration, timestep, horizon):
+        return [
+            (
+                ModelRunner._make_job_id(
+                    modelrun_name, model.name, ModelOperation.SIMULATE, timestep,
+                    decision_iteration),
+                {
+                    'model': model,
+                    'modelrun_name': modelrun_name,
+                    'current_timestep': timestep,
+                    'timesteps': horizon,
+                    'decision_iteration': decision_iteration,
+                    'operation': ModelOperation.SIMULATE
+                }
+            )
+            for model in models
+        ]
 
-        Returns
-        -------
-        :class:`networkx.graph`
-            Graph with model names as nodes and dependencies as edges, populated model
-            attribute with the :class:`smif.model.Model`
-        """
-        dependency_graph = nx.DiGraph()
-        for model in models.values():
-            dependency_graph.add_node(model.name, model=model)
-
-        for model in models.values():
+    @staticmethod
+    def _make_current_simulate_job_edges(modelrun_name, models, timestep, decision_iteration):
+        edges = []
+        for model in models:
             for dependency in model.deps.values():
-                dependency_graph.add_edge(
-                    dependency.source_model.name,
-                    dependency.sink_model.name
-                )
-        return dependency_graph
+                if dependency.timestep != RelativeTimestep.PREVIOUS:
+                    from_id = ModelRunner._make_job_id(
+                        modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
+                        timestep, decision_iteration)
+                    to_id = ModelRunner._make_job_id(
+                        modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
+                        timestep, decision_iteration)
+                    edges.append((from_id, to_id))
+        return edges
+
+    @staticmethod
+    def _make_within_bundle_previous_simulate_job_edges(modelrun_name, models, timestep,
+                                                        previous_timestep, decision_iteration):
+        edges = []
+        for model in models:
+            for dependency in model.deps.values():
+                if dependency.timestep == RelativeTimestep.PREVIOUS:
+                    from_id = ModelRunner._make_job_id(
+                        modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
+                        previous_timestep, decision_iteration)
+                    to_id = ModelRunner._make_job_id(
+                        modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
+                        timestep, decision_iteration)
+                    edges.append((from_id, to_id))
+        return edges
+
+    @staticmethod
+    def _make_between_bundle_previous_simulate_job_edges(modelrun_name, models, timestep,
+                                                         previous_timestep, decision_iteration,
+                                                         previous_decision_iteration):
+        edges = []
+        for model in models:
+            for dependency in model.deps.values():
+                if dependency.timestep == RelativeTimestep.PREVIOUS:
+                    from_id = ModelRunner._make_job_id(
+                        modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
+                        previous_timestep, previous_decision_iteration)
+                    to_id = ModelRunner._make_job_id(
+                        modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
+                        timestep, decision_iteration)
+                    edges.append((from_id, to_id))
+        return edges
+
+    @staticmethod
+    def _make_initial_previous_simulate_job_edges(modelrun_name, models, timestep,
+                                                  decision_iteration):
+        edges = []
+        for model in models:
+            for dependency in model.deps.values():
+                if isinstance(dependency.source_model, ScenarioModel):
+                    from_id = ModelRunner._make_job_id(
+                        modelrun_name, dependency.source_model.name, ModelOperation.SIMULATE,
+                        timestep, decision_iteration)
+                    to_id = ModelRunner._make_job_id(
+                        modelrun_name, dependency.sink_model.name, ModelOperation.SIMULATE,
+                        timestep, decision_iteration)
+                    edges.append((from_id, to_id))
+        return edges
+
+    @staticmethod
+    def _make_job_id(modelrun_name, model_name, operation, timestep=None,
+                     decision_iteration=None):
+        if operation == ModelOperation.BEFORE_MODEL_RUN:
+            id_ = '%s_%s_%s' % (modelrun_name, operation.value, model_name)
+        else:
+            id_ = '%s_%s_%s_%s_%s' % (
+                modelrun_name, operation.value, timestep, decision_iteration, model_name)
+        return id_
 
 
 class ModelRunBuilder(object):

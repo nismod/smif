@@ -130,7 +130,10 @@ class DecisionManager(object):
             for module in self._decision_modules:
                 yield module._get_next_decision_iteration()
         else:
-            yield {0: [x for x in self._timesteps]}
+            yield {
+                'decision_iterations': [0],
+                'timesteps': [x for x in self._timesteps]
+            }
 
     def get_decision(self, data_handle):
         """Writes decisions for given timestep to state
