@@ -9,10 +9,12 @@ up models to run in parallel and/or distributed.
 import itertools
 import logging
 import subprocess
+import traceback
 from collections import defaultdict
 from datetime import datetime
 
 import networkx
+from smif.data_layer import DataHandle
 from smif.model import ModelOperation
 
 
@@ -160,6 +162,7 @@ class JobScheduler(object):
         self._status = defaultdict(lambda: 'unstarted')
         self._id_counter = itertools.count()
         self.logger = logging.getLogger(__name__)
+        self.store = None
 
     def add(self, job_graph):
         """Add a JobGraph to the JobScheduler and run directly
@@ -173,6 +176,7 @@ class JobScheduler(object):
             self._run(job_graph, job_graph_id)
         except Exception as ex:
             self._status[job_graph_id] = 'failed'
+            traceback.print_exc()
             return job_graph_id, ex
 
         return job_graph_id, None
@@ -222,7 +226,14 @@ class JobScheduler(object):
         for job_node_id, job in self._get_run_order(job_graph):
             self.logger.info("Job %s", job_node_id)
             model = job['model']
-            data_handle = job['data_handle']
+            data_handle = DataHandle(
+                store=self.store,
+                model=model,
+                modelrun_name=job['modelrun_name'],
+                current_timestep=job['current_timestep'],
+                timesteps=job['timesteps'],
+                decision_iteration=job['decision_iteration']
+            )
             operation = job['operation']
             if operation is ModelOperation.BEFORE_MODEL_RUN:
                 # before_model_run may not be implemented by all jobs

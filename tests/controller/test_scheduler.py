@@ -5,7 +5,13 @@ from unittest.mock import Mock, patch
 import networkx
 from pytest import fixture, raises
 from smif.controller.scheduler import JobScheduler, ModelRunScheduler
+from smif.data_layer import MemoryInterface
 from smif.model import ModelOperation, ScenarioModel, SectorModel
+
+
+class EmptySectorModel(SectorModel):
+    def simulate(self, data):
+        return data
 
 
 class TestModelRunScheduler():
@@ -130,23 +136,42 @@ class TestJobScheduler():
     @fixture
     def job_graph(self):
         G = networkx.DiGraph()
+        a_model = ScenarioModel('a')
+
         G.add_node(
             'a',
-            model=Mock(spec=ScenarioModel),
+            model=a_model,
             operation=ModelOperation.BEFORE_MODEL_RUN,
-            data_handle=Mock()
+            modelrun_name='test',
+            current_timestep=1,
+            timesteps=[1],
+            decision_iteration=0
         )
+        b_model = EmptySectorModel('b')
         G.add_node(
             'b',
-            model=Mock(spec=SectorModel),
+            model=b_model,
             operation=ModelOperation.SIMULATE,
-            data_handle=Mock()
+            modelrun_name='test',
+            current_timestep=1,
+            timesteps=[1],
+            decision_iteration=0
         )
         G.add_edge('a', 'b')
         return G
 
-    def test_add(self, job_graph):
+    @fixture
+    def scheduler(self):
+        store = MemoryInterface()
+        store.write_model_run({
+            'name': 'test',
+            'narratives': {}
+        })
         scheduler = JobScheduler()
+        scheduler.store = store
+        return scheduler
+
+    def test_add(self, job_graph, scheduler):
         job_id, err = scheduler.add(job_graph)
 
         print(err)
@@ -157,30 +182,32 @@ class TestJobScheduler():
         scheduler = JobScheduler()
         assert scheduler.get_status(0)['status'] == 'unstarted'
 
-    def test_add_cyclic(self, job_graph):
+    def test_add_cyclic(self, job_graph, scheduler):
         job_graph.add_edge('b', 'a')
-        scheduler = JobScheduler()
         job_id, err = scheduler.add(job_graph)
 
         assert isinstance(err, NotImplementedError)
         assert scheduler.get_status(job_id)['status'] == 'failed'
 
-    def test_kill_fails(self, job_graph):
-        scheduler = JobScheduler()
+    def test_kill_fails(self, job_graph, scheduler):
         job_id, err = scheduler.add(job_graph)
 
         assert err is None
         with raises(NotImplementedError):
             scheduler.kill(job_id)
 
-    def test_unknown_operation(self, job_graph):
+    def test_unknown_operation(self, job_graph, scheduler):
+        model = EmptySectorModel('c')
+
         job_graph.add_node(
             'c',
-            model=Mock(),
+            model=model,
             operation='unknown_operation',
-            data_handle=Mock()
+            modelrun_name='test',
+            current_timestep=1,
+            timesteps=[1],
+            decision_iteration=0
         )
-        scheduler = JobScheduler()
         job_id, err = scheduler.add(job_graph)
 
         assert isinstance(err, ValueError)
