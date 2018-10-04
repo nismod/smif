@@ -6,9 +6,13 @@ A system of systems model contains simulation and scenario models,
 and the dependencies between the models.
 
 """
+import itertools
 import logging
+from collections import defaultdict
 
-from smif.model.model import CompositeModel, Model, ScenarioModel
+from smif.metadata import RelativeTimestep
+from smif.model.dependency import Dependency
+from smif.model.model import Model, ScenarioModel
 from smif.model.sector_model import SectorModel
 
 __author__ = "Will Usher, Tom Russell"
@@ -16,10 +20,8 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-class SosModel(CompositeModel):
+class SosModel():
     """Consists of the collection of models joined via dependencies
-
-    SosModel inherits from :class:`smif.model.CompositeModel`.
 
     Arguments
     ---------
@@ -28,9 +30,19 @@ class SosModel(CompositeModel):
 
     """
     def __init__(self, name):
-        # housekeeping
-        super().__init__(name)
         self.logger = logging.getLogger(__name__)
+
+        self.name = name
+        self.description = ''
+
+        # Models in an internal lookup by name
+        # { name: Model }
+        self._models = {}
+
+        # Maintain dependencies in an internal lookup (using names (str) in the tuple key)
+        # { (source, output, sink, input): list[Dependency]}
+        self._scenario_dependencies = defaultdict(list)
+        self._model_dependencies = defaultdict(list)
 
     def as_dict(self):
         """Serialize the SosModel object
@@ -40,30 +52,23 @@ class SosModel(CompositeModel):
         dict
         """
         scenario_dependencies = []
+        for dep in self._scenario_dependencies.values():
+            scenario_dependencies.append(dep.as_dict())
+
         model_dependencies = []
-        for model in self.models.values():
-            for dep in model.deps.values():
-                dep_config = {
-                    'source': dep.source_model.name,
-                    'source_output': dep.source.name,
-                    'sink': dep.sink_model.name,
-                    'sink_input': dep.sink.name
-                }
-                if isinstance(dep.source_model, ScenarioModel):
-                    scenario_dependencies.append(dep_config)
-                else:
-                    model_dependencies.append(dep_config)
+        for dep in self._model_dependencies.values():
+            model_dependencies.append(dep.as_dict())
 
         config = {
             'name': self.name,
             'description': self.description,
             'scenarios': sorted(
                 scenario.name
-                for scenario in self.scenario_models.values()
+                for scenario in self.scenario_models
             ),
             'sector_models': sorted(
                 model.name
-                for model in self.sector_models.values()
+                for model in self.sector_models
             ),
             'scenario_dependencies': scenario_dependencies,
             'model_dependencies': model_dependencies
@@ -86,55 +91,44 @@ class SosModel(CompositeModel):
         """
         sos_model = cls(data['name'])
 
-        def test(key, dict_):
-            """Quick existence-and-not-None check
-            """
-            return key in dict_ and dict_[key] is not None
-
-        if test('description', data):
+        try:
             sos_model.description = data['description']
+        except KeyError:
+            pass
 
         if models:
             for model in models:
                 sos_model.add_model(model)
 
-            for dep in _collect_dependencies(data):
-                sink = sos_model.models[dep['sink']]
-                source = sos_model.models[dep['source']]
+            for dep in data['model_dependencies'] + data['scenario_dependencies']:
+                sink = sos_model.get_model(dep['sink'])
+                source = sos_model.get_model(dep['source'])
                 source_output_name = dep['source_output']
                 sink_input_name = dep['sink_input']
+                try:
+                    timestep = RelativeTimestep.from_name(dep['timestep'])
+                except KeyError:
+                    # if not provided, default to current
+                    timestep = RelativeTimestep.CURRENT
+                except ValueError:
+                    # if not parseable as relative timestep, pass through
+                    pass
 
-                sink.add_dependency(source, source_output_name, sink_input_name)
-            sos_model.check_dependencies()
+                sos_model.add_dependency(
+                    source, source_output_name, sink, sink_input_name, timestep)
+
+        sos_model.check_dependencies()
         return sos_model
 
-    def add_model(self, model):
-        """Adds a sector model to the system-of-systems model
+    @property
+    def models(self):
+        """The models contained within this system-of-systems model
 
-        Arguments
-        ---------
-        model : :class:`smif.sector_model.Model`
-            A sector model wrapper
-
+        Returns
+        -------
+        list[smif.model.model.Model]
         """
-        assert isinstance(model, Model)
-
-        if isinstance(model, CompositeModel):
-            msg = "Nesting of CompositeModels (including SosModels) is not supported"
-            raise NotImplementedError(msg)
-
-        self.logger.info("Loading model: %s", model.name)
-        self.models[model.name] = model
-
-    def before_model_run(self, data_handle):
-        """Not implemented - use ModelRunner and a JobScheduler to execute
-        """
-        raise NotImplementedError("SosModel must be run by a scheduler")
-
-    def simulate(self, data_handle):
-        """Not implemented - use ModelRunner and a JobScheduler to execute
-        """
-        raise NotImplementedError("SosModel must be run by a scheduler")
+        return list(self._models.values())
 
     @property
     def sector_models(self):
@@ -142,13 +136,13 @@ class SosModel(CompositeModel):
 
         Returns
         =======
-        dict
-            A dict of sector model objects
+        list
+            A list of sector model objects
         """
-        return {
-            name: model for name, model in self.models.items()
+        return [
+            model for model in self.models
             if isinstance(model, SectorModel)
-        }
+        ]
 
     @property
     def scenario_models(self):
@@ -156,13 +150,150 @@ class SosModel(CompositeModel):
 
         Returns
         -------
-        dict
-            A dict of scenario model objects
+        list
+            A list of scenario model objects
         """
-        return {
-            name: model for name, model in self.models.items()
+        return [
+            model for model in self.models
             if isinstance(model, ScenarioModel)
-        }
+        ]
+
+    def add_model(self, model):
+        """Adds a model to the system-of-systems model
+
+        Arguments
+        ---------
+        model : :class:`smif.model.model.Model`
+        """
+        msg = "Only Models can be added to a SosModel (and SosModels cannot be nested)"
+        assert isinstance(model, Model), msg
+        self.logger.info("Loading model: %s", model.name)
+        self._models[model.name] = model
+
+    def get_model(self, model_name):
+        """Get a model by name
+
+        Arguments
+        ---------
+        model_name : str
+
+        Returns
+        -------
+        smif.model.model.Model
+        """
+        return self._models[model_name]
+
+    @property
+    def dependencies(self):
+        """Dependency connections between models within this system-of-systems model
+
+        Returns
+        -------
+        iterable[smif.model.dependency.Dependency]
+        """
+        return itertools.chain(
+            self._scenario_dependencies.values(),
+            self._model_dependencies.values()
+        )
+
+    @property
+    def scenario_dependencies(self):
+        """Dependency connections between models within this system-of-systems model
+
+        Returns
+        -------
+        iterable[smif.model.dependency.Dependency]
+        """
+        return self._scenario_dependencies.values()
+
+    @property
+    def model_dependencies(self):
+        """Dependency connections between models within this system-of-systems model
+
+        Returns
+        -------
+        iterable[smif.model.dependency.Dependency]
+        """
+        return self._model_dependencies.values()
+
+    def add_dependency(self, source_model, source_output_name, sink_model, sink_input_name,
+                       timestep=RelativeTimestep.CURRENT):
+        """Adds a dependency to this system-of-systems model
+
+        Arguments
+        ---------
+        source_model : smif.model.model.Model
+            A reference to the source `~smif.model.model.Model` object
+        source_output_name : string
+            The name of the model_output defined in the `source_model`
+        source_model : smif.model.model.Model
+            A reference to the source `~smif.model.model.Model` object
+        sink_name : string
+            The name of a model_input defined in this object
+        timestep : smif.metadata.RelativeTimestep, optional
+            The relative timestep of the dependency, defaults to CURRENT, may be PREVIOUS.
+        """
+        if source_output_name not in source_model.outputs:
+            msg = "Output '{}' is not defined in '{}' model"
+            raise ValueError(msg.format(source_output_name, source_model.name))
+
+        if sink_input_name not in sink_model.inputs:
+            msg = "Input '{}' is not defined in '{}' model"
+            raise ValueError(msg.format(sink_input_name, sink_model.name))
+
+        key = (source_model.name, source_output_name, sink_model.name, sink_input_name)
+
+        if not self._allow_adding_dependency(
+                source_model, source_output_name, sink_model, sink_input_name, timestep):
+            msg = "Inputs: '%s'. Free inputs: '%s'."
+            self.logger.debug(msg, sink_model.inputs, self.free_inputs)
+            msg = "Could not add dependency: input '{}' already provided"
+            raise ValueError(msg.format(sink_input_name))
+
+        source_spec = source_model.outputs[source_output_name]
+        sink_spec = sink_model.inputs[sink_input_name]
+        if isinstance(source_model, ScenarioModel):
+            self._scenario_dependencies[key] = Dependency(
+                source_model, source_spec, sink_model, sink_spec, timestep=timestep)
+        else:
+            self._model_dependencies[key] = Dependency(
+                source_model, source_spec, sink_model, sink_spec, timestep=timestep)
+
+        msg = "Added dependency from '%s:%s' to '%s:%s'"
+        self.logger.debug(
+            msg, source_model.name, source_output_name, self.name, sink_input_name)
+
+    def _allow_adding_dependency(self, source_model, source_output_name, sink_model,
+                                 sink_input_name, timestep):
+        key = (source_model.name, source_output_name, sink_model.name, sink_input_name)
+        existing_deps = key in self._scenario_dependencies or key in self._model_dependencies
+
+        if existing_deps:
+            if key in self._scenario_dependencies and key in self._model_dependencies:
+                # allowed at most two sources
+                allowable = False
+            else:
+                # if and only if one is a scenario and the other is to a previous timestep
+                try:
+                    other_dep = self._scenario_dependencies[key]
+                except KeyError:
+                    other_dep = self._model_dependencies[key]
+
+                other_model = other_dep.source_model
+                other_timestep = other_dep.timestep
+
+                other_is_previous = other_timestep == RelativeTimestep.PREVIOUS
+                other_is_scenario = isinstance(other_model, ScenarioModel)
+
+                new_is_previous = timestep == RelativeTimestep.PREVIOUS
+                new_is_scenario = isinstance(source_model, ScenarioModel)
+
+                allowable = (new_is_previous and other_is_scenario) or \
+                    (other_is_previous and new_is_scenario)
+        else:
+            allowable = True
+
+        return allowable
 
     def check_dependencies(self):
         """For each contained model, compare dependency list against
@@ -175,15 +306,51 @@ class SosModel(CompositeModel):
                 str(key) for key in self.free_inputs.keys()
             )))
 
+    @property
+    def free_inputs(self):
+        """Returns the free inputs to models which are not yet linked to a dependency.
 
-def _collect_dependencies(data):
-    """Return all dependencies from a SosModel config dict
-    """
-    deps = []
-    if 'dependencies' in data:
-        deps = deps + data['dependencies']
-    if 'model_dependencies' in data:
-        deps = deps + data['model_dependencies']
-    if 'scenario_dependencies' in data:
-        deps = deps + data['scenario_dependencies']
-    return deps
+        Returns
+        -------
+        dict of {(model_name, input_name): smif.metadata.Spec}
+        """
+        satisfied_inputs = set(
+            (sink_name, sink_input_name)
+            for (source_name, source_output_name, sink_name, sink_input_name), deps
+            in itertools.chain(
+                self._scenario_dependencies.items(), self._model_dependencies.items())
+            if deps
+        )
+        all_inputs = set()
+        all_specs = {}
+
+        for model in self.models:
+            try:
+                for input_name, input_spec in model.inputs.items():
+                    input_key = (model.name, input_name)
+                    all_inputs.add(input_key)
+                    all_specs[input_key] = input_spec
+            except AttributeError:
+                pass  # ScenarioModels don't have inputs
+
+        unsatisfied_inputs = all_inputs - satisfied_inputs
+
+        return {
+            input_key: all_specs[input_key]
+            for input_key in unsatisfied_inputs
+        }
+
+    @property
+    def outputs(self):
+        """All model outputs provided by models contained within this SosModel
+
+        Returns
+        -------
+        dict of {(model_name, output_name): smif.metadata.Spec}
+        """
+        outputs = {}
+        for model in self.models:
+            for output_name, output_spec in model.outputs.items():
+                outputs[(model.name, output_name)] = output_spec
+
+        return outputs
