@@ -245,7 +245,10 @@ class PreSpecified(DecisionModule):
         self._planned = planned_interventions
 
     def _get_next_decision_iteration(self):
-        return {0: [x for x in self.timesteps]}
+        return {
+            'decision_iterations': [0],
+            'timesteps': [x for x in self.timesteps]
+        }
 
     def get_decision(self, data_handle):
         """Return a dict of intervention names built in timestep
@@ -337,18 +340,34 @@ class RuleBased(DecisionModule):
         self.satisfied = False
         self.current_timestep_index = 0
         self.current_iteration = 0
+        # keep internal account of max iteration reached per timestep
+        self._max_iteration_by_timestep = {0: 0}
 
     def _get_next_decision_iteration(self):
-            if self.satisfied and self.current_timestep_index == len(self.timesteps) - 1:
-                return None
-            elif self.satisfied and self.current_timestep_index <= len(self.timesteps):
-                self.satisfied = False
-                self.current_timestep_index += 1
-                self.current_iteration += 1
-                return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
-            else:
-                self.current_iteration += 1
-                return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
+        if self.satisfied and self.current_timestep_index == len(self.timesteps) - 1:
+            return None
+        elif self.satisfied and self.current_timestep_index <= len(self.timesteps):
+            self._max_iteration_by_timestep[self.current_timestep_index] = \
+                self.current_iteration
+            self.satisfied = False
+            self.current_timestep_index += 1
+            self.current_iteration += 1
+            return self._make_bundle()
+        else:
+            self.current_iteration += 1
+            return self._make_bundle()
+
+    def _make_bundle(self):
+        bundle = {
+            'decision_iterations': [self.current_iteration],
+            'timesteps': [self.timesteps[self.current_timestep_index]],
+        }
+        if self.current_timestep_index != 0:
+            bundle['decision_links'] = {
+                self.current_iteration: self._max_iteration_by_timestep[
+                    self.current_timestep_index - 1]
+            }
+        return bundle
 
     def get_decision(self, data_handle):
         return []
