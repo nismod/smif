@@ -14,14 +14,12 @@ iterating, running every model in the set at each iteration, monitoring the
 model outputs over the iterations, and stopping at timeout, divergence or
 convergence.
 """
-
 import numpy as np
-from smif.data_layer import DataHandle
 from smif.exception import SmifTimestepResolutionError
-from smif.model.model import CompositeModel
+from smif.model.model import Model
 
 
-class ModelSet(CompositeModel):
+class ModelSet(Model):
     """Wraps a set of interdependent models
 
     Parameters
@@ -48,8 +46,9 @@ class ModelSet(CompositeModel):
         name = "<->".join(sorted(model.name for model in models.values()))
         super().__init__(name)
         self.models = models
+        self._inputs = {}
+        self._parameters = {}
         self._model_names = list(models.keys())
-        self._derive_deps_from_models()
         self._current_iteration = 0
         self._did_converge = False
 
@@ -58,12 +57,43 @@ class ModelSet(CompositeModel):
         self.relative_tolerance = float(relative_tolerance)
         self.absolute_tolerance = float(absolute_tolerance)
 
-    def _derive_deps_from_models(self):
-        for model in self.models.values():
-            for sink, dep in model.deps.items():
-                if dep.source_model not in self.models.values():
-                    self.deps[sink] = dep
-                    self.add_input(model.inputs[sink])
+    @property
+    def inputs(self):
+        """All model inputs defined at this layer
+
+        Returns
+        -------
+        dict of {input_name: smif.metadata.Spec}
+        """
+        return self._inputs
+
+    @property
+    def parameters(self):
+        """Model parameters
+
+        Returns
+        -------
+        dict of {parameter_name: smif.metadata.Spec}
+        """
+        return self._parameters
+
+    def add_input(self, spec):
+        """Add an input
+
+        Arguments
+        ---------
+        spec: smif.metadata.Spec
+        """
+        self.inputs[spec.name] = spec
+
+    def add_parameter(self, spec):
+        """Add a parameter
+
+        Arguments
+        ---------
+        spec: smif.metadata.Spec
+        """
+        self.parameters[spec.name] = spec
 
     def simulate(self, data_handle):
         """Runs a set of one or more models
@@ -108,15 +138,7 @@ class ModelSet(CompositeModel):
         """
         for model in self.models.values():
             self.logger.info("Simulating %s, iteration %s", model.name, i)
-            model_data_handle = DataHandle(
-                data_handle._store,
-                data_handle._modelrun_name,
-                data_handle._current_timestep,
-                data_handle._timesteps,
-                model,
-                i,
-                data_handle._decision_iteration
-            )
+            model_data_handle = data_handle.derive_for(model, i)
             # Start by running all models in set with best guess
             # - zeroes
             # - last year's inputs
@@ -182,15 +204,7 @@ class ModelSet(CompositeModel):
         converged = []
         for model in self.models.values():
             self.logger.debug("Checking %s for convergence", model.name)
-            model_data_handle = DataHandle(
-                data_handle._store,
-                data_handle._modelrun_name,
-                data_handle._current_timestep,
-                data_handle._timesteps,
-                model,
-                self._current_iteration,
-                data_handle._decision_iteration
-            )
+            model_data_handle = data_handle.derive_for(model, self._current_iteration)
             converged.append(self._model_converged(model, model_data_handle))
 
         if all(converged):
@@ -217,15 +231,8 @@ class ModelSet(CompositeModel):
         bool
             True if converged otherwise, False
         """
-        prev_data_handle = DataHandle(
-            data_handle._store,
-            data_handle._modelrun_name,
-            data_handle._current_timestep,
-            data_handle._timesteps,
-            model,
-            self._current_iteration - 1,  # access previous iteration
-            data_handle._decision_iteration
-        )
+        # access previous iteration
+        prev_data_handle = data_handle.derive_for(model, self._current_iteration - 1)
         close = []
         for spec in model.inputs.values():
             curr = data_handle.get_data(spec.name)

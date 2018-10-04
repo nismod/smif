@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name
 import sys
 from itertools import count
 
@@ -83,7 +84,6 @@ def counting_sector_model():
         dtype='float',
         unit='million GBP'
     ))
-    model.add_dependency(model, 'cost', 'cost')
     return model
 
 
@@ -93,7 +93,20 @@ def get_data_handle(model):
     store = MemoryInterface()
     store.write_model_run({
         'name': 'test',
-        'narratives': {}
+        'sos_model': 'test',
+        'narratives': {},
+        'scenarios': {}
+    })
+    store.write_sos_model({
+        'name': 'test',
+        'scenario_dependencies': [],
+        'model_dependencies': [{
+            'source': 'counter',
+            'source_output': 'cost',
+            'sink_input': 'cost',
+            'sink': 'counter',
+            'timestep': 'CURRENT'
+        }]
     })
     return DataHandle(
         store,
