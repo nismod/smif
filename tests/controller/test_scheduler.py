@@ -165,7 +165,14 @@ class TestJobScheduler():
         store = MemoryInterface()
         store.write_model_run({
             'name': 'test',
-            'narratives': {}
+            'narratives': {},
+            'scenarios': {},
+            'sos_model': 'test_sos_model'
+        })
+        store.write_sos_model({
+            'name': 'test_sos_model',
+            'scenario_dependencies': [],
+            'model_dependencies': []
         })
         scheduler = JobScheduler()
         scheduler.store = store
