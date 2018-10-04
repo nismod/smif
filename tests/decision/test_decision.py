@@ -202,6 +202,9 @@ class TestDecisionManager():
         df = DecisionManager(store, [2010, 2015], 'test', 'test_sos_model')
         dm = df.decision_loop()
         bundle = next(dm)
-        assert bundle == {0: [2010, 2015]}
+        assert bundle == {
+            'decision_iterations': [0],
+            'timesteps': [2010, 2015]
+        }
         with raises(StopIteration):
             next(dm)
