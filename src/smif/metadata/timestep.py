@@ -14,10 +14,10 @@ from smif.exception import SmifTimestepResolutionError
 class RelativeTimestep(Enum):
     """Specify current, previous or base year timestep
     """
-    CURRENT = 1  # current planning timestep
-    PREVIOUS = 2  # previous planning timestep
-    BASE = 3  # base year planning timestep
-    ALL = 4  # all planning timesteps
+    CURRENT = 'CURRENT'  # current planning timestep
+    PREVIOUS = 'PREVIOUS'  # previous planning timestep
+    BASE = 'BASE'  # base year planning timestep
+    ALL = 'ALL'  # all planning timesteps
 
     @classmethod
     def from_name(cls, name):
