@@ -178,7 +178,7 @@ class SosModelAPI(MethodView):
         else:
             response = jsonify({"message": "success"})
 
-        response.status_code = 201
+        response.status_code = 200
         return response
 
     def delete(self, sos_model_name):
@@ -202,10 +202,10 @@ class SectorModelAPI(MethodView):
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
         if sector_model_name is None:
-            data = data_interface.read_sector_models(skip_coords=True)
+            data = data_interface.read_sector_models()
             response = jsonify(data)
         else:
-            data = data_interface.read_sector_model(sector_model_name, skip_coords=True)
+            data = data_interface.read_sector_model(sector_model_name)
             response = jsonify(data)
 
         return response
@@ -255,10 +255,10 @@ class ScenarioAPI(MethodView):
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
         if scenario_name is None:
-            data = data_interface.read_scenarios(skip_coords=True)
+            data = data_interface.read_scenarios()
             response = jsonify(data)
         else:
-            data = data_interface.read_scenario(scenario_name, skip_coords=True)
+            data = data_interface.read_scenario(scenario_name)
             response = jsonify(data)
 
         return response
@@ -311,7 +311,7 @@ class NarrativeAPI(MethodView):
             data = data_interface.read_narratives()
             response = jsonify(data)
         else:
-            data = data_interface.read_narrative(narrative_name, skip_coords=True)
+            data = data_interface.read_narrative(narrative_name)
             response = jsonify(data)
 
         return response
