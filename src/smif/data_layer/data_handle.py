@@ -405,7 +405,7 @@ class DataHandle(object):
             self._decision_iteration
         )
 
-    def get_results(self, output_name, model_name=None, decision_iteration=None,
+    def get_results(self, output_name, decision_iteration=None,
                     timestep=None):
         """Get results values for model outputs
 
@@ -413,9 +413,6 @@ class DataHandle(object):
         ----------
         output_name : str
             The name of an output for `model_name`
-        model_name : str, default=None
-            The name of a model contained in the composite model,
-            or ``None`` if accessing results in the current model
         decision_iteration : int, default=None
         timestep : int or RelativeTimestep, default=None
 
@@ -424,6 +421,7 @@ class DataHandle(object):
         Access to model results is only granted to models contained
         within self._model if self._model is a smif.model.model.CompositeModel
         """
+        model_name = self._model.name
 
         # resolve timestep
         if timestep is None:
@@ -433,20 +431,9 @@ class DataHandle(object):
         else:
             assert isinstance(timestep, int) and timestep <= self._current_timestep
 
-        if model_name is None:  # Accessing results in the current model
-            model_name = self._model_name
-            results_model = self._model
-        elif model_name in self._model.models:  # Accessing a contained model
-            results_model = self._model.models[model_name]
-        else:
-            raise KeyError(
-                '{} is not contained in the current model'.format(
-                    model_name
-                )
-            )
-
+        # find output spec
         try:
-            spec = results_model.outputs[output_name]
+            spec = self._model.outputs[output_name]
         except KeyError:
             msg = "'{}' not recognised as output for '{}'"
             raise KeyError(msg.format(output_name, model_name))
@@ -456,6 +443,68 @@ class DataHandle(object):
 
         self.logger.debug(
             "Read %s %s %s", model_name, output_name, timestep)
+
+        return self._store.read_results(
+            self._modelrun_name,
+            model_name,
+            spec,
+            timestep,
+            decision_iteration
+        )
+
+
+class ResultsHandle(object):
+    """Results access for decision modules
+    """
+    def __init__(self, store, modelrun_name, sos_model, current_timestep=None, timesteps=None,
+                 decision_iteration=None):
+        self._store = store
+        self._modelrun_name = modelrun_name
+        self._sos_model = sos_model
+
+        self._current_timestep = current_timestep
+        self._timesteps = timesteps
+        self._decision_iteration = decision_iteration
+
+    @property
+    def base_timestep(self):
+        return self._timesteps[0]
+
+    @property
+    def current_timestep(self):
+        return self._current_timestep
+
+    @property
+    def previous_timestep(self):
+        rel = RelativeTimestep.PREVIOUS
+        return rel.resolve_relative_to(self._current_timestep, self._timesteps)
+
+    @property
+    def decision_iteration(self):
+        return self._decision_iteration
+
+    def get_results(self, model_name, output_name, timestep, decision_iteration):
+        """Access model results
+
+        Parameters
+        ----------
+        model_name : str
+        output_name : str
+        timestep : int
+        decision_iteration : int
+        """
+        if model_name in [model.name for model in self._sos_model.models]:
+            results_model = self._sos_model.get_model(model_name)
+        else:
+            raise KeyError(
+                '{} is not contained in SosModel {}'.format(model_name, self._sos_model.name)
+            )
+
+        try:
+            spec = results_model.outputs[output_name]
+        except KeyError:
+            msg = "'{}' not recognised as output for '{}'"
+            raise KeyError(msg.format(output_name, model_name))
 
         return self._store.read_results(
             self._modelrun_name,

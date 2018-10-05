@@ -1,10 +1,12 @@
 """Test ModelData
 """
+# pylint: disable=redefined-outer-name
 from unittest.mock import MagicMock, Mock, PropertyMock
 
 import numpy as np
 from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
+from smif.data_layer.data_handle import ResultsHandle
 from smif.exception import SmifTimestepResolutionError
 from smif.metadata import Spec
 from smif.model import SectorModel
@@ -471,27 +473,6 @@ class TestDataHandleGetResults:
         expected = 42
         assert actual == expected
 
-    def test_get_results_sos_model(self, mock_store,
-                                   mock_sector_model,
-                                   mock_sos_model):
-        """Get results from a sector model within a sos model
-        """
-        store = mock_store
-        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None)
-
-        dh = DataHandle(mock_store, 1, 2010, [2010], mock_sos_model)
-        actual = dh.get_results('test_output',
-                                model_name='test_sector_model')
-        expected = 42
-        assert actual == expected
-
-    def test_get_results_no_output_sos(self, mock_store,
-                                       mock_sos_model):
-        with raises(KeyError):
-            dh = DataHandle(mock_store, 1, 2010, [2010], mock_sos_model)
-            dh.get_results('no_such_output',
-                           model_name='test_sector_model')
-
     def test_get_results_no_output_sector(self, mock_store,
                                           mock_sector_model):
 
@@ -499,10 +480,25 @@ class TestDataHandleGetResults:
             dh = DataHandle(mock_store, 1, 2010, [2010], mock_sector_model)
             dh.get_results('no_such_output')
 
-    def test_get_results_wrong_name_sos(self,
-                                        mock_store,
-                                        mock_sos_model):
+
+def TestResultsHandle():
+    def test_get_results_sos_model(self, mock_store, mock_sector_model, mock_sos_model):
+        """Get results from a sector model within a sos model
+        """
+        store = mock_store
+        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None)
+
+        dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
+        actual = dh.get_results('test_sector_model', 'test_output', 2010, None)
+        expected = 42
+        assert actual == expected
+
+    def test_get_results_no_output_sos(self, mock_store, mock_sos_model):
         with raises(KeyError):
-            dh = DataHandle(mock_store, 1, 2010, [2010], mock_sos_model)
-            dh.get_results('test_output',
-                           model_name='no_such_model')
+            dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
+            dh.get_results('test_sector_model', 'no_such_output', None, None)
+
+    def test_get_results_wrong_name_sos(self, mock_store, mock_sos_model):
+        with raises(KeyError):
+            dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
+            dh.get_results('no_such_model', 'test_output', None, None)
