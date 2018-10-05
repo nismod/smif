@@ -17,7 +17,7 @@ class DataHandle(object):
     """Get/set model parameters and data
     """
     def __init__(self, store, modelrun_name, current_timestep, timesteps, model,
-                 modelset_iteration=None, decision_iteration=None):
+                 decision_iteration=None):
         """Create a DataHandle for a Model to access data, parameters and state, and to
         communicate results.
 
@@ -29,8 +29,6 @@ class DataHandle(object):
             Name of the current modelrun
         model : Model
             Model which will use this DataHandle
-        modelset_iteration : int, default=None
-            ID of the current ModelSet iteration
         decision_iteration : int, default=None
             ID of the current Decision iteration
         state : list, default=None
@@ -40,7 +38,6 @@ class DataHandle(object):
         self._modelrun_name = modelrun_name
         self._current_timestep = current_timestep
         self._timesteps = timesteps
-        self._modelset_iteration = modelset_iteration
         self._decision_iteration = decision_iteration
 
         self._model_name = model.name
@@ -103,7 +100,7 @@ class DataHandle(object):
                     )
                     self._parameters[variable.name] = data
 
-    def derive_for(self, model, modelset_iteration=None):
+    def derive_for(self, model):
         """Derive a new DataHandle configured for the given Model
 
         Parameters
@@ -111,16 +108,12 @@ class DataHandle(object):
         model : Model
             Model which will use this DataHandle
         """
-        if modelset_iteration is None:
-            modelset_iteration = self._modelset_iteration
-
         return DataHandle(
             store=self._store,
             modelrun_name=self._modelrun_name,
             current_timestep=self._current_timestep,
             timesteps=list(self.timesteps),
             model=model,
-            modelset_iteration=modelset_iteration,
             decision_iteration=self._decision_iteration
         )
 
@@ -260,13 +253,9 @@ class DataHandle(object):
 
         source_model_name = dep['source_model_name']
         source_output_name = dep['source_output_name']
-        if self._modelset_iteration is not None:
-            i = self._modelset_iteration - 1  # read from previous
-        else:
-            i = self._modelset_iteration
 
         self.logger.debug(
-            "Read %s %s %s %s", source_model_name, source_output_name, timestep, i)
+            "Read %s %s %s", source_model_name, source_output_name, timestep)
 
         spec = self._inputs[input_name]
 
@@ -283,7 +272,6 @@ class DataHandle(object):
                 source_model_name,  # read from source model
                 spec,  # using source model output spec
                 timestep,
-                i,
                 self._decision_iteration
             )
 
@@ -394,8 +382,7 @@ class DataHandle(object):
                 "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
 
         self.logger.debug(
-            "Write %s %s %s %s", self._model_name, output_name, self._current_timestep,
-            self._modelset_iteration)
+            "Write %s %s %s", self._model_name, output_name, self._current_timestep)
 
         spec = self._outputs[output_name]
 
@@ -415,12 +402,11 @@ class DataHandle(object):
             self._model_name,
             spec,
             self._current_timestep,
-            self._modelset_iteration,
             self._decision_iteration
         )
 
-    def get_results(self, output_name, model_name=None, modelset_iteration=None,
-                    decision_iteration=None, timestep=None):
+    def get_results(self, output_name, model_name=None, decision_iteration=None,
+                    timestep=None):
         """Get results values for model outputs
 
         Parameters
@@ -430,7 +416,6 @@ class DataHandle(object):
         model_name : str, default=None
             The name of a model contained in the composite model,
             or ``None`` if accessing results in the current model
-        modelset_iteration : int, default=None
         decision_iteration : int, default=None
         timestep : int or RelativeTimestep, default=None
 
@@ -466,20 +451,16 @@ class DataHandle(object):
             msg = "'{}' not recognised as output for '{}'"
             raise KeyError(msg.format(output_name, model_name))
 
-        if modelset_iteration is None:
-            modelset_iteration = self._modelset_iteration
         if decision_iteration is None:
             decision_iteration = self._decision_iteration
 
         self.logger.debug(
-            "Read %s %s %s %s", model_name, output_name, timestep,
-            modelset_iteration)
+            "Read %s %s %s", model_name, output_name, timestep)
 
         return self._store.read_results(
             self._modelrun_name,
             model_name,
             spec,
             timestep,
-            modelset_iteration,
             decision_iteration
         )

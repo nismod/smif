@@ -249,19 +249,17 @@ class MemoryInterface(DataInterface):
 
     # region Results
     def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
-                     modelset_iteration=None, decision_iteration=None):
+                     decision_iteration=None):
         key = (
-            modelrun_name, model_name, output_spec, timestep, modelset_iteration,
-            decision_iteration
+            modelrun_name, model_name, output_spec, timestep, decision_iteration
         )
         self.logger.debug("Get %s", key)
         return self._results[key]
 
     def write_results(self, data, modelrun_name, model_name, output_spec, timestep=None,
-                      modelset_iteration=None, decision_iteration=None):
+                      decision_iteration=None):
         key = (
-            modelrun_name, model_name, output_spec, timestep, modelset_iteration,
-            decision_iteration
+            modelrun_name, model_name, output_spec, timestep, decision_iteration
         )
         self.logger.debug("Set %s", key)
         self._results[key] = data

@@ -809,7 +809,7 @@ class DataInterface(metaclass=ABCMeta):
     # region Results
     @abstractmethod
     def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
-                     modelset_iteration=None, decision_iteration=None):
+                     decision_iteration=None):
         """Return results of a `model_name` in `modelrun_name` for a given `output_name`
 
         Parameters
@@ -818,7 +818,6 @@ class DataInterface(metaclass=ABCMeta):
         model_name : str
         output_spec: smif.metadata.Spec
         timestep : int, default=None
-        modelset_iteration : int, default=None
         decision_iteration : int, default=None
 
         Returns
@@ -833,7 +832,7 @@ class DataInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def write_results(self, data, modelrun_name, model_name, output_spec, timestep=None,
-                      modelset_iteration=None, decision_iteration=None):
+                      decision_iteration=None):
         """Write results of a `model_name` in `modelrun_name` for a given `output_name`
 
         Parameters
@@ -843,7 +842,6 @@ class DataInterface(metaclass=ABCMeta):
         model_name : str
         output_spec : smif.metadata.Spec
         timestep : int, optional
-        modelset_iteration : int, optional
         decision_iteration : int, optional
 
         Notes

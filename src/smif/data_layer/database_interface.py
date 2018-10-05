@@ -192,11 +192,11 @@ class DatabaseInterface(DataInterface):
 
     # region Results
     def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
-                     modelset_iteration=None, decision_iteration=None):
+                     decision_iteration=None):
         raise NotImplementedError()
 
     def write_results(self, data, modelrun_name, model_name, output_spec, timestep=None,
-                      modelset_iteration=None, decision_iteration=None):
+                      decision_iteration=None):
         raise NotImplementedError()
 
     def prepare_warm_start(self, modelrun_id):

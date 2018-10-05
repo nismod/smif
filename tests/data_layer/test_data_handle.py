@@ -185,7 +185,6 @@ class TestDataHandle():
             'test_source',  # write source model results
             mock_model.inputs['test'],  # input spec must be equivalent
             2015,
-            None,
             None
         )
         actual = data_handle.get_data("test")
@@ -204,7 +203,6 @@ class TestDataHandle():
             'test_convertor',  # write results as though from convertor
             mock_model_with_conversion.inputs['test'],
             2015,
-            None,
             None
         )
         actual = data_handle.get_data("test")
@@ -221,7 +219,6 @@ class TestDataHandle():
             'test_source',  # write source model results
             mock_model.inputs['test'],
             2015,  # base timetep
-            None,
             None
         )
         actual = data_handle.get_base_timestep_data("test")
@@ -238,7 +235,6 @@ class TestDataHandle():
             'test_source',  # write source model results
             mock_model.inputs['test'],
             2020,  # previous timetep
-            None,
             None
         )
         actual = data_handle.get_previous_timestep_data("test")
@@ -255,7 +251,6 @@ class TestDataHandle():
             'test_source',  # write source model results
             mock_model.inputs['test'],
             2015,  # current timetep
-            None,
             None
         )
         actual = data_handle["test"]
@@ -273,7 +268,6 @@ class TestDataHandle():
             'test_model',  # read results from model
             mock_model.outputs['test'],
             2015,
-            None,
             None
         )
         np.testing.assert_equal(actual, expected)
@@ -302,7 +296,6 @@ class TestDataHandle():
             'test_model',  # read results from model
             mock_model.outputs['test'],
             2015,
-            None,
             None
         )
         np.testing.assert_equal(actual, expected)
@@ -471,7 +464,7 @@ class TestDataHandleGetResults:
         """Get results from a sector model
         """
         store = mock_store
-        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None, None)
+        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None)
 
         dh = DataHandle(mock_store, 1, 2010, [2010], mock_sector_model)
         actual = dh.get_results('test_output')
@@ -484,7 +477,7 @@ class TestDataHandleGetResults:
         """Get results from a sector model within a sos model
         """
         store = mock_store
-        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None, None)
+        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None)
 
         dh = DataHandle(mock_store, 1, 2010, [2010], mock_sos_model)
         actual = dh.get_results('test_output',
