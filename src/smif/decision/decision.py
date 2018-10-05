@@ -12,10 +12,12 @@ __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
+import itertools
 import os
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
+from smif.data_layer.data_handle import ResultsHandle
 from smif.data_layer.model_loader import ModelLoader
 
 
@@ -40,21 +42,21 @@ class DecisionManager(object):
     Arguments
     ---------
     store: smif.data_layer.data_interface.DataInterface
-        An instance of a data handle activated for the SosModel
     """
 
-    def __init__(self, store, timesteps, modelrun_name, sos_model_name):
+    def __init__(self, store, timesteps, modelrun_name, sos_model):
 
         self.logger = getLogger(__name__)
 
         self._store = store
         self._modelrun_name = modelrun_name
+        self._sos_model = sos_model
         self._timesteps = timesteps
         self._decision_modules = []
 
         self.register = {}
-        for sector_model in self._store.read_sos_model(sos_model_name)['sector_models']:
-            self.register.update(self._store.read_interventions(sector_model))
+        for sector_model in sos_model.sector_models:
+            self.register.update(self._store.read_interventions(sector_model.name))
 
         self._set_up_decision_modules(modelrun_name)
 
@@ -106,7 +108,13 @@ class DecisionManager(object):
 
         Each call to this method returns a dict:
 
-            {decision_iteration (int) => list of timesteps (int)}
+            {
+                'decision_iterations': list of decision iterations (int),
+                'timesteps': list of timesteps (int),
+                'decision_links': (optional) dict of {
+                    decision iteration in current bundle: decision iteration of previous bundle
+                }
+            }
 
         A bundle is composed differently according to the implementation of the
         contained DecisionModule.  For example:
@@ -125,46 +133,63 @@ class DecisionManager(object):
         iterations, they can be performed in parallel. If each decision iteration contains
         multiple timesteps, they can also be parallelised, so long as there are no temporal
         dependencies.
+
+        Decision links are only required if the bundle timesteps do not start from the first
+        timestep of the model horizon.
         """
-        if len(self._decision_modules) > 0:
+        if self._decision_modules:
             for module in self._decision_modules:
-                yield module._get_next_decision_iteration()
+                bundle = next(module)
+                self._get_and_save_bundle_decisions(bundle)
+            # TODO merge bundles
+            yield bundle
         else:
-            yield {
+            bundle = {
                 'decision_iterations': [0],
                 'timesteps': [x for x in self._timesteps]
             }
+            self._get_and_save_bundle_decisions(bundle)
+            yield bundle
 
-    def get_decision(self, data_handle):
-        """Writes decisions for given timestep to state
+    def _get_and_save_bundle_decisions(self, bundle):
+        for iteration, timestep in itertools.product(
+                bundle['decision_iterations'], bundle['timesteps']):
+            self.get_and_save_decisions(iteration, timestep)
 
-        Calls each of the contained DecisionModule for the given timestep and
-        decision iteration in the `data_handle`, retrieving a list of decision
-        dicts (keyed by intervention name and build year).
+    def get_and_save_decisions(self, iteration, timestep):
+        """Retrieves decisions for given timestep and decision iteration from each decision
+        module and writes them to the store as state.
+
+        Calls each contained DecisionModule for the given timestep and decision iteration in
+        the `data_handle`, retrieving a list of decision dicts (keyed by intervention name and
+        build year).
 
         These decisions are then written to a state file using the data store.
 
         Arguments
         ---------
-        data_handle : smif.data_layer.data_handle.DataHandle
-
+        timestep : int
+        iteration : int
         """
-        timestep = data_handle.current_timestep
-        iteration = data_handle.decision_iteration
+        results_handle = ResultsHandle(
+            store=self._store,
+            modelrun_name=self._modelrun_name,
+            sos_model=self._sos_model,
+            current_timestep=timestep,
+            timesteps=self._timesteps,
+            decision_iteration=iteration
+        )
         decisions = []
         for module in self._decision_modules:
-            decisions.extend(module.get_decision(data_handle))
-        self.logger.debug(
-            "Retrieved %s decisions from %s",
-            len(decisions), str(self._decision_modules))
+            decisions.extend(module.get_decision(results_handle))
 
         self.logger.debug(
-            "Writing state for timestep %s and interation %s",
-            timestep,
-            iteration)
-        self._store.write_state(decisions,
-                                data_handle._modelrun_name,
-                                timestep, iteration)
+            "Retrieved %s decisions from %s", len(decisions), str(self._decision_modules))
+
+        self.logger.debug(
+            "Writing state for timestep %s and interation %s", timestep, iteration)
+
+        self._store.write_state(decisions, self._modelrun_name, timestep, iteration)
 
 
 class DecisionModule(metaclass=ABCMeta):
@@ -174,8 +199,7 @@ class DecisionModule(metaclass=ABCMeta):
 
     This class provides two main methods, ``__next__`` which is normally
     called implicitly as a call to the class as an iterator, and ``get_decision()``
-    which takes as arguments a smif.model.Model object, and ``timestep`` and
-    ``decision_iteration`` integers.
+    which takes as arguments a smif.data_layer.ResultsHandle object.
 
     Arguments
     ---------
@@ -210,8 +234,12 @@ class DecisionModule(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_decision(self, data_handle):
+    def get_decision(self, results_handle):
         """Return decisions for a given timestep and decision iteration
+
+        Parameters
+        ----------
+        results_handle : smif.data_layer.data_handle.ResultsHandle
 
         Returns
         -------
@@ -221,7 +249,7 @@ class DecisionModule(metaclass=ABCMeta):
         --------
         >>> register = {'intervention_a': {'capital_cost': {'value': 1234}}}
         >>> dm = DecisionModule([2010, 2015], register)
-        >>> dm.get_decision(data_handle)
+        >>> dm.get_decision(results_handle)
         [{'name': 'intervention_a', 'build_year': 2010}])
         """
         raise NotImplementedError
@@ -230,8 +258,8 @@ class DecisionModule(metaclass=ABCMeta):
 class PreSpecified(DecisionModule):
     """Pre-specified planning
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     timesteps : list
         A list of the timesteps included in the model horizon
     register : dict
@@ -250,13 +278,13 @@ class PreSpecified(DecisionModule):
             'timesteps': [x for x in self.timesteps]
         }
 
-    def get_decision(self, data_handle):
+    def get_decision(self, results_handle):
         """Return a dict of intervention names built in timestep
 
         Arguments
         ---------
-        data_handle : smif.data_layer.data_handle.DataHandle
-            A reference to a smif data handle
+        results_handle : smif.data_layer.data_handle.DataHandle
+            A reference to a smif results handle
 
         Returns
         -------
@@ -266,11 +294,11 @@ class PreSpecified(DecisionModule):
         --------
         >>> dm = PreSpecified([2010, 2015], register,
         [{'name': 'intervention_a', 'build_year': 2010}])
-        >>> dm.get_decision(handle)
+        >>> dm.get_decision(results_handle)
         [{'name': intervention_a', 'build_year': 2010}]
         """
         decisions = []
-        timestep = data_handle.current_timestep
+        timestep = results_handle.current_timestep
 
         assert isinstance(self._planned, list)
 
@@ -378,5 +406,5 @@ class RuleBased(DecisionModule):
             }
         return bundle
 
-    def get_decision(self, data_handle):
+    def get_decision(self, results_handle):
         return []

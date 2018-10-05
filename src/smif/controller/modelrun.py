@@ -166,7 +166,7 @@ class ModelRunner(object):
         decision_manager = DecisionManager(store,
                                            model_run.model_horizon,
                                            model_run.name,
-                                           model_run.sos_model.name)
+                                           model_run.sos_model)
 
         # Initialise the job scheduler
         self.logger.debug("Initialising the job scheduler")

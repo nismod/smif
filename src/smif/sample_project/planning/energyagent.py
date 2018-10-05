@@ -69,10 +69,11 @@ class EnergyAgent(DecisionModule):
         """
         data_handle
         """
-
         budget = 100
 
+        # TODO Should be the iteration previous to the current one?
         iteration = data_handle.decision_iteration
+
         if data_handle.current_timestep > data_handle.base_timestep:
             output_name = 'cost'
             cost = data_handle.get_results(output_name,

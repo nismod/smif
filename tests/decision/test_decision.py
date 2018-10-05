@@ -216,8 +216,11 @@ class TestDecisionManager():
         store._model_runs = {'test': {'sos_model': 'test_sos_model'}}
         store._sos_models = {'test_sos_model': {'sector_models': []}}
         store._strategies = {'test': []}
+        sos_model = Mock()
+        sos_model.name = 'test_sos_model'
+        sos_model.sector_models = []
 
-        df = DecisionManager(store, [2010, 2015], 'test', 'test_sos_model')
+        df = DecisionManager(store, [2010, 2015], 'test', sos_model)
         dm = df.decision_loop()
         bundle = next(dm)
         assert bundle == {
