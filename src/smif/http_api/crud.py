@@ -202,10 +202,10 @@ class SectorModelAPI(MethodView):
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
         if sector_model_name is None:
-            data = data_interface.read_sector_models()
+            data = data_interface.read_sector_models(skip_coords=True)
             response = jsonify(data)
         else:
-            data = data_interface.read_sector_model(sector_model_name)
+            data = data_interface.read_sector_model(sector_model_name, skip_coords=True)
             response = jsonify(data)
 
         return response
@@ -255,10 +255,10 @@ class ScenarioAPI(MethodView):
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
         if scenario_name is None:
-            data = data_interface.read_scenarios()
+            data = data_interface.read_scenarios(skip_coords=True)
             response = jsonify(data)
         else:
-            data = data_interface.read_scenario(scenario_name)
+            data = data_interface.read_scenario(scenario_name, skip_coords=True)
             response = jsonify(data)
 
         return response
@@ -311,7 +311,7 @@ class NarrativeAPI(MethodView):
             data = data_interface.read_narratives()
             response = jsonify(data)
         else:
-            data = data_interface.read_narrative(narrative_name)
+            data = data_interface.read_narrative(narrative_name, skip_coords=True)
             response = jsonify(data)
 
         return response
