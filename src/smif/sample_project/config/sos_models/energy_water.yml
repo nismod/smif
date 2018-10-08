@@ -4,7 +4,8 @@ scenarios: # Select 0 or more of the scenario sets
 - population
 - climate
 - reservoir_level  # needed for initial inputs to water_supply
-narratives: []
+narratives:
+- technology
 sector_models: # Select 1 or more of the sector models
 - water_supply
 - energy_demand

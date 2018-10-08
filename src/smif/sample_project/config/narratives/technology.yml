@@ -1,18 +1,12 @@
 name: technology
 description: Describes the evolution of technology
+sos_model: energy_water
 provides:
-  - name: smart_meter_savings
-    description: The savings from smart meters
-    dtype: float
-    unit: '%'
-  - name: clever_water_meter_savings
-    description: The savings from smart water meters
-    dtype: float
-    unit: '%'
-  - name: per_capita_water_demand
-    description: The assumed per capita demand for water
-    dtype: float
-    unit: liter/person
+  'energy_demand':
+    - name: smart_meter_savings
+  'water_supply':
+    - name: clever_water_meter_savings
+    - name: per_capita_water_demand
 variants:
   - name: high_tech_dsm
     description: High penetration of SMART technology on the demand side
