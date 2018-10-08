@@ -4,7 +4,7 @@ from collections import OrderedDict
 from copy import copy
 
 from smif.data_layer.data_interface import DataInterface
-from smif.exception import SmifDataExistsError
+from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 
 
 class MemoryInterface(DataInterface):
@@ -249,19 +249,23 @@ class MemoryInterface(DataInterface):
 
     # region Results
     def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
-                     modelset_iteration=None, decision_iteration=None):
+                     decision_iteration=None):
         key = (
-            modelrun_name, model_name, output_spec, timestep, modelset_iteration,
-            decision_iteration
+            modelrun_name, model_name, output_spec, timestep, decision_iteration
         )
         self.logger.debug("Get %s", key)
-        return self._results[key]
+
+        try:
+            results = self._results[key]
+        except KeyError:
+            raise SmifDataNotFoundError("Cannot find results for {}".format(key))
+
+        return results
 
     def write_results(self, data, modelrun_name, model_name, output_spec, timestep=None,
-                      modelset_iteration=None, decision_iteration=None):
+                      decision_iteration=None):
         key = (
-            modelrun_name, model_name, output_spec, timestep, modelset_iteration,
-            decision_iteration
+            modelrun_name, model_name, output_spec, timestep, decision_iteration
         )
         self.logger.debug("Set %s", key)
         self._results[key] = data

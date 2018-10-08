@@ -1,11 +1,13 @@
 """Test ModelData
 """
+# pylint: disable=redefined-outer-name
 from unittest.mock import MagicMock, Mock, PropertyMock
 
 import numpy as np
 from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
-from smif.data_layer.data_handle import TimestepResolutionError
+from smif.data_layer.data_handle import ResultsHandle
+from smif.exception import SmifDataError, SmifTimestepResolutionError
 from smif.metadata import Spec
 from smif.model import SectorModel
 
@@ -18,33 +20,94 @@ def mock_store():
     store.write_model_run({
         'name': 1,
         'narratives': {},
-        'sos_model': 'test_sos_model'})
+        'sos_model': 'test_sos_model',
+        'scenarios': {}
+    })
     store.write_sos_model({
         'name': 'test_sos_model',
-        'sector_models': ['sector_model_test']})
+        'sector_models': ['sector_model_test'],
+        'scenario_dependencies': [],
+        'model_dependencies': [
+            {
+                'source': 'test_source',
+                'source_output': 'test',
+                'sink_input': 'test',
+                'sink': 'test_model'
+            }
+        ]
+    })
+    store.write_model_run({
+        'name': 2,
+        'narratives': {},
+        'sos_model': 'test_converting_sos_model',
+        'scenarios': {}
+    })
+    store.write_sos_model({
+        'name': 'test_converting_sos_model',
+        'sector_models': ['sector_model_test'],
+        'scenario_dependencies': [],
+        'model_dependencies': [
+            {
+                'source': 'test_source',
+                'source_output': 'test',
+                'sink_input': 'test',
+                'sink': 'test_convertor'
+            },
+            {
+                'source': 'test_convertor',
+                'source_output': 'test',
+                'sink_input': 'test',
+                'sink': 'test_model'
+            }
+        ]
+    })
+
     store._initial_conditions = {'sector_model_test': []}
-    data = {'water_asset_a': {
-                    'build_year': 2010,
-                    'capacity': 50,
-                    'location': None,
-                    'sector': ''},
-            'water_asset_b': {
-                    'build_year': 2015,
-                    'capacity': 150,
-                    'location': None,
-                    'sector': ''},
-            'water_asset_c': {
-                    'capacity': 100,
-                    'build_year': 2015,
-                    'location': None,
-                    'sector': ''}}
+    data = {
+        'water_asset_a': {
+            'build_year': 2010,
+            'capacity': 50,
+            'location': None,
+            'sector': ''
+        },
+        'water_asset_b': {
+            'build_year': 2015,
+            'capacity': 150,
+            'location': None,
+            'sector': ''
+        },
+        'water_asset_c': {
+            'capacity': 100,
+            'build_year': 2015,
+            'location': None,
+            'sector': ''
+        }
+    }
     store._interventions['test_model'] = data
     return store
+
+
+@fixture(scope='function')
+def mock_sector_model():
+    mock_sector_model = MagicMock()
+    type(mock_sector_model).outputs = PropertyMock(return_value={'test_output': 'spec'})
+    type(mock_sector_model).name = PropertyMock(return_value='test_sector_model')
+    return mock_sector_model
+
+
+@fixture(scope='function')
+def mock_sos_model(mock_sector_model):
+    mock_sos_model = MagicMock(outputs=[('test_sector_model', 'test_output')])
+    mock_sos_model.name = 'test_sos_model'
+    mock_sos_model.models = [mock_sector_model]
+    mock_sos_model.get_model = Mock(return_value=mock_sector_model)
+    return mock_sos_model
 
 
 class EmptySectorModel(SectorModel):
     """Sector Model implementation
     """
+
     def simulate(self, data):
         """no-op
         """
@@ -86,7 +149,6 @@ def mock_model():
 
     source_model = EmptySectorModel('test_source')
     source_model.add_output(spec)
-    model.add_dependency(source_model, 'test', 'test')
 
     return model
 
@@ -118,15 +180,13 @@ def mock_model_with_conversion():
     convertor.add_output(l_spec)
     model.add_input(l_spec)
 
-    convertor.add_dependency(source, 'test', 'test')
-    model.add_dependency(convertor, 'test', 'test')
-
     return model
 
 
 class TestDataHandle():
     """
     """
+
     def test_create(self, mock_model, mock_store):
         """should be created with a DataInterface
         """
@@ -144,7 +204,6 @@ class TestDataHandle():
             'test_source',  # write source model results
             mock_model.inputs['test'],  # input spec must be equivalent
             2015,
-            None,
             None
         )
         actual = data_handle.get_data("test")
@@ -153,15 +212,16 @@ class TestDataHandle():
     def test_get_data_with_conversion(self, mock_store, mock_model_with_conversion):
         """should convert liters to milliliters (1 -> 0.001)
         """
-        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model_with_conversion)
+        modelrun_name = 2
+        data_handle = DataHandle(
+            mock_store, modelrun_name, 2015, [2015, 2020], mock_model_with_conversion)
         expected = np.array([[0.001]])
         mock_store.write_results(
             expected,
-            1,
+            modelrun_name,
             'test_convertor',  # write results as though from convertor
             mock_model_with_conversion.inputs['test'],
             2015,
-            None,
             None
         )
         actual = data_handle.get_data("test")
@@ -178,7 +238,6 @@ class TestDataHandle():
             'test_source',  # write source model results
             mock_model.inputs['test'],
             2015,  # base timetep
-            None,
             None
         )
         actual = data_handle.get_base_timestep_data("test")
@@ -195,7 +254,6 @@ class TestDataHandle():
             'test_source',  # write source model results
             mock_model.inputs['test'],
             2020,  # previous timetep
-            None,
             None
         )
         actual = data_handle.get_previous_timestep_data("test")
@@ -212,7 +270,6 @@ class TestDataHandle():
             'test_source',  # write source model results
             mock_model.inputs['test'],
             2015,  # current timetep
-            None,
             None
         )
         actual = data_handle["test"]
@@ -230,7 +287,6 @@ class TestDataHandle():
             'test_model',  # read results from model
             mock_model.outputs['test'],
             2015,
-            None,
             None
         )
         np.testing.assert_equal(actual, expected)
@@ -259,7 +315,6 @@ class TestDataHandle():
             'test_model',  # read results from model
             mock_model.outputs['test'],
             2015,
-            None,
             None
         )
         np.testing.assert_equal(actual, expected)
@@ -292,6 +347,7 @@ class TestDataHandle():
 class TestDataHandleState():
     """Test handling of initial conditions, decision interventions and intervention state.
     """
+
     def test_get_state(self, mock_store, mock_model):
         """should get decision module state for given timestep/decision_iteration
 
@@ -341,7 +397,7 @@ class TestDataHandleState():
                  'capacity': 150,
                  'location': None,
                  'sector': ''}
-            }
+        }
         assert actual == expected
 
     def test_interventions_sector_model_ignore_unrecog(self, mock_store, mock_model):
@@ -361,11 +417,11 @@ class TestDataHandleState():
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         actual = data_handle.get_current_interventions()
         expected = {'water_asset_a': {
-                'build_year': 2010,
-                'capacity': 50,
-                'location': None,
-                'sector': ''
-            }
+            'build_year': 2010,
+            'capacity': 50,
+            'location': None,
+            'sector': ''
+        }
         }
         assert actual == expected
 
@@ -378,6 +434,7 @@ class TestDataHandleState():
 class TestDataHandleTimesteps():
     """Test timestep helper properties
     """
+
     def test_current_timestep(self, empty_model, mock_store):
         """should return current timestep
         """
@@ -400,59 +457,24 @@ class TestDataHandleTimesteps():
         """should raise error if there's no previous timestep in the list
         """
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], empty_model)
-        with raises(TimestepResolutionError) as ex:
+        with raises(SmifTimestepResolutionError) as ex:
             data_handle.previous_timestep
         assert 'no previous timestep' in str(ex)
 
 
 class TestDataHandleGetResults:
 
-    @fixture(scope='function')
-    def mock_sector_model(self):
-        mock_sector_model = MagicMock()
-        type(mock_sector_model).outputs = PropertyMock(return_value={'test_output': 'spec'})
-        type(mock_sector_model).name = PropertyMock(return_value='test_sector_model')
-        return mock_sector_model
-
-    @fixture(scope='function')
-    def mock_sos_model(self, mock_sector_model):
-        mock_sos_model = MagicMock(outputs=[('test_sector_model', 'test_output')])
-        mock_sos_model.name = 'test_sos_model'
-        mock_sos_model.models = {'test_sector_model': mock_sector_model}
-        return mock_sos_model
-
     def test_get_results_sectormodel(self, mock_store,
                                      mock_sector_model):
         """Get results from a sector model
         """
         store = mock_store
-        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None, None)
+        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None)
 
         dh = DataHandle(mock_store, 1, 2010, [2010], mock_sector_model)
         actual = dh.get_results('test_output')
         expected = 42
         assert actual == expected
-
-    def test_get_results_sos_model(self, mock_store,
-                                   mock_sector_model,
-                                   mock_sos_model):
-        """Get results from a sector model within a sos model
-        """
-        store = mock_store
-        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None, None)
-
-        dh = DataHandle(mock_store, 1, 2010, [2010], mock_sos_model)
-        actual = dh.get_results('test_output',
-                                model_name='test_sector_model')
-        expected = 42
-        assert actual == expected
-
-    def test_get_results_no_output_sos(self, mock_store,
-                                       mock_sos_model):
-        with raises(KeyError):
-            dh = DataHandle(mock_store, 1, 2010, [2010], mock_sos_model)
-            dh.get_results('no_such_output',
-                           model_name='test_sector_model')
 
     def test_get_results_no_output_sector(self, mock_store,
                                           mock_sector_model):
@@ -461,10 +483,33 @@ class TestDataHandleGetResults:
             dh = DataHandle(mock_store, 1, 2010, [2010], mock_sector_model)
             dh.get_results('no_such_output')
 
-    def test_get_results_wrong_name_sos(self,
-                                        mock_store,
-                                        mock_sos_model):
+
+class TestResultsHandle:
+
+    def test_get_results_sos_model(self, mock_store, mock_sector_model, mock_sos_model):
+        """Get results from a sector model within a sos model
+        """
+        store = mock_store
+        store.write_results(42, 'test_modelrun', 'test_sector_model', 'spec', 2010, None)
+
+        dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
+        actual = dh.get_results('test_sector_model', 'test_output', 2010, None)
+        expected = 42
+        assert actual == expected
+
+    def test_get_results_no_output_sos(self, mock_store, mock_sos_model):
         with raises(KeyError):
-            dh = DataHandle(mock_store, 1, 2010, [2010], mock_sos_model)
-            dh.get_results('test_output',
-                           model_name='no_such_model')
+            dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
+            dh.get_results('test_sector_model', 'no_such_output', None, None)
+
+    def test_get_results_wrong_name_sos(self, mock_store, mock_sos_model):
+        with raises(KeyError):
+            dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
+            dh.get_results('no_such_model', 'test_output', None, None)
+
+    def test_get_results_not_exists(self, mock_store, mock_sos_model):
+        store = mock_store
+        store.write_results(42, 'test_modelrun', 'test_sector_model', 'spec', 2010, None)
+        dh = ResultsHandle(store, 'test_modelrun', mock_sos_model)
+        with raises(SmifDataError):
+            dh.get_results('test_sector_model', 'test_output', 2099, None)

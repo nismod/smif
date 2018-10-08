@@ -34,7 +34,6 @@ The key functions include:
   approaches
 
 """
-import logging
 import sys
 from abc import ABCMeta, abstractmethod
 
@@ -89,16 +88,12 @@ class SectorModel(Model, metaclass=ABCMeta):
     def __init__(self, name):
         super().__init__(name)
 
-        self.initial_conditions = []
-        self._interventions = {}
-
-        self.logger = logging.getLogger(__name__)
-
     @classmethod
     def from_dict(cls, config):
+        """Create object from dictionary serialisation
+        """
         model = cls(config['name'])
         model.description = config['description']
-        model.path = config['path']
         for input_ in config['inputs']:
             model.add_input(Spec.from_dict(input_))
         for output in config['outputs']:

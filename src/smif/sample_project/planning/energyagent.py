@@ -26,6 +26,8 @@ class EnergyAgent(DecisionModule):
         self.converged = False
         self.current_timestep_index = 0
         self.current_iteration = 0
+        # keep internal account of max iteration reached per timestep
+        self._max_iteration_by_timestep = {0: 0}
         self.model_name = 'energy_supply'
 
     @staticmethod
@@ -35,16 +37,28 @@ class EnergyAgent(DecisionModule):
         return EnergyAgent(timesteps, register)
 
     def _get_next_decision_iteration(self):
-            if self.converged and self.current_timestep_index == len(self.timesteps) - 1:
-                return None
-            elif self.converged and self.current_timestep_index <= len(self.timesteps):
-                self.converged = False
-                self.current_timestep_index += 1
-                self.current_iteration += 1
-                return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
-            else:
-                self.current_iteration += 1
-                return {self.current_iteration: [self.timesteps[self.current_timestep_index]]}
+        if self.converged and self.current_timestep_index == len(self.timesteps) - 1:
+            return None
+        elif self.converged and self.current_timestep_index <= len(self.timesteps):
+            self.converged = False
+            self.current_timestep_index += 1
+            self.current_iteration += 1
+            return self._make_bundle()
+        else:
+            self.current_iteration += 1
+            return self._make_bundle()
+
+    def _make_bundle(self):
+        bundle = {
+            'decision_iterations': [self.current_iteration],
+            'timesteps': [self.timesteps[self.current_timestep_index]],
+        }
+        if self.current_timestep_index != 0:
+            bundle['decision_links'] = {
+                self.current_iteration: self._max_iteration_by_timestep[
+                    self.current_timestep_index - 1]
+            }
+        return bundle
 
     def get_decision(self, data_handle):
         budget = self.run_regulator(data_handle)
@@ -55,10 +69,11 @@ class EnergyAgent(DecisionModule):
         """
         data_handle
         """
-
         budget = 100
 
+        # TODO Should be the iteration previous to the current one?
         iteration = data_handle.decision_iteration
+
         if data_handle.current_timestep > data_handle.base_timestep:
             output_name = 'cost'
             cost = data_handle.get_results(output_name,

@@ -1027,7 +1027,7 @@ class TestResults:
             results/
             <modelrun_name>/
             <model_name>/
-            decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/
+            decision_<id>/
                 output_<output_name>_
                 timestep_<timestep>_
                 regions_<spatial_resolution>_
@@ -1040,7 +1040,7 @@ class TestResults:
         spatial_resolution = 'lad'
         temporal_resolution = 'annual'
 
-        # 1. case with neither modelset nor decision
+        # 1. case with no decision
         expected = np.array([[[1.0]]])
         csv_contents = "region,interval,value\noxford,1,1.0\n"
         binary_contents = pa.serialize(expected).to_buffer()
@@ -1050,7 +1050,7 @@ class TestResults:
             "results",
             modelrun,
             model,
-            "decision_none_modelset_none",
+            "decision_none",
             "output_{}_timestep_{}".format(
                 output,
                 timestep
@@ -1083,7 +1083,7 @@ class TestResults:
             "results",
             modelrun,
             model,
-            "decision_{}_modelset_none".format(decision_iteration),
+            "decision_{}".format(decision_iteration),
             "output_{}_timestep_{}".format(
                 output,
                 timestep
@@ -1107,78 +1107,6 @@ class TestResults:
                                                  None, decision_iteration)
         assert actual == expected
 
-        # 3. case with modelset
-        modelset_iteration = 1
-        expected = np.array([[[3.0]]])
-        csv_contents = "region,interval,value\noxford,1,3.0\n"
-        binary_contents = pa.serialize(expected).to_buffer()
-        path = os.path.join(
-            str(setup_folder_structure),
-            "results",
-            modelrun,
-            model,
-            "decision_none_modelset_{}".format(modelset_iteration),
-            "output_{}_timestep_{}".format(
-                output,
-                timestep
-            )
-        )
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        with open(path + '.csv', 'w') as fh:
-            fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output,
-                                              spatial_resolution,
-                                              temporal_resolution, timestep,
-                                              modelset_iteration)
-        assert actual == expected
-
-        with pa.OSFile(path + '.dat', 'wb') as f:
-            f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output,
-                                                 spatial_resolution,
-                                                 temporal_resolution, timestep,
-                                                 modelset_iteration)
-        assert actual == expected
-
-        # 4. case with both decision and modelset
-        expected = np.array([[[4.0]]])
-        csv_contents = "region,interval,value\noxford,1,4.0\n"
-        binary_contents = pa.serialize(expected).to_buffer()
-        path = os.path.join(
-            str(setup_folder_structure),
-            "results",
-            modelrun,
-            model,
-            "decision_{}_modelset_{}".format(
-                modelset_iteration,
-                decision_iteration
-            ),
-            "output_{}_timestep_{}".format(
-                output,
-                timestep
-            )
-        )
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        with open(path + '.csv', 'w') as fh:
-            fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output,
-                                              spatial_resolution,
-                                              temporal_resolution, timestep,
-                                              modelset_iteration,
-                                              decision_iteration)
-        assert actual == expected
-
-        with pa.OSFile(path + '.dat', 'wb') as f:
-            f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output,
-                                                 spatial_resolution,
-                                                 temporal_resolution, timestep,
-                                                 modelset_iteration,
-                                                 decision_iteration)
-        assert actual == expected
-
 
 class TestWarmStart:
     """If re-running a ModelRun with warm-start specified explicitly, results should be checked
@@ -1200,7 +1128,7 @@ class TestWarmStart:
         previous_results_path = os.path.join(
             str(setup_folder_structure),
             "results", modelrun, model,
-            "decision_none_modelset_none"
+            "decision_none"
         )
         os.makedirs(previous_results_path, exist_ok=True)
 
@@ -1233,7 +1161,7 @@ class TestWarmStart:
         current_results_path = os.path.join(
             str(setup_folder_structure),
             "results", modelrun, model,
-            "decision_none_modelset_none"
+            "decision_none"
         )
 
         warm_start_results = os.listdir(current_results_path)

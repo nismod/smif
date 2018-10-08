@@ -17,18 +17,18 @@ class TestSpec():
     @fixture(scope='function')
     def get_spec(self):
         spec = Spec(
-                name='population',
-                description='Population by age class',
-                coords=[
-                    Coordinates('countries', ["England", "Wales"]),
-                    Coordinates('age', [">30", "<30"])
-                ],
-                dtype='int',
-                default=0,
-                abs_range=(0, float('inf')),
-                exp_range=(10e6, 10e9),
-                unit='people'
-            )
+            name='population',
+            description='Population by age class',
+            coords=[
+                Coordinates('countries', ["England", "Wales"]),
+                Coordinates('age', [">30", "<30"])
+            ],
+            dtype='int',
+            default=0,
+            abs_range=(0, float('inf')),
+            exp_range=(10e6, 10e9),
+            unit='people'
+        )
         return spec
 
     def test_construct(self, get_spec):

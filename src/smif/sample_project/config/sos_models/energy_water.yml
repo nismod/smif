@@ -3,6 +3,7 @@ description: 'The future supply and demand of energy and water for the UK'
 scenarios: # Select 0 or more of the scenario sets
 - population
 - climate
+- reservoir_level  # needed for initial inputs to water_supply
 narratives: []
 sector_models: # Select 1 or more of the sector models
 - water_supply
@@ -20,6 +21,10 @@ scenario_dependencies:
   source_output: population
   sink: energy_demand
   sink_input: population
+- source: reservoir_level
+  source_output: reservoir_level
+  sink: water_supply
+  sink_input: reservoir_level
 model_dependencies:
 - source: water_supply
   source_output: energy_demand
@@ -33,4 +38,4 @@ model_dependencies:
   source_output: reservoir_level
   sink: water_supply
   sink_input: reservoir_level
-  timestep_offset: -1  # suggested declaration of inter-timestep dep.
+  timestep: PREVIOUS  # dependency on own outputs from previous timestep

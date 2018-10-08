@@ -848,31 +848,37 @@ class DatafileInterface(DataInterface):
 
     # region Results
     def read_results(self, modelrun_id, model_name, output_spec, timestep=None,
-                     modelset_iteration=None, decision_iteration=None):
+                     decision_iteration=None):
         if timestep is None:
             raise NotImplementedError()
 
         results_path = self._get_results_path(
             modelrun_id, model_name, output_spec.name,
-            timestep, modelset_iteration, decision_iteration
+            timestep, decision_iteration
         )
 
-        if self.storage_format == 'local_csv':
-            data = self._get_data_from_csv(results_path)
-            return self.data_list_to_ndarray(data, output_spec)
-        elif self.storage_format == 'local_binary':
-            return self._get_data_from_native_file(results_path)
-        else:
-            raise NotImplementedError("Unrecognised storage format: %s" % self.storage_format)
+        try:
+            if self.storage_format == 'local_csv':
+                data = self._get_data_from_csv(results_path)
+                return self.data_list_to_ndarray(data, output_spec)
+            elif self.storage_format == 'local_binary':
+                return self._get_data_from_native_file(results_path)
+            else:
+                msg = "Unrecognised storage format: %s"
+                raise NotImplementedError(msg % self.storage_format)
+        except (FileNotFoundError, pa.lib.ArrowIOError):
+            key = str([modelrun_id, model_name, output_spec.name, timestep,
+                       decision_iteration])
+            raise SmifDataNotFoundError("Could not find results for {}".format(key))
 
     def write_results(self, data, modelrun_id, model_name, output_spec, timestep=None,
-                      modelset_iteration=None, decision_iteration=None):
+                      decision_iteration=None):
         if timestep is None:
             raise NotImplementedError()
 
         results_path = self._get_results_path(
             modelrun_id, model_name, output_spec.name,
-            timestep, modelset_iteration, decision_iteration
+            timestep, decision_iteration
         )
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
@@ -953,19 +959,18 @@ class DatafileInterface(DataInterface):
                     result['model_name'],
                     result['output_name'],
                     result['timestep'],
-                    result['modelset_iteration'],
                     result['decision_iteration']))
 
         self.logger.info("Warm start will resume at timestep %s", latest_timestep)
         return latest_timestep
 
     def _get_results_path(self, modelrun_id, model_name, output_name, timestep,
-                          modelset_iteration=None, decision_iteration=None):
+                          decision_iteration=None):
         """Return path to filename for a given output without file extension
 
         On the pattern of:
             results/<modelrun_name>/<model_name>/
-            decision_<id>_modelset_<id>/
+            decision_<id>/
             output_<output_name>_timestep_<timestep>.csv
 
         Parameters
@@ -974,15 +979,12 @@ class DatafileInterface(DataInterface):
         model_name : str
         output_name : str
         timestep : str or int
-        modelset_iteration : int, optional
         decision_iteration : int, optional
 
         Returns
         -------
         path : strs
         """
-        if modelset_iteration is None:
-            modelset_iteration = 'none'
         if decision_iteration is None:
             decision_iteration = 'none'
 
@@ -995,7 +997,7 @@ class DatafileInterface(DataInterface):
 
         path = os.path.join(
             self.results_folder, modelrun_id, model_name,
-            "decision_{}_modelset_{}".format(decision_iteration, modelset_iteration),
+            "decision_{}".format(decision_iteration),
             "output_{}_timestep_{}.{}".format(output_name, timestep, ext)
         )
         return path
@@ -1005,7 +1007,7 @@ class DatafileInterface(DataInterface):
 
         On the pattern of:
             results/<modelrun_name>/<model_name>/
-            decision_<id>_modelset_<id>/
+            decision_<id>/
             output_<output_name>_timestep_<timestep>.csv
 
         Parameters
@@ -1016,19 +1018,15 @@ class DatafileInterface(DataInterface):
         -------
         dict : A dict containing all of the metadata
         """
-        modelset_iteration = None
         decision_iteration = None
 
         data = re.findall(r"[\w']+", path)
 
         for section in data[2:len(data)]:
-            if 'modelset' in section or 'decision' in section:
+            if 'decision' in section:
                 regex_decision = re.findall(r"decision_(\d{1,})", section)
-                regex_modelset = re.findall(r"modelset_(\d{1,})", section)
                 if regex_decision:
                     decision_iteration = int(regex_decision[0])
-                if regex_decision:
-                    modelset_iteration = int(regex_modelset[0])
             elif section.startswith('output'):
                 results = self._parse_output_section(section)
             elif section == 'csv':
@@ -1041,7 +1039,6 @@ class DatafileInterface(DataInterface):
             'model_name': data[1],
             'output_name': '_'.join(results['output']),
             'timestep': results['timestep'],
-            'modelset_iteration': modelset_iteration,
             'decision_iteration': decision_iteration,
             'storage_format': storage_format
         }

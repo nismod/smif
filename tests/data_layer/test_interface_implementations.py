@@ -4,7 +4,7 @@ import numpy as np
 from pytest import fixture, mark, param, raises
 from smif.data_layer import (DatabaseInterface, DatafileInterface,
                              MemoryInterface)
-from smif.exception import SmifDataExistsError
+from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 from smif.metadata import Spec
 
 
@@ -609,6 +609,18 @@ class TestResults():
         """
         start = handler.prepare_warm_start('test_modelrun')
         assert start is None
+
+    def test_read_results_raises(self, handler):
+        results_in = np.array(1)
+        modelrun_name = 'test_modelrun'
+        model_name = 'energy'
+        timestep = 2010
+        output_spec = Spec(name='energy_use', dtype='float')
+
+        handler.write_results(results_in, modelrun_name, model_name, output_spec, timestep)
+
+        with raises(SmifDataNotFoundError):
+            handler.read_results(modelrun_name, model_name, output_spec, 2020)
 
 
 def sorted_by_name(list_):

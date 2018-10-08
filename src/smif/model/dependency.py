@@ -3,7 +3,12 @@ output and sink model input.
 
 A Dependency is an edge in the model process graph. No processing happens on dependency edges,
 only on the Model nodes.
+
+A Dependency can have a timestep specified - by default this is the current timestep, but a
+system-of-systems model may also want to specify that data should be provided from the previous
+timestep or a base timestep.
 """
+from smif.metadata import RelativeTimestep
 
 
 class Dependency(object):
@@ -19,8 +24,11 @@ class Dependency(object):
         The sink model object
     sink : smif.metadata.Spec
         The sink input description
+    timestep : smif.metadata.RelativeTimestep, optional
+        The relative timestep of the dependency, defaults to CURRENT
     """
-    def __init__(self, source_model, source, sink_model, sink):
+    def __init__(self, source_model, source, sink_model, sink,
+                 timestep=RelativeTimestep.CURRENT):
         # Insist on identical metadata - conversions must be explicit
         if source != sink:
             diff = ""
@@ -41,13 +49,30 @@ class Dependency(object):
         self.source = source
         self.sink_model = sink_model
         self.sink = sink
+        self.timestep = timestep
+
+    def as_dict(self):
+        """Serialise to dictionary representation
+        """
+        config = {
+            'source': self.source_model.name,
+            'source_output': self.source.name,
+            'sink': self.sink_model.name,
+            'sink_input': self.sink.name
+        }
+        try:
+            config['timestep'] = self.timestep.value
+        except AttributeError:
+            config['timestep'] = self.timestep
+        return config
 
     def __repr__(self):
-        return "<Dependency({}, {}, {}, {})>".format(
-            self.source_model, self.source, self.sink_model, self.sink)
+        return "<Dependency({}, {}, {}, {}, {})>".format(
+            self.source_model, self.source, self.sink_model, self.sink, self.timestep)
 
     def __eq__(self, other):
         return self.source_model == other.source_model \
             and self.source == other.source \
             and self.sink_model == other.sink_model \
-            and self.sink == other.sink
+            and self.sink == other.sink \
+            and self.timestep == other.timestep

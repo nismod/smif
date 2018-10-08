@@ -4,7 +4,7 @@ from copy import copy
 from unittest.mock import Mock
 
 from pytest import fixture, raises
-from smif.metadata import Spec
+from smif.metadata import RelativeTimestep, Spec
 from smif.model.dependency import Dependency
 
 
@@ -13,6 +13,7 @@ def dep():
     """Dependency with mocked models
     """
     source_model = Mock()
+    source_model.name = 'source_model'
     source_spec = Spec(
         name='source',
         dtype='float',
@@ -20,6 +21,7 @@ def dep():
         coords={'x': [0, 1], 'y': [0, 1]},
     )
     sink_model = Mock()
+    sink_model.name = 'sink_model'
     sink_spec = Spec(
         name='sink',
         dtype='float',
@@ -37,7 +39,7 @@ def test_create():
         name='source',
         dtype='float',
         dims=['x', 'y'],
-        coords={'x': [0, 1], 'y': [0, 1]},
+        coords={'x': [0, 1], 'y': [0, 1]}
     )
     sink_model = Mock()
     sink_spec = Spec(
@@ -46,11 +48,17 @@ def test_create():
         dims=['x', 'y'],
         coords={'x': [0, 1], 'y': [0, 1]},
     )
-    dep = Dependency(source_model, source_spec, sink_model, sink_spec)
+    dep = Dependency(source_model, source_spec, sink_model, sink_spec,
+                     RelativeTimestep.PREVIOUS)
     assert dep.source_model == source_model
     assert dep.source == source_spec
     assert dep.sink_model == sink_model
     assert dep.sink == sink_spec
+    assert dep.timestep == RelativeTimestep.PREVIOUS
+
+    # default to current timestep
+    dep = Dependency(source_model, source_spec, sink_model, sink_spec)
+    assert dep.timestep == RelativeTimestep.CURRENT
 
 
 def test_create_with_identical_meta():
@@ -117,9 +125,19 @@ def test_create_with_identical_meta():
 
 def test_repr(dep):
     actual = repr(dep)
-    expected = "<Dependency({}, {}, {}, {})>".format(
-        dep.source_model, dep.source, dep.sink_model, dep.sink)
+    expected = "<Dependency({}, {}, {}, {}, {})>".format(
+        dep.source_model, dep.source, dep.sink_model, dep.sink, dep.timestep)
     assert actual == expected
+
+
+def test_as_dict(dep):
+    assert dep.as_dict() == {
+        'source': 'source_model',
+        'source_output': 'source',
+        'sink_input': 'sink',
+        'sink': 'sink_model',
+        'timestep': 'CURRENT'
+    }
 
 
 def test_equality(dep):
@@ -146,5 +164,9 @@ def test_equality(dep):
     assert a != e
 
     f = copy(dep)
-    f.sink_model = Mock
+    f.sink_model = Mock()
     assert a != f
+
+    g = copy(dep)
+    g.timestep = RelativeTimestep.BASE
+    assert a != g

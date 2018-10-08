@@ -52,9 +52,10 @@ A more comprehensive example with one scenario and one scenario model:
 #         from smif.model import Model
 from smif.model.model import Model, ModelOperation
 from smif.model.sector_model import SectorModel
-from smif.model.scenario_model import ScenarioModel
+from smif.model.model import ScenarioModel
+from smif.model.sos_model import SosModel
 
 
 # Define what should be imported as * ::
 #         from smif.model import *
-__all__ = ['Model', 'ModelOperation', 'SectorModel', 'ScenarioModel']
+__all__ = ['Model', 'ModelOperation', 'SectorModel', 'ScenarioModel', 'SosModel']

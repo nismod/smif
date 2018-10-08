@@ -1,33 +1,29 @@
 from copy import copy
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-import networkx as nx
 from pytest import fixture, raises
 from smif.controller.modelrun import ModelRunBuilder, ModelRunner
 from smif.exception import SmifModelRunError
+from smif.metadata import RelativeTimestep, Spec
+from smif.model import ScenarioModel, SectorModel, SosModel
+
+
+class EmptySectorModel(SectorModel):
+    def simulate(self, data):
+        return data
 
 
 @fixture(scope='function')
 def config_data():
     """Config for a model run
     """
-    sos_model = Mock()
-    sos_model.name = "test_sos_model"
-    sos_model.parameters = {}
+    sos_model = SosModel('sos_model')
 
-    climate_scenario = Mock()
-    climate_scenario.name = 'climate'
-    climate_scenario.deps = {}
-    sos_model.scenario_models = {'climate': climate_scenario}
+    climate_scenario = ScenarioModel('climate')
+    sos_model.add_model(climate_scenario)
 
-    energy_supply = Mock()
-    energy_supply.name = 'energy_supply'
-    energy_supply.deps = {}
-    energy_supply.parameters = {}
-    sos_model.models = {'energy_supply': energy_supply}
-
-    graph = nx.DiGraph()
-    graph.add_node('energy_supply', model=climate_scenario)
+    energy_supply = EmptySectorModel('energy_supply')
+    sos_model.add_model(energy_supply)
 
     config = {
         'name': 'unique_model_run_name',
@@ -39,8 +35,6 @@ def config_data():
             'climate': 'RCP4.5'
         },
         'narratives': [
-            Mock(data={'model_name': {'parameter_name': 0}}),
-            Mock(data={'model_name': {'parameter_name': 0}})
         ],
         'strategies': [
             {
@@ -70,11 +64,11 @@ def model_run(config_data):
 def mock_model_run():
     """Minimal mock ModelRun
     """
-    sos_model = Mock()
+    sos_model = SosModel('test_sos_model')
     sos_model.parameters = {}
-    sos_model.models = []
 
     modelrun = Mock()
+    modelrun.name = 'test'
     modelrun.strategies = []
     modelrun.sos_model = sos_model
     modelrun.narratives = []
@@ -88,11 +82,19 @@ def mock_store():
     """Minimal mock store
     """
     store = Mock()
-    store.read_model_run = Mock(return_value={'narratives': {}})
+    store.read_model_run = Mock(return_value={
+        'sos_model': 'test_sos_model',
+        'narratives': {},
+        'scenarios': {}
+    })
+    store.read_sos_model = Mock(return_value={
+        'name': 'test_sos_model',
+        'model_dependencies': [],
+        'scenario_dependencies': [],
+        'sector_models': ['sector_model_test']
+    })
     store.read_strategies = Mock(return_value=[])
     store.read_all_initial_conditions = Mock(return_value=[])
-
-    store.read_sos_model = Mock(return_value={'sector_models': ['sector_model_test']})
     store.read_interventions = Mock(return_value={})
 
     return store
@@ -128,7 +130,7 @@ class TestModelRunBuilder:
 
         with raises(SmifModelRunError) as ex:
             builder.finish()
-        assert "ScenarioSet 'population' is selected in the ModelRun " \
+        assert "ScenarioSets {'population'} are selected in the ModelRun " \
                "configuration but not found in the SosModel configuration" in str(ex)
 
 
@@ -167,48 +169,41 @@ class TestModelRun:
 class TestModelRunnerJobGraphs():
     """Cover all JobGraph corner cases
     """
-    @patch('smif.controller.scheduler.JobScheduler.add')
-    def test_jobgraph_single_timestep(self, mock_add, mock_store, mock_model_run):
+    def test_jobgraph_single_timestep(self, mock_model_run):
         """
         a[before]
         |
         v
         a[sim]
         """
-        mock_add.return_value = (0, None)
-        model_a = Mock()
-        model_a.name = 'model_a'
-        model_a.deps = {}
-        model_a.parameters = {}
-
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a
-        }
+        model_a = EmptySectorModel('model_a')
+        mock_model_run.sos_model.add_model(model_a)
 
         runner = ModelRunner()
-        runner.solve_model(mock_model_run, mock_store)
+        bundle = {
+            'decision_iterations': [0],
+            'timesteps': [1]
+        }
+        job_graph = runner.build_job_graph(mock_model_run, bundle)
+        print(job_graph.nodes, job_graph.edges)
 
-        call_args = mock_add.call_args
-        job_graph = call_args[0][0]
-
-        actual = list(job_graph.predecessors('before_model_run_model_a'))
+        actual = list(job_graph.predecessors('test_before_model_run_model_a'))
         expected = []
         assert actual == expected
 
-        actual = list(job_graph.successors('before_model_run_model_a'))
-        expected = ['simulate_1_0_model_a']
+        actual = list(job_graph.successors('test_before_model_run_model_a'))
+        expected = ['test_simulate_1_0_model_a']
         assert actual == expected
 
-        actual = list(job_graph.predecessors('simulate_1_0_model_a'))
-        expected = ['before_model_run_model_a']
+        actual = list(job_graph.predecessors('test_simulate_1_0_model_a'))
+        expected = ['test_before_model_run_model_a']
         assert actual == expected
 
-        actual = list(job_graph.successors('simulate_1_0_model_a'))
+        actual = list(job_graph.successors('test_simulate_1_0_model_a'))
         expected = []
         assert actual == expected
 
-    @patch('smif.controller.scheduler.JobScheduler.add')
-    def test_jobgraph_multiple_timesteps(self, mock_add, mock_store, mock_model_run):
+    def test_jobgraph_multiple_timesteps(self, mock_model_run):
         """
         a[before]
         |        |
@@ -216,50 +211,78 @@ class TestModelRunnerJobGraphs():
         a[sim]  a[sim]
         t=1     t=2
         """
-        mock_add.return_value = (0, None)
-        model_a = Mock()
-        model_a.name = 'model_a'
-        model_a.deps = {}
-        model_a.parameters = {}
-
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a
-        }
+        model_a = EmptySectorModel('model_a')
+        mock_model_run.sos_model.add_model(model_a)
 
         mock_model_run.model_horizon = [1, 2]
 
         runner = ModelRunner()
-        runner.solve_model(mock_model_run, mock_store)
+        bundle = {
+            'decision_iterations': [0],
+            'timesteps': [1, 2]
+        }
+        job_graph = runner.build_job_graph(mock_model_run, bundle)
 
-        call_args = mock_add.call_args
-        job_graph = call_args[0][0]
-
-        actual = list(job_graph.predecessors('before_model_run_model_a'))
+        actual = list(job_graph.predecessors('test_before_model_run_model_a'))
         expected = []
         assert actual == expected
 
-        actual = list(job_graph.successors('before_model_run_model_a'))
-        expected = ['simulate_1_0_model_a', 'simulate_2_0_model_a']
+        actual = list(job_graph.successors('test_before_model_run_model_a'))
+        expected = ['test_simulate_1_0_model_a', 'test_simulate_2_0_model_a']
         assert sorted(actual) == sorted(expected)
 
-        actual = list(job_graph.predecessors('simulate_1_0_model_a'))
-        expected = ['before_model_run_model_a']
+        actual = list(job_graph.predecessors('test_simulate_1_0_model_a'))
+        expected = ['test_before_model_run_model_a']
         assert actual == expected
 
-        actual = list(job_graph.successors('simulate_1_0_model_a'))
+        actual = list(job_graph.successors('test_simulate_1_0_model_a'))
         expected = []
         assert actual == expected
 
-        actual = list(job_graph.predecessors('simulate_2_0_model_a'))
-        expected = ['before_model_run_model_a']
+        actual = list(job_graph.predecessors('test_simulate_2_0_model_a'))
+        expected = ['test_before_model_run_model_a']
         assert actual == expected
 
-        actual = list(job_graph.successors('simulate_2_0_model_a'))
+        actual = list(job_graph.successors('test_simulate_2_0_model_a'))
         expected = []
         assert actual == expected
 
-    @patch('smif.controller.scheduler.JobScheduler.add')
-    def test_jobgraph_multiple_models(self, mock_add, mock_store, mock_model_run):
+    def test_jobgraph_multiple_timesteps_with_dep(self, mock_model_run):
+        """
+        a[before]
+        |        |
+        v        V
+        a[sim]   a[sim]
+        t=1 ---> t=2
+        """
+        model_a = EmptySectorModel('model_a')
+        model_a.add_input(Spec('input', dtype='float'))
+        model_a.add_output(Spec('output', dtype='float'))
+
+        mock_model_run.sos_model.add_model(model_a)
+        mock_model_run.sos_model.add_dependency(
+            model_a, 'output',
+            model_a, 'input',
+            RelativeTimestep.PREVIOUS)
+
+        mock_model_run.model_horizon = [1, 2]
+
+        runner = ModelRunner()
+        bundle = {
+            'decision_iterations': [0],
+            'timesteps': [1, 2]
+        }
+        job_graph = runner.build_job_graph(mock_model_run, bundle)
+
+        actual = list(job_graph.predecessors('test_simulate_1_0_model_a'))
+        expected = ['test_before_model_run_model_a']
+        assert actual == expected
+
+        actual = list(job_graph.predecessors('test_simulate_2_0_model_a'))
+        expected = ['test_before_model_run_model_a', 'test_simulate_1_0_model_a']
+        assert sorted(actual) == sorted(expected)
+
+    def test_jobgraph_multiple_models(self, mock_model_run):
         """
         a[before]   b[before]   c[before]
         |           |           |
@@ -267,74 +290,58 @@ class TestModelRunnerJobGraphs():
         a[sim] ---> b[sim] ---> c[sim]
            |------------------>
         """
-        mock_add.return_value = (0, None)
-        model_a = Mock()
-        model_b = Mock()
-        model_c = Mock()
-        model_a.name = 'model_a'
-        model_b.name = 'model_b'
-        model_c.name = 'model_c'
-        model_a.parameters = {}
-        model_b.parameters = {}
-        model_c.parameters = {}
+        model_a = EmptySectorModel('model_a')
+        model_a.add_output(Spec('a', dtype='float'))
 
-        dep_a_b = Mock()
-        dep_a_b.source_model.name = 'model_a'
-        dep_a_b.sink_model.name = 'model_b'
-        dep_b_c = Mock()
-        dep_b_c.source_model.name = 'model_b'
-        dep_b_c.sink_model.name = 'model_c'
-        dep_a_c = Mock()
-        dep_a_c.source_model.name = 'model_a'
-        dep_a_c.sink_model.name = 'model_c'
+        model_b = EmptySectorModel('model_b')
+        model_b.add_input(Spec('a', dtype='float'))
+        model_b.add_output(Spec('b', dtype='float'))
 
-        model_a.deps = {
-            'model_a': dep_a_b
-        }
-        model_b.deps = {
-            'model_b': dep_b_c
-        }
-        model_c.deps = {
-            'model_c': dep_a_c
-        }
+        model_c = EmptySectorModel('model_c')
+        model_c.add_input(Spec('a', dtype='float'))
+        model_c.add_input(Spec('b', dtype='float'))
 
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a,
-            model_b.name: model_b,
-            model_c.name: model_c
-        }
+        mock_model_run.sos_model.add_model(model_a)
+        mock_model_run.sos_model.add_model(model_b)
+        mock_model_run.sos_model.add_model(model_c)
+
+        mock_model_run.sos_model.add_dependency(model_a, 'a', model_b, 'a')
+        mock_model_run.sos_model.add_dependency(model_a, 'a', model_c, 'a')
+        mock_model_run.sos_model.add_dependency(model_b, 'b', model_c, 'b')
 
         runner = ModelRunner()
-        runner.solve_model(mock_model_run, mock_store)
+        bundle = {
+            'decision_iterations': [0],
+            'timesteps': [1]
+        }
+        job_graph = runner.build_job_graph(mock_model_run, bundle)
 
-        call_args = mock_add.call_args
-        job_graph = call_args[0][0]
-
-        actual = list(job_graph.predecessors('simulate_1_0_model_a'))
-        expected = ['before_model_run_model_a']
+        actual = list(job_graph.predecessors('test_simulate_1_0_model_a'))
+        expected = ['test_before_model_run_model_a']
         assert actual == expected
 
-        actual = list(job_graph.successors('simulate_1_0_model_a'))
-        expected = ['simulate_1_0_model_b', 'simulate_1_0_model_c']
+        actual = list(job_graph.successors('test_simulate_1_0_model_a'))
+        expected = ['test_simulate_1_0_model_b', 'test_simulate_1_0_model_c']
         assert sorted(actual) == sorted(expected)
 
-        actual = list(job_graph.predecessors('simulate_1_0_model_b'))
-        expected = ['before_model_run_model_b', 'simulate_1_0_model_a']
+        actual = list(job_graph.predecessors('test_simulate_1_0_model_b'))
+        expected = ['test_before_model_run_model_b', 'test_simulate_1_0_model_a']
         assert sorted(actual) == sorted(expected)
 
-        actual = list(job_graph.successors('simulate_1_0_model_b'))
-        expected = ['simulate_1_0_model_c']
+        actual = list(job_graph.successors('test_simulate_1_0_model_b'))
+        expected = ['test_simulate_1_0_model_c']
         assert actual == expected
 
-        actual = list(job_graph.predecessors('simulate_1_0_model_c'))
-        expected = ['before_model_run_model_c', 'simulate_1_0_model_a', 'simulate_1_0_model_b']
+        actual = list(job_graph.predecessors('test_simulate_1_0_model_c'))
+        expected = ['test_before_model_run_model_c', 'test_simulate_1_0_model_a',
+                    'test_simulate_1_0_model_b']
         assert sorted(actual) == sorted(expected)
 
-        actual = list(job_graph.successors('simulate_1_0_model_c'))
+        actual = list(job_graph.successors('test_simulate_1_0_model_c'))
         expected = []
         assert actual == expected
 
-    def test_jobgraph_interdependency(self, mock_store, mock_model_run):
+    def test_jobgraph_interdependency(self, mock_model_run):
         """
         a[before]   b[before]
         |           |
@@ -342,63 +349,47 @@ class TestModelRunnerJobGraphs():
         a[sim] ---> b[sim]
                <---
         """
-        model_a = Mock()
-        model_b = Mock()
-        model_a.name = 'model_a'
-        model_b.name = 'model_b'
-        model_a.parameters = {}
-        model_b.parameters = {}
+        model_a = EmptySectorModel('model_a')
+        model_a.add_input(Spec('b', dtype='float'))
+        model_a.add_output(Spec('a', dtype='float'))
 
-        dep_a_b = Mock()
-        dep_a_b.source_model.name = 'model_a'
-        dep_a_b.sink_model.name = 'model_b'
-        dep_b_a = Mock()
-        dep_b_a.source_model.name = 'model_b'
-        dep_b_a.sink_model.name = 'model_a'
+        model_b = EmptySectorModel('model_b')
+        model_b.add_input(Spec('a', dtype='float'))
+        model_b.add_output(Spec('b', dtype='float'))
 
-        model_a.deps = {
-            'model_a': dep_a_b
-        }
-        model_b.deps = {
-            'model_b': dep_b_a
-        }
+        mock_model_run.sos_model.add_model(model_a)
+        mock_model_run.sos_model.add_model(model_b)
 
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a,
-            model_b.name: model_b,
-        }
+        mock_model_run.sos_model.add_dependency(model_a, 'a', model_b, 'a')
+        mock_model_run.sos_model.add_dependency(model_b, 'b', model_a, 'b')
 
         runner = ModelRunner()
+        bundle = {
+            'decision_iterations': [0],
+            'timesteps': [1]
+        }
         with raises(NotImplementedError):
-            runner.solve_model(mock_model_run, mock_store)
+            runner.build_job_graph(mock_model_run, bundle)
 
-    @patch('smif.controller.scheduler.JobScheduler.add')
-    def test_jobgraph_with_models_initialised(self, mock_add, mock_store, mock_model_run):
+    def test_jobgraph_with_models_initialised(self, mock_model_run):
         """
         a[sim]
         """
-        mock_add.return_value = (0, None)
-        model_a = Mock()
-        model_a.name = 'model_a'
-        model_a.deps = {}
-        model_a.parameters = {}
-
-        mock_model_run.sos_model.models = {
-            model_a.name: model_a
-        }
-
+        model_a = EmptySectorModel('model_a')
+        mock_model_run.sos_model.add_model(model_a)
         mock_model_run.initialised = True
 
         runner = ModelRunner()
-        runner.solve_model(mock_model_run, mock_store)
+        bundle = {
+            'decision_iterations': [0],
+            'timesteps': [1]
+        }
+        job_graph = runner.build_job_graph(mock_model_run, bundle)
 
-        call_args = mock_add.call_args
-        job_graph = call_args[0][0]
-
-        actual = list(job_graph.predecessors('simulate_1_0_model_a'))
+        actual = list(job_graph.predecessors('test_simulate_1_0_model_a'))
         expected = []
         assert actual == expected
 
-        actual = list(job_graph.successors('simulate_1_0_model_a'))
+        actual = list(job_graph.successors('test_simulate_1_0_model_a'))
         expected = []
         assert actual == expected

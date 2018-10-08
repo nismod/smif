@@ -57,7 +57,10 @@ class TestPreSpecified:
 
         actual = next(dm)
 
-        expected = {0: timesteps}
+        expected = {
+            'decision_iterations': [0],
+            'timesteps': timesteps
+        }
 
         assert actual == expected
 
@@ -175,15 +178,30 @@ class TestRuleBased:
         dm = RuleBased(timesteps, Mock())
 
         actual = next(dm)
-        assert actual == {1: [2010]}
+        assert actual == {
+            'decision_iterations': [1],
+            'timesteps': [2010]
+        }
 
         dm.satisfied = True
         actual = next(dm)
-        assert actual == {2: [2015]}
+        assert actual == {
+            'decision_iterations': [2],
+            'timesteps': [2015],
+            'decision_links': {
+                2: 1
+            }
+        }
         assert dm.satisfied is False
 
         actual = next(dm)
-        assert actual == {3: [2015]}
+        assert actual == {
+            'decision_iterations': [3],
+            'timesteps': [2015],
+            'decision_links': {
+                3: 1
+            }
+        }
         assert dm.satisfied is False
 
         dm.satisfied = True
@@ -198,10 +216,16 @@ class TestDecisionManager():
         store._model_runs = {'test': {'sos_model': 'test_sos_model'}}
         store._sos_models = {'test_sos_model': {'sector_models': []}}
         store._strategies = {'test': []}
+        sos_model = Mock()
+        sos_model.name = 'test_sos_model'
+        sos_model.sector_models = []
 
-        df = DecisionManager(store, [2010, 2015], 'test', 'test_sos_model')
+        df = DecisionManager(store, [2010, 2015], 'test', sos_model)
         dm = df.decision_loop()
         bundle = next(dm)
-        assert bundle == {0: [2010, 2015]}
+        assert bundle == {
+            'decision_iterations': [0],
+            'timesteps': [2010, 2015]
+        }
         with raises(StopIteration):
             next(dm)
