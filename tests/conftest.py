@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-conftest.py for smif.
-
-Read more about conftest.py under:
-https://pytest.org/latest/plugins.html
+"""Holds fixtures for the smif package tests
 """
 from __future__ import absolute_import, division, print_function
 
@@ -309,10 +305,10 @@ def get_sos_model():
         'name': 'energy',
         'description': "A system of systems model which encapsulates "
                        "the future supply and demand of energy for the UK",
-        'scenario_sets': [
+        'scenarios': [
             'population'
         ],
-        'narrative_sets': [
+        'narratives': [
             'technology'
         ],
         'sector_models': [
@@ -464,24 +460,11 @@ def get_scenario():
 
 
 @fixture
-def sample_narratives():
+def sample_narratives(get_narrative):
     """Return sample narratives
     """
     return [
-        {
-            'name': 'technology',
-            'description': 'Defines the rate and nature of technological change',
-            'provides': [],
-            'variants': [
-                {
-                    'name': 'Energy Demand - High Tech',
-                    'description': 'High penetration of SMART technology on the demand side',
-                    'data': {
-                        '': 'energy_demand_high_tech.yml',
-                    }
-                },
-            ],
-        },
+        get_narrative,
         {
             'name': 'governance',
             'description': 'Defines the nature of governance and influence upon decisions',
@@ -505,15 +488,19 @@ def get_narrative():
     """Return sample narrative
     """
     return {
-        "name": "technology",
-        "provides": [],
-        "variants": [
+        'name': 'technology',
+        'description': 'Describes the evolution of technology',
+        'provides': {
+            'energy_demand': ['smart_meter_savings'],
+            'water_supply': ['clever_water_meter_savings', 'per_capita_water_demand']
+                     },
+        'variants': [
             {
-                "name": "High Tech Demand Side Management",
-                "description": "High penetration of SMART technology on the demand side",
-                "data": {
-                    '': "high_tech_dsm.yml",
-                }
+                'name': 'high_tech_dsm',
+                'description': 'High takeup of smart technology on the demand side',
+                'data': {
+                    'smart_meter_savings': 'high_tech_dsm.csv',
+                },
             }
         ]
     }

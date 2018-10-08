@@ -1,3 +1,5 @@
+"""Holds fixtures for the data layer module tests
+"""
 from pytest import fixture
 from smif.data_layer import DatafileInterface, MemoryInterface
 from smif.metadata import Spec

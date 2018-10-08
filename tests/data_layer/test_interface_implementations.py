@@ -30,7 +30,7 @@ def init_handler(request, setup_empty_folder_structure):
 @fixture
 def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies,
             unit_definitions, dimension, sample_dimensions, source_spec, sink_spec,
-            coefficients, scenario, narrative):
+            coefficients, scenario, get_narrative):
     handler = init_handler
     handler.write_model_run(model_run)
     handler.write_sos_model(get_sos_model)
@@ -43,7 +43,7 @@ def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies
         handler.write_dimension(dim)
     handler.write_coefficients(source_spec, sink_spec, coefficients)
     handler.write_scenario(scenario)
-    handler.write_narrative(narrative)
+    handler.write_narrative(get_narrative)
 
     return handler
 
@@ -141,44 +141,14 @@ def scenario_no_coords(scenario):
 
 
 @fixture
-def narrative():
-    return {
-        'name': 'technology',
-        'description': 'Describes the evolution of technology',
-        'provides': [
-            {
-                'name': 'smart_meter_savings',
-                'dims': ['technology_type'],
-                'coords': {
-                    'technology_type': [
-                        {'name': 'water_meter'},
-                        {'name': 'electricity_meter'},
-                    ]
-                },
-                'dtype': 'float',
-            }
-        ],
-        'variants': [
-            {
-                'name': 'high_tech_dsm',
-                'description': 'High takeup of smart technology on the demand side',
-                'data': {
-                    'smart_meter_savings': 'high_tech_dsm.csv',
-                },
-            }
-        ]
-    }
-
-
-@fixture
-def narrative_no_coords(narrative):
-    narrative = deepcopy(narrative)
-    for spec in narrative['provides']:
+def narrative_no_coords(get_narrative):
+    get_narrative = deepcopy(get_narrative)
+    for spec in get_narrative['provides']:
         try:
             del spec['coords']
         except KeyError:
             pass
-    return narrative
+    return get_narrative
 
 
 @fixture
@@ -493,19 +463,19 @@ class TestScenarios():
 class TestNarratives():
     """Read and write narrative data
     """
-    def test_read_narratives(self, narrative, handler):
-        assert handler.read_narratives() == [narrative]
+    def test_read_narratives(self, get_narrative, handler):
+        assert handler.read_narratives() == [get_narrative]
 
     def test_read_narratives_no_coords(self, narrative_no_coords, handler):
         assert handler.read_narratives(skip_coords=True) == [narrative_no_coords]
 
-    def test_read_narrative(self, narrative, handler):
-        assert handler.read_narrative('technology') == narrative
+    def test_read_narrative(self, get_narrative, handler):
+        assert handler.read_narrative('technology') == get_narrative
 
     def test_read_narrative_no_coords(self, narrative_no_coords, handler):
         assert handler.read_narrative('technology', skip_coords=True) == narrative_no_coords
 
-    def test_write_narrative(self, narrative, handler):
+    def test_write_narrative(self, get_narrative, handler):
         another_narrative = {
             'name': 'policy',
             'description': 'Parameters decribing policy effects on demand',
@@ -514,10 +484,10 @@ class TestNarratives():
         }
         handler.write_narrative(another_narrative)
         actual = handler.read_narratives()
-        expected = [narrative, another_narrative]
+        expected = [get_narrative, another_narrative]
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
-    def test_update_narrative(self, narrative, handler):
+    def test_update_narrative(self, get_narrative, handler):
         another_narrative = {
             'name': 'technology',
             'description': 'Technology development, adoption and diffusion',
@@ -531,17 +501,17 @@ class TestNarratives():
         handler.delete_narrative('technology')
         assert handler.read_narratives() == []
 
-    def test_read_narrative_variants(self, handler, narrative):
+    def test_read_narrative_variants(self, handler, get_narrative):
         actual = handler.read_narrative_variants('technology')
-        expected = narrative['variants']
+        expected = get_narrative['variants']
         assert actual == expected
 
-    def test_read_narrative_variant(self, handler, narrative):
+    def test_read_narrative_variant(self, handler, get_narrative):
         actual = handler.read_narrative_variant('technology', 'high_tech_dsm')
-        expected = narrative['variants'][0]
+        expected = get_narrative['variants'][0]
         assert actual == expected
 
-    def test_write_narrative_variant(self, handler, narrative):
+    def test_write_narrative_variant(self, handler, get_narrative):
         new_variant = {
             'name': 'precautionary',
             'description': 'Slower take-up of smart demand-response technologies',
@@ -551,10 +521,10 @@ class TestNarratives():
         }
         handler.write_narrative_variant('technology', new_variant)
         actual = handler.read_narrative_variants('technology')
-        expected = [new_variant] + narrative['variants']
+        expected = [new_variant] + get_narrative['variants']
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
-    def test_update_narrative_variant(self, handler, narrative):
+    def test_update_narrative_variant(self, handler, get_narrative):
         new_variant = {
             'name': 'high_tech_dsm',
             'description': 'High takeup of smart technology on the demand side (v2)',
@@ -567,7 +537,7 @@ class TestNarratives():
         expected = [new_variant]
         assert actual == expected
 
-    def test_delete_narrative_variant(self, handler, narrative):
+    def test_delete_narrative_variant(self, handler, get_narrative):
         handler.delete_narrative_variant('technology', 'high_tech_dsm')
         assert handler.read_narrative_variants('technology') == []
 
