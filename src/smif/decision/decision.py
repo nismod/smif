@@ -22,22 +22,24 @@ from smif.data_layer.model_loader import ModelLoader
 
 
 class DecisionManager(object):
-    """A DecisionManager is initialised with one or more model run strategies that refer to
-    DecisionModules such as pre-specified planning, a rule-based models or multi-objective
-    optimisation. These implementations influence the combination and ordering of decision
+    """A DecisionManager is initialised with one or more model run strategies
+    that refer to DecisionModules such as pre-specified planning,
+    a rule-based models or multi-objective optimisation.
+    These implementations influence the combination and ordering of decision
     iterations and model timesteps that need to be performed by the model runner.
 
-    The DecisionManager presents a simple decision loop interface to the model runner, in the
-    form of a generator which allows the model runner to iterate over the collection of
-    independent simulations required at each step.
+    The DecisionManager presents a simple decision loop interface to the model runner,
+    in the form of a generator which allows the model runner to iterate over the
+    collection of independent simulations required at each step.
 
     The DecisionManager collates the output of the decision algorithms and
-    writes the post-decision state through a DataHandle. This allows Models to access a given
-    decision state (identified uniquely by timestep and decision iteration id).
+    writes the post-decision state through a ResultsHandle. This allows Models
+    to access a given decision state (identified uniquely by timestep and
+    decision iteration id).
 
-    The :py:meth:`get_decisions` method passes a DataHandle down to a DecisionModule,
-    allowing the DecisionModule to access model results from previous timesteps
-    and decision iterations when making decisions
+    The :py:meth:`get_decisions` method passes a ResultsHandle down to a
+    DecisionModule, allowing the DecisionModule to access model results from
+    previous timesteps and decision iterations when making decisions
 
     Arguments
     ---------
@@ -199,7 +201,7 @@ class DecisionModule(metaclass=ABCMeta):
 
     This class provides two main methods, ``__next__`` which is normally
     called implicitly as a call to the class as an iterator, and ``get_decision()``
-    which takes as arguments a smif.data_layer.ResultsHandle object.
+    which takes as arguments a smif.data_layer.data_handle.ResultsHandle object.
 
     Arguments
     ---------
@@ -223,13 +225,24 @@ class DecisionModule(metaclass=ABCMeta):
         that all decision iterations can be run in parallel
         (otherwise only one will be returned) and within a decision interation,
         all timesteps may be run in parallel as long as there are no
-        inter-timestep state transitions required (e.g. reservoir level)
+        inter-timestep state dependencies
 
         Returns
         -------
         dict
-            Yields a dictionary keyed by decision iteration (int) whose values contain
-            a list of timesteps
+            Yields a dictionary keyed by ``decision iterations`` whose values
+            contain a list of iteration integers, ``timesteps`` whose values
+            contain a list of timesteps run in each decision iteration and the
+            optional ``decision_links`` which link the decision interation of the
+            current bundle to that of the previous bundle::
+
+            {
+                'decision_iterations': list of decision iterations (int),
+                'timesteps': list of timesteps (int),
+                'decision_links': (optional) dict of {
+                    decision iteration in current bundle: decision iteration of previous bundle
+                }
+            }
         """
         raise NotImplementedError
 
@@ -283,7 +296,7 @@ class PreSpecified(DecisionModule):
 
         Arguments
         ---------
-        results_handle : smif.data_layer.data_handle.DataHandle
+        results_handle : smif.data_layer.data_handle.ResultsHandle
             A reference to a smif results handle
 
         Returns
