@@ -7,7 +7,7 @@ import numpy as np
 from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
 from smif.data_layer.data_handle import ResultsHandle
-from smif.exception import SmifTimestepResolutionError
+from smif.exception import SmifDataError, SmifTimestepResolutionError
 from smif.metadata import Spec
 from smif.model import SectorModel
 
@@ -85,6 +85,23 @@ def mock_store():
     }
     store._interventions['test_model'] = data
     return store
+
+
+@fixture(scope='function')
+def mock_sector_model():
+    mock_sector_model = MagicMock()
+    type(mock_sector_model).outputs = PropertyMock(return_value={'test_output': 'spec'})
+    type(mock_sector_model).name = PropertyMock(return_value='test_sector_model')
+    return mock_sector_model
+
+
+@fixture(scope='function')
+def mock_sos_model(mock_sector_model):
+    mock_sos_model = MagicMock(outputs=[('test_sector_model', 'test_output')])
+    mock_sos_model.name = 'test_sos_model'
+    mock_sos_model.models = {'test_sector_model': mock_sector_model}
+    mock_sos_model.get_model = Mock(return_value=mock_sector_model)
+    return mock_sos_model
 
 
 class EmptySectorModel(SectorModel):
@@ -447,20 +464,6 @@ class TestDataHandleTimesteps():
 
 class TestDataHandleGetResults:
 
-    @fixture(scope='function')
-    def mock_sector_model(self):
-        mock_sector_model = MagicMock()
-        type(mock_sector_model).outputs = PropertyMock(return_value={'test_output': 'spec'})
-        type(mock_sector_model).name = PropertyMock(return_value='test_sector_model')
-        return mock_sector_model
-
-    @fixture(scope='function')
-    def mock_sos_model(self, mock_sector_model):
-        mock_sos_model = MagicMock(outputs=[('test_sector_model', 'test_output')])
-        mock_sos_model.name = 'test_sos_model'
-        mock_sos_model.models = {'test_sector_model': mock_sector_model}
-        return mock_sos_model
-
     def test_get_results_sectormodel(self, mock_store,
                                      mock_sector_model):
         """Get results from a sector model
@@ -481,12 +484,13 @@ class TestDataHandleGetResults:
             dh.get_results('no_such_output')
 
 
-def TestResultsHandle():
+class TestResultsHandle:
+
     def test_get_results_sos_model(self, mock_store, mock_sector_model, mock_sos_model):
         """Get results from a sector model within a sos model
         """
         store = mock_store
-        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None)
+        store.write_results(42, 'test_modelrun', 'test_sector_model', 'spec', 2010, None)
 
         dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
         actual = dh.get_results('test_sector_model', 'test_output', 2010, None)
@@ -502,3 +506,10 @@ def TestResultsHandle():
         with raises(KeyError):
             dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
             dh.get_results('no_such_model', 'test_output', None, None)
+
+    def test_get_results_not_exists(self, mock_store, mock_sos_model):
+        store = mock_store
+        store.write_results(42, 'test_modelrun', 'test_sector_model', 'spec', 2010, None)
+        dh = ResultsHandle(store, 'test_modelrun', mock_sos_model)
+        with raises(SmifDataError):
+            dh.get_results('test_sector_model', 'test_output', 2099, None)

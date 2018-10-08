@@ -493,12 +493,13 @@ class ResultsHandle(object):
         timestep : int
         decision_iteration : int
         """
-        if model_name in [model.name for model in self._sos_model.models]:
+        if model_name in self._sos_model.models:
             results_model = self._sos_model.get_model(model_name)
         else:
-            raise KeyError(
-                '{} is not contained in SosModel {}'.format(model_name, self._sos_model.name)
-            )
+            msg = '{} is not contained in SosModel {}. Found {}.'
+            raise KeyError(msg.format(model_name, self._sos_model.name,
+                                      self._sos_model.models)
+                           )
 
         try:
             spec = results_model.outputs[output_name]
@@ -506,10 +507,17 @@ class ResultsHandle(object):
             msg = "'{}' not recognised as output for '{}'"
             raise KeyError(msg.format(output_name, model_name))
 
-        return self._store.read_results(
-            self._modelrun_name,
-            model_name,
-            spec,
-            timestep,
-            decision_iteration
-        )
+        try:
+            results = self._store.read_results(self._modelrun_name,
+                                               model_name,
+                                               spec,
+                                               timestep,
+                                               decision_iteration)
+        except SmifDataError:
+            msg = "Could not access results for {}.{} at timestep {} " \
+                  "and decision iteration {}"
+            raise SmifDataError(msg.format(model_name, output_name,
+                                           timestep, decision_iteration)
+                                )
+
+        return results

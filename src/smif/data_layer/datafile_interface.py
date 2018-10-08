@@ -857,13 +857,19 @@ class DatafileInterface(DataInterface):
             timestep, decision_iteration
         )
 
-        if self.storage_format == 'local_csv':
-            data = self._get_data_from_csv(results_path)
-            return self.data_list_to_ndarray(data, output_spec)
-        elif self.storage_format == 'local_binary':
-            return self._get_data_from_native_file(results_path)
-        else:
-            raise NotImplementedError("Unrecognised storage format: %s" % self.storage_format)
+        try:
+            if self.storage_format == 'local_csv':
+                data = self._get_data_from_csv(results_path)
+                return self.data_list_to_ndarray(data, output_spec)
+            elif self.storage_format == 'local_binary':
+                return self._get_data_from_native_file(results_path)
+            else:
+                msg = "Unrecognised storage format: %s"
+                raise NotImplementedError(msg % self.storage_format)
+        except FileNotFoundError:
+            key = str([modelrun_id, model_name, output_spec.name, timestep,
+                       decision_iteration])
+            raise SmifDataNotFoundError("Could not find results for {}".format(key))
 
     def write_results(self, data, modelrun_id, model_name, output_spec, timestep=None,
                       decision_iteration=None):
