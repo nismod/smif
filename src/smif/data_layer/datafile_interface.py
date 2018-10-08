@@ -866,7 +866,7 @@ class DatafileInterface(DataInterface):
             else:
                 msg = "Unrecognised storage format: %s"
                 raise NotImplementedError(msg % self.storage_format)
-        except FileNotFoundError:
+        except (FileNotFoundError, pa.lib.ArrowIOError):
             key = str([modelrun_id, model_name, output_spec.name, timestep,
                        decision_iteration])
             raise SmifDataNotFoundError("Could not find results for {}".format(key))

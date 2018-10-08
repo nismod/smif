@@ -99,7 +99,7 @@ def mock_sector_model():
 def mock_sos_model(mock_sector_model):
     mock_sos_model = MagicMock(outputs=[('test_sector_model', 'test_output')])
     mock_sos_model.name = 'test_sos_model'
-    mock_sos_model.models = {'test_sector_model': mock_sector_model}
+    mock_sos_model.models = [mock_sector_model]
     mock_sos_model.get_model = Mock(return_value=mock_sector_model)
     return mock_sos_model
 

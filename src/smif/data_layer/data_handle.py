@@ -493,10 +493,10 @@ class ResultsHandle(object):
         timestep : int
         decision_iteration : int
         """
-        if model_name in self._sos_model.models:
+        if model_name in [model.name for model in self._sos_model.models]:
             results_model = self._sos_model.get_model(model_name)
         else:
-            msg = '{} is not contained in SosModel {}. Found {}.'
+            msg = "Model '{}' is not contained in SosModel '{}'. Found {}."
             raise KeyError(msg.format(model_name, self._sos_model.name,
                                       self._sos_model.models)
                            )
