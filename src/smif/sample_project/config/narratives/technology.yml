@@ -2,9 +2,9 @@ name: technology
 description: Describes the evolution of technology
 sos_model: energy_water
 provides:
-  'energy_demand':
+  energy_demand:
     - name: smart_meter_savings
-  'water_supply':
+  water_supply:
     - name: clever_water_meter_savings
     - name: per_capita_water_demand
 variants:
