@@ -71,7 +71,7 @@ def mock_model_run():
     modelrun.name = 'test'
     modelrun.strategies = []
     modelrun.sos_model = sos_model
-    modelrun.narratives = []
+    modelrun.narratives = {}
     modelrun.model_horizon = [1]
     modelrun.initialised = False
     return modelrun

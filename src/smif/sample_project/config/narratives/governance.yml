@@ -1,4 +1,5 @@
 name: governance
 description: Affects the operation of the models according to changes in governance
-provides: []
-variants: []
+sos_model: ''
+provides: {}
+variants: {}

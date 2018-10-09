@@ -655,8 +655,17 @@ class DataInterface(metaclass=ABCMeta):
 
         Returns
         -------
-        list
+        dict
             A narrative dictionary
+
+        Example
+        -------
+
+        >>> interface.read_narrative("test_narrative")
+        {'name': 'test_narrative',
+         'description': 'A test narrative',
+         'sos_model': 'test_sos_model',
+         'provides': {'test_sector_model': ['parameter_name']}
         """
         raise NotImplementedError()
 

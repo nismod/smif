@@ -44,7 +44,7 @@ def mock_store():
                 'variants': [{
                     'name': 'high_tech_dsm',
                     'description': 'High takeup',
-                    'data': {'smart_meter_savings': np.array([[99]])}}]
+                    'data': {'smart_meter_savings': 'filename.csv'}}]
                             })
 
     data = np.array([[99]])
@@ -517,6 +517,49 @@ class TestDataHandleGetParameters:
             'scenarios': {}})
         dh = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         assert dh.get_parameter('smart_meter_savings') == np.array([[99]])
+
+    def test_load_parameters_override_ordered(self, mock_store, mock_model):
+        """Parameters in a narrative variants listed later override parameters
+        contained in earlier variants
+        """
+
+        mock_store.write_model_run({
+            'name': 1,
+            'narratives': {'test_narrative': ['first_variant',
+                                              'second_variant']},
+            'sos_model': 'test_sos_model',
+            'scenarios': {}})
+
+        mock_store.write_narrative({
+                'name': 'test_narrative',
+                'description': 'a narrative config',
+                'provides': {'test_sector_model': ['smart_meter_savings']},
+                'variants': [
+                    {
+                     'name': 'first_variant',
+                     'description': 'This variant should be overridden',
+                     'data': {'smart_meter_savings': 'filename.csv'}},
+                    {
+                     'name': 'second_variant',
+                     'description': 'This variant should override the first',
+                     'data': {'smart_meter_savings': 'filename.csv'}}
+                    ]
+                               })
+
+        mock_store.write_narrative_variant_data(np.array([[1]]),
+                                                'test_narrative',
+                                                'first_variant',
+                                                'smart_meter_savings',
+                                                timestep=None)
+
+        mock_store.write_narrative_variant_data(np.array([[2]]),
+                                                'test_narrative',
+                                                'second_variant',
+                                                'smart_meter_savings',
+                                                timestep=None)
+
+        dh = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+        assert dh.get_parameter('smart_meter_savings') == np.array([[2]])
 
 
 class TestResultsHandle:

@@ -85,6 +85,15 @@ class DataHandle(object):
     def _load_parameters(self, sos_model, concrete_narratives):
         """Load parameter values for model run
 
+        Parameters for each of the contained sector models are loaded
+        into memory as a data_handle is initialised.
+
+        Firstly, default values for the parameters are loaded from the parameter
+        specs contained within each of the sector models
+
+        Then, the data from the list of narrative variants linked to the current
+        model run are loaded into the parameters contained within the
+
         Arguments
         ---------
         sos_model : dict
@@ -104,15 +113,16 @@ class DataHandle(object):
             # previous parameter values
             for variant_name in variant_names:
 
-                for model in sos_model['sector_models']:
+                try:
+                    parameter_list = narrative['provides'][self._model.name]
+                except KeyError:
+                    parameter_list = []
 
-                    parameter_list = narrative['provides'][model]
-
-                    for parameter in parameter_list:
-                        data = self._store.read_narrative_variant_data(
-                            narrative_name, variant_name, parameter
-                        )
-                        self._parameters[parameter] = data
+                for parameter in parameter_list:
+                    data = self._store.read_narrative_variant_data(
+                        narrative_name, variant_name, parameter
+                    )
+                    self._parameters[parameter] = data
 
     def derive_for(self, model):
         """Derive a new DataHandle configured for the given Model

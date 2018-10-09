@@ -233,7 +233,21 @@ class MemoryInterface(DataInterface):
 
     def read_narrative_variant_data(self, narrative_name, variant_name, variable,
                                     timestep=None):
-        return self._narrative_data[(narrative_name, variant_name, variable, timestep)]
+        if narrative_name not in self._narratives:
+            msg = "Narrative '{}' not found"
+            raise SmifDataNotFoundError(msg.format(narrative_name))
+        if variant_name not in self._narratives[narrative_name]['variants']:
+            msg = "Variant '{}' not found in '{}'"
+            raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
+
+        try:
+            data = self._narrative_data[(narrative_name, variant_name, variable, timestep)]
+        except KeyError:
+            msg = "Could not find data for variable '{}', " \
+                  "variant '{}' and narrative '{}'"
+            raise SmifDataNotFoundError(msg.format(variable, variant_name, narrative_name))
+
+        return data
 
     def write_narrative_variant_data(self, data, narrative_name, variant_name, variable,
                                      timestep=None):

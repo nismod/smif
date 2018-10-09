@@ -466,14 +466,8 @@ class TestNarratives():
     def test_read_narratives(self, get_narrative, handler):
         assert handler.read_narratives() == [get_narrative]
 
-    def test_read_narratives_no_coords(self, narrative_no_coords, handler):
-        assert handler.read_narratives(skip_coords=True) == [narrative_no_coords]
-
     def test_read_narrative(self, get_narrative, handler):
         assert handler.read_narrative('technology') == get_narrative
-
-    def test_read_narrative_no_coords(self, narrative_no_coords, handler):
-        assert handler.read_narrative('technology', skip_coords=True) == narrative_no_coords
 
     def test_write_narrative(self, get_narrative, handler):
         another_narrative = {
@@ -541,14 +535,40 @@ class TestNarratives():
         handler.delete_narrative_variant('technology', 'high_tech_dsm')
         assert handler.read_narrative_variants('technology') == []
 
-    def test_read_narrative_variant_data(self, get_remapped_scenario_data):
+    def test_read_narrative_variant_data(self, get_remapped_scenario_data, get_narrative):
         """Read from in-memory data
         """
         data, spec = get_remapped_scenario_data
         handler = MemoryInterface()
+        handler.write_narrative(get_narrative)
         handler._narrative_data[('technology', 'high_tech_dsm', 'param', 2010)] = data
         assert handler.read_narrative_variant_data(
             'technology', 'high_tech_dsm', 'param', 2010) == data
+
+    def test_read_narrative_variant_data_raises_param(self, handler):
+        with raises(SmifDataNotFoundError) as err:
+            handler.read_narrative_variant_data('technology',
+                                                'high_tech_dsm',
+                                                'not_a_parameter')
+        expected = "Could not find data for variable 'not_a_parameter', " \
+                   "variant 'high_tech_dsm' and narrative 'technology'"
+        assert expected in str(err)
+
+    def test_read_narrative_variant_data_raises_variant(self, handler):
+        with raises(SmifDataNotFoundError) as err:
+            handler.read_narrative_variant_data('technology',
+                                                'not_a_variant',
+                                                'not_a_parameter')
+        expected = "Variant 'not_a_variant' not found in 'technology'"
+        assert expected in str(err)
+
+    def test_read_narrative_variant_data_raises_narrative(self, handler):
+        with raises(SmifDataNotFoundError) as err:
+            handler.read_narrative_variant_data('not_a_narrative',
+                                                'not_a_variant',
+                                                'not_a_parameter')
+        expected = "Narrative 'not_a_narrative' not found"
+        assert expected in str(err)
 
     def test_write_narrative_variant_data(self, get_remapped_scenario_data):
         """Write to in-memory data

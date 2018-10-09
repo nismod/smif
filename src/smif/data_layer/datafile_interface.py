@@ -799,9 +799,16 @@ class DatafileInterface(DataInterface):
     @check_exists_as_child('narrative', 'variant')
     def read_narrative_variant_data(self, narrative_name, variant_name, variable,
                                     timestep=None):
-        spec = self._read_narrative_variable_spec(narrative_name, variable)
-        filepath = self._get_narrative_variant_filepath(narrative_name, variant_name, variable)
-        data = self._get_data_from_csv(filepath)
+        try:
+            spec = self._read_narrative_variable_spec(narrative_name, variable)
+            filepath = self._get_narrative_variant_filepath(narrative_name,
+                                                            variant_name,
+                                                            variable)
+            data = self._get_data_from_csv(filepath)
+        except SmifDataNotFoundError:
+                msg = "Could not find data for variable '{}', " \
+                    "variant '{}' and narrative '{}'"
+                raise SmifDataNotFoundError(msg.format(variable, variant_name, narrative_name))
 
         if timestep is not None:
             data = [datum for datum in data if int(datum['timestep']) == timestep]
@@ -837,10 +844,21 @@ class DatafileInterface(DataInterface):
     def _read_narrative_variable_spec(self, narrative_name, variable):
         # Read spec from narrative->provides->variable
         narrative = self.read_narrative(narrative_name)
-        spec = _pick_from_list(narrative['provides'], variable)
+        model_name = self._key_from_list(variable, narrative['provides'])
+        if not model_name:
+            msg = "Parameter '{}' does not exist in '{}'"
+            raise SmifDataNotFoundError(msg.format(variable, narrative_name))
+        parameters = self.read_sector_model(model_name)['parameters']
+        spec = _pick_from_list(parameters, variable)
         self._set_item_coords(spec)
         return Spec.from_dict(spec)
     # endregion
+
+    def _key_from_list(self, name, dict_of_lists):
+        for key, items in dict_of_lists.items():
+            if name in items:
+                return key
+        return None
 
     # region Results
     def read_results(self, modelrun_id, model_name, output_spec, timestep=None,
@@ -1224,17 +1242,21 @@ def _assert_no_mismatch(dtype, name, obj):
 
 def _file_exists(file_dir, dtype, name):
     dir_key = "%ss" % dtype
-    return os.path.exists(os.path.join(file_dir[dir_key], name + '.yml'))
+    try:
+        return os.path.exists(os.path.join(file_dir[dir_key], name + '.yml'))
+    except TypeError:
+        msg = "Could not parse file name {} and dtype {}"
+        raise SmifDataNotFoundError(msg.format(name, dtype))
 
 
 def _assert_file_exists(file_dir, dtype, name):
     if not _file_exists(file_dir, dtype, name):
-        raise SmifDataNotFoundError("%s '%s' not found" % (dtype, name))
+        raise SmifDataNotFoundError("%s '%s' not found" % (dtype.capitalize(), name))
 
 
 def _assert_file_not_exists(file_dir, dtype, name):
     if _file_exists(file_dir, dtype, name):
-        raise SmifDataExistsError("%s '%s' already exists" % (dtype, name))
+        raise SmifDataExistsError("%s '%s' already exists" % (dtype.capitalize(), name))
 
 
 def _config_item_exists(config, dtype, name):
@@ -1266,10 +1288,10 @@ def _idx_in_list(list_of_dicts, name):
 def _assert_config_item_exists(config, dtype, name):
     if not _config_item_exists(config, dtype, name):
         raise SmifDataNotFoundError(
-            "%s '%s' not found in '%s'" % (str(dtype).title(), name, config['name']))
+            "%s '%s' not found in '%s'" % (str(dtype).capitalize(), name, config['name']))
 
 
 def _assert_config_item_not_exists(config, dtype, name):
     if _config_item_exists(config, dtype, name):
         raise SmifDataExistsError(
-            "%s '%s' already exists in '%s'" % (str(dtype).title(), name, config['name']))
+            "%s '%s' already exists in '%s'" % (str(dtype).capitalize(), name, config['name']))

@@ -121,7 +121,7 @@ class TestModelRun:
 
         with raises(SmifDataExistsError) as ex:
             config_handler.write_model_run(model_run1)
-        assert "model_run 'unique' already exists" in str(ex)
+        assert "Model_run 'unique' already exists" in str(ex)
 
     def test_model_run_read_one(self, model_run, get_handler):
         """Test reading a single model_run.
@@ -144,7 +144,7 @@ class TestModelRun:
         """
         with raises(SmifDataNotFoundError) as ex:
             get_handler.read_model_run('missing_name')
-        assert "model_run 'missing_name' not found" in str(ex)
+        assert "Model_run 'missing_name' not found" in str(ex)
 
     def test_model_run_update(self, model_run, get_handler):
         """Test updating a model_run description
@@ -182,7 +182,7 @@ class TestModelRun:
 
         with raises(SmifDataNotFoundError) as ex:
             config_handler.update_model_run('missing_name', model_run)
-        assert "model_run 'missing_name' not found" in str(ex)
+        assert "Model_run 'missing_name' not found" in str(ex)
 
     def test_model_run_delete(self, model_run, get_handler):
         """Test that updating a nonexistent model_run should fail
@@ -205,7 +205,7 @@ class TestModelRun:
         config_handler = get_handler
         with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_model_run('missing_name')
-        assert "model_run 'missing_name' not found" in str(ex)
+        assert "Model_run 'missing_name' not found" in str(ex)
 
 
 class TestSosModel:
@@ -243,7 +243,7 @@ class TestSosModel:
 
         with raises(SmifDataExistsError) as ex:
             config_handler.write_sos_model(sos_model1)
-        assert "sos_model 'unique' already exists" in str(ex)
+        assert "Sos_model 'unique' already exists" in str(ex)
 
     def test_sos_model_read_one(self, get_sos_model, get_handler):
         """Test reading a single sos_model.
@@ -267,7 +267,7 @@ class TestSosModel:
         config_handler = get_handler
         with raises(SmifDataNotFoundError) as ex:
             config_handler.read_sos_model('missing_name')
-        assert "sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex)
 
     def test_sos_model_update(self, get_sos_model, get_handler):
         """Test updating a sos_model description
@@ -305,7 +305,7 @@ class TestSosModel:
 
         with raises(SmifDataNotFoundError) as ex:
             config_handler.update_sos_model('missing_name', sos_model)
-        assert "sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex)
 
     def test_sos_model_delete(self, get_sos_model, get_handler):
         """Test that updating a nonexistent sos_model should fail
@@ -328,7 +328,7 @@ class TestSosModel:
         config_handler = get_handler
         with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_sos_model('missing_name')
-        assert "sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex)
 
 
 class TestSectorModel:
@@ -367,7 +367,7 @@ class TestSectorModel:
 
         with raises(SmifDataExistsError) as ex:
             config_handler.write_sector_model(sector_model1)
-        assert "sector_model 'unique' already exists" in str(ex)
+        assert "Sector_model 'unique' already exists" in str(ex)
 
     def test_sector_model_read_one(self, get_sector_model, get_handler):
         """Test reading a single sector_model.
@@ -391,7 +391,7 @@ class TestSectorModel:
         config_handler = get_handler
         with raises(SmifDataNotFoundError) as ex:
             config_handler.read_sector_model('missing_name')
-        assert "sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex)
 
     def test_sector_model_update(self, get_sector_model, get_handler):
         """Test updating a sector_model description
@@ -429,7 +429,7 @@ class TestSectorModel:
 
         with raises(SmifDataNotFoundError) as ex:
             config_handler.update_sector_model('missing_name', sector_model)
-        assert "sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex)
 
     def test_sector_model_delete(self, get_sector_model, get_handler):
         """Test that updating a nonexistent sector_model should fail
@@ -452,7 +452,7 @@ class TestSectorModel:
         config_handler = get_handler
         with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_sector_model('missing_name')
-        assert "sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex)
 
     # itnerventions should be tested as read from files via read_sector_model
     @mark.xfail
@@ -540,13 +540,6 @@ class TestScenarios:
         expected = sample_scenarios[0]
         actual = get_handler.read_scenario(expected['name'], skip_coords=True)
         assert actual == expected
-
-    def test_missing_scenario_definition(self, setup_folder_structure, get_handler):
-        """Should raise a SmifDataNotFoundError if scenario definition not found
-        """
-        with raises(SmifDataNotFoundError) as ex:
-            get_handler.read_scenario('missing')
-        assert "scenario 'missing' not found" in str(ex)
 
     def test_scenario_data(self, setup_folder_structure, get_handler,
                            get_scenario_data):
@@ -716,7 +709,7 @@ class TestScenarios:
         """
         with raises(SmifDataNotFoundError) as ex:
             get_handler.read_scenario('missing')
-        assert "scenario 'missing' not found" in str(ex)
+        assert "Scenario 'missing' not found" in str(ex)
 
     @mark.xfail
     def test_project_scenarios(self, get_handler):
