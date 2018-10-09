@@ -74,7 +74,14 @@ class SosModelConfig extends Component {
     renderSosModelConfig(sos_model, sector_models, scenarios, narratives, error) {
         return (
             <div key={'sosModel_' + sos_model.name}>
-                <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} narratives={narratives} error={error} saveSosModel={this.saveSosModel} cancelSosModel={this.cancelSosModel} />
+                {
+                    ('SmifValidationError' in error)
+                        ? 
+                        <div className="alert alert-danger">
+                            {error['SmifValidationError'].map(error => error)}
+                        </div>
+                        : <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} narratives={narratives} error={error} saveSosModel={this.saveSosModel} cancelSosModel={this.cancelSosModel} />
+                }
             </div>
         )
     }
