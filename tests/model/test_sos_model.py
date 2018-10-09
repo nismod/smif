@@ -602,8 +602,8 @@ class TestSosModelDependencies(object):
 
 class TestNarratives:
 
-    def test_add_narrative(self, sos_model):
-
+    @fixture(scope='function')
+    def narrative(self):
         narrative = {
             'name': 'test_narrative',
             'description': 'a narrative config',
@@ -613,57 +613,34 @@ class TestNarratives:
                 'description': 'High takeup',
                 'data': {'test_parameter': np.array([[99]])}}]
                     }
+        return narrative
+
+    def test_add_narrative(self, sos_model, narrative):
 
         sos_model.add_narrative(narrative)
         actual = sos_model.narratives['test_narrative']
         expected = narrative
         assert actual == expected
 
-    def test_add_narrative_raises_for_incorrect_parameter(self, sos_model):
+    def test_add_narrative_raises_for_incorrect_parameter(self, sos_model, narrative):
 
-        narrative = {
-            'name': 'test_narrative',
-            'description': 'a narrative config',
-            'provides': {'water_supply': ['no_such_parameter']},
-            'variants': [{
-                'name': 'high_tech_dsm',
-                'description': 'High takeup',
-                'data': {'test_parameter': np.array([[99]])}}]
-                    }
+        narrative['provides'] = {'water_supply': ['no_such_parameter']}
 
         with raises(SmifDataMismatchError) as err:
             sos_model.add_narrative(narrative)
 
         assert "Parameter 'no_such_parameter' does not exist in 'water_supply'" in str(err)
 
-    def test_add_narrative_raises_for_wrong_model(self, sos_model):
+    def test_add_narrative_raises_for_wrong_model(self, sos_model, narrative):
 
-        narrative = {
-            'name': 'test_narrative',
-            'description': 'a narrative config',
-            'provides': {'not_a_model': ['test_parameter']},
-            'variants': [{
-                'name': 'high_tech_dsm',
-                'description': 'High takeup',
-                'data': {'test_parameter': np.array([[99]])}}]
-                    }
+        narrative['provides'] = {'not_a_model': ['test_parameter']}
 
         with raises(SmifDataMismatchError) as err:
             sos_model.add_narrative(narrative)
 
         assert "'not_a_model' does not exist in 'test_sos_model'" in str(err)
 
-    def test_narratives_in_as_dict(self, sos_model):
-
-        narrative = {
-            'name': 'test_narrative',
-            'description': 'a narrative config',
-            'provides': {'water_supply': ['test_parameter']},
-            'variants': [{
-                'name': 'high_tech_dsm',
-                'description': 'High takeup',
-                'data': {'test_parameter': np.array([[99]])}}]
-                    }
+    def test_narratives_in_as_dict(self, sos_model, narrative):
 
         sos_model.add_narrative(narrative)
         actual = sos_model.as_dict()
@@ -672,3 +649,7 @@ class TestNarratives:
         actual_narratives = actual['narratives']
         expected_narratives = narrative
         assert actual_narratives == {'test_narrative': expected_narratives}
+
+    def test_get_parameter_specs_of_narrative(self, sos_model):
+
+        pass
