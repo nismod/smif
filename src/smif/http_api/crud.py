@@ -130,12 +130,24 @@ class SosModelAPI(MethodView):
         """
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
-        if sos_model_name is None:
-            data = data_interface.read_sos_models()
-            response = jsonify(data)
-        else:
-            data = data_interface.read_sos_model(sos_model_name)
-            response = jsonify(data)
+
+        try:
+            if sos_model_name is None:
+                data = []
+                data = data_interface.read_sos_models()
+            else:
+                data = {}
+                data = data_interface.read_sos_model(sos_model_name)
+
+            response = jsonify({
+                'data': data,
+                'error': {}
+            })
+        except SmifDataError as err:
+            response = jsonify({
+                'data': data,
+                'error': parse_exception(err.args[0])
+            })
 
         return response
 
@@ -151,7 +163,7 @@ class SosModelAPI(MethodView):
         except SmifDataError as err:
             response = jsonify({
                 'message': 'failed',
-                'sos_model': data,
+                'data': data,
                 'error': parse_exception(err.args[0])
             })
         else:
@@ -172,7 +184,7 @@ class SosModelAPI(MethodView):
         except SmifDataError as err:
             response = jsonify({
                 'message': 'failed',
-                'sos_model': data,
+                'data': data,
                 'error': parse_exception(err.args[0])
             })
         else:

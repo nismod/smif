@@ -10,7 +10,8 @@ from functools import lru_cache, wraps
 import pyarrow as pa
 from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.load import dump, load
-from smif.data_layer.validate import validate_sos_model_config
+from smif.data_layer.validate import (validate_sos_model_config,
+                                      validate_sos_model_format)
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError, SmifDataReadError,
                             SmifValidationError)
@@ -210,6 +211,7 @@ class DatafileInterface(DataInterface):
     @check_exists('sos_model')
     def read_sos_model(self, sos_model_name):
         data = self._read_yaml_file(self.config_folders['sos_models'], sos_model_name)
+        validate_sos_model_format(data)
         return data
 
     @check_not_exists('sos_model')

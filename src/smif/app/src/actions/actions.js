@@ -249,7 +249,8 @@ export const RECEIVE_SOS_MODELS = 'RECEIVE_SOS_MODELS'
 function receiveSosModels(json) {
     return {
         type: RECEIVE_SOS_MODELS,
-        sos_models: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -282,7 +283,8 @@ export const RECEIVE_SOS_MODEL = 'RECEIVE_SOS_MODEL'
 function receiveSosModel(json) {
     return {
         type: RECEIVE_SOS_MODEL,
-        sos_model: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -298,7 +300,7 @@ export const REJECT_SOS_MODEL = 'REJECT_SOS_MODEL'
 function rejectSosModel(json){
     return {
         type: REJECT_SOS_MODEL,
-        sos_model: json['sos_model'],
+        data: json['data'],
         error: json['error']
     }
 }
