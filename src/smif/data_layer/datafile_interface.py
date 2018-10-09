@@ -840,6 +840,7 @@ class DatafileInterface(DataInterface):
                     narrative_name, variant_name, variable)
             )
         filename = variant['data'][variable]
+        self.logger.debug(filename)
         return os.path.join(self.data_folders['narratives'], filename)
 
     def _read_narrative_variable_spec(self, narrative_name, variable):
@@ -1237,7 +1238,7 @@ def _assert_no_mismatch(dtype, name, obj):
     try:
         if name != obj['name']:
             raise SmifDataMismatchError(
-                "%s name '%s' must match '%s'" % (dtype, name, obj['name']))
+                "%s name '%s' must match '%s'" % (dtype.capitalize(), name, obj['name']))
     except KeyError:
         raise SmifValidationError("%s must have name defined" % dtype)
     except TypeError:

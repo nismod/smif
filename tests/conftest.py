@@ -9,7 +9,6 @@ import json
 import logging
 import os
 
-import numpy as np
 from pytest import fixture
 from smif.data_layer.load import dump
 
@@ -379,6 +378,16 @@ def get_sector_model(annual, hourly, regions_half_squares):
                 'default': 'data_file.csv',
                 'unit': 'percentage',
                 'dtype': 'float'
+            },
+            {
+                'name': 'homogeneity_coefficient',
+                'description': "How homegenous the centralisation"
+                               "process is",
+                'absolute_range': [0, 1],
+                'expected_range': [0, 1],
+                'default': 'default_homogeneity.csv',
+                'unit': 'percentage',
+                'dtype': 'float'
             }
         ],
         'interventions': [],
@@ -461,30 +470,6 @@ def get_scenario():
     }
 
 
-@fixture
-def sample_narratives(get_narrative):
-    """Return sample narratives
-    """
-    return [
-        get_narrative,
-        {
-            'name': 'governance',
-            'description': 'Defines the nature of governance and influence upon decisions',
-            'provides': [],
-            'variants': [
-                {
-                    'name': 'Central Planning',
-                    'description': 'Stronger role for central government in planning and ' +
-                                   'regulation, less emphasis on market-based solutions',
-                    'data': {
-                        '': 'central_planning.yml',
-                    },
-                },
-            ],
-        },
-    ]
-
-
 @fixture(scope='function')
 def get_narrative():
     """Return sample narrative
@@ -506,6 +491,31 @@ def get_narrative():
             }
         ]
     }
+
+
+@fixture
+def sample_narratives(get_narrative):
+    """Return sample narratives
+    """
+    return [
+        get_narrative,
+        {
+            'name': 'governance',
+            'description': 'Defines the nature of governance and influence upon decisions',
+            'provides': {'energy_demand_sample': ['homogeneity_coefficient']
+                         },
+            'variants': [
+                {
+                    'name': 'Central Planning',
+                    'description': 'Stronger role for central government in planning and ' +
+                                   'regulation, less emphasis on market-based solutions',
+                    'data': {
+                        'homogeneity_coefficient': 'central_planning.csv',
+                    },
+                },
+            ],
+        },
+    ]
 
 
 @fixture
