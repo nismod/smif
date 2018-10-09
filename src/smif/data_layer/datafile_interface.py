@@ -829,6 +829,7 @@ class DatafileInterface(DataInterface):
         spec = self._read_narrative_variable_spec(narrative_name, variable)
         data = self.ndarray_to_data_list(data, spec)
         filepath = self._get_narrative_variant_filepath(narrative_name, variant_name, variable)
+
         self._write_data_to_csv(filepath, data, spec=spec)
 
     def _get_narrative_variant_filepath(self, narrative_name, variant_name, variable):
@@ -850,6 +851,9 @@ class DatafileInterface(DataInterface):
             raise SmifDataNotFoundError(msg.format(variable, narrative_name))
         parameters = self.read_sector_model(model_name)['parameters']
         spec = _pick_from_list(parameters, variable)
+        if not spec:
+            msg = "Cannot find Spec for parameter '{}' in '{}'"
+            raise SmifDataNotFoundError(msg.format(variable, model_name))
         self._set_item_coords(spec)
         return Spec.from_dict(spec)
     # endregion

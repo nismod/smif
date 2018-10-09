@@ -945,12 +945,7 @@ class DataInterface(metaclass=ABCMeta):
         """
         DataInterface._validate_observations(observations, spec)
 
-        if spec.default is None:
-            default = np.nan
-        else:
-            default = spec.default
-
-        data = np.full(spec.shape, default, dtype=spec.dtype)
+        data = np.full(spec.shape, np.nan, dtype=spec.dtype)
 
         for obs in observations:
             indices = []

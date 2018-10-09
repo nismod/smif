@@ -44,6 +44,10 @@ def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies
     handler.write_coefficients(source_spec, sink_spec, coefficients)
     handler.write_scenario(scenario)
     handler.write_narrative(get_narrative)
+    handler.write_narrative_variant_data('technology',
+                                         'high_tech_dsm',
+                                         'smart_water_savings',
+                                         np.array([[424242]]))
 
     return handler
 
@@ -535,15 +539,14 @@ class TestNarratives():
         handler.delete_narrative_variant('technology', 'high_tech_dsm')
         assert handler.read_narrative_variants('technology') == []
 
-    def test_read_narrative_variant_data(self, get_remapped_scenario_data, get_narrative):
+    def test_read_narrative_variant_data(self, handler):
         """Read from in-memory data
         """
-        data, spec = get_remapped_scenario_data
-        handler = MemoryInterface()
-        handler.write_narrative(get_narrative)
-        handler._narrative_data[('technology', 'high_tech_dsm', 'param', 2010)] = data
-        assert handler.read_narrative_variant_data(
-            'technology', 'high_tech_dsm', 'param', 2010) == data
+        actual = handler.read_narrative_variant_data('technology',
+                                                     'high_tech_dsm',
+                                                     'smart_water_savings')
+        expected = np.array([[424242]])
+        assert actual == expected
 
     def test_read_narrative_variant_data_raises_param(self, handler):
         with raises(SmifDataNotFoundError) as err:
@@ -570,14 +573,17 @@ class TestNarratives():
         expected = "Narrative 'not_a_narrative' not found"
         assert expected in str(err)
 
-    def test_write_narrative_variant_data(self, get_remapped_scenario_data):
-        """Write to in-memory data
+    def test_write_narrative_variant_data(self, handler):
+        """Write narrative variant data to file or memory
         """
-        data, spec = get_remapped_scenario_data
-        handler = MemoryInterface()
+        data = np.array([[42]])
         handler.write_narrative_variant_data(
-            data, 'technology', 'high_tech_dsm', 'param', 2010)
-        assert handler._narrative_data[('technology', 'high_tech_dsm', 'param', 2010)] == data
+            'technology', 'high_tech_dsm', 'smart_water_savings', data)
+
+        actual = handler.read_narrative_variant_data(
+            'technology', 'high_tech_dsm', 'smart_water_savings')
+
+        assert actual == data
 
 
 class TestResults():

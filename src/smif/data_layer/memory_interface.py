@@ -249,7 +249,7 @@ class MemoryInterface(DataInterface):
 
         return data
 
-    def write_narrative_variant_data(self, data, narrative_name, variant_name, variable,
+    def write_narrative_variant_data(self, narrative_name, variant_name, variable, data,
                                      timestep=None):
         self._narrative_data[(narrative_name, variant_name, variable, timestep)] = data
     # endregion

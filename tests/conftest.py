@@ -9,6 +9,7 @@ import json
 import logging
 import os
 
+import numpy as np
 from pytest import fixture
 from smif.data_layer.load import dump
 
@@ -110,7 +111,7 @@ def initial_system():
 def parameters():
     return [
         {
-            'name': 'smart_meter_savings',
+            'name': 'smart_water_savings',
             'description': 'The savings from smart meters',
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
@@ -370,13 +371,14 @@ def get_sector_model(annual, hourly, regions_half_squares):
         ],
         'parameters': [
             {
-                'name': 'assump_diff_floorarea_pp',
+                'name': 'smart_water_savings',
                 'description': "Difference in floor area per person"
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'default': 1,
-                'unit': 'percentage'
+                'default': 'data_file.csv',
+                'unit': 'percentage',
+                'dtype': 'float'
             }
         ],
         'interventions': [],
@@ -491,7 +493,7 @@ def get_narrative():
         'name': 'technology',
         'description': 'Describes the evolution of technology',
         'provides': {
-            'energy_demand': ['smart_meter_savings'],
+            'energy_demand_sample': ['smart_water_savings'],
             'water_supply': ['clever_water_meter_savings', 'per_capita_water_demand']
                      },
         'variants': [
@@ -499,7 +501,7 @@ def get_narrative():
                 'name': 'high_tech_dsm',
                 'description': 'High takeup of smart technology on the demand side',
                 'data': {
-                    'smart_meter_savings': 'high_tech_dsm.csv',
+                    'smart_water_savings': 'high_tech_dsm.csv',
                 },
             }
         ]
