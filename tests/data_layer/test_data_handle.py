@@ -25,17 +25,32 @@ def mock_store():
     })
     store.write_sos_model({
         'name': 'test_sos_model',
-        'sector_models': ['sector_model_test'],
+        'sector_models': ['test_sector_model'],
         'scenario_dependencies': [],
         'model_dependencies': [
             {
                 'source': 'test_source',
                 'source_output': 'test',
                 'sink_input': 'test',
-                'sink': 'test_model'
+                'sink': 'test_sector_model'
             }
-        ]
+        ],
+        'narratives': ['test_narrative']
     })
+    store.write_narrative({
+                'name': 'test_narrative',
+                'description': 'a narrative config',
+                'provides': {'test_sector_model': ['smart_meter_savings']},
+                'variants': [{
+                    'name': 'high_tech_dsm',
+                    'description': 'High takeup',
+                    'data': {'smart_meter_savings': np.array([[99]])}}]
+                            })
+
+    data = np.array([[99]])
+    store.write_narrative_variant_data(data, 'test_narrative', 'high_tech_dsm',
+                                       'smart_meter_savings', timestep=None)
+
     store.write_model_run({
         'name': 2,
         'narratives': {},
@@ -44,7 +59,7 @@ def mock_store():
     })
     store.write_sos_model({
         'name': 'test_converting_sos_model',
-        'sector_models': ['sector_model_test'],
+        'sector_models': ['test_sector_model'],
         'scenario_dependencies': [],
         'model_dependencies': [
             {
@@ -57,12 +72,13 @@ def mock_store():
                 'source': 'test_convertor',
                 'source_output': 'test',
                 'sink_input': 'test',
-                'sink': 'test_model'
-            }
-        ]
+                'sink': 'test_sector_model'
+            }],
+        'narratives': {}
+
     })
 
-    store._initial_conditions = {'sector_model_test': []}
+    store._initial_conditions = {'test_sector_model': []}
     data = {
         'water_asset_a': {
             'build_year': 2010,
@@ -83,7 +99,7 @@ def mock_store():
             'sector': ''
         }
     }
-    store._interventions['test_model'] = data
+    store._interventions['test_sector_model'] = data
     return store
 
 
@@ -118,21 +134,21 @@ class EmptySectorModel(SectorModel):
 def empty_model():
     """Minimal sector model
     """
-    return EmptySectorModel('test_model')
+    return EmptySectorModel('test_sector_model')
 
 
 @fixture(scope='function')
 def mock_model():
     """Sector model with parameter, input, output, dependency
     """
-    model = EmptySectorModel('test_model')
+    model = EmptySectorModel('test_sector_model')
     model.add_parameter(
         Spec(
             name='smart_meter_savings',
             description='The savings from smart meters',
             abs_range=(0, 100),
             exp_range=(3, 10),
-            default=3,
+            default=np.array([[3]]),
             unit='%',
             dtype='float'
         )
@@ -159,7 +175,7 @@ def mock_model_with_conversion():
     """
     source = EmptySectorModel('test_source')
     convertor = EmptySectorModel('test_convertor')
-    model = EmptySectorModel('test_model')
+    model = EmptySectorModel('test_sector_model')
 
     ml_spec = Spec(
         name='test',
@@ -284,7 +300,7 @@ class TestDataHandle():
         data_handle.set_results("test", expected)
         actual = mock_store.read_results(
             1,
-            'test_model',  # read results from model
+            'test_sector_model',  # read results from model
             mock_model.outputs['test'],
             2015,
             None
@@ -300,7 +316,8 @@ class TestDataHandle():
         with raises(ValueError) as ex:
             data_handle.set_results("test", expect_error)
 
-        msg = "Tried to set results with shape (1, 2), expected (2, 2) for test_model:test"
+        msg = "Tried to set results with shape (1, 2), expected " \
+              "(2, 2) for test_sector_model:test"
         assert msg in str(ex)
 
     def test_set_data_with_square_brackets(self, mock_store, mock_model):
@@ -312,7 +329,7 @@ class TestDataHandle():
         data_handle["test"] = expected
         actual = mock_store.read_results(
             1,
-            'test_model',  # read results from model
+            'test_sector_model',  # read results from model
             mock_model.outputs['test'],
             2015,
             None
@@ -357,7 +374,7 @@ class TestDataHandleState():
         """
         mock_store.read_state = Mock(return_value=[
             {'name': 'test', 'build_year': 2010}])
-        mock_store._interventions['test_model'] = [
+        mock_store._interventions['test_sector_model'] = [
             {'name': 'test',
              'capital_cost': {'value': 2500, 'unit': '£/GW'}
              }]
@@ -482,6 +499,24 @@ class TestDataHandleGetResults:
         with raises(KeyError):
             dh = DataHandle(mock_store, 1, 2010, [2010], mock_sector_model)
             dh.get_results('no_such_output')
+
+
+class TestDataHandleGetParameters:
+
+    def test_load_parameter_defaults(self, mock_store, mock_model):
+
+        dh = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+        assert dh.get_parameter('smart_meter_savings') == np.array([[3]])
+
+    def test_load_parameters_override(self, mock_store, mock_model):
+
+        mock_store.write_model_run({
+            'name': 1,
+            'narratives': {'test_narrative': ['high_tech_dsm']},
+            'sos_model': 'test_sos_model',
+            'scenarios': {}})
+        dh = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+        assert dh.get_parameter('smart_meter_savings') == np.array([[99]])
 
 
 class TestResultsHandle:

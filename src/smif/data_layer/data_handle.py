@@ -10,7 +10,7 @@ from logging import getLogger
 from types import MappingProxyType
 
 from smif.exception import SmifDataError
-from smif.metadata import RelativeTimestep, Spec
+from smif.metadata import RelativeTimestep
 
 
 class DataHandle(object):
@@ -46,23 +46,23 @@ class DataHandle(object):
         self._model = model
 
         modelrun = self._store.read_model_run(self._modelrun_name)
+        sos_model = self._store.read_sos_model(modelrun['sos_model'])
 
         self._scenario_dependencies = {}
         self._model_dependencies = {}
-        self._load_dependencies(modelrun)
+        scenario_variants = modelrun['scenarios']
+        self._load_dependencies(sos_model, scenario_variants)
         self.logger.debug(
             "Create with %s model, %s scenario dependencies",
             len(self._scenario_dependencies),
             len(self._model_dependencies))
 
         self._parameters = {}
-        self._load_parameters(modelrun)
+        self._load_parameters(sos_model, modelrun['narratives'])
 
-    def _load_dependencies(self, modelrun):
+    def _load_dependencies(self, sos_model, scenario_variants):
         """Load Model dependencies as a dict with {input_name: list[Dependency]}
         """
-        scenario_variants = modelrun['scenarios']
-        sos_model = self._store.read_sos_model(modelrun['sos_model'])
         for dep in sos_model['model_dependencies']:
             if dep['sink'] == self._model_name:
                 input_name = dep['sink_input']
@@ -82,23 +82,37 @@ class DataHandle(object):
                     'variant': scenario_variants[dep['source']]
                 }
 
-    def _load_parameters(self, modelrun):
+    def _load_parameters(self, sos_model, concrete_narratives):
         """Load parameter values for model run
+
+        Arguments
+        ---------
+        sos_model : dict
+            A configuration dictionary of a system-of-systems model
+        concrete_narratives: dict of list
+            Links narrative names to a list of variants to furnish parameters
+            with values {narrative_name: [variant_name, ...]}
         """
+        # Populate the parameters with their default values
         for parameter in self._model.parameters.values():
             self._parameters[parameter.name] = parameter.default
 
-        # modelrun['narratives'] is a dict of lists: {narrative_name: [variant_name, ...]}
-        # e.g. { 'technology': ['high_tech_dsm'] }
-        for narrative_name, variants in modelrun['narratives'].items():
+        for narrative_name, variant_names in concrete_narratives.items():
             narrative = self._store.read_narrative(narrative_name)
-            variable_specs = [Spec.from_dict(v) for v in narrative['provides']]
-            for variant_name in variants:
-                for variable in variable_specs:
-                    data = self._store.read_narrative_variant_data(
-                        narrative_name, variant_name, variable.name
-                    )
-                    self._parameters[variable.name] = data
+
+            # Read parameter data from each variant, later variants overriding
+            # previous parameter values
+            for variant_name in variant_names:
+
+                for model in sos_model['sector_models']:
+
+                    parameter_list = narrative['provides'][model]
+
+                    for parameter in parameter_list:
+                        data = self._store.read_narrative_variant_data(
+                            narrative_name, variant_name, parameter
+                        )
+                        self._parameters[parameter] = data
 
     def derive_for(self, model):
         """Derive a new DataHandle configured for the given Model
