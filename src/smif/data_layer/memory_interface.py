@@ -197,19 +197,12 @@ class MemoryInterface(DataInterface):
     # endregion
 
     # region Narratives
-    def read_narratives(self, skip_coords=False):
+    def read_narratives(self):
         narratives = self._narratives.values()
-        if skip_coords:
-            narratives = [
-                self._skip_coords(s, ['provides'])
-                for s in narratives
-            ]
         return [_variant_dict_to_list(n) for n in narratives]
 
-    def read_narrative(self, narrative_name, skip_coords=False):
+    def read_narrative(self, narrative_name):
         narrative = self._narratives[narrative_name]
-        if skip_coords:
-            narrative = self._skip_coords(narrative, ['provides'])
         return _variant_dict_to_list(narrative)
 
     def write_narrative(self, narrative):

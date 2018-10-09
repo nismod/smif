@@ -634,7 +634,7 @@ class DataInterface(metaclass=ABCMeta):
 
     # region Narratives
     @abstractmethod
-    def read_narratives(self, skip_coords=False):
+    def read_narratives(self):
         """Read narratives from project configuration
 
         Returns
@@ -645,7 +645,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_narrative(self, narrative_name, skip_coords=False):
+    def read_narrative(self, narrative_name):
         """Read a certain narrative
 
         Arguments
@@ -697,28 +697,30 @@ class DataInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def read_narrative_variants(self, narrative_name):
-        """Read narratives from project configuration
+        """Read variants belonging to ``narrative_name`` from project configuration
 
         Returns
         -------
-        list
-            A list of narrative set dicts
+        list of dict
+            A list of narrative variants
         """
         raise NotImplementedError()
 
     @abstractmethod
     def read_narrative_variant(self, narrative_name, variant_name):
-        """Read a certain narrative
+        """Read a certain narrative variant
 
         Arguments
         ---------
-        narrative_name: str
+        narrative_name : str
             Name of the narrative
+        variant_name : str
+            Name of the narrative variant
 
         Returns
         -------
-        list
-            A narrative dictionary
+        dict
+            A narrative variant dictionary
         """
         raise NotImplementedError()
 

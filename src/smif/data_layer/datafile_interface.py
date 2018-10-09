@@ -743,26 +743,22 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Narratives
-    def read_narratives(self, skip_coords=False):
+    def read_narratives(self):
         narr_names = self._read_filenames_in_dir(self.config_folders['narratives'], '.yml')
-        return [self.read_narrative(name, skip_coords) for name in narr_names]
+        return [self.read_narrative(name) for name in narr_names]
 
     @check_exists('narrative')
-    def read_narrative(self, narrative_name, skip_coords=False):
+    def read_narrative(self, narrative_name):
         narrative = self._read_yaml_file(self.config_folders['narratives'], narrative_name)
-        if not skip_coords:
-            self._set_list_coords(narrative['provides'])
         return narrative
 
     @check_not_exists('narrative')
     def write_narrative(self, narrative):
-        narrative = self._skip_coords(narrative, ['provides'])
         self._write_yaml_file(
             self.config_folders['narratives'], narrative['name'], narrative)
 
     @check_exists('narrative')
     def update_narrative(self, narrative_name, narrative):
-        narrative = self._skip_coords(narrative, ['provides'])
         self._write_yaml_file(
             self.config_folders['narratives'], narrative_name, narrative)
 
@@ -772,7 +768,7 @@ class DatafileInterface(DataInterface):
             os.path.join(self.config_folders['narratives'], "{}.yml".format(narrative_name)))
 
     def read_narrative_variants(self, narrative_name):
-        narrative = self.read_narrative(narrative_name, skip_coords=True)
+        narrative = self.read_narrative(narrative_name)
         return narrative['variants']
 
     @check_exists_as_child('narrative', 'variant')
