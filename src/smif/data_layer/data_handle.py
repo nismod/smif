@@ -9,6 +9,7 @@ data (at any computed or pre-computed timestep) and write access to output data
 from logging import getLogger
 from types import MappingProxyType
 
+from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataError
 from smif.metadata import RelativeTimestep
 
@@ -303,7 +304,9 @@ class DataHandle(object):
                 self._decision_iteration
             )
 
-        return data
+        da = DataArray(spec, data)
+
+        return da
 
     def _resolve_source(self, input_name):
         """Find best dependency to provide input data

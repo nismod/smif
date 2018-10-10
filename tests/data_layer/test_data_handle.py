@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, Mock, PropertyMock
 import numpy as np
 from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
+from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import ResultsHandle
 from smif.exception import SmifDataError, SmifTimestepResolutionError
 from smif.metadata import Spec
@@ -211,17 +212,22 @@ class TestDataHandle():
         """should allow read access to input data
         """
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-        expected = np.array([[1.0, 2.0], [3.0, 4.0]])
+        data = np.array([[1.0, 2.0], [3.0, 4.0]])
+
+        spec = mock_model.inputs['test']
 
         mock_store.write_results(
-            expected,
+            data,
             1,
             'test_source',  # write source model results
-            mock_model.inputs['test'],  # input spec must be equivalent
+            spec,  # input spec must be equivalent
             2015,
             None
         )
         actual = data_handle.get_data("test")
+
+        expected = DataArray(spec, data)
+
         np.testing.assert_equal(actual, expected)
 
     def test_get_data_with_conversion(self, mock_store, mock_model_with_conversion):
@@ -230,49 +236,64 @@ class TestDataHandle():
         modelrun_name = 2
         data_handle = DataHandle(
             mock_store, modelrun_name, 2015, [2015, 2020], mock_model_with_conversion)
-        expected = np.array([[0.001]])
+        data = np.array([[0.001]])
+
+        spec = mock_model_with_conversion.inputs['test']
+
         mock_store.write_results(
-            expected,
+            data,
             modelrun_name,
             'test_convertor',  # write results as though from convertor
-            mock_model_with_conversion.inputs['test'],
+            spec,
             2015,
             None
         )
         actual = data_handle.get_data("test")
+
+        expected = DataArray(spec, data)
+
         np.testing.assert_equal(actual, expected)
 
     def test_get_base_timestep_data(self, mock_store, mock_model):
         """should allow read access to input data from base timestep
         """
         data_handle = DataHandle(mock_store, 1, 2025, [2015, 2020, 2025], mock_model)
-        expected = np.array([[1.0, 2.0], [3.0, 4.0]])
+        data = np.array([[1.0, 2.0], [3.0, 4.0]])
+
+        spec = mock_model.inputs['test']
+
         mock_store.write_results(
-            expected,
+            data,
             1,
             'test_source',  # write source model results
-            mock_model.inputs['test'],
+            spec,
             2015,  # base timetep
             None
         )
+
         actual = data_handle.get_base_timestep_data("test")
+        expected = DataArray(spec, data)
         np.testing.assert_equal(actual, expected)
 
     def test_get_previous_timestep_data(self, mock_store, mock_model):
         """should allow read access to input data from previous timestep
         """
         data_handle = DataHandle(mock_store, 1, 2025, [2015, 2020, 2025], mock_model)
-        expected = np.random.rand(*mock_model.inputs['test'].shape)
+        data = np.random.rand(*mock_model.inputs['test'].shape)
+        spec = mock_model.inputs['test']
         mock_store.write_results(
-            expected,
+            data,
             1,
             'test_source',  # write source model results
-            mock_model.inputs['test'],
+            spec,
             2020,  # previous timetep
             None
         )
         actual = data_handle.get_previous_timestep_data("test")
-        np.testing.assert_equal(actual, expected)
+
+        expected = DataArray(spec, data)
+
+        assert actual == expected
 
     def test_get_data_with_square_brackets(self, mock_store, mock_model):
         """should allow dict-like read access to input data
@@ -287,7 +308,7 @@ class TestDataHandle():
             2015,  # current timetep
             None
         )
-        actual = data_handle["test"]
+        actual = data_handle["test"].as_ndarray()
         np.testing.assert_equal(actual, expected)
 
     def test_set_data(self, mock_store, mock_model):
