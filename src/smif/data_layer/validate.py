@@ -160,10 +160,30 @@ def _validate_dependencies(configuration, conf_key, source, source_key, sink, si
                     (idx + 1, dependency['sink']),
                     'Each dependency sink must be enabled in the sos-model'))
 
-        # Source_output and sink_input must exist
+        # Source and sink model configurations must exist
         source_model = [model for model in source if model['name'] == dependency['source']]
         sink_model = [model for model in sink if model['name'] == dependency['sink']]
+        if len(source_model) == 0:
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Source `%s` does not exist.' %
+                    (idx + 1, dependency['source']),
+                    'Each dependency source must have a `%s` configuration.' %
+                    (source_key)))
+        elif len(sink_model) == 0:
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Sink  `%s` does not exist.' %
+                    (idx + 1, dependency['sink']),
+                    'Each dependency sink must have a `%s` configuration.' %
+                    (sink_key)))
+        if len(sink_model) == 0 or len(source_model) == 0:
+            # not worth doing further checks if source/sink does not exist
+            continue
 
+        # Source_output and sink_input must exist
         if source_key == 'sector_models':
             source_model_outputs = [
                 output for output in source_model[0]['outputs']
