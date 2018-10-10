@@ -18,11 +18,11 @@ class SosModelConfig extends Component {
     constructor(props) {
         super(props)
         const { dispatch } = this.props
-        
+
         this.saveSosModel = this.saveSosModel.bind(this)
         this.cancelSosModel = this.cancelSosModel.bind(this)
         this.returnToOverview = this.returnToOverview.bind(this)
-        
+
         this.config_name = this.props.match.params.name
 
         this.state = {
@@ -75,11 +75,20 @@ class SosModelConfig extends Component {
         return (
             <div key={'sosModel_' + sos_model.name}>
                 {
-                    ('SmifValidationError' in error)
-                        ? 
-                        <div className="alert alert-danger">
-                            {error['SmifValidationError'].map(error => error)}
-                        </div>
+                    (Object.keys(error).length > 0)
+                        ?
+                        Object.keys(error).map(exception => (
+                            <div key={exception} className="alert alert-danger">
+                                {exception}
+                                {
+                                    error[exception].map(ex => (
+                                        <div key={ex}>
+                                            {ex}
+                                        </div>
+                                    ))
+                                }
+                            </div>
+                        ))
                         : <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} narratives={narratives} error={error} saveSosModel={this.saveSosModel} cancelSosModel={this.cancelSosModel} />
                 }
             </div>
@@ -119,9 +128,9 @@ function mapStateToProps(state) {
         narratives: state.narratives.items,
         error: state.sos_model.error,
         isFetching: (
-            state.sos_model.isFetching || 
-            state.sector_models.isFetching || 
-            state.scenarios.isFetching || 
+            state.sos_model.isFetching ||
+            state.sector_models.isFetching ||
+            state.scenarios.isFetching ||
             state.narratives.isFetching
         )
     }
