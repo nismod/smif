@@ -40,6 +40,20 @@ class SosModelConfigForm extends Component {
     render() {
         const {selectedSosModel} = this.state
 
+        let errors = {}
+        if (this.props.error.SmifDataInputError != undefined) {
+            errors = this.props.error.SmifDataInputError.reduce(function(map, obj) {
+                if (!(obj.component in map)) {
+                    map[obj.component] = []
+                }
+                map[obj.component].push({
+                    'error': obj.error,
+                    'message': obj.message
+                })
+                return map
+            }, {})
+        }
+        
         return (
             <div>
                 <div className="card">
@@ -56,7 +70,32 @@ class SosModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea id="sos_model_description" className="form-control" name="description" rows="5" defaultValue={selectedSosModel.description} onChange={this.handleChange}/>
+                                <textarea id="sos_model_description" 
+                                    className={
+                                        'description' in errors
+                                            ? 'form-control is-invalid'   
+                                            : 'form-control'
+                                    }
+                                    name="description" 
+                                    rows="5" 
+                                    defaultValue={selectedSosModel.description} 
+                                    onChange={this.handleChange}/>
+                                
+                                {   
+                                    'description' in errors
+                                        ? (
+                                            <div className="invalid-feedback">
+                                                {
+                                                    errors['description'].map((exception, idx) => (
+                                                        <div key={'feedback_description_' + idx}>
+                                                            {exception.error + ' ' + exception.message}
+                                                        </div>
+                                                        
+                                                    ))
+                                                }
+                                            </div>)
+                                        : ''
+                                }
                             </div>
                         </div>
 
@@ -75,6 +114,21 @@ class SosModelConfigForm extends Component {
                                     activeProperties={selectedSosModel.sector_models} 
                                     availableProperties={this.props.sector_models} 
                                     onChange={this.handleChange} />
+                                {   
+                                    'sector_models' in errors
+                                        ? (
+                                            <div className="invalid-feedback">
+                                                {
+                                                    errors['sector_models'].map((exception, idx) => (
+                                                        <div key={'feedback_sector_models_' + idx}>
+                                                            {exception.error + ' ' + exception.message}
+                                                        </div>
+                                                        
+                                                    ))
+                                                }
+                                            </div>)
+                                        : ''
+                                }
                             </div>
                         </div>
 
@@ -82,10 +136,25 @@ class SosModelConfigForm extends Component {
                             <label className="col-sm-2 col-form-label">Scenarios</label>
                             <div className="col-sm-10">
                                 <PropertySelector 
-                                    name="scenario_sets" 
+                                    name="scenarios" 
                                     activeProperties={selectedSosModel.scenarios} 
                                     availableProperties={this.props.scenarios} 
                                     onChange={this.handleChange} />
+                                {   
+                                    'scenarios' in errors
+                                        ? (
+                                            <div className="invalid-feedback">
+                                                {
+                                                    errors['scenarios'].map((exception, idx) => (
+                                                        <div key={'feedback_scenarios_' + idx}>
+                                                            {exception.error + ' ' + exception.message}
+                                                        </div>
+                                                        
+                                                    ))
+                                                }
+                                            </div>)
+                                        : ''
+                                }
                             </div>
                         </div>
 
@@ -93,10 +162,25 @@ class SosModelConfigForm extends Component {
                             <label className="col-sm-2 col-form-label">Narratives</label>
                             <div className="col-sm-10">
                                 <PropertySelector 
-                                    name="narrative_sets" 
+                                    name="narratives" 
                                     activeProperties={selectedSosModel.narratives} 
                                     availableProperties={this.props.narratives} 
                                     onChange={this.handleChange} />
+                                {   
+                                    'narratives' in errors
+                                        ? (
+                                            <div className="invalid-feedback">
+                                                {
+                                                    errors['narratives'].map((exception, idx) => (
+                                                        <div key={'feedback_narratives_' + idx}>
+                                                            {exception.error + ' ' + exception.message}
+                                                        </div>
+                                                        
+                                                    ))
+                                                }
+                                            </div>)
+                                        : ''
+                                }
                             </div>
                         </div>
                     </div>
@@ -132,6 +216,21 @@ class SosModelConfigForm extends Component {
                                 )
                             } 
                         />
+                        {   
+                            'model_dependencies' in errors
+                                ? (
+                                    <div className="invalid-feedback">
+                                        {
+                                            errors['model_dependencies'].map((exception, idx) => (
+                                                <div key={'feedback_model_dependencies_' + idx}>
+                                                    {exception.error + ' ' + exception.message}
+                                                </div>
+                                                
+                                            ))
+                                        }
+                                    </div>)
+                                : ''
+                        }
                     </div>
                 </div>
 
@@ -165,6 +264,21 @@ class SosModelConfigForm extends Component {
                                 )
                             } 
                         />
+                        {   
+                            'scenario_dependencies' in errors
+                                ? (
+                                    <div className="invalid-feedback">
+                                        {
+                                            errors['scenario_dependencies'].map((exception, idx) => (
+                                                <div key={'feedback_scenario_dependencies_' + idx}>
+                                                    {exception.error + ' ' + exception.message}
+                                                </div>
+                                                
+                                            ))
+                                        }
+                                    </div>)
+                                : ''
+                        }
                     </div>
                 </div>
 
@@ -182,6 +296,7 @@ SosModelConfigForm.propTypes = {
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
+    error: PropTypes.object.isRequired,
     saveSosModel: PropTypes.func,
     cancelSosModel: PropTypes.func
 }

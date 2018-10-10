@@ -12,6 +12,9 @@ import {
     RECEIVE_SOS_MODELS,
     REQUEST_SOS_MODEL,
     RECEIVE_SOS_MODEL,
+    SEND_SOS_MODEL,
+    ACCEPT_SOS_MODEL,
+    REJECT_SOS_MODEL,
     REQUEST_SECTOR_MODELS,
     RECEIVE_SECTOR_MODELS,
     REQUEST_SECTOR_MODEL,
@@ -125,7 +128,8 @@ function model_run_status(
 function sos_models(
     state = {
         isFetching: true,
-        items: []
+        items: [],
+        error: {}
     },
     action
 ) {
@@ -137,7 +141,8 @@ function sos_models(
     case RECEIVE_SOS_MODELS:
         return Object.assign({}, state, {
             isFetching: false,
-            items: action.sos_models,
+            items: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -147,21 +152,37 @@ function sos_models(
 
 function sos_model(
     state = {
-        isFetching: true,
-        item: {}
+        isFetching: false,
+        item: {},
+        error: {}
     },
     action
 ) {
     switch (action.type){
     case REQUEST_SOS_MODEL:
         return Object.assign({}, state, {
-            isFetching: true
+            isFetching: true,
         })
     case RECEIVE_SOS_MODEL:
         return Object.assign({}, state, {
             isFetching: false,
-            item: action.sos_model,
-            lastUpdated: action.receivedAt
+            item: action.data,
+            error: action.error
+        })
+    case SEND_SOS_MODEL:
+        return Object.assign({}, state, {
+            isFetching: true,
+        })
+    case REJECT_SOS_MODEL:
+        return Object.assign({}, state, {
+            isFetching: false,
+            item: action.data,
+            error: action.error
+        })
+    case ACCEPT_SOS_MODEL:
+        return Object.assign({}, state, {
+            isFetching: false,
+            error: action.error
         })
     default:
         return state

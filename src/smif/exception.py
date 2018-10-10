@@ -7,6 +7,7 @@ Exception
               +-- SmifDataExistsError
               +-- SmifDataMismatchError
               +-- SmifDataReadError
+              +-- SmifDataInputError
         +-- SmifModelRunError
         +-- SmifValidationError
 """
@@ -51,6 +52,22 @@ class SmifDataReadError(SmifDataError):
     E.g. unable to handle file type or connect to database
     """
     pass
+
+
+class SmifDataInputError(SmifDataError):
+    """Raise when unable to write data because it does not meet specification
+    and can be addressed to a specific (user-interface) input field
+
+    E.g.
+    - component: description
+    - unable to write a description shorter than 5 characters
+    - We require a description so you can identify your system-of-systems
+      configuration throughout your project.
+    """
+    def __init__(self, component, error, message):
+        self.component = component
+        self.error = error
+        self.message = message
 
 
 class SmifModelRunError(SmifException):

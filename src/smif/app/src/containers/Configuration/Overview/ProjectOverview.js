@@ -162,7 +162,7 @@ class ProjectOverview extends Component {
             break
 
         case 'SectorModel':
-            this.props.sos_models.forEach(function(sos_model) {
+            this.props.sos_models.items.forEach(function(sos_model) {
 
                 sos_model.sector_models.forEach(function(sector_model) {
                     if (sector_model == event.target.value) {
@@ -188,7 +188,7 @@ class ProjectOverview extends Component {
                     }
                 })
             })
-            this.props.sos_models.forEach(function(sos_model) {
+            this.props.sos_models.items.forEach(function(sos_model) {
                 sos_model.scenarios.forEach(function(scenario) {
                     if (scenario == event.target.value) {
                         target_in_use_by.push({
@@ -301,7 +301,14 @@ class ProjectOverview extends Component {
                         <IntroBlock title="System-of-Systems Models" intro="A system-of-systems model collects together scenario sets and simulation models. Users define dependencies between scenario and simulation models.">
                             <input className="btn btn-success btn-margin" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
                         </IntroBlock>
-                        <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
+                        {
+                            ('SmifValidationError' in sos_models.error)
+                                ? 
+                                <div className="alert alert-danger">
+                                    {sos_models.error['SmifValidationError'].map(error => error)}
+                                </div>
+                                : <ProjectOverviewItem itemname="SosModel" items={sos_models.items} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
+                        }
                     </div>
 
                     <div hidden={name!='sector-models'}>
@@ -343,7 +350,7 @@ class ProjectOverview extends Component {
 
 ProjectOverview.propTypes = {
     model_runs: PropTypes.array.isRequired,
-    sos_models: PropTypes.array.isRequired,
+    sos_models: PropTypes.object.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
@@ -357,7 +364,7 @@ function mapStateToProps(state) {
 
     return {
         model_runs: model_runs.items,
-        sos_models: sos_models.items,
+        sos_models: sos_models,
         sector_models: sector_models.items,
         scenarios: scenarios.items,
         narratives: narratives.items,
