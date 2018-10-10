@@ -7,9 +7,7 @@ sos_model: energy
 scenarios:
   population: population_med
   water_sector_energy_demand: central
-narratives:
-  technology:
-  - high_tech_dsm
+narratives: {}
 strategies:
 - type: pre-specified-planning
   description: build_nuclear
