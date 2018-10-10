@@ -1,23 +1,33 @@
 """Test DataArray
 """
 import numpy
-import numpy.testing
-# import pandas
-# import xarray
+import pandas as pd
+import xarray as xa
+from numpy.testing import assert_array_equal
 from pytest import fixture
 from smif.data_layer.data_array import DataArray
 from smif.metadata import Spec
 
 
 @fixture
-def spec():
+def dims():
+    return ['a', 'b', 'c']
+
+
+@fixture
+def coords():
+    return[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']]
+
+
+@fixture
+def spec(dims, coords):
     return Spec(
         name='test_data',
-        dims=['a', 'b', 'c'],
+        dims=dims,
         coords={
-            'a': ['a1', 'a2'],
-            'b': ['b1', 'b2', 'b3'],
-            'c': ['c1', 'c2', 'c3', 'c4'],
+            'a': coords[0],
+            'b': coords[1],
+            'c': coords[2],
         },
         dtype='float',
         default=0,
@@ -48,10 +58,22 @@ class TestDataArray():
         """Should create default from spec.default
         """
         da = DataArray.default_from_spec(spec)
-        numpy.testing.assert_equal(da.data, numpy.zeros((2, 3, 4)))
+        assert_array_equal(da.data, numpy.zeros((2, 3, 4)))
 
-    def test_as_df(self, small_da):
-        small_da.as_df()
+    def test_as_df(self, small_da, data, dims, coords):
+        expected_index = pd.MultiIndex.from_product(coords, names=dims)
+        expected = pd.Series(numpy.reshape(data, data.size), index=expected_index)
 
-    def test_as_xarray(self, small_da):
-        small_da.as_xarray()
+        actual = small_da.as_df()
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test_as_xarray(self, small_da, data, dims, coords):
+        actual = small_da.as_xarray()
+        expected = xa.DataArray(data, coords, dims)
+
+        xa.testing.assert_equal(actual, expected)
+
+    def test_as_ndarray(self, small_da, data):
+        actual = small_da.as_ndarray()
+        expected = data
+        assert_array_equal(actual, expected)
