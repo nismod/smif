@@ -161,7 +161,7 @@ class DatafileInterface(DataInterface):
         if config_type == 'scenario':
             return self.read_scenario(config_name)
         elif config_type == 'narrative':
-            return self.read_narrative(config_name)
+            return self._read_narrative(config_name)
         else:
             raise NotImplementedError(
                 "Cannot read %s:%s through generic method." % (config_type, config_name))
@@ -761,7 +761,7 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Narratives
-    def read_narrative(self, sos_model_name, narrative_name):
+    def _read_narrative(self, sos_model_name, narrative_name):
         sos_model = self.read_sos_model(sos_model_name)
         narrative = _pick_from_list(sos_model['narratives'], narrative_name)
         if not narrative:
@@ -769,8 +769,8 @@ class DatafileInterface(DataInterface):
             raise SmifDataNotFoundError(msg.format(narrative_name, sos_model_name))
         return narrative
 
-    def read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
-        narrative = self.read_narrative(sos_model_name, narrative_name)
+    def _read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
+        narrative = self._read_narrative(sos_model_name, narrative_name)
         variant = _pick_from_list(narrative['variants'], variant_name)
         if not variant:
             msg = "Variant '{}' not found in '{}'"
@@ -779,7 +779,7 @@ class DatafileInterface(DataInterface):
 
     def read_narrative_variant_data(self, sos_model_name, narrative_name,
                                     variant_name, variable, timestep=None):
-        variant = self.read_narrative_variant(sos_model_name, narrative_name, variant_name)
+        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
         filepath = self._get_narrative_variant_filepath(variant, variable)
         data = self._get_data_from_csv(filepath)
 
@@ -801,7 +801,7 @@ class DatafileInterface(DataInterface):
                                      variant_name, variable, data, timestep=None):
         spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
         data = self.ndarray_to_data_list(data, spec)
-        variant = self.read_narrative_variant(sos_model_name, narrative_name, variant_name)
+        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
         filepath = self._get_narrative_variant_filepath(variant, variable)
 
         self._write_data_to_csv(filepath, data, spec=spec)
@@ -818,7 +818,7 @@ class DatafileInterface(DataInterface):
 
     def _read_narrative_variable_spec(self, sos_model_name, narrative_name, variable):
         # Read spec from narrative->provides->variable
-        narrative = self.read_narrative(sos_model_name, narrative_name)
+        narrative = self._read_narrative(sos_model_name, narrative_name)
         model_name = self._key_from_list(variable, narrative['provides'])
         if not model_name:
             msg = "Cannot identify source of Spec for variable '{}'"

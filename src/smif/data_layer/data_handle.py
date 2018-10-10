@@ -109,7 +109,7 @@ class DataHandle(object):
         # Load in the concrete narrative and selected variants from the model run
         for narrative_name, variant_names in concrete_narratives.items():
             # Load the narrative
-            narrative = self._store.read_narrative(sos_model['name'], narrative_name)
+            narrative = [x for x in sos_model['narratives'] if x['name'] == narrative_name][0]
             self.logger.debug("Loaded narrative: %s", narrative)
 
             # Read parameter data from each variant, later variants overriding

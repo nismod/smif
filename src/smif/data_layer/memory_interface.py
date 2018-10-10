@@ -197,20 +197,20 @@ class MemoryInterface(DataInterface):
     # endregion
 
     # region Narratives
-    def read_narratives(self, sos_model_name):
+    def _read_narratives(self, sos_model_name):
         return self._sos_models[sos_model_name]['narratives']
 
-    def read_narrative(self, sos_model_name, narrative_name):
+    def _read_narrative(self, sos_model_name, narrative_name):
         try:
-            narrative = [x for x in self.read_narratives(sos_model_name)
+            narrative = [x for x in self._read_narratives(sos_model_name)
                          if x['name'] == narrative_name][0]
         except IndexError:
             msg = "Narrative '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(narrative_name, sos_model_name))
         return narrative
 
-    def read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
-        narrative = self.read_narrative(sos_model_name, narrative_name)
+    def _read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
+        narrative = self._read_narrative(sos_model_name, narrative_name)
         try:
             variant = [x for x in narrative['variants'] if x['name'] == variant_name][0]
         except IndexError:
@@ -220,7 +220,7 @@ class MemoryInterface(DataInterface):
 
     def read_narrative_variant_data(self, sos_model_name, narrative_name,
                                     variant_name, variable, timestep=None):
-        variant = self.read_narrative_variant(sos_model_name, narrative_name, variant_name)
+        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
         if variable not in variant['data'].keys():
             msg = "Variable '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(variable, variant_name))
