@@ -33,6 +33,10 @@ class DataArray():
         self.spec = spec
         self.data = data
 
+    def __eq__(self, other):
+        return self.spec == other.spec and \
+            numpy.array_equal(self.data, other.data)
+
     @classmethod
     def default_from_spec(cls, spec):
         """Create DataArray from a spec's default

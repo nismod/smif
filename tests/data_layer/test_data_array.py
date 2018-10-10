@@ -77,3 +77,8 @@ class TestDataArray():
         actual = small_da.as_ndarray()
         expected = data
         assert_array_equal(actual, expected)
+
+    def test_equality(self, small_da, spec, data):
+
+        expected = DataArray(spec, data)
+        assert small_da.__eq__(expected) is True
