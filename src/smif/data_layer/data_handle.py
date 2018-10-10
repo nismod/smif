@@ -106,8 +106,11 @@ class DataHandle(object):
         for parameter in self._model.parameters.values():
             self._parameters[parameter.name] = parameter.default
 
+        # Load in the concrete narrative and selected variants from the model run
         for narrative_name, variant_names in concrete_narratives.items():
-            narrative = self._store.read_narrative(narrative_name)
+            # Load the narrative
+            narrative = self._store.read_narrative(sos_model['name'], narrative_name)
+            self.logger.debug("Loaded narrative: %s", narrative)
 
             # Read parameter data from each variant, later variants overriding
             # previous parameter values
@@ -120,6 +123,7 @@ class DataHandle(object):
 
                 for parameter in parameter_list:
                     data = self._store.read_narrative_variant_data(
+                        sos_model['name'],
                         narrative_name, variant_name, parameter
                     )
                     self._parameters[parameter] = data

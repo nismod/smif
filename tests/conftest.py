@@ -298,7 +298,7 @@ def model_run():
 
 
 @fixture
-def get_sos_model():
+def get_sos_model(sample_narratives):
     """Return sample sos_model
     """
     return {
@@ -308,9 +308,7 @@ def get_sos_model():
         'scenarios': [
             'population'
         ],
-        'narratives': [
-            'technology'
-        ],
+        'narratives': sample_narratives,
         'sector_models': [
             'energy_demand',
             'energy_supply'

@@ -16,18 +16,11 @@ def config_handler(get_handler_binary):
 
 
 @fixture(scope='function')
-def get_handler(get_handler_binary):
-    return get_handler_binary
-
-
-@fixture(scope='function')
 def get_handler_csv(setup_folder_structure, sample_scenarios, sample_narratives,
                     sample_dimensions):
     handler = DatafileInterface(str(setup_folder_structure), 'local_csv')
     for scenario in sample_scenarios:
         handler.write_scenario(scenario)
-    for narrative in sample_narratives:
-        handler.write_narrative(narrative)
     for dimension in sample_dimensions:
         handler.write_dimension(dimension)
     return handler
@@ -39,8 +32,6 @@ def get_handler_binary(setup_folder_structure, sample_scenarios, sample_narrativ
     handler = DatafileInterface(str(setup_folder_structure), 'local_binary')
     for scenario in sample_scenarios:
         handler.write_scenario(scenario)
-    for narrative in sample_narratives:
-        handler.write_narrative(narrative)
     for dimension in sample_dimensions:
         handler.write_dimension(dimension)
     handler.write_sector_model(get_sector_model)

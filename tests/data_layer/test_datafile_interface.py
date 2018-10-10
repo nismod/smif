@@ -766,7 +766,13 @@ class TestScenarios:
         assert actual == expected
 
 
+@fixture(scope='function')
+def setup_narratives(config_handler, get_sos_model):
+    config_handler.write_sos_model(get_sos_model)
+
+
 # need to test with spec and new methods
+@mark.usefixtures('setup_narratives')
 class TestNarrativeVariantData:
     """Narratives, parameters and interventions should be readable, metadata is editable. May
     move to clarify the distinctions here, and extend to specify strategies and contraints.
@@ -785,7 +791,7 @@ class TestNarrativeVariantData:
             writer.writerow({'homogeneity_coefficient': 8})
 
         actual = config_handler.read_narrative_variant_data(
-            'governance', 'Central Planning', 'homogeneity_coefficient')
+            'energy', 'governance', 'Central Planning', 'homogeneity_coefficient')
 
         assert actual == 8
 
@@ -794,91 +800,9 @@ class TestNarrativeVariantData:
         """
         with raises(SmifDataNotFoundError) as ex:
             config_handler.read_narrative_variant_data(
-                'governance', 'Central Planning', 'does not exist')
-        msg = "Could not find data for variable 'does not exist', " \
-              "variant 'Central Planning' and narrative 'governance'"
+                'energy', 'governance', 'Central Planning', 'does not exist')
+        msg = "Variable 'does not exist' not found in 'Central Planning'"
         assert msg in str(ex)
-
-    def test_read_narrative_definition(self, setup_folder_structure, config_handler,
-                                       sample_narratives):
-        expected = sample_narratives[0]
-        actual = config_handler.read_narrative(expected['name'])
-        assert actual == expected
-
-    def test_read_narrative_definition_missing(self, config_handler):
-        """Should raise a SmifDataNotFoundError if narrative not defined
-        """
-        with raises(SmifDataNotFoundError) as ex:
-            config_handler.read_narrative('missing')
-        assert "Narrative 'missing' not found" in str(ex)
-
-
-class TestNarrativeVariants:
-
-    def test_read_narrative_variants(self, config_handler, get_narrative):
-
-        actual = config_handler.read_narrative_variants('technology')
-        expected = get_narrative['variants']
-        assert isinstance(actual, list)
-        assert actual == expected
-
-    def test_read_narrative_variant(self, config_handler, get_narrative):
-
-        actual = config_handler.read_narrative_variant('technology', 'high_tech_dsm')
-        expected = get_narrative['variants'][0]
-        assert isinstance(actual, dict)
-        assert actual == expected
-
-
-class TestReadUpdateNarratives:
-
-    def test_read_narratives(self, config_handler, get_narrative):
-        """ Test to read and write the project configuration
-        """
-        # narratives / read existing (from fixture)
-        actual = config_handler.read_narratives()
-        assert get_narrative in actual
-
-    def test_add_narratives(self, config_handler):
-
-        narrative = {
-            'name': 'Medium Population (ONS)',
-            'description': 'The Medium ONS Forecast for UK population out to 2050',
-            'provides': [],
-            'variants': []
-        }
-        config_handler.write_narrative(narrative)
-        actual = config_handler.read_narratives()
-        assert len(actual) == 3
-        assert narrative in actual
-
-    def test_modify_narratives(self, config_handler):
-
-        narrative = {
-            'name': 'governance',
-            'description': 'The Medium ONS Forecast for UK population out to 2050',
-            'provides': [],
-            'variants': []
-        }
-
-        # narratives / modify
-        config_handler.update_narrative('governance', narrative)
-        actual = config_handler.read_narratives()
-        assert narrative in actual
-
-    def test_modify_name_raises(self, config_handler):
-
-        narrative = {
-            'name': 'Medium Population (ONS)',
-            'description': 'The Medium ONS Forecast for UK population out to 2050',
-            'provides': [],
-            'variants': []
-        }
-
-        with raises(SmifDataMismatchError) as err:
-            config_handler.update_narrative('governance', narrative)
-        expected = "Narrative name 'governance' must match 'Medium Population (ONS)'"
-        assert expected in str(err)
 
 
 # need to test with spec replacing spatial/temporal resolution

@@ -43,8 +43,8 @@ def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies
         handler.write_dimension(dim)
     handler.write_coefficients(source_spec, sink_spec, coefficients)
     handler.write_scenario(scenario)
-    handler.write_narrative(get_narrative)
-    handler.write_narrative_variant_data('technology',
+    handler.write_narrative_variant_data('energy',
+                                         'technology',
                                          'high_tech_dsm',
                                          'smart_water_savings',
                                          np.array([[424242]]))
@@ -467,82 +467,11 @@ class TestScenarios():
 class TestNarratives():
     """Read and write narrative data
     """
-    def test_read_narratives(self, get_narrative, handler):
-        assert handler.read_narratives() == [get_narrative]
-
-    def test_read_narrative(self, get_narrative, handler):
-        assert handler.read_narrative('technology') == get_narrative
-
-    def test_write_narrative(self, get_narrative, handler):
-        another_narrative = {
-            'name': 'policy',
-            'description': 'Parameters decribing policy effects on demand',
-            'variants': [],
-            'provides': []
-        }
-        handler.write_narrative(another_narrative)
-        actual = handler.read_narratives()
-        expected = [get_narrative, another_narrative]
-        assert sorted_by_name(actual) == sorted_by_name(expected)
-
-    def test_update_narrative(self, get_narrative, handler):
-        another_narrative = {
-            'name': 'technology',
-            'description': 'Technology development, adoption and diffusion',
-            'variants': [],
-            'provides': []
-        }
-        handler.update_narrative('technology', another_narrative)
-        assert handler.read_narratives() == [another_narrative]
-
-    def test_delete_narrative(self, handler):
-        handler.delete_narrative('technology')
-        assert handler.read_narratives() == []
-
-    def test_read_narrative_variants(self, handler, get_narrative):
-        actual = handler.read_narrative_variants('technology')
-        expected = get_narrative['variants']
-        assert actual == expected
-
-    def test_read_narrative_variant(self, handler, get_narrative):
-        actual = handler.read_narrative_variant('technology', 'high_tech_dsm')
-        expected = get_narrative['variants'][0]
-        assert actual == expected
-
-    def test_write_narrative_variant(self, handler, get_narrative):
-        new_variant = {
-            'name': 'precautionary',
-            'description': 'Slower take-up of smart demand-response technologies',
-            'data': {
-                'technology': 'precautionary.csv'
-            }
-        }
-        handler.write_narrative_variant('technology', new_variant)
-        actual = handler.read_narrative_variants('technology')
-        expected = [new_variant] + get_narrative['variants']
-        assert sorted_by_name(actual) == sorted_by_name(expected)
-
-    def test_update_narrative_variant(self, handler, get_narrative):
-        new_variant = {
-            'name': 'high_tech_dsm',
-            'description': 'High takeup of smart technology on the demand side (v2)',
-            'data': {
-                'technology': 'high_tech_dsm_v2.csv'
-            }
-        }
-        handler.update_narrative_variant('technology', 'high_tech_dsm', new_variant)
-        actual = handler.read_narrative_variants('technology')
-        expected = [new_variant]
-        assert actual == expected
-
-    def test_delete_narrative_variant(self, handler, get_narrative):
-        handler.delete_narrative_variant('technology', 'high_tech_dsm')
-        assert handler.read_narrative_variants('technology') == []
-
     def test_read_narrative_variant_data(self, handler):
         """Read from in-memory data
         """
-        actual = handler.read_narrative_variant_data('technology',
+        actual = handler.read_narrative_variant_data('energy',
+                                                     'technology',
                                                      'high_tech_dsm',
                                                      'smart_water_savings')
         expected = np.array([[424242]])
@@ -550,16 +479,17 @@ class TestNarratives():
 
     def test_read_narrative_variant_data_raises_param(self, handler):
         with raises(SmifDataNotFoundError) as err:
-            handler.read_narrative_variant_data('technology',
+            handler.read_narrative_variant_data('energy',
+                                                'technology',
                                                 'high_tech_dsm',
                                                 'not_a_parameter')
-        expected = "Could not find data for variable 'not_a_parameter', " \
-                   "variant 'high_tech_dsm' and narrative 'technology'"
+        expected = "Variable 'not_a_parameter' not found in 'high_tech_dsm'"
         assert expected in str(err)
 
     def test_read_narrative_variant_data_raises_variant(self, handler):
         with raises(SmifDataNotFoundError) as err:
-            handler.read_narrative_variant_data('technology',
+            handler.read_narrative_variant_data('energy',
+                                                'technology',
                                                 'not_a_variant',
                                                 'not_a_parameter')
         expected = "Variant 'not_a_variant' not found in 'technology'"
@@ -567,10 +497,11 @@ class TestNarratives():
 
     def test_read_narrative_variant_data_raises_narrative(self, handler):
         with raises(SmifDataNotFoundError) as err:
-            handler.read_narrative_variant_data('not_a_narrative',
+            handler.read_narrative_variant_data('energy',
+                                                'not_a_narrative',
                                                 'not_a_variant',
                                                 'not_a_parameter')
-        expected = "Narrative 'not_a_narrative' not found"
+        expected = "Narrative 'not_a_narrative' not found in 'energy'"
         assert expected in str(err)
 
     def test_write_narrative_variant_data(self, handler):
@@ -578,10 +509,10 @@ class TestNarratives():
         """
         data = np.array([[42]])
         handler.write_narrative_variant_data(
-            'technology', 'high_tech_dsm', 'smart_water_savings', data)
+            'energy', 'technology', 'high_tech_dsm', 'smart_water_savings', data)
 
         actual = handler.read_narrative_variant_data(
-            'technology', 'high_tech_dsm', 'smart_water_savings')
+            'energy', 'technology', 'high_tech_dsm', 'smart_water_savings')
 
         assert actual == data
 
