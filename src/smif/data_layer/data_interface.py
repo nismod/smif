@@ -121,6 +121,7 @@ class DataInterface(metaclass=ABCMeta):
         sos_model: dict
             A sos_model dictionary
         """
+        raise NotImplementedError()
 
     @abstractmethod
     def write_sos_model(self, sos_model):

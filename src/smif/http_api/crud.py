@@ -1,9 +1,13 @@
 """HTTP API endpoint
 """
+from collections import defaultdict
+
 import dateutil.parser
 import smif
 from flask import current_app, jsonify, request
 from flask.views import MethodView
+from smif.exception import (SmifDataError, SmifDataInputError,
+                            SmifDataNotFoundError, SmifValidationError)
 
 
 class SmifAPI(MethodView):
@@ -126,12 +130,24 @@ class SosModelAPI(MethodView):
         """
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
-        if sos_model_name is None:
-            data = data_interface.read_sos_models()
-            response = jsonify(data)
-        else:
-            data = data_interface.read_sos_model(sos_model_name)
-            response = jsonify(data)
+
+        try:
+            if sos_model_name is None:
+                data = []
+                data = data_interface.read_sos_models()
+            else:
+                data = {}
+                data = data_interface.read_sos_model(sos_model_name)
+
+            response = jsonify({
+                'data': data,
+                'error': {}
+            })
+        except SmifDataError as err:
+            response = jsonify({
+                'data': data,
+                'error': parse_exceptions(err)
+            })
 
         return response
 
@@ -142,8 +158,17 @@ class SosModelAPI(MethodView):
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
 
-        data_interface.write_sos_model(data)
-        response = jsonify({"message": "success"})
+        try:
+            data_interface.write_sos_model(data)
+        except SmifDataError as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
         response.status_code = 201
         return response
 
@@ -153,8 +178,19 @@ class SosModelAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
-        data_interface.update_sos_model(sos_model_name, data)
-        response = jsonify({})
+
+        try:
+            data_interface.update_sos_model(sos_model_name, data)
+        except SmifDataError as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
+        response.status_code = 200
         return response
 
     def delete(self, sos_model_name):
@@ -388,3 +424,35 @@ def check_timestamp(data):
         except(ValueError):
             pass
     return data
+
+
+def parse_exceptions(exception):
+    """Parse a group of exceptions so that it can be sent over
+    the http-api
+    """
+    if type(exception) == SmifDataError:
+        msg = defaultdict(list)
+        for ex in exception.args[0]:
+            msg[str(type(ex).__name__)].append(_parse_exception(ex))
+    else:
+        msg = {}
+        msg[str(type(exception).__name__)] = [_parse_exception(exception)]
+
+    return msg
+
+
+def _parse_exception(ex):
+    """Parse a single exception so that it can be sent over
+    the http-api
+    """
+    if type(ex) == SmifValidationError:
+        msg = ex.args[0]
+    if type(ex) == SmifDataInputError:
+        msg = {
+            'component': ex.component,
+            'error': ex.error,
+            'message': ex.message,
+        }
+    if type(ex) == SmifDataNotFoundError:
+        msg = ex.args[0]
+    return msg

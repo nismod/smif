@@ -328,7 +328,7 @@ def test_get_sos_models(client, get_sos_model):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == [get_sos_model]
+    assert data['data'] == [get_sos_model]
 
 
 def test_get_sos_model(client, get_sos_model):
@@ -340,16 +340,15 @@ def test_get_sos_model(client, get_sos_model):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == get_sos_model
+    assert data['data'] == get_sos_model
 
 
 def test_get_sos_model_missing(client):
     """GET missing system-of-systems model
     """
     response = client.get('/api/v1/sos_models/does_not_exist')
-    assert response.status_code == 404
     data = parse_json(response)
-    assert data['message'] == "sos_model 'does_not_exist' not found"
+    assert data['error']['SmifDataNotFoundError'] == ["sos_model 'does_not_exist' not found"]
 
 
 def test_post_sos_model(client, get_sos_model):

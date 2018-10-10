@@ -10,6 +10,8 @@ from functools import lru_cache, wraps
 import pyarrow as pa
 from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.load import dump, load
+from smif.data_layer.validate import (validate_sos_model_config,
+                                      validate_sos_model_format)
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError, SmifDataReadError,
                             SmifValidationError)
@@ -98,7 +100,7 @@ class DatafileInterface(DataInterface):
     storage_format: str
         The format used to store intermediate data (local_csv, local_binary)
     """
-    def __init__(self, base_folder, storage_format='local_binary'):
+    def __init__(self, base_folder, storage_format='local_binary', validation=True):
         super().__init__()
 
         self.base_folder = str(base_folder)
@@ -109,6 +111,7 @@ class DatafileInterface(DataInterface):
         self.results_folder = str(os.path.join(self.base_folder, 'results'))
 
         self.storage_format = storage_format
+        self.validation = validation
 
         # cache results of reading project_config (invalidate on write)
         self._project_config_cache_invalid = True
@@ -209,14 +212,30 @@ class DatafileInterface(DataInterface):
     @check_exists('sos_model')
     def read_sos_model(self, sos_model_name):
         data = self._read_yaml_file(self.config_folders['sos_models'], sos_model_name)
+        if self.validation:
+            validate_sos_model_format(data)
         return data
 
     @check_not_exists('sos_model')
     def write_sos_model(self, sos_model):
+        if self.validation:
+            validate_sos_model_config(
+                sos_model,
+                self.read_sector_models(skip_coords=True),
+                self.read_scenarios(skip_coords=True),
+                self.read_narratives(skip_coords=True)
+            )
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     @check_exists('sos_model')
     def update_sos_model(self, sos_model_name, sos_model):
+        if self.validation:
+            validate_sos_model_config(
+                sos_model,
+                self.read_sector_models(skip_coords=True),
+                self.read_scenarios(skip_coords=True),
+                self.read_narratives(skip_coords=True)
+            )
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     @check_exists('sos_model')

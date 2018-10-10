@@ -19,7 +19,7 @@ def init_handler(request, setup_empty_folder_structure):
         handler = MemoryInterface()
     elif request.param == 'file':
         base_folder = setup_empty_folder_structure
-        handler = DatafileInterface(base_folder, 'local_csv')
+        handler = DatafileInterface(base_folder, 'local_csv', validation=False)
     elif request.param == 'database':
         handler = DatabaseInterface()
         raise NotImplementedError

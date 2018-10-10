@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { Redirect } from 'react-router'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
@@ -9,21 +10,24 @@ import { fetchScenarios } from 'actions/actions.js'
 import { fetchNarratives } from 'actions/actions.js'
 
 import { saveSosModel } from 'actions/actions.js'
+import { acceptSosModel } from 'actions/actions.js'
 
 import SosModelConfigForm from 'components/ConfigForm/SosModelConfigForm.js'
 
 class SosModelConfig extends Component {
     constructor(props) {
         super(props)
+        const { dispatch } = this.props
 
         this.saveSosModel = this.saveSosModel.bind(this)
-        this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
+        this.cancelSosModel = this.cancelSosModel.bind(this)
+        this.returnToOverview = this.returnToOverview.bind(this)
 
         this.config_name = this.props.match.params.name
-    }
 
-    componentDidMount() {
-        const { dispatch } = this.props
+        this.state = {
+            closeSosmodel: false
+        }
 
         dispatch(fetchSosModel(this.config_name))
         dispatch(fetchSectorModels())
@@ -36,6 +40,7 @@ class SosModelConfig extends Component {
 
         if (this.config_name != this.props.match.params.name) {
             this.config_name = this.props.match.params.name
+            this.setState({closeSosmodel: false})
             dispatch(fetchSosModel(this.config_name))
         }
     }
@@ -43,12 +48,19 @@ class SosModelConfig extends Component {
     saveSosModel(sosModel) {
         const { dispatch } = this.props
         dispatch(saveSosModel(sosModel))
-
-        this.returnToPreviousPage()
+        this.setState({closeSosmodel: true})
     }
 
-    returnToPreviousPage() {
-        this.props.history.push('/configure/sos-models')
+    cancelSosModel() {
+        const { dispatch } = this.props
+        dispatch(acceptSosModel())
+        this.setState({closeSosmodel: true})
+    }
+
+    returnToOverview() {
+        return (
+            <Redirect to="/configure/sos-models" />
+        )
     }
 
     renderLoading() {
@@ -59,21 +71,39 @@ class SosModelConfig extends Component {
         )
     }
 
-    renderSosModelConfig(sos_model, sector_models, scenarios, narratives) {
+    renderSosModelConfig(sos_model, sector_models, scenarios, narratives, error) {
         return (
             <div key={'sosModel_' + sos_model.name}>
-                <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} narratives={narratives} saveSosModel={this.saveSosModel} cancelSosModel={this.returnToPreviousPage}/>
+                {
+                    (Object.keys(error).length > 0)
+                        ?
+                        Object.keys(error).map(exception => (
+                            <div key={exception} className="alert alert-danger">
+                                {exception}
+                                {
+                                    error[exception].map(ex => (
+                                        <div key={ex}>
+                                            {ex}
+                                        </div>
+                                    ))
+                                }
+                            </div>
+                        ))
+                        : <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} narratives={narratives} error={error} saveSosModel={this.saveSosModel} cancelSosModel={this.cancelSosModel} />
+                }
             </div>
         )
     }
 
     render () {
-        const {sos_model, sector_models, scenarios, narratives, isFetching} = this.props
+        const {sos_model, sector_models, scenarios, narratives, error, isFetching} = this.props
 
         if (isFetching) {
             return this.renderLoading()
+        } else if (this.state.closeSosmodel && Object.keys(error).length == 0) {
+            return this.returnToOverview()
         } else {
-            return this.renderSosModelConfig(sos_model, sector_models, scenarios, narratives)
+            return this.renderSosModelConfig(sos_model, sector_models, scenarios, narratives, error)
         }
     }
 }
@@ -83,6 +113,7 @@ SosModelConfig.propTypes = {
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     narratives: PropTypes.array.isRequired,
+    error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
@@ -95,10 +126,11 @@ function mapStateToProps(state) {
         sector_models: state.sector_models.items,
         scenarios: state.scenarios.items,
         narratives: state.narratives.items,
+        error: state.sos_model.error,
         isFetching: (
-            state.sos_model.isFetching || 
-            state.sector_models.isFetching || 
-            state.scenarios.isFetching || 
+            state.sos_model.isFetching ||
+            state.sector_models.isFetching ||
+            state.scenarios.isFetching ||
             state.narratives.isFetching
         )
     }
