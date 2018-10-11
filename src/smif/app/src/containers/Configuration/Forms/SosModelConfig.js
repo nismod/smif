@@ -71,26 +71,31 @@ class SosModelConfig extends Component {
         )
     }
 
+    renderError(error) {
+        return (
+            <div>
+                {            
+                    Object.keys(error).map(exception => (
+                        <div key={exception} className="alert alert-danger">
+                            {exception}
+                            {
+                                error[exception].map(ex => (
+                                    <div key={ex}>
+                                        {ex}
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    ))
+                }
+            </div>
+        )
+    }
+
     renderSosModelConfig(sos_model, sector_models, scenarios, narratives, error) {
         return (
-            <div key={'sosModel_' + sos_model.name}>
-                {
-                    (Object.keys(error).length > 0)
-                        ?
-                        Object.keys(error).map(exception => (
-                            <div key={exception} className="alert alert-danger">
-                                {exception}
-                                {
-                                    error[exception].map(ex => (
-                                        <div key={ex}>
-                                            {ex}
-                                        </div>
-                                    ))
-                                }
-                            </div>
-                        ))
-                        : <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} narratives={narratives} error={error} saveSosModel={this.saveSosModel} cancelSosModel={this.cancelSosModel} />
-                }
+            <div>
+                <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} narratives={narratives} error={error} saveSosModel={this.saveSosModel} cancelSosModel={this.cancelSosModel}/>
             </div>
         )
     }
@@ -100,6 +105,10 @@ class SosModelConfig extends Component {
 
         if (isFetching) {
             return this.renderLoading()
+        } else if (
+            Object.keys(error).includes('SmifDataNotFoundError') ||
+            Object.keys(error).includes('SmifValidationError')) {
+            return this.renderError(error)
         } else if (this.state.closeSosmodel && Object.keys(error).length == 0) {
             return this.returnToOverview()
         } else {
@@ -126,7 +135,12 @@ function mapStateToProps(state) {
         sector_models: state.sector_models.items,
         scenarios: state.scenarios.items,
         narratives: state.narratives.items,
-        error: state.sos_model.error,
+        error: ({
+            ...state.sos_model.error,
+            ...state.sector_models.error,
+            ...state.scenarios.error,
+            ...state.narratives.error
+        }),
         isFetching: (
             state.sos_model.isFetching ||
             state.sector_models.isFetching ||

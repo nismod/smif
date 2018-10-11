@@ -54,6 +54,27 @@ class NarrativeConfig extends Component {
         )
     }
 
+    renderError(error) {
+        return (
+            <div>
+                {            
+                    Object.keys(error).map(exception => (
+                        <div key={exception} className="alert alert-danger">
+                            {exception}
+                            {
+                                error[exception].map(ex => (
+                                    <div key={ex}>
+                                        {ex}
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    ))
+                }
+            </div>
+        )
+    }
+
     renderNarrativeConfig(narrative, dimensions) {
         return (
             <div>
@@ -68,10 +89,14 @@ class NarrativeConfig extends Component {
     }
 
     render () {
-        const {narrative, dimensions, isFetching} = this.props
+        const {narrative, dimensions, error, isFetching} = this.props
 
         if (isFetching) {
             return this.renderLoading()
+        } else if (
+            Object.keys(error).includes('SmifDataNotFoundError') ||
+            Object.keys(error).includes('SmifValidationError')) {
+            return this.renderError(error)
         } else {
             return this.renderNarrativeConfig(narrative, dimensions)
         }
@@ -81,6 +106,7 @@ class NarrativeConfig extends Component {
 NarrativeConfig.propTypes = {
     narrative: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
+    error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
@@ -92,6 +118,10 @@ function mapStateToProps(state) {
     return {
         narrative: state.narrative.item,
         dimensions: state.dimensions.items,
+        error: ({
+            ...state.narrative.error,
+            ...state.dimensions.error
+        }),
         isFetching: (
             state.narrative.isFetching ||
             state.dimensions.isFetching

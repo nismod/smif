@@ -51,11 +51,11 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         _check_exist('sos_model', arg)
         return get_sos_model
 
-    def read_sector_model(arg):
+    def read_sector_model(arg, skip_coords=False):
         _check_exist('sector_model', arg)
         return get_sector_model
 
-    def read_scenario(arg):
+    def read_scenario(arg, skip_coords=False):
         _check_exist('scenario', arg)
         return get_scenario
 
@@ -146,7 +146,7 @@ def test_get_smif(client):
     """
     response = client.get('/api/v1/smif/')
     data = parse_json(response)
-    assert data['version'] == smif.__version__
+    assert data['data']['version'] == smif.__version__
 
 
 def test_get_smif_version(client):
@@ -154,7 +154,7 @@ def test_get_smif_version(client):
     """
     response = client.get('/api/v1/smif/version')
     data = parse_json(response)
-    assert data == smif.__version__
+    assert data['data'] == smif.__version__
 
 
 def test_model_runs(client, model_run):
@@ -165,7 +165,7 @@ def test_model_runs(client, model_run):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == [model_run]
+    assert data['data'] == [model_run]
 
 
 def test_model_runs_filtered_running(client, model_run):
@@ -175,7 +175,7 @@ def test_model_runs_filtered_running(client, model_run):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == [model_run]
+    assert data['data'] == [model_run]
 
 
 def test_model_run(client, model_run):
@@ -187,16 +187,15 @@ def test_model_run(client, model_run):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == model_run
+    assert data['data'] == model_run
 
 
 def test_model_run_missing(client):
     """GET missing system-of-systems model run
     """
     response = client.get('/api/v1/model_runs/does_not_exist')
-    assert response.status_code == 404
     data = parse_json(response)
-    assert data['message'] == "model_run 'does_not_exist' not found"
+    assert data['error']['SmifDataNotFoundError'] == ["model_run 'does_not_exist' not found"]
 
 
 def test_post_model_run(client, model_run):
@@ -293,7 +292,7 @@ def test_get_modelrun_status_modelrun_never_started(client):
     )
     data = parse_json(response)
     assert response.status_code == 200
-    assert data['status'] == 'unstarted'
+    assert data['data']['status'] == 'unstarted'
 
 
 def test_get_modelrun_status_modelrun_running(client):
@@ -305,7 +304,7 @@ def test_get_modelrun_status_modelrun_running(client):
     )
     data = parse_json(response)
     assert response.status_code == 200
-    assert data['status'] == 'running'
+    assert data['data']['status'] == 'running'
 
 
 def test_get_modelrun_status_modelrun_done(client):
@@ -317,7 +316,7 @@ def test_get_modelrun_status_modelrun_done(client):
     )
     data = parse_json(response)
     assert response.status_code == 200
-    assert data['status'] == 'done'
+    assert data['data']['status'] == 'done'
 
 
 def test_get_sos_models(client, get_sos_model):
@@ -404,7 +403,7 @@ def test_get_sector_models(client, get_sector_model):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == [get_sector_model]
+    assert data['data'] == [get_sector_model]
 
 
 def test_get_sector_model(client, get_sector_model):
@@ -412,20 +411,18 @@ def test_get_sector_model(client, get_sector_model):
     """
     name = get_sector_model['name']
     response = client.get('/api/v1/sector_models/{}'.format(name))
-    current_app.config.data_interface.read_sector_model.assert_called_with(name)
+    current_app.config.data_interface.read_sector_model.assert_called_with(name, skip_coords=True)
 
-    assert response.status_code == 200
     data = parse_json(response)
-    assert data == get_sector_model
+    assert data['data'] == get_sector_model
 
 
 def test_get_sector_model_missing(client):
     """GET missing model run
     """
     response = client.get('/api/v1/sector_models/does_not_exist')
-    assert response.status_code == 404
     data = parse_json(response)
-    assert data['message'] == "sector_model 'does_not_exist' not found"
+    assert data['error']['SmifDataNotFoundError'] == ["sector_model 'does_not_exist' not found"]
 
 
 def test_post_sector_model(client, get_sector_model):
@@ -481,7 +478,7 @@ def test_get_scenarios(client, get_scenario):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == [get_scenario]
+    assert data['data'] == [get_scenario]
 
 
 def test_get_scenario(client, get_scenario):
@@ -489,20 +486,19 @@ def test_get_scenario(client, get_scenario):
     """
     name = get_scenario['name']
     response = client.get('/api/v1/scenarios/{}'.format(name))
-    current_app.config.data_interface.read_scenario.assert_called_with(name)
+    current_app.config.data_interface.read_scenario.assert_called_with(name, skip_coords=True)
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == get_scenario
+    assert data['data'] == get_scenario
 
 
 def test_get_scenario_missing(client):
     """GET missing system-of-systems model
     """
     response = client.get('/api/v1/scenarios/does_not_exist')
-    assert response.status_code == 404
     data = parse_json(response)
-    assert data['message'] == "scenario 'does_not_exist' not found"
+    assert data['error']['SmifDataNotFoundError'] == ["scenario 'does_not_exist' not found"]
 
 
 def test_post_scenario(client, get_scenario):
@@ -557,7 +553,7 @@ def test_get_narratives(client, get_narrative):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == [get_narrative]
+    assert data['data'] == [get_narrative]
 
 
 def test_get_narrative(client, get_narrative):
@@ -569,16 +565,15 @@ def test_get_narrative(client, get_narrative):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == get_narrative
+    assert data['data'] == get_narrative
 
 
 def test_get_narrative_missing(client):
     """GET missing system-of-systems model
     """
     response = client.get('/api/v1/narratives/does_not_exist')
-    assert response.status_code == 404
     data = parse_json(response)
-    assert data['message'] == "narrative 'does_not_exist' not found"
+    assert data['error']['SmifDataNotFoundError'] == ["narrative 'does_not_exist' not found"]
 
 
 def test_post_narrative(client, get_narrative):
@@ -634,7 +629,7 @@ def test_get_dimensions(client, get_dimension):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == [get_dimension]
+    assert data['data'] == [get_dimension]
 
 
 def test_get_dimension(client, get_dimension):
@@ -646,16 +641,15 @@ def test_get_dimension(client, get_dimension):
 
     assert response.status_code == 200
     data = parse_json(response)
-    assert data == get_dimension
+    assert data['data'] == get_dimension
 
 
 def test_get_dimension_missing(client):
     """GET missing system-of-systems model
     """
     response = client.get('/api/v1/dimensions/does_not_exist')
-    assert response.status_code == 404
     data = parse_json(response)
-    assert data['message'] == "dimension 'does_not_exist' not found"
+    assert data['error']['SmifDataNotFoundError'] == ["dimension 'does_not_exist' not found"]
 
 
 def test_post_dimension(client, get_dimension):

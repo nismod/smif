@@ -7,7 +7,8 @@ import smif
 from flask import current_app, jsonify, request
 from flask.views import MethodView
 from smif.exception import (SmifDataError, SmifDataInputError,
-                            SmifDataNotFoundError, SmifValidationError)
+                            SmifDataNotFoundError, SmifException,
+                            SmifValidationError)
 
 
 class SmifAPI(MethodView):
@@ -22,7 +23,12 @@ class SmifAPI(MethodView):
         else:
             data = {}
             data['version'] = smif.__version__
-        return jsonify(data)
+
+        response = jsonify({
+            'data': data,
+            'error': {}
+        })
+        return response
 
 
 class ModelRunAPI(MethodView):
@@ -35,29 +41,43 @@ class ModelRunAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
 
-        if action is None:
-            if model_run_name is None:
+        try:
+            if action is None:
+                if model_run_name is None:
 
-                model_runs = data_interface.read_model_runs()
+                    model_runs = data_interface.read_model_runs()
 
-                if 'status' in request.args.keys():
-                    # filtered: GET /api/v1/model_runs?status=done
-                    data = []
-                    for model_run in model_runs:
-                        status = current_app.config.scheduler.get_status(model_run['name'])
-                        if status['status'] == request.args['status']:
-                            data.append(model_run)
+                    if 'status' in request.args.keys():
+                        # filtered: GET /api/v1/model_runs?status=done
+                        data = []
+                        for model_run in model_runs:
+                            status = current_app.config.scheduler.get_status(model_run['name'])
+                            if status['status'] == request.args['status']:
+                                data.append(model_run)
+                    else:
+                        # all: GET /api/v1/model_runs/
+                        data = []
+                        data = model_runs
                 else:
-                    # all: GET /api/v1/model_runs/
-                    data = model_runs
-            else:
-                # one: GET /api/vi/model_runs/name
-                data = data_interface.read_model_run(model_run_name)
-        elif action == 'status':
-            # action: GET /api/vi/model_runs/name/status
-            data = current_app.config.scheduler.get_status(model_run_name)
+                    # one: GET /api/vi/model_runs/name
+                    data = {}
+                    data = data_interface.read_model_run(model_run_name)
+            elif action == 'status':
+                # action: GET /api/vi/model_runs/name/status
+                data = {}
+                data = current_app.config.scheduler.get_status(model_run_name)
 
-        return jsonify(data)
+            response = jsonify({
+                'data': data,
+                'error': {}
+            })
+        except SmifException as err:
+            response = jsonify({
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+
+        return response
 
     def post(self, model_run_name=None, action=None):
         """
@@ -75,28 +95,36 @@ class ModelRunAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
 
-        if action is None:
-            data = request.get_json() or request.form
-            data_interface.write_model_run(data)
-        elif action == 'start':
-            data = request.get_json() or request.form
-            args = {
-                'directory': data_interface.base_folder,
-                'verbosity': data['args']['verbosity'],
-                'warm_start': data['args']['warm_start'],
-                'output_format': data['args']['output_format']
-            }
-            current_app.config.scheduler.add(model_run_name, args)
-        elif action == 'kill':
-            current_app.config.scheduler.kill(model_run_name)
-        elif action == 'remove':
-            raise NotImplementedError
-        elif action == 'resume':
-            raise NotImplementedError
+        try:
+            if action is None:
+                data = request.get_json() or request.form
+                data_interface.write_model_run(data)
+            elif action == 'start':
+                data = request.get_json() or request.form
+                args = {
+                    'directory': data_interface.base_folder,
+                    'verbosity': data['args']['verbosity'],
+                    'warm_start': data['args']['warm_start'],
+                    'output_format': data['args']['output_format']
+                }
+                current_app.config.scheduler.add(model_run_name, args)
+            elif action == 'kill':
+                current_app.config.scheduler.kill(model_run_name)
+            elif action == 'remove':
+                raise NotImplementedError
+            elif action == 'resume':
+                raise NotImplementedError
+            else:
+                raise SyntaxError("ModelRun action '%s' does not exist" % action)
+        except SmifException as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
         else:
-            raise SyntaxError("ModelRun action '%s' does not exist" % action)
+            response = jsonify({"message": "success"})
 
-        response = jsonify({"message": "success"})
         response.status_code = 201
         return response
 
@@ -106,8 +134,19 @@ class ModelRunAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
-        data_interface.update_model_run(model_run_name, data)
-        response = jsonify({})
+
+        try:
+            data_interface.update_model_run(model_run_name, data)
+        except SmifException as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
+        response.status_code = 200
         return response
 
     def delete(self, model_run_name):
@@ -143,7 +182,7 @@ class SosModelAPI(MethodView):
                 'data': data,
                 'error': {}
             })
-        except SmifDataError as err:
+        except SmifException as err:
             response = jsonify({
                 'data': data,
                 'error': parse_exceptions(err)
@@ -160,7 +199,7 @@ class SosModelAPI(MethodView):
 
         try:
             data_interface.write_sos_model(data)
-        except SmifDataError as err:
+        except SmifException as err:
             response = jsonify({
                 'message': 'failed',
                 'data': data,
@@ -181,7 +220,7 @@ class SosModelAPI(MethodView):
 
         try:
             data_interface.update_sos_model(sos_model_name, data)
-        except SmifDataError as err:
+        except SmifException as err:
             response = jsonify({
                 'message': 'failed',
                 'data': data,
@@ -213,13 +252,25 @@ class SectorModelAPI(MethodView):
         """
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
-        if sector_model_name is None:
-            data = data_interface.read_sector_models()
-            response = jsonify(data)
-        else:
-            data = data_interface.read_sector_model(sector_model_name)
-            response = jsonify(data)
 
+        try:
+            if sector_model_name is None:
+                data = []
+                data = data_interface.read_sector_models(skip_coords=True)
+            else:
+                data = {}
+                data = data_interface.read_sector_model(sector_model_name, skip_coords=True)
+
+            response = jsonify({
+                'data': data,
+                'error': {}
+            })
+        except SmifException as err:
+            response = jsonify({
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+            print(parse_exceptions(err))
         return response
 
     def post(self):
@@ -230,8 +281,17 @@ class SectorModelAPI(MethodView):
         data = request.get_json() or request.form
         data = check_timestamp(data)
 
-        data_interface.write_sector_model(data)
-        response = jsonify({"message": "success"})
+        try:
+            data_interface.write_sector_model(data)
+        except SmifException as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
         response.status_code = 201
         return response
 
@@ -242,8 +302,19 @@ class SectorModelAPI(MethodView):
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
         data = check_timestamp(data)
-        data_interface.update_sector_model(sector_model_name, data)
-        response = jsonify({})
+
+        try:
+            data_interface.update_sector_model(sector_model_name, data)
+        except SmifException as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
+        response.status_code = 200
         return response
 
     def delete(self, sector_model_name):
@@ -266,12 +337,24 @@ class ScenarioAPI(MethodView):
         """
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
-        if scenario_name is None:
-            data = data_interface.read_scenarios()
-            response = jsonify(data)
-        else:
-            data = data_interface.read_scenario(scenario_name)
-            response = jsonify(data)
+
+        try:
+            if scenario_name is None:
+                data = []
+                data = data_interface.read_scenarios(skip_coords=True)
+            else:
+                data = {}
+                data = data_interface.read_scenario(scenario_name, skip_coords=True)
+
+            response = jsonify({
+                'data': data,
+                'error': {}
+            })
+        except SmifException as err:
+            response = jsonify({
+                'data': data,
+                'error': parse_exceptions(err)
+            })
 
         return response
 
@@ -281,10 +364,19 @@ class ScenarioAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
-        data = check_timestamp(data)
 
-        data_interface.write_scenario(data)
-        response = jsonify({"message": "success"})
+        try:
+            data = check_timestamp(data)
+            data_interface.write_scenario(data)
+        except SmifException as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
         response.status_code = 201
         return response
 
@@ -294,9 +386,20 @@ class ScenarioAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
-        data = check_timestamp(data)
-        data_interface.update_scenario(scenario_name, data)
-        response = jsonify({})
+
+        try:
+            data = check_timestamp(data)
+            data_interface.update_scenario(scenario_name, data)
+        except SmifException as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
+        response.status_code = 200
         return response
 
     def delete(self, scenario_name):
@@ -319,12 +422,24 @@ class NarrativeAPI(MethodView):
         """
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
-        if narrative_name is None:
-            data = data_interface.read_narratives()
-            response = jsonify(data)
-        else:
-            data = data_interface.read_narrative(narrative_name)
-            response = jsonify(data)
+
+        try:
+            if narrative_name is None:
+                data = []
+                data = data_interface.read_narratives()
+            else:
+                data = {}
+                data = data_interface.read_narrative(narrative_name)
+
+            response = jsonify({
+                'data': data,
+                'error': {}
+            })
+        except SmifException as err:
+            response = jsonify({
+                'data': data,
+                'error': parse_exceptions(err)
+            })
 
         return response
 
@@ -334,10 +449,19 @@ class NarrativeAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
-        data = check_timestamp(data)
 
-        data_interface.write_narrative(data)
-        response = jsonify({"message": "success"})
+        try:
+            data = check_timestamp(data)
+            data_interface.write_narrative(data)
+        except SmifException as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
         response.status_code = 201
         return response
 
@@ -347,9 +471,20 @@ class NarrativeAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
-        data = check_timestamp(data)
-        data_interface.update_narrative(narrative_name, data)
-        response = jsonify({})
+
+        try:
+            data = check_timestamp(data)
+            data_interface.update_narrative(narrative_name, data)
+        except SmifException as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
+        response.status_code = 200
         return response
 
     def delete(self, narrative_name):
@@ -372,12 +507,24 @@ class DimensionAPI(MethodView):
         """
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
-        if dimension_name is None:
-            data = data_interface.read_dimensions()
-            response = jsonify(data)
-        else:
-            data = data_interface.read_dimension(dimension_name)
-            response = jsonify(data)
+
+        try:
+            if dimension_name is None:
+                data = []
+                data = data_interface.read_dimensions()
+            else:
+                data = {}
+                data = data_interface.read_dimension(dimension_name)
+
+            response = jsonify({
+                'data': data,
+                'error': {}
+            })
+        except SmifException as err:
+            response = jsonify({
+                'data': data,
+                'error': parse_exceptions(err)
+            })
 
         return response
 
@@ -387,10 +534,19 @@ class DimensionAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
-        data = check_timestamp(data)
 
-        data_interface.write_dimension(data)
-        response = jsonify({"message": "success"})
+        try:
+            data = check_timestamp(data)
+            data_interface.write_dimension(data)
+        except SmifException as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
         response.status_code = 201
         return response
 
@@ -400,9 +556,20 @@ class DimensionAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
-        data = check_timestamp(data)
-        data_interface.update_dimension(dimension_name, data)
-        response = jsonify({})
+
+        try:
+            data = check_timestamp(data)
+            data_interface.update_dimension(dimension_name, data)
+        except SmifException as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
+        response.status_code = 200
         return response
 
     def delete(self, dimension_name):

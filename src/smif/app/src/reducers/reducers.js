@@ -36,7 +36,8 @@ import {
 function smif(
     state = {
         isFetching: true,
-        item: {}
+        item: {},
+        error: {}
     },
     action
 ) {
@@ -48,7 +49,8 @@ function smif(
     case RECEIVE_SMIF_DETAILS:
         return Object.assign({}, state, {
             isFetching: false,
-            item: action.smif,
+            item: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -59,7 +61,8 @@ function smif(
 function model_runs(
     state = {
         isFetching: false,
-        items: []
+        items: [],
+        error: {}
     },
     action
 ) {
@@ -71,7 +74,8 @@ function model_runs(
     case RECEIVE_MODEL_RUNS:
         return Object.assign({}, state, {
             isFetching: false,
-            items: action.model_runs,
+            items: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -82,7 +86,8 @@ function model_runs(
 function model_run(
     state = {
         isFetching: true,
-        item: {}
+        item: {},
+        error: {}
     },
     action
 ) {
@@ -94,7 +99,8 @@ function model_run(
     case RECEIVE_MODEL_RUN:
         return Object.assign({}, state, {
             isFetching: false,
-            item: action.model_run,
+            item: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -105,7 +111,8 @@ function model_run(
 function model_run_status(
     state = {
         isFetching: true,
-        item: {}
+        item: {},
+        error: {}
     },
     action
 ) {
@@ -117,7 +124,8 @@ function model_run_status(
     case RECEIVE_MODEL_RUN_STATUS:
         return Object.assign({}, state, {
             isFetching: false,
-            item: action.model_run_status,
+            item: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -152,7 +160,7 @@ function sos_models(
 
 function sos_model(
     state = {
-        isFetching: false,
+        isFetching: true,
         item: {},
         error: {}
     },
@@ -167,7 +175,8 @@ function sos_model(
         return Object.assign({}, state, {
             isFetching: false,
             item: action.data,
-            error: action.error
+            error: action.error,
+            lastUpdated: action.receivedAt
         })
     case SEND_SOS_MODEL:
         return Object.assign({}, state, {
@@ -192,7 +201,8 @@ function sos_model(
 function sector_models(
     state = {
         isFetching: true,
-        items: []
+        items: [],
+        error: {}
     },
     action
 ) {
@@ -204,7 +214,8 @@ function sector_models(
     case RECEIVE_SECTOR_MODELS:
         return Object.assign({}, state, {
             isFetching: false,
-            items: action.sector_models,
+            items: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -215,7 +226,8 @@ function sector_models(
 function sector_model(
     state = {
         isFetching: true,
-        item: {}
+        item: {},
+        error: {}
     },
     action
 ) {
@@ -227,7 +239,8 @@ function sector_model(
     case RECEIVE_SECTOR_MODEL:
         return Object.assign({}, state, {
             isFetching: false,
-            item: action.sector_model,
+            item: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -238,7 +251,8 @@ function sector_model(
 function scenarios(
     state = {
         isFetching: true,
-        items: []
+        items: [],
+        error: {}
     },
     action
 ) {
@@ -250,7 +264,8 @@ function scenarios(
     case RECEIVE_SCENARIOS:
         return Object.assign({}, state, {
             isFetching: false,
-            items: action.scenarios,
+            items: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -261,7 +276,8 @@ function scenarios(
 function scenario(
     state = {
         isFetching: true,
-        item: {}
+        item: {},
+        error: {}
     },
     action
 ) {
@@ -273,7 +289,8 @@ function scenario(
     case RECEIVE_SCENARIO:
         return Object.assign({}, state, {
             isFetching: false,
-            item: action.scenario,
+            item: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -284,7 +301,8 @@ function scenario(
 function narratives(
     state = {
         isFetching: true,
-        items: []
+        items: [],
+        error: {}
     },
     action
 ) {
@@ -296,7 +314,8 @@ function narratives(
     case RECEIVE_NARRATIVES:
         return Object.assign({}, state, {
             isFetching: false,
-            items: action.narratives,
+            items: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -307,7 +326,8 @@ function narratives(
 function narrative(
     state = {
         isFetching: true,
-        item: {}
+        item: {},
+        error: {}
     },
     action
 ) {
@@ -319,7 +339,8 @@ function narrative(
     case RECEIVE_NARRATIVE:
         return Object.assign({}, state, {
             isFetching: false,
-            item: action.narrative,
+            item: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -330,7 +351,8 @@ function narrative(
 function dimensions(
     state = {
         isFetching: true,
-        items: []
+        items: [],
+        error: {}
     },
     action
 ) {
@@ -342,7 +364,8 @@ function dimensions(
     case RECEIVE_DIMENSIONS:
         return Object.assign({}, state, {
             isFetching: false,
-            items: action.dimensions,
+            items: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -353,7 +376,8 @@ function dimensions(
 function dimension(
     state = {
         isFetching: true,
-        item: {}
+        item: {},
+        error: {}
     },
     action
 ) {
@@ -365,7 +389,8 @@ function dimension(
     case RECEIVE_DIMENSION:
         return Object.assign({}, state, {
             isFetching: false,
-            item: action.dimension,
+            item: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
