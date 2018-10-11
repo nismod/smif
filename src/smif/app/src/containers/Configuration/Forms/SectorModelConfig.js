@@ -56,6 +56,27 @@ class SectorModelConfig extends Component {
         )
     }
 
+    renderError(error) {
+        return (
+            <div>
+                {            
+                    Object.keys(error).map(exception => (
+                        <div key={exception} className="alert alert-danger">
+                            {exception}
+                            {
+                                error[exception].map(ex => (
+                                    <div key={ex}>
+                                        {ex}
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    ))
+                }
+            </div>
+        )
+    }
+
     renderSectorModelConfig(sector_model, sos_models, dimensions) {
         return (
             <div key={sector_model.name}>
@@ -65,10 +86,14 @@ class SectorModelConfig extends Component {
     }
 
     render () {
-        const {sector_model, sos_models, dimensions, isFetching} = this.props
+        const {sector_model, sos_models, dimensions, error, isFetching} = this.props
 
         if (isFetching) {
             return this.renderLoading()
+        } else if (
+            Object.keys(error).includes('SmifDataNotFoundError') ||
+            Object.keys(error).includes('SmifValidationError')) {
+            return this.renderError(error)
         } else {
             return this.renderSectorModelConfig(sector_model, sos_models, dimensions)
         }
@@ -79,6 +104,7 @@ SectorModelConfig.propTypes = {
     sos_models: PropTypes.array.isRequired,
     sector_model: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
+    error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
@@ -87,9 +113,14 @@ SectorModelConfig.propTypes = {
 
 function mapStateToProps(state) {
     return {
-        sos_models: state.sos_models.items,
         sector_model: state.sector_model.item,
+        sos_models: state.sos_models.items,
         dimensions: state.dimensions.items,
+        error: ({
+            ...state.sector_model.error,
+            ...state.sos_models.error,
+            ...state.dimensions.error
+        }),
         isFetching: (
             state.sos_models.isFetching ||
             state.sector_model.isFetching ||

@@ -54,6 +54,27 @@ class ScenarioConfig extends Component {
         )
     }
 
+    renderError(error) {
+        return (
+            <div>
+                {            
+                    Object.keys(error).map(exception => (
+                        <div key={exception} className="alert alert-danger">
+                            {exception}
+                            {
+                                error[exception].map(ex => (
+                                    <div key={ex}>
+                                        {ex}
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    ))
+                }
+            </div>
+        )
+    }
+
     renderScenarioConfig(scenario, dimensions) {
         return (
             <div>
@@ -68,10 +89,14 @@ class ScenarioConfig extends Component {
     }
 
     render () {
-        const {scenario, dimensions, isFetching} = this.props
+        const {scenario, dimensions, error, isFetching} = this.props
 
         if (isFetching) {
             return this.renderLoading()
+        } else if (
+            Object.keys(error).includes('SmifDataNotFoundError') ||
+            Object.keys(error).includes('SmifValidationError')) {
+            return this.renderError(error)
         } else {
             return this.renderScenarioConfig(scenario, dimensions)
         }
@@ -81,6 +106,7 @@ class ScenarioConfig extends Component {
 ScenarioConfig.propTypes = {
     scenario: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
+    error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
@@ -92,6 +118,10 @@ function mapStateToProps(state) {
     return {
         scenario: state.scenario.item,
         dimensions: state.dimensions.items,
+        error: ({
+            ...state.scenario.error,
+            ...state.dimensions.error
+        }),
         isFetching: (
             state.scenario.isFetching ||
             state.dimensions.isFetching
