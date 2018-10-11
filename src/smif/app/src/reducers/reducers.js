@@ -152,7 +152,7 @@ function sos_models(
 
 function sos_model(
     state = {
-        isFetching: false,
+        isFetching: true,
         item: {},
         error: {}
     },

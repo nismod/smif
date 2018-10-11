@@ -75,7 +75,10 @@ class SosModelConfig extends Component {
         return (
             <div key={'sosModel_' + sos_model.name}>
                 {
-                    (Object.keys(error).length > 0)
+                    (
+                        Object.keys(error).includes('SmifDataNotFoundError') || 
+                        Object.keys(error).includes('SmifValidationError')
+                    )
                         ?
                         Object.keys(error).map(exception => (
                             <div key={exception} className="alert alert-danger">
