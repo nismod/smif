@@ -8,6 +8,7 @@ from unittest.mock import Mock
 import numpy as np
 import pyarrow as pa
 from pytest import fixture, mark, raises
+from smif.data_layer.data_array import DataArray
 from smif.data_layer.datafile_interface import DatafileInterface
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError)
@@ -526,14 +527,25 @@ class TestScenarios:
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
 
-        expected = np.array([[100, 150, 200, 210]])
+        data = np.array([[100, 150, 200, 210]])
         actual = config_handler.read_scenario_variant_data(
             'population',
             'High Population (ONS)',
             'population_count',
             timestep=2017)
 
-        np.testing.assert_almost_equal(actual, expected)
+        spec = Spec.from_dict({
+            'name': "population_count",
+            'description': "The count of population",
+            'unit': 'people',
+            'dtype': 'int',
+            'coords': {'county': ['oxford'],
+                       'season': ['cold_month', 'spring_month', 'hot_month', 'fall_month']},
+            'dims': ['county', 'season']})
+
+        expected = DataArray(spec, data)
+
+        assert actual == expected
 
     def test_scenario_data_raises(self, setup_folder_structure, config_handler,
                                   get_faulty_scenario_data):
@@ -561,7 +573,8 @@ class TestScenarios:
         handler = config_handler
         scenario_name = 'population'
         variable = 'population_count'
-        spec = handler._read_scenario_variable_spec(scenario_name, variable)
+        scenario = handler.read_scenario(scenario_name)
+        spec = handler._get_spec_from_provider(scenario['provides'], variable)
         assert spec.as_dict() == {'name': 'population_count',
                                   'description': 'The count of population',
                                   'unit': 'people',
@@ -581,12 +594,14 @@ class TestScenarios:
         scenario_name = 'does not exist'
         variable = 'population_count'
         with raises(SmifDataNotFoundError):
-            handler._read_scenario_variable_spec(scenario_name, variable)
+            scenario = handler.read_scenario(scenario_name)
+            handler._get_spec_from_provider(scenario['provides'], variable)
 
         scenario_name = 'population'
         variable = 'does not exist'
         with raises(SmifDataNotFoundError):
-            handler._read_scenario_variable_spec(scenario_name, variable)
+            scenario = handler.read_scenario(scenario_name)
+            handler._get_spec_from_provider(scenario['provides'], variable)
 
     def test_scenario_data_validates(self, setup_folder_structure, config_handler,
                                      get_remapped_scenario_data):
@@ -617,7 +632,9 @@ class TestScenarios:
             'population_count',
             timestep=2015)
 
-        np.testing.assert_equal(actual, expected_data)
+        expected = DataArray(spec, expected_data)
+
+        assert actual == expected
 
     @mark.xfail
     def test_project_scenario_sets(self, config_handler):
@@ -793,7 +810,18 @@ class TestNarrativeVariantData:
         actual = config_handler.read_narrative_variant_data(
             'energy', 'governance', 'Central Planning', 'homogeneity_coefficient')
 
-        assert actual == 8
+        spec = Spec.from_dict({
+            'name': 'homogeneity_coefficient',
+            'description': "How homegenous the centralisation"
+                           "process is",
+            'absolute_range': [0, 1],
+            'expected_range': [0, 1],
+            'default': 'default_homogeneity.csv',
+            'unit': 'percentage',
+            'dtype': 'float'
+            })
+
+        assert actual == DataArray(spec, np.array(8, dtype=float))
 
     def test_narrative_data_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if narrative has no data

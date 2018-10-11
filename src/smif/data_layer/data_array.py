@@ -1,7 +1,9 @@
 """DataArray provides a thin wrapper around multidimensional arrays and metadata
 """
-import numpy
-from smif.exception import SmifDataError
+from logging import getLogger
+
+import numpy as np
+from smif.exception import SmifDataError, SmifDataMismatchError
 
 # Import pandas, xarray if available (optional dependencies)
 try:
@@ -30,18 +32,42 @@ class DataArray():
     data : numpy.ndarray
     """
     def __init__(self, spec, data):
+        self.logger = getLogger(__name__)
         self.spec = spec
         self.data = data
 
+        if not hasattr(data, 'shape'):
+            self.logger.debug("Data is not an numpy.ndarray")
+            data = np.array(data)
+
+        if not hasattr(spec, 'shape'):
+            self.logger.error("spec argument is not a Spec")
+            raise TypeError("spec argument is not a Spec")
+
+        if not data.shape == self.spec.shape:
+            msg = "Data shape ({}) does not match spec ({})"
+            raise SmifDataMismatchError(msg.format(data.shape, spec.shape))
+
     def __eq__(self, other):
         return self.spec == other.spec and \
-            numpy.array_equal(self.data, other.data)
+            np.array_equal(self.data, other.data)
+
+    def __repr__(self):
+        return "<DataArray('{}', '{}')>".format(self.spec, self.data)
+
+    def __str__(self):
+        return "<DataArray('{}', '{}')>".format(self.spec, self.data)
+
+    def as_dict(self):
+        """
+        """
+        return self.spec.as_dict()
 
     @classmethod
     def default_from_spec(cls, spec):
         """Create DataArray from a spec's default
         """
-        data = numpy.full(spec.shape, spec.default)
+        data = np.full(spec.shape, spec.default, dtype=spec.dtype)
         return cls(spec, data)
 
     @property
@@ -80,6 +106,12 @@ class DataArray():
         """
         return self.spec.unit
 
+    @property
+    def shape(self):
+        """The shape of the data array
+        """
+        return self.data.shape
+
     def as_ndarray(self):
         """Access as a :class:`numpy.ndarray`
         """
@@ -93,7 +125,7 @@ class DataArray():
 
         try:
             index = pandas.MultiIndex.from_product(coords, names=dims)
-            return pandas.Series(numpy.reshape(self.data, self.data.size), index=index)
+            return pandas.Series(np.reshape(self.data, self.data.size), index=index)
         except NameError as ex:
             raise SmifDataError(INSTALL_WARNING) from ex
 

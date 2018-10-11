@@ -2,6 +2,7 @@
 """
 import numpy as np
 from pytest import raises
+from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_interface import DataInterface
 from smif.exception import SmifDataMismatchError
 from smif.metadata import Spec
@@ -17,17 +18,47 @@ class TestDataInterface():
                 'interval': '1'
             }
         ]
-        actual = DataInterface.data_list_to_ndarray(
-            data,
-            Spec(
+
+        spec = Spec(
                 name='test',
                 dims=['region', 'interval'],
                 coords={'region': ['oxford'], 'interval': ['1']},
                 dtype='int'
-            )
+                )
+
+        actual = DataInterface.data_list_to_ndarray(
+            data,
+            spec
         )
-        expected = np.array([[3.]], dtype=float)
-        np.testing.assert_equal(actual, expected)
+        expected = DataArray(spec, np.array([[3.]], dtype=float))
+
+        assert actual == expected
+
+    def test_ndarray_to_data_list(self):
+
+        data = [
+            {
+                'timestep': 2010,
+                'test': 3,
+                'region': 'oxford',
+                'interval': '1'
+            }
+        ]
+
+        spec = Spec(
+                name='test',
+                dims=['region', 'interval'],
+                coords={'region': ['oxford'], 'interval': ['1']},
+                dtype='int'
+                )
+
+        actual = DataInterface.ndarray_to_data_list(
+            np.array([[3]]),
+            spec, timestep=2010
+        )
+        expected = data
+
+        assert actual == expected
 
     def test_scenario_data_missing_timestep(self):
         data = [

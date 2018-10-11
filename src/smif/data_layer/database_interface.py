@@ -145,8 +145,8 @@ class DatabaseInterface(DataInterface):
     def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
         raise NotImplementedError()
 
-    def write_scenario_variant_data(self, data, scenario_name, variant_name, variable,
-                                    timestep=None):
+    def write_scenario_variant_data(self, scenario_name, variant_name, variable,
+                                    data, timestep=None):
         raise NotImplementedError()
     # endregion
 
@@ -155,8 +155,8 @@ class DatabaseInterface(DataInterface):
                                     timestep=None):
         raise NotImplementedError()
 
-    def write_narrative_variant_data(self, data, narrative_name, variant_name, variable,
-                                     timestep=None):
+    def write_narrative_variant_data(self, narrative_name, variant_name, variable,
+                                     data, timestep=None):
         raise NotImplementedError()
     # endregion
 

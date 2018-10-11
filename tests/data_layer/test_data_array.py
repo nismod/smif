@@ -82,3 +82,7 @@ class TestDataArray():
 
         expected = DataArray(spec, data)
         assert small_da.__eq__(expected) is True
+
+    def test_repr(self, small_da, spec, data):
+
+        assert repr(small_da) == "<DataArray('{}', '{}')>".format(spec, data)

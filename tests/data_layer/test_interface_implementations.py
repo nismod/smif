@@ -4,6 +4,7 @@ import numpy as np
 from pytest import fixture, mark, param, raises
 from smif.data_layer import (DatabaseInterface, DatafileInterface,
                              MemoryInterface)
+from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 from smif.metadata import Spec
 
@@ -46,8 +47,9 @@ def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies
     handler.write_narrative_variant_data('energy',
                                          'technology',
                                          'high_tech_dsm',
-                                         'smart_water_savings',
-                                         np.array([[424242]]))
+                                         'smart_meter_savings',
+                                         np.array(424242, dtype=float)
+                                         )
 
     return handler
 
@@ -108,6 +110,7 @@ def coefficients():
 
 @fixture
 def scenario(sample_dimensions):
+
     return deepcopy({
         'name': 'mortality',
         'description': 'The annual mortality rate in UK population',
@@ -116,7 +119,7 @@ def scenario(sample_dimensions):
                 'name': 'mortality',
                 'dims': ['lad'],
                 'coords': {
-                    'lad': sample_dimensions[0]['elements']
+                    'lad': sample_dimensions[0]
                 },
                 'dtype': 'float',
             }
@@ -387,9 +390,9 @@ class TestScenarios():
             'provides': []
         }
         handler.write_scenario(another_scenario)
-        actual = handler.read_scenarios()
-        expected = [scenario, another_scenario]
-        assert sorted_by_name(actual) == sorted_by_name(expected)
+        actual = handler.read_scenario('fertility')
+        expected = another_scenario
+        assert actual == expected
 
     def test_update_scenario(self, scenario, handler):
         another_scenario = {
@@ -399,7 +402,7 @@ class TestScenarios():
             'provides': []
         }
         handler.update_scenario('mortality', another_scenario)
-        assert handler.read_scenarios() == [another_scenario]
+        assert handler.read_scenarios(skip_coords=True) == [another_scenario]
 
     def test_delete_scenario(self, handler):
         handler.delete_scenario('mortality')
@@ -445,23 +448,17 @@ class TestScenarios():
         handler.delete_scenario_variant('mortality', 'low')
         assert handler.read_scenario_variants('mortality') == []
 
-    def test_read_scenario_variant_data(self, get_remapped_scenario_data):
-        """Read from in-memory data
-        """
-        data, spec = get_remapped_scenario_data
-        handler = MemoryInterface()
-        handler._scenario_data[('test_scenario', 'variant', 'parameter', 2010)] = data
-        assert handler.read_scenario_variant_data(
-            'test_scenario', 'variant', 'parameter', 2010) == data
-
-    def test_write_scenario_variant_data(self, get_remapped_scenario_data):
+    def test_write_scenario_variant_data(self, handler):
         """Write to in-memory data
         """
-        data, spec = get_remapped_scenario_data
-        handler = MemoryInterface()
+        data = np.array([0, 1], dtype=float)
         handler.write_scenario_variant_data(
-            data, 'test_scenario', 'variant', 'parameter', 2010)
-        assert handler._scenario_data[('test_scenario', 'variant', 'parameter', 2010)] == data
+            'mortality', 'low', 'mortality', data, 2010)
+
+        expected = data
+        actual = handler.read_scenario_variant_data('mortality', 'low',
+                                                    'mortality', 2010)
+        np.testing.assert_equal(actual.as_ndarray(), expected)
 
 
 class TestNarratives():
@@ -473,8 +470,18 @@ class TestNarratives():
         actual = handler.read_narrative_variant_data('energy',
                                                      'technology',
                                                      'high_tech_dsm',
-                                                     'smart_water_savings')
-        expected = np.array([[424242]])
+                                                     'smart_meter_savings')
+        spec = Spec.from_dict({
+            'name': 'smart_meter_savings',
+            'description': "Difference in floor area per person"
+                           "in end year compared to base year",
+            'absolute_range': [0, float('inf')],
+            'expected_range': [0.5, 2],
+            'default': 'data_file.csv',
+            'unit': 'percentage',
+            'dtype': 'float'})
+        data = np.array(424242, dtype=float)
+        expected = DataArray(spec, data)
         assert actual == expected
 
     def test_read_narrative_variant_data_raises_param(self, handler):
@@ -507,21 +514,33 @@ class TestNarratives():
     def test_write_narrative_variant_data(self, handler):
         """Write narrative variant data to file or memory
         """
-        data = np.array([[42]])
+        data = np.array(42, dtype=float)
         handler.write_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', 'smart_water_savings', data)
+            'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings', data)
 
         actual = handler.read_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', 'smart_water_savings')
+            'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
 
-        assert actual == data
+        spec = Spec.from_dict({
+                'name': 'smart_meter_savings',
+                'description': "Difference in floor area per person"
+                               "in end year compared to base year",
+                'absolute_range': [0, float('inf')],
+                'expected_range': [0.5, 2],
+                'default': 'data_file.csv',
+                'unit': 'percentage',
+                'dtype': 'float'
+            })
+        expected = DataArray(spec, np.array(42, dtype=float))
+
+        assert actual == expected
 
 
 class TestResults():
     """Read/write results and prepare warm start
     """
     def test_read_write_results(self, handler):
-        results_in = np.array(1)
+        results_in = np.array(1, dtype=float)
         modelrun_name = 'test_modelrun'
         model_name = 'energy'
         timestep = 2010
@@ -529,7 +548,10 @@ class TestResults():
 
         handler.write_results(results_in, modelrun_name, model_name, output_spec, timestep)
         results_out = handler.read_results(modelrun_name, model_name, output_spec, timestep)
-        assert results_in == results_out
+
+        expected = DataArray(output_spec, results_in)
+
+        assert results_out == expected
 
     def test_warm_start(self, handler):
         """Warm start should return None if no results are available

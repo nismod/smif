@@ -8,6 +8,7 @@ import re
 from functools import lru_cache, wraps
 
 import pyarrow as pa
+from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.load import dump, load
 from smif.data_layer.validate import (validate_sos_model_config,
@@ -15,7 +16,6 @@ from smif.data_layer.validate import (validate_sos_model_config,
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError, SmifDataReadError,
                             SmifValidationError)
-from smif.metadata import Spec
 
 # Import fiona if available (optional dependency)
 try:
@@ -222,7 +222,7 @@ class DatafileInterface(DataInterface):
                 sos_model,
                 self.read_sector_models(skip_coords=True),
                 self.read_scenarios(skip_coords=True),
-                self.read_narratives(skip_coords=True)
+                self._read_narratives()
             )
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
@@ -233,7 +233,7 @@ class DatafileInterface(DataInterface):
                 sos_model,
                 self.read_sector_models(skip_coords=True),
                 self.read_scenarios(skip_coords=True),
-                self.read_narratives(skip_coords=True)
+                self._read_narratives()
             )
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
@@ -580,15 +580,6 @@ class DatafileInterface(DataInterface):
         for item in list_:
             self._set_item_coords(item)
 
-    def _set_item_coords(self, item):
-        """If dims exists and is not empty
-        """
-        if 'dims' in item and item['dims']:
-            item['coords'] = {
-                dim: self.read_dimension(dim)['elements']
-                for dim in item['dims']
-            }
-
     @lru_cache(maxsize=32)
     def _read_dimension_file(self, filename):
         filepath = os.path.join(self.data_folders['dimensions'], filename)
@@ -683,7 +674,7 @@ class DatafileInterface(DataInterface):
     @check_exists_as_child('scenario', 'variant')
     def read_scenario_variant(self, scenario_name, variant_name):
         variants = self.read_scenario_variants(scenario_name)
-        return _pick_from_list(variants, variant_name)
+        return self._pick_from_list(variants, variant_name)
 
     @check_not_exists_as_child('scenario', 'variant')
     def write_scenario_variant(self, scenario_name, variant):
@@ -707,7 +698,8 @@ class DatafileInterface(DataInterface):
 
     @check_exists_as_child('scenario', 'variant')
     def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
-        spec = self._read_scenario_variable_spec(scenario_name, variable)
+        scenario = self.read_scenario(scenario_name)
+        spec = self._get_spec_from_provider(scenario['provides'], variable)
         filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
         data = self._get_data_from_csv(filepath)
 
@@ -718,24 +710,33 @@ class DatafileInterface(DataInterface):
                                                    filepath, list(data[0].keys())))
 
         if timestep is not None:
+            self.logger.debug(data)
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
         try:
-            array = self.data_list_to_ndarray(data, spec)
+            da = self.data_list_to_ndarray(data, spec)
         except SmifDataMismatchError as ex:
             msg = "DataMismatch in scenario: {}:{}.{}, from {}"
             raise SmifDataMismatchError(
                 msg.format(scenario_name, variant_name, variable, str(ex))
             ) from ex
 
-        return array
+        return da
 
     @check_exists_as_child('scenario', 'variant')
-    def write_scenario_variant_data(self, scenario_name, variant_name, variable, data):
-        spec = self._read_scenario_variable_spec(scenario_name, variable)
-        data = self.ndarray_to_data_list(data, spec)
+    def write_scenario_variant_data(self, scenario_name, variant_name, variable,
+                                    data, timestep=None):
+        scenario = self.read_scenario(scenario_name)
+        spec = self._get_spec_from_provider(scenario['provides'], variable)
+        data = self.ndarray_to_data_list(data, spec, timestep)
         filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
-        self._write_data_to_csv(filepath, data, spec=spec)
+
+        if timestep:
+            fieldnames = ('timestep', ) + tuple(spec.dims) + (spec.name, )
+            self.logger.debug("%s, %s", fieldnames, data)
+            self._write_data_to_csv(filepath, data, fieldnames=fieldnames)
+        else:
+            self._write_data_to_csv(filepath, data, spec=spec)
 
     def _get_scenario_variant_filepath(self, scenario_name, variant_name, variable):
         variant = self.read_scenario_variant(scenario_name, variant_name)
@@ -746,24 +747,12 @@ class DatafileInterface(DataInterface):
             )
         filename = variant['data'][variable]
         return os.path.join(self.data_folders['scenarios'], filename)
-
-    def _read_scenario_variable_spec(self, scenario_name, variable):
-        # Read spec from scenario->provides->variable
-        scenario = self.read_scenario(scenario_name)
-        spec = _pick_from_list(scenario['provides'], variable)
-        if spec is not None:
-            self._set_item_coords(spec)
-            return Spec.from_dict(spec)
-        else:
-            msg = "Could not find spec definition for scenario '{}' " + \
-                  "and variable '{}'"
-            raise SmifDataNotFoundError(msg.format(scenario_name, variable))
     # endregion
 
     # region Narratives
     def _read_narrative(self, sos_model_name, narrative_name):
         sos_model = self.read_sos_model(sos_model_name)
-        narrative = _pick_from_list(sos_model['narratives'], narrative_name)
+        narrative = self._pick_from_list(sos_model['narratives'], narrative_name)
         if not narrative:
             msg = "Narrative '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(narrative_name, sos_model_name))
@@ -771,7 +760,7 @@ class DatafileInterface(DataInterface):
 
     def _read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
         narrative = self._read_narrative(sos_model_name, narrative_name)
-        variant = _pick_from_list(narrative['variants'], variant_name)
+        variant = self._pick_from_list(narrative['variants'], variant_name)
         if not variant:
             msg = "Variant '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
@@ -788,14 +777,14 @@ class DatafileInterface(DataInterface):
 
         spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
         try:
-            array = self.data_list_to_ndarray(data, spec)
+            da = self.data_list_to_ndarray(data, spec)
         except SmifDataMismatchError as ex:
             msg = "DataMismatch in narrative: {}:{}, {}, from {}"
             raise SmifDataMismatchError(
                 msg.format(narrative_name, variant_name, variable, str(ex))
             ) from ex
 
-        return array
+        return da
 
     def write_narrative_variant_data(self, sos_model_name, narrative_name,
                                      variant_name, variable, data, timestep=None):
@@ -815,29 +804,7 @@ class DatafileInterface(DataInterface):
         filename = variant['data'][variable]
         self.logger.debug(filename)
         return os.path.join(self.data_folders['narratives'], filename)
-
-    def _read_narrative_variable_spec(self, sos_model_name, narrative_name, variable):
-        # Read spec from narrative->provides->variable
-        narrative = self._read_narrative(sos_model_name, narrative_name)
-        model_name = self._key_from_list(variable, narrative['provides'])
-        if not model_name:
-            msg = "Cannot identify source of Spec for variable '{}'"
-            raise SmifDataNotFoundError(msg.format(variable))
-        parameters = self.read_sector_model(model_name)['parameters']
-        spec = _pick_from_list(parameters, variable)
-        if not spec:
-            msg = "Cannot find Spec for parameter '{}' in '{}'"
-            raise SmifDataNotFoundError(msg.format(variable, model_name))
-        self._set_item_coords(spec)
-        return Spec.from_dict(spec)
-
     # endregion
-
-    def _key_from_list(self, name, dict_of_lists):
-        for key, items in dict_of_lists.items():
-            if name in items:
-                return key
-        return None
 
     # region Results
     def read_results(self, modelrun_id, model_name, output_spec, timestep=None,
@@ -853,9 +820,11 @@ class DatafileInterface(DataInterface):
         try:
             if self.storage_format == 'local_csv':
                 data = self._get_data_from_csv(results_path)
+                self.logger.debug(data)
                 return self.data_list_to_ndarray(data, output_spec)
             elif self.storage_format == 'local_binary':
-                return self._get_data_from_native_file(results_path)
+                data = self._get_data_from_native_file(results_path)
+                return DataArray(output_spec, data)
             else:
                 msg = "Unrecognised storage format: %s"
                 raise NotImplementedError(msg % self.storage_format)
@@ -1248,13 +1217,6 @@ def _name_in_list(list_of_dicts, name):
         if 'name' in item and item['name'] == name:
             return True
     return False
-
-
-def _pick_from_list(list_of_dicts, name):
-    for item in list_of_dicts:
-        if 'name' in item and item['name'] == name:
-            return item
-    return None
 
 
 def _idx_in_list(list_of_dicts, name):
