@@ -1231,6 +1231,11 @@ class DatafileInterface(DataInterface):
             msg += "or:\n"
             msg += "    conda install fiona shapely rtree\n"
             raise SmifDataReadError(msg) from ex
+        except IOError as ex:
+            msg = "Could not read spatial dimension definition. '%s'" % (filepath)
+            msg += "Please verify that the path is correct and "
+            msg += "that the file is present on this location."
+            raise SmifDataNotFoundError(msg) from ex
     # endregion
 
 
