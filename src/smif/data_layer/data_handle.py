@@ -9,7 +9,6 @@ data (at any computed or pre-computed timestep) and write access to output data
 from logging import getLogger
 from types import MappingProxyType
 
-from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataError
 from smif.metadata import RelativeTimestep
 
@@ -105,7 +104,7 @@ class DataHandle(object):
         """
         # Populate the parameters with their default values
         for parameter in self._model.parameters.values():
-            self._parameters[parameter.name] = parameter.default
+            self._parameters[parameter.name] = parameter
 
         # Load in the concrete narrative and selected variants from the model run
         for narrative_name, variant_names in concrete_narratives.items():
@@ -123,11 +122,11 @@ class DataHandle(object):
                     parameter_list = []
 
                 for parameter in parameter_list:
-                    data = self._store.read_narrative_variant_data(
+                    da = self._store.read_narrative_variant_data(
                         sos_model['name'],
                         narrative_name, variant_name, parameter
                     )
-                    self._parameters[parameter] = data
+                    self._parameters[parameter] = da
 
     def derive_for(self, model):
         """Derive a new DataHandle configured for the given Model
@@ -289,22 +288,20 @@ class DataHandle(object):
         spec = self._inputs[input_name]
 
         if dep['type'] == 'scenario':
-            data = self._store.read_scenario_variant_data(
+            da = self._store.read_scenario_variant_data(
                 source_model_name,  # read from a given scenario model
                 dep['variant'],  # with given scenario variant
                 source_output_name,  # using output (variable) name
                 timestep
             )
         else:
-            data = self._store.read_results(
+            da = self._store.read_results(
                 self._modelrun_name,
                 source_model_name,  # read from source model
                 spec,  # using source model output spec
                 timestep,
                 self._decision_iteration
             )
-
-        da = DataArray(spec, data)
 
         return da
 
@@ -366,12 +363,6 @@ class DataHandle(object):
         """
         return self.get_data(input_name, RelativeTimestep.PREVIOUS)
 
-    def get_region_names(self, spatial_resolution):
-        return self._store.read_region_names(spatial_resolution)
-
-    def get_interval_names(self, temporal_resolution):
-        return self._store.read_interval_names(temporal_resolution)
-
     def get_parameter(self, parameter_name):
         """Get the value for a  parameter
 
@@ -381,7 +372,7 @@ class DataHandle(object):
 
         Returns
         -------
-        parameter_value
+        smif.data_layer.data_array.DataArray
         """
         if parameter_name not in self._parameters:
             raise KeyError(
@@ -538,17 +529,10 @@ class ResultsHandle(object):
             msg = "'{}' not recognised as output for '{}'"
             raise KeyError(msg.format(output_name, model_name))
 
-        try:
-            results = self._store.read_results(self._modelrun_name,
-                                               model_name,
-                                               spec,
-                                               timestep,
-                                               decision_iteration)
-        except SmifDataError:
-            msg = "Could not access results for {}.{} at timestep {} " \
-                  "and decision iteration {}"
-            raise SmifDataError(msg.format(model_name, output_name,
-                                           timestep, decision_iteration)
-                                )
+        results = self._store.read_results(self._modelrun_name,
+                                           model_name,
+                                           spec,
+                                           timestep,
+                                           decision_iteration)
 
         return results

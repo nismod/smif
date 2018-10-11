@@ -14,7 +14,7 @@ from smif.model import SectorModel
 
 
 @fixture(scope='function')
-def mock_store():
+def mock_store(get_sector_model):
     """Store with minimal setup
     """
     store = MemoryInterface()
@@ -26,30 +26,29 @@ def mock_store():
     })
     store.write_sos_model({
         'name': 'test_sos_model',
-        'sector_models': ['test_sector_model'],
+        'sector_models': ['energy_demand_sample'],
         'scenario_dependencies': [],
         'model_dependencies': [
             {
                 'source': 'test_source',
                 'source_output': 'test',
                 'sink_input': 'test',
-                'sink': 'test_sector_model'
+                'sink': 'energy_demand_sample'
             }
         ],
         'narratives': [{
                 'name': 'test_narrative',
                 'description': 'a narrative config',
-                'provides': {'test_sector_model': ['smart_meter_savings']},
+                'provides': {'energy_demand_sample': ['smart_meter_savings']},
                 'variants': [{
                     'name': 'high_tech_dsm',
                     'description': 'High takeup',
                     'data': {'smart_meter_savings': 'filename.csv'}}]
                             }]
     })
-    data = np.array([[99]])
     store.write_narrative_variant_data(
         'test_sos_model', 'test_narrative', 'high_tech_dsm',
-        'smart_meter_savings', data)
+        'smart_meter_savings', np.array(99))
 
     store.write_model_run({
         'name': 2,
@@ -59,7 +58,7 @@ def mock_store():
     })
     store.write_sos_model({
         'name': 'test_converting_sos_model',
-        'sector_models': ['test_sector_model'],
+        'sector_models': ['energy_demand_sample'],
         'scenario_dependencies': [],
         'model_dependencies': [
             {
@@ -72,13 +71,13 @@ def mock_store():
                 'source': 'test_convertor',
                 'source_output': 'test',
                 'sink_input': 'test',
-                'sink': 'test_sector_model'
+                'sink': 'energy_demand_sample'
             }],
         'narratives': []
 
     })
 
-    store._initial_conditions = {'test_sector_model': []}
+    store._initial_conditions = {'energy_demand_sample': []}
     data = {
         'water_asset_a': {
             'build_year': 2010,
@@ -99,21 +98,26 @@ def mock_store():
             'sector': ''
         }
     }
-    store._interventions['test_sector_model'] = data
+    store._interventions['energy_demand_sample'] = data
+
+    store.write_sector_model(get_sector_model)
     return store
 
 
 @fixture(scope='function')
 def mock_sector_model():
     mock_sector_model = MagicMock()
-    type(mock_sector_model).outputs = PropertyMock(return_value={'test_output': 'spec'})
-    type(mock_sector_model).name = PropertyMock(return_value='test_sector_model')
+    spec = Mock(spec=Spec)
+    spec.name = Mock(return_value='test_output')
+    type(spec).shape = PropertyMock(return_value=())
+    type(mock_sector_model).outputs = PropertyMock(return_value={'test_output': spec})
+    type(mock_sector_model).name = PropertyMock(return_value='energy_demand_sample')
     return mock_sector_model
 
 
 @fixture(scope='function')
 def mock_sos_model(mock_sector_model):
-    mock_sos_model = MagicMock(outputs=[('test_sector_model', 'test_output')])
+    mock_sos_model = MagicMock(outputs=[('energy_demand_sample', 'test_output')])
     mock_sos_model.name = 'test_sos_model'
     mock_sos_model.models = [mock_sector_model]
     mock_sos_model.get_model = Mock(return_value=mock_sector_model)
@@ -134,21 +138,21 @@ class EmptySectorModel(SectorModel):
 def empty_model():
     """Minimal sector model
     """
-    return EmptySectorModel('test_sector_model')
+    return EmptySectorModel('energy_demand_sample')
 
 
 @fixture(scope='function')
 def mock_model():
     """Sector model with parameter, input, output, dependency
     """
-    model = EmptySectorModel('test_sector_model')
+    model = EmptySectorModel('energy_demand_sample')
     model.add_parameter(
         Spec(
             name='smart_meter_savings',
             description='The savings from smart meters',
             abs_range=(0, 100),
             exp_range=(3, 10),
-            default=np.array([[3]]),
+            default=np.array(3),
             unit='%',
             dtype='float'
         )
@@ -175,7 +179,7 @@ def mock_model_with_conversion():
     """
     source = EmptySectorModel('test_source')
     convertor = EmptySectorModel('test_convertor')
-    model = EmptySectorModel('test_sector_model')
+    model = EmptySectorModel('energy_demand_sample')
 
     ml_spec = Spec(
         name='test',
@@ -236,7 +240,7 @@ class TestDataHandle():
         modelrun_name = 2
         data_handle = DataHandle(
             mock_store, modelrun_name, 2015, [2015, 2020], mock_model_with_conversion)
-        data = np.array([[0.001]])
+        data = np.array([[0.001, 0.003], [0.002, 0.004]])
 
         spec = mock_model_with_conversion.inputs['test']
 
@@ -320,12 +324,12 @@ class TestDataHandle():
         data_handle.set_results("test", expected)
         actual = mock_store.read_results(
             1,
-            'test_sector_model',  # read results from model
+            'energy_demand_sample',  # read results from model
             mock_model.outputs['test'],
             2015,
             None
         )
-        np.testing.assert_equal(actual, expected)
+        np.testing.assert_equal(actual.as_ndarray(), expected)
 
     def test_set_data_wrong_shape(self, mock_store, mock_model):
         """should allow write access to output data
@@ -337,7 +341,7 @@ class TestDataHandle():
             data_handle.set_results("test", expect_error)
 
         msg = "Tried to set results with shape (1, 2), expected " \
-              "(2, 2) for test_sector_model:test"
+              "(2, 2) for energy_demand_sample:test"
         assert msg in str(ex)
 
     def test_set_data_with_square_brackets(self, mock_store, mock_model):
@@ -349,36 +353,12 @@ class TestDataHandle():
         data_handle["test"] = expected
         actual = mock_store.read_results(
             1,
-            'test_sector_model',  # read results from model
+            'energy_demand_sample',  # read results from model
             mock_model.outputs['test'],
             2015,
             None
         )
-        np.testing.assert_equal(actual, expected)
-
-    def test_get_regions(self, mock_store, mock_model):
-        """should allow read access to input data
-        """
-        mock_store.read_region_names = Mock(return_value=['a', 'b'])
-        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-        expected = ['a', 'b']
-        actual = data_handle.get_region_names("half_squares")
-        assert actual == expected
-
-        mock_store.read_region_names.assert_called_with(
-            'half_squares')
-
-    def test_get_intervals(self, mock_store, mock_model):
-        """should allow read access to input data
-        """
-        mock_store.read_interval_names = Mock(return_value=['a', 'b'])
-        data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-        expected = ['a', 'b']
-        actual = data_handle.get_interval_names("remap_months")
-        assert actual == expected
-
-        mock_store.read_interval_names.assert_called_with(
-            'remap_months')
+        np.testing.assert_equal(actual.as_ndarray(), expected)
 
 
 class TestDataHandleState():
@@ -394,7 +374,7 @@ class TestDataHandleState():
         """
         mock_store.read_state = Mock(return_value=[
             {'name': 'test', 'build_year': 2010}])
-        mock_store._interventions['test_sector_model'] = [
+        mock_store._interventions['energy_demand_sample'] = [
             {'name': 'test',
              'capital_cost': {'value': 2500, 'unit': '£/GW'}
              }]
@@ -506,12 +486,12 @@ class TestDataHandleGetResults:
         """Get results from a sector model
         """
         store = mock_store
-        store.write_results(42, 1, 'test_sector_model', 'spec', 2010, None)
+        spec = mock_sector_model.outputs['test_output']
+        store.write_results(42, 1, 'energy_demand_sample', spec, 2010, None)
 
         dh = DataHandle(mock_store, 1, 2010, [2010], mock_sector_model)
         actual = dh.get_results('test_output')
-        expected = 42
-        assert actual == expected
+        assert actual == DataArray(spec, np.array(42, dtype=float))
 
     def test_get_results_no_output_sector(self, mock_store,
                                           mock_sector_model):
@@ -526,7 +506,22 @@ class TestDataHandleGetParameters:
     def test_load_parameter_defaults(self, mock_store, mock_model):
 
         dh = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-        assert dh.get_parameter('smart_meter_savings') == np.array([[3]])
+
+        actual = dh.get_parameter('smart_meter_savings')
+        spec = Spec.from_dict(
+            {
+                'name': 'smart_meter_savings',
+                'description': "Difference in floor area per person"
+                               "in end year compared to base year",
+                'absolute_range': [0, float('inf')],
+                'expected_range': [0.5, 2],
+                'default': 3.,
+                'unit': '%',
+                'dtype': 'float'
+            })
+        expected = DataArray(spec, np.array(3., dtype=float))
+
+        assert actual == expected
 
     def test_load_parameters_override(self, mock_store, mock_model):
 
@@ -536,7 +531,22 @@ class TestDataHandleGetParameters:
             'sos_model': 'test_sos_model',
             'scenarios': {}})
         dh = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-        assert dh.get_parameter('smart_meter_savings') == np.array([[99]])
+
+        actual = dh.get_parameter('smart_meter_savings')
+        spec = Spec.from_dict(
+            {
+                'name': 'smart_meter_savings',
+                'description': "Difference in floor area per person"
+                               "in end year compared to base year",
+                'absolute_range': [0, float('inf')],
+                'expected_range': [0.5, 2],
+                'default': 'data_file.csv',
+                'unit': 'percentage',
+                'dtype': 'float'
+            })
+        expected = DataArray(spec, np.array(99))
+
+        assert actual == expected
 
     def test_load_parameters_override_ordered(self, mock_store, mock_model):
         """Parameters in a narrative variants listed later override parameters
@@ -556,7 +566,7 @@ class TestDataHandleGetParameters:
             'name': 'test_narrative',
             'description': 'a narrative config',
             'sos_model': 'test_sos_model',
-            'provides': {'test_sector_model': ['smart_meter_savings']},
+            'provides': {'energy_demand_sample': ['smart_meter_savings']},
             'variants': [
                 {
                     'name': 'first_variant',
@@ -572,14 +582,28 @@ class TestDataHandleGetParameters:
 
         mock_store.write_narrative_variant_data(
             'test_sos_model', 'test_narrative', 'first_variant',
-            'smart_meter_savings', np.array([[1]]))
+            'smart_meter_savings', np.array(1))
 
         mock_store.write_narrative_variant_data(
             'test_sos_model', 'test_narrative', 'second_variant',
-            'smart_meter_savings', np.array([[2]]))
+            'smart_meter_savings', np.array(2))
 
         dh = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-        assert dh.get_parameter('smart_meter_savings') == np.array([[2]])
+
+        actual = dh.get_parameter('smart_meter_savings')
+        spec = Spec.from_dict(
+            {
+                'name': 'smart_meter_savings',
+                'description': "Difference in floor area per person"
+                               "in end year compared to base year",
+                'absolute_range': [0, float('inf')],
+                'expected_range': [0.5, 2],
+                'default': 'data_file.csv',
+                'unit': 'percentage',
+                'dtype': 'float'
+            })
+        expected = DataArray(spec, np.array(2))
+        assert actual == expected
 
 
 class TestResultsHandle:
@@ -588,17 +612,20 @@ class TestResultsHandle:
         """Get results from a sector model within a sos model
         """
         store = mock_store
-        store.write_results(42, 'test_modelrun', 'test_sector_model', 'spec', 2010, None)
+
+        spec = mock_sector_model.outputs['test_output']
+        store.write_results(42, 'test_modelrun', 'energy_demand_sample', spec, 2010, None)
 
         dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
-        actual = dh.get_results('test_sector_model', 'test_output', 2010, None)
-        expected = 42
+        actual = dh.get_results('energy_demand_sample', 'test_output', 2010, None)
+        spec = mock_sector_model.outputs['test_output']
+        expected = DataArray(spec, np.array(42, dtype=float))
         assert actual == expected
 
     def test_get_results_no_output_sos(self, mock_store, mock_sos_model):
         with raises(KeyError):
             dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
-            dh.get_results('test_sector_model', 'no_such_output', None, None)
+            dh.get_results('energy_demand_sample', 'no_such_output', None, None)
 
     def test_get_results_wrong_name_sos(self, mock_store, mock_sos_model):
         with raises(KeyError):
@@ -607,7 +634,7 @@ class TestResultsHandle:
 
     def test_get_results_not_exists(self, mock_store, mock_sos_model):
         store = mock_store
-        store.write_results(42, 'test_modelrun', 'test_sector_model', 'spec', 2010, None)
+        store.write_results(42, 'test_modelrun', 'energy_demand_sample', 'spec', 2010, None)
         dh = ResultsHandle(store, 'test_modelrun', mock_sos_model)
         with raises(SmifDataError):
-            dh.get_results('test_sector_model', 'test_output', 2099, None)
+            dh.get_results('energy_demand_sample', 'test_output', 2099, None)
