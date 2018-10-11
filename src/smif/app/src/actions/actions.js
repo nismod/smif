@@ -11,7 +11,8 @@ export const RECEIVE_SMIF_DETAILS = 'RECEIVE_SMIF_DETAILS'
 function receiveSmifDetails(json) {
     return {
         type: RECEIVE_SMIF_DETAILS,
-        smif: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -44,7 +45,8 @@ export const RECEIVE_MODEL_RUNS = 'RECEIVE_MODEL_RUNS'
 function receiveModelRuns(json) {
     return {
         type: RECEIVE_MODEL_RUNS,
-        model_runs: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -87,7 +89,8 @@ export const RECEIVE_MODEL_RUN = 'RECEIVE_MODEL_RUN'
 function receiveModelRun(json) {
     return {
         type: RECEIVE_MODEL_RUN,
-        model_run: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -120,7 +123,8 @@ export const RECEIVE_MODEL_RUN_STATUS = 'RECEIVE_MODEL_RUN_STATUS'
 function receiveModelRunStatus(json) {
     return {
         type: RECEIVE_MODEL_RUN_STATUS,
-        model_run_status: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -540,7 +544,8 @@ function receiveScenarios(json) {
     if (json == null) json = []
     return {
         type: RECEIVE_SCENARIOS,
-        scenarios: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -573,7 +578,8 @@ export const RECEIVE_SCENARIO = 'RECEIVE_SCENARIO'
 function receiveScenario(json) {
     return {
         type: RECEIVE_SCENARIO,
-        scenario: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -668,7 +674,8 @@ export const RECEIVE_NARRATIVES = 'RECEIVE_NARRATIVES'
 function receiveNarratives(json) {
     return {
         type: RECEIVE_NARRATIVES,
-        narratives: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -700,7 +707,8 @@ export const RECEIVE_NARRATIVE = 'RECEIVE_NARRATIVE'
 function receiveNarrative(json) {
     return {
         type: RECEIVE_NARRATIVE,
-        narrative: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -792,7 +800,8 @@ export const RECEIVE_DIMENSIONS = 'RECEIVE_DIMENSIONS'
 function receiveDimensions(json) {
     return {
         type: RECEIVE_DIMENSIONS,
-        dimensions: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -824,7 +833,8 @@ export const RECEIVE_DIMENSION = 'RECEIVE_DIMENSION'
 function receiveDimension(json) {
     return {
         type: RECEIVE_DIMENSION,
-        dimension: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
