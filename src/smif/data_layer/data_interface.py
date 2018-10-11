@@ -635,138 +635,14 @@ class DataInterface(metaclass=ABCMeta):
 
     # region Narratives
     @abstractmethod
-    def read_narratives(self, skip_coords=False):
-        """Read narratives from project configuration
-
-        Returns
-        -------
-        list
-            A list of narrative set dicts
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_narrative(self, narrative_name, skip_coords=False):
-        """Read a certain narrative
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the narrative
-
-        Returns
-        -------
-        list
-            A narrative dictionary
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def write_narrative(self, narrative):
-        """Write narrative to project configuration
-
-        Arguments
-        ---------
-        narrative: dict
-            A narrative dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def update_narrative(self, narrative_name, narrative):
-        """Update narrative to project configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the (original) entry
-        narrative: dict
-            The updated narrative dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def delete_narrative(self, narrative_name):
-        """Delete narrative from project configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            A narrative name
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_narrative_variants(self, narrative_name):
-        """Read narratives from project configuration
-
-        Returns
-        -------
-        list
-            A list of narrative set dicts
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_narrative_variant(self, narrative_name, variant_name):
-        """Read a certain narrative
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the narrative
-
-        Returns
-        -------
-        list
-            A narrative dictionary
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def write_narrative_variant(self, narrative_name, variant):
-        """Write narrative to project configuration
-
-        Arguments
-        ---------
-        narrative: dict
-            A narrative dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def update_narrative_variant(self, narrative_name, variant_name, variant):
-        """Update narrative to project configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the narrative
-        variant_name: str
-            Name of the (original) entry
-        variant: dict
-            The updated narrative variant dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def delete_narrative_variant(self, narrative_name, variant_name):
-        """Delete narrative from project configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            A narrative name
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_narrative_variant_data(self, narrative_name, variant_name, variable,
-                                    timestep=None):
+    def read_narrative_variant_data(self, sos_model_name, narrative_name,
+                                    variant_name, variable, timestep=None):
         """Read narrative data file
 
         Arguments
         ---------
+        sos_model_name : str
+            The name of the sos_model to which the narrative belongs
         narrative_name: str
             Name of the narrative
         variant_name: str
@@ -784,12 +660,17 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_narrative_variant_data(self, data, narrative_name, variant_name, variable,
-                                     timestep=None):
+    def write_narrative_variant_data(self, data, sos_model_name, narrative_name,
+                                     variant_name, variable, timestep=None):
         """Read narrative data file
 
         Arguments
         ---------
+        data : numpy.ndarray
+            The data to write which must be of matching directions to the Spec
+            of ``variable``
+        sos_model_name : str
+            The name of the sos_model to which the narrative belongs
         narrative_name: str
             Name of the narrative
         variant_name: str
@@ -935,12 +816,7 @@ class DataInterface(metaclass=ABCMeta):
         """
         DataInterface._validate_observations(observations, spec)
 
-        if spec.default is None:
-            default = np.nan
-        else:
-            default = spec.default
-
-        data = np.full(spec.shape, default, dtype=spec.dtype)
+        data = np.full(spec.shape, np.nan, dtype=spec.dtype)
 
         for obs in observations:
             indices = []

@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-conftest.py for smif.
-
-Read more about conftest.py under:
-https://pytest.org/latest/plugins.html
+"""Holds fixtures for the smif package tests
 """
 from __future__ import absolute_import, division, print_function
 
@@ -114,7 +110,7 @@ def initial_system():
 def parameters():
     return [
         {
-            'name': 'smart_meter_savings',
+            'name': 'smart_water_savings',
             'description': 'The savings from smart meters',
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
@@ -302,19 +298,17 @@ def model_run():
 
 
 @fixture
-def get_sos_model():
+def get_sos_model(sample_narratives):
     """Return sample sos_model
     """
     return {
         'name': 'energy',
         'description': "A system of systems model which encapsulates "
                        "the future supply and demand of energy for the UK",
-        'scenario_sets': [
+        'scenarios': [
             'population'
         ],
-        'narrative_sets': [
-            'technology'
-        ],
+        'narratives': sample_narratives,
         'sector_models': [
             'energy_demand',
             'energy_supply'
@@ -374,13 +368,24 @@ def get_sector_model(annual, hourly, regions_half_squares):
         ],
         'parameters': [
             {
-                'name': 'assump_diff_floorarea_pp',
+                'name': 'smart_water_savings',
                 'description': "Difference in floor area per person"
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'default': 1,
-                'unit': 'percentage'
+                'default': 'data_file.csv',
+                'unit': 'percentage',
+                'dtype': 'float'
+            },
+            {
+                'name': 'homogeneity_coefficient',
+                'description': "How homegenous the centralisation"
+                               "process is",
+                'absolute_range': [0, 1],
+                'expected_range': [0, 1],
+                'default': 'default_homogeneity.csv',
+                'unit': 'percentage',
+                'dtype': 'float'
             }
         ],
         'interventions': [],
@@ -463,60 +468,52 @@ def get_scenario():
     }
 
 
+@fixture(scope='function')
+def get_narrative():
+    """Return sample narrative
+    """
+    return {
+        'name': 'technology',
+        'description': 'Describes the evolution of technology',
+        'provides': {
+            'energy_demand_sample': ['smart_water_savings'],
+            'water_supply': ['clever_water_meter_savings', 'per_capita_water_demand']
+                     },
+        'variants': [
+            {
+                'name': 'high_tech_dsm',
+                'description': 'High takeup of smart technology on the demand side',
+                'data': {
+                    'smart_water_savings': 'high_tech_dsm.csv',
+                },
+            }
+        ]
+    }
+
+
 @fixture
-def sample_narratives():
+def sample_narratives(get_narrative):
     """Return sample narratives
     """
     return [
-        {
-            'name': 'technology',
-            'description': 'Defines the rate and nature of technological change',
-            'provides': [],
-            'variants': [
-                {
-                    'name': 'Energy Demand - High Tech',
-                    'description': 'High penetration of SMART technology on the demand side',
-                    'data': {
-                        '': 'energy_demand_high_tech.yml',
-                    }
-                },
-            ],
-        },
+        get_narrative,
         {
             'name': 'governance',
             'description': 'Defines the nature of governance and influence upon decisions',
-            'provides': [],
+            'provides': {'energy_demand_sample': ['homogeneity_coefficient']
+                         },
             'variants': [
                 {
                     'name': 'Central Planning',
                     'description': 'Stronger role for central government in planning and ' +
                                    'regulation, less emphasis on market-based solutions',
                     'data': {
-                        '': 'central_planning.yml',
+                        'homogeneity_coefficient': 'central_planning.csv',
                     },
                 },
             ],
         },
     ]
-
-
-@fixture(scope='function')
-def get_narrative():
-    """Return sample narrative
-    """
-    return {
-        "name": "technology",
-        "provides": [],
-        "variants": [
-            {
-                "name": "High Tech Demand Side Management",
-                "description": "High penetration of SMART technology on the demand side",
-                "data": {
-                    '': "high_tech_dsm.yml",
-                }
-            }
-        ]
-    }
 
 
 @fixture

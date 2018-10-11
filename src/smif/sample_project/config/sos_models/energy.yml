@@ -3,9 +3,8 @@ description: The future demand of energy for the UK
 scenarios: # Select 0 or more of the scenario sets
 - population
 - water_sector_energy_demand
-narratives: # Select 0 or more of the narrative sets
-- technology
-sector_models: # Select 1 or more of the sector models
+narratives: []  # Select 0 or more of the narrative sets
+sector_models:  # Select 1 or more of the sector models
 - energy_demand
 scenario_dependencies:
 - source: population

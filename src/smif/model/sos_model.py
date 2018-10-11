@@ -10,6 +10,7 @@ import itertools
 import logging
 from collections import defaultdict
 
+from smif.exception import SmifDataMismatchError
 from smif.metadata import RelativeTimestep
 from smif.model.dependency import Dependency
 from smif.model.model import Model, ScenarioModel
@@ -44,6 +45,8 @@ class SosModel():
         self._scenario_dependencies = defaultdict(list)
         self._model_dependencies = defaultdict(list)
 
+        self.narratives = {}
+
     def as_dict(self):
         """Serialize the SosModel object
 
@@ -71,7 +74,8 @@ class SosModel():
                 for model in self.sector_models
             ),
             'scenario_dependencies': scenario_dependencies,
-            'model_dependencies': model_dependencies
+            'model_dependencies': model_dependencies,
+            'narratives': self.narratives
         }
 
         return config
@@ -354,3 +358,35 @@ class SosModel():
                 outputs[(model.name, output_name)] = output_spec
 
         return outputs
+
+    def add_narrative(self, narrative):
+        """Add a narrative to the system-of-systems model
+
+        Arguments
+        ---------
+        narrative: dict
+        """
+        try:
+            name = narrative['name']
+        except KeyError:
+            msg = "Could not find narrative name. Narrative argument " \
+                  "should be a dict. Received a '{}'."
+            raise SmifDataMismatchError(msg.format(type(narrative)))
+
+        for model, parameters in narrative['provides'].items():
+            self._check_model_exists(model)
+            for parameter in parameters:
+                self._check_parameter_exists(parameter, model)
+
+        self.narratives[name] = narrative
+
+    def _check_model_exists(self, model_name):
+        if model_name not in [model.name for model in self.models]:
+            msg = "'{}' does not exist in '{}'"
+            raise SmifDataMismatchError(msg.format(model_name, self.name))
+
+    def _check_parameter_exists(self, parameter_name, model_name):
+        model = self._models[model_name]
+        if parameter_name not in model.parameters:
+            msg = "Parameter '{}' does not exist in '{}'"
+            raise SmifDataMismatchError(msg.format(parameter_name, model_name))

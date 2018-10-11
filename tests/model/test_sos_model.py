@@ -4,7 +4,9 @@ from copy import copy
 from unittest import TestCase
 from unittest.mock import Mock
 
+import numpy as np
 from pytest import fixture, raises
+from smif.exception import SmifDataMismatchError
 from smif.metadata import RelativeTimestep, Spec
 from smif.model.dependency import Dependency
 from smif.model.model import ScenarioModel
@@ -101,6 +103,19 @@ def sector_model():
             'coords': {'LSOA': [1, 2, 3]},
             'dtype': 'float',
             'unit': 'ml'
+        })
+    )
+    model.add_parameter(
+        Spec.from_dict({
+            'name': 'test_parameter',
+            'description': 'a dummy parameter to test narratives',
+            'dims': ['national'],
+            'coords': {'national': ['GB']},
+            'abs_range': (0.5, 2),
+            'exp_range': (0.5, 2),
+            'dtype': 'float',
+            'default': [[1.]],
+            'unit': '%'
         })
     )
     return model
@@ -405,7 +420,8 @@ class TestSosModel():
             'name': 'test_sos_model',
             'description': '',
             'scenarios': ['climate'],
-            'sector_models': ['economic_model', 'water_supply']
+            'sector_models': ['economic_model', 'water_supply'],
+            'narratives': {}
         }
         assert actual == expected
 
@@ -582,3 +598,58 @@ class TestSosModelDependencies(object):
         with raises(ValueError) as ex:
             SosModel.from_dict(sos_model_dict, [sector_model, scenario_model, economic_model])
         assert "meter!=ml" in str(ex.value)
+
+
+class TestNarratives:
+
+    @fixture(scope='function')
+    def narrative(self):
+        narrative = {
+            'name': 'test_narrative',
+            'description': 'a narrative config',
+            'provides': {'water_supply': ['test_parameter']},
+            'variants': [{
+                'name': 'high_tech_dsm',
+                'description': 'High takeup',
+                'data': {'test_parameter': np.array([[99]])}}]
+                    }
+        return narrative
+
+    def test_add_narrative(self, sos_model, narrative):
+
+        sos_model.add_narrative(narrative)
+        actual = sos_model.narratives['test_narrative']
+        expected = narrative
+        assert actual == expected
+
+    def test_add_narrative_raises_for_incorrect_parameter(self, sos_model, narrative):
+
+        narrative['provides'] = {'water_supply': ['no_such_parameter']}
+
+        with raises(SmifDataMismatchError) as err:
+            sos_model.add_narrative(narrative)
+
+        assert "Parameter 'no_such_parameter' does not exist in 'water_supply'" in str(err)
+
+    def test_add_narrative_raises_for_wrong_model(self, sos_model, narrative):
+
+        narrative['provides'] = {'not_a_model': ['test_parameter']}
+
+        with raises(SmifDataMismatchError) as err:
+            sos_model.add_narrative(narrative)
+
+        assert "'not_a_model' does not exist in 'test_sos_model'" in str(err)
+
+    def test_narratives_in_as_dict(self, sos_model, narrative):
+
+        sos_model.add_narrative(narrative)
+        actual = sos_model.as_dict()
+        assert 'narratives' in actual
+
+        actual_narratives = actual['narratives']
+        expected_narratives = narrative
+        assert actual_narratives == {'test_narrative': expected_narratives}
+
+    def test_get_parameter_specs_of_narrative(self, sos_model):
+
+        pass

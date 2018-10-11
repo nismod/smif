@@ -30,7 +30,7 @@ def init_handler(request, setup_empty_folder_structure):
 @fixture
 def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies,
             unit_definitions, dimension, sample_dimensions, source_spec, sink_spec,
-            coefficients, scenario, narrative):
+            coefficients, scenario, get_narrative):
     handler = init_handler
     handler.write_model_run(model_run)
     handler.write_sos_model(get_sos_model)
@@ -43,7 +43,11 @@ def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies
         handler.write_dimension(dim)
     handler.write_coefficients(source_spec, sink_spec, coefficients)
     handler.write_scenario(scenario)
-    handler.write_narrative(narrative)
+    handler.write_narrative_variant_data('energy',
+                                         'technology',
+                                         'high_tech_dsm',
+                                         'smart_water_savings',
+                                         np.array([[424242]]))
 
     return handler
 
@@ -141,44 +145,14 @@ def scenario_no_coords(scenario):
 
 
 @fixture
-def narrative():
-    return {
-        'name': 'technology',
-        'description': 'Describes the evolution of technology',
-        'provides': [
-            {
-                'name': 'smart_meter_savings',
-                'dims': ['technology_type'],
-                'coords': {
-                    'technology_type': [
-                        {'name': 'water_meter'},
-                        {'name': 'electricity_meter'},
-                    ]
-                },
-                'dtype': 'float',
-            }
-        ],
-        'variants': [
-            {
-                'name': 'high_tech_dsm',
-                'description': 'High takeup of smart technology on the demand side',
-                'data': {
-                    'smart_meter_savings': 'high_tech_dsm.csv',
-                },
-            }
-        ]
-    }
-
-
-@fixture
-def narrative_no_coords(narrative):
-    narrative = deepcopy(narrative)
-    for spec in narrative['provides']:
+def narrative_no_coords(get_narrative):
+    get_narrative = deepcopy(get_narrative)
+    for spec in get_narrative['provides']:
         try:
             del spec['coords']
         except KeyError:
             pass
-    return narrative
+    return get_narrative
 
 
 @fixture
@@ -493,101 +467,54 @@ class TestScenarios():
 class TestNarratives():
     """Read and write narrative data
     """
-    def test_read_narratives(self, narrative, handler):
-        assert handler.read_narratives() == [narrative]
-
-    def test_read_narratives_no_coords(self, narrative_no_coords, handler):
-        assert handler.read_narratives(skip_coords=True) == [narrative_no_coords]
-
-    def test_read_narrative(self, narrative, handler):
-        assert handler.read_narrative('technology') == narrative
-
-    def test_read_narrative_no_coords(self, narrative_no_coords, handler):
-        assert handler.read_narrative('technology', skip_coords=True) == narrative_no_coords
-
-    def test_write_narrative(self, narrative, handler):
-        another_narrative = {
-            'name': 'policy',
-            'description': 'Parameters decribing policy effects on demand',
-            'variants': [],
-            'provides': []
-        }
-        handler.write_narrative(another_narrative)
-        actual = handler.read_narratives()
-        expected = [narrative, another_narrative]
-        assert sorted_by_name(actual) == sorted_by_name(expected)
-
-    def test_update_narrative(self, narrative, handler):
-        another_narrative = {
-            'name': 'technology',
-            'description': 'Technology development, adoption and diffusion',
-            'variants': [],
-            'provides': []
-        }
-        handler.update_narrative('technology', another_narrative)
-        assert handler.read_narratives() == [another_narrative]
-
-    def test_delete_narrative(self, handler):
-        handler.delete_narrative('technology')
-        assert handler.read_narratives() == []
-
-    def test_read_narrative_variants(self, handler, narrative):
-        actual = handler.read_narrative_variants('technology')
-        expected = narrative['variants']
-        assert actual == expected
-
-    def test_read_narrative_variant(self, handler, narrative):
-        actual = handler.read_narrative_variant('technology', 'high_tech_dsm')
-        expected = narrative['variants'][0]
-        assert actual == expected
-
-    def test_write_narrative_variant(self, handler, narrative):
-        new_variant = {
-            'name': 'precautionary',
-            'description': 'Slower take-up of smart demand-response technologies',
-            'data': {
-                'technology': 'precautionary.csv'
-            }
-        }
-        handler.write_narrative_variant('technology', new_variant)
-        actual = handler.read_narrative_variants('technology')
-        expected = [new_variant] + narrative['variants']
-        assert sorted_by_name(actual) == sorted_by_name(expected)
-
-    def test_update_narrative_variant(self, handler, narrative):
-        new_variant = {
-            'name': 'high_tech_dsm',
-            'description': 'High takeup of smart technology on the demand side (v2)',
-            'data': {
-                'technology': 'high_tech_dsm_v2.csv'
-            }
-        }
-        handler.update_narrative_variant('technology', 'high_tech_dsm', new_variant)
-        actual = handler.read_narrative_variants('technology')
-        expected = [new_variant]
-        assert actual == expected
-
-    def test_delete_narrative_variant(self, handler, narrative):
-        handler.delete_narrative_variant('technology', 'high_tech_dsm')
-        assert handler.read_narrative_variants('technology') == []
-
-    def test_read_narrative_variant_data(self, get_remapped_scenario_data):
+    def test_read_narrative_variant_data(self, handler):
         """Read from in-memory data
         """
-        data, spec = get_remapped_scenario_data
-        handler = MemoryInterface()
-        handler._narrative_data[('technology', 'high_tech_dsm', 'param', 2010)] = data
-        assert handler.read_narrative_variant_data(
-            'technology', 'high_tech_dsm', 'param', 2010) == data
+        actual = handler.read_narrative_variant_data('energy',
+                                                     'technology',
+                                                     'high_tech_dsm',
+                                                     'smart_water_savings')
+        expected = np.array([[424242]])
+        assert actual == expected
 
-    def test_write_narrative_variant_data(self, get_remapped_scenario_data):
-        """Write to in-memory data
+    def test_read_narrative_variant_data_raises_param(self, handler):
+        with raises(SmifDataNotFoundError) as err:
+            handler.read_narrative_variant_data('energy',
+                                                'technology',
+                                                'high_tech_dsm',
+                                                'not_a_parameter')
+        expected = "Variable 'not_a_parameter' not found in 'high_tech_dsm'"
+        assert expected in str(err)
+
+    def test_read_narrative_variant_data_raises_variant(self, handler):
+        with raises(SmifDataNotFoundError) as err:
+            handler.read_narrative_variant_data('energy',
+                                                'technology',
+                                                'not_a_variant',
+                                                'not_a_parameter')
+        expected = "Variant 'not_a_variant' not found in 'technology'"
+        assert expected in str(err)
+
+    def test_read_narrative_variant_data_raises_narrative(self, handler):
+        with raises(SmifDataNotFoundError) as err:
+            handler.read_narrative_variant_data('energy',
+                                                'not_a_narrative',
+                                                'not_a_variant',
+                                                'not_a_parameter')
+        expected = "Narrative 'not_a_narrative' not found in 'energy'"
+        assert expected in str(err)
+
+    def test_write_narrative_variant_data(self, handler):
+        """Write narrative variant data to file or memory
         """
-        data, spec = get_remapped_scenario_data
-        handler = MemoryInterface()
+        data = np.array([[42]])
         handler.write_narrative_variant_data(
-            data, 'technology', 'high_tech_dsm', 'param', 2010)
-        assert handler._narrative_data[('technology', 'high_tech_dsm', 'param', 2010)] == data
+            'energy', 'technology', 'high_tech_dsm', 'smart_water_savings', data)
+
+        actual = handler.read_narrative_variant_data(
+            'energy', 'technology', 'high_tech_dsm', 'smart_water_savings')
+
+        assert actual == data
 
 
 class TestResults():

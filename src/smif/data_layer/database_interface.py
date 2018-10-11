@@ -151,36 +151,6 @@ class DatabaseInterface(DataInterface):
     # endregion
 
     # region Narratives
-    def read_narratives(self):
-        raise NotImplementedError()
-
-    def read_narrative(self, narrative_name):
-        raise NotImplementedError()
-
-    def write_narrative(self, narrative):
-        raise NotImplementedError()
-
-    def update_narrative(self, narrative_name, narrative):
-        raise NotImplementedError()
-
-    def delete_narrative(self, narrative_name):
-        raise NotImplementedError()
-
-    def read_narrative_variants(self, narrative_name):
-        raise NotImplementedError()
-
-    def read_narrative_variant(self, narrative_name, variant_name):
-        raise NotImplementedError()
-
-    def write_narrative_variant(self, narrative_name, variant):
-        raise NotImplementedError()
-
-    def update_narrative_variant(self, narrative_name, variant_name, variant):
-        raise NotImplementedError()
-
-    def delete_narrative_variant(self, narrative_name, variant_name):
-        raise NotImplementedError()
-
     def read_narrative_variant_data(self, narrative_name, variant_name, variable,
                                     timestep=None):
         raise NotImplementedError()

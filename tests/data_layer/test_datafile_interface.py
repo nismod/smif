@@ -9,7 +9,6 @@ import numpy as np
 import pyarrow as pa
 from pytest import fixture, mark, raises
 from smif.data_layer.datafile_interface import DatafileInterface
-from smif.data_layer.load import dump
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError)
 from smif.metadata import Spec
@@ -17,8 +16,8 @@ from smif.metadata import Spec
 
 class TestReadState:
 
-    def test_read_state(self, get_handler):
-        handler = get_handler
+    def test_read_state(self, config_handler):
+        handler = config_handler
 
         modelrun_name = 'modelrun'
         timestep = 2010
@@ -33,9 +32,9 @@ class TestReadState:
         expected = [{'build_year': 2010, 'name': 'power_station'}]
         assert actual == expected
 
-    def test_get_state_filename_all(self, get_handler):
+    def test_get_state_filename_all(self, config_handler):
 
-        handler = get_handler
+        handler = config_handler
 
         modelrun_name = 'a modelrun'
         timestep = 2010
@@ -49,8 +48,8 @@ class TestReadState:
 
         assert actual == expected
 
-    def test_get_state_filename_none_iteration(self, get_handler):
-        handler = get_handler
+    def test_get_state_filename_none_iteration(self, config_handler):
+        handler = config_handler
         modelrun_name = 'a modelrun'
         timestep = 2010
         decision_iteration = None
@@ -60,8 +59,8 @@ class TestReadState:
 
         assert actual == expected
 
-    def test_get_state_filename_both_none(self, get_handler):
-        handler = get_handler
+    def test_get_state_filename_both_none(self, config_handler):
+        handler = config_handler
         modelrun_name = 'a modelrun'
         timestep = None
         decision_iteration = None
@@ -72,8 +71,8 @@ class TestReadState:
 
         assert actual == expected
 
-    def test_get_state_filename_timestep_none(self, get_handler):
-        handler = get_handler
+    def test_get_state_filename_timestep_none(self, config_handler):
+        handler = config_handler
 
         modelrun_name = 'a modelrun'
         timestep = None
@@ -89,11 +88,10 @@ class TestReadState:
 class TestModelRun:
     """Model runs should be defined once, hard to overwrite
     """
-    def test_model_run_read_all(self, model_run, get_handler):
+    def test_model_run_read_all(self, model_run, config_handler):
         """Test to write two model_run configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
-        config_handler = get_handler
 
         model_run1 = model_run
         model_run1['name'] = 'model_run1'
@@ -110,10 +108,9 @@ class TestModelRun:
         assert 'model_run2' in model_run_names
         assert len(model_runs) == 2
 
-    def test_model_run_write_twice(self, model_run, get_handler):
+    def test_model_run_write_twice(self, model_run, config_handler):
         """Test that writing a model_run should fail (not overwrite).
         """
-        config_handler = get_handler
 
         model_run1 = model_run
         model_run1['name'] = 'unique'
@@ -121,12 +118,11 @@ class TestModelRun:
 
         with raises(SmifDataExistsError) as ex:
             config_handler.write_model_run(model_run1)
-        assert "model_run 'unique' already exists" in str(ex)
+        assert "Model_run 'unique' already exists" in str(ex)
 
-    def test_model_run_read_one(self, model_run, get_handler):
+    def test_model_run_read_one(self, model_run, config_handler):
         """Test reading a single model_run.
         """
-        config_handler = get_handler
 
         model_run1 = model_run
         model_run1['name'] = 'model_run1'
@@ -139,17 +135,16 @@ class TestModelRun:
         model_run = config_handler.read_model_run('model_run2')
         assert model_run['name'] == 'model_run2'
 
-    def test_model_run_read_missing(self, get_handler):
+    def test_model_run_read_missing(self, config_handler):
         """Test that reading a missing model_run fails.
         """
         with raises(SmifDataNotFoundError) as ex:
-            get_handler.read_model_run('missing_name')
-        assert "model_run 'missing_name' not found" in str(ex)
+            config_handler.read_model_run('missing_name')
+        assert "Model_run 'missing_name' not found" in str(ex)
 
-    def test_model_run_update(self, model_run, get_handler):
+    def test_model_run_update(self, model_run, config_handler):
         """Test updating a model_run description
         """
-        config_handler = get_handler
         model_run = model_run
         model_run['name'] = 'to_update'
         model_run['description'] = 'before'
@@ -162,10 +157,9 @@ class TestModelRun:
         actual = config_handler.read_model_run('to_update')
         assert actual['description'] == 'after'
 
-    def test_model_run_update_mismatch(self, model_run, get_handler):
+    def test_model_run_update_mismatch(self, model_run, config_handler):
         """Test that updating a model_run with mismatched name should fail
         """
-        config_handler = get_handler
         model_run = model_run
 
         model_run['name'] = 'model_run'
@@ -173,21 +167,19 @@ class TestModelRun:
             config_handler.update_model_run('model_run2', model_run)
         assert "name 'model_run2' must match 'model_run'" in str(ex)
 
-    def test_model_run_update_missing(self, model_run, get_handler):
+    def test_model_run_update_missing(self, model_run, config_handler):
         """Test that updating a nonexistent model_run should fail
         """
-        config_handler = get_handler
         model_run = model_run
         model_run['name'] = 'missing_name'
 
         with raises(SmifDataNotFoundError) as ex:
             config_handler.update_model_run('missing_name', model_run)
-        assert "model_run 'missing_name' not found" in str(ex)
+        assert "Model_run 'missing_name' not found" in str(ex)
 
-    def test_model_run_delete(self, model_run, get_handler):
+    def test_model_run_delete(self, model_run, config_handler):
         """Test that updating a nonexistent model_run should fail
         """
-        config_handler = get_handler
         model_run = model_run
         model_run['name'] = 'to_delete'
 
@@ -199,23 +191,21 @@ class TestModelRun:
         after_delete = config_handler.read_model_runs()
         assert len(after_delete) == 0
 
-    def test_model_run_delete_missing(self, model_run, get_handler):
+    def test_model_run_delete_missing(self, model_run, config_handler):
         """Test that updating a nonexistent model_run should fail
         """
-        config_handler = get_handler
         with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_model_run('missing_name')
-        assert "model_run 'missing_name' not found" in str(ex)
+        assert "Model_run 'missing_name' not found" in str(ex)
 
 
 class TestSosModel:
     """SoSModel configurations should be accessible and editable.
     """
-    def test_sos_model_read_all(self, get_sos_model, get_handler):
+    def test_sos_model_read_all(self, get_sos_model, config_handler):
         """Test to write two sos_model configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
-        config_handler = get_handler
 
         sos_model1 = get_sos_model
         sos_model1['name'] = 'sos_model1'
@@ -232,10 +222,9 @@ class TestSosModel:
         assert 'sos_model2' in sos_model_names
         assert len(sos_models) == 2
 
-    def test_sos_model_write_twice(self, get_sos_model, get_handler):
+    def test_sos_model_write_twice(self, get_sos_model, config_handler):
         """Test that writing a sos_model should fail (not overwrite).
         """
-        config_handler = get_handler
 
         sos_model1 = get_sos_model
         sos_model1['name'] = 'unique'
@@ -243,12 +232,11 @@ class TestSosModel:
 
         with raises(SmifDataExistsError) as ex:
             config_handler.write_sos_model(sos_model1)
-        assert "sos_model 'unique' already exists" in str(ex)
+        assert "Sos_model 'unique' already exists" in str(ex)
 
-    def test_sos_model_read_one(self, get_sos_model, get_handler):
+    def test_sos_model_read_one(self, get_sos_model, config_handler):
         """Test reading a single sos_model.
         """
-        config_handler = get_handler
 
         sos_model1 = get_sos_model
         sos_model1['name'] = 'sos_model1'
@@ -261,18 +249,16 @@ class TestSosModel:
         sos_model = config_handler.read_sos_model('sos_model2')
         assert sos_model['name'] == 'sos_model2'
 
-    def test_sos_model_read_missing(self, get_handler):
+    def test_sos_model_read_missing(self, config_handler):
         """Test that reading a missing sos_model fails.
         """
-        config_handler = get_handler
         with raises(SmifDataNotFoundError) as ex:
             config_handler.read_sos_model('missing_name')
-        assert "sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex)
 
-    def test_sos_model_update(self, get_sos_model, get_handler):
+    def test_sos_model_update(self, get_sos_model, config_handler):
         """Test updating a sos_model description
         """
-        config_handler = get_handler
         sos_model = get_sos_model
         sos_model['name'] = 'to_update'
         sos_model['description'] = 'before'
@@ -285,10 +271,9 @@ class TestSosModel:
         actual = config_handler.read_sos_model('to_update')
         assert actual['description'] == 'after'
 
-    def test_sos_model_update_mismatch(self, get_sos_model, get_handler):
+    def test_sos_model_update_mismatch(self, get_sos_model, config_handler):
         """Test that updating a sos_model with mismatched name should fail
         """
-        config_handler = get_handler
         sos_model = get_sos_model
 
         sos_model['name'] = 'sos_model'
@@ -296,21 +281,19 @@ class TestSosModel:
             config_handler.update_sos_model('sos_model2', sos_model)
         assert "name 'sos_model2' must match 'sos_model'" in str(ex)
 
-    def test_sos_model_update_missing(self, get_sos_model, get_handler):
+    def test_sos_model_update_missing(self, get_sos_model, config_handler):
         """Test that updating a nonexistent sos_model should fail
         """
-        config_handler = get_handler
         sos_model = get_sos_model
         sos_model['name'] = 'missing_name'
 
         with raises(SmifDataNotFoundError) as ex:
             config_handler.update_sos_model('missing_name', sos_model)
-        assert "sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex)
 
-    def test_sos_model_delete(self, get_sos_model, get_handler):
+    def test_sos_model_delete(self, get_sos_model, config_handler):
         """Test that updating a nonexistent sos_model should fail
         """
-        config_handler = get_handler
         sos_model = get_sos_model
         sos_model['name'] = 'to_delete'
 
@@ -322,24 +305,22 @@ class TestSosModel:
         after_delete = config_handler.read_sos_models()
         assert len(after_delete) == 0
 
-    def test_sos_model_delete_missing(self, get_sos_model, get_handler):
+    def test_sos_model_delete_missing(self, get_sos_model, config_handler):
         """Test that updating a nonexistent sos_model should fail
         """
-        config_handler = get_handler
         with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_sos_model('missing_name')
-        assert "sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex)
 
 
 class TestSectorModel:
     """SectorModel definitions should be accessible - may move towards being less editable
     as config, more defined in code/wrapper.
     """
-    def test_sector_model_read_all(self, get_sector_model, get_handler):
+    def test_sector_model_read_all(self, get_sector_model, config_handler):
         """Test to write two sector_model configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
-        config_handler = get_handler
 
         sector_model1 = get_sector_model
         sector_model1['name'] = 'sector_model1'
@@ -354,12 +335,12 @@ class TestSectorModel:
 
         assert 'sector_model1' in sector_model_names
         assert 'sector_model2' in sector_model_names
-        assert len(sector_models) == 2
+        assert 'energy_demand_sample' in sector_model_names
+        assert len(sector_models) == 3
 
-    def test_sector_model_write_twice(self, get_sector_model, get_handler):
+    def test_sector_model_write_twice(self, get_sector_model, config_handler):
         """Test that writing a sector_model should fail (not overwrite).
         """
-        config_handler = get_handler
 
         sector_model1 = get_sector_model
         sector_model1['name'] = 'unique'
@@ -367,12 +348,11 @@ class TestSectorModel:
 
         with raises(SmifDataExistsError) as ex:
             config_handler.write_sector_model(sector_model1)
-        assert "sector_model 'unique' already exists" in str(ex)
+        assert "Sector_model 'unique' already exists" in str(ex)
 
-    def test_sector_model_read_one(self, get_sector_model, get_handler):
+    def test_sector_model_read_one(self, get_sector_model, config_handler):
         """Test reading a single sector_model.
         """
-        config_handler = get_handler
 
         sector_model1 = get_sector_model
         sector_model1['name'] = 'sector_model1'
@@ -385,18 +365,16 @@ class TestSectorModel:
         sector_model = config_handler.read_sector_model('sector_model2')
         assert sector_model['name'] == 'sector_model2'
 
-    def test_sector_model_read_missing(self, get_handler):
+    def test_sector_model_read_missing(self, config_handler):
         """Test that reading a missing sector_model fails.
         """
-        config_handler = get_handler
         with raises(SmifDataNotFoundError) as ex:
             config_handler.read_sector_model('missing_name')
-        assert "sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex)
 
-    def test_sector_model_update(self, get_sector_model, get_handler):
+    def test_sector_model_update(self, get_sector_model, config_handler):
         """Test updating a sector_model description
         """
-        config_handler = get_handler
         sector_model = get_sector_model
         sector_model['name'] = 'to_update'
         sector_model['description'] = 'before'
@@ -409,10 +387,9 @@ class TestSectorModel:
         actual = config_handler.read_sector_model('to_update')
         assert actual['description'] == 'after'
 
-    def test_sector_model_update_mismatch(self, get_sector_model, get_handler):
+    def test_sector_model_update_mismatch(self, get_sector_model, config_handler):
         """Test that updating a sector_model with mismatched name should fail
         """
-        config_handler = get_handler
         sector_model = get_sector_model
 
         sector_model['name'] = 'sector_model'
@@ -420,46 +397,39 @@ class TestSectorModel:
             config_handler.update_sector_model('sector_model2', sector_model)
         assert "name 'sector_model2' must match 'sector_model'" in str(ex)
 
-    def test_sector_model_update_missing(self, get_sector_model, get_handler):
+    def test_sector_model_update_missing(self, get_sector_model, config_handler):
         """Test that updating a nonexistent sector_model should fail
         """
-        config_handler = get_handler
         sector_model = get_sector_model
         sector_model['name'] = 'missing_name'
 
         with raises(SmifDataNotFoundError) as ex:
             config_handler.update_sector_model('missing_name', sector_model)
-        assert "sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex)
 
-    def test_sector_model_delete(self, get_sector_model, get_handler):
+    def test_sector_model_delete(self, get_sector_model, config_handler):
         """Test that updating a nonexistent sector_model should fail
         """
-        config_handler = get_handler
-        sector_model = get_sector_model
-        sector_model['name'] = 'to_delete'
 
-        config_handler.write_sector_model(sector_model)
         before_delete = config_handler.read_sector_models()
         assert len(before_delete) == 1
 
-        config_handler.delete_sector_model('to_delete')
+        config_handler.delete_sector_model('energy_demand_sample')
         after_delete = config_handler.read_sector_models()
         assert len(after_delete) == 0
 
-    def test_sector_model_delete_missing(self, get_sector_model, get_handler):
+    def test_sector_model_delete_missing(self, get_sector_model, config_handler):
         """Test that updating a nonexistent sector_model should fail
         """
-        config_handler = get_handler
         with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_sector_model('missing_name')
-        assert "sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex)
 
     # itnerventions should be tested as read from files via read_sector_model
     @mark.xfail
     def test_read_sector_model_interventions(self,
                                              get_sector_model,
-                                             get_handler):
-        config_handler = get_handler
+                                             config_handler):
 
         sector_model = get_sector_model
         sector_model['name'] = 'sector_model'
@@ -473,8 +443,7 @@ class TestSectorModel:
 
     # interventions should be tested as read from files via read_sector_model
     @mark.xfail
-    def test_read_interventions(self, get_handler):
-        config_handler = get_handler
+    def test_read_interventions(self, config_handler):
         config_handler._read_state_file = Mock(return_value=[])
         config_handler._read_yaml_file = Mock(return_value=[])
 
@@ -484,8 +453,8 @@ class TestSectorModel:
         config_handler.read_interventions('filename.yml')
         assert config_handler._read_yaml_file.called_with('filename.yml')
 
-    def test_reshape_csv_interventions(self, get_handler):
-        handler = get_handler
+    def test_reshape_csv_interventions(self, config_handler):
+        handler = config_handler
 
         data = [{'name': 'test', 'capacity_value': 12, 'capacity_unit': 'GW'}]
         expected = [{'name': 'test', 'capacity': {'value': 12, 'unit': 'GW'}}]
@@ -494,8 +463,8 @@ class TestSectorModel:
         assert actual == expected
 
     def test_reshape_csv_interventions_duplicate_field(
-            self, get_handler):
-        handler = get_handler
+            self, config_handler):
+        handler = config_handler
 
         data = [{'name': 'test',
                  'capacity_value': 12,
@@ -506,8 +475,8 @@ class TestSectorModel:
             handler._reshape_csv_interventions(data)
 
     def test_reshape_csv_interventions_duplicate_field_inv(
-            self, get_handler):
-        handler = get_handler
+            self, config_handler):
+        handler = config_handler
 
         data = [{'name': 'test',
                  'capacity': 23,
@@ -517,8 +486,8 @@ class TestSectorModel:
         with raises(ValueError):
             handler._reshape_csv_interventions(data)
 
-    def test_reshape_csv_interventions_underscore_in_name(self, get_handler):
-        handler = get_handler
+    def test_reshape_csv_interventions_underscore_in_name(self, config_handler):
+        handler = config_handler
 
         data = [{'name': 'test', 'mega_capacity_value': 12, 'mega_capacity_unit': 'GW'}]
         expected = [{'name': 'test', 'mega_capacity': {'value': 12, 'unit': 'GW'}}]
@@ -533,22 +502,15 @@ class TestScenarios:
     """Scenario data should be readable, metadata is currently editable. May move to make it
     possible to import/edit/write data.
     """
-    def test_read_scenario_definition(self, setup_folder_structure, get_handler,
+    def test_read_scenario_definition(self, setup_folder_structure, config_handler,
                                       sample_scenarios):
         """Should read a scenario definition
         """
         expected = sample_scenarios[0]
-        actual = get_handler.read_scenario(expected['name'], skip_coords=True)
+        actual = config_handler.read_scenario(expected['name'], skip_coords=True)
         assert actual == expected
 
-    def test_missing_scenario_definition(self, setup_folder_structure, get_handler):
-        """Should raise a SmifDataNotFoundError if scenario definition not found
-        """
-        with raises(SmifDataNotFoundError) as ex:
-            get_handler.read_scenario('missing')
-        assert "scenario 'missing' not found" in str(ex)
-
-    def test_scenario_data(self, setup_folder_structure, get_handler,
+    def test_scenario_data(self, setup_folder_structure, config_handler,
                            get_scenario_data):
         """ Test to dump a scenario (CSV) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
@@ -564,7 +526,6 @@ class TestScenarios:
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
 
-        config_handler = get_handler
         expected = np.array([[100, 150, 200, 210]])
         actual = config_handler.read_scenario_variant_data(
             'population',
@@ -574,7 +535,7 @@ class TestScenarios:
 
         np.testing.assert_almost_equal(actual, expected)
 
-    def test_scenario_data_raises(self, setup_folder_structure, get_handler,
+    def test_scenario_data_raises(self, setup_folder_structure, config_handler,
                                   get_faulty_scenario_data):
         """If a scenario file has incorrect keys, raise a friendly error identifying
         missing keys
@@ -589,7 +550,6 @@ class TestScenarios:
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
 
-        config_handler = get_handler
         with raises(SmifDataMismatchError):
             config_handler.read_scenario_variant_data(
                 'population',
@@ -597,8 +557,8 @@ class TestScenarios:
                 'population_count',
                 timestep=2017)
 
-    def test_read_scenario_variable_spec(self, get_handler):
-        handler = get_handler
+    def test_read_scenario_variable_spec(self, config_handler):
+        handler = config_handler
         scenario_name = 'population'
         variable = 'population_count'
         spec = handler._read_scenario_variable_spec(scenario_name, variable)
@@ -616,8 +576,8 @@ class TestScenarios:
                                   'default': None,
                                   'exp_range': None}
 
-    def test_read_scenario_variable_spec_raises(self, get_handler):
-        handler = get_handler
+    def test_read_scenario_variable_spec_raises(self, config_handler):
+        handler = config_handler
         scenario_name = 'does not exist'
         variable = 'population_count'
         with raises(SmifDataNotFoundError):
@@ -628,7 +588,7 @@ class TestScenarios:
         with raises(SmifDataNotFoundError):
             handler._read_scenario_variable_spec(scenario_name, variable)
 
-    def test_scenario_data_validates(self, setup_folder_structure, get_handler,
+    def test_scenario_data_validates(self, setup_folder_structure, config_handler,
                                      get_remapped_scenario_data):
         """ DatafileInterface and DataInterface perform validation of scenario
         data against raw interval and region data.
@@ -650,8 +610,6 @@ class TestScenarios:
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
 
-        config_handler = get_handler
-
         expected_data = np.array([[100, 150, 200, 210]], dtype=float)
         actual = config_handler.read_scenario_variant_data(
             'population',
@@ -662,10 +620,9 @@ class TestScenarios:
         np.testing.assert_equal(actual, expected_data)
 
     @mark.xfail
-    def test_project_scenario_sets(self, get_handler):
+    def test_project_scenario_sets(self, config_handler):
         """ Test to read and write the project configuration
         """
-        config_handler = get_handler
 
         # Scenario sets / read existing (from fixture)
         scenario_sets = config_handler.read_scenario_sets()
@@ -711,18 +668,17 @@ class TestScenarios:
                 expected = 'The annual mortality rate in NL population'
                 assert scenario_set['description'] == expected
 
-    def test_read_scenario_missing(self, get_handler):
+    def test_read_scenario_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if scenario not found
         """
         with raises(SmifDataNotFoundError) as ex:
-            get_handler.read_scenario('missing')
-        assert "scenario 'missing' not found" in str(ex)
+            config_handler.read_scenario('missing')
+        assert "Scenario 'missing' not found" in str(ex)
 
     @mark.xfail
-    def test_project_scenarios(self, get_handler):
+    def test_project_scenarios(self, config_handler):
         """ Test to read and write the project configuration
         """
-        config_handler = get_handler
 
         # Scenarios / read existing (from fixture)
         scenarios = config_handler.read_scenarios()
@@ -773,10 +729,9 @@ class TestScenarios:
                 assert scenario['filename'] == 'population_medium_change.csv'
 
     @mark.xfail
-    def test_read_scenario_set_scenario_definitions(self, get_handler):
+    def test_read_scenario_set_scenario_definitions(self, config_handler):
         """ Test to read all scenario definitions for a scenario
         """
-        config_handler = get_handler
         actual = config_handler.read_scenario_set_scenario_definitions('population')
         expected = [
             {
@@ -811,198 +766,43 @@ class TestScenarios:
         assert actual == expected
 
 
+@fixture(scope='function')
+def setup_narratives(config_handler, get_sos_model):
+    config_handler.write_sos_model(get_sos_model)
+
+
 # need to test with spec and new methods
-@mark.xfail
-class TestNarratives:
+@mark.usefixtures('setup_narratives')
+class TestNarrativeVariantData:
     """Narratives, parameters and interventions should be readable, metadata is editable. May
     move to clarify the distinctions here, and extend to specify strategies and contraints.
     """
-    def test_narrative_data(self, setup_folder_structure, get_handler, narrative_data):
+    def test_narrative_data(self, setup_folder_structure, config_handler, get_narrative):
         """ Test to dump a narrative (yml) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
         returned dictionary.
         """
         basefolder = setup_folder_structure
         narrative_data_path = os.path.join(str(basefolder), 'data', 'narratives',
-                                           'central_planning.yml')
-        dump(narrative_data, narrative_data_path)
+                                           'central_planning.csv')
+        with open(narrative_data_path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['homogeneity_coefficient'])
+            writer.writeheader()
+            writer.writerow({'homogeneity_coefficient': 8})
 
-        config_handler = get_handler
-        test_narrative = config_handler.read_narrative_data('Central Planning')
+        actual = config_handler.read_narrative_variant_data(
+            'energy', 'governance', 'Central Planning', 'homogeneity_coefficient')
 
-        assert test_narrative['energy_demand'] == {'smart_meter_savings': 8}
+        assert actual == 8
 
-    def test_narrative_data_missing(self, get_handler):
+    def test_narrative_data_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if narrative has no data
         """
         with raises(SmifDataNotFoundError) as ex:
-            get_handler.read_narrative_data('missing')
-        assert "Narrative 'missing' has no data defined" in str(ex)
-
-    def test_read_narrative_definition(self, setup_folder_structure, get_handler,
-                                       sample_narratives):
-        expected = sample_narratives[0]
-        actual = get_handler.read_narrative(expected['name'])
-        assert actual == expected
-
-    def test_read_narrative_definition_missing(self, get_handler):
-        """Should raise a SmifDataNotFoundError if narrative not defined
-        """
-        with raises(SmifDataNotFoundError) as ex:
-            get_handler.read_narrative('missing')
-        assert "Narrative 'missing' not found" in str(ex)
-
-    def test_read_interventions(self, setup_folder_structure, water_interventions_abc,
-                                get_handler):
-        path = os.path.join(str(setup_folder_structure), 'data', 'interventions',
-                            'reservoirs.yml')
-        dump(water_interventions_abc, path)
-        actual = get_handler.read_interventions('reservoirs.yml')
-        assert actual == water_interventions_abc
-
-    def test_read_initial_conditions(self, setup_folder_structure, initial_system,
-                                     get_handler):
-        path = os.path.join(str(setup_folder_structure), 'data', 'initial_conditions',
-                            'system.yml')
-        dump(initial_system, path)
-        actual = get_handler.read_initial_conditions('system.yml')
-        assert actual == initial_system
-
-    def test_read_strategies(self, setup_folder_structure,
-                             initial_system,
-                             get_handler):
-        path = os.path.join(str(setup_folder_structure), 'data', 'strategies',
-                            'a_strategy.yml')
-        dump(initial_system, path)
-        actual = get_handler.read_strategies('a_strategy.yml')
-        assert actual == initial_system
-
-    def test_project_narrative_sets(self, get_handler):
-        """ Test to read and write the project configuration
-        """
-        config_handler = get_handler
-
-        # narrative sets / read existing (from fixture)
-        narrative_sets = config_handler.read_narrative_sets()
-        assert narrative_sets[0]['name'] == 'technology'
-        assert len(narrative_sets) == 2
-
-        # narrative sets / add
-        narrative_set = {
-            'description': 'The rate of development in the UK',
-            'name': 'development'
-        }
-        config_handler.write_narrative_set(narrative_set)
-        narrative_sets = config_handler.read_narrative_sets()
-        assert len(narrative_sets) == 3
-        for narrative_set in narrative_sets:
-            if narrative_set['name'] == 'development':
-                expected = 'The rate of development in the UK'
-                assert narrative_set['description'] == expected
-
-        # narrative sets / modify
-        narrative_set = {
-            'description': 'The rate of technical development in the NL',
-            'name': 'technology'
-        }
-        config_handler.update_narrative_set(narrative_set['name'],
-                                            narrative_set)
-        narrative_sets = config_handler.read_narrative_sets()
-        assert len(narrative_sets) == 3
-        for narrative_set in narrative_sets:
-            if narrative_set['name'] == 'technology':
-                expected = 'The rate of technical development in the NL'
-                assert narrative_set['description'] == expected
-
-        # narrative sets / modify unique identifier (name)
-        narrative_set = {
-            'name': 'name_change',
-            'description': 'The rate of technical development in the NL'
-        }
-        config_handler.update_narrative_set('technology', narrative_set)
-        narrative_sets = config_handler.read_narrative_sets()
-        assert len(narrative_sets) == 3
-        for narrative_set in narrative_sets:
-            if narrative_set['name'] == 'name_change':
-                expected = 'The rate of technical development in the NL'
-                assert narrative_set['description'] == expected
-
-    def test_project_narratives(self, get_handler):
-        """ Test to read and write the project configuration
-        """
-        config_handler = get_handler
-
-        # narratives / read existing (from fixture)
-        narratives = config_handler.read_narratives()
-        assert len(narratives) == 2
-
-        # narratives / add
-        narrative = {
-            'description': 'The Medium ONS Forecast for UK population out to 2050',
-            'filename': 'population_medium.csv',
-            'name': 'Medium Population (ONS)',
-            'parameters': [
-                {
-                    'name': 'population_count',
-                    'spatial_resolution': 'lad',
-                    'temporal_resolution': 'annual',
-                    'units': 'people',
-                }
-            ],
-            'narrative_set': 'population',
-        }
-        config_handler.write_narrative(narrative)
-        narratives = config_handler.read_narratives()
-        assert len(narratives) == 3
-        for narrative in narratives:
-            if narrative['name'] == 'Medium Population (ONS)':
-                assert narrative['filename'] == 'population_medium.csv'
-
-        # narratives / modify
-        narrative['filename'] = 'population_med.csv'
-        config_handler.update_narrative(narrative['name'], narrative)
-        narratives = config_handler.read_narratives()
-        assert len(narratives) == 3
-        for narrative in narratives:
-            if narrative['name'] == 'Medium Population (ONS)':
-                assert narrative['filename'] == 'population_med.csv'
-
-        # narratives / modify unique identifier (name)
-        narrative['name'] = 'name_change'
-        config_handler.update_narrative('Medium Population (ONS)', narrative)
-        narratives = config_handler.read_narratives()
-        assert len(narratives) == 3
-        for narrative in narratives:
-            if narrative['name'] == 'name_change':
-                assert narrative['filename'] == 'population_med.csv'
-
-    def test_read_parameters(self, setup_folder_structure, get_handler,
-                             model_run, narrative_data):
-        """ Test to read a modelrun's parameters
-        """
-        model_run = model_run
-        get_handler.write_model_run(model_run)
-        central_narrative_path = os.path.join(
-            str(setup_folder_structure),
-            'data',
-            'narratives',
-            'central_planning.yml'
-        )
-        dump(narrative_data, central_narrative_path)
-        high_tech_narrative_path = os.path.join(
-            str(setup_folder_structure),
-            'data',
-            'narratives',
-            'energy_demand_high_tech.yml'
-        )
-        dump(narrative_data, high_tech_narrative_path)
-
-        expected = {
-            'smart_meter_savings': 8
-        }
-        actual = get_handler.read_parameters('unique_model_run_name',
-                                             'energy_demand')
-        assert actual == expected
+            config_handler.read_narrative_variant_data(
+                'energy', 'governance', 'Central Planning', 'does not exist')
+        msg = "Variable 'does not exist' not found in 'Central Planning'"
+        assert msg in str(ex)
 
 
 # need to test with spec replacing spatial/temporal resolution
@@ -1295,15 +1095,15 @@ class TestCoefficients:
     def to_spec(self):
         return Spec(name='to_test_coef', dtype='int')
 
-    def test_read_write(self, from_spec, to_spec, get_handler):
+    def test_read_write(self, from_spec, to_spec, config_handler):
         data = np.eye(1000)
-        handler = get_handler
+        handler = config_handler
         handler.write_coefficients(from_spec, to_spec, data)
         actual = handler.read_coefficients(from_spec, to_spec)
         np.testing.assert_equal(actual, data)
 
-    def test_read_raises(self, from_spec, to_spec, get_handler):
-        handler = get_handler
+    def test_read_raises(self, from_spec, to_spec, config_handler):
+        handler = config_handler
         missing_spec = Spec(name='missing_coef', dtype='int')
         with raises(SmifDataNotFoundError):
             handler.read_coefficients(missing_spec, to_spec)

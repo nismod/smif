@@ -4,7 +4,24 @@ scenarios: # Select 0 or more of the scenario sets
 - population
 - climate
 - reservoir_level  # needed for initial inputs to water_supply
-narratives: []
+- water_sector_energy_demand
+narratives:
+- name: technology
+  description: Describes the evolution of technology
+  sos_model: energy_water
+  provides:
+    energy_demand:
+      - smart_meter_savings
+    water_supply:
+      - clever_water_meter_savings
+      - per_capita_water_demand
+  variants:
+    - name: high_tech_dsm
+      description: High penetration of SMART technology on the demand side
+      data:
+        smart_meter_savings: high_tech_dsm.csv
+        clever_water_meter_savings: high_tech_dsm.csv
+        per_capita_water_demand: high_tech_dsm.csv
 sector_models: # Select 1 or more of the sector models
 - water_supply
 - energy_demand
@@ -25,11 +42,11 @@ scenario_dependencies:
   source_output: reservoir_level
   sink: water_supply
   sink_input: reservoir_level
-model_dependencies:
-- source: water_supply
+- source: water_sector_energy_demand
   source_output: energy_demand
   sink: energy_demand
   sink_input: energy_demand
+model_dependencies:
 - source: energy_demand
   source_output: water_demand
   sink: water_supply

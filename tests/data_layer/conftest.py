@@ -1,3 +1,5 @@
+"""Holds fixtures for the data layer module tests
+"""
 from pytest import fixture
 from smif.data_layer import DatafileInterface, MemoryInterface
 from smif.metadata import Spec
@@ -8,8 +10,8 @@ def get_memory_handler():
     return MemoryInterface()
 
 
-@fixture
-def get_handler(get_handler_binary):
+@fixture(scope='function')
+def config_handler(get_handler_binary):
     return get_handler_binary
 
 
@@ -19,8 +21,6 @@ def get_handler_csv(setup_folder_structure, sample_scenarios, sample_narratives,
     handler = DatafileInterface(str(setup_folder_structure), 'local_csv', validation=False)
     for scenario in sample_scenarios:
         handler.write_scenario(scenario)
-    for narrative in sample_narratives:
-        handler.write_narrative(narrative)
     for dimension in sample_dimensions:
         handler.write_dimension(dimension)
     return handler
@@ -28,14 +28,13 @@ def get_handler_csv(setup_folder_structure, sample_scenarios, sample_narratives,
 
 @fixture(scope='function')
 def get_handler_binary(setup_folder_structure, sample_scenarios, sample_narratives,
-                       sample_dimensions):
+                       sample_dimensions, get_sector_model):
     handler = DatafileInterface(str(setup_folder_structure), 'local_binary', validation=False)
     for scenario in sample_scenarios:
         handler.write_scenario(scenario)
-    for narrative in sample_narratives:
-        handler.write_narrative(narrative)
     for dimension in sample_dimensions:
         handler.write_dimension(dimension)
+    handler.write_sector_model(get_sector_model)
     return handler
 
 
@@ -168,17 +167,3 @@ def get_remapped_scenario_data():
         }
     )
     return data, spec
-
-
-@fixture
-def narrative_data():
-    """Return sample narrative_data
-    """
-    return {
-        'energy_demand': {
-            'smart_meter_savings': 8
-        },
-        'water_supply': {
-            'clever_water_meter_savings': 8
-        }
-    }

@@ -197,54 +197,42 @@ class MemoryInterface(DataInterface):
     # endregion
 
     # region Narratives
-    def read_narratives(self, skip_coords=False):
-        narratives = self._narratives.values()
-        if skip_coords:
-            narratives = [
-                self._skip_coords(s, ['provides'])
-                for s in narratives
-            ]
-        return [_variant_dict_to_list(n) for n in narratives]
+    def _read_narratives(self, sos_model_name):
+        return self._sos_models[sos_model_name]['narratives']
 
-    def read_narrative(self, narrative_name, skip_coords=False):
-        narrative = self._narratives[narrative_name]
-        if skip_coords:
-            narrative = self._skip_coords(narrative, ['provides'])
-        return _variant_dict_to_list(narrative)
+    def _read_narrative(self, sos_model_name, narrative_name):
+        try:
+            narrative = [x for x in self._read_narratives(sos_model_name)
+                         if x['name'] == narrative_name][0]
+        except IndexError:
+            msg = "Narrative '{}' not found in '{}'"
+            raise SmifDataNotFoundError(msg.format(narrative_name, sos_model_name))
+        return narrative
 
-    def write_narrative(self, narrative):
-        narrative = _variant_list_to_dict(narrative)
-        self._narratives[narrative['name']] = narrative
+    def _read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
+        narrative = self._read_narrative(sos_model_name, narrative_name)
+        try:
+            variant = [x for x in narrative['variants'] if x['name'] == variant_name][0]
+        except IndexError:
+            msg = "Variant '{}' not found in '{}'"
+            raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
+        return variant
 
-    def update_narrative(self, narrative_name, narrative):
-        narrative = _variant_list_to_dict(narrative)
-        self._narratives[narrative_name] = narrative
+    def read_narrative_variant_data(self, sos_model_name, narrative_name,
+                                    variant_name, variable, timestep=None):
+        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
+        if variable not in variant['data'].keys():
+            msg = "Variable '{}' not found in '{}'"
+            raise SmifDataNotFoundError(msg.format(variable, variant_name))
+        else:
+            data = self._narrative_data[(
+                sos_model_name, narrative_name, variant_name, variable, timestep)]
+        return data
 
-    def delete_narrative(self, narrative_name):
-        del self._narratives[narrative_name]
-
-    def read_narrative_variants(self, narrative_name):
-        return list(self._narratives[narrative_name]['variants'].values())
-
-    def read_narrative_variant(self, narrative_name, variant_name):
-        return self._narratives[narrative_name]['variants'][variant_name]
-
-    def write_narrative_variant(self, narrative_name, variant):
-        self._narratives[narrative_name]['variants'][variant['name']] = variant
-
-    def update_narrative_variant(self, narrative_name, variant_name, variant):
-        self._narratives[narrative_name]['variants'][variant_name] = variant
-
-    def delete_narrative_variant(self, narrative_name, variant_name):
-        del self._narratives[narrative_name]['variants'][variant_name]
-
-    def read_narrative_variant_data(self, narrative_name, variant_name, variable,
-                                    timestep=None):
-        return self._narrative_data[(narrative_name, variant_name, variable, timestep)]
-
-    def write_narrative_variant_data(self, data, narrative_name, variant_name, variable,
-                                     timestep=None):
-        self._narrative_data[(narrative_name, variant_name, variable, timestep)] = data
+    def write_narrative_variant_data(self, sos_model_name, narrative_name,
+                                     variant_name, variable, data, timestep=None):
+        self._narrative_data[(
+            sos_model_name, narrative_name, variant_name, variable, timestep)] = data
     # endregion
 
     # region Results

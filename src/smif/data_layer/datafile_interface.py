@@ -121,7 +121,6 @@ class DatafileInterface(DataInterface):
         config_folders = [
             'dimensions',
             'model_runs',
-            'narratives',
             'scenarios',
             'sector_models',
             'sos_models',
@@ -162,7 +161,7 @@ class DatafileInterface(DataInterface):
         if config_type == 'scenario':
             return self.read_scenario(config_name)
         elif config_type == 'narrative':
-            return self.read_narrative(config_name)
+            return self._read_narrative(config_name)
         else:
             raise NotImplementedError(
                 "Cannot read %s:%s through generic method." % (config_type, config_name))
@@ -762,73 +761,32 @@ class DatafileInterface(DataInterface):
     # endregion
 
     # region Narratives
-    def read_narratives(self, skip_coords=False):
-        narr_names = self._read_filenames_in_dir(self.config_folders['narratives'], '.yml')
-        return [self.read_narrative(name, skip_coords) for name in narr_names]
-
-    @check_exists('narrative')
-    def read_narrative(self, narrative_name, skip_coords=False):
-        narrative = self._read_yaml_file(self.config_folders['narratives'], narrative_name)
-        if not skip_coords:
-            self._set_list_coords(narrative['provides'])
+    def _read_narrative(self, sos_model_name, narrative_name):
+        sos_model = self.read_sos_model(sos_model_name)
+        narrative = _pick_from_list(sos_model['narratives'], narrative_name)
+        if not narrative:
+            msg = "Narrative '{}' not found in '{}'"
+            raise SmifDataNotFoundError(msg.format(narrative_name, sos_model_name))
         return narrative
 
-    @check_not_exists('narrative')
-    def write_narrative(self, narrative):
-        narrative = self._skip_coords(narrative, ['provides'])
-        self._write_yaml_file(
-            self.config_folders['narratives'], narrative['name'], narrative)
+    def _read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
+        narrative = self._read_narrative(sos_model_name, narrative_name)
+        variant = _pick_from_list(narrative['variants'], variant_name)
+        if not variant:
+            msg = "Variant '{}' not found in '{}'"
+            raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
+        return variant
 
-    @check_exists('narrative')
-    def update_narrative(self, narrative_name, narrative):
-        narrative = self._skip_coords(narrative, ['provides'])
-        self._write_yaml_file(
-            self.config_folders['narratives'], narrative_name, narrative)
-
-    @check_exists('narrative')
-    def delete_narrative(self, narrative_name):
-        os.remove(
-            os.path.join(self.config_folders['narratives'], "{}.yml".format(narrative_name)))
-
-    def read_narrative_variants(self, narrative_name):
-        narrative = self.read_narrative(narrative_name, skip_coords=True)
-        return narrative['variants']
-
-    @check_exists_as_child('narrative', 'variant')
-    def read_narrative_variant(self, narrative_name, variant_name):
-        variants = self.read_narrative_variants(narrative_name)
-        return _pick_from_list(variants, variant_name)
-
-    @check_not_exists_as_child('narrative', 'variant')
-    def write_narrative_variant(self, narrative_name, variant):
-        narrative = self.read_narrative(narrative_name)
-        narrative['variants'].append(variant)
-        self.update_narrative(narrative_name, narrative)
-
-    @check_exists_as_child('narrative', 'variant')
-    def update_narrative_variant(self, narrative_name, variant_name, variant):
-        narrative = self.read_narrative(narrative_name)
-        v_idx = _idx_in_list(narrative['variants'], variant_name)
-        narrative['variants'][v_idx] = variant
-        self.update_narrative(narrative_name, narrative)
-
-    @check_exists_as_child('narrative', 'variant')
-    def delete_narrative_variant(self, narrative_name, variant_name):
-        narrative = self.read_narrative(narrative_name)
-        v_idx = _idx_in_list(narrative['variants'], variant_name)
-        del narrative['variants'][v_idx]
-        self.update_narrative(narrative_name, narrative)
-
-    @check_exists_as_child('narrative', 'variant')
-    def read_narrative_variant_data(self, narrative_name, variant_name, variable,
-                                    timestep=None):
-        spec = self._read_narrative_variable_spec(narrative_name, variable)
-        filepath = self._get_narrative_variant_filepath(narrative_name, variant_name, variable)
+    def read_narrative_variant_data(self, sos_model_name, narrative_name,
+                                    variant_name, variable, timestep=None):
+        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
+        filepath = self._get_narrative_variant_filepath(variant, variable)
         data = self._get_data_from_csv(filepath)
 
         if timestep is not None:
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
+        spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
         try:
             array = self.data_list_to_ndarray(data, spec)
         except SmifDataMismatchError as ex:
@@ -839,31 +797,47 @@ class DatafileInterface(DataInterface):
 
         return array
 
-    @check_exists_as_child('narrative', 'variant')
-    def write_narrative_variant_data(self, narrative_name, variant_name, variable, data,
-                                     timestep=None):
-        spec = self._read_narrative_variable_spec(narrative_name, variable)
+    def write_narrative_variant_data(self, sos_model_name, narrative_name,
+                                     variant_name, variable, data, timestep=None):
+        spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
         data = self.ndarray_to_data_list(data, spec)
-        filepath = self._get_narrative_variant_filepath(narrative_name, variant_name, variable)
+        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
+        filepath = self._get_narrative_variant_filepath(variant, variable)
+
         self._write_data_to_csv(filepath, data, spec=spec)
 
-    def _get_narrative_variant_filepath(self, narrative_name, variant_name, variable):
-        variant = self.read_narrative_variant(narrative_name, variant_name)
+    def _get_narrative_variant_filepath(self, variant, variable):
         if 'data' not in variant or variable not in variant['data']:
             raise SmifDataNotFoundError(
-                "narrative data file not defined for {}:{}, {}".format(
-                    narrative_name, variant_name, variable)
+                "Variable '{}' not found in '{}'".format(
+                    variable, variant['name'])
             )
         filename = variant['data'][variable]
+        self.logger.debug(filename)
         return os.path.join(self.data_folders['narratives'], filename)
 
-    def _read_narrative_variable_spec(self, narrative_name, variable):
+    def _read_narrative_variable_spec(self, sos_model_name, narrative_name, variable):
         # Read spec from narrative->provides->variable
-        narrative = self.read_narrative(narrative_name)
-        spec = _pick_from_list(narrative['provides'], variable)
+        narrative = self._read_narrative(sos_model_name, narrative_name)
+        model_name = self._key_from_list(variable, narrative['provides'])
+        if not model_name:
+            msg = "Cannot identify source of Spec for variable '{}'"
+            raise SmifDataNotFoundError(msg.format(variable))
+        parameters = self.read_sector_model(model_name)['parameters']
+        spec = _pick_from_list(parameters, variable)
+        if not spec:
+            msg = "Cannot find Spec for parameter '{}' in '{}'"
+            raise SmifDataNotFoundError(msg.format(variable, model_name))
         self._set_item_coords(spec)
         return Spec.from_dict(spec)
+
     # endregion
+
+    def _key_from_list(self, name, dict_of_lists):
+        for key, items in dict_of_lists.items():
+            if name in items:
+                return key
+        return None
 
     # region Results
     def read_results(self, modelrun_id, model_name, output_spec, timestep=None,
@@ -1238,7 +1212,7 @@ def _assert_no_mismatch(dtype, name, obj):
     try:
         if name != obj['name']:
             raise SmifDataMismatchError(
-                "%s name '%s' must match '%s'" % (dtype, name, obj['name']))
+                "%s name '%s' must match '%s'" % (dtype.capitalize(), name, obj['name']))
     except KeyError:
         raise SmifValidationError("%s must have name defined" % dtype)
     except TypeError:
@@ -1247,17 +1221,21 @@ def _assert_no_mismatch(dtype, name, obj):
 
 def _file_exists(file_dir, dtype, name):
     dir_key = "%ss" % dtype
-    return os.path.exists(os.path.join(file_dir[dir_key], name + '.yml'))
+    try:
+        return os.path.exists(os.path.join(file_dir[dir_key], name + '.yml'))
+    except TypeError:
+        msg = "Could not parse file name {} and dtype {}"
+        raise SmifDataNotFoundError(msg.format(name, dtype))
 
 
 def _assert_file_exists(file_dir, dtype, name):
     if not _file_exists(file_dir, dtype, name):
-        raise SmifDataNotFoundError("%s '%s' not found" % (dtype, name))
+        raise SmifDataNotFoundError("%s '%s' not found" % (dtype.capitalize(), name))
 
 
 def _assert_file_not_exists(file_dir, dtype, name):
     if _file_exists(file_dir, dtype, name):
-        raise SmifDataExistsError("%s '%s' already exists" % (dtype, name))
+        raise SmifDataExistsError("%s '%s' already exists" % (dtype.capitalize(), name))
 
 
 def _config_item_exists(config, dtype, name):
@@ -1289,10 +1267,10 @@ def _idx_in_list(list_of_dicts, name):
 def _assert_config_item_exists(config, dtype, name):
     if not _config_item_exists(config, dtype, name):
         raise SmifDataNotFoundError(
-            "%s '%s' not found in '%s'" % (str(dtype).title(), name, config['name']))
+            "%s '%s' not found in '%s'" % (str(dtype).capitalize(), name, config['name']))
 
 
 def _assert_config_item_not_exists(config, dtype, name):
     if _config_item_exists(config, dtype, name):
         raise SmifDataExistsError(
-            "%s '%s' already exists in '%s'" % (str(dtype).title(), name, config['name']))
+            "%s '%s' already exists in '%s'" % (str(dtype).capitalize(), name, config['name']))
