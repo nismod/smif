@@ -167,7 +167,8 @@ function sos_model(
         return Object.assign({}, state, {
             isFetching: false,
             item: action.data,
-            error: action.error
+            error: action.error,
+            lastUpdated: action.receivedAt
         })
     case SEND_SOS_MODEL:
         return Object.assign({}, state, {
@@ -192,7 +193,8 @@ function sos_model(
 function sector_models(
     state = {
         isFetching: true,
-        items: []
+        items: [],
+        error: {}
     },
     action
 ) {
@@ -204,7 +206,8 @@ function sector_models(
     case RECEIVE_SECTOR_MODELS:
         return Object.assign({}, state, {
             isFetching: false,
-            items: action.sector_models,
+            items: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:
@@ -215,7 +218,8 @@ function sector_models(
 function sector_model(
     state = {
         isFetching: true,
-        item: {}
+        item: {},
+        error: {}
     },
     action
 ) {
@@ -227,7 +231,8 @@ function sector_model(
     case RECEIVE_SECTOR_MODEL:
         return Object.assign({}, state, {
             isFetching: false,
-            item: action.sector_model,
+            item: action.data,
+            error: action.error,
             lastUpdated: action.receivedAt
         })
     default:

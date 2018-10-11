@@ -213,12 +213,24 @@ class SectorModelAPI(MethodView):
         """
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
-        if sector_model_name is None:
-            data = data_interface.read_sector_models()
-            response = jsonify(data)
-        else:
-            data = data_interface.read_sector_model(sector_model_name)
-            response = jsonify(data)
+
+        try:
+            if sector_model_name is None:
+                data = []
+                data = data_interface.read_sector_models(skip_coords=True)
+            else:
+                data = {}
+                data = data_interface.read_sector_model(sector_model_name, skip_coords=True)
+
+            response = jsonify({
+                'data': data,
+                'error': {}
+            })
+        except SmifDataError as err:
+            response = jsonify({
+                'data': data,
+                'error': parse_exceptions(err)
+            })
 
         return response
 
@@ -230,8 +242,17 @@ class SectorModelAPI(MethodView):
         data = request.get_json() or request.form
         data = check_timestamp(data)
 
-        data_interface.write_sector_model(data)
-        response = jsonify({"message": "success"})
+        try:
+            data_interface.write_sector_model(data)
+        except SmifDataError as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
         response.status_code = 201
         return response
 
@@ -242,8 +263,19 @@ class SectorModelAPI(MethodView):
         data_interface = current_app.config.data_interface
         data = request.get_json() or request.form
         data = check_timestamp(data)
-        data_interface.update_sector_model(sector_model_name, data)
-        response = jsonify({})
+
+        try:
+            data_interface.update_sector_model(sector_model_name, data)
+        except SmifDataError as err:
+            response = jsonify({
+                'message': 'failed',
+                'data': data,
+                'error': parse_exceptions(err)
+            })
+        else:
+            response = jsonify({"message": "success"})
+
+        response.status_code = 200
         return response
 
     def delete(self, sector_model_name):
@@ -267,10 +299,10 @@ class ScenarioAPI(MethodView):
         # return str(current_app.config)
         data_interface = current_app.config.data_interface
         if scenario_name is None:
-            data = data_interface.read_scenarios()
+            data = data_interface.read_scenarios(skip_coords=True)
             response = jsonify(data)
         else:
-            data = data_interface.read_scenario(scenario_name)
+            data = data_interface.read_scenario(scenario_name, skip_coords=True)
             response = jsonify(data)
 
         return response

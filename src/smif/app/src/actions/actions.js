@@ -412,7 +412,8 @@ export const RECEIVE_SECTOR_MODELS = 'RECEIVE_SECTOR_MODELS'
 function receiveSectorModels(json) {
     return {
         type: RECEIVE_SECTOR_MODELS,
-        sector_models: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -445,7 +446,8 @@ export const RECEIVE_SECTOR_MODEL = 'RECEIVE_SECTOR_MODEL'
 function receiveSectorModel(json) {
     return {
         type: RECEIVE_SECTOR_MODEL,
-        sector_model: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
