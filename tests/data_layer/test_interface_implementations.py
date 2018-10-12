@@ -118,9 +118,7 @@ def scenario(sample_dimensions):
             {
                 'name': 'mortality',
                 'dims': ['lad'],
-                'coords': {
-                    'lad': sample_dimensions[0]
-                },
+                'coords': {'lad': sample_dimensions[0]['elements']},
                 'dtype': 'float',
             }
         ],
@@ -377,7 +375,8 @@ class TestScenarios():
         assert handler.read_scenarios(skip_coords=True) == [scenario_no_coords]
 
     def test_read_scenario(self, scenario, handler):
-        assert handler.read_scenario('mortality') == scenario
+        actual = handler.read_scenario('mortality')
+        assert actual == scenario
 
     def test_read_scenario_no_coords(self, scenario_no_coords, handler):
         assert handler.read_scenario('mortality', skip_coords=True) == scenario_no_coords
@@ -402,7 +401,7 @@ class TestScenarios():
             'provides': []
         }
         handler.update_scenario('mortality', another_scenario)
-        assert handler.read_scenarios(skip_coords=True) == [another_scenario]
+        assert handler.read_scenarios() == [another_scenario]
 
     def test_delete_scenario(self, handler):
         handler.delete_scenario('mortality')

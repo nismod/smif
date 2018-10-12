@@ -12,7 +12,7 @@ import os
 from pytest import fixture
 from smif.data_layer.load import dump
 
-from .convert.conftest import regions_half_squares, remap_months
+from .convert.conftest import remap_months
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
@@ -331,7 +331,7 @@ def get_sos_model(sample_narratives):
 
 
 @fixture
-def get_sector_model(annual, hourly, regions_half_squares):
+def get_sector_model(annual, hourly):
     """Return sample sector_model
     """
     return {
@@ -345,7 +345,7 @@ def get_sector_model(annual, hourly, regions_half_squares):
                 'name': 'population',
                 'dims': ['lad', 'annual'],
                 'coords': {
-                    'lad': regions_half_squares,
+                    'lad': ['a', 'b'],
                     'annual': annual
                 },
                 'absolute_range': [0, int(1e12)],
@@ -358,7 +358,7 @@ def get_sector_model(annual, hourly, regions_half_squares):
                 'name': 'gas_demand',
                 'dims': ['lad', 'hourly'],
                 'coords': {
-                    'lad': regions_half_squares,
+                    'lad': ['a', 'b'],
                     'hourly': hourly
                 },
                 'absolute_range': [0, float('inf')],
@@ -517,25 +517,14 @@ def sample_narratives(get_narrative):
 
 
 @fixture
-def sample_dimensions(regions_half_squares, remap_months, hourly, annual):
+def sample_dimensions(remap_months, hourly, annual):
     """Return sample dimensions
     """
-    def reform_spatial_data(spatial):
-        data = []
-        for f in spatial:
-            name = f['properties']['name']
-            element = {
-                'name': name,
-                'feature': f
-            }
-            data.append(element)
-        return data
-
     return [
         {
             'name': 'lad',
             'description': 'Local authority districts for the UK',
-            'elements': reform_spatial_data(regions_half_squares)
+            'elements': ['a', 'b']
          },
         {
             'name': 'hourly',
