@@ -841,7 +841,7 @@ class DatafileInterface(DataInterface):
         spec = data_array.spec
 
         results_path = self._get_results_path(
-            modelrun_id, model_name, spec.name,
+            modelrun_id, model_name, data_array.name,
             timestep, decision_iteration
         )
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
