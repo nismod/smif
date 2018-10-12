@@ -9,6 +9,7 @@ data (at any computed or pre-computed timestep) and write access to output data
 from logging import getLogger
 from types import MappingProxyType
 
+from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataError
 from smif.metadata import RelativeTimestep
 
@@ -157,6 +158,8 @@ class DataHandle(object):
                 "'%s' not recognised as input or parameter for '%s'" % (key, self._model_name))
 
     def __setitem__(self, key, value):
+        if hasattr(value, 'as_ndarray'):
+            raise TypeError("Pass in a numpy array")
         self.set_results(key, value)
 
     @property
@@ -399,6 +402,9 @@ class DataHandle(object):
         output_name : str
         data : numpy.ndarray
         """
+        if hasattr(data, 'as_ndarray'):
+            raise TypeError("Pass in a numpy array")
+
         if output_name not in self._outputs:
             raise KeyError(
                 "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
@@ -408,21 +414,12 @@ class DataHandle(object):
 
         spec = self._outputs[output_name]
 
-        if data.shape != spec.shape:
-            raise ValueError(
-                "Tried to set results with shape {}, expected {} for {}:{}".format(
-                    data.shape,
-                    spec.shape,
-                    self._model_name,
-                    output_name
-                )
-            )
+        da = DataArray(spec, data)
 
         self._store.write_results(
-            data,
+            da,
             self._modelrun_name,
             self._model_name,
-            spec,
             self._current_timestep,
             self._decision_iteration
         )
@@ -514,6 +511,10 @@ class ResultsHandle(object):
         output_name : str
         timestep : int
         decision_iteration : int
+
+        Returns
+        -------
+        smif.data_layer.data_array.DataArray
         """
         if model_name in [model.name for model in self._sos_model.models]:
             results_model = self._sos_model.get_model(model_name)

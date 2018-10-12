@@ -31,7 +31,7 @@ def init_handler(request, setup_empty_folder_structure):
 @fixture
 def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies,
             unit_definitions, dimension, sample_dimensions, source_spec, sink_spec,
-            coefficients, scenario, get_narrative):
+            coefficients, scenario, get_narrative, parameter_spec):
     handler = init_handler
     handler.write_model_run(model_run)
     handler.write_sos_model(get_sos_model)
@@ -44,12 +44,11 @@ def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies
         handler.write_dimension(dim)
     handler.write_coefficients(source_spec, sink_spec, coefficients)
     handler.write_scenario(scenario)
+    data_array = DataArray(parameter_spec, np.array(424242, dtype=float))
     handler.write_narrative_variant_data('energy',
                                          'technology',
                                          'high_tech_dsm',
-                                         'smart_meter_savings',
-                                         np.array(424242, dtype=float)
-                                         )
+                                         data_array)
 
     return handler
 
@@ -447,40 +446,34 @@ class TestScenarios():
         handler.delete_scenario_variant('mortality', 'low')
         assert handler.read_scenario_variants('mortality') == []
 
-    def test_write_scenario_variant_data(self, handler):
+    def test_write_scenario_variant_data(self, handler, scenario):
         """Write to in-memory data
         """
         data = np.array([0, 1], dtype=float)
-        handler.write_scenario_variant_data(
-            'mortality', 'low', 'mortality', data, 2010)
 
-        expected = data
+        spec = Spec.from_dict(scenario['provides'][0])
+        da = DataArray(spec, data)
+
+        handler.write_scenario_variant_data('mortality', 'low', da, 2010)
+
         actual = handler.read_scenario_variant_data('mortality', 'low',
                                                     'mortality', 2010)
-        np.testing.assert_equal(actual.as_ndarray(), expected)
+        assert actual == da
 
 
 class TestNarratives():
     """Read and write narrative data
     """
-    def test_read_narrative_variant_data(self, handler):
+    def test_read_narrative_variant_data(self, handler, parameter_spec):
         """Read from in-memory data
         """
         actual = handler.read_narrative_variant_data('energy',
                                                      'technology',
                                                      'high_tech_dsm',
                                                      'smart_meter_savings')
-        spec = Spec.from_dict({
-            'name': 'smart_meter_savings',
-            'description': "Difference in floor area per person"
-                           "in end year compared to base year",
-            'absolute_range': [0, float('inf')],
-            'expected_range': [0.5, 2],
-            'default': 'data_file.csv',
-            'unit': 'percentage',
-            'dtype': 'float'})
+
         data = np.array(424242, dtype=float)
-        expected = DataArray(spec, data)
+        expected = DataArray(parameter_spec, data)
         assert actual == expected
 
     def test_read_narrative_variant_data_raises_param(self, handler):
@@ -510,27 +503,18 @@ class TestNarratives():
         expected = "Narrative 'not_a_narrative' not found in 'energy'"
         assert expected in str(err)
 
-    def test_write_narrative_variant_data(self, handler):
+    def test_write_narrative_variant_data(self, handler, parameter_spec):
         """Write narrative variant data to file or memory
         """
         data = np.array(42, dtype=float)
+        da = DataArray(parameter_spec, data)
         handler.write_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings', data)
+            'energy', 'technology', 'high_tech_dsm', da)
 
         actual = handler.read_narrative_variant_data(
             'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
 
-        spec = Spec.from_dict({
-                'name': 'smart_meter_savings',
-                'description': "Difference in floor area per person"
-                               "in end year compared to base year",
-                'absolute_range': [0, float('inf')],
-                'expected_range': [0.5, 2],
-                'default': 'data_file.csv',
-                'unit': 'percentage',
-                'dtype': 'float'
-            })
-        expected = DataArray(spec, np.array(42, dtype=float))
+        expected = DataArray(parameter_spec, np.array(42, dtype=float))
 
         assert actual == expected
 
@@ -545,7 +529,9 @@ class TestResults():
         timestep = 2010
         output_spec = Spec(name='energy_use', dtype='float')
 
-        handler.write_results(results_in, modelrun_name, model_name, output_spec, timestep)
+        da = DataArray(output_spec, results_in)
+
+        handler.write_results(da, modelrun_name, model_name, timestep)
         results_out = handler.read_results(modelrun_name, model_name, output_spec, timestep)
 
         expected = DataArray(output_spec, results_in)
@@ -565,7 +551,9 @@ class TestResults():
         timestep = 2010
         output_spec = Spec(name='energy_use', dtype='float')
 
-        handler.write_results(results_in, modelrun_name, model_name, output_spec, timestep)
+        da = DataArray(output_spec, results_in)
+
+        handler.write_results(da, modelrun_name, model_name, output_spec, timestep)
 
         with raises(SmifDataNotFoundError):
             handler.read_results(modelrun_name, model_name, output_spec, 2020)

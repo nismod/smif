@@ -612,19 +612,18 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_scenario_variant_data(self, scenario_name, variant_name, variable, data,
+    def write_scenario_variant_data(self, scenario_name, variant_name, data_array,
                                     timestep=None):
         """Write scenario data file
 
         Arguments
         ---------
-        scenario_name: str
+        scenario_name : str
             Name of the scenario
-        variant_name: str
+        variant_name : str
             Name of the scenario variant
-        variable: str
-            Name of the variable (facet)
-        data: numpy.ndarray
+        data_array : smif.data_layer.data_array.DataArray
+            Contains the annotated data
         timestep: int (optional)
             If None, read data for all timesteps
 
@@ -669,14 +668,13 @@ class DataInterface(metaclass=ABCMeta):
 
         Returns
         -------
-        list
-            A list with dictionaries containing the contents of 'narrative_name' data file
+        smif.data_layer.data_array.DataArray
         """
         raise NotImplementedError()
 
     @abstractmethod
     def write_narrative_variant_data(self, data, sos_model_name, narrative_name,
-                                     variant_name, variable, timestep=None):
+                                     data_array, timestep=None):
         """Read narrative data file
 
         Arguments
@@ -688,17 +686,11 @@ class DataInterface(metaclass=ABCMeta):
             The name of the sos_model to which the narrative belongs
         narrative_name: str
             Name of the narrative
-        variant_name: str
-            Narrative variant to use
-        variable: str
-            Variable (parameter) to read
+        data_array : smif.data_layer.data_array.DataArray
+            Contains the annotated data to write
         timestep: int (optional)
             Timestep
 
-        Returns
-        -------
-        list
-            A list with dictionaries containing the contents of 'narrative_name' data file
         """
         raise NotImplementedError()
     # endregion
@@ -719,7 +711,7 @@ class DataInterface(metaclass=ABCMeta):
 
         Returns
         -------
-        data: numpy.ndarray
+        smif.data_layer.data_array.DataArray
 
         Notes
         -----
@@ -728,16 +720,15 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_results(self, data, modelrun_name, model_name, output_spec, timestep=None,
+    def write_results(self, data_array, modelrun_name, model_name, timestep=None,
                       decision_iteration=None):
         """Write results of a `model_name` in `modelrun_name` for a given `output_name`
 
         Parameters
         ----------
-        data : numpy.ndarray
+        data_array : smif.data_layer.data_array.DataArray
         modelrun_id : str
         model_name : str
-        output_spec : smif.metadata.Spec
         timestep : int, optional
         decision_iteration : int, optional
 
@@ -775,13 +766,12 @@ class DataInterface(metaclass=ABCMeta):
 
     # region Common methods
     @staticmethod
-    def ndarray_to_data_list(data, spec, timestep=None):
+    def ndarray_to_data_list(data_array, timestep=None):
         """Convert :class:`numpy.ndarray` to list of observations
 
         Parameters
         ----------
-        data : numpy.ndarray
-        spec : smif.metadata.Spec
+        data_array : smif.data_layer.data_array.DataArray
         timestep : int, default=None
 
         Returns
@@ -792,9 +782,8 @@ class DataInterface(metaclass=ABCMeta):
         """
         observations = []
 
-        if not data.shape == spec.shape:
-            msg = "Data shape ({}) does not match spec ({})"
-            raise SmifDataMismatchError(msg.format(data.shape, spec.shape))
+        data = data_array.as_ndarray()
+        spec = data_array.spec
 
         for indices, value in np.ndenumerate(data):
             obs = {}

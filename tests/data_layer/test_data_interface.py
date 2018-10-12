@@ -51,10 +51,9 @@ class TestDataInterface():
                     Coordinates('interval', ['1'])],
             dtype='int')
 
-        actual = DataInterface.ndarray_to_data_list(
-            np.array([[3]]),
-            spec, timestep=2010
-        )
+        da = DataArray(spec, np.array([[3]]))
+
+        actual = DataInterface.ndarray_to_data_list(da, timestep=2010)
         expected = data
 
         assert actual == expected
@@ -70,10 +69,9 @@ class TestDataInterface():
 
         print(spec.coords)
 
-        actual = DataInterface.ndarray_to_data_list(
-            data,
-            spec, timestep=2010
-        )
+        da = DataArray(spec, data)
+
+        actual = DataInterface.ndarray_to_data_list(da, timestep=2010)
         expected = [
             {
                 'timestep': 2010,

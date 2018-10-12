@@ -724,12 +724,12 @@ class DatafileInterface(DataInterface):
         return da
 
     @check_exists_as_child('scenario', 'variant')
-    def write_scenario_variant_data(self, scenario_name, variant_name, variable,
-                                    data, timestep=None):
-        scenario = self.read_scenario(scenario_name)
-        spec = self._get_spec_from_provider(scenario['provides'], variable)
-        data = self.ndarray_to_data_list(data, spec, timestep)
-        filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
+    def write_scenario_variant_data(self, scenario_name, variant_name,
+                                    data_array, timestep=None):
+        spec = data_array.spec
+        data = self.ndarray_to_data_list(data_array, timestep)
+        filepath = self._get_scenario_variant_filepath(
+            scenario_name, variant_name, data_array.name)
 
         if timestep:
             fieldnames = ('timestep', ) + tuple(spec.dims) + (spec.name, )
@@ -787,11 +787,11 @@ class DatafileInterface(DataInterface):
         return da
 
     def write_narrative_variant_data(self, sos_model_name, narrative_name,
-                                     variant_name, variable, data, timestep=None):
-        spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
-        data = self.ndarray_to_data_list(data, spec)
+                                     variant_name, data_array, timestep=None):
+        spec = data_array.spec
+        data = self.ndarray_to_data_list(data_array)
         variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        filepath = self._get_narrative_variant_filepath(variant, variable)
+        filepath = self._get_narrative_variant_filepath(variant, spec.name)
 
         self._write_data_to_csv(filepath, data, spec=spec)
 
@@ -833,22 +833,24 @@ class DatafileInterface(DataInterface):
                        decision_iteration])
             raise SmifDataNotFoundError("Could not find results for {}".format(key))
 
-    def write_results(self, data, modelrun_id, model_name, output_spec, timestep=None,
+    def write_results(self, data_array, modelrun_id, model_name, timestep=None,
                       decision_iteration=None):
         if timestep is None:
             raise NotImplementedError()
 
+        spec = data_array.spec
+
         results_path = self._get_results_path(
-            modelrun_id, model_name, output_spec.name,
+            modelrun_id, model_name, spec.name,
             timestep, decision_iteration
         )
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
         if self.storage_format == 'local_csv':
-            data = self.ndarray_to_data_list(data, output_spec)
-            self._write_data_to_csv(results_path, data, spec=output_spec)
+            _data = self.ndarray_to_data_list(data_array)
+            self._write_data_to_csv(results_path, _data, spec=spec)
         elif self.storage_format == 'local_binary':
-            self._write_data_to_native_file(results_path, data)
+            self._write_data_to_native_file(results_path, data_array.as_ndarray())
         else:
             raise NotImplementedError("Unrecognised storage format: %s" % self.storage_format)
 

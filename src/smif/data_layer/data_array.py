@@ -45,7 +45,7 @@ class DataArray():
             raise TypeError("spec argument is not a Spec")
 
         if not data.shape == self.spec.shape:
-            msg = "Data shape ({}) does not match spec ({})"
+            msg = "Data shape {} does not match spec {}"
             raise SmifDataMismatchError(msg.format(data.shape, spec.shape))
 
     def __eq__(self, other):
