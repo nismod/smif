@@ -640,20 +640,20 @@ class TestResultsHandle:
 
         store.write_results(da, 'test_modelrun', 'energy_demand_sample', 2010, None)
 
-        dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
+        dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model, 2010)
         actual = dh.get_results('energy_demand_sample', 'test_output', 2010, None)
         spec = mock_sector_model.outputs['test_output']
         assert actual == da
 
     def test_get_results_no_output_sos(self, mock_store, mock_sos_model):
         with raises(KeyError):
-            dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
-            dh.get_results('energy_demand_sample', 'no_such_output', None, None)
+            dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model, 2010)
+            dh.get_results('energy_demand_sample', 'no_such_output', 2010, None)
 
     def test_get_results_wrong_name_sos(self, mock_store, mock_sos_model):
         with raises(KeyError):
-            dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model)
-            dh.get_results('no_such_model', 'test_output', None, None)
+            dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model, 2010)
+            dh.get_results('no_such_model', 'test_output', 2010, None)
 
     def test_get_results_not_exists(self, mock_store, mock_sos_model, mock_model):
         store = mock_store
@@ -662,6 +662,6 @@ class TestResultsHandle:
         da = DataArray(spec, np.array([[42, 42], [69, 69]]))
 
         store.write_results(da, 'test_modelrun', 'energy_demand_sample', 2010, None)
-        dh = ResultsHandle(store, 'test_modelrun', mock_sos_model)
+        dh = ResultsHandle(store, 'test_modelrun', mock_sos_model, 2100)
         with raises(SmifDataError):
             dh.get_results('energy_demand_sample', 'test_output', 2099, None)

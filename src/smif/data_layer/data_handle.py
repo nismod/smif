@@ -264,8 +264,9 @@ class DataHandle(object):
 
         Returns
         -------
-        data : numpy.ndarray
-            Two-dimensional array with shape (len(regions), len(intervals))
+        smif.data_layer.data_array.DataArray
+            Contains data annotated with the metadata and provides utility methods
+            to access the data in different ways
         """
         if input_name not in self._inputs:
             raise KeyError(
@@ -347,8 +348,7 @@ class DataHandle(object):
 
         Returns
         -------
-        data : numpy.ndarray
-            Two-dimensional array with shape (len(regions), len(intervals))
+        smif.data_layer.data_array.DataArray
         """
         return self.get_data(input_name, RelativeTimestep.BASE)
 
@@ -361,8 +361,7 @@ class DataHandle(object):
 
         Returns
         -------
-        data : numpy.ndarray
-            Two-dimensional array with shape (len(regions), len(intervals))
+        smif.data_layer.data_array.DataArray
         """
         return self.get_data(input_name, RelativeTimestep.PREVIOUS)
 
@@ -376,6 +375,8 @@ class DataHandle(object):
         Returns
         -------
         smif.data_layer.data_array.DataArray
+            Contains data annotated with the metadata and provides utility methods
+            to access the data in different ways
         """
         if parameter_name not in self._parameters:
             raise KeyError(
@@ -435,6 +436,12 @@ class DataHandle(object):
         decision_iteration : int, default=None
         timestep : int or RelativeTimestep, default=None
 
+        Returns
+        -------
+        smif.data_layer.data_array.DataArray
+            Contains data annotated with the metadata and provides utility methods
+            to access the data in different ways
+
         Notes
         -----
         Access to model results is only granted to models contained
@@ -475,7 +482,7 @@ class DataHandle(object):
 class ResultsHandle(object):
     """Results access for decision modules
     """
-    def __init__(self, store, modelrun_name, sos_model, current_timestep=None, timesteps=None,
+    def __init__(self, store, modelrun_name, sos_model, current_timestep, timesteps=None,
                  decision_iteration=None):
         self._store = store
         self._modelrun_name = modelrun_name
@@ -515,7 +522,15 @@ class ResultsHandle(object):
         Returns
         -------
         smif.data_layer.data_array.DataArray
+            Contains data annotated with the metadata and provides utility methods
+            to access the data in different ways
         """
+        # resolve timestep
+        if hasattr(timestep, 'resolve_relative_to'):
+            timestep = timestep.resolve_relative_to(self._current_timestep, self._timesteps)
+        else:
+            assert isinstance(timestep, int) and timestep <= self._current_timestep
+
         if model_name in [model.name for model in self._sos_model.models]:
             results_model = self._sos_model.get_model(model_name)
         else:
