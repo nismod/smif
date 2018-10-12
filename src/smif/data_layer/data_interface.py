@@ -793,6 +793,10 @@ class DataInterface(metaclass=ABCMeta):
                 if timestep:
                     obs['timestep'] = timestep
             observations.append(obs)
+
+        if data.shape == () and timestep:
+            observations[0]['timestep'] = timestep
+
         return observations
 
     @staticmethod

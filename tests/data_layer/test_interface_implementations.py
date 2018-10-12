@@ -518,6 +518,22 @@ class TestNarratives():
 
         assert actual == expected
 
+    def test_write_narrative_variant_data_timestep(self, handler, parameter_spec):
+        """Write narrative variant data to file or memory
+        """
+        data = np.array(42, dtype=float)
+        da = DataArray(parameter_spec, data)
+        handler.write_narrative_variant_data(
+            'energy', 'technology', 'high_tech_dsm', da,
+            timestep=2010)
+
+        actual = handler.read_narrative_variant_data(
+            'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings', timestep=2010)
+
+        expected = DataArray(parameter_spec, np.array(42, dtype=float))
+
+        assert actual == expected
+
 
 class TestResults():
     """Read/write results and prepare warm start
@@ -553,7 +569,7 @@ class TestResults():
 
         da = DataArray(output_spec, results_in)
 
-        handler.write_results(da, modelrun_name, model_name, output_spec, timestep)
+        handler.write_results(da, modelrun_name, model_name,  timestep=timestep)
 
         with raises(SmifDataNotFoundError):
             handler.read_results(modelrun_name, model_name, output_spec, 2020)

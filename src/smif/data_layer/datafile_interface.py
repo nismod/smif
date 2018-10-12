@@ -700,7 +700,8 @@ class DatafileInterface(DataInterface):
     def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
         scenario = self.read_scenario(scenario_name)
         spec = self._get_spec_from_provider(scenario['provides'], variable)
-        filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
+        variant = self.read_scenario_variant(scenario_name, variant_name)
+        filepath = self._get_variant_filepath(variant, variable, 'scenarios')
         data = self._get_data_from_csv(filepath)
 
         if 'timestep' not in data[0].keys():
@@ -723,30 +724,15 @@ class DatafileInterface(DataInterface):
 
         return da
 
-    @check_exists_as_child('scenario', 'variant')
-    def write_scenario_variant_data(self, scenario_name, variant_name,
-                                    data_array, timestep=None):
-        spec = data_array.spec
-        data = self.ndarray_to_data_list(data_array, timestep)
-        filepath = self._get_scenario_variant_filepath(
-            scenario_name, variant_name, data_array.name)
-
-        if timestep:
-            fieldnames = ('timestep', ) + tuple(spec.dims) + (spec.name, )
-            self.logger.debug("%s, %s", fieldnames, data)
-            self._write_data_to_csv(filepath, data, fieldnames=fieldnames)
-        else:
-            self._write_data_to_csv(filepath, data, spec=spec)
-
-    def _get_scenario_variant_filepath(self, scenario_name, variant_name, variable):
-        variant = self.read_scenario_variant(scenario_name, variant_name)
+    def _get_variant_filepath(self, variant, variable, scenario_or_narrative):
         if 'data' not in variant or variable not in variant['data']:
             raise SmifDataNotFoundError(
-                "Scenario data file not defined for {}:{}, {}".format(
-                    scenario_name, variant_name, variable)
+                "Variable '{}' not found in '{}'".format(
+                    variable, variant['name'])
             )
         filename = variant['data'][variable]
-        return os.path.join(self.data_folders['scenarios'], filename)
+        self.logger.debug(filename)
+        return os.path.join(self.data_folders[scenario_or_narrative], filename)
     # endregion
 
     # region Narratives
@@ -769,10 +755,15 @@ class DatafileInterface(DataInterface):
     def read_narrative_variant_data(self, sos_model_name, narrative_name,
                                     variant_name, variable, timestep=None):
         variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        filepath = self._get_narrative_variant_filepath(variant, variable)
+        filepath = self._get_variant_filepath(variant, variable, 'narratives')
         data = self._get_data_from_csv(filepath)
 
-        if timestep is not None:
+        if timestep:
+            if 'timestep' not in data[0].keys():
+                msg = "Header in '{}' missing 'timestep' key. Found {}"
+                raise SmifDataMismatchError(msg.format(
+                    filepath, list(data[0].keys())))
+            self.logger.debug(data)
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
         spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
@@ -789,28 +780,36 @@ class DatafileInterface(DataInterface):
     def write_narrative_variant_data(self, sos_model_name, narrative_name,
                                      variant_name, data_array, timestep=None):
         spec = data_array.spec
-        data = self.ndarray_to_data_list(data_array)
+        data = self.ndarray_to_data_list(data_array, timestep=timestep)
+        self.logger.debug(data)
         variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        filepath = self._get_narrative_variant_filepath(variant, spec.name)
+        filepath = self._get_variant_filepath(variant, spec.name, 'narratives')
+        self._write_variant_data_csv(filepath, data, spec, timestep)
 
-        self._write_data_to_csv(filepath, data, spec=spec)
+    @check_exists_as_child('scenario', 'variant')
+    def write_scenario_variant_data(self, scenario_name, variant_name,
+                                    data_array, timestep=None):
+        spec = data_array.spec
+        data = self.ndarray_to_data_list(data_array, timestep=timestep)
+        variant = self.read_scenario_variant(scenario_name, variant_name)
+        filepath = self._get_variant_filepath(
+            variant, data_array.name, 'scenarios')
+        self._write_variant_data_csv(filepath, data, spec, timestep)
 
-    def _get_narrative_variant_filepath(self, variant, variable):
-        if 'data' not in variant or variable not in variant['data']:
-            raise SmifDataNotFoundError(
-                "Variable '{}' not found in '{}'".format(
-                    variable, variant['name'])
-            )
-        filename = variant['data'][variable]
-        self.logger.debug(filename)
-        return os.path.join(self.data_folders['narratives'], filename)
+    def _write_variant_data_csv(self, filepath, data, spec, timestep=None):
+        if timestep:
+            fieldnames = ('timestep', ) + tuple(spec.dims) + (spec.name, )
+            self.logger.debug("%s, %s", fieldnames, data)
+            self._write_data_to_csv(filepath, data, fieldnames=fieldnames)
+        else:
+            self._write_data_to_csv(filepath, data, spec=spec)
     # endregion
 
     # region Results
-    def read_results(self, modelrun_id, model_name, output_spec, timestep=None,
+    def read_results(self, modelrun_id, model_name, output_spec, timestep,
                      decision_iteration=None):
         if timestep is None:
-            raise NotImplementedError()
+            raise ValueError("You must pass a timestep argument")
 
         results_path = self._get_results_path(
             modelrun_id, model_name, output_spec.name,
@@ -837,6 +836,11 @@ class DatafileInterface(DataInterface):
                       decision_iteration=None):
         if timestep is None:
             raise NotImplementedError()
+
+        if timestep:
+            assert isinstance(timestep, int)
+        if decision_iteration:
+            assert isinstance(decision_iteration, int)
 
         spec = data_array.spec
 

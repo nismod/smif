@@ -74,7 +74,7 @@ class DataArray():
     def name(self):
         """The name of the data that this spec describes.
         """
-        return self.spec._name
+        return self.spec.name
 
     @property
     def description(self):
