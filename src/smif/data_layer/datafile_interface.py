@@ -222,7 +222,6 @@ class DatafileInterface(DataInterface):
                 sos_model,
                 self.read_sector_models(skip_coords=True),
                 self.read_scenarios(skip_coords=True),
-                self.read_narratives(skip_coords=True)
             )
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
@@ -233,7 +232,6 @@ class DatafileInterface(DataInterface):
                 sos_model,
                 self.read_sector_models(skip_coords=True),
                 self.read_scenarios(skip_coords=True),
-                self.read_narratives(skip_coords=True)
             )
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
