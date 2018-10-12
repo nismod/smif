@@ -6,7 +6,6 @@ isodate
 m2r
 networkx
 numpy
-numpy
 Pint
 pyarrow
 python-dateutil
