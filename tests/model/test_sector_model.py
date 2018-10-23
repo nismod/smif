@@ -1,7 +1,9 @@
 """Test SectorModel and SectorModelBuilder
 """
+import numpy as np
 import smif.sample_project.models.water_supply
 from pytest import fixture, mark, raises
+from smif.data_layer.data_array import DataArray
 from smif.metadata import Spec
 from smif.model.sector_model import SectorModel
 from smif.sample_project.models.water_supply import WaterSupplySectorModel
@@ -148,8 +150,8 @@ class TestSectorModel():
                 'unit': 'milliliter'
             })
         }
-        assert sector_model.parameters == {
-            'assump_diff_floorarea_pp': Spec.from_dict({
+
+        spec = Spec.from_dict({
                 'name': 'assump_diff_floorarea_pp',
                 'description': 'Difference in floor area per person',
                 'dims': ['national'],
@@ -160,6 +162,9 @@ class TestSectorModel():
                 'default': 1,
                 'unit': '%'
             })
+
+        assert sector_model.parameters == {
+            'assump_diff_floorarea_pp': DataArray.default_from_spec(spec)
         }
         assert sector_model.outputs == {
             'cost': Spec.from_dict({
@@ -241,7 +246,9 @@ class TestSectorModel():
             'unit': '%'
         })
         empty_sector_model.add_parameter(spec)
-        assert empty_sector_model.parameters['smart_meter_savings'] == spec
+        expected = DataArray(spec, np.array([3]))
+        actual = empty_sector_model.parameters['smart_meter_savings']
+        assert actual == expected
 
     def test_simulate_exists(self, empty_sector_model):
         """Call simulate

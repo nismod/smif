@@ -4,6 +4,7 @@ import numpy as np
 from pytest import fixture, mark, param, raises
 from smif.data_layer import (DatabaseInterface, DatafileInterface,
                              MemoryInterface)
+from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 from smif.metadata import Spec
 
@@ -30,7 +31,7 @@ def init_handler(request, setup_empty_folder_structure):
 @fixture
 def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies,
             unit_definitions, dimension, sample_dimensions, source_spec, sink_spec,
-            coefficients, scenario, get_narrative):
+            coefficients, scenario, get_narrative, parameter_spec):
     handler = init_handler
     handler.write_model_run(model_run)
     handler.write_sos_model(get_sos_model)
@@ -43,11 +44,11 @@ def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies
         handler.write_dimension(dim)
     handler.write_coefficients(source_spec, sink_spec, coefficients)
     handler.write_scenario(scenario)
+    data_array = DataArray(parameter_spec, np.array(424242, dtype=float))
     handler.write_narrative_variant_data('energy',
                                          'technology',
                                          'high_tech_dsm',
-                                         'smart_water_savings',
-                                         np.array([[424242]]))
+                                         data_array)
 
     return handler
 
@@ -108,6 +109,7 @@ def coefficients():
 
 @fixture
 def scenario(sample_dimensions):
+
     return deepcopy({
         'name': 'mortality',
         'description': 'The annual mortality rate in UK population',
@@ -115,9 +117,7 @@ def scenario(sample_dimensions):
             {
                 'name': 'mortality',
                 'dims': ['lad'],
-                'coords': {
-                    'lad': sample_dimensions[0]['elements']
-                },
+                'coords': {'lad': sample_dimensions[0]['elements']},
                 'dtype': 'float',
             }
         ],
@@ -374,7 +374,8 @@ class TestScenarios():
         assert handler.read_scenarios(skip_coords=True) == [scenario_no_coords]
 
     def test_read_scenario(self, scenario, handler):
-        assert handler.read_scenario('mortality') == scenario
+        actual = handler.read_scenario('mortality')
+        assert actual == scenario
 
     def test_read_scenario_no_coords(self, scenario_no_coords, handler):
         assert handler.read_scenario('mortality', skip_coords=True) == scenario_no_coords
@@ -387,9 +388,9 @@ class TestScenarios():
             'provides': []
         }
         handler.write_scenario(another_scenario)
-        actual = handler.read_scenarios()
-        expected = [scenario, another_scenario]
-        assert sorted_by_name(actual) == sorted_by_name(expected)
+        actual = handler.read_scenario('fertility')
+        expected = another_scenario
+        assert actual == expected
 
     def test_update_scenario(self, scenario, handler):
         another_scenario = {
@@ -445,36 +446,34 @@ class TestScenarios():
         handler.delete_scenario_variant('mortality', 'low')
         assert handler.read_scenario_variants('mortality') == []
 
-    def test_read_scenario_variant_data(self, get_remapped_scenario_data):
-        """Read from in-memory data
-        """
-        data, spec = get_remapped_scenario_data
-        handler = MemoryInterface()
-        handler._scenario_data[('test_scenario', 'variant', 'parameter', 2010)] = data
-        assert handler.read_scenario_variant_data(
-            'test_scenario', 'variant', 'parameter', 2010) == data
-
-    def test_write_scenario_variant_data(self, get_remapped_scenario_data):
+    def test_write_scenario_variant_data(self, handler, scenario):
         """Write to in-memory data
         """
-        data, spec = get_remapped_scenario_data
-        handler = MemoryInterface()
-        handler.write_scenario_variant_data(
-            data, 'test_scenario', 'variant', 'parameter', 2010)
-        assert handler._scenario_data[('test_scenario', 'variant', 'parameter', 2010)] == data
+        data = np.array([0, 1], dtype=float)
+
+        spec = Spec.from_dict(scenario['provides'][0])
+        da = DataArray(spec, data)
+
+        handler.write_scenario_variant_data('mortality', 'low', da, 2010)
+
+        actual = handler.read_scenario_variant_data('mortality', 'low',
+                                                    'mortality', 2010)
+        assert actual == da
 
 
 class TestNarratives():
     """Read and write narrative data
     """
-    def test_read_narrative_variant_data(self, handler):
+    def test_read_narrative_variant_data(self, handler, parameter_spec):
         """Read from in-memory data
         """
         actual = handler.read_narrative_variant_data('energy',
                                                      'technology',
                                                      'high_tech_dsm',
-                                                     'smart_water_savings')
-        expected = np.array([[424242]])
+                                                     'smart_meter_savings')
+
+        data = np.array(424242, dtype=float)
+        expected = DataArray(parameter_spec, data)
         assert actual == expected
 
     def test_read_narrative_variant_data_raises_param(self, handler):
@@ -504,32 +503,56 @@ class TestNarratives():
         expected = "Narrative 'not_a_narrative' not found in 'energy'"
         assert expected in str(err)
 
-    def test_write_narrative_variant_data(self, handler):
+    def test_write_narrative_variant_data(self, handler, parameter_spec):
         """Write narrative variant data to file or memory
         """
-        data = np.array([[42]])
+        data = np.array(42, dtype=float)
+        da = DataArray(parameter_spec, data)
         handler.write_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', 'smart_water_savings', data)
+            'energy', 'technology', 'high_tech_dsm', da)
 
         actual = handler.read_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', 'smart_water_savings')
+            'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
 
-        assert actual == data
+        expected = DataArray(parameter_spec, np.array(42, dtype=float))
+
+        assert actual == expected
+
+    def test_write_narrative_variant_data_timestep(self, handler, parameter_spec):
+        """Write narrative variant data to file or memory
+        """
+        data = np.array(42, dtype=float)
+        da = DataArray(parameter_spec, data)
+        handler.write_narrative_variant_data(
+            'energy', 'technology', 'high_tech_dsm', da,
+            timestep=2010)
+
+        actual = handler.read_narrative_variant_data(
+            'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings', timestep=2010)
+
+        expected = DataArray(parameter_spec, np.array(42, dtype=float))
+
+        assert actual == expected
 
 
 class TestResults():
     """Read/write results and prepare warm start
     """
     def test_read_write_results(self, handler):
-        results_in = np.array(1)
+        results_in = np.array(1, dtype=float)
         modelrun_name = 'test_modelrun'
         model_name = 'energy'
         timestep = 2010
         output_spec = Spec(name='energy_use', dtype='float')
 
-        handler.write_results(results_in, modelrun_name, model_name, output_spec, timestep)
+        da = DataArray(output_spec, results_in)
+
+        handler.write_results(da, modelrun_name, model_name, timestep)
         results_out = handler.read_results(modelrun_name, model_name, output_spec, timestep)
-        assert results_in == results_out
+
+        expected = DataArray(output_spec, results_in)
+
+        assert results_out == expected
 
     def test_warm_start(self, handler):
         """Warm start should return None if no results are available
@@ -544,7 +567,9 @@ class TestResults():
         timestep = 2010
         output_spec = Spec(name='energy_use', dtype='float')
 
-        handler.write_results(results_in, modelrun_name, model_name, output_spec, timestep)
+        da = DataArray(output_spec, results_in)
+
+        handler.write_results(da, modelrun_name, model_name,  timestep=timestep)
 
         with raises(SmifDataNotFoundError):
             handler.read_results(modelrun_name, model_name, output_spec, 2020)

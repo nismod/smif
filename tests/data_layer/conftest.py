@@ -167,3 +167,17 @@ def get_remapped_scenario_data():
         }
     )
     return data, spec
+
+
+@fixture
+def parameter_spec():
+    spec = Spec.from_dict({
+            'name': 'smart_meter_savings',
+            'description': "Difference in floor area per person"
+                           "in end year compared to base year",
+            'absolute_range': [0, float('inf')],
+            'expected_range': [0.5, 2],
+            'default': 'data_file.csv',
+            'unit': 'percentage',
+            'dtype': 'float'})
+    return spec

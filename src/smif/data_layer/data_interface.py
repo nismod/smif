@@ -22,7 +22,9 @@ from functools import reduce
 from logging import getLogger
 
 import numpy as np
+from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
+from smif.metadata import Spec
 
 
 class DataInterface(metaclass=ABCMeta):
@@ -610,19 +612,18 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_scenario_variant_data(self, data, scenario_name, variant_name, variable,
+    def write_scenario_variant_data(self, scenario_name, variant_name, data_array,
                                     timestep=None):
         """Write scenario data file
 
         Arguments
         ---------
-        data: numpy.ndarray
-        scenario_name: str
+        scenario_name : str
             Name of the scenario
-        variant_name: str
+        variant_name : str
             Name of the scenario variant
-        variable: str
-            Name of the variable (facet)
+        data_array : smif.data_layer.data_array.DataArray
+            Contains the annotated data
         timestep: int (optional)
             If None, read data for all timesteps
 
@@ -634,6 +635,19 @@ class DataInterface(metaclass=ABCMeta):
     # endregion
 
     # region Narratives
+    @abstractmethod
+    def _read_narrative(self, sos_model_name, narrative_name):
+        """Read narrative from sos_model
+
+        Arguments
+        ---------
+        sos_model_name : str
+            The name of the sos_model to which the narrative belongs
+        narrative_name: str
+            Name of the narrative
+        """
+        raise NotImplementedError()
+
     @abstractmethod
     def read_narrative_variant_data(self, sos_model_name, narrative_name,
                                     variant_name, variable, timestep=None):
@@ -654,14 +668,13 @@ class DataInterface(metaclass=ABCMeta):
 
         Returns
         -------
-        list
-            A list with dictionaries containing the contents of 'narrative_name' data file
+        smif.data_layer.data_array.DataArray
         """
         raise NotImplementedError()
 
     @abstractmethod
     def write_narrative_variant_data(self, data, sos_model_name, narrative_name,
-                                     variant_name, variable, timestep=None):
+                                     data_array, timestep=None):
         """Read narrative data file
 
         Arguments
@@ -673,17 +686,11 @@ class DataInterface(metaclass=ABCMeta):
             The name of the sos_model to which the narrative belongs
         narrative_name: str
             Name of the narrative
-        variant_name: str
-            Narrative variant to use
-        variable: str
-            Variable (parameter) to read
+        data_array : smif.data_layer.data_array.DataArray
+            Contains the annotated data to write
         timestep: int (optional)
             Timestep
 
-        Returns
-        -------
-        list
-            A list with dictionaries containing the contents of 'narrative_name' data file
         """
         raise NotImplementedError()
     # endregion
@@ -704,7 +711,7 @@ class DataInterface(metaclass=ABCMeta):
 
         Returns
         -------
-        data: numpy.ndarray
+        smif.data_layer.data_array.DataArray
 
         Notes
         -----
@@ -713,16 +720,15 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_results(self, data, modelrun_name, model_name, output_spec, timestep=None,
+    def write_results(self, data_array, modelrun_name, model_name, timestep=None,
                       decision_iteration=None):
         """Write results of a `model_name` in `modelrun_name` for a given `output_name`
 
         Parameters
         ----------
-        data : numpy.ndarray
+        data_array : smif.data_layer.data_array.DataArray
         modelrun_id : str
         model_name : str
-        output_spec : smif.metadata.Spec
         timestep : int, optional
         decision_iteration : int, optional
 
@@ -760,14 +766,13 @@ class DataInterface(metaclass=ABCMeta):
 
     # region Common methods
     @staticmethod
-    def ndarray_to_data_list(data, spec):
+    def ndarray_to_data_list(data_array, timestep=None):
         """Convert :class:`numpy.ndarray` to list of observations
 
         Parameters
         ----------
-        data : numpy.ndarray
-        spec : smif.metadata.Spec
-        timestep: int or None
+        data_array : smif.data_layer.data_array.DataArray
+        timestep : int, default=None
 
         Returns
         -------
@@ -776,17 +781,27 @@ class DataInterface(metaclass=ABCMeta):
             and optionally one for the given timestep
         """
         observations = []
+
+        data = data_array.as_ndarray()
+        spec = data_array.spec
+
         for indices, value in np.ndenumerate(data):
             obs = {}
             obs[spec.name] = value
             for dim, idx in zip(spec.dims, indices):
-                obs[dim] = spec.dim_coords(dim).elements[idx]
+                obs[dim] = spec.dim_coords(dim).elements[idx]['name']
+                if timestep:
+                    obs['timestep'] = timestep
             observations.append(obs)
+
+        if data.shape == () and timestep:
+            observations[0]['timestep'] = timestep
+
         return observations
 
     @staticmethod
     def data_list_to_ndarray(observations, spec):
-        """Convert list of observations to :class:`numpy.ndarray`
+        """Convert list of observations to a ``DataArray``
 
         Parameters
         ----------
@@ -798,7 +813,7 @@ class DataInterface(metaclass=ABCMeta):
 
         Returns
         -------
-        data : numpy.ndarray
+        smif.data_layer.data_array.DataArray
 
         Raises
         ------
@@ -826,7 +841,7 @@ class DataInterface(metaclass=ABCMeta):
                 indices.append(idx)
             data[tuple(indices)] = obs[spec.name]
 
-        return data
+        return DataArray(spec, data)
 
     @staticmethod
     def _validate_observations(observations, spec):
@@ -882,4 +897,58 @@ class DataInterface(metaclass=ABCMeta):
                     pass
         return config
 
+    def _read_narrative_variable_spec(self, sos_model_name, narrative_name, variable):
+        # Read spec from narrative->provides->variable
+        narrative = self._read_narrative(sos_model_name, narrative_name)
+        model_name = self._key_from_list(variable, narrative['provides'])
+        if not model_name:
+            msg = "Cannot identify source of Spec for variable '{}'"
+            raise SmifDataNotFoundError(msg.format(variable))
+        parameters = self.read_sector_model(model_name)['parameters']
+        return self._get_spec_from_provider(parameters, variable)
+
+    def _get_spec_from_provider(self, config_list, variable_name):
+        """Gets a Spec definition from a scenario definition
+
+        Arguments
+        ---------
+        config_list : list of dict
+            A list of spec dicts
+        variable_name : str
+            The name of the variable for which to find the spec
+
+        Returns
+        -------
+        smif.metadata.Spec
+        """
+        spec = self._pick_from_list(config_list, variable_name)
+        if spec is not None:
+            self._set_item_coords(spec)
+            return Spec.from_dict(spec)
+        else:
+            msg = "Could not find spec definition for '{}'"
+            raise SmifDataNotFoundError(msg.format(variable_name))
+
+    def _set_item_coords(self, item):
+        """If dims exists and is not empty
+        """
+        if 'dims' in item and item['dims']:
+            item['coords'] = {
+                dim: self.read_dimension(dim)['elements']
+                for dim in item['dims']
+            }
+
+    @staticmethod
+    def _pick_from_list(list_of_dicts, name):
+        for item in list_of_dicts:
+            if 'name' in item and item['name'] == name:
+                return item
+        return None
+
+    @staticmethod
+    def _key_from_list(name, dict_of_lists):
+        for key, items in dict_of_lists.items():
+            if name in items:
+                return key
+        return None
     # endregion
