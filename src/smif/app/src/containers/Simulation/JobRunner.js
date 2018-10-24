@@ -212,7 +212,6 @@ JobRunner.propTypes = {
     model_run_status: PropTypes.object.isRequired,
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
-    narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
@@ -225,13 +224,11 @@ function mapStateToProps(state) {
         model_run_status: state.model_run_status.item,
         sos_models: state.sos_models.items,
         scenarios: state.scenarios.items,
-        narratives: state.narratives.items,
         isFetching: (
             state.model_run.isFetching ||
             state.model_run_status.isFetching ||
             state.sos_models.isFetching ||
-            state.scenarios.isFetching ||
-            state.narratives.isFetching
+            state.scenarios.isFetching
         )
     }
 }
