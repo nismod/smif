@@ -56,7 +56,7 @@ class SpecList extends Component {
             }))            
         }
         if (this.state.spec.default != '') {
-            new_spec.default = parseFloat(this.state.spec.default)
+            new_spec.default = this.state.spec.default
         }
         if (this.state.spec.unit != '') {
             new_spec.unit = this.state.spec.unit
@@ -162,7 +162,16 @@ class SpecList extends Component {
     }
 
     renderSpecList(name, specs) {
-        var columns = ['Name', 'Dimensions', 'Default', 'Unit', 'DType', 'Range']
+        var columns = []
+        columns.push('Name')
+        columns.push('Dimensions')
+        if (this.props.enable_defaults) {
+            columns.push('Default')
+        }
+        columns.push('Unit')
+        columns.push('DType')
+        columns.push('Range')
+        
         return (
             <div>
                 <table className="table table-hover table-list">
@@ -197,7 +206,7 @@ class SpecList extends Component {
                                                 ) : null
                                         }
                                     </td>
-                                    <td className="col-text">
+                                    <td className="col-text" hidden={!this.props.enable_defaults}>
                                         {spec.default}
                                     </td>
                                     <td className="col-text">
@@ -276,12 +285,12 @@ class SpecList extends Component {
                                 </div>
 
                                 <div className="row">
-                                    <div className="col">
+                                    <div className="col" hidden={!this.props.enable_defaults}>
                                         <label>Default</label>
                                         <input 
                                             id={name + '_spec_default'}
                                             className='form-control'
-                                            type="number"
+                                            type="text"
                                             name='default' 
                                             value={this.state.spec.default} 
                                             onChange={this.handleFormInput} 
@@ -394,7 +403,12 @@ SpecList.propTypes = {
     name: PropTypes.string.isRequired,
     onChange: PropTypes.func,
     specs: PropTypes.array.isRequired,
-    dims: PropTypes.array.isRequired
+    dims: PropTypes.array.isRequired,
+    enable_defaults: PropTypes.bool
+}
+
+SpecList.defaultProps = {
+    enable_defaults: true
 }
 
 export default SpecList

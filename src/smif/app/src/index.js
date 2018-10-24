@@ -14,7 +14,6 @@ import ModelRunConfig from 'containers/Configuration/Forms/ModelRunConfig'
 import SosModelConfig from 'containers/Configuration/Forms/SosModelConfig'
 import SectorModelConfig from 'containers/Configuration/Forms/SectorModelConfig'
 import ScenarioConfig from 'containers/Configuration/Forms/ScenarioConfig'
-import NarrativeConfig from 'containers/Configuration/Forms/NarrativeConfig'
 
 import store from 'store/store.js'
 
@@ -38,7 +37,6 @@ render(
                             <Route exact strict path="/configure/sos-models/:name" component={SosModelConfig}/>
                             <Route exact strict path="/configure/sector-models/:name" component={SectorModelConfig}/>
                             <Route exact strict path="/configure/scenarios/:name" component={ScenarioConfig}/>
-                            <Route exact strict path="/configure/narratives/:name" component={NarrativeConfig}/>
                             <Route component={NotFound} />
                         </Switch>
                     </main>

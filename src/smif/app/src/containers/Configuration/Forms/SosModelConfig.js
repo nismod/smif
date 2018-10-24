@@ -7,7 +7,6 @@ import { connect } from 'react-redux'
 import { fetchSosModel } from 'actions/actions.js'
 import { fetchSectorModels } from 'actions/actions.js'
 import { fetchScenarios } from 'actions/actions.js'
-import { fetchNarratives } from 'actions/actions.js'
 
 import { saveSosModel } from 'actions/actions.js'
 import { acceptSosModel } from 'actions/actions.js'
@@ -32,7 +31,6 @@ class SosModelConfig extends Component {
         dispatch(fetchSosModel(this.config_name))
         dispatch(fetchSectorModels())
         dispatch(fetchScenarios())
-        dispatch(fetchNarratives())
     }
 
     componentDidUpdate() {
@@ -92,16 +90,16 @@ class SosModelConfig extends Component {
         )
     }
 
-    renderSosModelConfig(sos_model, sector_models, scenarios, narratives, error) {
+    renderSosModelConfig(sos_model, sector_models, scenarios, error) {
         return (
             <div>
-                <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} narratives={narratives} error={error} saveSosModel={this.saveSosModel} cancelSosModel={this.cancelSosModel}/>
+                <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} error={error} saveSosModel={this.saveSosModel} cancelSosModel={this.cancelSosModel}/>
             </div>
         )
     }
 
     render () {
-        const {sos_model, sector_models, scenarios, narratives, error, isFetching} = this.props
+        const {sos_model, sector_models, scenarios, error, isFetching} = this.props
 
         if (isFetching) {
             return this.renderLoading()
@@ -112,7 +110,7 @@ class SosModelConfig extends Component {
         } else if (this.state.closeSosmodel && Object.keys(error).length == 0) {
             return this.returnToOverview()
         } else {
-            return this.renderSosModelConfig(sos_model, sector_models, scenarios, narratives, error)
+            return this.renderSosModelConfig(sos_model, sector_models, scenarios, error)
         }
     }
 }
@@ -121,7 +119,6 @@ SosModelConfig.propTypes = {
     sos_model: PropTypes.object.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
-    narratives: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
@@ -134,18 +131,15 @@ function mapStateToProps(state) {
         sos_model: state.sos_model.item,
         sector_models: state.sector_models.items,
         scenarios: state.scenarios.items,
-        narratives: state.narratives.items,
         error: ({
             ...state.sos_model.error,
             ...state.sector_models.error,
-            ...state.scenarios.error,
-            ...state.narratives.error
+            ...state.scenarios.error
         }),
         isFetching: (
             state.sos_model.isFetching ||
             state.sector_models.isFetching ||
-            state.scenarios.isFetching ||
-            state.narratives.isFetching
+            state.scenarios.isFetching
         )
     }
 }

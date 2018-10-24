@@ -3,9 +3,9 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios, fetchNarratives } from 'actions/actions.js'
-import { createModelRun, createSosModel, createSectorModel, createScenario, createNarrative } from 'actions/actions.js'
-import { deleteModelRun, deleteSosModel, deleteSectorModel, deleteScenario, deleteNarrative } from 'actions/actions.js'
+import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios } from 'actions/actions.js'
+import { createModelRun, createSosModel, createSectorModel, createScenario } from 'actions/actions.js'
+import { deleteModelRun, deleteSosModel, deleteSectorModel, deleteScenario } from 'actions/actions.js'
 
 import IntroBlock from 'components/ConfigForm/General/IntroBlock.js'
 import Popup from 'components/ConfigForm/General/Popup.js'
@@ -45,7 +45,6 @@ class ProjectOverview extends Component {
         dispatch(fetchSosModels())
         dispatch(fetchSectorModels())
         dispatch(fetchScenarios())
-        dispatch(fetchNarratives())
     }
 
     handleInputChange(event) {
@@ -127,16 +126,6 @@ class ProjectOverview extends Component {
                 }
             ))
             break
-        case 'Narrative':
-            dispatch(createNarrative(
-                {
-                    'name': config.name,
-                    'description': config.description,
-                    'provides': [],
-                    'variants': []
-                }
-            ))
-            break
         }
     }
 
@@ -200,22 +189,6 @@ class ProjectOverview extends Component {
                 })
             })
             break
-
-        case 'Narrative':
-            this.props.model_runs.forEach(function(sos_model_run) {
-                Object.keys(sos_model_run.narratives).forEach(function(narrative_sets) {
-                    sos_model_run.narratives[narrative_sets].forEach(function(narrative) {
-                        if (narrative == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model_run.name,
-                                link: '/configure/sos-model-run/',
-                                type: 'ModelRun'
-                            })
-                        }
-                    })
-                })
-            })
-            break
         }
 
         this.setState({
@@ -246,9 +219,6 @@ class ProjectOverview extends Component {
         case 'Scenario':
             dispatch(deleteScenario(deletePopupConfigName))
             break
-        case 'Narrative':
-            dispatch(deleteNarrative(deletePopupConfigName))
-            break
         }
     }
 
@@ -257,8 +227,8 @@ class ProjectOverview extends Component {
     }
 
     collectIdentifiers() {
-        const { model_runs, sos_models, sector_models, scenarios, narratives, isFetching } = this.props
-        let types = [model_runs, sos_models, sector_models, scenarios, narratives, isFetching]
+        const { model_runs, sos_models, sector_models, scenarios, isFetching } = this.props
+        let types = [model_runs, sos_models, sector_models, scenarios, isFetching]
 
         let identifiers = []
 
@@ -274,7 +244,7 @@ class ProjectOverview extends Component {
     }
 
     render () {
-        const { model_runs, sos_models, sector_models, scenarios, narratives, isFetching } = this.props
+        const { model_runs, sos_models, sector_models, scenarios, isFetching } = this.props
         const { name } = this.props.match.params
 
         let used_identifiers = this.collectIdentifiers()
@@ -325,21 +295,13 @@ class ProjectOverview extends Component {
                         <ProjectOverviewItem itemname="Scenario" items={scenarios} itemLink="/configure/scenarios/" onDelete={this.openDeletePopup} />
                     </div>
 
-
-                    <div hidden={name!='narratives'}>
-                        <IntroBlock title="Narratives" intro="Narratives are configurations that target the files which contain narrative data">
-                            <input className="btn btn-success btn-margin" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
-                        </IntroBlock>
-                        <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/narratives/" onDelete={this.openDeletePopup} />
-                    </div>
-
                     {/* Popup for Create */}
-                    <Popup onRequestOpen={this.state.createPopupIsOpen}>
+                    <Popup name='popup_create' onRequestOpen={this.state.createPopupIsOpen}>
                         <CreateConfigForm config_type={this.state.createPopupType} existing_names={used_identifiers} submit={this.handleCreate} cancel={this.closeCreatePopup}/>
                     </Popup>
 
                     {/* Popup for Delete */}
-                    <Popup onRequestOpen={this.state.deletePopupIsOpen}>
+                    <Popup name='popup_delete' onRequestOpen={this.state.deletePopupIsOpen}>
                         <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
                     </Popup>
                 </div>
@@ -353,21 +315,19 @@ ProjectOverview.propTypes = {
     sos_models: PropTypes.object.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
-    narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     match: PropTypes.object.isRequired,
     dispatch: PropTypes.func.isRequired
 }
 
 function mapStateToProps(state) {
-    const { model_runs, sos_models, sector_models, scenarios, narratives } = state
+    const { model_runs, sos_models, sector_models, scenarios } = state
 
     return {
         model_runs: model_runs.items,
         sos_models: sos_models,
         sector_models: sector_models.items,
         scenarios: scenarios.items,
-        narratives: narratives.items,
         isFetching: false
     }
 }

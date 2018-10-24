@@ -45,7 +45,7 @@ def validate_sos_model_format(sos_model):
 
     return sos_model
 
-def validate_sos_model_config(sos_model, sector_models, scenarios, narratives):
+def validate_sos_model_config(sos_model, sector_models, scenarios):
     """Check expected values for data loaded from master config file
     """
     errors = []
@@ -87,15 +87,15 @@ def validate_sos_model_config(sos_model, sector_models, scenarios, narratives):
                     'Smif refers to the scenario-configurations to find ' +
                     'details about a selected scenario.'))
 
-    # check narratives
-    for narrative in sos_model['narratives']:
-        if narrative not in [narrative['name'] for narrative in narratives]:
-            errors.append(
-                SmifDataInputError(
-                    'narratives',
-                    '%s must have a valid narrative configuration.' % (narrative),
-                    'Smif refers to the narrative-configurations to find ' +
-                    'details about a selected narrative.'))
+    # # check narratives
+    # for narrative in sos_model['narratives']:
+    #     if narrative not in [narrative['name'] for narrative in narratives]:
+    #         errors.append(
+    #             SmifDataInputError(
+    #                 'narratives',
+    #                 '%s must have a valid narrative configuration.' % (narrative),
+    #                 'Smif refers to the narrative-configurations to find ' +
+    #                 'details about a selected narrative.'))
 
     # check dependencies
     model_dependency_errors = _validate_dependencies(

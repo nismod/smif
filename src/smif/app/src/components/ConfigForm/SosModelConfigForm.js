@@ -157,32 +157,6 @@ class SosModelConfigForm extends Component {
                                 }
                             </div>
                         </div>
-
-                        <div className="form-group row">
-                            <label className="col-sm-2 col-form-label">Narratives</label>
-                            <div className="col-sm-10">
-                                <PropertySelector 
-                                    name="narratives" 
-                                    activeProperties={selectedSosModel.narratives} 
-                                    availableProperties={this.props.narratives} 
-                                    onChange={this.handleChange} />
-                                {   
-                                    'narratives' in errors
-                                        ? (
-                                            <div className="invalid-feedback">
-                                                {
-                                                    errors['narratives'].map((exception, idx) => (
-                                                        <div key={'feedback_narratives_' + idx}>
-                                                            {exception.error + ' ' + exception.message}
-                                                        </div>
-                                                        
-                                                    ))
-                                                }
-                                            </div>)
-                                        : ''
-                                }
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -295,7 +269,6 @@ SosModelConfigForm.propTypes = {
     sos_model: PropTypes.object.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
-    narratives: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
     saveSosModel: PropTypes.func,
     cancelSosModel: PropTypes.func

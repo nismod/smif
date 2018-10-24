@@ -95,6 +95,7 @@ class SectorModelConfigForm extends Component {
                             name="inputs" 
                             specs={selectedSectorModel.inputs} 
                             dims={dims}
+                            enable_defaults={false}
                             onChange={this.handleChange} />
                     </div>
                 </div>
@@ -105,7 +106,8 @@ class SectorModelConfigForm extends Component {
                         <SpecList 
                             name="outputs" 
                             specs={selectedSectorModel.outputs} 
-                            dims={dims} 
+                            dims={dims}
+                            enable_defaults={false}
                             onChange={this.handleChange} />
                     </div>
                 </div>

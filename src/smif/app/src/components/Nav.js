@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { NavLink, Route } from 'react-router-dom'
 import Footer from 'containers/Footer'
-import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios, fetchNarratives } from 'actions/actions.js'
+import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios } from 'actions/actions.js'
 
 import {FaHome, FaTasks, FaSliders, FaSitemap, FaCode, FaBarChart} from 'react-icons/lib/fa'
 import { Badge } from 'reactstrap'
@@ -22,7 +22,6 @@ class Nav extends Component {
         dispatch(fetchSosModels())
         dispatch(fetchSectorModels())
         dispatch(fetchScenarios())
-        dispatch(fetchNarratives())
     }
 
     renderLoading() {
@@ -195,29 +194,6 @@ class Nav extends Component {
                             </ul>
                         }/>
                     </li>
-
-                    <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/configure/narratives" >
-                            <FaBarChart size={20}/>
-                        Narratives
-                            <Badge color="secondary">{narratives.length}</Badge>
-                        </NavLink>
-                        <Route path="/configure/narratives/" render={() =>
-                            <ul className="nav flex-column">
-                                {narratives.map(narrative =>
-                                    <li key={'nav_narrative_' + narrative.name} className="nav-item">
-                                        <NavLink
-                                            key={'nav_' + narrative.name}
-                                            exact
-                                            className="nav-link"
-                                            to={'/configure/narratives/' + narrative.name} >
-                                            {narrative.name}
-                                        </NavLink>
-                                    </li>
-                                )}
-                            </ul>
-                        }/>
-                    </li>
                 </ul>
                 <Footer />
             </nav>
@@ -225,12 +201,12 @@ class Nav extends Component {
     }
 
     render() {
-        const {model_runs, sos_models, sector_models, scenarios, narratives, isFetching} = this.props
+        const {model_runs, sos_models, sector_models, scenarios, isFetching} = this.props
         if (isFetching && this.init) {
             return this.renderLoading()
         } else {
             this.init = false
-            return this.renderNav(model_runs, sos_models, sector_models, scenarios, narratives)
+            return this.renderNav(model_runs, sos_models, sector_models, scenarios)
         }
     }
 }
@@ -240,26 +216,23 @@ Nav.propTypes = {
     sos_models: PropTypes.array.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
-    narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
 }
 
 function mapStateToProps(state) {
-    const { model_runs, sos_models, sector_models, scenarios, narratives } = state
+    const { model_runs, sos_models, sector_models, scenarios } = state
     return {
         model_runs: model_runs.items,
         sos_models: sos_models.items,
         sector_models: sector_models.items,
         scenarios: scenarios.items,
-        narratives: narratives.items,
 
         isFetching: (
             state.model_runs.isFetching ||
             state.sos_models.isFetching ||
             state.sector_models.isFetching ||
-            state.scenarios.isFetching ||
-            state.narratives.isFetching
+            state.scenarios.isFetching
         )
     }
 }
