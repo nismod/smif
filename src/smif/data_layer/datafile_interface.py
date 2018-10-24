@@ -8,6 +8,7 @@ import re
 from functools import lru_cache, wraps
 
 import pyarrow as pa
+from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.load import dump, load
 from smif.data_layer.validate import (validate_sos_model_config,
@@ -15,7 +16,6 @@ from smif.data_layer.validate import (validate_sos_model_config,
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError, SmifDataReadError,
                             SmifValidationError)
-from smif.metadata import Spec
 
 # Import fiona if available (optional dependency)
 try:
@@ -578,15 +578,6 @@ class DatafileInterface(DataInterface):
         for item in list_:
             self._set_item_coords(item)
 
-    def _set_item_coords(self, item):
-        """If dims exists and is not empty
-        """
-        if 'dims' in item and item['dims']:
-            item['coords'] = {
-                dim: self.read_dimension(dim)['elements']
-                for dim in item['dims']
-            }
-
     @lru_cache(maxsize=32)
     def _read_dimension_file(self, filename):
         filepath = os.path.join(self.data_folders['dimensions'], filename)
@@ -681,7 +672,7 @@ class DatafileInterface(DataInterface):
     @check_exists_as_child('scenario', 'variant')
     def read_scenario_variant(self, scenario_name, variant_name):
         variants = self.read_scenario_variants(scenario_name)
-        return _pick_from_list(variants, variant_name)
+        return self._pick_from_list(variants, variant_name)
 
     @check_not_exists_as_child('scenario', 'variant')
     def write_scenario_variant(self, scenario_name, variant):
@@ -705,8 +696,10 @@ class DatafileInterface(DataInterface):
 
     @check_exists_as_child('scenario', 'variant')
     def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
-        spec = self._read_scenario_variable_spec(scenario_name, variable)
-        filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
+        scenario = self.read_scenario(scenario_name)
+        spec = self._get_spec_from_provider(scenario['provides'], variable)
+        variant = self.read_scenario_variant(scenario_name, variant_name)
+        filepath = self._get_variant_filepath(variant, variable, 'scenarios')
         data = self._get_data_from_csv(filepath)
 
         if 'timestep' not in data[0].keys():
@@ -716,52 +709,34 @@ class DatafileInterface(DataInterface):
                                                    filepath, list(data[0].keys())))
 
         if timestep is not None:
+            self.logger.debug(data)
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
         try:
-            array = self.data_list_to_ndarray(data, spec)
+            da = self.data_list_to_ndarray(data, spec)
         except SmifDataMismatchError as ex:
             msg = "DataMismatch in scenario: {}:{}.{}, from {}"
             raise SmifDataMismatchError(
                 msg.format(scenario_name, variant_name, variable, str(ex))
             ) from ex
 
-        return array
+        return da
 
-    @check_exists_as_child('scenario', 'variant')
-    def write_scenario_variant_data(self, scenario_name, variant_name, variable, data):
-        spec = self._read_scenario_variable_spec(scenario_name, variable)
-        data = self.ndarray_to_data_list(data, spec)
-        filepath = self._get_scenario_variant_filepath(scenario_name, variant_name, variable)
-        self._write_data_to_csv(filepath, data, spec=spec)
-
-    def _get_scenario_variant_filepath(self, scenario_name, variant_name, variable):
-        variant = self.read_scenario_variant(scenario_name, variant_name)
+    def _get_variant_filepath(self, variant, variable, scenario_or_narrative):
         if 'data' not in variant or variable not in variant['data']:
             raise SmifDataNotFoundError(
-                "Scenario data file not defined for {}:{}, {}".format(
-                    scenario_name, variant_name, variable)
+                "Variable '{}' not found in '{}'".format(
+                    variable, variant['name'])
             )
         filename = variant['data'][variable]
-        return os.path.join(self.data_folders['scenarios'], filename)
-
-    def _read_scenario_variable_spec(self, scenario_name, variable):
-        # Read spec from scenario->provides->variable
-        scenario = self.read_scenario(scenario_name)
-        spec = _pick_from_list(scenario['provides'], variable)
-        if spec is not None:
-            self._set_item_coords(spec)
-            return Spec.from_dict(spec)
-        else:
-            msg = "Could not find spec definition for scenario '{}' " + \
-                  "and variable '{}'"
-            raise SmifDataNotFoundError(msg.format(scenario_name, variable))
+        self.logger.debug(filename)
+        return os.path.join(self.data_folders[scenario_or_narrative], filename)
     # endregion
 
     # region Narratives
     def _read_narrative(self, sos_model_name, narrative_name):
         sos_model = self.read_sos_model(sos_model_name)
-        narrative = _pick_from_list(sos_model['narratives'], narrative_name)
+        narrative = self._pick_from_list(sos_model['narratives'], narrative_name)
         if not narrative:
             msg = "Narrative '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(narrative_name, sos_model_name))
@@ -769,7 +744,7 @@ class DatafileInterface(DataInterface):
 
     def _read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
         narrative = self._read_narrative(sos_model_name, narrative_name)
-        variant = _pick_from_list(narrative['variants'], variant_name)
+        variant = self._pick_from_list(narrative['variants'], variant_name)
         if not variant:
             msg = "Variant '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
@@ -778,70 +753,61 @@ class DatafileInterface(DataInterface):
     def read_narrative_variant_data(self, sos_model_name, narrative_name,
                                     variant_name, variable, timestep=None):
         variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        filepath = self._get_narrative_variant_filepath(variant, variable)
+        filepath = self._get_variant_filepath(variant, variable, 'narratives')
         data = self._get_data_from_csv(filepath)
 
-        if timestep is not None:
+        if timestep:
+            if 'timestep' not in data[0].keys():
+                msg = "Header in '{}' missing 'timestep' key. Found {}"
+                raise SmifDataMismatchError(msg.format(
+                    filepath, list(data[0].keys())))
+            self.logger.debug(data)
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
         spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
         try:
-            array = self.data_list_to_ndarray(data, spec)
+            da = self.data_list_to_ndarray(data, spec)
         except SmifDataMismatchError as ex:
             msg = "DataMismatch in narrative: {}:{}, {}, from {}"
             raise SmifDataMismatchError(
                 msg.format(narrative_name, variant_name, variable, str(ex))
             ) from ex
 
-        return array
+        return da
 
     def write_narrative_variant_data(self, sos_model_name, narrative_name,
-                                     variant_name, variable, data, timestep=None):
-        spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
-        data = self.ndarray_to_data_list(data, spec)
+                                     variant_name, data_array, timestep=None):
+        spec = data_array.spec
+        data = self.ndarray_to_data_list(data_array, timestep=timestep)
+        self.logger.debug(data)
         variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        filepath = self._get_narrative_variant_filepath(variant, variable)
+        filepath = self._get_variant_filepath(variant, spec.name, 'narratives')
+        self._write_variant_data_csv(filepath, data, spec, timestep)
 
-        self._write_data_to_csv(filepath, data, spec=spec)
+    @check_exists_as_child('scenario', 'variant')
+    def write_scenario_variant_data(self, scenario_name, variant_name,
+                                    data_array, timestep=None):
+        spec = data_array.spec
+        data = self.ndarray_to_data_list(data_array, timestep=timestep)
+        variant = self.read_scenario_variant(scenario_name, variant_name)
+        filepath = self._get_variant_filepath(
+            variant, data_array.name, 'scenarios')
+        self._write_variant_data_csv(filepath, data, spec, timestep)
 
-    def _get_narrative_variant_filepath(self, variant, variable):
-        if 'data' not in variant or variable not in variant['data']:
-            raise SmifDataNotFoundError(
-                "Variable '{}' not found in '{}'".format(
-                    variable, variant['name'])
-            )
-        filename = variant['data'][variable]
-        self.logger.debug(filename)
-        return os.path.join(self.data_folders['narratives'], filename)
-
-    def _read_narrative_variable_spec(self, sos_model_name, narrative_name, variable):
-        # Read spec from narrative->provides->variable
-        narrative = self._read_narrative(sos_model_name, narrative_name)
-        model_name = self._key_from_list(variable, narrative['provides'])
-        if not model_name:
-            msg = "Cannot identify source of Spec for variable '{}'"
-            raise SmifDataNotFoundError(msg.format(variable))
-        parameters = self.read_sector_model(model_name)['parameters']
-        spec = _pick_from_list(parameters, variable)
-        if not spec:
-            msg = "Cannot find Spec for parameter '{}' in '{}'"
-            raise SmifDataNotFoundError(msg.format(variable, model_name))
-        self._set_item_coords(spec)
-        return Spec.from_dict(spec)
-
+    def _write_variant_data_csv(self, filepath, data, spec, timestep=None):
+        if timestep:
+            fieldnames = ('timestep', ) + tuple(spec.dims) + (spec.name, )
+            self.logger.debug("%s, %s", fieldnames, data)
+            self._write_data_to_csv(filepath, data, fieldnames=fieldnames)
+        else:
+            self._write_data_to_csv(filepath, data, spec=spec)
     # endregion
 
-    def _key_from_list(self, name, dict_of_lists):
-        for key, items in dict_of_lists.items():
-            if name in items:
-                return key
-        return None
-
     # region Results
-    def read_results(self, modelrun_id, model_name, output_spec, timestep=None,
+    def read_results(self, modelrun_id, model_name, output_spec, timestep,
                      decision_iteration=None):
         if timestep is None:
-            raise NotImplementedError()
+            raise ValueError("You must pass a timestep argument")
 
         results_path = self._get_results_path(
             modelrun_id, model_name, output_spec.name,
@@ -851,9 +817,11 @@ class DatafileInterface(DataInterface):
         try:
             if self.storage_format == 'local_csv':
                 data = self._get_data_from_csv(results_path)
+                self.logger.debug(data)
                 return self.data_list_to_ndarray(data, output_spec)
             elif self.storage_format == 'local_binary':
-                return self._get_data_from_native_file(results_path)
+                data = self._get_data_from_native_file(results_path)
+                return DataArray(output_spec, data)
             else:
                 msg = "Unrecognised storage format: %s"
                 raise NotImplementedError(msg % self.storage_format)
@@ -862,22 +830,29 @@ class DatafileInterface(DataInterface):
                        decision_iteration])
             raise SmifDataNotFoundError("Could not find results for {}".format(key))
 
-    def write_results(self, data, modelrun_id, model_name, output_spec, timestep=None,
+    def write_results(self, data_array, modelrun_id, model_name, timestep=None,
                       decision_iteration=None):
         if timestep is None:
             raise NotImplementedError()
 
+        if timestep:
+            assert isinstance(timestep, int)
+        if decision_iteration:
+            assert isinstance(decision_iteration, int)
+
+        spec = data_array.spec
+
         results_path = self._get_results_path(
-            modelrun_id, model_name, output_spec.name,
+            modelrun_id, model_name, data_array.name,
             timestep, decision_iteration
         )
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
         if self.storage_format == 'local_csv':
-            data = self.ndarray_to_data_list(data, output_spec)
-            self._write_data_to_csv(results_path, data, spec=output_spec)
+            _data = self.ndarray_to_data_list(data_array)
+            self._write_data_to_csv(results_path, _data, spec=spec)
         elif self.storage_format == 'local_binary':
-            self._write_data_to_native_file(results_path, data)
+            self._write_data_to_native_file(results_path, data_array.as_ndarray())
         else:
             raise NotImplementedError("Unrecognised storage format: %s" % self.storage_format)
 
@@ -1251,13 +1226,6 @@ def _name_in_list(list_of_dicts, name):
         if 'name' in item and item['name'] == name:
             return True
     return False
-
-
-def _pick_from_list(list_of_dicts, name):
-    for item in list_of_dicts:
-        if 'name' in item and item['name'] == name:
-            return item
-    return None
 
 
 def _idx_in_list(list_of_dicts, name):

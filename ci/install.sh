@@ -39,6 +39,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
         python-dateutil \
         ruamel.yaml \
         rtree \
+        xarray \
+        pandas \
         shapely \
         fiona && source activate testenv
 fi

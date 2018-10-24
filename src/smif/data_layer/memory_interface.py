@@ -3,6 +3,7 @@
 from collections import OrderedDict
 from copy import copy
 
+from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_interface import DataInterface
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 
@@ -188,12 +189,21 @@ class MemoryInterface(DataInterface):
     def delete_scenario_variant(self, scenario_name, variant_name):
         del self._scenarios[scenario_name]['variants'][variant_name]
 
-    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
-        return self._scenario_data[(scenario_name, variant_name, variable, timestep)]
+    def read_scenario_variant_data(self, scenario_name, variant_name, variable,
+                                   timestep=None):
+        scenario = self.read_scenario(scenario_name)
+        spec = self._get_spec_from_provider(scenario['provides'], variable)
+        data = self._scenario_data[(scenario_name, variant_name, variable, timestep)]
+        return DataArray(spec, data)
 
-    def write_scenario_variant_data(self, data, scenario_name, variant_name, variable,
+    def write_scenario_variant_data(self, scenario_name, variant_name, data_array,
                                     timestep=None):
-        self._scenario_data[(scenario_name, variant_name, variable, timestep)] = data
+
+        self._scenario_data[(
+            scenario_name,
+            variant_name,
+            data_array.name,
+            timestep)] = data_array.as_ndarray()
     # endregion
 
     # region Narratives
@@ -222,15 +232,20 @@ class MemoryInterface(DataInterface):
                                     variant_name, variable, timestep=None):
         variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
         if variable not in variant['data'].keys():
+            self.logger.debug(variant['data'])
             msg = "Variable '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(variable, variant_name))
         else:
             data = self._narrative_data[(
                 sos_model_name, narrative_name, variant_name, variable, timestep)]
-        return data
+            spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
+            return DataArray(spec, data)
 
     def write_narrative_variant_data(self, sos_model_name, narrative_name,
-                                     variant_name, variable, data, timestep=None):
+                                     variant_name, data_array, timestep=None):
+        variable = data_array.name
+        data = data_array.as_ndarray()
+
         self._narrative_data[(
             sos_model_name, narrative_name, variant_name, variable, timestep)] = data
     # endregion
@@ -239,7 +254,7 @@ class MemoryInterface(DataInterface):
     def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
                      decision_iteration=None):
         key = (
-            modelrun_name, model_name, output_spec, timestep, decision_iteration
+            modelrun_name, model_name, output_spec.name, timestep, decision_iteration
         )
         self.logger.debug("Get %s", key)
 
@@ -248,15 +263,16 @@ class MemoryInterface(DataInterface):
         except KeyError:
             raise SmifDataNotFoundError("Cannot find results for {}".format(key))
 
-        return results
+        return DataArray(output_spec, results)
 
-    def write_results(self, data, modelrun_name, model_name, output_spec, timestep=None,
+    def write_results(self, data_array, modelrun_name, model_name, timestep=None,
                       decision_iteration=None):
         key = (
-            modelrun_name, model_name, output_spec, timestep, decision_iteration
+            modelrun_name, model_name, data_array.spec.name, timestep, decision_iteration
         )
         self.logger.debug("Set %s", key)
-        self._results[key] = data
+        self.logger.debug("Writing data %s", data_array.as_ndarray())
+        self._results[key] = data_array.as_ndarray()
 
     def prepare_warm_start(self, modelrun_name):
         results_keys = [k for k in self._results.keys() if k[0] == modelrun_name]

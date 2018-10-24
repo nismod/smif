@@ -12,7 +12,7 @@ import os
 from pytest import fixture
 from smif.data_layer.load import dump
 
-from .convert.conftest import regions_half_squares, remap_months
+from .convert.conftest import remap_months
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
@@ -110,7 +110,7 @@ def initial_system():
 def parameters():
     return [
         {
-            'name': 'smart_water_savings',
+            'name': 'smart_meter_savings',
             'description': 'The savings from smart meters',
             'absolute_range': (0, 100),
             'suggested_range': (3, 10),
@@ -331,7 +331,7 @@ def get_sos_model(sample_narratives):
 
 
 @fixture
-def get_sector_model(annual, hourly, regions_half_squares):
+def get_sector_model(annual, hourly):
     """Return sample sector_model
     """
     return {
@@ -345,7 +345,7 @@ def get_sector_model(annual, hourly, regions_half_squares):
                 'name': 'population',
                 'dims': ['lad', 'annual'],
                 'coords': {
-                    'lad': regions_half_squares,
+                    'lad': ['a', 'b'],
                     'annual': annual
                 },
                 'absolute_range': [0, int(1e12)],
@@ -358,7 +358,7 @@ def get_sector_model(annual, hourly, regions_half_squares):
                 'name': 'gas_demand',
                 'dims': ['lad', 'hourly'],
                 'coords': {
-                    'lad': regions_half_squares,
+                    'lad': ['a', 'b'],
                     'hourly': hourly
                 },
                 'absolute_range': [0, float('inf')],
@@ -368,7 +368,7 @@ def get_sector_model(annual, hourly, regions_half_squares):
         ],
         'parameters': [
             {
-                'name': 'smart_water_savings',
+                'name': 'smart_meter_savings',
                 'description': "Difference in floor area per person"
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
@@ -476,7 +476,7 @@ def get_narrative():
         'name': 'technology',
         'description': 'Describes the evolution of technology',
         'provides': {
-            'energy_demand_sample': ['smart_water_savings'],
+            'energy_demand_sample': ['smart_meter_savings'],
             'water_supply': ['clever_water_meter_savings', 'per_capita_water_demand']
                      },
         'variants': [
@@ -484,7 +484,7 @@ def get_narrative():
                 'name': 'high_tech_dsm',
                 'description': 'High takeup of smart technology on the demand side',
                 'data': {
-                    'smart_water_savings': 'high_tech_dsm.csv',
+                    'smart_meter_savings': 'high_tech_dsm.csv',
                 },
             }
         ]
@@ -517,14 +517,14 @@ def sample_narratives(get_narrative):
 
 
 @fixture
-def sample_dimensions(regions_half_squares, remap_months, hourly, annual):
+def sample_dimensions(remap_months, hourly, annual):
     """Return sample dimensions
     """
     return [
         {
             'name': 'lad',
             'description': 'Local authority districts for the UK',
-            'elements': regions_half_squares,
+            'elements': ['a', 'b']
          },
         {
             'name': 'hourly',

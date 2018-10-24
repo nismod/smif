@@ -13,6 +13,7 @@ dependencies:
 - isodate
 - networkx
 - numpy
+- pandas
 - pint
 - pyarrow
 - pylint  # dev
@@ -23,6 +24,7 @@ dependencies:
 - rtree
 - shapely
 - sphinx  # docs
+- xarray
 - pip:
   - better-apidoc  # docs
   - pre-commit  # dev

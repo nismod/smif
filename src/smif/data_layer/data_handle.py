@@ -9,6 +9,7 @@ data (at any computed or pre-computed timestep) and write access to output data
 from logging import getLogger
 from types import MappingProxyType
 
+from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataError
 from smif.metadata import RelativeTimestep
 
@@ -104,7 +105,7 @@ class DataHandle(object):
         """
         # Populate the parameters with their default values
         for parameter in self._model.parameters.values():
-            self._parameters[parameter.name] = parameter.default
+            self._parameters[parameter.name] = parameter
 
         # Load in the concrete narrative and selected variants from the model run
         for narrative_name, variant_names in concrete_narratives.items():
@@ -122,11 +123,11 @@ class DataHandle(object):
                     parameter_list = []
 
                 for parameter in parameter_list:
-                    data = self._store.read_narrative_variant_data(
+                    da = self._store.read_narrative_variant_data(
                         sos_model['name'],
                         narrative_name, variant_name, parameter
                     )
-                    self._parameters[parameter] = data
+                    self._parameters[parameter] = da
 
     def derive_for(self, model):
         """Derive a new DataHandle configured for the given Model
@@ -157,6 +158,8 @@ class DataHandle(object):
                 "'%s' not recognised as input or parameter for '%s'" % (key, self._model_name))
 
     def __setitem__(self, key, value):
+        if hasattr(value, 'as_ndarray'):
+            raise TypeError("Pass in a numpy array")
         self.set_results(key, value)
 
     @property
@@ -261,8 +264,9 @@ class DataHandle(object):
 
         Returns
         -------
-        data : numpy.ndarray
-            Two-dimensional array with shape (len(regions), len(intervals))
+        smif.data_layer.data_array.DataArray
+            Contains data annotated with the metadata and provides utility methods
+            to access the data in different ways
         """
         if input_name not in self._inputs:
             raise KeyError(
@@ -288,14 +292,14 @@ class DataHandle(object):
         spec = self._inputs[input_name]
 
         if dep['type'] == 'scenario':
-            data = self._store.read_scenario_variant_data(
+            da = self._store.read_scenario_variant_data(
                 source_model_name,  # read from a given scenario model
                 dep['variant'],  # with given scenario variant
                 source_output_name,  # using output (variable) name
                 timestep
             )
         else:
-            data = self._store.read_results(
+            da = self._store.read_results(
                 self._modelrun_name,
                 source_model_name,  # read from source model
                 spec,  # using source model output spec
@@ -303,7 +307,7 @@ class DataHandle(object):
                 self._decision_iteration
             )
 
-        return data
+        return da
 
     def _resolve_source(self, input_name):
         """Find best dependency to provide input data
@@ -344,8 +348,7 @@ class DataHandle(object):
 
         Returns
         -------
-        data : numpy.ndarray
-            Two-dimensional array with shape (len(regions), len(intervals))
+        smif.data_layer.data_array.DataArray
         """
         return self.get_data(input_name, RelativeTimestep.BASE)
 
@@ -358,16 +361,9 @@ class DataHandle(object):
 
         Returns
         -------
-        data : numpy.ndarray
-            Two-dimensional array with shape (len(regions), len(intervals))
+        smif.data_layer.data_array.DataArray
         """
         return self.get_data(input_name, RelativeTimestep.PREVIOUS)
-
-    def get_region_names(self, spatial_resolution):
-        return self._store.read_region_names(spatial_resolution)
-
-    def get_interval_names(self, temporal_resolution):
-        return self._store.read_interval_names(temporal_resolution)
 
     def get_parameter(self, parameter_name):
         """Get the value for a  parameter
@@ -378,7 +374,9 @@ class DataHandle(object):
 
         Returns
         -------
-        parameter_value
+        smif.data_layer.data_array.DataArray
+            Contains data annotated with the metadata and provides utility methods
+            to access the data in different ways
         """
         if parameter_name not in self._parameters:
             raise KeyError(
@@ -405,6 +403,9 @@ class DataHandle(object):
         output_name : str
         data : numpy.ndarray
         """
+        if hasattr(data, 'as_ndarray'):
+            raise TypeError("Pass in a numpy array")
+
         if output_name not in self._outputs:
             raise KeyError(
                 "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
@@ -414,21 +415,12 @@ class DataHandle(object):
 
         spec = self._outputs[output_name]
 
-        if data.shape != spec.shape:
-            raise ValueError(
-                "Tried to set results with shape {}, expected {} for {}:{}".format(
-                    data.shape,
-                    spec.shape,
-                    self._model_name,
-                    output_name
-                )
-            )
+        da = DataArray(spec, data)
 
         self._store.write_results(
-            data,
+            da,
             self._modelrun_name,
             self._model_name,
-            spec,
             self._current_timestep,
             self._decision_iteration
         )
@@ -443,6 +435,12 @@ class DataHandle(object):
             The name of an output for `model_name`
         decision_iteration : int, default=None
         timestep : int or RelativeTimestep, default=None
+
+        Returns
+        -------
+        smif.data_layer.data_array.DataArray
+            Contains data annotated with the metadata and provides utility methods
+            to access the data in different ways
 
         Notes
         -----
@@ -484,7 +482,7 @@ class DataHandle(object):
 class ResultsHandle(object):
     """Results access for decision modules
     """
-    def __init__(self, store, modelrun_name, sos_model, current_timestep=None, timesteps=None,
+    def __init__(self, store, modelrun_name, sos_model, current_timestep, timesteps=None,
                  decision_iteration=None):
         self._store = store
         self._modelrun_name = modelrun_name
@@ -520,7 +518,19 @@ class ResultsHandle(object):
         output_name : str
         timestep : int
         decision_iteration : int
+
+        Returns
+        -------
+        smif.data_layer.data_array.DataArray
+            Contains data annotated with the metadata and provides utility methods
+            to access the data in different ways
         """
+        # resolve timestep
+        if hasattr(timestep, 'resolve_relative_to'):
+            timestep = timestep.resolve_relative_to(self._current_timestep, self._timesteps)
+        else:
+            assert isinstance(timestep, int) and timestep <= self._current_timestep
+
         if model_name in [model.name for model in self._sos_model.models]:
             results_model = self._sos_model.get_model(model_name)
         else:
@@ -535,17 +545,10 @@ class ResultsHandle(object):
             msg = "'{}' not recognised as output for '{}'"
             raise KeyError(msg.format(output_name, model_name))
 
-        try:
-            results = self._store.read_results(self._modelrun_name,
-                                               model_name,
-                                               spec,
-                                               timestep,
-                                               decision_iteration)
-        except SmifDataError:
-            msg = "Could not access results for {}.{} at timestep {} " \
-                  "and decision iteration {}"
-            raise SmifDataError(msg.format(model_name, output_name,
-                                           timestep, decision_iteration)
-                                )
+        results = self._store.read_results(self._modelrun_name,
+                                           model_name,
+                                           spec,
+                                           timestep,
+                                           decision_iteration)
 
         return results

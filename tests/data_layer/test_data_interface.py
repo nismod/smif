@@ -2,9 +2,10 @@
 """
 import numpy as np
 from pytest import raises
+from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_interface import DataInterface
 from smif.exception import SmifDataMismatchError
-from smif.metadata import Spec
+from smif.metadata import Coordinates, Spec
 
 
 class TestDataInterface():
@@ -17,17 +18,75 @@ class TestDataInterface():
                 'interval': '1'
             }
         ]
-        actual = DataInterface.data_list_to_ndarray(
-            data,
-            Spec(
+
+        spec = Spec(
                 name='test',
                 dims=['region', 'interval'],
                 coords={'region': ['oxford'], 'interval': ['1']},
                 dtype='int'
-            )
+                )
+
+        actual = DataInterface.data_list_to_ndarray(
+            data,
+            spec
         )
-        expected = np.array([[3.]], dtype=float)
-        np.testing.assert_equal(actual, expected)
+        expected = DataArray(spec, np.array([[3.]], dtype=float))
+
+        assert actual == expected
+
+    def test_ndarray_to_data_list(self):
+
+        data = [
+            {
+                'timestep': 2010,
+                'test': 3,
+                'region': 'oxford',
+                'interval': '1'
+            }
+        ]
+
+        spec = Spec(
+            name='test',
+            coords=[Coordinates('region', ['oxford']),
+                    Coordinates('interval', ['1'])],
+            dtype='int')
+
+        da = DataArray(spec, np.array([[3]]))
+
+        actual = DataInterface.ndarray_to_data_list(da, timestep=2010)
+        expected = data
+
+        assert actual == expected
+
+    def test_ndarray_with_spatial_dimension(self, sample_dimensions):
+        lad = sample_dimensions[0]['elements']
+        spec = Spec(
+                name='test',
+                coords=[Coordinates('lad', lad), Coordinates('interval', ['1'])],
+                dtype='int'
+                )
+        data = np.array([[42], [69]])
+
+        print(spec.coords)
+
+        da = DataArray(spec, data)
+
+        actual = DataInterface.ndarray_to_data_list(da, timestep=2010)
+        expected = [
+            {
+                'timestep': 2010,
+                'test': 42,
+                'lad': 'a',
+                'interval': '1'
+            },
+            {
+                'timestep': 2010,
+                'test': 69,
+                'lad': 'b',
+                'interval': '1'
+            },
+        ]
+        assert actual == expected
 
     def test_scenario_data_missing_timestep(self):
         data = [

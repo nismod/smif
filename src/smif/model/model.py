@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 from enum import Enum
 from logging import getLogger
 
+from smif.data_layer.data_array import DataArray
 from smif.metadata import Spec
 
 
@@ -51,7 +52,7 @@ class Model(metaclass=ABCMeta):
 
         Returns
         -------
-        dict of {parameter_name: smif.metadata.Spec}
+        dict of {parameter_name: smif.data_layer.data_array.DataArray}
         """
         return self._parameters
 
@@ -71,7 +72,7 @@ class Model(metaclass=ABCMeta):
         ---------
         spec: smif.metadata.Spec
         """
-        self.parameters[spec.name] = spec
+        self.parameters[spec.name] = DataArray.default_from_spec(spec)
 
     @property
     def outputs(self):
