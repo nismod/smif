@@ -16,6 +16,7 @@ from smif.data_layer.validate import (validate_sos_model_config,
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError, SmifDataReadError,
                             SmifValidationError)
+from smif.metadata.spec import Spec
 
 # Import fiona if available (optional dependency)
 try:
@@ -141,6 +142,7 @@ class DatafileInterface(DataInterface):
             'narratives',
             'scenarios',
             'strategies',
+            'parameters'
         ]
         for folder in data_folders:
             dirname = os.path.join(self.data_folder, folder)
@@ -250,10 +252,28 @@ class DatafileInterface(DataInterface):
     def read_sector_model(self, sector_model_name, skip_coords=False):
         sector_model = self._read_yaml_file(
             self.config_folders['sector_models'], sector_model_name)
+
         if not skip_coords:
             self._set_list_coords(sector_model['inputs'])
             self._set_list_coords(sector_model['outputs'])
             self._set_list_coords(sector_model['parameters'])
+
+        for parameter in sector_model['parameters']:
+            filepath = os.path.join(self.data_folders['parameters'],
+                                    parameter['default'])
+
+            data = self._get_data_from_csv(filepath)
+            parameter.pop('default')
+            spec = Spec.from_dict(parameter)
+            try:
+                da = self.data_list_to_ndarray(data, spec)
+            except SmifDataMismatchError as ex:
+                msg = "DataMismatch in parameter: {}, from {}"
+                raise SmifDataMismatchError(
+                    msg.format(parameter['name'], str(ex))
+                ) from ex
+
+            parameter = da
         return sector_model
 
     @check_not_exists('sector_model')
@@ -699,16 +719,15 @@ class DatafileInterface(DataInterface):
         scenario = self.read_scenario(scenario_name)
         spec = self._get_spec_from_provider(scenario['provides'], variable)
         variant = self.read_scenario_variant(scenario_name, variant_name)
+        return self._read_variant_data(variant, variable, 'scenarios', spec, timestep)
+
+    def _read_variant_data(self, variant, variable, scenarios_or_narrative, spec, timestep):
         filepath = self._get_variant_filepath(variant, variable, 'scenarios')
         data = self._get_data_from_csv(filepath)
-
-        if 'timestep' not in data[0].keys():
-            msg = "Could not read data for scenario variant {} for scenario {}. " + \
-                  "Header in '{}' missing 'timestep' key. Found {}"
-            raise SmifDataMismatchError(msg.format(variant_name, scenario_name,
-                                                   filepath, list(data[0].keys())))
-
-        if timestep is not None:
+        if timestep:
+            if 'timestep' not in data[0].keys():
+                msg = "Header in '{}' missing 'timestep' key. Found {}"
+                raise SmifDataMismatchError(msg.format(filepath, list(data[0].keys())))
             self.logger.debug(data)
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
@@ -717,10 +736,17 @@ class DatafileInterface(DataInterface):
         except SmifDataMismatchError as ex:
             msg = "DataMismatch in scenario: {}:{}.{}, from {}"
             raise SmifDataMismatchError(
-                msg.format(scenario_name, variant_name, variable, str(ex))
+                msg.format(variant['name'], variable, str(ex))
             ) from ex
 
         return da
+
+    def read_narrative_variant_data(self, sos_model_name, narrative_name,
+                                    variant_name, variable, timestep=None):
+        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
+        spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
+        return self._read_variant_data(variant, variable, 'narratives', spec, timestep)
+
 
     def _get_variant_filepath(self, variant, variable, scenario_or_narrative):
         if 'data' not in variant or variable not in variant['data']:
@@ -749,31 +775,6 @@ class DatafileInterface(DataInterface):
             msg = "Variant '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
         return variant
-
-    def read_narrative_variant_data(self, sos_model_name, narrative_name,
-                                    variant_name, variable, timestep=None):
-        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        filepath = self._get_variant_filepath(variant, variable, 'narratives')
-        data = self._get_data_from_csv(filepath)
-
-        if timestep:
-            if 'timestep' not in data[0].keys():
-                msg = "Header in '{}' missing 'timestep' key. Found {}"
-                raise SmifDataMismatchError(msg.format(
-                    filepath, list(data[0].keys())))
-            self.logger.debug(data)
-            data = [datum for datum in data if int(datum['timestep']) == timestep]
-
-        spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
-        try:
-            da = self.data_list_to_ndarray(data, spec)
-        except SmifDataMismatchError as ex:
-            msg = "DataMismatch in narrative: {}:{}, {}, from {}"
-            raise SmifDataMismatchError(
-                msg.format(narrative_name, variant_name, variable, str(ex))
-            ) from ex
-
-        return da
 
     def write_narrative_variant_data(self, sos_model_name, narrative_name,
                                      variant_name, data_array, timestep=None):
