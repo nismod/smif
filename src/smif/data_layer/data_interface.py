@@ -192,6 +192,55 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
+    def read_sector_model_parameter(self, sector_model_name, parameter_name):
+        """Read a sector model parameter
+
+        Arguments
+        ---------
+        sector_model_name: str
+            A sector_model name
+        parameter_name: str
+            A parameter name
+
+        Returns
+        -------
+        parameter: dict
+            A parameter (spec) dictionary
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read_sector_model_parameter_default(self, sector_model_name, parameter_name):
+        """Read default data for a sector model parameter
+
+        Arguments
+        ---------
+        sector_model_name: str
+            A sector_model name
+        parameter_name: str
+            A parameter name
+
+        Returns
+        -------
+        data: smif.data_layer.data_array.DataArray
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_sector_model_parameter_default(self, sector_model_name, parameter_name, data):
+        """Write default data for a sector model parameter
+
+        Arguments
+        ---------
+        sector_model_name: str
+            A sector_model name
+        parameter_name: str
+            A parameter name
+        data: smif.data_layer.data_array.DataArray
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
     def write_sector_model(self, sector_model):
         """Write sector model
 
@@ -649,8 +698,8 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_narrative_variant_data(self, sos_model_name, narrative_name,
-                                    variant_name, variable, timestep=None):
+    def read_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
+                                    parameter_name, timestep=None):
         """Read narrative data file
 
         Arguments
@@ -661,7 +710,7 @@ class DataInterface(metaclass=ABCMeta):
             Name of the narrative
         variant_name: str
             Narrative variant to use
-        variable: str
+        parameter_name: str
             Variable (parameter) to read
         timestep: int (optional)
             Timestep
@@ -673,15 +722,12 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def write_narrative_variant_data(self, data, sos_model_name, narrative_name,
+    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
                                      data_array, timestep=None):
         """Read narrative data file
 
         Arguments
         ---------
-        data : numpy.ndarray
-            The data to write which must be of matching directions to the Spec
-            of ``variable``
         sos_model_name : str
             The name of the sos_model to which the narrative belongs
         narrative_name: str

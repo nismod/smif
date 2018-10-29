@@ -4,13 +4,16 @@
 """
 from __future__ import absolute_import, division, print_function
 
-import copy
 import json
 import logging
 import os
+from copy import deepcopy
 
+import numpy as np
 from pytest import fixture
+from smif.data_layer.data_array import DataArray
 from smif.data_layer.load import dump
+from smif.metadata import Spec
 
 from .convert.conftest import remap_months
 
@@ -335,7 +338,7 @@ def get_sector_model(annual, hourly):
     """Return sample sector_model
     """
     return {
-        'name': 'energy_demand_sample',
+        'name': 'energy_demand',
         'description': "Computes the energy demand of the"
                        "UK population for each timestep",
         'classname': 'EnergyDemandWrapper',
@@ -373,7 +376,6 @@ def get_sector_model(annual, hourly):
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'data': 0.5,
                 'unit': 'percentage',
                 'dtype': 'float'
             },
@@ -383,7 +385,6 @@ def get_sector_model(annual, hourly):
                                "process is",
                 'absolute_range': [0, 1],
                 'expected_range': [0, 1],
-                'data': 0.1,
                 'unit': 'percentage',
                 'dtype': 'float'
             }
@@ -394,8 +395,86 @@ def get_sector_model(annual, hourly):
 
 
 @fixture
+def energy_supply_sector_model(hourly):
+    """Return sample sector_model
+    """
+    return {
+        'name': 'energy_supply',
+        'description': "Supply system model",
+        'classname': 'EnergySupplyWrapper',
+        'path': '../../models/energy_supply/run.py',
+        'inputs': [
+            {
+                'name': 'natural_gas_demand',
+                'dims': ['lad', 'hourly'],
+                'coords': {
+                    'lad': ['a', 'b'],
+                    'hourly': hourly
+                },
+                'absolute_range': [0, float('inf')],
+                'expected_range': [0, 100],
+                'unit': 'GWh'
+            }
+        ],
+        'outputs': [],
+        'parameters': [],
+        'interventions': [],
+        'initial_conditions': []
+    }
+
+
+@fixture
+def water_supply_sector_model(hourly):
+    """Return sample sector_model
+    """
+    return {
+        'name': 'water_supply',
+        'description': "Supply system model",
+        'classname': 'WaterSupplyWrapper',
+        'path': '../../models/water_supply/run.py',
+        'inputs': [],
+        'outputs': [],
+        'parameters': [
+            {
+                'name': 'clever_water_meter_savings',
+                'description': "",
+                'absolute_range': [0, 1],
+                'expected_range': [0, 0.2],
+                'unit': 'percentage',
+                'dtype': 'float'
+            },
+            {
+                'name': 'per_capita_water_demand',
+                'description': "",
+                'absolute_range': [0, float('inf')],
+                'expected_range': [0, 0.05],
+                'unit': 'Ml/day',
+                'dtype': 'float'
+            }
+        ],
+        'interventions': [],
+        'initial_conditions': []
+    }
+
+
+@fixture
+def get_sector_model_parameter_defaults(get_sector_model):
+    """DataArray for each parameter default
+    """
+    data = {
+        'smart_meter_savings': np.array(0.5),
+        'homogeneity_coefficient': np.array(0.1)
+    }
+    for param in get_sector_model['parameters']:
+        nda = data[param['name']]
+        spec = Spec.from_dict(param)
+        data[param['name']] = DataArray(spec, nda)
+    return data
+
+
+@fixture
 def get_sector_model_no_coords(get_sector_model):
-    model = copy.deepcopy(get_sector_model)
+    model = deepcopy(get_sector_model)
     for spec_group in ('inputs', 'outputs', 'parameters'):
         for spec in model[spec_group]:
             try:
@@ -425,17 +504,11 @@ def sample_scenarios():
             'variants': [
                 {
                     'name': 'High Population (ONS)',
-                    'description': 'The High ONS Forecast for UK population out to 2050',
-                    'data': {
-                        'population_count': [[1, 2.2, 4, 6]]
-                    }
+                    'description': 'The High ONS Forecast for UK population out to 2050'
                 },
                 {
                     'name': 'Low Population (ONS)',
-                    'description': 'The Low ONS Forecast for UK population out to 2050',
-                    'data': {
-                        'population_count': [[1, 2, 3, 4]]
-                    }
+                    'description': 'The Low ONS Forecast for UK population out to 2050'
                 },
             ],
         },
@@ -476,16 +549,13 @@ def get_narrative():
         'name': 'technology',
         'description': 'Describes the evolution of technology',
         'provides': {
-            'energy_demand_sample': ['smart_meter_savings'],
+            'energy_demand': ['smart_meter_savings'],
             'water_supply': ['clever_water_meter_savings', 'per_capita_water_demand']
         },
         'variants': [
             {
                 'name': 'high_tech_dsm',
-                'description': 'High takeup of smart technology on the demand side',
-                'data': {
-                    'smart_meter_savings': 'high_tech_dsm.csv',
-                },
+                'description': 'High takeup of smart technology on the demand side'
             }
         ]
     }
@@ -501,20 +571,48 @@ def sample_narratives(get_narrative):
             'name': 'governance',
             'description': 'Defines the nature of governance and influence upon decisions',
             'provides': {
-                'energy_demand_sample': ['homogeneity_coefficient']
+                'energy_demand': ['homogeneity_coefficient']
             },
             'variants': [
                 {
                     'name': 'Central Planning',
                     'description': 'Stronger role for central government in planning and ' +
-                                   'regulation, less emphasis on market-based solutions',
-                    'data': {
-                        'homogeneity_coefficient': 0.8,
-                    },
+                                   'regulation, less emphasis on market-based solutions'
                 },
             ],
         },
     ]
+
+
+@fixture
+def sample_narrative_data(sample_narratives, get_sector_model, energy_supply_sector_model,
+                          water_supply_sector_model):
+    narrative_data = {}
+    sos_model_name = 'energy'
+    sector_models = {}
+    sector_models[get_sector_model['name']] = get_sector_model
+    sector_models[energy_supply_sector_model['name']] = energy_supply_sector_model
+    sector_models[water_supply_sector_model['name']] = water_supply_sector_model
+
+    for narrative in sample_narratives:
+        for sector_model_name, param_names in narrative['provides'].items():
+            sector_model = sector_models[sector_model_name]
+            for param_name in param_names:
+                param = _pick_from_list(sector_model['parameters'], param_name)
+                for variant in narrative['variants']:
+                    spec = Spec.from_dict(param)
+                    nda = np.random.random(spec.shape)
+                    da = DataArray(spec, nda)
+                    key = (sos_model_name, narrative['name'], variant['name'], param_name)
+                    narrative_data[key] = da
+    return narrative_data
+
+
+def _pick_from_list(list_, name):
+    for item in list_:
+        if item['name'] == name:
+            return item
+    assert False, '{} not found in {}'.format(name, list_)
 
 
 @fixture
@@ -601,5 +699,117 @@ def annual():
         {
             'name': '1',
             'interval': [['PT0H', 'PT8760H']]
+        }
+    ]
+
+
+@fixture
+def minimal_model_run():
+    return {
+        'name': 'test_modelrun',
+        'timesteps': [2010, 2015, 2010]
+    }
+
+
+@fixture
+def strategies():
+    return [
+        {
+            'type': 'pre-specified-planning',
+            'description': 'a description',
+            'model_name': 'test_model',
+            'interventions': [
+                {'name': 'a', 'build_year': 2020},
+                {'name': 'b', 'build_year': 2025},
+            ]
+        },
+        {
+            'type': 'rule-based',
+            'description': 'reduce emissions',
+            'path': 'planning/energyagent.py',
+            'classname': 'EnergyAgent'
+        }
+    ]
+
+
+@fixture
+def unit_definitions():
+    return ['kg = kilograms']
+
+
+@fixture
+def dimension():
+    return {'name': 'category', 'elements': [1, 2, 3]}
+
+
+@fixture
+def conversion_source_spec():
+    return Spec(name='a', dtype='float', unit='ml')
+
+
+@fixture
+def conversion_sink_spec():
+    return Spec(name='b', dtype='float', unit='ml')
+
+
+@fixture
+def conversion_coefficients():
+    return np.array([[1]])
+
+
+@fixture
+def scenario(sample_dimensions):
+
+    return deepcopy({
+        'name': 'mortality',
+        'description': 'The annual mortality rate in UK population',
+        'provides': [
+            {
+                'name': 'mortality',
+                'dims': ['lad'],
+                'coords': {'lad': sample_dimensions[0]['elements']},
+                'dtype': 'float',
+            }
+        ],
+        'variants': [
+            {
+                'name': 'low',
+                'description': 'Mortality (Low)',
+                'data': {
+                    'mortality': 'mortality_low.csv',
+                },
+            }
+        ]
+    })
+
+
+@fixture
+def scenario_no_coords(scenario):
+    scenario = deepcopy(scenario)
+    for spec in scenario['provides']:
+        try:
+            del spec['coords']
+        except KeyError:
+            pass
+    return scenario
+
+
+@fixture
+def narrative_no_coords(get_narrative):
+    get_narrative = deepcopy(get_narrative)
+    for spec in get_narrative['provides']:
+        try:
+            del spec['coords']
+        except KeyError:
+            pass
+    return get_narrative
+
+
+@fixture
+def state():
+    return [
+        {
+            'name': 'test_intervention',
+            'build_year': 1900
         }
     ]

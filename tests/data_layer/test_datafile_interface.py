@@ -495,7 +495,7 @@ class TestSectorModel:
 
         assert 'sector_model1' in sector_model_names
         assert 'sector_model2' in sector_model_names
-        assert 'energy_demand_sample' in sector_model_names
+        assert 'energy_demand' in sector_model_names
         assert len(sector_models) == 3
 
     def test_sector_model_write_twice(self, get_sector_model, config_handler):
@@ -574,7 +574,7 @@ class TestSectorModel:
         before_delete = config_handler.read_sector_models()
         assert len(before_delete) == 1
 
-        config_handler.delete_sector_model('energy_demand_sample')
+        config_handler.delete_sector_model('energy_demand')
         after_delete = config_handler.read_sector_models()
         assert len(after_delete) == 0
 

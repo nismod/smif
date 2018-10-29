@@ -27,20 +27,20 @@ def mock_store(get_sector_model, parameter_spec):
     })
     store.write_sos_model({
         'name': 'test_sos_model',
-        'sector_models': ['energy_demand_sample'],
+        'sector_models': ['energy_demand'],
         'scenario_dependencies': [],
         'model_dependencies': [
             {
                 'source': 'test_source',
                 'source_output': 'test',
                 'sink_input': 'test',
-                'sink': 'energy_demand_sample'
+                'sink': 'energy_demand'
             }
         ],
         'narratives': [{
                 'name': 'test_narrative',
                 'description': 'a narrative config',
-                'provides': {'energy_demand_sample': ['smart_meter_savings']},
+                'provides': {'energy_demand': ['smart_meter_savings']},
                 'variants': [{
                     'name': 'high_tech_dsm',
                     'description': 'High takeup',
@@ -60,7 +60,7 @@ def mock_store(get_sector_model, parameter_spec):
     })
     store.write_sos_model({
         'name': 'test_converting_sos_model',
-        'sector_models': ['energy_demand_sample'],
+        'sector_models': ['energy_demand'],
         'scenario_dependencies': [],
         'model_dependencies': [
             {
@@ -73,13 +73,13 @@ def mock_store(get_sector_model, parameter_spec):
                 'source': 'test_convertor',
                 'source_output': 'test',
                 'sink_input': 'test',
-                'sink': 'energy_demand_sample'
+                'sink': 'energy_demand'
             }],
         'narratives': []
 
     })
 
-    store._initial_conditions = {'energy_demand_sample': []}
+    store._initial_conditions = {'energy_demand': []}
     data = {
         'water_asset_a': {
             'build_year': 2010,
@@ -100,7 +100,7 @@ def mock_store(get_sector_model, parameter_spec):
             'sector': ''
         }
     }
-    store._interventions['energy_demand_sample'] = data
+    store._interventions['energy_demand'] = data
 
     store.write_sector_model(get_sector_model)
     return store
@@ -115,13 +115,13 @@ def mock_sector_model():
     type(spec).name = PropertyMock(return_value='test_output')
     type(spec).dtype = PropertyMock(return_value='float')
     type(mock_sector_model).outputs = PropertyMock(return_value={'test_output': spec})
-    type(mock_sector_model).name = PropertyMock(return_value='energy_demand_sample')
+    type(mock_sector_model).name = PropertyMock(return_value='energy_demand')
     return mock_sector_model
 
 
 @fixture(scope='function')
 def mock_sos_model(mock_sector_model):
-    mock_sos_model = MagicMock(outputs=[('energy_demand_sample', 'test_output')])
+    mock_sos_model = MagicMock(outputs=[('energy_demand', 'test_output')])
     mock_sos_model.name = 'test_sos_model'
     mock_sos_model.models = [mock_sector_model]
     mock_sos_model.get_model = Mock(return_value=mock_sector_model)
@@ -142,14 +142,14 @@ class EmptySectorModel(SectorModel):
 def empty_model():
     """Minimal sector model
     """
-    return EmptySectorModel('energy_demand_sample')
+    return EmptySectorModel('energy_demand')
 
 
 @fixture(scope='function')
 def mock_model():
     """Sector model with parameter, input, output, dependency
     """
-    model = EmptySectorModel('energy_demand_sample')
+    model = EmptySectorModel('energy_demand')
     model.add_parameter(
         Spec(
             name='smart_meter_savings',
@@ -183,7 +183,7 @@ def mock_model_with_conversion():
     """
     source = EmptySectorModel('test_source')
     convertor = EmptySectorModel('test_convertor')
-    model = EmptySectorModel('energy_demand_sample')
+    model = EmptySectorModel('energy_demand')
 
     ml_spec = Spec(
         name='test',
@@ -333,7 +333,7 @@ class TestDataHandle():
         data_handle.set_results("test", data)
         actual = mock_store.read_results(
             1,
-            'energy_demand_sample',  # read results from model
+            'energy_demand',  # read results from model
             mock_model.outputs['test'],
             2015,
             None
@@ -366,7 +366,7 @@ class TestDataHandle():
         data_handle["test"] = data
         actual = mock_store.read_results(
             1,
-            'energy_demand_sample',  # read results from model
+            'energy_demand',  # read results from model
             mock_model.outputs['test'],
             2015
         )
@@ -401,7 +401,7 @@ class TestDataHandleState():
         """
         mock_store.read_state = Mock(return_value=[
             {'name': 'test', 'build_year': 2010}])
-        mock_store._interventions['energy_demand_sample'] = [
+        mock_store._interventions['energy_demand'] = [
             {'name': 'test',
              'capital_cost': {'value': 2500, 'unit': '£/GW'}
              }]
@@ -518,7 +518,7 @@ class TestDataHandleGetResults:
         data = np.array([[1, 2.], [3., 4]])
         da = DataArray(spec, data)
 
-        store.write_results(da, 1, 'energy_demand_sample', 2010)
+        store.write_results(da, 1, 'energy_demand', 2010)
 
         dh = DataHandle(mock_store, 1, 2010, [2010], mock_sector_model)
         actual = dh.get_results('test_output')
@@ -597,7 +597,7 @@ class TestDataHandleGetParameters:
             'name': 'test_narrative',
             'description': 'a narrative config',
             'sos_model': 'test_sos_model',
-            'provides': {'energy_demand_sample': ['smart_meter_savings']},
+            'provides': {'energy_demand': ['smart_meter_savings']},
             'variants': [
                 {
                     'name': 'first_variant',
@@ -638,17 +638,17 @@ class TestResultsHandle:
 
         da = DataArray(spec, np.array([[42, 42], [1, 2.]]))
 
-        store.write_results(da, 'test_modelrun', 'energy_demand_sample', 2010, None)
+        store.write_results(da, 'test_modelrun', 'energy_demand', 2010, None)
 
         dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model, 2010)
-        actual = dh.get_results('energy_demand_sample', 'test_output', 2010, None)
+        actual = dh.get_results('energy_demand', 'test_output', 2010, None)
         spec = mock_sector_model.outputs['test_output']
         assert actual == da
 
     def test_get_results_no_output_sos(self, mock_store, mock_sos_model):
         with raises(KeyError):
             dh = ResultsHandle(mock_store, 'test_modelrun', mock_sos_model, 2010)
-            dh.get_results('energy_demand_sample', 'no_such_output', 2010, None)
+            dh.get_results('energy_demand', 'no_such_output', 2010, None)
 
     def test_get_results_wrong_name_sos(self, mock_store, mock_sos_model):
         with raises(KeyError):
@@ -661,7 +661,7 @@ class TestResultsHandle:
         spec = mock_model.outputs['test']
         da = DataArray(spec, np.array([[42, 42], [69, 69]]))
 
-        store.write_results(da, 'test_modelrun', 'energy_demand_sample', 2010, None)
+        store.write_results(da, 'test_modelrun', 'energy_demand', 2010, None)
         dh = ResultsHandle(store, 'test_modelrun', mock_sos_model, 2100)
         with raises(SmifDataError):
-            dh.get_results('energy_demand_sample', 'test_output', 2099, None)
+            dh.get_results('energy_demand', 'test_output', 2099, None)
