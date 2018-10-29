@@ -49,10 +49,20 @@ class NarrativeList extends Component {
         this.setState({formEditMode: false})
     }
 
-    handleNarrativeFormInput(event) {
-        this.setState({
-            narrative: update(this.state.narrative, {[event.target.name]: {$set: event.target.value}})
-        })
+    handleNarrativeFormInput(data, var1, var2=undefined) {
+
+        if (var1 == 'name' || var1 == 'description') {
+            this.setState({
+                narrative: update(this.state.narrative, {[var1]: {$set: data}})
+            })
+        } else {
+            let narrative = Object.assign({}, this.state.narrative)
+            narrative.provides[var2] = data
+
+            this.setState({
+                narrative: narrative
+            })
+        }
     }
 
     handleVariantFormInput(data, var1, var2=undefined) {
@@ -239,6 +249,9 @@ class NarrativeList extends Component {
         var columns = []
         columns.push('Narrative')
         columns.push('Variants')
+
+        console.debug(this.state.narrative)
+        console.debug(this.state.variant)
         
         return (
             <div>
@@ -304,7 +317,7 @@ class NarrativeList extends Component {
                                             name='name'
                                             disabled={this.state.formEditMode}
                                             value={this.state.narrative.name} 
-                                            onChange={this.handleNarrativeFormInput}
+                                            onChange={(e) => this.handleNarrativeFormInput(e.target.value, 'name')}
                                             autoFocus 
                                             required
                                         />
@@ -317,7 +330,7 @@ class NarrativeList extends Component {
                                             type="text"
                                             name="description" 
                                             value={this.state.narrative.description} 
-                                            onChange={this.handleNarrativeFormInput}
+                                            onChange={(e) => this.handleNarrativeFormInput(e.target.value, 'description')}
                                             required
                                         />
                                     </div>
@@ -332,7 +345,8 @@ class NarrativeList extends Component {
                                                     <PropertySelector 
                                                         name={sector_model.name} 
                                                         activeProperties={this.state.narrative.provides[sector_model.name]} 
-                                                        availableProperties={sector_model.parameters} />
+                                                        availableProperties={sector_model.parameters}
+                                                        onChange={(e) => this.handleNarrativeFormInput(e.target.value, 'provide', sector_model.name)} />
                                                     <br/>
                                                 </div>
                                             ))
