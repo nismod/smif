@@ -4,6 +4,8 @@ import update from 'immutability-helper'
 
 import PropertySelector from 'components/ConfigForm/General/PropertySelector.js'
 import DependencyList from 'components/ConfigForm/SosModel/DependencyList.js'
+import NarrativeList from 'components/ConfigForm/SosModel/NarrativeList.js'
+
 import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
 class SosModelConfigForm extends Component {
@@ -254,6 +256,34 @@ class SosModelConfigForm extends Component {
                                 : ''
                         }
                     </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">Narratives</div>
+                    <div className="card-body">
+                        <NarrativeList 
+                            name="Narrative" 
+                            narratives={selectedSosModel.narratives}
+                            sector_models={this.props.sector_models.filter(
+                                sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                            )} />
+                        {   
+                            'narratives' in errors
+                                ? (
+                                    <div className="invalid-feedback">
+                                        {
+                                            errors['narratives'].map((exception, idx) => (
+                                                <div key={'feedback_narratives_' + idx}>
+                                                    {exception.error + ' ' + exception.message}
+                                                </div>
+                                                        
+                                            ))
+                                        }
+                                    </div>)
+                                : ''
+                        }
+                    </div>
+                   
                 </div>
 
                 <SaveButton onClick={this.handleSave} />
