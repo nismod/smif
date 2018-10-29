@@ -135,7 +135,7 @@ class NarrativeList extends Component {
         }
 
         // update narrative
-        index = this.props.narratives.findIndex(narrative => narrative.name === narrative.name)
+        index = this.props.narratives.findIndex(prop_narrative => prop_narrative.name === narrative.name)
         this.props.narratives.splice(index, 1, narrative)
 
         this.closeVariantForm()
@@ -250,8 +250,7 @@ class NarrativeList extends Component {
         columns.push('Narrative')
         columns.push('Variants')
 
-        console.debug(this.state.narrative)
-        console.debug(this.state.variant)
+        console.debug(this.props.narratives)
         
         return (
             <div>
