@@ -373,7 +373,7 @@ def get_sector_model(annual, hourly):
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'default': 'data_file.csv',
+                'data': 0.5,
                 'unit': 'percentage',
                 'dtype': 'float'
             },
@@ -383,7 +383,7 @@ def get_sector_model(annual, hourly):
                                "process is",
                 'absolute_range': [0, 1],
                 'expected_range': [0, 1],
-                'default': 'default_homogeneity.csv',
+                'data': 0.1,
                 'unit': 'percentage',
                 'dtype': 'float'
             }
@@ -427,15 +427,15 @@ def sample_scenarios():
                     'name': 'High Population (ONS)',
                     'description': 'The High ONS Forecast for UK population out to 2050',
                     'data': {
-                        'population_count': 'population_high.csv',
-                    },
+                        'population_count': [[1, 2.2, 4, 6]]
+                    }
                 },
                 {
                     'name': 'Low Population (ONS)',
                     'description': 'The Low ONS Forecast for UK population out to 2050',
                     'data': {
-                        'population_count': 'population_low.csv',
-                    },
+                        'population_count': [[1, 2, 3, 4]]
+                    }
                 },
             ],
         },
@@ -461,7 +461,7 @@ def get_scenario():
             {
                 "name": "Central Economy (High)",
                 "data": {
-                    "gva": "economy_high.csv",
+                    "gva": 3,
                 }
             }
         ]
@@ -478,7 +478,7 @@ def get_narrative():
         'provides': {
             'energy_demand_sample': ['smart_meter_savings'],
             'water_supply': ['clever_water_meter_savings', 'per_capita_water_demand']
-                     },
+        },
         'variants': [
             {
                 'name': 'high_tech_dsm',
@@ -500,15 +500,16 @@ def sample_narratives(get_narrative):
         {
             'name': 'governance',
             'description': 'Defines the nature of governance and influence upon decisions',
-            'provides': {'energy_demand_sample': ['homogeneity_coefficient']
-                         },
+            'provides': {
+                'energy_demand_sample': ['homogeneity_coefficient']
+            },
             'variants': [
                 {
                     'name': 'Central Planning',
                     'description': 'Stronger role for central government in planning and ' +
                                    'regulation, less emphasis on market-based solutions',
                     'data': {
-                        'homogeneity_coefficient': 'central_planning.csv',
+                        'homogeneity_coefficient': 0.8,
                     },
                 },
             ],
@@ -525,22 +526,22 @@ def sample_dimensions(remap_months, hourly, annual):
             'name': 'lad',
             'description': 'Local authority districts for the UK',
             'elements': ['a', 'b']
-         },
+        },
         {
             'name': 'hourly',
             'description': 'The 8760 hours in the year named by hour',
             'elements': hourly
-         },
+        },
         {
             'name': 'annual',
             'description': 'One annual timestep, used for aggregate yearly data',
             'elements': annual,
-         },
+        },
         {
             'name': 'remap_months',
             'description': 'Remapped months to four representative months',
             'elements': remap_months,
-         },
+        },
         {
             'name': 'technology_type',
             'description': 'Technology dimension for narrative fixture',
@@ -548,23 +549,22 @@ def sample_dimensions(remap_months, hourly, annual):
                 {'name': 'water_meter'},
                 {'name': 'electricity_meter'},
             ]
-         },
+        },
         {
             'name': 'county',
             'elements': [
                 {'name': 'oxford'}
             ]
-         },
+        },
         {
             'name': 'season',
             'elements': [
-                 {'name': 'cold_month'},
-                 {'name': 'spring_month'},
-                 {'name': 'hot_month'},
-                 {'name': 'fall_month'}
+                {'name': 'cold_month'},
+                {'name': 'spring_month'},
+                {'name': 'hot_month'},
+                {'name': 'fall_month'}
             ]
-
-         }
+        }
     ]
 
 
