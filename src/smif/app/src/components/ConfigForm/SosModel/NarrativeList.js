@@ -125,6 +125,9 @@ class NarrativeList extends Component {
 
         let narrative = Object.assign({}, this.state.narrative)
 
+        console.debug(this.state.variant)
+        console.debug(this.state.narrative)
+
         // update variant
         let index = narrative.variants.findIndex(variant => variant.name === this.state.variant.name)
         if (index >= 0) {
@@ -184,6 +187,16 @@ class NarrativeList extends Component {
     }
 
     handleCreateVariant(narrative_name=undefined) {
+
+        if (narrative_name != undefined) {
+            let selectedNarrative = Object.assign({}, this.props.narratives.filter(narrative => narrative.name == narrative_name)[0])
+            
+            this.setState({narrative: {
+                ...this.emptyNarrative(),
+                ...selectedNarrative}
+            })
+        }
+
         this.setState({variant: this.emptyVariant(narrative_name)})
         this.openVariantForm()
     }
