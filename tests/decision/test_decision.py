@@ -229,3 +229,25 @@ class TestDecisionManager():
         }
         with raises(StopIteration):
             next(dm)
+
+    def test_interventions(self):
+        store = MemoryInterface()
+        store._model_runs = {'test': {'sos_model': 'test_sos_model'}}
+        store._sos_models = {'test_sos_model': {'sector_models': []}}
+        store._strategies = {'test': []}
+        sos_model = Mock()
+        sos_model.name = 'test_sos_model'
+        sos_model.sector_models = []
+
+        df = DecisionManager(store, [2010, 2015], 'test', sos_model)
+        df.register = {'a': {'name': 'a'},
+                       'b': {'name': 'b'},
+                       'c': {'name': 'c'}}
+
+        assert df.available_interventions == df.register
+
+        df.planned_interventions = {'a', 'b'}
+
+        expected = {'c': {'name': 'c'}}
+
+        assert df.available_interventions == expected

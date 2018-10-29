@@ -59,6 +59,7 @@ class DecisionManager(object):
         self.register = {}
         for sector_model in sos_model.sector_models:
             self.register.update(self._store.read_interventions(sector_model.name))
+        self.planned_interventions = {}
 
         self._set_up_decision_modules(modelrun_name)
 
@@ -82,14 +83,26 @@ class DecisionManager(object):
 
                 planned_interventions.extend(strategy['interventions'])
 
-            else:
+        # Create a Pre-Specified planning decision module with all
+        # the planned interventions
+        if planned_interventions:
+            self._decision_modules.append(
+                PreSpecified(self._timesteps, self.register, planned_interventions)
+                )
+
+            self.planned_interventions = {x['name'] for x in planned_interventions}
+
+        for index, strategy in enumerate(strategies):
+            if strategy['type'] != 'pre-specified-planning':
+
                 loader = ModelLoader()
 
                 # absolute path to be crystal clear for ModelLoader when loading python class
                 strategy['path'] = os.path.normpath(
                     os.path.join(self._store.base_folder, strategy['path']))
                 strategy['timesteps'] = self._timesteps
-                strategy['register'] = self.register
+                # Pass a reference to the register of interventions
+                strategy['register'] = self.available_interventions
 
                 strategy['name'] = strategy['classname'] + '_' + strategy['type']
 
@@ -97,13 +110,14 @@ class DecisionManager(object):
                 decision_module = loader.load(strategy)
                 self._decision_modules.append(decision_module)
 
-        # Create a Pre-Specified planning decision module with all
-        # the planned interventions
-
-        if planned_interventions:
-            self._decision_modules.append(
-                PreSpecified(self._timesteps, self.register, planned_interventions)
-                )
+    @property
+    def available_interventions(self):
+        """Returns a register of available interventions, i.e. those not planned
+        """
+        edited_register = {name: self.register[name]
+                           for name in self.register.keys() -
+                           self.planned_interventions}
+        return edited_register
 
     def decision_loop(self):
         """Generate bundles of simulation steps to run
