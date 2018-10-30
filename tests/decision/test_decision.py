@@ -211,7 +211,9 @@ class TestRuleBased:
 
 
 class TestDecisionManager():
-    def test_decision_manager_init(self):
+
+    @fixture(scope='function')
+    def decision_manager(self):
         store = MemoryInterface()
         store._model_runs = {'test': {'sos_model': 'test_sos_model'}}
         store._sos_models = {'test_sos_model': {'sector_models': []}}
@@ -221,6 +223,10 @@ class TestDecisionManager():
         sos_model.sector_models = []
 
         df = DecisionManager(store, [2010, 2015], 'test', sos_model)
+        return df
+
+    def test_decision_manager_init(self, decision_manager):
+        df = decision_manager
         dm = df.decision_loop()
         bundle = next(dm)
         assert bundle == {
@@ -229,3 +235,17 @@ class TestDecisionManager():
         }
         with raises(StopIteration):
             next(dm)
+
+    def test_available_interventions(self, decision_manager):
+        df = decision_manager
+        df.register = {'a': {'name': 'a'},
+                       'b': {'name': 'b'},
+                       'c': {'name': 'c'}}
+
+        assert df.available_interventions == df.register
+
+        df.planned_interventions = {'a', 'b'}
+
+        expected = {'c': {'name': 'c'}}
+
+        assert df.available_interventions == expected
