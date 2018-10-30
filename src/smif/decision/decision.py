@@ -54,23 +54,26 @@ class DecisionManager(object):
         self._modelrun_name = modelrun_name
         self._sos_model = sos_model
         self._timesteps = timesteps
-        self._decision_modules = []
+        self._decision_module = None
 
         self.register = {}
         for sector_model in sos_model.sector_models:
             self.register.update(self._store.read_interventions(sector_model.name))
         self.planned_interventions = {}
 
-        self._set_up_decision_modules(modelrun_name)
+        strategies = self._store.read_strategies(modelrun_name)
+        self.logger.info("%s strategies found", len(strategies))
+        self.pre_spec_planning = self._set_up_pre_spec_planning(modelrun_name, strategies)
+        self._set_up_decision_modules(modelrun_name, strategies)
 
-    def _set_up_decision_modules(self, modelrun_name):
+    def _set_up_pre_spec_planning(self, modelrun_name, strategies):
+
+        pre_spec_planning = None
 
         # Read in the historical interventions (initial conditions) directly
         initial_conditions = self._store.read_all_initial_conditions(modelrun_name)
 
         # Read in strategies
-        strategies = self._store.read_strategies(modelrun_name)
-        self.logger.info("%s strategies found", len(strategies))
         planned_interventions = []
         planned_interventions.extend(initial_conditions)
 
@@ -86,13 +89,23 @@ class DecisionManager(object):
         # Create a Pre-Specified planning decision module with all
         # the planned interventions
         if planned_interventions:
-            self._decision_modules.append(
-                PreSpecified(self._timesteps, self.register, planned_interventions)
-                )
-
+            pre_spec_planning = PreSpecified(self._timesteps,
+                                             self.register,
+                                             planned_interventions)
             self.planned_interventions = {x['name'] for x in planned_interventions}
 
-        for index, strategy in enumerate(strategies):
+        return pre_spec_planning
+
+    def _set_up_decision_modules(self, modelrun_name, strategies):
+
+        strategy_types = [x['type'] for x in strategies
+                          if x['type'] != 'pre-specified-planning']
+        if len(set(strategy_types)) > 1:
+            msg = "Cannot use more the 2 type of strategy simultaneously"
+            raise NotImplementedError(msg)
+
+        for strategy in strategies:
+
             if strategy['type'] != 'pre-specified-planning':
 
                 loader = ModelLoader()
@@ -108,7 +121,7 @@ class DecisionManager(object):
 
                 self.logger.debug("Trying to load strategy: %s", strategy)
                 decision_module = loader.load(strategy)
-                self._decision_modules.append(decision_module)
+                self._decision_module = decision_module
 
     @property
     def available_interventions(self):
@@ -153,11 +166,9 @@ class DecisionManager(object):
         Decision links are only required if the bundle timesteps do not start from the first
         timestep of the model horizon.
         """
-        if self._decision_modules:
-            for module in self._decision_modules:
-                bundle = next(module)
-                self._get_and_save_bundle_decisions(bundle)
-            # TODO merge bundles
+        if self._decision_module:
+            bundle = next(self._decision_module)
+            self._get_and_save_bundle_decisions(bundle)
             yield bundle
         else:
             bundle = {
@@ -168,8 +179,21 @@ class DecisionManager(object):
             yield bundle
 
     def _get_and_save_bundle_decisions(self, bundle):
+        """Iterate over bundle and write decisions
+
+        Arguments
+        ---------
+        bundle : dict
+
+        Returns
+        -------
+        bundle : dict
+            One definitive bundle across the decision modules
+
+        """
         for iteration, timestep in itertools.product(
-                bundle['decision_iterations'], bundle['timesteps']):
+                bundle['decision_iterations'],
+                bundle['timesteps']):
             self.get_and_save_decisions(iteration, timestep)
 
     def get_and_save_decisions(self, iteration, timestep):
@@ -196,11 +220,14 @@ class DecisionManager(object):
             decision_iteration=iteration
         )
         decisions = []
-        for module in self._decision_modules:
-            decisions.extend(module.get_decision(results_handle))
+        if self._decision_module:
+            decisions.extend(self._decision_module.get_decision(results_handle))
+
+        if self.pre_spec_planning:
+            decisions.extend(self.pre_spec_planning.get_decision(results_handle))
 
         self.logger.debug(
-            "Retrieved %s decisions from %s", len(decisions), str(self._decision_modules))
+            "Retrieved %s decisions from %s", len(decisions), str(self._decision_module))
 
         self.logger.debug(
             "Writing state for timestep %s and interation %s", timestep, iteration)
@@ -223,6 +250,9 @@ class DecisionModule(metaclass=ABCMeta):
         A list of planning timesteps
     register : dict
         Reference to a dict of iterventions
+    """
+
+    """Current iteration of the decision module
     """
     def __init__(self, timesteps, register):
         self.timesteps = timesteps
