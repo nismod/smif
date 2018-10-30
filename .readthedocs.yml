@@ -4,11 +4,9 @@
 # python version
 python:
   version: 3.5
-  setup_py_install: true
   use_system_site_packages: true
 
 requirements_file: requirements-docs.txt
 
 # don't build a PDF (just html)
-formats:
-  - none
+formats: []
