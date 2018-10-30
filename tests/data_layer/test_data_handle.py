@@ -4,7 +4,7 @@
 from unittest.mock import MagicMock, Mock, PropertyMock
 
 import numpy as np
-from pytest import fixture, raises
+from pytest import fixture, mark, raises
 from smif.data_layer import DataHandle, MemoryInterface
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import ResultsHandle
@@ -15,7 +15,7 @@ from smif.model import SectorModel
 
 
 @fixture(scope='function')
-def mock_store(get_sector_model, parameter_spec):
+def mock_store(get_sector_model):
     """Store with minimal setup
     """
     store = MemoryInterface()
@@ -37,17 +37,28 @@ def mock_store(get_sector_model, parameter_spec):
                 'sink': 'energy_demand'
             }
         ],
-        'narratives': [{
+        'narratives': [
+            {
                 'name': 'test_narrative',
                 'description': 'a narrative config',
-                'provides': {'energy_demand': ['smart_meter_savings']},
-                'variants': [{
-                    'name': 'high_tech_dsm',
-                    'description': 'High takeup',
-                    'data': {'smart_meter_savings': 'filename.csv'}}]
-                            }]
+                'provides': {
+                    'energy_demand': ['smart_meter_savings']
+                },
+                'variants': [
+                    {
+                        'name': 'high_tech_dsm',
+                        'description': 'High takeup',
+                        'data': {'smart_meter_savings': 'filename.csv'}
+                    }
+                ]
+            }
+        ]
     })
-
+    parameter_spec = Spec(
+        name='smart_meter_savings',
+        dtype='float',
+        unit='percentage'
+    )
     da = DataArray(parameter_spec, np.array(99))
     store.write_narrative_variant_data(
         'test_sos_model', 'test_narrative', 'high_tech_dsm', da)
@@ -74,9 +85,9 @@ def mock_store(get_sector_model, parameter_spec):
                 'source_output': 'test',
                 'sink_input': 'test',
                 'sink': 'energy_demand'
-            }],
+            }
+        ],
         'narratives': []
-
     })
 
     store._initial_conditions = {'energy_demand': []}
@@ -579,7 +590,8 @@ class TestDataHandleGetParameters:
 
         assert actual == expected
 
-    def test_load_parameters_override_ordered(self, mock_store, mock_model, parameter_spec):
+    @mark.skip(reason="TODO move narratives into sos_model")
+    def test_load_parameters_override_ordered(self, mock_store, mock_model):
         """Parameters in a narrative variants listed later override parameters
         contained in earlier variants
         """
@@ -611,6 +623,11 @@ class TestDataHandleGetParameters:
                             }]
         mock_store.update_sos_model('test_sos_model', sos_model)
 
+        parameter_spec = Spec(
+            name='smart_meter_savings',
+            dtype='float',
+            unit='percentage'
+        )
         first_variant = DataArray(parameter_spec, np.array(1))
         mock_store.write_narrative_variant_data(
             'test_sos_model', 'test_narrative', 'first_variant',

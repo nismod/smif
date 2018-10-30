@@ -732,40 +732,15 @@ class DatafileInterface(DataInterface):
         variant = self.read_scenario_variant(scenario_name, variant_name)
         return self._read_variant_data(variant, variable, 'scenarios', spec, timestep)
 
-    def _read_variant_data(self, variant, variable, scenarios_or_narrative, spec, timestep):
-        filepath = self._get_variant_filepath(variant, variable, scenarios_or_narrative)
-        data = self._get_data_from_csv(filepath)
-        if timestep:
-            if 'timestep' not in data[0].keys():
-                msg = "Header in '{}' missing 'timestep' key. Found {}"
-                raise SmifDataMismatchError(msg.format(filepath, list(data[0].keys())))
-            self.logger.debug(data)
-            data = [datum for datum in data if int(datum['timestep']) == timestep]
-
-        try:
-            da = self.data_list_to_ndarray(data, spec)
-        except SmifDataMismatchError as ex:
-            msg = "DataMismatch in scenario: {}:{}.{}, from {}"
-            raise SmifDataMismatchError(
-                msg.format(variant['name'], variable, str(ex))
-            ) from ex
-
-        return da
-
-    def read_narrative_variant_data(self, sos_model_name, narrative_name,
-                                    variant_name, parameter_name, timestep=None):
-        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        spec = self._read_narrative_variable_spec(
-            sos_model_name, narrative_name, parameter_name)
-        return self._read_variant_data(variant, parameter_name, 'narratives', spec, timestep)
-
-    def _get_variant_filepath(self, variant, variable, scenario_or_narrative):
-        if 'data' not in variant or variable not in variant['data']:
-            filename = '{}__{}.csv'.format(variable, variant['name'])
-        else:
-            filename = variant['data'][variable]
-        self.logger.debug(filename)
-        return os.path.join(self.data_folders[scenario_or_narrative], filename)
+    @check_exists_as_child('scenario', 'variant')
+    def write_scenario_variant_data(self, scenario_name, variant_name,
+                                    data_array, timestep=None):
+        spec = data_array.spec
+        data = self.ndarray_to_data_list(data_array, timestep=timestep)
+        variant = self.read_scenario_variant(scenario_name, variant_name)
+        filepath = self._get_variant_filepath(
+            variant, data_array.name, 'scenarios')
+        self._write_variant_data_csv(filepath, data, spec, timestep)
     # endregion
 
     # region Narratives
@@ -785,6 +760,13 @@ class DatafileInterface(DataInterface):
             raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
         return variant
 
+    def read_narrative_variant_data(self, sos_model_name, narrative_name,
+                                    variant_name, parameter_name, timestep=None):
+        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
+        spec = self._read_narrative_variable_spec(
+            sos_model_name, narrative_name, parameter_name)
+        return self._read_variant_data(variant, parameter_name, 'narratives', spec, timestep)
+
     def write_narrative_variant_data(self, sos_model_name, narrative_name,
                                      variant_name, data_array, timestep=None):
         spec = data_array.spec
@@ -793,16 +775,40 @@ class DatafileInterface(DataInterface):
         variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
         filepath = self._get_variant_filepath(variant, spec.name, 'narratives')
         self._write_variant_data_csv(filepath, data, spec, timestep)
+    # endregion
 
-    @check_exists_as_child('scenario', 'variant')
-    def write_scenario_variant_data(self, scenario_name, variant_name,
-                                    data_array, timestep=None):
-        spec = data_array.spec
-        data = self.ndarray_to_data_list(data_array, timestep=timestep)
-        variant = self.read_scenario_variant(scenario_name, variant_name)
-        filepath = self._get_variant_filepath(
-            variant, data_array.name, 'scenarios')
-        self._write_variant_data_csv(filepath, data, spec, timestep)
+    def _get_variant_filepath(self, variant, variable, scenario_or_narrative):
+        if 'data' not in variant or variable not in variant['data']:
+            filename = '{}__{}.csv'.format(variable, variant['name'])
+            filepath = os.path.join(self.data_folders[scenario_or_narrative], filename)
+        else:
+            filepath = variant['data'][variable]
+        self.logger.debug(variant)
+        self.logger.debug(filepath)
+        return filepath
+
+    def _read_variant_data(self, variant, variable, scenarios_or_narrative, spec, timestep):
+        filepath = self._get_variant_filepath(variant, variable, scenarios_or_narrative)
+        try:
+            data = self._get_data_from_csv(filepath)
+        except FileNotFoundError:
+            raise SmifDataNotFoundError
+        if timestep:
+            if 'timestep' not in data[0].keys():
+                msg = "Header in '{}' missing 'timestep' key. Found {}"
+                raise SmifDataMismatchError(msg.format(filepath, list(data[0].keys())))
+            self.logger.debug(data)
+            data = [datum for datum in data if int(datum['timestep']) == timestep]
+
+        try:
+            da = self.data_list_to_ndarray(data, spec)
+        except SmifDataMismatchError as ex:
+            msg = "DataMismatch in scenario: {}:{}.{}, from {}"
+            raise SmifDataMismatchError(
+                msg.format(variant['name'], variable, str(ex))
+            ) from ex
+
+        return da
 
     def _write_variant_data_csv(self, filepath, data, spec, timestep=None):
         if timestep:
@@ -811,7 +817,6 @@ class DatafileInterface(DataInterface):
             self._write_data_to_csv(filepath, data, fieldnames=fieldnames)
         else:
             self._write_data_to_csv(filepath, data, spec=spec)
-    # endregion
 
     # region Results
     def read_results(self, modelrun_id, model_name, output_spec, timestep,
