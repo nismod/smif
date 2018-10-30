@@ -241,7 +241,7 @@ def parse_arguments():
                                        help='Run a model')
     parser_run.set_defaults(func=run_model_runs)
     parser_run.add_argument('-i', '--interface',
-                            default='local_binary',
+                            default='local_csv',
                             choices=['local_csv', 'local_binary'],
                             help="Select the data interface (default: %(default)s)")
     parser_run.add_argument('-w', '--warm',
