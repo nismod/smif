@@ -58,6 +58,7 @@ mock_modules = [
     'shapely.geometry',
     'shapely.validation',
     'pandas',
+    'pandas.core',
     'xarray'
 ]
 sys.modules.update((mod_name, Mock()) for mod_name in mock_modules)
