@@ -780,9 +780,12 @@ class DatafileInterface(DataInterface):
     def _get_variant_filepath(self, variant, variable, scenario_or_narrative):
         if 'data' not in variant or variable not in variant['data']:
             filename = '{}__{}.csv'.format(variable, variant['name'])
-            filepath = os.path.join(self.data_folders[scenario_or_narrative], filename)
         else:
-            filepath = variant['data'][variable]
+            filename = variant['data'][variable]
+        if os.path.isabs(filename):
+            filepath = filename
+        else:
+            filepath = os.path.join(self.data_folders[scenario_or_narrative], filename)
         self.logger.debug(variant)
         self.logger.debug(filepath)
         return filepath
