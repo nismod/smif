@@ -110,7 +110,7 @@ class ModelRunConfigForm extends Component {
                 sos_model => sos_model.name == sos_model_run.sos_model
             )[0]
             let possible_scenarios = sos_model.scenarios
-            let possible_narratives = sos_model.narratives
+            let possible_narratives = sos_model.narratives.map(narrative => narrative.name)
 
             // Make sure each value is present
             possible_scenarios.map(scenario => {
@@ -287,32 +287,30 @@ class ModelRunConfigForm extends Component {
                                                     sos_model => sos_model.name == this.state.selected.sos_model
                                                 )[0].narratives.map(
                                                     sos_model_narrative => (
-                                                        <div key={sos_model_narrative} className="card">
+                                                        <div key={sos_model_narrative.name} className="card">
                                                             <div className="card-body">
-                                                                <h6 className="card-title">{sos_model_narrative}</h6>
+                                                                <h6 className="card-title">{sos_model_narrative.name}</h6>                                                               
                                                                 {
-                                                                    this.props.narratives.filter(
-                                                                        narrative => narrative.name == sos_model_narrative
-                                                                    )[0].variants.map(variant => (
+                                                                    sos_model_narrative.variants.map(variant => (
                                                                         <div className="form-check" 
-                                                                            key={sos_model_narrative + '_' + variant.name}
+                                                                            key={sos_model_narrative.name + '_' + variant.name}
                                                                             title={variant.description}>
                                                                             <label className="form-check-label">
                                                                                 <input
-                                                                                    id={'radio_' + sos_model_narrative + '_' + variant.name}
+                                                                                    id={'radio_' + sos_model_narrative.name + '_' + variant.name}
                                                                                     className="form-check-input"
                                                                                     type="checkbox"
                                                                                     name={'narratives'}
                                                                                     key={variant.name}
                                                                                     value={variant.name}
                                                                                     checked={
-                                                                                        this.state.selected.narratives[sos_model_narrative].includes(variant.name) 
+                                                                                        this.state.selected.narratives[sos_model_narrative.name].includes(variant.name) 
                                                                                             ? true : false
                                                                                     }
                                                                                     onChange={() => this.handleChange({
                                                                                         target: {
                                                                                             name: 'narratives',
-                                                                                            narrative: sos_model_narrative,
+                                                                                            narrative: sos_model_narrative.name,
                                                                                             variant: variant.name
                                                                                         }
                                                                                     })} />
@@ -417,7 +415,6 @@ ModelRunConfigForm.propTypes = {
     model_run: PropTypes.object.isRequired,
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
-    narratives: PropTypes.array.isRequired,
     saveModelRun: PropTypes.func,
     cancelModelRun: PropTypes.func
 }
