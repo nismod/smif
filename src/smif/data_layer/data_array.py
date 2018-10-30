@@ -67,7 +67,7 @@ class DataArray():
     def default_from_spec(cls, spec):
         """Create DataArray from a spec's default
         """
-        data = np.full(spec.shape, spec.default, dtype=spec.dtype)
+        data = np.full(spec.shape, np.nan, dtype=spec.dtype)
         return cls(spec, data)
 
     @property
