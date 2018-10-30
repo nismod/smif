@@ -4,7 +4,7 @@
 from unittest.mock import MagicMock, Mock, PropertyMock
 
 import numpy as np
-from pytest import fixture, mark, raises
+from pytest import fixture, raises
 from smif.data_layer import DataHandle, MemoryInterface
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import ResultsHandle
@@ -590,7 +590,6 @@ class TestDataHandleGetParameters:
 
         assert actual == expected
 
-    @mark.skip(reason="TODO move narratives into sos_model")
     def test_load_parameters_override_ordered(self, mock_store, mock_model):
         """Parameters in a narrative variants listed later override parameters
         contained in earlier variants
