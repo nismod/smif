@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
-import ReactModal from 'react-modal'
+import Modal from 'react-modal'
 
 const customStyles = {
     content : {
@@ -10,7 +10,9 @@ const customStyles = {
         right                 : '50%',
         bottom                : 'auto',
         marginRight           : '-50%',
-        transform             : 'translate(-50%, -50%)'
+        transform             : 'translate(-50%, -50%)',
+        maxHeight             : '80%',
+        overflow              : 'scroll'
     }
 }
 
@@ -35,7 +37,7 @@ class Popup extends Component {
     }
 
     componentDidMount() {
-        ReactModal.setAppElement('body')
+        Modal.setAppElement('body')
     }
 
     render() {
@@ -43,11 +45,15 @@ class Popup extends Component {
 
         return (
             <div>
-                <ReactModal isOpen={onRequestOpen} style={customStyles} contentLabel="Example CreateSosModelRunPopup">
+                <Modal isOpen={onRequestOpen} style={customStyles} contentLabel="Example CreateSosModelRunPopup">
                     <div id={name}>
-                        {this.props.children}
+                        <div className="frame">
+                            <div className="scroll">
+                                {this.props.children}
+                            </div>
+                        </div>
                     </div>
-                </ReactModal>
+                </Modal>
             </div>
         )
     }
