@@ -16,6 +16,7 @@ class MemoryInterface(DataInterface):
         self._model_runs = OrderedDict()
         self._sos_models = OrderedDict()
         self._sector_models = OrderedDict()
+        self._sector_model_parameter_defaults = OrderedDict()
         self._strategies = OrderedDict()
         self._state = OrderedDict()
         self._units = []  # list[str] of pint definitions
@@ -79,6 +80,17 @@ class MemoryInterface(DataInterface):
         if skip_coords:
             return self._skip_coords(m, ('inputs', 'outputs', 'parameters'))
         return m
+
+    def read_sector_model_parameter(self, sector_model_name, parameter_name):
+        m = self.read_sector_model(sector_model_name)
+        p = self._pick_from_list(m['parameters'], parameter_name)
+        return p
+
+    def read_sector_model_parameter_default(self, sector_model_name, parameter_name):
+        return self._sector_model_parameter_defaults[(sector_model_name, parameter_name)]
+
+    def write_sector_model_parameter_default(self, sector_model_name, parameter_name, data):
+        self._sector_model_parameter_defaults[(sector_model_name, parameter_name)] = data
 
     def write_sector_model(self, sector_model):
         self._sector_models[sector_model['name']] = sector_model
@@ -228,26 +240,18 @@ class MemoryInterface(DataInterface):
             raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
         return variant
 
-    def read_narrative_variant_data(self, sos_model_name, narrative_name,
-                                    variant_name, variable, timestep=None):
-        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        if variable not in variant['data'].keys():
-            self.logger.debug(variant['data'])
-            msg = "Variable '{}' not found in '{}'"
-            raise SmifDataNotFoundError(msg.format(variable, variant_name))
-        else:
-            data = self._narrative_data[(
-                sos_model_name, narrative_name, variant_name, variable, timestep)]
-            spec = self._read_narrative_variable_spec(sos_model_name, narrative_name, variable)
-            return DataArray(spec, data)
+    def read_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
+                                    parameter_name, timestep=None):
+        key = (sos_model_name, narrative_name, variant_name, parameter_name, timestep)
+        try:
+            return self._narrative_data[key]
+        except KeyError:
+            raise SmifDataNotFoundError
 
-    def write_narrative_variant_data(self, sos_model_name, narrative_name,
-                                     variant_name, data_array, timestep=None):
-        variable = data_array.name
-        data = data_array.as_ndarray()
-
-        self._narrative_data[(
-            sos_model_name, narrative_name, variant_name, variable, timestep)] = data
+    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
+                                     data_array, timestep=None):
+        key = (sos_model_name, narrative_name, variant_name, data_array.name, timestep)
+        self._narrative_data[key] = data_array
     # endregion
 
     # region Results

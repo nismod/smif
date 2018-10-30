@@ -15,6 +15,165 @@ from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
 from smif.metadata import Spec
 
 
+@fixture(scope='function')
+def config_handler(get_handler_binary):
+    return get_handler_binary
+
+
+@fixture(scope='function')
+def get_handler_csv(setup_folder_structure, sample_scenarios, sample_narratives,
+                    sample_dimensions):
+    handler = DatafileInterface(str(setup_folder_structure), 'local_csv', validation=False)
+    for scenario in sample_scenarios:
+        handler.write_scenario(scenario)
+    for dimension in sample_dimensions:
+        handler.write_dimension(dimension)
+    return handler
+
+
+@fixture(scope='function')
+def get_handler_binary(setup_folder_structure, sample_scenarios, sample_narratives,
+                       sample_dimensions, get_sector_model):
+    handler = DatafileInterface(str(setup_folder_structure), 'local_binary', validation=False)
+    for scenario in sample_scenarios:
+        handler.write_scenario(scenario)
+    for dimension in sample_dimensions:
+        handler.write_dimension(dimension)
+    handler.write_sector_model(get_sector_model)
+    return handler
+
+
+@fixture
+def get_scenario_data():
+    """Return sample scenario_data
+    """
+    return [
+        {
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'timestep': 2017
+        },
+        {
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'timestep': 2017
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'timestep': 2017
+        },
+        {
+            'population_count': 210,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'timestep': 2017
+        },
+    ]
+
+
+@fixture
+def get_faulty_scenario_data():
+    """Return faulty sample scenario_data
+    """
+    return [
+        {
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'year': 2017
+        },
+        {
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'year': 2017
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'year': 2017
+        },
+        {
+            'population_count': 210,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'year': 2017
+        },
+    ]
+
+
+@fixture(scope='function')
+def get_remapped_scenario_data():
+    """Return sample scenario_data
+    """
+    data = [
+        {
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'timestep': 2015
+        },
+        {
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'timestep': 2015
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'timestep': 2015
+        },
+        {
+            'population_count': 210,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'timestep': 2015
+        },
+        {
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'timestep': 2016
+        },
+        {
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'timestep': 2016
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'timestep': 2016
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'timestep': 2016
+        }
+    ]
+    spec = Spec(
+        name='people',
+        unit='people',
+        dtype='int',
+        dims=['county', 'season'],
+        coords={
+            'county': ['oxford'],
+            'season': ['cold_month', 'spring_month', 'hot_month', 'fall_month']
+        }
+    )
+    return data, spec
+
+
 class TestReadState:
 
     def test_read_state(self, config_handler):
@@ -336,7 +495,7 @@ class TestSectorModel:
 
         assert 'sector_model1' in sector_model_names
         assert 'sector_model2' in sector_model_names
-        assert 'energy_demand_sample' in sector_model_names
+        assert 'energy_demand' in sector_model_names
         assert len(sector_models) == 3
 
     def test_sector_model_write_twice(self, get_sector_model, config_handler):
@@ -415,7 +574,7 @@ class TestSectorModel:
         before_delete = config_handler.read_sector_models()
         assert len(before_delete) == 1
 
-        config_handler.delete_sector_model('energy_demand_sample')
+        config_handler.delete_sector_model('energy_demand')
         after_delete = config_handler.read_sector_models()
         assert len(after_delete) == 0
 
@@ -497,8 +656,6 @@ class TestSectorModel:
         assert actual == expected
 
 
-# need to test with spec and new methods
-# @mark.xfail
 class TestScenarios:
     """Scenario data should be readable, metadata is currently editable. May move to make it
     possible to import/edit/write data.
@@ -521,11 +678,15 @@ class TestScenarios:
         scenario_data = get_scenario_data
 
         keys = scenario_data[0].keys()
-        with open(os.path.join(str(basefolder), 'data', 'scenarios',
-                               'population_high.csv'), 'w+') as output_file:
+        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
+        with open(filepath, 'w+') as output_file:
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
+
+        variant = config_handler.read_scenario_variant('population', 'High Population (ONS)')
+        variant['data'] = {'population_count': filepath}
+        config_handler.update_scenario_variant('population', 'High Population (ONS)', variant)
 
         data = np.array([[100, 150, 200, 210]])
         actual = config_handler.read_scenario_variant_data(
@@ -556,11 +717,15 @@ class TestScenarios:
         scenario_data = get_faulty_scenario_data
 
         keys = scenario_data[0].keys()
-        with open(os.path.join(str(basefolder), 'data', 'scenarios',
-                               'population_high.csv'), 'w+') as output_file:
+        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
+        with open(filepath, 'w+') as output_file:
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
+
+        variant = config_handler.read_scenario_variant('population', 'High Population (ONS)')
+        variant['data'] = {'population_count': filepath}
+        config_handler.update_scenario_variant('population', 'High Population (ONS)', variant)
 
         with raises(SmifDataMismatchError):
             config_handler.read_scenario_variant_data(
@@ -619,11 +784,15 @@ class TestScenarios:
         scenario_data, spec = get_remapped_scenario_data
 
         keys = scenario_data[0].keys()
-        with open(os.path.join(str(basefolder), 'data', 'scenarios',
-                               'population_high.csv'), 'w+') as output_file:
+        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
+        with open(filepath, 'w+') as output_file:
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
+
+        variant = config_handler.read_scenario_variant('population', 'High Population (ONS)')
+        variant['data'] = {'population_count': filepath}
+        config_handler.update_scenario_variant('population', 'High Population (ONS)', variant)
 
         expected_data = np.array([[100, 150, 200, 210]], dtype=float)
         actual = config_handler.read_scenario_variant_data(
@@ -800,37 +969,50 @@ class TestNarrativeVariantData:
         returned dictionary.
         """
         basefolder = setup_folder_structure
-        narrative_data_path = os.path.join(str(basefolder), 'data', 'narratives',
-                                           'central_planning.csv')
-        with open(narrative_data_path, 'w') as csvfile:
+        filepath = os.path.join(
+            str(basefolder), 'data', 'narratives', 'central_planning.csv')
+        with open(filepath, 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=['homogeneity_coefficient'])
             writer.writeheader()
             writer.writerow({'homogeneity_coefficient': 8})
+
+        test_variant = None
+        test_narrative = None
+        sos_model = config_handler.read_sos_model('energy')
+        for narrative in sos_model['narratives']:
+            if narrative['name'] == 'governance':
+                test_narrative = narrative
+                for variant in narrative['variants']:
+                    if variant['name'] == 'Central Planning':
+                        test_variant = variant
+                        break
+                break
+
+        test_variant['data'] = {'homogeneity_coefficient': filepath}
+        test_narrative['variants'] = [test_variant]
+        sos_model['narratives'] = [test_narrative]
+        config_handler.update_sos_model('energy', sos_model)
 
         actual = config_handler.read_narrative_variant_data(
             'energy', 'governance', 'Central Planning', 'homogeneity_coefficient')
 
         spec = Spec.from_dict({
             'name': 'homogeneity_coefficient',
-            'description': "How homegenous the centralisation"
-                           "process is",
+            'description': "How homegenous the centralisation process is",
             'absolute_range': [0, 1],
             'expected_range': [0, 1],
-            'default': 'default_homogeneity.csv',
             'unit': 'percentage',
             'dtype': 'float'
-            })
+        })
 
         assert actual == DataArray(spec, np.array(8, dtype=float))
 
     def test_narrative_data_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if narrative has no data
         """
-        with raises(SmifDataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError):
             config_handler.read_narrative_variant_data(
                 'energy', 'governance', 'Central Planning', 'does not exist')
-        msg = "Variable 'does not exist' not found in 'Central Planning'"
-        assert msg in str(ex)
 
 
 # need to test with spec replacing spatial/temporal resolution

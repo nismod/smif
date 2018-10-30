@@ -1,4 +1,4 @@
-from copy import copy, deepcopy
+from copy import copy
 
 import numpy as np
 from pytest import fixture, mark, param, raises
@@ -29,161 +29,65 @@ def init_handler(request, setup_empty_folder_structure):
 
 
 @fixture
-def handler(init_handler, model_run, get_sos_model, get_sector_model, strategies,
-            unit_definitions, dimension, sample_dimensions, source_spec, sink_spec,
-            coefficients, scenario, get_narrative, parameter_spec):
+def handler(init_handler, minimal_model_run, get_sos_model, sample_narrative_data,
+            get_sector_model, get_sector_model_parameter_defaults, strategies,
+            unit_definitions, dimension, sample_dimensions, conversion_source_spec,
+            conversion_sink_spec, conversion_coefficients, scenario):
     handler = init_handler
-    handler.write_model_run(model_run)
-    handler.write_sos_model(get_sos_model)
-    handler.write_sector_model(get_sector_model)
-    handler.write_strategies('test_modelrun', strategies)
-    # could write state
+
+    # metadata
     handler.write_unit_definitions(unit_definitions)
     handler.write_dimension(dimension)
     for dim in sample_dimensions:
         handler.write_dimension(dim)
-    handler.write_coefficients(source_spec, sink_spec, coefficients)
+
+    # scenarios
     handler.write_scenario(scenario)
-    data_array = DataArray(parameter_spec, np.array(424242, dtype=float))
-    handler.write_narrative_variant_data('energy',
-                                         'technology',
-                                         'high_tech_dsm',
-                                         data_array)
 
+    # models
+    handler.write_sector_model(get_sector_model)
+    for parameter_name, data in get_sector_model_parameter_defaults.items():
+        handler.write_sector_model_parameter_default(
+            get_sector_model['name'], parameter_name, data)
+
+    # sos models
+    handler.write_sos_model(get_sos_model)
+    for key, narrative_variant_data in sample_narrative_data.items():
+        sos_model_name, narrative_name, variant_name, _ = key  # skip param name
+        handler.write_narrative_variant_data(
+            sos_model_name, narrative_name, variant_name, narrative_variant_data)
+
+    # model runs
+    handler.write_model_run(minimal_model_run)
+
+    # planning
+    handler.write_strategies('test_modelrun', strategies)
+
+    # conversion coefficients
+    handler.write_coefficients(
+        conversion_source_spec, conversion_sink_spec, conversion_coefficients)
     return handler
-
-
-@fixture
-def model_run():
-    return {
-        'name': 'test_modelrun',
-        'timesteps': [2010, 2015, 2010]
-    }
-
-
-@fixture
-def strategies():
-    return [
-        {
-            'type': 'pre-specified-planning',
-            'description': 'a description',
-            'model_name': 'test_model',
-            'interventions': [
-                {'name': 'a', 'build_year': 2020},
-                {'name': 'b', 'build_year': 2025},
-            ]
-         },
-        {
-            'type': 'rule-based',
-            'description': 'reduce emissions',
-            'path': 'planning/energyagent.py',
-            'classname': 'EnergyAgent'
-         }
-    ]
-
-
-@fixture
-def unit_definitions():
-    return ['kg = kilograms']
-
-
-@fixture
-def dimension():
-    return {'name': 'category', 'elements': [1, 2, 3]}
-
-
-@fixture
-def source_spec():
-    return Spec(name='a', dtype='float', unit='ml')
-
-
-@fixture
-def sink_spec():
-    return Spec(name='b', dtype='float', unit='ml')
-
-
-@fixture
-def coefficients():
-    return np.array([[1]])
-
-
-@fixture
-def scenario(sample_dimensions):
-
-    return deepcopy({
-        'name': 'mortality',
-        'description': 'The annual mortality rate in UK population',
-        'provides': [
-            {
-                'name': 'mortality',
-                'dims': ['lad'],
-                'coords': {'lad': sample_dimensions[0]['elements']},
-                'dtype': 'float',
-            }
-        ],
-        'variants': [
-            {
-                'name': 'low',
-                'description': 'Mortality (Low)',
-                'data': {
-                    'mortality': 'mortality_low.csv',
-                },
-            }
-        ]
-    })
-
-
-@fixture
-def scenario_no_coords(scenario):
-    scenario = deepcopy(scenario)
-    for spec in scenario['provides']:
-        try:
-            del spec['coords']
-        except KeyError:
-            pass
-    return scenario
-
-
-@fixture
-def narrative_no_coords(get_narrative):
-    get_narrative = deepcopy(get_narrative)
-    for spec in get_narrative['provides']:
-        try:
-            del spec['coords']
-        except KeyError:
-            pass
-    return get_narrative
-
-
-@fixture
-def state():
-    return [
-        {
-            'name': 'test_intervention',
-            'build_year': 1900
-        }
-    ]
 
 
 class TestModelRuns:
     """Read, write, update model runs
     """
-    def test_read_model_runs(self, handler, model_run):
+    def test_read_model_runs(self, handler, minimal_model_run):
         actual = handler.read_model_runs()
-        expected = [model_run]
+        expected = [minimal_model_run]
         assert actual == expected
 
-    def test_read_model_run(self, handler, model_run):
-        assert handler.read_model_run('test_modelrun') == model_run
+    def test_read_model_run(self, handler, minimal_model_run):
+        assert handler.read_model_run('test_modelrun') == minimal_model_run
 
-    def test_write_model_run(self, handler, model_run):
+    def test_write_model_run(self, handler, minimal_model_run):
         new_model_run = {
             'name': 'new_model_run_name',
             'description': 'Model run 2'
         }
         handler.write_model_run(new_model_run)
         actual = handler.read_model_runs()
-        expected = [model_run, new_model_run]
+        expected = [minimal_model_run, new_model_run]
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_update_model_run(self, handler):
@@ -351,15 +255,16 @@ class TestDimensions():
 class TestCoefficients():
     """Read/write conversion coefficients
     """
-    def test_read_coefficients(self, source_spec, sink_spec, handler, coefficients):
-        actual = handler.read_coefficients(source_spec, sink_spec)
-        expected = np.array([[1]])
+    def test_read_coefficients(self, conversion_source_spec, conversion_sink_spec, handler,
+                               conversion_coefficients):
+        actual = handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
+        expected = conversion_coefficients
         np.testing.assert_equal(actual, expected)
 
-    def test_write_coefficients(self, source_spec, sink_spec, handler, coefficients):
+    def test_write_coefficients(self, conversion_source_spec, conversion_sink_spec, handler):
         expected = np.array([[2]])
-        handler.write_coefficients(source_spec, sink_spec, expected)
-        actual = handler.read_coefficients(source_spec, sink_spec)
+        handler.write_coefficients(conversion_source_spec, conversion_sink_spec, expected)
+        actual = handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
         np.testing.assert_equal(actual, expected)
 
 
@@ -464,65 +369,56 @@ class TestScenarios():
 class TestNarratives():
     """Read and write narrative data
     """
-    def test_read_narrative_variant_data(self, handler, parameter_spec):
+    def test_read_narrative_variant_data(self, handler, sample_narrative_data):
         """Read from in-memory data
         """
         actual = handler.read_narrative_variant_data('energy',
                                                      'technology',
                                                      'high_tech_dsm',
                                                      'smart_meter_savings')
-
-        data = np.array(424242, dtype=float)
-        expected = DataArray(parameter_spec, data)
+        key = ('energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
+        expected = sample_narrative_data[key]
         assert actual == expected
 
     def test_read_narrative_variant_data_raises_param(self, handler):
-        with raises(SmifDataNotFoundError) as err:
+        with raises(SmifDataNotFoundError):
             handler.read_narrative_variant_data('energy',
                                                 'technology',
                                                 'high_tech_dsm',
                                                 'not_a_parameter')
-        expected = "Variable 'not_a_parameter' not found in 'high_tech_dsm'"
-        assert expected in str(err)
 
     def test_read_narrative_variant_data_raises_variant(self, handler):
-        with raises(SmifDataNotFoundError) as err:
+        with raises(SmifDataNotFoundError):
             handler.read_narrative_variant_data('energy',
                                                 'technology',
                                                 'not_a_variant',
                                                 'not_a_parameter')
-        expected = "Variant 'not_a_variant' not found in 'technology'"
-        assert expected in str(err)
 
     def test_read_narrative_variant_data_raises_narrative(self, handler):
-        with raises(SmifDataNotFoundError) as err:
+        with raises(SmifDataNotFoundError):
             handler.read_narrative_variant_data('energy',
                                                 'not_a_narrative',
                                                 'not_a_variant',
                                                 'not_a_parameter')
-        expected = "Narrative 'not_a_narrative' not found in 'energy'"
-        assert expected in str(err)
 
-    def test_write_narrative_variant_data(self, handler, parameter_spec):
+    def test_write_narrative_variant_data(self, handler, sample_narrative_data):
         """Write narrative variant data to file or memory
         """
-        data = np.array(42, dtype=float)
-        da = DataArray(parameter_spec, data)
+        key = ('energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
+        da = sample_narrative_data[key]
         handler.write_narrative_variant_data(
             'energy', 'technology', 'high_tech_dsm', da)
 
         actual = handler.read_narrative_variant_data(
             'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
 
-        expected = DataArray(parameter_spec, np.array(42, dtype=float))
+        assert actual == da
 
-        assert actual == expected
-
-    def test_write_narrative_variant_data_timestep(self, handler, parameter_spec):
+    def test_write_narrative_variant_data_timestep(self, handler, sample_narrative_data):
         """Write narrative variant data to file or memory
         """
-        data = np.array(42, dtype=float)
-        da = DataArray(parameter_spec, data)
+        key = ('energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
+        da = sample_narrative_data[key]
         handler.write_narrative_variant_data(
             'energy', 'technology', 'high_tech_dsm', da,
             timestep=2010)
@@ -530,9 +426,7 @@ class TestNarratives():
         actual = handler.read_narrative_variant_data(
             'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings', timestep=2010)
 
-        expected = DataArray(parameter_spec, np.array(42, dtype=float))
-
-        assert actual == expected
+        assert actual == da
 
 
 class TestResults():
@@ -569,7 +463,7 @@ class TestResults():
 
         da = DataArray(output_spec, results_in)
 
-        handler.write_results(da, modelrun_name, model_name,  timestep=timestep)
+        handler.write_results(da, modelrun_name, model_name, timestep=timestep)
 
         with raises(SmifDataNotFoundError):
             handler.read_results(modelrun_name, model_name, output_spec, 2020)
