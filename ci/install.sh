@@ -29,6 +29,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # provided versions
     conda create -n testenv --yes -c conda-forge \
         python=$PYTHON_VERSION \
+        pytest \
+        pytest-cov \
         numpy \
         rtree \
         xarray \
