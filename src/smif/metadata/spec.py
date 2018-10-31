@@ -15,7 +15,7 @@ class Spec(object):
 
     The API here is modelled on :class:`xarray.DataArray`: dtype and shape describe a
     :class:`numpy.ndarray`; dims and coords follow the xarray conventions for labelled axes;
-    and unit, default, abs_range and exp_range are introduced as supplementary metadata to
+    and unit, abs_range and exp_range are introduced as supplementary metadata to
     help validate connections between models.
 
     Attributes
@@ -26,8 +26,6 @@ class Spec(object):
         A human-friendly description
     dtype : str
         Data type for data values
-    default : object
-        Default data value
     abs_range : tuple
         Absolute range of data values
     exp_range : tuple
@@ -56,8 +54,6 @@ class Spec(object):
         which label that dimension.
     dtype : str
         String suitable for contructing a simple :class:`numpy.dtype`
-    default : object, optional
-        Value to be used as default
     abs_range : tuple, optional
         (min, max) absolute range for numeric values - can be used to raise errors
     exp_range : tuple, optional
@@ -65,7 +61,7 @@ class Spec(object):
     unit : str, optional
         Unit to be used for data values
     """
-    def __init__(self, name=None, dims=None, coords=None, dtype=None, default=None,
+    def __init__(self, name=None, dims=None, coords=None, dtype=None,
                  abs_range=None, exp_range=None, unit=None, description=None):
         self._name = name
         self._description = description
@@ -92,8 +88,6 @@ class Spec(object):
         if dtype is None:
             raise ValueError("Spec.dtype must be provided, in {}".format(self._name))
         self._dtype = dtype
-
-        self._default = default
 
         if abs_range is not None:
             self._check_range(abs_range)
@@ -158,7 +152,6 @@ class Spec(object):
             dims=data['dims'],
             coords=data['coords'],
             dtype=data['dtype'],
-            default=data['default'],
             abs_range=data['abs_range'],
             exp_range=data['exp_range'],
             unit=data['unit']
@@ -174,7 +167,6 @@ class Spec(object):
             'dims': self._dims,
             'coords': {c.name: c.ids for c in self._coords},
             'dtype': self._dtype,
-            'default': self._default,
             'abs_range': self._abs_range,
             'exp_range': self._exp_range,
             'unit': self._unit
@@ -197,12 +189,6 @@ class Spec(object):
         """The dtype of the data that this spec describes.
         """
         return self._dtype
-
-    @property
-    def default(self):
-        """The default value of data that this spec describes.
-        """
-        return self._default
 
     @property
     def abs_range(self):

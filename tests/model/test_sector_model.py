@@ -1,6 +1,5 @@
 """Test SectorModel and SectorModelBuilder
 """
-import numpy as np
 import smif.sample_project.models.water_supply
 from pytest import fixture, mark, raises
 from smif.metadata import Spec
@@ -22,7 +21,6 @@ def sector_model_dict():
                 'description': None,
                 'abs_range': None,
                 'exp_range': None,
-                'default': None,
                 'dims': ['LSOA'],
                 'coords': {'LSOA': [1, 2, 3]},
                 'dtype': 'float',
@@ -35,7 +33,6 @@ def sector_model_dict():
                 'description': None,
                 'abs_range': None,
                 'exp_range': None,
-                'default': None,
                 'dims': ['LSOA'],
                 'coords': {'LSOA': [1, 2, 3]},
                 'dtype': 'float',
@@ -46,7 +43,6 @@ def sector_model_dict():
                 'description': None,
                 'abs_range': None,
                 'exp_range': None,
-                'default': None,
                 'dims': ['LSOA'],
                 'coords': {'LSOA': [1, 2, 3]},
                 'dtype': 'float',
@@ -91,7 +87,6 @@ def sector_model():
             'abs_range': (0.5, 2),
             'exp_range': (0.5, 2),
             'dtype': 'float',
-            'default': np.nan,
             'unit': '%'
         })
     )
@@ -239,7 +234,6 @@ class TestSectorModel():
             'dims': ['national'],
             'coords': {'national': ['GB']},
             'dtype': 'float',
-            'default': 3,
             'unit': '%'
         })
         empty_sector_model.add_parameter(spec)

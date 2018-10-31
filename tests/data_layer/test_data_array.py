@@ -30,7 +30,6 @@ def spec(dims, coords):
             'c': coords[2],
         },
         dtype='float',
-        default=0,
         abs_range=(0, 1),
         exp_range=(0, 0.5)
     )

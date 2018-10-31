@@ -170,7 +170,6 @@ def mock_model():
             description='The savings from smart meters',
             abs_range=(0, 100),
             exp_range=(3, 10),
-            default=np.array(3),
             unit='%',
             dtype='float'
         )
@@ -584,7 +583,6 @@ class TestDataHandleGetParameters:
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'default': 'data_file.csv',
                 'unit': 'percentage',
                 'dtype': 'float'
             })
