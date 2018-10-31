@@ -114,6 +114,9 @@ def mock_store(get_sector_model):
     store._interventions['energy_demand'] = data
 
     store.write_sector_model(get_sector_model)
+    da = DataArray(parameter_spec, np.array(42))
+    store.write_sector_model_parameter_default('energy_demand',
+                                               'smart_meter_savings', da)
     return store
 
 
@@ -557,11 +560,10 @@ class TestDataHandleGetParameters:
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'default': 3.,
-                'unit': '%',
+                'unit': 'percentage',
                 'dtype': 'float'
             })
-        expected = DataArray(spec, np.array(3., dtype=float))
+        expected = DataArray(spec, np.array(42, dtype=float))
 
         assert actual == expected
 

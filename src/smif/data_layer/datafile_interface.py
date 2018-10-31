@@ -290,14 +290,16 @@ class DatafileInterface(DataInterface):
         return data
 
     def _default_parameter_filepath(self, sector_model_name, parameter):
-        if 'data_uri' in parameter:
-            filepath = parameter['data_uri']
+        if 'default' in parameter:
+            filepath = parameter['default']
         else:
-            filepath = os.path.join(
-                self.data_folders['parameters'],
-                'default__{}__{}.csv'.format(sector_model_name, parameter['name'])
-            )
-        return filepath
+            filepath = 'default__{}__{}.csv'.format(sector_model_name,
+                                                    parameter['name'])
+
+        if not os.path.isabs(filepath):
+            return os.path.join(self.data_folders['parameters'], filepath)
+        else:
+            return filepath
 
     @check_exists('sector_model')
     def update_sector_model(self, sector_model_name, sector_model):
