@@ -1,0 +1,13 @@
+name: water_sector_energy_demand
+description: Projected energy demand of the water sector
+provides:
+  - name: energy_demand
+    dims:
+    - country
+    dtype: float
+    unit: kWh
+variants:
+  - name: central
+    description: Projected demand
+    data:
+      energy_demand: water_sector_energy_demand.csv

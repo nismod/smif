@@ -1,7 +1,8 @@
 """Implements procedures and tools to run a system-of-systems model
 Provides methods for copying a sample project into a local directory
-and for or running a system-of-systems model. Provides a Scheduler
-that can run modelruns as a subprocess.
+and for or running a system-of-systems model.
+
+Provides a ModelRunScheduler that can run modelruns as a subprocess.
 
 Example
 -------
@@ -13,9 +14,9 @@ Run a single system-of-systems model::
 
 >>> execute_model_run('energy_supply_demand', '/projects/smif/')
 
-Use the Scheduler to run a system-of-systems model::
+Use the ModelRunScheduler to run a system-of-systems model::
 
-    >>> my_scheduler = Scheduler()
+    >>> my_scheduler = ModelRunScheduler()
     >>> my_scheduler.add(
             'energy_supply_demand',
             {
@@ -35,11 +36,12 @@ Use the Scheduler to run a system-of-systems model::
 """
 
 # import classes for access like ::
-#         from smif.controller import Scheduler
-from smif.controller.scheduler import Scheduler
+#         from smif.controller import ModelRunScheduler
+from smif.controller.scheduler import ModelRunScheduler
 from smif.controller.execute import execute_model_run
 from smif.controller.setup import copy_project_folder
+from smif.controller.modelrun import ModelRunner
 
 # Define what should be imported as * ::
 #         from smif.controller import *
-__all__ = ['Scheduler', 'execute_model_run', 'copy_project_folder']
+__all__ = ['ModelRunner', 'ModelRunScheduler', 'execute_model_run', 'copy_project_folder']

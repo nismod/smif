@@ -2,9 +2,8 @@ import logging
 import sys
 
 from smif.controller.build import build_model_run, get_model_run_definition
-from smif.controller.load import load_resolution_sets
 from smif.data_layer import DatafileInterface
-from smif.modelrun import ModelRunError
+from smif.exception import SmifModelRunError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -17,9 +16,6 @@ def execute_model_run(model_run_ids, directory, interface='local_binary', warm=F
     modelrun_ids: list
         Modelrun ids that should be executed sequentially
     """
-    LOGGER.info("Loading resolution data")
-    load_resolution_sets(directory)
-
     model_run_definitions = []
     for model_run in model_run_ids:
         LOGGER.info("Getting model run definition for '" + model_run + "'")
@@ -38,7 +34,7 @@ def execute_model_run(model_run_ids, directory, interface='local_binary', warm=F
                 modelrun.run(store, store.prepare_warm_start(modelrun.name))
             else:
                 modelrun.run(store)
-        except ModelRunError as ex:
+        except SmifModelRunError as ex:
             LOGGER.exception(ex)
             exit(1)
 

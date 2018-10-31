@@ -27,24 +27,18 @@ if [[ "$DISTRIB" == "conda" ]]; then
     conda config --add channels conda-forge
     # Configure the conda environment and put it in the path using the
     # provided versions
-    conda create -n testenv --yes python=$PYTHON_VERSION \
-        flask \
-        isodate \
-        networkx \
-        numpy \
-        pint \
-        pyarrow \
+    conda create -n testenv --yes -c conda-forge \
+        python=$PYTHON_VERSION \
         pytest \
         pytest-cov \
-        python-dateutil \
-        ruamel.yaml \
+        numpy \
         rtree \
-        scikit-optimize \
+        xarray \
+        pandas \
         shapely \
         fiona && source activate testenv
 fi
 
-# conda install --yes --file requirements.txt -c conda-forge
 python setup.py develop
 
 # Install node and npm dependencies

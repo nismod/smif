@@ -1,0 +1,14 @@
+name: reservoir_level
+description: National aggregate reservoir levels
+provides:
+  - name: reservoir_level
+    description: Reservoir levels
+    dims:
+    - country
+    dtype: float
+    unit: Ml
+variants:
+  - name: historical
+    description: Historical Reservoir levels
+    data:
+      reservoir_level: reservoir_level.csv

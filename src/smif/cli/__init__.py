@@ -23,7 +23,7 @@ supply and an energy demand model::
             water_supply.yml
         /sos_models
             energy_water.yml
-        /sos_model_runs
+        /model_runs
             run_to_2050.yml
             short_test_run.yml
             ...
@@ -84,11 +84,12 @@ except ImportError:
     USE_WIN32 = False
 
 from argparse import ArgumentParser
+import sys
 
 import smif
 import smif.cli.log
 
-from smif.controller import copy_project_folder, execute_model_run, Scheduler
+from smif.controller import copy_project_folder, execute_model_run, ModelRunScheduler
 from smif.http_api import create_app
 from smif.data_layer import DatafileInterface
 
@@ -105,7 +106,7 @@ def list_model_runs(args):
     """List the model runs defined in the config
     """
     handler = DatafileInterface(args.directory)
-    model_run_configs = handler.read_sos_model_runs()
+    model_run_configs = handler.read_model_runs()
     for run in model_run_configs:
         print(run['name'])
 
@@ -133,7 +134,7 @@ def _run_server(args):
         static_folder=app_folder,
         template_folder=app_folder,
         data_interface=DatafileInterface(args.directory),
-        scheduler=Scheduler()
+        scheduler=ModelRunScheduler()
     )
 
     port = 5000
@@ -240,7 +241,7 @@ def parse_arguments():
                                        help='Run a model')
     parser_run.set_defaults(func=run_model_runs)
     parser_run.add_argument('-i', '--interface',
-                            default='local_binary',
+                            default='local_csv',
                             choices=['local_csv', 'local_binary'],
                             help="Select the data interface (default: %(default)s)")
     parser_run.add_argument('-w', '--warm',
@@ -320,6 +321,14 @@ def main(arguments=None):
     """
     parser = parse_arguments()
     args = parser.parse_args(arguments)
+
+    def exception_handler(exception_type, exception, traceback, debug_hook=sys.excepthook):
+        if args.verbose:
+            debug_hook(exception_type, exception, traceback)
+        else:
+            print("{}: {}".format(exception_type.__name__, exception))
+
+    sys.excepthook = exception_handler
 
     if 'func' in args:
         args.func(args)

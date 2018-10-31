@@ -1,78 +1,200 @@
 """Test data file interface
 """
 import csv
-import json
 import os
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock
 
 import numpy as np
 import pyarrow as pa
-from pytest import raises
-from smif.data_layer import (DataExistsError, DataMismatchError,
-                             DataNotFoundError)
+from pytest import fixture, mark, raises
+from smif.data_layer.data_array import DataArray
 from smif.data_layer.datafile_interface import DatafileInterface
-from smif.data_layer.load import dump
-
-from ..convert.conftest import remap_months, remap_months_csv
-from ..convert.conftest import twenty_four_hours as hourly_day
-from ..convert.conftest import twenty_four_hours_csv as hourly_day_csv
+from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
+                            SmifDataNotFoundError)
+from smif.metadata import Spec
 
 
-class TestUnits():
-    """Units definitions should be available as specified in the project
+@fixture(scope='function')
+def config_handler(get_handler_binary):
+    return get_handler_binary
+
+
+@fixture(scope='function')
+def get_handler_csv(setup_folder_structure, sample_scenarios, sample_narratives,
+                    sample_dimensions):
+    handler = DatafileInterface(str(setup_folder_structure), 'local_csv', validation=False)
+    for scenario in sample_scenarios:
+        handler.write_scenario(scenario)
+    for dimension in sample_dimensions:
+        handler.write_dimension(dimension)
+    return handler
+
+
+@fixture(scope='function')
+def get_handler_binary(setup_folder_structure, sample_scenarios, sample_narratives,
+                       sample_dimensions, get_sector_model):
+    handler = DatafileInterface(str(setup_folder_structure), 'local_binary', validation=False)
+    for scenario in sample_scenarios:
+        handler.write_scenario(scenario)
+    for dimension in sample_dimensions:
+        handler.write_dimension(dimension)
+    handler.write_sector_model(get_sector_model)
+    return handler
+
+
+@fixture
+def get_scenario_data():
+    """Return sample scenario_data
     """
-    def test_units_file_path_blank(self, project_config,
-                                   setup_folder_structure):
-        """If no units file specified, should return None
-        """
-        config = project_config
-        config['units'] = ''
+    return [
+        {
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'timestep': 2017
+        },
+        {
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'timestep': 2017
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'timestep': 2017
+        },
+        {
+            'population_count': 210,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'timestep': 2017
+        },
+    ]
 
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder), 'local_csv')
 
-        actual = config_handler.read_units_file_name()
-        expected = None
-        assert actual == expected
+@fixture
+def get_faulty_scenario_data():
+    """Return faulty sample scenario_data
+    """
+    return [
+        {
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'year': 2017
+        },
+        {
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'year': 2017
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'year': 2017
+        },
+        {
+            'population_count': 210,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'year': 2017
+        },
+    ]
 
-    def test_units_file_path(self, project_config, setup_folder_structure):
-        """If units file specified, should return full path to file
-        """
-        config = project_config
-        config['units'] = 'user_units.txt'
 
-        basefolder = setup_folder_structure
-        project_config_path = os.path.join(
-            str(basefolder), 'config', 'project.yml')
-        dump(config, project_config_path)
-        config_handler = DatafileInterface(str(basefolder), 'local_csv')
-
-        actual = config_handler.read_units_file_name()
-        expected = os.path.join(str(basefolder), 'data', 'user_units.txt')
-        assert actual == expected
+@fixture(scope='function')
+def get_remapped_scenario_data():
+    """Return sample scenario_data
+    """
+    data = [
+        {
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'timestep': 2015
+        },
+        {
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'timestep': 2015
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'timestep': 2015
+        },
+        {
+            'population_count': 210,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'timestep': 2015
+        },
+        {
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'timestep': 2016
+        },
+        {
+            'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'timestep': 2016
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'timestep': 2016
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'timestep': 2016
+        }
+    ]
+    spec = Spec(
+        name='people',
+        unit='people',
+        dtype='int',
+        dims=['county', 'season'],
+        coords={
+            'county': ['oxford'],
+            'season': ['cold_month', 'spring_month', 'hot_month', 'fall_month']
+        }
+    )
+    return data, spec
 
 
 class TestReadState:
 
-    def test_read_state(self, get_handler):
-        handler = get_handler
+    def test_read_state(self, config_handler):
+        handler = config_handler
 
-        handler._read_state_file = Mock(return_value='state_data')
-
-        modelrun_name = 'a modelrun'
+        modelrun_name = 'modelrun'
         timestep = 2010
         decision_iteration = 0
+        dir_ = os.path.join(handler.results_folder, modelrun_name)
+        path = os.path.join(dir_, 'state_2010_decision_0.csv')
+        os.makedirs(dir_, exist_ok=True)
+        with open(path, 'w') as state_fh:
+            state_fh.write("build_year,name\n2010,power_station")
 
-        with raises(ValueError):
-            handler.read_state(modelrun_name, timestep, decision_iteration)
+        actual = handler.read_state(modelrun_name, timestep, decision_iteration)
+        expected = [{'build_year': 2010, 'name': 'power_station'}]
+        assert actual == expected
 
-    def test_get_state_filename_all(self, get_handler):
+    def test_get_state_filename_all(self, config_handler):
 
-        handler = get_handler
+        handler = config_handler
 
         modelrun_name = 'a modelrun'
         timestep = 2010
@@ -81,55 +203,44 @@ class TestReadState:
         actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
 
         expected = os.path.join(
-                handler.file_dir['results'], modelrun_name,
+                handler.results_folder, modelrun_name,
                 'state_2010_decision_0.csv')
 
         assert actual == expected
 
-    def test_get_state_filename_none_iteration(self, get_handler):
-
-        handler = get_handler
-
+    def test_get_state_filename_none_iteration(self, config_handler):
+        handler = config_handler
         modelrun_name = 'a modelrun'
         timestep = 2010
         decision_iteration = None
 
         actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
-
-        expected = os.path.join(
-            handler.file_dir['results'], modelrun_name, 'state_2010.csv')
+        expected = os.path.join(handler.results_folder, modelrun_name, 'state_2010.csv')
 
         assert actual == expected
 
-    def test_get_state_filename_both_none(self, get_handler):
-
-        handler = get_handler
-
+    def test_get_state_filename_both_none(self, config_handler):
+        handler = config_handler
         modelrun_name = 'a modelrun'
         timestep = None
         decision_iteration = None
 
         actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
-
         expected = os.path.join(
-            handler.file_dir['results'], modelrun_name, 'state_0000.csv')
+            handler.results_folder, modelrun_name, 'state_0000.csv')
 
         assert actual == expected
 
-    def test_get_state_filename_timestep_none(self, get_handler):
-
-        handler = get_handler
+    def test_get_state_filename_timestep_none(self, config_handler):
+        handler = config_handler
 
         modelrun_name = 'a modelrun'
         timestep = None
         decision_iteration = 0
 
         actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
-
         expected = os.path.join(
-            handler.file_dir['results'],
-            modelrun_name,
-            'state_0000_decision_0.csv')
+            handler.results_folder, modelrun_name, 'state_0000_decision_0.csv')
 
         assert actual == expected
 
@@ -137,133 +248,124 @@ class TestReadState:
 class TestModelRun:
     """Model runs should be defined once, hard to overwrite
     """
-    def test_sos_model_run_read_all(self, get_sos_model_run, get_handler):
-        """Test to write two sos_model_run configurations to Yaml files, then
+    def test_model_run_read_all(self, model_run, config_handler):
+        """Test to write two model_run configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
-        config_handler = get_handler
 
-        sos_model_run1 = get_sos_model_run
-        sos_model_run1['name'] = 'sos_model_run1'
-        config_handler.write_sos_model_run(sos_model_run1)
+        model_run1 = model_run
+        model_run1['name'] = 'model_run1'
+        config_handler.write_model_run(model_run1)
 
-        sos_model_run2 = get_sos_model_run
-        sos_model_run2['name'] = 'sos_model_run2'
-        config_handler.write_sos_model_run(sos_model_run2)
+        model_run2 = model_run
+        model_run2['name'] = 'model_run2'
+        config_handler.write_model_run(model_run2)
 
-        sos_model_runs = config_handler.read_sos_model_runs()
-        sos_model_run_names = list(sos_model_run['name'] for sos_model_run in sos_model_runs)
+        model_runs = config_handler.read_model_runs()
+        model_run_names = list(model_run['name'] for model_run in model_runs)
 
-        assert 'sos_model_run1' in sos_model_run_names
-        assert 'sos_model_run2' in sos_model_run_names
-        assert len(sos_model_runs) == 2
+        assert 'model_run1' in model_run_names
+        assert 'model_run2' in model_run_names
+        assert len(model_runs) == 2
 
-    def test_sos_model_run_write_twice(self, get_sos_model_run, get_handler):
-        """Test that writing a sos_model_run should fail (not overwrite).
+    def test_model_run_write_twice(self, model_run, config_handler):
+        """Test that writing a model_run should fail (not overwrite).
         """
-        config_handler = get_handler
 
-        sos_model_run1 = get_sos_model_run
-        sos_model_run1['name'] = 'unique'
-        config_handler.write_sos_model_run(sos_model_run1)
+        model_run1 = model_run
+        model_run1['name'] = 'unique'
+        config_handler.write_model_run(model_run1)
 
-        with raises(DataExistsError) as ex:
-            config_handler.write_sos_model_run(sos_model_run1)
-        assert "sos_model_run 'unique' already exists" in str(ex)
+        with raises(SmifDataExistsError) as ex:
+            config_handler.write_model_run(model_run1)
+        assert "Model_run 'unique' already exists" in str(ex)
 
-    def test_sos_model_run_read_one(self, get_sos_model_run, get_handler):
-        """Test reading a single sos_model_run.
+    def test_model_run_read_one(self, model_run, config_handler):
+        """Test reading a single model_run.
         """
-        config_handler = get_handler
 
-        sos_model_run1 = get_sos_model_run
-        sos_model_run1['name'] = 'sos_model_run1'
-        config_handler.write_sos_model_run(sos_model_run1)
+        model_run1 = model_run
+        model_run1['name'] = 'model_run1'
+        config_handler.write_model_run(model_run1)
 
-        sos_model_run2 = get_sos_model_run
-        sos_model_run2['name'] = 'sos_model_run2'
-        config_handler.write_sos_model_run(sos_model_run2)
+        model_run2 = model_run
+        model_run2['name'] = 'model_run2'
+        config_handler.write_model_run(model_run2)
 
-        sos_model_run = config_handler.read_sos_model_run('sos_model_run2')
-        assert sos_model_run['name'] == 'sos_model_run2'
+        model_run = config_handler.read_model_run('model_run2')
+        assert model_run['name'] == 'model_run2'
 
-    def test_sos_model_run_read_missing(self, get_handler):
-        """Test that reading a missing sos_model_run fails.
+    def test_model_run_read_missing(self, config_handler):
+        """Test that reading a missing model_run fails.
         """
-        with raises(DataNotFoundError) as ex:
-            get_handler.read_sos_model_run('missing_name')
-        assert "sos_model_run 'missing_name' not found" in str(ex)
+        with raises(SmifDataNotFoundError) as ex:
+            config_handler.read_model_run('missing_name')
+        assert "Model_run 'missing_name' not found" in str(ex)
 
-    def test_sos_model_run_update(self, get_sos_model_run, get_handler):
-        """Test updating a sos_model_run description
+    def test_model_run_update(self, model_run, config_handler):
+        """Test updating a model_run description
         """
-        config_handler = get_handler
-        sos_model_run = get_sos_model_run
-        sos_model_run['name'] = 'to_update'
-        sos_model_run['description'] = 'before'
+        model_run = model_run
+        model_run['name'] = 'to_update'
+        model_run['description'] = 'before'
 
-        config_handler.write_sos_model_run(sos_model_run)
+        config_handler.write_model_run(model_run)
 
-        sos_model_run['description'] = 'after'
-        config_handler.update_sos_model_run('to_update', sos_model_run)
+        model_run['description'] = 'after'
+        config_handler.update_model_run('to_update', model_run)
 
-        actual = config_handler.read_sos_model_run('to_update')
+        actual = config_handler.read_model_run('to_update')
         assert actual['description'] == 'after'
 
-    def test_sos_model_run_update_mismatch(self, get_sos_model_run, get_handler):
-        """Test that updating a sos_model_run with mismatched name should fail
+    def test_model_run_update_mismatch(self, model_run, config_handler):
+        """Test that updating a model_run with mismatched name should fail
         """
-        config_handler = get_handler
-        sos_model_run = get_sos_model_run
+        model_run = model_run
 
-        sos_model_run['name'] = 'sos_model_run'
-        with raises(DataMismatchError) as ex:
-            config_handler.update_sos_model_run('sos_model_run2', sos_model_run)
-        assert "name 'sos_model_run2' must match 'sos_model_run'" in str(ex)
+        model_run['name'] = 'model_run'
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.update_model_run('model_run2', model_run)
+        assert "name 'model_run2' must match 'model_run'" in str(ex)
 
-    def test_sos_model_run_update_missing(self, get_sos_model_run, get_handler):
-        """Test that updating a nonexistent sos_model_run should fail
+    def test_model_run_update_missing(self, model_run, config_handler):
+        """Test that updating a nonexistent model_run should fail
         """
-        config_handler = get_handler
-        sos_model_run = get_sos_model_run
-        sos_model_run['name'] = 'missing_name'
+        model_run = model_run
+        model_run['name'] = 'missing_name'
 
-        with raises(DataNotFoundError) as ex:
-            config_handler.update_sos_model_run('missing_name', sos_model_run)
-        assert "sos_model_run 'missing_name' not found" in str(ex)
+        with raises(SmifDataNotFoundError) as ex:
+            config_handler.update_model_run('missing_name', model_run)
+        assert "Model_run 'missing_name' not found" in str(ex)
 
-    def test_sos_model_run_delete(self, get_sos_model_run, get_handler):
-        """Test that updating a nonexistent sos_model_run should fail
+    def test_model_run_delete(self, model_run, config_handler):
+        """Test that updating a nonexistent model_run should fail
         """
-        config_handler = get_handler
-        sos_model_run = get_sos_model_run
-        sos_model_run['name'] = 'to_delete'
+        model_run = model_run
+        model_run['name'] = 'to_delete'
 
-        config_handler.write_sos_model_run(sos_model_run)
-        before_delete = config_handler.read_sos_model_runs()
+        config_handler.write_model_run(model_run)
+        before_delete = config_handler.read_model_runs()
         assert len(before_delete) == 1
 
-        config_handler.delete_sos_model_run('to_delete')
-        after_delete = config_handler.read_sos_model_runs()
+        config_handler.delete_model_run('to_delete')
+        after_delete = config_handler.read_model_runs()
         assert len(after_delete) == 0
 
-    def test_sos_model_run_delete_missing(self, get_sos_model_run, get_handler):
-        """Test that updating a nonexistent sos_model_run should fail
+    def test_model_run_delete_missing(self, model_run, config_handler):
+        """Test that updating a nonexistent model_run should fail
         """
-        config_handler = get_handler
-        with raises(DataNotFoundError) as ex:
-            config_handler.delete_sos_model_run('missing_name')
-        assert "sos_model_run 'missing_name' not found" in str(ex)
+        with raises(SmifDataNotFoundError) as ex:
+            config_handler.delete_model_run('missing_name')
+        assert "Model_run 'missing_name' not found" in str(ex)
 
 
 class TestSosModel:
     """SoSModel configurations should be accessible and editable.
     """
-    def test_sos_model_read_all(self, get_sos_model, get_handler):
+    def test_sos_model_read_all(self, get_sos_model, config_handler):
         """Test to write two sos_model configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
-        config_handler = get_handler
 
         sos_model1 = get_sos_model
         sos_model1['name'] = 'sos_model1'
@@ -280,23 +382,21 @@ class TestSosModel:
         assert 'sos_model2' in sos_model_names
         assert len(sos_models) == 2
 
-    def test_sos_model_write_twice(self, get_sos_model, get_handler):
+    def test_sos_model_write_twice(self, get_sos_model, config_handler):
         """Test that writing a sos_model should fail (not overwrite).
         """
-        config_handler = get_handler
 
         sos_model1 = get_sos_model
         sos_model1['name'] = 'unique'
         config_handler.write_sos_model(sos_model1)
 
-        with raises(DataExistsError) as ex:
+        with raises(SmifDataExistsError) as ex:
             config_handler.write_sos_model(sos_model1)
-        assert "sos_model 'unique' already exists" in str(ex)
+        assert "Sos_model 'unique' already exists" in str(ex)
 
-    def test_sos_model_read_one(self, get_sos_model, get_handler):
+    def test_sos_model_read_one(self, get_sos_model, config_handler):
         """Test reading a single sos_model.
         """
-        config_handler = get_handler
 
         sos_model1 = get_sos_model
         sos_model1['name'] = 'sos_model1'
@@ -309,18 +409,16 @@ class TestSosModel:
         sos_model = config_handler.read_sos_model('sos_model2')
         assert sos_model['name'] == 'sos_model2'
 
-    def test_sos_model_read_missing(self, get_handler):
+    def test_sos_model_read_missing(self, config_handler):
         """Test that reading a missing sos_model fails.
         """
-        config_handler = get_handler
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.read_sos_model('missing_name')
-        assert "sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex)
 
-    def test_sos_model_update(self, get_sos_model, get_handler):
+    def test_sos_model_update(self, get_sos_model, config_handler):
         """Test updating a sos_model description
         """
-        config_handler = get_handler
         sos_model = get_sos_model
         sos_model['name'] = 'to_update'
         sos_model['description'] = 'before'
@@ -333,32 +431,29 @@ class TestSosModel:
         actual = config_handler.read_sos_model('to_update')
         assert actual['description'] == 'after'
 
-    def test_sos_model_update_mismatch(self, get_sos_model, get_handler):
+    def test_sos_model_update_mismatch(self, get_sos_model, config_handler):
         """Test that updating a sos_model with mismatched name should fail
         """
-        config_handler = get_handler
         sos_model = get_sos_model
 
         sos_model['name'] = 'sos_model'
-        with raises(DataMismatchError) as ex:
+        with raises(SmifDataMismatchError) as ex:
             config_handler.update_sos_model('sos_model2', sos_model)
         assert "name 'sos_model2' must match 'sos_model'" in str(ex)
 
-    def test_sos_model_update_missing(self, get_sos_model, get_handler):
+    def test_sos_model_update_missing(self, get_sos_model, config_handler):
         """Test that updating a nonexistent sos_model should fail
         """
-        config_handler = get_handler
         sos_model = get_sos_model
         sos_model['name'] = 'missing_name'
 
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.update_sos_model('missing_name', sos_model)
-        assert "sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex)
 
-    def test_sos_model_delete(self, get_sos_model, get_handler):
+    def test_sos_model_delete(self, get_sos_model, config_handler):
         """Test that updating a nonexistent sos_model should fail
         """
-        config_handler = get_handler
         sos_model = get_sos_model
         sos_model['name'] = 'to_delete'
 
@@ -370,24 +465,22 @@ class TestSosModel:
         after_delete = config_handler.read_sos_models()
         assert len(after_delete) == 0
 
-    def test_sos_model_delete_missing(self, get_sos_model, get_handler):
+    def test_sos_model_delete_missing(self, get_sos_model, config_handler):
         """Test that updating a nonexistent sos_model should fail
         """
-        config_handler = get_handler
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_sos_model('missing_name')
-        assert "sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex)
 
 
 class TestSectorModel:
     """SectorModel definitions should be accessible - may move towards being less editable
     as config, more defined in code/wrapper.
     """
-    def test_sector_model_read_all(self, get_sector_model, get_handler):
+    def test_sector_model_read_all(self, get_sector_model, config_handler):
         """Test to write two sector_model configurations to Yaml files, then
         read the Yaml files and compare that the result is equal.
         """
-        config_handler = get_handler
 
         sector_model1 = get_sector_model
         sector_model1['name'] = 'sector_model1'
@@ -402,25 +495,24 @@ class TestSectorModel:
 
         assert 'sector_model1' in sector_model_names
         assert 'sector_model2' in sector_model_names
-        assert len(sector_models) == 2
+        assert 'energy_demand' in sector_model_names
+        assert len(sector_models) == 3
 
-    def test_sector_model_write_twice(self, get_sector_model, get_handler):
+    def test_sector_model_write_twice(self, get_sector_model, config_handler):
         """Test that writing a sector_model should fail (not overwrite).
         """
-        config_handler = get_handler
 
         sector_model1 = get_sector_model
         sector_model1['name'] = 'unique'
         config_handler.write_sector_model(sector_model1)
 
-        with raises(DataExistsError) as ex:
+        with raises(SmifDataExistsError) as ex:
             config_handler.write_sector_model(sector_model1)
-        assert "sector_model 'unique' already exists" in str(ex)
+        assert "Sector_model 'unique' already exists" in str(ex)
 
-    def test_sector_model_read_one(self, get_sector_model, get_handler):
+    def test_sector_model_read_one(self, get_sector_model, config_handler):
         """Test reading a single sector_model.
         """
-        config_handler = get_handler
 
         sector_model1 = get_sector_model
         sector_model1['name'] = 'sector_model1'
@@ -433,18 +525,16 @@ class TestSectorModel:
         sector_model = config_handler.read_sector_model('sector_model2')
         assert sector_model['name'] == 'sector_model2'
 
-    def test_sector_model_read_missing(self, get_handler):
+    def test_sector_model_read_missing(self, config_handler):
         """Test that reading a missing sector_model fails.
         """
-        config_handler = get_handler
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.read_sector_model('missing_name')
-        assert "sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex)
 
-    def test_sector_model_update(self, get_sector_model, get_handler):
+    def test_sector_model_update(self, get_sector_model, config_handler):
         """Test updating a sector_model description
         """
-        config_handler = get_handler
         sector_model = get_sector_model
         sector_model['name'] = 'to_update'
         sector_model['description'] = 'before'
@@ -457,55 +547,49 @@ class TestSectorModel:
         actual = config_handler.read_sector_model('to_update')
         assert actual['description'] == 'after'
 
-    def test_sector_model_update_mismatch(self, get_sector_model, get_handler):
+    def test_sector_model_update_mismatch(self, get_sector_model, config_handler):
         """Test that updating a sector_model with mismatched name should fail
         """
-        config_handler = get_handler
         sector_model = get_sector_model
 
         sector_model['name'] = 'sector_model'
-        with raises(DataMismatchError) as ex:
+        with raises(SmifDataMismatchError) as ex:
             config_handler.update_sector_model('sector_model2', sector_model)
         assert "name 'sector_model2' must match 'sector_model'" in str(ex)
 
-    def test_sector_model_update_missing(self, get_sector_model, get_handler):
+    def test_sector_model_update_missing(self, get_sector_model, config_handler):
         """Test that updating a nonexistent sector_model should fail
         """
-        config_handler = get_handler
         sector_model = get_sector_model
         sector_model['name'] = 'missing_name'
 
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.update_sector_model('missing_name', sector_model)
-        assert "sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex)
 
-    def test_sector_model_delete(self, get_sector_model, get_handler):
+    def test_sector_model_delete(self, get_sector_model, config_handler):
         """Test that updating a nonexistent sector_model should fail
         """
-        config_handler = get_handler
-        sector_model = get_sector_model
-        sector_model['name'] = 'to_delete'
 
-        config_handler.write_sector_model(sector_model)
         before_delete = config_handler.read_sector_models()
         assert len(before_delete) == 1
 
-        config_handler.delete_sector_model('to_delete')
+        config_handler.delete_sector_model('energy_demand')
         after_delete = config_handler.read_sector_models()
         assert len(after_delete) == 0
 
-    def test_sector_model_delete_missing(self, get_sector_model, get_handler):
+    def test_sector_model_delete_missing(self, get_sector_model, config_handler):
         """Test that updating a nonexistent sector_model should fail
         """
-        config_handler = get_handler
-        with raises(DataNotFoundError) as ex:
+        with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_sector_model('missing_name')
-        assert "sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex)
 
+    # itnerventions should be tested as read from files via read_sector_model
+    @mark.xfail
     def test_read_sector_model_interventions(self,
                                              get_sector_model,
-                                             get_handler):
-        config_handler = get_handler
+                                             config_handler):
 
         sector_model = get_sector_model
         sector_model['name'] = 'sector_model'
@@ -517,8 +601,9 @@ class TestSectorModel:
         config_handler._read_sector_model_interventions('sector_model')
         assert config_handler.read_interventions.called_with('energy_demand.csv')
 
-    def test_read_interventions(self, get_handler):
-        config_handler = get_handler
+    # interventions should be tested as read from files via read_sector_model
+    @mark.xfail
+    def test_read_interventions(self, config_handler):
         config_handler._read_state_file = Mock(return_value=[])
         config_handler._read_yaml_file = Mock(return_value=[])
 
@@ -528,20 +613,21 @@ class TestSectorModel:
         config_handler.read_interventions('filename.yml')
         assert config_handler._read_yaml_file.called_with('filename.yml')
 
-    def test_reshape_csv_interventions(self, get_handler):
-        handler = get_handler
+    def test_reshape_csv_interventions(self, config_handler):
+        handler = config_handler
 
-        data = [{'capacity_value': 12, 'capacity_unit': 'GW'}]
-        expected = [{'capacity': {'value': 12, 'unit': 'GW'}}]
+        data = [{'name': 'test', 'capacity_value': 12, 'capacity_unit': 'GW'}]
+        expected = [{'name': 'test', 'capacity': {'value': 12, 'unit': 'GW'}}]
 
         actual = handler._reshape_csv_interventions(data)
         assert actual == expected
 
     def test_reshape_csv_interventions_duplicate_field(
-            self, get_handler):
-        handler = get_handler
+            self, config_handler):
+        handler = config_handler
 
-        data = [{'capacity_value': 12,
+        data = [{'name': 'test',
+                 'capacity_value': 12,
                  'capacity_unit': 'GW',
                  'capacity': 23}]
 
@@ -549,235 +635,40 @@ class TestSectorModel:
             handler._reshape_csv_interventions(data)
 
     def test_reshape_csv_interventions_duplicate_field_inv(
-            self, get_handler):
-        handler = get_handler
+            self, config_handler):
+        handler = config_handler
 
-        data = [{'capacity': 23,
+        data = [{'name': 'test',
+                 'capacity': 23,
                  'capacity_value': 12,
                  'capacity_unit': 'GW'}]
 
         with raises(ValueError):
             handler._reshape_csv_interventions(data)
 
-    def test_reshape_csv_interventions_underscore_in_name(self, get_handler):
-        handler = get_handler
+    def test_reshape_csv_interventions_underscore_in_name(self, config_handler):
+        handler = config_handler
 
-        data = [{'mega_capacity_value': 12, 'mega_capacity_unit': 'GW'}]
-        expected = [{'mega_capacity': {'value': 12, 'unit': 'GW'}}]
+        data = [{'name': 'test', 'mega_capacity_value': 12, 'mega_capacity_unit': 'GW'}]
+        expected = [{'name': 'test', 'mega_capacity': {'value': 12, 'unit': 'GW'}}]
 
         actual = handler._reshape_csv_interventions(data)
         assert actual == expected
-
-    def test_sector_model_read_initial_conditions(self, get_handler, get_sector_model):
-        config_handler = get_handler
-        config_handler._sector_model_exists = Mock()
-        config_handler._read_sector_model_file = Mock(return_value=get_sector_model)
-        config_handler._read_sector_model_interventions = Mock()
-        config_handler.read_sector_model_initial_conditions = Mock()
-
-        config_handler.read_sector_model('test_model')
-        assert config_handler._sector_model_exists.called_with('test_model')
-        assert config_handler._read_sector_model_interventions.called_with('test_model')
-        assert config_handler.read_sector_model_initial_conditions.called_with('test_model')
-
-
-class TestDimensions:
-    """Dimension definitions (regions, intervals) should be readable. May move to make it
-    possible to import/edit/write these definitions.
-    """
-    def test_region_definition_data(self, setup_folder_structure, oxford_region,
-                                    get_handler):
-        """ Test to dump a region_definition_set (GeoJSON) data-file and then read the data
-        using the datafile interface. Finally check if the data shows up in the
-        returned dictionary.
-        """
-        basefolder = setup_folder_structure
-        region_definition_data = oxford_region
-
-        with open(os.path.join(str(basefolder), 'data', 'region_definitions',
-                               'test_region.json'), 'w+') as region_definition_file:
-            json.dump(region_definition_data, region_definition_file)
-
-        config_handler = get_handler
-        test_region_definition = config_handler.read_region_definition_data(
-            'lad')
-
-        assert test_region_definition[0]['properties']['name'] == 'oxford'
-
-    def test_missing_region_definition_data(self, setup_folder_structure, get_handler):
-        """Should raise error if region definition not found
-        """
-        with raises(DataNotFoundError) as ex:
-            get_handler.read_region_definition_data('missing')
-        assert "Region definition 'missing' not found" in str(ex)
-
-    def test_read_hourly_interval_definition_data(self,
-                                                  setup_folder_structure,
-                                                  setup_registers,
-                                                  get_handler):
-        path = os.path.join(str(setup_folder_structure),
-                            'data',
-                            'interval_definitions',
-                            'hourly.csv')
-        with open(path, 'w') as fh:
-            w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
-            w.writeheader()
-            w.writerows(hourly_day_csv())
-
-        actual = get_handler.read_interval_definition_data('hourly')
-        expected = hourly_day()
-        assert actual == expected
-
-    def test_read_remap_interval_definition_data(self,
-                                                 setup_folder_structure,
-                                                 setup_registers,
-                                                 get_handler):
-        path = os.path.join(str(setup_folder_structure),
-                            'data',
-                            'interval_definitions',
-                            'remap.csv')
-        with open(path, 'w') as fh:
-            w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
-            w.writeheader()
-            w.writerows(remap_months_csv())
-
-        actual = get_handler.read_interval_definition_data('remap_months')
-
-        expected = remap_months()
-        assert actual == expected
-
-    def test_read_annual_interval_definition(self,
-                                             setup_folder_structure,
-                                             annual_intervals_csv,
-                                             annual_intervals,
-                                             get_handler):
-        """Ids are cast to integer if digits
-        """
-        path = os.path.join(str(setup_folder_structure), 'data',
-                            'interval_definitions',
-                            'annual.csv')
-        with open(path, 'w') as fh:
-            w = csv.DictWriter(fh, fieldnames=('id', 'start', 'end'))
-            w.writeheader()
-            w.writerows(annual_intervals_csv)
-
-        actual = get_handler.read_interval_definition_data('annual')
-        expected = [(1, [('P0Y', 'P1Y')])]
-        assert actual == expected
-
-    def test_project_region_definitions(self, get_handler):
-        """ Test to read and write the project configuration
-        """
-        config_handler = get_handler
-
-        # region_definition sets / read existing (from fixture)
-        region_definitions = config_handler.read_region_definitions()
-        assert region_definitions[0]['name'] == 'lad'
-        assert len(region_definitions) == 1
-
-        # region_definition sets / add
-        region_definition = {
-            'name': 'lad_NL',
-            'description': 'Local authority districts for the Netherlands',
-            'filename': 'lad_NL.csv'
-        }
-        config_handler.write_region_definition(region_definition)
-        region_definitions = config_handler.read_region_definitions()
-        assert len(region_definitions) == 2
-        for region_definition in region_definitions:
-            if region_definition['name'] == 'lad_NL':
-                assert region_definition['filename'] == 'lad_NL.csv'
-
-        # region_definition sets / modify
-        region_definition = {
-            'name': 'lad_NL',
-            'description': 'Local authority districts for the Netherlands',
-            'filename': 'lad_NL_V2.csv'
-        }
-        config_handler.update_region_definition('lad_NL', region_definition)
-        region_definitions = config_handler.read_region_definitions()
-        assert len(region_definitions) == 2
-        for region_definition in region_definitions:
-            if region_definition['name'] == 'lad_NL':
-                assert region_definition['filename'] == 'lad_NL_V2.csv'
-
-        # region_definition sets / modify unique identifier (name)
-        region_definition['name'] = 'name_change'
-        config_handler.update_region_definition('lad_NL', region_definition)
-        region_definitions = config_handler.read_region_definitions()
-        assert len(region_definitions) == 2
-        for region_definition in region_definitions:
-            if region_definition['name'] == 'name_change':
-                assert region_definition['filename'] == 'lad_NL_V2.csv'
-
-    def test_project_interval_definitions(self, get_handler):
-        """ Test to read and write the project configuration
-        """
-        config_handler = get_handler
-
-        # interval_definitions / read existing (from fixture)
-        interval_definitions = config_handler.read_interval_definitions()
-        assert interval_definitions[0]['name'] == 'hourly'
-        assert len(interval_definitions) == 3
-
-        # interval_definition sets / add
-        interval_definition = {
-            'name': 'monthly',
-            'description': 'The 12 months of the year',
-            'filename': 'monthly.csv'
-        }
-        config_handler.write_interval_definition(interval_definition)
-        interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 4
-        for interval_definition in interval_definitions:
-            if interval_definition['name'] == 'monthly':
-                assert interval_definition['filename'] == 'monthly.csv'
-
-        # interval_definition sets / modify
-        interval_definition = {
-            'name': 'monthly',
-            'description': 'The 12 months of the year',
-            'filename': 'monthly_V2.csv'
-        }
-        config_handler.update_interval_definition(
-            interval_definition['name'], interval_definition)
-        interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 4
-        for interval_definition in interval_definitions:
-            if interval_definition['name'] == 'monthly':
-                assert interval_definition['filename'] == 'monthly_V2.csv'
-
-        # region_definition sets / modify unique identifier (name)
-        interval_definition['name'] = 'name_change'
-        config_handler.update_interval_definition(
-            'monthly', interval_definition)
-        interval_definitions = config_handler.read_interval_definitions()
-        assert len(interval_definitions) == 4
-        for interval_definition in interval_definitions:
-            if interval_definition['name'] == 'name_change':
-                assert interval_definition['filename'] == 'monthly_V2.csv'
 
 
 class TestScenarios:
     """Scenario data should be readable, metadata is currently editable. May move to make it
     possible to import/edit/write data.
     """
-    def test_read_scenario_definition(self, setup_folder_structure, get_handler,
-                                      project_config):
+    def test_read_scenario_definition(self, setup_folder_structure, config_handler,
+                                      sample_scenarios):
         """Should read a scenario definition
         """
-        expected = project_config['scenarios'][1]
-        actual = get_handler.read_scenario_definition(project_config['scenarios'][1]['name'])
+        expected = sample_scenarios[0]
+        actual = config_handler.read_scenario(expected['name'], skip_coords=True)
         assert actual == expected
 
-    def test_missing_scenario_definition(self, setup_folder_structure, get_handler):
-        """Should raise a DataNotFoundError if scenario definition not found
-        """
-        with raises(DataNotFoundError) as ex:
-            get_handler.read_scenario_definition('missing')
-        assert "Scenario definition 'missing' not found" in str(ex)
-
-    def test_scenario_data(self, setup_folder_structure, get_handler,
+    def test_scenario_data(self, setup_folder_structure, config_handler,
                            get_scenario_data):
         """ Test to dump a scenario (CSV) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
@@ -787,24 +678,96 @@ class TestScenarios:
         scenario_data = get_scenario_data
 
         keys = scenario_data[0].keys()
-        with open(os.path.join(str(basefolder), 'data', 'scenarios',
-                               'population_high.csv'), 'w+') as output_file:
+        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
+        with open(filepath, 'w+') as output_file:
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
 
-        config_handler = get_handler
-        expected = np.array([[200.0]])
-        actual = config_handler.read_scenario_data(
+        variant = config_handler.read_scenario_variant('population', 'High Population (ONS)')
+        variant['data'] = {'population_count': filepath}
+        config_handler.update_scenario_variant('population', 'High Population (ONS)', variant)
+
+        data = np.array([[100, 150, 200, 210]])
+        actual = config_handler.read_scenario_variant_data(
+            'population',
             'High Population (ONS)',
             'population_count',
-            'lad',
-            'annual',
-            2017)
+            timestep=2017)
 
-        np.testing.assert_almost_equal(actual, expected)
+        spec = Spec.from_dict({
+            'name': "population_count",
+            'description': "The count of population",
+            'unit': 'people',
+            'dtype': 'int',
+            'coords': {'county': ['oxford'],
+                       'season': ['cold_month', 'spring_month', 'hot_month', 'fall_month']},
+            'dims': ['county', 'season']})
 
-    def test_scenario_data_validates(self, setup_folder_structure, get_handler,
+        expected = DataArray(spec, data)
+
+        assert actual == expected
+
+    def test_scenario_data_raises(self, setup_folder_structure, config_handler,
+                                  get_faulty_scenario_data):
+        """If a scenario file has incorrect keys, raise a friendly error identifying
+        missing keys
+        """
+        basefolder = setup_folder_structure
+        scenario_data = get_faulty_scenario_data
+
+        keys = scenario_data[0].keys()
+        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
+        with open(filepath, 'w+') as output_file:
+            dict_writer = csv.DictWriter(output_file, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(scenario_data)
+
+        variant = config_handler.read_scenario_variant('population', 'High Population (ONS)')
+        variant['data'] = {'population_count': filepath}
+        config_handler.update_scenario_variant('population', 'High Population (ONS)', variant)
+
+        with raises(SmifDataMismatchError):
+            config_handler.read_scenario_variant_data(
+                'population',
+                'High Population (ONS)',
+                'population_count',
+                timestep=2017)
+
+    def test_read_scenario_variable_spec(self, config_handler):
+        handler = config_handler
+        scenario_name = 'population'
+        variable = 'population_count'
+        scenario = handler.read_scenario(scenario_name)
+        spec = handler._get_spec_from_provider(scenario['provides'], variable)
+        assert spec.as_dict() == {'name': 'population_count',
+                                  'description': 'The count of population',
+                                  'unit': 'people',
+                                  'dtype': 'int',
+                                  'dims': ['county', 'season'],
+                                  'coords': {
+                                      'county': ['oxford'],
+                                      'season': ['cold_month', 'spring_month',
+                                                 'hot_month', 'fall_month']
+                                            },
+                                  'abs_range': None,
+                                  'exp_range': None}
+
+    def test_read_scenario_variable_spec_raises(self, config_handler):
+        handler = config_handler
+        scenario_name = 'does not exist'
+        variable = 'population_count'
+        with raises(SmifDataNotFoundError):
+            scenario = handler.read_scenario(scenario_name)
+            handler._get_spec_from_provider(scenario['provides'], variable)
+
+        scenario_name = 'population'
+        variable = 'does not exist'
+        with raises(SmifDataNotFoundError):
+            scenario = handler.read_scenario(scenario_name)
+            handler._get_spec_from_provider(scenario['provides'], variable)
+
+    def test_scenario_data_validates(self, setup_folder_structure, config_handler,
                                      get_remapped_scenario_data):
         """ DatafileInterface and DataInterface perform validation of scenario
         data against raw interval and region data.
@@ -817,31 +780,34 @@ class TestScenarios:
         The set of unique region or interval names can be used instead.
         """
         basefolder = setup_folder_structure
-        scenario_data = get_remapped_scenario_data
+        scenario_data, spec = get_remapped_scenario_data
 
         keys = scenario_data[0].keys()
-        with open(os.path.join(str(basefolder), 'data', 'scenarios',
-                               'population_high.csv'), 'w+') as output_file:
+        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
+        with open(filepath, 'w+') as output_file:
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
 
-        config_handler = get_handler
+        variant = config_handler.read_scenario_variant('population', 'High Population (ONS)')
+        variant['data'] = {'population_count': filepath}
+        config_handler.update_scenario_variant('population', 'High Population (ONS)', variant)
 
         expected_data = np.array([[100, 150, 200, 210]], dtype=float)
-        actual = config_handler.read_scenario_data(
+        actual = config_handler.read_scenario_variant_data(
+            'population',
             'High Population (ONS)',
             'population_count',
-            'lad',
-            'remap_months',
-            2015)
+            timestep=2015)
 
-        np.testing.assert_equal(actual, expected_data)
+        expected = DataArray(spec, expected_data)
 
-    def test_project_scenario_sets(self, get_handler):
+        assert actual == expected
+
+    @mark.xfail
+    def test_project_scenario_sets(self, config_handler):
         """ Test to read and write the project configuration
         """
-        config_handler = get_handler
 
         # Scenario sets / read existing (from fixture)
         scenario_sets = config_handler.read_scenario_sets()
@@ -887,17 +853,17 @@ class TestScenarios:
                 expected = 'The annual mortality rate in NL population'
                 assert scenario_set['description'] == expected
 
-    def test_read_scenario_set_missing(self, get_handler):
-        """Should raise a DataNotFoundError if scenario set not found
+    def test_read_scenario_missing(self, config_handler):
+        """Should raise a SmifDataNotFoundError if scenario not found
         """
-        with raises(DataNotFoundError) as ex:
-            get_handler.read_scenario_set('missing')
-        assert "Scenario set 'missing' not found" in str(ex)
+        with raises(SmifDataNotFoundError) as ex:
+            config_handler.read_scenario('missing')
+        assert "Scenario 'missing' not found" in str(ex)
 
-    def test_project_scenarios(self, get_handler):
+    @mark.xfail
+    def test_project_scenarios(self, config_handler):
         """ Test to read and write the project configuration
         """
-        config_handler = get_handler
 
         # Scenarios / read existing (from fixture)
         scenarios = config_handler.read_scenarios()
@@ -947,10 +913,10 @@ class TestScenarios:
             if scenario['name'] == 'name_change':
                 assert scenario['filename'] == 'population_medium_change.csv'
 
-    def test_read_scenario_set_scenario_definitions(self, get_handler):
+    @mark.xfail
+    def test_read_scenario_set_scenario_definitions(self, config_handler):
         """ Test to read all scenario definitions for a scenario
         """
-        config_handler = get_handler
         actual = config_handler.read_scenario_set_scenario_definitions('population')
         expected = [
             {
@@ -985,198 +951,71 @@ class TestScenarios:
         assert actual == expected
 
 
-class TestNarratives:
+@fixture(scope='function')
+def setup_narratives(config_handler, get_sos_model):
+    config_handler.write_sos_model(get_sos_model)
+
+
+# need to test with spec and new methods
+@mark.usefixtures('setup_narratives')
+class TestNarrativeVariantData:
     """Narratives, parameters and interventions should be readable, metadata is editable. May
     move to clarify the distinctions here, and extend to specify strategies and contraints.
     """
-    def test_narrative_data(self, setup_folder_structure, get_handler, narrative_data):
+    def test_narrative_data(self, setup_folder_structure, config_handler, get_narrative):
         """ Test to dump a narrative (yml) data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
         returned dictionary.
         """
         basefolder = setup_folder_structure
-        narrative_data_path = os.path.join(str(basefolder), 'data', 'narratives',
-                                           'central_planning.yml')
-        dump(narrative_data, narrative_data_path)
+        filepath = os.path.join(
+            str(basefolder), 'data', 'narratives', 'central_planning.csv')
+        with open(filepath, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['homogeneity_coefficient'])
+            writer.writeheader()
+            writer.writerow({'homogeneity_coefficient': 8})
 
-        config_handler = get_handler
-        test_narrative = config_handler.read_narrative_data('Central Planning')
+        test_variant = None
+        test_narrative = None
+        sos_model = config_handler.read_sos_model('energy')
+        for narrative in sos_model['narratives']:
+            if narrative['name'] == 'governance':
+                test_narrative = narrative
+                for variant in narrative['variants']:
+                    if variant['name'] == 'Central Planning':
+                        test_variant = variant
+                        break
+                break
 
-        assert test_narrative['energy_demand'] == {'smart_meter_savings': 8}
+        test_variant['data'] = {'homogeneity_coefficient': filepath}
+        test_narrative['variants'] = [test_variant]
+        sos_model['narratives'] = [test_narrative]
+        config_handler.update_sos_model('energy', sos_model)
 
-    def test_narrative_data_missing(self, get_handler):
-        """Should raise a DataNotFoundError if narrative has no data
+        actual = config_handler.read_narrative_variant_data(
+            'energy', 'governance', 'Central Planning', 'homogeneity_coefficient')
+
+        spec = Spec.from_dict({
+            'name': 'homogeneity_coefficient',
+            'description': "How homegenous the centralisation process is",
+            'absolute_range': [0, 1],
+            'expected_range': [0, 1],
+            'unit': 'percentage',
+            'dtype': 'float'
+        })
+
+        assert actual == DataArray(spec, np.array(8, dtype=float))
+
+    def test_narrative_data_missing(self, config_handler):
+        """Should raise a SmifDataNotFoundError if narrative has no data
         """
-        with raises(DataNotFoundError) as ex:
-            get_handler.read_narrative_data('missing')
-        assert "Narrative 'missing' has no data defined" in str(ex)
-
-    def test_read_narrative_definition(self, setup_folder_structure, get_handler,
-                                       project_config):
-        expected = project_config['narratives'][0]
-        actual = get_handler.read_narrative(expected['name'])
-        assert actual == expected
-
-    def test_read_narrative_definition_missing(self, get_handler):
-        """Should raise a DataNotFoundError if narrative not defined
-        """
-        with raises(DataNotFoundError) as ex:
-            get_handler.read_narrative('missing')
-        assert "Narrative 'missing' not found" in str(ex)
-
-    def test_read_interventions(self, setup_folder_structure, water_interventions_abc,
-                                get_handler):
-        path = os.path.join(str(setup_folder_structure), 'data', 'interventions',
-                            'reservoirs.yml')
-        dump(water_interventions_abc, path)
-        actual = get_handler.read_interventions('reservoirs.yml')
-        assert actual == water_interventions_abc
-
-    def test_read_initial_conditions(self, setup_folder_structure, initial_system,
-                                     get_handler):
-        path = os.path.join(str(setup_folder_structure), 'data', 'initial_conditions',
-                            'system.yml')
-        dump(initial_system, path)
-        actual = get_handler.read_initial_conditions('system.yml')
-        assert actual == initial_system
-
-    def test_read_strategies(self, setup_folder_structure,
-                             initial_system,
-                             get_handler):
-        path = os.path.join(str(setup_folder_structure), 'data', 'strategies',
-                            'a_strategy.yml')
-        dump(initial_system, path)
-        actual = get_handler.read_strategies('a_strategy.yml')
-        assert actual == initial_system
-
-    def test_project_narrative_sets(self, get_handler):
-        """ Test to read and write the project configuration
-        """
-        config_handler = get_handler
-
-        # narrative sets / read existing (from fixture)
-        narrative_sets = config_handler.read_narrative_sets()
-        assert narrative_sets[0]['name'] == 'technology'
-        assert len(narrative_sets) == 2
-
-        # narrative sets / add
-        narrative_set = {
-            'description': 'The rate of development in the UK',
-            'name': 'development'
-        }
-        config_handler.write_narrative_set(narrative_set)
-        narrative_sets = config_handler.read_narrative_sets()
-        assert len(narrative_sets) == 3
-        for narrative_set in narrative_sets:
-            if narrative_set['name'] == 'development':
-                expected = 'The rate of development in the UK'
-                assert narrative_set['description'] == expected
-
-        # narrative sets / modify
-        narrative_set = {
-            'description': 'The rate of technical development in the NL',
-            'name': 'technology'
-        }
-        config_handler.update_narrative_set(narrative_set['name'],
-                                            narrative_set)
-        narrative_sets = config_handler.read_narrative_sets()
-        assert len(narrative_sets) == 3
-        for narrative_set in narrative_sets:
-            if narrative_set['name'] == 'technology':
-                expected = 'The rate of technical development in the NL'
-                assert narrative_set['description'] == expected
-
-        # narrative sets / modify unique identifier (name)
-        narrative_set = {
-            'name': 'name_change',
-            'description': 'The rate of technical development in the NL'
-        }
-        config_handler.update_narrative_set('technology', narrative_set)
-        narrative_sets = config_handler.read_narrative_sets()
-        assert len(narrative_sets) == 3
-        for narrative_set in narrative_sets:
-            if narrative_set['name'] == 'name_change':
-                expected = 'The rate of technical development in the NL'
-                assert narrative_set['description'] == expected
-
-    def test_project_narratives(self, get_handler):
-        """ Test to read and write the project configuration
-        """
-        config_handler = get_handler
-
-        # narratives / read existing (from fixture)
-        narratives = config_handler.read_narratives()
-        assert len(narratives) == 2
-
-        # narratives / add
-        narrative = {
-            'description': 'The Medium ONS Forecast for UK population out to 2050',
-            'filename': 'population_medium.csv',
-            'name': 'Medium Population (ONS)',
-            'parameters': [
-                {
-                    'name': 'population_count',
-                    'spatial_resolution': 'lad',
-                    'temporal_resolution': 'annual',
-                    'units': 'people',
-                }
-            ],
-            'narrative_set': 'population',
-        }
-        config_handler.write_narrative(narrative)
-        narratives = config_handler.read_narratives()
-        assert len(narratives) == 3
-        for narrative in narratives:
-            if narrative['name'] == 'Medium Population (ONS)':
-                assert narrative['filename'] == 'population_medium.csv'
-
-        # narratives / modify
-        narrative['filename'] = 'population_med.csv'
-        config_handler.update_narrative(narrative['name'], narrative)
-        narratives = config_handler.read_narratives()
-        assert len(narratives) == 3
-        for narrative in narratives:
-            if narrative['name'] == 'Medium Population (ONS)':
-                assert narrative['filename'] == 'population_med.csv'
-
-        # narratives / modify unique identifier (name)
-        narrative['name'] = 'name_change'
-        config_handler.update_narrative('Medium Population (ONS)', narrative)
-        narratives = config_handler.read_narratives()
-        assert len(narratives) == 3
-        for narrative in narratives:
-            if narrative['name'] == 'name_change':
-                assert narrative['filename'] == 'population_med.csv'
-
-    def test_read_parameters(self, setup_folder_structure, get_handler,
-                             get_sos_model_run, narrative_data):
-        """ Test to read a modelrun's parameters
-        """
-        sos_model_run = get_sos_model_run
-        get_handler.write_sos_model_run(sos_model_run)
-        central_narrative_path = os.path.join(
-            str(setup_folder_structure),
-            'data',
-            'narratives',
-            'central_planning.yml'
-        )
-        dump(narrative_data, central_narrative_path)
-        high_tech_narrative_path = os.path.join(
-            str(setup_folder_structure),
-            'data',
-            'narratives',
-            'energy_demand_high_tech.yml'
-        )
-        dump(narrative_data, high_tech_narrative_path)
-
-        expected = {
-            'smart_meter_savings': 8
-        }
-        actual = get_handler.read_parameters('unique_model_run_name',
-                                             'energy_demand')
-        assert actual == expected
+        with raises(SmifDataNotFoundError):
+            config_handler.read_narrative_variant_data(
+                'energy', 'governance', 'Central Planning', 'does not exist')
 
 
+# need to test with spec replacing spatial/temporal resolution
+@mark.xfail
 class TestResults:
     """Results from intermediate stages of running ModelRuns should be writeable and readable.
     """
@@ -1197,7 +1036,7 @@ class TestResults:
             results/
             <modelrun_name>/
             <model_name>/
-            decision_<id>_modelset_<id>/ or decision_<id>/ or modelset_<id>/
+            decision_<id>/
                 output_<output_name>_
                 timestep_<timestep>_
                 regions_<spatial_resolution>_
@@ -1210,7 +1049,7 @@ class TestResults:
         spatial_resolution = 'lad'
         temporal_resolution = 'annual'
 
-        # 1. case with neither modelset nor decision
+        # 1. case with no decision
         expected = np.array([[[1.0]]])
         csv_contents = "region,interval,value\noxford,1,1.0\n"
         binary_contents = pa.serialize(expected).to_buffer()
@@ -1220,11 +1059,10 @@ class TestResults:
             "results",
             modelrun,
             model,
-            "output_{}_timestep_{}_regions_{}_intervals_{}".format(
+            "decision_none",
+            "output_{}_timestep_{}".format(
                 output,
-                timestep,
-                spatial_resolution,
-                temporal_resolution
+                timestep
             )
         )
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1255,11 +1093,9 @@ class TestResults:
             modelrun,
             model,
             "decision_{}".format(decision_iteration),
-            "output_{}_timestep_{}_regions_{}_intervals_{}".format(
+            "output_{}_timestep_{}".format(
                 output,
-                timestep,
-                spatial_resolution,
-                temporal_resolution
+                timestep
             )
         )
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1280,88 +1116,12 @@ class TestResults:
                                                  None, decision_iteration)
         assert actual == expected
 
-        # 3. case with modelset
-        modelset_iteration = 1
-        expected = np.array([[[3.0]]])
-        csv_contents = "region,interval,value\noxford,1,3.0\n"
-        binary_contents = pa.serialize(expected).to_buffer()
-        path = os.path.join(
-            str(setup_folder_structure),
-            "results",
-            modelrun,
-            model,
-            "modelset_{}".format(modelset_iteration),
-            "output_{}_timestep_{}_regions_{}_intervals_{}".format(
-                output,
-                timestep,
-                spatial_resolution,
-                temporal_resolution
-            )
-        )
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        with open(path + '.csv', 'w') as fh:
-            fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output,
-                                              spatial_resolution,
-                                              temporal_resolution, timestep,
-                                              modelset_iteration)
-        assert actual == expected
-
-        with pa.OSFile(path + '.dat', 'wb') as f:
-            f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output,
-                                                 spatial_resolution,
-                                                 temporal_resolution, timestep,
-                                                 modelset_iteration)
-        assert actual == expected
-
-        # 4. case with both decision and modelset
-        expected = np.array([[[4.0]]])
-        csv_contents = "region,interval,value\noxford,1,4.0\n"
-        binary_contents = pa.serialize(expected).to_buffer()
-        path = os.path.join(
-            str(setup_folder_structure),
-            "results",
-            modelrun,
-            model,
-            "decision_{}_modelset_{}".format(
-                modelset_iteration,
-                decision_iteration
-            ),
-            "output_{}_timestep_{}_regions_{}_intervals_{}".format(
-                output,
-                timestep,
-                spatial_resolution,
-                temporal_resolution
-            )
-        )
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        with open(path + '.csv', 'w') as fh:
-            fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output,
-                                              spatial_resolution,
-                                              temporal_resolution, timestep,
-                                              modelset_iteration,
-                                              decision_iteration)
-        assert actual == expected
-
-        with pa.OSFile(path + '.dat', 'wb') as f:
-            f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output,
-                                                 spatial_resolution,
-                                                 temporal_resolution, timestep,
-                                                 modelset_iteration,
-                                                 decision_iteration)
-        assert actual == expected
-
 
 class TestWarmStart:
     """If re-running a ModelRun with warm-start specified explicitly, results should be checked
     for existence and left in place.
     """
-    def test_prepare_warm_start(self, setup_folder_structure, project_config):
+    def test_prepare_warm_start(self, setup_folder_structure):
         """ Confirm that the warm start copies previous model results
         and reports the correct next timestep
         """
@@ -1376,27 +1136,26 @@ class TestWarmStart:
         # Create results for a 'previous' modelrun
         previous_results_path = os.path.join(
             str(setup_folder_structure),
-            "results",
-            modelrun,
-            model
+            "results", modelrun, model,
+            "decision_none"
         )
         os.makedirs(previous_results_path, exist_ok=True)
 
         path = os.path.join(
             previous_results_path,
-            "output_electricity_demand_timestep_2020_regions_lad_regions_intervals_annual.csv")
+            "output_electricity_demand_timestep_2020.csv")
         with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,4.0\n")
 
         path = os.path.join(
             previous_results_path,
-            "output_electricity_demand_timestep_2025_regions_lad_regions_intervals_annual.csv")
+            "output_electricity_demand_timestep_2025.csv")
         with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,6.0\n")
 
         path = os.path.join(
             previous_results_path,
-            "output_electricity_demand_timestep_2030_regions_lad_regions_intervals_annual.csv")
+            "output_electricity_demand_timestep_2030.csv")
         with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,8.0\n")
 
@@ -1407,25 +1166,20 @@ class TestWarmStart:
         # should continue
         assert current_timestep == 2030
 
-        # Confirm that previous results (excluding the last timestep) were copied
+        # Confirm that previous results (excluding the last timestep) exist
         current_results_path = os.path.join(
             str(setup_folder_structure),
-            "results",
-            modelrun,
-            model
+            "results", modelrun, model,
+            "decision_none"
         )
 
         warm_start_results = os.listdir(current_results_path)
 
-        assert 'output_electricity_demand_timestep_2020' + \
-            '_regions_lad_regions_intervals_annual.csv' in warm_start_results
-        assert 'output_electricity_demand_timestep_2025' + \
-            '_regions_lad_regions_intervals_annual.csv' in warm_start_results
-        assert 'output_electricity_demand_timestep_2030' + \
-            '_regions_lad_regions_intervals_annual.csv' not in warm_start_results
+        assert 'output_electricity_demand_timestep_2020.csv' in warm_start_results
+        assert 'output_electricity_demand_timestep_2025.csv' in warm_start_results
+        assert 'output_electricity_demand_timestep_2030.csv' not in warm_start_results
 
-    def test_prepare_warm_start_other_local_storage(self, setup_folder_structure,
-                                                    project_config):
+    def test_prepare_warm_start_other_local_storage(self, setup_folder_structure):
         """ Confirm that the warm start does not work when previous
         results were saved using a different local storage type
         """
@@ -1448,19 +1202,19 @@ class TestWarmStart:
 
         path = os.path.join(
             previous_results_path,
-            "output_electricity_demand_timestep_2020_regions_lad_intervals_annual.csv")
+            "output_electricity_demand_timestep_2020.csv")
         with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,4.0\n")
 
         path = os.path.join(
             previous_results_path,
-            "output_electricity_demand_timestep_2025_regions_lad_intervals_annual.csv")
+            "output_electricity_demand_timestep_2025.csv")
         with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,6.0\n")
 
         path = os.path.join(
             previous_results_path,
-            "output_electricity_demand_timestep_2030_regions_lad_intervals_annual.csv")
+            "output_electricity_demand_timestep_2030.csv")
         with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,8.0\n")
 
@@ -1471,8 +1225,7 @@ class TestWarmStart:
         # should continue
         assert current_timestep is None
 
-    def test_prepare_warm_start_no_previous_results(self, setup_folder_structure,
-                                                    project_config):
+    def test_prepare_warm_start_no_previous_results(self, setup_folder_structure):
         """ Confirm that the warm start does not work when no previous
         results were saved
         """
@@ -1510,8 +1263,7 @@ class TestWarmStart:
         os.makedirs(current_results_path, exist_ok=True)
         assert len(os.listdir(current_results_path)) == 0
 
-    def test_prepare_warm_start_no_previous_modelrun(self, setup_folder_structure,
-                                                     project_config):
+    def test_prepare_warm_start_no_previous_modelrun(self, setup_folder_structure):
         """ Confirm that the warm start does not work when no previous
         modelrun occured
         """
@@ -1544,41 +1296,32 @@ class TestWarmStart:
 class TestCoefficients:
     """Dimension conversion coefficients should be cached to disk and read if available.
     """
-    def test_write(self, get_handler):
-        data = np.eye(100)
-        handler = get_handler
-        handler.write_coefficients('from_set_name', 'to_set_name', data)
+    @fixture
+    def from_spec(self):
+        return Spec(name='from_test_coef', dtype='int')
 
-        expected_file = os.path.join(handler.base_folder, 'data',
-                                     'coefficients',
-                                     'from_set_name_to_set_name.dat')
+    @fixture
+    def to_spec(self):
+        return Spec(name='to_test_coef', dtype='int')
 
-        assert os.path.exists(expected_file)
-
-    def test_read(self, get_handler):
-
+    def test_read_write(self, from_spec, to_spec, config_handler):
         data = np.eye(1000)
-        handler = get_handler
-        handler.write_coefficients('from_set_name', 'to_set_name', data)
+        handler = config_handler
+        handler.write_coefficients(from_spec, to_spec, data)
+        actual = handler.read_coefficients(from_spec, to_spec)
+        np.testing.assert_equal(actual, data)
 
-        actual = handler.read_coefficients('from_set_name', 'to_set_name')
-        expected = np.eye(1000)
+    def test_read_raises(self, from_spec, to_spec, config_handler):
+        handler = config_handler
+        missing_spec = Spec(name='missing_coef', dtype='int')
+        with raises(SmifDataNotFoundError):
+            handler.read_coefficients(missing_spec, to_spec)
 
-        np.testing.assert_equal(actual, expected)
-
-    def test_read_raises(self, get_handler):
-
-        handler = get_handler
-
-        actual = handler.read_coefficients('doesnotexist', 'to_set_name')
-
-        assert actual is None
-
-    def test_write_success_if_folder_missing(self):
+    def test_write_success_if_folder_missing(self, from_spec, to_spec):
         """Ensure we can write files, even if project directory starts empty
         """
         with TemporaryDirectory() as tmpdirname:
             # start with empty project (no data/coefficients subdirectory)
             handler = DatafileInterface(tmpdirname, 'local_binary')
             data = np.eye(10)
-            handler.write_coefficients('from_set_name', 'to_set_name', data)
+            handler.write_coefficients(from_spec, to_spec, data)

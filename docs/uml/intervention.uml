@@ -12,15 +12,19 @@ package smif {
         + modelrun : ModelRun
         --
         + solve(modelrun)
+        - get_decisions(timestep, iteration)
+        - get_interventions(decisions)
+        - set_state(timestep, iteration, state)
     }
     class ModelRun {
       + sos_model : SosModel
-      + strategy_bundle : DecisionMechanism
+      + strategy_bundle : DecisionModule
     }
 
 package smif.model {
 
     abstract class Model {
+    + state : Intervention
     + simulate(timestep)
     }
 
@@ -36,35 +40,35 @@ package smif.model {
 
 
 package smif.intervention {
-  abstract class Register {
-    + sos_model : SosModel
-    + data_handle : DataHandle
+
+  class Intervention {
+    + model : SectorModel
+    + name
+    + location
+    + capacity
+    + <attribute>
+  }
+
+  class InterventionRegister {
+    + interventions : Intervention
     --
     + add_interventions(model, interventions)
-    + add_planning(model, planning_list)
-    --
-    + get_decision_array(timestep, iteration)
-    + get_previous_state(timestep, iteration)
-    + get_reward(timestep, iteration)
-    - get_reward(model, timestep, iteration)
-    --
-    + set_state(timestep, iteration, state)
+    + get_intervention(name, model)
   }
+
+  Intervention -- InterventionRegister
 
 }
 
 package smif.decisions {
   class DecisionManager {
-    + strategy_bundle : DecisionMechanism
+    + strategy_bundle : DecisionModule
     + __next__()
-    - next_iteration_bundle()
-    - set_state(timestep, iteration)
-    - transition_function(timestep)
-    - get_reward(timestep, iteration)
+    + get_decisions(timestep, iteration)
   }
 
-  abstract class DecisionMechanism {
-
+  abstract class DecisionModule {
+    + get_decisions(timestep, iteration)
   }
 
   class RuleBased {
@@ -76,27 +80,26 @@ package smif.decisions {
       
   }
 
-  DecisionMechanism <|-- PreSpecified
-  DecisionMechanism <|-- RuleBased
-  DecisionMechanism <|-- MOEA
+  DecisionModule <|-- PreSpecified
+  DecisionModule <|-- RuleBased
+  DecisionModule <|-- MOEA
 
 }
 
 package smif.data_layer {
     class DataHandle {
-
+      + get_state(timestep, iteration, model)
+      + set_state(timestep, iteration, state)
+      + get_intervention(name, model)
     }
 }
 
 ModelRunner *-- DecisionManager
-ModelRunner *-- Register
-DecisionManager o-- DecisionMechanism
-DecisionManager -- Register
+ModelRunner *-- InterventionRegister
+DecisionManager o-- DecisionModule
 
 ModelRunner o-- ModelRun
 ModelRun o-- SosModel
-
-Register -- DataHandle
 
 }
 

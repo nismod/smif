@@ -1,0 +1,18 @@
+name: energy
+description: The future demand of energy for the UK
+scenarios: # Select 0 or more of the scenario sets
+- population
+- water_sector_energy_demand
+narratives: []  # Select 0 or more of the narrative sets
+sector_models:  # Select 1 or more of the sector models
+- energy_demand
+scenario_dependencies:
+- source: population
+  source_output: population
+  sink: energy_demand
+  sink_input: population
+- source: water_sector_energy_demand
+  source_output: energy_demand
+  sink: energy_demand
+  sink_input: energy_demand
+model_dependencies: []

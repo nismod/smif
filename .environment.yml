@@ -13,6 +13,7 @@ dependencies:
 - isodate
 - networkx
 - numpy
+- pandas
 - pint
 - pyarrow
 - pylint  # dev
@@ -21,9 +22,9 @@ dependencies:
 - python-dateutil
 - ruamel.yaml
 - rtree
-- scikit-optimize
 - shapely
 - sphinx  # docs
+- xarray
 - pip:
   - better-apidoc  # docs
   - pre-commit  # dev

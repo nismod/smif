@@ -4,19 +4,27 @@
 
 Raises
 ------
-DataNotFoundError
+SmifDataNotFoundError
     If data cannot be found in the store when try to read from the store
-DataExistsError
+SmifDataExistsError
     If data already exists in the store when trying to write to the store
     (use an update method instead)
-DataMismatchError
+SmifDataMismatchError
     Data presented to read, write and update methods is in the
     incorrect format or of wrong dimensions to that expected
+SmifDataReadError
+    When unable to read data e.g. unable to handle file type or connect
+    to database
 """
+import copy
 from abc import ABCMeta, abstractmethod
+from functools import reduce
 from logging import getLogger
 
 import numpy as np
+from smif.data_layer.data_array import DataArray
+from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
+from smif.metadata import Spec
 
 
 class DataInterface(metaclass=ABCMeta):
@@ -25,79 +33,71 @@ class DataInterface(metaclass=ABCMeta):
     def __init__(self):
         self.logger = getLogger(__name__)
 
+    # region Model runs
     @abstractmethod
-    def read_units_file_name(self):
-        """Reads the unit definition file name from the store
-
-        Returns
-        -------
-        str
-            Path to the units file
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_sos_model_runs(self):
+    def read_model_runs(self):
         """Read all system-of-system model runs
 
         Returns
         -------
         list
-            A list of sos_model_run dicts
+            A list of model_run dicts
         """
         raise NotImplementedError()
 
     @abstractmethod
-    def read_sos_model_run(self, sos_model_run_name):
+    def read_model_run(self, model_run_name):
         """Read a system-of-system model run
 
         Arguments
         ---------
-        sos_model_run_name: str
-            A sos_model_run name
+        model_run_name: str
+            A model_run name
 
         Returns
         -------
-        sos_model_run: dict
-            A sos_model_run dictionary
+        model_run: dict
+            A model_run dictionary
         """
         raise NotImplementedError()
 
     @abstractmethod
-    def write_sos_model_run(self, sos_model_run):
+    def write_model_run(self, model_run):
         """Write system-of-system model run
 
         Arguments
         ---------
-        sos_model_run: dict
-            A sos_model_run dictionary
+        model_run: dict
+            A model_run dictionary
         """
         raise NotImplementedError()
 
     @abstractmethod
-    def update_sos_model_run(self, sos_model_run_name, sos_model_run):
+    def update_model_run(self, model_run_name, model_run):
         """Update system-of-system model run
 
         Arguments
         ---------
-        sos_model_run_name: str
-            A sos_model_run name
-        sos_model_run: dict
-            A sos_model_run dictionary
+        model_run_name: str
+            A model_run name
+        model_run: dict
+            A model_run dictionary
         """
         raise NotImplementedError()
 
     @abstractmethod
-    def delete_sos_model_run(self, sos_model_run):
+    def delete_model_run(self, model_run_name):
         """Delete a system-of-system model run
 
         Arguments
         ---------
-        sos_model_run_name: str
-            A sos_model_run name
+        model_run_name: str
+            A model_run name
         """
         raise NotImplementedError()
+    # endregion
 
+    # region System-of-systems models
     @abstractmethod
     def read_sos_models(self):
         """Read all system-of-system models
@@ -123,6 +123,7 @@ class DataInterface(metaclass=ABCMeta):
         sos_model: dict
             A sos_model dictionary
         """
+        raise NotImplementedError()
 
     @abstractmethod
     def write_sos_model(self, sos_model):
@@ -158,9 +159,11 @@ class DataInterface(metaclass=ABCMeta):
             A sos_model name
         """
         raise NotImplementedError()
+    # endregion
 
+    # region Sector models
     @abstractmethod
-    def read_sector_models(self):
+    def read_sector_models(self, skip_coords=False):
         """Read all sector models
 
         sector_models.yml
@@ -173,7 +176,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_sector_model(self, sector_model_name):
+    def read_sector_model(self, sector_model_name, skip_coords=False):
         """Read a sector model
 
         Arguments
@@ -185,6 +188,55 @@ class DataInterface(metaclass=ABCMeta):
         -------
         sector_model: dict
             A sector_model dictionary
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read_sector_model_parameter(self, sector_model_name, parameter_name):
+        """Read a sector model parameter
+
+        Arguments
+        ---------
+        sector_model_name: str
+            A sector_model name
+        parameter_name: str
+            A parameter name
+
+        Returns
+        -------
+        parameter: dict
+            A parameter (spec) dictionary
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read_sector_model_parameter_default(self, sector_model_name, parameter_name):
+        """Read default data for a sector model parameter
+
+        Arguments
+        ---------
+        sector_model_name: str
+            A sector_model name
+        parameter_name: str
+            A parameter name
+
+        Returns
+        -------
+        data: smif.data_layer.data_array.DataArray
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_sector_model_parameter_default(self, sector_model_name, parameter_name, data):
+        """Write default data for a sector model parameter
+
+        Arguments
+        ---------
+        sector_model_name: str
+            A sector_model name
+        parameter_name: str
+            A parameter name
+        data: smif.data_layer.data_array.DataArray
         """
         raise NotImplementedError()
 
@@ -222,17 +274,97 @@ class DataInterface(metaclass=ABCMeta):
             A sector_model name
         """
         raise NotImplementedError()
+    # endregion
 
+    # region Strategies
     @abstractmethod
-    def read_state(self, modelrun_name, timestep, decision_iteration=None):
-        """Read list of (name, build_year) for a given modelrun, timestep,
-        decision
+    def read_strategies(self, modelrun_name):
+        """Read strategies for a given model_run
+
+        Arguments
+        ---------
+        modelrun_name : str
+            Name of the model run for which to read the strategies
+
+        Returns
+        -------
+        list
+            List of strategy definition dicts
         """
         raise NotImplementedError()
 
     @abstractmethod
-    def write_state(self, state, modelrun_name, timestep,
-                    decision_iteration=None):
+    def write_strategies(self, modelrun_name, strategies):
+        """Write strategies for a given model_run
+
+        Arguments
+        ---------
+        modelrun_name : str
+            Name of the model run for which to read the strategies
+        strategies : list[dict]
+            List of strategy definitions
+        """
+    # endregion
+
+    # region Interventions
+    @abstractmethod
+    def read_interventions(self, sector_model_name):
+        """Read interventions data for `sector_model_name`
+
+        Returns
+        -------
+        dict of dict
+            A dict of intervention dictionaries containing intervention
+            attributes keyed by intervention name
+        """
+        raise NotImplementedError()
+    # endregion
+
+    # region Initial Conditions
+    @abstractmethod
+    def read_initial_conditions(self, sector_model_name):
+        """Read historical interventions for `sector_model_name`
+
+        Returns
+        -------
+        list
+            A list of historical interventions
+        """
+        raise NotImplementedError()
+
+    def read_all_initial_conditions(self, model_run_name):
+        """A list of all historical interventions
+
+        Returns
+        -------
+        list
+        """
+        historical_interventions = []
+        sos_model_name = self.read_model_run(model_run_name)['sos_model']
+        sector_models = self.read_sos_model(sos_model_name)['sector_models']
+        for sector_model_name in sector_models:
+            historical_interventions.extend(
+                self.read_initial_conditions(sector_model_name)
+            )
+        return historical_interventions
+    # endregion
+
+    # region State
+    @abstractmethod
+    def read_state(self, modelrun_name, timestep, decision_iteration=None):
+        """Read list of (name, build_year) for a given modelrun, timestep,
+        decision
+
+        Arguments
+        ---------
+        modelrun_name : str
+        timestep: int
+        decision_iteration : int, default=None
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_state(self, state, modelrun_name, timestep, decision_iteration=None):
         """State is a list of decision dicts with name and build_year keys,
 
         State is output from the DecisionManager
@@ -245,136 +377,57 @@ class DataInterface(metaclass=ABCMeta):
         decision_iteration : int, default=None
         """
         raise NotImplementedError()
+    # endregion
 
+    # region Units
     @abstractmethod
-    def read_region_definitions(self):
-        """Read region_definitions from project configuration
+    def read_unit_definitions(self):
+        """Reads custom unit definitions
 
         Returns
         -------
         list
-            A list of region_definition dicts
+            List of str which are valid Pint unit definitions
         """
         raise NotImplementedError()
+    # endregion
 
+    # region Dimensions
     @abstractmethod
-    def read_region_definition_data(self, region_definition_name):
-        """Read region_definition data file into a Fiona feature collection
-
-        The file format must be possible to parse with GDAL, and must contain
-        an attribute "name" to use as an identifier for the region_definition.
-
-        Arguments
-        ---------
-        region_definition_name: str
-            Name of the region_definition
+    def read_dimensions(self):
+        """Read dimensions from project configuration
 
         Returns
         -------
         list
-            A list of data from the specified file in a fiona formatted dict
+            A list of dimension dicts
         """
         raise NotImplementedError()
 
     @abstractmethod
-    def read_region_names(self, region_definition_name):
-        """Return the set of unique region names in region set `region_definition_name`
+    def read_dimension(self, dimension_name):
+        """Return dimension
 
         Arguments
         ---------
-        region_definition_name: str
-            Name of the region_definition
-
-        Returns
-        -------
-        list
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def write_region_definition(self, region_definition):
-        """Write region_definition to project configuration
-
-        Arguments
-        ---------
-        region_definition: dict
-            A region_definition dict
-
-        Notes
-        -----
-        Unused
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def update_region_definition(self, region_definition):
-        """Update region_definition to project configuration
-
-        Arguments
-        ---------
-        region_definition_name: str
-            Name of the (original) entry
-        region_definition: dict
-            The updated region_definition dict
-
-        Notes
-        -----
-        Unused
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_interval_definitions(self):
-        """Read interval_definition sets from project configuration
-
-        Returns
-        -------
-        list
-            A list of interval_definition set dicts
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_interval_definition_data(self, interval_definition_name):
-        """Read data for an interval definition
-
-        Arguments
-        ---------
-        interval_definition_name: str
+        dimension_name: str
+            Name of the dimension
 
         Returns
         -------
         dict
-            Interval definition data
-
-        Notes
-        -----
-        Expects headings of `id`, `start`, `end`
+            A dimension definition (including elements)
         """
         raise NotImplementedError()
 
     @abstractmethod
-    def read_interval_names(self, interval_definition_name):
-        """Reads the unique set of interval names
+    def write_dimension(self, dimension):
+        """Write dimension to project configuration
 
         Arguments
         ---------
-        interval_definition_name: str
-
-        Returns
-        -------
-        list
-
-        """
-
-    @abstractmethod
-    def write_interval_definition(self, interval_definition):
-        """Write interval_definition to project configuration
-
-        Arguments
-        ---------
-        interval_definition: dict
-            A interval_definition dict
+        dimension: dict
+            A dimension dict
 
         Notes
         -----
@@ -383,31 +436,15 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def update_interval_definition(self, interval_definition):
-        """Update interval_definition to project configuration
+    def update_dimension(self, dimension_name, dimension):
+        """Update dimension
 
         Arguments
         ---------
-        interval_definition_name: str
+        dimension_name: str
             Name of the (original) entry
-        interval_definition: dict
-            The updated interval_definition dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_scenario_set_scenario_definitions(self, scenario_set_name):
-        """Read all scenarios from a certain scenario_set
-
-        Arguments
-        ---------
-        scenario_set_name: str
-            Name of the scenario_set
-
-        Returns
-        -------
-        list
-            A list of scenarios within the specified `scenario_set_name`
+        dimension: dict
+            The updated dimension dict
 
         Notes
         -----
@@ -416,86 +453,66 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_scenario_definition(self, scenario_name):
-        """Read scenario definition data
+    def delete_dimension(self, dimension_name):
+        """Delete dimension
 
         Arguments
         ---------
-        scenario_name: str
-            Name of the scenario
-
-        Returns
-        -------
-        dict
-            The scenario definition
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_scenario_sets(self):
-        """Read scenario sets from project configuration
-
-        Returns
-        -------
-        list
-            A list of scenario set dicts
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_scenario_set(self, scenario_set_name):
-        """Read a scenario_set
-
-        Arguments
-        ---------
-        scenario_set_name: str
-            Name of the scenario_set
-
-        Returns
-        -------
-        dict
-            Scenario set definition
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def write_scenario_set(self, scenario_set):
-        """Write scenario_set to project configuration
-
-        Arguments
-        ---------
-        scenario_set: dict
-            A scenario_set dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def update_scenario_set(self, scenario_set_name, scenario_set):
-        """Update scenario_set to project configuration
-
-        Arguments
-        ---------
-        scenario_set_name: str
+        dimension_name: str
             Name of the (original) entry
-        scenario_set: dict
-            The updated scenario_set dict
+
+        Notes
+        -----
+        Unused
         """
         raise NotImplementedError()
+    # endregion
 
+    # region Conversion coefficients
     @abstractmethod
-    def delete_scenario_set(self, scenario_set_name):
-        """Delete scenario_set from project configuration
-        and all scenarios within scenario_set
+    def read_coefficients(self, source_spec, destination_spec):
+        """Reads coefficients from the store
+
+        Coefficients are uniquely identified by their source/destination specs.
+        This method and `write_coefficients` implement caching of conversion
+        coefficients between dimensions.
 
         Arguments
         ---------
-        scenario_set_name: str
-            A scenario_set name
+        source_spec : smif.metadata.Spec
+        destination_spec : smif.metadata.Spec
+
+        Notes
+        -----
+        To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
+
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
-    def read_scenarios(self):
+    def write_coefficients(self, source_spec, destination_spec, data):
+        """Writes coefficients to the store
+
+        Coefficients are uniquely identified by their source/destination specs.
+        This method and `read_coefficients` implement caching of conversion
+        coefficients between dimensions.
+
+        Arguments
+        ---------
+        source_spec : smif.metadata.Spec
+        destination_spec : smif.metadata.Spec
+        data : numpy.ndarray
+
+        Notes
+        -----
+        To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
+        """
+        raise NotImplementedError()
+    # endregion
+
+    # region Scenarios
+    @abstractmethod
+    def read_scenarios(self, skip_coords=False):
         """Read scenarios from project configuration
 
         Returns
@@ -506,7 +523,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_scenario(self, scenario_name):
+    def read_scenario(self, scenario_name, skip_coords=False):
         """Read a scenario
 
         Arguments
@@ -533,7 +550,7 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def update_scenario(self, scenario):
+    def update_scenario(self, scenario_name, scenario):
         """Update scenario to project configuration
 
         Arguments
@@ -557,19 +574,81 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_scenario_data(self, scenario_name, facet_name,
-                           spatial_resolution, temporal_resolution, timestep):
+    def read_scenario_variants(self, scenario_name):
+        """Read scenarios from project configuration
+
+        Returns
+        -------
+        list
+            A list of scenario dicts
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read_scenario_variant(self, scenario_name, variant_name):
+        """Read a scenario
+
+        Arguments
+        ---------
+        scenario_name: str
+            Name of the scenario
+
+        Returns
+        -------
+        dict
+            A scenario dictionary
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_scenario_variant(self, scenario_name, variant):
+        """Write scenario to project configuration
+
+        Arguments
+        ---------
+        scenario: dict
+            A scenario dict
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def update_scenario_variant(self, scenario_name, variant_name, variant):
+        """Update scenario to project configuration
+
+        Arguments
+        ---------
+        scenario_name: str
+            Name of the (original) entry
+        scenario: dict
+            The updated scenario dict
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def delete_scenario_variant(self, scenario_name, variant_name):
+        """Delete scenario from project configuration
+
+        Arguments
+        ---------
+        scenario_name: str
+            A scenario name
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
         """Read scenario data file
 
         Arguments
         ---------
         scenario_name: str
             Name of the scenario
-        facet_name: str
-            Name of the scenario facet to read
-        spatial_resolution : str
-        temporal_resolution : str
-        timestep: int
+        variant_name: str
+            Name of the scenario variant
+        variable: str
+            Name of the variable (facet)
+        timestep: int (optional)
+            If None, read data for all timesteps
 
         Returns
         -------
@@ -582,200 +661,89 @@ class DataInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_narrative_sets(self):
-        """Read narrative sets from project configuration
-
-        Returns
-        -------
-        list
-            A list of narrative set dicts
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_narrative_set(self, narrative_set_name):
-        """Read all narratives from a certain narrative_set
+    def write_scenario_variant_data(self, scenario_name, variant_name, data_array,
+                                    timestep=None):
+        """Write scenario data file
 
         Arguments
         ---------
-        narrative_set_name: str
-            Name of the narrative_set
+        scenario_name : str
+            Name of the scenario
+        variant_name : str
+            Name of the scenario variant
+        data_array : smif.data_layer.data_array.DataArray
+            Contains the annotated data
+        timestep: int (optional)
+            If None, read data for all timesteps
 
-        Returns
-        -------
-        list
-            A narrative_set dictionary
+        Notes
+        -----
+        Called from smif.data_layer.data_handle
         """
         raise NotImplementedError()
+    # endregion
 
+    # region Narratives
     @abstractmethod
-    def write_narrative_set(self, narrative_set):
-        """Write narrative_set to project configuration
+    def _read_narrative(self, sos_model_name, narrative_name):
+        """Read narrative from sos_model
 
         Arguments
         ---------
-        narrative_set: dict
-            A narrative_set dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def update_narrative_set(self, narrative_set):
-        """Update narrative_set to project configuration
-
-        Arguments
-        ---------
-        narrative_set_name: str
-            Name of the (original) entry
-        narrative_set: dict
-            The updated narrative_set dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def delete_narrative_set(self, narrative_set_name):
-        """Delete narrative_set from project configuration
-
-        Arguments
-        ---------
-        narrative_set_name: str
-            A narrative_set name
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_narratives(self):
-        """Read narrative sets from project configuration
-
-        Returns
-        -------
-        list
-            A list of narrative set dicts
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_narrative(self, narrative_name):
-        """Read all narratives from a certain narrative
-
-        Arguments
-        ---------
+        sos_model_name : str
+            The name of the sos_model to which the narrative belongs
         narrative_name: str
             Name of the narrative
-
-        Returns
-        -------
-        list
-            A narrative dictionary
         """
         raise NotImplementedError()
 
     @abstractmethod
-    def write_narrative(self, narrative):
-        """Write narrative to project configuration
-
-        Arguments
-        ---------
-        narrative: dict
-            A narrative dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def update_narrative(self, narrative):
-        """Update narrative to project configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            Name of the (original) entry
-        narrative: dict
-            The updated narrative dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def delete_narrative(self, narrative_name):
-        """Delete narrative from project configuration
-
-        Arguments
-        ---------
-        narrative_name: str
-            A narrative name
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_narrative_data(self, narrative_name):
+    def read_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
+                                    parameter_name, timestep=None):
         """Read narrative data file
 
         Arguments
         ---------
+        sos_model_name : str
+            The name of the sos_model to which the narrative belongs
         narrative_name: str
             Name of the narrative
+        variant_name: str
+            Narrative variant to use
+        parameter_name: str
+            Variable (parameter) to read
+        timestep: int (optional)
+            Timestep
 
         Returns
         -------
-        list
-            A list with dictionaries containing the contents of 'narrative_name' data file
+        smif.data_layer.data_array.DataArray
         """
         raise NotImplementedError()
 
     @abstractmethod
-    def read_coefficients(self, source_name, destination_name):
-        """Reads coefficients from the store
-
-        Coefficients are uniquely identified by their source/destination names.
-        This method and `write_coefficients` implement caching of conversion
-        coefficients between dimensions.
+    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
+                                     data_array, timestep=None):
+        """Read narrative data file
 
         Arguments
         ---------
-        source_name : str
-            The name of a ResolutionSet
-        destination_name : str
-            The name of a ResolutionSet
+        sos_model_name : str
+            The name of the sos_model to which the narrative belongs
+        narrative_name: str
+            Name of the narrative
+        data_array : smif.data_layer.data_array.DataArray
+            Contains the annotated data to write
+        timestep: int (optional)
+            Timestep
 
-        Notes
-        -----
-        Both `source_name` and `destination_name` should reference names of
-        elements from the same ResolutionSet (e.g. both spatial or temporal
-        resolutions)
-
-        Called from smif.convert.register
-
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def write_coefficients(self, source_name, destination_name, data):
-        """Writes coefficients to the store
-
-Coefficients are uniquely identified by their source/destination names.
-        This method and `read_coefficients` implement caching of conversion
-        coefficients between dimensions.
-
-        Arguments
-        ---------
-        source_name : str
-            The name of a ResolutionSet
-        destination_name : str
-            The name of a ResolutionSet
-        data : numpy.ndarray
-
-        Notes
-        -----
-        Both `source_name` and `destination_name` should reference names of
-        elements from the same ResolutionSet (e.g. both spatial or temporal
-        resolutions)
-
-        Called from smif.convert.register
         """
         raise NotImplementedError()
+    # endregion
 
+    # region Results
     @abstractmethod
-    def read_results(self, modelrun_name, model_name, output_name, spatial_resolution,
-                     temporal_resolution, timestep=None, modelset_iteration=None,
+    def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
                      decision_iteration=None):
         """Return results of a `model_name` in `modelrun_name` for a given `output_name`
 
@@ -783,16 +751,32 @@ Coefficients are uniquely identified by their source/destination names.
         ----------
         modelrun_id : str
         model_name : str
-        output_name : str
-        spatial_resolution : str
-        temporal_resolution : str
+        output_spec: smif.metadata.Spec
         timestep : int, default=None
-        modelset_iteration : int, default=None
         decision_iteration : int, default=None
 
         Returns
         -------
-        data: numpy.ndarray
+        smif.data_layer.data_array.DataArray
+
+        Notes
+        -----
+        Called from smif.data_layer.data_handle
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_results(self, data_array, modelrun_name, model_name, timestep=None,
+                      decision_iteration=None):
+        """Write results of a `model_name` in `modelrun_name` for a given `output_name`
+
+        Parameters
+        ----------
+        data_array : smif.data_layer.data_array.DataArray
+        modelrun_id : str
+        model_name : str
+        timestep : int, optional
+        decision_iteration : int, optional
 
         Notes
         -----
@@ -824,98 +808,58 @@ Coefficients are uniquely identified by their source/destination names.
         Called from smif.controller.execute
         """
         raise NotImplementedError()
+    # endregion
 
-    @abstractmethod
-    def write_results(self, modelrun_name, model_name, output_name, data, spatial_resolution,
-                      temporal_resolution, timestep=None, modelset_iteration=None,
-                      decision_iteration=None):
-        """Write results of a `model_name` in `modelrun_name` for a given `output_name`
-
-        Parameters
-        ----------
-        modelrun_id : str
-        model_name : str
-        output_name : str
-        data : numpy.ndarray
-        spatial_resolution : str
-        temporal_resolution : str
-        timestep : int, optional
-        modelset_iteration : int, optional
-        decision_iteration : int, optional
-
-        Notes
-        -----
-        Called from smif.data_layer.data_handle
-        """
-        raise NotImplementedError()
-
-    def read_parameters(self, modelrun_name, model_name):
-        """Read global and model-specific parameter values for a given modelrun
-        and model.
-
-        Notes
-        -----
-        Called from smif.data_layer.data_handle
-        """
-        modelrun_config = self.read_sos_model_run(modelrun_name)
-        params = {}
-        for narratives in modelrun_config['narratives'].values():
-            for narrative in narratives:
-                data = self.read_narrative_data(narrative)
-                for model_or_global, narrative_params in data.items():
-                    if model_or_global in ('global', model_name):
-                        params.update(narrative_params)
-        return params
-
-    @abstractmethod
-    def read_strategies(self):
-        raise NotImplementedError
-
+    # region Common methods
     @staticmethod
-    def ndarray_to_data_list(data, region_names, interval_names, timestep=None):
+    def ndarray_to_data_list(data_array, timestep=None):
         """Convert :class:`numpy.ndarray` to list of observations
 
         Parameters
         ----------
-        data : numpy.ndarray
-        region_names : list of str
-        interval_names : list of str
-        timestep: int or None
+        data_array : smif.data_layer.data_array.DataArray
+        timestep : int, default=None
 
         Returns
         -------
         observations : list of dict
-            Each dict has keys: 'region' (a region name), 'interval' (an
-            interval name) and 'value'.
+            Each dict has keys: one for the variable name, one for each dimension in spec.dims,
+            and optionally one for the given timestep
         """
         observations = []
-        for region_idx, region in enumerate(region_names):
-            for interval_idx, interval in enumerate(interval_names):
-                observations.append({
-                    'timestep': timestep,
-                    'region': region,
-                    'interval': interval,
-                    'value': data[region_idx, interval_idx]
-                })
+
+        data = data_array.as_ndarray()
+        spec = data_array.spec
+
+        for indices, value in np.ndenumerate(data):
+            obs = {}
+            obs[spec.name] = value
+            for dim, idx in zip(spec.dims, indices):
+                obs[dim] = spec.dim_coords(dim).elements[idx]['name']
+                if timestep:
+                    obs['timestep'] = timestep
+            observations.append(obs)
+
+        if data.shape == () and timestep:
+            observations[0]['timestep'] = timestep
+
         return observations
 
     @staticmethod
-    def data_list_to_ndarray(observations, region_names, interval_names):
-        """Convert list of observations to :class:`numpy.ndarray`
+    def data_list_to_ndarray(observations, spec):
+        """Convert list of observations to a ``DataArray``
 
         Parameters
         ----------
         observations : list of dict
-            Required keys for each dict are 'region' (a region name), 'interval'
-            (an interval name) and 'value'.
-        region_names : list
-            A list of unique region names
-        interval_names : list
-            A list of unique interval names
+            Required keys for each dict are:
+            - one key to match spec.name
+            - one key per dimension in spec.dims
+        spec : smif.metadata.Spec
 
         Returns
         -------
-        data : numpy.ndarray
+        smif.data_layer.data_array.DataArray
 
         Raises
         ------
@@ -924,51 +868,52 @@ Coefficients are uniquely identified by their source/destination names.
         ValueError
             If an observation region or interval is not in region_names or
             interval_names
-        DataNotFoundError
-            If the observations don't include data for any region/interval
+        SmifDataNotFoundError
+            If the observations don't include data for any dimension
             combination
-        DataMismatchError
-            If the region_names and interval_names do not
+        SmifDataMismatchError
+            If the dimension coordinate ids do not
             match the observations
         """
-        # Check that the list of region and interval names are unique
-        assert len(region_names) == len(set(region_names))
-        assert len(interval_names) == len(set(interval_names))
+        DataInterface._validate_observations(observations, spec)
 
-        DataInterface._validate_observations(observations, region_names, interval_names)
-
-        data = np.full((len(region_names), len(interval_names)), np.nan)
+        data = np.full(spec.shape, np.nan, dtype=spec.dtype)
 
         for obs in observations:
-            region_idx = region_names.index(obs['region'])
-            interval_idx = interval_names.index(obs['interval'])
-            data[region_idx, interval_idx] = obs['value']
+            indices = []
+            for dim in spec.dims:
+                key = obs[dim]  # name (id/label) of coordinate element along dimension
+                idx = spec.dim_coords(dim).ids.index(key)  # index of name in dim elements
+                indices.append(idx)
+            data[tuple(indices)] = obs[spec.name]
 
-        return data
+        return DataArray(spec, data)
 
     @staticmethod
-    def _validate_observations(observations, region_names, interval_names):
-        if len(observations) != len(region_names) * len(interval_names):
-            msg = "Number of observations ({}) is not equal to intervals ({}) x regions ({})"
-            raise DataMismatchError(
-                msg.format(len(observations), len(region_names), len(interval_names))
+    def _validate_observations(observations, spec):
+        if len(observations) != reduce(lambda x, y: x * y, spec.shape, 1):
+            msg = "Number of observations ({}) is not equal to product of {}"
+            raise SmifDataMismatchError(
+                msg.format(len(observations), spec.shape)
             )
-        DataInterface._validate_observation_keys(observations)
-        DataInterface._validate_observation_meta(observations, region_names, 'region')
-        DataInterface._validate_observation_meta(observations, interval_names, 'interval')
+        DataInterface._validate_observation_keys(observations, spec)
+        for dim in spec.dims:
+            DataInterface._validate_observation_meta(
+                observations,
+                spec.dim_coords(dim).ids,
+                dim
+            )
 
     @staticmethod
-    def _validate_observation_keys(observations):
+    def _validate_observation_keys(observations, spec):
         for obs in observations:
-            if 'region' not in obs:
+            if spec.name not in obs:
                 raise KeyError(
-                    "Observation missing region: {}".format(obs))
-            if 'interval' not in obs:
-                raise KeyError(
-                    "Observation missing interval: {}".format(obs))
-            if 'value' not in obs:
-                raise KeyError(
-                    "Observation missing value: {}".format(obs))
+                    "Observation missing variable key ({}): {}".format(spec.name, obs))
+            for dim in spec.dims:
+                if dim not in obs:
+                    raise KeyError(
+                        "Observation missing dimension key ({}): {}".format(dim, obs))
 
     @staticmethod
     def _validate_observation_meta(observations, meta_list, meta_name):
@@ -981,26 +926,75 @@ Coefficients are uniquely identified by their source/destination names.
                 observed.add(obs[meta_name])
         missing = set(meta_list) - observed
         if missing:
-            raise DataNotFoundError(
-                "Missing values for %ss: %s", meta_name, list(missing))
+            raise SmifDataNotFoundError(
+                "Missing values for {}s: {}".format(meta_name, list(missing)))
 
+    @staticmethod
+    def _skip_coords(config, keys):
+        """Given a config dict and list of top-level keys for lists of specs,
+        delete coords from each spec in each list.
+        """
+        config = copy.deepcopy(config)
+        for key in keys:
+            for spec in config[key]:
+                try:
+                    del spec['coords']
+                except KeyError:
+                    pass
+        return config
 
-class DataNotFoundError(Exception):
-    """Raise when some data is not found
-    """
-    pass
+    def _read_narrative_variable_spec(self, sos_model_name, narrative_name, variable):
+        # Read spec from narrative->provides->variable
+        narrative = self._read_narrative(sos_model_name, narrative_name)
+        model_name = self._key_from_list(variable, narrative['provides'])
+        if not model_name:
+            msg = "Cannot identify source of Spec for variable '{}'"
+            raise SmifDataNotFoundError(msg.format(variable))
+        parameters = self.read_sector_model(model_name)['parameters']
+        return self._get_spec_from_provider(parameters, variable)
 
+    def _get_spec_from_provider(self, config_list, variable_name):
+        """Gets a Spec definition from a scenario definition
 
-class DataExistsError(Exception):
-    """Raise when some data is found unexpectedly
-    """
-    pass
+        Arguments
+        ---------
+        config_list : list of dict
+            A list of spec dicts
+        variable_name : str
+            The name of the variable for which to find the spec
 
+        Returns
+        -------
+        smif.metadata.Spec
+        """
+        spec = self._pick_from_list(config_list, variable_name)
+        if spec is not None:
+            self._set_item_coords(spec)
+            return Spec.from_dict(spec)
+        else:
+            msg = "Could not find spec definition for '{}'"
+            raise SmifDataNotFoundError(msg.format(variable_name))
 
-class DataMismatchError(Exception):
-    """Raise when some data doesn't match the context
+    def _set_item_coords(self, item):
+        """If dims exists and is not empty
+        """
+        if 'dims' in item and item['dims']:
+            item['coords'] = {
+                dim: self.read_dimension(dim)['elements']
+                for dim in item['dims']
+            }
 
-    E.g. when updating an object by id, the updated object's id must match
-    the id provided separately.
-    """
-    pass
+    @staticmethod
+    def _pick_from_list(list_of_dicts, name):
+        for item in list_of_dicts:
+            if 'name' in item and item['name'] == name:
+                return item
+        return None
+
+    @staticmethod
+    def _key_from_list(name, dict_of_lists):
+        for key, items in dict_of_lists.items():
+            if name in items:
+                return key
+        return None
+    # endregion

@@ -2,11 +2,10 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import Popup from 'components/ConfigForm/General/Popup.js'
 import PropertySelector from 'components/ConfigForm/General/PropertySelector.js'
-import DependencySelector from 'components/ConfigForm/SosModel/DependencySelector.js'
-import PropertyList from 'components/ConfigForm/General/PropertyList.js'
-import DeleteForm from 'components/ConfigForm/General/DeleteForm.js'
+import DependencyList from 'components/ConfigForm/SosModel/DependencyList.js'
+import NarrativeList from 'components/ConfigForm/SosModel/NarrativeList.js'
+
 import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
 
 class SosModelConfigForm extends Component {
@@ -18,18 +17,8 @@ class SosModelConfigForm extends Component {
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {
-            selectedSosModel: this.props.sosModel,
-            dependencyWarning: [],
-            deletePopupIsOpen: false
+            selectedSosModel: this.props.sos_model
         }
-
-        this.closeDeletePopup = this.closeDeletePopup.bind(this)
-        this.openDeletePopup = this.openDeletePopup.bind(this)
-        this.handleDelete = this.handleDelete.bind(this)
-    }
-
-    componentDidMount(){
-        this.validateForm()
     }
 
     handleChange(event) {
@@ -37,46 +26,9 @@ class SosModelConfigForm extends Component {
         const value = target.type === 'checkbox' ? target.checked : target.value
         const name = target.name
 
-        this.validateForm()
-
         this.setState({
             selectedSosModel: update(this.state.selectedSosModel, {[name]: {$set: value}})
         })
-    }
-
-    handleDelete(config) {
-        const {deletePopupType} = this.state
-
-        switch(deletePopupType) {
-        case 'dependency':
-            this.state.selectedSosModel.dependencies.splice(config, 1)
-        }
-
-        this.closeDeletePopup()
-    }
-
-    validateForm() {
-        const {selectedSosModel} = this.state
-
-        if (Object.keys(selectedSosModel).length > 0) {
-
-            // Check for dependencies that contain sector models or scenario sets that are not configured
-            let illegalDependencies = []
-
-            for (let i = 0; i < selectedSosModel.dependencies.length; i++) {
-                if ((selectedSosModel.sector_models.includes(selectedSosModel.dependencies[i].sink_model) || selectedSosModel.scenario_sets.includes(selectedSosModel.dependencies[i].sink_model)) &&
-                    (selectedSosModel.sector_models.includes(selectedSosModel.dependencies[i].source_model) || selectedSosModel.scenario_sets.includes(selectedSosModel.dependencies[i].source_model))) {
-                    illegalDependencies[i] = false
-                } else {
-                    illegalDependencies[i] = true
-                }
-            }
-
-            this.setState({
-                dependencyWarning: illegalDependencies
-            })
-        }
-
     }
 
     handleSave() {
@@ -87,124 +39,252 @@ class SosModelConfigForm extends Component {
         this.props.cancelSosModel()
     }
 
-    openDeletePopup(event) {
-        this.setState({
-            deletePopupIsOpen: true,
-            deletePopupConfigName: event.target.value,
-            deletePopupType: event.target.name,
-        })
-    }
-
-    closeDeletePopup() {
-        this.setState({deletePopupIsOpen: false})
-    }
-
     render() {
-        const {sectorModels, scenarioSets, narrativeSets} = this.props
         const {selectedSosModel} = this.state
 
-        // Get dependencies, give an index as name
-        let dependencies = []
-        if (selectedSosModel.dependencies != undefined) {
-            for (let i = 0; i < selectedSosModel.dependencies.length; i++) {
-                dependencies.push({
-                    name: i,
-                    sink_model: selectedSosModel.dependencies[i].sink_model,
-                    sink_model_input: selectedSosModel.dependencies[i].sink_model_input,
-                    source_model: selectedSosModel.dependencies[i].source_model,
-                    source_model_output: selectedSosModel.dependencies[i].source_model_output
+        let errors = {}
+        if (this.props.error.SmifDataInputError != undefined) {
+            errors = this.props.error.SmifDataInputError.reduce(function(map, obj) {
+                if (!(obj.component in map)) {
+                    map[obj.component] = []
+                }
+                map[obj.component].push({
+                    'error': obj.error,
+                    'message': obj.message
                 })
-            }
+                return map
+            }, {})
         }
-
+        
         return (
             <div>
-                <form>
-                    <div className="card">
-                        <div className="card-header">General</div>
-                        <div className="card-body">
+                <div className="card">
+                    <div className="card-header">General</div>
+                    <div className="card-body">
 
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Name</label>
-                                <div className="col-sm-10">
-                                    <input id="sos_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModel.name} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Description</label>
-                                <div className="col-sm-10">
-                                    <textarea id="sos_model_description" className="form-control" name="description" rows="5" defaultValue={selectedSosModel.description} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div className="card">
-                        <div className="card-header">Settings</div>
-                        <div className="card-body">
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Sector Models</label>
-                                <div className="col-sm-10">
-                                    <PropertySelector name="sector_models" activeProperties={selectedSosModel.sector_models} availableProperties={sectorModels} onChange={this.handleChange} />
-                                </div>
-                            </div>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Scenario Sets</label>
-                                <div className="col-sm-10">
-                                    <PropertySelector name="scenario_sets" activeProperties={selectedSosModel.scenario_sets} availableProperties={scenarioSets} onChange={this.handleChange} />
-                                </div>
-                            </div>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Narrative Sets</label>
-                                <div className="col-sm-10">
-                                    <PropertySelector name="narrative_sets" activeProperties={selectedSosModel.narrative_sets} availableProperties={narrativeSets} onChange={this.handleChange} />
-                                </div>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Name</label>
+                            <div className="col-sm-10">
+                                <input id="sos_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModel.name} onChange={this.handleChange}/>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="card">
-                        <div className="card-header">Dependencies</div>
-                        <div className="card-body">
-                            <PropertyList itemsName="dependency" items={dependencies} columns={{source_model: 'Source', source_model_output: 'Output', sink_model: 'Sink', sink_model_input: 'Input'}} enableWarnings={true} rowWarning={this.state.dependencyWarning} editButton={false} deleteButton={true} onDelete={this.openDeletePopup} />
-                            <DependencySelector sectorModels={sectorModels} scenarioSets={scenarioSets} dependencies={selectedSosModel.dependencies} selectedSectorModels={selectedSosModel.sector_models} selectedScenarioSets={selectedSosModel.scenario_sets} onChange={this.handleChange}/>
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Description</label>
+                            <div className="col-sm-10">
+                                <textarea id="sos_model_description" 
+                                    className={
+                                        'description' in errors
+                                            ? 'form-control is-invalid'   
+                                            : 'form-control'
+                                    }
+                                    name="description" 
+                                    rows="5" 
+                                    defaultValue={selectedSosModel.description} 
+                                    onChange={this.handleChange}/>
+                                
+                                {   
+                                    'description' in errors
+                                        ? (
+                                            <div className="invalid-feedback">
+                                                {
+                                                    errors['description'].map((exception, idx) => (
+                                                        <div key={'feedback_description_' + idx}>
+                                                            {exception.error + ' ' + exception.message}
+                                                        </div>
+                                                        
+                                                    ))
+                                                }
+                                            </div>)
+                                        : ''
+                                }
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">Settings</div>
+                    <div className="card-body">
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Sector Models</label>
+                            <div className="col-sm-10">
+                                <PropertySelector 
+                                    name="sector_models" 
+                                    activeProperties={selectedSosModel.sector_models} 
+                                    availableProperties={this.props.sector_models} 
+                                    onChange={this.handleChange} />
+                                {   
+                                    'sector_models' in errors
+                                        ? (
+                                            <div className="invalid-feedback">
+                                                {
+                                                    errors['sector_models'].map((exception, idx) => (
+                                                        <div key={'feedback_sector_models_' + idx}>
+                                                            {exception.error + ' ' + exception.message}
+                                                        </div>
+                                                        
+                                                    ))
+                                                }
+                                            </div>)
+                                        : ''
+                                }
+                            </div>
+                        </div>
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">Scenarios</label>
+                            <div className="col-sm-10">
+                                <PropertySelector 
+                                    name="scenarios" 
+                                    activeProperties={selectedSosModel.scenarios} 
+                                    availableProperties={this.props.scenarios} 
+                                    onChange={this.handleChange} />
+                                {   
+                                    'scenarios' in errors
+                                        ? (
+                                            <div className="invalid-feedback">
+                                                {
+                                                    errors['scenarios'].map((exception, idx) => (
+                                                        <div key={'feedback_scenarios_' + idx}>
+                                                            {exception.error + ' ' + exception.message}
+                                                        </div>
+                                                        
+                                                    ))
+                                                }
+                                            </div>)
+                                        : ''
+                                }
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <div className="card">
-                        <div className="card-header">Iteration Settings</div>
-                        <div className="card-body">
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Maximum Iterations</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" name="max_iterations" type="number" min="1" defaultValue={selectedSosModel.max_iterations} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Absolute Convergence Tolerance</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" name="convergence_absolute_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_absolute_tolerance} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-                            <div className="form-group row">
-                                <label className="col-sm-2 col-form-label">Relative Convergence Tolerance</label>
-                                <div className="col-sm-10">
-                                    <input className="form-control" name="convergence_relative_tolerance" type="number" step="0.00000001" min="0.00000001" defaultValue={selectedSosModel.convergence_relative_tolerance} onChange={this.handleChange}/>
-                                </div>
-                            </div>
-                        </div>
+                <div className="card">
+                    <div className="card-header">Model Dependencies</div>
+                    <div className="card-body">
+  
+                        <DependencyList 
+                            name="Model Dependency" 
+                            dependencies={this.state.selectedSosModel.model_dependencies} 
+                            source={
+                                this.props.sector_models.filter(
+                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                )
+                            }
+                            source_output={
+                                this.props.sector_models.reduce(function(obj, item) {
+                                    obj[item.name] = item.outputs
+                                    return obj}, {}
+                                )
+                            }
+                            sink={
+                                this.props.sector_models.filter(
+                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                )
+                            }
+                            sink_input={
+                                this.props.sector_models.reduce(function(obj, item) {
+                                    obj[item.name] = item.inputs
+                                    return obj}, {}
+                                )
+                            } 
+                        />
+                        {   
+                            'model_dependencies' in errors
+                                ? (
+                                    <div className="invalid-feedback">
+                                        {
+                                            errors['model_dependencies'].map((exception, idx) => (
+                                                <div key={'feedback_model_dependencies_' + idx}>
+                                                    {exception.error + ' ' + exception.message}
+                                                </div>
+                                                
+                                            ))
+                                        }
+                                    </div>)
+                                : ''
+                        }
                     </div>
-                </form>
+                </div>
 
-                <Popup name='popup_dependency_selector' onRequestOpen={this.state.deletePopupIsOpen}>
-                    <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
-                </Popup>
+                <div className="card">
+                    <div className="card-header">Scenario Dependencies</div>
+                    <div className="card-body">
+
+                        <DependencyList 
+                            name="Scenario Dependency" 
+                            dependencies={this.state.selectedSosModel.scenario_dependencies} 
+                            source={
+                                this.props.scenarios.filter(
+                                    scenario => this.state.selectedSosModel.scenarios.includes(scenario.name)
+                                )
+                            } 
+                            source_output={
+                                this.props.scenarios.reduce(function(obj, item) {
+                                    obj[item.name] = item.provides
+                                    return obj}, {}
+                                )
+                            }
+                            sink={
+                                this.props.sector_models.filter(
+                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                )
+                            }
+                            sink_input={
+                                this.props.sector_models.reduce(function(obj, item) {
+                                    obj[item.name] = item.inputs
+                                    return obj}, {}
+                                )
+                            } 
+                        />
+                        {   
+                            'scenario_dependencies' in errors
+                                ? (
+                                    <div className="invalid-feedback">
+                                        {
+                                            errors['scenario_dependencies'].map((exception, idx) => (
+                                                <div key={'feedback_scenario_dependencies_' + idx}>
+                                                    {exception.error + ' ' + exception.message}
+                                                </div>
+                                                
+                                            ))
+                                        }
+                                    </div>)
+                                : ''
+                        }
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">Narratives</div>
+                    <div className="card-body">
+                        <NarrativeList 
+                            name="Narrative" 
+                            narratives={selectedSosModel.narratives}
+                            sector_models={this.props.sector_models.filter(
+                                sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                            )} />
+                        {   
+                            'narratives' in errors
+                                ? (
+                                    <div className="invalid-feedback">
+                                        {
+                                            errors['narratives'].map((exception, idx) => (
+                                                <div key={'feedback_narratives_' + idx}>
+                                                    {exception.error + ' ' + exception.message}
+                                                </div>
+                                                        
+                                            ))
+                                        }
+                                    </div>)
+                                : ''
+                        }
+                    </div>
+                   
+                </div>
 
                 <SaveButton onClick={this.handleSave} />
                 <CancelButton onClick={this.handleCancel} />
@@ -216,10 +296,10 @@ class SosModelConfigForm extends Component {
 }
 
 SosModelConfigForm.propTypes = {
-    sosModel: PropTypes.object.isRequired,
-    sectorModels: PropTypes.array.isRequired,
-    scenarioSets: PropTypes.array.isRequired,
-    narrativeSets: PropTypes.array.isRequired,
+    sos_model: PropTypes.object.isRequired,
+    sector_models: PropTypes.array.isRequired,
+    scenarios: PropTypes.array.isRequired,
+    error: PropTypes.object.isRequired,
     saveSosModel: PropTypes.func,
     cancelSosModel: PropTypes.func
 }

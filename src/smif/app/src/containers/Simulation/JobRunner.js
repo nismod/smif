@@ -6,8 +6,8 @@ import Stepper from 'components/Simulation/Stepper'
 import ConsoleDisplay from 'components/Simulation/ConsoleDisplay'
 import JobRunControls from 'components/Simulation/JobRunControls'
 import {CreateButton, DangerButton, SaveButton} from 'components/ConfigForm/General/Buttons'
-import {fetchSosModelRun, fetchSosModelRunStatus, startSosModelRun, killSosModelRun, saveSosModelRun} from 'actions/actions.js'
-import {SosModelRunSummary} from 'components/Simulation/ConfigSummary'
+import {fetchModelRun, fetchModelRunStatus, startModelRun, killModelRun, saveModelRun} from 'actions/actions.js'
+import {ModelRunSummary} from 'components/Simulation/ConfigSummary'
 
 
 class JobRunner extends Component {
@@ -15,7 +15,7 @@ class JobRunner extends Component {
         super(props)
         this.init = true
 
-        this.saveSosModelRun = this.saveSosModelRun.bind(this)
+        this.saveModelRun = this.saveModelRun.bind(this)
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
 
         this.modelrun_name = this.props.match.params.name
@@ -28,8 +28,8 @@ class JobRunner extends Component {
     componentDidMount() {
         const { dispatch } = this.props
 
-        dispatch(fetchSosModelRun(this.modelrun_name))
-        dispatch(fetchSosModelRunStatus(this.modelrun_name))
+        dispatch(fetchModelRun(this.modelrun_name))
+        dispatch(fetchModelRunStatus(this.modelrun_name))
 
         this.setRenderInterval(5000)
     }
@@ -42,7 +42,7 @@ class JobRunner extends Component {
         const { dispatch } = this.props
         if (this.modelrun_name != this.props.match.params.name) {
             this.modelrun_name = this.props.match.params.name
-            dispatch(fetchSosModelRun(this.modelrun_name))
+            dispatch(fetchModelRun(this.modelrun_name))
         }
     }
 
@@ -52,33 +52,33 @@ class JobRunner extends Component {
             this.render_interval = interval
             clearInterval(this.interval)
             if (interval > 0) {
-                this.interval = setInterval(() => dispatch(fetchSosModelRunStatus(this.modelrun_name)), this.render_interval)
+                this.interval = setInterval(() => dispatch(fetchModelRunStatus(this.modelrun_name)), this.render_interval)
             }
         }
     }
 
     startJob(modelrun_name) {
         const { dispatch } = this.props
-        this.outstanding_request_from = this.props.sos_model_run_status.status
-        dispatch(startSosModelRun(modelrun_name, 
+        this.outstanding_request_from = this.props.model_run_status.status
+        dispatch(startModelRun(modelrun_name, 
             {
                 verbosity: this.controls.state.verbosity, 
                 warm_start: this.controls.state.warm_start,
                 output_format: this.controls.state.output_format
             }))
-        dispatch(fetchSosModelRunStatus(this.modelrun_name))
+        dispatch(fetchModelRunStatus(this.modelrun_name))
     }
 
     stopJob(modelrun_name) {
         const { dispatch } = this.props
-        this.outstanding_request_from = this.props.sos_model_run_status.status
-        dispatch(killSosModelRun(modelrun_name))
-        dispatch(fetchSosModelRunStatus(this.modelrun_name))
+        this.outstanding_request_from = this.props.model_run_status.status
+        dispatch(killModelRun(modelrun_name))
+        dispatch(fetchModelRunStatus(this.modelrun_name))
     }
 
-    saveSosModelRun(sosModelRun) {
+    saveModelRun(ModelRun) {
         const { dispatch } = this.props
-        dispatch(saveSosModelRun(sosModelRun))
+        dispatch(saveModelRun(ModelRun))
         this.returnToPreviousPage()
     }
 
@@ -102,7 +102,7 @@ class JobRunner extends Component {
         )
     }
 
-    renderJobRunner(sos_model_run, sos_model_run_status) {
+    renderJobRunner(model_run, model_run_status) {
 
         var controls = []
 
@@ -113,39 +113,39 @@ class JobRunner extends Component {
         )
 
         // Reset the outstanding request local property when state changes
-        if (this.outstanding_request_from != sos_model_run_status.status) {
+        if (this.outstanding_request_from != model_run_status.status) {
             this.outstanding_request_from = null
         }
 
-        switch (sos_model_run_status.status) {
+        switch (model_run_status.status) {
         case 'unstarted':
-            controls.push(<CreateButton value='Start Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
-            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
+            controls.push(<CreateButton value='Start Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
+            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'queing':
-            controls.push(<DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>)
+            controls.push(<DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(model_run.name)}}/>)
             this.setRenderInterval(100)
             break
         case 'running':
-            controls.push(<DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(sos_model_run.name)}}/>)
+            controls.push(<DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(model_run.name)}}/>)
             this.setRenderInterval(100)
             break
         case 'stopped':
-            controls.push(<SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
-            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
+            controls.push(<SaveButton value='Retry Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
+            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'done':
-            controls.push(<CreateButton value='Restart Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
-            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
+            controls.push(<CreateButton value='Restart Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
+            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'failed':
-            controls.push(<SaveButton value='Retry Modelrun' onClick={() => {this.startJob(sos_model_run.name)}}/>)
-            this.outstanding_request_from == sos_model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
+            controls.push(<SaveButton value='Retry Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
+            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         }
 
         var console_output = null
-        if (sos_model_run_status.status == 'running' || sos_model_run_status.status == 'stopped' || sos_model_run_status.status == 'done' || sos_model_run_status.status == 'failed') {
+        if (model_run_status.status == 'running' || model_run_status.status == 'stopped' || model_run_status.status == 'done' || model_run_status.status == 'failed') {
             console_output = (
                 <div className="row">
                     <div className="col-sm">
@@ -154,7 +154,7 @@ class JobRunner extends Component {
                                 Console Output
                             </div>
                             <div className="card-body">
-                                <ConsoleDisplay name={sos_model_run.name} output={sos_model_run_status.output} status={sos_model_run_status.status}/>
+                                <ConsoleDisplay name={model_run.name} output={model_run_status.output} status={model_run_status.status}/>
                             </div>
                         </div>
                     </div>
@@ -163,15 +163,15 @@ class JobRunner extends Component {
         }
 
         return (
-            <div key={'sosModelRun_' + sos_model_run.name}>
+            <div key={'ModelRun_' + model_run.name}>
                 <div className="row">
                     <div className="col-sm">
                         <div className="card">
                             <div className="card-header">
-                                <Stepper status={sos_model_run_status.status}/>
+                                <Stepper status={model_run_status.status}/>
                             </div>
                             <div className="card-body">
-                                <SosModelRunSummary sosModelRun={sos_model_run} />
+                                <ModelRunSummary ModelRun={model_run} />
                             </div>
                         </div>
                     </div>
@@ -196,23 +196,22 @@ class JobRunner extends Component {
     }
 
     render () {
-        const {sos_model_run, sos_model_run_status, isFetching} = this.props
+        const {model_run, model_run_status, isFetching} = this.props
 
         if (isFetching && this.init) {
             return this.renderLoading()
         } else {
             this.init = false
-            return this.renderJobRunner(sos_model_run, sos_model_run_status)
+            return this.renderJobRunner(model_run, model_run_status)
         }
     }
 }
 
 JobRunner.propTypes = {
-    sos_model_run: PropTypes.object.isRequired,
-    sos_model_run_status: PropTypes.object.isRequired,
+    model_run: PropTypes.object.isRequired,
+    model_run_status: PropTypes.object.isRequired,
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
-    narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
@@ -221,17 +220,15 @@ JobRunner.propTypes = {
 
 function mapStateToProps(state) {
     return {
-        sos_model_run: state.sos_model_run.item,
-        sos_model_run_status: state.sos_model_run_status.item,
+        model_run: state.model_run.item,
+        model_run_status: state.model_run_status.item,
         sos_models: state.sos_models.items,
         scenarios: state.scenarios.items,
-        narratives: state.narratives.items,
         isFetching: (
-            state.sos_model_run.isFetching ||
-            state.sos_model_run_status.isFetching ||
+            state.model_run.isFetching ||
+            state.model_run_status.isFetching ||
             state.sos_models.isFetching ||
-            state.scenarios.isFetching ||
-            state.narratives.isFetching
+            state.scenarios.isFetching
         )
     }
 }

@@ -3,9 +3,9 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
-import { fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives } from 'actions/actions.js'
-import { createSosModelRun, createSosModel, createSectorModel, createScenarioSet, createNarrativeSet, createNarrative } from 'actions/actions.js'
-import { deleteSosModelRun, deleteSosModel, deleteSectorModel, deleteScenarioSet, deleteNarrativeSet, deleteNarrative } from 'actions/actions.js'
+import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios } from 'actions/actions.js'
+import { createModelRun, createSosModel, createSectorModel, createScenario } from 'actions/actions.js'
+import { deleteModelRun, deleteSosModel, deleteSectorModel, deleteScenario } from 'actions/actions.js'
 
 import IntroBlock from 'components/ConfigForm/General/IntroBlock.js'
 import Popup from 'components/ConfigForm/General/Popup.js'
@@ -41,13 +41,10 @@ class ProjectOverview extends Component {
     componentDidMount () {
         const { dispatch } = this.props
 
-        dispatch(fetchSosModelRuns())
+        dispatch(fetchModelRuns())
         dispatch(fetchSosModels())
         dispatch(fetchSectorModels())
-        dispatch(fetchScenarioSets())
         dispatch(fetchScenarios())
-        dispatch(fetchNarrativeSets())
-        dispatch(fetchNarratives())
     }
 
     handleInputChange(event) {
@@ -77,8 +74,8 @@ class ProjectOverview extends Component {
         this.closeCreatePopup(createPopupType)
 
         switch(createPopupType) {
-        case 'SosModelRun':
-            dispatch(createSosModelRun(
+        case 'ModelRun':
+            dispatch(createModelRun(
                 {
                     'name': config.name,
                     'description': config.description,
@@ -97,12 +94,10 @@ class ProjectOverview extends Component {
                     'name': config.name,
                     'description': config.description,
                     'sector_models': [],
-                    'narrative_sets': [],
-                    'scenario_sets': [],
-                    'dependencies': [],
-                    'max_iterations': 1,
-                    'convergence_absolute_tolerance': '1e-05',
-                    'convergence_relative_tolerance': '1e-05'
+                    'narratives': [],
+                    'scenarios': [],
+                    'scenario_dependencies': [],
+                    'model_dependencies': []
                 }
             ))
             break
@@ -121,30 +116,13 @@ class ProjectOverview extends Component {
                 }
             ))
             break
-        case 'ScenarioSet':
-            dispatch(createScenarioSet(
-                {
-                    'name':  config.name,
-                    'description': config.description,
-                    'facets': []
-                }
-            ))
-            break
-        case 'NarrativeSet':
-            dispatch(createNarrativeSet(
+        case 'Scenario':
+            dispatch(createScenario(
                 {
                     'name': config.name,
                     'description': config.description,
-                }
-            ))
-            break
-        case 'Narrative':
-            dispatch(createNarrative(
-                {
-                    'name': config.name,
-                    'description': config.description,
-                    'narrative_set': '',
-                    'filename': ''
+                    'provides': [],
+                    'variants': []
                 }
             ))
             break
@@ -161,19 +139,19 @@ class ProjectOverview extends Component {
 
         switch(event.target.name) {
         case 'SosModel':
-            this.props.sos_model_runs.forEach(function(sos_model_run) {
+            this.props.model_runs.forEach(function(sos_model_run) {
                 if (sos_model_run.sos_model == event.target.value) {
                     target_in_use_by.push({
                         name: sos_model_run.name,
                         link: '/configure/sos-model-run/',
-                        type: 'SosModelRun'
+                        type: 'ModelRun'
                     })
                 }
             })
             break
 
         case 'SectorModel':
-            this.props.sos_models.forEach(function(sos_model) {
+            this.props.sos_models.items.forEach(function(sos_model) {
 
                 sos_model.sector_models.forEach(function(sector_model) {
                     if (sector_model == event.target.value) {
@@ -187,68 +165,27 @@ class ProjectOverview extends Component {
             })
             break
 
-        case 'ScenarioSet':
-            this.props.sos_models.forEach(function(sos_model) {
-
-                sos_model.scenario_sets.forEach(function(scenario_set) {
-                    if (scenario_set == event.target.value) {
+        case 'Scenario':
+            this.props.model_runs.forEach(function(sos_model_run) {
+                Object.keys(sos_model_run.scenarios).forEach(function(scenario) {
+                    if (scenario == event.target.value) {
+                        target_in_use_by.push({
+                            name: sos_model_run.name,
+                            link: '/configure/sos-model-run/',
+                            type: 'ModelRun'
+                        })
+                    }
+                })
+            })
+            this.props.sos_models.items.forEach(function(sos_model) {
+                sos_model.scenarios.forEach(function(scenario) {
+                    if (scenario == event.target.value) {
                         target_in_use_by.push({
                             name: sos_model.name,
                             link: '/configure/sos-models/',
                             type: 'SosModel'
                         })
                     }
-                })
-
-                sos_model.dependencies.forEach(function(dependency) {
-                    if (dependency.source_model == event.target.value) {
-                        target_in_use_by.push({
-                            name: sos_model.name,
-                            link: '/configure/sos-models/',
-                            type: 'SosModel'
-                        })
-                    }
-                })
-            })
-            break
-
-        case 'NarrativeSet':
-            this.props.sos_models.forEach(function(sos_model) {
-
-                sos_model.narrative_sets.forEach(function(narrative_set) {
-                    if (narrative_set == event.target.value) {
-                        target_in_use_by.push({
-                            name: sos_model.name,
-                            link: '/configure/sos-models/',
-                            type: 'SosModel'
-                        })
-                    }
-                })
-            })
-
-            this.props.narratives.forEach(function(narrative) {
-                if (narrative.narrative_set == event.target.value) {
-                    target_in_use_by.push({
-                        name: narrative.name,
-                        link: '/configure/narratives/',
-                        type: 'Narrative'
-                    })
-                }
-            })
-            break
-
-        case 'Narrative':
-            this.props.sos_model_runs.forEach(function(sos_model_run) {
-                Object.keys(sos_model_run.narratives).forEach(function(narrative_sets) {
-                    sos_model_run.narratives[narrative_sets].forEach(function(narrative) {
-                        if (narrative == event.target.value) {
-                            target_in_use_by.push({
-                                name: sos_model_run.name,
-                                link: '/configure/sos-model-run/',
-                                type: 'SosModelRun'
-                            })
-                        }
-                    })
                 })
             })
             break
@@ -270,8 +207,8 @@ class ProjectOverview extends Component {
         this.closeDeletePopup(deletePopupType)
 
         switch(deletePopupType) {
-        case 'SosModelRun':
-            dispatch(deleteSosModelRun(deletePopupConfigName))
+        case 'ModelRun':
+            dispatch(deleteModelRun(deletePopupConfigName))
             break
         case 'SosModel':
             dispatch(deleteSosModel(deletePopupConfigName))
@@ -279,14 +216,8 @@ class ProjectOverview extends Component {
         case 'SectorModel':
             dispatch(deleteSectorModel(deletePopupConfigName))
             break
-        case 'ScenarioSet':
-            dispatch(deleteScenarioSet(deletePopupConfigName))
-            break
-        case 'NarrativeSet':
-            dispatch(deleteNarrativeSet(deletePopupConfigName))
-            break
-        case 'Narrative':
-            dispatch(deleteNarrative(deletePopupConfigName))
+        case 'Scenario':
+            dispatch(deleteScenario(deletePopupConfigName))
             break
         }
     }
@@ -296,8 +227,8 @@ class ProjectOverview extends Component {
     }
 
     collectIdentifiers() {
-        const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching } = this.props
-        let types = [sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives, isFetching]
+        const { model_runs, sos_models, sector_models, scenarios, isFetching } = this.props
+        let types = [model_runs, sos_models, sector_models, scenarios, isFetching]
 
         let identifiers = []
 
@@ -313,7 +244,7 @@ class ProjectOverview extends Component {
     }
 
     render () {
-        const { sos_model_runs, sos_models, sector_models, scenario_sets, narrative_sets, narratives, isFetching } = this.props
+        const { model_runs, sos_models, sector_models, scenarios, isFetching } = this.props
         const { name } = this.props.match.params
 
         let used_identifiers = this.collectIdentifiers()
@@ -329,18 +260,25 @@ class ProjectOverview extends Component {
                 </div>
 
                 <div hidden={ isFetching }>
-                    <div hidden={name!='sos-model-run'}>
+                    <div hidden={name!='model-runs'}>
                         <IntroBlock title="Model Runs" intro="A model run brings together a system-of-systems model definition with timesteps over which planning takes place, and a choice of scenarios and narratives to population the placeholder scenario sets in the system-of-systems model.">
-                            <input className="btn btn-success btn-margin" name="SosModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
+                            <input className="btn btn-success btn-margin" name="ModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                         </IntroBlock>
-                        <ProjectOverviewItem itemname="SosModelRun" items={sos_model_runs} itemLink="/configure/sos-model-run/" resultLink="/jobs/runner/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem itemname="ModelRun" items={model_runs} itemLink="/configure/model-runs/" resultLink="/jobs/runner/" onDelete={this.openDeletePopup} />
                     </div>
 
                     <div hidden={name!='sos-models'}>
                         <IntroBlock title="System-of-Systems Models" intro="A system-of-systems model collects together scenario sets and simulation models. Users define dependencies between scenario and simulation models.">
                             <input className="btn btn-success btn-margin" name="SosModel" type="button" value="Create a new System-of-Systems Model" onClick={this.openCreatePopup}/>
                         </IntroBlock>
-                        <ProjectOverviewItem itemname="SosModel" items={sos_models} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
+                        {
+                            ('SmifValidationError' in sos_models.error)
+                                ? 
+                                <div className="alert alert-danger">
+                                    {sos_models.error['SmifValidationError'].map(error => error)}
+                                </div>
+                                : <ProjectOverviewItem itemname="SosModel" items={sos_models.items} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
+                        }
                     </div>
 
                     <div hidden={name!='sector-models'}>
@@ -350,34 +288,20 @@ class ProjectOverview extends Component {
                         <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
                     </div>
 
-                    <div hidden={name!='scenario-set'}>
-                        <IntroBlock title="Scenario Sets" intro="Scenarios allows to define static sources for simulation model dependencies. Scenario sets are the categories in which scenario data are organised.">
-                            <input className="btn btn-success btn-margin" name="ScenarioSet" type="button" value="Create a new Scenario Set" onClick={this.openCreatePopup}/>
+                    <div hidden={name!='scenarios'}>
+                        <IntroBlock title="Scenarios" intro="Scenarios are configurations that target the files which contain scenario data">
+                            <input className="btn btn-success btn-margin" name="Scenario" type="button" value="Add a new Scenario" onClick={this.openCreatePopup}/>
                         </IntroBlock>
-                        <ProjectOverviewItem itemname="ScenarioSet" items={scenario_sets} itemLink="/configure/scenario-set/" onDelete={this.openDeletePopup} />
-                    </div>
-
-                    <div hidden={name!='narrative-set'}>
-                        <IntroBlock title="Narrative Sets" intro="Narrative sets are the categories in which narrative data are organised.">
-                            <input className="btn btn-success btn-margin" name="NarrativeSet" type="button" value="Create a new Narrative Set" onClick={this.openCreatePopup}/>
-                        </IntroBlock>
-                        <ProjectOverviewItem itemname="NarrativeSet" items={narrative_sets} itemLink="/configure/narrative-set/" onDelete={this.openDeletePopup} />
-                    </div>
-
-                    <div hidden={name!='narrative-set'}>
-                        <IntroBlock title="Narratives" intro="Narratives are configurations that target the files which contain narrative data">
-                            <input className="btn btn-success btn-margin" name="Narrative" type="button" value="Add a new Narrative" onClick={this.openCreatePopup}/>
-                        </IntroBlock>
-                        <ProjectOverviewItem itemname="Narrative" items={narratives} itemLink="/configure/narratives/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem itemname="Scenario" items={scenarios} itemLink="/configure/scenarios/" onDelete={this.openDeletePopup} />
                     </div>
 
                     {/* Popup for Create */}
-                    <Popup onRequestOpen={this.state.createPopupIsOpen}>
+                    <Popup name='popup_create' onRequestOpen={this.state.createPopupIsOpen}>
                         <CreateConfigForm config_type={this.state.createPopupType} existing_names={used_identifiers} submit={this.handleCreate} cancel={this.closeCreatePopup}/>
                     </Popup>
 
                     {/* Popup for Delete */}
-                    <Popup onRequestOpen={this.state.deletePopupIsOpen}>
+                    <Popup name='popup_delete' onRequestOpen={this.state.deletePopupIsOpen}>
                         <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
                     </Popup>
                 </div>
@@ -387,29 +311,23 @@ class ProjectOverview extends Component {
 }
 
 ProjectOverview.propTypes = {
-    sos_model_runs: PropTypes.array.isRequired,
-    sos_models: PropTypes.array.isRequired,
+    model_runs: PropTypes.array.isRequired,
+    sos_models: PropTypes.object.isRequired,
     sector_models: PropTypes.array.isRequired,
-    scenario_sets: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
-    narrative_sets: PropTypes.array.isRequired,
-    narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     match: PropTypes.object.isRequired,
     dispatch: PropTypes.func.isRequired
 }
 
 function mapStateToProps(state) {
-    const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives } = state
+    const { model_runs, sos_models, sector_models, scenarios } = state
 
     return {
-        sos_model_runs: sos_model_runs.items,
-        sos_models: sos_models.items,
+        model_runs: model_runs.items,
+        sos_models: sos_models,
         sector_models: sector_models.items,
-        scenario_sets: scenario_sets.items,
         scenarios: scenarios.items,
-        narrative_sets: narrative_sets.items,
-        narratives: narratives.items,
         isFetching: false
     }
 }

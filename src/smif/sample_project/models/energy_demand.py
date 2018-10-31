@@ -17,12 +17,9 @@ class EDMWrapper(SectorModel):
 
         # State
 
-        state = data.get_state()
+        current_interventions = data.get_current_interventions()
 
-        current_interventions = self.get_current_interventions(state)
-
-        print("Current state of {} is {}".format(self.name, state))
-        print("Current interventions: {}".format(current_interventions))
+        print("Current interventions: {}".format(current_interventions.keys()))
 
         # Demonstrates how to get the value for a model parameter
         parameter_value = data.get_parameter('smart_meter_savings')
@@ -52,20 +49,16 @@ class EDMWrapper(SectorModel):
         # Pretend to call the 'energy model'
         # This code prints out debug logging messages for each input
         # defined in the energy_demand configuration
-        for name in self.inputs.names:
-            time_intervals = self.inputs[name].get_interval_names()
-            regions = self.inputs[name].get_region_names()
-            for i, region in enumerate(regions):
-                for j, interval in enumerate(time_intervals):
-                    self.logger.info(
-                        "%s %s %s",
-                        interval,
-                        region,
-                        data.get_data(name)[i, j])
+        for name in self.inputs:
+            self.logger.info(
+                "Read %s for %s",
+                data.get_data(name),
+                name
+            )
 
         # Write pretend results to data handler
-        data.set_results("cost", np.ones((3, 1)) * 3)
-        data.set_results("water_demand", np.ones((3, 1)) * 3)
+        data.set_results("cost", np.ones((3, )) * 3)
+        data.set_results("water_demand", np.ones((3, )) * 3)
 
         self.logger.info("EDMWrapper produced outputs in %s",
                          now)

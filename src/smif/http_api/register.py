@@ -1,9 +1,9 @@
 from flask import jsonify, render_template
-from smif.data_layer import (DataExistsError, DataMismatchError,
-                             DataNotFoundError)
-from smif.http_api.crud import (NarrativeAPI, NarrativeSetAPI, ScenarioAPI,
-                                ScenarioSetAPI, SectorModelAPI, SmifAPI,
-                                SosModelAPI, SosModelRunAPI)
+from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
+                            SmifDataNotFoundError)
+from smif.http_api.crud import (DimensionAPI, ModelRunAPI, NarrativeAPI,
+                                ScenarioAPI, SectorModelAPI, SmifAPI,
+                                SosModelAPI)
 
 
 def register_routes(app):
@@ -23,27 +23,25 @@ def register_api_endpoints(app):
     """
     register_api(app, SmifAPI, 'smif_api', '/api/v1/smif/',
                  key='key', key_type='string')
-    register_api(app, SosModelRunAPI, 'sos_model_run_api', '/api/v1/sos_model_runs/',
-                 key='sos_model_run_name', key_type='string',
+    register_api(app, ModelRunAPI, 'model_run_api', '/api/v1/model_runs/',
+                 key='model_run_name', key_type='string',
                  action='action', action_type='string')
     register_api(app, SosModelAPI, 'sos_model_api', '/api/v1/sos_models/',
                  key='sos_model_name', key_type='string')
     register_api(app, SectorModelAPI, 'sector_model_api', '/api/v1/sector_models/',
                  key='sector_model_name', key_type='string')
-    register_api(app, ScenarioSetAPI, 'scenario_set_api', '/api/v1/scenario_sets/',
-                 key='scenario_set_name', key_type='string')
     register_api(app, ScenarioAPI, 'scenario_api', '/api/v1/scenarios/',
                  key='scenario_name', key_type='string')
-    register_api(app, NarrativeSetAPI, 'narrative_set_api', '/api/v1/narrative_sets/',
-                 key='narrative_set_name', key_type='string')
     register_api(app, NarrativeAPI, 'narrative_api', '/api/v1/narratives/',
                  key='narrative_name', key_type='string')
+    register_api(app, DimensionAPI, 'dimension_api', '/api/v1/dimensions/',
+                 key='dimension_name', key_type='string')
 
 
 def register_error_handlers(app):
     """Handle expected errors
     """
-    @app.errorhandler(DataExistsError)
+    @app.errorhandler(SmifDataExistsError)
     def handle_exists(error):
         """Return 400 Bad Request if data to be created already exists
         """
@@ -51,7 +49,7 @@ def register_error_handlers(app):
         response.status_code = 400
         return response
 
-    @app.errorhandler(DataMismatchError)
+    @app.errorhandler(SmifDataMismatchError)
     def handle_mismatch(error):
         """Return 400 Bad Request if data and id/name are mismatched
         """
@@ -59,7 +57,7 @@ def register_error_handlers(app):
         response.status_code = 400
         return response
 
-    @app.errorhandler(DataNotFoundError)
+    @app.errorhandler(SmifDataNotFoundError)
     def handle_not_found(error):
         """Return 404 if data is not found
         """

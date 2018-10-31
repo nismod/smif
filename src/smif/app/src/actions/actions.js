@@ -11,7 +11,8 @@ export const RECEIVE_SMIF_DETAILS = 'RECEIVE_SMIF_DETAILS'
 function receiveSmifDetails(json) {
     return {
         type: RECEIVE_SMIF_DETAILS,
-        smif: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -33,120 +34,123 @@ export function fetchSmifDetails(){
     }
 }
 
-export const REQUEST_SOS_MODEL_RUNS = 'REQUEST_SOS_MODEL_RUNS'
-function requestSosModelRuns(){
+export const REQUEST_MODEL_RUNS = 'REQUEST_MODEL_RUNS'
+function requestModelRuns(){
     return {
-        type: REQUEST_SOS_MODEL_RUNS
+        type: REQUEST_MODEL_RUNS
     }
 }
 
-export const RECEIVE_SOS_MODEL_RUNS = 'RECEIVE_SOS_MODEL_RUNS'
-function receiveSosModelRuns(json) {
+export const RECEIVE_MODEL_RUNS = 'RECEIVE_MODEL_RUNS'
+function receiveModelRuns(json) {
     return {
-        type: RECEIVE_SOS_MODEL_RUNS,
-        sos_model_runs: json,
+        type: RECEIVE_MODEL_RUNS,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
 
-export function fetchSosModelRuns(filter = undefined){
+export function fetchModelRuns(filter = undefined){
     return function (dispatch) {
 
         // inform the app that the API request is starting
-        dispatch(requestSosModelRuns())
+        dispatch(requestModelRuns())
 
         // make API request, returning a promise
         if (filter == undefined) {
-            return fetch('/api/v1/sos_model_runs/')
+            return fetch('/api/v1/model_runs/')
                 .then(
                     response => response.json()
                 )
                 .then(
-                    json => dispatch(receiveSosModelRuns(json))
+                    json => dispatch(receiveModelRuns(json))
                 )
         } else {
-            return fetch('/api/v1/sos_model_runs/?' + filter)
+            return fetch('/api/v1/model_runs/?' + filter)
                 .then(
                     response => response.json()
                 )
                 .then(
-                    json => dispatch(receiveSosModelRuns(json))
+                    json => dispatch(receiveModelRuns(json))
                 )
         }
     }
 }
 
-export const REQUEST_SOS_MODEL_RUN = 'REQUEST_SOS_MODEL_RUN'
-function requestSosModelRun(){
+export const REQUEST_MODEL_RUN = 'REQUEST_MODEL_RUN'
+function requestModelRun(){
     return {
-        type: REQUEST_SOS_MODEL_RUN
+        type: REQUEST_MODEL_RUN
     }
 }
 
-export const RECEIVE_SOS_MODEL_RUN = 'RECEIVE_SOS_MODEL_RUN'
-function receiveSosModelRun(json) {
+export const RECEIVE_MODEL_RUN = 'RECEIVE_MODEL_RUN'
+function receiveModelRun(json) {
     return {
-        type: RECEIVE_SOS_MODEL_RUN,
-        sos_model_run: json,
+        type: RECEIVE_MODEL_RUN,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
 
-export function fetchSosModelRun(modelrunid){
+export function fetchModelRun(modelrunid){
     return function (dispatch) {
 
         // inform the app that the API request is starting
-        dispatch(requestSosModelRun())
+        dispatch(requestModelRun())
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + modelrunid)
+        return fetch('/api/v1/model_runs/' + modelrunid)
             .then(
                 response => response.json()
             )
             .then(
-                json => dispatch(receiveSosModelRun(json))
+                json => dispatch(receiveModelRun(json))
             )
     }
 }
 
-export const REQUEST_SOS_MODEL_RUN_STATUS = 'REQUEST_SOS_MODEL_RUN_STATUS'
-function requestSosModelRunStatus(){
+export const REQUEST_MODEL_RUN_STATUS = 'REQUEST_MODEL_RUN_STATUS'
+function requestModelRunStatus(){
     return {
-        type: REQUEST_SOS_MODEL_RUN_STATUS
+        type: REQUEST_MODEL_RUN_STATUS
     }
 }
 
-export const RECEIVE_SOS_MODEL_RUN_STATUS = 'RECEIVE_SOS_MODEL_RUN_STATUS'
-function receiveSosModelRunStatus(json) {
+export const RECEIVE_MODEL_RUN_STATUS = 'RECEIVE_MODEL_RUN_STATUS'
+function receiveModelRunStatus(json) {
     return {
-        type: RECEIVE_SOS_MODEL_RUN_STATUS,
-        sos_model_run_status: json,
+        type: RECEIVE_MODEL_RUN_STATUS,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
 
-export function fetchSosModelRunStatus(modelrunid){
+export function fetchModelRunStatus(modelrunid){
     return function (dispatch) {
 
         // inform the app that the API request is starting
-        dispatch(requestSosModelRunStatus())
+        dispatch(requestModelRunStatus())
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + modelrunid + '/status')
+        return fetch('/api/v1/model_runs/' + modelrunid + '/status')
             .then(
                 response => response.json()
             )
             .then(
-                json => dispatch(receiveSosModelRunStatus(json))
+                json => dispatch(receiveModelRunStatus(json))
             )
     }
 }
 
-export function saveSosModelRun(modelrun){
+export function saveModelRun(modelrun){
     return function () {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + modelrun.name, {
+        return fetch('/api/v1/model_runs/' + modelrun.name, {
             method: 'put',
             body: JSON.stringify(modelrun),
 
@@ -160,13 +164,13 @@ export function saveSosModelRun(modelrun){
     }
 }
 
-export function createSosModelRun(sosModelRun){
+export function createModelRun(ModelRun){
     return function (dispatch) {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/', {
+        return fetch('/api/v1/model_runs/', {
             method: 'post',
-            body: JSON.stringify(sosModelRun),
+            body: JSON.stringify(ModelRun),
 
             headers: {
                 'Content-Type': 'application/json'
@@ -175,17 +179,17 @@ export function createSosModelRun(sosModelRun){
             .then(
                 function() {
                     response => response.json()
-                    dispatch(fetchSosModelRuns())
+                    dispatch(fetchModelRuns())
                 }
             )
     }
 }
 
-export function deleteSosModelRun(sosModelRunName){
+export function deleteModelRun(ModelRunName){
     return function (dispatch) {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + sosModelRunName, {
+        return fetch('/api/v1/model_runs/' + ModelRunName, {
             method: 'delete',
 
             headers: {
@@ -195,17 +199,17 @@ export function deleteSosModelRun(sosModelRunName){
             .then(
                 function() {
                     response => response.json()
-                    dispatch(fetchSosModelRuns())
+                    dispatch(fetchModelRuns())
                 }
             )
     }
 }
 
-export function startSosModelRun(sosModelRunName, args){
+export function startModelRun(ModelRunName, args){
     return function () {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + sosModelRunName + '/start', {
+        return fetch('/api/v1/model_runs/' + ModelRunName + '/start', {
             method: 'post',
             body: JSON.stringify({
                 args: args
@@ -221,11 +225,11 @@ export function startSosModelRun(sosModelRunName, args){
     }
 }
 
-export function killSosModelRun(sosModelRunName){
+export function killModelRun(ModelRunName){
     return function () {
 
         // make API request, returning a promise
-        return fetch('/api/v1/sos_model_runs/' + sosModelRunName + '/kill', {
+        return fetch('/api/v1/model_runs/' + ModelRunName + '/kill', {
             method: 'post',
 
             headers: {
@@ -249,7 +253,8 @@ export const RECEIVE_SOS_MODELS = 'RECEIVE_SOS_MODELS'
 function receiveSosModels(json) {
     return {
         type: RECEIVE_SOS_MODELS,
-        sos_models: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -282,8 +287,33 @@ export const RECEIVE_SOS_MODEL = 'RECEIVE_SOS_MODEL'
 function receiveSosModel(json) {
     return {
         type: RECEIVE_SOS_MODEL,
-        sos_model: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
+    }
+}
+
+export const SEND_SOS_MODEL = 'SEND_SOS_MODEL'
+function sendSosModel(){
+    return {
+        type: SEND_SOS_MODEL
+    }
+}
+
+export const REJECT_SOS_MODEL = 'REJECT_SOS_MODEL'
+function rejectSosModel(json){
+    return {
+        type: REJECT_SOS_MODEL,
+        data: json['data'],
+        error: json['error']
+    }
+}
+
+export const ACCEPT_SOS_MODEL = 'ACCEPT_SOS_MODEL'
+export function acceptSosModel(){
+    return {
+        type: ACCEPT_SOS_MODEL,
+        error: {}
     }
 }
 
@@ -305,7 +335,10 @@ export function fetchSosModel(modelid){
 }
 
 export function saveSosModel(model){
-    return function () {
+    return function (dispatch) {
+
+        // inform the app that the API is saving
+        dispatch(sendSosModel())
 
         // make API request, returning a promise
         return fetch('/api/v1/sos_models/' + model.name, {
@@ -314,10 +347,19 @@ export function saveSosModel(model){
 
             headers: {
                 'Content-Type': 'application/json'
-            }}
-        )
-            .then (
+            }})
+            .then(
                 response => response.json()
+            )
+            .then(
+                function(json) {
+                    if (json['message'] == 'failed') {
+                        dispatch(rejectSosModel(json))
+                    }
+                    else {
+                        dispatch(acceptSosModel())
+                    }
+                }
             )
     }
 }
@@ -374,7 +416,8 @@ export const RECEIVE_SECTOR_MODELS = 'RECEIVE_SECTOR_MODELS'
 function receiveSectorModels(json) {
     return {
         type: RECEIVE_SECTOR_MODELS,
-        sector_models: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -407,7 +450,8 @@ export const RECEIVE_SECTOR_MODEL = 'RECEIVE_SECTOR_MODEL'
 function receiveSectorModel(json) {
     return {
         type: RECEIVE_SECTOR_MODEL,
-        sector_model: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -488,129 +532,6 @@ export function deleteSectorModel(sectorModelName){
     }
 }
 
-export const REQUEST_SCENARIO_SETS = 'REQUEST_SCENARIO_SETS'
-function requestScenarioSets(){
-    return {
-        type: REQUEST_SCENARIO_SETS
-    }
-}
-
-export const RECEIVE_SCENARIO_SETS = 'RECEIVE_SCENARIO_SETS'
-function receiveScenarioSets(json) {
-    return {
-        type: RECEIVE_SCENARIO_SETS,
-        scenario_sets: json,
-        receivedAt: Date.now()
-    }
-}
-
-export function fetchScenarioSets(){
-    return function (dispatch) {
-
-        // inform the app that the API request is starting
-        dispatch(requestScenarioSets())
-
-        // make API request, returning a promise
-        return fetch('/api/v1/scenario_sets/')
-            .then(
-                response => response.json()
-            )
-            .then(
-                json => dispatch(receiveScenarioSets(json))
-            )
-    }
-}
-
-export const REQUEST_SCENARIO_SET = 'REQUEST_SCENARIO_SET'
-function requestScenarioSet(){
-    return {
-        type: REQUEST_SCENARIO_SET
-    }
-}
-
-export const RECEIVE_SCENARIO_SET = 'RECEIVE_SCENARIO_SET'
-function receiveScenarioSet(json) {
-    return {
-        type: RECEIVE_SCENARIO_SET,
-        scenario_set: json,
-        receivedAt: Date.now()
-    }
-}
-
-export function fetchScenarioSet(scenarioSetName){
-    return function (dispatch) {
-
-        // inform the app that the API request is starting
-        dispatch(requestScenarioSet())
-
-        // make API request, returning a promise
-        return fetch('/api/v1/scenario_sets/' + scenarioSetName)
-            .then(
-                response => response.json()
-            )
-            .then(
-                json => dispatch(receiveScenarioSet(json))
-            )
-    }
-}
-
-export function saveScenarioSet(scenarioSet){
-    return function () {
-
-        // make API request, returning a promise
-        return fetch('/api/v1/scenario_sets/' + scenarioSet.name, {
-            method: 'put',
-            body: JSON.stringify(scenarioSet),
-
-            headers: {
-                'Content-Type': 'application/json'
-            }}
-        )
-            .then (
-                response => response.json()
-            )
-    }
-}
-
-export function createScenarioSet(scenarioSet){
-    return function (dispatch) {
-        // make API request, returning a promise
-        return fetch('/api/v1/scenario_sets/', {
-            method: 'post',
-            body: JSON.stringify(scenarioSet),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(
-                function() {
-                    response => response.json()
-                    dispatch(fetchScenarioSets())
-                }
-            )
-    }
-}
-
-export function deleteScenarioSet(scenarioSetName){
-    return function (dispatch) {
-
-        // make API request, returning a promise
-        return fetch('/api/v1/scenario_sets/' + scenarioSetName, {
-            method: 'delete',
-
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(
-                function() {
-                    response => response.json()
-                    dispatch(fetchScenarioSets())
-                }
-            )
-    }
-}
-
 export const REQUEST_SCENARIOS = 'REQUEST_SCENARIOS'
 function requestScenarios(){
     return {
@@ -623,7 +544,8 @@ function receiveScenarios(json) {
     if (json == null) json = []
     return {
         type: RECEIVE_SCENARIOS,
-        scenarios: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -656,7 +578,8 @@ export const RECEIVE_SCENARIO = 'RECEIVE_SCENARIO'
 function receiveScenario(json) {
     return {
         type: RECEIVE_SCENARIO,
-        scenario: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -740,131 +663,6 @@ export function deleteScenario(scenarioName){
     }
 }
 
-export const REQUEST_NARRATIVE_SETS = 'REQUEST_NARRATIVE_SETS'
-function requestNarrativeSets(){
-    return {
-        type: REQUEST_NARRATIVE_SETS
-    }
-}
-
-export const RECEIVE_NARRATIVE_SETS = 'RECEIVE_NARRATIVE_SETS'
-function receiveNarrativeSets(json) {
-    return {
-        type: RECEIVE_NARRATIVE_SETS,
-        narrative_sets: json,
-        receivedAt: Date.now()
-    }
-}
-
-export function fetchNarrativeSets(){
-    return function (dispatch) {
-
-        // inform the app that the API request is starting
-        dispatch(requestNarrativeSets())
-
-        // make API request, returning a promise
-        return fetch('/api/v1/narrative_sets/')
-            .then(
-                response => response.json()
-            )
-            .then(
-                json => dispatch(receiveNarrativeSets(json))
-            )
-    }
-}
-
-export const REQUEST_NARRATIVE_SET = 'REQUEST_NARRATIVE_SET'
-function requestNarrativeSet(){
-    return {
-        type: REQUEST_NARRATIVE_SET
-    }
-}
-
-export const RECEIVE_NARRATIVE_SET = 'RECEIVE_NARRATIVE_SET'
-function receiveNarrativeSet(json) {
-    return {
-        type: RECEIVE_NARRATIVE_SET,
-        narrative_set: json,
-        receivedAt: Date.now()
-    }
-}
-
-export function fetchNarrativeSet(narrativeSetName){
-    return function (dispatch) {
-
-        // inform the app that the API request is starting
-        dispatch(requestNarrativeSet())
-
-        // make API request, returning a promise
-        return fetch('/api/v1/narrative_sets/' + narrativeSetName)
-            .then(
-                response => response.json()
-            )
-            .then(
-                json => dispatch(receiveNarrativeSet(json))
-            )
-    }
-}
-
-export function saveNarrativeSet(narrativeSet){
-    return function () {
-
-        // make API request, returning a promise
-        return fetch('/api/v1/narrative_sets/' + narrativeSet.name, {
-            method: 'put',
-            body: JSON.stringify(narrativeSet),
-
-            headers: {
-                'Content-Type': 'application/json'
-            }}
-        )
-            .then (
-                response => response.json()
-            )
-    }
-}
-
-export function createNarrativeSet(narrativeSet){
-    return function (dispatch) {
-
-        // make API request, returning a promise
-        return fetch('/api/v1/narrative_sets/', {
-            method: 'post',
-            body: JSON.stringify(narrativeSet),
-
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(
-                function() {
-                    response => response.json()
-                    dispatch(fetchNarrativeSets())
-                }
-            )
-    }
-}
-
-export function deleteNarrativeSet(narrativeSetName){
-    return function (dispatch) {
-
-        // make API request, returning a promise
-        return fetch('/api/v1/narrative_sets/' + narrativeSetName, {
-            method: 'delete',
-
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(
-                function() {
-                    response => response.json()
-                    dispatch(fetchNarrativeSets())
-                }
-            )
-    }
-}
-
 export const REQUEST_NARRATIVES = 'REQUEST_NARRATIVES'
 function requestNarratives(){
     return {
@@ -876,7 +674,8 @@ export const RECEIVE_NARRATIVES = 'RECEIVE_NARRATIVES'
 function receiveNarratives(json) {
     return {
         type: RECEIVE_NARRATIVES,
-        narratives: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -908,7 +707,8 @@ export const RECEIVE_NARRATIVE = 'RECEIVE_NARRATIVE'
 function receiveNarrative(json) {
     return {
         type: RECEIVE_NARRATIVE,
-        narrative: json,
+        data: json['data'],
+        error: json['error'],
         receivedAt: Date.now()
     }
 }
@@ -984,6 +784,132 @@ export function deleteNarrative(narrativeName){
                 function() {
                     response => response.json()
                     dispatch(fetchNarratives())
+                }
+            )
+    }
+}
+
+export const REQUEST_DIMENSIONS = 'REQUEST_DIMENSIONS'
+function requestDimensions(){
+    return {
+        type: REQUEST_DIMENSIONS
+    }
+}
+
+export const RECEIVE_DIMENSIONS = 'RECEIVE_DIMENSIONS'
+function receiveDimensions(json) {
+    return {
+        type: RECEIVE_DIMENSIONS,
+        data: json['data'],
+        error: json['error'],
+        receivedAt: Date.now()
+    }
+}
+
+export function fetchDimensions(){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestDimensions())
+
+        // make API request, returning a promise
+        return fetch('/api/v1/dimensions/')
+            .then(
+                response => response.json()
+            )
+            .then(
+                json => dispatch(receiveDimensions(json))
+            )
+    }
+}
+
+export const REQUEST_DIMENSION = 'REQUEST_DIMENSION'
+function requestDimension(){
+    return {
+        type: REQUEST_DIMENSION
+    }
+}
+
+export const RECEIVE_DIMENSION = 'RECEIVE_DIMENSION'
+function receiveDimension(json) {
+    return {
+        type: RECEIVE_DIMENSION,
+        data: json['data'],
+        error: json['error'],
+        receivedAt: Date.now()
+    }
+}
+
+export function fetchDimension(dimension){
+    return function (dispatch) {
+        // inform the app that the API request is starting
+        dispatch(requestDimension())
+
+        // make API request, returning a promise
+        return fetch('/api/v1/dimensions/' + dimension)
+            .then(
+                response => response.json()
+            )
+            .then(
+                json => dispatch(receiveDimension(json))
+            )
+    }
+}
+
+export function saveDimension(dimension){
+    return function () {
+        // inform the app that the API request is starting
+
+        // make API request, returning a promise
+        return fetch('/api/v1/dimensions/' + dimension.name, {
+            method: 'put',
+            body: JSON.stringify(dimension),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }}
+        )
+            .then (
+                response => response.json()
+            )
+    }
+}
+
+export function createDimension(dimension){
+    return function (dispatch) {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/dimensions/', {
+            method: 'post',
+            body: JSON.stringify(dimension),
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchDimensions())
+                }
+            )
+    }
+}
+
+export function deleteDimension(dimension){
+    return function (dispatch) {
+
+        // make API request, returning a promise
+        return fetch('/api/v1/dimensions/' + dimension, {
+            method: 'delete',
+
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(
+                function() {
+                    response => response.json()
+                    dispatch(fetchDimensions())
                 }
             )
     }

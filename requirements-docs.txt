@@ -1,0 +1,13 @@
+# Add your pinned requirements for building docs (exclude any packages which can safely be
+# mocked in docs/conf.py
+better-apidoc
+flask
+isodate
+m2r
+networkx
+numpy>=1.14
+Pint
+pyarrow
+python-dateutil
+ruamel.yaml==0.15.50
+Sphinx==1.8.1

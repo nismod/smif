@@ -15,17 +15,18 @@ install:
         isodate \
         networkx \
         numpy \
+        pandas \
         pint \
         pyarrow \
         pytest \
         python-dateutil \
         ruamel.yaml \
         rtree \
-        scikit-optimize \
         shapely \
         libgdal \
         gdal \
-        fiona"
+        fiona \
+        xarray"
   - activate testenv
   - python setup.py develop
 test_script:

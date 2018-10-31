@@ -1,38 +1,58 @@
 name: energy_water
 description: 'The future supply and demand of energy and water for the UK'
-scenario_sets: # Select 0 or more of the scenario sets
+scenarios: # Select 0 or more of the scenario sets
 - population
-- rainfall
-narrative_sets: []
+- climate
+- reservoir_level  # needed for initial inputs to water_supply
+- water_sector_energy_demand
+narratives:
+- name: technology
+  description: Describes the evolution of technology
+  sos_model: energy_water
+  provides:
+    energy_demand:
+      - smart_meter_savings
+    water_supply:
+      - clever_water_meter_savings
+      - per_capita_water_demand
+  variants:
+    - name: high_tech_dsm
+      description: High penetration of SMART technology on the demand side
+      data:
+        smart_meter_savings: high_tech_dsm.csv
+        clever_water_meter_savings: high_tech_dsm.csv
+        per_capita_water_demand: high_tech_dsm.csv
 sector_models: # Select 1 or more of the sector models
 - water_supply
 - energy_demand
-dependencies:
-- source_model: rainfall
-  source_model_output: raininess
-  sink_model: water_supply
-  sink_model_input: raininess
-- source_model: population
-  source_model_output: population
-  sink_model: water_supply
-  sink_model_input: population
-- source_model: water_supply
-  source_model_output: energy_demand
-  sink_model: energy_demand
-  sink_model_input: energy_demand
-- source_model: population
-  source_model_output: population
-  sink_model: energy_demand
-  sink_model_input: population
-- source_model: energy_demand
-  source_model_output: water_demand
-  sink_model: water_supply
-  sink_model_input: water_demand
-- source_model: water_supply
-  source_model_output: reservoir_level
-  sink_model: water_supply
-  sink_model_input: reservoir_level
-  timestep_offset: -1  # suggested declaration of inter-timestep dep.
-max_iterations: 100
-convergence_absolute_tolerance: 1e-05
-convergence_relative_tolerance: 1e-05
+scenario_dependencies:
+- source: climate
+  source_output: precipitation
+  sink: water_supply
+  sink_input: precipitation
+- source: population
+  source_output: population
+  sink: water_supply
+  sink_input: population
+- source: population
+  source_output: population
+  sink: energy_demand
+  sink_input: population
+- source: reservoir_level
+  source_output: reservoir_level
+  sink: water_supply
+  sink_input: reservoir_level
+- source: water_sector_energy_demand
+  source_output: energy_demand
+  sink: energy_demand
+  sink_input: energy_demand
+model_dependencies:
+- source: energy_demand
+  source_output: water_demand
+  sink: water_supply
+  sink_input: water_demand
+- source: water_supply
+  source_output: reservoir_level
+  sink: water_supply
+  sink_input: reservoir_level
+  timestep: PREVIOUS  # dependency on own outputs from previous timestep

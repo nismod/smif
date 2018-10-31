@@ -1,0 +1,31 @@
+@startuml
+
+actor Modeller
+participant smif
+participant ModelRunner
+participant JobScheduler
+
+Modeller -> smif : run(modelrun)
+smif -> ModelRunner : run(modelrun)
+ModelRunner -> JobScheduler : run(job_graph)
+
+JobScheduler -> ModelA : simulate()
+activate ModelA
+JobScheduler <-- ModelA : done | error
+deactivate ModelA
+
+JobScheduler -> ModelB : simulate()
+activate ModelB
+JobScheduler <-- ModelB : done | error
+deactivate ModelB
+
+JobScheduler -> ModelC : simulate()
+activate ModelC
+JobScheduler <-- ModelC : done | error
+deactivate ModelC
+
+ModelRunner <-- JobScheduler : done | error
+smif <-- ModelRunner : done | error
+Modeller <-- smif : done | error
+
+@enduml

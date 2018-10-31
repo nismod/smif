@@ -36,11 +36,8 @@ class WaterSupplySectorModel(SectorModel):
         """
         # State
 
-        state = data.get_state()
+        current_interventions = data.get_current_interventions()
 
-        current_interventions = self.get_current_interventions(state)
-
-        print("Current state of {} is {}".format(self.name, state))
         print("Current interventions: {}".format(current_interventions))
         number_of_treatment_plants = 2
 
@@ -51,7 +48,7 @@ class WaterSupplySectorModel(SectorModel):
         water_demand = data.get_data('water_demand')  # liter
         final_water_demand = (population * per_capita_water_demand) + water_demand
 
-        raininess = sum(data.get_data('raininess'))  # megaliters
+        raininess = sum(data.get_data('precipitation'))  # milliliters to mega
         reservoir_level = sum(data.get_data('reservoir_level'))  # megaliters
 
         self.logger.debug(
@@ -78,14 +75,18 @@ class WaterSupplySectorModel(SectorModel):
         # run
         water, cost = instance.run()
 
+        self.logger.info(
+            "Water: %s, Cost: %s, Reservoir: %s", water, cost, instance.reservoir_level)
+
         # set results
-        data.set_results('water', np.ones((3, 1)) * water / 3)
-        data.set_results("cost", np.ones((3, 1)) * cost / 3)
-        data.set_results("energy_demand", np.ones((3, 1)) * 3)
+        data.set_results('water', np.ones((3, )) * water / 3)
+        data.set_results("cost", np.ones((3, )) * cost / 3)
+        data.set_results("energy_demand", np.ones((3, )) * 3)
 
         # state data output - hack around using national resolution to start
-        output = np.zeros((3, 1))
-        output[0, 0] = instance.reservoir_level
+        output = np.zeros((3, ))
+        # output[0] = instance.reservoir_level  # will continually increase, need to access
+        # t-1 TODO
         data.set_results("reservoir_level", output)
 
     def extract_obj(self, results):

@@ -3,18 +3,15 @@
 
 import os
 import subprocess
+import sys
 from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
-import pkg_resources
-
-from pytest import fixture
-
+import pytest
 import smif
+from pytest import fixture, mark
 from smif.cli import confirm, parse_arguments, setup_project_folder
-from smif.controller.build import get_narratives
 from smif.data_layer import DatafileInterface
-from smif.parameters import Narrative
 
 
 def get_args(args):
@@ -44,27 +41,38 @@ def test_fixture_single_run(tmp_sample_project):
     """
     config_dir = tmp_sample_project
     output = subprocess.run(["smif", "-v", "run", "-d", config_dir,
-                             "20170918_energy_water_short"],
+                             "energy_central"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
+    assert "Running energy_central" in str(output.stderr)
+    assert "Model run 'energy_central' complete" in str(output.stdout)
+
 
 @fixture()
 def tmp_sample_project(tmpdir_factory):
     test_folder = tmpdir_factory.mktemp("smif")
-    output = subprocess.run(["smif", "-v", "setup", "-d", str(test_folder)],
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.run(
+        ["smif", "-v", "setup", "-d", str(test_folder)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
     return str(test_folder)
+
 
 def test_fixture_single_run_csv(tmp_sample_project):
     """Test running the csv-filesystem-based single_run fixture
     """
-    
-    output = subprocess.run(["smif", "-v", "run", "-i", "local_csv", "-d", tmp_sample_project,
-                             "20170918_energy_water_short"],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+    output = subprocess.run(
+        ["smif", "-v", "run", "-i", "local_csv", "-d", tmp_sample_project,
+         "energy_central"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
+    assert "Running energy_central" in str(output.stderr)
+    assert "Model run 'energy_central' complete" in str(output.stdout)
 
 
 def test_fixture_single_run_warm(tmp_sample_project):
@@ -72,12 +80,15 @@ def test_fixture_single_run_warm(tmp_sample_project):
     """
     config_dir = tmp_sample_project
     output = subprocess.run(["smif", "-v", "run", "-w", "-d", config_dir,
-                             "20170918_energy_water_short"],
+                             "energy_central"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
+    assert "Running energy_central" in str(output.stderr)
+    assert "Model run 'energy_central' complete" in str(output.stdout)
 
 
+@pytest.mark.xfail(reason='Cyclic graphs not supported')
 def test_fixture_batch_run(tmp_sample_project):
     """Test running the multiple modelruns using the batch_run option
     """
@@ -85,10 +96,12 @@ def test_fixture_batch_run(tmp_sample_project):
     output = subprocess.run(["smif", "-v", "run", "-b", "-d", config_dir,
                              os.path.join(config_dir, "batchfile")],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert "Running 20170918_energy_water" in str(output.stderr)
-    assert "Model run '20170918_energy_water' complete" in str(output.stdout)
-    assert "Running 20170918_energy_water_short" in str(output.stderr)
-    assert "Model run '20170918_energy_water_short' complete" in str(output.stdout)
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
+    assert "Running energy_water_cp_cr" in str(output.stderr)
+    assert "Model run 'energy_water_cp_cr' complete" in str(output.stdout)
+    assert "Running energy_central" in str(output.stderr)
+    assert "Model run 'energy_central' complete" in str(output.stdout)
 
 
 def test_fixture_list_runs(tmp_sample_project):
@@ -96,8 +109,8 @@ def test_fixture_list_runs(tmp_sample_project):
     """
     config_dir = tmp_sample_project
     output = subprocess.run(["smif", "list", "-d", config_dir], stdout=subprocess.PIPE)
-    assert "20170918_energy_water" in str(output.stdout)
-    assert "20170918_energy_water_short" in str(output.stdout)
+    assert "energy_water_cp_cr" in str(output.stdout)
+    assert "energy_central" in str(output.stdout)
 
 
 def test_setup_project_folder():
@@ -174,23 +187,14 @@ def test_verbose_debug_alt():
     assert 'DEBUG' in str(output.stderr)
 
 
-def test_verbose_info(setup_folder_structure):
-    """Expect info message from `smif -v validate <config_file>`
-    """
-    config_file = os.path.join(str(setup_folder_structure))
-    output = subprocess.run(['smif', '-v', 'run', config_file], stderr=subprocess.PIPE)
-    assert 'INFO' in str(output.stderr)
-
-
-class TestRunSosModelRunComponents():
-
+class TestRunModelRunComponents():
+    @mark.xfail()
     def test_get_narratives(self, tmp_sample_project):
         """should load a list of narratives with parameter value data
         """
         config_dir = tmp_sample_project
         handler = DatafileInterface(config_dir, 'local_csv')
-        narratives = {'technology': ['High Tech Demand Side Management']}
-        actual = get_narratives(handler, narratives)
+        actual = handler.read_narrative_variants('technology')
 
         data = {
             'energy_demand': {
@@ -201,11 +205,15 @@ class TestRunSosModelRunComponents():
                 'per_capita_water_demand': 1.2
             }
         }
-        name = 'High Tech Demand Side Management'
+        name = 'technology'
+        variant = 'High Tech Demand Side Management'
         description = 'High penetration of SMART technology on the demand side'
-        narrative_set = 'technology'
 
-        narrative_object = Narrative(name, description, narrative_set)
-        narrative_object.data = data
+        narrative_variant = {
+            'name': name,
+            'variant': variant,
+            'description': description,
+        }
+        narrative_variant['data'] = data
 
-        assert actual == [narrative_object]
+        assert actual == [narrative_variant]

@@ -1,5 +1,0 @@
-energy_demand:
-  smart_meter_savings: 8
-water_supply:
-  clever_water_meter_savings: 8
-  per_capita_water_demand: 1.2

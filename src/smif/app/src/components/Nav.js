@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { NavLink, Route } from 'react-router-dom'
 import Footer from 'containers/Footer'
-import {fetchSosModelRuns, fetchSosModels, fetchSectorModels, fetchScenarioSets, fetchScenarios, fetchNarrativeSets, fetchNarratives} from 'actions/actions.js'
+import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios } from 'actions/actions.js'
 
 import {FaHome, FaTasks, FaSliders, FaSitemap, FaCode, FaBarChart} from 'react-icons/lib/fa'
 import { Badge } from 'reactstrap'
@@ -18,13 +18,10 @@ class Nav extends Component {
     componentDidMount () {
         const { dispatch } = this.props
 
-        dispatch(fetchSosModelRuns())
+        dispatch(fetchModelRuns())
         dispatch(fetchSosModels())
         dispatch(fetchSectorModels())
-        dispatch(fetchScenarioSets())
         dispatch(fetchScenarios())
-        dispatch(fetchNarrativeSets())
-        dispatch(fetchNarratives())
     }
 
     renderLoading() {
@@ -63,7 +60,7 @@ class Nav extends Component {
         )
     }
 
-    renderNav(sos_model_runs, sos_models, sector_models, scenario_sets, narrative_sets, narratives) {
+    renderNav(model_runs, sos_models, sector_models, scenarios, narratives) {
         var job_status = ['unstarted', 'running', 'stopped', 'done', 'failed']
 
         return (
@@ -86,7 +83,7 @@ class Nav extends Component {
                         <NavLink exact className="nav-link" to="/jobs/" >
                             <FaTasks size={20}/>
                         Jobs
-                            <Badge color="secondary">{sos_model_runs.length}</Badge>
+                            <Badge color="secondary">{model_runs.length}</Badge>
                         </NavLink>
                         <Route path="/jobs/" render={() =>
                             <ul className="nav flex-column">
@@ -104,20 +101,20 @@ class Nav extends Component {
                     </li>
 
                     <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/configure/sos-model-run" >
+                        <NavLink exact className="nav-link" to="/configure/model-runs" >
                             <FaSliders size={20}/>
                         Model Runs
-                            <Badge color="secondary">{sos_model_runs.length}</Badge>
+                            <Badge color="secondary">{model_runs.length}</Badge>
                         </NavLink>
-                        <Route path="/configure/sos-model-run/" render={() =>
+                        <Route path="/configure/model-runs/" render={() =>
                             <ul className="nav flex-column">
-                                {sos_model_runs.map(sos_model_run =>
-                                    <li key={'nav_sosmodelrun_' + sos_model_run.name} className="nav-item">
+                                {model_runs.map(model_run =>
+                                    <li key={'nav_modelrun_' + model_run.name} className="nav-item">
                                         <NavLink
-                                            key={'nav_' + sos_model_run.name}
+                                            key={'nav_' + model_run.name}
                                             className="nav-link"
-                                            to={'/configure/sos-model-run/' + sos_model_run.name} >
-                                            {sos_model_run.name}
+                                            to={'/configure/model-runs/' + model_run.name} >
+                                            {model_run.name}
                                         </NavLink>
                                     </li>
                                 )}
@@ -176,70 +173,25 @@ class Nav extends Component {
                     </li>
 
                     <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/configure/scenario-set" >
+                        <NavLink exact className="nav-link" to="/configure/scenarios" >
                             <FaBarChart size={20}/>
                         Scenarios
-                            <Badge color="secondary">{scenario_sets.length}</Badge>
+                            <Badge color="secondary">{scenarios.length}</Badge>
                         </NavLink>
-                        <Route path="/configure/scenario-set/" render={() =>
+                        <Route path="/configure/scenarios/" render={() =>
                             <ul className="nav flex-column">
-                                {scenario_sets.map(scenario_set =>
-                                    <li key={'nav_scenario_set_' + scenario_set.name} className="nav-item">
+                                {scenarios.map(scenario =>
+                                    <li key={'nav_scenario_' + scenario.name} className="nav-item">
                                         <NavLink
-                                            key={'nav_' + scenario_set.name}
+                                            key={'nav_' + scenario.name}
                                             exact
                                             className="nav-link"
-                                            to={'/configure/scenario-set/' + scenario_set.name} >
-                                            {scenario_set.name}
+                                            to={'/configure/scenarios/' + scenario.name} >
+                                            {scenario.name}
                                         </NavLink>
                                     </li>
                                 )}
                             </ul>
-                        }/>
-                    </li>
-
-                    <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/configure/narrative-set" >
-                            <FaBarChart size={20}/>
-                        Narratives
-                            <Badge color="secondary">{narrative_sets.length}</Badge>
-                        </NavLink>
-
-                        <Route path="/configure/narrative*" render={() =>
-                            <div>
-                                <span className="ml-4">Sets</span>
-                                <ul className="nav flex-column">
-                                    {narrative_sets.map(narrative_set =>
-                                        <li key={'nav_narrativeset_' + narrative_set.name} className="nav-item">
-                                            <NavLink
-                                                key={'nav_' + narrative_set.name}
-                                                exact
-                                                className="nav-link"
-                                                to={'/configure/narrative-set/' + narrative_set.name} >
-                                                {narrative_set.name}
-                                            </NavLink>
-                                        </li>
-                                    )}
-                                </ul>
-                            </div>
-                        }/>
-                        <Route path="/configure/narrative*" render={() =>
-                            <div>
-                                <span className="ml-4">Data</span>
-                                <ul className="nav flex-column">
-                                    {narratives.map(narrative =>
-                                        <li key={'nav_narrative_' + narrative.name} className="nav-item">
-                                            <NavLink
-                                                key={'nav_' + narrative.name}
-                                                exact
-                                                className="nav-link"
-                                                to={'/configure/narratives/' + narrative.name} >
-                                                {narrative.name}
-                                            </NavLink>
-                                        </li>
-                                    )}
-                                </ul>
-                            </div>
                         }/>
                     </li>
                 </ul>
@@ -249,49 +201,38 @@ class Nav extends Component {
     }
 
     render() {
-        const {sos_model_runs, sos_models, sector_models, scenario_sets, narrative_sets, narratives, isFetching} = this.props
-
+        const {model_runs, sos_models, sector_models, scenarios, isFetching} = this.props
         if (isFetching && this.init) {
             return this.renderLoading()
         } else {
             this.init = false
-            return this.renderNav(sos_model_runs, sos_models, sector_models, scenario_sets, narrative_sets, narratives)
+            return this.renderNav(model_runs, sos_models, sector_models, scenarios)
         }
     }
 }
 
 Nav.propTypes = {
-    sos_model_runs: PropTypes.array.isRequired,
+    model_runs: PropTypes.array.isRequired,
     sos_models: PropTypes.array.isRequired,
     sector_models: PropTypes.array.isRequired,
-    scenario_sets: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
-    narrative_sets: PropTypes.array.isRequired,
-    narratives: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired
 }
 
 function mapStateToProps(state) {
-    const { sos_model_runs, sos_models, sector_models, scenario_sets, scenarios, narrative_sets, narratives } = state
-
+    const { model_runs, sos_models, sector_models, scenarios } = state
     return {
-        sos_model_runs: sos_model_runs.items,
+        model_runs: model_runs.items,
         sos_models: sos_models.items,
         sector_models: sector_models.items,
-        scenario_sets: scenario_sets.items,
         scenarios: scenarios.items,
-        narrative_sets: narrative_sets.items,
-        narratives: narratives.items,
 
         isFetching: (
-            state.sos_model_runs.isFetching ||
+            state.model_runs.isFetching ||
             state.sos_models.isFetching ||
             state.sector_models.isFetching ||
-            state.scenario_sets.isFetching ||
-            state.scenarios.isFetching ||
-            state.narrative_sets.isFetching ||
-            state.narratives.isFetching
+            state.scenarios.isFetching
         )
     }
 }

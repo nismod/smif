@@ -6,13 +6,13 @@ import { connect } from 'react-redux'
 import { fetchSectorModel } from 'actions/actions.js'
 import { saveSectorModel } from 'actions/actions.js'
 import { fetchSosModels } from 'actions/actions.js'
+import { fetchDimensions } from 'actions/actions.js'
 
 import SectorModelConfigForm from 'components/ConfigForm/SectorModelConfigForm.js'
 
 class SectorModelConfig extends Component {
     constructor(props) {
         super(props)
-        this.init = true
 
         this.saveSectorModel = this.saveSectorModel.bind(this)
         this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
@@ -25,6 +25,7 @@ class SectorModelConfig extends Component {
 
         dispatch(fetchSectorModel(this.config_name))
         dispatch(fetchSosModels())
+        dispatch(fetchDimensions())
     }
 
     componentDidUpdate() {
@@ -39,6 +40,7 @@ class SectorModelConfig extends Component {
     saveSectorModel(SectorModel) {
         const { dispatch } = this.props
         dispatch(saveSectorModel(SectorModel))
+
         this.returnToPreviousPage()
     }
 
@@ -54,30 +56,46 @@ class SectorModelConfig extends Component {
         )
     }
 
-    renderError() {
+    renderError(error) {
         return (
-            <div className="alert alert-danger">
-                Error
+            <div>
+                {            
+                    Object.keys(error).map(exception => (
+                        <div key={exception} className="alert alert-danger">
+                            {exception}
+                            {
+                                error[exception].map(ex => (
+                                    <div key={ex}>
+                                        {ex}
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    ))
+                }
             </div>
         )
     }
 
-    renderSectorModelConfig(sector_model, sos_models) {
+    renderSectorModelConfig(sector_model, sos_models, dimensions) {
         return (
             <div key={sector_model.name}>
-                <SectorModelConfigForm sosModels={sos_models} sectorModel={sector_model} saveSectorModel={this.saveSectorModel} cancelSectorModel={this.returnToPreviousPage}/>
+                <SectorModelConfigForm sosModels={sos_models} sectorModel={sector_model} dimensions={dimensions} saveSectorModel={this.saveSectorModel} cancelSectorModel={this.returnToPreviousPage}/>
             </div>
         )
     }
 
     render () {
-        const {sector_model, sos_models, isFetching} = this.props
+        const {sector_model, sos_models, dimensions, error, isFetching} = this.props
 
-        if (isFetching && this.init) {
+        if (isFetching) {
             return this.renderLoading()
+        } else if (
+            Object.keys(error).includes('SmifDataNotFoundError') ||
+            Object.keys(error).includes('SmifValidationError')) {
+            return this.renderError(error)
         } else {
-            this.init = false
-            return this.renderSectorModelConfig(sector_model, sos_models)
+            return this.renderSectorModelConfig(sector_model, sos_models, dimensions)
         }
     }
 }
@@ -85,6 +103,8 @@ class SectorModelConfig extends Component {
 SectorModelConfig.propTypes = {
     sos_models: PropTypes.array.isRequired,
     sector_model: PropTypes.object.isRequired,
+    dimensions: PropTypes.array.isRequired,
+    error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
@@ -93,11 +113,18 @@ SectorModelConfig.propTypes = {
 
 function mapStateToProps(state) {
     return {
-        sos_models: state.sos_models.items,
         sector_model: state.sector_model.item,
+        sos_models: state.sos_models.items,
+        dimensions: state.dimensions.items,
+        error: ({
+            ...state.sector_model.error,
+            ...state.sos_models.error,
+            ...state.dimensions.error
+        }),
         isFetching: (
             state.sos_models.isFetching ||
-            state.sector_model.isFetching
+            state.sector_model.isFetching ||
+            state.dimensions.isFetching
         )
     }
 }

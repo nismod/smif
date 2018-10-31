@@ -1,0 +1,77 @@
+.image-reference img {
+    /* fix distortion of sphinx_pyreverse UML */
+    height: auto !important;
+}
+div.topic {
+    /* pad topic box, less gray */
+    padding: 0.5em 0.5em;
+    border-radius: 0.25em;
+    box-shadow: #000 0px 1px 3px -2px;
+    background: #faf8fa;
+}
+.topic-title:before {
+    /* add diamond to break-out box title */
+    content: '\2662';
+    margin-right: 0.25em;
+}
+a.image-reference:hover {
+    /* no border on image links */
+    border-bottom: none;
+}
+div.highlight {
+    /* reset highlight blocks to pygments background */
+    background: #2f1e2e;
+}
+div.viewcode-block:target {
+    /* reset source block background */
+    background: #34273C;
+}
+div.highlight pre {
+    /* fix code block padding, let pygments background show */
+    background: transparent;
+    padding: 0.5em 0.5em;
+}
+.highlight-yaml .l {
+    /* override YAML highlighting not to be mostly orange! */
+    color: #e7e9db;
+}
+div.figure {
+    padding: 0; /* remove extra padding around img/figure */
+}
+.figure img {
+    border-radius: 0.25em;
+    box-shadow: #000 0px 1px 3px -2px;
+    border: 1px solid #faf8fa;
+}
+.caption {
+    margin: 0 auto 0.75em;
+}
+/* sticky sidebar at non-mobile screen size */
+@media screen and (min-width: 876px) {
+    div.sphinxsidebar {
+        position: fixed;
+        float: none;
+        margin-left: 0;
+        top: 2em;
+        bottom: 0;
+        overflow: auto;
+    }
+}
+div.document,
+div.footer {
+    width: auto;
+    max-width: 940px;
+}
+/* simplify table style */
+table.docutils {
+    border: 0;
+    box-shadow: none;
+    width: 100%;
+}
+table.docutils td, table.docutils th {
+    border: 0;
+    padding: 0.5em 0.5em;
+}
+table.docutils th {
+    border-bottom: 1px solid #888;
+}

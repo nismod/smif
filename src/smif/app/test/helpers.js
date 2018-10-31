@@ -42,8 +42,6 @@ export const sos_model_run = {
 
 export const sos_models = [
     {
-        convergence_absolute_tolerance: '1e-05',
-        convergence_relative_tolerance: '1e-05',
         dependencies: [
             {
                 sink_model: 'water_supply',
@@ -77,7 +75,6 @@ export const sos_models = [
             }
         ],
         description: 'The future supply and demand of energy and water for the UK',
-        max_iterations: 100,
         name: 'energy_waste',
         narrative_sets: [
             'technology'
@@ -92,8 +89,6 @@ export const sos_models = [
         ]
     },
     {
-        convergence_absolute_tolerance: '1e-05',
-        convergence_relative_tolerance: '1e-05',
         dependencies: [
             {
                 sink_model: 'water_supply',
@@ -127,7 +122,6 @@ export const sos_models = [
             }
         ],
         description: 'The future supply and demand of energy and water for the UK',
-        max_iterations: 100,
         name: 'energy_water',
         scenario_sets: [
             'population'
@@ -140,8 +134,6 @@ export const sos_models = [
 ]
 
 export const sos_model = {
-    convergence_absolute_tolerance: '1e-05',
-    convergence_relative_tolerance: '1e-05',
     dependencies: [
         {
             sink_model: 'water_supply',
@@ -175,7 +167,6 @@ export const sos_model = {
         }
     ],
     description: 'The future supply and demand of energy and water for the UK',
-    max_iterations: 100,
     name: 'energy_waste',
     narrative_sets: [
         'technology'
