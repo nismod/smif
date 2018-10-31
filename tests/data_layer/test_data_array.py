@@ -30,7 +30,6 @@ def spec(dims, coords):
             'c': coords[2],
         },
         dtype='float',
-        default=0,
         abs_range=(0, 1),
         exp_range=(0, 0.5)
     )
@@ -53,12 +52,6 @@ class TestDataArray():
         da = DataArray(spec, data)
         numpy.testing.assert_equal(da.data, data)
         assert spec == da.spec
-
-    def test_from_spec(self, spec):
-        """Should create default from spec.default
-        """
-        da = DataArray.default_from_spec(spec)
-        assert_array_equal(da.data, numpy.zeros((2, 3, 4)))
 
     def test_as_df(self, small_da, data, dims, coords):
         expected_index = pd.MultiIndex.from_product(coords, names=dims)

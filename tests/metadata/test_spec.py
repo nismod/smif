@@ -24,7 +24,6 @@ class TestSpec():
                 Coordinates('age', [">30", "<30"])
             ],
             dtype='int',
-            default=0,
             abs_range=(0, float('inf')),
             exp_range=(10e6, 10e9),
             unit='people'
@@ -35,7 +34,6 @@ class TestSpec():
         """A Spec has:
         - coords: coordinates that label each point - list of Coordinates, one for each dim
         - name
-        - default value
         - dtype
         - absolute range: (optional) for numerical types, to raise error if exceeded
         - expected range: (optional) for numerical types, to raise warning if exceeded
@@ -90,7 +88,6 @@ class TestSpec():
                 'countries': ["England", "Wales"]
             },
             'dtype': 'int',
-            'default': 0,
             'abs_range': (0, float('inf')),
             'exp_range': (10e6, 10e9),
             'unit': 'people'
@@ -101,7 +98,6 @@ class TestSpec():
         assert spec.abs_range == (0, float('inf'))
         assert spec.exp_range == (10e6, 10e9)
         assert spec.dtype == 'int'
-        assert spec.default == 0
         assert spec.shape == (2, 2)
         assert spec.ndim == 2
         assert spec.dims == ['countries', 'age']
@@ -133,7 +129,6 @@ class TestSpec():
             description='Population by age class',
             coords=[Coordinates('countries', ["England", "Wales"])],
             dtype='int',
-            default=0,
             abs_range=(0, float('inf')),
             exp_range=(10e6, 10e9),
             unit='people'
@@ -144,7 +139,6 @@ class TestSpec():
             'dims': ['countries'],
             'coords': {'countries': ["England", "Wales"]},
             'dtype': 'int',
-            'default': 0,
             'abs_range': (0, float('inf')),
             'exp_range': (10e6, 10e9),
             'unit': 'people'

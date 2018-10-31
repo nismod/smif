@@ -37,6 +37,6 @@ parameters:
     exp_range:
     - 3
     - 10
-    default: 3
+    default: energy_demand_smart_meter_savings.csv
     dtype: float
     unit: '%'

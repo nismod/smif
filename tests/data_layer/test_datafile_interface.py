@@ -751,7 +751,6 @@ class TestScenarios:
                                                  'hot_month', 'fall_month']
                                             },
                                   'abs_range': None,
-                                  'default': None,
                                   'exp_range': None}
 
     def test_read_scenario_variable_spec_raises(self, config_handler):

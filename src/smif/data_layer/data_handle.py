@@ -105,7 +105,9 @@ class DataHandle(object):
         """
         # Populate the parameters with their default values
         for parameter in self._model.parameters.values():
-            self._parameters[parameter.name] = parameter
+            self._parameters[parameter.name] = \
+                self._store.read_sector_model_parameter_default(self._model.name,
+                                                                parameter.name)
 
         # Load in the concrete narrative and selected variants from the model run
         for narrative_name, variant_names in concrete_narratives.items():

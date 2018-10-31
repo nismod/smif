@@ -63,13 +63,6 @@ class DataArray():
         """
         return self.spec.as_dict()
 
-    @classmethod
-    def default_from_spec(cls, spec):
-        """Create DataArray from a spec's default
-        """
-        data = np.full(spec.shape, spec.default, dtype=spec.dtype)
-        return cls(spec, data)
-
     @property
     def name(self):
         """The name of the data that this spec describes.

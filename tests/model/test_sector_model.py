@@ -1,9 +1,7 @@
 """Test SectorModel and SectorModelBuilder
 """
-import numpy as np
 import smif.sample_project.models.water_supply
 from pytest import fixture, mark, raises
-from smif.data_layer.data_array import DataArray
 from smif.metadata import Spec
 from smif.model.sector_model import SectorModel
 from smif.sample_project.models.water_supply import WaterSupplySectorModel
@@ -23,7 +21,6 @@ def sector_model_dict():
                 'description': None,
                 'abs_range': None,
                 'exp_range': None,
-                'default': None,
                 'dims': ['LSOA'],
                 'coords': {'LSOA': [1, 2, 3]},
                 'dtype': 'float',
@@ -36,7 +33,6 @@ def sector_model_dict():
                 'description': None,
                 'abs_range': None,
                 'exp_range': None,
-                'default': None,
                 'dims': ['LSOA'],
                 'coords': {'LSOA': [1, 2, 3]},
                 'dtype': 'float',
@@ -47,7 +43,6 @@ def sector_model_dict():
                 'description': None,
                 'abs_range': None,
                 'exp_range': None,
-                'default': None,
                 'dims': ['LSOA'],
                 'coords': {'LSOA': [1, 2, 3]},
                 'dtype': 'float',
@@ -63,7 +58,6 @@ def sector_model_dict():
                 'abs_range': (0.5, 2),
                 'exp_range': (0.5, 2),
                 'dtype': 'float',
-                'default': 1,
                 'unit': '%'
             }
         ]
@@ -93,7 +87,6 @@ def sector_model():
             'abs_range': (0.5, 2),
             'exp_range': (0.5, 2),
             'dtype': 'float',
-            'default': 1,
             'unit': '%'
         })
     )
@@ -159,12 +152,11 @@ class TestSectorModel():
                 'abs_range': (0.5, 2),
                 'exp_range': (0.5, 2),
                 'dtype': 'float',
-                'default': 1,
                 'unit': '%'
             })
 
         assert sector_model.parameters == {
-            'assump_diff_floorarea_pp': DataArray.default_from_spec(spec)
+            'assump_diff_floorarea_pp': spec
         }
         assert sector_model.outputs == {
             'cost': Spec.from_dict({
@@ -242,11 +234,10 @@ class TestSectorModel():
             'dims': ['national'],
             'coords': {'national': ['GB']},
             'dtype': 'float',
-            'default': 3,
             'unit': '%'
         })
         empty_sector_model.add_parameter(spec)
-        expected = DataArray(spec, np.array([3]))
+        expected = spec
         actual = empty_sector_model.parameters['smart_meter_savings']
         assert actual == expected
 
