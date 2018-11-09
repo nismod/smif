@@ -106,7 +106,12 @@ class SosModel():
 
             for dep in data['model_dependencies'] + data['scenario_dependencies']:
                 sink = sos_model.get_model(dep['sink'])
-                source = sos_model.get_model(dep['source'])
+                try:
+                    source = sos_model.get_model(dep['source'])
+                except KeyError:
+                    msg = 'Model run has no variant specified for scenario `{}`'
+                    raise SmifDataMismatchError(msg.format(dep['source']))
+                
                 source_output_name = dep['source_output']
                 sink_input_name = dep['sink_input']
                 try:
