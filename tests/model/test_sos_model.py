@@ -599,6 +599,13 @@ class TestSosModelDependencies(object):
             SosModel.from_dict(sos_model_dict, [sector_model, scenario_model, economic_model])
         assert "meter!=ml" in str(ex.value)
 
+    def test_scenario_variant_not_present(self, sos_model_dict, sector_model, economic_model):
+        """Error on scenario variant not made available
+        """
+        with raises(SmifDataMismatchError) as ex:
+            SosModel.from_dict(sos_model_dict, [sector_model, economic_model])
+        assert "Model run has no variant specified for scenario `climate`" in str(ex.value)
+
 
 class TestNarratives:
 
