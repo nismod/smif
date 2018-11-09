@@ -282,7 +282,9 @@ class NarrativeList extends Component {
                                     <td className="col-text"
                                         data-name={narrative.name}
                                         onClick={(e) => this.handleNarrativeEdit(e)}>
-                                        {narrative.description}
+                                        <div title={narrative.description}>
+                                            {narrative.name}
+                                        </div>
                                     </td>
                                     <td className="col-text">
                                         {
