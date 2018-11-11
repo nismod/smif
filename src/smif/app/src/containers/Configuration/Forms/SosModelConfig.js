@@ -10,22 +10,28 @@ import { fetchScenarios } from 'actions/actions.js'
 
 import { saveSosModel } from 'actions/actions.js'
 import { acceptSosModel } from 'actions/actions.js'
+import { setAppEditInProgress } from 'actions/actions.js'
 
 import SosModelConfigForm from 'components/ConfigForm/SosModelConfigForm.js'
+import { ConfirmPopup } from 'components/ConfigForm/General/Popups.js'
 
 class SosModelConfig extends Component {
     constructor(props) {
         super(props)
         const { dispatch } = this.props
 
-        this.saveSosModel = this.saveSosModel.bind(this)
-        this.cancelSosModel = this.cancelSosModel.bind(this)
+        this.saveForm = this.saveForm.bind(this)
+        this.requestCancel = this.requestCancel.bind(this)
+        this.confirmCancel = this.confirmCancel.bind(this)
+        this.rejectCancel = this.rejectCancel.bind(this)
+        this.editForm = this.editForm.bind(this)
         this.returnToOverview = this.returnToOverview.bind(this)
 
         this.config_name = this.props.match.params.name
 
         this.state = {
-            closeSosmodel: false
+            requestCancel: false,
+            cancelForm: false
         }
 
         dispatch(fetchSosModel(this.config_name))
@@ -38,21 +44,38 @@ class SosModelConfig extends Component {
 
         if (this.config_name != this.props.match.params.name) {
             this.config_name = this.props.match.params.name
-            this.setState({closeSosmodel: false})
+            this.setState({cancelForm: false})
             dispatch(fetchSosModel(this.config_name))
         }
     }
 
-    saveSosModel(sosModel) {
+    saveForm(sosModel) {
         const { dispatch } = this.props
         dispatch(saveSosModel(sosModel))
-        this.setState({closeSosmodel: true})
+        this.setState({cancelForm: true})
     }
 
-    cancelSosModel() {
+    requestCancel() {
+        if (this.props.isEdit) {
+            this.setState({requestCancel: true})
+        } else {
+            this.confirmCancel()
+        }
+    }
+
+    confirmCancel() {
         const { dispatch } = this.props
         dispatch(acceptSosModel())
-        this.setState({closeSosmodel: true})
+        this.setState({cancelForm: true})
+    }
+
+    rejectCancel() {
+        this.setState({requestCancel: false})
+    }
+    
+    editForm() {
+        const { dispatch } = this.props
+        dispatch(setAppEditInProgress())
     }
 
     returnToOverview() {
@@ -93,7 +116,18 @@ class SosModelConfig extends Component {
     renderSosModelConfig(sos_model, sector_models, scenarios, error) {
         return (
             <div>
-                <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} error={error} saveSosModel={this.saveSosModel} cancelSosModel={this.cancelSosModel}/>
+                <SosModelConfigForm 
+                    sos_model={sos_model} 
+                    sector_models={sector_models} 
+                    scenarios={scenarios} 
+                    error={error} 
+                    onSave={this.saveForm} 
+                    onCancel={this.requestCancel}
+                    onEdit={this.editForm}/>
+                <ConfirmPopup 
+                    onRequestOpen={this.state.requestCancel}
+                    onConfirm={this.confirmCancel}
+                    onCancel={this.rejectCancel}/>
             </div>
         )
     }
@@ -107,7 +141,7 @@ class SosModelConfig extends Component {
             Object.keys(error).includes('SmifDataNotFoundError') ||
             Object.keys(error).includes('SmifValidationError')) {
             return this.renderError(error)
-        } else if (this.state.closeSosmodel && Object.keys(error).length == 0) {
+        } else if (this.state.cancelForm && Object.keys(error).length == 0) {
             return this.returnToOverview()
         } else {
             return this.renderSosModelConfig(sos_model, sector_models, scenarios, error)
@@ -121,6 +155,7 @@ SosModelConfig.propTypes = {
     scenarios: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
+    isEdit: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
     history: PropTypes.object.isRequired
@@ -140,7 +175,8 @@ function mapStateToProps(state) {
             state.sos_model.isFetching ||
             state.sector_models.isFetching ||
             state.scenarios.isFetching
-        )
+        ),
+        isEdit: state.app.hasPendingChanges
     }
 }
 

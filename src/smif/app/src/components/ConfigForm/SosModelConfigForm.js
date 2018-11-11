@@ -26,17 +26,19 @@ class SosModelConfigForm extends Component {
         const value = target.type === 'checkbox' ? target.checked : target.value
         const name = target.name
 
+        this.props.onEdit()
+
         this.setState({
             selectedSosModel: update(this.state.selectedSosModel, {[name]: {$set: value}})
         })
     }
 
     handleSave() {
-        this.props.saveSosModel(this.state.selectedSosModel)
+        this.props.onSave(this.state.selectedSosModel)
     }
 
     handleCancel() {
-        this.props.cancelSosModel()
+        this.props.onCancel()
     }
 
     render() {
@@ -300,8 +302,9 @@ SosModelConfigForm.propTypes = {
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
-    saveSosModel: PropTypes.func,
-    cancelSosModel: PropTypes.func
+    onSave: PropTypes.func,
+    onCancel: PropTypes.func,
+    onEdit: PropTypes.func
 }
 
 export default SosModelConfigForm
