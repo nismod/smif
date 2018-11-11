@@ -1,5 +1,7 @@
 import { combineReducers } from 'redux'
 import {
+    SET_APP_EDIT_IN_PROGRESS,
+    SET_APP_EDIT_DONE,
     REQUEST_SMIF_DETAILS,
     RECEIVE_SMIF_DETAILS,
     REQUEST_MODEL_RUNS,
@@ -32,6 +34,26 @@ import {
     REQUEST_DIMENSION,
     RECEIVE_DIMENSION,
 } from '../actions/actions.js'
+
+function app(
+    state = {
+        hasPendingChanges: false
+    },
+    action
+) {
+    switch (action.type){
+    case SET_APP_EDIT_IN_PROGRESS:
+        return Object.assign({}, state, {
+            hasPendingChanges: true
+        })
+    case SET_APP_EDIT_DONE:
+        return Object.assign({}, state, {
+            hasPendingChanges: false
+        })
+    default:
+        return state
+    }
+}
 
 function smif(
     state = {
@@ -399,6 +421,7 @@ function dimension(
 }
 
 const rootReducer = combineReducers({
+    app,
     smif,
     model_runs,
     model_run,

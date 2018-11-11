@@ -1,5 +1,33 @@
 import fetch from 'isomorphic-fetch'
 
+export const RECEIVE_APP_DETAILS = 'RECEIVE_APP_DETAILS'
+function receiveAppDetails(){
+    return {
+        type: RECEIVE_APP_DETAILS,
+        hasPendingChanges: false
+    }
+}
+
+export const SET_APP_EDIT_IN_PROGRESS = 'SET_APP_EDIT_IN_PROGRESS'
+export function setAppEditInProgress(){
+    return function (dispatch) {
+        dispatch({type: SET_APP_EDIT_IN_PROGRESS})
+    }
+}
+
+export const SET_APP_EDIT_DONE = 'SET_APP_EDIT_DONE'
+export function setAppEditDone(){
+    return function (dispatch) {
+        dispatch({type: SET_APP_EDIT_DONE})
+    }
+}
+
+export function fetchAppDetails(){
+    return function (dispatch) {
+        return dispatch(receiveAppDetails())
+    }
+}
+
 export const REQUEST_SMIF_DETAILS = 'REQUEST_SMIF_DETAILS'
 function requestSmifDetails(){
     return {
