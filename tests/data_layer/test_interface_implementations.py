@@ -164,6 +164,15 @@ class TestSectorModel():
         expected = get_sector_model_no_coords
         assert actual == expected
 
+    def test_sector_model_parameter_default(self, handler,
+                                            get_sector_model_parameter_defaults):
+        sector_model_name = 'energy_demand'
+        parameter_name = 'smart_meter_savings'
+        data = get_sector_model_parameter_defaults[parameter_name]
+        handler.write_sector_model_parameter_default(sector_model_name, parameter_name, data)
+        actual = handler.read_sector_model_parameter_default(sector_model_name, parameter_name)
+        assert actual == data
+
     def test_write_sector_model(self, handler, get_sector_model):
         new_sector_model = copy(get_sector_model)
         new_sector_model['name'] = 'another_energy_sector_model'
