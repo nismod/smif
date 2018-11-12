@@ -286,7 +286,15 @@ class DatafileInterface(DataInterface):
         filepath = self._default_parameter_filepath(sector_model_name, param)
         spec = Spec.from_dict(param)
         data_list = self._get_data_from_csv(filepath)
-        data = self.data_list_to_ndarray(data_list, spec)
+        try:
+            data = self.data_list_to_ndarray(data_list, spec)
+        except SmifDataMismatchError as ex:
+            raise SmifDataMismatchError(
+                "Reading default parameter values for {}:{}. {}".format(
+                    sector_model_name,
+                    parameter_name,
+                    str(ex)
+                )) from ex
         return data
 
     def _default_parameter_filepath(self, sector_model_name, parameter):
