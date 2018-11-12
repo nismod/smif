@@ -45,6 +45,12 @@ class ScenarioConfigForm extends Component {
             label: dim.name
         }))
 
+        dims.sort(function(a, b){
+            if(a.label < b.label) { return -1 }
+            if(a.label > b.label) { return 1 }
+            return 0
+        })
+
         return (
             <div>
                 <div className="card">
