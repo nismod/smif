@@ -36,6 +36,7 @@ The key functions include:
 """
 import sys
 from abc import ABCMeta, abstractmethod
+from typing import Dict
 
 from smif.metadata import Spec
 from smif.model.model import Model
@@ -102,7 +103,7 @@ class SectorModel(Model, metaclass=ABCMeta):
             model.add_parameter(Spec.from_dict(param))
         return model
 
-    def as_dict(self):
+    def as_dict(self) -> Dict:
         """Serialize the SectorModel object as a dictionary
 
         Returns

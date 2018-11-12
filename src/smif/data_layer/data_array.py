@@ -4,6 +4,7 @@ from logging import getLogger
 
 import numpy as np
 from smif.exception import SmifDataError, SmifDataMismatchError
+from smif.metadata.spec import Spec
 
 # Import pandas, xarray if available (optional dependencies)
 try:
@@ -31,7 +32,7 @@ class DataArray():
     spec : smif.metadata.spec.Spec
     data : numpy.ndarray
     """
-    def __init__(self, spec, data):
+    def __init__(self, spec: Spec, data: np.ndarray):
         self.logger = getLogger(__name__)
         self.spec = spec
         self.data = data
@@ -105,7 +106,7 @@ class DataArray():
         """
         return self.data.shape
 
-    def as_ndarray(self):
+    def as_ndarray(self) -> np.ndarray:
         """Access as a :class:`numpy.ndarray`
         """
         return self.data
