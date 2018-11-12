@@ -599,6 +599,24 @@ class TestSosModelDependencies(object):
             SosModel.from_dict(sos_model_dict, [sector_model, scenario_model, economic_model])
         assert "meter!=ml" in str(ex.value)
 
+    def test_scenario_variant_not_present(self, sos_model_dict, scenario_model, economic_model):
+        """Error on sector model not provided
+        """
+        with raises(SmifDataMismatchError) as ex:
+            SosModel.from_dict(sos_model_dict, [scenario_model, economic_model])
+        assert "SectorModel or ScenarioModel sink `economic_model` required " + \
+               "by dependency `economic_model (gva) - water_supply (rGVA)` " + \
+               "was not provided by the builder" in str(ex.value)
+
+    def test_scenario_model_not_provided(self, sos_model_dict, sector_model, economic_model):
+        """Error on scenario not provided
+        """
+        with raises(SmifDataMismatchError) as ex:
+            SosModel.from_dict(sos_model_dict, [sector_model, economic_model])
+        assert "SectorModel or ScenarioModel source `climate` required by " + \
+               "dependency `climate (precipitation) - water_supply (precipitation)` " + \
+               "was not provided by the builder" in str(ex.value)
+
 
 class TestNarratives:
 

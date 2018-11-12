@@ -105,8 +105,30 @@ class SosModel():
                 sos_model.add_model(model)
 
             for dep in data['model_dependencies'] + data['scenario_dependencies']:
-                sink = sos_model.get_model(dep['sink'])
-                source = sos_model.get_model(dep['source'])
+                try:
+                    sink = sos_model.get_model(dep['sink'])
+                except KeyError:
+                    msg = 'SectorModel or ScenarioModel sink `{}` required by ' + \
+                          'dependency `{}` was not provided by the builder'
+                    dependency = (
+                        dep['source'] + ' (' + dep['source_output'] + ')' + 
+                        ' - ' +
+                        dep['sink'] + ' (' + dep['sink_input'] + ')'
+                    )
+                    raise SmifDataMismatchError(msg.format(dep['source'], dependency))
+
+                try:
+                    source = sos_model.get_model(dep['source'])
+                except KeyError:
+                    msg = 'SectorModel or ScenarioModel source `{}` required by ' + \
+                          'dependency `{}` was not provided by the builder'
+                    dependency = (
+                        dep['source'] + ' (' + dep['source_output'] + ')' + 
+                        ' - ' +
+                        dep['sink'] + ' (' + dep['sink_input'] + ')'
+                    )
+                    raise SmifDataMismatchError(msg.format(dep['source'], dependency))
+
                 source_output_name = dep['source_output']
                 sink_input_name = dep['sink_input']
                 try:
