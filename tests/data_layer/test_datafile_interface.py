@@ -1013,6 +1013,21 @@ class TestNarrativeVariantData:
             config_handler.read_narrative_variant_data(
                 'energy', 'governance', 'Central Planning', 'does not exist')
 
+    def test_default_data_mismatch(self, config_handler, get_sector_model_parameter_defaults):
+        sector_model_name = 'energy_demand'
+        parameter_name = 'smart_meter_savings'
+        data = get_sector_model_parameter_defaults[parameter_name]
+        data.data = np.array([1, 2, 3])
+        config_handler.write_sector_model_parameter_default(
+            sector_model_name, parameter_name, data)
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_sector_model_parameter_default(
+                sector_model_name, parameter_name)
+
+        msg = "Reading default parameter values for energy_demand:smart_meter_savings"
+        assert msg in str(ex)
+
 
 # need to test with spec replacing spatial/temporal resolution
 @mark.xfail
