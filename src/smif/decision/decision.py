@@ -119,7 +119,7 @@ class DecisionManager(object):
 
                 strategy['name'] = strategy['classname'] + '_' + strategy['type']
 
-                self.logger.debug("Trying to load strategy: %s", strategy)
+                self.logger.debug("Trying to load strategy: %s", strategy['name'])
                 decision_module = loader.load(strategy)
                 self._decision_module = decision_module
 
@@ -165,11 +165,14 @@ class DecisionManager(object):
 
         Decision links are only required if the bundle timesteps do not start from the first
         timestep of the model horizon.
-        """
+    """
+        self.logger.debug("Calling decision loop")
         if self._decision_module:
-            bundle = next(self._decision_module)
-            self._get_and_save_bundle_decisions(bundle)
-            yield bundle
+            while True:
+                bundle = next(self._decision_module)
+                self.logger.debug("Bundle returned: %s", bundle)
+                self._get_and_save_bundle_decisions(bundle)
+                yield bundle
         else:
             bundle = {
                 'decision_iterations': [0],
@@ -257,6 +260,7 @@ class DecisionModule(metaclass=ABCMeta):
     def __init__(self, timesteps, register):
         self.timesteps = timesteps
         self.register = register
+        self.logger = getLogger(__name__)
 
     def __next__(self):
         return self._get_next_decision_iteration()
@@ -432,19 +436,44 @@ class RuleBased(DecisionModule):
     def __init__(self, timesteps, register):
         super().__init__(timesteps, register)
         self.satisfied = False
-        self.current_timestep_index = 0
+        self.current_timestep = self.first_timestep
         self.current_iteration = 0
         # keep internal account of max iteration reached per timestep
-        self._max_iteration_by_timestep = {0: 0}
+        self._max_iteration_by_timestep = {self.first_timestep: 0}
+        self.logger = getLogger(__name__)
+
+    @property
+    def next_timestep(self):
+        index_current_timestep = self.timesteps.index(self.current_timestep)
+        try:
+            return self.timesteps[index_current_timestep + 1]
+        except IndexError:
+            return None
+
+    @property
+    def previous_timestep(self):
+        index_current_timestep = self.timesteps.index(self.current_timestep)
+        if index_current_timestep > 0:
+            return self.timesteps[index_current_timestep - 1]
+        else:
+            return None
+
+    @property
+    def first_timestep(self):
+        return min(self.timesteps)
+
+    @property
+    def last_timestep(self):
+        return max(self.timesteps)
 
     def _get_next_decision_iteration(self):
-        if self.satisfied and self.current_timestep_index == len(self.timesteps) - 1:
+        if self.satisfied and (self.current_timestep == self.last_timestep):
             return None
-        elif self.satisfied and self.current_timestep_index <= len(self.timesteps):
-            self._max_iteration_by_timestep[self.current_timestep_index] = \
+        elif self.satisfied and (self.current_timestep < self.last_timestep):
+            self._max_iteration_by_timestep[self.current_timestep] = \
                 self.current_iteration
             self.satisfied = False
-            self.current_timestep_index += 1
+            self.current_timestep = self.next_timestep
             self.current_iteration += 1
             return self._make_bundle()
         else:
@@ -452,14 +481,13 @@ class RuleBased(DecisionModule):
             return self._make_bundle()
 
     def _make_bundle(self):
-        bundle = {
-            'decision_iterations': [self.current_iteration],
-            'timesteps': [self.timesteps[self.current_timestep_index]],
-        }
-        if self.current_timestep_index != 0:
+        bundle = {'decision_iterations': [self.current_iteration],
+                  'timesteps': [self.current_timestep]}
+
+        if self.current_timestep > self.first_timestep:
             bundle['decision_links'] = {
                 self.current_iteration: self._max_iteration_by_timestep[
-                    self.current_timestep_index - 1]
+                    self.previous_timestep]
             }
         return bundle
 
