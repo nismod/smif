@@ -29,8 +29,8 @@ class DataArray():
 
     Attributes
     ----------
-    spec : smif.metadata.spec.Spec
-    data : numpy.ndarray
+    spec: smif.metadata.spec.Spec
+    data: numpy.ndarray
     """
     def __init__(self, spec: Spec, data: np.ndarray):
         self.logger = getLogger(__name__)
@@ -111,7 +111,7 @@ class DataArray():
         """
         return self.data
 
-    def as_df(self):
+    def as_df(self) -> pandas.DataFrame:
         """Access DataArray as a :class:`pandas.DataFrame`
         """
         dims = self.dims
