@@ -170,6 +170,8 @@ class DecisionManager(object):
         if self._decision_module:
             while True:
                 bundle = next(self._decision_module)
+                if bundle is None:
+                    break
                 self.logger.debug("Bundle returned: %s", bundle)
                 self._get_and_save_bundle_decisions(bundle)
                 yield bundle
