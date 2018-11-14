@@ -255,7 +255,7 @@ class DataHandle(object):
 
         return current_interventions
 
-    def get_data(self, input_name, timestep=None):
+    def get_data(self, input_name: str, timestep=None) -> DataArray:
         """Get data required for model inputs
 
         Parameters

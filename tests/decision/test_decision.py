@@ -161,6 +161,35 @@ class TestPreSpecified:
             dm.within_lifetime(2010, 2010, -1)
 
 
+class TestRuleBasedProperties:
+
+    def test_timesteps(self):
+
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, Mock())
+        assert dm.current_timestep == 2010
+        assert dm.next_timestep == 2015
+
+    def test_timesteps_end(self):
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, Mock())
+        dm.current_timestep = 2020
+        assert dm.next_timestep is None
+
+    def test_timesteps_begin(self):
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, Mock())
+        dm.current_timestep = 2010
+        assert dm.previous_timestep is None
+
+    def test_timesteps_first_last(self):
+
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, Mock())
+        assert dm.first_timestep == 2010
+        assert dm.last_timestep == 2020
+
+
 class TestRuleBased:
 
     def test_initialisation(self):
@@ -169,7 +198,7 @@ class TestRuleBased:
         dm = RuleBased(timesteps, Mock())
         assert dm.timesteps == timesteps
         assert dm.satisfied is False
-        assert dm.current_timestep_index == 0
+        assert dm.current_timestep == 2010
         assert dm.current_iteration == 0
 
     def test_generator(self):
@@ -205,7 +234,7 @@ class TestRuleBased:
         assert dm.satisfied is False
 
         dm.satisfied = True
-        dm.current_timestep_index = 2
+        dm.current_timestep = 2020
         actual = next(dm)
         assert actual is None
 

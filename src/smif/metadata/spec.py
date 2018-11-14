@@ -226,7 +226,7 @@ class Spec(object):
         """
         return list(self._coords)
 
-    def dim_coords(self, dim):
+    def dim_coords(self, dim: str):
         """Coordinates for a given dimension
         """
         if not isinstance(dim, str):

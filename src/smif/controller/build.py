@@ -80,7 +80,7 @@ def get_scenario_models(scenarios, handler):
         scenario_definition['outputs'] = scenario_definition['provides']
         del scenario_definition['provides']
 
-        LOGGER.debug("Scenario definition: %s", scenario_definition)
+        LOGGER.debug("Scenario definition: %s", scenario_name)
 
         scenario_model = ScenarioModel.from_dict(scenario_definition)
         scenario_models.append(scenario_model)

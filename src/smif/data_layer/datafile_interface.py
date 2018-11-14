@@ -781,7 +781,6 @@ class DatafileInterface(DataInterface):
                                      variant_name, data_array, timestep=None):
         spec = data_array.spec
         data = self.ndarray_to_data_list(data_array, timestep=timestep)
-        self.logger.debug(data)
         variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
         filepath = self._get_variant_filepath(variant, spec.name, 'narratives')
         self._write_variant_data_csv(filepath, data, spec, timestep)
@@ -796,8 +795,6 @@ class DatafileInterface(DataInterface):
             filepath = filename
         else:
             filepath = os.path.join(self.data_folders[scenario_or_narrative], filename)
-        self.logger.debug(variant)
-        self.logger.debug(filepath)
         return filepath
 
     def _read_variant_data(self, variant, variable, scenarios_or_narrative, spec, timestep):
@@ -810,7 +807,6 @@ class DatafileInterface(DataInterface):
             if 'timestep' not in data[0].keys():
                 msg = "Header in '{}' missing 'timestep' key. Found {}"
                 raise SmifDataMismatchError(msg.format(filepath, list(data[0].keys())))
-            self.logger.debug(data)
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
         try:
@@ -845,7 +841,6 @@ class DatafileInterface(DataInterface):
         try:
             if self.storage_format == 'local_csv':
                 data = self._get_data_from_csv(results_path)
-                self.logger.debug(data)
                 return self.data_list_to_ndarray(data, output_spec)
             elif self.storage_format == 'local_binary':
                 data = self._get_data_from_native_file(results_path)

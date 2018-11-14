@@ -1,9 +1,9 @@
 from copy import copy
 
-from smif.decision.decision import DecisionModule
+from smif.decision.decision import RuleBased
 
 
-class EnergyAgent(DecisionModule):
+class EnergyAgent(RuleBased):
     """A coupled power-producer/regulator decision algorithm for simulating
     decision making in an energy supply model
 
@@ -23,11 +23,6 @@ class EnergyAgent(DecisionModule):
     """
     def __init__(self, timesteps, register):
         super().__init__(timesteps, register)
-        self.converged = False
-        self.current_timestep_index = 0
-        self.current_iteration = 0
-        # keep internal account of max iteration reached per timestep
-        self._max_iteration_by_timestep = {0: 0}
         self.model_name = 'energy_supply'
 
     @staticmethod
@@ -35,30 +30,6 @@ class EnergyAgent(DecisionModule):
         timesteps = config['timesteps']
         register = config['register']
         return EnergyAgent(timesteps, register)
-
-    def _get_next_decision_iteration(self):
-        if self.converged and self.current_timestep_index == len(self.timesteps) - 1:
-            return None
-        elif self.converged and self.current_timestep_index <= len(self.timesteps):
-            self.converged = False
-            self.current_timestep_index += 1
-            self.current_iteration += 1
-            return self._make_bundle()
-        else:
-            self.current_iteration += 1
-            return self._make_bundle()
-
-    def _make_bundle(self):
-        bundle = {
-            'decision_iterations': [self.current_iteration],
-            'timesteps': [self.timesteps[self.current_timestep_index]],
-        }
-        if self.current_timestep_index != 0:
-            bundle['decision_links'] = {
-                self.current_iteration: self._max_iteration_by_timestep[
-                    self.current_timestep_index - 1]
-            }
-        return bundle
 
     def get_decision(self, data_handle):
         budget = self.run_regulator(data_handle)
@@ -72,16 +43,17 @@ class EnergyAgent(DecisionModule):
         budget = 100
 
         # TODO Should be the iteration previous to the current one?
-        iteration = data_handle.decision_iteration
-
         if data_handle.current_timestep > data_handle.base_timestep:
+            previous_timestep = data_handle.previous_timestep
+            iteration = self._max_iteration_by_timestep[previous_timestep]
             output_name = 'cost'
-            cost = data_handle.get_results(output_name,
-                                           model_name='energy_demand',
+            cost = data_handle.get_results(model_name='energy_demand',
+                                           output_name=output_name,
                                            decision_iteration=iteration,
-                                           timestep=data_handle.previous_timestep)
-            budget -= cost
+                                           timestep=previous_timestep)
+            budget -= sum(cost.as_ndarray())
 
+        self.satisfied = True
         return budget
 
     def run_power_producer(self, data_handle, budget):
