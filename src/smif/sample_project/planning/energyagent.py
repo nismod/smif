@@ -43,9 +43,9 @@ class EnergyAgent(RuleBased):
         budget = 100
 
         # TODO Should be the iteration previous to the current one?
-        previous_timestep = data_handle.previous_timestep
-        iteration = self._max_iteration_by_timestep[previous_timestep]
         if data_handle.current_timestep > data_handle.base_timestep:
+            previous_timestep = data_handle.previous_timestep
+            iteration = self._max_iteration_by_timestep[previous_timestep]
             output_name = 'cost'
             cost = data_handle.get_results(model_name='energy_demand',
                                            output_name=output_name,
