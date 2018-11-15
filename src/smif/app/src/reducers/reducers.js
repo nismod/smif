@@ -1,7 +1,9 @@
 import { combineReducers } from 'redux'
 import {
-    SET_APP_EDIT_IN_PROGRESS,
-    SET_APP_EDIT_DONE,
+    APP_FORM_RESET,
+    APP_FORM_EDIT,
+    APP_FORM_SAVE,
+    APP_FORM_CANCEL,
     REQUEST_SMIF_DETAILS,
     RECEIVE_SMIF_DETAILS,
     REQUEST_MODEL_RUNS,
@@ -37,19 +39,32 @@ import {
 
 function app(
     state = {
-        hasPendingChanges: false
+        formEdit: false,
+        formSave: false,
+        formCancel: false
     },
     action
 ) {
     switch (action.type){
-    case SET_APP_EDIT_IN_PROGRESS:
+    case APP_FORM_RESET:
         return Object.assign({}, state, {
-            hasPendingChanges: true
+            formEdit: false,
+            formSave: false,
+            formCancel: false
         })
-    case SET_APP_EDIT_DONE:
+    case APP_FORM_EDIT:
         return Object.assign({}, state, {
-            hasPendingChanges: false
+            formEdit: true,
         })
+    case APP_FORM_SAVE:
+        return Object.assign({}, state, {
+            formSave: true
+        })
+    case APP_FORM_CANCEL:
+        return Object.assign({}, state, {
+            formCancel: true
+        })
+    
     default:
         return state
     }

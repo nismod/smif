@@ -10,7 +10,11 @@ import { fetchScenarios } from 'actions/actions.js'
 
 import { saveSosModel } from 'actions/actions.js'
 import { acceptSosModel } from 'actions/actions.js'
-import { setAppEditInProgress } from 'actions/actions.js'
+
+import { setAppFormEdit } from 'actions/actions.js'
+import { setAppFormCancel } from 'actions/actions.js'
+import { setAppFormSave } from 'actions/actions.js'
+import { setAppFormReset } from 'actions/actions.js'
 
 import SosModelConfigForm from 'components/ConfigForm/SosModelConfigForm.js'
 import { ConfirmPopup } from 'components/ConfigForm/General/Popups.js'
@@ -21,17 +25,16 @@ class SosModelConfig extends Component {
         const { dispatch } = this.props
 
         this.saveForm = this.saveForm.bind(this)
-        this.requestCancel = this.requestCancel.bind(this)
-        this.confirmCancel = this.confirmCancel.bind(this)
-        this.rejectCancel = this.rejectCancel.bind(this)
+        this.openClosePopup = this.openClosePopup.bind(this)
+        this.closeForm = this.closeForm.bind(this)
         this.editForm = this.editForm.bind(this)
         this.returnToOverview = this.returnToOverview.bind(this)
 
         this.config_name = this.props.match.params.name
 
         this.state = {
-            requestCancel: false,
-            cancelForm: false
+            openClosePopup: false,
+            closeForm: false
         }
 
         dispatch(fetchSosModel(this.config_name))
@@ -44,7 +47,8 @@ class SosModelConfig extends Component {
 
         if (this.config_name != this.props.match.params.name) {
             this.config_name = this.props.match.params.name
-            this.setState({cancelForm: false})
+            this.setState({closeForm: false})
+            dispatch(setAppFormReset())
             dispatch(fetchSosModel(this.config_name))
         }
     }
@@ -52,30 +56,26 @@ class SosModelConfig extends Component {
     saveForm(sosModel) {
         const { dispatch } = this.props
         dispatch(saveSosModel(sosModel))
-        this.setState({cancelForm: true})
+        this.setState({closeForm: true})
     }
 
-    requestCancel() {
-        if (this.props.isEdit) {
-            this.setState({requestCancel: true})
-        } else {
-            this.confirmCancel()
-        }
-    }
-
-    confirmCancel() {
+    closeForm() {
         const { dispatch } = this.props
         dispatch(acceptSosModel())
-        this.setState({cancelForm: true})
+        this.setState({closeForm: true})
     }
 
-    rejectCancel() {
-        this.setState({requestCancel: false})
-    }
-    
     editForm() {
         const { dispatch } = this.props
-        dispatch(setAppEditInProgress())
+        dispatch(setAppFormEdit())
+    }
+
+    openClosePopup() {
+        if (this.props.app.formEdit) {
+            this.setState({openClosePopup: true})
+        } else {
+            this.closeForm()
+        }
     }
 
     returnToOverview() {
@@ -114,6 +114,7 @@ class SosModelConfig extends Component {
     }
 
     renderSosModelConfig(sos_model, sector_models, scenarios, error) {
+        const { dispatch } = this.props
         return (
             <div>
                 <SosModelConfigForm 
@@ -122,18 +123,30 @@ class SosModelConfig extends Component {
                     scenarios={scenarios} 
                     error={error} 
                     onSave={this.saveForm} 
-                    onCancel={this.requestCancel}
+                    onCancel={this.openClosePopup}
                     onEdit={this.editForm}/>
                 <ConfirmPopup 
-                    onRequestOpen={this.state.requestCancel}
-                    onConfirm={this.confirmCancel}
-                    onCancel={this.rejectCancel}/>
+                    onRequestOpen={this.state.openClosePopup}
+                    onSave={() => dispatch(setAppFormSave())}
+                    onConfirm={() => dispatch(setAppFormCancel())}
+                    onCancel={() => this.setState({openClosePopup: false})}/>
             </div>
         )
     }
 
     render () {
-        const {sos_model, sector_models, scenarios, error, isFetching} = this.props
+        const {sos_model, sector_models, scenarios, error, isFetching, app} = this.props
+        const { dispatch } = this.props
+
+        if (app.formCancel) {
+            dispatch(setAppFormReset())
+            this.closeForm()
+        }
+        if (app.formSave) {
+            dispatch(setAppFormReset())
+            this.setState({openClosePopup: false})
+            this.saveForm(this.props.sos_model)
+        }
 
         if (isFetching) {
             return this.renderLoading()
@@ -141,7 +154,7 @@ class SosModelConfig extends Component {
             Object.keys(error).includes('SmifDataNotFoundError') ||
             Object.keys(error).includes('SmifValidationError')) {
             return this.renderError(error)
-        } else if (this.state.cancelForm && Object.keys(error).length == 0) {
+        } else if (this.state.closeForm && Object.keys(error).length == 0) {
             return this.returnToOverview()
         } else {
             return this.renderSosModelConfig(sos_model, sector_models, scenarios, error)
@@ -150,12 +163,12 @@ class SosModelConfig extends Component {
 }
 
 SosModelConfig.propTypes = {
+    app: PropTypes.object.isRequired,
     sos_model: PropTypes.object.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
-    isEdit: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
     history: PropTypes.object.isRequired
@@ -163,6 +176,7 @@ SosModelConfig.propTypes = {
 
 function mapStateToProps(state) {
     return {
+        app: state.app,
         sos_model: state.sos_model.item,
         sector_models: state.sector_models.items,
         scenarios: state.scenarios.items,
@@ -175,8 +189,7 @@ function mapStateToProps(state) {
             state.sos_model.isFetching ||
             state.sector_models.isFetching ||
             state.scenarios.isFetching
-        ),
-        isEdit: state.app.hasPendingChanges
+        )
     }
 }
 

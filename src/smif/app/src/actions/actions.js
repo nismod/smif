@@ -1,30 +1,30 @@
 import fetch from 'isomorphic-fetch'
 
-export const RECEIVE_APP_DETAILS = 'RECEIVE_APP_DETAILS'
-function receiveAppDetails(){
-    return {
-        type: RECEIVE_APP_DETAILS,
-        hasPendingChanges: false
+export const APP_FORM_RESET = 'APP_FORM_RESET'
+export function setAppFormReset(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_RESET})
     }
 }
 
-export const SET_APP_EDIT_IN_PROGRESS = 'SET_APP_EDIT_IN_PROGRESS'
-export function setAppEditInProgress(){
+export const APP_FORM_EDIT = 'APP_FORM_EDIT'
+export function setAppFormEdit(){
     return function (dispatch) {
-        dispatch({type: SET_APP_EDIT_IN_PROGRESS})
+        dispatch({type: APP_FORM_EDIT})
     }
 }
 
-export const SET_APP_EDIT_DONE = 'SET_APP_EDIT_DONE'
-export function setAppEditDone(){
+export const APP_FORM_SAVE = 'APP_FORM_SAVE'
+export function setAppFormSave(){
     return function (dispatch) {
-        dispatch({type: SET_APP_EDIT_DONE})
+        dispatch({type: APP_FORM_SAVE})
     }
 }
 
-export function fetchAppDetails(){
+export const APP_FORM_CANCEL = 'APP_FORM_CANCEL'
+export function setAppFormCancel(){
     return function (dispatch) {
-        return dispatch(receiveAppDetails())
+        dispatch({type: APP_FORM_CANCEL})
     }
 }
 
@@ -382,6 +382,7 @@ export function saveSosModel(model){
             .then(
                 function(json) {
                     if (json['message'] == 'failed') {
+                        dispatch(setAppFormEdit())
                         dispatch(rejectSosModel(json))
                     }
                     else {
