@@ -16,7 +16,7 @@ def dims():
 
 @fixture
 def coords():
-    return[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']]
+    return [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']]
 
 
 @fixture
@@ -79,3 +79,16 @@ class TestDataArray():
     def test_repr(self, small_da, spec, data):
 
         assert repr(small_da) == "<DataArray('{}', '{}')>".format(spec, data)
+
+    def test_dim_coords(self, small_da, spec):
+
+        actual = small_da.dim_coords('a')
+        expected = spec.dim_coords('a')
+
+        assert actual == expected
+
+    def test_coords(self, small_da, spec):
+
+        actual = small_da.coords
+        expected = spec.coords
+        assert actual == expected
