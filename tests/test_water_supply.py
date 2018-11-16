@@ -16,6 +16,10 @@ from .fixtures.water_supply import (ExampleWaterSupplySimulationModel,
 
 @fixture(scope='function')
 def raininess_oracle(timestep):
+    return a_raininess_oracle(timestep)
+
+
+def a_raininess_oracle(timestep):
     """Mimics an external data source for raininess
 
     Arguments
@@ -65,14 +69,14 @@ def test_raininess_oracle():
     expected = [1, 2, 3, 4, 5]
 
     for result in zip(time, expected):
-        actual = raininess_oracle(result[0])
+        actual = a_raininess_oracle(result[0])
         assert actual == result[1]
 
 
 def test_raininess_oracle_out_of_range():
     msg = "timestep 2051 is outside of the range [2010, 2050]"
     with raises(AssertionError, message=msg):
-        raininess_oracle(2051)
+        a_raininess_oracle(2051)
 
 
 def test_simulate_rain_cost_python():
