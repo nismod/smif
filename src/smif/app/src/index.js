@@ -4,7 +4,7 @@ import { render } from 'react-dom'
 import { Provider } from 'react-redux'
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom'
 
-import Nav from 'components/Nav'
+import Nav from 'containers/Nav'
 import Welcome from 'components/Welcome'
 import NotFound from 'components/ConfigForm/General/NotFound'
 import JobsOverview from 'containers/Configuration/Overview/JobsOverview'
