@@ -7,6 +7,12 @@ from smif.model.sector_model import SectorModel
 class EDMWrapper(SectorModel):
     """Energy model
     """
+    def before_model_run(self, data):
+
+        data = data.get_base_timestep_data('energy_demand')
+        self.logger.info("Energy demand in base year is %s",
+                         data)
+
     def simulate(self, data):
 
         # Get the current timestep

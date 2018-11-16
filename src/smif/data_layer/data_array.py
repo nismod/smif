@@ -88,7 +88,6 @@ class DataArray():
         """
         return self.spec.coords
 
-    @property
     def dim_coords(self, dim):
         """Coordinates for a given dimension
         """

@@ -275,12 +275,21 @@ class DataHandle(object):
                 "'{}' not recognised as input for '{}'".format(input_name, self._model_name))
 
         # resolve timestep
-        if timestep is None:
-            timestep = self._current_timestep
-        elif isinstance(timestep, RelativeTimestep):
-            timestep = timestep.resolve_relative_to(self._current_timestep, self._timesteps)
+        if self._current_timestep is None:
+            if timestep is None:
+                raise ValueError("You must provide a timestep to obtain data")
+            elif hasattr(timestep, "resolve_relative_to"):
+                timestep = timestep.resolve_relative_to(self._timesteps[0], self._timesteps)
+            else:
+                assert isinstance(timestep, int) and timestep in self._timesteps
         else:
-            assert isinstance(timestep, int) and timestep <= self._current_timestep
+            if timestep is None:
+                timestep = self._current_timestep
+            elif hasattr(timestep, "resolve_relative_to"):
+                timestep = timestep.resolve_relative_to(self._current_timestep,
+                                                        self._timesteps)
+            else:
+                assert isinstance(timestep, int) and timestep <= self._current_timestep
 
         # resolve source
         dep = self._resolve_source(input_name)
@@ -294,14 +303,14 @@ class DataHandle(object):
         spec = self._inputs[input_name]
 
         if dep['type'] == 'scenario':
-            da = self._store.read_scenario_variant_data(
+            data = self._store.read_scenario_variant_data(
                 source_model_name,  # read from a given scenario model
                 dep['variant'],  # with given scenario variant
                 source_output_name,  # using output (variable) name
                 timestep
             )
         else:
-            da = self._store.read_results(
+            data = self._store.read_results(
                 self._modelrun_name,
                 source_model_name,  # read from source model
                 spec,  # using source model output spec
@@ -309,7 +318,7 @@ class DataHandle(object):
                 self._decision_iteration
             )
 
-        return da
+        return data
 
     def _resolve_source(self, input_name):
         """Find best dependency to provide input data
