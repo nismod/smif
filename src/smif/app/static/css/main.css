@@ -101,6 +101,7 @@ select {
 }
 .sidebar .nav-link {
     color: #333;
+    cursor: pointer;
 }
 .sidebar .nav-link.active {
     color: #007bff;
