@@ -9,12 +9,13 @@ import { fetchSectorModels } from 'actions/actions.js'
 import { fetchScenarios } from 'actions/actions.js'
 
 import { saveSosModel } from 'actions/actions.js'
-import { acceptSosModel } from 'actions/actions.js'
 
 import { setAppFormEdit } from 'actions/actions.js'
 import { setAppFormCancel } from 'actions/actions.js'
+import { setAppFormCancelDone } from 'actions/actions.js'
 import { setAppFormSave } from 'actions/actions.js'
-import { setAppFormReset } from 'actions/actions.js'
+import { setAppFormSaveDone } from 'actions/actions.js'
+import { setAppRedirect } from 'actions/actions.js'
 
 import SosModelConfigForm from 'components/ConfigForm/SosModelConfigForm.js'
 import { ConfirmPopup } from 'components/ConfigForm/General/Popups.js'
@@ -24,11 +25,7 @@ class SosModelConfig extends Component {
         super(props)
         const { dispatch } = this.props
 
-        this.saveForm = this.saveForm.bind(this)
         this.openClosePopup = this.openClosePopup.bind(this)
-        this.closeForm = this.closeForm.bind(this)
-        this.editForm = this.editForm.bind(this)
-        this.returnToOverview = this.returnToOverview.bind(this)
 
         this.config_name = this.props.match.params.name
 
@@ -48,40 +45,19 @@ class SosModelConfig extends Component {
         if (this.config_name != this.props.match.params.name) {
             this.config_name = this.props.match.params.name
             this.setState({closeForm: false})
-            dispatch(setAppFormReset())
             dispatch(fetchSosModel(this.config_name))
         }
     }
 
-    saveForm(sosModel) {
-        const { dispatch } = this.props
-        dispatch(saveSosModel(sosModel))
-        this.setState({closeForm: true})
-    }
-
-    closeForm() {
-        const { dispatch } = this.props
-        dispatch(acceptSosModel())
-        this.setState({closeForm: true})
-    }
-
-    editForm() {
-        const { dispatch } = this.props
-        dispatch(setAppFormEdit())
-    }
-
     openClosePopup() {
+        const { dispatch } = this.props
+        dispatch(setAppRedirect('/configure/sos-models'))
+        
         if (this.props.app.formEdit) {
             this.setState({openClosePopup: true})
         } else {
-            this.closeForm()
+            dispatch(setAppFormCancel())
         }
-    }
-
-    returnToOverview() {
-        return (
-            <Redirect to="/configure/sos-models" />
-        )
     }
 
     renderLoading() {
@@ -122,9 +98,9 @@ class SosModelConfig extends Component {
                     sector_models={sector_models} 
                     scenarios={scenarios} 
                     error={error} 
-                    onSave={this.saveForm} 
+                    onSave={() => dispatch(setAppFormSave())} 
                     onCancel={this.openClosePopup}
-                    onEdit={this.editForm}/>
+                    onEdit={() => dispatch(setAppFormEdit())}/>
                 <ConfirmPopup 
                     onRequestOpen={this.state.openClosePopup}
                     onSave={() => dispatch(setAppFormSave())}
@@ -138,14 +114,13 @@ class SosModelConfig extends Component {
         const {sos_model, sector_models, scenarios, error, isFetching, app} = this.props
         const { dispatch } = this.props
 
-        if (app.formCancel) {
-            dispatch(setAppFormReset())
-            this.closeForm()
+        if (app.formReqCancel) {
+            dispatch(setAppFormCancelDone())
         }
-        if (app.formSave) {
-            dispatch(setAppFormReset())
+        if (app.formReqSave) {
             this.setState({openClosePopup: false})
-            this.saveForm(this.props.sos_model)
+            dispatch(saveSosModel(this.props.sos_model))
+            dispatch(setAppFormSaveDone())
         }
 
         if (isFetching) {
@@ -154,8 +129,6 @@ class SosModelConfig extends Component {
             Object.keys(error).includes('SmifDataNotFoundError') ||
             Object.keys(error).includes('SmifValidationError')) {
             return this.renderError(error)
-        } else if (this.state.closeForm && Object.keys(error).length == 0) {
-            return this.returnToOverview()
         } else {
             return this.renderSosModelConfig(sos_model, sector_models, scenarios, error)
         }

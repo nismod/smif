@@ -1,12 +1,5 @@
 import fetch from 'isomorphic-fetch'
 
-export const APP_FORM_RESET = 'APP_FORM_RESET'
-export function setAppFormReset(){
-    return function (dispatch) {
-        dispatch({type: APP_FORM_RESET})
-    }
-}
-
 export const APP_FORM_EDIT = 'APP_FORM_EDIT'
 export function setAppFormEdit(){
     return function (dispatch) {
@@ -21,10 +14,48 @@ export function setAppFormSave(){
     }
 }
 
+export const APP_FORM_SAVE_DONE = 'APP_FORM_SAVE_DONE'
+export function setAppFormSaveDone(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_SAVE_DONE})
+    }
+}
+
+export const APP_FORM_ACCEPT = 'APP_FORM_ACCEPT'
+export function setAppFormAccept(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_ACCEPT})
+    }
+}
+
+export const APP_FORM_REJECT = 'APP_FORM_REJECT'
+export function setAppFormReject(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_REJECT})
+    }
+}
+
 export const APP_FORM_CANCEL = 'APP_FORM_CANCEL'
 export function setAppFormCancel(){
     return function (dispatch) {
         dispatch({type: APP_FORM_CANCEL})
+    }
+}
+
+export const APP_FORM_CANCEL_DONE = 'APP_FORM_CANCEL_DONE'
+export function setAppFormCancelDone(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_CANCEL_DONE})
+    }
+}
+
+export const APP_REDIRECT = 'APP_REDIRECT'
+export function setAppRedirect(url){
+    return function (dispatch) {
+        dispatch({
+            type: APP_REDIRECT,
+            data: url
+        })
     }
 }
 
@@ -382,10 +413,11 @@ export function saveSosModel(model){
             .then(
                 function(json) {
                     if (json['message'] == 'failed') {
-                        dispatch(setAppFormEdit())
+                        dispatch(setAppFormReject())
                         dispatch(rejectSosModel(json))
                     }
                     else {
+                        dispatch(setAppFormAccept())
                         dispatch(acceptSosModel())
                     }
                 }

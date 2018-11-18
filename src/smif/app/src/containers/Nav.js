@@ -8,6 +8,7 @@ import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios } fro
 
 import { setAppFormCancel } from 'actions/actions.js'
 import { setAppFormSave } from 'actions/actions.js'
+import { setAppRedirect } from 'actions/actions.js'
 
 import { FaHome, FaTasks, FaSliders, FaSitemap, FaCode, FaBarChart } from 'react-icons/lib/fa'
 import { Badge } from 'reactstrap'
@@ -20,11 +21,9 @@ class Nav extends Component {
         super(props)
         this.init = true
 
-        this.redirect = this.redirect.bind(this)
+        this.navigate = this.navigate.bind(this)
         this.state = {
             openClosePopup: false,
-            redirect: false,
-            redirect_to: ''
         }
     }
 
@@ -37,12 +36,15 @@ class Nav extends Component {
         dispatch(fetchScenarios())
     }
 
-    componentDidUpdate() {
-        if (this.state.redirect == true) {
-            this.setState({
-                redirect: false,
-                redirect_to: ''
-            })
+    navigate(to) {
+        const { dispatch } = this.props
+        dispatch(setAppRedirect(to))
+
+        if (this.props.app.formEdit) {
+            this.setState({openClosePopup: true})
+        } else {
+            const { dispatch } = this.props
+            dispatch(setAppFormCancel())
         }
     }
 
@@ -82,22 +84,6 @@ class Nav extends Component {
         )
     }
 
-    redirect(target) {
-        if (this.props.app.formEdit) {
-            this.setState({
-                openClosePopup: true,
-                redirect: false,
-                redirect_to: target,
-            })
-        } else {
-            this.setState({
-                openClosePopup: false,
-                redirect: true,
-                redirect_to: target,
-            })
-        }
-    }
-
     renderNav(model_runs, sos_models, sector_models, scenarios) {
         var job_status = ['unstarted', 'running', 'stopped', 'done', 'failed']
         const pathname = this.props.location.pathname
@@ -107,7 +93,7 @@ class Nav extends Component {
             <nav className="col-12 col-md-3 col-xl-2 bg-light sidebar">
                 <ul className="nav flex-column">
                     <li className="nav-item">
-                        <div className="nav-link" onClick={() => this.redirect('/')}>
+                        <div className="nav-link" onClick={() => this.navigate('/')}>
                             <FaHome size={20}/>
                             Home
                         </div>
@@ -120,7 +106,7 @@ class Nav extends Component {
                 <ul className="nav flex-column mb-2">
 
                     <li className="nav-item">
-                        <div className="nav-link" onClick={() => this.redirect('/jobs/')}>
+                        <div className="nav-link" onClick={() => this.navigate('/jobs/')}>
                             <FaTasks size={20}/>
                                 Jobs
                             <Badge color="secondary">{model_runs.length}</Badge>
@@ -134,7 +120,7 @@ class Nav extends Component {
                                                 pathname == '/jobs/status=' + status ? 
                                                     'nav-link active' : 'nav-link'
                                             }
-                                            onClick={() => this.redirect('/jobs/status=' + status)}>
+                                            onClick={() => this.navigate('/jobs/status=' + status)}>
                                             {status}
                                         </div>
                                     </li>
@@ -144,7 +130,7 @@ class Nav extends Component {
                     </li>
 
                     <li className="nav-item">
-                        <div className="nav-link" onClick={() => this.redirect('/configure/model-runs')}>
+                        <div className="nav-link" onClick={() => this.navigate('/configure/model-runs')}>
                             <FaSliders size={20}/>
                                 Model Runs
                             <Badge color="secondary">{model_runs.length}</Badge>
@@ -159,7 +145,7 @@ class Nav extends Component {
                                                     'nav-link active' : 'nav-link'
                                             }
                                             key={'nav_' + model_run.name}
-                                            onClick={() => this.redirect('/configure/model-runs/' + model_run.name)}>
+                                            onClick={() => this.navigate('/configure/model-runs/' + model_run.name)}>
                                             {model_run.name}
                                         </div>
                                     </li>
@@ -175,7 +161,7 @@ class Nav extends Component {
 
                 <ul className="nav flex-column mb-2">
                     <li className="nav-item">
-                        <div className="nav-link" onClick={() => this.redirect('/configure/sos-models')}>
+                        <div className="nav-link" onClick={() => this.navigate('/configure/sos-models')}>
                             <FaSitemap size={20}/>
                                 System-of-Systems Models
                             <Badge color="secondary">{sos_models.length}</Badge>
@@ -190,7 +176,7 @@ class Nav extends Component {
                                                     'nav-link active' : 'nav-link'
                                             }
                                             key={'nav_' + sos_model.name}
-                                            onClick={() => this.redirect('/configure/sos-models/' + sos_model.name)}>
+                                            onClick={() => this.navigate('/configure/sos-models/' + sos_model.name)}>
                                             {sos_model.name}
                                         </div>
                                     </li>
@@ -198,7 +184,7 @@ class Nav extends Component {
                             </ul>
                         }/>
 
-                        <div className="nav-link" onClick={() => this.redirect('/configure/sector-models')}>
+                        <div className="nav-link" onClick={() => this.navigate('/configure/sector-models')}>
                             <FaCode size={20}/>
                                 Model Wrappers
                             <Badge color="secondary">{sector_models.length}</Badge>
@@ -213,7 +199,7 @@ class Nav extends Component {
                                                     'nav-link active' : 'nav-link'
                                             }
                                             key={'nav_' + sector_model.name}
-                                            onClick={() => this.redirect('/configure/sector-models/' + sector_model.name)}>
+                                            onClick={() => this.navigate('/configure/sector-models/' + sector_model.name)}>
                                             {sector_model.name}
                                         </div>
                                     </li>
@@ -223,7 +209,7 @@ class Nav extends Component {
                     </li>
 
                     <li className="nav-item">
-                        <div className="nav-link" onClick={() => this.redirect('/configure/scenarios')}>
+                        <div className="nav-link" onClick={() => this.navigate('/configure/scenarios')}>
                             <FaBarChart size={20}/>
                                 Scenarios
                             <Badge color="secondary">{scenarios.length}</Badge>
@@ -238,7 +224,7 @@ class Nav extends Component {
                                                     'nav-link active' : 'nav-link'
                                             }
                                             key={'nav_' + scenario.name}
-                                            onClick={() => this.redirect('/configure/scenarios/' + scenario.name)}>
+                                            onClick={() => this.navigate('/configure/scenarios/' + scenario.name)}>
                                             {scenario.name}
                                         </div>
                                     </li>
@@ -257,11 +243,9 @@ class Nav extends Component {
                         this.setState({openClosePopup: false}))
                     }
                     onConfirm={() => (
-                        this.setState({
-                            redirect: true,
-                            openClosePopup: false
-                        })
-                    )}
+                        dispatch(setAppFormCancel()),
+                        this.setState({openClosePopup: false}))
+                    }
                     onCancel={() => this.setState({openClosePopup: false})}
                 />
             </nav>
@@ -271,11 +255,12 @@ class Nav extends Component {
 
     render() {
         const {model_runs, sos_models, sector_models, scenarios, isFetching} = this.props
+        const pathname = this.props.location.pathname
 
-        if (this.state.redirect == true) {
+        if (this.props.app.redirect != '' && this.props.app.redirect != pathname && this.props.app.formEdit == false && this.props.app.formError == false && this.props.app.formSaving == false) {
             return (
                 <div>
-                    <Redirect to={this.state.redirect_to} />
+                    <Redirect to={this.props.app.redirect} />
                 </div>
             )
         }

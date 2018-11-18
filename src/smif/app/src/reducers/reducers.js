@@ -1,9 +1,13 @@
 import { combineReducers } from 'redux'
 import {
-    APP_FORM_RESET,
     APP_FORM_EDIT,
     APP_FORM_SAVE,
+    APP_FORM_SAVE_DONE,
     APP_FORM_CANCEL,
+    APP_FORM_CANCEL_DONE,
+    APP_FORM_ACCEPT,
+    APP_FORM_REJECT,
+    APP_REDIRECT,
     REQUEST_SMIF_DETAILS,
     RECEIVE_SMIF_DETAILS,
     REQUEST_MODEL_RUNS,
@@ -40,29 +44,56 @@ import {
 function app(
     state = {
         formEdit: false,
-        formSave: false,
-        formCancel: false
+        formReqSave: false,
+        formReqCancel: false,
+        formSaving: false,
+        formError: false,
+        redirect: ''
     },
     action
 ) {
     switch (action.type){
-    case APP_FORM_RESET:
-        return Object.assign({}, state, {
-            formEdit: false,
-            formSave: false,
-            formCancel: false
-        })
     case APP_FORM_EDIT:
         return Object.assign({}, state, {
             formEdit: true,
         })
     case APP_FORM_SAVE:
         return Object.assign({}, state, {
-            formSave: true
+            formReqSave: true
+        })
+    case APP_FORM_SAVE_DONE:
+        return Object.assign({}, state, {
+            formReqSave: false,
+            formSaving: true
         })
     case APP_FORM_CANCEL:
         return Object.assign({}, state, {
-            formCancel: true
+            formReqCancel: true,
+        })
+    case APP_FORM_CANCEL_DONE:
+        return Object.assign({}, state, {
+            formEdit: false,
+            formReqSave: false,
+            formSaving: false,
+            formError: false,
+            formReqCancel: false
+        })
+    case APP_FORM_ACCEPT:
+        return Object.assign({}, state, {
+            formEdit: false,
+            formReqSave: false,
+            formSaving: false,
+            formError: false,
+            formReqCancel: false
+        })    
+    case APP_FORM_REJECT:
+        return Object.assign({}, state, {
+            formSaving: false,
+            formError: true
+        })
+    case APP_REDIRECT:
+        return Object.assign({}, state, {
+            redirect: action.data
         })
     
     default:
