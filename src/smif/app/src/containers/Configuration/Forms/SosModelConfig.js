@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { Redirect } from 'react-router'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
@@ -11,28 +10,18 @@ import { fetchScenarios } from 'actions/actions.js'
 import { saveSosModel } from 'actions/actions.js'
 
 import { setAppFormEdit } from 'actions/actions.js'
-import { setAppFormCancel } from 'actions/actions.js'
-import { setAppFormCancelDone } from 'actions/actions.js'
 import { setAppFormSave } from 'actions/actions.js'
 import { setAppFormSaveDone } from 'actions/actions.js'
-import { setAppRedirect } from 'actions/actions.js'
+import { setAppNavigate } from 'actions/actions.js'
 
 import SosModelConfigForm from 'components/ConfigForm/SosModelConfigForm.js'
-import { ConfirmPopup } from 'components/ConfigForm/General/Popups.js'
 
 class SosModelConfig extends Component {
     constructor(props) {
         super(props)
         const { dispatch } = this.props
 
-        this.openClosePopup = this.openClosePopup.bind(this)
-
         this.config_name = this.props.match.params.name
-
-        this.state = {
-            openClosePopup: false,
-            closeForm: false
-        }
 
         dispatch(fetchSosModel(this.config_name))
         dispatch(fetchSectorModels())
@@ -44,19 +33,7 @@ class SosModelConfig extends Component {
 
         if (this.config_name != this.props.match.params.name) {
             this.config_name = this.props.match.params.name
-            this.setState({closeForm: false})
             dispatch(fetchSosModel(this.config_name))
-        }
-    }
-
-    openClosePopup() {
-        const { dispatch } = this.props
-        dispatch(setAppRedirect('/configure/sos-models'))
-        
-        if (this.props.app.formEdit) {
-            this.setState({openClosePopup: true})
-        } else {
-            dispatch(setAppFormCancel())
         }
     }
 
@@ -99,13 +76,8 @@ class SosModelConfig extends Component {
                     scenarios={scenarios} 
                     error={error} 
                     onSave={() => dispatch(setAppFormSave())} 
-                    onCancel={this.openClosePopup}
+                    onCancel={() => dispatch(setAppNavigate('/configure/sos-models'))}
                     onEdit={() => dispatch(setAppFormEdit())}/>
-                <ConfirmPopup 
-                    onRequestOpen={this.state.openClosePopup}
-                    onSave={() => dispatch(setAppFormSave())}
-                    onConfirm={() => dispatch(setAppFormCancel())}
-                    onCancel={() => this.setState({openClosePopup: false})}/>
             </div>
         )
     }
@@ -114,11 +86,7 @@ class SosModelConfig extends Component {
         const {sos_model, sector_models, scenarios, error, isFetching, app} = this.props
         const { dispatch } = this.props
 
-        if (app.formReqCancel) {
-            dispatch(setAppFormCancelDone())
-        }
         if (app.formReqSave) {
-            this.setState({openClosePopup: false})
             dispatch(saveSosModel(this.props.sos_model))
             dispatch(setAppFormSaveDone())
         }

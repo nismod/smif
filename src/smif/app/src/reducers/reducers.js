@@ -2,12 +2,13 @@ import { combineReducers } from 'redux'
 import {
     APP_FORM_EDIT,
     APP_FORM_SAVE,
+    APP_FORM_DONT_SAVE,
     APP_FORM_SAVE_DONE,
     APP_FORM_CANCEL,
-    APP_FORM_CANCEL_DONE,
     APP_FORM_ACCEPT,
     APP_FORM_REJECT,
-    APP_REDIRECT,
+    APP_NAVIGATE,
+    APP_NAVIGATE_DONE,
     REQUEST_SMIF_DETAILS,
     RECEIVE_SMIF_DETAILS,
     REQUEST_MODEL_RUNS,
@@ -59,7 +60,16 @@ function app(
         })
     case APP_FORM_SAVE:
         return Object.assign({}, state, {
-            formReqSave: true
+            formReqSave: true,
+            formReqCancel: false
+        })
+    case APP_FORM_DONT_SAVE:
+        return Object.assign({}, state, {
+            formEdit: false,
+            formReqSave: false,
+            formSaving: false,
+            formError: false,
+            formReqCancel: false
         })
     case APP_FORM_SAVE_DONE:
         return Object.assign({}, state, {
@@ -68,15 +78,7 @@ function app(
         })
     case APP_FORM_CANCEL:
         return Object.assign({}, state, {
-            formReqCancel: true,
-        })
-    case APP_FORM_CANCEL_DONE:
-        return Object.assign({}, state, {
-            formEdit: false,
-            formReqSave: false,
-            formSaving: false,
-            formError: false,
-            formReqCancel: false
+            formReqCancel: false,
         })
     case APP_FORM_ACCEPT:
         return Object.assign({}, state, {
@@ -91,9 +93,15 @@ function app(
             formSaving: false,
             formError: true
         })
-    case APP_REDIRECT:
+    case APP_NAVIGATE:
         return Object.assign({}, state, {
-            redirect: action.data
+            redirect: action.data,
+            formReqCancel: true
+        })
+    case APP_NAVIGATE_DONE:
+        return Object.assign({}, state, {
+            redirect: '',
+            formReqCancel: false
         })
     
     default:

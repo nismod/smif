@@ -14,6 +14,13 @@ export function setAppFormSave(){
     }
 }
 
+export const APP_FORM_DONT_SAVE = 'APP_FORM_DONT_SAVE'
+export function setAppFormDontSave(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_DONT_SAVE})
+    }
+}
+
 export const APP_FORM_SAVE_DONE = 'APP_FORM_SAVE_DONE'
 export function setAppFormSaveDone(){
     return function (dispatch) {
@@ -42,18 +49,21 @@ export function setAppFormCancel(){
     }
 }
 
-export const APP_FORM_CANCEL_DONE = 'APP_FORM_CANCEL_DONE'
-export function setAppFormCancelDone(){
+export const APP_NAVIGATE = 'APP_NAVIGATE'
+export function setAppNavigate(url){
     return function (dispatch) {
-        dispatch({type: APP_FORM_CANCEL_DONE})
+        dispatch({
+            type: APP_NAVIGATE,
+            data: url
+        })
     }
 }
 
-export const APP_REDIRECT = 'APP_REDIRECT'
-export function setAppRedirect(url){
+export const APP_NAVIGATE_DONE = 'APP_NAVIGATE_DONE'
+export function setAppNavigateDone(url){
     return function (dispatch) {
         dispatch({
-            type: APP_REDIRECT,
+            type: APP_NAVIGATE_DONE,
             data: url
         })
     }
