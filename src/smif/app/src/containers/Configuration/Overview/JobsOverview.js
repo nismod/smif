@@ -4,6 +4,8 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
 import { fetchModelRuns } from 'actions/actions.js'
+import { setAppRedirect } from 'actions/actions.js'
+
 import ProjectOverviewItem from 'components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
 
 import IntroBlock from 'components/ConfigForm/General/IntroBlock.js'
@@ -49,7 +51,11 @@ class JobsOverview extends Component {
                 <div hidden={ isFetching }>
                     <div>
                         <IntroBlock title="Jobs" intro="A job brings together a system-of-systems modelrun configuration and the simulation execution. Each job provides controls to start, stop or restart a modelrun configuration and provides real-time results about its execution. Jobs can be filtered by status by using the navigation pane on the left."/>
-                        <ProjectOverviewItem itemname="ModelRun" items={model_runs} itemLink="/jobs/runner/" />
+                        <ProjectOverviewItem 
+                            itemname="ModelRun" 
+                            items={model_runs} 
+                            itemLink="/jobs/runner/" 
+                            onClick={(to) => this.props.dispatch(setAppRedirect(to))} />
                     </div>
                 </div>
             </div>
