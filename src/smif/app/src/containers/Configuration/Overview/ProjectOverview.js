@@ -6,6 +6,7 @@ import { connect } from 'react-redux'
 import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios } from 'actions/actions.js'
 import { createModelRun, createSosModel, createSectorModel, createScenario } from 'actions/actions.js'
 import { deleteModelRun, deleteSosModel, deleteSectorModel, deleteScenario } from 'actions/actions.js'
+import { setAppRedirect } from 'actions/actions.js'
 
 import IntroBlock from 'components/ConfigForm/General/IntroBlock.js'
 import Popup from 'components/ConfigForm/General/Popup.js'
@@ -264,7 +265,13 @@ class ProjectOverview extends Component {
                         <IntroBlock title="Model Runs" intro="A model run brings together a system-of-systems model definition with timesteps over which planning takes place, and a choice of scenarios and narratives to population the placeholder scenario sets in the system-of-systems model.">
                             <input className="btn btn-success btn-margin" name="ModelRun" type="button" value="Create a new Model Run" onClick={this.openCreatePopup}/>
                         </IntroBlock>
-                        <ProjectOverviewItem itemname="ModelRun" items={model_runs} itemLink="/configure/model-runs/" resultLink="/jobs/runner/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem 
+                            itemname="ModelRun" 
+                            items={model_runs} 
+                            itemLink="/configure/model-runs/" 
+                            resultLink="/jobs/runner/" 
+                            onDelete={this.openDeletePopup}
+                            onClick={(to) => this.props.dispatch(setAppRedirect(to))} />
                     </div>
 
                     <div hidden={name!='sos-models'}>
@@ -277,7 +284,12 @@ class ProjectOverview extends Component {
                                 <div className="alert alert-danger">
                                     {sos_models.error['SmifValidationError'].map(error => error)}
                                 </div>
-                                : <ProjectOverviewItem itemname="SosModel" items={sos_models.items} itemLink="/configure/sos-models/" onDelete={this.openDeletePopup} />
+                                : <ProjectOverviewItem 
+                                    itemname="SosModel" 
+                                    items={sos_models.items} 
+                                    itemLink="/configure/sos-models/" 
+                                    onDelete={this.openDeletePopup} 
+                                    onClick={(to) => this.props.dispatch(setAppRedirect(to))} />
                         }
                     </div>
 
@@ -285,14 +297,24 @@ class ProjectOverview extends Component {
                         <IntroBlock title="Model Wrappers" intro="To integrate a new sector model into the system-of-systems model it is necessary to write a Python wrapper function. The wrapper acts as an interface between the simulation modelling integration framework and the simulation model, keeping all the code necessary to implement the conversion of data types in one place.">
                             <input className="btn btn-success btn-margin" name="SectorModel" type="button" value="Add a new Wrapper" onClick={this.openCreatePopup}/>
                         </IntroBlock>
-                        <ProjectOverviewItem itemname="SectorModel" items={sector_models} itemLink="/configure/sector-models/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem 
+                            itemname="SectorModel" 
+                            items={sector_models} 
+                            itemLink="/configure/sector-models/" 
+                            onDelete={this.openDeletePopup}
+                            onClick={(to) => this.props.dispatch(setAppRedirect(to))} />
                     </div>
 
                     <div hidden={name!='scenarios'}>
                         <IntroBlock title="Scenarios" intro="Scenarios are configurations that target the files which contain scenario data">
                             <input className="btn btn-success btn-margin" name="Scenario" type="button" value="Add a new Scenario" onClick={this.openCreatePopup}/>
                         </IntroBlock>
-                        <ProjectOverviewItem itemname="Scenario" items={scenarios} itemLink="/configure/scenarios/" onDelete={this.openDeletePopup} />
+                        <ProjectOverviewItem 
+                            itemname="Scenario" 
+                            items={scenarios} 
+                            itemLink="/configure/scenarios/" 
+                            onDelete={this.openDeletePopup}
+                            onClick={(to) => this.props.dispatch(setAppRedirect(to))} />
                     </div>
 
                     {/* Popup for Create */}
