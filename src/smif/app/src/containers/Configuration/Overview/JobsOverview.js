@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
 import { fetchModelRuns } from 'actions/actions.js'
-import { setAppRedirect } from 'actions/actions.js'
+import { setAppNavigate } from 'actions/actions.js'
 
 import ProjectOverviewItem from 'components/ConfigForm/ProjectOverview/ProjectOverviewItem.js'
 
@@ -55,7 +55,7 @@ class JobsOverview extends Component {
                             itemname="ModelRun" 
                             items={model_runs} 
                             itemLink="/jobs/runner/" 
-                            onClick={(to) => this.props.dispatch(setAppRedirect(to))} />
+                            onClick={(to) => this.props.dispatch(setAppNavigate(to))} />
                     </div>
                 </div>
             </div>

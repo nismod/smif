@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios } from 'actions/actions.js'
 import { createModelRun, createSosModel, createSectorModel, createScenario } from 'actions/actions.js'
 import { deleteModelRun, deleteSosModel, deleteSectorModel, deleteScenario } from 'actions/actions.js'
-import { setAppRedirect } from 'actions/actions.js'
+import { setAppNavigate } from 'actions/actions.js'
 
 import IntroBlock from 'components/ConfigForm/General/IntroBlock.js'
 import Popup from 'components/ConfigForm/General/Popup.js'
@@ -271,7 +271,7 @@ class ProjectOverview extends Component {
                             itemLink="/configure/model-runs/" 
                             resultLink="/jobs/runner/" 
                             onDelete={this.openDeletePopup}
-                            onClick={(to) => this.props.dispatch(setAppRedirect(to))} />
+                            onClick={(to) => this.props.dispatch(setAppNavigate(to))} />
                     </div>
 
                     <div hidden={name!='sos-models'}>
@@ -289,7 +289,7 @@ class ProjectOverview extends Component {
                                     items={sos_models.items} 
                                     itemLink="/configure/sos-models/" 
                                     onDelete={this.openDeletePopup} 
-                                    onClick={(to) => this.props.dispatch(setAppRedirect(to))} />
+                                    onClick={(to) => this.props.dispatch(setAppNavigate(to))} />
                         }
                     </div>
 
@@ -302,7 +302,7 @@ class ProjectOverview extends Component {
                             items={sector_models} 
                             itemLink="/configure/sector-models/" 
                             onDelete={this.openDeletePopup}
-                            onClick={(to) => this.props.dispatch(setAppRedirect(to))} />
+                            onClick={(to) => this.props.dispatch(setAppNavigate(to))} />
                     </div>
 
                     <div hidden={name!='scenarios'}>
@@ -314,7 +314,7 @@ class ProjectOverview extends Component {
                             items={scenarios} 
                             itemLink="/configure/scenarios/" 
                             onDelete={this.openDeletePopup}
-                            onClick={(to) => this.props.dispatch(setAppRedirect(to))} />
+                            onClick={(to) => this.props.dispatch(setAppNavigate(to))} />
                     </div>
 
                     {/* Popup for Create */}
@@ -332,7 +332,7 @@ class ProjectOverview extends Component {
                             config_name={this.state.deletePopupConfigName} 
                             config_type={this.state.deletePopupType} 
                             in_use_by={this.state.deletePopupInUseBy}
-                            onClick={(to) => this.props.dispatch(setAppRedirect(to))} 
+                            onClick={(to) => this.props.dispatch(setAppNavigate(to))} 
                             submit={this.handleDelete} 
                             cancel={this.closeDeletePopup}/>
                     </Popup>
