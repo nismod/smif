@@ -144,7 +144,7 @@ class ProjectOverview extends Component {
                 if (sos_model_run.sos_model == event.target.value) {
                     target_in_use_by.push({
                         name: sos_model_run.name,
-                        link: '/configure/sos-model-run/',
+                        link: '/configure/model-runs/',
                         type: 'ModelRun'
                     })
                 }
@@ -172,7 +172,7 @@ class ProjectOverview extends Component {
                     if (scenario == event.target.value) {
                         target_in_use_by.push({
                             name: sos_model_run.name,
-                            link: '/configure/sos-model-run/',
+                            link: '/configure/model-runs/',
                             type: 'ModelRun'
                         })
                     }
@@ -319,12 +319,22 @@ class ProjectOverview extends Component {
 
                     {/* Popup for Create */}
                     <Popup name='popup_create' onRequestOpen={this.state.createPopupIsOpen}>
-                        <CreateConfigForm config_type={this.state.createPopupType} existing_names={used_identifiers} submit={this.handleCreate} cancel={this.closeCreatePopup}/>
+                        <CreateConfigForm 
+                            config_type={this.state.createPopupType} 
+                            existing_names={used_identifiers} 
+                            submit={this.handleCreate} 
+                            cancel={this.closeCreatePopup}/>
                     </Popup>
 
                     {/* Popup for Delete */}
                     <Popup name='popup_delete' onRequestOpen={this.state.deletePopupIsOpen}>
-                        <DeleteForm config_name={this.state.deletePopupConfigName} config_type={this.state.deletePopupType} in_use_by={this.state.deletePopupInUseBy} submit={this.handleDelete} cancel={this.closeDeletePopup}/>
+                        <DeleteForm 
+                            config_name={this.state.deletePopupConfigName} 
+                            config_type={this.state.deletePopupType} 
+                            in_use_by={this.state.deletePopupInUseBy}
+                            onClick={(to) => this.props.dispatch(setAppRedirect(to))} 
+                            submit={this.handleDelete} 
+                            cancel={this.closeDeletePopup}/>
                     </Popup>
                 </div>
             </div>
