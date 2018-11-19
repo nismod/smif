@@ -75,7 +75,10 @@ class SosModelConfig extends Component {
                     sector_models={sector_models} 
                     scenarios={scenarios} 
                     error={error} 
-                    onSave={() => dispatch(setAppFormSave())} 
+                    onSave={() => (
+                        dispatch(setAppFormSave()),
+                        dispatch(setAppNavigate('/configure/sos-models'))
+                    )} 
                     onCancel={() => dispatch(setAppNavigate('/configure/sos-models'))}
                     onEdit={() => dispatch(setAppFormEdit())}/>
             </div>

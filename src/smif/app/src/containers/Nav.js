@@ -222,7 +222,7 @@ class Nav extends Component {
                 <Footer />
 
                 <ConfirmPopup 
-                    onRequestOpen={this.props.app.formEdit && this.props.app.formReqCancel}
+                    onRequestOpen={this.props.app.formEdit && this.props.app.formReqCancel && !this.props.app.formSaving}
                     onSave={() => dispatch(setAppFormSave())}
                     onConfirm={() => dispatch(setAppFormDontSave())}
                     onCancel={() => dispatch(setAppFormCancel())}
@@ -234,9 +234,12 @@ class Nav extends Component {
 
     render() {
         const {model_runs, sos_models, sector_models, scenarios, isFetching} = this.props
-        const pathname = this.props.location.pathname
 
-        if (this.props.app.redirect != '' && this.props.app.redirect != pathname && this.props.app.formEdit == false && this.props.app.formError == false && this.props.app.formSaving == false) {
+        if (this.props.app.redirect != '' && 
+            this.props.app.formEdit == false && 
+            this.props.app.formError == false && 
+            this.props.app.formSaving == false) {
+            
             this.props.dispatch(setAppNavigateDone())
             return (
                 <div>
