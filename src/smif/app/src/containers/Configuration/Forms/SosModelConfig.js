@@ -79,7 +79,6 @@ class SosModelConfig extends Component {
                     save={app.formReqSave}
                     onSave={(sos_model) => (
                         dispatch(saveSosModel(sos_model)),
-                        app.redirect == '' ? dispatch(setAppNavigate('/configure/sos-models')) : null,
                         dispatch(setAppFormSaveDone())
                     )} 
                     onCancel={() => dispatch(setAppNavigate('/configure/sos-models'))}

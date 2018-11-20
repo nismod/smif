@@ -35,6 +35,7 @@ class SosModelConfigForm extends Component {
 
     handleSave() {
         this.props.onSave(this.state.selectedSosModel)
+        this.props.onCancel()
     }
 
     handleCancel() {
@@ -45,7 +46,7 @@ class SosModelConfigForm extends Component {
         const {selectedSosModel} = this.state
 
         if (this.props.save) {
-            this.handleSave()
+            this.props.onSave(this.state.selectedSosModel)
         }
 
         let errors = {}
