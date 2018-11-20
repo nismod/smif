@@ -90,8 +90,10 @@ function app(
         })    
     case APP_FORM_REJECT:
         return Object.assign({}, state, {
+            formReqSave: false,
             formSaving: false,
-            formError: true
+            formError: true,
+            formReqCancel: false
         })
     case APP_NAVIGATE:
         return Object.assign({}, state, {
