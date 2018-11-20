@@ -66,18 +66,21 @@ class SosModelConfig extends Component {
         )
     }
 
-    renderSosModelConfig(sos_model, sector_models, scenarios, error) {
-        const { dispatch } = this.props
+    renderSosModelConfig() {
+        const { app, sos_model, sector_models, scenarios, error, dispatch } = this.props
+
         return (
             <div>
                 <SosModelConfigForm 
                     sos_model={sos_model} 
                     sector_models={sector_models} 
                     scenarios={scenarios} 
-                    error={error} 
-                    onSave={() => (
-                        dispatch(setAppFormSave()),
-                        dispatch(setAppNavigate('/configure/sos-models'))
+                    error={error}
+                    save={app.formReqSave}
+                    onSave={(sos_model) => (
+                        dispatch(saveSosModel(sos_model)),
+                        app.redirect == '' ? dispatch(setAppNavigate('/configure/sos-models')) : null,
+                        dispatch(setAppFormSaveDone())
                     )} 
                     onCancel={() => dispatch(setAppNavigate('/configure/sos-models'))}
                     onEdit={() => dispatch(setAppFormEdit())}/>
@@ -86,13 +89,7 @@ class SosModelConfig extends Component {
     }
 
     render () {
-        const {sos_model, sector_models, scenarios, error, isFetching, app} = this.props
-        const { dispatch } = this.props
-
-        if (app.formReqSave) {
-            dispatch(saveSosModel(this.props.sos_model))
-            dispatch(setAppFormSaveDone())
-        }
+        const { error, isFetching } = this.props
 
         if (isFetching) {
             return this.renderLoading()
@@ -101,7 +98,7 @@ class SosModelConfig extends Component {
             Object.keys(error).includes('SmifValidationError')) {
             return this.renderError(error)
         } else {
-            return this.renderSosModelConfig(sos_model, sector_models, scenarios, error)
+            return this.renderSosModelConfig()
         }
     }
 }

@@ -423,12 +423,12 @@ export function saveSosModel(model){
             .then(
                 function(json) {
                     if (json['message'] == 'failed') {
-                        dispatch(setAppFormReject())
                         dispatch(rejectSosModel(json))
+                        dispatch(setAppFormReject())
                     }
                     else {
-                        dispatch(setAppFormAccept())
                         dispatch(acceptSosModel())
+                        dispatch(setAppFormAccept())
                     }
                 }
             )

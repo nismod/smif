@@ -44,6 +44,10 @@ class SosModelConfigForm extends Component {
     render() {
         const {selectedSosModel} = this.state
 
+        if (this.props.save) {
+            this.handleSave()
+        }
+
         let errors = {}
         if (this.props.error.SmifDataInputError != undefined) {
             errors = this.props.error.SmifDataInputError.reduce(function(map, obj) {
@@ -302,6 +306,7 @@ SosModelConfigForm.propTypes = {
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
+    save: PropTypes.bool,
     onSave: PropTypes.func,
     onCancel: PropTypes.func,
     onEdit: PropTypes.func
