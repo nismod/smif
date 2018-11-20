@@ -5,23 +5,22 @@ import { connect } from 'react-redux'
 
 import { fetchScenario } from 'actions/actions.js'
 import { fetchDimensions } from 'actions/actions.js'
+
 import { saveScenario } from 'actions/actions.js'
+
+import { setAppFormEdit } from 'actions/actions.js'
+import { setAppFormSaveDone } from 'actions/actions.js'
+import { setAppNavigate } from 'actions/actions.js'
 
 import ScenarioConfigForm from 'components/ConfigForm/ScenarioConfigForm.js'
 
 class ScenarioConfig extends Component {
     constructor(props) {
         super(props)
-
-        this.saveScenario = this.saveScenario.bind(this)
-        this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
-
-        this.config_name = this.props.match.params.name
-    }
-
-    componentDidMount() {
         const { dispatch } = this.props
 
+        this.config_name = this.props.match.params.name
+    
         dispatch(fetchScenario(this.config_name))
         dispatch(fetchDimensions())
     }
@@ -33,17 +32,6 @@ class ScenarioConfig extends Component {
             this.config_name = this.props.match.params.name
             dispatch(fetchScenario(this.config_name))
         }
-    }
-
-    saveScenario(Scenario) {
-        const { dispatch } = this.props
-        dispatch(saveScenario(Scenario))
-
-        this.returnToPreviousPage()
-    }
-
-    returnToPreviousPage() {
-        this.props.history.push('/configure/scenarios')
     }
 
     renderLoading() {
@@ -75,7 +63,9 @@ class ScenarioConfig extends Component {
         )
     }
 
-    renderScenarioConfig(scenario, dimensions) {
+    renderScenarioConfig() {
+        const { app, scenario, dimensions, dispatch } = this.props
+
         return (
             <div>
                 <ScenarioConfigForm
@@ -83,13 +73,20 @@ class ScenarioConfig extends Component {
                     dimensions={dimensions}
                     saveScenarioNarrative={this.saveScenario}
                     cancelScenarioNarrative={this.returnToPreviousPage}
-                    require_provide_full_variant />
+                    require_provide_full_variant
+                    save={app.formReqSave}
+                    onSave={(scenario) => (
+                        dispatch(setAppFormSaveDone()),
+                        dispatch(saveScenario(scenario))
+                    )} 
+                    onCancel={() => dispatch(setAppNavigate('/configure/scenarios'))}
+                    onEdit={() => dispatch(setAppFormEdit())}/>
             </div>
         )
     }
 
     render () {
-        const {scenario, dimensions, error, isFetching} = this.props
+        const {error, isFetching} = this.props
 
         if (isFetching) {
             return this.renderLoading()
@@ -98,12 +95,13 @@ class ScenarioConfig extends Component {
             Object.keys(error).includes('SmifValidationError')) {
             return this.renderError(error)
         } else {
-            return this.renderScenarioConfig(scenario, dimensions)
+            return this.renderScenarioConfig()
         }
     }
 }
 
 ScenarioConfig.propTypes = {
+    app: PropTypes.object.isRequired,
     scenario: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
@@ -116,6 +114,7 @@ ScenarioConfig.propTypes = {
 function mapStateToProps(state) {
 
     return {
+        app: state.app,
         scenario: state.scenario.item,
         dimensions: state.dimensions.items,
         error: ({
