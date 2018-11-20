@@ -294,6 +294,29 @@ class TestDataHandle():
         expected = DataArray(spec, data)
         np.testing.assert_equal(actual, expected)
 
+    def test_get_base_timestep_data_before_model_run(self, mock_store, mock_model):
+        """Prior to a model run, there is no current timestep
+
+        This should allow read access to input data from base timestep
+        """
+        data_handle = DataHandle(mock_store, 1, None, [2015, 2020, 2025], mock_model)
+        data = np.array([[1.0, 2.0], [3.0, 4.0]])
+
+        spec = mock_model.inputs['test']
+        da = DataArray(spec, data)
+
+        mock_store.write_results(
+            da,
+            1,
+            'test_source',  # write source model results
+            2015,  # base timetep
+            None
+        )
+
+        actual = data_handle.get_base_timestep_data("test")
+        expected = DataArray(spec, data)
+        np.testing.assert_equal(actual, expected)
+
     def test_get_previous_timestep_data(self, mock_store, mock_model):
         """should allow read access to input data from previous timestep
         """
