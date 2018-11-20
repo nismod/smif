@@ -21,15 +21,11 @@ class SosModelConfigForm extends Component {
         }
     }
 
-    handleChange(event) {
-        const target = event.target
-        const value = target.type === 'checkbox' ? target.checked : target.value
-        const name = target.name
-
+    handleChange(key, value) {
         this.props.onEdit()
 
         this.setState({
-            selectedSosModel: update(this.state.selectedSosModel, {[name]: {$set: value}})
+            selectedSosModel: update(this.state.selectedSosModel, {[key]: {$set: value}})
         })
     }
 
@@ -85,11 +81,9 @@ class SosModelConfigForm extends Component {
                                             ? 'form-control is-invalid'   
                                             : 'form-control'
                                     }
-                                    name="description" 
                                     rows="5" 
                                     defaultValue={selectedSosModel.description} 
-                                    onChange={this.handleChange}/>
-                                
+                                    onChange={(event) => this.handleChange('description', event.target.value)}/>
                                 {   
                                     'description' in errors
                                         ? (
@@ -119,10 +113,9 @@ class SosModelConfigForm extends Component {
                             <label className="col-sm-2 col-form-label">Sector Models</label>
                             <div className="col-sm-10">
                                 <PropertySelector 
-                                    name="sector_models" 
                                     activeProperties={selectedSosModel.sector_models} 
                                     availableProperties={this.props.sector_models} 
-                                    onChange={this.handleChange} />
+                                    onChange={(event) => this.handleChange('sector_models', event.target.value)} />
                                 {   
                                     'sector_models' in errors
                                         ? (
@@ -145,10 +138,9 @@ class SosModelConfigForm extends Component {
                             <label className="col-sm-2 col-form-label">Scenarios</label>
                             <div className="col-sm-10">
                                 <PropertySelector 
-                                    name="scenarios" 
                                     activeProperties={selectedSosModel.scenarios} 
                                     availableProperties={this.props.scenarios} 
-                                    onChange={this.handleChange} />
+                                    onChange={(event) => this.handleChange('scenarios', event.target.value)} />
                                 {   
                                     'scenarios' in errors
                                         ? (
@@ -197,7 +189,8 @@ class SosModelConfigForm extends Component {
                                     obj[item.name] = item.inputs
                                     return obj}, {}
                                 )
-                            } 
+                            }
+                            onChange={(model_dependencies) => this.handleChange('model_dependencies', model_dependencies)} 
                         />
                         {   
                             'model_dependencies' in errors
@@ -246,6 +239,7 @@ class SosModelConfigForm extends Component {
                                     return obj}, {}
                                 )
                             } 
+                            onChange={(scenario_dependencies) => this.handleChange('scenario_dependencies', scenario_dependencies)} 
                         />
                         {   
                             'scenario_dependencies' in errors
@@ -273,7 +267,8 @@ class SosModelConfigForm extends Component {
                             narratives={selectedSosModel.narratives}
                             sector_models={this.props.sector_models.filter(
                                 sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
-                            )} />
+                            )}
+                            onChange={(narratives) => this.handleChange('narratives', narratives)}  />
                         {   
                             'narratives' in errors
                                 ? (

@@ -111,12 +111,14 @@ class NarrativeList extends Component {
 
         // update narratives
         let index = this.props.narratives.findIndex(narrative => narrative.name === this.state.narrative.name)
+        let new_narratives = Object.assign([], this.props.narratives)
         if (index >= 0) {
-            this.props.narratives.splice(index, 1, this.state.narrative)
+            new_narratives.splice(index, 1, this.state.narrative)
         }
         else {
-            this.props.narratives.push(this.state.narrative)
+            new_narratives.push(this.state.narrative)
         }
+        this.props.onChange(new_narratives)
         this.closeNarrativeForm()
     }
 
@@ -135,9 +137,10 @@ class NarrativeList extends Component {
         }
 
         // update narrative
+        let new_narratives = Object.assign([], this.props.narratives)
         index = this.props.narratives.findIndex(prop_narrative => prop_narrative.name === narrative.name)
-        this.props.narratives.splice(index, 1, narrative)
-
+        new_narratives.splice(index, 1, narrative)
+        this.props.onChange(new_narratives)
         this.closeVariantForm()
     }
 
@@ -236,7 +239,9 @@ class NarrativeList extends Component {
     }
 
     handleNarrativeDelete(name) {
-        this.props.narratives.splice(this.props.narratives.findIndex(narrative => narrative.name === name), 1)
+        let new_narratives = Object.assign([], this.props.narratives)
+        new_narratives.splice(this.props.narratives.findIndex(narrative => narrative.name === name), 1)
+        this.props.onChange(new_narratives)
         this.closeNarrativeForm()
     }
 
@@ -249,9 +254,10 @@ class NarrativeList extends Component {
         narrative.variants.splice(index, 1)
 
         // update narrative
+        let new_narratives = Object.assign([], this.props.narratives)
         index = this.props.narratives.findIndex(prop_narrative => prop_narrative.name === narrative.name)
-        this.props.narratives.splice(index, 1, narrative)
-        
+        new_narratives.splice(index, 1, narrative)
+        this.props.onChange(new_narratives)
         this.closeVariantForm()
     }
 
@@ -478,7 +484,8 @@ class NarrativeList extends Component {
 NarrativeList.propTypes = {
     name: PropTypes.string.isRequired,
     narratives: PropTypes.array.isRequired,
-    sector_models: PropTypes.array.isRequired
+    sector_models: PropTypes.array.isRequired,
+    onChange: PropTypes.func
 }
 
 export default NarrativeList

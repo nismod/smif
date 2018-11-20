@@ -68,6 +68,7 @@ class DependencyList extends Component {
     
     handleSubmit(event) {
         event.preventDefault()
+        let new_dep = Object.assign([], this.props.dependencies)
 
         // Prevent user from adding existing dependencies
         if (this.props.dependencies.filter((dependency, idx) => {
@@ -84,11 +85,12 @@ class DependencyList extends Component {
         // Add dependency
         else {
             if (this.state.formEditMode) {
-                this.props.dependencies[this.state.formEditNumber] = this.state.dependency
+                new_dep[this.state.formEditNumber] = this.state.dependency
             }
             else {
-                this.props.dependencies.push(this.state.dependency)
+                new_dep.push(this.state.dependency)
             }
+            this.props.onChange(new_dep)
             this.closeForm()
         }
     }
@@ -153,7 +155,10 @@ class DependencyList extends Component {
     }
 
     handleDelete(name) {
-        this.props.dependencies.splice(name, 1)
+        let new_dep = Object.assign([], this.props.dependencies)
+        new_dep.splice(name, 1)
+    
+        this.props.onChange(new_dep)
         this.closeForm()
     }
 
@@ -358,7 +363,8 @@ DependencyList.propTypes = {
     source: PropTypes.array.isRequired,
     source_output: PropTypes.object.isRequired,
     sink: PropTypes.array.isRequired,
-    sink_input: PropTypes.object.isRequired
+    sink_input: PropTypes.object.isRequired,
+    onChange: PropTypes.func
 }
 
 export default DependencyList
