@@ -20,16 +20,13 @@ class SosModelRunItem extends Component {
     }
 
     onEditHandler(event) {
-        const {itemLink} = this.props
+        const {itemLink, onClick} = this.props
 
         const target = event.currentTarget
         const name = target.dataset.name
 
         if (name != undefined) {
-            this.setState({
-                redirect: true,
-                redirect_to: itemLink + name
-            })
+            onClick(itemLink + name)
         }
     }
 
@@ -48,15 +45,12 @@ class SosModelRunItem extends Component {
     }
 
     onStartHandler(event) {
-        const {resultLink} = this.props
+        const {resultLink, onClick} = this.props
         const target = event.currentTarget
         const name = target.name
 
         if (name != undefined) {
-            this.setState({
-                redirect: true,
-                redirect_to: resultLink + name
-            })
+            onClick(resultLink + name)
         }
     }
 
@@ -159,7 +153,8 @@ SosModelRunItem.propTypes = {
     items: PropTypes.array,
     itemLink: PropTypes.string,
     resultLink: PropTypes.string,
-    onDelete: PropTypes.func
+    onDelete: PropTypes.func,
+    onClick: PropTypes.func
 }
 
 export default SosModelRunItem

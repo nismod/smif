@@ -19,26 +19,29 @@ class ScenarioConfigForm extends Component {
         }
     }
 
-    handleChange(event) {
-        const target = event.target
-        const value = target.type === 'checkbox' ? target.checked : target.value
-        const name = target.name
+    handleChange(key, value) {
+        this.props.onEdit()
 
         this.setState({
-            selected: update(this.state.selected, {[name]: {$set: value}})
+            selected: update(this.state.selected, {[key]: {$set: value}})
         })
     }
 
     handleSave() {
-        this.props.saveScenarioNarrative(this.state.selected)
+        this.props.onSave(this.state.selected)
+        this.props.onCancel()
     }
 
     handleCancel() {
-        this.props.cancelScenarioNarrative()
+        this.props.onCancel()
     }
 
     render() {
         const {selected} = this.state
+
+        if (this.props.save) {
+            this.props.onSave(this.state.selected)
+        }
 
         let dims = this.props.dimensions.map(dim => ({
             value: dim.name,
@@ -60,14 +63,23 @@ class ScenarioConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input id="scenario_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selected.name} onChange={this.handleChange}/>
+                                <input 
+                                    className="form-control" 
+                                    type="text" 
+                                    disabled="true" 
+                                    defaultValue={selected.name} 
+                                    onChange={(event) => this.handleChange('name', event.target.value)}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea id="scenario_description" className="form-control" name="description" rows="5" defaultValue={selected.description} onChange={this.handleChange}/>
+                                <textarea 
+                                    className="form-control" 
+                                    rows="5" 
+                                    defaultValue={selected.description} 
+                                    onChange={(event) => this.handleChange('description', event.target.value)}/>
                             </div>
                         </div>
 
@@ -81,7 +93,7 @@ class ScenarioConfigForm extends Component {
                             name="provides"
                             specs={selected.provides} 
                             dims={dims} 
-                            onChange={this.handleChange} />
+                            onChange={(event) => this.handleChange('provides', event.target.value)} />
                     </div>
                 </div>
 
@@ -89,11 +101,10 @@ class ScenarioConfigForm extends Component {
                     <div className="card-header">Variants</div>
                     <div className="card-body">        
                         <VariantList 
-                            name="variants"
                             variants={selected.variants} 
                             provides={selected.provides} 
-                            onChange={this.handleChange}
-                            require_provide_full_config={this.props.require_provide_full_variant} />
+                            require_provide_full_config={this.props.require_provide_full_variant}
+                            onChange={(event) => this.handleChange('description', event.target.value)} />
                     </div>
                 </div>
 
@@ -111,7 +122,11 @@ ScenarioConfigForm.propTypes = {
     dimensions: PropTypes.array.isRequired,
     saveScenarioNarrative: PropTypes.func,
     require_provide_full_variant: PropTypes.bool,
-    cancelScenarioNarrative: PropTypes.func
+    cancelScenarioNarrative: PropTypes.func,
+    save: PropTypes.bool,
+    onSave: PropTypes.func,
+    onCancel: PropTypes.func,
+    onEdit: PropTypes.func
 }
 
 ScenarioConfigForm.defaultValue = {

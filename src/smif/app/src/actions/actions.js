@@ -1,5 +1,74 @@
 import fetch from 'isomorphic-fetch'
 
+export const APP_FORM_EDIT = 'APP_FORM_EDIT'
+export function setAppFormEdit(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_EDIT})
+    }
+}
+
+export const APP_FORM_SAVE = 'APP_FORM_SAVE'
+export function setAppFormSave(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_SAVE})
+    }
+}
+
+export const APP_FORM_DISCARD = 'APP_FORM_DISCARD'
+export function setAppFormDiscard(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_DISCARD})
+    }
+}
+
+export const APP_FORM_KEEP_EDITING = 'APP_FORM_KEEP_EDITING'
+export function setAppFormKeepEditing(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_KEEP_EDITING})
+    }
+}
+
+export const APP_FORM_SAVE_DONE = 'APP_FORM_SAVE_DONE'
+export function setAppFormSaveDone(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_SAVE_DONE})
+    }
+}
+
+export const APP_FORM_ACCEPT = 'APP_FORM_ACCEPT'
+export function setAppFormAccept(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_ACCEPT})
+    }
+}
+
+export const APP_FORM_REJECT = 'APP_FORM_REJECT'
+export function setAppFormReject(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_REJECT})
+    }
+}
+
+export const APP_NAVIGATE = 'APP_NAVIGATE'
+export function setAppNavigate(url){
+    return function (dispatch) {
+        dispatch({
+            type: APP_NAVIGATE,
+            data: url
+        })
+    }
+}
+
+export const APP_NAVIGATE_DONE = 'APP_NAVIGATE_DONE'
+export function setAppNavigateDone(url){
+    return function (dispatch) {
+        dispatch({
+            type: APP_NAVIGATE_DONE,
+            data: url
+        })
+    }
+}
+
 export const REQUEST_SMIF_DETAILS = 'REQUEST_SMIF_DETAILS'
 function requestSmifDetails(){
     return {
@@ -147,7 +216,7 @@ export function fetchModelRunStatus(modelrunid){
 }
 
 export function saveModelRun(modelrun){
-    return function () {
+    return function (dispatch) {
 
         // make API request, returning a promise
         return fetch('/api/v1/model_runs/' + modelrun.name, {
@@ -160,6 +229,9 @@ export function saveModelRun(modelrun){
         )
             .then (
                 response => response.json()
+            )
+            .then (
+                dispatch(setAppFormAccept())
             )
     }
 }
@@ -355,9 +427,11 @@ export function saveSosModel(model){
                 function(json) {
                     if (json['message'] == 'failed') {
                         dispatch(rejectSosModel(json))
+                        dispatch(setAppFormReject())
                     }
                     else {
                         dispatch(acceptSosModel())
+                        dispatch(setAppFormAccept())
                     }
                 }
             )
@@ -474,7 +548,7 @@ export function fetchSectorModel(modelid){
 }
 
 export function saveSectorModel(model){
-    return function () {
+    return function (dispatch) {
 
         // make API request, returning a promise
         return fetch('/api/v1/sector_models/' + model.name, {
@@ -487,6 +561,9 @@ export function saveSectorModel(model){
         )
             .then (
                 response => response.json()
+            )
+            .then (
+                dispatch(setAppFormAccept())
             )
     }
 }
@@ -618,6 +695,9 @@ export function saveScenario(scenario){
                     response => response.json()
                     dispatch(fetchScenarios())
                 }
+            )
+            .then (
+                dispatch(setAppFormAccept())
             )
     }
 }

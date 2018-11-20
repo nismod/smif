@@ -14,30 +14,33 @@ class SectorModelConfigForm extends Component {
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {
-            selectedSectorModel: this.props.sectorModel,
+            selected: this.props.sectorModel,
         }
     }
 
-    handleChange(event) {
-        const target = event.target
-        const value = target.type === 'checkbox' ? target.checked : target.value
-        const name = target.name
+    handleChange(key, value) {
+        this.props.onEdit()
 
         this.setState({
-            selectedSectorModel: update(this.state.selectedSectorModel, {[name]: {$set: value}})
+            selected: update(this.state.selected, {[key]: {$set: value}})
         })
     }
 
     handleSave() {
-        this.props.saveSectorModel(this.state.selectedSectorModel)
+        this.props.onSave(this.state.selected)
+        this.props.onCancel()
     }
 
     handleCancel() {
-        this.props.cancelSectorModel()
+        this.props.onCancel()
     }
 
-    renderSectorModelConfigForm() {
-        const {selectedSectorModel} = this.state
+    render() {
+        const {selected} = this.state
+
+        if (this.props.save) {
+            this.props.onSave(this.state.selected)
+        }
 
         let dims = this.props.dimensions.map(dim => ({
             value: dim.name,
@@ -59,14 +62,24 @@ class SectorModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input id="sector_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSectorModel.name} onChange={this.handleChange}/>
+                                <input 
+                                    className="form-control" 
+                                    type="text" 
+                                    disabled="true" 
+                                    defaultValue={selected.name} 
+                                    onChange={(event) => this.handleChange('name', event.target.value)}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea id="sector_model_description" className="form-control" name="description" rows="5" defaultValue={selectedSectorModel.description} onChange={this.handleChange}/>
+                                <textarea 
+                                    className="form-control" 
+                                    name="description" 
+                                    rows="5" 
+                                    defaultValue={selected.description} 
+                                    onChange={(event) => this.handleChange('description', event.target.value)}/>
                             </div>
                         </div>
 
@@ -80,14 +93,22 @@ class SectorModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Class Name</label>
                             <div className="col-sm-10">
-                                <input id="sector_model_classname" className="form-control" name="classname" type="text" defaultValue={selectedSectorModel.classname} onChange={this.handleChange}/>
+                                <input 
+                                    className="form-control" 
+                                    type="text" 
+                                    defaultValue={selected.classname} 
+                                    onChange={(event) => this.handleChange('classname', event.target.value)}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Path</label>
                             <div className="col-sm-10">
-                                <input id="sector_model_path" className="form-control" name="path" type="text" defaultValue={selectedSectorModel.path} onChange={this.handleChange}/>
+                                <input 
+                                    className="form-control" 
+                                    type="text" 
+                                    defaultValue={selected.path} 
+                                    onChange={(event) => this.handleChange('path', event.target.value)}/>
                             </div>
                         </div>
 
@@ -99,10 +120,10 @@ class SectorModelConfigForm extends Component {
                     <div className="card-body">
                         <SpecList 
                             name="inputs" 
-                            specs={selectedSectorModel.inputs} 
+                            specs={selected.inputs} 
                             dims={dims}
                             enable_defaults={false}
-                            onChange={this.handleChange} />
+                            onChange={(event) => this.handleChange('inputs', event.target.value)}/>
                     </div>
                 </div>
 
@@ -111,10 +132,10 @@ class SectorModelConfigForm extends Component {
                     <div className="card-body">
                         <SpecList 
                             name="outputs" 
-                            specs={selectedSectorModel.outputs} 
+                            specs={selected.outputs} 
                             dims={dims}
                             enable_defaults={false}
-                            onChange={this.handleChange} />
+                            onChange={(event) => this.handleChange('outputs', event.target.value)}/>
                     </div>
                 </div>
 
@@ -123,9 +144,9 @@ class SectorModelConfigForm extends Component {
                     <div className="card-body">
                         <SpecList 
                             name="parameters" 
-                            specs={selectedSectorModel.parameters} 
+                            specs={selected.parameters} 
                             dims={dims}
-                            onChange={this.handleChange} />
+                            onChange={(event) => this.handleChange('parameters', event.target.value)}/>
                     </div>
                 </div>
 
@@ -136,21 +157,6 @@ class SectorModelConfigForm extends Component {
             </div>
         )
     }
-
-    renderDanger(message) {
-        return (
-            <div>
-                <div id="alert-danger" className="alert alert-danger">
-                    {message}
-                </div>
-                <CancelButton onClick={this.handleCancel} />
-            </div>
-        )
-    }
-
-    render() {
-        return this.renderSectorModelConfigForm()
-    }
 }
 
 SectorModelConfigForm.propTypes = {
@@ -158,7 +164,11 @@ SectorModelConfigForm.propTypes = {
     sectorModel: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
     saveSectorModel: PropTypes.func,
-    cancelSectorModel: PropTypes.func
+    cancelSectorModel: PropTypes.func,
+    save: PropTypes.bool,
+    onSave: PropTypes.func,
+    onCancel: PropTypes.func,
+    onEdit: PropTypes.func
 }
 
 SectorModelConfigForm.defaultProps = {

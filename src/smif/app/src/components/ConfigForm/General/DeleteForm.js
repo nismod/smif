@@ -69,14 +69,18 @@ class DeleteForm extends Component {
                             <ul>
                                 {in_use_by.map((conf) =>
                                     <div key={conf.name}>
-                                        <Link
-                                            to={conf.link + conf.name}
-                                            className="btn btn-outline-dark btn-margin">
+                                        <button
+                                            id={'btn_edit_' + conf.name}
+                                            type="button"
+                                            className="btn btn-outline-dark btn-margin"
+                                            name={conf.name}
+                                            onClick={() => this.props.onClick(conf.link + conf.name)}>
                                             <FaPencil/>
-                                        </Link>
+                                        </button>
                                         {conf.name}
                                         ({conf.type})
                                     </div>
+
                                 )}
                             </ul>
                         </div>
@@ -93,6 +97,7 @@ DeleteForm.propTypes = {
     config_name: PropTypes.string,
     config_type: PropTypes.string,
     in_use_by: PropTypes.array,
+    onClick: PropTypes.func,
     submit: PropTypes.func,
     cancel: PropTypes.func
 }

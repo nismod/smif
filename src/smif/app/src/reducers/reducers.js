@@ -1,5 +1,14 @@
 import { combineReducers } from 'redux'
 import {
+    APP_FORM_EDIT,
+    APP_FORM_SAVE,
+    APP_FORM_DISCARD,
+    APP_FORM_KEEP_EDITING,
+    APP_FORM_SAVE_DONE,
+    APP_FORM_ACCEPT,
+    APP_FORM_REJECT,
+    APP_NAVIGATE,
+    APP_NAVIGATE_DONE,
     REQUEST_SMIF_DETAILS,
     RECEIVE_SMIF_DETAILS,
     REQUEST_MODEL_RUNS,
@@ -32,6 +41,75 @@ import {
     REQUEST_DIMENSION,
     RECEIVE_DIMENSION,
 } from '../actions/actions.js'
+
+function app(
+    state = {
+        formEdit: false,
+        formReqSave: false,
+        formReqCancel: false,
+        formSaving: false,
+        formError: false,
+        redirect: ''
+    },
+    action
+) {
+    switch (action.type){
+    case APP_FORM_EDIT:
+        return Object.assign({}, state, {
+            formEdit: true,
+        })
+    case APP_FORM_SAVE:
+        return Object.assign({}, state, {
+            formReqSave: true,
+            formReqCancel: false
+        })
+    case APP_FORM_DISCARD:
+        return Object.assign({}, state, {
+            formEdit: false,
+            formReqSave: false,
+            formSaving: false,
+            formError: false,
+            formReqCancel: false
+        })
+    case APP_FORM_SAVE_DONE:
+        return Object.assign({}, state, {
+            formReqSave: false,
+            formSaving: true
+        })
+    case APP_FORM_KEEP_EDITING:
+        return Object.assign({}, state, {
+            formReqCancel: false,
+        })
+    case APP_FORM_ACCEPT:
+        return Object.assign({}, state, {
+            formEdit: false,
+            formReqSave: false,
+            formSaving: false,
+            formError: false,
+            formReqCancel: false
+        })    
+    case APP_FORM_REJECT:
+        return Object.assign({}, state, {
+            formReqSave: false,
+            formSaving: false,
+            formError: true,
+            formReqCancel: false
+        })
+    case APP_NAVIGATE:
+        return Object.assign({}, state, {
+            redirect: action.data,
+            formReqCancel: true
+        })
+    case APP_NAVIGATE_DONE:
+        return Object.assign({}, state, {
+            redirect: '',
+            formReqCancel: false
+        })
+    
+    default:
+        return state
+    }
+}
 
 function smif(
     state = {
@@ -399,6 +477,7 @@ function dimension(
 }
 
 const rootReducer = combineReducers({
+    app,
     smif,
     model_runs,
     model_run,

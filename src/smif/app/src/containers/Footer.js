@@ -9,7 +9,7 @@ class Footer extends Component {
 
     constructor(props) {
         super(props)
-
+        this.init = true
     }
 
     componentDidMount() {
@@ -48,9 +48,10 @@ class Footer extends Component {
     render() {
         const {isFetching, smif} = this.props
 
-        if (isFetching) {
+        if (isFetching && this.init) {
             return this.renderLoading()
         } else {
+            this.init = false
             return this.renderFooter(smif.version)
         }
     }

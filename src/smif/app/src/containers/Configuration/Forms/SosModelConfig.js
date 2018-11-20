@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { Redirect } from 'react-router'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
@@ -9,7 +8,10 @@ import { fetchSectorModels } from 'actions/actions.js'
 import { fetchScenarios } from 'actions/actions.js'
 
 import { saveSosModel } from 'actions/actions.js'
-import { acceptSosModel } from 'actions/actions.js'
+
+import { setAppFormEdit } from 'actions/actions.js'
+import { setAppFormSaveDone } from 'actions/actions.js'
+import { setAppNavigate } from 'actions/actions.js'
 
 import SosModelConfigForm from 'components/ConfigForm/SosModelConfigForm.js'
 
@@ -18,15 +20,7 @@ class SosModelConfig extends Component {
         super(props)
         const { dispatch } = this.props
 
-        this.saveSosModel = this.saveSosModel.bind(this)
-        this.cancelSosModel = this.cancelSosModel.bind(this)
-        this.returnToOverview = this.returnToOverview.bind(this)
-
         this.config_name = this.props.match.params.name
-
-        this.state = {
-            closeSosmodel: false
-        }
 
         dispatch(fetchSosModel(this.config_name))
         dispatch(fetchSectorModels())
@@ -38,27 +32,8 @@ class SosModelConfig extends Component {
 
         if (this.config_name != this.props.match.params.name) {
             this.config_name = this.props.match.params.name
-            this.setState({closeSosmodel: false})
             dispatch(fetchSosModel(this.config_name))
         }
-    }
-
-    saveSosModel(sosModel) {
-        const { dispatch } = this.props
-        dispatch(saveSosModel(sosModel))
-        this.setState({closeSosmodel: true})
-    }
-
-    cancelSosModel() {
-        const { dispatch } = this.props
-        dispatch(acceptSosModel())
-        this.setState({closeSosmodel: true})
-    }
-
-    returnToOverview() {
-        return (
-            <Redirect to="/configure/sos-models" />
-        )
     }
 
     renderLoading() {
@@ -90,16 +65,29 @@ class SosModelConfig extends Component {
         )
     }
 
-    renderSosModelConfig(sos_model, sector_models, scenarios, error) {
+    renderSosModelConfig() {
+        const { app, sos_model, sector_models, scenarios, error, dispatch } = this.props
+
         return (
             <div>
-                <SosModelConfigForm sos_model={sos_model} sector_models={sector_models} scenarios={scenarios} error={error} saveSosModel={this.saveSosModel} cancelSosModel={this.cancelSosModel}/>
+                <SosModelConfigForm 
+                    sos_model={sos_model} 
+                    sector_models={sector_models} 
+                    scenarios={scenarios} 
+                    error={error}
+                    save={app.formReqSave}
+                    onSave={(sos_model) => (
+                        dispatch(setAppFormSaveDone()),
+                        dispatch(saveSosModel(sos_model))
+                    )} 
+                    onCancel={() => dispatch(setAppNavigate('/configure/sos-models'))}
+                    onEdit={() => dispatch(setAppFormEdit())}/>
             </div>
         )
     }
 
     render () {
-        const {sos_model, sector_models, scenarios, error, isFetching} = this.props
+        const { error, isFetching } = this.props
 
         if (isFetching) {
             return this.renderLoading()
@@ -107,15 +95,14 @@ class SosModelConfig extends Component {
             Object.keys(error).includes('SmifDataNotFoundError') ||
             Object.keys(error).includes('SmifValidationError')) {
             return this.renderError(error)
-        } else if (this.state.closeSosmodel && Object.keys(error).length == 0) {
-            return this.returnToOverview()
         } else {
-            return this.renderSosModelConfig(sos_model, sector_models, scenarios, error)
+            return this.renderSosModelConfig()
         }
     }
 }
 
 SosModelConfig.propTypes = {
+    app: PropTypes.object.isRequired,
     sos_model: PropTypes.object.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
@@ -128,6 +115,7 @@ SosModelConfig.propTypes = {
 
 function mapStateToProps(state) {
     return {
+        app: state.app,
         sos_model: state.sos_model.item,
         sector_models: state.sector_models.items,
         scenarios: state.scenarios.items,

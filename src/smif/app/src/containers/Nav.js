@@ -2,12 +2,21 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
+import { Redirect } from 'react-router'
 import { NavLink, Route } from 'react-router-dom'
-import Footer from 'containers/Footer'
 import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios } from 'actions/actions.js'
 
-import {FaHome, FaTasks, FaSliders, FaSitemap, FaCode, FaBarChart} from 'react-icons/lib/fa'
+import { setAppFormKeepEditing } from 'actions/actions.js'
+import { setAppFormSave } from 'actions/actions.js'
+import { setAppFormDiscard } from 'actions/actions.js'
+import { setAppNavigate } from 'actions/actions.js'
+import { setAppNavigateDone } from 'actions/actions.js'
+
+import { FaHome, FaTasks, FaSliders, FaSitemap, FaCode, FaBarChart } from 'react-icons/lib/fa'
 import { Badge } from 'reactstrap'
+
+import { ConfirmPopup } from 'components/ConfigForm/General/Popups.js'
+import Footer from 'containers/Footer'
 
 class Nav extends Component {
     constructor(props) {
@@ -15,7 +24,7 @@ class Nav extends Component {
         this.init = true
     }
 
-    componentDidMount () {
+    componentDidMount() {
         const { dispatch } = this.props
 
         dispatch(fetchModelRuns())
@@ -60,17 +69,19 @@ class Nav extends Component {
         )
     }
 
-    renderNav(model_runs, sos_models, sector_models, scenarios, narratives) {
+    renderNav(model_runs, sos_models, sector_models, scenarios) {
         var job_status = ['unstarted', 'running', 'stopped', 'done', 'failed']
+        const pathname = this.props.location.pathname
+        const { dispatch } = this.props
 
         return (
             <nav className="col-12 col-md-3 col-xl-2 bg-light sidebar">
                 <ul className="nav flex-column">
                     <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/">
+                        <div className="nav-link" onClick={() => dispatch(setAppNavigate('/'))}>
                             <FaHome size={20}/>
                             Home
-                        </NavLink>
+                        </div>
                     </li>
                 </ul>
 
@@ -80,20 +91,23 @@ class Nav extends Component {
                 <ul className="nav flex-column mb-2">
 
                     <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/jobs/" >
+                        <div className="nav-link" onClick={() => dispatch(setAppNavigate('/jobs/'))}>
                             <FaTasks size={20}/>
-                        Jobs
+                                Jobs
                             <Badge color="secondary">{model_runs.length}</Badge>
-                        </NavLink>
+                        </div>
                         <Route path="/jobs/" render={() =>
                             <ul className="nav flex-column">
                                 {job_status.map(status =>
                                     <li key={'nav_' + status} className="nav-item">
-                                        <NavLink
-                                            className="nav-link"
-                                            to={'/jobs/status=' + status} >
+                                        <div 
+                                            className={
+                                                pathname == '/jobs/status=' + status ? 
+                                                    'nav-link active' : 'nav-link'
+                                            }
+                                            onClick={() => dispatch(setAppNavigate('/jobs/status=' + status))}>
                                             {status}
-                                        </NavLink>
+                                        </div>
                                     </li>
                                 )}
                             </ul>
@@ -101,21 +115,24 @@ class Nav extends Component {
                     </li>
 
                     <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/configure/model-runs" >
+                        <div className="nav-link" onClick={() => dispatch(setAppNavigate('/configure/model-runs'))}>
                             <FaSliders size={20}/>
-                        Model Runs
+                                Model Runs
                             <Badge color="secondary">{model_runs.length}</Badge>
-                        </NavLink>
+                        </div>
                         <Route path="/configure/model-runs/" render={() =>
                             <ul className="nav flex-column">
                                 {model_runs.map(model_run =>
                                     <li key={'nav_modelrun_' + model_run.name} className="nav-item">
-                                        <NavLink
+                                        <div
+                                            className={
+                                                pathname == '/configure/model-runs/' + model_run.name ? 
+                                                    'nav-link active' : 'nav-link'
+                                            }
                                             key={'nav_' + model_run.name}
-                                            className="nav-link"
-                                            to={'/configure/model-runs/' + model_run.name} >
+                                            onClick={() => dispatch(setAppNavigate('/configure/model-runs/' + model_run.name))}>
                                             {model_run.name}
-                                        </NavLink>
+                                        </div>
                                     </li>
                                 )}
                             </ul>
@@ -129,43 +146,47 @@ class Nav extends Component {
 
                 <ul className="nav flex-column mb-2">
                     <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/configure/sos-models" >
+                        <div className="nav-link" onClick={() => dispatch(setAppNavigate('/configure/sos-models'))}>
                             <FaSitemap size={20}/>
-                        System-of-Systems Models
+                                System-of-Systems Models
                             <Badge color="secondary">{sos_models.length}</Badge>
-                        </NavLink>
+                        </div>
                         <Route path="/configure/sos-models/" render={() =>
                             <ul className="nav flex-column">
                                 {sos_models.map(sos_model =>
                                     <li key={'nav_sosmodel_' + sos_model.name} className="nav-item">
-                                        <NavLink
+                                        <div
+                                            className={
+                                                pathname == '/configure/sos-models/' + sos_model.name ? 
+                                                    'nav-link active' : 'nav-link'
+                                            }
                                             key={'nav_' + sos_model.name}
-                                            exact
-                                            className="nav-link"
-                                            to={'/configure/sos-models/' + sos_model.name} >
+                                            onClick={() => dispatch(setAppNavigate('/configure/sos-models/' + sos_model.name))}>
                                             {sos_model.name}
-                                        </NavLink>
+                                        </div>
                                     </li>
                                 )}
                             </ul>
                         }/>
 
-                        <NavLink exact className="nav-link" to="/configure/sector-models" >
+                        <div className="nav-link" onClick={() => dispatch(setAppNavigate('/configure/sector-models'))}>
                             <FaCode size={20}/>
-                        Model Wrappers
+                                Model Wrappers
                             <Badge color="secondary">{sector_models.length}</Badge>
-                        </NavLink>
+                        </div>
                         <Route path="/configure/sector-models/" render={() =>
                             <ul className="nav flex-column">
                                 {sector_models.map(sector_model =>
                                     <li key={'nav_sectormodel_' + sector_model.name} className="nav-item">
-                                        <NavLink
+                                        <div
+                                            className={
+                                                pathname == '/configure/sector-models/' + sector_model.name ? 
+                                                    'nav-link active' : 'nav-link'
+                                            }
                                             key={'nav_' + sector_model.name}
-                                            exact
-                                            className="nav-link"
-                                            to={'/configure/sector-models/' + sector_model.name} >
+                                            onClick={() => dispatch(setAppNavigate('/configure/sector-models/' + sector_model.name))}>
                                             {sector_model.name}
-                                        </NavLink>
+                                        </div>
                                     </li>
                                 )}
                             </ul>
@@ -173,36 +194,64 @@ class Nav extends Component {
                     </li>
 
                     <li className="nav-item">
-                        <NavLink exact className="nav-link" to="/configure/scenarios" >
+                        <div className="nav-link" onClick={() => dispatch(setAppNavigate('/configure/scenarios'))}>
                             <FaBarChart size={20}/>
-                        Scenarios
+                                Scenarios
                             <Badge color="secondary">{scenarios.length}</Badge>
-                        </NavLink>
+                        </div>
                         <Route path="/configure/scenarios/" render={() =>
                             <ul className="nav flex-column">
                                 {scenarios.map(scenario =>
                                     <li key={'nav_scenario_' + scenario.name} className="nav-item">
-                                        <NavLink
+                                        <div
+                                            className={
+                                                pathname == '/configure/scenarios/' + scenario.name ? 
+                                                    'nav-link active' : 'nav-link'
+                                            }
                                             key={'nav_' + scenario.name}
-                                            exact
-                                            className="nav-link"
-                                            to={'/configure/scenarios/' + scenario.name} >
+                                            onClick={() => dispatch(setAppNavigate('/configure/scenarios/' + scenario.name))}>
                                             {scenario.name}
-                                        </NavLink>
+                                        </div>
                                     </li>
                                 )}
                             </ul>
                         }/>
                     </li>
                 </ul>
+
                 <Footer />
+
+                <ConfirmPopup 
+                    onRequestOpen={this.props.app.formEdit && this.props.app.formReqCancel && !this.props.app.formSaving}
+                    onSave={() => dispatch(setAppFormSave())}
+                    onConfirm={() => dispatch(setAppFormDiscard())}
+                    onCancel={() => dispatch(setAppFormKeepEditing())}
+                />
             </nav>
+
         )
     }
 
     render() {
         const {model_runs, sos_models, sector_models, scenarios, isFetching} = this.props
-        if (isFetching && this.init) {
+
+        if (this.props.app.redirect != '' && 
+            this.props.location.pathname == this.props.app.redirect) {    
+            this.props.dispatch(setAppNavigateDone())
+        }
+
+        if (this.props.app.redirect != '' && 
+            this.props.location.pathname != this.props.app.redirect &&
+            this.props.app.formEdit == false && 
+            this.props.app.formError == false && 
+            this.props.app.formSaving == false) {
+            return (
+                <div>
+                    <Redirect to={this.props.app.redirect} />
+                </div>
+            )
+        }
+        else if (isFetching && this.init) {
             return this.renderLoading()
         } else {
             this.init = false
@@ -212,17 +261,20 @@ class Nav extends Component {
 }
 
 Nav.propTypes = {
+    app: PropTypes.object.isRequired,
     model_runs: PropTypes.array.isRequired,
     sos_models: PropTypes.array.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     isFetching: PropTypes.bool.isRequired,
-    dispatch: PropTypes.func.isRequired
+    dispatch: PropTypes.func.isRequired,
+    location: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {
     const { model_runs, sos_models, sector_models, scenarios } = state
     return {
+        app: state.app,
         model_runs: model_runs.items,
         sos_models: sos_models.items,
         sector_models: sector_models.items,

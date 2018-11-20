@@ -4,24 +4,23 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
 import { fetchSectorModel } from 'actions/actions.js'
-import { saveSectorModel } from 'actions/actions.js'
 import { fetchSosModels } from 'actions/actions.js'
 import { fetchDimensions } from 'actions/actions.js'
+
+import { saveSectorModel } from 'actions/actions.js'
+
+import { setAppFormEdit } from 'actions/actions.js'
+import { setAppFormSaveDone } from 'actions/actions.js'
+import { setAppNavigate } from 'actions/actions.js'
 
 import SectorModelConfigForm from 'components/ConfigForm/SectorModelConfigForm.js'
 
 class SectorModelConfig extends Component {
     constructor(props) {
         super(props)
-
-        this.saveSectorModel = this.saveSectorModel.bind(this)
-        this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
-
-        this.config_name = this.props.match.params.name
-    }
-
-    componentDidMount() {
         const { dispatch } = this.props
+        
+        this.config_name = this.props.match.params.name
 
         dispatch(fetchSectorModel(this.config_name))
         dispatch(fetchSosModels())
@@ -35,17 +34,6 @@ class SectorModelConfig extends Component {
             this.config_name = this.props.match.params.name
             dispatch(fetchSectorModel(this.config_name))
         }
-    }
-
-    saveSectorModel(SectorModel) {
-        const { dispatch } = this.props
-        dispatch(saveSectorModel(SectorModel))
-
-        this.returnToPreviousPage()
-    }
-
-    returnToPreviousPage() {
-        this.props.history.push('/configure/sector-models')
     }
 
     renderLoading() {
@@ -77,16 +65,29 @@ class SectorModelConfig extends Component {
         )
     }
 
-    renderSectorModelConfig(sector_model, sos_models, dimensions) {
+    renderSectorModelConfig() {
+        const {app, sector_model, sos_models, dimensions, error, dispatch} = this.props    
+
         return (
             <div key={sector_model.name}>
-                <SectorModelConfigForm sosModels={sos_models} sectorModel={sector_model} dimensions={dimensions} saveSectorModel={this.saveSectorModel} cancelSectorModel={this.returnToPreviousPage}/>
+                <SectorModelConfigForm 
+                    sectorModel={sector_model} 
+                    sosModels={sos_models} 
+                    dimensions={dimensions}
+                    error={error}
+                    save={app.formReqSave}
+                    onSave={(sector_model) => (
+                        dispatch(setAppFormSaveDone()),
+                        dispatch(saveSectorModel(sector_model))
+                    )} 
+                    onCancel={() => dispatch(setAppNavigate('/configure/sector-models'))}
+                    onEdit={() => dispatch(setAppFormEdit())}/>
             </div>
         )
     }
 
     render () {
-        const {sector_model, sos_models, dimensions, error, isFetching} = this.props
+        const {error, isFetching} = this.props
 
         if (isFetching) {
             return this.renderLoading()
@@ -95,14 +96,15 @@ class SectorModelConfig extends Component {
             Object.keys(error).includes('SmifValidationError')) {
             return this.renderError(error)
         } else {
-            return this.renderSectorModelConfig(sector_model, sos_models, dimensions)
+            return this.renderSectorModelConfig()
         }
     }
 }
 
 SectorModelConfig.propTypes = {
-    sos_models: PropTypes.array.isRequired,
+    app: PropTypes.object.isRequired,
     sector_model: PropTypes.object.isRequired,
+    sos_models: PropTypes.array.isRequired,
     dimensions: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
@@ -113,6 +115,7 @@ SectorModelConfig.propTypes = {
 
 function mapStateToProps(state) {
     return {
+        app: state.app,
         sector_model: state.sector_model.item,
         sos_models: state.sos_models.items,
         dimensions: state.dimensions.items,

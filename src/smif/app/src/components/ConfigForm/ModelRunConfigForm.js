@@ -16,7 +16,7 @@ class ModelRunConfigForm extends Component {
         this.cleanModelRun = this.cleanModelRun.bind(this)
 
         this.state = {
-            selected: this.props.model_run
+            selected: this.cleanModelRun(this.props.model_run)
         }
         this.form = {
             timestep_base_year: this.props.model_run.timesteps[0],
@@ -28,14 +28,12 @@ class ModelRunConfigForm extends Component {
         }
     }
 
-    handleChange(event) {
-        const target = event.target
-        const value = target.type === 'checkbox' ? target.checked : target.value
-        const name = target.name
+    handleChange(key, value) {
+        this.props.onEdit()
 
-        if (name.startsWith('scenarios_')) {
+        if (key == 'scenarios') {
             let newScenarios = Object.assign({}, this.state.selected.scenarios)
-            newScenarios[name.replace('scenarios_', '')] = event.target.value
+            newScenarios[value.scenario] = value.variant
 
             this.setState({
                 selected: update(
@@ -44,13 +42,13 @@ class ModelRunConfigForm extends Component {
                 )
             })
         } 
-        else if (name == 'narratives') {   
+        else if (key == 'narratives') {   
             let newNarratives = Object.assign({}, this.state.selected.narratives)
-            if (newNarratives[target.narrative].includes(target.variant)) {
-                newNarratives[target.narrative] = newNarratives[target.narrative].filter(narrative => narrative != target.variant)
+            if (newNarratives[value.narrative].includes(value.variant)) {
+                newNarratives[value.narrative] = newNarratives[value.narrative].filter(narrative => narrative != value.variant)
             }
             else {
-                newNarratives[target.narrative].push(target.variant)
+                newNarratives[value.narrative].push(value.variant)
             }
 
             this.setState({
@@ -60,14 +58,14 @@ class ModelRunConfigForm extends Component {
                 )
             })
         } 
-        else if (name.startsWith('timestep_')) {
-            if (name == 'timestep_size') {
+        else if (key.startsWith('timestep_')) {
+            if (key == 'timestep_size') {
                 this.form.timestep_size = parseInt(value)
             }
-            if (name == 'timestep_base_year') {
+            if (key == 'timestep_base_year') {
                 this.form.timestep_base_year = parseInt(value)
             }
-            if (name == 'timestep_number') {
+            if (key == 'timestep_number') {
                 this.form.timestep_number = parseInt(value)
             }
 
@@ -86,17 +84,20 @@ class ModelRunConfigForm extends Component {
         }
         else {
             this.setState({
-                selected: update(this.state.selected, {[name]: {$set: value}})
+                selected: this.cleanModelRun(
+                    update(this.state.selected, {[key]: {$set: value}})
+                )
             })
         }
     }
 
     handleSave() {
-        this.props.saveModelRun(this.state.selected)
+        this.props.onSave(this.state.selected)
+        this.props.onCancel()
     }
 
     handleCancel() {
-        this.props.cancelModelRun()
+        this.props.onCancel()
     }
 
     cleanModelRun(sos_model_run) {
@@ -154,7 +155,9 @@ class ModelRunConfigForm extends Component {
     render() {
         const {selected} = this.state
 
-        this.state.selected = this.cleanModelRun(this.state.selected)
+        if (this.props.save) {
+            this.props.onSave(this.state.selected)
+        }
 
         return (
             <div>
@@ -165,21 +168,33 @@ class ModelRunConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input id="sos_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selected.name} onChange={this.handleChange}/>
+                                <input
+                                    className="form-control" 
+                                    type="text" 
+                                    disabled="true" 
+                                    defaultValue={selected.name} 
+                                    onChange={(event) => this.handleChange('name', event.target.value)}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea id="sos_model_description" className="form-control" name="description" rows="5" defaultValue={selected.description} onChange={this.handleChange}/>
+                                <textarea 
+                                    className="form-control" 
+                                    rows="5" 
+                                    defaultValue={selected.description} 
+                                    onChange={(event) => this.handleChange('description', event.target.value)}/>
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Created</label>
                             <div className="col-sm-10">
-                                <label id="sos_model_run_stamp" className="form-control">{selected.stamp}</label>
+                                <label 
+                                    className="form-control">
+                                    {selected.stamp}
+                                </label>
                             </div>
                         </div>
 
@@ -194,11 +209,9 @@ class ModelRunConfigForm extends Component {
                             <label className="col-sm-2 col-form-label">System-of-systems model</label>
                             <div className="col-sm-10">
                                 <select 
-                                    id={name + '_source'}
                                     className='form-control'
-                                    name="sos_model" 
                                     value={this.state.selected.sos_model}
-                                    onChange={this.handleChange}
+                                    onChange={(event) => this.handleChange('sos_model', event.target.value)}
                                     required>
                                     <option
                                         value=''
@@ -252,14 +265,16 @@ class ModelRunConfigForm extends Component {
                                                                                     id={'radio_' + sos_model_scenario + '_' + variant.name}
                                                                                     className="form-check-input"
                                                                                     type="radio"
-                                                                                    name={'scenarios_' + sos_model_scenario}
                                                                                     key={variant.name}
                                                                                     value={variant.name}
                                                                                     checked={
                                                                                         this.state.selected.scenarios[sos_model_scenario] == variant.name 
                                                                                             ? true : false
                                                                                     }
-                                                                                    onChange={this.handleChange} />
+                                                                                    onChange={(event) => this.handleChange('scenarios', {
+                                                                                        scenario: sos_model_scenario, 
+                                                                                        variant: event.target.value
+                                                                                    })} />
                                                                                 {variant.name}
                                                                             </label>
                                                                         </div>
@@ -307,12 +322,9 @@ class ModelRunConfigForm extends Component {
                                                                                         this.state.selected.narratives[sos_model_narrative.name].includes(variant.name) 
                                                                                             ? true : false
                                                                                     }
-                                                                                    onChange={() => this.handleChange({
-                                                                                        target: {
-                                                                                            name: 'narratives',
-                                                                                            narrative: sos_model_narrative.name,
-                                                                                            variant: variant.name
-                                                                                        }
+                                                                                    onChange={() => this.handleChange('narratives', {
+                                                                                        narrative: sos_model_narrative.name,
+                                                                                        variant: variant.name
                                                                                     })} />
                                                                                 {variant.name}
                                                                             </label>
@@ -331,9 +343,6 @@ class ModelRunConfigForm extends Component {
                         }
                     </div>
                 </div>
-
-
-
 
                 <div className="card">
                     <div className="card-header">Timesteps</div>
@@ -360,11 +369,10 @@ class ModelRunConfigForm extends Component {
                                 <input 
                                     className='form-control'
                                     type="number"
-                                    name='timestep_base_year' 
                                     min={2000}
                                     max={2100}
                                     value={this.form.timestep_base_year} 
-                                    onChange={this.handleChange} 
+                                    onChange={(event) => this.handleChange('timestep_base_year', event.target.value)} 
                                 />
                             </div>
                         </div>
@@ -375,11 +383,10 @@ class ModelRunConfigForm extends Component {
                                 <input 
                                     className='form-control'
                                     type="number"
-                                    name='timestep_size' 
                                     min={1}
                                     max={10}
                                     value={this.form.timestep_size}
-                                    onChange={this.handleChange} 
+                                    onChange={(event) => this.handleChange('timestep_size', event.target.value)} 
                                 />
                             </div>
                         </div>
@@ -390,11 +397,10 @@ class ModelRunConfigForm extends Component {
                                 <input 
                                     className='form-control'
                                     type="number"
-                                    name='timestep_number' 
                                     min={1}
                                     max={100}
                                     value={this.form.timestep_number}
-                                    onChange={this.handleChange} 
+                                    onChange={(event) => this.handleChange('timestep_number', event.target.value)} 
                                 />
                             </div>
                         </div>
@@ -415,8 +421,10 @@ ModelRunConfigForm.propTypes = {
     model_run: PropTypes.object.isRequired,
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
-    saveModelRun: PropTypes.func,
-    cancelModelRun: PropTypes.func
+    save: PropTypes.bool,
+    onSave: PropTypes.func,
+    onCancel: PropTypes.func,
+    onEdit: PropTypes.func
 }
 
 export default ModelRunConfigForm

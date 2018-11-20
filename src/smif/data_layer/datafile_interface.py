@@ -219,12 +219,6 @@ class DatafileInterface(DataInterface):
 
     @check_not_exists('sos_model')
     def write_sos_model(self, sos_model):
-        if self.validation:
-            validate_sos_model_config(
-                sos_model,
-                self.read_sector_models(skip_coords=True),
-                self.read_scenarios(skip_coords=True),
-            )
         self._write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     @check_exists('sos_model')

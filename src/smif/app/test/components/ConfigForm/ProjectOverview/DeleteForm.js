@@ -7,7 +7,7 @@ import {MemoryRouter} from 'react-router-dom'
 
 import DeleteForm from '../../../../src/components/ConfigForm/General/DeleteForm.js'
 
-describe('<DeleteForm />', () => {
+describe.skip('<DeleteForm />', () => {
 
     it('renders config_type', () => {
         const form = shallow(<DeleteForm
