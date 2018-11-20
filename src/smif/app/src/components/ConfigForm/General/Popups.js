@@ -11,8 +11,8 @@ const ConfirmPopup = (props) => (
             </div>
             <br/>
             <div>
-                <DangerButton value="Don't Save" onClick={props.onConfirm} />
-                <CancelButton value="Cancel" onClick={props.onCancel}/>
+                <DangerButton value="Discard" onClick={props.onConfirm} />
+                <CancelButton value="Keep Editing" onClick={props.onCancel}/>
                 <SaveButton value="Save" onClick={props.onSave} />
             </div>
         </Popup>

@@ -2,9 +2,9 @@ import { combineReducers } from 'redux'
 import {
     APP_FORM_EDIT,
     APP_FORM_SAVE,
-    APP_FORM_DONT_SAVE,
+    APP_FORM_DISCARD,
+    APP_FORM_KEEP_EDITING,
     APP_FORM_SAVE_DONE,
-    APP_FORM_CANCEL,
     APP_FORM_ACCEPT,
     APP_FORM_REJECT,
     APP_NAVIGATE,
@@ -63,7 +63,7 @@ function app(
             formReqSave: true,
             formReqCancel: false
         })
-    case APP_FORM_DONT_SAVE:
+    case APP_FORM_DISCARD:
         return Object.assign({}, state, {
             formEdit: false,
             formReqSave: false,
@@ -76,7 +76,7 @@ function app(
             formReqSave: false,
             formSaving: true
         })
-    case APP_FORM_CANCEL:
+    case APP_FORM_KEEP_EDITING:
         return Object.assign({}, state, {
             formReqCancel: false,
         })

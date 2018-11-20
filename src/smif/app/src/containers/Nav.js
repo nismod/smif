@@ -6,9 +6,9 @@ import { Redirect } from 'react-router'
 import { NavLink, Route } from 'react-router-dom'
 import { fetchModelRuns, fetchSosModels, fetchSectorModels, fetchScenarios } from 'actions/actions.js'
 
-import { setAppFormCancel } from 'actions/actions.js'
+import { setAppFormKeepEditing } from 'actions/actions.js'
 import { setAppFormSave } from 'actions/actions.js'
-import { setAppFormDontSave } from 'actions/actions.js'
+import { setAppFormDiscard } from 'actions/actions.js'
 import { setAppNavigate } from 'actions/actions.js'
 import { setAppNavigateDone } from 'actions/actions.js'
 
@@ -224,8 +224,8 @@ class Nav extends Component {
                 <ConfirmPopup 
                     onRequestOpen={this.props.app.formEdit && this.props.app.formReqCancel && !this.props.app.formSaving}
                     onSave={() => dispatch(setAppFormSave())}
-                    onConfirm={() => dispatch(setAppFormDontSave())}
-                    onCancel={() => dispatch(setAppFormCancel())}
+                    onConfirm={() => dispatch(setAppFormDiscard())}
+                    onCancel={() => dispatch(setAppFormKeepEditing())}
                 />
             </nav>
 
@@ -236,11 +236,15 @@ class Nav extends Component {
         const {model_runs, sos_models, sector_models, scenarios, isFetching} = this.props
 
         if (this.props.app.redirect != '' && 
+            this.props.location.pathname == this.props.app.redirect) {    
+            this.props.dispatch(setAppNavigateDone())
+        }
+
+        if (this.props.app.redirect != '' && 
+            this.props.location.pathname != this.props.app.redirect &&
             this.props.app.formEdit == false && 
             this.props.app.formError == false && 
             this.props.app.formSaving == false) {
-            
-            this.props.dispatch(setAppNavigateDone())
             return (
                 <div>
                     <Redirect to={this.props.app.redirect} />

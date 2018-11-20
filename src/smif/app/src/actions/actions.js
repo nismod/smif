@@ -14,10 +14,17 @@ export function setAppFormSave(){
     }
 }
 
-export const APP_FORM_DONT_SAVE = 'APP_FORM_DONT_SAVE'
-export function setAppFormDontSave(){
+export const APP_FORM_DISCARD = 'APP_FORM_DISCARD'
+export function setAppFormDiscard(){
     return function (dispatch) {
-        dispatch({type: APP_FORM_DONT_SAVE})
+        dispatch({type: APP_FORM_DISCARD})
+    }
+}
+
+export const APP_FORM_KEEP_EDITING = 'APP_FORM_KEEP_EDITING'
+export function setAppFormKeepEditing(){
+    return function (dispatch) {
+        dispatch({type: APP_FORM_KEEP_EDITING})
     }
 }
 
@@ -39,13 +46,6 @@ export const APP_FORM_REJECT = 'APP_FORM_REJECT'
 export function setAppFormReject(){
     return function (dispatch) {
         dispatch({type: APP_FORM_REJECT})
-    }
-}
-
-export const APP_FORM_CANCEL = 'APP_FORM_CANCEL'
-export function setAppFormCancel(){
-    return function (dispatch) {
-        dispatch({type: APP_FORM_CANCEL})
     }
 }
 
