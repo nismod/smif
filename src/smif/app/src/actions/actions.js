@@ -548,7 +548,7 @@ export function fetchSectorModel(modelid){
 }
 
 export function saveSectorModel(model){
-    return function () {
+    return function (dispatch) {
 
         // make API request, returning a promise
         return fetch('/api/v1/sector_models/' + model.name, {
@@ -561,6 +561,9 @@ export function saveSectorModel(model){
         )
             .then (
                 response => response.json()
+            )
+            .then (
+                dispatch(setAppFormAccept())
             )
     }
 }
@@ -692,6 +695,9 @@ export function saveScenario(scenario){
                     response => response.json()
                     dispatch(fetchScenarios())
                 }
+            )
+            .then (
+                dispatch(setAppFormAccept())
             )
     }
 }
