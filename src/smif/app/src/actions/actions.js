@@ -216,7 +216,7 @@ export function fetchModelRunStatus(modelrunid){
 }
 
 export function saveModelRun(modelrun){
-    return function () {
+    return function (dispatch) {
 
         // make API request, returning a promise
         return fetch('/api/v1/model_runs/' + modelrun.name, {
@@ -229,6 +229,9 @@ export function saveModelRun(modelrun){
         )
             .then (
                 response => response.json()
+            )
+            .then (
+                dispatch(setAppFormAccept())
             )
     }
 }

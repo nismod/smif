@@ -17,7 +17,7 @@ class SosModelConfigForm extends Component {
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {
-            selectedSosModel: this.props.sos_model
+            selected: this.props.sos_model
         }
     }
 
@@ -25,12 +25,12 @@ class SosModelConfigForm extends Component {
         this.props.onEdit()
 
         this.setState({
-            selectedSosModel: update(this.state.selectedSosModel, {[key]: {$set: value}})
+            selected: update(this.state.selected, {[key]: {$set: value}})
         })
     }
 
     handleSave() {
-        this.props.onSave(this.state.selectedSosModel)
+        this.props.onSave(this.state.selected)
         this.props.onCancel()
     }
 
@@ -39,10 +39,10 @@ class SosModelConfigForm extends Component {
     }
 
     render() {
-        const {selectedSosModel} = this.state
+        const {selected} = this.state
 
         if (this.props.save) {
-            this.props.onSave(this.state.selectedSosModel)
+            this.props.onSave(this.state.selected)
         }
 
         let errors = {}
@@ -68,7 +68,7 @@ class SosModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input id="sos_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selectedSosModel.name} onChange={this.handleChange}/>
+                                <input id="sos_model_name" className="form-control" name="name" type="text" disabled="true" defaultValue={selected.name} onChange={this.handleChange}/>
                             </div>
                         </div>
 
@@ -82,7 +82,7 @@ class SosModelConfigForm extends Component {
                                             : 'form-control'
                                     }
                                     rows="5" 
-                                    defaultValue={selectedSosModel.description} 
+                                    defaultValue={selected.description} 
                                     onChange={(event) => this.handleChange('description', event.target.value)}/>
                                 {   
                                     'description' in errors
@@ -113,7 +113,7 @@ class SosModelConfigForm extends Component {
                             <label className="col-sm-2 col-form-label">Sector Models</label>
                             <div className="col-sm-10">
                                 <PropertySelector 
-                                    activeProperties={selectedSosModel.sector_models} 
+                                    activeProperties={selected.sector_models} 
                                     availableProperties={this.props.sector_models} 
                                     onChange={(event) => this.handleChange('sector_models', event.target.value)} />
                                 {   
@@ -138,7 +138,7 @@ class SosModelConfigForm extends Component {
                             <label className="col-sm-2 col-form-label">Scenarios</label>
                             <div className="col-sm-10">
                                 <PropertySelector 
-                                    activeProperties={selectedSosModel.scenarios} 
+                                    activeProperties={selected.scenarios} 
                                     availableProperties={this.props.scenarios} 
                                     onChange={(event) => this.handleChange('scenarios', event.target.value)} />
                                 {   
@@ -167,10 +167,10 @@ class SosModelConfigForm extends Component {
   
                         <DependencyList 
                             name="Model Dependency" 
-                            dependencies={this.state.selectedSosModel.model_dependencies} 
+                            dependencies={this.state.selected.model_dependencies} 
                             source={
                                 this.props.sector_models.filter(
-                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                    sector_model => this.state.selected.sector_models.includes(sector_model.name)
                                 )
                             }
                             source_output={
@@ -181,7 +181,7 @@ class SosModelConfigForm extends Component {
                             }
                             sink={
                                 this.props.sector_models.filter(
-                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                    sector_model => this.state.selected.sector_models.includes(sector_model.name)
                                 )
                             }
                             sink_input={
@@ -216,10 +216,10 @@ class SosModelConfigForm extends Component {
 
                         <DependencyList 
                             name="Scenario Dependency" 
-                            dependencies={this.state.selectedSosModel.scenario_dependencies} 
+                            dependencies={this.state.selected.scenario_dependencies} 
                             source={
                                 this.props.scenarios.filter(
-                                    scenario => this.state.selectedSosModel.scenarios.includes(scenario.name)
+                                    scenario => this.state.selected.scenarios.includes(scenario.name)
                                 )
                             } 
                             source_output={
@@ -230,7 +230,7 @@ class SosModelConfigForm extends Component {
                             }
                             sink={
                                 this.props.sector_models.filter(
-                                    sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                    sector_model => this.state.selected.sector_models.includes(sector_model.name)
                                 )
                             }
                             sink_input={
@@ -264,9 +264,9 @@ class SosModelConfigForm extends Component {
                     <div className="card-body">
                         <NarrativeList 
                             name="Narrative" 
-                            narratives={selectedSosModel.narratives}
+                            narratives={selected.narratives}
                             sector_models={this.props.sector_models.filter(
-                                sector_model => this.state.selectedSosModel.sector_models.includes(sector_model.name)
+                                sector_model => this.state.selected.sector_models.includes(sector_model.name)
                             )}
                             onChange={(narratives) => this.handleChange('narratives', narratives)}  />
                         {   

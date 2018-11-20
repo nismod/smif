@@ -9,21 +9,19 @@ import { fetchScenarios } from 'actions/actions.js'
 
 import { saveModelRun } from 'actions/actions.js'
 
+import { setAppFormEdit } from 'actions/actions.js'
+import { setAppFormSaveDone } from 'actions/actions.js'
+import { setAppNavigate } from 'actions/actions.js'
+
 import ModelRunConfigForm from 'components/ConfigForm/ModelRunConfigForm.js'
 
 class ModelRunConfig extends Component {
     constructor(props) {
         super(props)
-
-        this.saveModelRun = this.saveModelRun.bind(this)
-        this.returnToPreviousPage = this.returnToPreviousPage.bind(this)
-
-        this.config_name = this.props.match.params.name
-    }
-
-    componentDidMount() {
         const { dispatch } = this.props
 
+        this.config_name = this.props.match.params.name
+        
         dispatch(fetchModelRun(this.config_name))
         dispatch(fetchSosModels())
         dispatch(fetchScenarios())
@@ -38,17 +36,6 @@ class ModelRunConfig extends Component {
         }
     }
 
-    saveModelRun(sosModel) {
-        const { dispatch } = this.props
-        dispatch(saveModelRun(sosModel))
-
-        this.returnToPreviousPage()
-    }
-
-    returnToPreviousPage() {
-        this.props.history.push('/configure/model-runs')
-    }
-
     renderLoading() {
         return (
             <div className="alert alert-primary">
@@ -57,8 +44,29 @@ class ModelRunConfig extends Component {
         )
     }
 
+    renderError(error) {
+        return (
+            <div>
+                {            
+                    Object.keys(error).map(exception => (
+                        <div key={exception} className="alert alert-danger">
+                            {exception}
+                            {
+                                error[exception].map(ex => (
+                                    <div key={ex}>
+                                        {ex}
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    ))
+                }
+            </div>
+        )
+    }
+
     renderModelRunConfig() {
-        const {model_run, sos_models, scenarios} = this.props
+        const { app, model_run, sos_models, scenarios, dispatch } = this.props
 
         return (
             <div key={'sosModel_' + model_run.name}>
@@ -66,15 +74,26 @@ class ModelRunConfig extends Component {
                     model_run={model_run} 
                     sos_models={sos_models}
                     scenarios={scenarios}
-                    saveModelRun={this.saveModelRun} 
-                    cancelModelRun={this.returnToPreviousPage} />
+                    save={app.formReqSave}
+                    onSave={(model_run) => (
+                        dispatch(setAppFormSaveDone()),
+                        dispatch(saveModelRun(model_run))
+                    )}
+                    onCancel={() => dispatch(setAppNavigate('/configure/model-runs'))}
+                    onEdit={() => dispatch(setAppFormEdit())}/>
             </div>
         )
     }
 
     render () {
-        if (this.props.isFetching) {
+        const { error, isFetching } = this.props
+
+        if (isFetching) {
             return this.renderLoading()
+        } else if (
+            Object.keys(error).includes('SmifDataNotFoundError') ||
+            Object.keys(error).includes('SmifValidationError')) {
+            return this.renderError(error)
         } else {
             return this.renderModelRunConfig()
         }
@@ -82,9 +101,11 @@ class ModelRunConfig extends Component {
 }
 
 ModelRunConfig.propTypes = {
+    app: PropTypes.object.isRequired,
     model_run: PropTypes.object.isRequired,
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
+    error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     match: PropTypes.object.isRequired,
@@ -93,9 +114,15 @@ ModelRunConfig.propTypes = {
 
 function mapStateToProps(state) {
     return {
+        app: state.app,
         model_run: state.model_run.item,
         sos_models: state.sos_models.items,
         scenarios: state.scenarios.items,
+        error: ({
+            ...state.model_run.error,
+            ...state.sos_model.error,
+            ...state.scenarios.error
+        }),
         isFetching: (
             state.model_run.isFetching || 
             state.sos_models.isFetching ||

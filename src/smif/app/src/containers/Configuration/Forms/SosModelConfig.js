@@ -10,7 +10,6 @@ import { fetchScenarios } from 'actions/actions.js'
 import { saveSosModel } from 'actions/actions.js'
 
 import { setAppFormEdit } from 'actions/actions.js'
-import { setAppFormSave } from 'actions/actions.js'
 import { setAppFormSaveDone } from 'actions/actions.js'
 import { setAppNavigate } from 'actions/actions.js'
 
@@ -78,8 +77,8 @@ class SosModelConfig extends Component {
                     error={error}
                     save={app.formReqSave}
                     onSave={(sos_model) => (
-                        dispatch(saveSosModel(sos_model)),
-                        dispatch(setAppFormSaveDone())
+                        dispatch(setAppFormSaveDone()),
+                        dispatch(saveSosModel(sos_model))
                     )} 
                     onCancel={() => dispatch(setAppNavigate('/configure/sos-models'))}
                     onEdit={() => dispatch(setAppFormEdit())}/>
