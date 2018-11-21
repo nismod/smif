@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import Popup from 'components/ConfigForm/General/Popup'
-import { SaveButton, DangerButton, CancelButton } from 'components/ConfigForm/General/Buttons'
+import { PrimaryButton, DangerButton, SecondaryButton } from 'components/ConfigForm/General/Buttons'
 
 const ConfirmPopup = (props) => (
     <div>
@@ -12,8 +12,8 @@ const ConfirmPopup = (props) => (
             <br/>
             <div>
                 <DangerButton value="Discard" onClick={props.onConfirm} />
-                <CancelButton value="Keep Editing" onClick={props.onCancel}/>
-                <SaveButton value="Save" onClick={props.onSave} />
+                <SecondaryButton value="Keep Editing" onClick={props.onCancel}/>
+                <PrimaryButton value="Save" onClick={props.onSave} />
             </div>
         </Popup>
     </div>

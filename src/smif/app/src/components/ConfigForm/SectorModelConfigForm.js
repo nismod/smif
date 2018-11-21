@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import SpecList from 'components/ConfigForm/General/SpecList.js'
-import {SaveButton, CancelButton} from 'components/ConfigForm/General/Buttons'
+import {PrimaryButton, SecondaryButton} from 'components/ConfigForm/General/Buttons'
 
 class SectorModelConfigForm extends Component {
     constructor(props) {
@@ -150,8 +150,8 @@ class SectorModelConfigForm extends Component {
                     </div>
                 </div>
 
-                <SaveButton onClick={this.handleSave} />
-                <CancelButton onClick={this.handleCancel} />
+                <PrimaryButton value="Save" onClick={this.handleSave} />
+                <SecondaryButton value="Cancel" onClick={this.handleCancel} />
 
                 <br/>
             </div>

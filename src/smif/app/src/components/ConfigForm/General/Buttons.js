@@ -2,60 +2,60 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 /**
- * CreateButton
+ * SuccessButton
  *
- * Primary button for create actions
+ * Primary button
  */
-const CreateButton = (props) => (
+const SuccessButton = (props) => (
     <input
         id={props.id}
         className="btn btn-success btn-margin"
         type="button"
-        value={props.value? props.value : 'Add'}
+        value={props.value}
         onClick={props.onClick} />
 )
 
-CreateButton.propTypes = {
+SuccessButton.propTypes = {
     id: PropTypes.string,
     value: PropTypes.string,
     onClick: PropTypes.func
 }
 
 /**
- * SaveButton
+ * PrimaryButton
  *
- * Primary button for save actions
+ * Primary button
  */
-const SaveButton = (props) => (
+const PrimaryButton = (props) => (
     <input
         id={props.id}
         className="btn btn-primary btn-margin"
         type="submit"
-        value={props.value? props.value : 'Save'}
+        value={props.value}
         onClick={props.onClick} />
 )
 
-SaveButton.propTypes = {
+PrimaryButton.propTypes = {
     id: PropTypes.string,
     value: PropTypes.string,
     onClick: PropTypes.func
 }
 
 /**
- * CancelButton
+ * SecondaryButton
  *
- * Secondary button for cancel actions
+ * Secondary button
  */
-const CancelButton = (props) => (
+const SecondaryButton = (props) => (
     <input
         id={props.id}
         className="btn btn-outline-secondary btn-margin"
         type="button"
-        value={props.value? props.value : 'Cancel'}
+        value={props.value}
         onClick={props.onClick} />
 )
 
-CancelButton.propTypes = {
+SecondaryButton.propTypes = {
     id: PropTypes.string,
     value: PropTypes.string,
     onClick: PropTypes.func
@@ -113,9 +113,9 @@ ToggleButton.propTypes = {
 }
 
 export {
-    CreateButton,
-    SaveButton,
-    CancelButton,
+    SuccessButton,
+    PrimaryButton,
+    SecondaryButton,
     DangerButton,
     ToggleButton
 }

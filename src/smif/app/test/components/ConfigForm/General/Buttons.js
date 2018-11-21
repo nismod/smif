@@ -3,21 +3,20 @@ import {expect} from 'chai'
 import {shallow} from 'enzyme'
 import {describe, it} from 'mocha'
 import {
-    CreateButton,
-    SaveButton,
-    CancelButton,
+    SuccessButton,
+    PrimaryButton,
+    SecondaryButton,
     DangerButton
 } from '../../../../src/components/ConfigForm/General/Buttons'
 
 
-describe('<CreateButton />', () => {
+describe('<SuccessButton />', () => {
     it('has sensible defaults', () => {
-        const html = shallow(<CreateButton />).html()
+        const html = shallow(<SuccessButton />).html()
         expect(html).to.not.contain('id="')
-        expect(html).to.contain('Add')
     })
     it('renders options', () => {
-        const html = shallow(<CreateButton
+        const html = shallow(<SuccessButton
             id="test"
             value="Test" />).html()
         expect(html).to.contain('id="test"')
@@ -25,14 +24,13 @@ describe('<CreateButton />', () => {
     })
 })
 
-describe('<SaveButton />', () => {
+describe('<PrimaryButton />', () => {
     it('has sensible defaults', () => {
-        const html = shallow(<SaveButton />).html()
+        const html = shallow(<PrimaryButton />).html()
         expect(html).to.not.contain('id="')
-        expect(html).to.contain('Save')
     })
     it('renders options', () => {
-        const html = shallow(<SaveButton
+        const html = shallow(<PrimaryButton
             id="test"
             value="Test" />).html()
         expect(html).to.contain('id="test"')
@@ -40,14 +38,13 @@ describe('<SaveButton />', () => {
     })
 })
 
-describe('<CancelButton />', () => {
+describe('<SecondaryButton />', () => {
     it('has sensible defaults', () => {
-        const html = shallow(<CancelButton />).html()
+        const html = shallow(<SecondaryButton />).html()
         expect(html).to.not.contain('id="')
-        expect(html).to.contain('Cancel')
     })
     it('renders options', () => {
-        const html = shallow(<CancelButton
+        const html = shallow(<SecondaryButton
             id="test"
             value="Test" />).html()
         expect(html).to.contain('id="test"')
@@ -59,7 +56,6 @@ describe('<DangerButton />', () => {
     it('has sensible defaults', () => {
         const html = shallow(<DangerButton />).html()
         expect(html).to.not.contain('id="')
-        expect(html).to.contain('Delete')
     })
     it('renders options', () => {
         const html = shallow(<DangerButton

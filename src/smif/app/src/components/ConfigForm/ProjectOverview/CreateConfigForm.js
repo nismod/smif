@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
+import { PrimaryButton, SecondaryButton } from 'components/ConfigForm/General/Buttons'
 
 class CreateConfigForm extends Component {
     constructor(props) {
@@ -103,8 +103,8 @@ class CreateConfigForm extends Component {
                     {this.state.alert_message}
                 </div>
 
-                <SaveButton id="saveConfig" onClick={this.handleSubmit} />
-                <CancelButton id="cancelConfig" onClick={this.handleCancel} />
+                <PrimaryButton id="saveConfig" value="Save" onClick={this.handleSubmit} />
+                <SecondaryButton id="cancelConfig" value="Cancel" onClick={this.handleCancel} />
             </div>
         )
     }
