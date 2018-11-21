@@ -229,6 +229,14 @@ class ModelRunConfigForm extends Component {
                                         ))
                                     }
                                 </select>
+
+                                {
+                                    this.state.selected.sos_model != '' ?
+                                        <PrimaryButton 
+                                            value="Go to system-of-systems configuration" 
+                                            onClick={() => this.props.onNavigate('/configure/sos-models/' + this.state.selected.sos_model)}/>
+                                        : null
+                                }
                             </div>
                         </div>
                         {
@@ -422,6 +430,7 @@ ModelRunConfigForm.propTypes = {
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     save: PropTypes.bool,
+    onNavigate: PropTypes.func,
     onSave: PropTypes.func,
     onCancel: PropTypes.func,
     onEdit: PropTypes.func
