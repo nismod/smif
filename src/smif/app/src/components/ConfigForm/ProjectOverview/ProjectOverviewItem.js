@@ -54,7 +54,12 @@ class SosModelRunItem extends Component {
         }
     }
 
+<<<<<<< HEAD
     renderItems(itemname, items, itemLink, resultLink, onDelete) {
+=======
+    renderItems() {
+        const {itemname, items, resultLink, onDelete, onClick} = this.props
+>>>>>>> Remove unused filters
 
         if (this.state.redirect) {
             return <Redirect push to={this.state.redirect_to}/>
