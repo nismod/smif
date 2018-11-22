@@ -114,7 +114,7 @@ export const RECEIVE_MODEL_RUNS = 'RECEIVE_MODEL_RUNS'
 function receiveModelRuns(json) {
     return {
         type: RECEIVE_MODEL_RUNS,
-        data: json['data'],
+        data: json['data'].sort((a, b) => a.name.localeCompare(b.name)),
         error: json['error'],
         receivedAt: Date.now()
     }
@@ -192,7 +192,7 @@ export const RECEIVE_MODEL_RUN_STATUS = 'RECEIVE_MODEL_RUN_STATUS'
 function receiveModelRunStatus(json) {
     return {
         type: RECEIVE_MODEL_RUN_STATUS,
-        data: json['data'],
+        data: json['data'].sort((a, b) => a.name.localeCompare(b.name)),
         error: json['error'],
         receivedAt: Date.now()
     }
@@ -325,7 +325,7 @@ export const RECEIVE_SOS_MODELS = 'RECEIVE_SOS_MODELS'
 function receiveSosModels(json) {
     return {
         type: RECEIVE_SOS_MODELS,
-        data: json['data'],
+        data: json['data'].sort((a, b) => a.name.localeCompare(b.name)),
         error: json['error'],
         receivedAt: Date.now()
     }
@@ -376,7 +376,7 @@ export const REJECT_SOS_MODEL = 'REJECT_SOS_MODEL'
 function rejectSosModel(json){
     return {
         type: REJECT_SOS_MODEL,
-        data: json['data'],
+        data: json['data'].sort((a, b) => a.name.localeCompare(b.name)),
         error: json['error']
     }
 }
@@ -490,7 +490,7 @@ export const RECEIVE_SECTOR_MODELS = 'RECEIVE_SECTOR_MODELS'
 function receiveSectorModels(json) {
     return {
         type: RECEIVE_SECTOR_MODELS,
-        data: json['data'],
+        data: json['data'].sort((a, b) => a.name.localeCompare(b.name)),
         error: json['error'],
         receivedAt: Date.now()
     }
@@ -621,7 +621,7 @@ function receiveScenarios(json) {
     if (json == null) json = []
     return {
         type: RECEIVE_SCENARIOS,
-        data: json['data'],
+        data: json['data'].sort((a, b) => a.name.localeCompare(b.name)),
         error: json['error'],
         receivedAt: Date.now()
     }
@@ -754,7 +754,7 @@ export const RECEIVE_NARRATIVES = 'RECEIVE_NARRATIVES'
 function receiveNarratives(json) {
     return {
         type: RECEIVE_NARRATIVES,
-        data: json['data'],
+        data: json['data'].sort((a, b) => a.name.localeCompare(b.name)),
         error: json['error'],
         receivedAt: Date.now()
     }
@@ -787,7 +787,7 @@ export const RECEIVE_NARRATIVE = 'RECEIVE_NARRATIVE'
 function receiveNarrative(json) {
     return {
         type: RECEIVE_NARRATIVE,
-        data: json['data'],
+        data: json['data'].sort((a, b) => a.name.localeCompare(b.name)),
         error: json['error'],
         receivedAt: Date.now()
     }
@@ -880,7 +880,7 @@ export const RECEIVE_DIMENSIONS = 'RECEIVE_DIMENSIONS'
 function receiveDimensions(json) {
     return {
         type: RECEIVE_DIMENSIONS,
-        data: json['data'],
+        data: json['data'].sort((a, b) => a.name.localeCompare(b.name)),
         error: json['error'],
         receivedAt: Date.now()
     }
