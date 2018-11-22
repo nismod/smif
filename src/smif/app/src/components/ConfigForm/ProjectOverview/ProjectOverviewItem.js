@@ -19,6 +19,8 @@ class SosModelRunItem extends Component {
         this.onEditHandler = this.onEditHandler.bind(this)
         this.onDeleteHandler = this.onDeleteHandler.bind(this)
         this.onStartHandler = this.onStartHandler.bind(this)
+
+        this.filterAll = this.filterAll.bind(this)
     }
 
     onEditHandler(name) {
@@ -48,6 +50,30 @@ class SosModelRunItem extends Component {
             onClick(resultLink + name)
         }
     }
+
+    onFilteredChange(filtered) {
+        // console.log('filtered:',filtered);
+        // const { sortedData } = this.reactTable.getResolvedState();
+        // console.log('sortedData:', sortedData);
+        // extra check for the "filterAll"
+        if (filtered.length > 1 && this.state.filterAll.length) {
+            // NOTE: this removes any FILTER ALL filter
+            const filterAll = ''
+            this.setState({
+                filtered: filtered.filter(item => item.id != 'all'),
+                filterAll
+            })
+        } else this.setState({ filtered })
+    }
+
+    filterAll(e) {
+        const { value } = e.target
+        const filterAll = value
+        const filtered = [{ id: 'all', value: filterAll }]
+        // NOTE: this completely clears any COLUMN filters
+        this.setState({ filterAll, filtered })
+    }
+
     
 
     renderItems() {
@@ -61,18 +87,28 @@ class SosModelRunItem extends Component {
                 <div>
                     <ReactTable
                         data={items}
+                        filterable
+                        defaultFilterMethod={(filter, row) =>
+                            String(row[filter.id]) === filter.value
+                        }
                         columns={[{
                             Header: 'Name',
                             accessor: 'name',
-                            width: Math.round(window.innerWidth * 0.2)
+                            width: Math.round(window.innerWidth * 0.2),
+                            filterMethod: (filter, row) => {
+                                return row[filter.id].includes(filter.value)
+                            }
                         }, {
                             Header: 'Description',
                             accessor: 'description',
-                            width: Math.round(window.innerWidth * 0.3)
+                            width: Math.round(window.innerWidth * 0.3),
+                            filterMethod: (filter, row) => {
+                                return row[filter.id].includes(filter.value)
+                            }
                         }, {
                             Header: 'Actions',
-                            accessor: 'name',
                             width: Math.round(window.innerWidth * 0.1),
+                            filterable: false,
                             Cell: row => (
                                 <div className='text-center'>
                                     <button 
@@ -80,27 +116,27 @@ class SosModelRunItem extends Component {
                                         id={'btn_start_' + row.value}
                                         type="button"
                                         className="btn btn-outline-dark btn-margin"
-                                        name={row.value}
-                                        onClick={() => this.onStartHandler(row.value)}>
+                                        name={row.original.name}
+                                        onClick={() => this.onStartHandler(row.original.name)}>
                                         <FaPlay/>
                                     </button>
                                     <button 
                                         hidden={onClick==undefined}
-                                        id={'btn_edit_' + row.value}
+                                        id={'btn_edit_' + row.original.name}
                                         type="button"
                                         className="btn btn-outline-dark btn-margin"
-                                        name={row.value}
-                                        onClick={() => this.onEditHandler(row.value)}>
+                                        name={row.original.name}
+                                        onClick={() => this.onEditHandler(row.original.name)}>
                                         <FaPencil/>
                                     </button>
                                     <button
                                         hidden={onDelete==undefined} 
-                                        id={'btn_delete_' + row.value}
+                                        id={'btn_delete_' + row.original.name}
                                         type="button"
                                         className="btn btn-outline-dark btn-margin"
                                         value={itemname}
-                                        name={row.value}
-                                        onClick={() => this.onDeleteHandler(row.value)}>
+                                        name={row.original.name}
+                                        onClick={() => this.onDeleteHandler(row.original.name)}>
                                         <FaTrash/>
                                     </button>
                                 </div>
