@@ -116,8 +116,83 @@ class SosModelRunItem extends Component {
                                 </tr>
                             ))
                         }
+<<<<<<< HEAD
                     </tbody>
                 </table>
+=======
+                        columns={[{
+                            Header: 'Name',
+                            accessor: 'name',
+                            width: Math.round(window.innerWidth * 0.2),
+                            filterMethod: (filter, row) => {
+                                return row[filter.id].includes(filter.value)
+                            }
+                        }, {
+                            Header: 'Description',
+                            accessor: 'description',
+                            width: Math.round(window.innerWidth * 0.3),
+                            filterMethod: (filter, row) => {
+                                return row[filter.id].includes(filter.value)
+                            }
+                        }, {
+                            Header: 'Actions',
+                            width: Math.round(window.innerWidth * 0.1),
+                            filterable: false,
+                            Cell: row => (
+                                <div className='text-center'>
+                                    <button 
+                                        hidden={resultLink==undefined}
+                                        id={'btn_start_' + row.value}
+                                        type="button"
+                                        className="btn btn-outline-dark btn-margin"
+                                        name={row.original.name}
+                                        onClick={() => this.onStartHandler(row.original.name)}>
+                                        <FaPlay/>
+                                    </button>
+                                    <button 
+                                        hidden={onClick==undefined}
+                                        id={'btn_edit_' + row.original.name}
+                                        type="button"
+                                        className="btn btn-outline-dark btn-margin"
+                                        name={row.original.name}
+                                        onClick={() => this.onEditHandler(row.original.name)}>
+                                        <FaPencil/>
+                                    </button>
+                                    <button
+                                        hidden={onDelete==undefined} 
+                                        id={'btn_delete_' + row.original.name}
+                                        type="button"
+                                        className="btn btn-outline-dark btn-margin"
+                                        value={itemname}
+                                        name={row.original.name}
+                                        onClick={() => this.onDeleteHandler(row.original.name)}>
+                                        <FaTrash/>
+                                    </button>
+                                </div>
+                            )
+                        }]}
+                        defaultPageSize={8}
+                        rowHeight={10}
+                        minRows={1}
+                        className="-striped -highlight"
+                        getTdProps={(state, rowInfo, column) => {
+                            return {
+                                onClick: () => {
+                                    if (column.Header != 'Actions') {
+                                        this.onEditHandler(rowInfo.original.name)
+                                    }
+                                },
+                                style: {
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center'
+                                }
+                            }
+                        }}
+
+                    />
+                </div>
+>>>>>>> Make row clickable
             )
         }
     }
