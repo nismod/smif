@@ -36,6 +36,7 @@
     "react-redux": "^5.0.6",
     "react-router-dom": "^4.2.2",
     "react-select": "^2.0.0",
+    "react-table": "^6.8.6",
     "reactstrap": "^6.1.0",
     "redux": "^4.0.0",
     "redux-logger": "^3.0.6",
