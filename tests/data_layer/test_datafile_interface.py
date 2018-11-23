@@ -1332,11 +1332,10 @@ class TestCoefficients:
         with raises(SmifDataNotFoundError):
             handler.read_coefficients(missing_spec, to_spec)
 
-    def test_write_success_if_folder_missing(self, from_spec, to_spec):
+    def test_dfi_raises_if_folder_missing(self):
         """Ensure we can write files, even if project directory starts empty
         """
         with TemporaryDirectory() as tmpdirname:
             # start with empty project (no data/coefficients subdirectory)
-            handler = DatafileInterface(tmpdirname, 'local_binary')
-            data = np.eye(10)
-            handler.write_coefficients(from_spec, to_spec, data)
+            with raises(SmifDataNotFoundError):
+                DatafileInterface(tmpdirname, 'local_binary')

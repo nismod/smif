@@ -129,25 +129,29 @@ class DatafileInterface(DataInterface):
         for folder in config_folders:
             dirname = os.path.join(self.config_folder, folder)
             # ensure each directory exists
-            os.makedirs(dirname, exist_ok=True)
+            if not os.path.exists(dirname):
+                msg = "Expected configuration folder at '%s' but it does not exist"
+                raise SmifDataNotFoundError(msg, dirname)
+
             self.config_folders[folder] = dirname
 
         data_folders = [
             'coefficients',
             'dimensions',
-            'strategies',
             'initial_conditions',
             'initial_inputs',
             'interventions',
             'narratives',
+            'parameters'
             'scenarios',
             'strategies',
-            'parameters'
         ]
         for folder in data_folders:
             dirname = os.path.join(self.data_folder, folder)
             # ensure each directory exists
-            os.makedirs(dirname, exist_ok=True)
+            if not os.path.exists(dirname):
+                msg = "Expected data folder at '%s' but it does does not exist"
+                raise SmifDataNotFoundError(msg, dirname)
             self.data_folders[folder] = dirname
 
         # ensure project config file exists
