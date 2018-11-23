@@ -171,7 +171,8 @@ class DatafileInterface(DataInterface):
     # region Model runs
     def read_model_runs(self):
         names = self._read_filenames_in_dir(self.config_folders['model_runs'], '.yml')
-        model_runs = [self.read_model_run(name) for name in names]
+        sorted_names = sorted(names)
+        model_runs = [self.read_model_run(name) for name in sorted_names]
         return model_runs
 
     def read_model_run(self, model_run_name):
