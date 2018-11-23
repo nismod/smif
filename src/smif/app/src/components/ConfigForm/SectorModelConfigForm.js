@@ -14,7 +14,8 @@ class SectorModelConfigForm extends Component {
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {
-            selected: this.props.sectorModel,
+            selected: this.props.sector_model,
+            form_inUse_Dropdown_isOpen: false
         }
     }
 
@@ -80,6 +81,34 @@ class SectorModelConfigForm extends Component {
                                     rows="5" 
                                     defaultValue={selected.description} 
                                     onChange={(event) => this.handleChange('description', event.target.value)}/>
+                            </div>
+                        </div>
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">In use by</label>
+                            <div className="col-sm-10">
+                                <div className="dropdown" onClick={() => this.setState({ inuse_dropdown: !this.state.inuse_dropdown})}>
+                                    <button
+                                        className="btn btn-secondary dropdown-toggle"
+                                        type="button"
+                                        id="dropdownMenuButton"
+                                        data-toggle="dropdown"
+                                        aria-haspopup="true"
+                                    >
+                                        System-of-Systems Model Configuration
+                                    </button>
+                                    <div className={`dropdown-menu${this.state.inuse_dropdown ? ' show' : ''}`} aria-labelledby="dropdownMenuButton">
+                                        {
+                                            this.props.sos_models.filter(sos_model => sos_model.sector_models.includes(this.props.sector_model.name)).map(sector_model => (
+                                                <a key={sector_model.name} 
+                                                    className="dropdown-item" 
+                                                    onClick={() => this.props.onNavigate('/configure/sos-models/' + sector_model.name)}>
+                                                    {sector_model.name}
+                                                </a>
+                                            ))
+                                        }   
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -160,8 +189,8 @@ class SectorModelConfigForm extends Component {
 }
 
 SectorModelConfigForm.propTypes = {
-    sosModels: PropTypes.array.isRequired,
-    sectorModel: PropTypes.object.isRequired,
+    sos_models: PropTypes.array.isRequired,
+    sector_model: PropTypes.object.isRequired,
     dimensions: PropTypes.array.isRequired,
     saveSectorModel: PropTypes.func,
     cancelSectorModel: PropTypes.func,
@@ -173,8 +202,8 @@ SectorModelConfigForm.propTypes = {
 }
 
 SectorModelConfigForm.defaultProps = {
-    sosModels: [],
-    sectorModel: {},
+    sos_models: [],
+    sector_model: {},
 }
 
 export default SectorModelConfigForm

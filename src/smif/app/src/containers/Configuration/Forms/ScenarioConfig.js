@@ -64,15 +64,14 @@ class ScenarioConfig extends Component {
     }
 
     renderScenarioConfig() {
-        const { app, scenario, dimensions, dispatch } = this.props
+        const { app, scenario, sos_models, dimensions, dispatch } = this.props
 
         return (
             <div>
                 <ScenarioConfigForm
-                    scenario_narrative={scenario}
+                    scenario={scenario}
+                    sos_models={sos_models}
                     dimensions={dimensions}
-                    saveScenarioNarrative={this.saveScenario}
-                    cancelScenarioNarrative={this.returnToPreviousPage}
                     require_provide_full_variant
                     save={app.formReqSave}
                     onNavigate={(dest) => dispatch(setAppNavigate(dest))}
@@ -104,6 +103,7 @@ class ScenarioConfig extends Component {
 ScenarioConfig.propTypes = {
     app: PropTypes.object.isRequired,
     scenario: PropTypes.object.isRequired,
+    sos_models: PropTypes.array.isRequired,
     dimensions: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
     isFetching: PropTypes.bool.isRequired,
@@ -117,13 +117,16 @@ function mapStateToProps(state) {
     return {
         app: state.app,
         scenario: state.scenario.item,
+        sos_models: state.sos_models.items,
         dimensions: state.dimensions.items,
         error: ({
             ...state.scenario.error,
+            ...state.sos_models.error,
             ...state.dimensions.error
         }),
         isFetching: (
             state.scenario.isFetching ||
+            state.sos_models.isFetching ||
             state.dimensions.isFetching
         )
     }

@@ -18,7 +18,7 @@ class SosModelConfigForm extends Component {
 
         this.state = {
             selected: this.props.sos_model,
-            isOpen: false
+            inuse_dropdown: false
         }
     }
 
@@ -106,7 +106,7 @@ class SosModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">In use by</label>
                             <div className="col-sm-10">
-                                <div className="dropdown" onClick={() => this.setState({ isOpen: !this.state.isOpen})}>
+                                <div className="dropdown" onClick={() => this.setState({ inuse_dropdown: !this.state.inuse_dropdown})}>
                                     <button
                                         className="btn btn-secondary dropdown-toggle"
                                         type="button"
@@ -114,20 +114,18 @@ class SosModelConfigForm extends Component {
                                         data-toggle="dropdown"
                                         aria-haspopup="true"
                                     >
-                                        Model Run Configurations
+                                        Model Run Configuration
                                     </button>
-                                    <div className={`dropdown-menu${this.state.isOpen ? ' show' : ''}`} aria-labelledby="dropdownMenuButton">
+                                    <div className={`dropdown-menu${this.state.inuse_dropdown ? ' show' : ''}`} aria-labelledby="dropdownMenuButton">
                                         {
                                             this.props.model_runs.filter(model_run => model_run.sos_model == this.props.sos_model.name).map(model_run => (
                                                 <a key={model_run.name} 
                                                     className="dropdown-item" 
-                                                    href="#nogo" 
                                                     onClick={() => this.props.onNavigate('/configure/model-runs/' + model_run.name)}>
                                                     {model_run.name}
                                                 </a>
                                             ))
                                         }
-                                        
                                     </div>
                                 </div>
                             </div>

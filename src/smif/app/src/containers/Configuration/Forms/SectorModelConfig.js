@@ -71,8 +71,8 @@ class SectorModelConfig extends Component {
         return (
             <div key={sector_model.name}>
                 <SectorModelConfigForm 
-                    sectorModel={sector_model} 
-                    sosModels={sos_models} 
+                    sector_model={sector_model} 
+                    sos_models={sos_models} 
                     dimensions={dimensions}
                     error={error}
                     save={app.formReqSave}
