@@ -422,6 +422,7 @@ ModelRunConfigForm.propTypes = {
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     save: PropTypes.bool,
+    onNavigate: PropTypes.func,
     onSave: PropTypes.func,
     onCancel: PropTypes.func,
     onEdit: PropTypes.func

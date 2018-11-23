@@ -124,6 +124,7 @@ ScenarioConfigForm.propTypes = {
     require_provide_full_variant: PropTypes.bool,
     cancelScenarioNarrative: PropTypes.func,
     save: PropTypes.bool,
+    onNavigate: PropTypes.func,
     onSave: PropTypes.func,
     onCancel: PropTypes.func,
     onEdit: PropTypes.func

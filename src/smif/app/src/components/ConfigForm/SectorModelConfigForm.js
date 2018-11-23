@@ -166,6 +166,7 @@ SectorModelConfigForm.propTypes = {
     saveSectorModel: PropTypes.func,
     cancelSectorModel: PropTypes.func,
     save: PropTypes.bool,
+    onNavigate: PropTypes.func,
     onSave: PropTypes.func,
     onCancel: PropTypes.func,
     onEdit: PropTypes.func

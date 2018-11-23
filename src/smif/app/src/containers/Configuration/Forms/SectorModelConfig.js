@@ -76,6 +76,7 @@ class SectorModelConfig extends Component {
                     dimensions={dimensions}
                     error={error}
                     save={app.formReqSave}
+                    onNavigate={(dest) => dispatch(setAppNavigate(dest))}
                     onSave={(sector_model) => (
                         dispatch(setAppFormSaveDone()),
                         dispatch(saveSectorModel(sector_model))

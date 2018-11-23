@@ -75,6 +75,7 @@ class ScenarioConfig extends Component {
                     cancelScenarioNarrative={this.returnToPreviousPage}
                     require_provide_full_variant
                     save={app.formReqSave}
+                    onNavigate={(dest) => dispatch(setAppNavigate(dest))}
                     onSave={(scenario) => (
                         dispatch(setAppFormSaveDone()),
                         dispatch(saveScenario(scenario))
