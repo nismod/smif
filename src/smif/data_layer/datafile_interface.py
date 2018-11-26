@@ -143,7 +143,7 @@ class DatafileInterface(DataInterface):
             'initial_inputs',
             'interventions',
             'narratives',
-            'parameters'
+            'parameters',
             'scenarios',
             'strategies',
         ]
