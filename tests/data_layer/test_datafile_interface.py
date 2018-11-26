@@ -769,8 +769,7 @@ class TestScenarios:
 
     def test_scenario_data_validates(self, setup_folder_structure, config_handler,
                                      get_remapped_scenario_data):
-        """ DatafileInterface and DataInterface perform validation of scenario
-        data against raw interval and region data.
+        """Store performs validation of scenario data against raw interval and region data.
 
         As such `len(region_names) * len(interval_names)` is not a valid size
         of scenario data under cases where resolution definitions contain

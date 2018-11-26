@@ -155,7 +155,7 @@ class ModelRunner(object):
         Arguments
         ---------
         model_run : :class:`smif.controller.modelrun.ModelRun`
-        store : :class:`smif.data_layer.DataInterface`
+        store : :class:`smif.data_layer.Store`
         """
         # Solve the model run: decision loop generates a series of bundles of independent
         # decision iterations, each with a number of timesteps to run

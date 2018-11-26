@@ -4,11 +4,11 @@ from collections import OrderedDict
 from copy import copy
 
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.data_interface import DataInterface
+from smif.data_layer.store import Store
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 
 
-class MemoryInterface(DataInterface):
+class MemoryInterface(Store):
     """ Read and write interface to main memory
     """
     def __init__(self):

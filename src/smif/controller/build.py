@@ -63,7 +63,7 @@ def get_scenario_models(scenarios, handler):
     Arguments
     ---------
     scenarios : dict
-    handler : smif.data_layer.DataInterface
+    handler : smif.data_layer.Store
 
     Returns
     -------
@@ -93,7 +93,7 @@ def get_sector_models(sector_model_names, handler):
     Arguments
     ---------
     sector_model_names : list of str
-    handler : smif.data_layer.DataInterface
+    handler : smif.data_layer.Store
 
     Returns
     -------

@@ -1,8 +1,8 @@
 
-from smif.data_layer.data_interface import DataInterface
+from smif.data_layer.store import Store
 
 
-class DatabaseInterface(DataInterface):
+class DatabaseInterface(Store):
     def __init__(self, config_path):
         raise NotImplementedError()
 

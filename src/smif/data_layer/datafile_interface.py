@@ -9,8 +9,8 @@ from functools import lru_cache, wraps
 
 import pyarrow as pa
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.load import dump, load
+from smif.data_layer.store import Store
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
@@ -88,7 +88,7 @@ def check_not_exists_as_child(parent_dtype, child_dtype):
     return wrapper
 
 
-class DatafileInterface(DataInterface):
+class DatafileInterface(Store):
     """Read and write interface to YAML / CSV configuration files
     and intermediate CSV / native-binary data storage.
 

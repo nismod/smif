@@ -24,7 +24,7 @@ class DataHandle(object):
 
         Parameters
         ----------
-        store : DataInterface
+        store : Store
             Backing store for inputs, parameters, results
         modelrun_name : str
             Name of the current modelrun
