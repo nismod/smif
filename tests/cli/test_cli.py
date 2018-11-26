@@ -14,6 +14,17 @@ from smif.cli import confirm, parse_arguments, setup_project_folder
 from smif.data_layer import DatafileInterface
 
 
+@fixture()
+def tmp_sample_project(tmpdir_factory):
+    test_folder = tmpdir_factory.mktemp("smif")
+    subprocess.run(
+        ["smif", "-v", "setup", "-d", str(test_folder)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    return str(test_folder)
+
+
 def get_args(args):
     """Get args object from list of strings
     """
@@ -47,17 +58,6 @@ def test_fixture_single_run(tmp_sample_project):
     print(output.stderr.decode("utf-8"), file=sys.stderr)
     assert "Running energy_central" in str(output.stderr)
     assert "Model run 'energy_central' complete" in str(output.stdout)
-
-
-@fixture()
-def tmp_sample_project(tmpdir_factory):
-    test_folder = tmpdir_factory.mktemp("smif")
-    subprocess.run(
-        ["smif", "-v", "setup", "-d", str(test_folder)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    return str(test_folder)
 
 
 def test_fixture_single_run_csv(tmp_sample_project):
