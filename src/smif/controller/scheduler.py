@@ -237,10 +237,8 @@ class JobScheduler(object):
             operation = job['operation']
             if operation is ModelOperation.BEFORE_MODEL_RUN:
                 # before_model_run may not be implemented by all jobs
-                try:
+                if hasattr(model, "before_model_run"):
                     model.before_model_run(data_handle)
-                except AttributeError as ex:
-                    self.logger.warning(ex)
 
             elif operation is ModelOperation.SIMULATE:
                 model.simulate(data_handle)
