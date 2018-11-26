@@ -43,7 +43,7 @@ class DecisionManager(object):
 
     Arguments
     ---------
-    store: smif.data_layer.data_interface.DataInterface
+    store: smif.data_layer.store.Store
     """
 
     def __init__(self, store, timesteps, modelrun_name, sos_model):

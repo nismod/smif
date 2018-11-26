@@ -37,7 +37,7 @@ class Register(LogMixin, metaclass=ABCMeta):
         The axis over which operations on the data array are performed
 
     """
-    data_interface = None
+    store = None
 
     def __init__(self, axis=None):
         self.axis = axis
@@ -180,8 +180,8 @@ class NDimensionalRegister(Register):
         return self._register[name]
 
     def _write_coefficients(self, source, destination, data):
-        if self.data_interface:
-            self.data_interface.write_coefficients(source, destination, data)
+        if self.store:
+            self.store.write_coefficients(source, destination, data)
         else:
             msg = "Data interface not available to write coefficients"
             self.logger.warning(msg)

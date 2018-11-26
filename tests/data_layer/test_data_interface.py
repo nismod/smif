@@ -3,12 +3,12 @@
 import numpy as np
 from pytest import raises
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.data_interface import DataInterface
+from smif.data_layer.store import Store
 from smif.exception import SmifDataMismatchError
 from smif.metadata import Coordinates, Spec
 
 
-class TestDataInterface():
+class TestStore():
     def test_data_list_to_array(self):
         data = [
             {
@@ -26,7 +26,7 @@ class TestDataInterface():
                 dtype='int'
                 )
 
-        actual = DataInterface.data_list_to_ndarray(
+        actual = Store.data_list_to_ndarray(
             data,
             spec
         )
@@ -53,7 +53,7 @@ class TestDataInterface():
 
         da = DataArray(spec, np.array([[3]]))
 
-        actual = DataInterface.ndarray_to_data_list(da, timestep=2010)
+        actual = Store.ndarray_to_data_list(da, timestep=2010)
         expected = data
 
         assert actual == expected
@@ -71,7 +71,7 @@ class TestDataInterface():
 
         da = DataArray(spec, data)
 
-        actual = DataInterface.ndarray_to_data_list(da, timestep=2010)
+        actual = Store.ndarray_to_data_list(da, timestep=2010)
         expected = [
             {
                 'timestep': 2010,
@@ -96,7 +96,7 @@ class TestDataInterface():
         ]
         msg = "Observation missing dimension key (region)"
         with raises(KeyError) as ex:
-            DataInterface.data_list_to_ndarray(
+            Store.data_list_to_ndarray(
                 data,
                 Spec(
                     name='test',
@@ -118,7 +118,7 @@ class TestDataInterface():
         ]
         msg = "Unknown region 'missing' in row 0"
         with raises(ValueError) as ex:
-            DataInterface.data_list_to_ndarray(
+            Store.data_list_to_ndarray(
                 data,
                 Spec(
                     name='test',
@@ -146,7 +146,7 @@ class TestDataInterface():
         ]
         msg = "Number of observations (2) is not equal to product of (1, 1)"
         with raises(SmifDataMismatchError) as ex:
-            DataInterface.data_list_to_ndarray(
+            Store.data_list_to_ndarray(
                 data,
                 Spec(
                     name='test',
