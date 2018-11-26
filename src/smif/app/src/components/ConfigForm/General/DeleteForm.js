@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 
 import { FaPencil } from 'react-icons/lib/fa'
-import { CancelButton, DangerButton } from './Buttons'
+import { SecondaryButton, DangerButton } from './Buttons'
 
 class DeleteForm extends Component {
     constructor(props) {
@@ -55,7 +55,7 @@ class DeleteForm extends Component {
                     </div>
 
                     <DangerButton id="deleteButton" value="Delete" onClick={this.handleSubmit} />
-                    <CancelButton id="cancelDelete" onClick={this.handleCancel} />
+                    <SecondaryButton id="cancelDelete" value="Cancel" onClick={this.handleCancel} />
                 </div>
             )
         } else {
@@ -86,7 +86,7 @@ class DeleteForm extends Component {
                         </div>
                     </div>
 
-                    <CancelButton id="cancelDelete" onClick={this.handleCancel} />
+                    <SecondaryButton id="cancelDelete" value="Cancel" onClick={this.handleCancel} />
                 </div>
             )
         }

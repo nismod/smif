@@ -5,7 +5,7 @@ import {connect} from 'react-redux'
 import Stepper from 'components/Simulation/Stepper'
 import ConsoleDisplay from 'components/Simulation/ConsoleDisplay'
 import JobRunControls from 'components/Simulation/JobRunControls'
-import {CreateButton, DangerButton, SaveButton} from 'components/ConfigForm/General/Buttons'
+import {SuccessButton, DangerButton, PrimaryButton} from 'components/ConfigForm/General/Buttons'
 import {fetchModelRun, fetchModelRunStatus, startModelRun, killModelRun, saveModelRun} from 'actions/actions.js'
 import {ModelRunSummary} from 'components/Simulation/ConfigSummary'
 
@@ -119,7 +119,7 @@ class JobRunner extends Component {
 
         switch (model_run_status.status) {
         case 'unstarted':
-            controls.push(<CreateButton value='Start Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
+            controls.push(<SuccessButton value='Start Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
             this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'queing':
@@ -131,15 +131,15 @@ class JobRunner extends Component {
             this.setRenderInterval(100)
             break
         case 'stopped':
-            controls.push(<SaveButton value='Retry Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
+            controls.push(<PrimaryButton value='Retry Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
             this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'done':
-            controls.push(<CreateButton value='Restart Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
+            controls.push(<SuccessButton value='Restart Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
             this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         case 'failed':
-            controls.push(<SaveButton value='Retry Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
+            controls.push(<PrimaryButton value='Retry Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
             this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
             break
         }

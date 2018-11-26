@@ -5,7 +5,7 @@ import update from 'immutability-helper'
 import Popup from 'components/ConfigForm/General/Popup.js'
 import PropertySelector from 'components/ConfigForm/General/PropertySelector.js'
 import Select from 'react-select'
-import {SaveButton, CancelButton, CreateButton, DangerButton} from 'components/ConfigForm/General/Buttons'
+import {PrimaryButton, SecondaryButton, SuccessButton, DangerButton} from 'components/ConfigForm/General/Buttons'
 
 class NarrativeList extends Component {
     constructor(props) {
@@ -317,7 +317,7 @@ class NarrativeList extends Component {
                     </tbody>
                 </table>
 
-                <CreateButton id={'btn_add_' + name} value={'Add ' + name} onClick={() => this.handleCreateNarrative()} />
+                <SuccessButton id={'btn_add_' + name} value={'Add ' + name} onClick={() => this.handleCreateNarrative()} />
                 <Popup name={'popup_add_' + name} onRequestOpen={this.state.formNarrativePopupIsOpen}>
                     <form className="form-config" onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleNarrativeSubmit(e)}}>
                         <div>
@@ -370,8 +370,8 @@ class NarrativeList extends Component {
                                 </div>
                             </div>
 
-                            <SaveButton id={'btn_' + name + '_save'}  />
-                            <CancelButton id={'btn_' + name + '_cancel'} onClick={() => this.closeNarrativeForm()}/>
+                            <PrimaryButton id={'btn_' + name + '_save'} value="Save" />
+                            <SecondaryButton id={'btn_' + name + '_cancel'} value="Cancel" onClick={() => this.closeNarrativeForm()}/>
                             {
                                 !this.state.formEditMode ? null : (
                                     <DangerButton  
@@ -460,8 +460,8 @@ class NarrativeList extends Component {
 
                             <br/>
 
-                            <SaveButton id={'btn_' + name + '_save'}  />
-                            <CancelButton id={'btn_' + name + '_cancel'} onClick={() => this.closeVariantForm()}/>
+                            <PrimaryButton id={'btn_' + name + '_save'} value="Save" />
+                            <SecondaryButton id={'btn_' + name + '_cancel'} value="Cancel" onClick={() => this.closeVariantForm()}/>
                             {
                                 !this.state.formEditMode ? null : (
                                     <DangerButton  

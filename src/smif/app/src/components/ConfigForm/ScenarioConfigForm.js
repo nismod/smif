@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
+import { PrimaryButton, SecondaryButton } from 'components/ConfigForm/General/Buttons'
 import SpecList from './General/SpecList'
 import VariantList from './General/VariantList'
 
@@ -108,8 +108,8 @@ class ScenarioConfigForm extends Component {
                     </div>
                 </div>
 
-                <SaveButton onClick={this.handleSave} />
-                <CancelButton onClick={this.handleCancel} />
+                <PrimaryButton value="Save" onClick={this.handleSave} />
+                <SecondaryButton value="Cancel" onClick={this.handleCancel} />
 
                 <br/>
             </div>

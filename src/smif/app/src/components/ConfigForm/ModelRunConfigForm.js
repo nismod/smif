@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
-import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
+import { PrimaryButton, SecondaryButton } from 'components/ConfigForm/General/Buttons'
 import { Range } from 'rc-slider'
 
 class ModelRunConfigForm extends Component {
@@ -229,6 +229,14 @@ class ModelRunConfigForm extends Component {
                                         ))
                                     }
                                 </select>
+
+                                {
+                                    this.state.selected.sos_model != '' ?
+                                        <PrimaryButton 
+                                            value="Go to system-of-systems configuration" 
+                                            onClick={() => this.props.onNavigate('/configure/sos-models/' + this.state.selected.sos_model)}/>
+                                        : null
+                                }
                             </div>
                         </div>
                         {
@@ -408,8 +416,8 @@ class ModelRunConfigForm extends Component {
                     </div>
                 </div>
 
-                <SaveButton onClick={this.handleSave} />
-                <CancelButton onClick={this.handleCancel} />
+                <PrimaryButton value="Save" onClick={this.handleSave}/>
+                <SecondaryButton value="Cancel" onClick={this.handleCancel} />
 
                 <br/>
             </div>
@@ -422,6 +430,7 @@ ModelRunConfigForm.propTypes = {
     sos_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     save: PropTypes.bool,
+    onNavigate: PropTypes.func,
     onSave: PropTypes.func,
     onCancel: PropTypes.func,
     onEdit: PropTypes.func

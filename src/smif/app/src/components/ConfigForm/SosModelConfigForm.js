@@ -6,7 +6,7 @@ import PropertySelector from 'components/ConfigForm/General/PropertySelector.js'
 import DependencyList from 'components/ConfigForm/SosModel/DependencyList.js'
 import NarrativeList from 'components/ConfigForm/SosModel/NarrativeList.js'
 
-import { SaveButton, CancelButton } from 'components/ConfigForm/General/Buttons'
+import { PrimaryButton, SecondaryButton } from 'components/ConfigForm/General/Buttons'
 
 class SosModelConfigForm extends Component {
     constructor(props) {
@@ -288,8 +288,8 @@ class SosModelConfigForm extends Component {
                    
                 </div>
 
-                <SaveButton onClick={this.handleSave} />
-                <CancelButton onClick={this.handleCancel} />
+                <PrimaryButton value="Save" onClick={this.handleSave} />
+                <SecondaryButton value="Cancel" onClick={this.handleCancel} />
 
                 <br/>
             </div>

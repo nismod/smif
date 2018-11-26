@@ -75,6 +75,7 @@ class ModelRunConfig extends Component {
                     sos_models={sos_models}
                     scenarios={scenarios}
                     save={app.formReqSave}
+                    onNavigate={(dest) => dispatch(setAppNavigate(dest))}
                     onSave={(model_run) => (
                         dispatch(setAppFormSaveDone()),
                         dispatch(saveModelRun(model_run))

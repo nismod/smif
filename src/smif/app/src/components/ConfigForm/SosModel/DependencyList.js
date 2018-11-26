@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
 import Popup from 'components/ConfigForm/General/Popup.js'
-import {SaveButton, CancelButton, CreateButton, DangerButton} from 'components/ConfigForm/General/Buttons'
+import {PrimaryButton, SecondaryButton, SuccessButton, DangerButton} from 'components/ConfigForm/General/Buttons'
 
 class DependencyList extends Component {
     constructor(props) {
@@ -225,7 +225,7 @@ class DependencyList extends Component {
                     </tbody>
                 </table>
 
-                <CreateButton id={'btn_add_' + name} value={'Add ' + name} onClick={() => this.handleCreate()} />
+                <SuccessButton id={'btn_add_' + name} value={'Add ' + name} onClick={() => this.handleCreate()} />
                 <Popup name={'popup_add_' + name} onRequestOpen={this.state.formPopupIsOpen}>
                     <form className="form-config" onSubmit={(e) => {e.preventDefault(); e.stopPropagation(); this.handleSubmit(e)}}>
                         <div>
@@ -340,8 +340,8 @@ class DependencyList extends Component {
 
                             <br/>
 
-                            <SaveButton id={'btn_' + name + '_save'}  />
-                            <CancelButton id={'btn_' + name + '_cancel'} onClick={() => this.closeForm()}/>
+                            <PrimaryButton id={'btn_' + name + '_save'} value="Save" />
+                            <SecondaryButton id={'btn_' + name + '_cancel'} value="Cancel" onClick={() => this.closeForm()}/>
                             {
                                 !this.state.formEditMode ? null : (
                                     <DangerButton  
