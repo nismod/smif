@@ -707,6 +707,16 @@ class Store():
         self.data_store.write_results(
             data_array, model_run_name, model_name, timestep, decision_iteration)
 
+    def available_results(self, model_run_name):
+        """List available results from a model run
+
+        Returns
+        -------
+        list[tuple]
+             Each tuple is (timestep, decision_iteration, model_name, output_name)
+        """
+        return self.data_store.available_results(model_run_name)
+
     def prepare_warm_start(self, model_run_name):
         """Copy the results from the previous model_run if available
 
@@ -726,5 +736,14 @@ class Store():
         -----
         Called from smif.controller.execute
         """
-        raise NotImplementedError()
+        available_results = self.data_store.available_results(model_run_name)
+        if available_results:
+            max_timestep = max(
+                timestep for
+                timestep, decision_iteration, model_name, output_name in available_results
+            )
+            # could explicitly clear results for max timestep
+        else:
+            max_timestep = None
+        return max_timestep
     # endregion

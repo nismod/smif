@@ -228,7 +228,12 @@ class TestStoreData():
         # read
         spec = sample_results.spec
         assert store.read_results('model_run_name', 'model_name', spec, 0) == sample_results
+        # check
+        assert store.available_results('model_run_name') == \
+            [(0, None, 'model_name', spec.name)]
 
-    @mark.xfail
-    def test_warm_start(self, store):
+    def test_warm_start(self, store, sample_results):
         assert store.prepare_warm_start('test_model_run') is None
+        timestep = 2020
+        store.write_results(sample_results, 'test_model_run', 'model_name', timestep)
+        assert store.prepare_warm_start('test_model_run') == timestep

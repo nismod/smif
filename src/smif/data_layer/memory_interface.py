@@ -273,11 +273,14 @@ class MemoryDataStore(DataStore):
         key = (modelrun_name, model_name, data_array.spec.name, timestep, decision_iteration)
         self._results[key] = data_array.as_ndarray()
 
-    def prepare_warm_start(self, modelrun_name):
-        results_keys = [k for k in self._results.keys() if k[0] == modelrun_name]
-        if results_keys:
-            return max(k[3] for k in results_keys)  # max timestep reached
-        return None
+    def available_results(self, model_run_name):
+        results_keys = [
+            (timestep, decision_iteration, model_name, output_name)
+            for (result_modelrun_name, model_name, output_name, timestep, decision_iteration)
+            in self._results.keys()
+            if model_run_name == result_modelrun_name
+        ]
+        return results_keys
     # endregion
 
 
