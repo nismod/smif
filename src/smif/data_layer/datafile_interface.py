@@ -37,7 +37,7 @@ class YamlConfigStore(ConfigStore):
     base_folder: str
         The path to the configuration and data files
     """
-    def __init__(self, base_folder, validation=True):
+    def __init__(self, base_folder, validation=False):
         super().__init__()
         self.logger = getLogger(__name__)
         self.validation = validation
