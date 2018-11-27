@@ -4,7 +4,7 @@ Many methods simply proxy to config/metadata/data store implementations, but the
 cross-coordination and there are some convenience methods implemented at this layer.
 """
 import numpy.testing
-from pytest import fixture, mark
+from pytest import fixture
 from smif.data_layer import Store
 from smif.data_layer.memory_interface import (MemoryConfigStore,
                                               MemoryDataStore,
@@ -51,7 +51,10 @@ class TestStoreConfig():
         store.delete_sos_model(get_sos_model['name'])
         assert store.read_sos_models() == []
 
-    def test_models(self, store, get_sector_model):
+    def test_models(self, store, get_sector_model, sample_dimensions):
+        # setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
         # write
         store.write_model(get_sector_model)
         # read all
@@ -63,8 +66,10 @@ class TestStoreConfig():
         # delete
         store.delete_model(get_sector_model['name'])
         assert store.read_models() == []
+        # teardown
+        for dim in sample_dimensions:
+            store.delete_dimension(dim['name'])
 
-    @mark.xfail
     def test_models_skip_coords(self, store, get_sector_model, get_sector_model_no_coords):
         # write
         store.write_model(get_sector_model)
@@ -79,7 +84,10 @@ class TestStoreConfig():
         store.delete_model(get_sector_model['name'])
         assert store.read_models() == []
 
-    def test_scenarios(self, store, scenario):
+    def test_scenarios(self, store, scenario, sample_dimensions):
+        # setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
         # write
         store.write_scenario(scenario)
         # read all
@@ -91,8 +99,10 @@ class TestStoreConfig():
         # delete
         store.delete_scenario(scenario['name'])
         assert store.read_scenarios() == []
+        # teardown
+        for dim in sample_dimensions:
+            store.delete_dimension(dim['name'])
 
-    @mark.xfail
     def test_scenarios_skip_coords(self, store, scenario, scenario_no_coords):
         # write
         store.write_scenario(scenario)

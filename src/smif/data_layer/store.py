@@ -14,6 +14,7 @@ SmifDataReadError
     When unable to read data e.g. unable to handle file type or connect
     to database
 """
+from copy import deepcopy
 from logging import getLogger
 
 
@@ -148,7 +149,13 @@ class Store():
         -------
         list[~smif.model.model.Model]
         """
-        return self.config_store.read_models()
+        models = self.config_store.read_models()
+        if not skip_coords:
+            models = [
+                self._add_coords(model, ('inputs', 'outputs', 'parameters'))
+                for model in models
+            ]
+        return models
 
     def read_model(self, model_name, skip_coords=False):
         """Read a model
@@ -161,7 +168,10 @@ class Store():
         -------
         ~smif.model.model.Model
         """
-        return self.config_store.read_model(model_name)
+        model = self.config_store.read_model(model_name)
+        if not skip_coords:
+            model = self._add_coords(model, ('inputs', 'outputs', 'parameters'))
+        return model
 
     def write_model(self, model):
         """Write a model
@@ -200,7 +210,13 @@ class Store():
         -------
         list[~smif.model.ScenarioModel]
         """
-        return self.config_store.read_scenarios()
+        scenarios = self.config_store.read_scenarios()
+        if not skip_coords:
+            scenarios = [
+                self._add_coords(scenario, ['provides'])
+                for scenario in scenarios
+            ]
+        return scenarios
 
     def read_scenario(self, scenario_name, skip_coords=False):
         """Read a scenario
@@ -213,7 +229,10 @@ class Store():
         -------
         ~smif.model.ScenarioModel
         """
-        return self.config_store.read_scenario(scenario_name)
+        scenario = self.config_store.read_scenario(scenario_name)
+        if not skip_coords:
+            scenario = self._add_coords(scenario, ['provides'])
+        return scenario
 
     def write_scenario(self, scenario):
         """Write scenario
@@ -418,6 +437,20 @@ class Store():
         dimension_name : str
         """
         self.metadata_store.delete_dimension(dimension_name)
+
+    def _add_coords(self, item, keys):
+        """Add coordinates to spec definitions on an object
+        """
+        item = deepcopy(item)
+        for key in keys:
+            spec_list = item[key]
+            for spec in spec_list:
+                if 'dims' in spec and spec['dims']:
+                    spec['coords'] = {
+                        dim: self.read_dimension(dim)['elements']
+                        for dim in spec['dims']
+                    }
+        return item
     # endregion
 
     #

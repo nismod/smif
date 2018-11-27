@@ -1,7 +1,7 @@
 """Memory-backed store implementations
 """
 from collections import OrderedDict
-from copy import copy
+from copy import copy, deepcopy
 
 from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
@@ -70,9 +70,11 @@ class MemoryConfigStore(ConfigStore):
         return m
 
     def write_model(self, model):
+        model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
         self._models[model['name']] = model
 
     def update_model(self, model_name, model):
+        model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
         self._models[model_name] = model
 
     def delete_model(self, model_name):
@@ -90,10 +92,12 @@ class MemoryConfigStore(ConfigStore):
 
     def write_scenario(self, scenario):
         scenario = _variant_list_to_dict(scenario)
+        scenario = _skip_coords(scenario, ['provides'])
         self._scenarios[scenario['name']] = scenario
 
     def update_scenario(self, scenario_name, scenario):
         scenario = _variant_list_to_dict(scenario)
+        scenario = _skip_coords(scenario, ['provides'])
         self._scenarios[scenario_name] = scenario
 
     def delete_scenario(self, scenario_name):
@@ -301,4 +305,18 @@ def _variant_dict_to_list(config):
     except KeyError:
         dict_ = {}
     config['variants'] = list(dict_.values())
+    return config
+
+
+def _skip_coords(config, keys):
+    """Given a config dict and list of top-level keys for lists of specs,
+    delete coords from each spec in each list.
+    """
+    config = deepcopy(config)
+    for key in keys:
+        for spec in config[key]:
+            try:
+                del spec['coords']
+            except KeyError:
+                pass
     return config
