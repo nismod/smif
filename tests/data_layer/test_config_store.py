@@ -6,7 +6,7 @@ from pytest import fixture, mark, param, raises
 from smif.data_layer.database_interface import DbConfigStore
 from smif.data_layer.datafile_interface import YamlConfigStore
 from smif.data_layer.memory_interface import MemoryConfigStore
-from smif.exception import SmifDataExistsError
+from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 
 
 @fixture(
@@ -99,13 +99,16 @@ class TestSosModel:
     """Read, write, update, delete SosModel config
     """
     def test_read_sos_models(self, handler, get_sos_model):
-        handler = handler
         actual = handler.read_sos_models()
         expected = [get_sos_model]
         assert actual == expected
 
     def test_read_sos_model(self, handler, get_sos_model):
         assert handler.read_sos_model('energy') == get_sos_model
+
+    def test_read_non_existing_sos_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.read_sos_model('non_existing')
 
     def test_write_sos_model(self, handler, get_sos_model):
         new_sos_model = copy(get_sos_model)
@@ -116,7 +119,6 @@ class TestSosModel:
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_write_existing_sos_model(self, handler):
-        handler = handler
         with raises(SmifDataExistsError):
             handler.write_sos_model({'name': 'energy'})
 
@@ -126,9 +128,17 @@ class TestSosModel:
         handler.update_sos_model('energy', updated_sos_model)
         assert handler.read_sos_models() == [updated_sos_model]
 
+    def test_update_non_existing_sos_model(self, handler, get_sos_model):
+        with raises(SmifDataNotFoundError):
+            handler.update_sos_model('non_existing', get_sos_model)
+
     def test_delete_sos_model(self, handler):
         handler.delete_sos_model('energy')
         assert handler.read_sos_models() == []
+
+    def test_delete_non_existing_sos_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.delete_sos_model('non_existing')
 
 
 class TestSectorModel():

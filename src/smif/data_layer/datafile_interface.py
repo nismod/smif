@@ -66,14 +66,13 @@ class YamlConfigStore(ConfigStore):
         self._project_config_cache_invalid = True
         # MUST ONLY access through self.read_project_config()
         self._project_config_cache = None
-        
+
         # ensure project config file exists
         try:
             self.read_project_config()
         except FileNotFoundError:
             # write empty config if none found
             self._write_project_config({})
-
 
     def read_project_config(self):
         """Read the project configuration
@@ -150,6 +149,7 @@ class YamlConfigStore(ConfigStore):
         return sos_models
 
     def read_sos_model(self, sos_model_name):
+        _assert_file_exists(self.config_folders, 'sos_model', sos_model_name)
         data = _read_yaml_file(self.config_folders['sos_models'], sos_model_name)
         if self.validation:
             validate_sos_model_format(data)
@@ -160,6 +160,7 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     def update_sos_model(self, sos_model_name, sos_model):
+        _assert_file_exists(self.config_folders, 'sos_model', sos_model_name)
         if self.validation:
             validate_sos_model_config(
                 sos_model,
@@ -169,6 +170,7 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     def delete_sos_model(self, sos_model_name):
+        _assert_file_exists(self.config_folders, 'sos_model', sos_model_name)
         os.remove(os.path.join(self.config_folders['sos_models'], sos_model_name + '.yml'))
     # endregion
 
@@ -1074,6 +1076,7 @@ def data_list_to_ndarray(observations, spec):
         data[tuple(indices)] = obs[spec.name]
 
     return DataArray(spec, data)
+
 
 def _validate_observations(observations, spec):
     if len(observations) != reduce(lambda x, y: x * y, spec.shape, 1):

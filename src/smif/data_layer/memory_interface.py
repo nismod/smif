@@ -47,17 +47,19 @@ class MemoryConfigStore(ConfigStore):
         return list(self._sos_models.values())
 
     def read_sos_model(self, sos_model_name):
+        _assert_memory_exists(self._sos_models, 'sos_model', sos_model_name)
         return self._sos_models[sos_model_name]
 
     def write_sos_model(self, sos_model):
-        if sos_model['name'] in self._sos_models:
-            raise SmifDataExistsError()
+        _assert_memory_not_exists(self._sos_models, 'sos_model', sos_model['name'])
         self._sos_models[sos_model['name']] = sos_model
 
     def update_sos_model(self, sos_model_name, sos_model):
+        _assert_memory_exists(self._sos_models, 'sos_model', sos_model_name)
         self._sos_models[sos_model_name] = sos_model
 
     def delete_sos_model(self, sos_model_name):
+        _assert_memory_exists(self._sos_models, 'sos_model', sos_model_name)
         del self._sos_models[sos_model_name]
     # endregion
 
@@ -293,3 +295,13 @@ def _variant_dict_to_list(config):
         dict_ = {}
     config['variants'] = list(dict_.values())
     return config
+
+
+def _assert_memory_exists(data, dtype, name):
+    if name not in data:
+        raise SmifDataNotFoundError("%s '%s' not found" % (dtype.capitalize(), name))
+
+
+def _assert_memory_not_exists(data, dtype, name):
+    if name in data:
+        raise SmifDataExistsError("%s '%s' already exists" % (dtype.capitalize(), name))
