@@ -6,13 +6,13 @@ from pytest import fixture, mark, param, raises
 from smif.data_layer.database_interface import DbConfigStore
 from smif.data_layer.datafile_interface import YamlConfigStore
 from smif.data_layer.memory_interface import MemoryConfigStore
-from smif.exception import SmifDataExistsError
+from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 
 
 @fixture(
     params=[
         'memory',
-        param('text_file', marks=mark.skip),
+        'text_file',
         param('database', marks=mark.skip)
     ])
 def init_handler(request, setup_empty_folder_structure):
@@ -62,6 +62,10 @@ class TestModelRuns:
     def test_read_model_run(self, handler, minimal_model_run):
         assert handler.read_model_run('test_modelrun') == minimal_model_run
 
+    def test_read_non_existing_model_run(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.read_model_run('non_existing')
+
     def test_read_model_run_sorted(self, handler, minimal_model_run):
         y_model_run = {'name': 'y'}
         z_model_run = {'name': 'z'}
@@ -82,6 +86,10 @@ class TestModelRuns:
         expected = [minimal_model_run, new_model_run]
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
+    def test_write_existing_model_run(self, handler):
+        with raises(SmifDataExistsError):
+            handler.write_model_run(handler.read_model_run('test_modelrun'))
+
     def test_update_model_run(self, handler):
         updated_model_run = {
             'name': 'test_modelrun',
@@ -90,22 +98,33 @@ class TestModelRuns:
         handler.update_model_run('test_modelrun', updated_model_run)
         assert handler.read_model_runs() == [updated_model_run]
 
+    def test_update_non_existing_model_run(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.update_model_run('non_existing', {})
+
     def test_delete_model_run(self, handler):
         handler.delete_model_run('test_modelrun')
         assert handler.read_model_runs() == []
+
+    def test_delete_non_existing_model_run(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.delete_model_run('non_existing')
 
 
 class TestSosModel:
     """Read, write, update, delete SosModel config
     """
     def test_read_sos_models(self, handler, get_sos_model):
-        handler = handler
         actual = handler.read_sos_models()
         expected = [get_sos_model]
         assert actual == expected
 
     def test_read_sos_model(self, handler, get_sos_model):
         assert handler.read_sos_model('energy') == get_sos_model
+
+    def test_read_non_existing_sos_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.read_sos_model('non_existing')
 
     def test_write_sos_model(self, handler, get_sos_model):
         new_sos_model = copy(get_sos_model)
@@ -116,7 +135,6 @@ class TestSosModel:
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_write_existing_sos_model(self, handler):
-        handler = handler
         with raises(SmifDataExistsError):
             handler.write_sos_model({'name': 'energy'})
 
@@ -126,9 +144,17 @@ class TestSosModel:
         handler.update_sos_model('energy', updated_sos_model)
         assert handler.read_sos_models() == [updated_sos_model]
 
+    def test_update_non_existing_sos_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.update_sos_model('non_existing', {})
+
     def test_delete_sos_model(self, handler):
         handler.delete_sos_model('energy')
         assert handler.read_sos_models() == []
+
+    def test_delete_non_existing_sos_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.delete_sos_model('non_existing')
 
 
 class TestSectorModel():
@@ -144,6 +170,10 @@ class TestSectorModel():
         expected = get_sector_model_no_coords
         assert actual == expected
 
+    def test_read_non_existing_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.read_model('non_existing')
+
     def test_write_model(self, handler, get_sector_model_no_coords):
         new_sector_model = copy(get_sector_model_no_coords)
         new_sector_model['name'] = 'another_energy_sector_model'
@@ -151,6 +181,10 @@ class TestSectorModel():
         actual = handler.read_models()
         expected = [get_sector_model_no_coords, new_sector_model]
         assert sorted_by_name(actual) == sorted_by_name(expected)
+
+    def test_write_existing_model(self, handler, get_sector_model_no_coords):
+        with raises(SmifDataExistsError):
+            handler.write_model(handler.read_model(get_sector_model_no_coords['name']))
 
     def test_update_model(self, handler, get_sector_model_no_coords):
         name = get_sector_model_no_coords['name']
@@ -160,11 +194,19 @@ class TestSectorModel():
         actual = handler.read_model(name)
         assert actual == expected
 
+    def test_update_non_existing_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.update_model('non_existing', {})
+
     def test_delete_model(self, handler, get_sector_model_no_coords):
         handler.delete_model(get_sector_model_no_coords['name'])
         expected = []
         actual = handler.read_models()
         assert actual == expected
+
+    def test_delete_non_existing_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.delete_model('non_existing')
 
 
 class TestStrategies():
@@ -188,6 +230,10 @@ class TestScenarios():
         actual = handler.read_scenario('mortality')
         assert actual == scenario_no_coords
 
+    def test_read_non_existing_test_read_scenario(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.read_scenario('non_existing')
+
     def test_write_scenario(self, scenario_no_coords, handler):
         another_scenario = {
             'name': 'fertility',
@@ -200,6 +246,10 @@ class TestScenarios():
         expected = another_scenario
         assert actual == expected
 
+    def test_write_existing_scenario(self, handler, get_sector_model_no_coords):
+        with raises(SmifDataExistsError):
+            handler.write_scenario(handler.read_scenario('mortality'))
+
     def test_update_scenario(self, scenario_no_coords, handler):
         another_scenario = {
             'name': 'mortality',
@@ -210,9 +260,17 @@ class TestScenarios():
         handler.update_scenario('mortality', another_scenario)
         assert handler.read_scenarios() == [another_scenario]
 
+    def test_update_non_existing_scenario(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.update_scenario('non_existing', {})
+
     def test_delete_scenario(self, handler):
         handler.delete_scenario('mortality')
         assert handler.read_scenarios() == []
+
+    def test_delete_non_existing_scenario(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.delete_scenario('non_existing')
 
     def test_read_scenario_variants(self, handler, scenario_no_coords):
         actual = handler.read_scenario_variants('mortality')

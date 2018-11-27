@@ -66,14 +66,13 @@ class YamlConfigStore(ConfigStore):
         self._project_config_cache_invalid = True
         # MUST ONLY access through self.read_project_config()
         self._project_config_cache = None
-        
+
         # ensure project config file exists
         try:
             self.read_project_config()
         except FileNotFoundError:
             # write empty config if none found
             self._write_project_config({})
-
 
     def read_project_config(self):
         """Read the project configuration
@@ -118,6 +117,7 @@ class YamlConfigStore(ConfigStore):
         return model_runs
 
     def read_model_run(self, model_run_name):
+        _assert_file_exists(self.config_folders, 'model_run', model_run_name)
         modelrun_config = self._read_model_run(model_run_name)
         del modelrun_config['strategies']
         return modelrun_config
@@ -129,17 +129,20 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['model_runs'], model_run_name, model_run)
 
     def write_model_run(self, model_run):
+        _assert_file_not_exists(self.config_folders, 'model_run', model_run['name'])
         config = copy.copy(model_run)
         config['strategies'] = []
         _write_yaml_file(self.config_folders['model_runs'], config['name'], config)
 
     def update_model_run(self, model_run_name, model_run):
+        _assert_file_exists(self.config_folders, 'model_run', model_run_name)
         prev = self._read_model_run(model_run_name)
         config = copy.copy(model_run)
         config['strategies'] = prev['strategies']
         self._overwrite_model_run(model_run_name, config)
 
     def delete_model_run(self, model_run_name):
+        _assert_file_exists(self.config_folders, 'model_run', model_run_name)
         os.remove(os.path.join(self.config_folders['model_runs'], model_run_name + '.yml'))
     # endregion
 
@@ -150,6 +153,7 @@ class YamlConfigStore(ConfigStore):
         return sos_models
 
     def read_sos_model(self, sos_model_name):
+        _assert_file_exists(self.config_folders, 'sos_model', sos_model_name)
         data = _read_yaml_file(self.config_folders['sos_models'], sos_model_name)
         if self.validation:
             validate_sos_model_format(data)
@@ -160,6 +164,7 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     def update_sos_model(self, sos_model_name, sos_model):
+        _assert_file_exists(self.config_folders, 'sos_model', sos_model_name)
         if self.validation:
             validate_sos_model_config(
                 sos_model,
@@ -169,6 +174,7 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     def delete_sos_model(self, sos_model_name):
+        _assert_file_exists(self.config_folders, 'sos_model', sos_model_name)
         os.remove(os.path.join(self.config_folders['sos_models'], sos_model_name + '.yml'))
     # endregion
 
@@ -179,10 +185,12 @@ class YamlConfigStore(ConfigStore):
         return models
 
     def read_model(self, model_name):
+        _assert_file_exists(self.config_folders, 'sector_model', model_name)
         model = _read_yaml_file(self.config_folders['sector_models'], model_name)
         return model
 
     def write_model(self, model):
+        _assert_file_not_exists(self.config_folders, 'sector_model', model['name'])
         model = copy.deepcopy(model)
         if model['interventions']:
             self.logger.warning("Ignoring interventions")
@@ -193,6 +201,7 @@ class YamlConfigStore(ConfigStore):
             self.config_folders['sector_models'], model['name'], model)
 
     def update_model(self, model_name, model):
+        _assert_file_exists(self.config_folders, 'sector_model', model_name)
         model = copy.deepcopy(model)
         # ignore interventions and initial conditions which the app doesn't handle
         if model['interventions'] or model['initial_conditions']:
@@ -213,6 +222,7 @@ class YamlConfigStore(ConfigStore):
             self.config_folders['sector_models'], model['name'], model)
 
     def delete_model(self, model_name):
+        _assert_file_exists(self.config_folders, 'sector_model', model_name)
         os.remove(
             os.path.join(self.config_folders['sector_models'], model_name + '.yml'))
     # endregion
@@ -223,18 +233,22 @@ class YamlConfigStore(ConfigStore):
         return [self.read_scenario(name) for name in scenario_names]
 
     def read_scenario(self, scenario_name):
+        _assert_file_exists(self.config_folders, 'scenario', scenario_name)
         scenario = _read_yaml_file(self.config_folders['scenarios'], scenario_name)
         return scenario
 
     def write_scenario(self, scenario):
+        _assert_file_not_exists(self.config_folders, 'scenario', scenario['name'])
         scenario = _skip_coords(scenario, ['provides'])
         _write_yaml_file(self.config_folders['scenarios'], scenario['name'], scenario)
 
     def update_scenario(self, scenario_name, scenario):
+        _assert_file_exists(self.config_folders, 'scenario', scenario_name)
         scenario = _skip_coords(scenario, ['provides'])
         _write_yaml_file(self.config_folders['scenarios'], scenario['name'], scenario)
 
     def delete_scenario(self, scenario_name):
+        _assert_file_exists(self.config_folders, 'scenario', scenario_name)
         os.remove(
             os.path.join(self.config_folders['scenarios'], "{}.yml".format(scenario_name)))
     # endregion
@@ -1074,6 +1088,7 @@ def data_list_to_ndarray(observations, spec):
         data[tuple(indices)] = obs[spec.name]
 
     return DataArray(spec, data)
+
 
 def _validate_observations(observations, spec):
     if len(observations) != reduce(lambda x, y: x * y, spec.shape, 1):

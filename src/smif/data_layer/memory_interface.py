@@ -30,16 +30,28 @@ class MemoryConfigStore(ConfigStore):
         return list(sorted_model_runs.values())
 
     def read_model_run(self, model_run_name):
-        return self._model_runs[model_run_name]
+        try:
+            return self._model_runs[model_run_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("sos_model_run '%s' not found" % (model_run_name))
 
     def write_model_run(self, model_run):
-        self._model_runs[model_run['name']] = model_run
+        if model_run['name'] not in self._model_runs:
+            self._model_runs[model_run['name']] = model_run
+        else:
+            raise SmifDataExistsError("model_run '%s' already exists" % (model_run['name']))
 
     def update_model_run(self, model_run_name, model_run):
-        self._model_runs[model_run_name] = model_run
+        if model_run_name in self._model_runs:
+            self._model_runs[model_run_name] = model_run
+        else:
+            raise SmifDataNotFoundError("model_run '%s' not found" % (model_run_name))
 
     def delete_model_run(self, model_run_name):
-        del self._model_runs[model_run_name]
+        try:
+            del self._model_runs[model_run_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("model_run '%s' not found" % (model_run_name))
     # endregion
 
     # region System-of-systems models
@@ -47,18 +59,28 @@ class MemoryConfigStore(ConfigStore):
         return list(self._sos_models.values())
 
     def read_sos_model(self, sos_model_name):
-        return self._sos_models[sos_model_name]
+        try:
+            return self._sos_models[sos_model_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("sos_model '%s' not found" % (sos_model_name))
 
     def write_sos_model(self, sos_model):
-        if sos_model['name'] in self._sos_models:
-            raise SmifDataExistsError()
-        self._sos_models[sos_model['name']] = sos_model
+        if sos_model['name'] not in self._sos_models:
+            self._sos_models[sos_model['name']] = sos_model
+        else:
+            raise SmifDataExistsError("sos_model '%s' already exists" % (sos_model['name']))
 
     def update_sos_model(self, sos_model_name, sos_model):
-        self._sos_models[sos_model_name] = sos_model
+        if sos_model_name in self._sos_models:
+            self._sos_models[sos_model_name] = sos_model
+        else:
+            raise SmifDataNotFoundError("sos_model '%s' not found" % (sos_model_name))
 
     def delete_sos_model(self, sos_model_name):
-        del self._sos_models[sos_model_name]
+        try:
+            del self._sos_models[sos_model_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("sos_model '%s' not found" % (sos_model_name))
     # endregion
 
     # region Models
@@ -66,19 +88,30 @@ class MemoryConfigStore(ConfigStore):
         return list(self._models.values())
 
     def read_model(self, model_name):
-        m = self._models[model_name]
-        return m
+        try:
+            return self._models[model_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("model '%s' not found" % (model_name))
 
     def write_model(self, model):
-        model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
-        self._models[model['name']] = model
+        if model['name'] not in self._models:
+            model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
+            self._models[model['name']] = model
+        else:
+            raise SmifDataExistsError("model '%s' already exists" % (model['name']))
 
     def update_model(self, model_name, model):
-        model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
-        self._models[model_name] = model
+        if model_name in self._models:
+            model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
+            self._models[model_name] = model
+        else:
+            raise SmifDataNotFoundError("model '%s' not found" % (model_name))
 
     def delete_model(self, model_name):
-        del self._models[model_name]
+        try:
+            del self._models[model_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("model '%s' not found" % (model_name))
     # endregion
 
     # region Scenarios
@@ -87,21 +120,33 @@ class MemoryConfigStore(ConfigStore):
         return [_variant_dict_to_list(s) for s in scenarios]
 
     def read_scenario(self, scenario_name):
-        scenario = self._scenarios[scenario_name]
-        return _variant_dict_to_list(scenario)
+        try:
+            scenario = self._scenarios[scenario_name]
+            return _variant_dict_to_list(scenario)
+        except(KeyError):
+            raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
 
     def write_scenario(self, scenario):
-        scenario = _variant_list_to_dict(scenario)
-        scenario = _skip_coords(scenario, ['provides'])
-        self._scenarios[scenario['name']] = scenario
+        if scenario['name'] not in self._scenarios:
+            scenario = _variant_list_to_dict(scenario)
+            scenario = _skip_coords(scenario, ['provides'])
+            self._scenarios[scenario['name']] = scenario
+        else:
+            raise SmifDataExistsError("scenario '%s' already exists" % (scenario['name']))
 
     def update_scenario(self, scenario_name, scenario):
-        scenario = _variant_list_to_dict(scenario)
-        scenario = _skip_coords(scenario, ['provides'])
-        self._scenarios[scenario_name] = scenario
+        if scenario_name in self._scenarios:
+            scenario = _variant_list_to_dict(scenario)
+            scenario = _skip_coords(scenario, ['provides'])
+            self._scenarios[scenario_name] = scenario
+        else:
+            raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
 
     def delete_scenario(self, scenario_name):
-        del self._scenarios[scenario_name]
+        try:
+            del self._scenarios[scenario_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
     # endregion
 
     # region Scenario Variants
@@ -109,7 +154,11 @@ class MemoryConfigStore(ConfigStore):
         return list(self._scenarios[scenario_name]['variants'].values())
 
     def read_scenario_variant(self, scenario_name, variant_name):
-        return self._scenarios[scenario_name]['variants'][variant_name]
+        try:
+            return self._scenarios[scenario_name]['variants'][variant_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("scenario '%s' variant '%s' not found"
+                                        % (scenario_name, variant_name))
 
     def write_scenario_variant(self, scenario_name, variant):
         self._scenarios[scenario_name]['variants'][variant['name']] = variant
@@ -146,7 +195,11 @@ class MemoryConfigStore(ConfigStore):
 
     # region Strategies
     def read_strategies(self, modelrun_name):
-        return self._strategies[modelrun_name]
+        try:
+            return self._strategies[modelrun_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("strategies in modelrun '%s' not found"
+                                        % (modelrun_name))
 
     def write_strategies(self, modelrun_name, strategies):
         self._strategies[modelrun_name] = strategies
