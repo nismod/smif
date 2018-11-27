@@ -156,6 +156,7 @@ class YamlConfigStore(ConfigStore):
         return data
 
     def write_sos_model(self, sos_model):
+        _assert_file_not_exists(self.config_folders, 'sos_model', sos_model['name'])
         _write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     def update_sos_model(self, sos_model_name, sos_model):
