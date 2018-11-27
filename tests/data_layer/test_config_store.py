@@ -29,15 +29,15 @@ def init_handler(request, setup_empty_folder_structure):
 
 
 @fixture
-def handler(init_handler, minimal_model_run, get_sos_model, get_sector_model, strategies,
-            scenario):
+def handler(init_handler, minimal_model_run, get_sos_model, get_sector_model_no_coords,
+            strategies, scenario_no_coords):
     handler = init_handler
 
     # scenarios
-    handler.write_scenario(scenario)
+    handler.write_scenario(scenario_no_coords)
 
     # models
-    handler.write_model(get_sector_model)
+    handler.write_model(get_sector_model_no_coords)
 
     # sos models
     handler.write_sos_model(get_sos_model)
@@ -134,55 +134,34 @@ class TestSosModel:
 class TestSectorModel():
     """Read/write/update/delete SectorModel config
     """
-    def test_read_sector_models(self, handler, get_sector_model):
-        actual = handler.read_models()
-        expected = [get_sector_model]
-        assert actual == expected
-
-    def test_read_sector_models_no_coords(self, handler, get_sector_model,
-                                          get_sector_model_no_coords):
+    def test_read_models(self, handler, get_sector_model_no_coords):
         actual = handler.read_models()
         expected = [get_sector_model_no_coords]
         assert actual == expected
 
-    def test_read_sector_model(self, handler, get_sector_model):
-        actual = handler.read_model(get_sector_model['name'])
-        expected = get_sector_model
-        assert actual == expected
-
-    def test_read_sector_model_no_coords(self, handler, get_sector_model,
-                                         get_sector_model_no_coords):
-        actual = handler.read_model(get_sector_model['name'])
+    def test_read_model(self, handler, get_sector_model_no_coords):
+        actual = handler.read_model(get_sector_model_no_coords['name'])
         expected = get_sector_model_no_coords
         assert actual == expected
 
-    def test_sector_model_parameter_default(self, handler,
-                                            get_sector_model_parameter_defaults):
-        sector_model_name = 'energy_demand'
-        parameter_name = 'smart_meter_savings'
-        data = get_sector_model_parameter_defaults[parameter_name]
-        handler.write_model_parameter_default(sector_model_name, parameter_name, data)
-        actual = handler.read_model_parameter_default(sector_model_name, parameter_name)
-        assert actual == data
-
-    def test_write_sector_model(self, handler, get_sector_model):
-        new_sector_model = copy(get_sector_model)
+    def test_write_model(self, handler, get_sector_model_no_coords):
+        new_sector_model = copy(get_sector_model_no_coords)
         new_sector_model['name'] = 'another_energy_sector_model'
-        handler.write_sector_model(new_sector_model)
+        handler.write_model(new_sector_model)
         actual = handler.read_models()
-        expected = [get_sector_model, new_sector_model]
+        expected = [get_sector_model_no_coords, new_sector_model]
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
-    def test_update_sector_model(self, handler, get_sector_model):
-        name = get_sector_model['name']
-        expected = copy(get_sector_model)
+    def test_update_model(self, handler, get_sector_model_no_coords):
+        name = get_sector_model_no_coords['name']
+        expected = copy(get_sector_model_no_coords)
         expected['description'] = ['Updated description']
         handler.update_model(name, expected)
         actual = handler.read_model(name)
         assert actual == expected
 
-    def test_delete_sector_model(self, handler, get_sector_model):
-        handler.delete_model(get_sector_model['name'])
+    def test_delete_model(self, handler, get_sector_model_no_coords):
+        handler.delete_model(get_sector_model_no_coords['name'])
         expected = []
         actual = handler.read_models()
         assert actual == expected
@@ -201,21 +180,15 @@ class TestStrategies():
 class TestScenarios():
     """Read and write scenario data
     """
-    def test_read_scenarios(self, scenario, handler):
+    def test_read_scenarios(self, scenario_no_coords, handler):
         actual = handler.read_scenarios()
-        assert actual == [scenario]
+        assert actual == [scenario_no_coords]
 
-    def test_read_scenarios_no_coords(self, scenario_no_coords, handler):
-        assert handler.read_scenarios() == [scenario_no_coords]
-
-    def test_read_scenario(self, scenario, handler):
+    def test_read_scenario(self, scenario_no_coords, handler):
         actual = handler.read_scenario('mortality')
-        assert actual == scenario
+        assert actual == scenario_no_coords
 
-    def test_read_scenario_no_coords(self, scenario_no_coords, handler):
-        assert handler.read_scenario('mortality') == scenario_no_coords
-
-    def test_write_scenario(self, scenario, handler):
+    def test_write_scenario(self, scenario_no_coords, handler):
         another_scenario = {
             'name': 'fertility',
             'description': 'Projected annual fertility rates',
@@ -227,7 +200,7 @@ class TestScenarios():
         expected = another_scenario
         assert actual == expected
 
-    def test_update_scenario(self, scenario, handler):
+    def test_update_scenario(self, scenario_no_coords, handler):
         another_scenario = {
             'name': 'mortality',
             'description': 'Projected annual mortality rates',
@@ -241,17 +214,17 @@ class TestScenarios():
         handler.delete_scenario('mortality')
         assert handler.read_scenarios() == []
 
-    def test_read_scenario_variants(self, handler, scenario):
+    def test_read_scenario_variants(self, handler, scenario_no_coords):
         actual = handler.read_scenario_variants('mortality')
-        expected = scenario['variants']
+        expected = scenario_no_coords['variants']
         assert actual == expected
 
-    def test_read_scenario_variant(self, handler, scenario):
+    def test_read_scenario_variant(self, handler, scenario_no_coords):
         actual = handler.read_scenario_variant('mortality', 'low')
-        expected = scenario['variants'][0]
+        expected = scenario_no_coords['variants'][0]
         assert actual == expected
 
-    def test_write_scenario_variant(self, handler, scenario):
+    def test_write_scenario_variant(self, handler, scenario_no_coords):
         new_variant = {
             'name': 'high',
             'description': 'Mortality (High)',
@@ -261,10 +234,10 @@ class TestScenarios():
         }
         handler.write_scenario_variant('mortality', new_variant)
         actual = handler.read_scenario_variants('mortality')
-        expected = [new_variant] + scenario['variants']
+        expected = [new_variant] + scenario_no_coords['variants']
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
-    def test_update_scenario_variant(self, handler, scenario):
+    def test_update_scenario_variant(self, handler):
         new_variant = {
             'name': 'low',
             'description': 'Mortality (Low)',
@@ -277,7 +250,7 @@ class TestScenarios():
         expected = [new_variant]
         assert actual == expected
 
-    def test_delete_scenario_variant(self, handler, scenario):
+    def test_delete_scenario_variant(self, handler):
         handler.delete_scenario_variant('mortality', 'low')
         assert handler.read_scenario_variants('mortality') == []
 
