@@ -117,6 +117,7 @@ class YamlConfigStore(ConfigStore):
         return model_runs
 
     def read_model_run(self, model_run_name):
+        _assert_file_exists(self.config_folders, 'model_run', model_run_name)
         modelrun_config = self._read_model_run(model_run_name)
         del modelrun_config['strategies']
         return modelrun_config
@@ -181,6 +182,7 @@ class YamlConfigStore(ConfigStore):
         return models
 
     def read_model(self, model_name):
+        _assert_file_exists(self.config_folders, 'sector_model', model_name)
         model = _read_yaml_file(self.config_folders['sector_models'], model_name)
         return model
 
@@ -225,6 +227,7 @@ class YamlConfigStore(ConfigStore):
         return [self.read_scenario(name) for name in scenario_names]
 
     def read_scenario(self, scenario_name):
+        _assert_file_exists(self.config_folders, 'scenario', scenario_name)
         scenario = _read_yaml_file(self.config_folders['scenarios'], scenario_name)
         return scenario
 

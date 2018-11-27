@@ -62,6 +62,10 @@ class TestModelRuns:
     def test_read_model_run(self, handler, minimal_model_run):
         assert handler.read_model_run('test_modelrun') == minimal_model_run
 
+    def test_read_non_existing_model_run(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.read_model_run('non_existing')
+
     def test_read_model_run_sorted(self, handler, minimal_model_run):
         y_model_run = {'name': 'y'}
         z_model_run = {'name': 'z'}
@@ -154,6 +158,10 @@ class TestSectorModel():
         expected = get_sector_model_no_coords
         assert actual == expected
 
+    def test_read_non_existing_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.read_model('non_existing')
+
     def test_write_model(self, handler, get_sector_model_no_coords):
         new_sector_model = copy(get_sector_model_no_coords)
         new_sector_model['name'] = 'another_energy_sector_model'
@@ -197,6 +205,10 @@ class TestScenarios():
     def test_read_scenario(self, scenario_no_coords, handler):
         actual = handler.read_scenario('mortality')
         assert actual == scenario_no_coords
+
+    def test_read_non_existing_test_read_scenario(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.read_scenario('non_existing')
 
     def test_write_scenario(self, scenario_no_coords, handler):
         another_scenario = {

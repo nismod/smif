@@ -30,7 +30,10 @@ class MemoryConfigStore(ConfigStore):
         return list(sorted_model_runs.values())
 
     def read_model_run(self, model_run_name):
-        return self._model_runs[model_run_name]
+        try:
+            return self._model_runs[model_run_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("sos_model_run '%s' not found" % (model_run_name))
 
     def write_model_run(self, model_run):
         self._model_runs[model_run['name']] = model_run
@@ -76,8 +79,10 @@ class MemoryConfigStore(ConfigStore):
         return list(self._models.values())
 
     def read_model(self, model_name):
-        m = self._models[model_name]
-        return m
+        try:
+            return self._models[model_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("model '%s' not found" % (model_name))
 
     def write_model(self, model):
         self._models[model['name']] = model
@@ -95,8 +100,11 @@ class MemoryConfigStore(ConfigStore):
         return [_variant_dict_to_list(s) for s in scenarios]
 
     def read_scenario(self, scenario_name):
-        scenario = self._scenarios[scenario_name]
-        return _variant_dict_to_list(scenario)
+        try:
+            scenario = self._scenarios[scenario_name]
+            return _variant_dict_to_list(scenario)
+        except(KeyError):
+            raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
 
     def write_scenario(self, scenario):
         scenario = _variant_list_to_dict(scenario)
@@ -115,7 +123,11 @@ class MemoryConfigStore(ConfigStore):
         return list(self._scenarios[scenario_name]['variants'].values())
 
     def read_scenario_variant(self, scenario_name, variant_name):
-        return self._scenarios[scenario_name]['variants'][variant_name]
+        try:
+            return self._scenarios[scenario_name]['variants'][variant_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("scenario '%s' variant '%s' not found"
+                                        % (scenario_name, variant_name))
 
     def write_scenario_variant(self, scenario_name, variant):
         self._scenarios[scenario_name]['variants'][variant['name']] = variant
@@ -152,7 +164,11 @@ class MemoryConfigStore(ConfigStore):
 
     # region Strategies
     def read_strategies(self, modelrun_name):
-        return self._strategies[modelrun_name]
+        try:
+            return self._strategies[modelrun_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("strategies in modelrun '%s' not found"
+                                        % (modelrun_name))
 
     def write_strategies(self, modelrun_name, strategies):
         self._strategies[modelrun_name] = strategies
