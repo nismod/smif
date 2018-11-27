@@ -763,16 +763,9 @@ class CSVDataStore(DataStore):
         )
 
         try:
-            if self.storage_format == 'local_csv':
-                data = _get_data_from_csv(results_path)
-                return data_list_to_ndarray(data, output_spec)
-            elif self.storage_format == 'local_binary':
-                data = _get_data_from_native_file(results_path)
-                return DataArray(output_spec, data)
-            else:
-                msg = "Unrecognised storage format: %s"
-                raise NotImplementedError(msg % self.storage_format)
-        except (FileNotFoundError, pa.lib.ArrowIOError):
+            data = _get_data_from_csv(results_path)
+            return data_list_to_ndarray(data, output_spec)
+        except (FileNotFoundError):
             key = str([modelrun_id, model_name, output_spec.name, timestep,
                        decision_iteration])
             raise SmifDataNotFoundError("Could not find results for {}".format(key))
@@ -795,13 +788,8 @@ class CSVDataStore(DataStore):
         )
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
-        if self.storage_format == 'local_csv':
-            _data = ndarray_to_data_list(data_array)
-            _write_data_to_csv(results_path, _data, spec=spec)
-        elif self.storage_format == 'local_binary':
-            _write_data_to_native_file(results_path, data_array.as_ndarray())
-        else:
-            raise NotImplementedError("Unrecognised storage format: %s" % self.storage_format)
+        _data = ndarray_to_data_list(data_array)
+        _write_data_to_csv(results_path, _data, spec=spec)
 
     def _results_exist(self, modelrun_name):
         """Checks whether modelrun results exists on the filesystem
@@ -839,9 +827,7 @@ class CSVDataStore(DataStore):
         results = list(glob.iglob(os.path.join(previous_results_dir, '**/*.*'),
                                   recursive=True))
         for filename in results:
-            warn = (self.storage_format == 'local_csv' and not filename.endswith(".csv")) or \
-                   (self.storage_format == 'local_binary' and not filename.endswith(".dat"))
-            if warn:
+            if not filename.endswith(".csv"):
                 self.logger.info("Warm start not possible because a different "
                                  "storage mode was used in the previous run")
                 return None
@@ -901,17 +887,10 @@ class CSVDataStore(DataStore):
         if decision_iteration is None:
             decision_iteration = 'none'
 
-        if self.storage_format == 'local_csv':
-            ext = 'csv'
-        elif self.storage_format == 'local_binary':
-            ext = 'dat'
-        else:
-            ext = 'unknown'
-
         path = os.path.join(
             self.results_folder, modelrun_id, model_name,
             "decision_{}".format(decision_iteration),
-            "output_{}_timestep_{}.{}".format(output_name, timestep, ext)
+            "output_{}_timestep_{}.{}".format(output_name, timestep, 'csv')
         )
         return path
 
