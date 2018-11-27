@@ -129,12 +129,13 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['model_runs'], model_run_name, model_run)
 
     def write_model_run(self, model_run):
+        _assert_file_not_exists(self.config_folders, 'model_run', model_run['name'])
         config = copy.copy(model_run)
         config['strategies'] = []
-        _assert_file_not_exists(self.config_folders, 'model_run', model_run['name'])
         _write_yaml_file(self.config_folders['model_runs'], config['name'], config)
 
     def update_model_run(self, model_run_name, model_run):
+        _assert_file_exists(self.config_folders, 'model_run', model_run_name)
         prev = self._read_model_run(model_run_name)
         config = copy.copy(model_run)
         config['strategies'] = prev['strategies']
@@ -188,17 +189,18 @@ class YamlConfigStore(ConfigStore):
         return model
 
     def write_model(self, model):
+        _assert_file_not_exists(self.config_folders, 'sector_model', model['name'])
         model = copy.deepcopy(model)
         if model['interventions']:
             self.logger.warning("Ignoring interventions")
             model['interventions'] = []
 
         model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
-        _assert_file_not_exists(self.config_folders, 'sector_model', model['name'])
         _write_yaml_file(
             self.config_folders['sector_models'], model['name'], model)
 
     def update_model(self, model_name, model):
+        _assert_file_exists(self.config_folders, 'sector_model', model_name)
         model = copy.deepcopy(model)
         # ignore interventions and initial conditions which the app doesn't handle
         if model['interventions'] or model['initial_conditions']:
@@ -234,11 +236,12 @@ class YamlConfigStore(ConfigStore):
         return scenario
 
     def write_scenario(self, scenario):
-        scenario = _skip_coords(scenario, ['provides'])
         _assert_file_not_exists(self.config_folders, 'scenario', scenario['name'])
+        scenario = _skip_coords(scenario, ['provides'])
         _write_yaml_file(self.config_folders['scenarios'], scenario['name'], scenario)
 
     def update_scenario(self, scenario_name, scenario):
+        _assert_file_exists(self.config_folders, 'scenario', scenario_name)
         scenario = _skip_coords(scenario, ['provides'])
         _write_yaml_file(self.config_folders['scenarios'], scenario['name'], scenario)
 

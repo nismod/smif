@@ -98,6 +98,10 @@ class TestModelRuns:
         handler.update_model_run('test_modelrun', updated_model_run)
         assert handler.read_model_runs() == [updated_model_run]
 
+    def test_update_non_existing_model_run(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.update_model_run('non_existing', {})
+
     def test_delete_model_run(self, handler):
         handler.delete_model_run('test_modelrun')
         assert handler.read_model_runs() == []
@@ -136,9 +140,9 @@ class TestSosModel:
         handler.update_sos_model('energy', updated_sos_model)
         assert handler.read_sos_models() == [updated_sos_model]
 
-    def test_update_non_existing_sos_model(self, handler, get_sos_model):
+    def test_update_non_existing_sos_model(self, handler):
         with raises(SmifDataNotFoundError):
-            handler.update_sos_model('non_existing', get_sos_model)
+            handler.update_sos_model('non_existing', {})
 
     def test_delete_sos_model(self, handler):
         handler.delete_sos_model('energy')
@@ -185,6 +189,10 @@ class TestSectorModel():
         handler.update_model(name, expected)
         actual = handler.read_model(name)
         assert actual == expected
+
+    def test_update_non_existing_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.update_model('non_existing', {})
 
     def test_delete_model(self, handler, get_sector_model_no_coords):
         handler.delete_model(get_sector_model_no_coords['name'])
@@ -243,6 +251,10 @@ class TestScenarios():
         }
         handler.update_scenario('mortality', another_scenario)
         assert handler.read_scenarios() == [another_scenario]
+
+    def test_update_non_existing_scenario(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.update_scenario('non_existing', {})
 
     def test_delete_scenario(self, handler):
         handler.delete_scenario('mortality')

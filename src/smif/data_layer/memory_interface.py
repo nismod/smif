@@ -42,7 +42,10 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataExistsError("model_run '%s' already exists" % (model_run['name']))
 
     def update_model_run(self, model_run_name, model_run):
-        self._model_runs[model_run_name] = model_run
+        if model_run_name in self._model_runs:
+            self._model_runs[model_run_name] = model_run
+        else:
+            raise SmifDataNotFoundError("model_run '%s' not found" % (model_run_name))
 
     def delete_model_run(self, model_run_name):
         del self._model_runs[model_run_name]
@@ -68,7 +71,7 @@ class MemoryConfigStore(ConfigStore):
         if sos_model_name in self._sos_models:
             self._sos_models[sos_model_name] = sos_model
         else:
-            raise SmifDataNotFoundError("sos_model '%s' not found" % (sos_model['name']))
+            raise SmifDataNotFoundError("sos_model '%s' not found" % (sos_model_name))
 
     def delete_sos_model(self, sos_model_name):
         try:
@@ -94,7 +97,10 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataExistsError("model '%s' already exists" % (model['name']))
 
     def update_model(self, model_name, model):
-        self._models[model_name] = model
+        if model_name in self._models:
+            self._models[model_name] = model
+        else:
+            raise SmifDataNotFoundError("model '%s' not found" % (model_name))
 
     def delete_model(self, model_name):
         del self._models[model_name]
@@ -120,8 +126,11 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataExistsError("scenario '%s' already exists" % (scenario['name']))
 
     def update_scenario(self, scenario_name, scenario):
-        scenario = _variant_list_to_dict(scenario)
-        self._scenarios[scenario_name] = scenario
+        if scenario_name in self._scenarios:
+            scenario = _variant_list_to_dict(scenario)
+            self._scenarios[scenario_name] = scenario
+        else:
+            raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
 
     def delete_scenario(self, scenario_name):
         del self._scenarios[scenario_name]
