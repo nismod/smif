@@ -3,13 +3,10 @@
 """
 
 # import classes for access like ::
-#         from smif.data_layer import DatabaseInterface`
-from smif.data_layer.database_interface import DatabaseInterface
-from smif.data_layer.datafile_interface import DatafileInterface
-
+#         from smif.data_layer import DataHandle`
 from smif.data_layer.data_handle import DataHandle
-from smif.data_layer.memory_interface import MemoryInterface
+from smif.data_layer.store import Store
 
 # Define what should be imported as * ::
 #         from smif.data_layer import *
-__all__ = ['DatabaseInterface', 'DatafileInterface', 'DataHandle', 'MemoryInterface']
+__all__ = ['DataHandle', 'Store']
