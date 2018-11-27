@@ -1,61 +1,46 @@
+"""Test all ConfigStore implementations
+"""
 from copy import copy
 
-import numpy as np
 from pytest import fixture, mark, param, raises
-from smif.data_layer import (DatabaseInterface, DatafileInterface,
-                             MemoryInterface)
-from smif.data_layer.data_array import DataArray
-from smif.exception import SmifDataExistsError, SmifDataNotFoundError
-from smif.metadata import Spec
+from smif.data_layer.database_interface import DbConfigStore
+from smif.data_layer.datafile_interface import YamlConfigStore
+from smif.data_layer.memory_interface import MemoryConfigStore
+from smif.exception import SmifDataExistsError
 
 
 @fixture(
     params=[
         'memory',
-        'file',
-        param('database', marks=mark.skip)]
-    )
+        param('text_file', marks=mark.skip),
+        param('database', marks=mark.skip)
+    ])
 def init_handler(request, setup_empty_folder_structure):
     if request.param == 'memory':
-        handler = MemoryInterface()
-    elif request.param == 'file':
+        handler = MemoryConfigStore()
+    elif request.param == 'text_file':
         base_folder = setup_empty_folder_structure
-        handler = DatafileInterface(base_folder, 'local_csv', validation=False)
+        handler = YamlConfigStore(base_folder)
     elif request.param == 'database':
-        handler = DatabaseInterface()
+        handler = DbConfigStore()
         raise NotImplementedError
 
     return handler
 
 
 @fixture
-def handler(init_handler, minimal_model_run, get_sos_model, sample_narrative_data,
-            get_sector_model, get_sector_model_parameter_defaults, strategies,
-            unit_definitions, dimension, sample_dimensions, conversion_source_spec,
-            conversion_sink_spec, conversion_coefficients, scenario):
+def handler(init_handler, minimal_model_run, get_sos_model, get_sector_model, strategies,
+            scenario):
     handler = init_handler
-
-    # metadata
-    handler.write_unit_definitions(unit_definitions)
-    handler.write_dimension(dimension)
-    for dim in sample_dimensions:
-        handler.write_dimension(dim)
 
     # scenarios
     handler.write_scenario(scenario)
 
     # models
     handler.write_model(get_sector_model)
-    for parameter_name, data in get_sector_model_parameter_defaults.items():
-        handler.write_model_parameter_default(
-            get_sector_model['name'], parameter_name, data)
 
     # sos models
     handler.write_sos_model(get_sos_model)
-    for key, narrative_variant_data in sample_narrative_data.items():
-        sos_model_name, narrative_name, variant_name, _ = key  # skip param name
-        handler.write_narrative_variant_data(
-            sos_model_name, narrative_name, variant_name, narrative_variant_data)
 
     # model runs
     handler.write_model_run(minimal_model_run)
@@ -63,9 +48,6 @@ def handler(init_handler, minimal_model_run, get_sos_model, sample_narrative_dat
     # planning
     handler.write_strategies('test_modelrun', strategies)
 
-    # conversion coefficients
-    handler.write_coefficients(
-        conversion_source_spec, conversion_sink_spec, conversion_coefficients)
     return handler
 
 
@@ -216,77 +198,6 @@ class TestStrategies():
             sorted(expected, key=lambda d: d['description'])
 
 
-class TestState():
-    """Read and write state
-    """
-    def test_read_write_state(self, handler, state):
-        expected = state
-        modelrun_name = 'test_modelrun'
-        timestep = 2020
-        decision_iteration = None
-
-        handler.write_state(expected, modelrun_name, timestep, decision_iteration)
-        actual = handler.read_state(modelrun_name, timestep, decision_iteration)
-        assert actual == expected
-
-
-class TestUnits():
-    """Read units definitions
-    """
-    def test_read_units(self, handler, unit_definitions):
-        expected = unit_definitions
-        actual = handler.read_unit_definitions()
-        assert actual == expected
-
-
-class TestDimensions():
-    """Read/write/update/delete dimensions
-    """
-    def test_read_dimensions(self, handler, dimension, sample_dimensions):
-        actual = handler.read_dimensions()
-        expected = [dimension] + sample_dimensions
-        assert sorted_by_name(actual) == sorted_by_name(expected)
-
-    def test_read_dimension(self, handler, dimension):
-        assert handler.read_dimension('category') == dimension
-
-    def test_write_dimension(self, handler, dimension, sample_dimensions):
-        another_dimension = {'name': '3rd', 'elements': ['a', 'b']}
-        handler.write_dimension(another_dimension)
-        actual = handler.read_dimensions()
-        expected = [dimension, another_dimension] + sample_dimensions
-        assert sorted_by_name(actual) == sorted_by_name(expected)
-
-    def test_update_dimension(self, handler, dimension, sample_dimensions):
-        another_dimension = {'name': 'category', 'elements': [4, 5, 6]}
-        handler.update_dimension('category', another_dimension)
-        actual = handler.read_dimensions()
-        expected = [another_dimension] + sample_dimensions
-        assert sorted_by_name(actual) == sorted_by_name(expected)
-
-    def test_delete_dimension(self, handler, sample_dimensions):
-        handler.delete_dimension('category')
-        actual = handler.read_dimensions()
-        expected = sample_dimensions
-        assert sorted_by_name(actual) == sorted_by_name(expected)
-
-
-class TestCoefficients():
-    """Read/write conversion coefficients
-    """
-    def test_read_coefficients(self, conversion_source_spec, conversion_sink_spec, handler,
-                               conversion_coefficients):
-        actual = handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
-        expected = conversion_coefficients
-        np.testing.assert_equal(actual, expected)
-
-    def test_write_coefficients(self, conversion_source_spec, conversion_sink_spec, handler):
-        expected = np.array([[2]])
-        handler.write_coefficients(conversion_source_spec, conversion_sink_spec, expected)
-        actual = handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
-        np.testing.assert_equal(actual, expected)
-
-
 class TestScenarios():
     """Read and write scenario data
     """
@@ -369,123 +280,6 @@ class TestScenarios():
     def test_delete_scenario_variant(self, handler, scenario):
         handler.delete_scenario_variant('mortality', 'low')
         assert handler.read_scenario_variants('mortality') == []
-
-    def test_write_scenario_variant_data(self, handler, scenario):
-        """Write to in-memory data
-        """
-        data = np.array([0, 1], dtype=float)
-
-        spec = Spec.from_dict(scenario['provides'][0])
-        da = DataArray(spec, data)
-
-        handler.write_scenario_variant_data('mortality', 'low', da, 2010)
-
-        actual = handler.read_scenario_variant_data('mortality', 'low',
-                                                    'mortality', 2010)
-        assert actual == da
-
-
-class TestNarratives():
-    """Read and write narrative data
-    """
-    def test_read_narrative_variant_data(self, handler, sample_narrative_data):
-        """Read from in-memory data
-        """
-        actual = handler.read_narrative_variant_data('energy',
-                                                     'technology',
-                                                     'high_tech_dsm',
-                                                     'smart_meter_savings')
-        key = ('energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
-        expected = sample_narrative_data[key]
-        assert actual == expected
-
-    def test_read_narrative_variant_data_raises_param(self, handler):
-        with raises(SmifDataNotFoundError):
-            handler.read_narrative_variant_data('energy',
-                                                'technology',
-                                                'high_tech_dsm',
-                                                'not_a_parameter')
-
-    def test_read_narrative_variant_data_raises_variant(self, handler):
-        with raises(SmifDataNotFoundError):
-            handler.read_narrative_variant_data('energy',
-                                                'technology',
-                                                'not_a_variant',
-                                                'not_a_parameter')
-
-    def test_read_narrative_variant_data_raises_narrative(self, handler):
-        with raises(SmifDataNotFoundError):
-            handler.read_narrative_variant_data('energy',
-                                                'not_a_narrative',
-                                                'not_a_variant',
-                                                'not_a_parameter')
-
-    def test_write_narrative_variant_data(self, handler, sample_narrative_data):
-        """Write narrative variant data to file or memory
-        """
-        key = ('energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
-        da = sample_narrative_data[key]
-        handler.write_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', da)
-
-        actual = handler.read_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
-
-        assert actual == da
-
-    def test_write_narrative_variant_data_timestep(self, handler, sample_narrative_data):
-        """Write narrative variant data to file or memory
-        """
-        key = ('energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
-        da = sample_narrative_data[key]
-        handler.write_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', da,
-            timestep=2010)
-
-        actual = handler.read_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings', timestep=2010)
-
-        assert actual == da
-
-
-class TestResults():
-    """Read/write results and prepare warm start
-    """
-    def test_read_write_results(self, handler):
-        results_in = np.array(1, dtype=float)
-        modelrun_name = 'test_modelrun'
-        model_name = 'energy'
-        timestep = 2010
-        output_spec = Spec(name='energy_use', dtype='float')
-
-        da = DataArray(output_spec, results_in)
-
-        handler.write_results(da, modelrun_name, model_name, timestep)
-        results_out = handler.read_results(modelrun_name, model_name, output_spec, timestep)
-
-        expected = DataArray(output_spec, results_in)
-
-        assert results_out == expected
-
-    def test_warm_start(self, handler):
-        """Warm start should return None if no results are available
-        """
-        start = handler.prepare_warm_start('test_modelrun')
-        assert start is None
-
-    def test_read_results_raises(self, handler):
-        results_in = np.array(1)
-        modelrun_name = 'test_modelrun'
-        model_name = 'energy'
-        timestep = 2010
-        output_spec = Spec(name='energy_use', dtype='float')
-
-        da = DataArray(output_spec, results_in)
-
-        handler.write_results(da, modelrun_name, model_name, timestep=timestep)
-
-        with raises(SmifDataNotFoundError):
-            handler.read_results(modelrun_name, model_name, output_spec, 2020)
 
 
 def sorted_by_name(list_):
