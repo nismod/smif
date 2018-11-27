@@ -1,11 +1,13 @@
+"""Database store implementations
+"""
+from smif.data_layer.abstract_config_store import ConfigStore
+from smif.data_layer.abstract_data_store import DataStore
+from smif.data_layer.abstract_metadata_store import MetadataStore
 
-from smif.data_layer.store import Store
 
-
-class DatabaseInterface(Store):
-    def __init__(self, config_path):
-        raise NotImplementedError()
-
+class DbConfigStore(ConfigStore):
+    """Database backend for config store
+    """
     # region Model runs
     def read_model_runs(self):
         raise NotImplementedError()
@@ -40,20 +42,59 @@ class DatabaseInterface(Store):
         raise NotImplementedError()
     # endregion
 
-    # region Sector models
-    def read_sector_models(self):
+    # region Models
+    def read_models(self):
         raise NotImplementedError()
 
-    def read_sector_model(self, sector_model_name):
+    def read_model(self, model_name):
         raise NotImplementedError()
 
-    def write_sector_model(self, sector_model):
+    def write_model(self, model):
         raise NotImplementedError()
 
-    def update_sector_model(self, sector_model_name, sector_model):
+    def update_model(self, model_name, model):
         raise NotImplementedError()
 
-    def delete_sector_model(self, sector_model_name):
+    def delete_model(self, model_name):
+        raise NotImplementedError()
+    # endregion
+
+    # region Scenarios
+    def read_scenarios(self):
+        raise NotImplementedError()
+
+    def read_scenario(self, scenario_name):
+        raise NotImplementedError()
+
+    def write_scenario(self, scenario):
+        raise NotImplementedError()
+
+    def update_scenario(self, scenario_name, scenario):
+        raise NotImplementedError()
+
+    def delete_scenario(self, scenario_name):
+        raise NotImplementedError()
+    # endregion
+
+    # region Scenario Variants
+    def read_scenario_variants(self, scenario_name):
+        raise NotImplementedError()
+
+    def read_scenario_variant(self, scenario_name, variant_name):
+        raise NotImplementedError()
+
+    def write_scenario_variant(self, scenario_name, variant):
+        raise NotImplementedError()
+
+    def update_scenario_variant(self, scenario_name, variant_name, variant):
+        raise NotImplementedError()
+
+    def delete_scenario_variant(self, scenario_name, variant_name):
+        raise NotImplementedError()
+    # endregion
+
+    # region Narratives
+    def read_narrative(self, sos_model_name, narrative_name):
         raise NotImplementedError()
     # endregion
 
@@ -65,22 +106,10 @@ class DatabaseInterface(Store):
         raise NotImplementedError()
     # endregion
 
-    # region Interventions
-    def read_interventions(self, sector_model_name):
-        raise NotImplementedError()
 
-    def read_initial_conditions(self, sector_model_name):
-        raise NotImplementedError()
-    # endregion
-
-    # region State
-    def read_state(self, modelrun_name, timestep, decision_iteration=None):
-        raise NotImplementedError()
-
-    def write_state(self, state, modelrun_name, timestep, decision_iteration=None):
-        raise NotImplementedError()
-    # endregion
-
+class DbMetadataStore(MetadataStore):
+    """Database backend for metadata store
+    """
     # region Units
     def read_unit_definitions(self):
         raise NotImplementedError()
@@ -103,45 +132,11 @@ class DatabaseInterface(Store):
         raise NotImplementedError()
     # endregion
 
-    # region Conversion coefficients
-    def read_coefficients(self, source_spec, destination_spec):
-        raise NotImplementedError
 
-    def write_coefficients(self, source_spec, destination_spec, data):
-        raise NotImplementedError()
-    # endregion
-
-    # region Scenarios
-    def read_scenarios(self):
-        raise NotImplementedError()
-
-    def read_scenario(self, scenario_name):
-        raise NotImplementedError()
-
-    def write_scenario(self, scenario):
-        raise NotImplementedError()
-
-    def update_scenario(self, scenario_name, scenario):
-        raise NotImplementedError()
-
-    def delete_scenario(self, scenario_name):
-        raise NotImplementedError()
-
-    def read_scenario_variants(self, scenario_name):
-        raise NotImplementedError()
-
-    def read_scenario_variant(self, scenario_name, variant_name):
-        raise NotImplementedError()
-
-    def write_scenario_variant(self, scenario_name, variant):
-        raise NotImplementedError()
-
-    def update_scenario_variant(self, scenario_name, variant_name, variant):
-        raise NotImplementedError()
-
-    def delete_scenario_variant(self, scenario_name, variant_name):
-        raise NotImplementedError()
-
+class DbDataStore(DataStore):
+    """Database backend for data store
+    """
+    # region Scenario Variant Data
     def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
         raise NotImplementedError()
 
@@ -150,13 +145,43 @@ class DatabaseInterface(Store):
         raise NotImplementedError()
     # endregion
 
-    # region Narratives
+    # region Narrative Data
     def read_narrative_variant_data(self, narrative_name, variant_name, variable,
                                     timestep=None):
         raise NotImplementedError()
 
     def write_narrative_variant_data(self, narrative_name, variant_name, data_array,
                                      timestep=None):
+        raise NotImplementedError()
+
+    def read_model_parameter_default(self, model_name, parameter_name):
+        raise NotImplementedError()
+
+    def write_model_parameter_default(self, model_name, parameter_name, data):
+        raise NotImplementedError()
+    # endregion
+
+    # region Interventions
+    def read_interventions(self, sector_model_name):
+        raise NotImplementedError()
+
+    def read_initial_conditions(self, sector_model_name):
+        raise NotImplementedError()
+    # endregion
+
+    # region State
+    def read_state(self, modelrun_name, timestep, decision_iteration=None):
+        raise NotImplementedError()
+
+    def write_state(self, state, modelrun_name, timestep, decision_iteration=None):
+        raise NotImplementedError()
+    # endregion
+
+    # region Conversion coefficients
+    def read_coefficients(self, source_spec, destination_spec):
+        raise NotImplementedError
+
+    def write_coefficients(self, source_spec, destination_spec, data):
         raise NotImplementedError()
     # endregion
 
