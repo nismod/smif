@@ -173,12 +173,12 @@ class YamlConfigStore(ConfigStore):
 
     # region Models
     def read_models(self):
-        names = _read_filenames_in_dir(self.config_folders['models'], '.yml')
+        names = _read_filenames_in_dir(self.config_folders['sector_models'], '.yml')
         models = [self.read_model(name) for name in names]
         return models
 
     def read_model(self, model_name):
-        model = _read_yaml_file(self.config_folders['models'], model_name)
+        model = _read_yaml_file(self.config_folders['sector_models'], model_name)
         return model
 
     def write_model(self, model):
@@ -189,7 +189,7 @@ class YamlConfigStore(ConfigStore):
 
         model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
         _write_yaml_file(
-            self.config_folders['models'], model['name'], model)
+            self.config_folders['sector_models'], model['name'], model)
 
     def update_model(self, model_name, model):
         model = copy.deepcopy(model)
@@ -209,11 +209,11 @@ class YamlConfigStore(ConfigStore):
         model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
 
         _write_yaml_file(
-            self.config_folders['models'], model['name'], model)
+            self.config_folders['sector_models'], model['name'], model)
 
     def delete_model(self, model_name):
         os.remove(
-            os.path.join(self.config_folders['models'], model_name + '.yml'))
+            os.path.join(self.config_folders['sector_models'], model_name + '.yml'))
     # endregion
 
     # region Scenarios
