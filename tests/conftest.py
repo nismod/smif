@@ -12,7 +12,7 @@ from copy import deepcopy
 import numpy as np
 from pytest import fixture
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.load import dump
+from smif.data_layer.datafile_interface import dump_yaml as dump
 from smif.metadata import Spec
 
 from .convert.conftest import remap_months
