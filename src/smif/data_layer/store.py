@@ -14,6 +14,7 @@ SmifDataReadError
     When unable to read data e.g. unable to handle file type or connect
     to database
 """
+from copy import deepcopy
 from logging import getLogger
 
 
@@ -141,16 +142,22 @@ class Store():
     # endregion
 
     # region Models
-    def read_models(self):
+    def read_models(self, skip_coords=False):
         """Read all models
 
         Returns
         -------
         list[~smif.model.model.Model]
         """
-        return self.config_store.read_models()
+        models = self.config_store.read_models()
+        if not skip_coords:
+            models = [
+                self._add_coords(model, ('inputs', 'outputs', 'parameters'))
+                for model in models
+            ]
+        return models
 
-    def read_model(self, model_name):
+    def read_model(self, model_name, skip_coords=False):
         """Read a model
 
         Parameters
@@ -161,7 +168,10 @@ class Store():
         -------
         ~smif.model.model.Model
         """
-        return self.config_store.read_model(model_name)
+        model = self.config_store.read_model(model_name)
+        if not skip_coords:
+            model = self._add_coords(model, ('inputs', 'outputs', 'parameters'))
+        return model
 
     def write_model(self, model):
         """Write a model
@@ -193,16 +203,22 @@ class Store():
     # endregion
 
     # region Scenarios
-    def read_scenarios(self):
+    def read_scenarios(self, skip_coords=False):
         """Read scenarios
 
         Returns
         -------
         list[~smif.model.ScenarioModel]
         """
-        return self.config_store.read_scenarios()
+        scenarios = self.config_store.read_scenarios()
+        if not skip_coords:
+            scenarios = [
+                self._add_coords(scenario, ['provides'])
+                for scenario in scenarios
+            ]
+        return scenarios
 
-    def read_scenario(self, scenario_name):
+    def read_scenario(self, scenario_name, skip_coords=False):
         """Read a scenario
 
         Parameters
@@ -213,7 +229,10 @@ class Store():
         -------
         ~smif.model.ScenarioModel
         """
-        return self.config_store.read_scenario(scenario_name)
+        scenario = self.config_store.read_scenario(scenario_name)
+        if not skip_coords:
+            scenario = self._add_coords(scenario, ['provides'])
+        return scenario
 
     def write_scenario(self, scenario):
         """Write scenario
@@ -418,6 +437,20 @@ class Store():
         dimension_name : str
         """
         self.metadata_store.delete_dimension(dimension_name)
+
+    def _add_coords(self, item, keys):
+        """Add coordinates to spec definitions on an object
+        """
+        item = deepcopy(item)
+        for key in keys:
+            spec_list = item[key]
+            for spec in spec_list:
+                if 'dims' in spec and spec['dims']:
+                    spec['coords'] = {
+                        dim: self.read_dimension(dim)['elements']
+                        for dim in spec['dims']
+                    }
+        return item
     # endregion
 
     #
@@ -547,15 +580,36 @@ class Store():
         """
         return self.data_store.read_interventions(model_name)
 
+    def write_interventions(self, model_name, interventions):
+        """Write interventions data for a model
+
+        Parameters
+        ----------
+        dict[str, dict]
+            A dict of intervention dictionaries containing intervention
+            attributes keyed by intervention name
+        """
+        self.data_store.write_interventions(model_name, interventions)
+
     def read_initial_conditions(self, model_name):
         """Read historical interventions for `model_name`
 
         Returns
         -------
         list[dict]
-            A list of historical interventions
+            A list of historical interventions, with keys 'name' and 'build_year'
         """
-        return self.data_store.read_interventions(model_name)
+        return self.data_store.read_initial_conditions(model_name)
+
+    def write_initial_conditions(self, model_name, initial_conditions):
+        """Write historical interventions for a model
+
+        Parameters
+        ----------
+        list[dict]
+            A list of historical interventions, with keys 'name' and 'build_year'
+        """
+        self.data_store.write_initial_conditions(model_name, initial_conditions)
 
     def read_all_initial_conditions(self, model_run_name):
         """A list of all historical interventions
@@ -566,12 +620,12 @@ class Store():
         """
         historical_interventions = []
         model_run = self.read_model_run(model_run_name)
-        sos_model_name = model_run.sos_model.name
+        sos_model_name = model_run['sos_model']
         sos_model = self.read_sos_model(sos_model_name)
-        sector_models = sos_model.sector_models
-        for sector_model in sector_models:
+        sector_model_names = sos_model['sector_models']
+        for sector_model_name in sector_model_names:
             historical_interventions.extend(
-                self.read_initial_conditions(sector_model.name)
+                self.read_initial_conditions(sector_model_name)
             )
         return historical_interventions
     # endregion
@@ -686,6 +740,16 @@ class Store():
         self.data_store.write_results(
             data_array, model_run_name, model_name, timestep, decision_iteration)
 
+    def available_results(self, model_run_name):
+        """List available results from a model run
+
+        Returns
+        -------
+        list[tuple]
+             Each tuple is (timestep, decision_iteration, model_name, output_name)
+        """
+        return self.data_store.available_results(model_run_name)
+
     def prepare_warm_start(self, model_run_name):
         """Copy the results from the previous model_run if available
 
@@ -705,5 +769,14 @@ class Store():
         -----
         Called from smif.controller.execute
         """
-        raise NotImplementedError()
+        available_results = self.data_store.available_results(model_run_name)
+        if available_results:
+            max_timestep = max(
+                timestep for
+                timestep, decision_iteration, model_name, output_name in available_results
+            )
+            # could explicitly clear results for max timestep
+        else:
+            max_timestep = None
+        return max_timestep
     # endregion

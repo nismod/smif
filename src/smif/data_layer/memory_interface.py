@@ -1,7 +1,7 @@
 """Memory-backed store implementations
 """
 from collections import OrderedDict
-from copy import copy
+from copy import copy, deepcopy
 
 from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
@@ -95,12 +95,14 @@ class MemoryConfigStore(ConfigStore):
 
     def write_model(self, model):
         if model['name'] not in self._models:
+            model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
             self._models[model['name']] = model
         else:
             raise SmifDataExistsError("model '%s' already exists" % (model['name']))
 
     def update_model(self, model_name, model):
         if model_name in self._models:
+            model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
             self._models[model_name] = model
         else:
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
@@ -127,6 +129,7 @@ class MemoryConfigStore(ConfigStore):
     def write_scenario(self, scenario):
         if scenario['name'] not in self._scenarios:
             scenario = _variant_list_to_dict(scenario)
+            scenario = _skip_coords(scenario, ['provides'])
             self._scenarios[scenario['name']] = scenario
         else:
             raise SmifDataExistsError("scenario '%s' already exists" % (scenario['name']))
@@ -134,6 +137,7 @@ class MemoryConfigStore(ConfigStore):
     def update_scenario(self, scenario_name, scenario):
         if scenario_name in self._scenarios:
             scenario = _variant_list_to_dict(scenario)
+            scenario = _skip_coords(scenario, ['provides'])
             self._scenarios[scenario_name] = scenario
         else:
             raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
@@ -244,7 +248,7 @@ class MemoryDataStore(DataStore):
         self._scenario_data = OrderedDict()
         self._narrative_data = OrderedDict()
         self._interventions = OrderedDict()
-        self._initial_conditions = []
+        self._initial_conditions = OrderedDict()
         self._state = OrderedDict()
         self._model_parameter_defaults = OrderedDict()
         self._coefficients = OrderedDict()
@@ -283,8 +287,14 @@ class MemoryDataStore(DataStore):
     def read_interventions(self, model_name):
         return self._interventions[model_name]
 
+    def write_interventions(self, model_name, interventions):
+        self._interventions[model_name] = interventions
+
     def read_initial_conditions(self, model_name):
         return self._initial_conditions[model_name]
+
+    def write_initial_conditions(self, model_name, initial_conditions):
+        self._initial_conditions[model_name] = initial_conditions
     # endregion
 
     # region State
@@ -320,11 +330,14 @@ class MemoryDataStore(DataStore):
         key = (modelrun_name, model_name, data_array.spec.name, timestep, decision_iteration)
         self._results[key] = data_array.as_ndarray()
 
-    def prepare_warm_start(self, modelrun_name):
-        results_keys = [k for k in self._results.keys() if k[0] == modelrun_name]
-        if results_keys:
-            return max(k[3] for k in results_keys)  # max timestep reached
-        return None
+    def available_results(self, model_run_name):
+        results_keys = [
+            (timestep, decision_iteration, model_name, output_name)
+            for (result_modelrun_name, model_name, output_name, timestep, decision_iteration)
+            in self._results.keys()
+            if model_run_name == result_modelrun_name
+        ]
+        return results_keys
     # endregion
 
 
@@ -345,4 +358,18 @@ def _variant_dict_to_list(config):
     except KeyError:
         dict_ = {}
     config['variants'] = list(dict_.values())
+    return config
+
+
+def _skip_coords(config, keys):
+    """Given a config dict and list of top-level keys for lists of specs,
+    delete coords from each spec in each list.
+    """
+    config = deepcopy(config)
+    for key in keys:
+        for spec in config[key]:
+            try:
+                del spec['coords']
+            except KeyError:
+                pass
     return config

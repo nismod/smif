@@ -166,21 +166,16 @@ class TestNarratives():
 class TestResults():
     """Read/write results and prepare warm start
     """
-    def test_read_write_results(self, handler):
-        results_in = np.array(1, dtype=float)
+    def test_read_write_results(self, handler, sample_results):
+        output_spec = sample_results.spec
         modelrun_name = 'test_modelrun'
         model_name = 'energy'
         timestep = 2010
-        output_spec = Spec(name='energy_use', dtype='float')
 
-        da = DataArray(output_spec, results_in)
-
-        handler.write_results(da, modelrun_name, model_name, timestep)
+        handler.write_results(sample_results, modelrun_name, model_name, timestep)
         results_out = handler.read_results(modelrun_name, model_name, output_spec, timestep)
 
-        expected = DataArray(output_spec, results_in)
-
-        assert results_out == expected
+        assert results_out == sample_results
 
     def test_warm_start(self, handler):
         """Warm start should return None if no results are available
@@ -188,16 +183,13 @@ class TestResults():
         start = handler.prepare_warm_start('test_modelrun')
         assert start is None
 
-    def test_read_results_raises(self, handler):
-        results_in = np.array(1)
+    def test_read_results_raises(self, handler, sample_results):
         modelrun_name = 'test_modelrun'
         model_name = 'energy'
         timestep = 2010
-        output_spec = Spec(name='energy_use', dtype='float')
+        output_spec = sample_results.spec
 
-        da = DataArray(output_spec, results_in)
-
-        handler.write_results(da, modelrun_name, model_name, timestep=timestep)
+        handler.write_results(sample_results, modelrun_name, model_name, timestep=timestep)
 
         with raises(SmifDataNotFoundError):
             handler.read_results(modelrun_name, model_name, output_spec, 2020)
