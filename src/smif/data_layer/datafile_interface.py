@@ -62,6 +62,11 @@ class YamlConfigStore(ConfigStore):
 
             self.config_folders[folder] = dirname
 
+        # cache results of reading project_config (invalidate on write)
+        self._project_config_cache_invalid = True
+        # MUST ONLY access through self.read_project_config()
+        self._project_config_cache = None
+        
         # ensure project config file exists
         try:
             self.read_project_config()
@@ -69,10 +74,6 @@ class YamlConfigStore(ConfigStore):
             # write empty config if none found
             self._write_project_config({})
 
-        # cache results of reading project_config (invalidate on write)
-        self._project_config_cache_invalid = True
-        # MUST ONLY access through self.read_project_config()
-        self._project_config_cache = None
 
     def read_project_config(self):
         """Read the project configuration
