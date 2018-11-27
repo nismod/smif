@@ -431,6 +431,7 @@ class CSVDataStore(DataStore):
     """
     def __init__(self, base_folder):
         super().__init__()
+        self.logger = getLogger(__name__)
         self.base_folder = str(base_folder)
         self.data_folder = str(os.path.join(self.base_folder, 'data'))
         self.data_folders = {}
