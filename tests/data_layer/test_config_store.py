@@ -12,7 +12,7 @@ from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 @fixture(
     params=[
         'memory',
-        param('text_file', marks=mark.skip),
+        'text_file',
         param('database', marks=mark.skip)
     ])
 def init_handler(request, setup_empty_folder_structure):
@@ -85,6 +85,10 @@ class TestModelRuns:
         actual = handler.read_model_runs()
         expected = [minimal_model_run, new_model_run]
         assert sorted_by_name(actual) == sorted_by_name(expected)
+
+    def test_write_existing_model_run(self, handler):
+        with raises(SmifDataExistsError):
+            handler.write_model_run(handler.read_model_run('test_modelrun'))
 
     def test_update_model_run(self, handler):
         updated_model_run = {
@@ -170,6 +174,10 @@ class TestSectorModel():
         expected = [get_sector_model_no_coords, new_sector_model]
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
+    def test_write_existing_model(self, handler, get_sector_model_no_coords):
+        with raises(SmifDataExistsError):
+            handler.write_model(handler.read_model(get_sector_model_no_coords['name']))
+
     def test_update_model(self, handler, get_sector_model_no_coords):
         name = get_sector_model_no_coords['name']
         expected = copy(get_sector_model_no_coords)
@@ -221,6 +229,10 @@ class TestScenarios():
         actual = handler.read_scenario('fertility')
         expected = another_scenario
         assert actual == expected
+
+    def test_write_existing_scenario(self, handler, get_sector_model_no_coords):
+        with raises(SmifDataExistsError):
+            handler.write_scenario(handler.read_scenario('mortality'))
 
     def test_update_scenario(self, scenario_no_coords, handler):
         another_scenario = {

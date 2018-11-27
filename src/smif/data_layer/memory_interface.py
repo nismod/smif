@@ -36,7 +36,10 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataNotFoundError("sos_model_run '%s' not found" % (model_run_name))
 
     def write_model_run(self, model_run):
-        self._model_runs[model_run['name']] = model_run
+        if model_run['name'] not in self._model_runs:
+            self._model_runs[model_run['name']] = model_run
+        else:
+            raise SmifDataExistsError("model_run '%s' already exists" % (model_run['name']))
 
     def update_model_run(self, model_run_name, model_run):
         self._model_runs[model_run_name] = model_run
@@ -85,7 +88,10 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
 
     def write_model(self, model):
-        self._models[model['name']] = model
+        if model['name'] not in self._models:
+            self._models[model['name']] = model
+        else:
+            raise SmifDataExistsError("model '%s' already exists" % (model['name']))
 
     def update_model(self, model_name, model):
         self._models[model_name] = model
@@ -107,8 +113,11 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
 
     def write_scenario(self, scenario):
-        scenario = _variant_list_to_dict(scenario)
-        self._scenarios[scenario['name']] = scenario
+        if scenario['name'] not in self._scenarios:
+            scenario = _variant_list_to_dict(scenario)
+            self._scenarios[scenario['name']] = scenario
+        else:
+            raise SmifDataExistsError("scenario '%s' already exists" % (scenario['name']))
 
     def update_scenario(self, scenario_name, scenario):
         scenario = _variant_list_to_dict(scenario)

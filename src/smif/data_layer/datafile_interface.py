@@ -131,6 +131,7 @@ class YamlConfigStore(ConfigStore):
     def write_model_run(self, model_run):
         config = copy.copy(model_run)
         config['strategies'] = []
+        _assert_file_not_exists(self.config_folders, 'model_run', model_run['name'])
         _write_yaml_file(self.config_folders['model_runs'], config['name'], config)
 
     def update_model_run(self, model_run_name, model_run):
@@ -193,6 +194,7 @@ class YamlConfigStore(ConfigStore):
             model['interventions'] = []
 
         model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
+        _assert_file_not_exists(self.config_folders, 'sector_model', model['name'])
         _write_yaml_file(
             self.config_folders['sector_models'], model['name'], model)
 
@@ -233,6 +235,7 @@ class YamlConfigStore(ConfigStore):
 
     def write_scenario(self, scenario):
         scenario = _skip_coords(scenario, ['provides'])
+        _assert_file_not_exists(self.config_folders, 'scenario', scenario['name'])
         _write_yaml_file(self.config_folders['scenarios'], scenario['name'], scenario)
 
     def update_scenario(self, scenario_name, scenario):
