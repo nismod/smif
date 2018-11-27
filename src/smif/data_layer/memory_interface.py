@@ -48,7 +48,10 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataNotFoundError("model_run '%s' not found" % (model_run_name))
 
     def delete_model_run(self, model_run_name):
-        del self._model_runs[model_run_name]
+        try:
+            del self._model_runs[model_run_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("model_run '%s' not found" % (model_run_name))
     # endregion
 
     # region System-of-systems models
@@ -103,7 +106,10 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
 
     def delete_model(self, model_name):
-        del self._models[model_name]
+        try:
+            del self._models[model_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("model '%s' not found" % (model_name))
     # endregion
 
     # region Scenarios
@@ -133,7 +139,10 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
 
     def delete_scenario(self, scenario_name):
-        del self._scenarios[scenario_name]
+        try:
+            del self._scenarios[scenario_name]
+        except(KeyError):
+            raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
     # endregion
 
     # region Scenario Variants

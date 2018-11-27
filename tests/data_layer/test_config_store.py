@@ -106,6 +106,10 @@ class TestModelRuns:
         handler.delete_model_run('test_modelrun')
         assert handler.read_model_runs() == []
 
+    def test_delete_non_existing_model_run(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.delete_model_run('non_existing')
+
 
 class TestSosModel:
     """Read, write, update, delete SosModel config
@@ -200,6 +204,10 @@ class TestSectorModel():
         actual = handler.read_models()
         assert actual == expected
 
+    def test_delete_non_existing_model(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.delete_model('non_existing')
+
 
 class TestStrategies():
     """Read strategies data
@@ -259,6 +267,10 @@ class TestScenarios():
     def test_delete_scenario(self, handler):
         handler.delete_scenario('mortality')
         assert handler.read_scenarios() == []
+
+    def test_delete_non_existing_scenario(self, handler):
+        with raises(SmifDataNotFoundError):
+            handler.delete_scenario('non_existing')
 
     def test_read_scenario_variants(self, handler, scenario_no_coords):
         actual = handler.read_scenario_variants('mortality')

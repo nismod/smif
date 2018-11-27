@@ -142,6 +142,7 @@ class YamlConfigStore(ConfigStore):
         self._overwrite_model_run(model_run_name, config)
 
     def delete_model_run(self, model_run_name):
+        _assert_file_exists(self.config_folders, 'model_run', model_run_name)
         os.remove(os.path.join(self.config_folders['model_runs'], model_run_name + '.yml'))
     # endregion
 
@@ -221,6 +222,7 @@ class YamlConfigStore(ConfigStore):
             self.config_folders['sector_models'], model['name'], model)
 
     def delete_model(self, model_name):
+        _assert_file_exists(self.config_folders, 'sector_model', model_name)
         os.remove(
             os.path.join(self.config_folders['sector_models'], model_name + '.yml'))
     # endregion
@@ -246,6 +248,7 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['scenarios'], scenario['name'], scenario)
 
     def delete_scenario(self, scenario_name):
+        _assert_file_exists(self.config_folders, 'scenario', scenario_name)
         os.remove(
             os.path.join(self.config_folders['scenarios'], "{}.yml".format(scenario_name)))
     # endregion
