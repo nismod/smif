@@ -111,7 +111,7 @@ class YamlConfigStore(ConfigStore):
 
     # region Model runs
     def read_model_runs(self):
-        names = self._read_filenames_in_dir(self.config_folders['model_runs'], '.yml')
+        names = _read_filenames_in_dir(self.config_folders['model_runs'], '.yml')
         sorted_names = sorted(names)
         model_runs = [self.read_model_run(name) for name in sorted_names]
         return model_runs
@@ -480,7 +480,7 @@ class CSVDataStore(DataStore):
     def write_narrative_variant_data(self, sos_model_name, narrative_name,
                                      variant_name, data_array, timestep=None):
         spec = data_array.spec
-        data = self.ndarray_to_data_list(data_array, timestep=timestep)
+        data = ndarray_to_data_list(data_array, timestep=timestep)
         variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
         filepath = self._get_variant_filepath(variant, spec.name, 'narratives')
         self._write_variant_data_csv(filepath, data, spec, timestep)
@@ -489,16 +489,16 @@ class CSVDataStore(DataStore):
         param = self.read_model_parameter(model_name, parameter_name)
         filepath = self._default_parameter_filepath(model_name, param)
         spec = Spec.from_dict(param)
-        data_list = self.ndarray_to_data_list(data)
-        self._write_data_to_csv(filepath, data_list, spec)
+        data_list = ndarray_to_data_list(data)
+        _write_data_to_csv(filepath, data_list, spec)
 
     def read_model_parameter_default(self, model_name, parameter_name):
         param = self.read_model_parameter(model_name, parameter_name)
         filepath = self._default_parameter_filepath(model_name, param)
         spec = Spec.from_dict(param)
-        data_list = self._get_data_from_csv(filepath)
+        data_list = _get_data_from_csv(filepath)
         try:
-            data = self.data_list_to_ndarray(data_list, spec)
+            data = data_list_to_ndarray(data_list, spec)
         except SmifDataMismatchError as ex:
             raise SmifDataMismatchError(
                 "Reading default parameter values for {}:{}. {}".format(
@@ -534,7 +534,7 @@ class CSVDataStore(DataStore):
     def _read_variant_data(self, variant, variable, scenarios_or_narrative, spec, timestep):
         filepath = self._get_variant_filepath(variant, variable, scenarios_or_narrative)
         try:
-            data = self._get_data_from_csv(filepath)
+            data = _get_data_from_csv(filepath)
         except FileNotFoundError:
             raise SmifDataNotFoundError
         if timestep:
@@ -544,7 +544,7 @@ class CSVDataStore(DataStore):
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
         try:
-            da = self.data_list_to_ndarray(data, spec)
+            da = data_list_to_ndarray(data, spec)
         except SmifDataMismatchError as ex:
             msg = "DataMismatch in scenario: {}:{}.{}, from {}"
             raise SmifDataMismatchError(
@@ -557,9 +557,9 @@ class CSVDataStore(DataStore):
         if timestep:
             fieldnames = ('timestep', ) + tuple(spec.dims) + (spec.name, )
             self.logger.debug("%s, %s", fieldnames, data)
-            self._write_data_to_csv(filepath, data, fieldnames=fieldnames)
+            _write_data_to_csv(filepath, data, fieldnames=fieldnames)
         else:
-            self._write_data_to_csv(filepath, data, spec=spec)
+            _write_data_to_csv(filepath, data, spec=spec)
 
     # region Interventions
     def read_interventions(self, model_name):
@@ -620,7 +620,7 @@ class CSVDataStore(DataStore):
         """
         _, ext = os.path.splitext(filename)
         if ext == '.csv':
-            data = self._get_data_from_csv(os.path.join(dirname, filename))
+            data = _get_data_from_csv(os.path.join(dirname, filename))
             try:
                 data = self._reshape_csv_interventions(data)
             except ValueError:
@@ -705,7 +705,7 @@ class CSVDataStore(DataStore):
 
         return path
 
-    def _read_state_file(fname):
+    def _read_state_file(self, fname):
         """Read list of {name, build_year} dicts from state file
         """
         with open(fname, 'r') as file_handle:
@@ -729,7 +729,7 @@ class CSVDataStore(DataStore):
     def read_coefficients(self, source_spec, destination_spec):
         results_path = self._get_coefficients_path(source_spec, destination_spec)
         try:
-            return self._get_data_from_native_file(results_path)
+            return _get_data_from_native_file(results_path)
         except (FileNotFoundError, pa.lib.ArrowIOError):
             msg = "Could not find the coefficients file for %s to %s"
             self.logger.warning(msg, source_spec, destination_spec)
@@ -737,7 +737,7 @@ class CSVDataStore(DataStore):
 
     def write_coefficients(self, source_spec, destination_spec, data):
         results_path = self._get_coefficients_path(source_spec, destination_spec)
-        self._write_data_to_native_file(results_path, data)
+        _write_data_to_native_file(results_path, data)
 
     def _get_coefficients_path(self, source_spec, destination_spec):
         path = os.path.join(
@@ -763,10 +763,10 @@ class CSVDataStore(DataStore):
 
         try:
             if self.storage_format == 'local_csv':
-                data = self._get_data_from_csv(results_path)
-                return self.data_list_to_ndarray(data, output_spec)
+                data = _get_data_from_csv(results_path)
+                return data_list_to_ndarray(data, output_spec)
             elif self.storage_format == 'local_binary':
-                data = self._get_data_from_native_file(results_path)
+                data = _get_data_from_native_file(results_path)
                 return DataArray(output_spec, data)
             else:
                 msg = "Unrecognised storage format: %s"
@@ -795,10 +795,10 @@ class CSVDataStore(DataStore):
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
 
         if self.storage_format == 'local_csv':
-            _data = self.ndarray_to_data_list(data_array)
-            self._write_data_to_csv(results_path, _data, spec=spec)
+            _data = ndarray_to_data_list(data_array)
+            _write_data_to_csv(results_path, _data, spec=spec)
         elif self.storage_format == 'local_binary':
-            self._write_data_to_native_file(results_path, data_array.as_ndarray())
+            _write_data_to_native_file(results_path, data_array.as_ndarray())
         else:
             raise NotImplementedError("Unrecognised storage format: %s" % self.storage_format)
 
@@ -998,7 +998,7 @@ class CSVDataStore(DataStore):
         -------
         ~smif.metadata.spec.Spec
         """
-        spec = self._pick_from_list(config_list, variable_name)
+        spec = _pick_from_list(config_list, variable_name)
         if spec is not None:
             self._set_item_coords(spec)
             return Spec.from_dict(spec)
