@@ -665,7 +665,7 @@ class TestScenarios:
         """Should read a scenario definition
         """
         expected = sample_scenarios[0]
-        actual = config_handler.read_scenario(expected['name'], skip_coords=True)
+        actual = config_handler.read_scenario(expected['name'])
         assert actual == expected
 
     def test_scenario_data(self, setup_folder_structure, config_handler,

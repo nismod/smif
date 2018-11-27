@@ -51,11 +51,11 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         _check_exist('sos_model', arg)
         return get_sos_model
 
-    def read_sector_model(arg, skip_coords=False):
+    def read_sector_model(arg):
         _check_exist('sector_model', arg)
         return get_sector_model
 
-    def read_scenario(arg, skip_coords=False):
+    def read_scenario(arg):
         _check_exist('scenario', arg)
         return get_scenario
 
@@ -411,7 +411,7 @@ def test_get_sector_model(client, get_sector_model):
     """
     name = get_sector_model['name']
     response = client.get('/api/v1/sector_models/{}'.format(name))
-    current_app.config.data_interface.read_sector_model.assert_called_with(name, skip_coords=True)
+    current_app.config.data_interface.read_sector_model.assert_called_with(name)
 
     data = parse_json(response)
     assert data['data'] == get_sector_model
@@ -422,7 +422,8 @@ def test_get_sector_model_missing(client):
     """
     response = client.get('/api/v1/sector_models/does_not_exist')
     data = parse_json(response)
-    assert data['error']['SmifDataNotFoundError'] == ["sector_model 'does_not_exist' not found"]
+    assert data['error']['SmifDataNotFoundError'] == \
+        ["sector_model 'does_not_exist' not found"]
 
 
 def test_post_sector_model(client, get_sector_model):
@@ -486,7 +487,7 @@ def test_get_scenario(client, get_scenario):
     """
     name = get_scenario['name']
     response = client.get('/api/v1/scenarios/{}'.format(name))
-    current_app.config.data_interface.read_scenario.assert_called_with(name, skip_coords=True)
+    current_app.config.data_interface.read_scenario.assert_called_with(name)
 
     assert response.status_code == 200
     data = parse_json(response)
