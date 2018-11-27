@@ -141,7 +141,7 @@ class Store():
     # endregion
 
     # region Models
-    def read_models(self):
+    def read_models(self, skip_coords=False):
         """Read all models
 
         Returns
@@ -150,7 +150,7 @@ class Store():
         """
         return self.config_store.read_models()
 
-    def read_model(self, model_name):
+    def read_model(self, model_name, skip_coords=False):
         """Read a model
 
         Parameters
@@ -193,7 +193,7 @@ class Store():
     # endregion
 
     # region Scenarios
-    def read_scenarios(self):
+    def read_scenarios(self, skip_coords=False):
         """Read scenarios
 
         Returns
@@ -202,7 +202,7 @@ class Store():
         """
         return self.config_store.read_scenarios()
 
-    def read_scenario(self, scenario_name):
+    def read_scenario(self, scenario_name, skip_coords=False):
         """Read a scenario
 
         Parameters
