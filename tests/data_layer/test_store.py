@@ -183,27 +183,33 @@ class TestStoreData():
             sos_model_name, narrative_name, variant_name, param_name)
         assert actual == narrative_variant_data
 
-    @mark.xfail
     def test_interventions(self, store, interventions):
         # write
         store.write_interventions('model_name', interventions)
         # read
         assert store.read_interventions('model_name') == interventions
 
-    @mark.xfail
-    def test_initial_conditions(self, store, initial_conditions):
+    def test_initial_conditions(self, store, initial_conditions, get_sos_model,
+                                minimal_model_run):
+        store.write_sos_model(get_sos_model)
+        store.write_model_run(minimal_model_run)
+        model_run_name = minimal_model_run['name']
+        sample_model_name = next(iter(get_sos_model['sector_models']))
+        # write empty defaults
+        for model_name in get_sos_model['sector_models']:
+            store.write_initial_conditions(model_name, [])
         # write
-        store.write_initial_conditions('model_name', initial_conditions)
+        store.write_initial_conditions(sample_model_name, initial_conditions)
         # read
-        assert store.read_initial_conditions('model_name') == initial_conditions
-        # read all
-        assert store.read_all_initial_conditions() == initial_conditions
+        assert store.read_initial_conditions(sample_model_name) == initial_conditions
+        # read all for a model run
+        assert store.read_all_initial_conditions(model_run_name) == initial_conditions
 
     def test_state(self, store, state):
         # write
-        store.write_state(state, 'modelrun_name', 0, 0)
+        store.write_state(state, 'model_run_name', 0, 0)
         # read
-        assert store.read_state('modelrun_name', 0, 0) == state
+        assert store.read_state('model_run_name', 0, 0) == state
 
     def test_conversion_coefficients(self, store, conversion_coefficients,
                                      conversion_source_spec, conversion_sink_spec):

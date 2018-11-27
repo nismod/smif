@@ -762,7 +762,8 @@ def remap_months():
 def minimal_model_run():
     return {
         'name': 'test_modelrun',
-        'timesteps': [2010, 2015, 2010]
+        'timesteps': [2010, 2015, 2010],
+        'sos_model': 'energy'
     }
 
 

@@ -191,7 +191,7 @@ class MemoryDataStore(DataStore):
         self._scenario_data = OrderedDict()
         self._narrative_data = OrderedDict()
         self._interventions = OrderedDict()
-        self._initial_conditions = []
+        self._initial_conditions = OrderedDict()
         self._state = OrderedDict()
         self._model_parameter_defaults = OrderedDict()
         self._coefficients = OrderedDict()
@@ -230,8 +230,14 @@ class MemoryDataStore(DataStore):
     def read_interventions(self, model_name):
         return self._interventions[model_name]
 
+    def write_interventions(self, model_name, interventions):
+        self._interventions[model_name] = interventions
+
     def read_initial_conditions(self, model_name):
         return self._initial_conditions[model_name]
+
+    def write_initial_conditions(self, model_name, initial_conditions):
+        self._initial_conditions[model_name] = initial_conditions
     # endregion
 
     # region State

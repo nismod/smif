@@ -547,15 +547,36 @@ class Store():
         """
         return self.data_store.read_interventions(model_name)
 
+    def write_interventions(self, model_name, interventions):
+        """Write interventions data for a model
+
+        Parameters
+        ----------
+        dict[str, dict]
+            A dict of intervention dictionaries containing intervention
+            attributes keyed by intervention name
+        """
+        self.data_store.write_interventions(model_name, interventions)
+
     def read_initial_conditions(self, model_name):
         """Read historical interventions for `model_name`
 
         Returns
         -------
         list[dict]
-            A list of historical interventions
+            A list of historical interventions, with keys 'name' and 'build_year'
         """
-        return self.data_store.read_interventions(model_name)
+        return self.data_store.read_initial_conditions(model_name)
+
+    def write_initial_conditions(self, model_name, initial_conditions):
+        """Write historical interventions for a model
+
+        Parameters
+        ----------
+        list[dict]
+            A list of historical interventions, with keys 'name' and 'build_year'
+        """
+        self.data_store.write_initial_conditions(model_name, initial_conditions)
 
     def read_all_initial_conditions(self, model_run_name):
         """A list of all historical interventions
@@ -566,12 +587,12 @@ class Store():
         """
         historical_interventions = []
         model_run = self.read_model_run(model_run_name)
-        sos_model_name = model_run.sos_model.name
+        sos_model_name = model_run['sos_model']
         sos_model = self.read_sos_model(sos_model_name)
-        sector_models = sos_model.sector_models
-        for sector_model in sector_models:
+        sector_model_names = sos_model['sector_models']
+        for sector_model_name in sector_model_names:
             historical_interventions.extend(
-                self.read_initial_conditions(sector_model.name)
+                self.read_initial_conditions(sector_model_name)
             )
         return historical_interventions
     # endregion
