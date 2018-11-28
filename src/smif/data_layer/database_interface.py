@@ -90,6 +90,7 @@ class DbConfigStore(ConfigStore):
     def read_scenarios(self):
         """Read list of scenarios
 
+
          Returns
         -------
         list
@@ -110,6 +111,11 @@ class DbConfigStore(ConfigStore):
     def read_scenario(self, scenario_name):
         """Read a scenario
 
+        Argument
+        --------
+        scenario_name: string
+            The name of the scenario to read
+
          Returns
         -------
         dict
@@ -129,6 +135,12 @@ class DbConfigStore(ConfigStore):
 
     def write_scenario(self, scenario):
         """Write a scenario
+
+        Argument
+        --------
+        scenario: dict
+            A scenario definition
+
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -146,12 +158,20 @@ class DbConfigStore(ConfigStore):
 
     def update_scenario(self, scenario_name, scenario):
         """Update a scenario
+
+        Argument
+        --------
+        scenario_name: string
+            The name of the scenario to update
+        scenario: dict
+            The project configuration
+
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # run sql call
-        cursor.execute('UPDATE scenarios SET description = %s', [scenario['description']])
+        cursor.execute('UPDATE scenarios SET description = %s WHERE name=%s', [scenario['description'], scenario_name])
 
         # commit changes to database
         self.database_connection.commit()
@@ -160,6 +180,11 @@ class DbConfigStore(ConfigStore):
 
     def delete_scenario(self, scenario_name):
         """Delete a scenario
+
+        Argument
+        --------
+        scenario_name: string
+            The name of the scenario to delete
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
