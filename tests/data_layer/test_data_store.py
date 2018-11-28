@@ -13,7 +13,7 @@ from smif.metadata import Spec
 @fixture(
     params=[
         'memory',
-        param('file', marks=mark.skip),
+        'file',
         param('database', marks=mark.skip)]
     )
 def init_handler(request, setup_empty_folder_structure):
@@ -93,10 +93,17 @@ class TestScenarios():
         spec = Spec.from_dict(scenario['provides'][0])
         da = DataArray(spec, data)
 
-        handler.write_scenario_variant_data('mortality', 'low', da, 2010)
+        handler.write_scenario_variant_data(
+            'mortality',
+            scenario['variants'][0],
+            da, 2010)
 
-        actual = handler.read_scenario_variant_data('mortality', 'low',
-                                                    'mortality', 2010)
+        actual = handler.read_scenario_variant_data(
+            'mortality',
+            scenario['variants'][0],
+            'mortality',
+            spec,
+            2010)
         assert actual == da
 
 

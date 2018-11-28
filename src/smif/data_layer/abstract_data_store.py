@@ -12,14 +12,17 @@ class DataStore(metaclass=ABCMeta):
     """
     # region Scenario Variant Data
     @abstractmethod
-    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
+    def read_scenario_variant_data(self, scenario_name, variant, variable, spec,
+                                   timestep=None):
+
         """Read scenario data file
 
         Parameters
         ----------
         scenario_name : str
-        variant_name : str
+        variant : str
         variable : str
+        spec : ~smif.metadata.spec.Spec
         timestep : int (optional)
             If None, read data for all timesteps
 
@@ -29,13 +32,13 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
+    def write_scenario_variant_data(self, scenario_name, variant, data, timestep=None):
         """Write scenario data file
 
         Parameters
         ----------
         scenario_name : str
-        variant_name : str
+        variant : dict
         data : ~smif.data_layer.data_array.DataArray
         timestep : int (optional)
             If None, write data for all timesteps

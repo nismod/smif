@@ -473,8 +473,9 @@ class Store():
         -------
         data : ~smif.data_layer.data_array.DataArray
         """
+        variant = self.read_scenario_variant(scenario_name, variant_name)
         return self.data_store.read_scenario_variant_data(
-            scenario_name, variant_name, variable, timestep)
+            scenario_name, variant, variable, timestep)
 
     def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
         """Write scenario data file
@@ -487,8 +488,8 @@ class Store():
         timestep : int (optional)
             If None, write data for all timesteps
         """
-        self.data_store.write_scenario_variant_data(
-            scenario_name, variant_name, data, timestep)
+        variant = self.read_scenario_variant(scenario_name, variant_name)
+        self.data_store.write_scenario_variant_data(scenario_name, variant, data, timestep)
     # endregion
 
     # region Narrative Data
