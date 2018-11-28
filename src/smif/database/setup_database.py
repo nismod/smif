@@ -83,7 +83,8 @@ def main():
 	#subprocess.run(['sudo', 'sh', config_dir + '/provision-db.sh'])
 
 	# build the database if it does not exist
-	subprocess.run(['psql', '-U', 'vagrant', '-d', 'nismod_smif_conf', '-q', '-c', 'CREATE DATABASE IF DOES NOT EXIST nismod_smif_config'])
+	cmd = """psql -U vagrant -tc "SELECT 1 FROM pg_database WHERE datname = 'nismod_smif_config';" | grep -q 1 || psql -U vagrant -c "CREATE DATABASE nismod_smif_config;" """
+	subprocess.run(cmd, shell=True)
 
 	# run migrations - delete existing relations than add new set
 	# run the migrations - down first in case anything exists already
