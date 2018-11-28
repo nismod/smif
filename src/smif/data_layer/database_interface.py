@@ -89,9 +89,14 @@ class DbConfigStore(ConfigStore):
     # region Scenarios
     def read_scenarios(self):
         """Read list of scenarios
+
+         Returns
+        -------
+        list
+            A list of scenarios as dictionary's
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
         cursor.execute('SELECT * FROM scenarios')
@@ -104,9 +109,14 @@ class DbConfigStore(ConfigStore):
 
     def read_scenario(self, scenario_name):
         """Read a scenario
+
+         Returns
+        -------
+        dict
+            A scenario definition
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
         cursor.execute('SELECT * FROM scenarios WHERE name=%s', [scenario_name])
@@ -159,7 +169,7 @@ class DbConfigStore(ConfigStore):
 
         # commit changes to database
         self.database_connection.commit()
-        
+
         return
     # endregion
 
