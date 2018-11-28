@@ -90,7 +90,6 @@ class DbConfigStore(ConfigStore):
     def read_scenarios(self):
         """Read list of scenarios
 
-
          Returns
         -------
         list
@@ -248,6 +247,10 @@ class DbConfigStore(ConfigStore):
         variant_name: string
             The name of scenario variant to return
 
+        Returns
+        -------
+        dict
+            A scenario variant definition
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -256,10 +259,10 @@ class DbConfigStore(ConfigStore):
         cursor.execute('SELECT * FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s', [scenario_name, variant_name])
 
         # get returned data
-        scenario_variants = cursor.fetchall()
+        scenario_variant = cursor.fetchall()
 
         # return data to user
-        return scenario_variants
+        return scenario_variant
 
     def write_scenario_variant(self, scenario_name, variant):
         """Write scenario variant
@@ -270,13 +273,18 @@ class DbConfigStore(ConfigStore):
             The name of the scenario the variant is associated with
         variant: dict
             The variant definition
+
+        Returns
+        -------
+        integer
+            The id of the added scenario variant
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # here is a dependency on the given scenario name already existing
         # - this can be enforced in the database by a foreign key, but should probably check here
-        # - would also enable me to get the scenario id
+        # - would also enable access to the scenario id
         cursor.execute('SELECT id FROM scenarios WHERE name=%s', [scenario_name])
 
         # get returned data
@@ -322,6 +330,12 @@ class DbConfigStore(ConfigStore):
             The name of the scenario the variant to be deleted is associated with
         variant_name: string
             The name of the variant to be deleted
+
+        Returns
+        -------
+        integer
+            The number of rows deleted
+
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -332,7 +346,11 @@ class DbConfigStore(ConfigStore):
         # commit changes to database
         self.database_connection.commit()
 
-        return
+        # get the number of rows deleted and return
+        affected_rows = cursor.rowcount
+
+        return affected_rows
+
     # endregion
 
     # region Narratives
