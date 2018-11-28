@@ -189,11 +189,25 @@ class DbConfigStore(ConfigStore):
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        # run sql call
-        cursor.execute('DELETE FROM scenarios WHERE name=%s', [scenario_name])
+        # check passed scenario exists
+        cursor.execute('SELECT id FROM scenarios WHERE name=%s;', [scenario_name])
 
-        # commit changes to database
-        self.database_connection.commit()
+        # get returned data - scenario id
+        scenario_id = cursor.fethall()
+
+        if scenario_id is not None:
+
+            # need to check for and delete any scenario variants that are associated with this modelurn
+            cursor.execute('DELETE FROM scenario_variants WHERE scenario_name=%s;', [scenario_name])
+
+            # commit changes to database
+            self.database_connection.commit()
+
+            # run sql call
+            cursor.execute('DELETE FROM scenarios WHERE name=%s', [scenario_name])
+
+            # commit changes to database
+            self.database_connection.commit()
 
         return
     # endregion
