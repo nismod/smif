@@ -528,15 +528,40 @@ def sample_scenarios():
             'variants': [
                 {
                     'name': 'High Population (ONS)',
-                    'description': 'The High ONS Forecast for UK population out to 2050'
+                    'description': 'The High ONS Forecast for UK population out to 2050',
+                    'data': {
+                        'population_count': 'population_high.csv'
+                    }
                 },
                 {
                     'name': 'Low Population (ONS)',
-                    'description': 'The Low ONS Forecast for UK population out to 2050'
+                    'description': 'The Low ONS Forecast for UK population out to 2050',
+                    'data': {
+                        'population_count': 'population_low.csv'
+                    }
                 },
             ],
         },
     ]
+
+
+@fixture
+def sample_scenario_data(scenario, get_sector_model, energy_supply_sector_model,
+                         water_supply_sector_model):
+    scenario_data = {}
+
+    for scenario in [scenario]:
+        for variant in scenario['variants']:
+            for data_key, data_value in variant['data'].items():
+                spec = Spec.from_dict(
+                    [provides for provides in scenario['provides']
+                     if provides['name'] == data_key][0])
+                nda = np.random.random(spec.shape)
+                da = DataArray(spec, nda)
+                key = (scenario['name'], variant['name'], data_key)
+                scenario_data[key] = da
+
+    return scenario_data
 
 
 @fixture

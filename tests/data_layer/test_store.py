@@ -177,8 +177,25 @@ class TestStoreMetadata():
 
 
 class TestStoreData():
-    def test_scenario_variant_data(self, store, state):
-        pass
+    def test_scenario_variant_data(self, store, sample_dimensions, scenario,
+                                   sample_scenario_data):
+        # setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_scenario(scenario)
+        # pick out single sample
+        key = next(iter(sample_scenario_data))
+        scenario_name, variant_name, variable = key
+        scenario_variant_data = sample_scenario_data[key]
+        # write
+        store.write_scenario_variant_data(
+            scenario_name, variant_name, scenario_variant_data
+        )
+        # read
+        actual = store.read_scenario_variant_data(
+            scenario_name, variant_name, variable
+        )
+        assert actual == scenario_variant_data
 
     def test_narrative_data(self, store, sample_narrative_data):
         # pick out single sample
