@@ -263,13 +263,13 @@ class DbConfigStore(ConfigStore):
         # here is a dependency on the given scenario name already existing
         # - this can be enforced in the database by a foreign key, but should probably check here
         # - would also enable me to get the scenario id
-        cursor.execute('SELECT id FROM scenarios WHERE scenario_name=%s', [scenario_name])
+        cursor.execute('SELECT id FROM scenarios WHERE name=%s', [scenario_name])
 
         # get returned data
         scenario_id = cursor.fetchone()
 
         # run sql call
-        cursor.execute('INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s) RETURNING id;', [variant['scenario_name'], variant['variant_name'], scenario_id[0]])
+        cursor.execute('INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;', [variant['scenario_name'], variant['variant_name'], scenario_id[0]])
 
         # commit changes to database
         self.database_connection.commit()
