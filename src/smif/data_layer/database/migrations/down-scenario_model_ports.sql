@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS scenario_model_ports;
