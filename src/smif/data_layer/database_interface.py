@@ -197,7 +197,7 @@ class DbConfigStore(ConfigStore):
 
         if len(scenario_id) > 0:
 
-            # need to check for and delete any scenario variants that are associated with this modelurn
+            # need to check for and delete any scenario variants that are associated with this scenario
             cursor.execute('DELETE FROM scenario_variants WHERE scenario_name=%s;', [scenario_name])
 
             # commit changes to database
@@ -208,7 +208,7 @@ class DbConfigStore(ConfigStore):
 
             # commit changes to database
             self.database_connection.commit()
-        
+
         return
     # endregion
 
