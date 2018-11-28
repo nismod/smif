@@ -9,9 +9,8 @@ from unittest.mock import call, patch
 
 import pytest
 import smif
-from pytest import fixture, mark
+from pytest import fixture
 from smif.cli import confirm, parse_arguments, setup_project_folder
-from smif.data_layer import DatafileInterface
 
 
 @fixture()
@@ -185,35 +184,3 @@ def test_verbose_debug_alt():
     """
     output = subprocess.run(['smif', '--verbose', '--verbose'], stderr=subprocess.PIPE)
     assert 'DEBUG' in str(output.stderr)
-
-
-class TestRunModelRunComponents():
-    @mark.xfail()
-    def test_get_narratives(self, tmp_sample_project):
-        """should load a list of narratives with parameter value data
-        """
-        config_dir = tmp_sample_project
-        handler = DatafileInterface(config_dir, 'local_csv')
-        actual = handler.read_narrative_variants('technology')
-
-        data = {
-            'energy_demand': {
-                'smart_meter_savings': 8
-            },
-            'water_supply': {
-                'clever_water_meter_savings': 8,
-                'per_capita_water_demand': 1.2
-            }
-        }
-        name = 'technology'
-        variant = 'High Tech Demand Side Management'
-        description = 'High penetration of SMART technology on the demand side'
-
-        narrative_variant = {
-            'name': name,
-            'variant': variant,
-            'description': description,
-        }
-        narrative_variant['data'] = data
-
-        assert actual == [narrative_variant]
