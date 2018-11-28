@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS sos_models_dependency;
+DROP TABLE IF EXISTS sos_model_dependency;
