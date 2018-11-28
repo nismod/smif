@@ -116,7 +116,7 @@ class DbConfigStore(ConfigStore):
         scenario_name: string
             The name of the scenario to read
 
-         Returns
+        Returns
         -------
         dict
             A scenario definition
@@ -200,19 +200,120 @@ class DbConfigStore(ConfigStore):
 
     # region Scenario Variants
     def read_scenario_variants(self, scenario_name):
-        raise NotImplementedError()
+        """Read scenario variants
+
+        Argument
+        --------
+        scenario_name: string
+            The name of the scenario name to return variants for
+
+        Returns
+        -------
+        dict
+            A list scenario variants as dictionaries
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # run sql call
+        cursor.execute('SELECT * FROM scenario_variants WHERE scenario_name=%s', [scenario_name])
+
+        # get returned data
+        scenario_variants = cursor.fetchall()
+
+        # return data to user
+        return scenario_variants
 
     def read_scenario_variant(self, scenario_name, variant_name):
-        raise NotImplementedError()
+        """Read scenario variants
+
+        Argument
+        --------
+        scenario_name: string
+            The name of the scenario
+        variant_name: string
+            The name of scenario variant to return
+
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # run sql call
+        cursor.execute('SELECT * FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s', [scenario_name, variant_name])
+
+        # get returned data
+        scenario_variants = cursor.fetchall()
+
+        # return data to user
+        return scenario_variants
 
     def write_scenario_variant(self, scenario_name, variant):
-        raise NotImplementedError()
+        """Write scenario variant
+
+        Argument
+        --------
+        scenario_name: string
+            The name of the scenario the variant is associated with
+        variant: dict
+            The variant definition
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # here is a dependency on the given scenario name already existing
+        # - this can be enforced in the database by a foreign key, but should probably check here
+        # - would also enable me to get the scenario id
+        cursor.execute('SELECT id FROM scenarios WHERE scenario_name=%s', [scenario_name])
+
+        # get returned data
+        scenario_id = cursor.fetchone()
+
+        # run sql call
+        cursor.execute('INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s) RETURNING id;', [variant['scenario_name'], variant['variant_name'], scenario_id[0]])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # get returned data
+        variant_id = cursor.fetchone()
+
+        return
 
     def update_scenario_variant(self, scenario_name, variant_name, variant):
+        """Update scenario variant
+
+        Argument
+        --------
+        scenario_name: string
+            The name of the scenario the variant is associated with
+        variant_name: string
+            The name of variant to be updated
+        variant: dict
+            The variant definition containing the data to be updated
+
+        """
         raise NotImplementedError()
 
     def delete_scenario_variant(self, scenario_name, variant_name):
-        raise NotImplementedError()
+        """"Delete scenario variant
+
+        Argument
+        --------
+        scenario_name: string
+            The name of the scenario the variant to be deleted is associated with
+        variant_name: string
+            The name of the variant to be deleted
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # run sql call
+        cursor.execute('DELETE FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s', [scenario_name, variant_name])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        return
     # endregion
 
     # region Narratives
