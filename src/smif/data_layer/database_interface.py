@@ -1,13 +1,40 @@
 """Database store implementations
 """
+# import psycopg2 to handel database transactions
+import psycopg2
+from psycopg2.extras import DictCursor
+
 from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
 
 
+def initiate_db_connection(host, user_name, database_name, port, password):
+    """Establish a database connection
+
+    Returns
+    -------
+    database_connection
+        An established connection to the database
+
+    """
+
+    # attempt to create the database connection
+    database_connection = psycopg2.connect("host=%s dbname=%s user=%s password=%s port=%s" % (host, database_name, user_name, password, port))
+
+    return database_connection
+
+
 class DbConfigStore(ConfigStore):
     """Database backend for config store
     """
+
+    def __init__(self, host, user, dbname, port, password):
+        """Initiate. Setup database connection.
+        """
+        # establish database connection
+        self.database_connection = initiate_db_connection(host, user, dbname, port, password)
+
     # region Model runs
     def read_model_runs(self):
         raise NotImplementedError()
@@ -61,19 +88,79 @@ class DbConfigStore(ConfigStore):
 
     # region Scenarios
     def read_scenarios(self):
-        raise NotImplementedError()
+        """Read list of scenarios
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # run sql call
+        cursor.execute('SELECT * FROM scenarios')
+
+        # get returned data
+        scenarios = cursor.fetchall()
+
+        # return data to user
+        return scenarios
 
     def read_scenario(self, scenario_name):
-        raise NotImplementedError()
+        """Read a scenario
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # run sql call
+        cursor.execute('SELECT * FROM scenarios WHERE name=%s', [scenario_name])
+
+        # get returned data
+        scenario = cursor.fetchone()
+
+        # return data to user
+        return scenario
 
     def write_scenario(self, scenario):
-        raise NotImplementedError()
+        """Write a scenario
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # run sql call
+        cursor.execute('INSERT INTO scenarios (name, description) VALUES (%s,%s) RETURNING id;', [scenario['name'], scenario['description']])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # get id of new scenario - checks it has been written in
+        scenario_id = cursor.fetchone()
+
+        return
 
     def update_scenario(self, scenario_name, scenario):
-        raise NotImplementedError()
+        """Update a scenario
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # run sql call
+        cursor.execute('UPDATE scenarios SET description = %s', [scenario['description']])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        return
 
     def delete_scenario(self, scenario_name):
-        raise NotImplementedError()
+        """Delete a scenario
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # run sql call
+        cursor.execute('DELETE FROM scenarios WHERE name=%s', [scenario_name])
+
+        # commit changes to database
+        self.database_connection.commit()
+        
+        return
     # endregion
 
     # region Scenario Variants
