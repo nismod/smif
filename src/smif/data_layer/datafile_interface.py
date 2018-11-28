@@ -473,15 +473,14 @@ class CSVDataStore(DataStore):
             self.data_folders[folder] = dirname
 
     # region Scenario Variant Data
-    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
+    def read_scenario_variant_data(self, scenario_name, variant, variable, spec,
+                                   timestep=None):
         # TODO pandas.read_csv
         return self._read_variant_data(variant, variable, 'scenarios', spec, timestep)
 
-    def write_scenario_variant_data(self, scenario_name, variant_name,
-                                    data_array, timestep=None):
+    def write_scenario_variant_data(self, scenario_name, variant, data_array, timestep=None):
         spec = data_array.spec
         data = ndarray_to_data_list(data_array, timestep=timestep)
-        variant = self.read_scenario_variant(scenario_name, variant_name)
         filepath = self._get_variant_filepath(variant, data_array.name, 'scenarios')
         self._write_variant_data_csv(filepath, data, spec, timestep)
     # endregion
@@ -538,6 +537,8 @@ class CSVDataStore(DataStore):
     # endregion
 
     def _get_variant_filepath(self, variant, variable, scenario_or_narrative):
+        print(variant)
+        print(variable)
         if 'data' not in variant or variable not in variant['data']:
             filename = '{}__{}.csv'.format(variable, variant['name'])
         else:
@@ -806,6 +807,9 @@ class CSVDataStore(DataStore):
 
         _data = ndarray_to_data_list(data_array)
         _write_data_to_csv(results_path, _data, spec=spec)
+
+    def available_results(self, modelrun_name):
+        return None
 
     def _results_exist(self, modelrun_name):
         """Checks whether modelrun results exists on the filesystem

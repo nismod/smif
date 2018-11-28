@@ -255,11 +255,17 @@ class MemoryDataStore(DataStore):
         self._results = OrderedDict()
 
     # region Scenario Variant Data
-    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
-        return self._scenario_data[(scenario_name, variant_name, variable, timestep)]
+    def read_scenario_variant_data(self, scenario_name, variant, variable, spec,
+                                   timestep=None):
+        key = (scenario_name, variant['name'], variable, timestep)
+        try:
+            return self._scenario_data[key]
+        except KeyError:
+            raise SmifDataNotFoundError
 
-    def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
-        self._scenario_data[(scenario_name, variant_name, data.name, timestep)] = data
+    def write_scenario_variant_data(self, scenario_name, variant, data, timestep=None):
+        key = (scenario_name, variant['name'], data.name, timestep)
+        self._scenario_data[key] = data
     # endregion
 
     # region Narrative Data
