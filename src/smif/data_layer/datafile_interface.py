@@ -537,8 +537,6 @@ class CSVDataStore(DataStore):
     # endregion
 
     def _get_variant_filepath(self, variant, variable, scenario_or_narrative):
-        print(variant)
-        print(variable)
         if 'data' not in variant or variable not in variant['data']:
             filename = '{}__{}.csv'.format(variable, variant['name'])
         else:

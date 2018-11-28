@@ -20,7 +20,7 @@ class DataStore(metaclass=ABCMeta):
         Parameters
         ----------
         scenario_name : str
-        variant : str
+        variant : dict
         variable : str
         spec : ~smif.metadata.spec.Spec
         timestep : int (optional)
