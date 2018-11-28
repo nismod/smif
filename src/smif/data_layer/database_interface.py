@@ -280,18 +280,23 @@ class DbConfigStore(ConfigStore):
         cursor.execute('SELECT id FROM scenarios WHERE name=%s', [scenario_name])
 
         # get returned data
-        scenario_id = cursor.fetchone()
+        scenario_id = cursor.fetchall()
 
-        # run sql call
-        cursor.execute('INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;', [variant['scenario_name'], variant['variant_name'], scenario_id[0]])
+        # if a scenario_id has been found
+        if len(scenario_id) == 1:
 
-        # commit changes to database
-        self.database_connection.commit()
+            # run sql call
+            cursor.execute('INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;', [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
 
-        # get returned data
-        variant_id = cursor.fetchone()
+            # commit changes to database
+            self.database_connection.commit()
 
-        return
+            # get returned data
+            variant_id = cursor.fetchone()
+
+            return variant_id
+        else:
+            return
 
     def update_scenario_variant(self, scenario_name, variant_name, variant):
         """Update scenario variant
