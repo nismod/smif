@@ -193,9 +193,9 @@ class DbConfigStore(ConfigStore):
         cursor.execute('SELECT id FROM scenarios WHERE name=%s;', [scenario_name])
 
         # get returned data - scenario id
-        scenario_id = cursor.fethall()
+        scenario_id = cursor.fetchall()
 
-        if scenario_id is not None:
+        if len(scenario_id) > 0:
 
             # need to check for and delete any scenario variants that are associated with this modelurn
             cursor.execute('DELETE FROM scenario_variants WHERE scenario_name=%s;', [scenario_name])
@@ -208,7 +208,7 @@ class DbConfigStore(ConfigStore):
 
             # commit changes to database
             self.database_connection.commit()
-
+        
         return
     # endregion
 
