@@ -177,8 +177,15 @@ class TestStoreMetadata():
 
 
 class TestStoreData():
-    def test_scenario_variant_data(self, store, state):
-        pass
+    def test_scenario_variant_data(self, store, sample_results):
+        da = sample_results
+        scenario = 'population'
+        variant = 'low'
+        timestep = 2010
+        # write
+        store.write_scenario_variant_data(scenario, variant, da, timestep)
+        # read
+        assert store.read_scenario_variant_data(scenario, variant, da.name, timestep) == da
 
     def test_narrative_data(self, store, sample_narrative_data):
         # pick out single sample
