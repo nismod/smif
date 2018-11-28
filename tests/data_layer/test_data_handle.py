@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, Mock, PropertyMock
 
 import numpy as np
 from pytest import fixture, raises
-from smif.data_layer import DataHandle, MemoryInterface
+from smif.data_layer import DataHandle
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import ResultsHandle
 from smif.exception import (SmifDataError, SmifDataMismatchError,
@@ -15,10 +15,10 @@ from smif.model import SectorModel
 
 
 @fixture(scope='function')
-def mock_store(get_sector_model):
+def mock_store(get_sector_model, empty_store):
     """Store with minimal setup
     """
-    store = MemoryInterface()
+    store = empty_store
     store.write_model_run({
         'name': 1,
         'narratives': {},
@@ -90,7 +90,7 @@ def mock_store(get_sector_model):
         'narratives': []
     })
 
-    store._initial_conditions = {'energy_demand': []}
+    store.write_initial_conditions('energy_demand', [])
     data = {
         'water_asset_a': {
             'build_year': 2010,
@@ -111,12 +111,11 @@ def mock_store(get_sector_model):
             'sector': ''
         }
     }
-    store._interventions['energy_demand'] = data
+    store.write_interventions('energy_demand', data)
 
-    store.write_sector_model(get_sector_model)
+    store.write_model(get_sector_model)
     da = DataArray(parameter_spec, np.array(42))
-    store.write_sector_model_parameter_default('energy_demand',
-                                               'smart_meter_savings', da)
+    store.write_model_parameter_default('energy_demand', 'smart_meter_savings', da)
     return store
 
 
@@ -435,15 +434,16 @@ class TestDataHandleState():
         method of the store with arguments for model run name, current
         timestep and decision iteration.
         """
-        mock_store.read_state = Mock(return_value=[
-            {'name': 'test', 'build_year': 2010}])
-        mock_store._interventions['energy_demand'] = [
-            {'name': 'test',
-             'capital_cost': {'value': 2500, 'unit': '£/GW'}
-             }]
+        mock_store.read_state = Mock(return_value=[{'name': 'test', 'build_year': 2010}])
+        mock_store.write_interventions('energy_demand', [{
+            'name': 'test',
+            'capital_cost': {'value': 2500, 'unit': '£/GW'}
+        }])
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-        expected = [{'name': 'test',
-                     'build_year': 2010}]
+        expected = [{
+            'name': 'test',
+            'build_year': 2010
+        }]
         actual = data_handle.get_state()
         mock_store.read_state.assert_called_with(1, 2015, None)
         assert actual == expected
@@ -460,7 +460,7 @@ class TestDataHandleState():
             {'name': 'water_asset_a', 'build_year': 2010},
             {'name': 'water_asset_b', 'build_year': 2015}
         ]
-        mock_store._state[(1, 2015, None)] = state
+        mock_store.write_state(state, 1, 2015, None)
         # mock_store._strategies[1] = []
 
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
@@ -492,7 +492,7 @@ class TestDataHandleState():
             {'name': 'energy_asset_unexpected', 'build_year': 2015}
         ]
 
-        mock_store._state[(1, 2015, None)] = state
+        mock_store.write_state(state, 1, 2015, None)
 
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         actual = data_handle.get_current_interventions()
@@ -591,7 +591,7 @@ class TestDataHandleGetParameters:
 
     def test_load_parameters_override(self, mock_store, mock_model):
 
-        mock_store.write_model_run({
+        mock_store.update_model_run(1, {
             'name': 1,
             'narratives': {'test_narrative': ['high_tech_dsm']},
             'sos_model': 'test_sos_model',
@@ -618,7 +618,7 @@ class TestDataHandleGetParameters:
         contained in earlier variants
         """
 
-        mock_store.write_model_run({
+        mock_store.update_model_run(1, {
             'name': 1,
             'narratives': {'test_narrative': ['first_variant',
                                               'second_variant']},
@@ -641,8 +641,8 @@ class TestDataHandleGetParameters:
                     'name': 'second_variant',
                     'description': 'This variant should override the first',
                     'data': {'smart_meter_savings': 'filename.csv'}}
-                ]
-                            }]
+            ]
+        }]
         mock_store.update_sos_model('test_sos_model', sos_model)
 
         parameter_spec = Spec(
