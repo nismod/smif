@@ -5,7 +5,6 @@ from unittest.mock import Mock, patch
 import networkx
 from pytest import fixture, raises
 from smif.controller.scheduler import JobScheduler, ModelRunScheduler
-from smif.data_layer import MemoryInterface
 from smif.model import ModelOperation, ScenarioModel, SectorModel
 
 
@@ -161,21 +160,20 @@ class TestJobScheduler():
         return G
 
     @fixture
-    def scheduler(self):
-        store = MemoryInterface()
-        store.write_model_run({
+    def scheduler(self, empty_store):
+        empty_store.write_model_run({
             'name': 'test',
             'narratives': {},
             'scenarios': {},
             'sos_model': 'test_sos_model'
         })
-        store.write_sos_model({
+        empty_store.write_sos_model({
             'name': 'test_sos_model',
             'scenario_dependencies': [],
             'model_dependencies': []
         })
         scheduler = JobScheduler()
-        scheduler.store = store
+        scheduler.store = empty_store
         return scheduler
 
     def test_add(self, job_graph, scheduler):

@@ -11,16 +11,31 @@ from copy import deepcopy
 
 import numpy as np
 from pytest import fixture
+from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.datafile_interface import dump_yaml as dump
+from smif.data_layer.memory_interface import (MemoryConfigStore,
+                                              MemoryDataStore,
+                                              MemoryMetadataStore)
 from smif.metadata import Spec
-
-from .convert.conftest import remap_months
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s: %(levelname)-8s %(message)s',
                     filemode='w')
+
+
+@fixture
+def empty_store():
+    """Store fixture
+    """
+    # implement each part using the memory classes, simpler than mocking
+    # each other implementation of a part is tested fully by e.g. test_config_store.py
+    return Store(
+        config_store=MemoryConfigStore(),
+        metadata_store=MemoryMetadataStore(),
+        data_store=MemoryDataStore()
+    )
 
 
 @fixture
@@ -218,6 +233,22 @@ def oxford_region():
         ]
     }
     return data
+
+
+@fixture
+def initial_conditions():
+    return [{'name': 'solar_installation', 'build_year': 2017}]
+
+
+@fixture
+def interventions():
+    return {
+        'solar_installation': {
+            'name': 'solar_installation',
+            'capacity': 5,
+            'capactiy_units': 'MW'
+        }
+    }
 
 
 @fixture
@@ -618,6 +649,13 @@ def sample_narrative_data(sample_narratives, get_sector_model, energy_supply_sec
     return narrative_data
 
 
+@fixture
+def sample_results():
+    spec = Spec(name='energy_use', dtype='float')
+    data = np.array(1, dtype=float)
+    return DataArray(spec, data)
+
+
 def _pick_from_list(list_, name):
     for item in list_:
         if item['name'] == name:
@@ -714,10 +752,35 @@ def annual():
 
 
 @fixture
+def remap_months():
+    """Remapping four representative months to months across the year
+
+    In this case we have a model which represents the seasons through
+    the year using one month for each season. We then map the four
+    model seasons 1, 2, 3 & 4 onto the months throughout the year that
+    they represent.
+
+    The data will be presented to the model using the four time intervals,
+    1, 2, 3 & 4. When converting to hours, the data will be replicated over
+    the year.  When converting from hours to the model time intervals,
+    data will be averaged and aggregated.
+
+    """
+    data = [
+        {'name': 'cold_month', 'interval': [['P0M', 'P1M'], ['P1M', 'P2M'], ['P11M', 'P12M']]},
+        {'name': 'spring_month', 'interval': [['P2M', 'P3M'], ['P3M', 'P4M'], ['P4M', 'P5M']]},
+        {'name': 'hot_month', 'interval': [['P5M', 'P6M'], ['P6M', 'P7M'], ['P7M', 'P8M']]},
+        {'name': 'fall_month', 'interval': [['P8M', 'P9M'], ['P9M', 'P10M'], ['P10M', 'P11M']]}
+    ]
+    return data
+
+
+@fixture
 def minimal_model_run():
     return {
         'name': 'test_modelrun',
-        'timesteps': [2010, 2015, 2010]
+        'timesteps': [2010, 2015, 2010],
+        'sos_model': 'energy'
     }
 
 
