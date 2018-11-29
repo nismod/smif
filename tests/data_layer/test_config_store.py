@@ -1,5 +1,6 @@
 """Test all ConfigStore implementations
 """
+import os
 from copy import copy
 
 from pytest import fixture, mark, param, raises
@@ -22,10 +23,30 @@ def init_handler(request, setup_empty_folder_structure):
         base_folder = setup_empty_folder_structure
         handler = YamlConfigStore(base_folder)
     elif request.param == 'database':
-        handler = DbConfigStore()
-        raise NotImplementedError
+        handler = DbConfigStore(
+            host=os.environ['PGHOST'],
+            port=os.environ['PGPORT'],
+            user=os.environ['PGUSER'],
+            dbname=os.environ['PGDATABASE'],
+            password=os.environ['PGPASSWORD']
+        )
 
     return handler
+
+
+def test_db_connection():
+    """Test that we can connect to a database in the test environment
+    """
+    store = DbConfigStore(
+        host=os.environ['PGHOST'],
+        port=os.environ['PGPORT'],
+        user=os.environ['PGUSER'],
+        dbname=os.environ['PGDATABASE'],
+        password=os.environ['PGPASSWORD']
+    )
+    with store.database_connection.cursor() as cur:
+        cur.execute('SELECT 1;')
+        assert cur.fetchone() == (1,)
 
 
 @fixture
