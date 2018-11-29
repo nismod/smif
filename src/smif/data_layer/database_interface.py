@@ -2,6 +2,7 @@
 """
 # import psycopg2 to handel database transactions
 import psycopg2
+import json
 from psycopg2.extras import DictCursor
 
 from smif.data_layer.abstract_config_store import ConfigStore
@@ -229,7 +230,7 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT * FROM scenario_variants WHERE scenario_name=%s', [scenario_name])
+        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.variant_name WHERE sv.scenario_name=%s', [scenario_name])
 
         # get returned data
         scenario_variants = cursor.fetchall()
@@ -256,7 +257,7 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT * FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s', [scenario_name, variant_name])
+        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.variant_name WHERE sv.scenario_name=%s AND sv.variant_name=%s', [scenario_name, variant_name])
 
         # get returned data
         scenario_variant = cursor.fetchall()
@@ -285,13 +286,22 @@ class DbConfigStore(ConfigStore):
         # here is a dependency on the given scenario name already existing
         # - this can be enforced in the database by a foreign key, but should probably check here
         # - would also enable access to the scenario id
-        cursor.execute('SELECT id FROM scenarios WHERE name=%s', [scenario_name])
+        cursor.execute('SELECT id FROM scenarios WHERE name=%s;', [scenario_name])
 
         # get returned data
         scenario_id = cursor.fetchall()
 
         # if a scenario_id has been found
         if len(scenario_id) == 1:
+
+            # run sql to add data to variants to database
+            cursor.execute('INSERT INTO variants (variant_name, description, data) VALUES (%s,%s,%s) RETURNING id;', [variant['variant_name'], variant['description'], json.dumps(variant['data'])])
+
+            # commit changes to database
+            self.database_connection.commit()
+
+            # get returned data
+            variant_id = cursor.fetchone()
 
             # run sql call
             cursor.execute('INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;', [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
@@ -300,9 +310,9 @@ class DbConfigStore(ConfigStore):
             self.database_connection.commit()
 
             # get returned data
-            variant_id = cursor.fetchone()
+            scenario_variant_id = cursor.fetchone()
 
-            return variant_id
+            return scenario_variant_id
         else:
             return
 
@@ -342,6 +352,12 @@ class DbConfigStore(ConfigStore):
 
         # run sql call
         cursor.execute('DELETE FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s', [scenario_name, variant_name])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # run sql call
+        cursor.execute('DELETE FROM variants WHERE variant_name=%s', [scenario_name, variant_name])
 
         # commit changes to database
         self.database_connection.commit()
