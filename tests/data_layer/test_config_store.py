@@ -9,7 +9,9 @@ from smif.data_layer.datafile_interface import YamlConfigStore
 from smif.data_layer.memory_interface import MemoryConfigStore
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 
-skip_on_appveyor = mark.skipif('APPVEYOR' in os.environ and os.environ['APPVEYOR'])
+skip_on_appveyor = mark.skipif(
+    'APPVEYOR' in os.environ and os.environ['APPVEYOR'],
+    reason="Not yet set up with postgresql service on Appveyor CI")
 
 
 @fixture(
