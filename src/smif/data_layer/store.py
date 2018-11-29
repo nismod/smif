@@ -17,6 +17,9 @@ SmifDataReadError
 from copy import deepcopy
 from logging import getLogger
 
+from smif.data_layer.datafile_interface import CSVDataStore
+from smif.metadata.spec import Spec
+
 
 class Store():
     """Common interface to data store, composed of config, metadata and data store implementations.
@@ -474,8 +477,12 @@ class Store():
         data : ~smif.data_layer.data_array.DataArray
         """
         variant = self.read_scenario_variant(scenario_name, variant_name)
-        return self.data_store.read_scenario_variant_data(
-            scenario_name, variant, variable, timestep)
+        key = self._key_from_data(variant['data'][variable], scenario_name, variant_name,
+                                  variable)
+        scenario = self.read_scenario(scenario_name, skip_coords=True)
+        spec = Spec.from_dict([
+            provide for provide in scenario['provides'] if provide['name'] == variable][0])
+        return self.data_store.read_data_array(key, spec, timestep)
 
     def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
         """Write scenario data file
@@ -489,7 +496,9 @@ class Store():
             If None, write data for all timesteps
         """
         variant = self.read_scenario_variant(scenario_name, variant_name)
-        self.data_store.write_scenario_variant_data(scenario_name, variant, data, timestep)
+        key = self._key_from_data(variant['data'][data.spec.name], scenario_name, variant_name,
+                                  data.spec.name)
+        self.data_store.write_data_array(key, data, timestep)
     # endregion
 
     # region Narrative Data
@@ -780,4 +789,14 @@ class Store():
         else:
             max_timestep = None
         return max_timestep
+    # endregion
+
+    # region data store utilities
+    def _key_from_data(self, path, *args):
+        """Return path or generate a unique key for a given set of args
+        """
+        if type(self.data_store) == CSVDataStore:
+            return path
+        else:
+            return tuple(args)
     # endregion
