@@ -329,7 +329,31 @@ class DbConfigStore(ConfigStore):
             The variant definition containing the data to be updated
 
         """
-        raise NotImplementedError()
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        if 'description' in variant.keys() and 'data' in variant.keys():
+
+            # run sql call
+            cursor.execute('UPDATE variants SET description=%s AND data=%s WHERE variant_name = %s RETURNING id;', [variant['description'], json.dumps(variant['data']), variant_name])
+
+        elif 'description' in variant.keys() and 'data' not in variant.keys():
+
+            # run sql call
+            cursor.execute('UPDATE variants SET description=%s WHERE variant_name = %s RETURNING id;', [variant['description'], variant_name])
+
+        elif 'description' not in variant.keys() and 'data' in variant.keys():
+
+            # run sql call
+            cursor.execute('UPDATE variants SET data=%s WHERE variant_name = %s RETURNING id;', [json.dumps(variant['data']), variant_name])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # get the number of rows deleted and return
+        affected_rows = cursor.rowcount
+
+        return affected_rows
 
     def delete_scenario_variant(self, scenario_name, variant_name):
         """"Delete scenario variant
