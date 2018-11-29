@@ -3,6 +3,6 @@ CREATE TABLE simulation_model_port(
 	"model_name" varchar,
 	"model_id" integer,
 	"port_type" varchar,
-	"spec_name" varchar,
-	"spec_id" integer
+	"specification_name" varchar,
+	"specification_id" integer
 );

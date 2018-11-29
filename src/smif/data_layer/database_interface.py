@@ -31,10 +31,13 @@ class DbConfigStore(ConfigStore):
     """
 
     def __init__(self, host, user, dbname, port, password):
-        """Initiate. Setup database connection.
+        """Initiate. Setup database connection. Set up common values.
         """
         # establish database connection
         self.database_connection = initiate_db_connection(host, user, dbname, port, password)
+
+        # list of expected port types - these should be specified somewhere, or not presumed at all
+        self.port_types = ['inputs', 'outputs', 'parameters']
 
     # region Model runs
     def read_model_runs(self):
@@ -93,10 +96,21 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT * FROM simulation_model WHERE model_name=%s', [model_name])
+        cursor.execute('SELECT * FROM simulation_models WHERE name=%s', [model_name])
 
         # get returned data
         simulation_model = cursor.fetchall()
+
+        # get port types for model - inputs, outputs, parameters
+        # run sql call
+        for port_type in self.port_types:
+            cursor.execute('SELECT s.* FROM simulation_model_port smp JOIN specifications s ON smp.specification_name=s.name WHERE smp.model_name=%s AND port_type=%s;', [model_name, port_type])
+
+            # get returned data
+            port_data = cursor.fetchall()
+
+            # add port data to model dictionary
+            simulation_model[0][port_type] = port_data
 
         # return data to user
         return simulation_model
@@ -105,19 +119,46 @@ class DbConfigStore(ConfigStore):
         """Write a simulation model to the database
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        # run sql call
-        cursor.execute('INSERT INTO simulation_model (name, description, interventions, wrapper_locations) VALUES (%s,%s,%s,%s) RETURNING id;', [model['name'], model['description'], json.dumps(model['interventions']), model['wrapper_location']])
+        # write model
+        # write the model to the database
+        cursor.execute('INSERT INTO simulation_models (name, description, interventions, wrapper_location) VALUES (%s,%s,%s,%s) RETURNING id;', [model['name'], model['description'], json.dumps(model['interventions']), model['wrapper_location']])
 
         # commit changes to database
         self.database_connection.commit()
 
         # get returned data
-        scenario_variants = cursor.fetchone()
+        simulation_model_id = cursor.fetchone()
+
+        # write the specification to the database (metadata on the inputs/outputs/parameters)
+
+        # loop through port types
+        for port_type in self.port_types:
+            # if port type is a key in given model definition, add all specifications to database
+            if port_type in model.keys():
+                # loop through the specifications for the port type
+                for spec in model[port_type]:
+                    # should probably check it is already not in the database first
+
+                    # add specification to database
+                    cursor.execute('INSERT INTO specifications (name, description, dimensions, unit, suggested_range, absolute_range) VALUES (%s,%s,%s,%s,%s,%s) RETURNING id;', [spec['name'], spec['description'], spec['dimensions'], spec['unit'], spec['suggested_range'], spec['absolute_range']])
+
+                    # commit changes to database
+                    self.database_connection.commit()
+
+                    # get returned data
+                    specification_id = cursor.fetchone()
+
+                    # write to port
+                    # write model and specification to port table
+                    cursor.execute('INSERT INTO simulation_model_port (model_name, model_id, specification_name, specification_id, port_type) VALUES (%s, %s, %s, %s, %s);', [model['name'], simulation_model_id[0], spec['name'], specification_id[0], port_type])
+
+                    # commit changes to database
+                    self.database_connection.commit()
 
         # return data to user
-        return scenario_variants
+        return
 
     def update_model(self, model_name, model):
         """Update a simulation model
