@@ -10,99 +10,33 @@ from abc import ABCMeta, abstractmethod
 class DataStore(metaclass=ABCMeta):
     """A DataStore must implement each of the abstract methods defined in this interface
     """
-    # region Scenario Variant Data
+    # region DataArray
     @abstractmethod
-    def read_scenario_variant_data(self, scenario_name, variant, variable, spec,
-                                   timestep=None):
-
-        """Read scenario data file
+    def read_data_array(self, key, spec, timestep=None):
+        """Read data array
 
         Parameters
         ----------
-        scenario_name : str
-        variant : dict
-        variable : str
+        key : str
         spec : ~smif.metadata.spec.Spec
         timestep : int (optional)
             If None, read data for all timesteps
 
         Returns
         -------
-        data : ~smif.data_layer.data_array.DataArray
+        data_array : ~smif.data_layer.data_array.DataArray
         """
 
     @abstractmethod
-    def write_scenario_variant_data(self, scenario_name, variant, data, timestep=None):
-        """Write scenario data file
+    def write_data_array(self, key, data_array, timestep=None):
+        """Write data array
 
         Parameters
         ----------
-        scenario_name : str
-        variant : dict
-        data : ~smif.data_layer.data_array.DataArray
+        key : str
+        data_array : ~smif.data_layer.data_array.DataArray
         timestep : int (optional)
             If None, write data for all timesteps
-        """
-    # endregion
-
-    # region Narrative Data
-    @abstractmethod
-    def read_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                    parameter_name, timestep=None):
-        """Read narrative data file
-
-        Parameters
-        ----------
-        sos_model_name : str
-        narrative_name : str
-        variant_name : str
-        parameter_name : str
-        timestep : int (optional)
-            If None, read data for all timesteps
-
-        Returns
-        -------
-        ~smif.data_layer.data_array.DataArray
-        """
-
-    @abstractmethod
-    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                     data, timestep=None):
-        """Read narrative data file
-
-        Parameters
-        ----------
-        sos_model_name : str
-        narrative_name : str
-        variant_name : str
-        data : ~smif.data_layer.data_array.DataArray
-        timestep : int (optional)
-            If None, write data for all timesteps
-        """
-
-    @abstractmethod
-    def read_model_parameter_default(self, model_name, parameter_name):
-        """Read default data for a sector model parameter
-
-        Parameters
-        ----------
-        model_name : str
-        parameter_name : str
-
-        Returns
-        -------
-        ~smif.data_layer.data_array.DataArray
-        """
-
-    @abstractmethod
-    def write_model_parameter_default(self, model_name, parameter_name, data):
-        """Write default data for a sector model parameter
-
-        Parameters
-        ----------
-        model_name : str
-        parameter_name : str
-        data : ~smif.data_layer.data_array.DataArray
         """
     # endregion
 

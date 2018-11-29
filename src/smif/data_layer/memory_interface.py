@@ -245,8 +245,7 @@ class MemoryDataStore(DataStore):
     """
     def __init__(self):
         super().__init__()
-        self._scenario_data = OrderedDict()
-        self._narrative_data = OrderedDict()
+        self._data_array = OrderedDict()
         self._interventions = OrderedDict()
         self._initial_conditions = OrderedDict()
         self._state = OrderedDict()
@@ -254,18 +253,15 @@ class MemoryDataStore(DataStore):
         self._coefficients = OrderedDict()
         self._results = OrderedDict()
 
-    # region Scenario Variant Data
-    def read_scenario_variant_data(self, scenario_name, variant, variable, spec,
-                                   timestep=None):
-        key = (scenario_name, variant['name'], variable, timestep)
+    # region Data Array
+    def read_data_array(self, key, spec, timestep=None):
         try:
-            return self._scenario_data[key]
+            return self._data_array[key]
         except KeyError:
             raise SmifDataNotFoundError
 
-    def write_scenario_variant_data(self, scenario_name, variant, data, timestep=None):
-        key = (scenario_name, variant['name'], data.name, timestep)
-        self._scenario_data[key] = data
+    def write_data_array(self, key, data, timestep=None):
+        self._data_array[key] = data
     # endregion
 
     # region Narrative Data

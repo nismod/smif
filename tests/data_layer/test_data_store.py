@@ -6,7 +6,7 @@ from smif.data_layer.data_array import DataArray
 from smif.data_layer.database_interface import DbDataStore
 from smif.data_layer.datafile_interface import CSVDataStore
 from smif.data_layer.memory_interface import MemoryDataStore
-from smif.exception import SmifDataNotFoundError
+from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
 from smif.metadata import Spec
 
 
@@ -35,21 +35,35 @@ def handler(init_handler, sample_narrative_data, get_sector_model,
             conversion_coefficients):
     handler = init_handler
 
-    # parameter defaults
-    for parameter_name, data in get_sector_model_parameter_defaults.items():
-        handler.write_model_parameter_default(
-            get_sector_model['name'], parameter_name, data)
-
-    # narrative data
-    for key, narrative_variant_data in sample_narrative_data.items():
-        sos_model_name, narrative_name, variant_name, _ = key  # skip param name
-        handler.write_narrative_variant_data(
-            sos_model_name, narrative_name, variant_name, narrative_variant_data)
-
     # conversion coefficients
     handler.write_coefficients(
         conversion_source_spec, conversion_sink_spec, conversion_coefficients)
     return handler
+
+
+class TestDataArray():
+    """Read and write DataArray
+    """
+    def test_read_write_data_array(self, handler, scenario):
+        data = np.array([0, 1], dtype=float)
+        spec = Spec.from_dict(scenario['provides'][0])
+
+        da = DataArray(spec, data)
+
+        handler.write_data_array('mortality.csv', da, 2010)
+        actual = handler.read_data_array('mortality.csv', spec, 2010)
+
+        assert actual == da
+
+    def test_read_data_array_missing_timestep(self, handler, scenario):
+        data = np.array([0, 1], dtype=float)
+        spec = Spec.from_dict(scenario['provides'][0])
+
+        da = DataArray(spec, data)
+
+        handler.write_data_array('mortality.csv', da, 2010)
+        with raises(SmifDataMismatchError):
+            handler.read_data_array('mortality.csv', spec, 2011)
 
 
 class TestState():
@@ -80,94 +94,6 @@ class TestCoefficients():
         handler.write_coefficients(conversion_source_spec, conversion_sink_spec, expected)
         actual = handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
         np.testing.assert_equal(actual, expected)
-
-
-class TestScenarios():
-    """Read and write scenario data
-    """
-    def test_write_scenario_variant_data(self, handler, scenario):
-        """Write to in-memory data
-        """
-        data = np.array([0, 1], dtype=float)
-
-        spec = Spec.from_dict(scenario['provides'][0])
-        da = DataArray(spec, data)
-
-        handler.write_scenario_variant_data(
-            'mortality',
-            scenario['variants'][0],
-            da, 2010)
-
-        actual = handler.read_scenario_variant_data(
-            'mortality',
-            scenario['variants'][0],
-            'mortality',
-            spec,
-            2010)
-        assert actual == da
-
-
-class TestNarratives():
-    """Read and write narrative data
-    """
-    def test_read_narrative_variant_data(self, handler, sample_narrative_data):
-        """Read from in-memory data
-        """
-        actual = handler.read_narrative_variant_data('energy',
-                                                     'technology',
-                                                     'high_tech_dsm',
-                                                     'smart_meter_savings')
-        key = ('energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
-        expected = sample_narrative_data[key]
-        assert actual == expected
-
-    def test_read_narrative_variant_data_raises_param(self, handler):
-        with raises(SmifDataNotFoundError):
-            handler.read_narrative_variant_data('energy',
-                                                'technology',
-                                                'high_tech_dsm',
-                                                'not_a_parameter')
-
-    def test_read_narrative_variant_data_raises_variant(self, handler):
-        with raises(SmifDataNotFoundError):
-            handler.read_narrative_variant_data('energy',
-                                                'technology',
-                                                'not_a_variant',
-                                                'not_a_parameter')
-
-    def test_read_narrative_variant_data_raises_narrative(self, handler):
-        with raises(SmifDataNotFoundError):
-            handler.read_narrative_variant_data('energy',
-                                                'not_a_narrative',
-                                                'not_a_variant',
-                                                'not_a_parameter')
-
-    def test_write_narrative_variant_data(self, handler, sample_narrative_data):
-        """Write narrative variant data to file or memory
-        """
-        key = ('energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
-        da = sample_narrative_data[key]
-        handler.write_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', da)
-
-        actual = handler.read_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
-
-        assert actual == da
-
-    def test_write_narrative_variant_data_timestep(self, handler, sample_narrative_data):
-        """Write narrative variant data to file or memory
-        """
-        key = ('energy', 'technology', 'high_tech_dsm', 'smart_meter_savings')
-        da = sample_narrative_data[key]
-        handler.write_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', da,
-            timestep=2010)
-
-        actual = handler.read_narrative_variant_data(
-            'energy', 'technology', 'high_tech_dsm', 'smart_meter_savings', timestep=2010)
-
-        assert actual == da
 
 
 class TestResults():

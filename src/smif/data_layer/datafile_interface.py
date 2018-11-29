@@ -288,14 +288,6 @@ class YamlConfigStore(ConfigStore):
             msg = "Narrative '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(narrative_name, sos_model_name))
         return narrative
-
-    def _read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
-        narrative = self.read_narrative(sos_model_name, narrative_name)
-        variant = _pick_from_list(narrative['variants'], variant_name)
-        if not variant:
-            msg = "Variant '{}' not found in '{}'"
-            raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
-        return variant
     # endregion
 
     # region Strategies
@@ -472,110 +464,39 @@ class CSVDataStore(DataStore):
                 raise SmifDataNotFoundError(msg.format(abs_path))
             self.data_folders[folder] = dirname
 
-    # region Scenario Variant Data
-    def read_scenario_variant_data(self, scenario_name, variant, variable, spec,
-                                   timestep=None):
-        # TODO pandas.read_csv
-        return self._read_variant_data(variant, variable, 'scenarios', spec, timestep)
-
-    def write_scenario_variant_data(self, scenario_name, variant, data_array, timestep=None):
-        spec = data_array.spec
-        data = ndarray_to_data_list(data_array, timestep=timestep)
-        filepath = self._get_variant_filepath(variant, data_array.name, 'scenarios')
-        self._write_variant_data_csv(filepath, data, spec, timestep)
-    # endregion
-
-    # region Narrative Data
-    def read_narrative_variant_data(self, sos_model_name, narrative_name,
-                                    variant_name, parameter_name, timestep=None):
-        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        spec = self._read_narrative_variable_spec(
-            sos_model_name, narrative_name, parameter_name)
-        return self._read_variant_data(variant, parameter_name, 'narratives', spec, timestep)
-
-    def write_narrative_variant_data(self, sos_model_name, narrative_name,
-                                     variant_name, data_array, timestep=None):
-        spec = data_array.spec
-        data = ndarray_to_data_list(data_array, timestep=timestep)
-        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        filepath = self._get_variant_filepath(variant, spec.name, 'narratives')
-        self._write_variant_data_csv(filepath, data, spec, timestep)
-
-    def write_model_parameter_default(self, model_name, parameter_name, data):
-        param = self.read_model_parameter(model_name, parameter_name)
-        filepath = self._default_parameter_filepath(model_name, param)
-        spec = Spec.from_dict(param)
-        data_list = ndarray_to_data_list(data)
-        _write_data_to_csv(filepath, data_list, spec)
-
-    def read_model_parameter_default(self, model_name, parameter_name):
-        param = self.read_model_parameter(model_name, parameter_name)
-        filepath = self._default_parameter_filepath(model_name, param)
-        spec = Spec.from_dict(param)
-        data_list = _get_data_from_csv(filepath)
+    # region Data Array
+    def read_data_array(self, key, spec, timestep=None):
         try:
-            data = data_list_to_ndarray(data_list, spec)
-        except SmifDataMismatchError as ex:
-            raise SmifDataMismatchError(
-                "Reading default parameter values for {}:{}. {}".format(
-                    model_name,
-                    parameter_name,
-                    str(ex)
-                )) from ex
-        return data
-
-    def _default_parameter_filepath(self, model_name, parameter):
-        if 'default' in parameter:
-            filepath = parameter['default']
-        else:
-            filepath = 'default__{}__{}.csv'.format(model_name, parameter['name'])
-
-        if not os.path.isabs(filepath):
-            return os.path.join(self.data_folders['parameters'], filepath)
-        else:
-            return filepath
-    # endregion
-
-    def _get_variant_filepath(self, variant, variable, scenario_or_narrative):
-        if 'data' not in variant or variable not in variant['data']:
-            filename = '{}__{}.csv'.format(variable, variant['name'])
-        else:
-            filename = variant['data'][variable]
-        if os.path.isabs(filename):
-            filepath = filename
-        else:
-            filepath = os.path.join(self.data_folders[scenario_or_narrative], filename)
-        return filepath
-
-    def _read_variant_data(self, variant, variable, scenarios_or_narrative, spec, timestep):
-        filepath = self._get_variant_filepath(variant, variable, scenarios_or_narrative)
-        try:
-            data = _get_data_from_csv(filepath)
+            data = _get_data_from_csv(key)
         except FileNotFoundError:
             raise SmifDataNotFoundError
         if timestep:
             if 'timestep' not in data[0].keys():
                 msg = "Header in '{}' missing 'timestep' key. Found {}"
-                raise SmifDataMismatchError(msg.format(filepath, list(data[0].keys())))
+                raise SmifDataMismatchError(msg.format(key, list(data[0].keys())))
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
         try:
             da = data_list_to_ndarray(data, spec)
         except SmifDataMismatchError as ex:
-            msg = "DataMismatch in scenario: {}:{}.{}, from {}"
+            msg = "DataMismatch in key: {}, from {}"
             raise SmifDataMismatchError(
-                msg.format(variant['name'], variable, str(ex))
+                msg.format(key, str(ex))
             ) from ex
 
         return da
 
-    def _write_variant_data_csv(self, filepath, data, spec, timestep=None):
+    def write_data_array(self, key, data_array, timestep=None):
+        spec = data_array.spec
+        data = ndarray_to_data_list(data_array, timestep=timestep)
+
         if timestep:
             fieldnames = ('timestep', ) + tuple(spec.dims) + (spec.name, )
             self.logger.debug("%s, %s", fieldnames, data)
-            _write_data_to_csv(filepath, data, fieldnames=fieldnames)
+            _write_data_to_csv(key, data, fieldnames=fieldnames)
         else:
-            _write_data_to_csv(filepath, data, spec=spec)
+            _write_data_to_csv(key, data, spec=spec)
+    # endregion
 
     # region Interventions
     def read_interventions(self, model_name):
