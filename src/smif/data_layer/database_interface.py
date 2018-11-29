@@ -74,17 +74,7 @@ class DbConfigStore(ConfigStore):
     def read_models(self)
         """Read all simulation models
         """
-        # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        # run sql call
-        cursor.execute('SELECT * FROM simulation_models')
-
-        # get returned data
-        scenarios = cursor.fetchall()
-
-        # return data to user
-        return scenarios
+        raise NotImplementedError()
 
     def read_model(self, model_name):
         """Read a simulation model
