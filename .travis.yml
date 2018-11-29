@@ -16,7 +16,6 @@ env:
   global:
     - DISTRIB="conda"
     - PGUSER="postgres"
-    - PGDATABASE="travis_ci_test"
     - PGHOST="localhost"
     - PGPORT="5432"
     - PGPASSWORD=""
@@ -26,7 +25,7 @@ env:
 
 install: source $TRAVIS_BUILD_DIR/ci/install.sh
 before_script:
-  - psql -c 'create database travis_ci_test;' -U postgres -d postgres
+  - psql -c 'create database test_smif;' -U postgres
 script:
   - cd $TRAVIS_BUILD_DIR && pytest --cov-report html --cov=smif tests/
   - cd $TRAVIS_BUILD_DIR/src/smif/app && npm test
