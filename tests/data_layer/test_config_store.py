@@ -1,5 +1,6 @@
 """Test all ConfigStore implementations
 """
+import os
 from copy import copy
 
 from pytest import fixture, mark, param, raises
@@ -7,6 +8,10 @@ from smif.data_layer.database_interface import DbConfigStore
 from smif.data_layer.datafile_interface import YamlConfigStore
 from smif.data_layer.memory_interface import MemoryConfigStore
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
+
+skip_on_appveyor = mark.skipif(
+    'APPVEYOR' in os.environ and os.environ['APPVEYOR'],
+    reason="Not yet set up with postgresql service on Appveyor CI")
 
 
 @fixture(
@@ -22,10 +27,31 @@ def init_handler(request, setup_empty_folder_structure):
         base_folder = setup_empty_folder_structure
         handler = YamlConfigStore(base_folder)
     elif request.param == 'database':
-        handler = DbConfigStore()
-        raise NotImplementedError
+        handler = DbConfigStore(
+            host=os.environ['PGHOST'],
+            port=os.environ['PGPORT'],
+            user=os.environ['PGUSER'],
+            dbname=os.environ['PGDATABASE'],
+            password=os.environ['PGPASSWORD']
+        )
 
     return handler
+
+
+@skip_on_appveyor
+def test_db_connection():
+    """Test that we can connect to a database in the test environment
+    """
+    store = DbConfigStore(
+        host=os.environ['PGHOST'],
+        port=os.environ['PGPORT'],
+        user=os.environ['PGUSER'],
+        dbname=os.environ['PGDATABASE'],
+        password=os.environ['PGPASSWORD']
+    )
+    with store.database_connection.cursor() as cur:
+        cur.execute('SELECT 1;')
+        assert cur.fetchone() == (1,)
 
 
 @fixture
