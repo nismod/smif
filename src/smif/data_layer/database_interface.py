@@ -71,19 +71,39 @@ class DbConfigStore(ConfigStore):
     # endregion
 
     # region Models
-    def read_models(self):
-        raise NotImplementedError()
+    def read_models(self)
+        """Read all simulation models
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # run sql call
+        cursor.execute('SELECT * FROM simulation_models')
+
+        # get returned data
+        scenarios = cursor.fetchall()
+
+        # return data to user
+        return scenarios
 
     def read_model(self, model_name):
+        """Read a simulation model
+        """
         raise NotImplementedError()
 
     def write_model(self, model):
+        """Write a new simulation model
+        """
         raise NotImplementedError()
 
     def update_model(self, model_name, model):
+        """Update an existing simulation model
+        """
         raise NotImplementedError()
 
     def delete_model(self, model_name):
+        """Delete a simulation model
+        """
         raise NotImplementedError()
     # endregion
 
