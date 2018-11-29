@@ -72,19 +72,91 @@ class DbConfigStore(ConfigStore):
 
     # region Models
     def read_models(self):
-        raise NotImplementedError()
+        """Read all simulation models
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # run sql call
+        cursor.execute('SELECT * FROM simulation_model')
+
+        # get returned data
+        simulation_models = cursor.fetchall()
+
+        # return data to user
+        return simulation_models
 
     def read_model(self, model_name):
-        raise NotImplementedError()
+        """Read a simulation model
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # run sql call
+        cursor.execute('SELECT * FROM simulation_model WHERE model_name=%s', [model_name])
+
+        # get returned data
+        simulation_model = cursor.fetchall()
+
+        # return data to user
+        return simulation_model
 
     def write_model(self, model):
-        raise NotImplementedError()
+        """Write a simulation model to the database
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # run sql call
+        cursor.execute('INSERT INTO simulation_model (name, description, interventions, wrapper_locations) VALUES (%s,%s,%s,%s) RETURNING id;', [model['name'], model['description'], json.dumps(model['interventions']), model['wrapper_location']])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # get returned data
+        scenario_variants = cursor.fetchone()
+
+        # return data to user
+        return scenario_variants
 
     def update_model(self, model_name, model):
-        raise NotImplementedError()
+        """Update a simulation model
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # run sql call
+        if 'description' in model.keys():
+            cursor.execute('UPDATE simulation_model SET description=%s WHERE name=%s;', [model['description'], model_name])
+        if 'interventions' in model.keys():
+            cursor.execute('UPDATE simulation_model SET interventions=%s WHERE name=%s;', [json.dumps(model['interventions']), model_name])
+        if 'wrapper_location' in model.keys():
+            cursor.execute('UPDATE simulation_model SET wrapper_location=%s WHERE name=%s;', [model['wrapper_location'], model_name])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # get the number of rows deleted and return
+        affected_rows = cursor.rowcount
+
+        return affected_rows
 
     def delete_model(self, model_name):
-        raise NotImplementedError()
+        """Delete a simulation model
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # run sql call
+        cursor.execute('DELETE FROM simulation_model WHERE model_name=%s;', [model_name])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # get the number of rows deleted and return
+        affected_rows = cursor.rowcount
+
+        return affected_rows
     # endregion
 
     # region Scenarios
