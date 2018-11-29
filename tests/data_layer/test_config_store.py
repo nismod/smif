@@ -3,22 +3,32 @@
 import os
 from copy import copy
 
+import smif.data_layer.database.setup_database
 from pytest import fixture, mark, param, raises
 from smif.data_layer.database_interface import DbConfigStore
 from smif.data_layer.datafile_interface import YamlConfigStore
 from smif.data_layer.memory_interface import MemoryConfigStore
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 
-skip_on_appveyor = mark.skipif(
+SKIP_ON_APPVEYOR = mark.skipif(
     'APPVEYOR' in os.environ and os.environ['APPVEYOR'],
     reason="Not yet set up with postgresql service on Appveyor CI")
+
+
+DB_OPTIONS = {
+    'host': os.environ['PGHOST'],
+    'port': os.environ['PGPORT'],
+    'user': os.environ['PGUSER'],
+    'dbname': 'test_smif',
+    'password': os.environ['PGPASSWORD']
+}
 
 
 @fixture(
     params=[
         'memory',
         'text_file',
-        param('database', marks=mark.skip)
+        param('database', marks=SKIP_ON_APPVEYOR)
     ])
 def init_handler(request, setup_empty_folder_structure):
     if request.param == 'memory':
@@ -27,28 +37,30 @@ def init_handler(request, setup_empty_folder_structure):
         base_folder = setup_empty_folder_structure
         handler = YamlConfigStore(base_folder)
     elif request.param == 'database':
-        handler = DbConfigStore(
-            host=os.environ['PGHOST'],
-            port=os.environ['PGPORT'],
-            user=os.environ['PGUSER'],
-            dbname=os.environ['PGDATABASE'],
-            password=os.environ['PGPASSWORD']
-        )
+        # migrations dir
+        migrations_dir = os.path.join(os.path.dirname(os.path.realpath(
+            smif.data_layer.database.setup_database.__file__)), 'migrations')
+
+        # run up migrations
+        smif.data_layer.database.setup_database.up_migrations(
+            migrations_dir, DB_OPTIONS['dbname'])
+
+        # run down migrations with fixture teardown
+        def teardown():
+            smif.data_layer.database.setup_database.down_migrations(
+                migrations_dir, DB_OPTIONS['dbname'])
+        request.addfinalizer(teardown)
+
+        handler = DbConfigStore(**DB_OPTIONS)
 
     return handler
 
 
-@skip_on_appveyor
+@SKIP_ON_APPVEYOR
 def test_db_connection():
     """Test that we can connect to a database in the test environment
     """
-    store = DbConfigStore(
-        host=os.environ['PGHOST'],
-        port=os.environ['PGPORT'],
-        user=os.environ['PGUSER'],
-        dbname=os.environ['PGDATABASE'],
-        password=os.environ['PGPASSWORD']
-    )
+    store = DbConfigStore(**DB_OPTIONS)
     with store.database_connection.cursor() as cur:
         cur.execute('SELECT 1;')
         assert cur.fetchone() == (1,)
