@@ -58,18 +58,100 @@ class DbConfigStore(ConfigStore):
 
     # region System-of-systems models
     def read_sos_models(self):
+        """Read all systems of systems models
+
+        Returns
+        -------
+        list
+            A list of dicts containing sos model definitions
+        """
         raise NotImplementedError()
 
     def read_sos_model(self, sos_model_name):
+        """Read a single system of systems model
+
+        Argument
+        --------
+        sos_model_name: string
+            The name of the systems of systems model to read
+
+        Returns
+        -------
+        dict
+            The systems of systems model definition
+        """
         raise NotImplementedError()
 
     def write_sos_model(self, sos_model):
-        raise NotImplementedError()
+        """Write a systems of systems model
+
+        Argument
+        --------
+        sos_model: dict
+            The definition for a systems os systems model
+
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # write sos model, return id
+        cursor.execute('INSERT INTO sos_model (name, description) VALUES (%s, %s) RETURNING id;', [sos_model['name'], sos_model['description']])
+
+        # write to database
+        self.database_connection.commit()
+
+        # get returned model id
+        sos_model_id = cursor.fetchone()
+
+        # write dependencies
+        # loop through passed dependencies
+        for dependency in sos_model['dependencies']:
+
+            # sql to write dependency to db
+            cursor.execute('INSERT INTO sos_model_dependencies (sos_model_name, source_model, source_output, sink_model, sink_input, lag) VALUES (%s,%s,%s,%s,%s,%s);', [sos_model['name'], dependency['source_model'], dependency['source_model_output'], dependency['sink_model'], dependency['sink_model_input'], dependency['lag']])
+
+            # write to database
+            self.database_connection.commit()
+
+        # write sos_model_sim_models
+        for sector_model in sos_model['sector_models']:
+            # write link between sos model and simulation models
+            cursor.execute('INSERT INTO sos_model_simulation_models (sos_model_name, simulation_model_name) VALUES (%s,%s);', [sos_model['name'], sector_model])
+
+        # write to database
+        self.database_connection.commit()
+
+        # write sos_model_scenarios
+        for scenario in sos_model['scenario_sets']:
+            cursor.execute('INSERT INTO sos_model_scenarios (sos_model_name, scenario_name) VALUES (%s,%s);', [sos_model['name'], scenario])
+
+        # write to database
+        self.database_connection.commit()
+
+        return sos_model_id
 
     def update_sos_model(self, sos_model_name, sos_model):
+        """Update a systems of systems model
+
+        Argument
+        --------
+        sos_model_name: string
+            The name of the systems of systems model to update
+        sos_model: dict
+            The definition of a systems of systems model with only the data to be updated in
+
+        """
         raise NotImplementedError()
 
     def delete_sos_model(self, sos_model_name):
+        """Delete a systems of systems model
+
+        Argument
+        --------
+        sos_model_name: string
+            The name of the systems of systems model to delete
+
+        """
         raise NotImplementedError()
     # endregion
 
