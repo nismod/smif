@@ -84,36 +84,37 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # get sos model details
-        cursor.execute('SELECT * FROM sos_model WHERE name=%s;', [sos_model_name])
+        cursor.execute('SELECT * FROM sos_models WHERE name=%s;', [sos_model_name])
 
         # get returned data
         sos_model = cursor.fetchone()
 
-        # get simulation models
-        cursor.execute('SELECT * FROM sos_model_simulation_models WHERE sos_model_name=%s;', [sos_model_name])
+        if sos_model is not None:
+            # get simulation models
+            cursor.execute('SELECT * FROM sos_model_simulation_models WHERE sos_model_name=%s;', [sos_model_name])
 
-        # add all returned models to the sector models key in the sos_model definition
-        sos_model['sector_models'] = []
-        for model in cursor.fetchall():
-            sos_model['sector_models'].append(model)
+            # add all returned models to the sector models key in the sos_model definition
+            sos_model['sector_models'] = []
+            for model in cursor.fetchall():
+                sos_model['sector_models'].append(model)
 
-        # get scenario sets
-        cursor.execute('SELECT * FROM sos_model_scenarios WHERE sos_model_name=%s;', [sos_model_name])
+            # get scenario sets
+            cursor.execute('SELECT * FROM sos_model_scenarios WHERE sos_model_name=%s;', [sos_model_name])
 
-        # add all returned models to the sector models key in the sos_model definition
-        sos_model['scenario_sets'] = []
-        for scenario in cursor.fetchall():
-            sos_model['scenario_sets'].append(scenario)
+            # add all returned models to the sector models key in the sos_model definition
+            sos_model['scenario_sets'] = []
+            for scenario in cursor.fetchall():
+                sos_model['scenario_sets'].append(scenario)
 
-        # get sos model dependencies
-        cursor.execute('SELECT * FROM sos_model_dependencies WHERE sos_model_name=%s;', [sos_model_name])
+            # get sos model dependencies
+            cursor.execute('SELECT * FROM sos_model_dependencies WHERE sos_model_name=%s;', [sos_model_name])
 
-        # add all returned dependencies to the dependencies key in the sos_model definition
-        sos_model['dependencies'] = []
-        for dependency in cursor.fetchall():
-            sos_model['dependencies'].append(dependency)
+            # add all returned dependencies to the dependencies key in the sos_model definition
+            sos_model['dependencies'] = []
+            for dependency in cursor.fetchall():
+                sos_model['dependencies'].append(dependency)
 
-        return
+        return sos_model
 
     def write_sos_model(self, sos_model):
         """Write a systems of systems model
