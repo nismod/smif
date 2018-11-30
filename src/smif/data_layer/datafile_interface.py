@@ -20,7 +20,6 @@ from smif.data_layer.validate import (validate_sos_model_config,
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError, SmifDataReadError,
                             SmifValidationError)
-from smif.metadata.spec import Spec
 
 # Import fiona if available (optional dependency)
 try:
@@ -892,47 +891,6 @@ class CSVDataStore(DataStore):
                 results.setdefault('intervals', []).append(element)
         return results
     # endregion
-
-    def _read_narrative_variable_spec(self, sos_model_name, narrative_name, variable):
-        # Read spec from narrative->provides->variable
-        narrative = self.read_narrative(sos_model_name, narrative_name)
-        model_name = _key_from_list(variable, narrative['provides'])
-        if not model_name:
-            msg = "Cannot identify source of Spec for variable '{}'"
-            raise SmifDataNotFoundError(msg.format(variable))
-        parameters = self.read_model(model_name)['parameters']
-        return self._get_spec_from_provider(parameters, variable)
-
-    def _get_spec_from_provider(self, config_list, variable_name):
-        """Gets a Spec definition from a scenario definition
-
-        Parameters
-        ----------
-        config_list : list[dict]
-            A list of spec dicts
-        variable_name : str
-            The name of the variable for which to find the spec
-
-        Returns
-        -------
-        ~smif.metadata.spec.Spec
-        """
-        spec = _pick_from_list(config_list, variable_name)
-        if spec is not None:
-            self._set_item_coords(spec)
-            return Spec.from_dict(spec)
-        else:
-            msg = "Could not find spec definition for '{}'"
-            raise SmifDataNotFoundError(msg.format(variable_name))
-
-    def _set_item_coords(self, item):
-        """If dims exists and is not empty
-        """
-        if 'dims' in item and item['dims']:
-            item['coords'] = {
-                dim: self.read_dimension(dim)['elements']
-                for dim in item['dims']
-            }
 
 
 def ndarray_to_data_list(data_array, timestep=None):
