@@ -101,16 +101,18 @@ class DbConfigStore(ConfigStore):
         # get returned data
         simulation_model = cursor.fetchall()
 
-        # get port types for model - inputs, outputs, parameters
-        # run sql call
-        for port_type in self.port_types:
-            cursor.execute('SELECT s.* FROM simulation_model_port smp JOIN specifications s ON smp.specification_name=s.name WHERE smp.model_name=%s AND port_type=%s;', [model_name, port_type])
+        # check if a simulation model has been found and only proceed if so
+        if len(simulation_model) == 1:
+            # get port types for model - inputs, outputs, parameters
+            # run sql call
+            for port_type in self.port_types:
+                cursor.execute('SELECT s.* FROM simulation_model_port smp JOIN specifications s ON smp.specification_name=s.name WHERE smp.model_name=%s AND port_type=%s;', [model_name, port_type])
 
-            # get returned data
-            port_data = cursor.fetchall()
+                # get returned data
+                port_data = cursor.fetchall()
 
-            # add port data to model dictionary
-            simulation_model[0][port_type] = port_data
+                # add port data to model dictionary
+                simulation_model[0][port_type] = port_data
 
         # return data to user
         return simulation_model
@@ -216,10 +218,36 @@ class DbConfigStore(ConfigStore):
         """Delete a simulation model
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        # run sql call
-        cursor.execute('DELETE FROM simulation_model WHERE model_name=%s;', [model_name])
+        # delete specifications if unique to model
+        # get a list of the specifications linked to the model name
+        cursor.execute('SELECT * FROM simulation_model_port WHERE model_name=%s;', [model_name])
+
+        # loop through returned model specifications
+        for specification in cursor.fetchall():
+
+            # check if the specification is used by any other models
+            cursor.execute('SELECT COUNT(*) FROM simulation_model_port WHERE specification_name=%s;', [specification['specification_name']])
+
+            # get the count from the query
+            specification_count = cursor.fetchone()
+
+            # if the count is only 1, safe to delete specification, otherwise leave it
+            if specification_count == 1:
+                cursor.execute('DELETE FROM specifications WHERE specification_name=%s;', [specification['name']])
+
+                # commit changes to database
+                self.database_connection.commit()
+
+        # run sql call to delete from simulation model port
+        cursor.execute('DELETE FROM simulation_model_port WHERE model_name=%s;', [model_name])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # run sql call to delete from simulation models
+        cursor.execute('DELETE FROM simulation_models WHERE name=%s;', [model_name])
 
         # commit changes to database
         self.database_connection.commit()
