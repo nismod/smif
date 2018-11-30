@@ -166,21 +166,51 @@ class DbConfigStore(ConfigStore):
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        # run sql call
+        # update the model description is passed
         if 'description' in model.keys():
-            cursor.execute('UPDATE simulation_model SET description=%s WHERE name=%s;', [model['description'], model_name])
+            cursor.execute('UPDATE simulation_models SET description=%s WHERE name=%s;', [model['description'], model_name])
+
+        # update the intervention list is passed
         if 'interventions' in model.keys():
-            cursor.execute('UPDATE simulation_model SET interventions=%s WHERE name=%s;', [json.dumps(model['interventions']), model_name])
+            cursor.execute('UPDATE simulation_models SET interventions=%s WHERE name=%s;', [json.dumps(model['interventions']), model_name])
+
+        # update the wrapper location if passed
         if 'wrapper_location' in model.keys():
-            cursor.execute('UPDATE simulation_model SET wrapper_location=%s WHERE name=%s;', [model['wrapper_location'], model_name])
+            cursor.execute('UPDATE simulation_models SET wrapper_location=%s WHERE name=%s;', [model['wrapper_location'], model_name])
 
         # commit changes to database
         self.database_connection.commit()
 
-        # get the number of rows deleted and return
-        affected_rows = cursor.rowcount
+        # update any of the port types if passed
+        # need to figure out how to update an inputs/output/parameter and the specification
+        for port_type in self.port_types:
+            # if the port type has been passed to be updated
+            if port_type in model.keys():
+                # loop through each specification for the port type
+                for spec in model[port_type]:
+                    # check for each key in the specification and update if present
+                    if 'name' in spec.keys():
+                        continue
+                    if 'description' in spec.keys():
+                        # run update sql
+                        cursor.execute('UPDATE specifications SET description = %s WHERE name=%s', [spec['description'], model[port_type]['name']])
+                    if 'dimensions' in spec.keys():
+                        # run update sql
+                        cursor.execute('UPDATE specifications SET dimensions = %s WHERE name=%s',                                       [spec['dimensions'], model[port_type]['name']])
+                    if 'unit' in spec.keys():
+                        # run update sql
+                        cursor.execute('UPDATE specifications SET unit = %s WHERE name=%s', [spec['unit'], model[port_type]['name']])
+                    if 'suggested_range' in spec.keys():
+                        # run update sql
+                        cursor.execute('UPDATE specifications SET suggested_range = %s WHERE name=%s',[spec['suggested_range'], model[port_type]['name']])
+                    if 'absolute_range' in spec.keys():
+                        # run update sql
+                        cursor.execute('UPDATE specifications SET absolute_range = %s WHERE name=%s',[spec['absolute_range'], model[port_type]['name']])
 
-        return affected_rows
+                    # commit changes to database
+                    self.database_connection.commit()
+
+        return
 
     def delete_model(self, model_name):
         """Delete a simulation model
