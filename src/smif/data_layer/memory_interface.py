@@ -256,12 +256,19 @@ class MemoryDataStore(DataStore):
     # region Data Array
     def read_data_array(self, key, spec, timestep=None):
         try:
-            return self._data_array[key]
+            if timestep:
+                return self._data_array[key, timestep]
+            else:
+                return self._data_array[key]
         except KeyError:
             raise SmifDataNotFoundError
 
     def write_data_array(self, key, data, timestep=None):
-        self._data_array[key] = data
+
+        if timestep:
+            self._data_array[key, timestep] = data
+        else:
+            self._data_array[key] = data
     # endregion
 
     # region Narrative Data
