@@ -271,20 +271,7 @@ class MemoryDataStore(DataStore):
             self._data_array[key] = data
     # endregion
 
-    # region Narrative Data
-    def read_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                    parameter_name, timestep=None):
-        key = (sos_model_name, narrative_name, variant_name, parameter_name, timestep)
-        try:
-            return self._narrative_data[key]
-        except KeyError:
-            raise SmifDataNotFoundError
-
-    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                     data, timestep=None):
-        key = (sos_model_name, narrative_name, variant_name, data.name, timestep)
-        self._narrative_data[key] = data
-
+    # region Model parameters
     def read_model_parameter_default(self, model_name, parameter_name):
         return self._model_parameter_defaults[(model_name, parameter_name)]
 
