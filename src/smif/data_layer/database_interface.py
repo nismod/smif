@@ -21,7 +21,8 @@ def initiate_db_connection(host, user_name, database_name, port, password):
     """
 
     # attempt to create the database connection
-    database_connection = psycopg2.connect("host=%s dbname=%s user=%s password=%s port=%s" % (host, database_name, user_name, password, port))
+    database_connection = psycopg2.connect("host=%s dbname=%s user=%s password=%s port=%s" %
+                                           (host, database_name, user_name, password, port))
 
     return database_connection
 
@@ -71,7 +72,7 @@ class DbConfigStore(ConfigStore):
     # endregion
 
     # region Models
-    def read_models(self)
+    def read_models(self):
         """Read all simulation models
         """
         raise NotImplementedError()
@@ -156,7 +157,8 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # run sql call
-        cursor.execute('INSERT INTO scenarios (name, description) VALUES (%s,%s) RETURNING id;', [scenario['name'], scenario['description']])
+        sql = 'INSERT INTO scenarios (name, description) VALUES (%s,%s) RETURNING id;'
+        cursor.execute(sql, [scenario['name'], scenario['description']])
 
         # commit changes to database
         self.database_connection.commit()
@@ -240,7 +242,9 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.variant_name WHERE sv.scenario_name=%s', [scenario_name])
+        sql = 'SELECT sv.*, v.description, v.data FROM scenario_variants sv ' \
+              'JOIN variants v ON sv.variant_name = v.variant_name WHERE sv.scenario_name=%s'
+        cursor.execute(sql, [scenario_name])
 
         # get returned data
         scenario_variants = cursor.fetchall()
@@ -267,7 +271,10 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.variant_name WHERE sv.scenario_name=%s AND sv.variant_name=%s', [scenario_name, variant_name])
+        sql = 'SELECT sv.*, v.description, v.data FROM scenario_variants sv ' \
+              'JOIN variants v ON sv.variant_name = v.variant_name ' \
+              'WHERE sv.scenario_name=%s AND sv.variant_name=%s'
+        cursor.execute(sql, [scenario_name, variant_name])
 
         # get returned data
         scenario_variant = cursor.fetchall()
@@ -305,7 +312,8 @@ class DbConfigStore(ConfigStore):
         if len(scenario_id) == 1:
 
             # run sql to add data to variants to database
-            cursor.execute('INSERT INTO variants (variant_name, description, data) VALUES (%s,%s,%s) RETURNING id;', [variant['variant_name'], variant['description'], json.dumps(variant['data'])])
+            sql = 'INSERT INTO variants (variant_name, description, data) VALUES (%s,%s,%s) RETURNING id;'
+            cursor.execute(sql, [variant['variant_name'], variant['description'], json.dumps(variant['data'])])
 
             # commit changes to database
             self.database_connection.commit()
@@ -314,7 +322,8 @@ class DbConfigStore(ConfigStore):
             variant_id = cursor.fetchone()
 
             # run sql call
-            cursor.execute('INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;', [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
+            sql = 'INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;'
+            cursor.execute(sql, [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
 
             # commit changes to database
             self.database_connection.commit()
@@ -345,17 +354,22 @@ class DbConfigStore(ConfigStore):
         if 'description' in variant.keys() and 'data' in variant.keys():
 
             # run sql call
-            cursor.execute('UPDATE variants SET description=%s AND data=%s WHERE variant_name = %s RETURNING id;', [variant['description'], json.dumps(variant['data']), variant_name])
+            sql = 'UPDATE variants SET description=%s AND data=%s WHERE variant_name = %s RETURNING id;'
+            cursor.execute(sql, [variant['description'],
+                                 json.dumps(variant['data']),
+                                 variant_name])
 
         elif 'description' in variant.keys() and 'data' not in variant.keys():
 
             # run sql call
-            cursor.execute('UPDATE variants SET description=%s WHERE variant_name = %s RETURNING id;', [variant['description'], variant_name])
+            sql = 'UPDATE variants SET description=%s WHERE variant_name = %s RETURNING id;'
+            cursor.execute(sql, [variant['description'], variant_name])
 
         elif 'description' not in variant.keys() and 'data' in variant.keys():
 
             # run sql call
-            cursor.execute('UPDATE variants SET data=%s WHERE variant_name = %s RETURNING id;', [json.dumps(variant['data']), variant_name])
+            sql = 'UPDATE variants SET data=%s WHERE variant_name = %s RETURNING id;'
+            cursor.execute(sql, [json.dumps(variant['data']), variant_name])
 
         # commit changes to database
         self.database_connection.commit()
@@ -385,7 +399,8 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # run sql call
-        cursor.execute('DELETE FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s', [scenario_name, variant_name])
+        sql = 'DELETE FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s'
+        cursor.execute(sql, [scenario_name, variant_name])
 
         # commit changes to database
         self.database_connection.commit()
