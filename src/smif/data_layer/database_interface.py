@@ -299,7 +299,7 @@ class DbConfigStore(ConfigStore):
             # get port types for model - inputs, outputs, parameters
             # run sql call
             for port_type in self.port_types:
-                cursor.execute('SELECT s.* FROM simulation_model_port smp JOIN specifications s ON smp.specification_name=s.name WHERE smp.model_name=%s AND port_type=%s;', [model_name, port_type])
+                cursor.execute('SELECT s.* FROM simulation_model_port smp JOIN specifications s ON smp.specification_id=s.id WHERE smp.model_name=%s AND port_type=%s;', [model_name, port_type])
 
                 # get returned data
                 port_data = cursor.fetchall()
@@ -594,7 +594,7 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.variant_name WHERE sv.scenario_name=%s', [scenario_name])
+        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.name WHERE sv.scenario_name=%s', [scenario_name])
 
         # get returned data
         scenario_variants = cursor.fetchall()
@@ -621,7 +621,7 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.variant_name WHERE sv.scenario_name=%s AND sv.variant_name=%s', [scenario_name, variant_name])
+        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.name WHERE sv.scenario_name=%s AND sv.variant_name=%s', [scenario_name, variant_name])
 
         # get returned data
         scenario_variant = cursor.fetchall()
@@ -659,7 +659,7 @@ class DbConfigStore(ConfigStore):
         if len(scenario_id) == 1:
 
             # run sql to add data to variants to database
-            cursor.execute('INSERT INTO variants (variant_name, description, data) VALUES (%s,%s,%s) RETURNING id;', [variant['variant_name'], variant['description'], json.dumps(variant['data'])])
+            cursor.execute('INSERT INTO variants (name, description, data) VALUES (%s,%s,%s) RETURNING id;', [variant['variant_name'], variant['description'], json.dumps(variant['data'])])
 
             # commit changes to database
             self.database_connection.commit()
@@ -699,17 +699,17 @@ class DbConfigStore(ConfigStore):
         if 'description' in variant.keys() and 'data' in variant.keys():
 
             # run sql call
-            cursor.execute('UPDATE variants SET description=%s AND data=%s WHERE variant_name = %s RETURNING id;', [variant['description'], json.dumps(variant['data']), variant_name])
+            cursor.execute('UPDATE variants SET description=%s AND data=%s WHERE name = %s RETURNING id;', [variant['description'], json.dumps(variant['data']), variant_name])
 
         elif 'description' in variant.keys() and 'data' not in variant.keys():
 
             # run sql call
-            cursor.execute('UPDATE variants SET description=%s WHERE variant_name = %s RETURNING id;', [variant['description'], variant_name])
+            cursor.execute('UPDATE variants SET description=%s WHERE name = %s RETURNING id;', [variant['description'], variant_name])
 
         elif 'description' not in variant.keys() and 'data' in variant.keys():
 
             # run sql call
-            cursor.execute('UPDATE variants SET data=%s WHERE variant_name = %s RETURNING id;', [json.dumps(variant['data']), variant_name])
+            cursor.execute('UPDATE variants SET data=%s WHERE name = %s RETURNING id;', [json.dumps(variant['data']), variant_name])
 
         # commit changes to database
         self.database_connection.commit()
@@ -745,7 +745,7 @@ class DbConfigStore(ConfigStore):
         self.database_connection.commit()
 
         # run sql call
-        cursor.execute('DELETE FROM variants WHERE variant_name=%s', [scenario_name, variant_name])
+        cursor.execute('DELETE FROM variants WHERE name=%s', [scenario_name, variant_name])
 
         # commit changes to database
         self.database_connection.commit()
