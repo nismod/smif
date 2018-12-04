@@ -65,7 +65,28 @@ class DbConfigStore(ConfigStore):
         list
             A list of dicts containing sos model definitions
         """
-        raise NotImplementedError()
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # get sos model details
+        cursor.execute('SELECT name FROM sos_models;')
+
+        # get returned data
+        sos_models = cursor.fetchall()
+
+        # is some models are returned
+        if sos_models is not None:
+
+            # create list to store models
+            sos_models_list = []
+
+            # loop through existing models
+            for model_name in sos_models:
+
+                # get the model details
+                sos_models_list.append(self.read_sos_model(model_name[0]))
+
+        return sos_models_list
 
     def read_sos_model(self, sos_model_name):
         """Read a single system of systems model
@@ -129,7 +150,7 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # write sos model, return id
-        cursor.execute('INSERT INTO sos_model (name, description) VALUES (%s, %s) RETURNING id;', [sos_model['name'], sos_model['description']])
+        cursor.execute('INSERT INTO sos_models (name, description) VALUES (%s, %s) RETURNING id;', [sos_model['name'], sos_model['description']])
 
         # write to database
         self.database_connection.commit()
@@ -197,7 +218,7 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT * FROM simulation_model')
+        cursor.execute('SELECT * FROM simulation_models')
 
         # get returned data
         simulation_models = cursor.fetchall()
