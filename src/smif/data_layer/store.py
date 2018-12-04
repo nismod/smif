@@ -482,7 +482,7 @@ class Store():
         scenario = self.read_scenario(scenario_name, skip_coords=True)
         spec = Spec.from_dict([
             provide for provide in scenario['provides'] if provide['name'] == variable][0])
-        return self.data_store.read_data_array(key, spec, timestep)
+        return self.data_store.read_scenario_variant_data(key, spec, timestep)
 
     def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
         """Write scenario data file
@@ -498,7 +498,7 @@ class Store():
         variant = self.read_scenario_variant(scenario_name, variant_name)
         key = self._key_from_data(variant['data'][data.spec.name], scenario_name, variant_name,
                                   data.spec.name)
-        self.data_store.write_data_array(key, data, timestep)
+        self.data_store.write_scenario_variant_data(key, data, timestep)
     # endregion
 
     # region Narrative Data
@@ -519,8 +519,25 @@ class Store():
         -------
         ~smif.data_layer.data_array.DataArray
         """
-        return self.data_store.read_narrative_variant_data(
-            sos_model_name, narrative_name, variant_name, parameter_name, timestep)
+        sos_model = self.read_sos_model(sos_model_name)
+        sector_models = [
+            self.read_model(sector_model) for sector_model in sos_model['sector_models']]
+
+        narrative = [narrative for narrative in sos_model['narratives']
+                     if narrative['name'] == narrative_name][0]
+        variant = [variant for variant in narrative['variants']
+                   if variant['name'] == variant_name][0]
+        key = self._key_from_data(variant['data'][parameter_name], narrative_name,
+                                  variant_name, parameter_name)
+
+        parameters = []
+        for sector_model in sector_models:
+            parameters += sector_model['parameters']
+
+        spec = Spec.from_dict([parameter for parameter in parameters
+                              if parameter['name'] == parameter_name][0])
+
+        return self.data_store.read_narrative_variant_data(key, spec, timestep)
 
     def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
                                      data, timestep=None):
@@ -535,8 +552,14 @@ class Store():
         timestep : int (optional)
             If None, write data for all timesteps
         """
-        self.data_store.write_narrative_variant_data(
-            sos_model_name, narrative_name, variant_name, data, timestep)
+        sos_model = self.read_sos_model(sos_model_name)
+        narrative = [narrative for narrative in sos_model['narratives']
+                     if narrative['name'] == narrative_name][0]
+        variant = [variant for variant in narrative['variants']
+                   if variant['name'] == variant_name][0]
+        key = self._key_from_data(variant['data'][data.spec.name], narrative_name,
+                                  variant_name, data.spec.name)
+        self.data_store.write_narrative_variant_data(key, data)
 
     def read_model_parameter(self, model_name, parameter_name):
         """Read a model parameter

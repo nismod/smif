@@ -197,7 +197,15 @@ class TestStoreData():
         )
         assert actual == scenario_variant_data
 
-    def test_narrative_data(self, store, sample_narrative_data):
+    def test_narrative_variant_data(self, store, sample_dimensions, get_sos_model,
+                                    get_sector_model, energy_supply_sector_model,
+                                    sample_narrative_data):
+        # Setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_sos_model(get_sos_model)
+        store.write_model(get_sector_model)
+        store.write_model(energy_supply_sector_model)
         # pick out single sample
         key = next(iter(sample_narrative_data))
         sos_model_name, narrative_name, variant_name, param_name = key

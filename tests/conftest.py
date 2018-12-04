@@ -609,7 +609,12 @@ def get_narrative():
         'variants': [
             {
                 'name': 'high_tech_dsm',
-                'description': 'High takeup of smart technology on the demand side'
+                'description': 'High takeup of smart technology on the demand side',
+                'data': {
+                    'smart_meter_savings': 'high_tech_dsm.csv',
+                    'clever_water_meter_savings': 'high_tech_dsm.csv',
+                    'per_capita_water_demand': 'high_tech_dsm.csv'
+                }
             }
         ]
     }
