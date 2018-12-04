@@ -142,6 +142,8 @@ class TestResults():
     @mark.xfail()
     def test_warm_start(self, handler):
         """Warm start should return None if no results are available
+        """
+        pass
 
     def test_available_results(self, handler):
         """Available results should return an empty list if none are available
