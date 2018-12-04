@@ -149,6 +149,17 @@ class DbConfigStore(ConfigStore):
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
+        # check name does not already exist
+        cursor.execute('SELECT name FROM sos_models WHERE name=%s;', [sos_model['name']])
+
+        # get returned data from query
+        sos_models = cursor.fetchall()
+
+        # if one of more names are returned
+        if len(sos_models) > 0:
+            # return an error - sos model already exists, use a different name
+            return
+
         # write sos model, return id
         cursor.execute('INSERT INTO sos_models (name, description) VALUES (%s, %s) RETURNING id;', [sos_model['name'], sos_model['description']])
 
@@ -161,6 +172,27 @@ class DbConfigStore(ConfigStore):
         # write dependencies
         # loop through passed dependencies
         for dependency in sos_model['dependencies']:
+            # check dependent models already exist in database - source model
+            cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['source_model']])
+
+            # get returned data from query
+            sos_models = cursor.fetchall()
+
+            # if no names are returned
+            if len(sos_models) == 0:
+                # return an error - simulation model does not exist
+                return
+
+            # check dependent models already exist in database - sink model
+            cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['sink_model']])
+
+            # get returned data from query
+            sos_models = cursor.fetchall()
+
+            # if no names are returned
+            if len(sos_models) == 0:
+                # return an error - simulation model does not exist
+                return
 
             # sql to write dependency to db
             cursor.execute('INSERT INTO sos_model_dependencies (sos_model_name, source_model, source_output, sink_model, sink_input, lag) VALUES (%s,%s,%s,%s,%s,%s);', [sos_model['name'], dependency['source_model'], dependency['source_model_output'], dependency['sink_model'], dependency['sink_model_input'], dependency['lag']])
@@ -170,6 +202,18 @@ class DbConfigStore(ConfigStore):
 
         # write sos_model_sim_models
         for sector_model in sos_model['sector_models']:
+
+            # check simulation model already in database
+            cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [sector_model])
+
+            # get returned data from query
+            sos_models = cursor.fetchall()
+
+            # if no names are returned
+            if len(sos_models) == 0:
+                # return an error - simulation model does not exist
+                return
+
             # write link between sos model and simulation models
             cursor.execute('INSERT INTO sos_model_simulation_models (sos_model_name, simulation_model_name) VALUES (%s,%s);', [sos_model['name'], sector_model])
 
@@ -178,6 +222,18 @@ class DbConfigStore(ConfigStore):
 
         # write sos_model_scenarios
         for scenario in sos_model['scenario_sets']:
+            # check scenario already exists
+            cursor.execute('SELECT name FROM scenarios WHERE name=%s;', [scenario])
+
+            # get returned data from query
+            scenario_names = cursor.fetchall()
+
+            # if no names are returned
+            if len(scenario_names) == 0:
+                # return an error - scenario does not exist
+                return
+
+            # add data into database
             cursor.execute('INSERT INTO sos_model_scenarios (sos_model_name, scenario_name) VALUES (%s,%s);', [sos_model['name'], scenario])
 
         # write to database
