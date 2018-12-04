@@ -11,14 +11,31 @@ from copy import deepcopy
 
 import numpy as np
 from pytest import fixture
+from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.datafile_interface import dump_yaml as dump
+from smif.data_layer.memory_interface import (MemoryConfigStore,
+                                              MemoryDataStore,
+                                              MemoryMetadataStore)
 from smif.metadata import Spec
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s: %(levelname)-8s %(message)s',
                     filemode='w')
+
+
+@fixture
+def empty_store():
+    """Store fixture
+    """
+    # implement each part using the memory classes, simpler than mocking
+    # each other implementation of a part is tested fully by e.g. test_config_store.py
+    return Store(
+        config_store=MemoryConfigStore(),
+        metadata_store=MemoryMetadataStore(),
+        data_store=MemoryDataStore()
+    )
 
 
 @fixture

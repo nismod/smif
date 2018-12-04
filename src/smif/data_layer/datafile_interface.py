@@ -308,6 +308,7 @@ class FileMetadataStore(MetadataStore):
         super().__init__()
         self.logger = getLogger(__name__)
 
+        base_folder = str(base_folder)
         self.units_path = os.path.join(base_folder, 'data', 'user-defined-units.txt')
         self.data_folder = os.path.join(base_folder, 'data', 'dimensions')
         self.config_folder = os.path.join(base_folder, 'config', 'dimensions')

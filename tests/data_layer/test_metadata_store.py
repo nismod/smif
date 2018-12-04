@@ -9,9 +9,9 @@ from smif.data_layer.memory_interface import MemoryMetadataStore
 @fixture(
     params=[
         'memory',
-        param('file', marks=mark.skip),
-        param('database', marks=mark.skip)]
-    )
+        'file',
+        param('database', marks=mark.skip)
+    ])
 def init_handler(request, setup_empty_folder_structure):
     if request.param == 'memory':
         handler = MemoryMetadataStore()

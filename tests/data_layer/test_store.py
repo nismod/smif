@@ -177,6 +177,7 @@ class TestStoreMetadata():
 
 
 class TestStoreData():
+
     def test_scenario_variant_data(self, store, sample_dimensions, scenario,
                                    sample_scenario_data):
         # setup

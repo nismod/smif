@@ -11,21 +11,22 @@ install:
   - conda config --add channels conda-forge
   - conda info -a
   - "conda create -n testenv --yes python=%PYTHON_VERSION% \
+        fiona \
         flask \
+        gdal \
         isodate \
+        libgdal \
         networkx \
         numpy \
         pandas \
         pint \
+        psycopg2 \
         pyarrow \
         pytest \
         python-dateutil \
         ruamel.yaml \
         rtree \
         shapely \
-        libgdal \
-        gdal \
-        fiona \
         xarray"
   - activate testenv
   - python setup.py develop
