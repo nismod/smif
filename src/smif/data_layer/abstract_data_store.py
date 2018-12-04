@@ -56,6 +56,7 @@ class DataStore(metaclass=ABCMeta):
             attributes keyed by intervention name
         """
 
+    @abstractmethod
     def write_interventions(self, key, interventions):
         """Write interventions data for `key`
 
@@ -66,12 +67,26 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def read_initial_conditions(self, model_name):
-        """Read historical interventions for `model_name`
+    def read_initial_conditions(self, key):
+        """Read historical interventions for `key`
+
+        Parameters
+        ----------
+        key : str
 
         Returns
         -------
         list[dict]
+        """
+
+    @abstractmethod
+    def write_initial_conditions(self, key, initial_conditions):
+        """Write historical interventions for `key`
+
+        Parameters
+        ----------
+        key : str
+        initial_conditions: list[dict]
         """
     # endregion
 

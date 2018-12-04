@@ -66,10 +66,23 @@ class TestDataArray():
             handler.read_data_array('mortality.csv', spec, 2011)
 
 
+class TestInitialConditions():
+    """Read and write initial conditions
+    """
+    def test_read_write_initial_conditions(self, handler, initial_conditions):
+
+        expected = initial_conditions
+
+        handler.write_initial_conditions('initial_conditions.csv', initial_conditions)
+        actual = handler.read_initial_conditions('initial_conditions.csv')
+
+        assert actual == expected
+
+
 class TestInterventions():
     """Read and write interventions
     """
-    def test_read_interventions(self, handler, interventions):
+    def test_read__write_interventions(self, handler, interventions):
 
         expected = {}
         for key, intervention in list(interventions.items()):

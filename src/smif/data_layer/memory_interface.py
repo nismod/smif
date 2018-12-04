@@ -297,11 +297,12 @@ class MemoryDataStore(DataStore):
     def write_interventions(self, key, interventions):
         self._interventions[key] = interventions
 
-    def read_initial_conditions(self, model_name):
-        return self._initial_conditions[model_name]
+    def read_initial_conditions(self, key):
+        print(self._initial_conditions)
+        return self._initial_conditions[key]
 
-    def write_initial_conditions(self, model_name, initial_conditions):
-        self._initial_conditions[model_name] = initial_conditions
+    def write_initial_conditions(self, key, initial_conditions):
+        self._initial_conditions[key] = initial_conditions
     # endregion
 
     # region State

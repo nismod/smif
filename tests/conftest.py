@@ -220,7 +220,7 @@ def oxford_region():
 
 @fixture
 def initial_conditions():
-    return [{'name': 'solar_installation', 'build_year': 2017}]
+    return [{'name': 'solar_installation', 'build_year': '2017'}]
 
 
 @fixture

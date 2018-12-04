@@ -500,7 +500,7 @@ class CSVDataStore(DataStore):
     # region Interventions
     def read_interventions(self, keys):
         all_interventions = {}
-        interventions = self._read_interventions_files(keys)
+        interventions = self._read_files(keys, os.path.join(self.data_folder, 'interventions'))
         for entry in interventions:
             name = entry.pop('name')
             if name in all_interventions:
@@ -510,40 +510,31 @@ class CSVDataStore(DataStore):
                 all_interventions[name] = entry
         return all_interventions
 
-    def read_initial_conditions(self, model_name):
-        model = _read_yaml_file(self.config_folders['models'], model_name)
-        return self._read_interventions_files(
-            model['initial_conditions'], self.data_folders['initial_conditions'])
+    def write_interventions(self, key, interventions):
+        data = [interventions[intervention] for intervention in interventions.keys()]
+        _write_data_to_csv(os.path.join(self.data_folder, 'interventions', key), data)
 
-    def _read_interventions_files(self, keys):
-        intervention_list = []
+    def read_initial_conditions(self, keys):
+        return self._read_file(keys, os.path.join(self.data_folder, 'initial_conditions'))
+
+    def write_initial_conditions(self, key, initial_conditions):
+        data = initial_conditions
+        _write_data_to_csv(os.path.join(self.data_folder, 'initial_conditions', key), data)
+
+    def _read_files(self, keys, dirname):
+        data_list = []
         for key in keys:
-            path = os.path.join(self.data_folder, 'interventions')
-            interventions = self._read_interventions_file(key, path)
-            intervention_list.extend(interventions)
-        return intervention_list
+            interventions = self._read_file(key, dirname)
+            data_list.extend(interventions)
+        return data_list
 
-    def _read_interventions_file(self, filename, dirname):
-        """Read the planned intervention data from a file
-
-        Planned interventions are stored either a csv or yaml file. In the case
-        of the former, the file should look like this::
-
-            name,build_year
-            asset_a,2010
-            asset_b,2015
-
-        In the case of a yaml, file, the format is as follows::
-
-            - name: asset_a
-              build_year: 2010
-            - name: asset_b
-              build_year: 2015
+    def _read_file(self, filename, dirname):
+        """Read data from a file
 
         Arguments
         ---------
         filename: str
-            The name of the strategy yml or csv file to read in
+            The name of the csv file to read in
         dirname: str
             The key of the dirname e.g. ``strategies`` or ``initial_conditions``
 
@@ -552,21 +543,13 @@ class CSVDataStore(DataStore):
         dict of dict
             Dict of intervention attribute dicts, keyed by intervention name
         """
-        _, ext = os.path.splitext(filename)
-        if ext == '.csv':
-            data = _get_data_from_csv(os.path.join(dirname, filename))
-            try:
-                data = self._reshape_csv_interventions(data)
-            except ValueError:
-                raise ValueError("Error reshaping data for {}".format(filename))
-        else:
-            data = _read_yaml_file(dirname, filename, extension='')
+        data = _get_data_from_csv(os.path.join(dirname, filename))
+        try:
+            data = self._reshape_csv_interventions(data)
+        except ValueError:
+            raise ValueError("Error reshaping data for {}".format(filename))
 
         return data
-
-    def write_interventions(self, key, interventions):
-        data = [interventions[intervention] for intervention in interventions.keys()]
-        _write_data_to_csv(os.path.join(self.data_folder, 'interventions', key), data)
 
     def _reshape_csv_interventions(self, data):
         """
