@@ -12,7 +12,7 @@ class DataStore(metaclass=ABCMeta):
     """
     # region DataArray
     @abstractmethod
-    def read_data_array(self, key, spec, timestep=None):
+    def read_scenario_variant_data(self, key, spec, timestep=None):
         """Read data array
 
         Parameters
@@ -28,7 +28,35 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def write_data_array(self, key, data_array, timestep=None):
+    def write_scenario_variant_data(self, key, data_array, timestep=None):
+        """Write data array
+
+        Parameters
+        ----------
+        key : str
+        data_array : ~smif.data_layer.data_array.DataArray
+        timestep : int (optional)
+            If None, write data for all timesteps
+        """
+
+    @abstractmethod
+    def read_narrative_variant_data(self, key, spec, timestep=None):
+        """Read data array
+
+        Parameters
+        ----------
+        key : str
+        spec : ~smif.metadata.spec.Spec
+        timestep : int (optional)
+            If None, read data for all timesteps
+
+        Returns
+        -------
+        data_array : ~smif.data_layer.data_array.DataArray
+        """
+
+    @abstractmethod
+    def write_narrative_variant_data(self, key, data_array, timestep=None):
         """Write data array
 
         Parameters

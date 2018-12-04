@@ -464,7 +464,23 @@ class CSVDataStore(DataStore):
             self.data_folders[folder] = dirname
 
     # region Data Array
-    def read_data_array(self, key, spec, timestep=None):
+    def read_scenario_variant_data(self, key, spec, timestep=None):
+        path = os.path.join(self.data_folder, 'scenarios', key)
+        return self._read_data_array(path, spec, timestep)
+
+    def write_scenario_variant_data(self, key, data, timestep=None):
+        path = os.path.join(self.data_folder, 'scenarios', key)
+        self._write_data_array(path, data, timestep)
+
+    def read_narrative_variant_data(self, key, spec, timestep=None):
+        path = os.path.join(self.data_folder, 'narratives', key)
+        return self._read_data_array(path, spec, timestep)
+
+    def write_narrative_variant_data(self, key, data, timestep=None):
+        path = os.path.join(self.data_folder, 'narratives', key)
+        self._write_data_array(path, data, timestep)
+
+    def _read_data_array(self, key, spec, timestep=None):
         try:
             data = _get_data_from_csv(key)
         except FileNotFoundError:
@@ -485,7 +501,7 @@ class CSVDataStore(DataStore):
 
         return da
 
-    def write_data_array(self, key, data_array, timestep=None):
+    def _write_data_array(self, key, data_array, timestep=None):
         spec = data_array.spec
         data = ndarray_to_data_list(data_array, timestep=timestep)
 

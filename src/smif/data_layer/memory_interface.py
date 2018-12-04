@@ -7,7 +7,8 @@ from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.data_layer.data_array import DataArray
-from smif.exception import SmifDataExistsError, SmifDataNotFoundError
+from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
+                            SmifDataNotFoundError)
 
 
 class MemoryConfigStore(ConfigStore):
@@ -254,16 +255,28 @@ class MemoryDataStore(DataStore):
         self._results = OrderedDict()
 
     # region Data Array
-    def read_data_array(self, key, spec, timestep=None):
+    def read_scenario_variant_data(self, key, spec, timestep=None):
+        return self._read_data_array(key, spec, timestep)
+
+    def write_scenario_variant_data(self, key, data, timestep=None):
+        self._write_data_array(key, data, timestep)
+
+    def read_narrative_variant_data(self, key, spec, timestep=None):
+        return self._read_data_array(key, spec, timestep)
+
+    def write_narrative_variant_data(self, key, data, timestep=None):
+        self._write_data_array(key, data, timestep)
+
+    def _read_data_array(self, key, spec, timestep=None):
         try:
             if timestep:
                 return self._data_array[key, timestep]
             else:
                 return self._data_array[key]
         except KeyError:
-            raise SmifDataNotFoundError
+            raise SmifDataMismatchError
 
-    def write_data_array(self, key, data, timestep=None):
+    def _write_data_array(self, key, data, timestep=None):
 
         if timestep:
             self._data_array[key, timestep] = data
