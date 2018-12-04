@@ -76,21 +76,45 @@ class DbConfigStore(ConfigStore):
     # region Models
     def read_models(self):
         """Read all simulation models
+
+        Returns
+        -------
+        list
+            A list of dictionaries for the models returned
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT * FROM simulation_model')
+        cursor.execute('SELECT * FROM simulation_models')
 
         # get returned data
         simulation_models = cursor.fetchall()
 
+        # loop through the returned simulation models to get their details
+        # create dictionary to store simulation models
+        simulation_model_list = {}
+        # loop through known models
+        for simulation_model in simulation_models:
+
+            # get details of the models from the read call and add to list
+            simulation_model_list[simulation_model['name']] = self.read_model(simulation_model['name'])
+
         # return data to user
-        return simulation_models
+        return simulation_model_list
 
     def read_model(self, model_name):
         """Read a simulation model
+
+        Argument
+        --------
+        model_name: string
+            The name of the model to read
+
+        Returns
+        -------
+        dict
+            A dictionary of the model definition returned
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -119,6 +143,12 @@ class DbConfigStore(ConfigStore):
 
     def write_model(self, model):
         """Write a simulation model to the database
+
+        Argument
+        --------
+        model: dictionary
+            A model definition
+
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -164,6 +194,14 @@ class DbConfigStore(ConfigStore):
 
     def update_model(self, model_name, model):
         """Update a simulation model
+
+        Argument
+        --------
+        model_name: string
+            The name of the model to update
+        model:
+             A model definition with only the fields to be updated
+
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -216,6 +254,12 @@ class DbConfigStore(ConfigStore):
 
     def delete_model(self, model_name):
         """Delete a simulation model
+
+        Argument
+        --------
+        model_name: string
+            The name of the model to be deleted
+
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -255,7 +299,7 @@ class DbConfigStore(ConfigStore):
         # get the number of rows deleted and return
         affected_rows = cursor.rowcount
 
-        return affected_rows
+        return
     # endregion
 
     # region Scenarios
