@@ -3,7 +3,9 @@ import PropTypes from 'prop-types'
 
 import { Redirect } from 'react-router-dom'
 
-import {FaTrash, FaPlay} from 'react-icons/lib/fa'
+import {FaTrash, FaPencil, FaPlay} from 'react-icons/lib/fa'
+import ReactTable from 'react-table'
+import 'react-table/react-table.css'
 
 class SosModelRunItem extends Component {
     constructor(props) {
@@ -19,107 +21,49 @@ class SosModelRunItem extends Component {
         this.onStartHandler = this.onStartHandler.bind(this)
     }
 
-    onEditHandler(event) {
+    onEditHandler(name) {
         const {itemLink, onClick} = this.props
-
-        const target = event.currentTarget
-        const name = target.dataset.name
 
         if (name != undefined) {
             onClick(itemLink + name)
         }
     }
 
-    onDeleteHandler(event) {
-        const {onDelete} = this.props
-        const target = event.currentTarget
-        const name = target.name
+    onDeleteHandler(name) {
+        const {onDelete, itemname} = this.props
 
         onDelete({
             target: {
-                name: target.value,
+                name: itemname,
                 value: name,
                 type: 'action'
             }
         })
     }
 
-    onStartHandler(event) {
+    onStartHandler(name) {
         const {resultLink, onClick} = this.props
-        const target = event.currentTarget
-        const name = target.name
 
         if (name != undefined) {
             onClick(resultLink + name)
         }
     }
 
-<<<<<<< HEAD
-    renderItems(itemname, items, itemLink, resultLink, onDelete) {
-=======
     renderItems() {
         const {itemname, items, resultLink, onDelete, onClick} = this.props
->>>>>>> Remove unused filters
 
         if (this.state.redirect) {
             return <Redirect push to={this.state.redirect_to}/>
         }
         else {
             return (
-                <table className="table table-hover table-projectoverview">
-                    <thead className="thead-light">
-                        <tr>
-                            <th className="col-name" scope="col">Name</th>
-                            <th className="col-desc" scope="col">Description</th>
-                            <th hidden={resultLink==undefined} className="col-action" scope="col"></th>
-                            <th hidden={onDelete==undefined} className="col-action" scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            items.map((item, i) => (
-                                <tr id={'row_' + item.name} key={i}>
-                                    <td
-                                        data-name={item.name}
-                                        className="col-name"
-                                        onClick={(e) => this.onEditHandler(e)}>
-                                        {item.name}
-                                    </td>
-                                    <td
-                                        data-name={item.name}
-                                        className="col-desc"
-                                        onClick={(e) => this.onEditHandler(e)}>
-                                        {item.description}
-                                    </td>
-                                    <td hidden={resultLink==undefined} className="col-action">
-                                        <button
-                                            id={'btn_start_' + item.name}
-                                            type="button"
-                                            className="btn btn-outline-dark btn-margin"
-                                            value={itemname}
-                                            name={item.name}
-                                            onClick={this.onStartHandler}>
-                                            <FaPlay/>
-                                        </button>
-                                    </td>
-                                    <td hidden={onDelete==undefined} className="col-action">
-                                        <button
-                                            id={'btn_delete_' + item.name}
-                                            type="button"
-                                            className="btn btn-outline-dark btn-margin"
-                                            value={itemname}
-                                            name={item.name}
-                                            onClick={this.onDeleteHandler}>
-                                            <FaTrash/>
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
+                <div>
+                    <ReactTable
+                        data={items}
+                        filterable
+                        defaultFilterMethod={(filter, row) =>
+                            String(row[filter.id]) === filter.value
                         }
-<<<<<<< HEAD
-                    </tbody>
-                </table>
-=======
                         columns={[{
                             Header: 'Name',
                             accessor: 'name',
@@ -192,7 +136,6 @@ class SosModelRunItem extends Component {
 
                     />
                 </div>
->>>>>>> Make row clickable
             )
         }
     }
@@ -214,7 +157,7 @@ class SosModelRunItem extends Component {
     }
 
     render() {
-        const {itemname, items, itemLink, resultLink, onDelete} = this.props
+        const {itemname, items, itemLink } = this.props
 
         if (itemname == '' || itemname == undefined || itemname == null) {
             return this.renderDanger('There is no itemname configured')
@@ -223,7 +166,7 @@ class SosModelRunItem extends Component {
         } else if (items == null || items == undefined || items.length == 0) {
             return this.renderInfo('There are no items in this list')
         } else {
-            return this.renderItems(itemname, items, itemLink, resultLink, onDelete)
+            return this.renderItems()
         }
     }
 }
