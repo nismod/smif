@@ -28,7 +28,8 @@ DB_OPTIONS = {
     params=[
         'memory',
         'text_file',
-        param('database', marks=SKIP_ON_APPVEYOR)
+        # param('database', marks=SKIP_ON_APPVEYOR)
+        param('database', marks=mark.skip)
     ])
 def init_handler(request, setup_empty_folder_structure):
     if request.param == 'memory':
