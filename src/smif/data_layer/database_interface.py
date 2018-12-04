@@ -299,6 +299,8 @@ class DbConfigStore(ConfigStore):
             # get port types for model - inputs, outputs, parameters
             # run sql call
             for port_type in self.port_types:
+
+                # get specification details by joining sim model port and specification relation using the specification id (unique to each specification)
                 cursor.execute('SELECT s.* FROM simulation_model_port smp JOIN specifications s ON smp.specification_id=s.id WHERE smp.model_name=%s AND port_type=%s;', [model_name, port_type])
 
                 # get returned data
@@ -346,7 +348,7 @@ class DbConfigStore(ConfigStore):
                     specification_id = cursor.fetchone()
 
                     # write to port
-                    # write model and specification to port table
+                    # write model and specification to port table, including the specification id
                     cursor.execute('INSERT INTO simulation_model_port (model_name, model_id, specification_name, specification_id, port_type) VALUES (%s, %s, %s, %s, %s);', [model['name'], simulation_model_id[0], spec['name'], specification_id[0], port_type])
 
                     # commit changes to database
