@@ -42,14 +42,27 @@ class DataStore(metaclass=ABCMeta):
 
     # region Interventions
     @abstractmethod
-    def read_interventions(self, model_name):
-        """Read interventions data for `model_name`
+    def read_interventions(self, key):
+        """Read interventions data for `key`
+
+        Parameters
+        ----------
+        key : str
 
         Returns
         -------
         dict[str, dict]
             A dict of intervention dictionaries containing intervention
             attributes keyed by intervention name
+        """
+
+    def write_interventions(self, key, interventions):
+        """Write interventions data for `key`
+
+        Parameters
+        ----------
+        key : str
+        interventions : dict[str, dict]
         """
 
     @abstractmethod

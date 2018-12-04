@@ -66,6 +66,22 @@ class TestDataArray():
             handler.read_data_array('mortality.csv', spec, 2011)
 
 
+class TestInterventions():
+    """Read and write interventions
+    """
+    def test_read_interventions(self, handler, interventions):
+
+        expected = {}
+        for key, intervention in list(interventions.items()):
+            expected[key] = intervention.copy()
+            expected[key].pop('name')
+
+        handler.write_interventions('my_intervention.csv', interventions)
+        actual = handler.read_interventions(['my_intervention.csv'])
+
+        assert actual == expected
+
+
 class TestState():
     """Read and write state
     """

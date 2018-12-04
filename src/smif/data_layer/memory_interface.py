@@ -280,11 +280,22 @@ class MemoryDataStore(DataStore):
     # endregion
 
     # region Interventions
-    def read_interventions(self, model_name):
-        return self._interventions[model_name]
+    def read_interventions(self, keys):
+        all_interventions = {}
+        interventions = [list(self._interventions[key].values()) for key in keys][0]
 
-    def write_interventions(self, model_name, interventions):
-        self._interventions[model_name] = interventions
+        for entry in interventions:
+            name = entry.pop('name')
+            if name in all_interventions:
+                msg = "An entry for intervention {} already exists"
+                raise ValueError(msg.format(name))
+            else:
+                all_interventions[name] = entry
+
+        return all_interventions
+
+    def write_interventions(self, key, interventions):
+        self._interventions[key] = interventions
 
     def read_initial_conditions(self, model_name):
         return self._initial_conditions[model_name]

@@ -228,7 +228,12 @@ def interventions():
     return {
         'solar_installation': {
             'name': 'solar_installation',
-            'capacity': 5,
+            'capacity': '5',
+            'capactiy_units': 'MW'
+        },
+        'wind_installation': {
+            'name': 'wind_installation',
+            'capacity': '4',
             'capactiy_units': 'MW'
         }
     }

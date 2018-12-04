@@ -498,12 +498,9 @@ class CSVDataStore(DataStore):
     # endregion
 
     # region Interventions
-    def read_interventions(self, model_name):
+    def read_interventions(self, keys):
         all_interventions = {}
-        model = _read_yaml_file(
-            self.config_folders['models'], model_name)
-        interventions = self._read_interventions_files(
-            model['interventions'], self.data_folders['interventions'])
+        interventions = self._read_interventions_files(keys)
         for entry in interventions:
             name = entry.pop('name')
             if name in all_interventions:
@@ -518,10 +515,11 @@ class CSVDataStore(DataStore):
         return self._read_interventions_files(
             model['initial_conditions'], self.data_folders['initial_conditions'])
 
-    def _read_interventions_files(self, filenames, dirname):
+    def _read_interventions_files(self, keys):
         intervention_list = []
-        for filename in filenames:
-            interventions = self._read_interventions_file(filename, dirname)
+        for key in keys:
+            path = os.path.join(self.data_folder, 'interventions')
+            interventions = self._read_interventions_file(key, path)
             intervention_list.extend(interventions)
         return intervention_list
 
@@ -566,8 +564,9 @@ class CSVDataStore(DataStore):
 
         return data
 
-    def _write_interventions_file(self, filename, dirname, data):
-        _write_yaml_file(dirname, filename=filename, data=data, extension='')
+    def write_interventions(self, key, interventions):
+        data = [interventions[intervention] for intervention in interventions.keys()]
+        _write_data_to_csv(os.path.join(self.data_folder, 'interventions', key), data)
 
     def _reshape_csv_interventions(self, data):
         """
