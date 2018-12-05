@@ -99,18 +99,21 @@ def mock_store(sample_dimensions, get_sector_model, empty_store):
     store.write_initial_conditions('energy_demand', [])
     data = {
         'water_asset_a': {
+            'name': 'water_asset_a',
             'build_year': 2010,
             'capacity': 50,
             'location': None,
             'sector': ''
         },
         'water_asset_b': {
+            'name': 'water_asset_b',
             'build_year': 2015,
             'capacity': 150,
             'location': None,
             'sector': ''
         },
         'water_asset_c': {
+            'name': 'water_asset_c',
             'capacity': 100,
             'build_year': 2015,
             'location': None,
