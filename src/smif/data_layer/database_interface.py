@@ -257,7 +257,7 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # check sos model exists
-        cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [sos_model['name']])
+        cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [sos_model_name])
 
         # get result of query
         sos_models = cursor.fetchall()
@@ -287,7 +287,7 @@ class DbConfigStore(ConfigStore):
                         return
 
                     # update
-                    cursor.execute('UPDATE dependencies SET source_model=%s WHERE name=%s;' [dependency['source_model'], sos_model['name']])
+                    cursor.execute('UPDATE dependencies SET source_model=%s WHERE name=%s;' [dependency['source_model'], sos_model_name])
 
                     # write to database
                     self.database_connection.commit()
@@ -305,7 +305,7 @@ class DbConfigStore(ConfigStore):
                         return
 
                     # update
-                    cursor.execute('UPDATE dependencies SET sink_model=%s WHERE name=%s;', [dependency['source_model'], sos_model['name']])
+                    cursor.execute('UPDATE dependencies SET sink_model=%s WHERE name=%s;', [dependency['source_model'], sos_model_name])
 
                     # write to database
                     self.database_connection.commit()
@@ -319,14 +319,14 @@ class DbConfigStore(ConfigStore):
 
                 if 'sink_model_input' in dependency.keys():
                     # update
-                    cursor.execute('UPDATE dependencies SET sink_model_input=%s WHERE name=%s;', [dependency['sink_model_input'], sos_model['name']])
+                    cursor.execute('UPDATE dependencies SET sink_model_input=%s WHERE name=%s;', [dependency['sink_model_input'], sos_model_name])
 
                     # write to database
                     self.database_connection.commit()
 
                 if 'lag' in dependency.keys():
                     # update
-                    cursor.execute('UPDATE dependencies SET lag=%s WHERE name=%s;', [dependency['lag'], sos_model['name']])
+                    cursor.execute('UPDATE dependencies SET lag=%s WHERE name=%s;', [dependency['lag'], sos_model_name])
 
                     # write to database
                     self.database_connection.commit()
@@ -350,7 +350,7 @@ class DbConfigStore(ConfigStore):
                     return
 
                 # write link between sos model and simulation models
-                cursor.execute('UPDATE sos_model_simulation_models SET simulation_model_name=%s WHERE sos_model_name=%s;', [sector_model, sos_model['name']])
+                cursor.execute('UPDATE sos_model_simulation_models SET simulation_model_name=%s WHERE sos_model_name=%s;', [sector_model, sos_model_name])
 
                 # write to database
                 self.database_connection.commit()
@@ -373,7 +373,7 @@ class DbConfigStore(ConfigStore):
                     return
 
                 # add data into database
-                cursor.execute('UPDATE sos_model_scenarios SET scenario_name=%s WHERE sos_model_name=%s;', [scenario, sos_model['name']])
+                cursor.execute('UPDATE sos_model_scenarios SET scenario_name=%s WHERE sos_model_name=%s;', [scenario, sos_model_name])
 
             # write to database
             self.database_connection.commit()
@@ -382,7 +382,7 @@ class DbConfigStore(ConfigStore):
         if 'description' in sos_model.keys():
 
             # sql to update description
-            cursor.execute('UPDATE sos_models SET description=%s WHERE name=%s;', [sos_model['description'], sos_model['name']])
+            cursor.execute('UPDATE sos_models SET description=%s WHERE name=%s;', [sos_model['description'], sos_model_name])
 
             # write to database
             self.database_connection.commit()
