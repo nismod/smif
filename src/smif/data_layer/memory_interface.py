@@ -310,6 +310,9 @@ class MemoryDataStore(DataStore):
     def write_interventions(self, key, interventions):
         self._interventions[key] = interventions
 
+    def read_strategy_interventions(self, strategy):
+        return strategy['interventions']
+
     def read_initial_conditions(self, keys):
         return [self._initial_conditions[key] for key in keys][0]
 
