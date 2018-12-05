@@ -612,7 +612,10 @@ class Store():
             attributes keyed by intervention name
         """
         model = self.read_model(model_name)
-        return self.data_store.read_interventions(model['interventions'])
+        if model['interventions'] != []:
+            return self.data_store.read_interventions(model['interventions'])
+        else:
+            return {}
 
     def write_interventions(self, model_name, interventions):
         """Write interventions data for a model
@@ -636,7 +639,11 @@ class Store():
         list[dict]
             A list of historical interventions, with keys 'name' and 'build_year'
         """
-        return self.data_store.read_initial_conditions(model_name)
+        model = self.read_model(model_name)
+        if model['initial_conditions'] != []:
+            return self.data_store.read_initial_conditions(model['initial_conditions'])
+        else:
+            return []
 
     def write_initial_conditions(self, model_name, initial_conditions):
         """Write historical interventions for a model
@@ -646,7 +653,11 @@ class Store():
         list[dict]
             A list of historical interventions, with keys 'name' and 'build_year'
         """
-        self.data_store.write_initial_conditions(model_name, initial_conditions)
+        model = self.read_model(model_name)
+        model['initial_conditions'] = [model_name + '.csv']
+        self.update_model(model_name, model)
+        self.data_store.write_initial_conditions(model['initial_conditions'][0],
+                                                 initial_conditions)
 
     def read_all_initial_conditions(self, model_run_name):
         """A list of all historical interventions

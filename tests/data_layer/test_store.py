@@ -219,27 +219,33 @@ class TestStoreData():
             sos_model_name, narrative_name, variant_name, param_name)
         assert actual == narrative_variant_data
 
-    def test_interventions(self, store, interventions):
+    def test_interventions(self, store, sample_dimensions, get_sector_model, interventions):
+        # setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_model(get_sector_model)
         # write
-        store.write_interventions('model_name', interventions)
+        store.write_interventions(get_sector_model['name'], interventions)
         # read
-        assert store.read_interventions('model_name') == interventions
+        assert store.read_interventions(get_sector_model['name']) == interventions
 
-    def test_initial_conditions(self, store, initial_conditions, get_sos_model,
+    def test_initial_conditions(self, store, sample_dimensions, initial_conditions,
+                                get_sos_model, get_sector_model, energy_supply_sector_model,
                                 minimal_model_run):
+        # setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
         store.write_sos_model(get_sos_model)
         store.write_model_run(minimal_model_run)
-        model_run_name = minimal_model_run['name']
-        sample_model_name = next(iter(get_sos_model['sector_models']))
-        # write empty defaults
-        for model_name in get_sos_model['sector_models']:
-            store.write_initial_conditions(model_name, [])
+        store.write_model(get_sector_model)
+        store.write_model(energy_supply_sector_model)
         # write
-        store.write_initial_conditions(sample_model_name, initial_conditions)
+        store.write_initial_conditions(get_sector_model['name'], initial_conditions)
         # read
-        assert store.read_initial_conditions(sample_model_name) == initial_conditions
+        assert store.read_initial_conditions(get_sector_model['name']) == initial_conditions
         # read all for a model run
-        assert store.read_all_initial_conditions(model_run_name) == initial_conditions
+        actual = store.read_all_initial_conditions(minimal_model_run['name'])
+        assert actual == initial_conditions
 
     def test_state(self, store, state):
         # write
