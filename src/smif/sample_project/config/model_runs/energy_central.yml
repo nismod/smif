@@ -13,7 +13,7 @@ narratives: {}
 strategies:
 - type: pre-specified-planning
   description: build_nuclear
-  filename: build_nuke.yml
+  filename: build_nuke.csv
   model_name: energy_supply
 - type: rule-based
   description: reduce emissions
