@@ -62,7 +62,7 @@ class EnergyAgent(RuleBased):
         budget : float
         """
         cheapest_first = []
-        for name, item in self.register.items():
+        for name, item in self.interventions.items():
             cheapest_first.append((name, float(item['capital_cost']['value'])))
         sorted(cheapest_first, key=lambda x: float(x[1]), reverse=True)
 
