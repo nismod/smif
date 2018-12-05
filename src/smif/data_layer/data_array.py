@@ -176,9 +176,21 @@ class DataArray():
         # fill out to size (values in the array before `.combine_first` win)
         xr_data_array = xr_data_array.combine_first(empty_xr_data_array)
         # check we do match shape (could be bigger than spec)
-        assert xr_data_array.shape == spec.shape
+        assert xr_data_array.shape == spec.shape, "Shape must match when creating DataArray"
         data = xr_data_array.data
         return cls(spec, data)
+
+    def update(self, other):
+        """Update data values with any from other which are non-null
+        """
+        assert self.spec == other.spec, "Specs must match when updating DataArray"
+        # convert self and other to xarray representation
+        self_xr = self.as_xarray()
+        other_xr = other.as_xarray()
+        # use xarray.combine_first convenience function
+        self_xr.combine_first(other_xr)
+        # assign result back to self
+        self.data = self_xr.data
 
 
 def _array_equal_nan(a, b):

@@ -94,7 +94,7 @@ class TestDataArray():
         assert_array_equal(actual.data, expected.data)
         assert actual == expected
 
-    def test_combine(self):
+    def test_combine(self, small_da, data):
         """Should override values where present (use case: full array of default values,
         overridden by a partial array of specific values).
 
@@ -102,7 +102,19 @@ class TestDataArray():
         - http://xarray.pydata.org/en/stable/combining.html#merging-with-no-conflicts
         - https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.update.html
         """
-        pass
+        partial_data = numpy.full(small_da.shape, numpy.nan)
+        partial_data[0, 0, 1] = 99
+        partial = DataArray(small_da.spec, partial_data)
+
+        # update in-place
+        small_da.update(partial)
+
+        expected_data = data
+        expected_data[0, 0, 1] = 99
+        expected = DataArray(small_da.spec, expected_data)
+
+        assert small_da == expected
+        assert_array_equal(small_da.data, expected.data)
 
     def test_as_xarray(self, small_da, small_da_xr):
         actual = small_da.as_xarray()
