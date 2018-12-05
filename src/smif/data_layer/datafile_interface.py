@@ -532,7 +532,8 @@ class CSVDataStore(DataStore):
         _write_data_to_csv(os.path.join(self.data_folder, 'interventions', key), data)
 
     def read_initial_conditions(self, keys):
-        return self._read_file(keys, os.path.join(self.data_folder, 'initial_conditions'))
+        path = os.path.join(self.data_folder, 'initial_conditions')
+        return [self._read_file(key, path) for key in keys][0]
 
     def write_initial_conditions(self, key, initial_conditions):
         data = initial_conditions

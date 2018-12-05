@@ -74,7 +74,7 @@ class TestInitialConditions():
         expected = initial_conditions
 
         handler.write_initial_conditions('initial_conditions.csv', initial_conditions)
-        actual = handler.read_initial_conditions('initial_conditions.csv')
+        actual = handler.read_initial_conditions(['initial_conditions.csv'])
 
         assert actual == expected
 
