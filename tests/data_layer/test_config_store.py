@@ -1,5 +1,6 @@
 """Test all ConfigStore implementations
 """
+import getpass
 import os
 from copy import copy
 
@@ -15,13 +16,31 @@ SKIP_ON_APPVEYOR = mark.skipif(
     reason="Not yet set up with postgresql service on Appveyor CI")
 
 
+# For testing, always use `test_smif` database; other connection details are configurable
 DB_OPTIONS = {
-    'host': os.environ['PGHOST'],
-    'port': os.environ['PGPORT'],
-    'user': os.environ['PGUSER'],
-    'dbname': 'test_smif',
-    'password': os.environ['PGPASSWORD']
+    'dbname': 'test_smif'
 }
+
+# Try setting sane defaults if environment variables are not set
+try:
+    DB_OPTIONS['host'] = os.environ['PGHOST']
+except KeyError:
+    DB_OPTIONS['host'] = 'localhost'
+
+try:
+    DB_OPTIONS['port'] = os.environ['PGPORT']
+except KeyError:
+    DB_OPTIONS['port'] = 5432
+
+try:
+    DB_OPTIONS['user'] = os.environ['PGUSER']
+except KeyError:
+    DB_OPTIONS['user'] = getpass.getuser()
+
+try:
+    DB_OPTIONS['password'] = os.environ['PGPASSWORD']
+except KeyError:
+    DB_OPTIONS['password'] = ''
 
 
 @fixture(
