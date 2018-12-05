@@ -277,7 +277,26 @@ class DecisionModule(metaclass=ABCMeta):
 
     @property
     def interventions(self):
+        """Return the list of available interventions
+
+        Returns
+        -------
+        list
+        """
         return self._register
+
+    def get_intervention(self, name):
+        """Return an intervention dict
+
+        Returns
+        -------
+        dict
+        """
+        try:
+            return self._register[name]
+        except KeyError:
+            msg = "Intervention '{}' is not found in the list of available interventions"
+            raise SmifDataNotFoundError(msg.format(name))
 
     @abstractmethod
     def _get_next_decision_iteration(self):

@@ -198,6 +198,20 @@ class TestRuleBasedProperties:
         dm = RuleBased(timesteps, interventions)
         assert dm.interventions == interventions
 
+    def test_get_intervention(self):
+
+        interventions = {'a': {'name': 'a'},
+                         'b': {'name': 'b'},
+                         'c': {'name': 'c'}}
+
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, interventions)
+        assert dm.get_intervention('a') == interventions['a']
+        with raises(SmifDataNotFoundError) as ex:
+            dm.get_intervention('z')
+        msg = "Intervention 'z' is not found in the list of available interventions"
+        assert msg in str(ex)
+
 
 class TestRuleBased:
 
