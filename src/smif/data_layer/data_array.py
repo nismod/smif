@@ -128,9 +128,18 @@ class DataArray():
 
         try:
             index = pandas.MultiIndex.from_product(coords, names=dims)
-            return pandas.Series(np.reshape(self.data, self.data.size), index=index)
+            return pandas.DataFrame(
+                {self.name: np.reshape(self.data, self.data.size)}, index=index)
         except NameError as ex:
             raise SmifDataError(INSTALL_WARNING) from ex
+
+    @classmethod
+    def from_df(cls, spec, dataframe):
+        """Create a DataArray from a :class:`pandas.DataFrame`
+        """
+        xr_dataset = dataframe.to_xarray()  # convert to dataset
+        xr_data_array = xr_dataset[spec.name]  # extract xr.DataArray
+        return cls.from_xarray(spec, xr_data_array)
 
     def as_xarray(self):
         """Access DataArray as a :class:`xarray.DataArray`
@@ -152,3 +161,21 @@ class DataArray():
             )
         except NameError as ex:
             raise SmifDataError(INSTALL_WARNING) from ex
+
+    @classmethod
+    def from_xarray(cls, spec, xr_data_array):
+        """Create a DataArray from a :class:`xarray.DataArray`
+        """
+        # set up empty xr.DataArray to override
+        empty_xr_data_array = xarray.DataArray(
+            np.full(spec.shape, np.nan),
+            coords={c.name: c.ids for c in spec.coords},
+            dims=spec.dims,
+            name=spec.name
+        )
+        # fill out to size (values in the array before `.combine_first` win)
+        xr_data_array = xr_data_array.combine_first(empty_xr_data_array)
+        # check we do match shape (could be bigger than spec)
+        assert xr_data_array.shape == spec.shape
+        data = xr_data_array.data
+        return cls(spec, data)

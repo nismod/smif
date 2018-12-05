@@ -2,7 +2,7 @@
 """
 import numpy
 import pandas as pd
-import xarray as xa
+import xarray as xr
 from numpy.testing import assert_array_equal
 from pytest import fixture
 from smif.data_layer.data_array import DataArray
@@ -45,6 +45,17 @@ def small_da(spec, data):
     return DataArray(spec, data)
 
 
+@fixture
+def small_da_df(spec, data):
+    index = pd.MultiIndex.from_product([c.ids for c in spec.coords], names=spec.dims)
+    return pd.DataFrame({spec.name: numpy.reshape(data, data.size)}, index=index)
+
+
+@fixture
+def small_da_xr(spec, data):
+    return xr.DataArray(data, [(c.name, c.ids) for c in spec.coords])
+
+
 class TestDataArray():
     def test_init(self, spec, data):
         """Should initialise from spec and ndarray of data
@@ -53,18 +64,40 @@ class TestDataArray():
         numpy.testing.assert_equal(da.data, data)
         assert spec == da.spec
 
-    def test_as_df(self, small_da, data, dims, coords):
-        expected_index = pd.MultiIndex.from_product(coords, names=dims)
-        expected = pd.Series(numpy.reshape(data, data.size), index=expected_index)
-
+    def test_as_df(self, small_da, small_da_df):
+        """Should create a pandas.DataFrame from a DataArray
+        """
         actual = small_da.as_df()
-        pd.testing.assert_series_equal(actual, expected)
+        pd.testing.assert_frame_equal(actual, small_da_df)
 
-    def test_as_xarray(self, small_da, data, dims, coords):
+    def test_from_df(self, small_da, small_da_df):
+        """Should create a DataArray from a pandas.DataFrame
+        """
+        actual = DataArray.from_df(small_da.spec, small_da_df)
+        assert actual == small_da
+
+    def test_from_df_partial(self, spec):
+        """Should create a DataArray that can handle missing data, returning nan/null
+        """
+        pass
+
+    def test_combine(self):
+        """Should override values where present (use case: full array of default values,
+        overridden by a partial array of specific values).
+
+        See variously:
+        - http://xarray.pydata.org/en/stable/combining.html#merging-with-no-conflicts
+        - https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.update.html
+        """
+        pass
+
+    def test_as_xarray(self, small_da, small_da_xr):
         actual = small_da.as_xarray()
-        expected = xa.DataArray(data, coords, dims)
+        xr.testing.assert_equal(actual, small_da_xr)
 
-        xa.testing.assert_equal(actual, expected)
+    def test_from_xarray(self, small_da, small_da_xr):
+        actual = DataArray.from_xarray(small_da.spec, small_da_xr)
+        assert actual == small_da
 
     def test_as_ndarray(self, small_da, data):
         actual = small_da.as_ndarray()
@@ -72,9 +105,8 @@ class TestDataArray():
         assert_array_equal(actual, expected)
 
     def test_equality(self, small_da, spec, data):
-
         expected = DataArray(spec, data)
-        assert small_da.__eq__(expected) is True
+        assert small_da == expected
 
     def test_repr(self, small_da, spec, data):
         assert repr(small_da) == "<DataArray('{}', '{}')>".format(spec, data)
