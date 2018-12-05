@@ -42,14 +42,14 @@ class WaterSupplySectorModel(SectorModel):
         number_of_treatment_plants = 2
 
         # Inputs
-        per_capita_water_demand = data.get_parameter('per_capita_water_demand')  # liter/person
-        population = data.get_data('population')  # people
+        per_capita_water_demand = data.get_parameter('per_capita_water_demand').as_ndarray()  # liter/person
+        population = data.get_data('population').as_ndarray()  # people
 
-        water_demand = data.get_data('water_demand')  # liter
+        water_demand = data.get_data('water_demand').as_ndarray()  # liter
         final_water_demand = (population * per_capita_water_demand) + water_demand
 
-        raininess = sum(data.get_data('precipitation'))  # milliliters to mega
-        reservoir_level = sum(data.get_data('reservoir_level'))  # megaliters
+        raininess = sum(data.get_data('precipitation').as_ndarray())  # milliliters to mega
+        reservoir_level = sum(data.get_data('reservoir_level').as_ndarray())  # megaliters
 
         self.logger.debug(
             "Parameters:\n "

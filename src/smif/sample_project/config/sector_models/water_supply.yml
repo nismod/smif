@@ -48,7 +48,7 @@ outputs:
 interventions:
   - water_supply.csv
 initial_conditions:
-  - water_supply_oxford.yml
+  - water_supply_oxford.csv
   - reservoirs.csv
 parameters:
 - name: clever_water_meter_savings
@@ -59,7 +59,7 @@ parameters:
   exp_range:
   - 3
   - 10
-  default: 3
+  default: defaults.csv
   dtype: float
   unit: '%'
 - name: per_capita_water_demand
@@ -70,6 +70,6 @@ parameters:
   exp_range:
   - 1
   - 1.3
-  default: 1.1
+  default: defaults.csv
   dtype: float
   unit: 'liter/person'
