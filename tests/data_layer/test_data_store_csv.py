@@ -401,7 +401,7 @@ class TestNarrativeVariantData:
             sector_model_name, parameter_name, data)
 
         with raises(SmifDataMismatchError) as ex:
-            config_handler.read_sector_model_parameter_default(
+            config_handler.read_model_parameter_default(
                 sector_model_name, parameter_name)
 
         msg = "Reading default parameter values for energy_demand:smart_meter_savings"
