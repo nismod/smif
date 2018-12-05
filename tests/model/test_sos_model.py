@@ -562,7 +562,7 @@ class TestSosModelDependencies(object):
     def test_dependency_model_not_exist(self, sos_model, scenario_model, energy_model):
         """Should fail with a SmifConfigurationError
         """
-        
+
         missing_sink = Mock()
         type(missing_sink).name = PropertyMock(return_value='test_sink_model')
 
@@ -631,7 +631,7 @@ class TestSosModelDependencies(object):
         """
         with raises(SmifDataMismatchError) as ex:
             SosModel.from_dict(sos_model_dict, [scenario_model, economic_model])
-        assert "SectorModel or ScenarioModel sink `economic_model` required " + \
+        assert "SectorModel or ScenarioModel sink `water_supply` required " + \
                "by dependency `economic_model (gva) - water_supply (rGVA)` " + \
                "was not provided by the builder" in str(ex.value)
 

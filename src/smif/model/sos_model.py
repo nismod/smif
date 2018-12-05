@@ -105,30 +105,8 @@ class SosModel():
                 sos_model.add_model(model)
 
             for dep in data['model_dependencies'] + data['scenario_dependencies']:
-                try:
-                    sink = sos_model.get_model(dep['sink'])
-                except KeyError:
-                    msg = 'SectorModel or ScenarioModel sink `{}` required by ' + \
-                          'dependency `{}` was not provided by the builder'
-                    dependency = (
-                        dep['source'] + ' (' + dep['source_output'] + ')' + 
-                        ' - ' +
-                        dep['sink'] + ' (' + dep['sink_input'] + ')'
-                    )
-                    raise SmifDataMismatchError(msg.format(dep['source'], dependency))
-
-                try:
-                    source = sos_model.get_model(dep['source'])
-                except KeyError:
-                    msg = 'SectorModel or ScenarioModel source `{}` required by ' + \
-                          'dependency `{}` was not provided by the builder'
-                    dependency = (
-                        dep['source'] + ' (' + dep['source_output'] + ')' + 
-                        ' - ' +
-                        dep['sink'] + ' (' + dep['sink_input'] + ')'
-                    )
-                    raise SmifDataMismatchError(msg.format(dep['source'], dependency))
-
+                sink = SosModel._get_dependency(sos_model, dep, 'sink')
+                source = SosModel._get_dependency(sos_model, dep, 'source')
                 source_output_name = dep['source_output']
                 sink_input_name = dep['sink_input']
                 try:
@@ -145,6 +123,23 @@ class SosModel():
 
         sos_model.check_dependencies()
         return sos_model
+
+    @staticmethod
+    def _get_dependency(sos_model, dep, source_or_sink):
+        try:
+            source = sos_model.get_model(dep[source_or_sink])
+        except KeyError:
+            msg = 'SectorModel or ScenarioModel {} `{}` required by ' + \
+                  'dependency `{}` was not provided by the builder'
+            dependency = (
+                dep['source'] + ' (' + dep['source_output'] + ')' +
+                ' - ' +
+                dep['sink'] + ' (' + dep['sink_input'] + ')'
+            )
+            raise SmifDataMismatchError(msg.format(source_or_sink,
+                                                   dep[source_or_sink],
+                                                   dependency))
+        return source
 
     @property
     def models(self):
