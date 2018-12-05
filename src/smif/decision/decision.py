@@ -19,6 +19,7 @@ from logging import getLogger
 
 from smif.data_layer.data_handle import ResultsHandle
 from smif.data_layer.model_loader import ModelLoader
+from smif.exception import SmifDataNotFoundError
 
 
 class DecisionManager(object):
@@ -56,9 +57,9 @@ class DecisionManager(object):
         self._timesteps = timesteps
         self._decision_module = None
 
-        self.register = {}
+        self._register = {}
         for sector_model in sos_model.sector_models:
-            self.register.update(self._store.read_interventions(sector_model.name))
+            self._register.update(self._store.read_interventions(sector_model.name))
         self.planned_interventions = {}
 
         strategies = self._store.read_strategies(modelrun_name)
@@ -90,7 +91,7 @@ class DecisionManager(object):
         # the planned interventions
         if planned_interventions:
             pre_spec_planning = PreSpecified(self._timesteps,
-                                             self.register,
+                                             self._register,
                                              planned_interventions)
             self.planned_interventions = {x['name'] for x in planned_interventions}
 
@@ -127,10 +128,17 @@ class DecisionManager(object):
     def available_interventions(self):
         """Returns a register of available interventions, i.e. those not planned
         """
-        edited_register = {name: self.register[name]
-                           for name in self.register.keys() -
+        edited_register = {name: self._register[name]
+                           for name in self._register.keys() -
                            self.planned_interventions}
         return edited_register
+
+    def get_intervention(self, value):
+        try:
+            return self._register[value]
+        except KeyError:
+            msg = ""
+            raise SmifDataNotFoundError(msg.format(value))
 
     def decision_loop(self):
         """Generate bundles of simulation steps to run
@@ -261,11 +269,34 @@ class DecisionModule(metaclass=ABCMeta):
     """
     def __init__(self, timesteps, register):
         self.timesteps = timesteps
-        self.register = register
+        self._register = register
         self.logger = getLogger(__name__)
 
     def __next__(self):
         return self._get_next_decision_iteration()
+
+    @property
+    def interventions(self):
+        """Return the list of available interventions
+
+        Returns
+        -------
+        list
+        """
+        return self._register
+
+    def get_intervention(self, name):
+        """Return an intervention dict
+
+        Returns
+        -------
+        dict
+        """
+        try:
+            return self._register[name]
+        except KeyError:
+            msg = "Intervention '{}' is not found in the list of available interventions"
+            raise SmifDataNotFoundError(msg.format(name))
 
     @abstractmethod
     def _get_next_decision_iteration(self):
@@ -368,7 +399,7 @@ class PreSpecified(DecisionModule):
         for intervention in self._planned:
             build_year = int(intervention['build_year'])
 
-            data = self.register[intervention['name']]
+            data = self._register[intervention['name']]
             lifetime = data['technical_lifetime']['value']
 
             if self.buildable(build_year, timestep) and \

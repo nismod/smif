@@ -30,4 +30,4 @@ install:
   - activate testenv
   - python setup.py develop
 test_script:
-  - python -m pytest
+  - python setup.py test
