@@ -9,8 +9,8 @@ from functools import lru_cache, wraps
 
 import pyarrow as pa
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.data_interface import DataInterface
 from smif.data_layer.load import dump, load
+from smif.data_layer.store import Store
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
@@ -88,7 +88,7 @@ def check_not_exists_as_child(parent_dtype, child_dtype):
     return wrapper
 
 
-class DatafileInterface(DataInterface):
+class DatafileInterface(Store):
     """Read and write interface to YAML / CSV configuration files
     and intermediate CSV / native-binary data storage.
 
@@ -129,25 +129,31 @@ class DatafileInterface(DataInterface):
         for folder in config_folders:
             dirname = os.path.join(self.config_folder, folder)
             # ensure each directory exists
-            os.makedirs(dirname, exist_ok=True)
+            if not os.path.exists(dirname):
+                msg = "Expected configuration folder at '{}' but it does not exist"
+                abs_path = os.path.abspath(dirname)
+                raise SmifDataNotFoundError(msg.format(abs_path))
+
             self.config_folders[folder] = dirname
 
         data_folders = [
             'coefficients',
             'dimensions',
-            'strategies',
             'initial_conditions',
             'initial_inputs',
             'interventions',
             'narratives',
+            'parameters',
             'scenarios',
             'strategies',
-            'parameters'
         ]
         for folder in data_folders:
             dirname = os.path.join(self.data_folder, folder)
             # ensure each directory exists
-            os.makedirs(dirname, exist_ok=True)
+            if not os.path.exists(dirname):
+                msg = "Expected data folder at '{}' but it does does not exist"
+                abs_path = os.path.abspath(dirname)
+                raise SmifDataNotFoundError(msg.format(abs_path))
             self.data_folders[folder] = dirname
 
         # ensure project config file exists
@@ -171,7 +177,8 @@ class DatafileInterface(DataInterface):
     # region Model runs
     def read_model_runs(self):
         names = self._read_filenames_in_dir(self.config_folders['model_runs'], '.yml')
-        model_runs = [self.read_model_run(name) for name in names]
+        sorted_names = sorted(names)
+        model_runs = [self.read_model_run(name) for name in sorted_names]
         return model_runs
 
     def read_model_run(self, model_run_name):

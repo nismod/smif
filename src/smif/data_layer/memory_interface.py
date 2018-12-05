@@ -4,11 +4,11 @@ from collections import OrderedDict
 from copy import copy
 
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.data_interface import DataInterface
+from smif.data_layer.store import Store
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 
 
-class MemoryInterface(DataInterface):
+class MemoryInterface(Store):
     """ Read and write interface to main memory
     """
     def __init__(self):
@@ -32,7 +32,10 @@ class MemoryInterface(DataInterface):
 
     # region Model runs
     def read_model_runs(self):
-        return list(self._model_runs.values())
+        model_runs = self._model_runs.items()
+        sorted_model_runs = OrderedDict(sorted(model_runs,
+                                        key=lambda t: t[0]))
+        return list(sorted_model_runs.values())
 
     def read_model_run(self, model_run_name):
         return self._model_runs[model_run_name]

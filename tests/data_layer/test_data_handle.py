@@ -225,7 +225,7 @@ class TestDataHandle():
     """
 
     def test_create(self, mock_model, mock_store):
-        """should be created with a DataInterface
+        """should be created with a Store
         """
         DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
 
@@ -432,7 +432,7 @@ class TestDataHandleState():
         """should get decision module state for given timestep/decision_iteration
 
         A call to ``get_state`` method on the data handle calls the read_state
-        method of the data_interface with arguments for model run name, current
+        method of the store with arguments for model run name, current
         timestep and decision iteration.
         """
         mock_store.read_state = Mock(return_value=[

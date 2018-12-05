@@ -80,6 +80,16 @@ class TestModelRuns:
     def test_read_model_run(self, handler, minimal_model_run):
         assert handler.read_model_run('test_modelrun') == minimal_model_run
 
+    def test_read_model_run_sorted(self, handler, minimal_model_run):
+        y_model_run = {'name': 'y'}
+        z_model_run = {'name': 'z'}
+
+        handler.write_model_run(z_model_run)
+        handler.write_model_run(y_model_run)
+
+        expected = [minimal_model_run, y_model_run, z_model_run]
+        assert handler.read_model_runs() == expected
+
     def test_write_model_run(self, handler, minimal_model_run):
         new_model_run = {
             'name': 'new_model_run_name',

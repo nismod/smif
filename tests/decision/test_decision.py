@@ -3,6 +3,7 @@ from unittest.mock import Mock, PropertyMock
 from pytest import fixture, raises
 from smif.data_layer.memory_interface import MemoryInterface
 from smif.decision.decision import DecisionManager, PreSpecified, RuleBased
+from smif.exception import SmifDataNotFoundError
 
 
 @fixture(scope='function')
@@ -189,6 +190,28 @@ class TestRuleBasedProperties:
         assert dm.first_timestep == 2010
         assert dm.last_timestep == 2020
 
+    def test_interventions(self):
+
+        interventions = Mock()
+
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, interventions)
+        assert dm.interventions == interventions
+
+    def test_get_intervention(self):
+
+        interventions = {'a': {'name': 'a'},
+                         'b': {'name': 'b'},
+                         'c': {'name': 'c'}}
+
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, interventions)
+        assert dm.get_intervention('a') == interventions['a']
+        with raises(SmifDataNotFoundError) as ex:
+            dm.get_intervention('z')
+        msg = "Intervention 'z' is not found in the list of available interventions"
+        assert msg in str(ex)
+
 
 class TestRuleBased:
 
@@ -267,14 +290,25 @@ class TestDecisionManager():
 
     def test_available_interventions(self, decision_manager):
         df = decision_manager
-        df.register = {'a': {'name': 'a'},
-                       'b': {'name': 'b'},
-                       'c': {'name': 'c'}}
+        df._register = {'a': {'name': 'a'},
+                        'b': {'name': 'b'},
+                        'c': {'name': 'c'}}
 
-        assert df.available_interventions == df.register
+        assert df.available_interventions == df._register
 
         df.planned_interventions = {'a', 'b'}
 
         expected = {'c': {'name': 'c'}}
 
         assert df.available_interventions == expected
+
+    def test_get_intervention(self, decision_manager):
+        df = decision_manager
+        df._register = {'a': {'name': 'a'},
+                        'b': {'name': 'b'},
+                        'c': {'name': 'c'}}
+
+        assert df.get_intervention('a') == {'name': 'a'}
+
+        with raises(SmifDataNotFoundError):
+            df.get_intervention('z')

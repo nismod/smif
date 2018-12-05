@@ -2,11 +2,11 @@
 # pylint: disable=redefined-outer-name
 from copy import copy
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, PropertyMock
 
 import numpy as np
 from pytest import fixture, raises
-from smif.exception import SmifDataMismatchError
+from smif.exception import SmifDataMismatchError, SmifValidationError
 from smif.metadata import RelativeTimestep, Spec
 from smif.model.dependency import Dependency
 from smif.model.model import ScenarioModel
@@ -537,7 +537,7 @@ class TestSosModelDependencies(object):
         )
 
     def test_dependency_duplicate(self, sos_model, scenario_model, sector_model):
-        with raises(ValueError) as ex:
+        with raises(SmifValidationError) as ex:
             sos_model.add_dependency(
                 scenario_model, 'precipitation',
                 sector_model, 'precipitation')
@@ -546,16 +546,41 @@ class TestSosModelDependencies(object):
     def test_dependency_not_present(self, sos_model, scenario_model, energy_model):
         """Should fail with missing input/output
         """
-        with raises(ValueError) as ex:
+        sos_model.add_model(energy_model)
+        with raises(SmifValidationError) as ex:
             sos_model.add_dependency(
                 scenario_model, 'not_present', energy_model, 'electricity_demand_input')
         msg = "Output 'not_present' is not defined in '{}'".format(scenario_model.name)
         assert msg in str(ex)
 
-        with raises(ValueError) as ex:
+        with raises(SmifValidationError) as ex:
             sos_model.add_dependency(
                 scenario_model, 'precipitation', energy_model, 'incorrect_name')
         msg = "Input 'incorrect_name' is not defined in '{}'".format(energy_model.name)
+        assert msg in str(ex)
+
+    def test_dependency_model_not_exist(self, sos_model, scenario_model, energy_model):
+        """Should fail with a SmifConfigurationError
+        """
+
+        missing_sink = Mock()
+        type(missing_sink).name = PropertyMock(return_value='test_sink_model')
+
+        with raises(SmifValidationError) as ex:
+            sos_model.add_dependency(
+                scenario_model, 'precipitation', missing_sink, 'does not matter'
+            )
+        msg = "Sink model 'test_sink_model' does not exist in list of models"
+        assert msg in str(ex)
+
+        missing_source = Mock()
+        type(missing_source).name = PropertyMock(return_value='test_source_model')
+
+        with raises(SmifValidationError) as ex:
+            sos_model.add_dependency(
+                missing_source, 'does not matter', energy_model, 'electricity_demand_input'
+            )
+        msg = "Source model 'test_source_model' does not exist in list of models"
         assert msg in str(ex)
 
     def test_data_not_present(self, sos_model_dict, sector_model):
@@ -596,15 +621,17 @@ class TestSosModelDependencies(object):
         )
 
         with raises(ValueError) as ex:
-            SosModel.from_dict(sos_model_dict, [sector_model, scenario_model, economic_model])
+            SosModel.from_dict(sos_model_dict,
+                               [sector_model, scenario_model, economic_model])
         assert "meter!=ml" in str(ex.value)
 
-    def test_scenario_variant_not_present(self, sos_model_dict, scenario_model, economic_model):
+    def test_scenario_variant_not_present(self, sos_model_dict, scenario_model,
+                                          economic_model):
         """Error on sector model not provided
         """
         with raises(SmifDataMismatchError) as ex:
             SosModel.from_dict(sos_model_dict, [scenario_model, economic_model])
-        assert "SectorModel or ScenarioModel sink `economic_model` required " + \
+        assert "SectorModel or ScenarioModel sink `water_supply` required " + \
                "by dependency `economic_model (gva) - water_supply (rGVA)` " + \
                "was not provided by the builder" in str(ex.value)
 

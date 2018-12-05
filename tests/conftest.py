@@ -25,22 +25,32 @@ logging.basicConfig(filename='test_logs.log',
 
 @fixture
 def setup_empty_folder_structure(tmpdir_factory):
-    folder_list = [
-        'config',
-        os.path.join('config', 'model_runs'),
-        os.path.join('config', 'sos_models'),
-        os.path.join('config', 'sector_models'),
-        'data',
-        os.path.join('data', 'initial_conditions'),
-        os.path.join('data', 'interventions'),
-        os.path.join('data', 'narratives'),
-        os.path.join('data', 'dimensions'),
-        os.path.join('data', 'scenarios'),
-        os.path.join('data', 'coefficients'),
-        os.path.join('data', 'strategies'),
-        'models',
-        'results'
+
+    folder_list = ['models', 'results', 'config', 'data']
+
+    config_folders = [
+        'dimensions',
+        'model_runs',
+        'scenarios',
+        'sector_models',
+        'sos_models',
     ]
+    for folder in config_folders:
+        folder_list.append(os.path.join('config', folder))
+
+    data_folders = [
+        'coefficients',
+        'dimensions',
+        'initial_conditions',
+        'initial_inputs',
+        'interventions',
+        'narratives',
+        'scenarios',
+        'strategies',
+        'parameters'
+    ]
+    for folder in data_folders:
+        folder_list.append(os.path.join('data', folder))
 
     test_folder = tmpdir_factory.mktemp("smif")
 

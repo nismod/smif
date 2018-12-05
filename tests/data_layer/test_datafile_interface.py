@@ -769,8 +769,7 @@ class TestScenarios:
 
     def test_scenario_data_validates(self, setup_folder_structure, config_handler,
                                      get_remapped_scenario_data):
-        """ DatafileInterface and DataInterface perform validation of scenario
-        data against raw interval and region data.
+        """Store performs validation of scenario data against raw interval and region data.
 
         As such `len(region_names) * len(interval_names)` is not a valid size
         of scenario data under cases where resolution definitions contain
@@ -1332,11 +1331,10 @@ class TestCoefficients:
         with raises(SmifDataNotFoundError):
             handler.read_coefficients(missing_spec, to_spec)
 
-    def test_write_success_if_folder_missing(self, from_spec, to_spec):
+    def test_dfi_raises_if_folder_missing(self):
         """Ensure we can write files, even if project directory starts empty
         """
         with TemporaryDirectory() as tmpdirname:
             # start with empty project (no data/coefficients subdirectory)
-            handler = DatafileInterface(tmpdirname, 'local_binary')
-            data = np.eye(10)
-            handler.write_coefficients(from_spec, to_spec, data)
+            with raises(SmifDataNotFoundError):
+                DatafileInterface(tmpdirname, 'local_binary')

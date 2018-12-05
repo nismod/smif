@@ -20,7 +20,7 @@ class SmifException(Exception):
 
 
 class SmifDataError(SmifException):
-    """Errors raised by the DataInterface
+    """Errors raised by the Store
     """
     pass
 

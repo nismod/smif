@@ -27,8 +27,8 @@ from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
 from smif.metadata import Spec
 
 
-class DataInterface(metaclass=ABCMeta):
-    """Abstract base class to define common data interface
+class Store(metaclass=ABCMeta):
+    """Abstract base class to define common data store
     """
     def __init__(self):
         self.logger = getLogger(__name__)
@@ -875,7 +875,7 @@ class DataInterface(metaclass=ABCMeta):
             If the dimension coordinate ids do not
             match the observations
         """
-        DataInterface._validate_observations(observations, spec)
+        Store._validate_observations(observations, spec)
 
         data = np.full(spec.shape, np.nan, dtype=spec.dtype)
 
@@ -896,9 +896,9 @@ class DataInterface(metaclass=ABCMeta):
             raise SmifDataMismatchError(
                 msg.format(len(observations), spec.shape)
             )
-        DataInterface._validate_observation_keys(observations, spec)
+        Store._validate_observation_keys(observations, spec)
         for dim in spec.dims:
-            DataInterface._validate_observation_meta(
+            Store._validate_observation_meta(
                 observations,
                 spec.dim_coords(dim).ids,
                 dim

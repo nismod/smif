@@ -5,9 +5,8 @@ import { Redirect } from 'react-router-dom'
 
 import {FaTrash, FaPencil, FaPlay} from 'react-icons/lib/fa'
 import ReactTable from 'react-table'
-import 'react-table/react-table.css'
 
-class SosModelRunItem extends Component {
+class ProjectOverviewItem extends Component {
     constructor(props) {
         super(props)
 
@@ -19,8 +18,6 @@ class SosModelRunItem extends Component {
         this.onEditHandler = this.onEditHandler.bind(this)
         this.onDeleteHandler = this.onDeleteHandler.bind(this)
         this.onStartHandler = this.onStartHandler.bind(this)
-
-        this.filterAll = this.filterAll.bind(this)
     }
 
     onEditHandler(name) {
@@ -50,31 +47,6 @@ class SosModelRunItem extends Component {
             onClick(resultLink + name)
         }
     }
-
-    onFilteredChange(filtered) {
-        // console.log('filtered:',filtered);
-        // const { sortedData } = this.reactTable.getResolvedState();
-        // console.log('sortedData:', sortedData);
-        // extra check for the "filterAll"
-        if (filtered.length > 1 && this.state.filterAll.length) {
-            // NOTE: this removes any FILTER ALL filter
-            const filterAll = ''
-            this.setState({
-                filtered: filtered.filter(item => item.id != 'all'),
-                filterAll
-            })
-        } else this.setState({ filtered })
-    }
-
-    filterAll(e) {
-        const { value } = e.target
-        const filterAll = value
-        const filtered = [{ id: 'all', value: filterAll }]
-        // NOTE: this completely clears any COLUMN filters
-        this.setState({ filterAll, filtered })
-    }
-
-    
 
     renderItems() {
         const {itemname, items, resultLink, onDelete, onClick} = this.props
@@ -142,17 +114,26 @@ class SosModelRunItem extends Component {
                                 </div>
                             )
                         }]}
-                        defaultPageSize={8}
-                        rowHeight={10}
+                        showPagination={items.length > 50 ? true : false}
+                        defaultPageSize={50}
+                        showPageSizeOptions={false}
                         minRows={1}
                         className="-striped -highlight"
-                        getTdProps={() => ({
-                            style: {
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center'
+                        getTdProps={(state, rowInfo, column) => {
+                            return {
+                                onClick: () => {
+                                    if (column.Header != 'Actions') {
+                                        this.onEditHandler(rowInfo.original.name)
+                                    }
+                                },
+                                style: {
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center'
+                                }
                             }
-                        })}
+                        }}
+
                     />
                 </div>
             )
@@ -190,7 +171,7 @@ class SosModelRunItem extends Component {
     }
 }
 
-SosModelRunItem.propTypes = {
+ProjectOverviewItem.propTypes = {
     itemname: PropTypes.string,
     items: PropTypes.array,
     itemLink: PropTypes.string,
@@ -199,4 +180,4 @@ SosModelRunItem.propTypes = {
     onClick: PropTypes.func
 }
 
-export default SosModelRunItem
+export default ProjectOverviewItem
