@@ -100,11 +100,11 @@ def get_sector_models(sector_model_names, handler):
     sector_models = []
     loader = ModelLoader()
     for sector_model_name in sector_model_names:
-        sector_model_config = handler.read_sector_model(sector_model_name)
+        sector_model_config = handler.read_model(sector_model_name)
 
         # absolute path to be crystal clear for ModelLoader when loading python class
         sector_model_config['path'] = os.path.normpath(
-            os.path.join(handler.base_folder, sector_model_config['path'])
+            os.path.join(handler.model_base_folder, sector_model_config['path'])
         )
         sector_model = loader.load(sector_model_config)
         sector_models.append(sector_model)

@@ -31,11 +31,13 @@ class Store():
     metadata_store: ~smif.data_layer.abstract_metadata_store.MetadataStore
     data_store: ~smif.data_layer.abstract_data_store.DataStore
     """
-    def __init__(self, config_store, metadata_store, data_store):
+    def __init__(self, config_store, metadata_store, data_store, model_base_folder="."):
         self.logger = getLogger(__name__)
         self.config_store = config_store
         self.metadata_store = metadata_store
         self.data_store = data_store
+        # base folder for any relative paths to models
+        self.model_base_folder = str(model_base_folder)
 
     #
     # CONFIG
