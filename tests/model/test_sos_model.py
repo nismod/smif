@@ -2,7 +2,7 @@
 # pylint: disable=redefined-outer-name
 from copy import copy
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, PropertyMock
 
 import numpy as np
 from pytest import fixture, raises
@@ -537,7 +537,7 @@ class TestSosModelDependencies(object):
         )
 
     def test_dependency_duplicate(self, sos_model, scenario_model, sector_model):
-        with raises(ValueError) as ex:
+        with raises(SmifValidationError) as ex:
             sos_model.add_dependency(
                 scenario_model, 'precipitation',
                 sector_model, 'precipitation')
@@ -546,6 +546,7 @@ class TestSosModelDependencies(object):
     def test_dependency_not_present(self, sos_model, scenario_model, energy_model):
         """Should fail with missing input/output
         """
+        sos_model.add_model(energy_model)
         with raises(SmifValidationError) as ex:
             sos_model.add_dependency(
                 scenario_model, 'not_present', energy_model, 'electricity_demand_input')
@@ -561,18 +562,25 @@ class TestSosModelDependencies(object):
     def test_dependency_model_not_exist(self, sos_model, scenario_model, energy_model):
         """Should fail with a SmifConfigurationError
         """
-        with raises(SmifValidationError) as ex:
-            sos_model.add_dependency(
-                scenario_model, 'precipitation', Mock(), 'does not matter'
-            )
-        msg = "Sink model '{}' does not exist in list of models"
-        assert msg in str(ex)
+        
+        missing_sink = Mock()
+        type(missing_sink).name = PropertyMock(return_value='test_sink_model')
 
         with raises(SmifValidationError) as ex:
             sos_model.add_dependency(
-                Mock(), 'does not matter', energy_model, 'electricity_demand_input'
+                scenario_model, 'precipitation', missing_sink, 'does not matter'
             )
-        msg = "Source model '{}' does not exist in list of models"
+        msg = "Sink model 'test_sink_model' does not exist in list of models"
+        assert msg in str(ex)
+
+        missing_source = Mock()
+        type(missing_source).name = PropertyMock(return_value='test_source_model')
+
+        with raises(SmifValidationError) as ex:
+            sos_model.add_dependency(
+                missing_source, 'does not matter', energy_model, 'electricity_demand_input'
+            )
+        msg = "Source model 'test_source_model' does not exist in list of models"
         assert msg in str(ex)
 
     def test_data_not_present(self, sos_model_dict, sector_model):

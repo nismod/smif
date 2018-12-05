@@ -10,7 +10,7 @@ import itertools
 import logging
 from collections import defaultdict
 
-from smif.exception import SmifDataMismatchError
+from smif.exception import SmifDataMismatchError, SmifValidationError
 from smif.metadata import RelativeTimestep
 from smif.model.dependency import Dependency
 from smif.model.model import Model, ScenarioModel
@@ -259,13 +259,25 @@ class SosModel():
         timestep : smif.metadata.RelativeTimestep, optional
             The relative timestep of the dependency, defaults to CURRENT, may be PREVIOUS.
         """
+        try:
+            self.get_model(source_model.name)
+        except KeyError:
+            msg = "Source model '{}' does not exist in list of models"
+            raise SmifValidationError(msg.format(source_model.name))
+
+        try:
+            self.get_model(sink_model.name)
+        except KeyError:
+            msg = "Sink model '{}' does not exist in list of models"
+            raise SmifValidationError(msg.format(sink_model.name))
+
         if source_output_name not in source_model.outputs:
             msg = "Output '{}' is not defined in '{}' model"
-            raise ValueError(msg.format(source_output_name, source_model.name))
+            raise SmifValidationError(msg.format(source_output_name, source_model.name))
 
         if sink_input_name not in sink_model.inputs:
             msg = "Input '{}' is not defined in '{}' model"
-            raise ValueError(msg.format(sink_input_name, sink_model.name))
+            raise SmifValidationError(msg.format(sink_input_name, sink_model.name))
 
         key = (source_model.name, source_output_name, sink_model.name, sink_input_name)
 
@@ -274,7 +286,7 @@ class SosModel():
             msg = "Inputs: '%s'. Free inputs: '%s'."
             self.logger.debug(msg, sink_model.inputs, self.free_inputs)
             msg = "Could not add dependency: input '{}' already provided"
-            raise ValueError(msg.format(sink_input_name))
+            raise SmifValidationError(msg.format(sink_input_name))
 
         source_spec = source_model.outputs[source_output_name]
         sink_spec = sink_model.inputs[sink_input_name]
