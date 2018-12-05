@@ -145,6 +145,7 @@ class TestResults():
         """
         pass
 
+    @mark.xfail()
     def test_available_results(self, handler):
         """Available results should return an empty list if none are available
         develop
