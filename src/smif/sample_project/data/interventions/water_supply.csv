@@ -1,0 +1,6 @@
+name,location,capacity_value,capacity_units,operational_lifetime_value,operational_lifetime_units,technical_lifetime_value,technical_lifetime_units,capital_cost_value,capital_cost_units
+small_pumping_station,Oxford,50,ML/day,150,years,50,years,5,million £
+large_pumping_station,Oxford,500,ML/day,100,years,50,years,15,million £
+M40 toll,Oxford,2,lanes,150,years,50,years,50,million £/km
+reservoir,Oxford,500,ML,300,years,150,years,15,million £
+Kielder Water,England,500,ML,300,years,150,years,15,million £

@@ -46,7 +46,7 @@ outputs:
   dtype: float
   unit: Ml
 interventions:
-  - water_supply.yml
+  - water_supply.csv
 initial_conditions:
   - water_supply_oxford.yml
   - reservoirs.csv
