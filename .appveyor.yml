@@ -33,10 +33,10 @@ install:
   - activate testenv
   - python setup.py develop
 before_test:
-  - SET PGUSER="postgres"
-  - SET PGHOST="localhost"
-  - SET PGPORT="5432"
-  - SET PGPASSWORD=""
+  - SET PGUSER=postgres
+  - SET PGHOST=localhost
+  - SET PGPORT=5432
+  - SET PGPASSWORD=
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
   - createdb -U postgres test_smif
 test_script:
