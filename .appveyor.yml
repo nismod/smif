@@ -1,4 +1,6 @@
 build: false
+services:
+  - postgresql96
 environment:
   matrix:
     - PYTHON_VERSION: 3.6
@@ -30,5 +32,12 @@ install:
         xarray"
   - activate testenv
   - python setup.py develop
+before_test:
+  - PGUSER="postgres"
+  - PGHOST="localhost"
+  - PGPORT="5432"
+  - PGPASSWORD=""
+  - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
+  - createdb -U postgres test_smif
 test_script:
   - python setup.py test
