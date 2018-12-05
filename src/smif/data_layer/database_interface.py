@@ -240,7 +240,7 @@ class DbConfigStore(ConfigStore):
         # write to database
         self.database_connection.commit()
 
-        return sos_model_id
+        return
 
     def update_sos_model(self, sos_model_name, sos_model):
         """Update a systems of systems model
@@ -264,7 +264,52 @@ class DbConfigStore(ConfigStore):
             The name of the systems of systems model to delete
 
         """
-        raise NotImplementedError()
+
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # check sos model exists
+        cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [sos_model_name])
+
+        # get result of query
+        sos_models = cursor.fetchall()
+
+        # if none returned, exit with error
+        if len(sos_models) == 0:
+            # no model with the given name found
+            return
+
+        # delete from sos_model_simulation_models
+        cursor.execute('DELETE FROM sos_model_simulation_models WHERE sos_model_name = %s;', [sos_model_name])
+
+        # run query to delete from db
+        self.database_connection.commit()
+
+        # delete from sos_model_scenarios
+        cursor.execute('DELETE FROM sos_model_scenarios WHERE sos_model_name = %s;', [sos_model_name])
+
+        # run query to delete from db
+        self.database_connection.commit()
+
+        # delete from sos_model_dependencies
+        cursor.execute('DELETE FROM sos_model_dependencies WHERE sos_model_name = %s;', [sos_model_name])
+
+        # run query to delete from db
+        self.database_connection.commit()
+
+        # delete from model_run
+        cursor.execute('DELETE FROM model_runs WHERE sos_model = %s;', [sos_model_name])
+
+        # run query to delete from db
+        self.database_connection.commit()
+
+        # delete from sos_models
+        cursor.execute('DELETE FROM sos_models WHERE name = %s;', [sos_model_name])
+
+        # run query to delete from db
+        self.database_connection.commit()
+
+        return
     # endregion
 
     # region Models
