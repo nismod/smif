@@ -15,6 +15,7 @@ dependencies:
 - numpy
 - pandas
 - pint
+- psycopg2
 - pyarrow
 - pylint  # dev
 - pytest  # test

@@ -12,7 +12,7 @@ Copy a project folder::
 
 Run a single system-of-systems model::
 
->>> execute_model_run('energy_supply_demand', '/projects/smif/')
+>>> execute_model_run('energy_supply_demand', store)
 
 Use the ModelRunScheduler to run a system-of-systems model::
 

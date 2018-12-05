@@ -91,7 +91,10 @@ import smif.cli.log
 
 from smif.controller import copy_project_folder, execute_model_run, ModelRunScheduler
 from smif.http_api import create_app
-from smif.data_layer import DatafileInterface
+from smif.data_layer import Store
+from smif.data_layer.datafile_interface import (YamlConfigStore,
+                                                CSVDataStore,
+                                                FileMetadataStore)
 
 
 __author__ = "Will Usher, Tom Russell"
@@ -105,8 +108,8 @@ LOGGER = logging.getLogger(__name__)
 def list_model_runs(args):
     """List the model runs defined in the config
     """
-    handler = DatafileInterface(args.directory)
-    model_run_configs = handler.read_model_runs()
+    store = _get_store(args)
+    model_run_configs = store.read_model_runs()
     for run in model_run_configs:
         print(run['name'])
 
@@ -125,7 +128,18 @@ def run_model_runs(args):
     else:
         model_run_ids = [args.modelrun]
 
-    execute_model_run(model_run_ids, args.directory, args.interface, args.warm)
+    store = _get_store(args)
+    execute_model_run(model_run_ids, store, args.warm)
+
+
+def _get_store(args):
+    """Contruct store as configured by arguments
+    """
+    return Store(
+        config_store=YamlConfigStore(args.directory),
+        metadata_store=FileMetadataStore(args.directory),
+        data_store=CSVDataStore(args.directory)
+    )
 
 
 def _run_server(args):
@@ -133,7 +147,7 @@ def _run_server(args):
     app = create_app(
         static_folder=app_folder,
         template_folder=app_folder,
-        data_interface=DatafileInterface(args.directory),
+        data_interface=_get_store(args),
         scheduler=ModelRunScheduler()
     )
 

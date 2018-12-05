@@ -1,10 +1,10 @@
 """Database store implementations
 """
+import json
+
 # import psycopg2 to handel database transactions
 import psycopg2
-import json
-from psycopg2.extras import DictCursor
-
+import psycopg2.extras
 from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
@@ -21,7 +21,8 @@ def initiate_db_connection(host, user_name, database_name, port, password):
     """
 
     # attempt to create the database connection
-    database_connection = psycopg2.connect("host=%s dbname=%s user=%s password=%s port=%s" % (host, database_name, user_name, password, port))
+    database_connection = psycopg2.connect("host=%s dbname=%s user=%s password=%s port=%s" %
+                                           (host, database_name, user_name, password, port))
 
     return database_connection
 
@@ -378,7 +379,8 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # run sql call
-        cursor.execute('INSERT INTO scenarios (name, description) VALUES (%s,%s) RETURNING id;', [scenario['name'], scenario['description']])
+        sql = 'INSERT INTO scenarios (name, description) VALUES (%s,%s) RETURNING id;'
+        cursor.execute(sql, [scenario['name'], scenario['description']])
 
         # commit changes to database
         self.database_connection.commit()
@@ -536,7 +538,8 @@ class DbConfigStore(ConfigStore):
             variant_id = cursor.fetchone()
 
             # run sql call
-            cursor.execute('INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;', [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
+            sql = 'INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;'
+            cursor.execute(sql, [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
 
             # commit changes to database
             self.database_connection.commit()
@@ -607,7 +610,8 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # run sql call
-        cursor.execute('DELETE FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s', [scenario_name, variant_name])
+        sql = 'DELETE FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s'
+        cursor.execute(sql, [scenario_name, variant_name])
 
         # commit changes to database
         self.database_connection.commit()

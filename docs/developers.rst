@@ -36,6 +36,33 @@ Run tests::
     python setup.py test
 
 
+Integration testing
+-------------------
+
+The smif test suite includes a number of integration tests:
+- ``tests/cli`` contains a few system integration tests, running small models using the smif
+  command-line interface
+- ``tests/data_layer`` contains data store integration tests which interact with data stores -
+  including the filesystem and a database.
+
+To run Postgres database integration tests, you will need:
+- a Postgres installation, (currently testing on 9.6 or greater)
+- a ``test_smif`` database, and a user with login and permissions to create and drop tables on
+  the database
+- to set the ``PG...``
+  `environment variables <https://www.postgresql.org/docs/current/libpq-envars.html>`_
+  before running the tests
+
+For example, assuming Postgres is installed and your user has database creation rights::
+
+    createdb test_smif
+    export PGHOST=localhost
+    export PGPORT=5432
+    export PGUSER=username
+    export PGPASSWORD=password
+    python -m pytest tests/data_layer
+
+
 Documentation
 -------------
 
@@ -63,7 +90,7 @@ Versioning
 
 We intend to follow `semantic versioning`_, with
 major versions for any incompatible changes to the public API.
-Note that tags should follow `PEP440`_ which has stricter 
+Note that tags should follow `PEP440`_ which has stricter
 constraints on tags than semantic versioning.
 
 Releases

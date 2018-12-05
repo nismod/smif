@@ -95,30 +95,6 @@ def months():
 
 
 @fixture
-def remap_months():
-    """Remapping four representative months to months across the year
-
-    In this case we have a model which represents the seasons through
-    the year using one month for each season. We then map the four
-    model seasons 1, 2, 3 & 4 onto the months throughout the year that
-    they represent.
-
-    The data will be presented to the model using the four time intervals,
-    1, 2, 3 & 4. When converting to hours, the data will be replicated over
-    the year.  When converting from hours to the model time intervals,
-    data will be averaged and aggregated.
-
-    """
-    data = [
-        {'name': 'cold_month', 'interval': [['P0M', 'P1M'], ['P1M', 'P2M'], ['P11M', 'P12M']]},
-        {'name': 'spring_month', 'interval': [['P2M', 'P3M'], ['P3M', 'P4M'], ['P4M', 'P5M']]},
-        {'name': 'hot_month', 'interval': [['P5M', 'P6M'], ['P6M', 'P7M'], ['P7M', 'P8M']]},
-        {'name': 'fall_month', 'interval': [['P8M', 'P9M'], ['P9M', 'P10M'], ['P10M', 'P11M']]}
-    ]
-    return data
-
-
-@fixture
 def seasons():
     # NB "winter" is split into two pieces around the year end
     data = [

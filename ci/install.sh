@@ -35,6 +35,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         rtree \
         xarray \
         pandas \
+        psycopg2 \
         shapely \
         fiona && source activate testenv
 fi
