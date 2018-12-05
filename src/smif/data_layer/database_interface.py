@@ -224,28 +224,45 @@ class DbConfigStore(ConfigStore):
         # update any of the port types if passed
         # need to figure out how to update an inputs/output/parameter and the specification
         for port_type in self.port_types:
+
             # if the port type has been passed to be updated
             if port_type in model.keys():
+
                 # loop through each specification for the port type
                 for spec in model[port_type]:
+
+                    # get the id of the specification to update - based on name, model and port
+                    cursor.execute('SELECT specification_id FROM simulation_model_port WHERE port_type=%s and specification_name=%s and model_name=%s;', [port_type, spec['name'], model_name])
+
+                    # get result of query
+                    spec_id = cursor.fetchall()
+
+                    # check for possible errors related to the existence of the specification
+                    if len(spec_id) > 1:
+                        # return an error, more than one specification id returned
+                        return
+                    elif len(spec_id) == 0:
+                        # return an error - no matching specification found to be updated
+                        return
+
                     # check for each key in the specification and update if present
                     if 'name' in spec.keys():
                         continue
                     if 'description' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET description = %s WHERE name=%s', [spec['description'], model[port_type]['name']])
+                        cursor.execute('UPDATE specifications SET description = %s WHERE id=%s', [spec['description'], spec_id])
                     if 'dimensions' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET dimensions = %s WHERE name=%s',                                       [spec['dimensions'], model[port_type]['name']])
+                        cursor.execute('UPDATE specifications SET dimensions = %s WHERE id=%s',                                       [spec['dimensions'], spec_id])
                     if 'unit' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET unit = %s WHERE name=%s', [spec['unit'], model[port_type]['name']])
+                        cursor.execute('UPDATE specifications SET unit = %s WHERE id=%s', [spec['unit'], spec_id])
                     if 'suggested_range' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET suggested_range = %s WHERE name=%s',[spec['suggested_range'], model[port_type]['name']])
+                        cursor.execute('UPDATE specifications SET suggested_range = %s WHERE id=%s',[spec['suggested_range'], spec_id])
                     if 'absolute_range' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET absolute_range = %s WHERE name=%s',[spec['absolute_range'], model[port_type]['name']])
+                        cursor.execute('UPDATE specifications SET absolute_range = %s WHERE id=%s',[spec['absolute_range'], spec_id])
 
                     # commit changes to database
                     self.database_connection.commit()
@@ -272,14 +289,14 @@ class DbConfigStore(ConfigStore):
         for specification in cursor.fetchall():
 
             # check if the specification is used by any other models
-            cursor.execute('SELECT COUNT(*) FROM simulation_model_port WHERE specification_name=%s;', [specification['specification_name']])
+            cursor.execute('SELECT COUNT(*) FROM simulation_model_port WHERE specification_id=%s;', [specification['id']])
 
             # get the count from the query
             specification_count = cursor.fetchone()
 
             # if the count is only 1, safe to delete specification, otherwise leave it
             if specification_count == 1:
-                cursor.execute('DELETE FROM specifications WHERE specification_name=%s;', [specification['name']])
+                cursor.execute('DELETE FROM specifications WHERE id=%s;', [specification['id']])
 
                 # commit changes to database
                 self.database_connection.commit()
