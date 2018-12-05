@@ -20,6 +20,7 @@ import store from 'store/store.js'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '../static/css/main.css'
 import 'rc-slider/assets/index.css'
+import 'react-table/react-table.css'
 
 render(
     <Provider store={store}>
