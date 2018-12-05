@@ -208,7 +208,12 @@ class TestStoreData():
         store.write_model(get_sector_model)
         store.write_model(energy_supply_sector_model)
         # pick out single sample
-        key = next(iter(sample_narrative_data))
+        key = (
+            'energy',
+            'technology',
+            'high_tech_dsm',
+            'smart_meter_savings'
+        )
         sos_model_name, narrative_name, variant_name, param_name = key
         narrative_variant_data = sample_narrative_data[key]
         # write
