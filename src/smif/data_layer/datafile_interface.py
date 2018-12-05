@@ -482,8 +482,6 @@ class CSVDataStore(DataStore):
         self._write_data_array(path, data, timestep)
 
     def read_model_parameter_default(self, key, spec):
-        print(self.data_folder)
-        print(key)
         path = os.path.join(self.data_folder, 'parameters', key)
         return self._read_data_array(path, spec)
 
