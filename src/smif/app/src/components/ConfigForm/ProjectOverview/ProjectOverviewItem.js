@@ -5,9 +5,8 @@ import { Redirect } from 'react-router-dom'
 
 import {FaTrash, FaPencil, FaPlay} from 'react-icons/lib/fa'
 import ReactTable from 'react-table'
-import 'react-table/react-table.css'
 
-class SosModelRunItem extends Component {
+class ProjectOverviewItem extends Component {
     constructor(props) {
         super(props)
 
@@ -172,7 +171,7 @@ class SosModelRunItem extends Component {
     }
 }
 
-SosModelRunItem.propTypes = {
+ProjectOverviewItem.propTypes = {
     itemname: PropTypes.string,
     items: PropTypes.array,
     itemLink: PropTypes.string,
@@ -181,4 +180,4 @@ SosModelRunItem.propTypes = {
     onClick: PropTypes.func
 }
 
-export default SosModelRunItem
+export default ProjectOverviewItem
