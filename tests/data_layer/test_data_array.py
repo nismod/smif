@@ -79,7 +79,20 @@ class TestDataArray():
     def test_from_df_partial(self, spec):
         """Should create a DataArray that can handle missing data, returning nan/null
         """
-        pass
+        df = pd.DataFrame({
+            'a': ['a1'],
+            'b': ['b1'],
+            'c': ['c2'],
+            'test_data': [1]
+        }).set_index(['a', 'b', 'c'])
+        expected_data = numpy.full(spec.shape, numpy.nan)
+        expected_data[0, 0, 1] = 1.0
+        expected = DataArray(spec, expected_data)
+
+        actual = DataArray.from_df(spec, df)
+
+        assert_array_equal(actual.data, expected.data)
+        assert actual == expected
 
     def test_combine(self):
         """Should override values where present (use case: full array of default values,

@@ -51,7 +51,7 @@ class DataArray():
 
     def __eq__(self, other):
         return self.spec == other.spec and \
-            np.array_equal(self.data, other.data)
+            _array_equal_nan(self.data, other.data)
 
     def __repr__(self):
         return "<DataArray('{}', '{}')>".format(self.spec, self.data)
@@ -179,3 +179,9 @@ class DataArray():
         assert xr_data_array.shape == spec.shape
         data = xr_data_array.data
         return cls(spec, data)
+
+
+def _array_equal_nan(a, b):
+    """Compare numpy arrays for equality, allowing NaN to be considerd equal to itself
+    """
+    return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
