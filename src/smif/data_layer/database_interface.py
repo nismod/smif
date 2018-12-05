@@ -253,7 +253,141 @@ class DbConfigStore(ConfigStore):
             The definition of a systems of systems model with only the data to be updated in
 
         """
-        raise NotImplementedError()
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # check sos model exists
+        cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [sos_model['name']])
+
+        # get result of query
+        sos_models = cursor.fetchall()
+
+        # if no model with the name exists, return
+        if len(sos_models) == 0:
+            # no model with the name given
+            return
+
+        # update dependencies if passed
+        if 'dependencies' in sos_model.keys():
+
+            # loop through dependencies
+            for dependency in sos_model['dependencies']:
+                # update details
+
+                if 'source_model' in dependency.keys():
+                    # check dependent models already exist in database - source model
+                    cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['source_model']])
+
+                    # get returned data from query
+                    sos_models = cursor.fetchall()
+
+                    # if no names are returned
+                    if len(sos_models) == 0:
+                        # return an error - simulation model does not exist
+                        return
+
+                    # update
+                    cursor.execute('UPDATE dependencies SET source_model=%s WHERE name=%s;' [dependency['source_model'], sos_model['name']])
+
+                    # write to database
+                    self.database_connection.commit()
+
+                if 'sink_model' in dependency.keys():
+                    # check dependent models already exist in database - sink model
+                    cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['sink_model']])
+
+                    # get returned data from query
+                    sos_models = cursor.fetchall()
+
+                    # if no names are returned
+                    if len(sos_models) == 0:
+                        # return an error - simulation model does not exist
+                        return
+
+                    # update
+                    cursor.execute('UPDATE dependencies SET sink_model=%s WHERE name=%s;', [dependency['source_model'], sos_model['name']])
+
+                    # write to database
+                    self.database_connection.commit()
+
+                if 'source_model_output' in dependency.keys():
+                    # update
+                    cursor.execute('UPDATE dependencies SET source_model_output=%s WHERE name=%s;', [dependency['source_model_output'], sos_model['name']])
+
+                    # write to database
+                    self.database_connection.commit()
+
+                if 'sink_model_input' in dependency.keys():
+                    # update
+                    cursor.execute('UPDATE dependencies SET sink_model_input=%s WHERE name=%s;', [dependency['sink_model_input'], sos_model['name']])
+
+                    # write to database
+                    self.database_connection.commit()
+
+                if 'lag' in dependency.keys():
+                    # update
+                    cursor.execute('UPDATE dependencies SET lag=%s WHERE name=%s;', [dependency['lag'], sos_model['name']])
+
+                    # write to database
+                    self.database_connection.commit()
+
+        # need to update methods as does not all for multiple as different rows
+        # update sos_model_simulation_models if passed
+        if 'sector_models' in sos_model.keys():
+
+            # loop through the sector models
+            for sector_model in sos_model['sector_models']:
+
+                # check simulation model already in database
+                cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [sector_model])
+
+                # get returned data from query
+                sos_models = cursor.fetchall()
+
+                # if no names are returned
+                if len(sos_models) == 0:
+                    # return an error - simulation model does not exist
+                    return
+
+                # write link between sos model and simulation models
+                cursor.execute('UPDATE sos_model_simulation_models SET simulation_model_name=%s WHERE sos_model_name=%s;', [sector_model, sos_model['name']])
+
+                # write to database
+                self.database_connection.commit()
+
+        # need to update methods as does not allow multiple as different rows
+        # update sos_model_scenarios if passed
+        if 'scenario_sets' in sos_model.keys():
+
+            # loop through passed scenarios
+            for scenario in sos_model['scenario_sets']:
+                # check scenario already exists
+                cursor.execute('SELECT name FROM scenarios WHERE name=%s;', [scenario])
+
+                # get returned data from query
+                scenario_names = cursor.fetchall()
+
+                # if no names are returned
+                if len(scenario_names) == 0:
+                    # return an error - scenario does not exist
+                    return
+
+                # add data into database
+                cursor.execute('UPDATE sos_model_scenarios SET scenario_name=%s WHERE sos_model_name=%s;', [scenario, sos_model['name']])
+
+            # write to database
+            self.database_connection.commit()
+
+        # update sos model description if passed
+        if 'description' in sos_model.keys():
+
+            # sql to update description
+            cursor.execute('UPDATE sos_models SET description=%s WHERE name=%s;', [sos_model['description'], sos_model['name']])
+
+            # write to database
+            self.database_connection.commit()
+
+        return
 
     def delete_sos_model(self, sos_model_name):
         """Delete a systems of systems model
