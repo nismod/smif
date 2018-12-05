@@ -20,7 +20,6 @@ from smif.data_layer.validate import (validate_sos_model_config,
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError, SmifDataReadError,
                             SmifValidationError)
-from smif.metadata.spec import Spec
 
 # Import fiona if available (optional dependency)
 try:
@@ -288,14 +287,6 @@ class YamlConfigStore(ConfigStore):
             msg = "Narrative '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(narrative_name, sos_model_name))
         return narrative
-
-    def _read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
-        narrative = self.read_narrative(sos_model_name, narrative_name)
-        variant = _pick_from_list(narrative['variants'], variant_name)
-        if not variant:
-            msg = "Variant '{}' not found in '{}'"
-            raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
-        return variant
     # endregion
 
     # region Strategies
@@ -473,119 +464,60 @@ class CSVDataStore(DataStore):
                 raise SmifDataNotFoundError(msg.format(abs_path))
             self.data_folders[folder] = dirname
 
-    # region Scenario Variant Data
-    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
-        # TODO pandas.read_csv
-        return self._read_variant_data(variant, variable, 'scenarios', spec, timestep)
+    # region Data Array
+    def read_scenario_variant_data(self, key, spec, timestep=None):
+        path = os.path.join(self.data_folder, 'scenarios', key)
+        return self._read_data_array(path, spec, timestep)
 
-    def write_scenario_variant_data(self, scenario_name, variant_name,
-                                    data_array, timestep=None):
-        spec = data_array.spec
-        data = ndarray_to_data_list(data_array, timestep=timestep)
-        variant = self.read_scenario_variant(scenario_name, variant_name)
-        filepath = self._get_variant_filepath(variant, data_array.name, 'scenarios')
-        self._write_variant_data_csv(filepath, data, spec, timestep)
-    # endregion
+    def write_scenario_variant_data(self, key, data, timestep=None):
+        path = os.path.join(self.data_folder, 'scenarios', key)
+        self._write_data_array(path, data, timestep)
 
-    # region Narrative Data
-    def read_narrative_variant_data(self, sos_model_name, narrative_name,
-                                    variant_name, parameter_name, timestep=None):
-        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        spec = self._read_narrative_variable_spec(
-            sos_model_name, narrative_name, parameter_name)
-        return self._read_variant_data(variant, parameter_name, 'narratives', spec, timestep)
+    def read_narrative_variant_data(self, key, spec, timestep=None):
+        path = os.path.join(self.data_folder, 'narratives', key)
+        return self._read_data_array(path, spec, timestep)
 
-    def write_narrative_variant_data(self, sos_model_name, narrative_name,
-                                     variant_name, data_array, timestep=None):
-        spec = data_array.spec
-        data = ndarray_to_data_list(data_array, timestep=timestep)
-        variant = self._read_narrative_variant(sos_model_name, narrative_name, variant_name)
-        filepath = self._get_variant_filepath(variant, spec.name, 'narratives')
-        self._write_variant_data_csv(filepath, data, spec, timestep)
+    def write_narrative_variant_data(self, key, data, timestep=None):
+        path = os.path.join(self.data_folder, 'narratives', key)
+        self._write_data_array(path, data, timestep)
 
-    def write_model_parameter_default(self, model_name, parameter_name, data):
-        param = self.read_model_parameter(model_name, parameter_name)
-        filepath = self._default_parameter_filepath(model_name, param)
-        spec = Spec.from_dict(param)
-        data_list = ndarray_to_data_list(data)
-        _write_data_to_csv(filepath, data_list, spec)
-
-    def read_model_parameter_default(self, model_name, parameter_name):
-        param = self.read_model_parameter(model_name, parameter_name)
-        filepath = self._default_parameter_filepath(model_name, param)
-        spec = Spec.from_dict(param)
-        data_list = _get_data_from_csv(filepath)
+    def _read_data_array(self, key, spec, timestep=None):
         try:
-            data = data_list_to_ndarray(data_list, spec)
-        except SmifDataMismatchError as ex:
-            raise SmifDataMismatchError(
-                "Reading default parameter values for {}:{}. {}".format(
-                    model_name,
-                    parameter_name,
-                    str(ex)
-                )) from ex
-        return data
-
-    def _default_parameter_filepath(self, model_name, parameter):
-        if 'default' in parameter:
-            filepath = parameter['default']
-        else:
-            filepath = 'default__{}__{}.csv'.format(model_name, parameter['name'])
-
-        if not os.path.isabs(filepath):
-            return os.path.join(self.data_folders['parameters'], filepath)
-        else:
-            return filepath
-    # endregion
-
-    def _get_variant_filepath(self, variant, variable, scenario_or_narrative):
-        if 'data' not in variant or variable not in variant['data']:
-            filename = '{}__{}.csv'.format(variable, variant['name'])
-        else:
-            filename = variant['data'][variable]
-        if os.path.isabs(filename):
-            filepath = filename
-        else:
-            filepath = os.path.join(self.data_folders[scenario_or_narrative], filename)
-        return filepath
-
-    def _read_variant_data(self, variant, variable, scenarios_or_narrative, spec, timestep):
-        filepath = self._get_variant_filepath(variant, variable, scenarios_or_narrative)
-        try:
-            data = _get_data_from_csv(filepath)
+            data = _get_data_from_csv(key)
         except FileNotFoundError:
             raise SmifDataNotFoundError
         if timestep:
             if 'timestep' not in data[0].keys():
                 msg = "Header in '{}' missing 'timestep' key. Found {}"
-                raise SmifDataMismatchError(msg.format(filepath, list(data[0].keys())))
+                raise SmifDataMismatchError(msg.format(key, list(data[0].keys())))
             data = [datum for datum in data if int(datum['timestep']) == timestep]
 
         try:
             da = data_list_to_ndarray(data, spec)
         except SmifDataMismatchError as ex:
-            msg = "DataMismatch in scenario: {}:{}.{}, from {}"
+            msg = "DataMismatch in key: {}, from {}"
             raise SmifDataMismatchError(
-                msg.format(variant['name'], variable, str(ex))
+                msg.format(key, str(ex))
             ) from ex
 
         return da
 
-    def _write_variant_data_csv(self, filepath, data, spec, timestep=None):
+    def _write_data_array(self, key, data_array, timestep=None):
+        spec = data_array.spec
+        data = ndarray_to_data_list(data_array, timestep=timestep)
+
         if timestep:
             fieldnames = ('timestep', ) + tuple(spec.dims) + (spec.name, )
             self.logger.debug("%s, %s", fieldnames, data)
-            _write_data_to_csv(filepath, data, fieldnames=fieldnames)
+            _write_data_to_csv(key, data, fieldnames=fieldnames)
         else:
-            _write_data_to_csv(filepath, data, spec=spec)
+            _write_data_to_csv(key, data, spec=spec)
+    # endregion
 
     # region Interventions
-    def read_interventions(self, model_name):
+    def read_interventions(self, keys):
         all_interventions = {}
-        model = _read_yaml_file(
-            self.config_folders['models'], model_name)
-        interventions = self._read_interventions_files(
-            model['interventions'], self.data_folders['interventions'])
+        interventions = self._read_files(keys, os.path.join(self.data_folder, 'interventions'))
         for entry in interventions:
             name = entry.pop('name')
             if name in all_interventions:
@@ -595,39 +527,32 @@ class CSVDataStore(DataStore):
                 all_interventions[name] = entry
         return all_interventions
 
-    def read_initial_conditions(self, model_name):
-        model = _read_yaml_file(self.config_folders['models'], model_name)
-        return self._read_interventions_files(
-            model['initial_conditions'], self.data_folders['initial_conditions'])
+    def write_interventions(self, key, interventions):
+        data = [interventions[intervention] for intervention in interventions.keys()]
+        _write_data_to_csv(os.path.join(self.data_folder, 'interventions', key), data)
 
-    def _read_interventions_files(self, filenames, dirname):
-        intervention_list = []
-        for filename in filenames:
-            interventions = self._read_interventions_file(filename, dirname)
-            intervention_list.extend(interventions)
-        return intervention_list
+    def read_initial_conditions(self, keys):
+        path = os.path.join(self.data_folder, 'initial_conditions')
+        return [self._read_file(key, path) for key in keys][0]
 
-    def _read_interventions_file(self, filename, dirname):
-        """Read the planned intervention data from a file
+    def write_initial_conditions(self, key, initial_conditions):
+        data = initial_conditions
+        _write_data_to_csv(os.path.join(self.data_folder, 'initial_conditions', key), data)
 
-        Planned interventions are stored either a csv or yaml file. In the case
-        of the former, the file should look like this::
+    def _read_files(self, keys, dirname):
+        data_list = []
+        for key in keys:
+            interventions = self._read_file(key, dirname)
+            data_list.extend(interventions)
+        return data_list
 
-            name,build_year
-            asset_a,2010
-            asset_b,2015
-
-        In the case of a yaml, file, the format is as follows::
-
-            - name: asset_a
-              build_year: 2010
-            - name: asset_b
-              build_year: 2015
+    def _read_file(self, filename, dirname):
+        """Read data from a file
 
         Arguments
         ---------
         filename: str
-            The name of the strategy yml or csv file to read in
+            The name of the csv file to read in
         dirname: str
             The key of the dirname e.g. ``strategies`` or ``initial_conditions``
 
@@ -636,20 +561,13 @@ class CSVDataStore(DataStore):
         dict of dict
             Dict of intervention attribute dicts, keyed by intervention name
         """
-        _, ext = os.path.splitext(filename)
-        if ext == '.csv':
-            data = _get_data_from_csv(os.path.join(dirname, filename))
-            try:
-                data = self._reshape_csv_interventions(data)
-            except ValueError:
-                raise ValueError("Error reshaping data for {}".format(filename))
-        else:
-            data = _read_yaml_file(dirname, filename, extension='')
+        data = _get_data_from_csv(os.path.join(dirname, filename))
+        try:
+            data = self._reshape_csv_interventions(data)
+        except ValueError:
+            raise ValueError("Error reshaping data for {}".format(filename))
 
         return data
-
-    def _write_interventions_file(self, filename, dirname, data):
-        _write_yaml_file(dirname, filename=filename, data=data, extension='')
 
     def _reshape_csv_interventions(self, data):
         """
@@ -807,6 +725,9 @@ class CSVDataStore(DataStore):
 
         _data = ndarray_to_data_list(data_array)
         _write_data_to_csv(results_path, _data, spec=spec)
+
+    def available_results(self, modelrun_name):
+        return None
 
     def _results_exist(self, modelrun_name):
         """Checks whether modelrun results exists on the filesystem
@@ -970,47 +891,6 @@ class CSVDataStore(DataStore):
                 results.setdefault('intervals', []).append(element)
         return results
     # endregion
-
-    def _read_narrative_variable_spec(self, sos_model_name, narrative_name, variable):
-        # Read spec from narrative->provides->variable
-        narrative = self.read_narrative(sos_model_name, narrative_name)
-        model_name = _key_from_list(variable, narrative['provides'])
-        if not model_name:
-            msg = "Cannot identify source of Spec for variable '{}'"
-            raise SmifDataNotFoundError(msg.format(variable))
-        parameters = self.read_model(model_name)['parameters']
-        return self._get_spec_from_provider(parameters, variable)
-
-    def _get_spec_from_provider(self, config_list, variable_name):
-        """Gets a Spec definition from a scenario definition
-
-        Parameters
-        ----------
-        config_list : list[dict]
-            A list of spec dicts
-        variable_name : str
-            The name of the variable for which to find the spec
-
-        Returns
-        -------
-        ~smif.metadata.spec.Spec
-        """
-        spec = _pick_from_list(config_list, variable_name)
-        if spec is not None:
-            self._set_item_coords(spec)
-            return Spec.from_dict(spec)
-        else:
-            msg = "Could not find spec definition for '{}'"
-            raise SmifDataNotFoundError(msg.format(variable_name))
-
-    def _set_item_coords(self, item):
-        """If dims exists and is not empty
-        """
-        if 'dims' in item and item['dims']:
-            item['coords'] = {
-                dim: self.read_dimension(dim)['elements']
-                for dim in item['dims']
-            }
 
 
 def ndarray_to_data_list(data_array, timestep=None):

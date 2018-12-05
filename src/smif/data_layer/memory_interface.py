@@ -7,7 +7,8 @@ from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.data_layer.data_array import DataArray
-from smif.exception import SmifDataExistsError, SmifDataNotFoundError
+from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
+                            SmifDataNotFoundError)
 
 
 class MemoryConfigStore(ConfigStore):
@@ -245,8 +246,7 @@ class MemoryDataStore(DataStore):
     """
     def __init__(self):
         super().__init__()
-        self._scenario_data = OrderedDict()
-        self._narrative_data = OrderedDict()
+        self._data_array = OrderedDict()
         self._interventions = OrderedDict()
         self._initial_conditions = OrderedDict()
         self._state = OrderedDict()
@@ -254,28 +254,37 @@ class MemoryDataStore(DataStore):
         self._coefficients = OrderedDict()
         self._results = OrderedDict()
 
-    # region Scenario Variant Data
-    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
-        return self._scenario_data[(scenario_name, variant_name, variable, timestep)]
+    # region Data Array
+    def read_scenario_variant_data(self, key, spec, timestep=None):
+        return self._read_data_array(key, spec, timestep)
 
-    def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
-        self._scenario_data[(scenario_name, variant_name, data.name, timestep)] = data
+    def write_scenario_variant_data(self, key, data, timestep=None):
+        self._write_data_array(key, data, timestep)
+
+    def read_narrative_variant_data(self, key, spec, timestep=None):
+        return self._read_data_array(key, spec, timestep)
+
+    def write_narrative_variant_data(self, key, data, timestep=None):
+        self._write_data_array(key, data, timestep)
+
+    def _read_data_array(self, key, spec, timestep=None):
+        try:
+            if timestep:
+                return self._data_array[key, timestep]
+            else:
+                return self._data_array[key]
+        except KeyError:
+            raise SmifDataMismatchError
+
+    def _write_data_array(self, key, data, timestep=None):
+
+        if timestep:
+            self._data_array[key, timestep] = data
+        else:
+            self._data_array[key] = data
     # endregion
 
-    # region Narrative Data
-    def read_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                    parameter_name, timestep=None):
-        key = (sos_model_name, narrative_name, variant_name, parameter_name, timestep)
-        try:
-            return self._narrative_data[key]
-        except KeyError:
-            raise SmifDataNotFoundError
-
-    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                     data, timestep=None):
-        key = (sos_model_name, narrative_name, variant_name, data.name, timestep)
-        self._narrative_data[key] = data
-
+    # region Model parameters
     def read_model_parameter_default(self, model_name, parameter_name):
         return self._model_parameter_defaults[(model_name, parameter_name)]
 
@@ -284,17 +293,28 @@ class MemoryDataStore(DataStore):
     # endregion
 
     # region Interventions
-    def read_interventions(self, model_name):
-        return self._interventions[model_name]
+    def read_interventions(self, keys):
+        all_interventions = {}
+        interventions = [list(self._interventions[key].values()) for key in keys][0]
 
-    def write_interventions(self, model_name, interventions):
-        self._interventions[model_name] = interventions
+        for entry in interventions:
+            name = entry.pop('name')
+            if name in all_interventions:
+                msg = "An entry for intervention {} already exists"
+                raise ValueError(msg.format(name))
+            else:
+                all_interventions[name] = entry
 
-    def read_initial_conditions(self, model_name):
-        return self._initial_conditions[model_name]
+        return all_interventions
 
-    def write_initial_conditions(self, model_name, initial_conditions):
-        self._initial_conditions[model_name] = initial_conditions
+    def write_interventions(self, key, interventions):
+        self._interventions[key] = interventions
+
+    def read_initial_conditions(self, keys):
+        return [self._initial_conditions[key] for key in keys][0]
+
+    def write_initial_conditions(self, key, initial_conditions):
+        self._initial_conditions[key] = initial_conditions
     # endregion
 
     # region State

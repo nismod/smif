@@ -15,10 +15,14 @@ from smif.model import SectorModel
 
 
 @fixture(scope='function')
-def mock_store(get_sector_model, empty_store):
+def mock_store(sample_dimensions, get_sector_model, empty_store):
     """Store with minimal setup
     """
     store = empty_store
+
+    for dim in sample_dimensions:
+            store.write_dimension(dim)
+
     store.write_model_run({
         'name': 1,
         'narratives': {},
@@ -90,21 +94,26 @@ def mock_store(get_sector_model, empty_store):
         'narratives': []
     })
 
+    store.write_model(get_sector_model)
+
     store.write_initial_conditions('energy_demand', [])
     data = {
         'water_asset_a': {
+            'name': 'water_asset_a',
             'build_year': 2010,
             'capacity': 50,
             'location': None,
             'sector': ''
         },
         'water_asset_b': {
+            'name': 'water_asset_b',
             'build_year': 2015,
             'capacity': 150,
             'location': None,
             'sector': ''
         },
         'water_asset_c': {
+            'name': 'water_asset_c',
             'capacity': 100,
             'build_year': 2015,
             'location': None,
@@ -113,7 +122,6 @@ def mock_store(get_sector_model, empty_store):
     }
     store.write_interventions('energy_demand', data)
 
-    store.write_model(get_sector_model)
     da = DataArray(parameter_spec, np.array(42))
     store.write_model_parameter_default('energy_demand', 'smart_meter_savings', da)
     return store

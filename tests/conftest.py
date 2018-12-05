@@ -237,7 +237,7 @@ def oxford_region():
 
 @fixture
 def initial_conditions():
-    return [{'name': 'solar_installation', 'build_year': 2017}]
+    return [{'name': 'solar_installation', 'build_year': '2017'}]
 
 
 @fixture
@@ -245,7 +245,12 @@ def interventions():
     return {
         'solar_installation': {
             'name': 'solar_installation',
-            'capacity': 5,
+            'capacity': '5',
+            'capactiy_units': 'MW'
+        },
+        'wind_installation': {
+            'name': 'wind_installation',
+            'capacity': '4',
             'capactiy_units': 'MW'
         }
     }
@@ -545,15 +550,40 @@ def sample_scenarios():
             'variants': [
                 {
                     'name': 'High Population (ONS)',
-                    'description': 'The High ONS Forecast for UK population out to 2050'
+                    'description': 'The High ONS Forecast for UK population out to 2050',
+                    'data': {
+                        'population_count': 'population_high.csv'
+                    }
                 },
                 {
                     'name': 'Low Population (ONS)',
-                    'description': 'The Low ONS Forecast for UK population out to 2050'
+                    'description': 'The Low ONS Forecast for UK population out to 2050',
+                    'data': {
+                        'population_count': 'population_low.csv'
+                    }
                 },
             ],
         },
     ]
+
+
+@fixture
+def sample_scenario_data(scenario, get_sector_model, energy_supply_sector_model,
+                         water_supply_sector_model):
+    scenario_data = {}
+
+    for scenario in [scenario]:
+        for variant in scenario['variants']:
+            for data_key, data_value in variant['data'].items():
+                spec = Spec.from_dict(
+                    [provides for provides in scenario['provides']
+                     if provides['name'] == data_key][0])
+                nda = np.random.random(spec.shape)
+                da = DataArray(spec, nda)
+                key = (scenario['name'], variant['name'], data_key)
+                scenario_data[key] = da
+
+    return scenario_data
 
 
 @fixture
@@ -596,7 +626,12 @@ def get_narrative():
         'variants': [
             {
                 'name': 'high_tech_dsm',
-                'description': 'High takeup of smart technology on the demand side'
+                'description': 'High takeup of smart technology on the demand side',
+                'data': {
+                    'smart_meter_savings': 'high_tech_dsm.csv',
+                    'clever_water_meter_savings': 'high_tech_dsm.csv',
+                    'per_capita_water_demand': 'high_tech_dsm.csv'
+                }
             }
         ]
     }
