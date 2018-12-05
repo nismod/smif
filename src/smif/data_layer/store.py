@@ -611,7 +611,8 @@ class Store():
             A dict of intervention dictionaries containing intervention
             attributes keyed by intervention name
         """
-        return self.data_store.read_interventions(model_name)
+        model = self.read_model(model_name)
+        return self.data_store.read_interventions(model['interventions'])
 
     def write_interventions(self, model_name, interventions):
         """Write interventions data for a model
@@ -622,7 +623,10 @@ class Store():
             A dict of intervention dictionaries containing intervention
             attributes keyed by intervention name
         """
-        self.data_store.write_interventions(model_name, interventions)
+        model = self.read_model(model_name)
+        model['interventions'] = [model_name + '.csv']
+        self.update_model(model_name, model)
+        self.data_store.write_interventions(model['interventions'][0], interventions)
 
     def read_initial_conditions(self, model_name):
         """Read historical interventions for `model_name`
