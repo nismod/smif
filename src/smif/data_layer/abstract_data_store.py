@@ -204,7 +204,8 @@ class DataStore(metaclass=ABCMeta):
     @abstractmethod
     def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
                      decision_iteration=None):
-        """Return results of a `model_name` in `model_run_name` for a given `output_name`
+        """Return results of a model from a model_run for a given output at a timestep and
+        decision iteration
 
         Parameters
         ----------
@@ -231,5 +232,15 @@ class DataStore(metaclass=ABCMeta):
         model_name : str
         timestep : int, optional
         decision_iteration : int, optional
+        """
+
+    @abstractmethod
+    def available_results(self, modelrun_name):
+        """List available results from a model run
+
+        Returns
+        -------
+        list[tuple]
+             Each tuple is (timestep, decision_iteration, model_name, output_name)
         """
     # endregion

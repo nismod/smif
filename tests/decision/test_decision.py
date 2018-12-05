@@ -1,7 +1,6 @@
 from unittest.mock import Mock, PropertyMock
 
 from pytest import fixture, raises
-from smif.data_layer.memory_interface import MemoryInterface
 from smif.decision.decision import DecisionManager, PreSpecified, RuleBased
 
 
@@ -242,16 +241,15 @@ class TestRuleBased:
 class TestDecisionManager():
 
     @fixture(scope='function')
-    def decision_manager(self):
-        store = MemoryInterface()
-        store._model_runs = {'test': {'sos_model': 'test_sos_model'}}
-        store._sos_models = {'test_sos_model': {'sector_models': []}}
-        store._strategies = {'test': []}
+    def decision_manager(self, empty_store):
+        empty_store.write_model_run({'name': 'test', 'sos_model': 'test_sos_model'})
+        empty_store.write_sos_model({'name': 'test_sos_model', 'sector_models': []})
+        empty_store.write_strategies('test', [])
         sos_model = Mock()
         sos_model.name = 'test_sos_model'
         sos_model.sector_models = []
 
-        df = DecisionManager(store, [2010, 2015], 'test', sos_model)
+        df = DecisionManager(empty_store, [2010, 2015], 'test', sos_model)
         return df
 
     def test_decision_manager_init(self, decision_manager):

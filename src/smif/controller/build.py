@@ -4,7 +4,6 @@ import sys
 import traceback
 
 from smif.controller.modelrun import ModelRunBuilder
-from smif.data_layer import DatafileInterface
 from smif.data_layer.model_loader import ModelLoader
 from smif.exception import SmifDataNotFoundError
 from smif.model import ScenarioModel, SosModel
@@ -12,12 +11,12 @@ from smif.model import ScenarioModel, SosModel
 LOGGER = logging.getLogger(__name__)
 
 
-def get_model_run_definition(directory, modelrun):
+def get_model_run_definition(store, modelrun):
     """Builds the model run
 
     Arguments
     ---------
-    directory : str
+    store : ~smif.data_layer.store.Store
         Path to the project directory
     modelrun : str
         Name of the model run to run
@@ -29,9 +28,8 @@ def get_model_run_definition(directory, modelrun):
         ScenarioModel, SosModel and SectorModel objects
 
     """
-    handler = DatafileInterface(directory)
     try:
-        model_run_config = handler.read_model_run(modelrun)
+        model_run_config = store.read_model_run(modelrun)
     except SmifDataNotFoundError:
         LOGGER.error("Model run %s not found. Run 'smif list' to see available model runs.",
                      modelrun)
@@ -39,19 +37,19 @@ def get_model_run_definition(directory, modelrun):
 
     LOGGER.info("Running %s", model_run_config['name'])
     LOGGER.debug("Model Run: %s", model_run_config)
-    sos_model_config = handler.read_sos_model(model_run_config['sos_model'])
+    sos_model_config = store.read_sos_model(model_run_config['sos_model'])
 
-    sector_models = get_sector_models(sos_model_config['sector_models'], handler)
+    sector_models = get_sector_models(sos_model_config['sector_models'], store)
     LOGGER.debug("Sector models: %s", sector_models)
 
-    scenario_models = get_scenario_models(model_run_config['scenarios'], handler)
+    scenario_models = get_scenario_models(model_run_config['scenarios'], store)
     LOGGER.debug("Scenario models: %s", [model.name for model in scenario_models])
 
     sos_model = SosModel.from_dict(sos_model_config, sector_models + scenario_models)
     model_run_config['sos_model'] = sos_model
     LOGGER.debug("Model list: %s", list(model.name for model in sos_model.models))
 
-    model_run_config['strategies'] = handler.read_strategies(model_run_config['name'])
+    model_run_config['strategies'] = store.read_strategies(model_run_config['name'])
     LOGGER.debug("Strategies: %s", [s['type'] for s in model_run_config['strategies']])
 
     return model_run_config

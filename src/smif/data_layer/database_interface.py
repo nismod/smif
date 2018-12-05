@@ -1,10 +1,10 @@
 """Database store implementations
 """
+import json
+
 # import psycopg2 to handel database transactions
 import psycopg2
-import json
-from psycopg2.extras import DictCursor
-
+import psycopg2.extras
 from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
@@ -21,7 +21,8 @@ def initiate_db_connection(host, user_name, database_name, port, password):
     """
 
     # attempt to create the database connection
-    database_connection = psycopg2.connect("host=%s dbname=%s user=%s password=%s port=%s" % (host, database_name, user_name, password, port))
+    database_connection = psycopg2.connect("host=%s dbname=%s user=%s password=%s port=%s" %
+                                           (host, database_name, user_name, password, port))
 
     return database_connection
 
@@ -269,6 +270,11 @@ class DbConfigStore(ConfigStore):
     # region Models
     def read_models(self):
         """Read all simulation models
+
+        Returns
+        -------
+        list
+            A list of dictionaries for the models returned
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -279,11 +285,30 @@ class DbConfigStore(ConfigStore):
         # get returned data
         simulation_models = cursor.fetchall()
 
+        # loop through the returned simulation models to get their details
+        # create dictionary to store simulation models
+        simulation_model_list = {}
+        # loop through known models
+        for simulation_model in simulation_models:
+
+            # get details of the models from the read call and add to list
+            simulation_model_list[simulation_model['name']] = self.read_model(simulation_model['name'])
+
         # return data to user
-        return simulation_models
+        return simulation_model_list
 
     def read_model(self, model_name):
         """Read a simulation model
+
+        Argument
+        --------
+        model_name: string
+            The name of the model to read
+
+        Returns
+        -------
+        dict
+            A dictionary of the model definition returned
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -314,6 +339,12 @@ class DbConfigStore(ConfigStore):
 
     def write_model(self, model):
         """Write a simulation model to the database
+
+        Argument
+        --------
+        model: dictionary
+            A model definition
+
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -359,6 +390,14 @@ class DbConfigStore(ConfigStore):
 
     def update_model(self, model_name, model):
         """Update a simulation model
+
+        Argument
+        --------
+        model_name: string
+            The name of the model to update
+        model:
+             A model definition with only the fields to be updated
+
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -381,28 +420,45 @@ class DbConfigStore(ConfigStore):
         # update any of the port types if passed
         # need to figure out how to update an inputs/output/parameter and the specification
         for port_type in self.port_types:
+
             # if the port type has been passed to be updated
             if port_type in model.keys():
+
                 # loop through each specification for the port type
                 for spec in model[port_type]:
+
+                    # get the id of the specification to update - based on name, model and port
+                    cursor.execute('SELECT specification_id FROM simulation_model_port WHERE port_type=%s and specification_name=%s and model_name=%s;', [port_type, spec['name'], model_name])
+
+                    # get result of query
+                    spec_id = cursor.fetchall()
+
+                    # check for possible errors related to the existence of the specification
+                    if len(spec_id) > 1:
+                        # return an error, more than one specification id returned
+                        return
+                    elif len(spec_id) == 0:
+                        # return an error - no matching specification found to be updated
+                        return
+
                     # check for each key in the specification and update if present
                     if 'name' in spec.keys():
                         continue
                     if 'description' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET description = %s WHERE name=%s', [spec['description'], model[port_type]['name']])
+                        cursor.execute('UPDATE specifications SET description = %s WHERE id=%s', [spec['description'], spec_id])
                     if 'dimensions' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET dimensions = %s WHERE name=%s',                                       [spec['dimensions'], model[port_type]['name']])
+                        cursor.execute('UPDATE specifications SET dimensions = %s WHERE id=%s',                                       [spec['dimensions'], spec_id])
                     if 'unit' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET unit = %s WHERE name=%s', [spec['unit'], model[port_type]['name']])
+                        cursor.execute('UPDATE specifications SET unit = %s WHERE id=%s', [spec['unit'], spec_id])
                     if 'suggested_range' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET suggested_range = %s WHERE name=%s',[spec['suggested_range'], model[port_type]['name']])
+                        cursor.execute('UPDATE specifications SET suggested_range = %s WHERE id=%s',[spec['suggested_range'], spec_id])
                     if 'absolute_range' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET absolute_range = %s WHERE name=%s',[spec['absolute_range'], model[port_type]['name']])
+                        cursor.execute('UPDATE specifications SET absolute_range = %s WHERE id=%s',[spec['absolute_range'], spec_id])
 
                     # commit changes to database
                     self.database_connection.commit()
@@ -411,6 +467,12 @@ class DbConfigStore(ConfigStore):
 
     def delete_model(self, model_name):
         """Delete a simulation model
+
+        Argument
+        --------
+        model_name: string
+            The name of the model to be deleted
+
         """
         # establish a cursor to read the database
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -423,14 +485,14 @@ class DbConfigStore(ConfigStore):
         for specification in cursor.fetchall():
 
             # check if the specification is used by any other models
-            cursor.execute('SELECT COUNT(*) FROM simulation_model_port WHERE specification_name=%s;', [specification['specification_name']])
+            cursor.execute('SELECT COUNT(*) FROM simulation_model_port WHERE specification_id=%s;', [specification['id']])
 
             # get the count from the query
             specification_count = cursor.fetchone()
 
             # if the count is only 1, safe to delete specification, otherwise leave it
             if specification_count == 1:
-                cursor.execute('DELETE FROM specifications WHERE specification_name=%s;', [specification['name']])
+                cursor.execute('DELETE FROM specifications WHERE id=%s;', [specification['id']])
 
                 # commit changes to database
                 self.database_connection.commit()
@@ -450,7 +512,7 @@ class DbConfigStore(ConfigStore):
         # get the number of rows deleted and return
         affected_rows = cursor.rowcount
 
-        return affected_rows
+        return
     # endregion
 
     # region Scenarios
@@ -512,7 +574,8 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # run sql call
-        cursor.execute('INSERT INTO scenarios (name, description) VALUES (%s,%s) RETURNING id;', [scenario['name'], scenario['description']])
+        sql = 'INSERT INTO scenarios (name, description) VALUES (%s,%s) RETURNING id;'
+        cursor.execute(sql, [scenario['name'], scenario['description']])
 
         # commit changes to database
         self.database_connection.commit()
@@ -670,7 +733,8 @@ class DbConfigStore(ConfigStore):
             variant_id = cursor.fetchone()
 
             # run sql call
-            cursor.execute('INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;', [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
+            sql = 'INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;'
+            cursor.execute(sql, [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
 
             # commit changes to database
             self.database_connection.commit()
@@ -741,7 +805,8 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # run sql call
-        cursor.execute('DELETE FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s', [scenario_name, variant_name])
+        sql = 'DELETE FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s'
+        cursor.execute(sql, [scenario_name, variant_name])
 
         # commit changes to database
         self.database_connection.commit()
