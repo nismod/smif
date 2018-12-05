@@ -18,6 +18,7 @@ from copy import deepcopy
 from logging import getLogger
 
 from smif.data_layer.datafile_interface import CSVDataStore
+from smif.exception import SmifDataNotFoundError
 from smif.metadata.spec import Spec
 
 
@@ -532,10 +533,15 @@ class Store():
 
         parameters = []
         for sector_model in sector_models:
-            parameters += sector_model['parameters']
+            parameters.extend(sector_model['parameters'])
 
-        spec = Spec.from_dict([parameter for parameter in parameters
-                              if parameter['name'] == parameter_name][0])
+        spec_dict = _pick_from_list(parameters, parameter_name)
+        if spec_dict is None:
+            raise SmifDataNotFoundError("Parameter {} not found in any of {}".format(
+                parameter_name,
+                sos_model['sector_models']
+            ))
+        spec = Spec.from_dict(spec_dict)
 
         return self.data_store.read_narrative_variant_data(key, spec, timestep)
 
@@ -553,12 +559,10 @@ class Store():
             If None, write data for all timesteps
         """
         sos_model = self.read_sos_model(sos_model_name)
-        narrative = [narrative for narrative in sos_model['narratives']
-                     if narrative['name'] == narrative_name][0]
-        variant = [variant for variant in narrative['variants']
-                   if variant['name'] == variant_name][0]
-        key = self._key_from_data(variant['data'][data.spec.name], narrative_name,
-                                  variant_name, data.spec.name)
+        narrative = _pick_from_list(sos_model['narratives'], narrative_name)
+        variant = _pick_from_list(narrative['variants'], variant_name)
+        key = self._key_from_data(
+            variant['data'][data.spec.name], narrative_name, variant_name, data.spec.name)
         self.data_store.write_narrative_variant_data(key, data)
 
     def read_model_parameter(self, model_name, parameter_name):
@@ -838,3 +842,10 @@ class Store():
         else:
             return tuple(args)
     # endregion
+
+
+def _pick_from_list(list_of_dicts, name):
+    for item in list_of_dicts:
+        if 'name' in item and item['name'] == name:
+            return item
+    return None
