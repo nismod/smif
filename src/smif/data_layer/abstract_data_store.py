@@ -66,6 +66,34 @@ class DataStore(metaclass=ABCMeta):
         timestep : int (optional)
             If None, write data for all timesteps
         """
+
+    @abstractmethod
+    def read_model_parameter_default(self, key, spec):
+        """Read data array
+
+        Parameters
+        ----------
+        key : str
+        spec : ~smif.metadata.spec.Spec
+
+        Returns
+        -------
+        data_array : ~smif.data_layer.data_array.DataArray
+        """
+
+    @abstractmethod
+    def write_model_parameter_default(self, key, data_array):
+        """Read data array
+
+        Parameters
+        ----------
+        key : str
+        data_array : ~smif.data_layer.data_array.DataArray
+
+        Returns
+        -------
+        data_array : ~smif.data_layer.data_array.DataArray
+        """
     # endregion
 
     # region Interventions

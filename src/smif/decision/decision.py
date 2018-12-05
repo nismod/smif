@@ -113,7 +113,7 @@ class DecisionManager(object):
 
                 # absolute path to be crystal clear for ModelLoader when loading python class
                 strategy['path'] = os.path.normpath(
-                    os.path.join(self._store.base_folder, strategy['path']))
+                    os.path.join(self._store.model_base_folder, strategy['path']))
                 strategy['timesteps'] = self._timesteps
                 # Pass a reference to the register of interventions
                 strategy['register'] = self.available_interventions
