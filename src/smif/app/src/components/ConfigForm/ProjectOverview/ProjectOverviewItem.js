@@ -117,6 +117,7 @@ class SosModelRunItem extends Component {
                         }]}
                         showPagination={items.length > 50 ? true : false}
                         defaultPageSize={50}
+                        showPageSizeOptions={false}
                         minRows={1}
                         className="-striped -highlight"
                         getTdProps={(state, rowInfo, column) => {
