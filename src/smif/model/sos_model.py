@@ -10,7 +10,7 @@ import itertools
 import logging
 from collections import defaultdict
 
-from smif.exception import SmifDataMismatchError
+from smif.exception import SmifDataMismatchError, SmifValidationError
 from smif.metadata import RelativeTimestep
 from smif.model.dependency import Dependency
 from smif.model.model import Model, ScenarioModel
@@ -105,30 +105,8 @@ class SosModel():
                 sos_model.add_model(model)
 
             for dep in data['model_dependencies'] + data['scenario_dependencies']:
-                try:
-                    sink = sos_model.get_model(dep['sink'])
-                except KeyError:
-                    msg = 'SectorModel or ScenarioModel sink `{}` required by ' + \
-                          'dependency `{}` was not provided by the builder'
-                    dependency = (
-                        dep['source'] + ' (' + dep['source_output'] + ')' + 
-                        ' - ' +
-                        dep['sink'] + ' (' + dep['sink_input'] + ')'
-                    )
-                    raise SmifDataMismatchError(msg.format(dep['source'], dependency))
-
-                try:
-                    source = sos_model.get_model(dep['source'])
-                except KeyError:
-                    msg = 'SectorModel or ScenarioModel source `{}` required by ' + \
-                          'dependency `{}` was not provided by the builder'
-                    dependency = (
-                        dep['source'] + ' (' + dep['source_output'] + ')' + 
-                        ' - ' +
-                        dep['sink'] + ' (' + dep['sink_input'] + ')'
-                    )
-                    raise SmifDataMismatchError(msg.format(dep['source'], dependency))
-
+                sink = SosModel._get_dependency(sos_model, dep, 'sink')
+                source = SosModel._get_dependency(sos_model, dep, 'source')
                 source_output_name = dep['source_output']
                 sink_input_name = dep['sink_input']
                 try:
@@ -145,6 +123,23 @@ class SosModel():
 
         sos_model.check_dependencies()
         return sos_model
+
+    @staticmethod
+    def _get_dependency(sos_model, dep, source_or_sink):
+        try:
+            source = sos_model.get_model(dep[source_or_sink])
+        except KeyError:
+            msg = 'SectorModel or ScenarioModel {} `{}` required by ' + \
+                  'dependency `{}` was not provided by the builder'
+            dependency = (
+                dep['source'] + ' (' + dep['source_output'] + ')' +
+                ' - ' +
+                dep['sink'] + ' (' + dep['sink_input'] + ')'
+            )
+            raise SmifDataMismatchError(msg.format(source_or_sink,
+                                                   dep[source_or_sink],
+                                                   dependency))
+        return source
 
     @property
     def models(self):
@@ -259,13 +254,25 @@ class SosModel():
         timestep : smif.metadata.RelativeTimestep, optional
             The relative timestep of the dependency, defaults to CURRENT, may be PREVIOUS.
         """
+        try:
+            self.get_model(source_model.name)
+        except KeyError:
+            msg = "Source model '{}' does not exist in list of models"
+            raise SmifValidationError(msg.format(source_model.name))
+
+        try:
+            self.get_model(sink_model.name)
+        except KeyError:
+            msg = "Sink model '{}' does not exist in list of models"
+            raise SmifValidationError(msg.format(sink_model.name))
+
         if source_output_name not in source_model.outputs:
             msg = "Output '{}' is not defined in '{}' model"
-            raise ValueError(msg.format(source_output_name, source_model.name))
+            raise SmifValidationError(msg.format(source_output_name, source_model.name))
 
         if sink_input_name not in sink_model.inputs:
             msg = "Input '{}' is not defined in '{}' model"
-            raise ValueError(msg.format(sink_input_name, sink_model.name))
+            raise SmifValidationError(msg.format(sink_input_name, sink_model.name))
 
         key = (source_model.name, source_output_name, sink_model.name, sink_input_name)
 
@@ -274,7 +281,7 @@ class SosModel():
             msg = "Inputs: '%s'. Free inputs: '%s'."
             self.logger.debug(msg, sink_model.inputs, self.free_inputs)
             msg = "Could not add dependency: input '{}' already provided"
-            raise ValueError(msg.format(sink_input_name))
+            raise SmifValidationError(msg.format(sink_input_name))
 
         source_spec = source_model.outputs[source_output_name]
         sink_spec = sink_model.inputs[sink_input_name]
