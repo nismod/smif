@@ -115,8 +115,8 @@ class SosModelRunItem extends Component {
                                 </div>
                             )
                         }]}
-                        defaultPageSize={8}
-                        rowHeight={10}
+                        showPagination={items.length > 50 ? true : false}
+                        defaultPageSize={50}
                         minRows={1}
                         className="-striped -highlight"
                         getTdProps={(state, rowInfo, column) => {
