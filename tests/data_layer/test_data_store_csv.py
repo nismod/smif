@@ -5,7 +5,7 @@ import os
 from tempfile import TemporaryDirectory
 
 import numpy as np
-from pytest import fixture, mark, raises
+from pytest import fixture, raises
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.datafile_interface import CSVDataStore
 from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
@@ -276,14 +276,6 @@ class TestScenarios:
         assert actual == expected
 
 
-@fixture(scope='function')
-def setup_narratives(config_handler, get_sos_model):
-    config_handler.write_sos_model(get_sos_model)
-
-
-# need to test with spec and new methods
-@mark.usefixtures('setup_narratives')
-@mark.xfail
 class TestNarrativeVariantData:
     """Narratives, parameters and interventions should be readable, metadata is editable. May
     move to clarify the distinctions here, and extend to specify strategies and contraints.
@@ -301,26 +293,6 @@ class TestNarrativeVariantData:
             writer.writeheader()
             writer.writerow({'homogeneity_coefficient': 8})
 
-        test_variant = None
-        test_narrative = None
-        sos_model = config_handler.read_sos_model('energy')
-        for narrative in sos_model['narratives']:
-            if narrative['name'] == 'governance':
-                test_narrative = narrative
-                for variant in narrative['variants']:
-                    if variant['name'] == 'Central Planning':
-                        test_variant = variant
-                        break
-                break
-
-        test_variant['data'] = {'homogeneity_coefficient': filepath}
-        test_narrative['variants'] = [test_variant]
-        sos_model['narratives'] = [test_narrative]
-        config_handler.update_sos_model('energy', sos_model)
-
-        actual = config_handler.read_narrative_variant_data(
-            'energy', 'governance', 'Central Planning', 'homogeneity_coefficient')
-
         spec = Spec.from_dict({
             'name': 'homogeneity_coefficient',
             'description': "How homegenous the centralisation process is",
@@ -330,29 +302,23 @@ class TestNarrativeVariantData:
             'dtype': 'float'
         })
 
+        actual = config_handler.read_narrative_variant_data('central_planning.csv', spec)
         assert actual == DataArray(spec, np.array(8, dtype=float))
 
     def test_narrative_data_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if narrative has no data
         """
         with raises(SmifDataNotFoundError):
-            config_handler.read_narrative_variant_data(
-                'energy', 'governance', 'Central Planning', 'does not exist')
+            config_handler.read_narrative_variant_data('does not exist', None)
 
     def test_default_data_mismatch(self, config_handler, get_sector_model_parameter_defaults):
-        sector_model_name = 'energy_demand'
         parameter_name = 'smart_meter_savings'
         data = get_sector_model_parameter_defaults[parameter_name]
         data.data = np.array([1, 2, 3])
-        config_handler.write_sector_model_parameter_default(
-            sector_model_name, parameter_name, data)
+        config_handler.write_model_parameter_default('default.csv', data)
 
-        with raises(SmifDataMismatchError) as ex:
-            config_handler.read_model_parameter_default(
-                sector_model_name, parameter_name)
-
-        msg = "Reading default parameter values for energy_demand:smart_meter_savings"
-        assert msg in str(ex)
+        with raises(SmifDataMismatchError):
+            config_handler.read_model_parameter_default('default.csv', data.spec)
 
 
 class TestResults:
