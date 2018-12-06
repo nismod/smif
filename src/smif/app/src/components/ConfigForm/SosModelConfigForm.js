@@ -120,7 +120,7 @@ class SosModelConfigForm extends Component {
                                         {
                                             this.props.model_runs.filter(model_run => model_run.sos_model == this.props.sos_model.name).map(model_run => (
                                                 <a key={model_run.name} 
-                                                    className="dropdown-item" 
+                                                    className="btn dropdown-item" 
                                                     onClick={() => this.props.onNavigate('/configure/model-runs/' + model_run.name)}>
                                                     {model_run.name}
                                                 </a>

@@ -101,7 +101,7 @@ class SectorModelConfigForm extends Component {
                                         {
                                             this.props.sos_models.filter(sos_model => sos_model.sector_models.includes(this.props.sector_model.name)).map(sector_model => (
                                                 <a key={sector_model.name} 
-                                                    className="dropdown-item" 
+                                                    className="btn dropdown-item" 
                                                     onClick={() => this.props.onNavigate('/configure/sos-models/' + sector_model.name)}>
                                                     {sector_model.name}
                                                 </a>

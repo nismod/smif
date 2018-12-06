@@ -100,7 +100,7 @@ class ScenarioConfigForm extends Component {
                                         {
                                             this.props.sos_models.filter(sos_model => sos_model.scenarios.includes(this.props.scenario.name)).map(sos_model => (
                                                 <a key={sos_model.name} 
-                                                    className="dropdown-item" 
+                                                    className="btn dropdown-item" 
                                                     onClick={() => this.props.onNavigate('/configure/sos-models/' + sos_model.name)}>
                                                     {sos_model.name}
                                                 </a>
