@@ -226,11 +226,14 @@ def regions_rect():
     """
     return [
         {
-            'type': 'Feature',
-            'properties': {'name': 'zero'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
+            'name': 'zero',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'zero'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
+                }
             }
         }
     ]
@@ -247,19 +250,25 @@ def regions_half_squares():
     """
     return [
         {
-            'type': 'Feature',
-            'properties': {'name': 'a'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            'name': 'a',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'a'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+                }
             }
         },
         {
-            'type': 'Feature',
-            'properties': {'name': 'b'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
+            'name': 'b',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'b'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
+                }
             }
         }
     ]
@@ -271,27 +280,36 @@ def regions():
     """
     return [
         {
-            'type': 'Feature',
-            'properties': {'name': 'unit'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            'name': 'unit',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'unit'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+                }
             }
         },
         {
-            'type': 'Feature',
-            'properties': {'name': 'half'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 0.5], [1, 0.5], [1, 0]]]
+            'name': 'half',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'half'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 0.5], [1, 0.5], [1, 0]]]
+                }
             }
         },
         {
-            'type': 'Feature',
-            'properties': {'name': 'two'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
+            'name': 'two',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'two'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
+                }
             }
         }
     ]
@@ -308,11 +326,14 @@ def regions_single_half_square():
     """
     return [
         {
-            'type': 'Feature',
-            'properties': {'name': 'a'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            'name': 'a',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'a'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+                }
             }
         }
     ]
@@ -329,19 +350,25 @@ def regions_half_triangles():
     """
     return [
         {
-            'type': 'Feature',
-            'properties': {'name': 'zero'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 2], [1, 0]]]
+            'name': 'zero',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'zero'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 2], [1, 0]]]
+                }
             }
         },
         {
-            'type': 'Feature',
-            'properties': {'name': 'one'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 2], [1, 2], [1, 0]]]
+            'name': 'one',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'one'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 2], [1, 2], [1, 0]]]
+                }
             }
         }
     ]
