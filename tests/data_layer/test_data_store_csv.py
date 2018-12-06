@@ -5,7 +5,6 @@ import os
 from tempfile import TemporaryDirectory
 
 import numpy as np
-import pyarrow as pa
 from pytest import fixture, mark, raises
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.datafile_interface import CSVDataStore
@@ -356,78 +355,39 @@ class TestNarrativeVariantData:
         assert msg in str(ex)
 
 
-# need to test with spec replacing spatial/temporal resolution
-@mark.xfail
 class TestResults:
     """Results from intermediate stages of running ModelRuns should be writeable and readable.
     """
-    def test_read_results(self, setup_folder_structure, get_handler_csv,
-                          get_handler_binary):
+    def test_read_results(self, setup_folder_structure, config_handler):
         """Results from .csv in a folder structure which encodes metadata
         in filenames and directory structure.
 
-        With no decision/iteration specifiers:
-            results/
-            <modelrun_name>/
-            <model_name>/
-                output_<output_name>_
-                timestep_<timestep>_
-                regions_<spatial_resolution>_
-                intervals_<temporal_resolution>.csv
-        Else:
-            results/
+        On the pattern of:
             <modelrun_name>/
             <model_name>/
             decision_<id>/
                 output_<output_name>_
-                timestep_<timestep>_
-                regions_<spatial_resolution>_
-                intervals_<temporal_resolution>.csv
+                timestep_<timestep>.csv
         """
         modelrun = 'energy_transport_baseline'
         model = 'energy_demand'
+        decision_iteration = 1
         output = 'electricity_demand'
         timestep = 2020
-        spatial_resolution = 'lad'
-        temporal_resolution = 'annual'
-
-        # 1. case with no decision
-        expected = np.array([[[1.0]]])
-        csv_contents = "region,interval,value\noxford,1,1.0\n"
-        binary_contents = pa.serialize(expected).to_buffer()
-
-        path = os.path.join(
-            str(setup_folder_structure),
-            "results",
-            modelrun,
-            model,
-            "decision_none",
-            "output_{}_timestep_{}".format(
-                output,
-                timestep
-            )
+        output_spec = Spec(
+            name='electricity_demand',
+            unit='MWh',
+            dtype='float',
+            dims=['region', 'interval'],
+            coords={
+                'region': ['oxford'],
+                'interval': ['1']
+            }
         )
-        os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        with open(path + '.csv', 'w') as fh:
-            fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output,
-                                              spatial_resolution,
-                                              temporal_resolution, timestep)
-        assert actual == expected
-
-        with pa.OSFile(path + '.dat', 'wb') as f:
-            f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output,
-                                                 spatial_resolution,
-                                                 temporal_resolution, timestep)
-        assert actual == expected
-
-        # 2. case with decision
-        decision_iteration = 1
-        expected = np.array([[[2.0]]])
-        csv_contents = "region,interval,value\noxford,1,2.0\n"
-        binary_contents = pa.serialize(expected).to_buffer()
+        expected_data = np.array([[2.0]])
+        expected = DataArray(output_spec, expected_data)
+        csv_contents = "region,interval,electricity_demand\noxford,1,2.0\n"
 
         path = os.path.join(
             str(setup_folder_structure),
@@ -444,18 +404,8 @@ class TestResults:
 
         with open(path + '.csv', 'w') as fh:
             fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output,
-                                              spatial_resolution,
-                                              temporal_resolution, timestep,
-                                              None, decision_iteration)
-        assert actual == expected
-
-        with pa.OSFile(path + '.dat', 'wb') as f:
-            f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output,
-                                                 spatial_resolution,
-                                                 temporal_resolution, timestep,
-                                                 None, decision_iteration)
+        actual = config_handler.read_results(
+            modelrun, model, output_spec, timestep, decision_iteration)
         assert actual == expected
 
 
