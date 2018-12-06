@@ -124,7 +124,7 @@ class DbConfigStore(ConfigStore):
             return
 
         # write model run to database
-        cursor.execute('INSERT INTO model_runs (name, sos_model, sos_model_id) VALUES (%s,%s,%s);', [model_run['name'], model_run['sos_model'], sos_models[0]])
+        cursor.execute('INSERT INTO model_runs (name, sos_model, sos_model_id) VALUES (%s,%s,%s);', [model_run['name'], model_run['sos_model'], sos_models[0]['id']])
 
         # write data to database
         self.database_connection.commit()
@@ -165,7 +165,7 @@ class DbConfigStore(ConfigStore):
                 # if only one model run id returned, make change
                 if len(sos_model_id) == 1:
                     # update table with new sos model
-                    cursor.execute('UPDATE model_runs SET sos_model=%s, sos_model_id=%s WHERE name=%s;', [model_run['sos_model'], sos_model_id[0]])
+                    cursor.execute('UPDATE model_runs SET sos_model=%s, sos_model_id=%s WHERE name=%s;', [model_run['sos_model'], sos_model_id[0]['id'],model_run_name])
 
                     # commit update to database
                     self.database_connection.commit()
@@ -178,7 +178,7 @@ class DbConfigStore(ConfigStore):
             # return an error to the user
             return
 
-        raise NotImplementedError()
+        return
 
     def delete_model_run(self, model_run_name):
         """Delete a model run
