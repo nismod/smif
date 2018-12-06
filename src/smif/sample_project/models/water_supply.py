@@ -38,18 +38,25 @@ class WaterSupplySectorModel(SectorModel):
 
         current_interventions = data.get_current_interventions()
 
-        print("Current interventions: {}".format(current_interventions))
+        self.logger.debug("Current interventions: {}".format(current_interventions))
         number_of_treatment_plants = 2
 
         # Inputs
-        per_capita_water_demand = data.get_parameter('per_capita_water_demand').as_ndarray()  # liter/person
+        per_capita_water_demand = data.get_parameter(
+            'per_capita_water_demand').as_ndarray()  # liter/person
         population = data.get_data('population').as_ndarray()  # people
 
         water_demand = data.get_data('water_demand').as_ndarray()  # liter
         final_water_demand = (population * per_capita_water_demand) + water_demand
 
         raininess = sum(data.get_data('precipitation').as_ndarray())  # milliliters to mega
-        reservoir_level = sum(data.get_data('reservoir_level').as_ndarray())  # megaliters
+        if data.current_timestep == data.base_timestep:
+            reservoir_level = data.get_data('reservoir_level', 2009)
+        else:
+            reservoir_level = data.get_previous_timestep_data('reservoir_level')
+
+        reservoir_level = sum(reservoir_level.as_ndarray())  # megaliters
+        self.logger.info('Total reservoir level before timestep: %s', reservoir_level)
 
         self.logger.debug(
             "Parameters:\n "
@@ -82,12 +89,7 @@ class WaterSupplySectorModel(SectorModel):
         data.set_results('water', np.ones((3, )) * water / 3)
         data.set_results("cost", np.ones((3, )) * cost / 3)
         data.set_results("energy_demand", np.ones((3, )) * 3)
-
-        # state data output - hack around using national resolution to start
-        output = np.zeros((3, ))
-        # output[0] = instance.reservoir_level  # will continually increase, need to access
-        # t-1 TODO
-        data.set_results("reservoir_level", output)
+        data.set_results("reservoir_level", np.ones((3, )) * instance.reservoir_level / 3)
 
     def extract_obj(self, results):
         return results['cost'].sum()
