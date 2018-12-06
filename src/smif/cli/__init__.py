@@ -138,7 +138,8 @@ def _get_store(args):
     return Store(
         config_store=YamlConfigStore(args.directory),
         metadata_store=FileMetadataStore(args.directory),
-        data_store=CSVDataStore(args.directory)
+        data_store=CSVDataStore(args.directory),
+        model_base_folder=args.directory
     )
 
 

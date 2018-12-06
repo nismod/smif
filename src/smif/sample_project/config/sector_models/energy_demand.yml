@@ -25,8 +25,8 @@ outputs:
     dtype: float
     unit: Ml
 interventions:
-- energy_supply.yml
 - energy_supply.csv
+- energy_supply_alt.csv
 initial_conditions: []
 parameters:
   - name: smart_meter_savings
@@ -37,6 +37,6 @@ parameters:
     exp_range:
     - 3
     - 10
-    default: energy_demand_smart_meter_savings.csv
+    default: defaults.csv
     dtype: float
     unit: '%'

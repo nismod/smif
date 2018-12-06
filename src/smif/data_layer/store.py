@@ -31,11 +31,13 @@ class Store():
     metadata_store: ~smif.data_layer.abstract_metadata_store.MetadataStore
     data_store: ~smif.data_layer.abstract_data_store.DataStore
     """
-    def __init__(self, config_store, metadata_store, data_store):
+    def __init__(self, config_store, metadata_store, data_store, model_base_folder="."):
         self.logger = getLogger(__name__)
         self.config_store = config_store
         self.metadata_store = metadata_store
         self.data_store = data_store
+        # base folder for any relative paths to models
+        self.model_base_folder = str(model_base_folder)
 
     #
     # CONFIG
@@ -351,7 +353,12 @@ class Store():
         -------
         list[dict]
         """
-        return self.config_store.read_strategies(model_run_name)
+        strategies = deepcopy(self.config_store.read_strategies(model_run_name))
+        for strategy in strategies:
+            if strategy['type'] == 'pre-specified-planning':
+                strategy['interventions'] = self.data_store.read_strategy_interventions(
+                    strategy)
+        return strategies
 
     def write_strategies(self, model_run_name, strategies):
         """Write strategies for a given model_run
@@ -480,9 +487,9 @@ class Store():
         variant = self.read_scenario_variant(scenario_name, variant_name)
         key = self._key_from_data(variant['data'][variable], scenario_name, variant_name,
                                   variable)
-        scenario = self.read_scenario(scenario_name, skip_coords=True)
-        spec = Spec.from_dict([
-            provide for provide in scenario['provides'] if provide['name'] == variable][0])
+        scenario = self.read_scenario(scenario_name)
+        spec_dict = _pick_from_list(scenario['provides'], variable)
+        spec = Spec.from_dict(spec_dict)
         return self.data_store.read_scenario_variant_data(key, spec, timestep)
 
     def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
@@ -565,20 +572,6 @@ class Store():
             variant['data'][data.spec.name], narrative_name, variant_name, data.spec.name)
         self.data_store.write_narrative_variant_data(key, data)
 
-    def read_model_parameter(self, model_name, parameter_name):
-        """Read a model parameter
-
-        Parameters
-        ----------
-        model_name : str
-        parameter_name : str
-
-        Returns
-        -------
-        ~smif.metadata.spec.Spec
-        """
-        raise NotImplementedError()
-
     def read_model_parameter_default(self, model_name, parameter_name):
         """Read default data for a sector model parameter
 
@@ -591,7 +584,15 @@ class Store():
         -------
         ~smif.data_layer.data_array.DataArray
         """
-        return self.data_store.read_model_parameter_default(model_name, parameter_name)
+        model = self.read_model(model_name)
+        param = _pick_from_list(model['parameters'], parameter_name)
+        spec = Spec.from_dict(param)
+        try:
+            path = param['default']
+        except KeyError:
+            path = 'default__{}__{}.csv'.format(model_name, parameter_name)
+        key = self._key_from_data(path, model_name, parameter_name)
+        return self.data_store.read_model_parameter_default(key, spec)
 
     def write_model_parameter_default(self, model_name, parameter_name, data):
         """Write default data for a sector model parameter
@@ -602,7 +603,14 @@ class Store():
         parameter_name : str
         data : ~smif.data_layer.data_array.DataArray
         """
-        self.data_store.write_model_parameter_default(model_name, parameter_name, data)
+        model = self.read_model(model_name)
+        param = _pick_from_list(model['parameters'], parameter_name)
+        try:
+            path = param['default']
+        except KeyError:
+            path = 'default__{}__{}.csv'.format(model_name, parameter_name)
+        key = self._key_from_data(path, model_name, parameter_name)
+        self.data_store.write_model_parameter_default(key, data)
     # endregion
 
     # region Interventions
@@ -634,6 +642,11 @@ class Store():
         model['interventions'] = [model_name + '.csv']
         self.update_model(model_name, model)
         self.data_store.write_interventions(model['interventions'][0], interventions)
+
+    def read_strategy_interventions(self, strategy):
+        """Read interventions as defined in a model run strategy
+        """
+        return self.data_store.read_strategy_interventions(strategy)
 
     def read_initial_conditions(self, model_name):
         """Read historical interventions for `model_name`

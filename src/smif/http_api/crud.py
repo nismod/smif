@@ -256,10 +256,10 @@ class SectorModelAPI(MethodView):
         try:
             if sector_model_name is None:
                 data = []
-                data = data_interface.read_sector_models(skip_coords=True)
+                data = data_interface.read_models(skip_coords=True)
             else:
                 data = {}
-                data = data_interface.read_sector_model(sector_model_name, skip_coords=True)
+                data = data_interface.read_model(sector_model_name, skip_coords=True)
 
             response = jsonify({
                 'data': data,

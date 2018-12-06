@@ -481,6 +481,14 @@ class CSVDataStore(DataStore):
         path = os.path.join(self.data_folder, 'narratives', key)
         self._write_data_array(path, data, timestep)
 
+    def read_model_parameter_default(self, key, spec):
+        path = os.path.join(self.data_folder, 'parameters', key)
+        return self._read_data_array(path, spec)
+
+    def write_model_parameter_default(self, key, data):
+        path = os.path.join(self.data_folder, 'parameters', key)
+        self._write_data_array(path, data)
+
     def _read_data_array(self, key, spec, timestep=None):
         try:
             data = _get_data_from_csv(key)
@@ -495,9 +503,9 @@ class CSVDataStore(DataStore):
         try:
             da = data_list_to_ndarray(data, spec)
         except SmifDataMismatchError as ex:
-            msg = "DataMismatch in key: {}, from {}"
+            msg = "DataMismatch reading {} with spec {}"
             raise SmifDataMismatchError(
-                msg.format(key, str(ex))
+                msg.format(key, spec)
             ) from ex
 
         return da
@@ -530,6 +538,10 @@ class CSVDataStore(DataStore):
     def write_interventions(self, key, interventions):
         data = [interventions[intervention] for intervention in interventions.keys()]
         _write_data_to_csv(os.path.join(self.data_folder, 'interventions', key), data)
+
+    def read_strategy_interventions(self, strategy):
+        filename = strategy['filename']
+        return self._read_file(filename, self.data_folders['strategies'])
 
     def read_initial_conditions(self, keys):
         path = os.path.join(self.data_folder, 'initial_conditions')

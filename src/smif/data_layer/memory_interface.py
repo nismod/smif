@@ -285,11 +285,11 @@ class MemoryDataStore(DataStore):
     # endregion
 
     # region Model parameters
-    def read_model_parameter_default(self, model_name, parameter_name):
-        return self._model_parameter_defaults[(model_name, parameter_name)]
+    def read_model_parameter_default(self, key, spec):
+        return self._model_parameter_defaults[key]
 
-    def write_model_parameter_default(self, model_name, parameter_name, data):
-        self._model_parameter_defaults[(model_name, parameter_name)] = data
+    def write_model_parameter_default(self, key, data):
+        self._model_parameter_defaults[key] = data
     # endregion
 
     # region Interventions
@@ -309,6 +309,9 @@ class MemoryDataStore(DataStore):
 
     def write_interventions(self, key, interventions):
         self._interventions[key] = interventions
+
+    def read_strategy_interventions(self, strategy):
+        return strategy['interventions']
 
     def read_initial_conditions(self, keys):
         return [self._initial_conditions[key] for key in keys][0]

@@ -1,0 +1,3 @@
+name,location,capacity_value,capacity_units,operational_lifetime_value,operational_lifetime_units,technical_lifetime_value,technical_lifetime_units,capital_cost_value,capital_cost_units
+nuclear_large,Oxford,1000,MW,40,years,25,years,2000,million £
+carrington_retire,Oxford,-500,MW,0,years,0,years,0,million £
