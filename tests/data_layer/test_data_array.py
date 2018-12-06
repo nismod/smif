@@ -77,18 +77,24 @@ class TestDataArray():
         assert small_da.__eq__(expected) is True
 
     def test_repr(self, small_da, spec, data):
-
         assert repr(small_da) == "<DataArray('{}', '{}')>".format(spec, data)
 
     def test_dim_coords(self, small_da, spec):
-
         actual = small_da.dim_coords('a')
         expected = spec.dim_coords('a')
+        assert actual == expected
 
+    def test_dim_names(self, small_da, spec):
+        actual = small_da.dim_names('a')
+        expected = spec.dim_names('a')
+        assert actual == expected
+
+    def test_dim_elements(self, small_da, spec):
+        actual = small_da.dim_elements('a')
+        expected = spec.dim_elements('a')
         assert actual == expected
 
     def test_coords(self, small_da, spec):
-
         actual = small_da.coords
         expected = spec.coords
         assert actual == expected
