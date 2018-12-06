@@ -372,42 +372,6 @@ class TestScenarios:
         actual = config_handler.read_scenario(expected['name'])
         assert actual == expected
 
-    @mark.xfail
-    def test_read_scenario_variable_spec(self, config_handler):
-        handler = config_handler
-        scenario_name = 'population'
-        variable = 'population_count'
-        scenario = handler.read_scenario(scenario_name)
-        # testing private method here
-        spec = handler._get_spec_from_provider(scenario['provides'], variable)
-        assert spec.as_dict() == {'name': 'population_count',
-                                  'description': 'The count of population',
-                                  'unit': 'people',
-                                  'dtype': 'int',
-                                  'dims': ['county', 'season'],
-                                  'coords': {
-                                      'county': ['oxford'],
-                                      'season': ['cold_month', 'spring_month',
-                                                 'hot_month', 'fall_month']
-                                            },
-                                  'abs_range': None,
-                                  'exp_range': None}
-
-    @mark.xfail
-    def test_read_scenario_variable_spec_raises(self, config_handler):
-        handler = config_handler
-        scenario_name = 'does not exist'
-        variable = 'population_count'
-        with raises(SmifDataNotFoundError):
-            scenario = handler.read_scenario(scenario_name)
-            handler._get_spec_from_provider(scenario['provides'], variable)
-
-        scenario_name = 'population'
-        variable = 'does not exist'
-        with raises(SmifDataNotFoundError):
-            scenario = handler.read_scenario(scenario_name)
-            handler._get_spec_from_provider(scenario['provides'], variable)
-
     def test_read_scenario_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if scenario not found
         """
