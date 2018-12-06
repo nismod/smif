@@ -134,6 +134,9 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['model_runs'], config['name'], config)
 
     def update_model_run(self, model_run_name, model_run):
+        if model_run['name'] != model_run_name:
+            raise SmifDataMismatchError(
+                "Model run name '%s' must match '%s'" % (model_run_name, model_run['name']))
         _assert_file_exists(self.config_folders, 'model_run', model_run_name)
         prev = self._read_model_run(model_run_name)
         config = copy.copy(model_run)
@@ -163,6 +166,9 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     def update_sos_model(self, sos_model_name, sos_model):
+        if sos_model['name'] != sos_model_name:
+            raise SmifDataMismatchError(
+                "SoSModel name '%s' must match '%s'" % (sos_model_name, sos_model['name']))
         _assert_file_exists(self.config_folders, 'sos_model', sos_model_name)
         if self.validation:
             validate_sos_model_config(
@@ -200,6 +206,9 @@ class YamlConfigStore(ConfigStore):
             self.config_folders['sector_models'], model['name'], model)
 
     def update_model(self, model_name, model):
+        if model['name'] != model_name:
+            raise SmifDataMismatchError(
+                "Model name '%s' must match '%s'" % (model_name, model['name']))
         _assert_file_exists(self.config_folders, 'sector_model', model_name)
         model = copy.deepcopy(model)
         # ignore interventions and initial conditions which the app doesn't handle

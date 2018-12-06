@@ -1,6 +1,6 @@
 """Test YAML config store
 """
-from pytest import fixture, mark, raises
+from pytest import fixture, raises
 from smif.data_layer.datafile_interface import YamlConfigStore
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError)
@@ -87,7 +87,6 @@ class TestModelRun:
         actual = config_handler.read_model_run('to_update')
         assert actual['description'] == 'after'
 
-    @mark.xfail
     def test_model_run_update_mismatch(self, model_run, config_handler):
         """Test that updating a model_run with mismatched name should fail
         """
@@ -202,7 +201,6 @@ class TestSosModel:
         actual = config_handler.read_sos_model('to_update')
         assert actual['description'] == 'after'
 
-    @mark.xfail
     def test_sos_model_update_mismatch(self, get_sos_model, config_handler):
         """Test that updating a sos_model with mismatched name should fail
         """
@@ -319,7 +317,6 @@ class TestSectorModel:
         actual = config_handler.read_model('to_update')
         assert actual['description'] == 'after'
 
-    @mark.xfail
     def test_sector_model_update_mismatch(self, get_sector_model, config_handler):
         """Test that updating a sector_model with mismatched name should fail
         """
