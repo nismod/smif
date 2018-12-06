@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import update from 'immutability-helper'
 
+import { FaPlay } from 'react-icons/lib/fa'
 import { PrimaryButton, SecondaryButton } from 'components/ConfigForm/General/Buttons'
 import { Range } from 'rc-slider'
 
@@ -167,13 +168,21 @@ class ModelRunConfigForm extends Component {
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
-                            <div className="col-sm-10">
+                            <div className="col-sm-9">
                                 <input
                                     className="form-control" 
                                     type="text" 
                                     disabled="true" 
                                     defaultValue={selected.name} 
                                     onChange={(event) => this.handleChange('name', event.target.value)}/>
+                            </div>
+                            <div className="col-sm-1">
+                                <button 
+                                    type="button"
+                                    className="btn btn-outline-dark btn-margin"
+                                    onClick={() => this.props.onNavigate('/jobs/runner/' + this.state.selected.name)}>
+                                    <FaPlay/>
+                                </button>
                             </div>
                         </div>
 
@@ -197,7 +206,6 @@ class ModelRunConfigForm extends Component {
                                 </label>
                             </div>
                         </div>
-
                     </div>
                 </div>
 

@@ -15,7 +15,7 @@ class ScenarioConfigForm extends Component {
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {
-            selected: this.props.scenario_narrative
+            selected: this.props.scenario
         }
     }
 
@@ -83,6 +83,34 @@ class ScenarioConfigForm extends Component {
                             </div>
                         </div>
 
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">In use by</label>
+                            <div className="col-sm-10">
+                                <div className="dropdown" onClick={() => this.setState({ inuse_dropdown: !this.state.inuse_dropdown})}>
+                                    <button
+                                        className="btn btn-secondary dropdown-toggle"
+                                        type="button"
+                                        id="dropdownMenuButton"
+                                        data-toggle="dropdown"
+                                        aria-haspopup="true"
+                                    >
+                                        System-of-Systems Model Configuration
+                                    </button>
+                                    <div className={`dropdown-menu${this.state.inuse_dropdown ? ' show' : ''}`} aria-labelledby="dropdownMenuButton">
+                                        {
+                                            this.props.sos_models.filter(sos_model => sos_model.scenarios.includes(this.props.scenario.name)).map(sos_model => (
+                                                <a key={sos_model.name} 
+                                                    className="btn dropdown-item" 
+                                                    onClick={() => this.props.onNavigate('/configure/sos-models/' + sos_model.name)}>
+                                                    {sos_model.name}
+                                                </a>
+                                            ))
+                                        }   
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -118,12 +146,12 @@ class ScenarioConfigForm extends Component {
 }
 
 ScenarioConfigForm.propTypes = {
-    scenario_narrative: PropTypes.object.isRequired,
+    scenario: PropTypes.object.isRequired,
+    sos_models: PropTypes.array.isRequired,
     dimensions: PropTypes.array.isRequired,
-    saveScenarioNarrative: PropTypes.func,
     require_provide_full_variant: PropTypes.bool,
-    cancelScenarioNarrative: PropTypes.func,
     save: PropTypes.bool,
+    onNavigate: PropTypes.func,
     onSave: PropTypes.func,
     onCancel: PropTypes.func,
     onEdit: PropTypes.func
