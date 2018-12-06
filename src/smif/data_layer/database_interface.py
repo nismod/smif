@@ -32,10 +32,13 @@ class DbConfigStore(ConfigStore):
     """
 
     def __init__(self, host, user, dbname, port, password):
-        """Initiate. Setup database connection.
+        """Initiate. Setup database connection. Set up common values.
         """
         # establish database connection
         self.database_connection = initiate_db_connection(host, user, dbname, port, password)
+
+        # list of expected port types - these should be specified somewhere, or not presumed at all
+        self.port_types = ['inputs', 'outputs', 'parameters']
 
     # region Model runs
     def read_model_runs(self):
@@ -74,28 +77,247 @@ class DbConfigStore(ConfigStore):
     # region Models
     def read_models(self):
         """Read all simulation models
+
+        Returns
+        -------
+        list
+            A list of dictionaries for the models returned
         """
-        raise NotImplementedError()
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # run sql call
+        cursor.execute('SELECT * FROM simulation_models')
+
+        # get returned data
+        simulation_models = cursor.fetchall()
+
+        # loop through the returned simulation models to get their details
+        # create dictionary to store simulation models
+        simulation_model_list = {}
+        # loop through known models
+        for simulation_model in simulation_models:
+
+            # get details of the models from the read call and add to list
+            simulation_model_list[simulation_model['name']] = self.read_model(simulation_model['name'])
+
+        # return data to user
+        return simulation_model_list
 
     def read_model(self, model_name):
         """Read a simulation model
+
+        Argument
+        --------
+        model_name: string
+            The name of the model to read
+
+        Returns
+        -------
+        dict
+            A dictionary of the model definition returned
         """
-        raise NotImplementedError()
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # run sql call
+        cursor.execute('SELECT * FROM simulation_models WHERE name=%s', [model_name])
+
+        # get returned data
+        simulation_model = cursor.fetchall()
+
+        # check if a simulation model has been found and only proceed if so
+        if len(simulation_model) == 1:
+            # get port types for model - inputs, outputs, parameters
+            # run sql call
+            for port_type in self.port_types:
+                cursor.execute('SELECT s.* FROM simulation_model_port smp JOIN specifications s ON smp.specification_id=s.id WHERE smp.model_name=%s AND port_type=%s;', [model_name, port_type])
+
+                # get returned data
+                port_data = cursor.fetchall()
+
+                # add port data to model dictionary
+                simulation_model[0][port_type] = port_data
+
+        # return data to user
+        return simulation_model
 
     def write_model(self, model):
-        """Write a new simulation model
+        """Write a simulation model to the database
+
+        Argument
+        --------
+        model: dictionary
+            A model definition
+
         """
-        raise NotImplementedError()
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # write model
+        # write the model to the database
+        cursor.execute('INSERT INTO simulation_models (name, description, interventions, wrapper_location) VALUES (%s,%s,%s,%s) RETURNING id;', [model['name'], model['description'], json.dumps(model['interventions']), model['wrapper_location']])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # get returned data
+        simulation_model_id = cursor.fetchone()
+
+        # write the specification to the database (metadata on the inputs/outputs/parameters)
+
+        # loop through port types
+        for port_type in self.port_types:
+            # if port type is a key in given model definition, add all specifications to database
+            if port_type in model.keys():
+                # loop through the specifications for the port type
+                for spec in model[port_type]:
+                    # should probably check it is already not in the database first
+
+                    # add specification to database
+                    cursor.execute('INSERT INTO specifications (name, description, dimensions, unit, suggested_range, absolute_range) VALUES (%s,%s,%s,%s,%s,%s) RETURNING id;', [spec['name'], spec['description'], spec['dimensions'], spec['unit'], spec['suggested_range'], spec['absolute_range']])
+
+                    # commit changes to database
+                    self.database_connection.commit()
+
+                    # get returned data
+                    specification_id = cursor.fetchone()
+
+                    # write to port
+                    # write model and specification to port table
+                    cursor.execute('INSERT INTO simulation_model_port (model_name, model_id, specification_name, specification_id, port_type) VALUES (%s, %s, %s, %s, %s);', [model['name'], simulation_model_id[0], spec['name'], specification_id[0], port_type])
+
+                    # commit changes to database
+                    self.database_connection.commit()
+
+        # return data to user
+        return
 
     def update_model(self, model_name, model):
-        """Update an existing simulation model
+        """Update a simulation model
+
+        Argument
+        --------
+        model_name: string
+            The name of the model to update
+        model:
+             A model definition with only the fields to be updated
+
         """
-        raise NotImplementedError()
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # update the model description is passed
+        if 'description' in model.keys():
+            cursor.execute('UPDATE simulation_models SET description=%s WHERE name=%s;', [model['description'], model_name])
+
+        # update the intervention list is passed
+        if 'interventions' in model.keys():
+            cursor.execute('UPDATE simulation_models SET interventions=%s WHERE name=%s;', [json.dumps(model['interventions']), model_name])
+
+        # update the wrapper location if passed
+        if 'wrapper_location' in model.keys():
+            cursor.execute('UPDATE simulation_models SET wrapper_location=%s WHERE name=%s;', [model['wrapper_location'], model_name])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # update any of the port types if passed
+        # need to figure out how to update an inputs/output/parameter and the specification
+        for port_type in self.port_types:
+
+            # if the port type has been passed to be updated
+            if port_type in model.keys():
+
+                # loop through each specification for the port type
+                for spec in model[port_type]:
+
+                    # get the id of the specification to update - based on name, model and port
+                    cursor.execute('SELECT specification_id FROM simulation_model_port WHERE port_type=%s and specification_name=%s and model_name=%s;', [port_type, spec['name'], model_name])
+
+                    # get result of query
+                    spec_id = cursor.fetchall()
+
+                    # check for possible errors related to the existence of the specification
+                    if len(spec_id) > 1:
+                        # return an error, more than one specification id returned
+                        return
+                    elif len(spec_id) == 0:
+                        # return an error - no matching specification found to be updated
+                        return
+
+                    # check for each key in the specification and update if present
+                    if 'name' in spec.keys():
+                        continue
+                    if 'description' in spec.keys():
+                        # run update sql
+                        cursor.execute('UPDATE specifications SET description = %s WHERE id=%s', [spec['description'], spec_id])
+                    if 'dimensions' in spec.keys():
+                        # run update sql
+                        cursor.execute('UPDATE specifications SET dimensions = %s WHERE id=%s',                                       [spec['dimensions'], spec_id])
+                    if 'unit' in spec.keys():
+                        # run update sql
+                        cursor.execute('UPDATE specifications SET unit = %s WHERE id=%s', [spec['unit'], spec_id])
+                    if 'suggested_range' in spec.keys():
+                        # run update sql
+                        cursor.execute('UPDATE specifications SET suggested_range = %s WHERE id=%s',[spec['suggested_range'], spec_id])
+                    if 'absolute_range' in spec.keys():
+                        # run update sql
+                        cursor.execute('UPDATE specifications SET absolute_range = %s WHERE id=%s',[spec['absolute_range'], spec_id])
+
+                    # commit changes to database
+                    self.database_connection.commit()
+
+        return
 
     def delete_model(self, model_name):
         """Delete a simulation model
+
+        Argument
+        --------
+        model_name: string
+            The name of the model to be deleted
+
         """
-        raise NotImplementedError()
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # delete specifications if unique to model
+        # get a list of the specifications linked to the model name
+        cursor.execute('SELECT * FROM simulation_model_port WHERE model_name=%s;', [model_name])
+
+        # loop through returned model specifications
+        for specification in cursor.fetchall():
+
+            # check if the specification is used by any other models
+            cursor.execute('SELECT COUNT(*) FROM simulation_model_port WHERE specification_id=%s;', [specification['id']])
+
+            # get the count from the query
+            specification_count = cursor.fetchone()
+
+            # if the count is only 1, safe to delete specification, otherwise leave it
+            if specification_count == 1:
+                cursor.execute('DELETE FROM specifications WHERE id=%s;', [specification['id']])
+
+                # commit changes to database
+                self.database_connection.commit()
+
+        # run sql call to delete from simulation model port
+        cursor.execute('DELETE FROM simulation_model_port WHERE model_name=%s;', [model_name])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # run sql call to delete from simulation models
+        cursor.execute('DELETE FROM simulation_models WHERE name=%s;', [model_name])
+
+        # commit changes to database
+        self.database_connection.commit()
+
+        # get the number of rows deleted and return
+        affected_rows = cursor.rowcount
+
+        return
     # endregion
 
     # region Scenarios
@@ -242,9 +464,7 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        sql = 'SELECT sv.*, v.description, v.data FROM scenario_variants sv ' \
-              'JOIN variants v ON sv.variant_name = v.variant_name WHERE sv.scenario_name=%s'
-        cursor.execute(sql, [scenario_name])
+        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.name WHERE sv.scenario_name=%s', [scenario_name])
 
         # get returned data
         scenario_variants = cursor.fetchall()
@@ -271,10 +491,7 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        sql = 'SELECT sv.*, v.description, v.data FROM scenario_variants sv ' \
-              'JOIN variants v ON sv.variant_name = v.variant_name ' \
-              'WHERE sv.scenario_name=%s AND sv.variant_name=%s'
-        cursor.execute(sql, [scenario_name, variant_name])
+        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.name WHERE sv.scenario_name=%s AND sv.variant_name=%s', [scenario_name, variant_name])
 
         # get returned data
         scenario_variant = cursor.fetchall()
@@ -312,8 +529,7 @@ class DbConfigStore(ConfigStore):
         if len(scenario_id) == 1:
 
             # run sql to add data to variants to database
-            sql = 'INSERT INTO variants (variant_name, description, data) VALUES (%s,%s,%s) RETURNING id;'
-            cursor.execute(sql, [variant['variant_name'], variant['description'], json.dumps(variant['data'])])
+            cursor.execute('INSERT INTO variants (name, description, data) VALUES (%s,%s,%s) RETURNING id;', [variant['variant_name'], variant['description'], json.dumps(variant['data'])])
 
             # commit changes to database
             self.database_connection.commit()
@@ -354,22 +570,17 @@ class DbConfigStore(ConfigStore):
         if 'description' in variant.keys() and 'data' in variant.keys():
 
             # run sql call
-            sql = 'UPDATE variants SET description=%s AND data=%s WHERE variant_name = %s RETURNING id;'
-            cursor.execute(sql, [variant['description'],
-                                 json.dumps(variant['data']),
-                                 variant_name])
+            cursor.execute('UPDATE variants SET description=%s AND data=%s WHERE name = %s RETURNING id;', [variant['description'], json.dumps(variant['data']), variant_name])
 
         elif 'description' in variant.keys() and 'data' not in variant.keys():
 
             # run sql call
-            sql = 'UPDATE variants SET description=%s WHERE variant_name = %s RETURNING id;'
-            cursor.execute(sql, [variant['description'], variant_name])
+            cursor.execute('UPDATE variants SET description=%s WHERE name = %s RETURNING id;', [variant['description'], variant_name])
 
         elif 'description' not in variant.keys() and 'data' in variant.keys():
 
             # run sql call
-            sql = 'UPDATE variants SET data=%s WHERE variant_name = %s RETURNING id;'
-            cursor.execute(sql, [json.dumps(variant['data']), variant_name])
+            cursor.execute('UPDATE variants SET data=%s WHERE name = %s RETURNING id;', [json.dumps(variant['data']), variant_name])
 
         # commit changes to database
         self.database_connection.commit()
@@ -406,7 +617,7 @@ class DbConfigStore(ConfigStore):
         self.database_connection.commit()
 
         # run sql call
-        cursor.execute('DELETE FROM variants WHERE variant_name=%s', [scenario_name, variant_name])
+        cursor.execute('DELETE FROM variants WHERE name=%s', [scenario_name, variant_name])
 
         # commit changes to database
         self.database_connection.commit()
