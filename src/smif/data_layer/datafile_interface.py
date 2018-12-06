@@ -748,7 +748,28 @@ class CSVDataStore(DataStore):
         _write_data_to_csv(results_path, _data, spec=spec)
 
     def available_results(self, modelrun_name):
-        return None
+        """List available results for a given model run
+
+        See _get_results_path for path construction.
+
+        On the pattern of:
+            results/<modelrun_name>/<model_name>/
+            decision_<id>/
+            output_<output_name>_timestep_<timestep>.csv
+        """
+        paths = glob.glob(os.path.join(self.results_folder, modelrun_name, "*", "*", "*.csv"))
+        # (timestep, decision_iteration, model_name, output_name)
+        results_keys = []
+        for path in paths:
+            model_name, decision_str, output_str = path.split(os.sep)[-3:]
+            decision_iteration = int(decision_str[9:])  # trim "decision_"
+            output_str_trimmed = output_str[7:-4]  # trim "output_" [...] ".csv"
+            output_name, timestep_str = output_str_trimmed.split("_timestep_")
+            timestep = int(timestep_str)
+            results_keys.append(
+                (timestep, decision_iteration, model_name, output_name)
+            )
+        return results_keys
 
     def _results_exist(self, modelrun_name):
         """Checks whether modelrun results exists on the filesystem
