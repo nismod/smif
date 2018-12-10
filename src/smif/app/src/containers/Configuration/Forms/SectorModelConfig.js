@@ -71,11 +71,12 @@ class SectorModelConfig extends Component {
         return (
             <div key={sector_model.name}>
                 <SectorModelConfigForm 
-                    sectorModel={sector_model} 
-                    sosModels={sos_models} 
+                    sector_model={sector_model} 
+                    sos_models={sos_models} 
                     dimensions={dimensions}
                     error={error}
                     save={app.formReqSave}
+                    onNavigate={(dest) => dispatch(setAppNavigate(dest))}
                     onSave={(sector_model) => (
                         dispatch(setAppFormSaveDone()),
                         dispatch(saveSectorModel(sector_model))

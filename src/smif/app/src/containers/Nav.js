@@ -17,6 +17,7 @@ import { Badge } from 'reactstrap'
 
 import { ConfirmPopup } from 'components/ConfigForm/General/Popups.js'
 import Footer from 'containers/Footer'
+import history from '../history.js'
 
 class Nav extends Component {
     constructor(props) {
@@ -245,6 +246,8 @@ class Nav extends Component {
             this.props.app.formEdit == false && 
             this.props.app.formError == false && 
             this.props.app.formSaving == false) {
+
+            history.push(this.props.app.redirect)
             return (
                 <div>
                     <Redirect to={this.props.app.redirect} />

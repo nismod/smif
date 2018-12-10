@@ -17,7 +17,8 @@ class SosModelConfigForm extends Component {
         this.handleCancel = this.handleCancel.bind(this)
 
         this.state = {
-            selected: this.props.sos_model
+            selected: this.props.sos_model,
+            inuse_dropdown: false
         }
     }
 
@@ -99,6 +100,34 @@ class SosModelConfigForm extends Component {
                                             </div>)
                                         : ''
                                 }
+                            </div>
+                        </div>
+
+                        <div className="form-group row">
+                            <label className="col-sm-2 col-form-label">In use by</label>
+                            <div className="col-sm-10">
+                                <div className="dropdown" onClick={() => this.setState({ inuse_dropdown: !this.state.inuse_dropdown})}>
+                                    <button
+                                        className="btn btn-secondary dropdown-toggle"
+                                        type="button"
+                                        id="dropdownMenuButton"
+                                        data-toggle="dropdown"
+                                        aria-haspopup="true"
+                                    >
+                                        Model Run Configuration
+                                    </button>
+                                    <div className={`dropdown-menu${this.state.inuse_dropdown ? ' show' : ''}`} aria-labelledby="dropdownMenuButton">
+                                        {
+                                            this.props.model_runs.filter(model_run => model_run.sos_model == this.props.sos_model.name).map(model_run => (
+                                                <a key={model_run.name} 
+                                                    className="btn dropdown-item" 
+                                                    onClick={() => this.props.onNavigate('/configure/model-runs/' + model_run.name)}>
+                                                    {model_run.name}
+                                                </a>
+                                            ))
+                                        }
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -299,10 +328,12 @@ class SosModelConfigForm extends Component {
 
 SosModelConfigForm.propTypes = {
     sos_model: PropTypes.object.isRequired,
+    model_runs: PropTypes.array.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
     save: PropTypes.bool,
+    onNavigate: PropTypes.func,
     onSave: PropTypes.func,
     onCancel: PropTypes.func,
     onEdit: PropTypes.func

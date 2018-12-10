@@ -4,6 +4,8 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
 import { fetchSosModel } from 'actions/actions.js'
+
+import { fetchModelRuns } from 'actions/actions.js'
 import { fetchSectorModels } from 'actions/actions.js'
 import { fetchScenarios } from 'actions/actions.js'
 
@@ -23,6 +25,8 @@ class SosModelConfig extends Component {
         this.config_name = this.props.match.params.name
 
         dispatch(fetchSosModel(this.config_name))
+
+        dispatch(fetchModelRuns())
         dispatch(fetchSectorModels())
         dispatch(fetchScenarios())
     }
@@ -66,16 +70,18 @@ class SosModelConfig extends Component {
     }
 
     renderSosModelConfig() {
-        const { app, sos_model, sector_models, scenarios, error, dispatch } = this.props
+        const { app, sos_model, model_runs, sector_models, scenarios, error, dispatch } = this.props
 
         return (
             <div>
                 <SosModelConfigForm 
                     sos_model={sos_model} 
+                    model_runs={model_runs} 
                     sector_models={sector_models} 
                     scenarios={scenarios} 
                     error={error}
                     save={app.formReqSave}
+                    onNavigate={(dest) => dispatch(setAppNavigate(dest))}
                     onSave={(sos_model) => (
                         dispatch(setAppFormSaveDone()),
                         dispatch(saveSosModel(sos_model))
@@ -104,6 +110,7 @@ class SosModelConfig extends Component {
 SosModelConfig.propTypes = {
     app: PropTypes.object.isRequired,
     sos_model: PropTypes.object.isRequired,
+    model_runs: PropTypes.array.isRequired,
     sector_models: PropTypes.array.isRequired,
     scenarios: PropTypes.array.isRequired,
     error: PropTypes.object.isRequired,
@@ -117,6 +124,7 @@ function mapStateToProps(state) {
     return {
         app: state.app,
         sos_model: state.sos_model.item,
+        model_runs: state.model_runs.items,
         sector_models: state.sector_models.items,
         scenarios: state.scenarios.items,
         error: ({

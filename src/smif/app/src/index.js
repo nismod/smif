@@ -16,14 +16,16 @@ import SectorModelConfig from 'containers/Configuration/Forms/SectorModelConfig'
 import ScenarioConfig from 'containers/Configuration/Forms/ScenarioConfig'
 
 import store from 'store/store.js'
+import history from './history'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '../static/css/main.css'
 import 'rc-slider/assets/index.css'
+import 'react-table/react-table.css'
 
 render(
     <Provider store={store}>
-        <Router>
+        <Router history={history}>
             <div className="container-fluid">
                 <div className="row">
                     <Route path="/" component={Nav}/>

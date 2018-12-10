@@ -13,13 +13,21 @@ const ModelRunSummary = (props) => (
         <dd className="col-sm-9">{props.ModelRun.stamp}</dd>
 
         <dt className="col-sm-3">Model</dt>
-        <dd className="col-sm-9">{props.ModelRun.sos_model}</dd>
+        <dd className="col-sm-9">
+            <a href={'/configure/sos-models/' + props.ModelRun.sos_model}>
+                {props.ModelRun.sos_model}
+            </a>
+        </dd>
 
         <dt className="col-sm-3">Scenarios</dt>
         <dd className="col-sm-9">
-            {Object.keys(props.ModelRun.scenarios).map(
-                scen => <div key={'sum_scen_' + scen}>{scen}: {props.ModelRun.scenarios[scen]}</div>
-            )}
+            {Object.keys(props.ModelRun.scenarios).map(scen => (
+                <div key={'sum_scen_' + scen}>
+                    <a href={'/configure/scenarios/' + scen}>
+                        {scen}: {props.ModelRun.scenarios[scen]}
+                    </a>
+                </div>
+            ))}
         </dd>
 
         <dt className="col-sm-3">Narratives</dt>
@@ -41,7 +49,7 @@ const ModelRunSummary = (props) => (
 )
 
 ModelRunSummary.propTypes = {
-    ModelRun: PropTypes.object.isRequired,
+    ModelRun: PropTypes.object.isRequired
 }
 
 export {
