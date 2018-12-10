@@ -202,24 +202,28 @@ class DbConfigStore(ConfigStore):
             self.database_connection.commit()
 
         # write sos_model_sim_models
+        sim_model_counter = 1
         for sector_model in sos_model['sector_models']:
 
             # check simulation model already in database
-            cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [sector_model])
+            cursor.execute('SELECT id FROM simulation_models WHERE name=%s;', [sector_model])
 
             # get returned data from query
-            sos_models = cursor.fetchall()
+            simulation_models = cursor.fetchall()
 
             # if no names are returned
-            if len(sos_models) == 0:
+            if len(simulation_models) == 0:
                 # return an error - simulation model does not exist
                 return
 
             # write link between sos model and simulation models
-            cursor.execute('INSERT INTO sos_model_simulation_models (sos_model_name, simulation_model_name) VALUES (%s,%s);', [sos_model['name'], sector_model])
+            cursor.execute('INSERT INTO sos_model_simulation_models (sos_model_name, simulation_model_name, simulation_model_id, sos_sim_model_id) VALUES (%s,%s,%s,%s);', [sos_model['name'], sector_model, simulation_models[0]['id'], sim_model_counter])
 
-        # write to database
-        self.database_connection.commit()
+            # iterate counter
+            sim_model_counter += 1
+
+            # write to database
+            self.database_connection.commit()
 
         # write sos_model_scenarios
         for scenario in sos_model['scenario_sets']:
@@ -349,10 +353,33 @@ class DbConfigStore(ConfigStore):
                     # return an error - simulation model does not exist
                     return
 
-                # write link between sos model and simulation models
-                cursor.execute('UPDATE sos_model_simulation_models SET simulation_model_name=%s WHERE sos_model_name=%s;', [sector_model, sos_model_name])
+            # if all simulation models in database, attempt to update the sos model sim model relation
 
-                # write to database
+            # get what is already in the database
+            cursor.execute('SELECT *  FROM sos_model_simulation_models WHERE sos_model_name=%s;', [sos_model_name])
+
+            # get result from query
+            sos_model_sim_models = cursor.fetchall()
+
+            for sector_model in sos_model['sector_models']:
+                # already checked if sim model in database
+                # start by seeing if in relation already - loop through existing data
+                for sim_model in sos_model_sim_models:
+                    if sim_model['simulation_model_name'] == sector_model:
+                        # return an error as already in relation so don't need to add again
+                        return
+
+                # if here, not in relation so add sim model to sos model sim model relation
+                # get max id count in relation
+                cursor.execute('SELECT max(sos_sim_model_id) FROM sos_model_simulation_models WHERE sos_model_name=%s;', [sos_model_name])
+
+                # get result of query
+                sos_sim_model_id = cursor.fetchone()
+
+                # write sim model to sos model sim models relation
+                cursor.execute('INSERT INTO sos_model_simulation_models (sos_model_name, simulation_model_name, sos_sim_model_id) VALUES (%s,%s,%s);', [sos_model_name, sector_model, sos_sim_model_id[0]])
+
+                # write update to database
                 self.database_connection.commit()
 
         # need to update methods as does not allow multiple as different rows
