@@ -1,6 +1,6 @@
 """Test YAML config store
 """
-from pytest import fixture, mark, raises
+from pytest import fixture, raises
 from smif.data_layer.datafile_interface import YamlConfigStore
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError)
@@ -87,7 +87,6 @@ class TestModelRun:
         actual = config_handler.read_model_run('to_update')
         assert actual['description'] == 'after'
 
-    @mark.xfail
     def test_model_run_update_mismatch(self, model_run, config_handler):
         """Test that updating a model_run with mismatched name should fail
         """
@@ -202,7 +201,6 @@ class TestSosModel:
         actual = config_handler.read_sos_model('to_update')
         assert actual['description'] == 'after'
 
-    @mark.xfail
     def test_sos_model_update_mismatch(self, get_sos_model, config_handler):
         """Test that updating a sos_model with mismatched name should fail
         """
@@ -319,7 +317,6 @@ class TestSectorModel:
         actual = config_handler.read_model('to_update')
         assert actual['description'] == 'after'
 
-    @mark.xfail
     def test_sector_model_update_mismatch(self, get_sector_model, config_handler):
         """Test that updating a sector_model with mismatched name should fail
         """
@@ -371,42 +368,6 @@ class TestScenarios:
         expected = sample_scenarios[0]
         actual = config_handler.read_scenario(expected['name'])
         assert actual == expected
-
-    @mark.xfail
-    def test_read_scenario_variable_spec(self, config_handler):
-        handler = config_handler
-        scenario_name = 'population'
-        variable = 'population_count'
-        scenario = handler.read_scenario(scenario_name)
-        # testing private method here
-        spec = handler._get_spec_from_provider(scenario['provides'], variable)
-        assert spec.as_dict() == {'name': 'population_count',
-                                  'description': 'The count of population',
-                                  'unit': 'people',
-                                  'dtype': 'int',
-                                  'dims': ['county', 'season'],
-                                  'coords': {
-                                      'county': ['oxford'],
-                                      'season': ['cold_month', 'spring_month',
-                                                 'hot_month', 'fall_month']
-                                            },
-                                  'abs_range': None,
-                                  'exp_range': None}
-
-    @mark.xfail
-    def test_read_scenario_variable_spec_raises(self, config_handler):
-        handler = config_handler
-        scenario_name = 'does not exist'
-        variable = 'population_count'
-        with raises(SmifDataNotFoundError):
-            scenario = handler.read_scenario(scenario_name)
-            handler._get_spec_from_provider(scenario['provides'], variable)
-
-        scenario_name = 'population'
-        variable = 'does not exist'
-        with raises(SmifDataNotFoundError):
-            scenario = handler.read_scenario(scenario_name)
-            handler._get_spec_from_provider(scenario['provides'], variable)
 
     def test_read_scenario_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if scenario not found

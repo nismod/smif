@@ -241,6 +241,16 @@ class Spec(object):
                 return coord
         raise KeyError("Coords not found for dim '{}', in Spec '{}'".format(dim, self._name))
 
+    def dim_names(self, dim: str):
+        """Names of each coordinate in a given dimension
+        """
+        return self.dim_coords(dim).names
+
+    def dim_elements(self, dim: str):
+        """Elements of each coordinate in a given dimension
+        """
+        return self.dim_coords(dim).elements
+
     @property
     def unit(self):
         """The unit for all data points.

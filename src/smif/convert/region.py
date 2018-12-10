@@ -29,8 +29,8 @@ class RegionAdaptor(Adaptor):
         from_coords = from_spec.dim_coords(from_dim)
         to_coords = to_spec.dim_coords(to_dim)
         # create RegionSets from Coordinates
-        from_set = RegionSet(from_dim, [e['feature'] for e in from_coords.elements])
-        to_set = RegionSet(to_dim, [e['feature'] for e in to_coords.elements])
+        from_set = RegionSet(from_dim, from_coords.elements)
+        to_set = RegionSet(to_dim, to_coords.elements)
         # register RegionSets
         register = NDimensionalRegister()
         register.register(from_set)
@@ -51,16 +51,16 @@ class RegionSet(ResolutionSet):
     ----------
     set_name : str
         Name to use as identifier for this set of regions
-    fiona_shape_iter: iterable
+    elements: iterable
         Iterable (probably a list or a reader handle)
         of fiona feature records e.g. the 'features' entry of
         a GeoJSON collection
 
     """
-    def __init__(self, set_name, fiona_shape_iter):
+    def __init__(self, set_name, elements):
         self.name = set_name
         self._regions = []
-        self.data = fiona_shape_iter
+        self.data = [e['feature'] for e in elements]
 
         self._idx = index.Index()
         for pos, region in enumerate(self._regions):

@@ -5,8 +5,7 @@ import os
 from tempfile import TemporaryDirectory
 
 import numpy as np
-import pyarrow as pa
-from pytest import fixture, mark, raises
+from pytest import fixture, raises
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.datafile_interface import CSVDataStore
 from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
@@ -137,8 +136,13 @@ def get_remapped_scenario_data():
             'timestep': 2016
         }
     ]
-    spec = Spec(
-        name='people',
+    return data
+
+
+@fixture
+def scenario_spec():
+    return Spec(
+        name='population_count',
         unit='people',
         dtype='int',
         dims=['county', 'season'],
@@ -147,10 +151,8 @@ def get_remapped_scenario_data():
             'season': ['cold_month', 'spring_month', 'hot_month', 'fall_month']
         }
     )
-    return data, spec
 
 
-@mark.xfail
 class TestReadState:
 
     def test_read_state(self, config_handler):
@@ -180,8 +182,7 @@ class TestReadState:
         actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
 
         expected = os.path.join(
-                handler.results_folder, modelrun_name,
-                'state_2010_decision_0.csv')
+            handler.results_folder, modelrun_name, 'state_2010_decision_0.csv')
 
         assert actual == expected
 
@@ -222,52 +223,12 @@ class TestReadState:
         assert actual == expected
 
 
-@mark.xfail
 class TestScenarios:
     """Scenario data should be readable, metadata is currently editable. May move to make it
     possible to import/edit/write data.
     """
-    def test_scenario_data(self, setup_folder_structure, config_handler, get_scenario_data):
-        """ Test to dump a scenario (CSV) data-file and then read the file
-        using the datafile interface. Finally check the data shows up in the
-        returned dictionary.
-        """
-        basefolder = setup_folder_structure
-        scenario_data = get_scenario_data
-
-        keys = scenario_data[0].keys()
-        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
-        with open(filepath, 'w+') as output_file:
-            dict_writer = csv.DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(scenario_data)
-
-        variant = config_handler.read_scenario_variant('population', 'High Population (ONS)')
-        variant['data'] = {'population_count': filepath}
-        config_handler.update_scenario_variant('population', 'High Population (ONS)', variant)
-
-        data = np.array([[100, 150, 200, 210]])
-        actual = config_handler.read_scenario_variant_data(
-            'population',
-            'High Population (ONS)',
-            'population_count',
-            timestep=2017)
-
-        spec = Spec.from_dict({
-            'name': "population_count",
-            'description': "The count of population",
-            'unit': 'people',
-            'dtype': 'int',
-            'coords': {'county': ['oxford'],
-                       'season': ['cold_month', 'spring_month', 'hot_month', 'fall_month']},
-            'dims': ['county', 'season']})
-
-        expected = DataArray(spec, data)
-
-        assert actual == expected
-
     def test_scenario_data_raises(self, setup_folder_structure, config_handler,
-                                  get_faulty_scenario_data):
+                                  get_faulty_scenario_data, scenario_spec):
         """If a scenario file has incorrect keys, raise a friendly error identifying
         missing keys
         """
@@ -281,19 +242,12 @@ class TestScenarios:
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
 
-        variant = config_handler.read_scenario_variant('population', 'High Population (ONS)')
-        variant['data'] = {'population_count': filepath}
-        config_handler.update_scenario_variant('population', 'High Population (ONS)', variant)
-
+        key = 'population_high.csv'
         with raises(SmifDataMismatchError):
-            config_handler.read_scenario_variant_data(
-                'population',
-                'High Population (ONS)',
-                'population_count',
-                timestep=2017)
+            config_handler.read_scenario_variant_data(key, scenario_spec, 2017)
 
     def test_scenario_data_validates(self, setup_folder_structure, config_handler,
-                                     get_remapped_scenario_data):
+                                     get_remapped_scenario_data, scenario_spec):
         """Store performs validation of scenario data against raw interval and region data.
 
         As such `len(region_names) * len(interval_names)` is not a valid size
@@ -304,7 +258,8 @@ class TestScenarios:
         The set of unique region or interval names can be used instead.
         """
         basefolder = setup_folder_structure
-        scenario_data, spec = get_remapped_scenario_data
+        scenario_data = get_remapped_scenario_data
+        spec = scenario_spec
 
         keys = scenario_data[0].keys()
         filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
@@ -313,30 +268,14 @@ class TestScenarios:
             dict_writer.writeheader()
             dict_writer.writerows(scenario_data)
 
-        variant = config_handler.read_scenario_variant('population', 'High Population (ONS)')
-        variant['data'] = {'population_count': filepath}
-        config_handler.update_scenario_variant('population', 'High Population (ONS)', variant)
-
         expected_data = np.array([[100, 150, 200, 210]], dtype=float)
-        actual = config_handler.read_scenario_variant_data(
-            'population',
-            'High Population (ONS)',
-            'population_count',
-            timestep=2015)
+        actual = config_handler.read_scenario_variant_data('population_high.csv', spec, 2015)
 
         expected = DataArray(spec, expected_data)
 
         assert actual == expected
 
 
-@fixture(scope='function')
-def setup_narratives(config_handler, get_sos_model):
-    config_handler.write_sos_model(get_sos_model)
-
-
-# need to test with spec and new methods
-@mark.usefixtures('setup_narratives')
-@mark.xfail
 class TestNarrativeVariantData:
     """Narratives, parameters and interventions should be readable, metadata is editable. May
     move to clarify the distinctions here, and extend to specify strategies and contraints.
@@ -354,26 +293,6 @@ class TestNarrativeVariantData:
             writer.writeheader()
             writer.writerow({'homogeneity_coefficient': 8})
 
-        test_variant = None
-        test_narrative = None
-        sos_model = config_handler.read_sos_model('energy')
-        for narrative in sos_model['narratives']:
-            if narrative['name'] == 'governance':
-                test_narrative = narrative
-                for variant in narrative['variants']:
-                    if variant['name'] == 'Central Planning':
-                        test_variant = variant
-                        break
-                break
-
-        test_variant['data'] = {'homogeneity_coefficient': filepath}
-        test_narrative['variants'] = [test_variant]
-        sos_model['narratives'] = [test_narrative]
-        config_handler.update_sos_model('energy', sos_model)
-
-        actual = config_handler.read_narrative_variant_data(
-            'energy', 'governance', 'Central Planning', 'homogeneity_coefficient')
-
         spec = Spec.from_dict({
             'name': 'homogeneity_coefficient',
             'description': "How homegenous the centralisation process is",
@@ -383,103 +302,58 @@ class TestNarrativeVariantData:
             'dtype': 'float'
         })
 
+        actual = config_handler.read_narrative_variant_data('central_planning.csv', spec)
         assert actual == DataArray(spec, np.array(8, dtype=float))
 
     def test_narrative_data_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if narrative has no data
         """
         with raises(SmifDataNotFoundError):
-            config_handler.read_narrative_variant_data(
-                'energy', 'governance', 'Central Planning', 'does not exist')
+            config_handler.read_narrative_variant_data('does not exist', None)
 
     def test_default_data_mismatch(self, config_handler, get_sector_model_parameter_defaults):
-        sector_model_name = 'energy_demand'
         parameter_name = 'smart_meter_savings'
         data = get_sector_model_parameter_defaults[parameter_name]
         data.data = np.array([1, 2, 3])
-        config_handler.write_sector_model_parameter_default(
-            sector_model_name, parameter_name, data)
+        config_handler.write_model_parameter_default('default.csv', data)
 
-        with raises(SmifDataMismatchError) as ex:
-            config_handler.read_model_parameter_default(
-                sector_model_name, parameter_name)
-
-        msg = "Reading default parameter values for energy_demand:smart_meter_savings"
-        assert msg in str(ex)
+        with raises(SmifDataMismatchError):
+            config_handler.read_model_parameter_default('default.csv', data.spec)
 
 
-# need to test with spec replacing spatial/temporal resolution
-@mark.xfail
 class TestResults:
     """Results from intermediate stages of running ModelRuns should be writeable and readable.
     """
-    def test_read_results(self, setup_folder_structure, get_handler_csv,
-                          get_handler_binary):
+    def test_read_results(self, setup_folder_structure, config_handler):
         """Results from .csv in a folder structure which encodes metadata
         in filenames and directory structure.
 
-        With no decision/iteration specifiers:
-            results/
-            <modelrun_name>/
-            <model_name>/
-                output_<output_name>_
-                timestep_<timestep>_
-                regions_<spatial_resolution>_
-                intervals_<temporal_resolution>.csv
-        Else:
-            results/
+        On the pattern of:
             <modelrun_name>/
             <model_name>/
             decision_<id>/
                 output_<output_name>_
-                timestep_<timestep>_
-                regions_<spatial_resolution>_
-                intervals_<temporal_resolution>.csv
+                timestep_<timestep>.csv
         """
         modelrun = 'energy_transport_baseline'
         model = 'energy_demand'
+        decision_iteration = 1
         output = 'electricity_demand'
         timestep = 2020
-        spatial_resolution = 'lad'
-        temporal_resolution = 'annual'
-
-        # 1. case with no decision
-        expected = np.array([[[1.0]]])
-        csv_contents = "region,interval,value\noxford,1,1.0\n"
-        binary_contents = pa.serialize(expected).to_buffer()
-
-        path = os.path.join(
-            str(setup_folder_structure),
-            "results",
-            modelrun,
-            model,
-            "decision_none",
-            "output_{}_timestep_{}".format(
-                output,
-                timestep
-            )
+        output_spec = Spec(
+            name='electricity_demand',
+            unit='MWh',
+            dtype='float',
+            dims=['region', 'interval'],
+            coords={
+                'region': ['oxford'],
+                'interval': ['1']
+            }
         )
-        os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        with open(path + '.csv', 'w') as fh:
-            fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output,
-                                              spatial_resolution,
-                                              temporal_resolution, timestep)
-        assert actual == expected
-
-        with pa.OSFile(path + '.dat', 'wb') as f:
-            f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output,
-                                                 spatial_resolution,
-                                                 temporal_resolution, timestep)
-        assert actual == expected
-
-        # 2. case with decision
-        decision_iteration = 1
-        expected = np.array([[[2.0]]])
-        csv_contents = "region,interval,value\noxford,1,2.0\n"
-        binary_contents = pa.serialize(expected).to_buffer()
+        expected_data = np.array([[2.0]])
+        expected = DataArray(output_spec, expected_data)
+        csv_contents = "region,interval,electricity_demand\noxford,1,2.0\n"
 
         path = os.path.join(
             str(setup_folder_structure),
@@ -496,23 +370,11 @@ class TestResults:
 
         with open(path + '.csv', 'w') as fh:
             fh.write(csv_contents)
-        actual = get_handler_csv.read_results(modelrun, model, output,
-                                              spatial_resolution,
-                                              temporal_resolution, timestep,
-                                              None, decision_iteration)
-        assert actual == expected
-
-        with pa.OSFile(path + '.dat', 'wb') as f:
-            f.write(binary_contents)
-        actual = get_handler_binary.read_results(modelrun, model, output,
-                                                 spatial_resolution,
-                                                 temporal_resolution, timestep,
-                                                 None, decision_iteration)
+        actual = config_handler.read_results(
+            modelrun, model, output_spec, timestep, decision_iteration)
         assert actual == expected
 
 
-# TODO - move test (and implementations) up to test_store
-@mark.xfail
 class TestWarmStart:
     """If re-running a ModelRun with warm-start specified explicitly, results should be checked
     for existence and left in place.
@@ -598,19 +460,19 @@ class TestWarmStart:
 
         path = os.path.join(
             previous_results_path,
-            "output_electricity_demand_timestep_2020.csv")
+            "output_electricity_demand_timestep_2020.parquet")
         with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,4.0\n")
 
         path = os.path.join(
             previous_results_path,
-            "output_electricity_demand_timestep_2025.csv")
+            "output_electricity_demand_timestep_2025.parquet")
         with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,6.0\n")
 
         path = os.path.join(
             previous_results_path,
-            "output_electricity_demand_timestep_2030.csv")
+            "output_electricity_demand_timestep_2030.parquet")
         with open(path, 'w') as fh:
             fh.write("region,interval,value\noxford,1,8.0\n")
 
@@ -689,7 +551,6 @@ class TestWarmStart:
         assert len(os.listdir(current_results_path)) == 0
 
 
-@mark.xfail
 class TestCoefficients:
     """Dimension conversion coefficients should be cached to disk and read if available.
     """

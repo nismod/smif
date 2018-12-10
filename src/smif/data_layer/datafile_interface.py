@@ -134,6 +134,9 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['model_runs'], config['name'], config)
 
     def update_model_run(self, model_run_name, model_run):
+        if model_run['name'] != model_run_name:
+            raise SmifDataMismatchError(
+                "Model run name '%s' must match '%s'" % (model_run_name, model_run['name']))
         _assert_file_exists(self.config_folders, 'model_run', model_run_name)
         prev = self._read_model_run(model_run_name)
         config = copy.copy(model_run)
@@ -163,6 +166,9 @@ class YamlConfigStore(ConfigStore):
         _write_yaml_file(self.config_folders['sos_models'], sos_model['name'], sos_model)
 
     def update_sos_model(self, sos_model_name, sos_model):
+        if sos_model['name'] != sos_model_name:
+            raise SmifDataMismatchError(
+                "SoSModel name '%s' must match '%s'" % (sos_model_name, sos_model['name']))
         _assert_file_exists(self.config_folders, 'sos_model', sos_model_name)
         if self.validation:
             validate_sos_model_config(
@@ -200,6 +206,9 @@ class YamlConfigStore(ConfigStore):
             self.config_folders['sector_models'], model['name'], model)
 
     def update_model(self, model_name, model):
+        if model['name'] != model_name:
+            raise SmifDataMismatchError(
+                "Model name '%s' must match '%s'" % (model_name, model['name']))
         _assert_file_exists(self.config_folders, 'sector_model', model_name)
         model = copy.deepcopy(model)
         # ignore interventions and initial conditions which the app doesn't handle
@@ -739,7 +748,28 @@ class CSVDataStore(DataStore):
         _write_data_to_csv(results_path, _data, spec=spec)
 
     def available_results(self, modelrun_name):
-        return None
+        """List available results for a given model run
+
+        See _get_results_path for path construction.
+
+        On the pattern of:
+            results/<modelrun_name>/<model_name>/
+            decision_<id>/
+            output_<output_name>_timestep_<timestep>.csv
+        """
+        paths = glob.glob(os.path.join(self.results_folder, modelrun_name, "*", "*", "*.csv"))
+        # (timestep, decision_iteration, model_name, output_name)
+        results_keys = []
+        for path in paths:
+            model_name, decision_str, output_str = path.split(os.sep)[-3:]
+            decision_iteration = int(decision_str[9:])  # trim "decision_"
+            output_str_trimmed = output_str[7:-4]  # trim "output_" [...] ".csv"
+            output_name, timestep_str = output_str_trimmed.split("_timestep_")
+            timestep = int(timestep_str)
+            results_keys.append(
+                (timestep, decision_iteration, model_name, output_name)
+            )
+        return results_keys
 
     def _results_exist(self, modelrun_name):
         """Checks whether modelrun results exists on the filesystem

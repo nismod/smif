@@ -158,7 +158,7 @@ class TestModelRuns:
 
     def test_update_non_existing_model_run(self, handler):
         with raises(SmifDataNotFoundError):
-            handler.update_model_run('non_existing', {})
+            handler.update_model_run('non_existing', {'name': 'non_existing'})
 
     def test_delete_model_run(self, handler):
         handler.delete_model_run('test_modelrun')
@@ -204,7 +204,7 @@ class TestSosModel:
 
     def test_update_non_existing_sos_model(self, handler):
         with raises(SmifDataNotFoundError):
-            handler.update_sos_model('non_existing', {})
+            handler.update_sos_model('non_existing', {'name': 'non_existing'})
 
     def test_delete_sos_model(self, handler):
         handler.delete_sos_model('energy')
@@ -254,7 +254,7 @@ class TestSectorModel():
 
     def test_update_non_existing_model(self, handler):
         with raises(SmifDataNotFoundError):
-            handler.update_model('non_existing', {})
+            handler.update_model('non_existing', {'name': 'non_existing'})
 
     def test_delete_model(self, handler, get_sector_model_no_coords):
         handler.delete_model(get_sector_model_no_coords['name'])

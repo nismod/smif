@@ -93,6 +93,16 @@ class DataArray():
         """
         return self.spec.dim_coords(dim)
 
+    def dim_names(self, dim):
+        """Coordinate names for a given dimension
+        """
+        return self.spec.dim_names(dim)
+
+    def dim_elements(self, dim):
+        """Coordinate elements for a given dimension
+        """
+        return self.spec.dim_elements(dim)
+
     @property
     def unit(self):
         """The unit for all data points.

@@ -15,7 +15,7 @@ class TestSpec():
     """
 
     @fixture(scope='function')
-    def get_spec(self):
+    def spec(self):
         spec = Spec(
             name='population',
             description='Population by age class',
@@ -30,7 +30,7 @@ class TestSpec():
         )
         return spec
 
-    def test_construct(self, get_spec):
+    def test_construct(self, spec):
         """A Spec has:
         - coords: coordinates that label each point - list of Coordinates, one for each dim
         - name
@@ -42,7 +42,6 @@ class TestSpec():
 
         The DataArray it describes may be sparse
         """
-        spec = get_spec
         assert spec.name == 'population'
         assert spec.description == 'Population by age class'
         assert spec.unit == 'people'
@@ -57,8 +56,7 @@ class TestSpec():
             Coordinates('age', [">30", "<30"])
         ]
 
-    def test_dim_coords_method(self, get_spec):
-        spec = get_spec
+    def test_dim_coords_method(self, spec):
         assert spec.dim_coords('countries') == Coordinates('countries', ["England", "Wales"])
         with raises(KeyError) as err:
             spec.dim_coords('does not exist')
@@ -75,6 +73,16 @@ class TestSpec():
             spec.dim_coords('no coords')
 
         assert "Coords not found for dim 'no coords', in Spec 'population'" in str(err)
+
+    def test_dim_names(self, spec):
+        """Names of each coordinate in a given dimension
+        """
+        assert spec.dim_names('countries') == ["England", "Wales"]
+
+    def test_dim_elements(self, spec):
+        """Elements of each coordinate in a given dimension
+        """
+        assert spec.dim_elements('countries') == [{'name': "England"}, {'name': "Wales"}]
 
     def test_from_dict(self):
         """classmethod to construct from serialisation

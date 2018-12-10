@@ -139,18 +139,16 @@ class TestResults():
 
         assert results_out == sample_results
 
-    @mark.xfail()
-    def test_warm_start(self, handler):
-        """Warm start should return None if no results are available
-        """
-        pass
-
-    @mark.xfail()
-    def test_available_results(self, handler):
+    def test_available_results(self, handler, sample_results):
         """Available results should return an empty list if none are available
         develop
         """
         assert handler.available_results('test_modelrun') == []
+        handler.write_results(sample_results, 'test_modelrun', 'energy', 2010, 0)
+
+        # keys should be (timestep, decision_iteration, model_name, output_name)
+        assert handler.available_results('test_modelrun') == \
+            [(2010, 0, 'energy', sample_results.spec.name)]
 
     def test_read_results_raises(self, handler, sample_results):
         modelrun_name = 'test_modelrun'
