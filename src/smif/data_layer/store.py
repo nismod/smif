@@ -17,7 +17,7 @@ SmifDataReadError
 from copy import deepcopy
 from logging import getLogger
 
-from smif.data_layer.datafile_interface import CSVDataStore
+from smif.data_layer.file import CSVDataStore
 from smif.exception import SmifDataNotFoundError
 from smif.metadata.spec import Spec
 
@@ -834,7 +834,7 @@ class Store():
         -----
         Called from smif.controller.execute
         """
-        available_results = self.data_store.available_results(model_run_name)
+        available_results = self.available_results(model_run_name)
         if available_results:
             max_timestep = max(
                 timestep for

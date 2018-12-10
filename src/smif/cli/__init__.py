@@ -92,9 +92,7 @@ import smif.cli.log
 from smif.controller import copy_project_folder, execute_model_run, ModelRunScheduler
 from smif.http_api import create_app
 from smif.data_layer import Store
-from smif.data_layer.datafile_interface import (YamlConfigStore,
-                                                CSVDataStore,
-                                                FileMetadataStore)
+from smif.data_layer.file import (YamlConfigStore, CSVDataStore, FileMetadataStore)
 
 
 __author__ = "Will Usher, Tom Russell"

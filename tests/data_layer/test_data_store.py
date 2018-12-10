@@ -4,7 +4,7 @@ import numpy as np
 from pytest import fixture, mark, param, raises
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.database_interface import DbDataStore
-from smif.data_layer.datafile_interface import CSVDataStore
+from smif.data_layer.file.file_data_store import CSVDataStore
 from smif.data_layer.memory_interface import MemoryDataStore
 from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
 from smif.metadata import Spec
@@ -16,7 +16,7 @@ from smif.metadata import Spec
         'file',
         param('database', marks=mark.skip)]
     )
-def init_handler(request, setup_empty_folder_structure):
+def handler(request, setup_empty_folder_structure):
     if request.param == 'memory':
         handler = MemoryDataStore()
     elif request.param == 'file':
@@ -26,18 +26,6 @@ def init_handler(request, setup_empty_folder_structure):
         handler = DbDataStore()
         raise NotImplementedError
 
-    return handler
-
-
-@fixture
-def handler(init_handler, sample_narrative_data, get_sector_model,
-            get_sector_model_parameter_defaults, conversion_source_spec, conversion_sink_spec,
-            conversion_coefficients):
-    handler = init_handler
-
-    # conversion coefficients
-    handler.write_coefficients(
-        conversion_source_spec, conversion_sink_spec, conversion_coefficients)
     return handler
 
 
@@ -82,13 +70,9 @@ class TestInitialConditions():
 class TestInterventions():
     """Read and write interventions
     """
-    def test_read__write_interventions(self, handler, interventions):
+    def test_read_write_interventions(self, handler, interventions):
 
-        expected = {}
-        for key, intervention in list(interventions.items()):
-            expected[key] = intervention.copy()
-            expected[key].pop('name')
-
+        expected = interventions
         handler.write_interventions('my_intervention.csv', interventions)
         actual = handler.read_interventions(['my_intervention.csv'])
 
@@ -112,13 +96,8 @@ class TestState():
 class TestCoefficients():
     """Read/write conversion coefficients
     """
-    def test_read_coefficients(self, conversion_source_spec, conversion_sink_spec, handler,
-                               conversion_coefficients):
-        actual = handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
-        expected = conversion_coefficients
-        np.testing.assert_equal(actual, expected)
-
-    def test_write_coefficients(self, conversion_source_spec, conversion_sink_spec, handler):
+    def test_read_write_coefficients(self, conversion_source_spec, conversion_sink_spec,
+                                     handler):
         expected = np.array([[2]])
         handler.write_coefficients(conversion_source_spec, conversion_sink_spec, expected)
         actual = handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
