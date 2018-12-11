@@ -59,19 +59,418 @@ class DbConfigStore(ConfigStore):
 
     # region System-of-systems models
     def read_sos_models(self):
-        raise NotImplementedError()
+        """Read all systems of systems models
+
+        Returns
+        -------
+        list
+            A list of dicts containing sos model definitions
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # get sos model details
+        cursor.execute('SELECT name FROM sos_models;')
+
+        # get returned data
+        sos_models = cursor.fetchall()
+
+        # is some models are returned
+        if sos_models is not None:
+
+            # create list to store models
+            sos_models_list = []
+
+            # loop through existing models
+            for model_name in sos_models:
+
+                # get the model details
+                sos_models_list.append(self.read_sos_model(model_name[0]))
+
+        return sos_models_list
 
     def read_sos_model(self, sos_model_name):
-        raise NotImplementedError()
+        """Read a single system of systems model
+
+        Argument
+        --------
+        sos_model_name: string
+            The name of the systems of systems model to read
+
+        Returns
+        -------
+        dict
+            The systems of systems model definition
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # get sos model details
+        cursor.execute('SELECT * FROM sos_models WHERE name=%s;', [sos_model_name])
+
+        # get returned data
+        sos_model = cursor.fetchone()
+
+        if sos_model is not None:
+            # get simulation models
+            cursor.execute('SELECT * FROM sos_model_simulation_models WHERE sos_model_name=%s;', [sos_model_name])
+
+            # add all returned models to the sector models key in the sos_model definition
+            sos_model['sector_models'] = []
+            for model in cursor.fetchall():
+                sos_model['sector_models'].append(model)
+
+            # get scenario sets
+            cursor.execute('SELECT * FROM sos_model_scenarios WHERE sos_model_name=%s;', [sos_model_name])
+
+            # add all returned models to the sector models key in the sos_model definition
+            sos_model['scenario_sets'] = []
+            for scenario in cursor.fetchall():
+                sos_model['scenario_sets'].append(scenario)
+
+            # get sos model dependencies
+            cursor.execute('SELECT * FROM sos_model_dependencies WHERE sos_model_name=%s;', [sos_model_name])
+
+            # add all returned dependencies to the dependencies key in the sos_model definition
+            sos_model['dependencies'] = []
+            for dependency in cursor.fetchall():
+                sos_model['dependencies'].append(dependency)
+
+        return sos_model
 
     def write_sos_model(self, sos_model):
-        raise NotImplementedError()
+        """Write a systems of systems model
+
+        Argument
+        --------
+        sos_model: dict
+            The definition for a systems os systems model
+
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # check name does not already exist
+        cursor.execute('SELECT name FROM sos_models WHERE name=%s;', [sos_model['name']])
+
+        # get returned data from query
+        sos_models = cursor.fetchall()
+
+        # if one of more names are returned
+        if len(sos_models) > 0:
+            # return an error - sos model already exists, use a different name
+            return
+
+        # write sos model, return id
+        cursor.execute('INSERT INTO sos_models (name, description) VALUES (%s, %s) RETURNING id;', [sos_model['name'], sos_model['description']])
+
+        # write to database
+        self.database_connection.commit()
+
+        # get returned model id
+        sos_model_id = cursor.fetchone()
+
+        # write dependencies
+        # loop through passed dependencies
+        for dependency in sos_model['dependencies']:
+            # check dependent models already exist in database - source model
+            cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['source_model']])
+
+            # get returned data from query
+            sos_models = cursor.fetchall()
+
+            # if no names are returned
+            if len(sos_models) == 0:
+                # return an error - simulation model does not exist
+                return
+
+            # check dependent models already exist in database - sink model
+            cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['sink_model']])
+
+            # get returned data from query
+            sos_models = cursor.fetchall()
+
+            # if no names are returned
+            if len(sos_models) == 0:
+                # return an error - simulation model does not exist
+                return
+
+            # sql to write dependency to db
+            cursor.execute('INSERT INTO sos_model_dependencies (sos_model_name, source_model, source_output, sink_model, sink_input, lag) VALUES (%s,%s,%s,%s,%s,%s);', [sos_model['name'], dependency['source_model'], dependency['source_model_output'], dependency['sink_model'], dependency['sink_model_input'], dependency['lag']])
+
+            # write to database
+            self.database_connection.commit()
+
+        # write sos_model_sim_models
+        sim_model_counter = 1
+        for sector_model in sos_model['sector_models']:
+
+            # check simulation model already in database
+            cursor.execute('SELECT id FROM simulation_models WHERE name=%s;', [sector_model])
+
+            # get returned data from query
+            simulation_models = cursor.fetchall()
+
+            # if no names are returned
+            if len(simulation_models) == 0:
+                # return an error - simulation model does not exist
+                return
+
+            # write link between sos model and simulation models
+            cursor.execute('INSERT INTO sos_model_simulation_models (sos_model_name, simulation_model_name, simulation_model_id, sos_sim_model_id) VALUES (%s,%s,%s,%s);', [sos_model['name'], sector_model, simulation_models[0]['id'], sim_model_counter])
+
+            # iterate counter
+            sim_model_counter += 1
+
+            # write to database
+            self.database_connection.commit()
+
+        # write sos_model_scenarios
+        for scenario in sos_model['scenario_sets']:
+            # check scenario already exists
+            cursor.execute('SELECT name FROM scenarios WHERE name=%s;', [scenario])
+
+            # get returned data from query
+            scenario_names = cursor.fetchall()
+
+            # if no names are returned
+            if len(scenario_names) == 0:
+                # return an error - scenario does not exist
+                return
+
+            # add data into database
+            cursor.execute('INSERT INTO sos_model_scenarios (sos_model_name, scenario_name) VALUES (%s,%s);', [sos_model['name'], scenario])
+
+        # write to database
+        self.database_connection.commit()
+
+        return
 
     def update_sos_model(self, sos_model_name, sos_model):
-        raise NotImplementedError()
+        """Update a systems of systems model
+
+        Argument
+        --------
+        sos_model_name: string
+            The name of the systems of systems model to update
+        sos_model: dict
+            The definition of a systems of systems model with only the data to be updated in
+
+        """
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # check sos model exists
+        cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [sos_model_name])
+
+        # get result of query
+        sos_models = cursor.fetchall()
+
+        # if no model with the name exists, return
+        if len(sos_models) == 0:
+            # no model with the name given
+            return
+
+        # update dependencies if passed
+        if 'dependencies' in sos_model.keys():
+
+            # loop through dependencies
+            for dependency in sos_model['dependencies']:
+                # update details
+
+                if 'source_model' in dependency.keys():
+                    # check dependent models already exist in database - source model
+                    cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['source_model']])
+
+                    # get returned data from query
+                    sos_models = cursor.fetchall()
+
+                    # if no names are returned
+                    if len(sos_models) == 0:
+                        # return an error - simulation model does not exist
+                        return
+
+                    # update
+                    cursor.execute('UPDATE dependencies SET source_model=%s WHERE name=%s;' [dependency['source_model'], sos_model_name])
+
+                    # write to database
+                    self.database_connection.commit()
+
+                if 'sink_model' in dependency.keys():
+                    # check dependent models already exist in database - sink model
+                    cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['sink_model']])
+
+                    # get returned data from query
+                    sos_models = cursor.fetchall()
+
+                    # if no names are returned
+                    if len(sos_models) == 0:
+                        # return an error - simulation model does not exist
+                        return
+
+                    # update
+                    cursor.execute('UPDATE dependencies SET sink_model=%s WHERE name=%s;', [dependency['source_model'], sos_model_name])
+
+                    # write to database
+                    self.database_connection.commit()
+
+                if 'source_model_output' in dependency.keys():
+                    # update
+                    cursor.execute('UPDATE dependencies SET source_model_output=%s WHERE name=%s;', [dependency['source_model_output'], sos_model['name']])
+
+                    # write to database
+                    self.database_connection.commit()
+
+                if 'sink_model_input' in dependency.keys():
+                    # update
+                    cursor.execute('UPDATE dependencies SET sink_model_input=%s WHERE name=%s;', [dependency['sink_model_input'], sos_model_name])
+
+                    # write to database
+                    self.database_connection.commit()
+
+                if 'lag' in dependency.keys():
+                    # update
+                    cursor.execute('UPDATE dependencies SET lag=%s WHERE name=%s;', [dependency['lag'], sos_model_name])
+
+                    # write to database
+                    self.database_connection.commit()
+
+        # need to update methods as does not all for multiple as different rows
+        # update sos_model_simulation_models if passed
+        if 'sector_models' in sos_model.keys():
+
+            # loop through the sector models
+            for sector_model in sos_model['sector_models']:
+
+                # check simulation model already in database
+                cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [sector_model])
+
+                # get returned data from query
+                sos_models = cursor.fetchall()
+
+                # if no names are returned
+                if len(sos_models) == 0:
+                    # return an error - simulation model does not exist
+                    return
+
+            # if all simulation models in database, attempt to update the sos model sim model relation
+
+            # get what is already in the database
+            cursor.execute('SELECT *  FROM sos_model_simulation_models WHERE sos_model_name=%s;', [sos_model_name])
+
+            # get result from query
+            sos_model_sim_models = cursor.fetchall()
+
+            for sector_model in sos_model['sector_models']:
+                # already checked if sim model in database
+                # start by seeing if in relation already - loop through existing data
+                for sim_model in sos_model_sim_models:
+                    if sim_model['simulation_model_name'] == sector_model:
+                        # return an error as already in relation so don't need to add again
+                        return
+
+                # if here, not in relation so add sim model to sos model sim model relation
+                # get max id count in relation
+                cursor.execute('SELECT max(sos_sim_model_id) FROM sos_model_simulation_models WHERE sos_model_name=%s;', [sos_model_name])
+
+                # get result of query
+                sos_sim_model_id = cursor.fetchone()
+
+                # write sim model to sos model sim models relation
+                cursor.execute('INSERT INTO sos_model_simulation_models (sos_model_name, simulation_model_name, sos_sim_model_id) VALUES (%s,%s,%s);', [sos_model_name, sector_model, sos_sim_model_id[0]])
+
+                # write update to database
+                self.database_connection.commit()
+
+        # need to update methods as does not allow multiple as different rows
+        # update sos_model_scenarios if passed
+        if 'scenario_sets' in sos_model.keys():
+
+            # loop through passed scenarios
+            for scenario in sos_model['scenario_sets']:
+                # check scenario already exists
+                cursor.execute('SELECT name FROM scenarios WHERE name=%s;', [scenario])
+
+                # get returned data from query
+                scenario_names = cursor.fetchall()
+
+                # if no names are returned
+                if len(scenario_names) == 0:
+                    # return an error - scenario does not exist
+                    return
+
+                # add data into database
+                cursor.execute('UPDATE sos_model_scenarios SET scenario_name=%s WHERE sos_model_name=%s;', [scenario, sos_model_name])
+
+            # write to database
+            self.database_connection.commit()
+
+        # update sos model description if passed
+        if 'description' in sos_model.keys():
+
+            # sql to update description
+            cursor.execute('UPDATE sos_models SET description=%s WHERE name=%s;', [sos_model['description'], sos_model_name])
+
+            # write to database
+            self.database_connection.commit()
+
+        return
 
     def delete_sos_model(self, sos_model_name):
-        raise NotImplementedError()
+        """Delete a systems of systems model
+
+        Argument
+        --------
+        sos_model_name: string
+            The name of the systems of systems model to delete
+
+        """
+
+        # establish a cursor to read the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # check sos model exists
+        cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [sos_model_name])
+
+        # get result of query
+        sos_models = cursor.fetchall()
+
+        # if none returned, exit with error
+        if len(sos_models) == 0:
+            # no model with the given name found
+            return
+
+        # delete from sos_model_simulation_models
+        cursor.execute('DELETE FROM sos_model_simulation_models WHERE sos_model_name = %s;', [sos_model_name])
+
+        # run query to delete from db
+        self.database_connection.commit()
+
+        # delete from sos_model_scenarios
+        cursor.execute('DELETE FROM sos_model_scenarios WHERE sos_model_name = %s;', [sos_model_name])
+
+        # run query to delete from db
+        self.database_connection.commit()
+
+        # delete from sos_model_dependencies
+        cursor.execute('DELETE FROM sos_model_dependencies WHERE sos_model_name = %s;', [sos_model_name])
+
+        # run query to delete from db
+        self.database_connection.commit()
+
+        # delete from model_run
+        cursor.execute('DELETE FROM model_runs WHERE sos_model = %s;', [sos_model_name])
+
+        # run query to delete from db
+        self.database_connection.commit()
+
+        # delete from sos_models
+        cursor.execute('DELETE FROM sos_models WHERE name = %s;', [sos_model_name])
+
+        # run query to delete from db
+        self.database_connection.commit()
+
+        return
     # endregion
 
     # region Models
@@ -131,6 +530,8 @@ class DbConfigStore(ConfigStore):
             # get port types for model - inputs, outputs, parameters
             # run sql call
             for port_type in self.port_types:
+
+                # get specification details by joining sim model port and specification relation using the specification id (unique to each specification)
                 cursor.execute('SELECT s.* FROM simulation_model_port smp JOIN specifications s ON smp.specification_id=s.id WHERE smp.model_name=%s AND port_type=%s;', [model_name, port_type])
 
                 # get returned data
@@ -184,7 +585,7 @@ class DbConfigStore(ConfigStore):
                     specification_id = cursor.fetchone()
 
                     # write to port
-                    # write model and specification to port table
+                    # write model and specification to port table, including the specification id
                     cursor.execute('INSERT INTO simulation_model_port (model_name, model_id, specification_name, specification_id, port_type) VALUES (%s, %s, %s, %s, %s);', [model['name'], simulation_model_id[0], spec['name'], specification_id[0], port_type])
 
                     # commit changes to database

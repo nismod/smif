@@ -1,4 +1,4 @@
-CREATE TABLE sos_model_dependency(
+CREATE TABLE sos_model_dependencies(
 	"id" serial PRIMARY KEY,
 	"sos_model_name" varchar,
 	"sos_model_id" integer,
