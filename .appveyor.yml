@@ -39,6 +39,6 @@ install:
   - python setup.py develop
 before_test:
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
-  - createdb test_smif
+  - createdb -w -e test_smif
 test_script:
   - python setup.py test
