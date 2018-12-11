@@ -42,19 +42,175 @@ class DbConfigStore(ConfigStore):
 
     # region Model runs
     def read_model_runs(self):
-        raise NotImplementedError()
+        """Read all model runs
+
+        Returns
+        -------
+        list
+            A list of dicts containing model runs
+        """
+        # establish a cursor for the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # query database to get model runs
+        cursor.execute('SELECT * FROM model_runs;')
+
+        # get result of query
+        model_runs = cursor.fetchall()
+
+        return model_runs
 
     def read_model_run(self, model_run_name):
-        raise NotImplementedError()
+        """Read a single model run
+
+        Returns
+        -------
+        dict
+            A dictionary containing a model run definition
+        """
+        # establish a cursor for the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # sql to get model run information
+        cursor.execute('SELECT * FROM model_runs WHERE name=%s;', [model_run_name])
+
+        # get result of query
+        model_run = cursor.fetchall()
+
+        # check only one model run has been returned
+        if len(model_run) > 1:
+            # more than one model run returned, a database data error has occurred
+            return
+        elif len(model_run) == 0:
+            # no model run exists with given name
+            return
+
+        return model_run[0]
 
     def write_model_run(self, model_run):
-        raise NotImplementedError()
+        """Read all systems of systems models
+
+        Argument
+        --------
+        model_run: dict
+            A dictionary containing a model run definition
+        """
+        # establish a cursor for the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # check model run name is unique
+        cursor.execute('SELECT id FROM model_runs WHERE name = %s;', [model_run['name']])
+
+        # get result of query
+        model_runs = cursor.fetchall()
+
+        # if one or more model runs are returned, return an error
+        if len(model_runs) > 0:
+            # model run with same name already exists
+            return
+
+        # check given sos model already exists
+        cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [model_run['sos_model']])
+
+        # get result of query
+        sos_models = cursor.fetchall()
+
+        # check that only one sos model exists with the name given, otherwise return an error
+        if len(sos_models) > 1:
+            # more than one sos model with the given name - a data error
+            return
+        elif len(sos_models) == 0:
+            # no sos model exists with the name given
+            return
+
+        # write model run to database
+        cursor.execute('INSERT INTO model_runs (name, sos_model, sos_model_id) VALUES (%s,%s,%s);', [model_run['name'], model_run['sos_model'], sos_models[0]['id']])
+
+        # write data to database
+        self.database_connection.commit()
+
+        return
 
     def update_model_run(self, model_run_name, model_run):
-        raise NotImplementedError()
+        """Update an existing model run definition
+
+        Argument
+        --------
+        model_run_name: string
+            The name of the model run to update
+        model_run: dict
+            A dictionary containing a model run definition with those arguments to be updated
+        """
+        # establish a cursor for the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # check given model run is in the database
+        cursor.execute('SELECT id FROM model_runs WHERE name=%s;', [model_run_name])
+
+        # get result of query
+        model_runs = cursor.fetchall()
+
+        # if anything but one model run returned, return an error
+        if len(model_runs) == 1:
+
+            # if the sos model key has been passed in the definition
+            if 'sos_model' in model_run.keys():
+
+                # check the passed model exists
+                cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [model_run['sos_model']])
+
+                # get result of query
+                sos_model_id = cursor.fetchall()
+
+                # if only one model run id returned, make change
+                if len(sos_model_id) == 1:
+                    # update table with new sos model
+                    cursor.execute('UPDATE model_runs SET sos_model=%s, sos_model_id=%s WHERE name=%s;', [model_run['sos_model'], sos_model_id[0]['id'],model_run_name])
+
+                    # commit update to database
+                    self.database_connection.commit()
+
+                else:
+                    # return as error as given sos model does not exist
+                    return
+
+        else:
+            # return an error to the user
+            return
+
+        return
 
     def delete_model_run(self, model_run_name):
-        raise NotImplementedError()
+        """Delete a model run
+
+        Argument
+        --------
+        model_run_name: string
+            The name of the model run
+        """
+        # establish a cursor for the database
+        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # check given model run is in database
+        cursor.execute('SELECT id FROM model_runs WHERE name=%s;', [model_run_name])
+
+        # get result of query
+        model_runs = cursor.fetchall()
+
+        # if only one model run returned, delete it
+        if len(model_runs) == 1:
+            # delete model run
+            cursor.execute('DELETE FROM model_runs WHERE name=%s;', [model_run_name])
+
+            # commit the delete action to the database
+            self.database_connection.commit()
+
+        else:
+            # return an error as no model run, or multiple, returned
+            return
+
+        return
+
     # endregion
 
     # region System-of-systems models
