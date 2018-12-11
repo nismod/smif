@@ -156,7 +156,9 @@ class DataHandle(object):
             return self.get_results(key)
         else:
             raise KeyError(
-                "'%s' not recognised as input or parameter for '%s'" % (key, self._model_name))
+                "'%s' not recognised as input, output or parameter for '%s'" %
+                (key, self._model_name)
+                )
 
     def __setitem__(self, key, value):
         if hasattr(value, 'as_ndarray'):
