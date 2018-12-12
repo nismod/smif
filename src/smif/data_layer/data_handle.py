@@ -113,11 +113,11 @@ class DataHandle(object):
             # Load the narrative
             narrative = [x for x in sos_model['narratives'] if x['name'] == narrative_name][0]
             self.logger.debug("Loaded narrative: %s", narrative)
+            self.logger.debug("Considering variants: %s", variant_names)
 
             # Read parameter data from each variant, later variants overriding
             # previous parameter values
             for variant_name in variant_names:
-
                 try:
                     parameter_list = narrative['provides'][self._model.name]
                 except KeyError:
@@ -128,7 +128,7 @@ class DataHandle(object):
                         sos_model['name'],
                         narrative_name, variant_name, parameter
                     )
-                    self._parameters[parameter] = da
+                    self._parameters[parameter].update(da)
 
     def derive_for(self, model):
         """Derive a new DataHandle configured for the given Model
