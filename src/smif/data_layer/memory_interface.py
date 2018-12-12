@@ -7,8 +7,7 @@ from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.data_layer.data_array import DataArray
-from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
-                            SmifDataNotFoundError)
+from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 
 
 class MemoryConfigStore(ConfigStore):
@@ -268,16 +267,20 @@ class MemoryDataStore(DataStore):
         self._write_data_array(key, data, timestep)
 
     def _read_data_array(self, key, spec, timestep=None):
-        try:
-            if timestep:
+        if timestep:
+            try:
                 return self._data_array[key, timestep]
-            else:
+            except KeyError:
+                raise SmifDataNotFoundError(
+                    "Data for {} not found for timestep {}".format(spec.name, timestep))
+        else:
+            try:
                 return self._data_array[key]
-        except KeyError:
-            raise SmifDataMismatchError
+            except KeyError:
+                raise SmifDataNotFoundError(
+                    "Data for {} not found".format(spec.name))
 
     def _write_data_array(self, key, data, timestep=None):
-
         if timestep:
             self._data_array[key, timestep] = data
         else:

@@ -81,6 +81,9 @@ class CSVDataStore(DataStore):
                 msg = "Missing 'timestep' key, found {} in {}"
                 raise SmifDataMismatchError(msg.format(list(dataframe.columns), path))
             dataframe = dataframe[dataframe.timestep == timestep]
+            if dataframe.empty:
+                raise SmifDataNotFoundError(
+                    "Data for {} not found for timestep {}".format(spec.name, timestep))
             dataframe.drop('timestep', axis=1, inplace=True)
 
         if spec.dims:
@@ -93,8 +96,6 @@ class CSVDataStore(DataStore):
                 msg = "Expected single value, found {} in {}"
                 raise SmifDataMismatchError(msg.format(list(data.shape), path))
             data_array = DataArray(spec, data[0])
-        print(dataframe)
-        print(data_array)
         return data_array
 
     def _write_data_array(self, path, data_array, timestep=None):

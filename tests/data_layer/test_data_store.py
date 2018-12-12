@@ -6,7 +6,7 @@ from smif.data_layer.data_array import DataArray
 from smif.data_layer.database_interface import DbDataStore
 from smif.data_layer.file.file_data_store import CSVDataStore
 from smif.data_layer.memory_interface import MemoryDataStore
-from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
+from smif.exception import SmifDataNotFoundError
 from smif.metadata import Spec
 
 
@@ -50,8 +50,10 @@ class TestDataArray():
         da = DataArray(spec, data)
 
         handler.write_scenario_variant_data('mortality.csv', da, 2010)
-        with raises(SmifDataMismatchError):
+        msg = "not found for timestep 2011"
+        with raises(SmifDataNotFoundError) as ex:
             handler.read_scenario_variant_data('mortality.csv', spec, 2011)
+        assert msg in str(ex)
 
     def test_string_data(self, handler):
         spec = Spec(
