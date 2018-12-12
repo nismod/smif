@@ -208,15 +208,26 @@ class DataArray():
     def validate_as_full(self):
         """Check that the data array contains no NaN values
         """
-        data_contains_nan = np.isnan(np.sum(self.data))
-        if data_contains_nan:
-            raise SmifDataMismatchError
+        if np.issubdtype(self.data.dtype, np.number):
+            if np.any(np.isnan(self.data)):
+                raise SmifDataMismatchError
+        else:
+            # create vectorised test for nan to use against np.array with dtype=object
+            def _is_nan(x):
+                return x is np.nan
+            _is_nan = np.frompyfunc(_is_nan, 1, 1)
+
+            if np.any(_is_nan(self.data).astype(bool)):
+                raise SmifDataMismatchError
 
 
 def _array_equal_nan(a, b):
     """Compare numpy arrays for equality, allowing NaN to be considerd equal to itself
     """
-    return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
+    if np.issubdtype(a.dtype, np.number) and np.issubdtype(b.dtype, np.number):
+        return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
+    else:
+        return np.all(a == b)
 
 
 def _reindex_xr_data_array(spec, xr_data_array):
