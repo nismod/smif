@@ -254,6 +254,5 @@ def _reindex_xr_data_array(spec, xr_data_array):
     # reindex to ensure data order
     coords = {c.name: c.ids for c in spec.coords}
     xr_data_array = xr_data_array.reindex(indexers=coords)
-    print(xr_data_array)
 
     return xr_data_array
