@@ -16,6 +16,7 @@ SmifDataReadError
 """
 from copy import deepcopy
 from logging import getLogger
+from operator import itemgetter
 
 from smif.data_layer.file import CSVDataStore
 from smif.exception import SmifDataNotFoundError
@@ -51,7 +52,7 @@ class Store():
         -------
         list[~smif.controller.modelrun.ModelRun]
         """
-        return self.config_store.read_model_runs()
+        return sorted(self.config_store.read_model_runs(), key=itemgetter('name'))
 
     def read_model_run(self, model_run_name):
         """Read a system-of-system model run
@@ -103,7 +104,7 @@ class Store():
         -------
         list[~smif.model.sos_model.SosModel]
         """
-        return self.config_store.read_sos_models()
+        return sorted(self.config_store.read_sos_models(), key=itemgetter('name'))
 
     def read_sos_model(self, sos_model_name):
         """Read a specific system-of-system model
@@ -155,7 +156,7 @@ class Store():
         -------
         list[~smif.model.model.Model]
         """
-        models = self.config_store.read_models()
+        models = sorted(self.config_store.read_models(), key=itemgetter('name'))
         if not skip_coords:
             models = [
                 self._add_coords(model, ('inputs', 'outputs', 'parameters'))
@@ -216,7 +217,7 @@ class Store():
         -------
         list[~smif.model.ScenarioModel]
         """
-        scenarios = self.config_store.read_scenarios()
+        scenarios = sorted(self.config_store.read_scenarios(), key=itemgetter('name'))
         if not skip_coords:
             scenarios = [
                 self._add_coords(scenario, ['provides'])
@@ -281,7 +282,8 @@ class Store():
         -------
         list[dict]
         """
-        return self.config_store.read_scenario_variants(scenario_name)
+        scenario_variants = self.config_store.read_scenario_variants(scenario_name)
+        return sorted(scenario_variants, key=itemgetter('name'))
 
     def read_scenario_variant(self, scenario_name, variant_name):
         """Read a scenario variant
