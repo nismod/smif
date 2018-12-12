@@ -530,26 +530,22 @@ class Store():
         ~smif.data_layer.data_array.DataArray
         """
         sos_model = self.read_sos_model(sos_model_name)
-        sector_models = [
-            self.read_model(sector_model) for sector_model in sos_model['sector_models']]
-
-        narrative = [narrative for narrative in sos_model['narratives']
-                     if narrative['name'] == narrative_name][0]
-        variant = [variant for variant in narrative['variants']
-                   if variant['name'] == variant_name][0]
+        narrative = _pick_from_list(sos_model['narratives'], narrative_name)
+        variant = _pick_from_list(narrative['variants'], variant_name)
         key = self._key_from_data(variant['data'][parameter_name], narrative_name,
                                   variant_name, parameter_name)
 
-        parameters = []
-        for sector_model in sector_models:
-            parameters.extend(sector_model['parameters'])
-
-        spec_dict = _pick_from_list(parameters, parameter_name)
+        spec_dict = None
+        # find sector model which needs this parameter, to get spec definition
+        for model_name, params in narrative['provides'].items():
+            if parameter_name in params:
+                sector_model = self.read_model(model_name)
+                spec_dict = _pick_from_list(sector_model['parameters'], parameter_name)
+                break
+        # find spec
         if spec_dict is None:
             raise SmifDataNotFoundError("Parameter {} not found in any of {}".format(
-                parameter_name,
-                sos_model['sector_models']
-            ))
+                parameter_name, sos_model['sector_models']))
         spec = Spec.from_dict(spec_dict)
 
         return self.data_store.read_narrative_variant_data(key, spec, timestep)
