@@ -53,6 +53,20 @@ class TestDataArray():
         with raises(SmifDataMismatchError):
             handler.read_scenario_variant_data('mortality.csv', spec, 2011)
 
+    def test_string_data(self, handler):
+        spec = Spec(
+            name='string_data',
+            dims=['zones'],
+            coords={'zones': ['a', 'b', 'c']},
+            dtype='object'
+        )
+        data = np.array(['alpha', 'beta', 'γάμμα'], dtype='object')
+        expected = DataArray(spec, data)
+
+        handler.write_scenario_variant_data('key', expected, 2010)
+        actual = handler.read_scenario_variant_data('key', spec, 2010)
+        assert actual == expected
+
 
 class TestInitialConditions():
     """Read and write initial conditions
