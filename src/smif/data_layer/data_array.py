@@ -201,9 +201,9 @@ class DataArray():
         self_xr = self.as_xarray()
         other_xr = other.as_xarray()
         # use xarray.combine_first convenience function
-        self_xr.combine_first(other_xr)
+        overridden = other_xr.combine_first(self_xr)
         # assign result back to self
-        self.data = self_xr.data
+        self.data = overridden.data
 
     def validate_as_full(self):
         """Check that the data array contains no NaN values
