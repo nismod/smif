@@ -582,11 +582,14 @@ class Store():
         -------
         ~smif.data_layer.data_array.DataArray
         """
-        model = self.read_model(model_name)
+        model = self.read_model(model_name, skip_coords=True)
         param = _pick_from_list(model['parameters'], parameter_name)
         spec = Spec.from_dict(param)
         try:
             path = param['default']
+        except TypeError:
+            raise SmifDataNotFoundError("Parameter {} not found in model {}".format(
+                parameter_name, model_name))
         except KeyError:
             path = 'default__{}__{}.csv'.format(model_name, parameter_name)
         key = self._key_from_data(path, model_name, parameter_name)
@@ -601,10 +604,13 @@ class Store():
         parameter_name : str
         data : ~smif.data_layer.data_array.DataArray
         """
-        model = self.read_model(model_name)
+        model = self.read_model(model_name, skip_coords=True)
         param = _pick_from_list(model['parameters'], parameter_name)
         try:
             path = param['default']
+        except TypeError:
+            raise SmifDataNotFoundError("Parameter {} not found in model {}".format(
+                parameter_name, model_name))
         except KeyError:
             path = 'default__{}__{}.csv'.format(model_name, parameter_name)
         key = self._key_from_data(path, model_name, parameter_name)
