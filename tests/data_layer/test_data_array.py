@@ -4,7 +4,7 @@ import numpy
 import pandas as pd
 import xarray as xr
 from numpy.testing import assert_array_equal
-from pytest import fixture
+from pytest import fixture, raises
 from smif.data_layer.data_array import DataArray
 from smif.metadata import Spec
 
@@ -155,3 +155,120 @@ class TestDataArray():
         actual = small_da.coords
         expected = spec.coords
         assert actual == expected
+
+
+class TestDataFrameInterop():
+    def test_to_from_df(self):
+        df = pd.DataFrame([
+            {
+                'test': 3,
+                'region': 'oxford',
+                'interval': 1
+            }
+        ]).set_index(['region', 'interval'])
+
+        spec = Spec(
+            name='test',
+            dims=['region', 'interval'],
+            coords={'region': ['oxford'], 'interval': [1]},
+            dtype='int64'
+        )
+
+        da = DataArray(spec, numpy.array([[3.]], dtype='int64'))
+        da_from_df = DataArray.from_df(spec, df)
+        assert da_from_df == da
+
+        da_to_df = da.as_df()
+        pd.testing.assert_frame_equal(da_to_df, df)
+
+    def test_multi_dim_order(self):
+        spec = Spec(
+            name='test',
+            coords={'lad': ['c', 'a', 'b'], 'interval': [4, 2]},
+            dims=['lad', 'interval'],
+            dtype='float'
+        )
+        data = numpy.array([
+            # 4 2
+            [1, 2],  # c
+            [5, 6],  # a
+            [9, 0]  # b
+        ], dtype='float')
+        da = DataArray(spec, data)
+
+        df = pd.DataFrame([
+            {'test': 6.0, 'lad': 'a', 'interval': 2},
+            {'test': 0.0, 'lad': 'b', 'interval': 2},
+            {'test': 2.0, 'lad': 'c', 'interval': 2},
+            {'test': 5.0, 'lad': 'a', 'interval': 4},
+            {'test': 9.0, 'lad': 'b', 'interval': 4},
+            {'test': 1.0, 'lad': 'c', 'interval': 4},
+        ]).set_index(['lad', 'interval'])
+        da_from_df = DataArray.from_df(spec, df)
+        assert da_from_df == da
+
+        da_to_df = da.as_df().sort_index()
+        df = df.sort_index()
+        pd.testing.assert_frame_equal(da_to_df, df)
+
+    def test_match_metadata(self):
+        spec = Spec(
+            name='test',
+            dims=['region'],
+            coords={'region': ['oxford']},
+            dtype='int64'
+        )
+
+        # must have a column named the same as the spec.name
+        df = pd.DataFrame([
+            {'region': 'oxford', 'other': 'else'}
+        ]).set_index(['region'])
+        msg = "missing variable key (test)"
+        with raises(KeyError) as ex:
+            DataArray.from_df(spec, df)
+        assert msg in str(ex)
+
+        # must have an index level for each spec dimension
+        df = pd.DataFrame([
+            {'test': 3.14}
+        ])
+        msg = "missing dimension keys ['region']"
+        with raises(KeyError) as ex:
+            DataArray.from_df(spec, df)
+        assert msg in str(ex)
+
+        # must have dimension labels that exist in the spec dimension
+        df = pd.DataFrame([
+            {'test': 3.14, 'region': 'missing'}
+        ]).set_index(['region'])
+        msg = "Unknown region values ['missing']"
+        with raises(ValueError) as ex:
+            DataArray.from_df(spec, df)
+        assert msg in str(ex)
+
+        # must not have dimension labels outside of the spec dimension
+        df = pd.DataFrame([
+            {'test': 3.14, 'region': 'oxford'},
+            {'test': 3.14, 'region': 'extra'}
+        ]).set_index(['region'])
+        msg = "Unknown region values ['extra']"
+        with raises(ValueError) as ex:
+            DataArray.from_df(spec, df)
+        assert msg in str(ex)
+
+    def test_scalar(self):
+        # should handle zero-dimensional case (numpy array as scalar)
+        data = numpy.array(2.0)
+        spec = Spec(
+            name='test',
+            dims=[],
+            coords={},
+            dtype='float'
+        )
+        da = DataArray(spec, data)
+        df = pd.DataFrame([{'test': 2.0}])
+        da_from_df = DataArray.from_df(spec, df)
+        assert da_from_df == da
+
+        df_from_da = da.as_df()
+        pd.testing.assert_frame_equal(df_from_da, df)
