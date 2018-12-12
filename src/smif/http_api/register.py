@@ -10,6 +10,8 @@ def register_routes(app):
     """Register plain routing
     """
     @app.route('/')
+    @app.route('/jobs/')
+    @app.route('/jobs/<path:path>')
     @app.route('/configure')
     @app.route('/configure/<path:path>')
     def home(path=None):
