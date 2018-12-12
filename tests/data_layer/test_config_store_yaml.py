@@ -1,7 +1,7 @@
 """Test YAML config store
 """
 from pytest import fixture, raises
-from smif.data_layer.datafile_interface import YamlConfigStore
+from smif.data_layer.file.file_config_store import YamlConfigStore
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError)
 

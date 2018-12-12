@@ -7,7 +7,7 @@ from copy import copy
 import smif.data_layer.database.setup_database
 from pytest import fixture, mark, param, raises
 from smif.data_layer.database_interface import DbConfigStore
-from smif.data_layer.datafile_interface import YamlConfigStore
+from smif.data_layer.file.file_config_store import YamlConfigStore
 from smif.data_layer.memory_interface import MemoryConfigStore
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 

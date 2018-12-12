@@ -2,7 +2,7 @@
 """
 from pytest import fixture, mark, param
 from smif.data_layer.database_interface import DbMetadataStore
-from smif.data_layer.datafile_interface import FileMetadataStore
+from smif.data_layer.file.file_metadata_store import FileMetadataStore
 from smif.data_layer.memory_interface import MemoryMetadataStore
 
 

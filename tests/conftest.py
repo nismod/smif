@@ -13,7 +13,7 @@ import numpy as np
 from pytest import fixture
 from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.datafile_interface import dump_yaml as dump
+from smif.data_layer.file.file_config_store import _write_yaml_file as dump
 from smif.data_layer.memory_interface import (MemoryConfigStore,
                                               MemoryDataStore,
                                               MemoryMetadataStore)
@@ -102,16 +102,14 @@ def setup_folder_structure(setup_empty_folder_structure, oxford_region, remap_mo
   interval: [[PT0H, PT1H]]
 """)
 
-    initial_conditions_file = test_folder.join('data', 'initial_conditions', 'init_system.yml')
-    dump(initial_system, str(initial_conditions_file))
+    initial_conditions_dir = str(test_folder.join('data', 'initial_conditions'))
+    dump(initial_conditions_dir, 'init_system', initial_system)
 
-    planned_interventions_file = test_folder.join(
-        'data', 'interventions', 'planned_interventions.yml')
-    dump(planned_interventions, str(planned_interventions_file))
+    interventions_dir = str(test_folder.join('data', 'interventions'))
+    dump(interventions_dir, 'planned_interventions', planned_interventions)
 
-    remap_months_file = test_folder.join('data', 'dimensions', 'remap.yml')
-    data = remap_months
-    dump(data, str(remap_months_file))
+    dimensions_dir = str(test_folder.join('data', 'dimensions'))
+    dump(dimensions_dir, 'remap', remap_months)
 
     units_file = test_folder.join('data', 'user_units.txt')
     with units_file.open(mode='w') as units_fh:
@@ -237,7 +235,7 @@ def oxford_region():
 
 @fixture
 def initial_conditions():
-    return [{'name': 'solar_installation', 'build_year': '2017'}]
+    return [{'name': 'solar_installation', 'build_year': 2017}]
 
 
 @fixture
@@ -245,13 +243,13 @@ def interventions():
     return {
         'solar_installation': {
             'name': 'solar_installation',
-            'capacity': '5',
-            'capactiy_units': 'MW'
+            'capacity': 5,
+            'capacity_units': 'MW'
         },
         'wind_installation': {
             'name': 'wind_installation',
-            'capacity': '4',
-            'capactiy_units': 'MW'
+            'capacity': 4,
+            'capacity_units': 'MW'
         }
     }
 
@@ -758,7 +756,7 @@ def get_dimension():
             [
                 {
                     "end": "PT8760H",
-                    "id": "1",
+                    "id": 1,
                     "start": "PT0H"
                 }
             ]
@@ -780,7 +778,7 @@ def hourly():
 def annual():
     return [
         {
-            'name': '1',
+            'name': 1,
             'interval': [['PT0H', 'PT8760H']]
         }
     ]

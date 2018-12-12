@@ -5,9 +5,9 @@ import os
 from tempfile import TemporaryDirectory
 
 import numpy as np
-from pytest import fixture, raises
+from pytest import fixture, mark, raises
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.datafile_interface import CSVDataStore
+from smif.data_layer.file.file_data_store import CSVDataStore
 from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
 from smif.metadata import Spec
 
@@ -154,7 +154,6 @@ def scenario_spec():
 
 
 class TestReadState:
-
     def test_read_state(self, config_handler):
         handler = config_handler
 
@@ -169,57 +168,6 @@ class TestReadState:
 
         actual = handler.read_state(modelrun_name, timestep, decision_iteration)
         expected = [{'build_year': 2010, 'name': 'power_station'}]
-        assert actual == expected
-
-    def test_get_state_filename_all(self, config_handler):
-
-        handler = config_handler
-
-        modelrun_name = 'a modelrun'
-        timestep = 2010
-        decision_iteration = 0
-
-        actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
-
-        expected = os.path.join(
-            handler.results_folder, modelrun_name, 'state_2010_decision_0.csv')
-
-        assert actual == expected
-
-    def test_get_state_filename_none_iteration(self, config_handler):
-        handler = config_handler
-        modelrun_name = 'a modelrun'
-        timestep = 2010
-        decision_iteration = None
-
-        actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
-        expected = os.path.join(handler.results_folder, modelrun_name, 'state_2010.csv')
-
-        assert actual == expected
-
-    def test_get_state_filename_both_none(self, config_handler):
-        handler = config_handler
-        modelrun_name = 'a modelrun'
-        timestep = None
-        decision_iteration = None
-
-        actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
-        expected = os.path.join(
-            handler.results_folder, modelrun_name, 'state_0000.csv')
-
-        assert actual == expected
-
-    def test_get_state_filename_timestep_none(self, config_handler):
-        handler = config_handler
-
-        modelrun_name = 'a modelrun'
-        timestep = None
-        decision_iteration = 0
-
-        actual = handler._get_state_filename(modelrun_name, timestep, decision_iteration)
-        expected = os.path.join(
-            handler.results_folder, modelrun_name, 'state_0000_decision_0.csv')
-
         assert actual == expected
 
 
@@ -269,10 +217,9 @@ class TestScenarios:
             dict_writer.writerows(scenario_data)
 
         expected_data = np.array([[100, 150, 200, 210]], dtype=float)
-        actual = config_handler.read_scenario_variant_data('population_high.csv', spec, 2015)
-
         expected = DataArray(spec, expected_data)
 
+        actual = config_handler.read_scenario_variant_data('population_high.csv', spec, 2015)
         assert actual == expected
 
 
@@ -313,12 +260,16 @@ class TestNarrativeVariantData:
 
     def test_default_data_mismatch(self, config_handler, get_sector_model_parameter_defaults):
         parameter_name = 'smart_meter_savings'
-        data = get_sector_model_parameter_defaults[parameter_name]
-        data.data = np.array([1, 2, 3])
-        config_handler.write_model_parameter_default('default.csv', data)
+        spec = get_sector_model_parameter_defaults[parameter_name].spec
+        path = os.path.join(config_handler.data_folders['parameters'], 'default.csv')
+        with open(path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=[parameter_name])
+            writer.writeheader()
+            for i in range(4):
+                writer.writerow({parameter_name: i})
 
         with raises(SmifDataMismatchError):
-            config_handler.read_model_parameter_default('default.csv', data.spec)
+            config_handler.read_model_parameter_default('default.csv', spec)
 
 
 class TestResults:
@@ -347,7 +298,7 @@ class TestResults:
             dims=['region', 'interval'],
             coords={
                 'region': ['oxford'],
-                'interval': ['1']
+                'interval': [1]
             }
         )
 
@@ -375,6 +326,7 @@ class TestResults:
         assert actual == expected
 
 
+@mark.skip(reason="Move to test available_results implementation")
 class TestWarmStart:
     """If re-running a ModelRun with warm-start specified explicitly, results should be checked
     for existence and left in place.

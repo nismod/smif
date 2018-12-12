@@ -15,7 +15,7 @@ except ImportError:
 
 
 INSTALL_WARNING = """\
-Please install pandas and/or xarray to access smif.DataArray
+Please install pandas and xarray to access smif.DataArray
 data as pandas.DataFrame or xarray.DataArray. Try running:
     pip install smif[data]
 or:
@@ -34,8 +34,6 @@ class DataArray():
     """
     def __init__(self, spec: Spec, data: np.ndarray):
         self.logger = getLogger(__name__)
-        self.spec = spec
-        self.data = data
 
         if not hasattr(data, 'shape'):
             self.logger.debug("Data is not an numpy.ndarray")
@@ -45,13 +43,21 @@ class DataArray():
             self.logger.error("spec argument is not a Spec")
             raise TypeError("spec argument is not a Spec")
 
-        if not data.shape == self.spec.shape:
-            msg = "Data shape {} does not match spec {}"
-            raise SmifDataMismatchError(msg.format(data.shape, spec.shape))
+        if not data.shape == spec.shape:
+            # special case for scalar - allow a single-value 1D array, here coerced to single
+            # value 0D array. Then simpler to create from DataFrame or xarray.DataArray
+            if data.shape == (1,) and spec.shape == ():
+                data = np.array(data[0])
+            else:
+                msg = "Data shape {} does not match spec {}"
+                raise SmifDataMismatchError(msg.format(data.shape, spec.shape))
+
+        self.spec = spec
+        self.data = data
 
     def __eq__(self, other):
         return self.spec == other.spec and \
-            np.array_equal(self.data, other.data)
+            _array_equal_nan(self.data, other.data)
 
     def __repr__(self):
         return "<DataArray('{}', '{}')>".format(self.spec, self.data)
@@ -127,10 +133,36 @@ class DataArray():
         coords = [c.ids for c in self.coords]
 
         try:
-            index = pandas.MultiIndex.from_product(coords, names=dims)
-            return pandas.Series(np.reshape(self.data, self.data.size), index=index)
+            if dims and coords:
+                index = pandas.MultiIndex.from_product(coords, names=dims)
+                return pandas.DataFrame(
+                    {self.name: np.reshape(self.data, self.data.size)}, index=index)
+            else:
+                # with no dims or coords, should be in the zero-dimensional case
+                if self.data.shape != ():
+                    msg = "Expected zero-dimensional data, got %s" % self.data.shape
+                    raise SmifDataMismatchError(msg)
+                return pandas.DataFrame([{self.name: self.data[()]}])
         except NameError as ex:
             raise SmifDataError(INSTALL_WARNING) from ex
+
+    @classmethod
+    def from_df(cls, spec, dataframe):
+        """Create a DataArray from a :class:`pandas.DataFrame`
+        """
+        xr_dataset = dataframe.to_xarray()  # convert to dataset
+
+        try:
+            xr_data_array = xr_dataset[spec.name]  # extract xr.DataArray
+        except KeyError:
+            # must have a column for the data variable (spec.name)
+            raise KeyError(
+                "Data missing variable key ({}), got {}".format(
+                    spec.name, dataframe.columns))
+
+        # reindex to ensure data order and fill out NaNs
+        xr_data_array = _reindex_xr_data_array(spec, xr_data_array)
+        return cls(spec, xr_data_array.data)
 
     def as_xarray(self):
         """Access DataArray as a :class:`xarray.DataArray`
@@ -152,3 +184,65 @@ class DataArray():
             )
         except NameError as ex:
             raise SmifDataError(INSTALL_WARNING) from ex
+
+    @classmethod
+    def from_xarray(cls, spec, xr_data_array):
+        """Create a DataArray from a :class:`xarray.DataArray`
+        """
+        # reindex to ensure data order and fill out NaNs
+        xr_data_array = _reindex_xr_data_array(spec, xr_data_array)
+        return cls(spec, xr_data_array.data)
+
+    def update(self, other):
+        """Update data values with any from other which are non-null
+        """
+        assert self.spec == other.spec, "Specs must match when updating DataArray"
+        # convert self and other to xarray representation
+        self_xr = self.as_xarray()
+        other_xr = other.as_xarray()
+        # use xarray.combine_first convenience function
+        self_xr.combine_first(other_xr)
+        # assign result back to self
+        self.data = self_xr.data
+
+    def validate_as_full(self):
+        """Check that the data array contains no NaN values
+        """
+        data_contains_nan = np.isnan(np.sum(self.data))
+        if data_contains_nan:
+            raise SmifDataMismatchError
+
+
+def _array_equal_nan(a, b):
+    """Compare numpy arrays for equality, allowing NaN to be considerd equal to itself
+    """
+    return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
+
+
+def _reindex_xr_data_array(spec, xr_data_array):
+    """Reindex, raise clear errors, error if extra dimension names
+    """
+    # must have an index level for each dimension
+    missing_dims = [d for d in spec.dims if d not in xr_data_array.dims]
+    if missing_dims:
+        raise KeyError(
+            "Data missing dimension keys {}, got {}".format(
+                missing_dims, xr_data_array.dims))
+
+    for dim in spec.dims:
+        # all index values must exist in dimension
+        index_values = xr_data_array.coords[dim].values
+        # cast list to np.array then do set operation - alternative to python set() ops
+        dim_names = np.array(spec.dim_names(dim))
+        in_index_but_not_dim_names = np.setdiff1d(index_values, dim_names)
+        if in_index_but_not_dim_names.size > 0:
+            raise ValueError(
+                "Unknown {} values {} in {}".format(
+                    dim, in_index_but_not_dim_names, spec.name))
+
+    # reindex to ensure data order
+    coords = {c.name: c.ids for c in spec.coords}
+    xr_data_array = xr_data_array.reindex(indexers=coords)
+    print(xr_data_array)
+
+    return xr_data_array
