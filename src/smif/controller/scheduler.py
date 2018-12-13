@@ -55,6 +55,8 @@ class ModelRunScheduler(object):
         touches the filesystem or other shared resources.
         """
         if self._status[model_run_name] is not 'running':
+            self._output[model_run_name] = ''
+            self._status[model_run_name] = 'queing'
 
             smif_call = (
                 'smif ' +
@@ -80,11 +82,11 @@ class ModelRunScheduler(object):
                 'space': " \x1b"
             }
             format_str = """\
-{colour}Modelrun{reset} {model_run_name}
-{colour}Time{reset}     {datetime}
-{colour}PID{reset}      {pid}
-{colour}Command{reset}  {smif_call}
-"""
+                {colour}Modelrun{reset} {model_run_name}
+                {colour}Time{reset}     {datetime}
+                {colour}PID{reset}      {pid}
+                {colour}Command{reset}  {smif_call}
+                """
             format_str.replace(" ", "{space}")
             output = format_str.format(**format_args)
             output += "-" * 100 + "\n"

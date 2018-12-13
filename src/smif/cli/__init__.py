@@ -73,8 +73,6 @@ except ImportError:
 import logging
 import logging.config
 import os
-import socket
-import errno
 import pkg_resources
 
 try:
@@ -149,19 +147,7 @@ def _run_server(args):
         data_interface=_get_store(args),
         scheduler=ModelRunScheduler()
     )
-
     port = 5000
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while True:
-        try:
-            s.bind(("0.0.0.0", port))
-            break
-        except socket.error as e:
-            if e.errno == errno.EADDRINUSE:
-                port += 1
-            else:
-                raise Exception('Smif app server error')
-    s.close()
 
     print("    Opening smif app\n")
     print("    Copy/paste this URL into your web browser to connect:")
