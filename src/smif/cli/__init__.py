@@ -92,7 +92,8 @@ import smif.cli.log
 from smif.controller import copy_project_folder, execute_model_run, ModelRunScheduler
 from smif.http_api import create_app
 from smif.data_layer import Store
-from smif.data_layer.file import (YamlConfigStore, CSVDataStore, FileMetadataStore)
+from smif.data_layer.file import (CSVDataStore, FileMetadataStore, ParquetDataStore,
+                                  YamlConfigStore)
 
 
 __author__ = "Will Usher, Tom Russell"
@@ -133,12 +134,23 @@ def run_model_runs(args):
 def _get_store(args):
     """Contruct store as configured by arguments
     """
-    return Store(
-        config_store=YamlConfigStore(args.directory),
-        metadata_store=FileMetadataStore(args.directory),
-        data_store=CSVDataStore(args.directory),
-        model_base_folder=args.directory
-    )
+    if args.interface == 'local_csv':
+        store = Store(
+            config_store=YamlConfigStore(args.directory),
+            metadata_store=FileMetadataStore(args.directory),
+            data_store=CSVDataStore(args.directory),
+            model_base_folder=args.directory
+        )
+    elif args.interface == 'local_binary':
+        store = Store(
+            config_store=YamlConfigStore(args.directory),
+            metadata_store=FileMetadataStore(args.directory),
+            data_store=ParquetDataStore(args.directory),
+            model_base_folder=args.directory
+        )
+    else:
+        raise ValueError("Store interface type {} not recognised.".format(args.interface))
+    return store
 
 
 def _run_server(args):
