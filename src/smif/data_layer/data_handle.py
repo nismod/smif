@@ -106,19 +106,18 @@ class DataHandle(object):
         # Populate the parameters with their default values
         for parameter in self._model.parameters.values():
             self._parameters[parameter.name] = \
-                self._store.read_sector_model_parameter_default(self._model.name,
-                                                                parameter.name)
+                self._store.read_model_parameter_default(self._model.name, parameter.name)
 
         # Load in the concrete narrative and selected variants from the model run
         for narrative_name, variant_names in concrete_narratives.items():
             # Load the narrative
             narrative = [x for x in sos_model['narratives'] if x['name'] == narrative_name][0]
             self.logger.debug("Loaded narrative: %s", narrative)
+            self.logger.debug("Considering variants: %s", variant_names)
 
             # Read parameter data from each variant, later variants overriding
             # previous parameter values
             for variant_name in variant_names:
-
                 try:
                     parameter_list = narrative['provides'][self._model.name]
                 except KeyError:
@@ -129,7 +128,7 @@ class DataHandle(object):
                         sos_model['name'],
                         narrative_name, variant_name, parameter
                     )
-                    self._parameters[parameter] = da
+                    self._parameters[parameter].update(da)
 
     def derive_for(self, model):
         """Derive a new DataHandle configured for the given Model
@@ -157,7 +156,9 @@ class DataHandle(object):
             return self.get_results(key)
         else:
             raise KeyError(
-                "'%s' not recognised as input or parameter for '%s'" % (key, self._model_name))
+                "'%s' not recognised as input, output or parameter for '%s'" %
+                (key, self._model_name)
+                )
 
     def __setitem__(self, key, value):
         if hasattr(value, 'as_ndarray'):

@@ -37,10 +37,7 @@ class TestRegionAdaptor:
             dtype='float',
             dims=['half_squares'],
             coords={
-                'half_squares': [
-                    {'name': f['properties']['name'], 'feature': f}
-                    for f in regions_half_squares
-                ]
+                'half_squares': regions_half_squares
             }
         )
         adaptor.add_input(from_spec)
@@ -49,10 +46,7 @@ class TestRegionAdaptor:
             dtype='float',
             dims=['rect'],
             coords={
-                'rect': [
-                    {'name': f['properties']['name'], 'feature': f}
-                    for f in regions_rect
-                ]
+                'rect': regions_rect
             }
         )
         adaptor.add_output(to_spec)
@@ -80,10 +74,7 @@ class TestRegionAdaptor:
             dtype='float',
             dims=['rect', 'months'],
             coords={
-                'rect': [
-                    {'name': f['properties']['name'], 'feature': f}
-                    for f in regions_rect
-                ],
+                'rect': regions_rect,
                 'months': list(range(12))
             }
         )
@@ -93,10 +84,7 @@ class TestRegionAdaptor:
             dtype='float',
             dims=['half_squares', 'months'],
             coords={
-                'half_squares': [
-                    {'name': f['properties']['name'], 'feature': f}
-                    for f in regions_half_squares
-                ],
+                'half_squares': regions_half_squares,
                 'months': list(range(12))
             }
         )
@@ -217,19 +205,25 @@ class TestRegionSet():
         with raises(AssertionError) as ex:
             RegionSet('test', [
                 {
-                    'type': 'Feature',
-                    'properties': {'name': 'a'},
-                    'geometry': {
-                        'type': 'Polygon',
-                        'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+                    'name': 'a',
+                    'feature': {
+                        'type': 'Feature',
+                        'properties': {'name': 'a'},
+                        'geometry': {
+                            'type': 'Polygon',
+                            'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+                        }
                     }
                 },
                 {
-                    'type': 'Feature',
-                    'properties': {'name': 'a'},
-                    'geometry': {
-                        'type': 'Polygon',
-                        'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
+                    'name': 'a',
+                    'feature': {
+                        'type': 'Feature',
+                        'properties': {'name': 'a'},
+                        'geometry': {
+                            'type': 'Polygon',
+                            'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
+                        }
                     }
                 }
             ])

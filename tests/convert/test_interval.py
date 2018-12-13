@@ -4,9 +4,10 @@ from unittest.mock import Mock
 
 import numpy as np
 from numpy.testing import assert_equal
-from pytest import mark, raises
+from pytest import raises
 from smif.convert.interval import Interval, IntervalAdaptor, IntervalSet
 from smif.convert.register import NDimensionalRegister
+from smif.exception import SmifDataNotFoundError
 from smif.metadata import Spec
 
 
@@ -232,39 +233,11 @@ class TestTimeRegisterConversion:
         np.testing.assert_allclose(actual, expected, rtol=1e-05, atol=1e-08)
 
 
-@mark.xfail()
 class TestConvertor:
     """Integration tests of convertor - these should be updated to test IntervalAdaptor.
     """
-    def test_one_region_pass_through_time(self, convertor):
-        """Only one region, 12 months, neither space nor time conversion is required
-        """
-        data = np.array([[
-            31,
-            28,
-            31,
-            30,
-            31,
-            30,
-            31,
-            31,
-            30,
-            31,
-            30,
-            31
-        ]], dtype=float)
-        actual = convertor.convert(
-            data,
-            'half_squares',
-            'half_squares',
-            'months',
-            'months',
-            's',
-            's'
-        )
-        assert np.allclose(actual, data)
 
-    def test_one_region_time_aggregation(self, convertor):
+    def test_one_region_time_aggregation(self, months, seasons, regions_rect):
         """Only one region, time aggregation is required
         """
         data = np.array([[
@@ -289,18 +262,38 @@ class TestConvertor:
             30 + 31 + 30
         ]], dtype=float)  # area a, seasons 1-4
 
-        actual = convertor.convert(
-            data,
-            'half_squares',
-            'half_squares',
-            'months',
-            'seasons',
-            's',
-            's'
+        adaptor = IntervalAdaptor('test-month-seasons')
+        from_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['rect', 'months'],
+            coords={
+                'months':  months,
+                'rect': regions_rect
+            }
         )
+        adaptor.add_input(from_spec)
+        to_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['rect', 'seasons'],
+            coords={
+                'seasons':  seasons,
+                'rect': regions_rect
+            }
+        )
+        adaptor.add_output(to_spec)
+
+        data_handle = Mock()
+        data_handle.get_data = Mock(return_value=data)
+        data_handle.read_coefficients = Mock(side_effect=SmifDataNotFoundError)
+
+        adaptor.simulate(data_handle)
+        actual = data_handle.set_results.call_args[0][1]
+
         assert np.allclose(actual, expected)
 
-    def test_two_region_time_aggregation(self, convertor):
+    def test_two_region_time_aggregation(self, months, seasons, regions_half_squares):
         """Two regions, time aggregation by region is required
         """
         data = np.array([
@@ -336,16 +329,6 @@ class TestConvertor:
             ]
         ], dtype=float)
 
-        actual = convertor.convert(
-            data,
-            'half_squares',
-            'half_squares',
-            'months',
-            'seasons',
-            'm',
-            'm'
-        )
-
         expected = np.array([
             [
                 31 + 31 + 28,
@@ -361,67 +344,124 @@ class TestConvertor:
             ]
         ], dtype=float)
 
+        adaptor = IntervalAdaptor('test-month-seasons-two-regions')
+        from_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['half_squares', 'months'],
+            coords={
+                'months':  months,
+                'half_squares': regions_half_squares
+            }
+        )
+        adaptor.add_input(from_spec)
+        to_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['half_squares', 'seasons'],
+            coords={
+                'seasons':  seasons,
+                'half_squares': regions_half_squares
+            }
+        )
+        adaptor.add_output(to_spec)
+
+        data_handle = Mock()
+        data_handle.get_data = Mock(return_value=data)
+        data_handle.read_coefficients = Mock(side_effect=SmifDataNotFoundError)
+
+        adaptor.simulate(data_handle)
+        actual = data_handle.set_results.call_args[0][1]
+
         assert np.allclose(actual, expected)
 
-    def test_one_region_convert_from_hour_to_day(self, convertor):
+    def test_one_region_convert_from_hour_to_day(self, regions_rect, twenty_four_hours,
+                                                 one_day):
         """One region, time aggregation required
         """
         data = np.ones((1, 24))  # area a, hours 0-23
-        actual = convertor.convert(
-            data,
-            'half_squares',
-            'half_squares',
-            'hourly_day',
-            'one_day',
-            'm',
-            'm'
-        )
         expected = np.array([[24]])  # area a, day 0
+
+        adaptor = IntervalAdaptor('test-hours-day')
+        from_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['rect', 'twenty_four_hours'],
+            coords={
+                'twenty_four_hours':  twenty_four_hours,
+                'rect': regions_rect
+            }
+        )
+        adaptor.add_input(from_spec)
+        to_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['rect', 'one_day'],
+            coords={
+                'one_day':  one_day,
+                'rect': regions_rect
+            }
+        )
+        adaptor.add_output(to_spec)
+
+        data_handle = Mock()
+        data_handle.get_data = Mock(return_value=data)
+        data_handle.read_coefficients = Mock(side_effect=SmifDataNotFoundError)
+
+        adaptor.simulate(data_handle)
+        actual = data_handle.set_results.call_args[0][1]
+
         assert np.allclose(actual, expected)
 
-    def test_remap_timeslices_to_months(self, convertor):
+    def test_remap_timeslices_to_months(self, regions_rect, seasons, months):
         """One region, time remapping required
         """
         data = np.array([[
-            1,  # winter month
-            1,  # spring month
-            1,  # summer month
-            1  # autumn month
+            3,  # winter month
+            3,  # spring month
+            3,  # summer month
+            3  # autumn month
         ]], dtype=float)
-        actual = convertor.convert(
-            data,
-            'half_squares',
-            'half_squares',
-            'remap_months',
-            'months',
-            'm',
-            'm'
-        )
         expected = np.array([[1.03333333, 0.93333333, 1.01086957, 0.97826087,
                               1.01086957, 0.97826087, 1.01086957, 1.01086957,
                               0.98901099, 1.02197802, 0.98901099, 1.03333333]])
-        assert np.allclose(actual, expected)
 
-    def test_remap_months_to_timeslices(self, convertor, monthly_data, remap_month_data):
-        """One region, time remapping required
-        """
-        data = monthly_data
-        actual = convertor.convert(
-            data,
-            'half_squares',
-            'half_squares',
-            'months',
-            'remap_months',
-            'm',
-            'm'
+        adaptor = IntervalAdaptor('test-month-remap')
+        from_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['rect', 'seasons'],
+            coords={
+                'seasons':  seasons,
+                'rect': regions_rect
+            }
         )
-        expected = remap_month_data
+        adaptor.add_input(from_spec)
+        to_spec = Spec(
+            name='test-var',
+            dtype='float',
+            dims=['rect', 'months'],
+            coords={
+                'months':  months,
+                'rect': regions_rect
+            }
+        )
+        adaptor.add_output(to_spec)
+
+        data_handle = Mock()
+        data_handle.get_data = Mock(return_value=data)
+        data_handle.read_coefficients = Mock(side_effect=SmifDataNotFoundError)
+
+        adaptor.simulate(data_handle)
+        actual = data_handle.set_results.call_args[0][1]
+
         assert np.allclose(actual, expected)
 
 
 class TestInterval:
     """Test interval object representation
     """
+
     def test_empty_interval_list(self):
 
         with raises(ValueError):
@@ -560,6 +600,7 @@ class TestInterval:
 class TestIntervalSet:
     """IntervalSet should map to a Coordinates definition
     """
+
     def test_get_names(self, months):
 
         expected_names = \
@@ -580,8 +621,7 @@ class TestIntervalSet:
 
 
 class TestIntervalRegister():
-    """
-    """
+
     def test_interval_loads(self):
         """Pass a time-interval definition into the register
 

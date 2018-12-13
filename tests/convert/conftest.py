@@ -95,30 +95,6 @@ def months():
 
 
 @fixture
-def remap_months():
-    """Remapping four representative months to months across the year
-
-    In this case we have a model which represents the seasons through
-    the year using one month for each season. We then map the four
-    model seasons 1, 2, 3 & 4 onto the months throughout the year that
-    they represent.
-
-    The data will be presented to the model using the four time intervals,
-    1, 2, 3 & 4. When converting to hours, the data will be replicated over
-    the year.  When converting from hours to the model time intervals,
-    data will be averaged and aggregated.
-
-    """
-    data = [
-        {'name': 'cold_month', 'interval': [['P0M', 'P1M'], ['P1M', 'P2M'], ['P11M', 'P12M']]},
-        {'name': 'spring_month', 'interval': [['P2M', 'P3M'], ['P3M', 'P4M'], ['P4M', 'P5M']]},
-        {'name': 'hot_month', 'interval': [['P5M', 'P6M'], ['P6M', 'P7M'], ['P7M', 'P8M']]},
-        {'name': 'fall_month', 'interval': [['P8M', 'P9M'], ['P9M', 'P10M'], ['P10M', 'P11M']]}
-    ]
-    return data
-
-
-@fixture
 def seasons():
     # NB "winter" is split into two pieces around the year end
     data = [
@@ -250,11 +226,14 @@ def regions_rect():
     """
     return [
         {
-            'type': 'Feature',
-            'properties': {'name': 'zero'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
+            'name': 'zero',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'zero'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
+                }
             }
         }
     ]
@@ -271,19 +250,25 @@ def regions_half_squares():
     """
     return [
         {
-            'type': 'Feature',
-            'properties': {'name': 'a'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            'name': 'a',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'a'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+                }
             }
         },
         {
-            'type': 'Feature',
-            'properties': {'name': 'b'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
+            'name': 'b',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'b'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 1], [0, 2], [1, 2], [1, 1]]]
+                }
             }
         }
     ]
@@ -295,27 +280,36 @@ def regions():
     """
     return [
         {
-            'type': 'Feature',
-            'properties': {'name': 'unit'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            'name': 'unit',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'unit'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+                }
             }
         },
         {
-            'type': 'Feature',
-            'properties': {'name': 'half'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 0.5], [1, 0.5], [1, 0]]]
+            'name': 'half',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'half'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 0.5], [1, 0.5], [1, 0]]]
+                }
             }
         },
         {
-            'type': 'Feature',
-            'properties': {'name': 'two'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
+            'name': 'two',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'two'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 2], [1, 2], [1, 0]]]
+                }
             }
         }
     ]
@@ -332,11 +326,14 @@ def regions_single_half_square():
     """
     return [
         {
-            'type': 'Feature',
-            'properties': {'name': 'a'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+            'name': 'a',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'a'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 1], [1, 1], [1, 0]]]
+                }
             }
         }
     ]
@@ -353,19 +350,25 @@ def regions_half_triangles():
     """
     return [
         {
-            'type': 'Feature',
-            'properties': {'name': 'zero'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 0], [0, 2], [1, 0]]]
+            'name': 'zero',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'zero'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 0], [0, 2], [1, 0]]]
+                }
             }
         },
         {
-            'type': 'Feature',
-            'properties': {'name': 'one'},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[0, 2], [1, 2], [1, 0]]]
+            'name': 'one',
+            'feature': {
+                'type': 'Feature',
+                'properties': {'name': 'one'},
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[0, 2], [1, 2], [1, 0]]]
+                }
             }
         }
     ]

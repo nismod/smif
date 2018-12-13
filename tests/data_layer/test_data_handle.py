@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, Mock, PropertyMock
 
 import numpy as np
 from pytest import fixture, raises
-from smif.data_layer import DataHandle, MemoryInterface
+from smif.data_layer import DataHandle
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import ResultsHandle
 from smif.exception import (SmifDataError, SmifDataMismatchError,
@@ -15,10 +15,14 @@ from smif.model import SectorModel
 
 
 @fixture(scope='function')
-def mock_store(get_sector_model):
+def mock_store(sample_dimensions, get_sector_model, empty_store):
     """Store with minimal setup
     """
-    store = MemoryInterface()
+    store = empty_store
+
+    for dim in sample_dimensions:
+        store.write_dimension(dim)
+
     store.write_model_run({
         'name': 1,
         'narratives': {},
@@ -57,7 +61,7 @@ def mock_store(get_sector_model):
     parameter_spec = Spec(
         name='smart_meter_savings',
         dtype='float',
-        unit='percentage'
+        unit='%'
     )
     da = DataArray(parameter_spec, np.array(99))
     store.write_narrative_variant_data(
@@ -90,33 +94,36 @@ def mock_store(get_sector_model):
         'narratives': []
     })
 
-    store._initial_conditions = {'energy_demand': []}
+    store.write_model(get_sector_model)
+
+    store.write_initial_conditions('energy_demand', [])
     data = {
         'water_asset_a': {
+            'name': 'water_asset_a',
             'build_year': 2010,
             'capacity': 50,
             'location': None,
             'sector': ''
         },
         'water_asset_b': {
+            'name': 'water_asset_b',
             'build_year': 2015,
             'capacity': 150,
             'location': None,
             'sector': ''
         },
         'water_asset_c': {
+            'name': 'water_asset_c',
             'capacity': 100,
             'build_year': 2015,
             'location': None,
             'sector': ''
         }
     }
-    store._interventions['energy_demand'] = data
+    store.write_interventions('energy_demand', data)
 
-    store.write_sector_model(get_sector_model)
     da = DataArray(parameter_spec, np.array(42))
-    store.write_sector_model_parameter_default('energy_demand',
-                                               'smart_meter_savings', da)
+    store.write_model_parameter_default('energy_demand', 'smart_meter_savings', da)
     return store
 
 
@@ -178,8 +185,8 @@ def mock_model():
     spec = Spec(
         name='test',
         dtype='float',
-        dims=['region', 'interval'],
-        coords={'region': [1, 2], 'interval': ['a', 'b']}
+        dims=['lad', 'technology_type'],
+        coords={'lad': [1, 2], 'technology_type': ['water_meter', 'electricity_meter']}
     )
     model.add_input(spec)
     model.add_output(spec)
@@ -435,15 +442,16 @@ class TestDataHandleState():
         method of the store with arguments for model run name, current
         timestep and decision iteration.
         """
-        mock_store.read_state = Mock(return_value=[
-            {'name': 'test', 'build_year': 2010}])
-        mock_store._interventions['energy_demand'] = [
-            {'name': 'test',
-             'capital_cost': {'value': 2500, 'unit': '£/GW'}
-             }]
+        mock_store.read_state = Mock(return_value=[{'name': 'test', 'build_year': 2010}])
+        mock_store.write_interventions('energy_demand', [{
+            'name': 'test',
+            'capital_cost': {'value': 2500, 'unit': '£/GW'}
+        }])
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
-        expected = [{'name': 'test',
-                     'build_year': 2010}]
+        expected = [{
+            'name': 'test',
+            'build_year': 2010
+        }]
         actual = data_handle.get_state()
         mock_store.read_state.assert_called_with(1, 2015, None)
         assert actual == expected
@@ -460,7 +468,7 @@ class TestDataHandleState():
             {'name': 'water_asset_a', 'build_year': 2010},
             {'name': 'water_asset_b', 'build_year': 2015}
         ]
-        mock_store._state[(1, 2015, None)] = state
+        mock_store.write_state(state, 1, 2015, None)
         # mock_store._strategies[1] = []
 
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
@@ -492,7 +500,7 @@ class TestDataHandleState():
             {'name': 'energy_asset_unexpected', 'build_year': 2015}
         ]
 
-        mock_store._state[(1, 2015, None)] = state
+        mock_store.write_state(state, 1, 2015, None)
 
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         actual = data_handle.get_current_interventions()
@@ -582,7 +590,7 @@ class TestDataHandleGetParameters:
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'unit': 'percentage',
+                'unit': '%',
                 'dtype': 'float'
             })
         expected = DataArray(spec, np.array(42, dtype=float))
@@ -591,7 +599,7 @@ class TestDataHandleGetParameters:
 
     def test_load_parameters_override(self, mock_store, mock_model):
 
-        mock_store.write_model_run({
+        mock_store.update_model_run(1, {
             'name': 1,
             'narratives': {'test_narrative': ['high_tech_dsm']},
             'sos_model': 'test_sos_model',
@@ -606,7 +614,7 @@ class TestDataHandleGetParameters:
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'unit': 'percentage',
+                'unit': '%',
                 'dtype': 'float'
             })
         expected = DataArray(spec, np.array(99))
@@ -618,7 +626,7 @@ class TestDataHandleGetParameters:
         contained in earlier variants
         """
 
-        mock_store.write_model_run({
+        mock_store.update_model_run(1, {
             'name': 1,
             'narratives': {'test_narrative': ['first_variant',
                                               'second_variant']},
@@ -626,7 +634,6 @@ class TestDataHandleGetParameters:
             'scenarios': {}})
 
         sos_model = mock_store.read_sos_model('test_sos_model')
-
         sos_model['narratives'] = [{
             'name': 'test_narrative',
             'description': 'a narrative config',
@@ -641,30 +648,85 @@ class TestDataHandleGetParameters:
                     'name': 'second_variant',
                     'description': 'This variant should override the first',
                     'data': {'smart_meter_savings': 'filename.csv'}}
-                ]
-                            }]
+            ]
+        }]
         mock_store.update_sos_model('test_sos_model', sos_model)
 
         parameter_spec = Spec(
             name='smart_meter_savings',
             dtype='float',
-            unit='percentage'
+            unit='%'
         )
         first_variant = DataArray(parameter_spec, np.array(1))
         mock_store.write_narrative_variant_data(
-            'test_sos_model', 'test_narrative', 'first_variant',
-            first_variant)
+            'test_sos_model', 'test_narrative', 'first_variant', first_variant)
 
         second_variant = DataArray(parameter_spec, np.array(2))
         mock_store.write_narrative_variant_data(
-            'test_sos_model', 'test_narrative', 'second_variant',
-            second_variant)
+            'test_sos_model', 'test_narrative', 'second_variant', second_variant)
 
         dh = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
 
         actual = dh.get_parameter('smart_meter_savings')
 
         assert actual == second_variant
+
+    def test_load_parameters_partial_override(self, mock_store, mock_model):
+        # add parameter to model
+        param_spec = Spec(
+            name='multi_savings',
+            description='The savings from various technologies',
+            abs_range=(0, 100),
+            exp_range=(3, 10),
+            dims=['technology_type'],
+            coords={'technology_type': ['water_meter', 'electricity_meter']},
+            unit='%',
+            dtype='float'
+        )
+        mock_model.add_parameter(param_spec)
+        mock_store.update_model(mock_model.name, mock_model.as_dict())
+
+        # default values
+        param_defaults = DataArray(param_spec, np.array([3, 3]))
+        mock_store.write_model_parameter_default(
+            mock_model.name, param_spec.name, param_defaults)
+
+        # add narrative to sosmodel
+        sos_model = mock_store.read_sos_model('test_sos_model')
+        sos_model['narratives'] = [{
+            'name': 'test_narrative',
+            'description': 'a narrative config',
+            'sos_model': 'test_sos_model',
+            'provides': {'energy_demand': ['multi_savings']},
+            'variants': [
+                {
+                    'name': 'low_multi_save',
+                    'description': 'Low values',
+                    'data': {'multi_savings': 'multi_savings.csv'}
+                }
+            ]
+        }]
+        mock_store.update_sos_model('test_sos_model', sos_model)
+
+        # narrative values - one NaN i.e. not overridden
+        param_narrative = DataArray(param_spec, np.array([np.nan, 99]))
+        mock_store.write_narrative_variant_data(
+            'test_sos_model', 'test_narrative', 'low_multi_save', param_narrative)
+
+        # expect combination
+        expected = DataArray(param_spec, np.array([3, 99]))
+
+        mock_store.update_model_run(1, {
+            'name': 1,
+            'narratives': {'test_narrative': ['low_multi_save']},
+            'sos_model': 'test_sos_model',
+            'scenarios': {}
+        })
+
+        dh = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
+        actual = dh.get_parameter('multi_savings')
+
+        assert actual == expected
 
 
 class TestResultsHandle:

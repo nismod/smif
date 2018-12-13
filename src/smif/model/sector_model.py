@@ -5,14 +5,6 @@ The :class:`SectorModel` exposes several key methods for running wrapped
 sector models.  To add a sector model to an instance of the framework,
 first implement :class:`SectorModel`.
 
-Utility Methods
-===============
-A number of utility methods are included to ease the integration of a
-SectorModel wrapper within a System of Systems model.  These include:
-
-- ``get_region_names(region_set_name)`` - gets a list of region names
-- ``get_interval_names(interval_set_name)`` - gets a list of interval names
-
 Key Functions
 =============
 This class performs several key functions which ease the integration of sector
@@ -29,7 +21,7 @@ The key functions include:
 * converting input/outputs to/from geographies/temporal resolutions
 * converting control vectors from the decision layer of the framework, to
   asset Interventions specific to the sector model
-* returning scaler/vector values to the framework to enable measurements of
+* returning scalar/vector values to the framework to enable measurements of
   performance, particularly for the purposes of optimisation and rule-based
   approaches
 

@@ -40,6 +40,7 @@ class TestCoordinates():
 
         assert building_sectors.name == name
         assert building_sectors.ids == element_ids
+        assert building_sectors.names == element_ids
         assert building_sectors.elements == [
             {'name': 'residential'},
             {'name': 'commercial'},
@@ -72,6 +73,7 @@ class TestCoordinates():
 
         assert building_sectors.name == name
         assert building_sectors.ids == ['residential', 'commercial', 'industrial']
+        assert building_sectors.names == ['residential', 'commercial', 'industrial']
         assert building_sectors.elements == elements
 
     def test_name_dim_alias(self):

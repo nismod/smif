@@ -10,17 +10,33 @@ import os
 from copy import deepcopy
 
 import numpy as np
+import pandas as pd
 from pytest import fixture
+from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.load import dump
+from smif.data_layer.file.file_config_store import _write_yaml_file as dump
+from smif.data_layer.memory_interface import (MemoryConfigStore,
+                                              MemoryDataStore,
+                                              MemoryMetadataStore)
 from smif.metadata import Spec
-
-from .convert.conftest import remap_months
 
 logging.basicConfig(filename='test_logs.log',
                     level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s: %(levelname)-8s %(message)s',
                     filemode='w')
+
+
+@fixture
+def empty_store():
+    """Store fixture
+    """
+    # implement each part using the memory classes, simpler than mocking
+    # each other implementation of a part is tested fully by e.g. test_config_store.py
+    return Store(
+        config_store=MemoryConfigStore(),
+        metadata_store=MemoryMetadataStore(),
+        data_store=MemoryDataStore()
+    )
 
 
 @fixture
@@ -87,16 +103,14 @@ def setup_folder_structure(setup_empty_folder_structure, oxford_region, remap_mo
   interval: [[PT0H, PT1H]]
 """)
 
-    initial_conditions_file = test_folder.join('data', 'initial_conditions', 'init_system.yml')
-    dump(initial_system, str(initial_conditions_file))
+    initial_conditions_dir = str(test_folder.join('data', 'initial_conditions'))
+    dump(initial_conditions_dir, 'init_system', initial_system)
 
-    planned_interventions_file = test_folder.join(
-        'data', 'interventions', 'planned_interventions.yml')
-    dump(planned_interventions, str(planned_interventions_file))
+    interventions_dir = str(test_folder.join('data', 'interventions'))
+    dump(interventions_dir, 'planned_interventions', planned_interventions)
 
-    remap_months_file = test_folder.join('data', 'dimensions', 'remap.yml')
-    data = remap_months
-    dump(data, str(remap_months_file))
+    dimensions_dir = str(test_folder.join('data', 'dimensions'))
+    dump(dimensions_dir, 'remap', remap_months)
 
     units_file = test_folder.join('data', 'user_units.txt')
     with units_file.open(mode='w') as units_fh:
@@ -218,6 +232,27 @@ def oxford_region():
         ]
     }
     return data
+
+
+@fixture
+def initial_conditions():
+    return [{'name': 'solar_installation', 'build_year': 2017}]
+
+
+@fixture
+def interventions():
+    return {
+        'solar_installation': {
+            'name': 'solar_installation',
+            'capacity': 5,
+            'capacity_units': 'MW'
+        },
+        'wind_installation': {
+            'name': 'wind_installation',
+            'capacity': 4,
+            'capacity_units': 'MW'
+        }
+    }
 
 
 @fixture
@@ -386,7 +421,7 @@ def get_sector_model(annual, hourly):
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'unit': 'percentage',
+                'unit': '%',
                 'dtype': 'float'
             },
             {
@@ -483,6 +518,45 @@ def get_sector_model_parameter_defaults(get_sector_model):
 
 
 @fixture
+def get_multidimensional_param():
+    spec = Spec.from_dict({
+        'name': 'ss_t_base_heating',
+        'description': 'Industrial base temperature',
+        'default': '../energy_demand/parameters/ss_t_base_heating.csv',
+        'unit': '',
+        'dims': ['interpolation_params', 'end_yr'],
+        'coords': {
+            'interpolation_params': ['diffusion_choice', 'value_ey'],
+            'end_yr': [2030, 2050]
+        },
+        'dtype': 'float'
+    })
+    dataframe = pd.DataFrame([
+        {
+            'interpolation_params': 'diffusion_choice',
+            'end_yr': 2030,
+            'ss_t_base_heating': 0
+        },
+        {
+            'interpolation_params': 'diffusion_choice',
+            'end_yr': 2050,
+            'ss_t_base_heating': 0
+        },
+        {
+            'interpolation_params': 'value_ey',
+            'end_yr': 2030,
+            'ss_t_base_heating': 15.5
+        },
+        {
+            'interpolation_params': 'value_ey',
+            'end_yr': 2050,
+            'ss_t_base_heating': 15.5
+        },
+    ]).set_index(['interpolation_params', 'end_yr'])
+    return DataArray.from_df(spec, dataframe)
+
+
+@fixture
 def get_sector_model_no_coords(get_sector_model):
     model = deepcopy(get_sector_model)
     for spec_group in ('inputs', 'outputs', 'parameters'):
@@ -514,15 +588,40 @@ def sample_scenarios():
             'variants': [
                 {
                     'name': 'High Population (ONS)',
-                    'description': 'The High ONS Forecast for UK population out to 2050'
+                    'description': 'The High ONS Forecast for UK population out to 2050',
+                    'data': {
+                        'population_count': 'population_high.csv'
+                    }
                 },
                 {
                     'name': 'Low Population (ONS)',
-                    'description': 'The Low ONS Forecast for UK population out to 2050'
+                    'description': 'The Low ONS Forecast for UK population out to 2050',
+                    'data': {
+                        'population_count': 'population_low.csv'
+                    }
                 },
             ],
         },
     ]
+
+
+@fixture
+def sample_scenario_data(scenario, get_sector_model, energy_supply_sector_model,
+                         water_supply_sector_model):
+    scenario_data = {}
+
+    for scenario in [scenario]:
+        for variant in scenario['variants']:
+            for data_key, data_value in variant['data'].items():
+                spec = Spec.from_dict(
+                    [provides for provides in scenario['provides']
+                     if provides['name'] == data_key][0])
+                nda = np.random.random(spec.shape)
+                da = DataArray(spec, nda)
+                key = (scenario['name'], variant['name'], data_key)
+                scenario_data[key] = da
+
+    return scenario_data
 
 
 @fixture
@@ -565,7 +664,12 @@ def get_narrative():
         'variants': [
             {
                 'name': 'high_tech_dsm',
-                'description': 'High takeup of smart technology on the demand side'
+                'description': 'High takeup of smart technology on the demand side',
+                'data': {
+                    'smart_meter_savings': 'high_tech_dsm.csv',
+                    'clever_water_meter_savings': 'high_tech_dsm.csv',
+                    'per_capita_water_demand': 'high_tech_dsm.csv'
+                }
             }
         ]
     }
@@ -616,6 +720,13 @@ def sample_narrative_data(sample_narratives, get_sector_model, energy_supply_sec
                     key = (sos_model_name, narrative['name'], variant['name'], param_name)
                     narrative_data[key] = da
     return narrative_data
+
+
+@fixture
+def sample_results():
+    spec = Spec(name='energy_use', dtype='float')
+    data = np.array(1, dtype=float)
+    return DataArray(spec, data)
 
 
 def _pick_from_list(list_, name):
@@ -685,7 +796,7 @@ def get_dimension():
             [
                 {
                     "end": "PT8760H",
-                    "id": "1",
+                    "id": 1,
                     "start": "PT0H"
                 }
             ]
@@ -707,17 +818,42 @@ def hourly():
 def annual():
     return [
         {
-            'name': '1',
+            'name': 1,
             'interval': [['PT0H', 'PT8760H']]
         }
     ]
 
 
 @fixture
+def remap_months():
+    """Remapping four representative months to months across the year
+
+    In this case we have a model which represents the seasons through
+    the year using one month for each season. We then map the four
+    model seasons 1, 2, 3 & 4 onto the months throughout the year that
+    they represent.
+
+    The data will be presented to the model using the four time intervals,
+    1, 2, 3 & 4. When converting to hours, the data will be replicated over
+    the year.  When converting from hours to the model time intervals,
+    data will be averaged and aggregated.
+
+    """
+    data = [
+        {'name': 'cold_month', 'interval': [['P0M', 'P1M'], ['P1M', 'P2M'], ['P11M', 'P12M']]},
+        {'name': 'spring_month', 'interval': [['P2M', 'P3M'], ['P3M', 'P4M'], ['P4M', 'P5M']]},
+        {'name': 'hot_month', 'interval': [['P5M', 'P6M'], ['P6M', 'P7M'], ['P7M', 'P8M']]},
+        {'name': 'fall_month', 'interval': [['P8M', 'P9M'], ['P9M', 'P10M'], ['P10M', 'P11M']]}
+    ]
+    return data
+
+
+@fixture
 def minimal_model_run():
     return {
         'name': 'test_modelrun',
-        'timesteps': [2010, 2015, 2010]
+        'timesteps': [2010, 2015, 2010],
+        'sos_model': 'energy'
     }
 
 

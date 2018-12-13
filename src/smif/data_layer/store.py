@@ -1,6 +1,4 @@
-"""This module provides a common data interface to smif
-
-
+"""The store provides a common data interface to smif configuration, data and metadata.
 
 Raises
 ------
@@ -16,333 +14,685 @@ SmifDataReadError
     When unable to read data e.g. unable to handle file type or connect
     to database
 """
-import copy
-from abc import ABCMeta, abstractmethod
-from functools import reduce
+from copy import deepcopy
 from logging import getLogger
+from operator import itemgetter
 
-import numpy as np
-from smif.data_layer.data_array import DataArray
-from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
-from smif.metadata import Spec
+from smif.data_layer.file import CSVDataStore
+from smif.exception import SmifDataNotFoundError
+from smif.metadata.spec import Spec
 
 
-class Store(metaclass=ABCMeta):
-    """Abstract base class to define common data store
+class Store():
+    """Common interface to data store, composed of config, metadata and data store implementations.
+
+    Parameters
+    ----------
+    config_store: ~smif.data_layer.abstract_config_store.ConfigStore
+    metadata_store: ~smif.data_layer.abstract_metadata_store.MetadataStore
+    data_store: ~smif.data_layer.abstract_data_store.DataStore
     """
-    def __init__(self):
+    def __init__(self, config_store, metadata_store, data_store, model_base_folder="."):
         self.logger = getLogger(__name__)
+        self.config_store = config_store
+        self.metadata_store = metadata_store
+        self.data_store = data_store
+        # base folder for any relative paths to models
+        self.model_base_folder = str(model_base_folder)
+
+    #
+    # CONFIG
+    #
 
     # region Model runs
-    @abstractmethod
     def read_model_runs(self):
         """Read all system-of-system model runs
 
         Returns
         -------
-        list
-            A list of model_run dicts
+        list[~smif.controller.modelrun.ModelRun]
         """
-        raise NotImplementedError()
+        return sorted(self.config_store.read_model_runs(), key=itemgetter('name'))
 
-    @abstractmethod
     def read_model_run(self, model_run_name):
         """Read a system-of-system model run
 
-        Arguments
-        ---------
-        model_run_name: str
-            A model_run name
+        Parameters
+        ----------
+        model_run_name : str
 
         Returns
         -------
-        model_run: dict
-            A model_run dictionary
+        ~smif.controller.modelrun.ModelRun
         """
-        raise NotImplementedError()
+        return self.config_store.read_model_run(model_run_name)
 
-    @abstractmethod
     def write_model_run(self, model_run):
         """Write system-of-system model run
 
-        Arguments
-        ---------
-        model_run: dict
-            A model_run dictionary
+        Parameters
+        ----------
+        model_run : ~smif.controller.modelrun.ModelRun
         """
-        raise NotImplementedError()
+        self.config_store.write_model_run(model_run)
 
-    @abstractmethod
     def update_model_run(self, model_run_name, model_run):
         """Update system-of-system model run
 
-        Arguments
-        ---------
-        model_run_name: str
-            A model_run name
-        model_run: dict
-            A model_run dictionary
+        Parameters
+        ----------
+        model_run_name : str
+        model_run : ~smif.controller.modelrun.ModelRun
         """
-        raise NotImplementedError()
+        self.config_store.update_model_run(model_run_name, model_run)
 
-    @abstractmethod
     def delete_model_run(self, model_run_name):
         """Delete a system-of-system model run
 
-        Arguments
-        ---------
-        model_run_name: str
-            A model_run name
+        Parameters
+        ----------
+        model_run_name : str
         """
-        raise NotImplementedError()
+        self.config_store.delete_model_run(model_run_name)
     # endregion
 
     # region System-of-systems models
-    @abstractmethod
     def read_sos_models(self):
         """Read all system-of-system models
 
         Returns
         -------
-        list
-            A list of sos_model dicts
+        list[~smif.model.sos_model.SosModel]
         """
-        raise NotImplementedError()
+        return sorted(self.config_store.read_sos_models(), key=itemgetter('name'))
 
-    @abstractmethod
     def read_sos_model(self, sos_model_name):
         """Read a specific system-of-system model
 
-        Arguments
-        ---------
-        sos_model_name: str
-            A sos_model name
+        Parameters
+        ----------
+        sos_model_name : str
 
         Returns
         -------
-        sos_model: dict
-            A sos_model dictionary
+        ~smif.model.sos_model.SosModel
         """
-        raise NotImplementedError()
+        return self.config_store.read_sos_model(sos_model_name)
 
-    @abstractmethod
     def write_sos_model(self, sos_model):
         """Write system-of-system model
 
-        Arguments
-        ---------
-        sos_model: dict
-            A sos_model dictionary
+        Parameters
+        ----------
+        sos_model : ~smif.model.sos_model.SosModel
         """
-        raise NotImplementedError()
+        self.config_store.write_sos_model(sos_model)
 
-    @abstractmethod
     def update_sos_model(self, sos_model_name, sos_model):
         """Update system-of-system model
 
-        Arguments
-        ---------
-        sos_model_name: str
-            A sos_model name
-        sos_model: dict
-            A sos_model dictionary
+        Parameters
+        ----------
+        sos_model_name : str
+        sos_model : ~smif.model.sos_model.SosModel
         """
-        raise NotImplementedError()
+        self.config_store.update_sos_model(sos_model_name, sos_model)
 
-    @abstractmethod
     def delete_sos_model(self, sos_model_name):
         """Delete a system-of-system model
 
-        Arguments
-        ---------
-        sos_model_name: str
-            A sos_model name
+        Parameters
+        ----------
+        sos_model_name : str
         """
-        raise NotImplementedError()
+        self.config_store.delete_sos_model(sos_model_name)
     # endregion
 
-    # region Sector models
-    @abstractmethod
-    def read_sector_models(self, skip_coords=False):
-        """Read all sector models
-
-        sector_models.yml
+    # region Models
+    def read_models(self, skip_coords=False):
+        """Read all models
 
         Returns
         -------
-        list
-            A list of sector_model dicts
+        list[~smif.model.model.Model]
         """
-        raise NotImplementedError()
+        models = sorted(self.config_store.read_models(), key=itemgetter('name'))
+        if not skip_coords:
+            models = [
+                self._add_coords(model, ('inputs', 'outputs', 'parameters'))
+                for model in models
+            ]
+        return models
 
-    @abstractmethod
-    def read_sector_model(self, sector_model_name, skip_coords=False):
-        """Read a sector model
+    def read_model(self, model_name, skip_coords=False):
+        """Read a model
 
-        Arguments
-        ---------
-        sector_model_name: str
-            A sector_model name
+        Parameters
+        ----------
+        model_name : str
 
         Returns
         -------
-        sector_model: dict
-            A sector_model dictionary
+        ~smif.model.model.Model
         """
-        raise NotImplementedError()
+        model = self.config_store.read_model(model_name)
+        if not skip_coords:
+            model = self._add_coords(model, ('inputs', 'outputs', 'parameters'))
+        return model
 
-    @abstractmethod
-    def read_sector_model_parameter(self, sector_model_name, parameter_name):
-        """Read a sector model parameter
+    def write_model(self, model):
+        """Write a model
 
-        Arguments
-        ---------
-        sector_model_name: str
-            A sector_model name
-        parameter_name: str
-            A parameter name
+        Parameters
+        ----------
+        model : ~smif.model.model.Model
+        """
+        self.config_store.write_model(model)
+
+    def update_model(self, model_name, model):
+        """Update a model
+
+        Parameters
+        ----------
+        model_name : str
+        model : ~smif.model.model.Model
+        """
+        self.config_store.update_model(model_name, model)
+
+    def delete_model(self, model_name):
+        """Delete a model
+
+        Parameters
+        ----------
+        model_name : str
+        """
+        self.config_store.delete_model(model_name)
+    # endregion
+
+    # region Scenarios
+    def read_scenarios(self, skip_coords=False):
+        """Read scenarios
 
         Returns
         -------
-        parameter: dict
-            A parameter (spec) dictionary
+        list[~smif.model.ScenarioModel]
         """
-        raise NotImplementedError()
+        scenarios = sorted(self.config_store.read_scenarios(), key=itemgetter('name'))
+        if not skip_coords:
+            scenarios = [
+                self._add_coords(scenario, ['provides'])
+                for scenario in scenarios
+            ]
+        return scenarios
 
-    @abstractmethod
-    def read_sector_model_parameter_default(self, sector_model_name, parameter_name):
-        """Read default data for a sector model parameter
+    def read_scenario(self, scenario_name, skip_coords=False):
+        """Read a scenario
 
-        Arguments
-        ---------
-        sector_model_name: str
-            A sector_model name
-        parameter_name: str
-            A parameter name
+        Parameters
+        ----------
+        scenario_name : str
 
         Returns
         -------
-        data: smif.data_layer.data_array.DataArray
+        ~smif.model.ScenarioModel
         """
-        raise NotImplementedError()
+        scenario = self.config_store.read_scenario(scenario_name)
+        if not skip_coords:
+            scenario = self._add_coords(scenario, ['provides'])
+        return scenario
 
-    @abstractmethod
-    def write_sector_model_parameter_default(self, sector_model_name, parameter_name, data):
-        """Write default data for a sector model parameter
+    def write_scenario(self, scenario):
+        """Write scenario
 
-        Arguments
-        ---------
-        sector_model_name: str
-            A sector_model name
-        parameter_name: str
-            A parameter name
-        data: smif.data_layer.data_array.DataArray
+        Parameters
+        ----------
+        scenario : ~smif.model.ScenarioModel
         """
-        raise NotImplementedError()
+        self.config_store.write_scenario(scenario)
 
-    @abstractmethod
-    def write_sector_model(self, sector_model):
-        """Write sector model
+    def update_scenario(self, scenario_name, scenario):
+        """Update scenario
 
-        Arguments
-        ---------
-        sector_model: dict
-            A sector_model dictionary
+        Parameters
+        ----------
+        scenario_name : str
+        scenario : ~smif.model.ScenarioModel
         """
-        raise NotImplementedError()
+        self.config_store.update_scenario(scenario_name, scenario)
 
-    @abstractmethod
-    def update_sector_model(self, sector_model_name, sector_model):
-        """Update sector model
+    def delete_scenario(self, scenario_name):
+        """Delete scenario from project configuration
 
-        Arguments
-        ---------
-        sector_model_name: str
-            A sector_model name
-        sector_model: dict
-            A sector_model dictionary
+        Parameters
+        ----------
+        scenario_name : str
         """
-        raise NotImplementedError()
+        self.config_store.delete_scenario(scenario_name)
+    # endregion
 
-    @abstractmethod
-    def delete_sector_model(self, sector_model_name):
-        """Delete a sector model
+    # region Scenario Variants
+    def read_scenario_variants(self, scenario_name):
+        """Read variants of a given scenario
 
-        Arguments
-        ---------
-        sector_model_name: str
-            A sector_model name
+        Parameters
+        ----------
+        scenario_name : str
+
+        Returns
+        -------
+        list[dict]
         """
-        raise NotImplementedError()
+        scenario_variants = self.config_store.read_scenario_variants(scenario_name)
+        return sorted(scenario_variants, key=itemgetter('name'))
+
+    def read_scenario_variant(self, scenario_name, variant_name):
+        """Read a scenario variant
+
+        Parameters
+        ----------
+        scenario_name : str
+        variant_name : str
+
+        Returns
+        -------
+        dict
+        """
+        return self.config_store.read_scenario_variant(scenario_name, variant_name)
+
+    def write_scenario_variant(self, scenario_name, variant):
+        """Write scenario to project configuration
+
+        Parameters
+        ----------
+        scenario_name : str
+        variant : dict
+        """
+        self.config_store.write_scenario_variant(scenario_name, variant)
+
+    def update_scenario_variant(self, scenario_name, variant_name, variant):
+        """Update scenario to project configuration
+
+        Parameters
+        ----------
+        scenario_name : str
+        variant_name : str
+        variant : dict
+        """
+        self.config_store.update_scenario_variant(scenario_name, variant_name, variant)
+
+    def delete_scenario_variant(self, scenario_name, variant_name):
+        """Delete scenario from project configuration
+
+        Parameters
+        ----------
+        scenario_name : str
+        variant_name : str
+        """
+        self.config_store.delete_scenario_variant(scenario_name, variant_name)
+    # endregion
+
+    # region Narratives
+    def read_narrative(self, sos_model_name, narrative_name):
+        """Read narrative from sos_model
+
+        Parameters
+        ----------
+        sos_model_name : str
+        narrative_name : str
+        """
+        return self.config_store.read_narrative(sos_model_name, narrative_name)
     # endregion
 
     # region Strategies
-    @abstractmethod
-    def read_strategies(self, modelrun_name):
-        """Read strategies for a given model_run
+    def read_strategies(self, model_run_name):
+        """Read strategies for a given model run
 
-        Arguments
-        ---------
-        modelrun_name : str
-            Name of the model run for which to read the strategies
+        Parameters
+        ----------
+        model_run_name : str
 
         Returns
         -------
-        list
-            List of strategy definition dicts
+        list[dict]
         """
-        raise NotImplementedError()
+        strategies = deepcopy(self.config_store.read_strategies(model_run_name))
+        for strategy in strategies:
+            if strategy['type'] == 'pre-specified-planning':
+                strategy['interventions'] = self.data_store.read_strategy_interventions(
+                    strategy)
+        return strategies
 
-    @abstractmethod
-    def write_strategies(self, modelrun_name, strategies):
+    def write_strategies(self, model_run_name, strategies):
         """Write strategies for a given model_run
 
-        Arguments
-        ---------
-        modelrun_name : str
-            Name of the model run for which to read the strategies
+        Parameters
+        ----------
+        model_run_name : str
         strategies : list[dict]
-            List of strategy definitions
         """
+        self.config_store.write_strategies(model_run_name, strategies)
+    # endregion
+
+    #
+    # METADATA
+    #
+
+    # region Units
+    def read_unit_definitions(self):
+        """Reads custom unit definitions
+
+        Returns
+        -------
+        list[str]
+            Pint-compatible unit definitions
+        """
+        return self.metadata_store.read_unit_definitions()
+
+    def write_unit_definitions(self, definitions):
+        """Reads custom unit definitions
+
+        Parameters
+        ----------
+        list[str]
+            Pint-compatible unit definitions
+        """
+        self.metadata_store.write_unit_definitions(definitions)
+    # endregion
+
+    # region Dimensions
+    def read_dimensions(self):
+        """Read dimensions
+
+        Returns
+        -------
+        list[~smif.metadata.coords.Coords]
+        """
+        return self.metadata_store.read_dimensions()
+
+    def read_dimension(self, dimension_name):
+        """Return dimension
+
+        Parameters
+        ----------
+        dimension_name : str
+
+        Returns
+        -------
+        ~smif.metadata.coords.Coords
+            A dimension definition (including elements)
+        """
+        return self.metadata_store.read_dimension(dimension_name)
+
+    def write_dimension(self, dimension):
+        """Write dimension to project configuration
+
+        Parameters
+        ----------
+        dimension : ~smif.metadata.coords.Coords
+        """
+        self.metadata_store.write_dimension(dimension)
+
+    def update_dimension(self, dimension_name, dimension):
+        """Update dimension
+
+        Parameters
+        ----------
+        dimension_name : str
+        dimension : ~smif.metadata.coords.Coords
+        """
+        self.metadata_store.update_dimension(dimension_name, dimension)
+
+    def delete_dimension(self, dimension_name):
+        """Delete dimension
+
+        Parameters
+        ----------
+        dimension_name : str
+        """
+        self.metadata_store.delete_dimension(dimension_name)
+
+    def _add_coords(self, item, keys):
+        """Add coordinates to spec definitions on an object
+        """
+        item = deepcopy(item)
+        for key in keys:
+            spec_list = item[key]
+            for spec in spec_list:
+                if 'dims' in spec and spec['dims']:
+                    spec['coords'] = {
+                        dim: self.read_dimension(dim)['elements']
+                        for dim in spec['dims']
+                    }
+        return item
+    # endregion
+
+    #
+    # DATA
+    #
+
+    # region Scenario Variant Data
+    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
+        """Read scenario data file
+
+        Parameters
+        ----------
+        scenario_name : str
+        variant_name : str
+        variable : str
+        timestep : int (optional)
+            If None, read data for all timesteps
+
+        Returns
+        -------
+        data : ~smif.data_layer.data_array.DataArray
+        """
+        variant = self.read_scenario_variant(scenario_name, variant_name)
+        key = self._key_from_data(variant['data'][variable], scenario_name, variant_name,
+                                  variable)
+        scenario = self.read_scenario(scenario_name)
+        spec_dict = _pick_from_list(scenario['provides'], variable)
+        spec = Spec.from_dict(spec_dict)
+        return self.data_store.read_scenario_variant_data(key, spec, timestep)
+
+    def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
+        """Write scenario data file
+
+        Parameters
+        ----------
+        scenario_name : str
+        variant_name : str
+        data : ~smif.data_layer.data_array.DataArray
+        timestep : int (optional)
+            If None, write data for all timesteps
+        """
+        variant = self.read_scenario_variant(scenario_name, variant_name)
+        key = self._key_from_data(variant['data'][data.spec.name], scenario_name, variant_name,
+                                  data.spec.name)
+        self.data_store.write_scenario_variant_data(key, data, timestep)
+    # endregion
+
+    # region Narrative Data
+    def read_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
+                                    parameter_name, timestep=None):
+        """Read narrative data file
+
+        Parameters
+        ----------
+        sos_model_name : str
+        narrative_name : str
+        variant_name : str
+        parameter_name : str
+        timestep : int (optional)
+            If None, read data for all timesteps
+
+        Returns
+        -------
+        ~smif.data_layer.data_array.DataArray
+        """
+        sos_model = self.read_sos_model(sos_model_name)
+        narrative = _pick_from_list(sos_model['narratives'], narrative_name)
+        variant = _pick_from_list(narrative['variants'], variant_name)
+        key = self._key_from_data(variant['data'][parameter_name], narrative_name,
+                                  variant_name, parameter_name)
+
+        spec_dict = None
+        # find sector model which needs this parameter, to get spec definition
+        for model_name, params in narrative['provides'].items():
+            if parameter_name in params:
+                sector_model = self.read_model(model_name)
+                spec_dict = _pick_from_list(sector_model['parameters'], parameter_name)
+                break
+        # find spec
+        if spec_dict is None:
+            raise SmifDataNotFoundError("Parameter {} not found in any of {}".format(
+                parameter_name, sos_model['sector_models']))
+        spec = Spec.from_dict(spec_dict)
+
+        return self.data_store.read_narrative_variant_data(key, spec, timestep)
+
+    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
+                                     data, timestep=None):
+        """Read narrative data file
+
+        Parameters
+        ----------
+        sos_model_name : str
+        narrative_name : str
+        variant_name : str
+        data : ~smif.data_layer.data_array.DataArray
+        timestep : int (optional)
+            If None, write data for all timesteps
+        """
+        sos_model = self.read_sos_model(sos_model_name)
+        narrative = _pick_from_list(sos_model['narratives'], narrative_name)
+        variant = _pick_from_list(narrative['variants'], variant_name)
+        key = self._key_from_data(
+            variant['data'][data.spec.name], narrative_name, variant_name, data.spec.name)
+        self.data_store.write_narrative_variant_data(key, data)
+
+    def read_model_parameter_default(self, model_name, parameter_name):
+        """Read default data for a sector model parameter
+
+        Parameters
+        ----------
+        model_name : str
+        parameter_name : str
+
+        Returns
+        -------
+        ~smif.data_layer.data_array.DataArray
+        """
+        model = self.read_model(model_name)
+        param = _pick_from_list(model['parameters'], parameter_name)
+        spec = Spec.from_dict(param)
+        try:
+            path = param['default']
+        except TypeError:
+            raise SmifDataNotFoundError("Parameter {} not found in model {}".format(
+                parameter_name, model_name))
+        except KeyError:
+            path = 'default__{}__{}.csv'.format(model_name, parameter_name)
+        key = self._key_from_data(path, model_name, parameter_name)
+        return self.data_store.read_model_parameter_default(key, spec)
+
+    def write_model_parameter_default(self, model_name, parameter_name, data):
+        """Write default data for a sector model parameter
+
+        Parameters
+        ----------
+        model_name : str
+        parameter_name : str
+        data : ~smif.data_layer.data_array.DataArray
+        """
+        model = self.read_model(model_name, skip_coords=True)
+        param = _pick_from_list(model['parameters'], parameter_name)
+        try:
+            path = param['default']
+        except TypeError:
+            raise SmifDataNotFoundError("Parameter {} not found in model {}".format(
+                parameter_name, model_name))
+        except KeyError:
+            path = 'default__{}__{}.csv'.format(model_name, parameter_name)
+        key = self._key_from_data(path, model_name, parameter_name)
+        self.data_store.write_model_parameter_default(key, data)
     # endregion
 
     # region Interventions
-    @abstractmethod
-    def read_interventions(self, sector_model_name):
-        """Read interventions data for `sector_model_name`
+    def read_interventions(self, model_name):
+        """Read interventions data for `model_name`
 
         Returns
         -------
-        dict of dict
+        dict[str, dict]
             A dict of intervention dictionaries containing intervention
             attributes keyed by intervention name
         """
-        raise NotImplementedError()
-    # endregion
+        model = self.read_model(model_name, skip_coords=True)
+        if model['interventions'] != []:
+            return self.data_store.read_interventions(model['interventions'])
+        else:
+            return {}
 
-    # region Initial Conditions
-    @abstractmethod
-    def read_initial_conditions(self, sector_model_name):
-        """Read historical interventions for `sector_model_name`
+    def write_interventions(self, model_name, interventions):
+        """Write interventions data for a model
+
+        Parameters
+        ----------
+        dict[str, dict]
+            A dict of intervention dictionaries containing intervention
+            attributes keyed by intervention name
+        """
+        model = self.read_model(model_name)
+        model['interventions'] = [model_name + '.csv']
+        self.update_model(model_name, model)
+        self.data_store.write_interventions(model['interventions'][0], interventions)
+
+    def read_strategy_interventions(self, strategy):
+        """Read interventions as defined in a model run strategy
+        """
+        return self.data_store.read_strategy_interventions(strategy)
+
+    def read_initial_conditions(self, model_name):
+        """Read historical interventions for `model_name`
 
         Returns
         -------
-        list
-            A list of historical interventions
+        list[dict]
+            A list of historical interventions, with keys 'name' and 'build_year'
         """
-        raise NotImplementedError()
+        model = self.read_model(model_name)
+        if model['initial_conditions'] != []:
+            return self.data_store.read_initial_conditions(model['initial_conditions'])
+        else:
+            return []
+
+    def write_initial_conditions(self, model_name, initial_conditions):
+        """Write historical interventions for a model
+
+        Parameters
+        ----------
+        list[dict]
+            A list of historical interventions, with keys 'name' and 'build_year'
+        """
+        model = self.read_model(model_name)
+        model['initial_conditions'] = [model_name + '.csv']
+        self.update_model(model_name, model)
+        self.data_store.write_initial_conditions(model['initial_conditions'][0],
+                                                 initial_conditions)
 
     def read_all_initial_conditions(self, model_run_name):
         """A list of all historical interventions
 
         Returns
         -------
-        list
+        list[dict]
         """
         historical_interventions = []
-        sos_model_name = self.read_model_run(model_run_name)['sos_model']
-        sector_models = self.read_sos_model(sos_model_name)['sector_models']
-        for sector_model_name in sector_models:
+        model_run = self.read_model_run(model_run_name)
+        sos_model_name = model_run['sos_model']
+        sos_model = self.read_sos_model(sos_model_name)
+        sector_model_names = sos_model['sector_models']
+        for sector_model_name in sector_model_names:
             historical_interventions.extend(
                 self.read_initial_conditions(sector_model_name)
             )
@@ -350,126 +700,38 @@ class Store(metaclass=ABCMeta):
     # endregion
 
     # region State
-    @abstractmethod
-    def read_state(self, modelrun_name, timestep, decision_iteration=None):
-        """Read list of (name, build_year) for a given modelrun, timestep,
+    def read_state(self, model_run_name, timestep, decision_iteration=None):
+        """Read list of (name, build_year) for a given model_run, timestep,
         decision
 
-        Arguments
-        ---------
-        modelrun_name : str
-        timestep: int
-        decision_iteration : int, default=None
-        """
-        raise NotImplementedError()
+        Parameters
+        ----------
+        model_run_name : str
+        timestep : int
+        decision_iteration : int, optional
 
-    @abstractmethod
-    def write_state(self, state, modelrun_name, timestep, decision_iteration=None):
-        """State is a list of decision dicts with name and build_year keys,
+        Returns
+        -------
+        list[dict]
+        """
+        return self.data_store.read_state(model_run_name, timestep, decision_iteration)
+
+    def write_state(self, state, model_run_name, timestep, decision_iteration=None):
+        """State is a list of decisions with name and build_year.
 
         State is output from the DecisionManager
 
-        Arguments
-        ---------
-        state : list
-        modelrun_name : str
-        timestep: int
-        decision_iteration : int, default=None
+        Parameters
+        ----------
+        state : list[dict]
+        model_run_name : str
+        timestep : int
+        decision_iteration : int, optional
         """
-        raise NotImplementedError()
-    # endregion
-
-    # region Units
-    @abstractmethod
-    def read_unit_definitions(self):
-        """Reads custom unit definitions
-
-        Returns
-        -------
-        list
-            List of str which are valid Pint unit definitions
-        """
-        raise NotImplementedError()
-    # endregion
-
-    # region Dimensions
-    @abstractmethod
-    def read_dimensions(self):
-        """Read dimensions from project configuration
-
-        Returns
-        -------
-        list
-            A list of dimension dicts
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_dimension(self, dimension_name):
-        """Return dimension
-
-        Arguments
-        ---------
-        dimension_name: str
-            Name of the dimension
-
-        Returns
-        -------
-        dict
-            A dimension definition (including elements)
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def write_dimension(self, dimension):
-        """Write dimension to project configuration
-
-        Arguments
-        ---------
-        dimension: dict
-            A dimension dict
-
-        Notes
-        -----
-        Unused
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def update_dimension(self, dimension_name, dimension):
-        """Update dimension
-
-        Arguments
-        ---------
-        dimension_name: str
-            Name of the (original) entry
-        dimension: dict
-            The updated dimension dict
-
-        Notes
-        -----
-        Unused
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def delete_dimension(self, dimension_name):
-        """Delete dimension
-
-        Arguments
-        ---------
-        dimension_name: str
-            Name of the (original) entry
-
-        Notes
-        -----
-        Unused
-        """
-        raise NotImplementedError()
+        self.data_store.write_state(state, model_run_name, timestep, decision_iteration)
     # endregion
 
     # region Conversion coefficients
-    @abstractmethod
     def read_coefficients(self, source_spec, destination_spec):
         """Reads coefficients from the store
 
@@ -477,19 +739,21 @@ class Store(metaclass=ABCMeta):
         This method and `write_coefficients` implement caching of conversion
         coefficients between dimensions.
 
-        Arguments
-        ---------
-        source_spec : smif.metadata.Spec
-        destination_spec : smif.metadata.Spec
+        Parameters
+        ----------
+        source_spec : ~smif.metadata.spec.Spec
+        destination_spec : ~smif.metadata.spec.Spec
+
+        Returns
+        -------
+        numpy.ndarray
 
         Notes
         -----
         To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
-
         """
-        raise NotImplementedError
+        return self.data_store.read_coefficients(source_spec, destination_spec)
 
-    @abstractmethod
     def write_coefficients(self, source_spec, destination_spec, data):
         """Writes coefficients to the store
 
@@ -497,504 +761,108 @@ class Store(metaclass=ABCMeta):
         This method and `read_coefficients` implement caching of conversion
         coefficients between dimensions.
 
-        Arguments
-        ---------
-        source_spec : smif.metadata.Spec
-        destination_spec : smif.metadata.Spec
+        Parameters
+        ----------
+        source_spec : ~smif.metadata.spec.Spec
+        destination_spec : ~smif.metadata.spec.Spec
         data : numpy.ndarray
 
         Notes
         -----
         To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
         """
-        raise NotImplementedError()
-    # endregion
-
-    # region Scenarios
-    @abstractmethod
-    def read_scenarios(self, skip_coords=False):
-        """Read scenarios from project configuration
-
-        Returns
-        -------
-        list
-            A list of scenario dicts
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_scenario(self, scenario_name, skip_coords=False):
-        """Read a scenario
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the scenario
-
-        Returns
-        -------
-        dict
-            A scenario dictionary
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def write_scenario(self, scenario):
-        """Write scenario to project configuration
-
-        Arguments
-        ---------
-        scenario: dict
-            A scenario dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def update_scenario(self, scenario_name, scenario):
-        """Update scenario to project configuration
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the (original) entry
-        scenario: dict
-            The updated scenario dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def delete_scenario(self, scenario_name):
-        """Delete scenario from project configuration
-
-        Arguments
-        ---------
-        scenario_name: str
-            A scenario name
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_scenario_variants(self, scenario_name):
-        """Read scenarios from project configuration
-
-        Returns
-        -------
-        list
-            A list of scenario dicts
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_scenario_variant(self, scenario_name, variant_name):
-        """Read a scenario
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the scenario
-
-        Returns
-        -------
-        dict
-            A scenario dictionary
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def write_scenario_variant(self, scenario_name, variant):
-        """Write scenario to project configuration
-
-        Arguments
-        ---------
-        scenario: dict
-            A scenario dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def update_scenario_variant(self, scenario_name, variant_name, variant):
-        """Update scenario to project configuration
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the (original) entry
-        scenario: dict
-            The updated scenario dict
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def delete_scenario_variant(self, scenario_name, variant_name):
-        """Delete scenario from project configuration
-
-        Arguments
-        ---------
-        scenario_name: str
-            A scenario name
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
-        """Read scenario data file
-
-        Arguments
-        ---------
-        scenario_name: str
-            Name of the scenario
-        variant_name: str
-            Name of the scenario variant
-        variable: str
-            Name of the variable (facet)
-        timestep: int (optional)
-            If None, read data for all timesteps
-
-        Returns
-        -------
-        data: numpy.ndarray
-
-        Notes
-        -----
-        Called from smif.data_layer.data_handle
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def write_scenario_variant_data(self, scenario_name, variant_name, data_array,
-                                    timestep=None):
-        """Write scenario data file
-
-        Arguments
-        ---------
-        scenario_name : str
-            Name of the scenario
-        variant_name : str
-            Name of the scenario variant
-        data_array : smif.data_layer.data_array.DataArray
-            Contains the annotated data
-        timestep: int (optional)
-            If None, read data for all timesteps
-
-        Notes
-        -----
-        Called from smif.data_layer.data_handle
-        """
-        raise NotImplementedError()
-    # endregion
-
-    # region Narratives
-    @abstractmethod
-    def _read_narrative(self, sos_model_name, narrative_name):
-        """Read narrative from sos_model
-
-        Arguments
-        ---------
-        sos_model_name : str
-            The name of the sos_model to which the narrative belongs
-        narrative_name: str
-            Name of the narrative
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def read_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                    parameter_name, timestep=None):
-        """Read narrative data file
-
-        Arguments
-        ---------
-        sos_model_name : str
-            The name of the sos_model to which the narrative belongs
-        narrative_name: str
-            Name of the narrative
-        variant_name: str
-            Narrative variant to use
-        parameter_name: str
-            Variable (parameter) to read
-        timestep: int (optional)
-            Timestep
-
-        Returns
-        -------
-        smif.data_layer.data_array.DataArray
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                     data_array, timestep=None):
-        """Read narrative data file
-
-        Arguments
-        ---------
-        sos_model_name : str
-            The name of the sos_model to which the narrative belongs
-        narrative_name: str
-            Name of the narrative
-        data_array : smif.data_layer.data_array.DataArray
-            Contains the annotated data to write
-        timestep: int (optional)
-            Timestep
-
-        """
-        raise NotImplementedError()
+        self.data_store.write_coefficients(source_spec, destination_spec, data)
     # endregion
 
     # region Results
-    @abstractmethod
-    def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
+    def read_results(self, model_run_name, model_name, output_spec, timestep=None,
                      decision_iteration=None):
-        """Return results of a `model_name` in `modelrun_name` for a given `output_name`
+        """Return results of a `model_name` in `model_run_name` for a given `output_name`
 
         Parameters
         ----------
-        modelrun_id : str
+        model_run_id : str
         model_name : str
-        output_spec: smif.metadata.Spec
+        output_spec : smif.metadata.Spec
         timestep : int, default=None
         decision_iteration : int, default=None
 
         Returns
         -------
-        smif.data_layer.data_array.DataArray
-
-        Notes
-        -----
-        Called from smif.data_layer.data_handle
+        ~smif.data_layer.data_array.DataArray
         """
-        raise NotImplementedError()
+        return self.data_store.read_results(
+            model_run_name, model_name, output_spec, timestep, decision_iteration)
 
-    @abstractmethod
-    def write_results(self, data_array, modelrun_name, model_name, timestep=None,
+    def write_results(self, data_array, model_run_name, model_name, timestep=None,
                       decision_iteration=None):
-        """Write results of a `model_name` in `modelrun_name` for a given `output_name`
+        """Write results of a `model_name` in `model_run_name` for a given `output_name`
 
         Parameters
         ----------
-        data_array : smif.data_layer.data_array.DataArray
-        modelrun_id : str
+        data_array : ~smif.data_layer.data_array.DataArray
+        model_run_id : str
         model_name : str
         timestep : int, optional
         decision_iteration : int, optional
-
-        Notes
-        -----
-        Called from smif.data_layer.data_handle
         """
-        raise NotImplementedError()
+        self.data_store.write_results(
+            data_array, model_run_name, model_name, timestep, decision_iteration)
 
-    @abstractmethod
-    def prepare_warm_start(self, modelrun_id):
-        """Copy the results from the previous modelrun if available
-
-        The method allows a previous unsuccessful modelrun to 'warm start' a new
-        model run from a later timestep. Model results are recovered from the
-        timestep that the previous modelrun was run until, and the new model
-        run runs from the returned timestep
-
-        Parameters
-        ----------
-        modelrun_id: str
-            The name of the modelrun to recover
+    def available_results(self, model_run_name):
+        """List available results from a model run
 
         Returns
         -------
-        int
-            The timestep to which the data store was recovered
+        list[tuple]
+             Each tuple is (timestep, decision_iteration, model_name, output_name)
+        """
+        return self.data_store.available_results(model_run_name)
+
+    def prepare_warm_start(self, model_run_name):
+        """Copy the results from the previous model_run if available
+
+        The method allows a previous unsuccessful model_run to 'warm start' a new model run
+        from a later timestep. Model results are recovered from the timestep that the previous
+        model_run was run until, and the new model run runs from the returned timestep
+
+        Parameters
+        ----------
+        model_run_name : str
+
+        Returns
+        -------
+        int The timestep to which the data store was recovered
 
         Notes
         -----
         Called from smif.controller.execute
         """
-        raise NotImplementedError()
-    # endregion
-
-    # region Common methods
-    @staticmethod
-    def ndarray_to_data_list(data_array, timestep=None):
-        """Convert :class:`numpy.ndarray` to list of observations
-
-        Parameters
-        ----------
-        data_array : smif.data_layer.data_array.DataArray
-        timestep : int, default=None
-
-        Returns
-        -------
-        observations : list of dict
-            Each dict has keys: one for the variable name, one for each dimension in spec.dims,
-            and optionally one for the given timestep
-        """
-        observations = []
-
-        data = data_array.as_ndarray()
-        spec = data_array.spec
-
-        for indices, value in np.ndenumerate(data):
-            obs = {}
-            obs[spec.name] = value
-            for dim, idx in zip(spec.dims, indices):
-                obs[dim] = spec.dim_coords(dim).elements[idx]['name']
-                if timestep:
-                    obs['timestep'] = timestep
-            observations.append(obs)
-
-        if data.shape == () and timestep:
-            observations[0]['timestep'] = timestep
-
-        return observations
-
-    @staticmethod
-    def data_list_to_ndarray(observations, spec):
-        """Convert list of observations to a ``DataArray``
-
-        Parameters
-        ----------
-        observations : list of dict
-            Required keys for each dict are:
-            - one key to match spec.name
-            - one key per dimension in spec.dims
-        spec : smif.metadata.Spec
-
-        Returns
-        -------
-        smif.data_layer.data_array.DataArray
-
-        Raises
-        ------
-        KeyError
-            If an observation is missing a required key
-        ValueError
-            If an observation region or interval is not in region_names or
-            interval_names
-        SmifDataNotFoundError
-            If the observations don't include data for any dimension
-            combination
-        SmifDataMismatchError
-            If the dimension coordinate ids do not
-            match the observations
-        """
-        Store._validate_observations(observations, spec)
-
-        data = np.full(spec.shape, np.nan, dtype=spec.dtype)
-
-        for obs in observations:
-            indices = []
-            for dim in spec.dims:
-                key = obs[dim]  # name (id/label) of coordinate element along dimension
-                idx = spec.dim_coords(dim).ids.index(key)  # index of name in dim elements
-                indices.append(idx)
-            data[tuple(indices)] = obs[spec.name]
-
-        return DataArray(spec, data)
-
-    @staticmethod
-    def _validate_observations(observations, spec):
-        if len(observations) != reduce(lambda x, y: x * y, spec.shape, 1):
-            msg = "Number of observations ({}) is not equal to product of {}"
-            raise SmifDataMismatchError(
-                msg.format(len(observations), spec.shape)
+        available_results = self.available_results(model_run_name)
+        if available_results:
+            max_timestep = max(
+                timestep for
+                timestep, decision_iteration, model_name, output_name in available_results
             )
-        Store._validate_observation_keys(observations, spec)
-        for dim in spec.dims:
-            Store._validate_observation_meta(
-                observations,
-                spec.dim_coords(dim).ids,
-                dim
-            )
-
-    @staticmethod
-    def _validate_observation_keys(observations, spec):
-        for obs in observations:
-            if spec.name not in obs:
-                raise KeyError(
-                    "Observation missing variable key ({}): {}".format(spec.name, obs))
-            for dim in spec.dims:
-                if dim not in obs:
-                    raise KeyError(
-                        "Observation missing dimension key ({}): {}".format(dim, obs))
-
-    @staticmethod
-    def _validate_observation_meta(observations, meta_list, meta_name):
-        observed = set()
-        for line, obs in enumerate(observations):
-            if obs[meta_name] not in meta_list:
-                raise ValueError("Unknown {} '{}' in row {}".format(
-                    meta_name, obs[meta_name], line))
-            else:
-                observed.add(obs[meta_name])
-        missing = set(meta_list) - observed
-        if missing:
-            raise SmifDataNotFoundError(
-                "Missing values for {}s: {}".format(meta_name, list(missing)))
-
-    @staticmethod
-    def _skip_coords(config, keys):
-        """Given a config dict and list of top-level keys for lists of specs,
-        delete coords from each spec in each list.
-        """
-        config = copy.deepcopy(config)
-        for key in keys:
-            for spec in config[key]:
-                try:
-                    del spec['coords']
-                except KeyError:
-                    pass
-        return config
-
-    def _read_narrative_variable_spec(self, sos_model_name, narrative_name, variable):
-        # Read spec from narrative->provides->variable
-        narrative = self._read_narrative(sos_model_name, narrative_name)
-        model_name = self._key_from_list(variable, narrative['provides'])
-        if not model_name:
-            msg = "Cannot identify source of Spec for variable '{}'"
-            raise SmifDataNotFoundError(msg.format(variable))
-        parameters = self.read_sector_model(model_name)['parameters']
-        return self._get_spec_from_provider(parameters, variable)
-
-    def _get_spec_from_provider(self, config_list, variable_name):
-        """Gets a Spec definition from a scenario definition
-
-        Arguments
-        ---------
-        config_list : list of dict
-            A list of spec dicts
-        variable_name : str
-            The name of the variable for which to find the spec
-
-        Returns
-        -------
-        smif.metadata.Spec
-        """
-        spec = self._pick_from_list(config_list, variable_name)
-        if spec is not None:
-            self._set_item_coords(spec)
-            return Spec.from_dict(spec)
+            # could explicitly clear results for max timestep
         else:
-            msg = "Could not find spec definition for '{}'"
-            raise SmifDataNotFoundError(msg.format(variable_name))
-
-    def _set_item_coords(self, item):
-        """If dims exists and is not empty
-        """
-        if 'dims' in item and item['dims']:
-            item['coords'] = {
-                dim: self.read_dimension(dim)['elements']
-                for dim in item['dims']
-            }
-
-    @staticmethod
-    def _pick_from_list(list_of_dicts, name):
-        for item in list_of_dicts:
-            if 'name' in item and item['name'] == name:
-                return item
-        return None
-
-    @staticmethod
-    def _key_from_list(name, dict_of_lists):
-        for key, items in dict_of_lists.items():
-            if name in items:
-                return key
-        return None
+            max_timestep = None
+        return max_timestep
     # endregion
+
+    # region data store utilities
+    def _key_from_data(self, path, *args):
+        """Return path or generate a unique key for a given set of args
+        """
+        if type(self.data_store) == CSVDataStore:
+            return path
+        else:
+            return tuple(args)
+    # endregion
+
+
+def _pick_from_list(list_of_dicts, name):
+    for item in list_of_dicts:
+        if 'name' in item and item['name'] == name:
+            return item
+    return None

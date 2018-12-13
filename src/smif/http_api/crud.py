@@ -102,7 +102,7 @@ class ModelRunAPI(MethodView):
             elif action == 'start':
                 data = request.get_json() or request.form
                 args = {
-                    'directory': data_interface.base_folder,
+                    'directory': data_interface.model_base_folder,
                     'verbosity': data['args']['verbosity'],
                     'warm_start': data['args']['warm_start'],
                     'output_format': data['args']['output_format']
@@ -256,10 +256,10 @@ class SectorModelAPI(MethodView):
         try:
             if sector_model_name is None:
                 data = []
-                data = data_interface.read_sector_models(skip_coords=True)
+                data = data_interface.read_models(skip_coords=True)
             else:
                 data = {}
-                data = data_interface.read_sector_model(sector_model_name, skip_coords=True)
+                data = data_interface.read_model(sector_model_name, skip_coords=True)
 
             response = jsonify({
                 'data': data,
@@ -270,7 +270,6 @@ class SectorModelAPI(MethodView):
                 'data': data,
                 'error': parse_exceptions(err)
             })
-            print(parse_exceptions(err))
         return response
 
     def post(self):

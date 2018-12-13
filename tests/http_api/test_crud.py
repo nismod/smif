@@ -51,7 +51,7 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         _check_exist('sos_model', arg)
         return get_sos_model
 
-    def read_sector_model(arg, skip_coords=False):
+    def read_model(arg, skip_coords=False):
         _check_exist('sector_model', arg)
         return get_sector_model
 
@@ -76,8 +76,8 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         'read_model_run.side_effect':  read_model_run,
         'read_sos_models.side_effect': [[get_sos_model]],
         'read_sos_model.side_effect':  read_sos_model,
-        'read_sector_models.side_effect': [[get_sector_model]],
-        'read_sector_model.side_effect':  read_sector_model,
+        'read_models.side_effect': [[get_sector_model]],
+        'read_model.side_effect':  read_model,
         'read_scenarios.side_effect': [[get_scenario]],
         'read_scenario.side_effect':  read_scenario,
         'read_narratives.side_effect': [[get_narrative]],
@@ -399,7 +399,7 @@ def test_get_sector_models(client, get_sector_model):
     """GET all model runs
     """
     response = client.get('/api/v1/sector_models/')
-    assert current_app.config.data_interface.read_sector_models.called == 1
+    assert current_app.config.data_interface.read_models.called == 1
 
     assert response.status_code == 200
     data = parse_json(response)
@@ -411,7 +411,8 @@ def test_get_sector_model(client, get_sector_model):
     """
     name = get_sector_model['name']
     response = client.get('/api/v1/sector_models/{}'.format(name))
-    current_app.config.data_interface.read_sector_model.assert_called_with(name, skip_coords=True)
+    current_app.config.data_interface.read_model.assert_called_with(
+        name, skip_coords=True)
 
     data = parse_json(response)
     assert data['data'] == get_sector_model
@@ -422,7 +423,8 @@ def test_get_sector_model_missing(client):
     """
     response = client.get('/api/v1/sector_models/does_not_exist')
     data = parse_json(response)
-    assert data['error']['SmifDataNotFoundError'] == ["sector_model 'does_not_exist' not found"]
+    assert data['error']['SmifDataNotFoundError'] == \
+        ["sector_model 'does_not_exist' not found"]
 
 
 def test_post_sector_model(client, get_sector_model):

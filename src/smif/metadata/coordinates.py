@@ -96,6 +96,12 @@ class Coordinates(object):
         """
         return self._ids
 
+    @property
+    def names(self):
+        """Names is an alias for Coordinates.ids
+        """
+        return self._ids
+
     def _set_elements(self, elements):
         """Set elements with a list of ids (string or numeric) or dicts (including key 'id')
         """

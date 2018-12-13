@@ -1,7 +1,7 @@
 """Test SectorModel and SectorModelBuilder
 """
 import smif.sample_project.models.water_supply
-from pytest import fixture, mark, raises
+from pytest import fixture, raises
 from smif.metadata import Spec
 from smif.model.sector_model import SectorModel
 from smif.sample_project.models.water_supply import WaterSupplySectorModel
@@ -250,73 +250,3 @@ class TestSectorModel():
         """Call before_model_run
         """
         empty_sector_model.before_model_run(None)
-
-
-@mark.xfail()
-class TestSectorModelDimensions():
-    """SectorModels should have access to dimension metadata, including regions
-    (name, geometry and centroid) and intervals.
-    """
-    def test_access_intervals(self, empty_sector_model):
-        """Access names
-        """
-        interval_names = empty_sector_model.get_interval_names('annual')
-        assert interval_names == ['1']
-
-    def test_access_region_names(self, empty_sector_model):
-        """Access names
-        """
-        region_names = empty_sector_model.get_region_names('half_squares')
-        assert region_names == ['a', 'b']
-
-    def test_access_region_geometries(self, empty_sector_model):
-        """Access geometries
-        """
-        actual = empty_sector_model.get_regions('half_squares')
-
-        expected = [
-            {
-                'type': 'Feature',
-                'properties': {'name': 'a'},
-                'geometry': {
-                    'type': 'Polygon',
-                    'coordinates': (((0.0, 0.0), (0.0, 1.0), (1.0, 1.0),
-                                     (1.0, 0.0), (0.0, 0.0),),)
-                }
-            },
-            {
-                'type': 'Feature',
-                'properties': {'name': 'b'},
-                'geometry': {
-                    'type': 'Polygon',
-                    'coordinates': (((0.0, 1.0), (0.0, 2.0), (1.0, 2.0),
-                                     (1.0, 1.0), (0.0, 1.0),),)
-                }
-            },
-        ]
-        assert actual == expected
-
-    def test_access_region_centroids(self, empty_sector_model):
-        """Access geometry centroids
-        """
-        actual = empty_sector_model.get_region_centroids('half_squares')
-
-        expected = [
-            {
-                'type': 'Feature',
-                'properties': {'name': 'a'},
-                'geometry': {
-                    'type': 'Point',
-                    'coordinates': (0.5, 0.5)
-                }
-            },
-            {
-                'type': 'Feature',
-                'properties': {'name': 'b'},
-                'geometry': {
-                    'type': 'Point',
-                    'coordinates': (0.5, 1.5)
-                }
-            }
-        ]
-        assert actual == expected

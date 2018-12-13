@@ -89,7 +89,9 @@ import smif.cli.log
 
 from smif.controller import copy_project_folder, execute_model_run, ModelRunScheduler
 from smif.http_api import create_app
-from smif.data_layer import DatafileInterface
+from smif.data_layer import Store
+from smif.data_layer.file import (CSVDataStore, FileMetadataStore, ParquetDataStore,
+                                  YamlConfigStore)
 
 
 __author__ = "Will Usher, Tom Russell"
@@ -103,8 +105,8 @@ LOGGER = logging.getLogger(__name__)
 def list_model_runs(args):
     """List the model runs defined in the config
     """
-    handler = DatafileInterface(args.directory)
-    model_run_configs = handler.read_model_runs()
+    store = _get_store(args)
+    model_run_configs = store.read_model_runs()
     for run in model_run_configs:
         print(run['name'])
 
@@ -123,7 +125,30 @@ def run_model_runs(args):
     else:
         model_run_ids = [args.modelrun]
 
-    execute_model_run(model_run_ids, args.directory, args.interface, args.warm)
+    store = _get_store(args)
+    execute_model_run(model_run_ids, store, args.warm)
+
+
+def _get_store(args):
+    """Contruct store as configured by arguments
+    """
+    if args.interface == 'local_csv':
+        store = Store(
+            config_store=YamlConfigStore(args.directory),
+            metadata_store=FileMetadataStore(args.directory),
+            data_store=CSVDataStore(args.directory),
+            model_base_folder=args.directory
+        )
+    elif args.interface == 'local_binary':
+        store = Store(
+            config_store=YamlConfigStore(args.directory),
+            metadata_store=FileMetadataStore(args.directory),
+            data_store=ParquetDataStore(args.directory),
+            model_base_folder=args.directory
+        )
+    else:
+        raise ValueError("Store interface type {} not recognised.".format(args.interface))
+    return store
 
 
 def _run_server(args):
@@ -131,7 +156,7 @@ def _run_server(args):
     app = create_app(
         static_folder=app_folder,
         template_folder=app_folder,
-        data_interface=DatafileInterface(args.directory),
+        data_interface=_get_store(args),
         scheduler=ModelRunScheduler()
     )
     port = 5000
@@ -196,47 +221,44 @@ def parse_arguments():
                         help='show messages: -v to see messages reporting on progress, ' +
                         '-vv to see debug messages.')
 
+    parent_parser = ArgumentParser(add_help=False)
+    parent_parser.add_argument('-v', '--verbose',
+                               action='count',
+                               help='show messages: -v to see messages reporting on ' +
+                               'progress, -vv to see debug messages.')
+    parent_parser.add_argument('-i', '--interface',
+                               default='local_csv',
+                               choices=['local_csv', 'local_binary'],
+                               help="Select the data interface (default: %(default)s)")
+    parent_parser.add_argument('-d', '--directory',
+                               default='.',
+                               help="Path to the project directory")
+
     subparsers = parser.add_subparsers(help='available commands')
 
     # SETUP
-    parser_setup = subparsers.add_parser('setup',
-                                         help='Setup the project folder')
+    parser_setup = subparsers.add_parser(
+        'setup', help='Setup the project folder', parents=[parent_parser])
     parser_setup.set_defaults(func=setup_project_folder)
-    parser_setup.add_argument('-d', '--directory',
-                              default='.',
-                              help="Path to the project directory")
 
     # LIST
-    parser_list = subparsers.add_parser('list',
-                                        help='List available model runs')
+    parser_list = subparsers.add_parser(
+        'list', help='List available model runs', parents=[parent_parser])
     parser_list.set_defaults(func=list_model_runs)
-    parser_list.add_argument('-d', '--directory',
-                             default='.',
-                             help="Path to the project directory")
 
     # APP
-    parser_app = subparsers.add_parser('app',
-                                       help='Open smif app')
+    parser_app = subparsers.add_parser(
+        'app', help='Open smif app', parents=[parent_parser])
     parser_app.set_defaults(func=run_app)
-    parser_app.add_argument('-d', '--directory',
-                            default='.',
-                            help="Path to the project directory")
 
     # RUN
-    parser_run = subparsers.add_parser('run',
-                                       help='Run a model')
+    parser_run = subparsers.add_parser(
+        'run', help='Run a model', parents=[parent_parser])
     parser_run.set_defaults(func=run_model_runs)
-    parser_run.add_argument('-i', '--interface',
-                            default='local_csv',
-                            choices=['local_csv', 'local_binary'],
-                            help="Select the data interface (default: %(default)s)")
     parser_run.add_argument('-w', '--warm',
                             action='store_true',
                             help="Use intermediate results from the last modelrun \
                                   and continue from where it had left")
-    parser_run.add_argument('-d', '--directory',
-                            default='.',
-                            help="Path to the project directory")
     parser_run.add_argument('-b', '--batchfile',
                             action='store_true',
                             help="Use a batchfile instead of a modelrun name (a \
