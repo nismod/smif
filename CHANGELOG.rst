@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 1.1
+===========
+- GUI improved usability
+  - Forms now ask users to discard or save changes
+  - Configuration lists can be sorted and filtered
+  - Single click navigation between linked configurations
+  - First steps of input validation (in SosModel configurations)
+
 Version 0.8
 ===========
 
