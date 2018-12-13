@@ -32,7 +32,6 @@ class FileDataStore(DataStore):
             'coefficients',
             'strategies',
             'initial_conditions',
-            'initial_inputs',
             'interventions',
             'narratives',
             'scenarios',

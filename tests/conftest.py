@@ -58,7 +58,6 @@ def setup_empty_folder_structure(tmpdir_factory):
         'coefficients',
         'dimensions',
         'initial_conditions',
-        'initial_inputs',
         'interventions',
         'narratives',
         'scenarios',
