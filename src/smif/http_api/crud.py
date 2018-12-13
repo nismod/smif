@@ -102,7 +102,7 @@ class ModelRunAPI(MethodView):
             elif action == 'start':
                 data = request.get_json() or request.form
                 args = {
-                    'directory': data_interface.base_folder,
+                    'directory': data_interface.model_base_folder,
                     'verbosity': data['args']['verbosity'],
                     'warm_start': data['args']['warm_start'],
                     'output_format': data['args']['output_format']
