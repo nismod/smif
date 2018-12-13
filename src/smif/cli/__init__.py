@@ -235,47 +235,44 @@ def parse_arguments():
                         help='show messages: -v to see messages reporting on progress, ' +
                         '-vv to see debug messages.')
 
+    parent_parser = ArgumentParser(add_help=False)
+    parent_parser.add_argument('-v', '--verbose',
+                               action='count',
+                               help='show messages: -v to see messages reporting on ' +
+                               'progress, -vv to see debug messages.')
+    parent_parser.add_argument('-i', '--interface',
+                               default='local_csv',
+                               choices=['local_csv', 'local_binary'],
+                               help="Select the data interface (default: %(default)s)")
+    parent_parser.add_argument('-d', '--directory',
+                               default='.',
+                               help="Path to the project directory")
+
     subparsers = parser.add_subparsers(help='available commands')
 
     # SETUP
-    parser_setup = subparsers.add_parser('setup',
-                                         help='Setup the project folder')
+    parser_setup = subparsers.add_parser(
+        'setup', help='Setup the project folder', parents=[parent_parser])
     parser_setup.set_defaults(func=setup_project_folder)
-    parser_setup.add_argument('-d', '--directory',
-                              default='.',
-                              help="Path to the project directory")
 
     # LIST
-    parser_list = subparsers.add_parser('list',
-                                        help='List available model runs')
+    parser_list = subparsers.add_parser(
+        'list', help='List available model runs', parents=[parent_parser])
     parser_list.set_defaults(func=list_model_runs)
-    parser_list.add_argument('-d', '--directory',
-                             default='.',
-                             help="Path to the project directory")
 
     # APP
-    parser_app = subparsers.add_parser('app',
-                                       help='Open smif app')
+    parser_app = subparsers.add_parser(
+        'app', help='Open smif app', parents=[parent_parser])
     parser_app.set_defaults(func=run_app)
-    parser_app.add_argument('-d', '--directory',
-                            default='.',
-                            help="Path to the project directory")
 
     # RUN
-    parser_run = subparsers.add_parser('run',
-                                       help='Run a model')
+    parser_run = subparsers.add_parser(
+        'run', help='Run a model', parents=[parent_parser])
     parser_run.set_defaults(func=run_model_runs)
-    parser_run.add_argument('-i', '--interface',
-                            default='local_csv',
-                            choices=['local_csv', 'local_binary'],
-                            help="Select the data interface (default: %(default)s)")
     parser_run.add_argument('-w', '--warm',
                             action='store_true',
                             help="Use intermediate results from the last modelrun \
                                   and continue from where it had left")
-    parser_run.add_argument('-d', '--directory',
-                            default='.',
-                            help="Path to the project directory")
     parser_run.add_argument('-b', '--batchfile',
                             action='store_true',
                             help="Use a batchfile instead of a modelrun name (a \
