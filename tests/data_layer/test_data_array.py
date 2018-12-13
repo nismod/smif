@@ -109,7 +109,8 @@ class TestDataArray():
         # update in-place
         small_da.update(partial)
 
-        expected_data = data
+        # match fixture data
+        expected_data = numpy.arange(24, dtype='float').reshape((2, 3, 4))
         expected_data[0, 0, 1] = 99
         expected = DataArray(small_da.spec, expected_data)
 

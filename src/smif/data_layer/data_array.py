@@ -201,22 +201,33 @@ class DataArray():
         self_xr = self.as_xarray()
         other_xr = other.as_xarray()
         # use xarray.combine_first convenience function
-        self_xr.combine_first(other_xr)
+        overridden = other_xr.combine_first(self_xr)
         # assign result back to self
-        self.data = self_xr.data
+        self.data = overridden.data
 
     def validate_as_full(self):
         """Check that the data array contains no NaN values
         """
-        data_contains_nan = np.isnan(np.sum(self.data))
-        if data_contains_nan:
-            raise SmifDataMismatchError
+        if np.issubdtype(self.data.dtype, np.number):
+            if np.any(np.isnan(self.data)):
+                raise SmifDataMismatchError
+        else:
+            # create vectorised test for nan to use against np.array with dtype=object
+            def _is_nan(x):
+                return x is np.nan
+            _is_nan = np.frompyfunc(_is_nan, 1, 1)
+
+            if np.any(_is_nan(self.data).astype(bool)):
+                raise SmifDataMismatchError
 
 
 def _array_equal_nan(a, b):
     """Compare numpy arrays for equality, allowing NaN to be considerd equal to itself
     """
-    return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
+    if np.issubdtype(a.dtype, np.number) and np.issubdtype(b.dtype, np.number):
+        return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
+    else:
+        return np.all(a == b)
 
 
 def _reindex_xr_data_array(spec, xr_data_array):
@@ -243,6 +254,5 @@ def _reindex_xr_data_array(spec, xr_data_array):
     # reindex to ensure data order
     coords = {c.name: c.ids for c in spec.coords}
     xr_data_array = xr_data_array.reindex(indexers=coords)
-    print(xr_data_array)
 
     return xr_data_array

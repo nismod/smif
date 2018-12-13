@@ -270,7 +270,6 @@ class SectorModelAPI(MethodView):
                 'data': data,
                 'error': parse_exceptions(err)
             })
-            print(parse_exceptions(err))
         return response
 
     def post(self):

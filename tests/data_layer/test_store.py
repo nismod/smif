@@ -38,6 +38,17 @@ class TestStoreConfig():
         store.delete_model_run(minimal_model_run['name'])
         assert store.read_model_runs() == []
 
+    def test_read_model_run_sorted(self, store, minimal_model_run):
+        y_model_run = {'name': 'y'}
+        z_model_run = {'name': 'z'}
+
+        store.write_model_run(minimal_model_run)
+        store.write_model_run(z_model_run)
+        store.write_model_run(y_model_run)
+
+        expected = [minimal_model_run, y_model_run, z_model_run]
+        assert store.read_model_runs() == expected
+
     def test_sos_models(self, store, get_sos_model):
         # write
         store.write_sos_model(get_sos_model)
@@ -177,7 +188,6 @@ class TestStoreMetadata():
 
 
 class TestStoreData():
-
     def test_scenario_variant_data(self, store, sample_dimensions, scenario,
                                    sample_scenario_data):
         # setup
@@ -223,6 +233,22 @@ class TestStoreData():
         actual = store.read_narrative_variant_data(
             sos_model_name, narrative_name, variant_name, param_name)
         assert actual == narrative_variant_data
+
+    def test_model_parameter_default(self, store, get_multidimensional_param,
+                                     get_sector_model, sample_dimensions):
+        param_data = get_multidimensional_param
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        for dim in param_data.dims:
+            store.write_dimension({'name': dim, 'elements': param_data.dim_elements(dim)})
+        get_sector_model['parameters'] = [param_data.spec.as_dict()]
+        store.write_model(get_sector_model)
+        # write
+        store.write_model_parameter_default(
+            get_sector_model['name'], param_data.name, param_data)
+        # read
+        actual = store.read_model_parameter_default(get_sector_model['name'], param_data.name)
+        assert actual == param_data
 
     def test_interventions(self, store, sample_dimensions, get_sector_model, interventions):
         # setup
