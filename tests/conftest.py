@@ -10,6 +10,7 @@ import os
 from copy import deepcopy
 
 import numpy as np
+import pandas as pd
 from pytest import fixture
 from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
@@ -420,7 +421,7 @@ def get_sector_model(annual, hourly):
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'unit': 'percentage',
+                'unit': '%',
                 'dtype': 'float'
             },
             {
@@ -514,6 +515,45 @@ def get_sector_model_parameter_defaults(get_sector_model):
         spec = Spec.from_dict(param)
         data[param['name']] = DataArray(spec, nda)
     return data
+
+
+@fixture
+def get_multidimensional_param():
+    spec = Spec.from_dict({
+        'name': 'ss_t_base_heating',
+        'description': 'Industrial base temperature',
+        'default': '../energy_demand/parameters/ss_t_base_heating.csv',
+        'unit': '',
+        'dims': ['interpolation_params', 'end_yr'],
+        'coords': {
+            'interpolation_params': ['diffusion_choice', 'value_ey'],
+            'end_yr': [2030, 2050]
+        },
+        'dtype': 'float'
+    })
+    dataframe = pd.DataFrame([
+        {
+            'interpolation_params': 'diffusion_choice',
+            'end_yr': 2030,
+            'ss_t_base_heating': 0
+        },
+        {
+            'interpolation_params': 'diffusion_choice',
+            'end_yr': 2050,
+            'ss_t_base_heating': 0
+        },
+        {
+            'interpolation_params': 'value_ey',
+            'end_yr': 2030,
+            'ss_t_base_heating': 15.5
+        },
+        {
+            'interpolation_params': 'value_ey',
+            'end_yr': 2050,
+            'ss_t_base_heating': 15.5
+        },
+    ]).set_index(['interpolation_params', 'end_yr'])
+    return DataArray.from_df(spec, dataframe)
 
 
 @fixture

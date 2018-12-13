@@ -582,7 +582,7 @@ class Store():
         -------
         ~smif.data_layer.data_array.DataArray
         """
-        model = self.read_model(model_name, skip_coords=True)
+        model = self.read_model(model_name)
         param = _pick_from_list(model['parameters'], parameter_name)
         spec = Spec.from_dict(param)
         try:
@@ -627,7 +627,7 @@ class Store():
             A dict of intervention dictionaries containing intervention
             attributes keyed by intervention name
         """
-        model = self.read_model(model_name)
+        model = self.read_model(model_name, skip_coords=True)
         if model['interventions'] != []:
             return self.data_store.read_interventions(model['interventions'])
         else:

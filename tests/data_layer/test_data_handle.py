@@ -61,7 +61,7 @@ def mock_store(sample_dimensions, get_sector_model, empty_store):
     parameter_spec = Spec(
         name='smart_meter_savings',
         dtype='float',
-        unit='percentage'
+        unit='%'
     )
     da = DataArray(parameter_spec, np.array(99))
     store.write_narrative_variant_data(
@@ -590,7 +590,7 @@ class TestDataHandleGetParameters:
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'unit': 'percentage',
+                'unit': '%',
                 'dtype': 'float'
             })
         expected = DataArray(spec, np.array(42, dtype=float))
@@ -614,7 +614,7 @@ class TestDataHandleGetParameters:
                                "in end year compared to base year",
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0.5, 2],
-                'unit': 'percentage',
+                'unit': '%',
                 'dtype': 'float'
             })
         expected = DataArray(spec, np.array(99))
@@ -655,7 +655,7 @@ class TestDataHandleGetParameters:
         parameter_spec = Spec(
             name='smart_meter_savings',
             dtype='float',
-            unit='percentage'
+            unit='%'
         )
         first_variant = DataArray(parameter_spec, np.array(1))
         mock_store.write_narrative_variant_data(

@@ -7,7 +7,8 @@ from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.data_layer.data_array import DataArray
-from smif.exception import SmifDataExistsError, SmifDataNotFoundError
+from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
+                            SmifDataNotFoundError)
 
 
 class MemoryConfigStore(ConfigStore):
@@ -269,16 +270,22 @@ class MemoryDataStore(DataStore):
     def _read_data_array(self, key, spec, timestep=None):
         if timestep:
             try:
-                return self._data_array[key, timestep]
+                data = self._data_array[key, timestep]
             except KeyError:
                 raise SmifDataNotFoundError(
                     "Data for {} not found for timestep {}".format(spec.name, timestep))
         else:
             try:
-                return self._data_array[key]
+                data = self._data_array[key]
             except KeyError:
                 raise SmifDataNotFoundError(
                     "Data for {} not found".format(spec.name))
+
+        if data.spec != spec:
+            raise SmifDataMismatchError(
+                "Spec did not match reading {}, requested {}, got {}".format(
+                    spec.name, spec, data.spec))
+        return data
 
     def _write_data_array(self, key, data, timestep=None):
         if timestep:
@@ -289,7 +296,12 @@ class MemoryDataStore(DataStore):
 
     # region Model parameters
     def read_model_parameter_default(self, key, spec):
-        return self._model_parameter_defaults[key]
+        data = self._model_parameter_defaults[key]
+        if data.spec != spec:
+            raise SmifDataMismatchError(
+                "Spec did not match reading {}, requested {}, got {}".format(
+                    spec.name, spec, data.spec))
+        return data
 
     def write_model_parameter_default(self, key, data):
         self._model_parameter_defaults[key] = data
