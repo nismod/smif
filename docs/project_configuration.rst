@@ -31,20 +31,19 @@ The basic folder structure looks like this::
         /sos_models
             energy_water.yml
             energy.yml
-        /model_runs
-            energy_central.yml
-            energy_water_cp_cr.yml
     /data
+        /coefficients
+            ...
         /dimensions
             hourly.csv
             annual.csv
             lad.shp
         /initial_conditions
-            energy_demand_existing.yml
-            energy_supply_existing.yml
+            energy_demand_existing.csv
+            energy_supply_existing.csv
         /interventions
-            energy_demand.yml
-            energy_supply.yml
+            energy_demand.csv
+            energy_supply.csv
         /narratives
             energy_demand_high_tech.csv
             central_planning.csv
@@ -52,7 +51,7 @@ The basic folder structure looks like this::
             population_high.csv
             population_low.csv
         /strategies
-            pipeline_2020.yml
+            pipeline_2020.csv
     /models
         energy_demand.py
         water_supply.py
@@ -145,7 +144,7 @@ are executed.
 
 .. literalinclude:: ../src/smif/sample_project/config/model_runs/energy_central.yml
    :language: yaml
-   :lines: 4-5
+   :lines: 4-7
 
 
 Scenarios
@@ -156,7 +155,7 @@ chosen.
 
 .. literalinclude:: ../src/smif/sample_project/config/model_runs/energy_central.yml
    :language: yaml
-   :lines: 7-9
+   :lines: 9-11
 
 
 Narratives
@@ -169,7 +168,7 @@ none at all).
 
 .. literalinclude:: ../src/smif/sample_project/config/model_runs/energy_central.yml
    :language: yaml
-   :lines: 10-12
+   :lines: 12
 
 
 System-of-Systems Models
@@ -219,13 +218,13 @@ system-of-systems model configuration defintion.
 
 .. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
-   :lines: 3-5
+   :lines: 3-7
 
 Similarly, narratives can be made available if desired.
 
 .. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
-   :lines: 6
+   :lines: 8-24
 
 
 Simulation Models
@@ -236,7 +235,7 @@ project.
 
 .. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
-   :lines: 7-9
+   :lines: 25-27
 
 
 Dependencies
@@ -248,7 +247,7 @@ model dependencies (where a model will receive data from another model).
 
 .. literalinclude:: ../src/smif/sample_project/config/sos_models/energy_water.yml
    :language: yaml
-   :lines: 10-35
+   :lines: 28-58
 
 .. csv-table::
    :header: "Attribute", "Type", "Notes"
@@ -475,15 +474,14 @@ Interventions are instances of :class:`-smif.intervention.Intervention` and are 
 supply side efficiency improvements, but not demand side management (these are incorporated in
 the strategies).
 
-Define all possible interventions in an ``*.yml`` file in the ``data/interventions``
+Define all possible interventions in an ``*.csv`` file in the ``data/interventions``
 For example:
 
-.. literalinclude:: ../src/smif/sample_project/data/interventions/water_supply.yml
-   :language: yaml
-   :lines: 6-19
+.. literalinclude:: ../src/smif/sample_project/data/interventions/water_supply.csv
+   :language: text
+   :lines: 1-3
 
-Alternatively define all possible interventions in an ``*.csv`` file in the
-``data/interventions`` For example:
+After name, columns are optional and will be used for any attributes. Another example:
 
 .. literalinclude:: ../src/smif/sample_project/data/interventions/energy_supply.csv
    :language: csv
@@ -505,8 +503,8 @@ Initial conditions define the interventions to be applied before any decision pr
 Depending on the model, it may be possible to compose the entire system of interest from a
 list of initial conditions.
 
-.. literalinclude:: ../src/smif/sample_project/data/initial_conditions/water_supply_oxford.yml
-   :language: yaml
+.. literalinclude:: ../src/smif/sample_project/data/initial_conditions/water_supply_oxford.csv
+   :language: text
 
 
 References

@@ -98,7 +98,7 @@ tool for you.
   - **smif** *is not* focussed on tight coupling between models which need to exchange
     data at every simulation timestep (running in lockstep)
   - **smif** *does* accomodate individual models with different spatial and temporal
-    (and other dimensions') resolutions, by providing data Adaptors to convert from one
+    (and other dimensional) resolutions, by providing data adaptors to convert from one
     resolution to another
 
 - **smif** has been designed to support the coupling of bottom-up, engineering
@@ -244,7 +244,7 @@ Citation
 
 If you use **smif** for research, please cite the software directly:
 
-* Will Usher, Tom Russell, & Roald Schoenmakers. (2018, August 15). nismod/smif
+* Will Usher, Tom Russell, & Roald Schoenmakers. (2018). nismod/smif
   vX.Y.Z (Version vX.Y.Z). Zenodo. http://doi.org/10.5281/zenodo.1309336
 
 Here's an example BibTeX entry::

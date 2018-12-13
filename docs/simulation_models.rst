@@ -82,12 +82,9 @@ Accessing model parameter data
 
 Use the :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameter` or
 :py:meth:`~smif.data_layer.data_handle.DataHandle.get_parameters` method as shown in the
-example:
+example::
 
-.. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
-   :language: python
-   :lines:  22
-   :dedent: 8
+        parameter_value = data.get_parameter('smart_meter_savings')
 
 
 Note that the name argument passed to the
@@ -101,36 +98,27 @@ Accessing model input data for the current year
 The method :py:meth:`~smif.data_layer.data_handle.DataHandle.get_data()` allows a user to get
 the value for any model input that has been defined in the sector model's configuration.  In
 the example, the option year argument is omitted, and it defaults to fetching the data for the
-current timestep.
+current timestep::
 
-.. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
-   :language: python
-   :lines: 27
-   :dedent: 8
+    current_energy_demand = data.get_data('energy_demand')
 
 
 Accessing model input data for the base year
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To access model input data from the timestep prior to the current timestep, you can use the
-following argument:
+following argument::
 
-.. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
-   :language: python
-   :lines:  33
-   :dedent: 8
+    base_energy_demand = data.get_base_timestep_data('energy_demand')
 
 
 Accessing model input data for a previous year
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To access model input data from the timestep prior to the current timestep, you can use the
-following argument:
+following argument::
 
-.. literalinclude:: ../src/smif/sample_project/models/energy_demand.py
-   :language: python
-   :lines:  41
-   :dedent: 8
+    prev_energy_demand = data.get_previous_timestep_data('energy_demand')
 
 
 Passing model data directly to a Python model
@@ -141,7 +129,7 @@ the model, passing in data directly.
 
 .. literalinclude:: ../src/smif/sample_project/models/water_supply.py
    :language: python
-   :lines:  73-80
+   :lines:  76-80
    :dedent: 8
 
 In this example, the example water supply simulation model is instantiated within the simulate
@@ -259,10 +247,26 @@ Writing model results to the data handler
 Writing results back to the data handler is as simple as calling the
 :py:meth:`~smif.data_layer.data_handle.DataHandle.set_results` method::
 
-    data.set_results("cost", np.array([[1.23, 1.543, 2.355]])
 
-The expected format of the data is a 2-dimensional numpy array with the dimensions described by
-the tuple ``(len(regions), len(intervals))`` as defined in the model's output configuration.
+    data.set_results("cost", np.array([1.23, 1.543, 2.355])
+
+The expected format of the data is an n-dimensional numpy array with the dimensions described
+by the shape tuple ``(len(dim), ...)`` where there is an entry for each dimension defined in
+the model's output specification.
+
+A model wrapper can reflect on its outputs and their specs::
+
+    # find the spec for a given output
+    spec = self.outputs[output_name]
+    # spec dimensions
+    spec.dims  # e.g. ['lad', 'month', 'economic_sector']
+    # spec shape (length of each dimension)
+    spec.shape  # e.g. (370, 12, 46)
+    # dimension names (labels for each element in a given dimension)
+    spec.dim_names('lad')  # e.g. ['E070001', 'E060002', ...]
+    # full metadata about dimension elements
+    spec.dim_elements('lad')  # [{'name': 'E070001', 'feature': {'properties': {...}, 'coordinates': {...}}}, ...]
+
 Results are expected to be set for each of the model outputs defined in the output
 configuration and a warning is raised if these are not present at runtime.
 
