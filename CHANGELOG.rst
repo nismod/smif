@@ -2,13 +2,36 @@
 Changelog
 =========
 
-Version 1.1
+Version 1.0
 ===========
+
 - GUI improved usability
+
   - Forms now ask users to discard or save changes
   - Configuration lists can be sorted and filtered
   - Single click navigation between linked configurations
   - First steps of input validation (in SosModel configurations)
+
+- Define model data (inputs/parameters/outputs) using arbitrary dimensions (may be spatial,
+  temporal, categorical)
+
+  - Dimension conversions can be performed by an ``Adaptor``, represented as another
+    ``SectorModel`` within a ``SosModel``
+
+- Data layer refactor to enable various Store implementations, separately for configuration
+  data, metadata and input/parameter/results and interventions/decisions/state data.
+
+  - ``DataArray`` and ``Spec`` handle input/parameter/results data and metadata
+  - Groundwork for a PostgreSQL ``DbConfigStore`` implementation
+
+- Separation of ``SosModel`` construction and configuration from ``ModelRun`` running:
+  introduce a ``JobScheduler`` that runs directed graphs of simulation jobs, connected by
+  dependency edges.
+
+  - Initial ``JobScheduler`` is purely serial
+  - Remove ``ModelSet``, removing the capability to handle within-timestep dependency loops
+  - Introduce explicit between-timestep dependencies (including model self-dependency)
+
 
 Version 0.8
 ===========
@@ -17,17 +40,21 @@ Functionality
 
 - GUI redesiged to include sidebar, jobs, modelrun scheduler
 - Decision architecture reaches maturity
+
   - Initial conditions and pre-specified planning concepts merged
   - Pre-Specified Planning strategies can be defined in model run
   - Strategy contains a list of planning decisions (name, build_year) tuples
   - Interventions file contains list of interventions
+
 - Interventions can be defined in yml or csv format
-  - CSV format is parsed so that <attribute_name>_value and <attribute_name>_unit 
-    suffixes to column names populate a nested dict 
+
+  - CSV format is parsed so that <attribute_name>_value and <attribute_name>_unit
+    suffixes to column names populate a nested dict
     ``{attribute_name: {'value': x, 'unit': y}}`` in memory
-  - yml format is declared using ``attribute_name: {'value': x, 'unit': y}}`` 
+  - yml format is declared using ``attribute_name: {'value': x, 'unit': y}}``
     structure
-- CLI code refactored out to seperate build, execute, load and setup modules in 
+
+- CLI code refactored out to seperate build, execute, load and setup modules in
   a new ``smif.controller`` subpackage
 
 
@@ -37,7 +64,7 @@ Version 0.7
 Functionality:
 
 - Renamed ScenarioSets parameters to facets which constrain the dimensions of
-  data defined in Scenarios 
+  data defined in Scenarios
 - Numerous functionality and usability improvements to the smif GUI
 - Refactored and generalised conversion of space and time to use numpy operations
 - Conversion coefficients are cached and loaded instead of being regenerated each run
@@ -45,27 +72,27 @@ Functionality:
   resumes a model run from the last successfully completed time interval of a run
 - Added timestamps to results
 - Add a binary file interface ``-i`` argument to the command line interface that
-  writes intermediate model results using pyarrow resulting in much smaller file 
+  writes intermediate model results using pyarrow resulting in much smaller file
   sizes than csv and a great speedup
-- Write out a link to the ``smif app`` in the console, instead of opening the app 
+- Write out a link to the ``smif app`` in the console, instead of opening the app
   in the default browser automatically
 
 Bugs:
 
 - Fixes to the GUI to avoid locking due to threading
-- Fixed a bug in datafileinterface where an infinite loop was entered when an 
+- Fixed a bug in datafileinterface where an infinite loop was entered when an
   interval definition did not exist
-- Datafileinterface validates data from the set of unique interval and region 
+- Datafileinterface validates data from the set of unique interval and region
   names
 - Updated SectorModel calls to region register to return lists of intervals and
   regions in same order as the datafileinterface
 - Fixes to the GUI server to enable port-forwarding through a virtual machine
 - Fixes bug in smif --warm, where certain keywords caused the warm start to not
   being able to find previous modelrun results
-- Fixes loading modelruns interactively, resolve error when loading duplicate 
+- Fixes loading modelruns interactively, resolve error when loading duplicate
   region/interval definitions
-- Fixes region and interval columns of scenario data files are read as integers 
-  from csv but IDs of regions and intervals could be read as strings or integers 
+- Fixes region and interval columns of scenario data files are read as integers
+  from csv but IDs of regions and intervals could be read as strings or integers
   from shapefiles and csvs respectively raising validation errors
 
 
@@ -83,7 +110,7 @@ Functionality:
   from the command line
 - Added ``smif setup`` command to copy bundled example project to user folder
 - Added functionality to SectorModel wrapper which enables introspection of
-  configuration data - managed by the ``DataHandle`` class and accessed at 
+  configuration data - managed by the ``DataHandle`` class and accessed at
   runtime in SectorModel.simulate() via the ``self.data`` property. This gives
   access to timesteps, input data, region and interval sets, model parameters.
 - Added unit conversion and the ability to load custom units from a file, the
@@ -94,7 +121,7 @@ Functionality:
 - Build documentation using better-api package to better order and display the
   code on readthedocs
 - Added class diagram for data DataHandle class
-- Migrated code coverage to codecov.io 
+- Migrated code coverage to codecov.io
 - Updated pyscaffold dependency to v3.0 (removes pbr which causes issues with
    e.g. submodules among other things)
 - GUI is now build on travis in deploy stage
@@ -122,7 +149,7 @@ Version 0.5
 - Updated documentation
 - Added prototype (template) smif GUI using web app (in progress)
 - Updated command line interface with new commands ``list`` and ``run``
-- Introduced concepts of simulation model, scenario model, 
+- Introduced concepts of simulation model, scenario model,
   system-of-systems model, narratives and model run.
 
 Version 0.4
@@ -132,10 +159,10 @@ Version 0.4
 - Uses numpy arrays for passing data between scenarios and models
 - Refactored space-time convertor functions
 - Read ModelSet convergence settings from model configuration data
-- Added units to model metadata class and require as well as spatial and 
+- Added units to model metadata class and require as well as spatial and
   temporal resolutions
 - Added UML class diagrams to documentation
-- Refactored to create discrete model objects which inherit from an 
+- Refactored to create discrete model objects which inherit from an
   abstractclass
 - Complete restructuring of packagea
 
@@ -146,7 +173,7 @@ Version 0.3
 - Fast, more compact YAML
 - Input, output and pre-specified planning files can now be empty
 - State is passed between successive time steps
-- Interdependencies (cycles in dependencies) are now supported, 
+- Interdependencies (cycles in dependencies) are now supported,
   models are run in cycles stopping at convergence or timeout
 - Non-unique time interval definitions are supported
 
