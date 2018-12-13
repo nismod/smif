@@ -405,7 +405,10 @@ class CSVDataStore(FileDataStore):
     def _read_ndarray(self, path):
         """Read numpy.ndarray
         """
-        return np.loadtxt(path)
+        try:
+            return np.loadtxt(path)
+        except OSError:
+            raise FileNotFoundError(path)
 
     def _write_ndarray(self, path, data, header=None):
         """Write numpy.ndarray
@@ -474,7 +477,10 @@ class ParquetDataStore(FileDataStore):
     def _read_ndarray(self, path):
         """Read numpy.ndarray
         """
-        return np.load(path)
+        try:
+            return np.load(path)
+        except OSError:
+            raise FileNotFoundError(path)
 
     def _write_ndarray(self, path, data, header=None):
         """Write numpy.ndarray
