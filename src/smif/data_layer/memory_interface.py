@@ -25,15 +25,12 @@ class MemoryConfigStore(ConfigStore):
 
     # region Model runs
     def read_model_runs(self):
-        model_runs = self._model_runs.items()
-        sorted_model_runs = OrderedDict(sorted(model_runs,
-                                        key=lambda t: t[0]))
-        return list(sorted_model_runs.values())
+        return list(self._model_runs.values())
 
     def read_model_run(self, model_run_name):
         try:
             return self._model_runs[model_run_name]
-        except(KeyError):
+        except KeyError:
             raise SmifDataNotFoundError("sos_model_run '%s' not found" % (model_run_name))
 
     def write_model_run(self, model_run):
@@ -51,7 +48,7 @@ class MemoryConfigStore(ConfigStore):
     def delete_model_run(self, model_run_name):
         try:
             del self._model_runs[model_run_name]
-        except(KeyError):
+        except KeyError:
             raise SmifDataNotFoundError("model_run '%s' not found" % (model_run_name))
     # endregion
 
@@ -62,7 +59,7 @@ class MemoryConfigStore(ConfigStore):
     def read_sos_model(self, sos_model_name):
         try:
             return self._sos_models[sos_model_name]
-        except(KeyError):
+        except KeyError:
             raise SmifDataNotFoundError("sos_model '%s' not found" % (sos_model_name))
 
     def write_sos_model(self, sos_model):
@@ -80,7 +77,7 @@ class MemoryConfigStore(ConfigStore):
     def delete_sos_model(self, sos_model_name):
         try:
             del self._sos_models[sos_model_name]
-        except(KeyError):
+        except KeyError:
             raise SmifDataNotFoundError("sos_model '%s' not found" % (sos_model_name))
     # endregion
 
@@ -91,7 +88,7 @@ class MemoryConfigStore(ConfigStore):
     def read_model(self, model_name):
         try:
             return self._models[model_name]
-        except(KeyError):
+        except KeyError:
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
 
     def write_model(self, model):
@@ -111,7 +108,7 @@ class MemoryConfigStore(ConfigStore):
     def delete_model(self, model_name):
         try:
             del self._models[model_name]
-        except(KeyError):
+        except KeyError:
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
     # endregion
 
@@ -124,7 +121,7 @@ class MemoryConfigStore(ConfigStore):
         try:
             scenario = self._scenarios[scenario_name]
             return _variant_dict_to_list(scenario)
-        except(KeyError):
+        except KeyError:
             raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
 
     def write_scenario(self, scenario):
@@ -146,7 +143,7 @@ class MemoryConfigStore(ConfigStore):
     def delete_scenario(self, scenario_name):
         try:
             del self._scenarios[scenario_name]
-        except(KeyError):
+        except KeyError:
             raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
     # endregion
 
@@ -157,7 +154,7 @@ class MemoryConfigStore(ConfigStore):
     def read_scenario_variant(self, scenario_name, variant_name):
         try:
             return self._scenarios[scenario_name]['variants'][variant_name]
-        except(KeyError):
+        except KeyError:
             raise SmifDataNotFoundError("scenario '%s' variant '%s' not found"
                                         % (scenario_name, variant_name))
 
@@ -198,7 +195,7 @@ class MemoryConfigStore(ConfigStore):
     def read_strategies(self, modelrun_name):
         try:
             return self._strategies[modelrun_name]
-        except(KeyError):
+        except KeyError:
             raise SmifDataNotFoundError("strategies in modelrun '%s' not found"
                                         % (modelrun_name))
 

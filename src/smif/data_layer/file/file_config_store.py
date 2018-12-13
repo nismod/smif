@@ -95,8 +95,7 @@ class YamlConfigStore(ConfigStore):
     # region Model runs
     def read_model_runs(self):
         names = _read_filenames_in_dir(self.config_folders['model_runs'], '.yml')
-        sorted_names = sorted(names)
-        model_runs = [self.read_model_run(name) for name in sorted_names]
+        model_runs = [self.read_model_run(name) for name in names]
         return model_runs
 
     def read_model_run(self, model_run_name):

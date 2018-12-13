@@ -38,6 +38,17 @@ class TestStoreConfig():
         store.delete_model_run(minimal_model_run['name'])
         assert store.read_model_runs() == []
 
+    def test_read_model_run_sorted(self, store, minimal_model_run):
+        y_model_run = {'name': 'y'}
+        z_model_run = {'name': 'z'}
+
+        store.write_model_run(minimal_model_run)
+        store.write_model_run(z_model_run)
+        store.write_model_run(y_model_run)
+
+        expected = [minimal_model_run, y_model_run, z_model_run]
+        assert store.read_model_runs() == expected
+
     def test_sos_models(self, store, get_sos_model):
         # write
         store.write_sos_model(get_sos_model)
