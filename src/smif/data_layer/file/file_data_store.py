@@ -429,8 +429,8 @@ class ParquetDataStore(FileDataStore):
         """
         try:
             dataframe = pandas.read_parquet(path, engine='pyarrow')
-        except pa.lib.ArrowIOError:
-            raise SmifDataNotFoundError
+        except (pa.lib.ArrowIOError, OSError) as ex:
+            raise SmifDataNotFoundError from ex
 
         if timestep is not None:
             if 'timestep' not in dataframe.columns:
