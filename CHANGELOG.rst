@@ -5,6 +5,8 @@ Changelog
 Version 1.0
 ===========
 
+Functionality:
+
 - GUI improved usability
 
   - Forms now ask users to discard or save changes
@@ -36,7 +38,7 @@ Version 1.0
 Version 0.8
 ===========
 
-Functionality
+Functionality:
 
 - GUI redesiged to include sidebar, jobs, modelrun scheduler
 - Decision architecture reaches maturity
@@ -116,15 +118,15 @@ Functionality:
 - Added unit conversion and the ability to load custom units from a file, the
   location to which is specified under the ``units`` key in the project file
 
- Development:
+Development:
 
 - Build documentation using better-api package to better order and display the
   code on readthedocs
 - Added class diagram for data DataHandle class
 - Migrated code coverage to codecov.io
 - Updated pyscaffold dependency to v3.0 (removes pbr which causes issues with
-   e.g. submodules among other things)
-- GUI is now build on travis in deploy stage
+  e.g. submodules among other things)
+- GUI is now built on travis in deploy stage
 - Travis build stages are used to separate testing and deployment
 
 Bugs:
@@ -164,7 +166,7 @@ Version 0.4
 - Added UML class diagrams to documentation
 - Refactored to create discrete model objects which inherit from an
   abstractclass
-- Complete restructuring of packagea
+- Complete restructuring of package
 
 
 Version 0.3
