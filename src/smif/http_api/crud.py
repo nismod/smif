@@ -281,7 +281,7 @@ class SectorModelAPI(MethodView):
         data = check_timestamp(data)
 
         try:
-            data_interface.write_sector_model(data)
+            data_interface.write_model(data)
         except SmifException as err:
             response = jsonify({
                 'message': 'failed',
@@ -303,7 +303,7 @@ class SectorModelAPI(MethodView):
         data = check_timestamp(data)
 
         try:
-            data_interface.update_sector_model(sector_model_name, data)
+            data_interface.update_model(sector_model_name, data)
         except SmifException as err:
             response = jsonify({
                 'message': 'failed',
@@ -321,7 +321,7 @@ class SectorModelAPI(MethodView):
         DELETE /api/v1/sector_models
         """
         data_interface = current_app.config.data_interface
-        data_interface.delete_sector_model(sector_model_name)
+        data_interface.delete_model(sector_model_name)
         response = jsonify({})
         return response
 

@@ -437,7 +437,7 @@ def test_post_sector_model(client, get_sector_model):
         '/api/v1/sector_models/',
         data=send,
         content_type='application/json')
-    current_app.config.data_interface.write_sector_model.assert_called_with(get_sector_model)
+    current_app.config.data_interface.write_model.assert_called_with(get_sector_model)
 
     data = parse_json(response)
     assert response.status_code == 201
@@ -452,7 +452,7 @@ def test_put_sector_model(client, get_sector_model):
         '/api/v1/sector_models/' + get_sector_model['name'],
         data=send,
         content_type='application/json')
-    current_app.config.data_interface.update_sector_model.assert_called_with(
+    current_app.config.data_interface.update_model.assert_called_with(
         get_sector_model['name'], get_sector_model)
 
     assert response.status_code == 200
@@ -466,7 +466,7 @@ def test_delete_sector_model(client, get_sector_model):
         '/api/v1/sector_models/' + get_sector_model['name'],
         data=send,
         content_type='application/json')
-    current_app.config.data_interface.delete_sector_model.assert_called_with(
+    current_app.config.data_interface.delete_model.assert_called_with(
         get_sector_model['name'])
 
     assert response.status_code == 200
