@@ -400,16 +400,16 @@ class Store():
     # endregion
 
     # region Dimensions
-    def read_dimensions(self):
+    def read_dimensions(self, skip_coords=False):
         """Read dimensions
 
         Returns
         -------
         list[~smif.metadata.coords.Coords]
         """
-        return self.metadata_store.read_dimensions()
+        return self.metadata_store.read_dimensions(skip_coords)
 
-    def read_dimension(self, dimension_name):
+    def read_dimension(self, dimension_name, skip_coords=False):
         """Return dimension
 
         Parameters
@@ -421,7 +421,7 @@ class Store():
         ~smif.metadata.coords.Coords
             A dimension definition (including elements)
         """
-        return self.metadata_store.read_dimension(dimension_name)
+        return self.metadata_store.read_dimension(dimension_name, skip_coords)
 
     def write_dimension(self, dimension):
         """Write dimension to project configuration

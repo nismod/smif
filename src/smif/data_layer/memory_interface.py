@@ -221,11 +221,17 @@ class MemoryMetadataStore(MetadataStore):
     # endregion
 
     # region Dimensions
-    def read_dimensions(self):
-        return list(self._dimensions.values())
+    def read_dimensions(self, skip_coords=False):
+        return [self.read_dimension(k, skip_coords) for k in self._dimensions]
 
-    def read_dimension(self, dimension_name):
-        return self._dimensions[dimension_name]
+    def read_dimension(self, dimension_name, skip_coords=False):
+        dim = self._dimensions[dimension_name]
+        if skip_coords:
+            dim = {
+                'name': dim['name'],
+                'description': dim['description']
+            }
+        return dim
 
     def write_dimension(self, dimension):
         self._dimensions[dimension['name']] = dimension

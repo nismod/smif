@@ -46,13 +46,16 @@ class FileMetadataStore(MetadataStore):
     # endregion
 
     # region Dimensions
-    def read_dimensions(self):
+    def read_dimensions(self, skip_coords=False):
         dim_names = _read_filenames_in_dir(self.config_folder, '.yml')
-        return [self.read_dimension(name) for name in dim_names]
+        return [self.read_dimension(name, skip_coords) for name in dim_names]
 
-    def read_dimension(self, dimension_name):
+    def read_dimension(self, dimension_name, skip_coords=False):
         dim = _read_yaml_file(self.config_folder, dimension_name)
-        dim['elements'] = self._read_dimension_file(dim['elements'])
+        if skip_coords:
+            del dim['elements']
+        else:
+            dim['elements'] = self._read_dimension_file(dim['elements'])
         return dim
 
     def write_dimension(self, dimension):
