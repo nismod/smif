@@ -6,6 +6,8 @@ from functools import lru_cache
 from logging import getLogger
 
 import pandas
+from pandas import compat as pandas_compat
+from pandas.core import common as pandas_common
 from ruamel.yaml import YAML
 from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.exception import SmifDataNotFoundError, SmifDataReadError
@@ -95,7 +97,8 @@ class FileMetadataStore(MetadataStore):
         if ext in ('.yml', '.yaml'):
             data = _read_yaml_file(self.data_folder, filebasename)
         elif ext == '.csv':
-            data = pandas.read_csv(filepath).to_dict('records')
+            dataframe = pandas.read_csv(filepath)
+            data = _df_to_records(dataframe)
         elif ext in ('.geojson', '.shp'):
             data = self._read_spatial_file(filepath)
         else:
@@ -204,3 +207,25 @@ def _read_filenames_in_dir(path, extension):
             basename, _ = os.path.splitext(filename)
             files.append(basename)
     return files
+
+
+def _df_to_records(df):
+    """Fix pandas conversion to list[dict] with python scalar values
+
+    Ported here from future release of pandas 0.24.0
+
+    See:
+    - PR: https://github.com/pandas-dev/pandas/pull/23921
+    - Issue: https://github.com/pandas-dev/pandas/issues/23753
+
+    Note that this skips the pandas_common,maybe_box_datetimelike implementation, which may be
+    desired but relies on more pandas internals so is not copied over (yet).
+    """
+    into_c = pandas_common.standardize_mapping(dict)
+    return [
+        into_c(
+            (k, v)
+            for k, v in pandas_compat.iteritems(row._asdict())
+        )
+        for row in df.itertuples(index=False)
+    ]
