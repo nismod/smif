@@ -83,7 +83,6 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         'read_model.side_effect':  read_model,
         'read_scenarios.side_effect': [[get_scenario]],
         'read_scenario.side_effect':  read_scenario,
-        'read_narratives.side_effect': [[get_narrative]],
         'read_narrative.side_effect':  read_narrative,
         'read_dimensions.side_effect': [[get_dimension]],
         'read_dimension.side_effect':  read_dimension,
@@ -570,17 +569,6 @@ def test_put_scenario(client, get_scenario):
         get_scenario['name'], get_scenario)
 
     assert response.status_code == 200
-
-
-def test_get_narratives(client, get_narrative):
-    """GET all narratives
-    """
-    response = client.get('/api/v1/narratives/')
-    assert current_app.config.data_interface.read_narratives.called == 1
-
-    assert response.status_code == 200
-    data = parse_json(response)
-    assert data['data'] == [get_narrative]
 
 
 def test_get_narrative(client, get_narrative):
