@@ -8,6 +8,9 @@ from unittest.mock import Mock
 import pytest
 import smif
 from flask import current_app
+from smif.data_layer.memory_interface import (MemoryConfigStore,
+                                              MemoryDataStore,
+                                              MemoryMetadataStore)
 from smif.exception import SmifDataNotFoundError
 from smif.http_api import create_app
 
@@ -139,6 +142,28 @@ def test_hello(client):
     """
     response = client.get('/')
     assert "Welcome to smif" in str(response.data)
+
+
+def test_check_mock_is_correct(mock_data_interface):
+    mock_methods = [method_name for method_name in dir(mock_data_interface) if
+                    callable(getattr(mock_data_interface, method_name))]
+    mock_methods = [method for method in mock_methods if
+                    not method.startswith('assert_') and
+                    method not in (
+                        'attach_mock',
+                        'configure_mock',
+                        'mock_add_spec',
+                        'reset_mock',
+                        'return_value')]
+
+    actual_methods = (
+        dir(MemoryConfigStore()) +
+        dir(MemoryDataStore()) +
+        dir(MemoryMetadataStore())
+    )
+
+    for mock_method in mock_methods:
+        assert mock_method in actual_methods
 
 
 def test_get_smif(client):
