@@ -32,8 +32,13 @@ class MetadataStore(metaclass=ABCMeta):
 
     # region Dimensions
     @abstractmethod
-    def read_dimensions(self):
+    def read_dimensions(self, skip_coords=False):
         """Read dimensions
+
+        Parameters
+        ----------
+        skip_coords : bool, default False
+            If True, skip reading dimension elements (names and metadata)
 
         Returns
         -------
@@ -41,12 +46,14 @@ class MetadataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def read_dimension(self, dimension_name):
+    def read_dimension(self, dimension_name, skip_coords=False):
         """Return dimension
 
         Parameters
         ----------
         dimension_name : str
+        skip_coords : bool, default False
+            If True, skip reading dimension elements (names and metadata)
 
         Returns
         -------

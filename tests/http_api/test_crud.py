@@ -63,7 +63,7 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         _check_exist('narrative', arg)
         return get_narrative
 
-    def read_dimension(arg):
+    def read_dimension(arg, skip_coords=False):
         _check_exist('dimension', arg)
         return get_dimension
 
@@ -639,7 +639,7 @@ def test_get_dimension(client, get_dimension):
     """
     name = get_dimension['name']
     response = client.get('/api/v1/dimensions/{}'.format(name))
-    current_app.config.data_interface.read_dimension.assert_called_with(name)
+    current_app.config.data_interface.read_dimension.assert_called_with(name, skip_coords=True)
 
     assert response.status_code == 200
     data = parse_json(response)
