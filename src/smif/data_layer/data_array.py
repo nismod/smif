@@ -3,7 +3,8 @@
 from logging import getLogger
 
 import numpy as np
-from smif.exception import SmifDataError, SmifDataMismatchError
+from smif.exception import (SmifDataError, SmifDataMismatchError,
+                            SmifDataNotFoundError)
 from smif.metadata.spec import Spec
 
 # Import pandas, xarray if available (optional dependencies)
@@ -208,35 +209,22 @@ class DataArray():
     def validate_as_full(self):
         """Check that the data array contains no NaN values
         """
-        if np.issubdtype(self.data.dtype, np.number):
-            mask = np.zeros(self.data.shape, dtype=np.bool)
-            np.isnan(self.data, out=mask)
+        df = self.as_df()
+        if np.any(df.isnull()):
+            missing_data = self._show_null(df)
+            self.logger.debug("Missing data:\n\n    %s", missing_data)
+            msg = "There are missing data points in '{}'"
+            raise SmifDataNotFoundError(msg.format(self.name))
 
-            if np.any(mask):
-                missing_data = self._show_na()
-                self.logger.debug("Missing data:\n\n    %s", missing_data)
-                msg = "There are missing data points in '{}'"
-                raise SmifDataMismatchError(msg.format(self.name))
-        else:
-            # create vectorised test for nan to use against np.array with dtype=object
-            def _is_nan(x):
-                return x is np.nan
-            _is_nan = np.frompyfunc(_is_nan, 1, 1)
-
-            if np.any(_is_nan(self.data).astype(bool)):
-                msg = "There are missing data points in '{}'"
-                raise SmifDataMismatchError(msg.format(self.name))
-
-    def _show_na(self) -> pandas.DataFrame:
+    def _show_null(self, df) -> pandas.DataFrame:
         """Shows missing data
 
         Returns
         -------
         pandas.DataFrame
         """
-        df = self.as_df()
         try:
-            missing_data = df[pandas.isna(df).values]
+            missing_data = df[df.isnull().values]
         except NameError as ex:
             raise SmifDataError(INSTALL_WARNING) from ex
         return missing_data
