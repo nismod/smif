@@ -60,10 +60,6 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         _check_exist('scenario', arg)
         return get_scenario
 
-    def read_narrative(arg):
-        _check_exist('narrative', arg)
-        return get_narrative
-
     def read_dimension(arg):
         _check_exist('dimension', arg)
         return get_dimension
@@ -81,7 +77,6 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         'read_model.side_effect':  read_model,
         'read_scenarios.side_effect': [[get_scenario]],
         'read_scenario.side_effect':  read_scenario,
-        'read_narrative.side_effect':  read_narrative,
         'read_dimensions.side_effect': [[get_dimension]],
         'read_dimension.side_effect':  read_dimension
     }
