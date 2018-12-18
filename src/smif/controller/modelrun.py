@@ -124,6 +124,8 @@ class ModelRun(object):
 
         """
         self.logger.debug("Running model run %s", self.name)
+        self.logger.profiling_start('modelrun.run', self.name)
+
         if self.status == 'Built':
             if not self.model_horizon:
                 raise SmifModelRunError("No timesteps specified for model run")
@@ -136,6 +138,8 @@ class ModelRun(object):
             self.status = 'Successful'
         else:
             raise SmifModelRunError("Model is not yet built.")
+
+        self.logger.profiling_stop('modelrun.run', self.name)
 
 
 class ModelRunner(object):
