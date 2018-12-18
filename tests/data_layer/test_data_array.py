@@ -6,6 +6,7 @@ import xarray as xr
 from numpy.testing import assert_array_equal
 from pytest import fixture, raises
 from smif.data_layer.data_array import DataArray
+from smif.exception import SmifDataMismatchError
 from smif.metadata import Spec
 
 
@@ -273,3 +274,40 @@ class TestDataFrameInterop():
 
         df_from_da = da.as_df()
         pd.testing.assert_frame_equal(df_from_da, df)
+
+
+class TestMissingData:
+
+    def test_missing_data_raises(self, small_da):
+        """Should create a pandas.DataFrame from a DataArray
+        """
+        da = small_da
+        da.validate_as_full()
+        da.data[1, 1] = numpy.NaN
+
+        with raises(SmifDataMismatchError):
+            da.validate_as_full()
+
+    def test_missing_data_message(self, small_da):
+        """Should create a pandas.DataFrame from a DataArray
+        """
+        da = small_da
+        da.validate_as_full()
+        da.data[1, 1, 1] = numpy.NaN
+        da.data[0, 0, 3] = numpy.NaN
+        with raises(SmifDataMismatchError) as ex:
+            da.validate_as_full()
+
+        expected = "There are missing data points in 'test_data'"
+        assert expected in str(ex)
+
+    def test_missing_data(self, small_da):
+
+        actual = small_da._show_na()
+        expected = pd.DataFrame(columns=['test_data'], dtype=float)
+        expected.index = pd.MultiIndex(
+            levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
+            labels=[[], [], []],
+            names=['a', 'b', 'c'])
+
+        pd.testing.assert_frame_equal(actual, expected)

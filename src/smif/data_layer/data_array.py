@@ -209,8 +209,14 @@ class DataArray():
         """Check that the data array contains no NaN values
         """
         if np.issubdtype(self.data.dtype, np.number):
-            if np.any(np.isnan(self.data)):
-                raise SmifDataMismatchError
+            mask = np.zeros(self.data.shape, dtype=np.bool)
+            np.isnan(self.data, out=mask)
+
+            if np.any(mask):
+                missing_data = self._show_na()
+                self.logger.debug("Missing data:\n\n    %s", missing_data)
+                msg = "There are missing data points in '{}'"
+                raise SmifDataMismatchError(msg.format(self.name))
         else:
             # create vectorised test for nan to use against np.array with dtype=object
             def _is_nan(x):
@@ -218,7 +224,22 @@ class DataArray():
             _is_nan = np.frompyfunc(_is_nan, 1, 1)
 
             if np.any(_is_nan(self.data).astype(bool)):
-                raise SmifDataMismatchError
+                msg = "There are missing data points in '{}'"
+                raise SmifDataMismatchError(msg.format(self.name))
+
+    def _show_na(self) -> pandas.DataFrame:
+        """Shows missing data
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+        df = self.as_df()
+        try:
+            missing_data = df[pandas.isna(df).values]
+        except NameError as ex:
+            raise SmifDataError(INSTALL_WARNING) from ex
+        return missing_data
 
 
 def _array_equal_nan(a, b):

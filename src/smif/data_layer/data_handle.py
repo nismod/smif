@@ -270,6 +270,12 @@ class DataHandle(object):
         smif.data_layer.data_array.DataArray
             Contains data annotated with the metadata and provides utility methods
             to access the data in different ways
+
+        Raises
+        ------
+        SmifDataError
+            If any data reading error occurs below this method, the error is
+            handled and reraised within the context of the current call
         """
         if input_name not in self._inputs:
             raise KeyError(
@@ -304,20 +310,38 @@ class DataHandle(object):
         spec = self._inputs[input_name]
 
         if dep['type'] == 'scenario':
-            data = self._store.read_scenario_variant_data(
-                source_model_name,  # read from a given scenario model
-                dep['variant'],  # with given scenario variant
-                source_output_name,  # using output (variable) name
-                timestep
-            )
+            try:
+                data = self._store.read_scenario_variant_data(
+                    source_model_name,  # read from a given scenario model
+                    dep['variant'],  # with given scenario variant
+                    source_output_name,  # using output (variable) name
+                    timestep
+                )
+            except SmifDataError as ex:
+                msg = "Could not read data for output '{}' from '{}.{}' in {}"
+                raise SmifDataError(msg.format(
+                    source_output_name,
+                    source_model_name,
+                    dep['variant'],
+                    timestep
+                )) from ex
         else:
-            data = self._store.read_results(
-                self._modelrun_name,
-                source_model_name,  # read from source model
-                spec,  # using source model output spec
-                timestep,
-                self._decision_iteration
-            )
+            try:
+                data = self._store.read_results(
+                    self._modelrun_name,
+                    source_model_name,  # read from source model
+                    spec,  # using source model output spec
+                    timestep,
+                    self._decision_iteration
+                )
+            except SmifDataError as ex:
+                msg = "Could not read data for output '{}' from '{}' in {}, iteration {}"
+                raise SmifDataError(msg.format(
+                    spec.name,
+                    source_model_name,
+                    timestep,
+                    self._decision_iteration
+                )) from ex          
 
         return data
 
