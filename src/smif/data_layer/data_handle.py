@@ -281,7 +281,7 @@ class DataHandle(object):
             raise KeyError(
                 "'{}' not recognised as input for '{}'".format(input_name, self._model_name))
 
-        timestep = self.resolve_timestep(timestep)
+        timestep = self._resolve_timestep(timestep)
 
         dep = self._resolve_source(input_name)
 
@@ -290,14 +290,14 @@ class DataHandle(object):
             timestep)
 
         if dep['type'] == 'scenario':
-            data = self.get_scenario(dep, timestep)
+            data = self._get_scenario(dep, timestep)
         else:
             spec = self._inputs[input_name]
-            data = self.get_result(dep, timestep, spec)
+            data = self._get_result(dep, timestep, spec)
 
         return data
 
-    def resolve_timestep(self, timestep):
+    def _resolve_timestep(self, timestep):
         """Resolves a relative timestep to an absolute timestep
 
         Arguments
@@ -325,7 +325,7 @@ class DataHandle(object):
                 assert isinstance(timestep, int) and timestep <= self._current_timestep
         return timestep
 
-    def get_result(self, dep, timestep, spec):
+    def _get_result(self, dep, timestep, spec):
         """Retrieves a model result for a dependency
         """
         try:
@@ -346,7 +346,7 @@ class DataHandle(object):
             )) from ex
         return data
 
-    def get_scenario(self, dep, timestep):
+    def _get_scenario(self, dep, timestep):
         """Retrieves data from a scenario
 
         Arguments
