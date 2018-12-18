@@ -40,7 +40,15 @@ class ModelLoader(object):
         :class:`~smif.model.Model`
         """
         klass = self.load_model_class(config['name'], config['path'], config['classname'])
-        return klass.from_dict(config)
+        if not hasattr(klass, 'from_dict'):
+            msg = "Model '{}' does not have a ``from_dict`` method and " \
+                  "cannot be loaded from config"
+            raise KeyError(msg.format(config['name']))
+        model_instance = klass.from_dict(config)
+        if model_instance:
+            return model_instance
+        else:
+            raise ValueError("Model not initialised from configuration data")
 
     def load_model_class(self, model_name, model_path, classname):
         """Dynamically load model class

@@ -8,12 +8,29 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from smif.exception import SmifDataNotFoundError
+from smif.metadata import Spec
 from smif.model import Model
 
 
 class Adaptor(Model, metaclass=ABCMeta):
     """Abstract Adaptor, to convert inputs/outputs between other Models
+
+    Override method `generate_coefficients`, which accepts two
+    :class:`~smif.metadata.spec.Spec` definitions.
+
     """
+    @classmethod
+    def from_dict(cls, config):
+        """Create object from dictionary serialisation
+        """
+        model = cls(config['name'])
+        model.description = config['description']
+        for input_ in config['inputs']:
+            model.add_input(Spec.from_dict(input_))
+        for output in config['outputs']:
+            model.add_output(Spec.from_dict(output))
+        return model
+
     def simulate(self, data):
         """Convert from input to output based on matching variable names
         """
