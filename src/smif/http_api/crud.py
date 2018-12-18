@@ -426,10 +426,10 @@ class DimensionAPI(MethodView):
         try:
             if dimension_name is None:
                 data = []
-                data = data_interface.read_dimensions()
+                data = data_interface.read_dimensions(skip_coords=True)
             else:
                 data = {}
-                data = data_interface.read_dimension(dimension_name)
+                data = data_interface.read_dimension(dimension_name, skip_coords=True)
 
             response = jsonify({
                 'data': data,
