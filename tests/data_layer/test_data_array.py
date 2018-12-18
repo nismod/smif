@@ -6,6 +6,7 @@ import xarray as xr
 from numpy.testing import assert_array_equal
 from pytest import fixture, raises
 from smif.data_layer.data_array import DataArray
+from smif.exception import SmifDataNotFoundError
 from smif.metadata import Spec
 
 
@@ -41,8 +42,35 @@ def data():
 
 
 @fixture
+def non_numeric_spec(dims, coords):
+    return Spec(
+        name='test_data',
+        dims=dims,
+        coords={
+            'a': coords[0],
+            'b': coords[1],
+            'c': coords[2],
+        },
+        dtype='str',
+        abs_range=('0', '1'),
+        exp_range=('0', '0.5')
+    )
+
+
+@fixture
+def non_numeric_data():
+    strings = [str(x) for x in range(24)]
+    return numpy.array(strings, dtype=numpy.object).reshape((2, 3, 4))
+
+
+@fixture
 def small_da(spec, data):
     return DataArray(spec, data)
+
+
+@fixture
+def small_da_non_numeric(non_numeric_spec, non_numeric_data):
+    return DataArray(non_numeric_spec, non_numeric_data)
 
 
 @fixture
@@ -273,3 +301,80 @@ class TestDataFrameInterop():
 
         df_from_da = da.as_df()
         pd.testing.assert_frame_equal(df_from_da, df)
+
+
+class TestMissingData:
+
+    def test_missing_data_raises(self, small_da):
+        """Should check for NaNs and raise SmifDataError
+        """
+        da = small_da
+        da.validate_as_full()
+        da.data[1, 1] = numpy.NaN
+
+        with raises(SmifDataNotFoundError):
+            da.validate_as_full()
+
+    def test_missing_data_message(self, small_da):
+        """Should check for NaNs and raise SmifDataError
+        """
+        da = small_da
+        da.validate_as_full()
+        da.data[1, 1, 1] = numpy.nan
+        da.data[0, 0, 3] = numpy.nan
+        with raises(SmifDataNotFoundError) as ex:
+            da.validate_as_full()
+
+        expected = "There are missing data points in 'test_data'"
+        assert expected in str(ex)
+
+    def test_missing_data_message_non_numeric(self, small_da_non_numeric):
+        """Should check for NaNs and raise SmifDataError
+        """
+        da = small_da_non_numeric
+        da.validate_as_full()
+        da.data[1, 1, 1] = None
+        da.data[0, 0, 3] = None
+        with raises(SmifDataNotFoundError) as ex:
+            da.validate_as_full()
+
+        expected = "There are missing data points in 'test_data'"
+        assert expected in str(ex)
+
+    def test_no_missing_data(self, small_da):
+
+        df = small_da.as_df()
+        actual = small_da._show_null(df)
+        expected = pd.DataFrame(columns=['test_data'], dtype=float)
+        expected.index = pd.MultiIndex(
+            levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
+            labels=[[], [], []],
+            names=['a', 'b', 'c'])
+
+        pd.testing.assert_frame_equal(actual, expected)
+
+    def test_no_missing_data_non_numeric(self, small_da_non_numeric):
+
+        df = small_da_non_numeric.as_df()
+        actual = small_da_non_numeric._show_null(df)
+        expected = pd.DataFrame(columns=['test_data'], dtype=str)
+        expected.index = pd.MultiIndex(
+            levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
+            labels=[[], [], []],
+            names=['a', 'b', 'c'])
+
+        pd.testing.assert_frame_equal(actual, expected)
+
+    def test_missing_data_non_numeric(self, small_da_non_numeric):
+
+        small_da_non_numeric.data[1, 1, 1] = None
+        df = small_da_non_numeric.as_df()
+        actual = small_da_non_numeric._show_null(df)
+        index = pd.MultiIndex(
+            levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
+            labels=[[1], [1], [1]],
+            names=['a', 'b', 'c'])
+        expected = pd.DataFrame(data=numpy.array([[None]], dtype=numpy.object),
+                                index=index,
+                                columns=['test_data'])
+        pd.testing.assert_frame_equal(actual, expected)

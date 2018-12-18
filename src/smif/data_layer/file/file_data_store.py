@@ -121,7 +121,11 @@ class FileDataStore(DataStore):
         dups = set()
 
         for intervention in all_interventions:
-            name = intervention['name']
+            try:
+                name = intervention['name']
+            except KeyError:
+                msg = "Could not find `name` key in {} for {}"
+                raise KeyError(msg.format(intervention, keys))
             if name in seen:
                 dups.add(name)
             else:
