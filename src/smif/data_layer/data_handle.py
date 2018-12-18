@@ -281,7 +281,33 @@ class DataHandle(object):
             raise KeyError(
                 "'{}' not recognised as input for '{}'".format(input_name, self._model_name))
 
-        # resolve timestep
+        timestep = self.resolve_timestep(timestep)
+
+        dep = self._resolve_source(input_name)
+
+        self.logger.debug(
+            "Read %s %s %s", dep['source_model_name'], dep['source_output_name'],
+            timestep)
+
+        if dep['type'] == 'scenario':
+            data = self.get_scenario(dep, timestep)
+        else:
+            spec = self._inputs[input_name]
+            data = self.get_result(dep, timestep, spec)
+
+        return data
+
+    def resolve_timestep(self, timestep):
+        """Resolves a relative timestep to an absolute timestep
+
+        Arguments
+        ---------
+        timestep : RelativeTimestep or int
+
+        Returns
+        -------
+        int
+        """
         if self._current_timestep is None:
             if timestep is None:
                 raise ValueError("You must provide a timestep to obtain data")
@@ -297,56 +323,66 @@ class DataHandle(object):
                                                         self._timesteps)
             else:
                 assert isinstance(timestep, int) and timestep <= self._current_timestep
+        return timestep
 
-        # resolve source
-        dep = self._resolve_source(input_name)
-
-        source_model_name = dep['source_model_name']
-        source_output_name = dep['source_output_name']
-
-        self.logger.debug(
-            "Read %s %s %s", source_model_name, source_output_name, timestep)
-
-        spec = self._inputs[input_name]
-
-        if dep['type'] == 'scenario':
-            try:
-                data = self._store.read_scenario_variant_data(
-                    source_model_name,  # read from a given scenario model
-                    dep['variant'],  # with given scenario variant
-                    source_output_name,  # using output (variable) name
-                    timestep
-                )
-            except SmifDataError as ex:
-                msg = "Could not read data for output '{}' from '{}.{}' in {}"
-                raise SmifDataError(msg.format(
-                    source_output_name,
-                    source_model_name,
-                    dep['variant'],
-                    timestep
-                )) from ex
-        else:
-            try:
-                data = self._store.read_results(
-                    self._modelrun_name,
-                    source_model_name,  # read from source model
-                    spec,  # using source model output spec
-                    timestep,
-                    self._decision_iteration
-                )
-            except SmifDataError as ex:
-                msg = "Could not read data for output '{}' from '{}' in {}, iteration {}"
-                raise SmifDataError(msg.format(
-                    spec.name,
-                    source_model_name,
-                    timestep,
-                    self._decision_iteration
-                )) from ex          
-
+    def get_result(self, dep, timestep, spec):
+        """Retrieves a model result for a dependency
+        """
+        try:
+            data = self._store.read_results(
+                self._modelrun_name,
+                dep['source_model_name'],  # read from source model
+                spec,  # using source model output spec
+                timestep,
+                self._decision_iteration
+            )
+        except SmifDataError as ex:
+            msg = "Could not read data for output '{}' from '{}' in {}, iteration {}"
+            raise SmifDataError(msg.format(
+                spec.name,
+                dep['source_model_name'],
+                timestep,
+                self._decision_iteration
+            )) from ex
         return data
 
-    def _resolve_source(self, input_name):
+    def get_scenario(self, dep, timestep):
+        """Retrieves data from a scenario
+
+        Arguments
+        ---------
+        dep : dict
+            A scenario dependency
+        timestep : int
+
+        Returns
+        -------
+        DataArray
+        """
+        try:
+            data = self._store.read_scenario_variant_data(
+                dep['source_model_name'],  # read from a given scenario model
+                dep['variant'],  # with given scenario variant
+                dep['source_output_name'],  # using output (variable) name
+                timestep
+            )
+        except SmifDataError as ex:
+            msg = "Could not read data for output '{}' from '{}.{}' in {}"
+            raise SmifDataError(msg.format(
+                dep['source_output_name'],
+                dep['source_model_name'],
+                dep['variant'],
+                timestep
+            )) from ex
+        return data
+
+    def _resolve_source(self, input_name) -> dict:
         """Find best dependency to provide input data
+
+        Returns
+        -------
+        dep : dict
+            A scenario or model dependency dictionary
         """
         try:
             scenario_dep = self._scenario_dependencies[input_name]
