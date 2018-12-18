@@ -1,3 +1,4 @@
+import datetime
 import logging
 import logging.config
 import re
@@ -33,6 +34,45 @@ LOGGING_CONFIG = {
         'level': 'DEBUG'
     }
 }
+
+
+# Make profiling methods available through the logger
+def profiling_start(self, operation, key):
+    time_placeholder = datetime.time(0, 0)
+    level = sum(log[1]['stop'] == time_placeholder for log in logging.Logger._profile.items())
+    logging.Logger._profile[(operation, key)] = {
+        'start': datetime.datetime.now(),
+        'stop': time_placeholder,
+        'level': level
+    }
+
+
+def profiling_stop(self, operation, key):
+    logging.Logger._profile[(operation, key)]['stop'] = datetime.datetime.now()
+
+
+def summary(self, *args, **kws):
+    if self.isEnabledFor(logging.INFO):
+        summary = []
+        summary.append("*"*150)
+        for profile in logging.Logger._profile.keys():
+            profile_data = logging.Logger._profile[profile]
+            diff = profile_data['stop'] - profile_data['start']
+            s = diff.total_seconds()
+            time_spent = '{:02d}:{:02d}:{:02d}'.format(
+                int(s // 3600), int(s % 3600 // 60), int(s % 60))
+            summary.append(profile_data['level']*'| ' + "{:20s} {:80s} {:50s}".format(
+                profile[0], profile[1], time_spent))
+        summary.append("*"*150)
+
+        for entry in summary:
+            self._log(logging.INFO, entry, args)
+
+
+logging.Logger.profiling_start = profiling_start
+logging.Logger.profiling_stop = profiling_stop
+logging.Logger.summary = summary
+logging.Logger._profile = {}
 
 # Configure logging once, outside of any dependency on argparse
 VERBOSITY = None
