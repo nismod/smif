@@ -13,6 +13,10 @@ from smif.model import Model
 
 class Adaptor(Model, metaclass=ABCMeta):
     """Abstract Adaptor, to convert inputs/outputs between other Models
+
+    Override method `generate_coefficients`, which accepts two
+    :class:`~smif.metadata.spec.Spec` definitions.
+
     """
     def simulate(self, data):
         """Convert from input to output based on matching variable names
