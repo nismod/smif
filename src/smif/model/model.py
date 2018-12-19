@@ -1,5 +1,6 @@
 """Model abstract class
 """
+import sys
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 from logging import getLogger
@@ -34,6 +35,38 @@ class Model(metaclass=ABCMeta):
 
     def __repr__(self):
         return "<{} name='{}'>".format(self.__class__.__name__, self.name)
+
+    @classmethod
+    def from_dict(cls, config):
+        """Create object from dictionary serialisation
+        """
+        model = cls(config['name'])
+        model.description = config['description']
+        for input_ in config['inputs']:
+            model.add_input(Spec.from_dict(input_))
+        for output in config['outputs']:
+            model.add_output(Spec.from_dict(output))
+        for param in config['parameters']:
+            model.add_parameter(Spec.from_dict(param))
+        return model
+
+    def as_dict(self):
+        """Serialize the SectorModel object as a dictionary
+
+        Returns
+        -------
+        dict
+        """
+        config = {
+            'name': self.name,
+            'description': self.description,
+            'path': sys.modules[self.__module__].__file__,
+            'classname': self.__class__.__name__,
+            'inputs': [inp.as_dict() for inp in self.inputs.values()],
+            'outputs': [out.as_dict() for out in self.outputs.values()],
+            'parameters': [param.as_dict() for param in self.parameters.values()]
+        }
+        return config
 
     @property
     def inputs(self):
