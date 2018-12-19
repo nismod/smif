@@ -119,6 +119,7 @@ def run_model_runs(args):
     ----------
     args
     """
+    LOGGER.profiling_start('run_model_runs', str(args))
     if args.batchfile:
         with open(args.modelrun, 'r') as f:
             model_run_ids = f.read().splitlines()
@@ -127,6 +128,8 @@ def run_model_runs(args):
 
     store = _get_store(args)
     execute_model_run(model_run_ids, store, args.warm)
+    LOGGER.profiling_stop('run_model_runs', str(args))
+    LOGGER.summary()
 
 
 def _get_store(args):

@@ -36,6 +36,5 @@ def execute_model_run(model_run_ids, store, warm=False):
             LOGGER.exception(ex)
             exit(1)
 
-        LOGGER.summary()
         print("Model run '%s' complete" % modelrun.name)
         sys.stdout.flush()
