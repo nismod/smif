@@ -452,17 +452,12 @@ class ParquetDataStore(FileDataStore):
 
     def _read_data_array(self, path, spec, timestep=None):
         """Read DataArray from file
-
-        Falls back to CSVDataStore if reading from the parquet file fails
         """
         try:
             data_array = self._read_parquet_data_array(path, spec, timestep)
-        except pa.lib.ArrowIOError:
-            csv = CSVDataStore(self.base_folder)
-            data_array = csv._read_data_array(path, spec, timestep)
-        except OSError as ex:
-            raise SmifDataNotFoundError() from ex
-
+        except (pa.lib.ArrowIOError, OSError) as ex:
+            msg = "Could not find data for {} at {}"
+            raise SmifDataNotFoundError(msg.format(spec.name, path)) from ex
         return data_array
 
     def _write_data_array(self, path, data_array, timestep=None):
@@ -475,15 +470,10 @@ class ParquetDataStore(FileDataStore):
 
     def _read_list_of_dicts(self, path):
         """Read file to list[dict]
-
-        Falls back to CSVDataStore if reading from the parquet file fails
         """
         try:
             return pandas.read_parquet(path, engine='pyarrow').to_dict('records')
-        except pa.lib.ArrowIOError:
-            csv = CSVDataStore(self.base_folder)
-            return csv._read_list_of_dicts(path)
-        except Exception as ex:
+        except pa.lib.ArrowIOError as ex:
             msg = "Unable to read file at {}"
             raise SmifDataNotFoundError(msg.format(path)) from ex
 
