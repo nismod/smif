@@ -99,6 +99,7 @@ class FileDataStore(DataStore):
         self._write_data_array(path, data, timestep)
 
     def read_model_parameter_default(self, key, spec):
+        self.logger.debug("Trying to read model parameter default from key {}".format(key))
         path = os.path.join(self.data_folders['parameters'], key)
         data = self._read_data_array(path, spec)
         data.validate_as_full()
@@ -230,6 +231,7 @@ class FileDataStore(DataStore):
     # endregion
 
     # region Results
+
     def read_results(self, modelrun_id, model_name, output_spec, timestep,
                      decision_iteration=None):
         if timestep is None:
@@ -348,6 +350,18 @@ class FileDataStore(DataStore):
         return (timestep, decision_iteration, model_name, output_name)
     # endregion
 
+    def _filter_on_timestep(self, timestep, dataframe, path, spec):
+        if timestep is not None:
+            if 'timestep' not in dataframe.columns:
+                msg = "Missing 'timestep' key, found {} in {}"
+                raise SmifDataMismatchError(msg.format(list(dataframe.columns), path))
+            dataframe = dataframe[dataframe.timestep == timestep]
+            if dataframe.empty:
+                raise SmifDataNotFoundError(
+                    "Data for {} not found for timestep {}".format(spec.name, timestep))
+            dataframe.drop('timestep', axis=1, inplace=True)
+        return dataframe
+
 
 class CSVDataStore(FileDataStore):
     """CSV text file data store
@@ -365,15 +379,7 @@ class CSVDataStore(FileDataStore):
         except FileNotFoundError:
             raise SmifDataNotFoundError
 
-        if timestep is not None:
-            if 'timestep' not in dataframe.columns:
-                msg = "Missing 'timestep' key, found {} in {}"
-                raise SmifDataMismatchError(msg.format(list(dataframe.columns), path))
-            dataframe = dataframe[dataframe.timestep == timestep]
-            if dataframe.empty:
-                raise SmifDataNotFoundError(
-                    "Data for {} not found for timestep {}".format(spec.name, timestep))
-            dataframe.drop('timestep', axis=1, inplace=True)
+        dataframe = self._filter_on_timestep(timestep, dataframe, path, spec)
 
         if spec.dims:
             dataframe.set_index(spec.dims, inplace=True)
@@ -432,21 +438,19 @@ class ParquetDataStore(FileDataStore):
         """
         try:
             dataframe = pandas.read_parquet(path, engine='pyarrow')
-        except (pa.lib.ArrowIOError, OSError) as ex:
-            raise SmifDataNotFoundError from ex
+        except pa.lib.ArrowIOError:
+            dataframe = pandas.read_csv(path)
+        except OSError as ex:
+            raise SmifDataNotFoundError() from ex
 
-        if timestep is not None:
-            if 'timestep' not in dataframe.columns:
-                msg = "Missing 'timestep' key, found {} in {}"
-                raise SmifDataMismatchError(msg.format(list(dataframe.columns), path))
-            dataframe = dataframe[dataframe.timestep == timestep]
-            if dataframe.empty:
-                raise SmifDataNotFoundError(
-                    "Data for {} not found for timestep {}".format(spec.name, timestep))
-            dataframe.drop('timestep', axis=1, inplace=True)
+        dataframe = self._filter_on_timestep(timestep, dataframe, path, spec)
 
         if spec.dims:
-            data_array = DataArray.from_df(spec, dataframe)
+            try:
+                data_array = DataArray.from_df(spec, dataframe)
+            except KeyError:
+                dataframe.set_index(spec.dims, inplace=True)
+                data_array = DataArray.from_df(spec, dataframe)
         else:
             # zero-dimensional case (scalar)
             data = dataframe[spec.name]
@@ -469,8 +473,11 @@ class ParquetDataStore(FileDataStore):
         """
         try:
             return pandas.read_parquet(path, engine='pyarrow').to_dict('records')
-        except pa.lib.ArrowIOError as ex:
-            raise SmifDataNotFoundError(path) from ex
+        except pa.lib.ArrowIOError:
+            return pandas.read_csv(path).to_dict('records')
+        else:
+            msg = "Unable to read file at {}"
+            raise SmifDataNotFoundError(msg.format(path))
 
     def _write_list_of_dicts(self, path, data):
         """Write list[dict] to file
