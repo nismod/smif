@@ -108,7 +108,6 @@ def get_sector_models(sector_model_names, handler):
         )
         sector_model = loader.load(sector_model_config)
         sector_models.append(sector_model)
-        LOGGER.debug("Model inputs: %s", sector_model.inputs.keys())
     return sector_models
 
 

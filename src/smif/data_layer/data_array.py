@@ -3,7 +3,8 @@
 from logging import getLogger
 
 import numpy as np
-from smif.exception import SmifDataError, SmifDataMismatchError
+from smif.exception import (SmifDataError, SmifDataMismatchError,
+                            SmifDataNotFoundError)
 from smif.metadata.spec import Spec
 
 # Import pandas, xarray if available (optional dependencies)
@@ -208,17 +209,25 @@ class DataArray():
     def validate_as_full(self):
         """Check that the data array contains no NaN values
         """
-        if np.issubdtype(self.data.dtype, np.number):
-            if np.any(np.isnan(self.data)):
-                raise SmifDataMismatchError
-        else:
-            # create vectorised test for nan to use against np.array with dtype=object
-            def _is_nan(x):
-                return x is np.nan
-            _is_nan = np.frompyfunc(_is_nan, 1, 1)
+        df = self.as_df()
+        if np.any(df.isnull()):
+            missing_data = self._show_null(df)
+            self.logger.debug("Missing data:\n\n    %s", missing_data)
+            msg = "There are missing data points in '{}'"
+            raise SmifDataNotFoundError(msg.format(self.name))
 
-            if np.any(_is_nan(self.data).astype(bool)):
-                raise SmifDataMismatchError
+    def _show_null(self, df) -> pandas.DataFrame:
+        """Shows missing data
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+        try:
+            missing_data = df[df.isnull().values]
+        except NameError as ex:
+            raise SmifDataError(INSTALL_WARNING) from ex
+        return missing_data
 
 
 def _array_equal_nan(a, b):

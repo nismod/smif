@@ -26,11 +26,8 @@ The key functions include:
   approaches
 
 """
-import sys
 from abc import ABCMeta, abstractmethod
-from typing import Dict
 
-from smif.metadata import Spec
 from smif.model.model import Model
 
 __author__ = "Will Usher, Tom Russell"
@@ -80,38 +77,6 @@ class SectorModel(Model, metaclass=ABCMeta):
     """
     def __init__(self, name):
         super().__init__(name)
-
-    @classmethod
-    def from_dict(cls, config):
-        """Create object from dictionary serialisation
-        """
-        model = cls(config['name'])
-        model.description = config['description']
-        for input_ in config['inputs']:
-            model.add_input(Spec.from_dict(input_))
-        for output in config['outputs']:
-            model.add_output(Spec.from_dict(output))
-        for param in config['parameters']:
-            model.add_parameter(Spec.from_dict(param))
-        return model
-
-    def as_dict(self) -> Dict:
-        """Serialize the SectorModel object as a dictionary
-
-        Returns
-        -------
-        dict
-        """
-        config = {
-            'name': self.name,
-            'description': self.description,
-            'path': sys.modules[self.__module__].__file__,
-            'classname': self.__class__.__name__,
-            'inputs': [inp.as_dict() for inp in self.inputs.values()],
-            'outputs': [out.as_dict() for out in self.outputs.values()],
-            'parameters': [param.as_dict() for param in self.parameters.values()]
-        }
-        return config
 
     def before_model_run(self, data):
         """Implement this method to conduct pre-model run tasks

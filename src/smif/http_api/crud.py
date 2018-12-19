@@ -102,11 +102,12 @@ class ModelRunAPI(MethodView):
             elif action == 'start':
                 data = request.get_json() or request.form
                 args = {
-                    'directory': data_interface.model_base_folder,
                     'verbosity': data['args']['verbosity'],
                     'warm_start': data['args']['warm_start'],
                     'output_format': data['args']['output_format']
                 }
+                if hasattr(data_interface, 'model_base_folder'):
+                    args['directory'] = data_interface.model_base_folder
                 current_app.config.scheduler.add(model_run_name, args)
             elif action == 'kill':
                 current_app.config.scheduler.kill(model_run_name)
@@ -281,7 +282,7 @@ class SectorModelAPI(MethodView):
         data = check_timestamp(data)
 
         try:
-            data_interface.write_sector_model(data)
+            data_interface.write_model(data)
         except SmifException as err:
             response = jsonify({
                 'message': 'failed',
@@ -303,7 +304,7 @@ class SectorModelAPI(MethodView):
         data = check_timestamp(data)
 
         try:
-            data_interface.update_sector_model(sector_model_name, data)
+            data_interface.update_model(sector_model_name, data)
         except SmifException as err:
             response = jsonify({
                 'message': 'failed',
@@ -321,7 +322,7 @@ class SectorModelAPI(MethodView):
         DELETE /api/v1/sector_models
         """
         data_interface = current_app.config.data_interface
-        data_interface.delete_sector_model(sector_model_name)
+        data_interface.delete_model(sector_model_name)
         response = jsonify({})
         return response
 
@@ -407,91 +408,6 @@ class ScenarioAPI(MethodView):
         """
         data_interface = current_app.config.data_interface
         data_interface.delete_scenario(scenario_name)
-        response = jsonify({})
-        return response
-
-
-class NarrativeAPI(MethodView):
-    """Implement CRUD operations for narratives configuration data
-    """
-    def get(self, narrative_name):
-        """Get narratives
-        all: GET /api/v1/narratives/
-        one: GET /api/vi/narratives/name
-        """
-        # return str(current_app.config)
-        data_interface = current_app.config.data_interface
-
-        try:
-            if narrative_name is None:
-                data = []
-                data = data_interface.read_narratives()
-            else:
-                data = {}
-                data = data_interface.read_narrative(narrative_name)
-
-            response = jsonify({
-                'data': data,
-                'error': {}
-            })
-        except SmifException as err:
-            response = jsonify({
-                'data': data,
-                'error': parse_exceptions(err)
-            })
-
-        return response
-
-    def post(self):
-        """Create a narrative:
-        POST /api/v1/narratives
-        """
-        data_interface = current_app.config.data_interface
-        data = request.get_json() or request.form
-
-        try:
-            data = check_timestamp(data)
-            data_interface.write_narrative(data)
-        except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
-        else:
-            response = jsonify({"message": "success"})
-
-        response.status_code = 201
-        return response
-
-    def put(self, narrative_name):
-        """Update a narrative:
-        PUT /api/v1/narratives
-        """
-        data_interface = current_app.config.data_interface
-        data = request.get_json() or request.form
-
-        try:
-            data = check_timestamp(data)
-            data_interface.update_narrative(narrative_name, data)
-        except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
-        else:
-            response = jsonify({"message": "success"})
-
-        response.status_code = 200
-        return response
-
-    def delete(self, narrative_name):
-        """Delete a narrative:
-        DELETE /api/v1/narratives
-        """
-        data_interface = current_app.config.data_interface
-        data_interface.delete_narrative(narrative_name)
         response = jsonify({})
         return response
 

@@ -8,6 +8,7 @@ from unittest.mock import Mock
 import pytest
 import smif
 from flask import current_app
+from smif.data_layer.store import Store
 from smif.exception import SmifDataNotFoundError
 from smif.http_api import create_app
 
@@ -59,10 +60,6 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         _check_exist('scenario', arg)
         return get_scenario
 
-    def read_narrative(arg):
-        _check_exist('narrative', arg)
-        return get_narrative
-
     def read_dimension(arg, skip_coords=False):
         _check_exist('dimension', arg)
         return get_dimension
@@ -80,12 +77,10 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
         'read_model.side_effect':  read_model,
         'read_scenarios.side_effect': [[get_scenario]],
         'read_scenario.side_effect':  read_scenario,
-        'read_narratives.side_effect': [[get_narrative]],
-        'read_narrative.side_effect':  read_narrative,
         'read_dimensions.side_effect': [[get_dimension]],
-        'read_dimension.side_effect':  read_dimension,
+        'read_dimension.side_effect':  read_dimension
     }
-    return Mock(**attrs)
+    return Mock(spec=Store, **attrs)
 
 
 @pytest.fixture
@@ -437,7 +432,7 @@ def test_post_sector_model(client, get_sector_model):
         '/api/v1/sector_models/',
         data=send,
         content_type='application/json')
-    current_app.config.data_interface.write_sector_model.assert_called_with(get_sector_model)
+    current_app.config.data_interface.write_model.assert_called_with(get_sector_model)
 
     data = parse_json(response)
     assert response.status_code == 201
@@ -452,7 +447,7 @@ def test_put_sector_model(client, get_sector_model):
         '/api/v1/sector_models/' + get_sector_model['name'],
         data=send,
         content_type='application/json')
-    current_app.config.data_interface.update_sector_model.assert_called_with(
+    current_app.config.data_interface.update_model.assert_called_with(
         get_sector_model['name'], get_sector_model)
 
     assert response.status_code == 200
@@ -466,7 +461,7 @@ def test_delete_sector_model(client, get_sector_model):
         '/api/v1/sector_models/' + get_sector_model['name'],
         data=send,
         content_type='application/json')
-    current_app.config.data_interface.delete_sector_model.assert_called_with(
+    current_app.config.data_interface.delete_model.assert_called_with(
         get_sector_model['name'])
 
     assert response.status_code == 200
@@ -543,82 +538,6 @@ def test_put_scenario(client, get_scenario):
         content_type='application/json')
     current_app.config.data_interface.update_scenario.assert_called_with(
         get_scenario['name'], get_scenario)
-
-    assert response.status_code == 200
-
-
-def test_get_narratives(client, get_narrative):
-    """GET all narratives
-    """
-    response = client.get('/api/v1/narratives/')
-    assert current_app.config.data_interface.read_narratives.called == 1
-
-    assert response.status_code == 200
-    data = parse_json(response)
-    assert data['data'] == [get_narrative]
-
-
-def test_get_narrative(client, get_narrative):
-    """GET single system-of-systems model
-    """
-    name = get_narrative['name']
-    response = client.get('/api/v1/narratives/{}'.format(name))
-    current_app.config.data_interface.read_narrative.assert_called_with(name)
-
-    assert response.status_code == 200
-    data = parse_json(response)
-    assert data['data'] == get_narrative
-
-
-def test_get_narrative_missing(client):
-    """GET missing system-of-systems model
-    """
-    response = client.get('/api/v1/narratives/does_not_exist')
-    data = parse_json(response)
-    assert data['error']['SmifDataNotFoundError'] == ["narrative 'does_not_exist' not found"]
-
-
-def test_post_narrative(client, get_narrative):
-    """POST system-of-systems model
-    """
-    name = 'test_post_narrative'
-    get_narrative['name'] = name
-    send = serialise_json(get_narrative)
-    response = client.post(
-        '/api/v1/narratives/',
-        data=send,
-        content_type='application/json')
-    current_app.config.data_interface.write_narrative.assert_called_with(get_narrative)
-
-    data = parse_json(response)
-    assert response.status_code == 201
-    assert data['message'] == 'success'
-
-
-def test_put_narrative(client, get_narrative):
-    """PUT narrative
-    """
-    send = serialise_json(get_narrative)
-    response = client.put(
-        '/api/v1/narratives/' + get_narrative['name'],
-        data=send,
-        content_type='application/json')
-    current_app.config.data_interface.update_narrative.assert_called_with(
-        get_narrative['name'], get_narrative)
-
-    assert response.status_code == 200
-
-
-def test_delete_narrative(client, get_narrative):
-    """DELETE narrative
-    """
-    send = serialise_json(get_narrative)
-    response = client.delete(
-        '/api/v1/narratives/' + get_narrative['name'],
-        data=send,
-        content_type='application/json')
-    current_app.config.data_interface.delete_narrative.assert_called_with(
-        get_narrative['name'])
 
     assert response.status_code == 200
 
