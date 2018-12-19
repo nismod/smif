@@ -67,7 +67,7 @@ def summary(self, *args, **kws):
 
         # header
         summary.append(("{:*^" + str(total_width) + "s}").format(" Modelrun time profile "))
-        summary.append(column.format('Function', 'Argument', 'Time [hh:mm:ss]'))
+        summary.append(column.format('Function', 'Operation', 'Time [hh:mm:ss]'))
         summary.append("*"*total_width)
 
         # body
@@ -86,12 +86,12 @@ def summary(self, *args, **kws):
             else:
                 func = profile[0]
             if len(profile[1]) > columns[1]-2:
-                arg = profile[1][:columns[1]-3] + '..'
+                op = profile[1][:columns[1]-3] + '..'
             else:
-                arg = profile[1]
+                op = profile[1]
 
             summary.append(profile_data['level']*'| ' + column.format(
-                func, arg, time_spent))
+                func, op, time_spent))
 
         # footer
         summary.append("*"*total_width)
