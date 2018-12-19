@@ -55,16 +55,16 @@ def profiling_stop(self, operation, key):
 def summary(self, *args, **kws):
     if self.isEnabledFor(logging.INFO):
         summary = []
-        summary.append("*"*150)
+        summary.append("{:*^120s}".format(" Modelrun time profile "))
         for profile in logging.Logger._profile.keys():
             profile_data = logging.Logger._profile[profile]
             diff = profile_data['stop'] - profile_data['start']
             s = diff.total_seconds()
             time_spent = '{:02d}:{:02d}:{:02d}'.format(
                 int(s // 3600), int(s % 3600 // 60), int(s % 60))
-            summary.append(profile_data['level']*'| ' + "{:20s} {:80s} {:50s}".format(
+            summary.append(profile_data['level']*'| ' + "{:20s} {:80s} {:10s}".format(
                 profile[0], profile[1], time_spent))
-        summary.append("*"*150)
+        summary.append("*"*120)
 
         for entry in summary:
             self._log(logging.INFO, entry, args)
