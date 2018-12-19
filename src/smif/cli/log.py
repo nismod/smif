@@ -3,6 +3,7 @@ import logging
 import logging.config
 import re
 import sys
+from collections import OrderedDict
 
 LOGGING_CONFIG = {
     'version': 1,
@@ -72,7 +73,7 @@ def summary(self, *args, **kws):
 logging.Logger.profiling_start = profiling_start
 logging.Logger.profiling_stop = profiling_stop
 logging.Logger.summary = summary
-logging.Logger._profile = {}
+logging.Logger._profile = OrderedDict()
 
 # Configure logging once, outside of any dependency on argparse
 VERBOSITY = None
