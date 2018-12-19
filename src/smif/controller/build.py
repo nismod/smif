@@ -123,6 +123,7 @@ def build_model_run(model_run_config):
     -------
     `smif.controller.modelrun.ModelRun`
     """
+    LOGGER.profiling_start('build_model_run', model_run_config['name'])
     try:
         builder = ModelRunBuilder()
         builder.construct(model_run_config)
@@ -137,4 +138,5 @@ def build_model_run(model_run_config):
             LOGGER.error("An AssertionError occurred, see details above.")
         exit(-1)
 
+    LOGGER.profiling_stop('build_model_run', model_run_config['name'])
     return modelrun
