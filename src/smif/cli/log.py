@@ -53,18 +53,48 @@ def profiling_stop(self, operation, key):
 
 
 def summary(self, *args, **kws):
+
     if self.isEnabledFor(logging.INFO):
         summary = []
-        summary.append("{:*^120s}".format(" Modelrun time profile "))
+        columns = [30, 80, 12]
+        column = "{:" + str(columns[0]) + "s}" + \
+                 "{:" + str(columns[1]) + "s}" + \
+                 "{:" + str(columns[2]) + "s}"
+
+        level_width = max([profile['level'] for profile
+                          in logging.Logger._profile.values()]) * 2
+        total_width = sum(columns) + level_width
+
+        # header
+        summary.append(("{:*^" + str(total_width) + "s}").format(" Modelrun time profile "))
+        summary.append(column.format('Function', 'Argument', 'Time [hh:mm:ss]'))
+        summary.append("*"*total_width)
+
+        # body
         for profile in logging.Logger._profile.keys():
+
+            # calculate time diff
             profile_data = logging.Logger._profile[profile]
             diff = profile_data['stop'] - profile_data['start']
             s = diff.total_seconds()
             time_spent = '{:02d}:{:02d}:{:02d}'.format(
                 int(s // 3600), int(s % 3600 // 60), int(s % 60))
-            summary.append(profile_data['level']*'| ' + "{:20s} {:80s} {:10s}".format(
-                profile[0], profile[1], time_spent))
-        summary.append("*"*120)
+
+            # trunctuate long lines
+            if len(profile[0]) > columns[0]-2:
+                func = profile[0][:columns[0]-3] + '..'
+            else:
+                func = profile[0]
+            if len(profile[1]) > columns[1]-2:
+                arg = profile[1][:columns[1]-3] + '..'
+            else:
+                arg = profile[1]
+
+            summary.append(profile_data['level']*'| ' + column.format(
+                func, arg, time_spent))
+
+        # footer
+        summary.append("*"*total_width)
 
         for entry in summary:
             self._log(logging.INFO, entry, args)
