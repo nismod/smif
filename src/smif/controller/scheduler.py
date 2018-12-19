@@ -223,10 +223,13 @@ class JobScheduler(object):
         - sort the jobs into a single list
         - unpack model, data_handle and operation from each node
         """
+        self.logger.profiling_start('JobScheduler._run()', 'graph_' + str(job_graph_id))
         self._status[job_graph_id] = 'running'
 
         for job_node_id, job in self._get_run_order(job_graph):
             self.logger.info("Job %s", job_node_id)
+            self.logger.profiling_start('JobScheduler._run()', 'job_' + job_node_id)
+
             model = job['model']
             data_handle = DataHandle(
                 store=self.store,
@@ -247,8 +250,10 @@ class JobScheduler(object):
 
             else:
                 raise ValueError("Unrecognised operation: {}".format(operation))
+            self.logger.profiling_stop('JobScheduler._run()', 'job_' + job_node_id)
 
         self._status[job_graph_id] = 'done'
+        self.logger.profiling_stop('JobScheduler._run()', 'graph_' + str(job_graph_id))
 
     def _next_id(self):
         return next(self._id_counter)
