@@ -67,7 +67,7 @@ def summary(self, *args, **kws):
 
         # header
         summary.append(("{:*^" + str(total_width) + "s}").format(" Modelrun time profile "))
-        summary.append(column.format('Function', 'Operation', 'Time [hh:mm:ss]'))
+        summary.append(column.format('Function', 'Operation', 'Duration [hh:mm:ss]'))
         summary.append("*"*total_width)
 
         # body
