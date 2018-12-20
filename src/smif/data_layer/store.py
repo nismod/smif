@@ -18,7 +18,7 @@ from copy import deepcopy
 from logging import getLogger
 from operator import itemgetter
 
-from smif.data_layer.file import CSVDataStore
+from smif.data_layer.file import CSVDataStore, ParquetDataStore
 from smif.exception import SmifDataNotFoundError
 from smif.metadata.spec import Spec
 
@@ -854,7 +854,7 @@ class Store():
     def _key_from_data(self, path, *args):
         """Return path or generate a unique key for a given set of args
         """
-        if type(self.data_store) == CSVDataStore:
+        if isinstance(self.data_store, (CSVDataStore, ParquetDataStore)):
             return path
         else:
             return tuple(args)
