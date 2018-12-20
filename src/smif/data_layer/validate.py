@@ -2,6 +2,8 @@
 """Validate the correct format and presence of the config data
 for the system-of-systems model
 """
+import itertools
+
 from smif.exception import (SmifDataError, SmifDataInputError,
                             SmifValidationError)
 
@@ -36,7 +38,9 @@ def validate_sos_model_format(sos_model):
     for key, value in sos_model.items():
         if key not in default_keys:
             errors.append(
-                SmifValidationError('Invalid key `%s` in sos_model configuration `%s`.' % (key, sos_model['name']))
+                SmifValidationError(
+                    'Invalid key `%s` in sos_model configuration `%s`.'
+                    % (key, sos_model['name']))
             )
 
     # Throw collection of errors
@@ -44,6 +48,7 @@ def validate_sos_model_format(sos_model):
         raise SmifDataError(errors)
 
     return sos_model
+
 
 def validate_sos_model_config(sos_model, sector_models, scenarios):
     """Check expected values for data loaded from master config file
@@ -87,15 +92,30 @@ def validate_sos_model_config(sos_model, sector_models, scenarios):
                     'Smif refers to the scenario-configurations to find ' +
                     'details about a selected scenario.'))
 
-    # # check narratives
-    # for narrative in sos_model['narratives']:
-    #     if narrative not in [narrative['name'] for narrative in narratives]:
-    #         errors.append(
-    #             SmifDataInputError(
-    #                 'narratives',
-    #                 '%s must have a valid narrative configuration.' % (narrative),
-    #                 'Smif refers to the narrative-configurations to find ' +
-    #                 'details about a selected narrative.'))
+    # check narratives
+    for narrative in sos_model['narratives']:
+
+        # Check provides are valid
+        if not all(provide in sos_model['sector_models']
+                   for provide in narrative['provides'].keys()):
+            errors.append(
+                SmifDataInputError(
+                    'narratives',
+                    ('Narrative `%s` provides data for models that are not enabled in this ' +
+                    'system-of-systems model.') % (narrative['name']),
+                    'A narrative can only provide for enabled models.'))
+
+        # Check if all variants are valid
+        for variant in narrative['variants']:
+            should_provide = list(itertools.chain(*narrative['provides'].values()))
+            variant_provides = list(variant['data'].keys())
+            if sorted(variant_provides) != sorted(should_provide):
+                errors.append(
+                    SmifDataInputError(
+                        'narratives', 'Narrative `%s`, variant `%s` provides incorrect data.'
+                        % (narrative['name'], variant['name']),
+                        'A variant can only provide data for parameters that are specified ' +
+                        'by the narrative.'))
 
     # check dependencies
     model_dependency_errors = _validate_dependencies(
