@@ -16,7 +16,7 @@ class PropertySelector extends Component {
 
         // compose object with active and valid flags
         let flagged_props = []
-        for (var propname of unique_properties) {
+        for (var propname of unique_properties.sort()) {
             flagged_props.push({
                 name: propname,
                 active: activeProperties.includes(propname) ? true : false,

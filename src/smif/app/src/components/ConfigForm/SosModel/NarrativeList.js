@@ -59,6 +59,10 @@ class NarrativeList extends Component {
             let narrative = JSON.parse(JSON.stringify(this.state.narrative))
             narrative.provides[var2] = data
 
+            if (narrative.provides[var2].length == 0){
+                delete narrative.provides[var2]
+            }
+
             this.setState({
                 narrative: narrative
             })
@@ -354,14 +358,26 @@ class NarrativeList extends Component {
                                     <div className="col">
                                         <label className='label'>Provides</label>
                                         {
-                                            this.props.sector_models.map((sector_model, idx) => (
+                                            Object.keys(this.state.narrative.provides).concat(
+                                                this.props.sector_models.map(
+                                                    sector_model => sector_model.name)).filter(
+                                                    function(item, i, ar){ return ar.indexOf(item) === i; }
+                                                ).sort().map((sector_model, idx) => (
                                                 <div key={idx}>
-                                                    <span className="badge badge badge-secondary">{sector_model.name}</span>
+                                                    <span className="badge badge badge-secondary">{sector_model}</span>
                                                     <PropertySelector
-                                                        name={sector_model.name}
-                                                        activeProperties={this.state.narrative.provides[sector_model.name]}
-                                                        availableProperties={sector_model.parameters}
-                                                        onChange={(e) => this.handleNarrativeFormInput(e.target.value, 'provide', sector_model.name)} />
+                                                        name={sector_model}
+                                                        activeProperties={
+                                                            sector_model in this.state.narrative.provides
+                                                                ? this.state.narrative.provides[sector_model]
+                                                                : []
+                                                            }
+                                                        availableProperties={
+                                                            this.props.sector_models.filter(sectormodel => sectormodel.name == sector_model).length > 0
+                                                                ? this.props.sector_models.filter(sectormodel => sectormodel.name == sector_model)[0].parameters
+                                                                : []
+                                                            }
+                                                        onChange={(e) => this.handleNarrativeFormInput(e.target.value, 'provide', sector_model)} />
                                                     <br/>
                                                 </div>
                                             ))
