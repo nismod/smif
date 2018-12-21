@@ -10,20 +10,21 @@ class PropertySelector extends Component {
 
     flagActiveSectorModels(activeProperties, availableProperties) {
 
-        for (let i = 0; i < availableProperties.length; i++) {
-            availableProperties[i].active = false
+        // compose list of unique active and available properties
+        let available_prop_names = availableProperties.map(availableProperties => availableProperties.name)
+        let unique_properties = activeProperties.concat(available_prop_names).filter((v, i, a) => (a.indexOf(v) === i))
 
-            if (activeProperties != null) {
-                for (let k = 0; k < activeProperties.length; k++) {
-                    if (activeProperties[k] == availableProperties[i].name) {
-                        availableProperties[i].active = true
-                        break
-                    }
-                }
-            }
+        // compose object with active and valid flags
+        let flagged_props = []
+        for (var propname of unique_properties) {
+            flagged_props.push({
+                name: propname,
+                active: activeProperties.includes(propname) ? true : false,
+                valid: available_prop_names.includes(propname) ? true : false
+            })
         }
 
-        return availableProperties
+        return flagged_props
     }
 
     handleChange(event) {
@@ -70,8 +71,24 @@ class PropertySelector extends Component {
                         {
                             Object.keys(selectedProperties).map((i) => (
                                 <div className="form-check" key={i}>
-                                    <input className="form-check-input" type="checkbox" name={selectedProperties[i].name} key={selectedProperties[i].name} value={selectedProperties[i].name} defaultChecked={selectedProperties[i].active} onClick={this.handleChange}></input>
-                                    {selectedProperties[i].name}
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        name={selectedProperties[i].name}
+                                        key={selectedProperties[i].name}
+                                        value={selectedProperties[i].name}
+                                        defaultChecked={selectedProperties[i].active}
+                                        onClick={this.handleChange}>
+                                    </input>
+                                    {
+                                        selectedProperties[i].valid ?
+                                            selectedProperties[i].name
+                                            :
+                                            <strike>
+                                                {selectedProperties[i].name}
+                                            </strike>
+                                    }
+
                                 </div>
                             ))
                         }
