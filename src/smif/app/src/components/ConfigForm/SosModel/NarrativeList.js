@@ -56,7 +56,7 @@ class NarrativeList extends Component {
                 narrative: update(this.state.narrative, {[var1]: {$set: data}})
             })
         } else {
-            let narrative = Object.assign({}, this.state.narrative)
+            let narrative = JSON.parse(JSON.stringify(this.state.narrative))
             narrative.provides[var2] = data
 
             this.setState({
@@ -72,7 +72,7 @@ class NarrativeList extends Component {
                 variant: update(this.state.variant, {[var1]: {$set: data}})
             })
         } else {
-            let variant = Object.assign({}, this.state.variant)
+            let variant = JSON.parse(JSON.stringify(this.state.variant))
             variant.data[var2] = data
 
             this.setState({
@@ -80,38 +80,38 @@ class NarrativeList extends Component {
             })
         }
     }
-    
+
     handleNarrativeSubmit(event) {
         event.preventDefault()
 
         // Sync provide with variants
         let parameters = []
-        Object.keys(this.state.narrative.provides).forEach(sos_model => { 
+        Object.keys(this.state.narrative.provides).forEach(sos_model => {
             this.state.narrative.provides[sos_model].forEach(parameter => {
                 parameters.push(parameter)
             })
         })
 
         this.state.narrative.variants.forEach(variant => {
-            
+
             // Remove parameter definition that are not provided
             Object.keys(variant.data).forEach(parameter => {
                 if (!parameters.includes(parameter)) {
                     delete variant.data[parameter]
-                }    
+                }
             })
-            
+
             // Add parameters that are provided but not defined
             parameters.forEach(parameter => {
                 if (!Object.keys(variant.data).includes(parameter)) {
                     variant.data[parameter] = ''
                 }
             })
-        })        
+        })
 
         // update narratives
         let index = this.props.narratives.findIndex(narrative => narrative.name === this.state.narrative.name)
-        let new_narratives = Object.assign([], this.props.narratives)
+        let new_narratives =JSON.parse(JSON.stringify(this.props.narratives))
         if (index >= 0) {
             new_narratives.splice(index, 1, this.state.narrative)
         }
@@ -123,9 +123,9 @@ class NarrativeList extends Component {
     }
 
     handleVariantSubmit(event) {
-        event.preventDefault()  
+        event.preventDefault()
 
-        let narrative = Object.assign({}, this.state.narrative)
+        let narrative = JSON.parse(JSON.stringify(this.state.narrative))
 
         // update variant
         let index = narrative.variants.findIndex(variant => variant.name === this.state.variant.name)
@@ -137,7 +137,7 @@ class NarrativeList extends Component {
         }
 
         // update narrative
-        let new_narratives = Object.assign([], this.props.narratives)
+        let new_narratives = JSON.parse(JSON.stringify(this.props.narratives))
         index = this.props.narratives.findIndex(prop_narrative => prop_narrative.name === narrative.name)
         new_narratives.splice(index, 1, narrative)
         this.props.onChange(new_narratives)
@@ -164,12 +164,12 @@ class NarrativeList extends Component {
         } else {
             let parameters = []
             let narrative = this.props.narratives.filter(narrative => narrative.name == narrative_name)[0]
-            Object.keys(narrative.provides).forEach(sos_model => { 
+            Object.keys(narrative.provides).forEach(sos_model => {
                 narrative.provides[sos_model].forEach(parameter => {
                     parameters.push(parameter)
                 })
             })
-            
+
             return {
                 name: '',
                 description: '',
@@ -189,8 +189,8 @@ class NarrativeList extends Component {
     handleCreateVariant(narrative_name=undefined) {
 
         if (narrative_name != undefined) {
-            let selectedNarrative = Object.assign({}, this.props.narratives.filter(narrative => narrative.name == narrative_name)[0])
-            
+            let selectedNarrative = JSON.parse(JSON.stringify(this.props.narratives.filter(narrative => narrative.name == narrative_name)[0]))
+
             this.setState({narrative: {
                 ...this.emptyNarrative(),
                 ...selectedNarrative}
@@ -205,7 +205,7 @@ class NarrativeList extends Component {
         const target = event.currentTarget
         const name = target.dataset.name
 
-        let selectedNarrative = Object.assign({}, this.props.narratives.filter(narrative => narrative.name == name)[0])
+        let selectedNarrative = JSON.parse(JSON.stringify(this.props.narratives.filter(narrative => narrative.name == name)[0]))
 
         this.setState({narrative: {
             ...this.emptyNarrative(),
@@ -221,9 +221,9 @@ class NarrativeList extends Component {
         const narrative_name = target.dataset.name.split(',')[0]
         const variant_name = target.dataset.name.split(',')[1]
 
-        let selectedNarrative = Object.assign({}, this.props.narratives.filter(narrative => narrative.name == narrative_name)[0])
-        let selectedVariant = Object.assign({}, selectedNarrative.variants.filter(variant => variant.name == variant_name)[0])
-        
+        let selectedNarrative =  JSON.parse(JSON.stringify(this.props.narratives.filter(narrative => narrative.name == narrative_name)[0]))
+        let selectedVariant =  JSON.parse(JSON.stringify(selectedNarrative.variants.filter(variant => variant.name == variant_name)[0]))
+
         this.setState({narrative: {
             ...this.emptyNarrative(),
             ...selectedNarrative}
@@ -239,7 +239,7 @@ class NarrativeList extends Component {
     }
 
     handleNarrativeDelete(name) {
-        let new_narratives = Object.assign([], this.props.narratives)
+        let new_narratives = JSON.parse(JSON.stringify(this.props.narratives))
         new_narratives.splice(this.props.narratives.findIndex(narrative => narrative.name === name), 1)
         this.props.onChange(new_narratives)
         this.closeNarrativeForm()
@@ -247,14 +247,14 @@ class NarrativeList extends Component {
 
     handleVariantDelete() {
 
-        let narrative = Object.assign({}, this.state.narrative)
+        let narrative = JSON.parse(JSON.stringify(this.state.narrative))
 
         // update variant
         let index = narrative.variants.findIndex(variant => variant.name === this.state.variant.name)
         narrative.variants.splice(index, 1)
 
         // update narrative
-        let new_narratives = Object.assign([], this.props.narratives)
+        let new_narratives = JSON.parse(JSON.stringify(this.props.narratives))
         index = this.props.narratives.findIndex(prop_narrative => prop_narrative.name === narrative.name)
         new_narratives.splice(index, 1, narrative)
         this.props.onChange(new_narratives)
@@ -265,7 +265,7 @@ class NarrativeList extends Component {
         var columns = []
         columns.push('Narrative')
         columns.push('Variants')
-        
+
         return (
             <div>
                 <table className="table table-hover table-list">
@@ -276,7 +276,7 @@ class NarrativeList extends Component {
                                     <th className="col-text"
                                         scope="col" key={name + '_column_' + column}>
                                         {column}
-                                    </th> 
+                                    </th>
                                 ))
                             }
                         </tr>
@@ -295,8 +295,8 @@ class NarrativeList extends Component {
                                     <td className="col-text">
                                         {
                                             narrative.variants.map((variant, idx) => (
-                                                <button key={idx} 
-                                                    type="button" 
+                                                <button key={idx}
+                                                    type="button"
                                                     data-name={[narrative.name, variant.name]}
                                                     className="btn btn-margin btn-outline-secondary"
                                                     onClick={(e) => this.handleVariantEdit(e)}>
@@ -304,8 +304,8 @@ class NarrativeList extends Component {
                                                 </button>
                                             ))
                                         }
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             className="btn btn-margin btn-outline-secondary"
                                             onClick={(e) => this.handleCreateVariant(narrative.name)}>
                                             {'+'}
@@ -325,26 +325,26 @@ class NarrativeList extends Component {
                                 <div className="row">
                                     <div className="col">
                                         <label className='label'>Name</label>
-                                        <input 
+                                        <input
                                             id={name + '_narrative_name'}
                                             className='form-control'
-                                            type="text" 
+                                            type="text"
                                             name='name'
                                             disabled={this.state.formEditMode}
-                                            value={this.state.narrative.name} 
+                                            value={this.state.narrative.name}
                                             onChange={(e) => this.handleNarrativeFormInput(e.target.value, 'name')}
-                                            autoFocus 
+                                            autoFocus
                                             required
                                         />
                                     </div>
                                     <div className="col">
                                         <label>Description</label>
-                                        <input 
-                                            id={name + '_narrative_description'} 
+                                        <input
+                                            id={name + '_narrative_description'}
                                             className='form-control'
                                             type="text"
-                                            name="description" 
-                                            value={this.state.narrative.description} 
+                                            name="description"
+                                            value={this.state.narrative.description}
                                             onChange={(e) => this.handleNarrativeFormInput(e.target.value, 'description')}
                                             required
                                         />
@@ -357,9 +357,9 @@ class NarrativeList extends Component {
                                             this.props.sector_models.map((sector_model, idx) => (
                                                 <div key={idx}>
                                                     <span className="badge badge badge-secondary">{sector_model.name}</span>
-                                                    <PropertySelector 
-                                                        name={sector_model.name} 
-                                                        activeProperties={this.state.narrative.provides[sector_model.name]} 
+                                                    <PropertySelector
+                                                        name={sector_model.name}
+                                                        activeProperties={this.state.narrative.provides[sector_model.name]}
                                                         availableProperties={sector_model.parameters}
                                                         onChange={(e) => this.handleNarrativeFormInput(e.target.value, 'provide', sector_model.name)} />
                                                     <br/>
@@ -374,8 +374,8 @@ class NarrativeList extends Component {
                             <SecondaryButton id={'btn_' + name + '_cancel'} value="Cancel" onClick={() => this.closeNarrativeForm()}/>
                             {
                                 !this.state.formEditMode ? null : (
-                                    <DangerButton  
-                                        id={'btn_' + name + '_delete'} 
+                                    <DangerButton
+                                        id={'btn_' + name + '_delete'}
                                         onClick={() => this.handleNarrativeDelete(this.state.narrative.name)} />
                                 )
                             }
@@ -390,26 +390,26 @@ class NarrativeList extends Component {
                                 <div className="row">
                                     <div className="col-4">
                                         <label className='label'>Name</label>
-                                        <input 
+                                        <input
                                             id={name + '_variant_name'}
                                             className='form-control'
-                                            type="text" 
+                                            type="text"
                                             name='name'
                                             disabled={this.state.formEditMode}
-                                            value={this.state.variant.name} 
+                                            value={this.state.variant.name}
                                             onChange={(e) => this.handleVariantFormInput(e.target.value, 'name')}
-                                            autoFocus 
+                                            autoFocus
                                             required
                                         />
                                     </div>
                                     <div className="col-8">
                                         <label>Description</label>
-                                        <input 
-                                            id={name + '_variant_description'} 
+                                        <input
+                                            id={name + '_variant_description'}
                                             className='form-control'
                                             type="text"
-                                            name="description" 
-                                            value={this.state.variant.description} 
+                                            name="description"
+                                            value={this.state.variant.description}
                                             onChange={(e) => this.handleVariantFormInput(e.target.value, 'description')}
                                             required
                                         />
@@ -421,16 +421,16 @@ class NarrativeList extends Component {
                                         <label className='label'>Parameter</label>
                                         {
                                             Object.keys(this.state.variant.data).map((variant, idx) => (
-                                                <div key={idx}> 
-                                                    <input 
+                                                <div key={idx}>
+                                                    <input
                                                         id={name + '_variant_name'}
                                                         className='form-control'
-                                                        type="text" 
+                                                        type="text"
                                                         name='parameter'
                                                         disabled={true}
                                                         value={variant}
                                                         onChange={this.handleVariantFormInput}
-                                                        autoFocus 
+                                                        autoFocus
                                                         required
                                                     />
                                                 </div>
@@ -441,13 +441,13 @@ class NarrativeList extends Component {
                                         <label className='label'>Datafile</label>
                                         {
                                             Object.keys(this.state.variant.data).map((parameter, idx) => (
-                                                <div key={idx}> 
-                                                    <input 
-                                                        id={name + '_variant_description'} 
+                                                <div key={idx}>
+                                                    <input
+                                                        id={name + '_variant_description'}
                                                         className='form-control'
                                                         type="text"
-                                                        name="description" 
-                                                        value={this.state.variant.data[parameter]} 
+                                                        name="description"
+                                                        value={this.state.variant.data[parameter]}
                                                         onChange={(e) => this.handleVariantFormInput(e.target.value, 'parameter', parameter)}
                                                         required
                                                     />
@@ -455,7 +455,7 @@ class NarrativeList extends Component {
                                             ))
                                         }
                                     </div>
-                                </div>    
+                                </div>
                             </div>
 
                             <br/>
@@ -464,8 +464,8 @@ class NarrativeList extends Component {
                             <SecondaryButton id={'btn_' + name + '_cancel'} value="Cancel" onClick={() => this.closeVariantForm()}/>
                             {
                                 !this.state.formEditMode ? null : (
-                                    <DangerButton  
-                                        id={'btn_' + name + '_delete'} 
+                                    <DangerButton
+                                        id={'btn_' + name + '_delete'}
                                         onClick={() => this.handleVariantDelete()} />
                                 )
                             }
