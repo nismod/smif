@@ -96,14 +96,30 @@ def validate_sos_model_config(sos_model, sector_models, scenarios):
     for narrative in sos_model['narratives']:
 
         # Check provides are valid
-        if not all(provide in sos_model['sector_models']
-                   for provide in narrative['provides'].keys()):
-            errors.append(
-                SmifDataInputError(
-                    'narratives',
-                    ('Narrative `%s` provides data for models that are not enabled in this ' +
-                    'system-of-systems model.') % (narrative['name']),
-                    'A narrative can only provide for enabled models.'))
+        for model_name in narrative['provides']:
+
+            # A narrative can only provides for enabled models
+            if model_name not in sos_model['sector_models']:
+                errors.append(
+                    SmifDataInputError(
+                        'narratives',
+                        ('Narrative `%s` provides data for model `%s` that is not enabled ' +
+                        'in this system-of-systems model.') % (narrative['name'], model_name),
+                        'A narrative can only provide for enabled models.'))
+            else:
+                # A narrative can only provides parameters that exist in the model
+                parameters = [parameter['name'] for parameter in [
+                    model for model in sector_models
+                    if model['name'] == model_name][0]['parameters']
+                ]
+                for provide in narrative['provides'][model_name]:
+                    if provide not in parameters:
+                        errors.append(
+                            SmifDataInputError(
+                                'narratives',
+                                ('Narrative `%s` provides data for non-existing model parameter ' +
+                                '`%s`') % (narrative['name'], provide), 'A narrative can only ' +
+                                'provide existing model parameters.'))
 
         # Check if all variants are valid
         for variant in narrative['variants']:
