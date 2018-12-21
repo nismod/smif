@@ -125,7 +125,7 @@ class PropertySelector extends Component {
     render() {
         const {name, activeProperties, availableProperties} = this.props
 
-        if (availableProperties == null || availableProperties.length == 0) {
+        if (availableProperties == null || availableProperties.length + activeProperties.length == 0) {
             return this.renderInfo('There are no ' + name + ' properties available')
         } else {
             let selectedProperties = this.flagActiveSectorModels(activeProperties, availableProperties)
