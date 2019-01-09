@@ -4,15 +4,14 @@ import PropTypes from 'prop-types'
 import Ansi from 'ansi-to-react'
 import moment from 'moment'
 import stripAnsi from 'strip-ansi'
-import { FaAngleDoubleUp, FaAngleDoubleDown, FaFloppyO } from 'react-icons/lib/fa'
+import { FaAngleDoubleUp, FaAngleDoubleDown, FaSave } from 'react-icons/fa'
 
 class ConsoleDisplay extends Component {
 
     constructor(props) {
         super(props)
-        /* istanbul ignore next */
         this.anchor = React.createRef()
-        
+
         this.state = {
             followConsole: false
         }
@@ -31,10 +30,10 @@ class ConsoleDisplay extends Component {
         var element = document.createElement('a')
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
         element.setAttribute('download', filename)
-      
+
         element.style.display = 'none'
         document.body.appendChild(element)
-      
+
         element.click()
         document.body.removeChild(element)
     }
@@ -59,7 +58,7 @@ class ConsoleDisplay extends Component {
                         onClick={() => {
                             this.download(moment().format('YMMDD_HHmm') + '_' + name + '.log', stripAnsi(output))
                         }}>
-                        <FaFloppyO/>
+                        <FaSave/>
                     </button>
                     <button
                         id="btn_toggle_scroll"

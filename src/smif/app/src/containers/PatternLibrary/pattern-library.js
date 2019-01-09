@@ -1,6 +1,6 @@
 import React from 'react'
 
-import FaTrash from 'react-icons/lib/fa/trash'
+import {FaTrash} from 'react-icons/fa'
 
 import './pattern-library.css'
 
@@ -131,7 +131,7 @@ export default class PatternLibrary extends React.Component {
                     <h3>Datalist</h3>
                     <div className="sample-container">
                         <label>Choose a model:
-                        <input type="text" list="models" name="myModels" />
+                            <input type="text" list="models" name="myModels" />
                         </label>
                         <datalist id="models">
                             <option value="Water">Water</option>
