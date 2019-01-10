@@ -390,6 +390,7 @@ def get_sector_model(annual, hourly):
         'inputs': [
             {
                 'name': 'population',
+                'dtype': 'float',
                 'dims': ['lad', 'annual'],
                 'coords': {
                     'lad': ['a', 'b'],
@@ -403,6 +404,7 @@ def get_sector_model(annual, hourly):
         'outputs': [
             {
                 'name': 'gas_demand',
+                'dtype': 'float',
                 'dims': ['lad', 'hourly'],
                 'coords': {
                     'lad': ['a', 'b'],

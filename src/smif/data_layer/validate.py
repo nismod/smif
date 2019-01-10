@@ -65,7 +65,24 @@ def validate_sos_model_config(sos_model, sector_models, scenarios):
     errors.extend(_validate_description(sos_model))
 
     # check sector models
-    if len(sos_model['sector_models']) == 0:
+    errors.extend(_validate_sos_model_models(sos_model, sector_models))
+
+    # check scenarios
+    errors.extend(_validate_sos_model_scenarios(sos_model, scenarios))
+
+    # check narratives
+    errors.extend(_validate_sos_model_narratives(sos_model, sector_models))
+
+    # check dependencies
+    errors.extend(_validate_sos_model_deps(sos_model, sector_models, scenarios))
+
+    if errors:
+        raise SmifDataError(errors)
+
+
+def _validate_sos_model_models(sos_model, sector_models):
+    errors = []
+    if not sos_model['sector_models']:
         errors.append(
             SmifDataInputError(
                 'sector_models',
@@ -81,8 +98,11 @@ def validate_sos_model_config(sos_model, sector_models, scenarios):
                     '%s must have a valid sector_model configuration.' % (sector_model),
                     'Smif refers to the sector_model-configurations to find ' +
                     'details about a selected sector_model.'))
+    return errors
 
-    # check scenarios
+
+def _validate_sos_model_scenarios(sos_model, scenarios):
+    errors = []
     for scenario in sos_model['scenarios']:
         if scenario not in [scenario['name'] for scenario in scenarios]:
             errors.append(
@@ -91,10 +111,12 @@ def validate_sos_model_config(sos_model, sector_models, scenarios):
                     '%s must have a valid scenario configuration.' % (scenario),
                     'Smif refers to the scenario-configurations to find ' +
                     'details about a selected scenario.'))
+    return errors
 
-    # check narratives
+
+def _validate_sos_model_narratives(sos_model, sector_models):
+    errors = []
     for narrative in sos_model['narratives']:
-
         # Check provides are valid
         for model_name in narrative['provides']:
 
@@ -104,52 +126,55 @@ def validate_sos_model_config(sos_model, sector_models, scenarios):
                     SmifDataInputError(
                         'narratives',
                         ('Narrative `%s` provides data for model `%s` that is not enabled ' +
-                        'in this system-of-systems model.') % (narrative['name'], model_name),
+                         'in this system-of-systems model.') % (narrative['name'], model_name),
                         'A narrative can only provide for enabled models.'))
             else:
                 # A narrative can only provides parameters that exist in the model
-                parameters = [parameter['name'] for parameter in [
-                    model for model in sector_models
-                    if model['name'] == model_name][0]['parameters']
+                parameters = [
+                    parameter['name'] for parameter in [
+                        model for model in sector_models
+                        if model['name'] == model_name][0]['parameters']
                 ]
                 for provide in narrative['provides'][model_name]:
+                    msg = 'Narrative `{}` provides data for non-existing model parameter `{}`'
                     if provide not in parameters:
                         errors.append(
                             SmifDataInputError(
                                 'narratives',
-                                ('Narrative `%s` provides data for non-existing model parameter ' +
-                                '`%s`') % (narrative['name'], provide), 'A narrative can only ' +
-                                'provide existing model parameters.'))
+                                msg.format(narrative['name'], provide),
+                                'A narrative can only provide existing model parameters.'
+                            )
+                        )
 
         # Check if all variants are valid
         for variant in narrative['variants']:
             should_provide = list(itertools.chain(*narrative['provides'].values()))
             variant_provides = list(variant['data'].keys())
             if sorted(variant_provides) != sorted(should_provide):
+                msg = 'Narrative `{}`, variant `{}` provides incorrect data.'
                 errors.append(
                     SmifDataInputError(
-                        'narratives', 'Narrative `%s`, variant `%s` provides incorrect data.'
-                        % (narrative['name'], variant['name']),
+                        'narratives',
+                        msg.format(narrative['name'], variant['name']),
                         'A variant can only provide data for parameters that are specified ' +
                         'by the narrative.'))
+    return errors
 
-    # check dependencies
-    model_dependency_errors = _validate_dependencies(
+
+def _validate_sos_model_deps(sos_model, sector_models, scenarios):
+    errors = []
+    errors.extend(_validate_dependencies(
         sos_model, 'model_dependencies',
         sector_models, 'sector_models',
         sector_models, 'sector_models'
-    )
-    errors.extend(model_dependency_errors)
+    ))
 
-    scenario_dependency_errors = _validate_dependencies(
+    errors.extend(_validate_dependencies(
         sos_model, 'scenario_dependencies',
         scenarios, 'scenarios',
         sector_models, 'sector_models'
-    )
-    errors.extend(scenario_dependency_errors)
-
-    if errors:
-        raise SmifDataError(errors)
+    ))
+    return errors
 
 
 def _validate_description(configuration):
@@ -188,6 +213,7 @@ def _validate_dependencies(configuration, conf_key, source, source_key, sink, si
                     '(Dependency %s) Source `%s` is not enabled.' %
                     (idx + 1, dependency['source']),
                     'Each dependency source must be enabled in the sos-model'))
+
         if dependency['sink'] not in configuration[sink_key]:
             errors.append(
                 SmifDataInputError(
@@ -255,7 +281,7 @@ def _validate_dependencies(configuration, conf_key, source, source_key, sink, si
         # Source_output and sink_input must have matching specs
         source_model_output = source_model_outputs[0]
         sink_model_input = sink_model_inputs[0]
-        if (sorted(source_model_output['dims']) != sorted(sink_model_input['dims'])):
+        if sorted(source_model_output['dims']) != sorted(sink_model_input['dims']):
             errors.append(
                 SmifDataInputError(
                     conf_key,
@@ -264,12 +290,12 @@ def _validate_dependencies(configuration, conf_key, source, source_key, sink, si
                         source_model_output['name']
                     ) +
                     '`%s` (%s != %s).' % (
-                            sink_model_input['name'],
-                            source_model_output['dims'],
-                            sink_model_input['dims']
+                        sink_model_input['name'],
+                        source_model_output['dims'],
+                        sink_model_input['dims']
                     ),
                     'Dependencies must have matching dimensions.'))
-        if (source_model_output['dtype'] != sink_model_input['dtype']):
+        if source_model_output['dtype'] != sink_model_input['dtype']:
             errors.append(
                 SmifDataInputError(
                     conf_key,
