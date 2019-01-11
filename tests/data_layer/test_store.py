@@ -49,8 +49,13 @@ class TestStoreConfig():
         expected = [minimal_model_run, y_model_run, z_model_run]
         assert store.read_model_runs() == expected
 
-    def test_sos_models(self, store, get_sos_model):
+    def test_sos_models(self, store, get_sos_model, get_sector_model,
+                        energy_supply_sector_model, sample_scenarios):
         # write
+        store.write_model(get_sector_model)
+        store.write_model(energy_supply_sector_model)
+        for scenario in sample_scenarios:
+            store.write_scenario(scenario)
         store.write_sos_model(get_sos_model)
         # read all
         assert store.read_sos_models() == [get_sos_model]

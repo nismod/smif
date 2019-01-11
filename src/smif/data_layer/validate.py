@@ -130,10 +130,19 @@ def _validate_sos_model_narratives(sos_model, sector_models):
                         'A narrative can only provide for enabled models.'))
             else:
                 # A narrative can only provides parameters that exist in the model
+                try:
+                    sector_model = _pick_sector_model(model_name, sector_models)
+                except KeyError:
+                    msg = 'Narrative `{}` provides data for model `{}` that is not found.'
+                    errors.append(
+                        SmifDataInputError(
+                            'models',
+                            msg.format(narrative['name'], model_name),
+                            'A narrative can only provide for existing models.'))
+                    sector_model = {'parameters': []}
+
                 parameters = [
-                    parameter['name'] for parameter in [
-                        model for model in sector_models
-                        if model['name'] == model_name][0]['parameters']
+                    parameter['name'] for parameter in sector_model['parameters']
                 ]
                 for provide in narrative['provides'][model_name]:
                     msg = 'Narrative `{}` provides data for non-existing model parameter `{}`'
@@ -159,6 +168,13 @@ def _validate_sos_model_narratives(sos_model, sector_models):
                         'A variant can only provide data for parameters that are specified ' +
                         'by the narrative.'))
     return errors
+
+
+def _pick_sector_model(name, models):
+    for model in models:
+        if model['name'] == name:
+            return model
+    raise KeyError("Model '{}' not found in models".format(name))
 
 
 def _validate_sos_model_deps(sos_model, sector_models, scenarios):

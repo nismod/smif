@@ -66,7 +66,7 @@ def mock_store(sample_dimensions, get_sector_model, empty_store):
         'outputs': [
             {
                 'name': 'test',
-                'dtype': 'float',
+                'dtype': 'int',
                 'dims': ['lad', 'annual'],
                 'absolute_range': [0, int(1e12)],
                 'expected_range': [0, 100000],
@@ -74,7 +74,7 @@ def mock_store(sample_dimensions, get_sector_model, empty_store):
             },
             {
                 'name': 'test_alt_dims',
-                'dtype': 'float',
+                'dtype': 'int',
                 'dims': ['lad', 'annual'],
                 'absolute_range': [0, int(1e12)],
                 'expected_range': [0, 100000],
@@ -95,7 +95,7 @@ def mock_store(sample_dimensions, get_sector_model, empty_store):
         'inputs': [
             {
                 'name': 'test',
-                'dtype': 'float',
+                'dtype': 'int',
                 'dims': ['lad', 'annual'],
                 'absolute_range': [0, int(1e12)],
                 'expected_range': [0, 100000],
@@ -105,7 +105,7 @@ def mock_store(sample_dimensions, get_sector_model, empty_store):
         'outputs': [
             {
                 'name': 'test',
-                'dtype': 'float',
+                'dtype': 'int',
                 'dims': ['lad', 'annual'],
                 'absolute_range': [0, int(1e12)],
                 'expected_range': [0, 100000],
