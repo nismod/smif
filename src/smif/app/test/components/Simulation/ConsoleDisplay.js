@@ -4,7 +4,7 @@ import {expect} from 'chai'
 import {mount} from 'enzyme'
 import {describe, it} from 'mocha'
 
-import ConsoleDisplay from 'components/Simulation/ConsoleDisplay'
+import ConsoleDisplay from '../../../src/components/Simulation/ConsoleDisplay'
 
 describe('<ConsoleDisplay />', () => {
 
@@ -26,7 +26,7 @@ describe('<ConsoleDisplay />', () => {
 
     it('Download file', () => {
         sinon.spy(ConsoleDisplay.prototype, 'download')
-        
+
         let wrapper = mount(<ConsoleDisplay name='my_name' output='my_output' status='stopped'/>)
         wrapper.find('[id="btn_download"]').simulate('click')
         expect(ConsoleDisplay.prototype.download).to.have.property('callCount', 1)

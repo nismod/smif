@@ -1,9 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
-import { Link } from 'react-router-dom'
-
-import { FaPencil } from 'react-icons/lib/fa'
+import { FaPen } from 'react-icons/fa'
 import { SecondaryButton, DangerButton } from './Buttons'
 
 class DeleteForm extends Component {
@@ -75,7 +73,7 @@ class DeleteForm extends Component {
                                             className="btn btn-outline-dark btn-margin"
                                             name={conf.name}
                                             onClick={() => this.props.onClick(conf.link + conf.name)}>
-                                            <FaPencil/>
+                                            <FaPen/>
                                         </button>
                                         {conf.name}
                                         ({conf.type})

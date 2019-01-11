@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 
 import { Redirect } from 'react-router-dom'
 
-import {FaTrash, FaPencil, FaPlay} from 'react-icons/lib/fa'
+import {FaTrash, FaPen, FaPlay} from 'react-icons/fa'
 import ReactTable from 'react-table'
 
 class ProjectOverviewItem extends Component {
@@ -83,7 +83,7 @@ class ProjectOverviewItem extends Component {
                             filterable: false,
                             Cell: row => (
                                 <div className='text-center'>
-                                    <button 
+                                    <button
                                         hidden={resultLink==undefined}
                                         id={'btn_start_' + row.value}
                                         type="button"
@@ -92,17 +92,17 @@ class ProjectOverviewItem extends Component {
                                         onClick={() => this.onStartHandler(row.original.name)}>
                                         <FaPlay/>
                                     </button>
-                                    <button 
+                                    <button
                                         hidden={onClick==undefined}
                                         id={'btn_edit_' + row.original.name}
                                         type="button"
                                         className="btn btn-outline-dark btn-margin"
                                         name={row.original.name}
                                         onClick={() => this.onEditHandler(row.original.name)}>
-                                        <FaPencil/>
+                                        <FaPen/>
                                     </button>
                                     <button
-                                        hidden={onDelete==undefined} 
+                                        hidden={onDelete==undefined}
                                         id={'btn_delete_' + row.original.name}
                                         type="button"
                                         className="btn btn-outline-dark btn-margin"
