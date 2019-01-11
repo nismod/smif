@@ -1,6 +1,5 @@
 """Test config validation
 """
-from pytest import raises
 from smif.data_layer.validate import validate_sos_model_config
 from smif.exception import SmifDataError
 
@@ -28,15 +27,16 @@ class TestValidateSosModel:
             [get_sector_model, energy_supply_sector_model],
             sample_scenarios)
 
-        with raises(SmifDataError) as ex:
+        try:
             get_sos_model['description'] = 256 * 'a'
             validate_sos_model_config(
                 get_sos_model,
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
-        assert ex.args[0]
-        assert ex.args[0][0].component == 'description'
-        assert 'characters' in ex.args[0][0].error
+        except SmifDataError as ex:
+            assert ex.args[0]
+            assert ex.args[0][0].component == 'description'
+            assert 'characters' in ex.args[0][0].error
 
     def test_sector_models_none_configured(self, get_sos_model, get_sector_model,
                                            energy_supply_sector_model, sample_scenarios):
@@ -49,7 +49,7 @@ class TestValidateSosModel:
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
             assert False
-        except(SmifDataError) as ex:
+        except SmifDataError as ex:
             assert ex.args[0]
             assert ex.args[0][0].component == 'sector_models'
             assert 'one sector model must be selected' in ex.args[0][0].error
@@ -64,7 +64,7 @@ class TestValidateSosModel:
                 [],
                 sample_scenarios)
             assert False
-        except(SmifDataError) as ex:
+        except SmifDataError as ex:
             assert ex.args[0]
             assert ex.args[0][0].component == 'sector_models'
             assert 'valid sector_model configuration' in ex.args[0][0].error
@@ -82,7 +82,7 @@ class TestValidateSosModel:
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
             assert False
-        except(SmifDataError) as ex:
+        except SmifDataError as ex:
             assert ex.args[0]
             assert ex.args[0][0].component == 'scenarios'
             assert 'valid scenario configuration' in ex.args[0][0].error
@@ -130,7 +130,7 @@ class TestValidateSosModel:
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
             assert False
-        except(SmifDataError) as ex:
+        except SmifDataError as ex:
             assert ex.args[0]
             assert ex.args[0][0].component == 'model_dependencies'
             assert 'Circular dependencies' in ex.args[0][0].error
@@ -179,7 +179,7 @@ class TestValidateSosModel:
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
             assert False
-        except(SmifDataError) as ex:
+        except SmifDataError as ex:
             assert ex.args[0]
             assert ex.args[0][2].component == 'model_dependencies'
             assert '`energy_demand` is not enabled' in ex.args[0][2].error
@@ -216,7 +216,7 @@ class TestValidateSosModel:
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
             assert False
-        except(SmifDataError) as ex:
+        except SmifDataError as ex:
             assert ex.args[0]
             assert ex.args[0][0].component == 'model_dependencies'
             assert 'Source output `output_a` does not exist' in ex.args[0][0].error
@@ -239,7 +239,7 @@ class TestValidateSosModel:
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
             assert False
-        except(SmifDataError) as ex:
+        except SmifDataError as ex:
             assert ex.args[0]
             assert ex.args[0][0].component == 'model_dependencies'
             assert 'Sink input `input_a` does not exist' in ex.args[0][0].error
@@ -284,7 +284,7 @@ class TestValidateSosModel:
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
             assert False
-        except(SmifDataError) as ex:
+        except SmifDataError as ex:
             assert ex.args[0]
             assert ex.args[0][0].component == 'model_dependencies'
             msg = '`output_a` has different dimensions than sink `input_a`'
@@ -317,7 +317,7 @@ class TestValidateSosModel:
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
             assert False
-        except(SmifDataError) as ex:
+        except SmifDataError as ex:
             assert ex.args[0]
             assert ex.args[0][0].component == 'model_dependencies'
             msg = '`output_a` has a different dtype than sink `input_a`'
@@ -378,7 +378,7 @@ class TestValidateSosModel:
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
             assert False
-        except(SmifDataError) as ex:
+        except SmifDataError as ex:
             assert len(ex.args[0]) == 2
             assert ex.args[0][0].component == 'model_dependencies'
             assert 'Sink input `input_a` is driven by multiple sources' in ex.args[0][0].error
