@@ -12,12 +12,21 @@ import { setAppFormDiscard } from 'actions/actions.js'
 import { setAppNavigate } from 'actions/actions.js'
 import { setAppNavigateDone } from 'actions/actions.js'
 
-import { FaHome, FaTasks, FaSliders, FaSitemap, FaCode, FaBarChart } from 'react-icons/lib/fa'
-import { Badge } from 'reactstrap'
+import { FaHome, FaTasks, FaSlidersH, FaSitemap, FaCode, FaChartBar } from 'react-icons/fa'
 
 import { ConfirmPopup } from 'components/ConfigForm/General/Popups.js'
 import Footer from 'containers/Footer'
 import history from '../history.js'
+
+
+const Badge = (props) => (
+    <span className={`badge badge-${props.color}`}>{props.children}</span>
+)
+
+Badge.propTypes = {
+    color: PropTypes.string,
+    children: PropTypes.node
+}
 
 class Nav extends Component {
     constructor(props) {
@@ -101,9 +110,9 @@ class Nav extends Component {
                             <ul className="nav flex-column">
                                 {job_status.map(status =>
                                     <li key={'nav_' + status} className="nav-item">
-                                        <div 
+                                        <div
                                             className={
-                                                pathname == '/jobs/status=' + status ? 
+                                                pathname == '/jobs/status=' + status ?
                                                     'nav-link active' : 'nav-link'
                                             }
                                             onClick={() => dispatch(setAppNavigate('/jobs/status=' + status))}>
@@ -117,7 +126,7 @@ class Nav extends Component {
 
                     <li className="nav-item">
                         <div className="nav-link" onClick={() => dispatch(setAppNavigate('/configure/model-runs'))}>
-                            <FaSliders size={20}/>
+                            <FaSlidersH size={20}/>
                                 Model Runs
                             <Badge color="secondary">{model_runs.length}</Badge>
                         </div>
@@ -127,7 +136,7 @@ class Nav extends Component {
                                     <li key={'nav_modelrun_' + model_run.name} className="nav-item">
                                         <div
                                             className={
-                                                pathname == '/configure/model-runs/' + model_run.name ? 
+                                                pathname == '/configure/model-runs/' + model_run.name ?
                                                     'nav-link active' : 'nav-link'
                                             }
                                             key={'nav_' + model_run.name}
@@ -158,7 +167,7 @@ class Nav extends Component {
                                     <li key={'nav_sosmodel_' + sos_model.name} className="nav-item">
                                         <div
                                             className={
-                                                pathname == '/configure/sos-models/' + sos_model.name ? 
+                                                pathname == '/configure/sos-models/' + sos_model.name ?
                                                     'nav-link active' : 'nav-link'
                                             }
                                             key={'nav_' + sos_model.name}
@@ -181,7 +190,7 @@ class Nav extends Component {
                                     <li key={'nav_sectormodel_' + sector_model.name} className="nav-item">
                                         <div
                                             className={
-                                                pathname == '/configure/sector-models/' + sector_model.name ? 
+                                                pathname == '/configure/sector-models/' + sector_model.name ?
                                                     'nav-link active' : 'nav-link'
                                             }
                                             key={'nav_' + sector_model.name}
@@ -196,7 +205,7 @@ class Nav extends Component {
 
                     <li className="nav-item">
                         <div className="nav-link" onClick={() => dispatch(setAppNavigate('/configure/scenarios'))}>
-                            <FaBarChart size={20}/>
+                            <FaChartBar size={20}/>
                                 Scenarios
                             <Badge color="secondary">{scenarios.length}</Badge>
                         </div>
@@ -206,7 +215,7 @@ class Nav extends Component {
                                     <li key={'nav_scenario_' + scenario.name} className="nav-item">
                                         <div
                                             className={
-                                                pathname == '/configure/scenarios/' + scenario.name ? 
+                                                pathname == '/configure/scenarios/' + scenario.name ?
                                                     'nav-link active' : 'nav-link'
                                             }
                                             key={'nav_' + scenario.name}
@@ -222,7 +231,7 @@ class Nav extends Component {
 
                 <Footer />
 
-                <ConfirmPopup 
+                <ConfirmPopup
                     onRequestOpen={this.props.app.formEdit && this.props.app.formReqCancel && !this.props.app.formSaving}
                     onSave={() => dispatch(setAppFormSave())}
                     onConfirm={() => dispatch(setAppFormDiscard())}
@@ -236,15 +245,15 @@ class Nav extends Component {
     render() {
         const {model_runs, sos_models, sector_models, scenarios, isFetching} = this.props
 
-        if (this.props.app.redirect != '' && 
-            this.props.location.pathname == this.props.app.redirect) {    
+        if (this.props.app.redirect != '' &&
+            this.props.location.pathname == this.props.app.redirect) {
             this.props.dispatch(setAppNavigateDone())
         }
 
-        if (this.props.app.redirect != '' && 
+        if (this.props.app.redirect != '' &&
             this.props.location.pathname != this.props.app.redirect &&
-            this.props.app.formEdit == false && 
-            this.props.app.formError == false && 
+            this.props.app.formEdit == false &&
+            this.props.app.formError == false &&
             this.props.app.formSaving == false) {
 
             history.push(this.props.app.redirect)
