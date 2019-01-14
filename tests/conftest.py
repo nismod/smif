@@ -360,13 +360,15 @@ def get_sos_model(sample_narratives):
             'energy_demand',
             'energy_supply'
         ],
-        'dependencies': [
+        'scenario_dependencies': [
             {
                 'source': 'population',
-                'source_output': 'count',
+                'source_output': 'population_count',
                 'sink': 'energy_demand',
                 'sink_input': 'population'
-            },
+            }
+        ],
+        'model_dependencies': [
             {
                 'source': 'energy_demand',
                 'source_output': 'gas_demand',
@@ -390,6 +392,7 @@ def get_sector_model(annual, hourly):
         'inputs': [
             {
                 'name': 'population',
+                'dtype': 'int',
                 'dims': ['lad', 'annual'],
                 'coords': {
                     'lad': ['a', 'b'],
@@ -403,6 +406,7 @@ def get_sector_model(annual, hourly):
         'outputs': [
             {
                 'name': 'gas_demand',
+                'dtype': 'float',
                 'dims': ['lad', 'hourly'],
                 'coords': {
                     'lad': ['a', 'b'],
@@ -457,6 +461,7 @@ def energy_supply_sector_model(hourly):
                 },
                 'absolute_range': [0, float('inf')],
                 'expected_range': [0, 100],
+                'dtype': 'float',
                 'unit': 'GWh'
             }
         ],
@@ -581,7 +586,7 @@ def sample_scenarios():
                     'description': "The count of population",
                     'unit': 'people',
                     'dtype': 'int',
-                    'dims': ['county', 'season']
+                    'dims': ['lad', 'annual']
                 },
             ],
             'variants': [
@@ -657,17 +662,14 @@ def get_narrative():
         'name': 'technology',
         'description': 'Describes the evolution of technology',
         'provides': {
-            'energy_demand': ['smart_meter_savings'],
-            'water_supply': ['clever_water_meter_savings', 'per_capita_water_demand']
+            'energy_demand': ['smart_meter_savings']
         },
         'variants': [
             {
                 'name': 'high_tech_dsm',
                 'description': 'High takeup of smart technology on the demand side',
                 'data': {
-                    'smart_meter_savings': 'high_tech_dsm.csv',
-                    'clever_water_meter_savings': 'high_tech_dsm.csv',
-                    'per_capita_water_demand': 'high_tech_dsm.csv'
+                    'smart_meter_savings': 'high_tech_dsm.csv'
                 }
             }
         ]
@@ -690,7 +692,10 @@ def sample_narratives(get_narrative):
                 {
                     'name': 'Central Planning',
                     'description': 'Stronger role for central government in planning and ' +
-                                   'regulation, less emphasis on market-based solutions'
+                                   'regulation, less emphasis on market-based solutions',
+                    'data': {
+                        'homogeneity_coefficient': 'homogeneity_coefficient.csv'
+                    }
                 },
             ],
         },

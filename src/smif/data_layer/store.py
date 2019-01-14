@@ -19,6 +19,8 @@ from logging import getLogger
 from operator import itemgetter
 
 from smif.data_layer.file import CSVDataStore, ParquetDataStore
+from smif.data_layer.validate import (validate_sos_model_config,
+                                      validate_sos_model_format)
 from smif.exception import SmifDataNotFoundError
 from smif.metadata.spec import Spec
 
@@ -126,6 +128,7 @@ class Store():
         ----------
         sos_model : ~smif.model.sos_model.SosModel
         """
+        validate_sos_model_format(sos_model)
         self.config_store.write_sos_model(sos_model)
 
     def update_sos_model(self, sos_model_name, sos_model):
@@ -136,6 +139,10 @@ class Store():
         sos_model_name : str
         sos_model : ~smif.model.sos_model.SosModel
         """
+        models = self.config_store.read_models()
+        scenarios = self.config_store.read_scenarios()
+        validate_sos_model_config(sos_model, models, scenarios)
+
         self.config_store.update_sos_model(sos_model_name, sos_model)
 
     def delete_sos_model(self, sos_model_name):

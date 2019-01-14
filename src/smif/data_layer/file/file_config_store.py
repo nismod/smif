@@ -199,7 +199,7 @@ class YamlConfigStore(ConfigStore):
         # ignore interventions and initial conditions which the app doesn't handle
         if model['interventions'] or model['initial_conditions']:
 
-            old_model = _read_yaml_file(self.config_folders['models'], model['name'])
+            old_model = _read_yaml_file(self.config_folders['sector_models'], model['name'])
 
         if model['interventions']:
             self.logger.warning("Ignoring interventions write")

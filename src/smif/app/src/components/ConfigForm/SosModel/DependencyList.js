@@ -37,7 +37,7 @@ class DependencyList extends Component {
         if (event.target.name == 'source') {
             this.setState({
                 dependency: update(
-                    this.state.dependency, 
+                    this.state.dependency,
                     {
                         [event.target.name]: {$set: event.target.value},
                         ['source_output']: {$set: ''}
@@ -48,7 +48,7 @@ class DependencyList extends Component {
         else if (event.target.name == 'sink') {
             this.setState({
                 dependency: update(
-                    this.state.dependency, 
+                    this.state.dependency,
                     {
                         [event.target.name]: {$set: event.target.value},
                         ['sink_input']: {$set: ''}
@@ -59,13 +59,13 @@ class DependencyList extends Component {
         else {
             this.setState({
                 dependency: update(
-                    this.state.dependency, 
+                    this.state.dependency,
                     {[event.target.name]: {$set: event.target.value}}
                 )
             })
         }
     }
-    
+
     handleSubmit(event) {
         event.preventDefault()
         let new_dep = Object.assign([], this.props.dependencies)
@@ -100,7 +100,8 @@ class DependencyList extends Component {
             source: '',
             source_output: '',
             sink: '',
-            sink_input: ''
+            sink_input: '',
+            timestep: 'CURRENT'
         }
     }
 
@@ -157,7 +158,7 @@ class DependencyList extends Component {
     handleDelete(name) {
         let new_dep = Object.assign([], this.props.dependencies)
         new_dep.splice(name, 1)
-    
+
         this.props.onChange(new_dep)
         this.closeForm()
     }
@@ -176,7 +177,7 @@ class DependencyList extends Component {
                                     <th className="col-text"
                                         scope="col" key={name + '_column_' + column}>
                                         {column}
-                                    </th> 
+                                    </th>
                                 ))
                             }
                         </tr>
@@ -189,32 +190,32 @@ class DependencyList extends Component {
                                     onClick={(e) => this.handleEdit(e)}>
                                     <td className="col-text">
                                         {
-                                            this.props.source.map(source => source.name).includes(dependency.source) 
-                                                ? dependency.source 
+                                            this.props.source.map(source => source.name).includes(dependency.source)
+                                                ? dependency.source
                                                 : (<s>{dependency.source}</s>)
                                         }
                                     </td>
                                     <td className="col-text">
                                         {
                                             dependency.source in this.props.source_output
-                                                ? this.props.source_output[dependency.source].map(source_output => source_output.name).includes(dependency.source_output) 
-                                                    ? dependency.source_output 
+                                                ? this.props.source_output[dependency.source].map(source_output => source_output.name).includes(dependency.source_output)
+                                                    ? dependency.source_output
                                                     : (<s>{dependency.source_output}</s>)
                                                 : (<s>{dependency.source_output}</s>)
                                         }
                                     </td>
                                     <td className="col-text">
                                         {
-                                            this.props.sink.map(sink => sink.name).includes(dependency.sink) 
-                                                ? dependency.sink 
+                                            this.props.sink.map(sink => sink.name).includes(dependency.sink)
+                                                ? dependency.sink
                                                 : (<s>{dependency.sink}</s>)
                                         }
                                     </td>
                                     <td className="col-text">
                                         {
                                             dependency.sink in this.props.sink_input
-                                                ? this.props.sink_input[dependency.sink].map(sink_input => sink_input.name).includes(dependency.sink_input) 
-                                                    ? dependency.sink_input 
+                                                ? this.props.sink_input[dependency.sink].map(sink_input => sink_input.name).includes(dependency.sink_input)
+                                                    ? dependency.sink_input
                                                     : (<s>{dependency.sink_input}</s>)
                                                 : (<s>{dependency.sink_input}</s>)
                                         }
@@ -233,21 +234,21 @@ class DependencyList extends Component {
                                 <div className="row">
                                     <div className="col">
                                         <label className='label'>Source</label>
-                                        <select 
+                                        <select
                                             id={name + '_source'}
                                             className='form-control'
-                                            name="source" 
+                                            name="source"
                                             value={this.state.dependency.source}
                                             onChange={this.handleFormInput}
                                             required>
                                             <option
                                                 value=''
                                                 disabled>
-                                                Please select 
+                                                Please select
                                             </option>
                                             {
                                                 source.map((source) => (
-                                                    <option 
+                                                    <option
                                                         key={source.name}
                                                         value={source.name}>
                                                         {source.name}
@@ -258,21 +259,21 @@ class DependencyList extends Component {
                                     </div>
                                     <div className="col">
                                         <label className='label'>Sink</label>
-                                        <select 
+                                        <select
                                             id={name + '_sink'}
                                             className='form-control'
-                                            name="sink" 
+                                            name="sink"
                                             value={this.state.dependency.sink}
                                             onChange={this.handleFormInput}
                                             required>
                                             <option
                                                 value=''
                                                 disabled>
-                                                Please select 
+                                                Please select
                                             </option>
                                             {
                                                 sink.map((sink) => (
-                                                    <option 
+                                                    <option
                                                         key={sink.name}
                                                         value={sink.name}>
                                                         {sink.name}
@@ -285,22 +286,22 @@ class DependencyList extends Component {
                                 <div className="row">
                                     <div className="col">
                                         <label className='label'>Source Output</label>
-                                        <select 
+                                        <select
                                             id={name + '_source_output'}
                                             className='form-control'
-                                            name="source_output" 
+                                            name="source_output"
                                             value={this.state.dependency.source_output}
                                             onChange={this.handleFormInput}
                                             required>
                                             <option
                                                 value=''
                                                 disabled>
-                                                Please select 
+                                                Please select
                                             </option>
                                             {
-                                                this.state.dependency.source != '' 
+                                                this.state.dependency.source != ''
                                                     ? source_output[this.state.dependency.source].map(output => (
-                                                        <option 
+                                                        <option
                                                             key={output.name}
                                                             value={output.name}>
                                                             {output.name}
@@ -311,28 +312,42 @@ class DependencyList extends Component {
                                     </div>
                                     <div className="col">
                                         <label className='label'>Sink Input</label>
-                                        <select 
+                                        <select
                                             id={name + '_sink'}
                                             className='form-control'
-                                            name="sink_input" 
+                                            name="sink_input"
                                             value={this.state.dependency.sink_input}
                                             onChange={this.handleFormInput}
                                             required>
                                             <option
                                                 value=''
                                                 disabled>
-                                                Please select 
+                                                Please select
                                             </option>
                                             {
-                                                this.state.dependency.sink != '' 
+                                                this.state.dependency.sink != ''
                                                     ? sink_input[this.state.dependency.sink].map(input => (
-                                                        <option 
+                                                        <option
                                                             key={input.name}
                                                             value={input.name}>
                                                             {input.name}
                                                         </option>
                                                     )) : null
                                             }
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col">
+                                        <label className='label'>Timestep</label>
+                                        <select
+                                            id={name + '_timestep'}
+                                            className='form-control'
+                                            name="timestep"
+                                            value={this.state.dependency.timestep}
+                                            onChange={this.handleFormInput}>
+                                            <option value='CURRENT'>Within timestep (default)</option>
+                                            <option value='PREVIOUS'>Previous timestep</option>
                                         </select>
                                     </div>
                                 </div>
@@ -344,8 +359,8 @@ class DependencyList extends Component {
                             <SecondaryButton id={'btn_' + name + '_cancel'} value="Cancel" onClick={() => this.closeForm()}/>
                             {
                                 !this.state.formEditMode ? null : (
-                                    <DangerButton  
-                                        id={'btn_' + name + '_delete'} 
+                                    <DangerButton
+                                        id={'btn_' + name + '_delete'}
                                         onClick={() => this.handleDelete(this.state.formEditNumber)} />
                                 )
                             }
