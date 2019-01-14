@@ -7,6 +7,7 @@ import DependencyList from 'components/ConfigForm/SosModel/DependencyList.js'
 import NarrativeList from 'components/ConfigForm/SosModel/NarrativeList.js'
 
 import { PrimaryButton, SecondaryButton } from 'components/ConfigForm/General/Buttons'
+import ErrorBlock from './General/ErrorBlock';
 
 class SosModelConfigForm extends Component {
     constructor(props) {
@@ -59,7 +60,7 @@ class SosModelConfigForm extends Component {
                 return map
             }, {})
         }
-        
+
         return (
             <div>
                 <div className="card">
@@ -76,30 +77,16 @@ class SosModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea id="sos_model_description" 
+                                <ErrorBlock errors={errors.description} />
+                                <textarea id="sos_model_description"
                                     className={
                                         'description' in errors
-                                            ? 'form-control is-invalid'   
+                                            ? 'form-control is-invalid'
                                             : 'form-control'
                                     }
-                                    rows="5" 
-                                    defaultValue={selected.description} 
+                                    rows="5"
+                                    defaultValue={selected.description}
                                     onChange={(event) => this.handleChange('description', event.target.value)}/>
-                                {   
-                                    'description' in errors
-                                        ? (
-                                            <div className="invalid-feedback">
-                                                {
-                                                    errors['description'].map((exception, idx) => (
-                                                        <div key={'feedback_description_' + idx}>
-                                                            {exception.error + ' ' + exception.message}
-                                                        </div>
-                                                        
-                                                    ))
-                                                }
-                                            </div>)
-                                        : ''
-                                }
                             </div>
                         </div>
 
@@ -119,8 +106,8 @@ class SosModelConfigForm extends Component {
                                     <div className={`dropdown-menu${this.state.inuse_dropdown ? ' show' : ''}`} aria-labelledby="dropdownMenuButton">
                                         {
                                             this.props.model_runs.filter(model_run => model_run.sos_model == this.props.sos_model.name).map(model_run => (
-                                                <a key={model_run.name} 
-                                                    className="btn dropdown-item" 
+                                                <a key={model_run.name}
+                                                    className="btn dropdown-item"
                                                     onClick={() => this.props.onNavigate('/configure/model-runs/' + model_run.name)}>
                                                     {model_run.name}
                                                 </a>
@@ -141,50 +128,22 @@ class SosModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Sector Models</label>
                             <div className="col-sm-10">
-                                <PropertySelector 
-                                    activeProperties={selected.sector_models} 
-                                    availableProperties={this.props.sector_models} 
+                                <ErrorBlock errors={errors.sector_models} />
+                                <PropertySelector
+                                    activeProperties={selected.sector_models}
+                                    availableProperties={this.props.sector_models}
                                     onChange={(event) => this.handleChange('sector_models', event.target.value)} />
-                                {   
-                                    'sector_models' in errors
-                                        ? (
-                                            <div className="invalid-feedback">
-                                                {
-                                                    errors['sector_models'].map((exception, idx) => (
-                                                        <div key={'feedback_sector_models_' + idx}>
-                                                            {exception.error + ' ' + exception.message}
-                                                        </div>
-                                                        
-                                                    ))
-                                                }
-                                            </div>)
-                                        : ''
-                                }
                             </div>
                         </div>
 
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Scenarios</label>
                             <div className="col-sm-10">
-                                <PropertySelector 
-                                    activeProperties={selected.scenarios} 
-                                    availableProperties={this.props.scenarios} 
+                                <ErrorBlock errors={errors.scenarios} />
+                                <PropertySelector
+                                    activeProperties={selected.scenarios}
+                                    availableProperties={this.props.scenarios}
                                     onChange={(event) => this.handleChange('scenarios', event.target.value)} />
-                                {   
-                                    'scenarios' in errors
-                                        ? (
-                                            <div className="invalid-feedback">
-                                                {
-                                                    errors['scenarios'].map((exception, idx) => (
-                                                        <div key={'feedback_scenarios_' + idx}>
-                                                            {exception.error + ' ' + exception.message}
-                                                        </div>
-                                                        
-                                                    ))
-                                                }
-                                            </div>)
-                                        : ''
-                                }
                             </div>
                         </div>
                     </div>
@@ -193,10 +152,10 @@ class SosModelConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Model Dependencies</div>
                     <div className="card-body">
-  
-                        <DependencyList 
-                            name="Model Dependency" 
-                            dependencies={this.state.selected.model_dependencies} 
+                        <ErrorBlock errors={errors.model_dependencies} />
+                        <DependencyList
+                            name="Model Dependency"
+                            dependencies={this.state.selected.model_dependencies}
                             source={
                                 this.props.sector_models.filter(
                                     sector_model => this.state.selected.sector_models.includes(sector_model.name)
@@ -219,38 +178,23 @@ class SosModelConfigForm extends Component {
                                     return obj}, {}
                                 )
                             }
-                            onChange={(model_dependencies) => this.handleChange('model_dependencies', model_dependencies)} 
+                            onChange={(model_dependencies) => this.handleChange('model_dependencies', model_dependencies)}
                         />
-                        {   
-                            'model_dependencies' in errors
-                                ? (
-                                    <div className="invalid-feedback">
-                                        {
-                                            errors['model_dependencies'].map((exception, idx) => (
-                                                <div key={'feedback_model_dependencies_' + idx}>
-                                                    {exception.error + ' ' + exception.message}
-                                                </div>
-                                                
-                                            ))
-                                        }
-                                    </div>)
-                                : ''
-                        }
                     </div>
                 </div>
 
                 <div className="card">
                     <div className="card-header">Scenario Dependencies</div>
                     <div className="card-body">
-
-                        <DependencyList 
-                            name="Scenario Dependency" 
-                            dependencies={this.state.selected.scenario_dependencies} 
+                        <ErrorBlock errors={errors.scenario_dependencies} />
+                        <DependencyList
+                            name="Scenario Dependency"
+                            dependencies={this.state.selected.scenario_dependencies}
                             source={
                                 this.props.scenarios.filter(
                                     scenario => this.state.selected.scenarios.includes(scenario.name)
                                 )
-                            } 
+                            }
                             source_output={
                                 this.props.scenarios.reduce(function(obj, item) {
                                     obj[item.name] = item.provides
@@ -267,54 +211,25 @@ class SosModelConfigForm extends Component {
                                     obj[item.name] = item.inputs
                                     return obj}, {}
                                 )
-                            } 
-                            onChange={(scenario_dependencies) => this.handleChange('scenario_dependencies', scenario_dependencies)} 
+                            }
+                            onChange={(scenario_dependencies) => this.handleChange('scenario_dependencies', scenario_dependencies)}
                         />
-                        {   
-                            'scenario_dependencies' in errors
-                                ? (
-                                    <div className="invalid-feedback">
-                                        {
-                                            errors['scenario_dependencies'].map((exception, idx) => (
-                                                <div key={'feedback_scenario_dependencies_' + idx}>
-                                                    {exception.error + ' ' + exception.message}
-                                                </div>
-                                                
-                                            ))
-                                        }
-                                    </div>)
-                                : ''
-                        }
                     </div>
                 </div>
 
                 <div className="card">
                     <div className="card-header">Narratives</div>
                     <div className="card-body">
-                        <NarrativeList 
-                            name="Narrative" 
+                        <ErrorBlock errors={errors.narratives} />
+                        <NarrativeList
+                            name="Narrative"
                             narratives={selected.narratives}
                             sector_models={this.props.sector_models.filter(
                                 sector_model => this.state.selected.sector_models.includes(sector_model.name)
                             )}
                             onChange={(narratives) => this.handleChange('narratives', narratives)}  />
-                        {   
-                            'narratives' in errors
-                                ? (
-                                    <div className="invalid-feedback">
-                                        {
-                                            errors['narratives'].map((exception, idx) => (
-                                                <div key={'feedback_narratives_' + idx}>
-                                                    {exception.error + ' ' + exception.message}
-                                                </div>
-                                                        
-                                            ))
-                                        }
-                                    </div>)
-                                : ''
-                        }
                     </div>
-                   
+
                 </div>
 
                 <PrimaryButton value="Save" onClick={this.handleSave} />
