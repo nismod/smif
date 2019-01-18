@@ -47,6 +47,34 @@ class TestDataArray():
 
         assert actual == da
 
+    def test_read_zero_d_from_timeseries(self, handler):
+        """Read a single value
+            timestep,param
+            2010,0
+            2015,1
+        """
+        # write data for multiple timesteps by adding 'timestep' dim to the spec
+        data = np.array([0, 1], dtype=float)
+        write_spec = Spec(
+            name='param',
+            dims=['timestep'],
+            coords={'timestep': [2010, 2015]},
+            dtype='float'
+        )
+        da = DataArray(write_spec, data)
+        handler.write_scenario_variant_data('param', da)
+
+        read_spec = Spec(
+            name='param',
+            dims=[],
+            coords={},
+            dtype='float'
+        )
+        actual = handler.read_scenario_variant_data('param', read_spec, 2010).data
+        assert actual == np.array(0.0)
+        actual = handler.read_scenario_variant_data('param', read_spec, 2015).data
+        assert actual == np.array(1.0)
+
     def test_read_data_array_missing_timestep(self, handler, scenario):
         data = np.array([0, 1], dtype=float)
         spec = Spec.from_dict(scenario['provides'][0])

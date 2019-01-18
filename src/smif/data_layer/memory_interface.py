@@ -275,8 +275,11 @@ class MemoryDataStore(DataStore):
             try:
                 data = self._data_array[key, timestep]
             except KeyError:
-                raise SmifDataNotFoundError(
-                    "Data for {} not found for timestep {}".format(spec.name, timestep))
+                try:
+                    data = self._filter_timestep(self._data_array[key], spec, timestep)
+                except KeyError:
+                    raise SmifDataNotFoundError(
+                        "Data for {} not found for timestep {}".format(spec.name, timestep))
         else:
             try:
                 data = self._data_array[key]
@@ -289,6 +292,18 @@ class MemoryDataStore(DataStore):
                 "Spec did not match reading {}, requested {}, got {}".format(
                     spec.name, spec, data.spec))
         return data
+
+    def _filter_timestep(self, data, read_spec, timestep):
+        dataframe = data.as_df().reset_index()
+        if 'timestep' not in dataframe.columns:
+            msg = "Missing 'timestep' key, found {} in {}"
+            raise SmifDataMismatchError(msg.format(list(dataframe.columns), data.name))
+        dataframe = dataframe[dataframe.timestep == timestep]
+        if dataframe.empty:
+            raise SmifDataNotFoundError(
+                "Data for {} not found for timestep {}".format(data.name, timestep))
+        dataframe.drop('timestep', axis=1, inplace=True)
+        return DataArray.from_df(read_spec, dataframe)
 
     def _write_data_array(self, key, data, timestep=None):
         if timestep:

@@ -353,8 +353,10 @@ class FileDataStore(DataStore):
     def _filter_on_timestep(self, timestep, dataframe, path, spec):
         if timestep is not None:
             if 'timestep' not in dataframe.columns:
-                msg = "Missing 'timestep' key, found {} in {}"
-                raise SmifDataMismatchError(msg.format(list(dataframe.columns), path))
+                dataframe = dataframe.reset_index()
+                if 'timestep' not in dataframe.columns:
+                    msg = "Missing 'timestep' key, found {} in {}"
+                    raise SmifDataMismatchError(msg.format(list(dataframe.columns), path))
             dataframe = dataframe[dataframe.timestep == timestep]
             if dataframe.empty:
                 raise SmifDataNotFoundError(
@@ -390,7 +392,7 @@ class CSVDataStore(FileDataStore):
             if data.shape != (1,):
                 msg = "Expected single value, found {} in {}"
                 raise SmifDataMismatchError(msg.format(list(data.shape), path))
-            data_array = DataArray(spec, data[0])
+            data_array = DataArray(spec, data.iloc[0])
         return data_array
 
     def _write_data_array(self, path, data_array, timestep=None):
@@ -446,7 +448,7 @@ class ParquetDataStore(FileDataStore):
             if data.shape != (1,):
                 msg = "Expected single value, found {} in {}"
                 raise SmifDataMismatchError(msg.format(list(data.shape), path))
-            data_array = DataArray(spec, data[0])
+            data_array = DataArray(spec, data.iloc[0])
 
         return data_array
 
