@@ -25,6 +25,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     conda update --yes conda -c conda-forge
 
     conda config --add channels conda-forge
+
     # Configure the conda environment and put it in the path using the
     # provided versions
     conda create -n testenv --yes -c conda-forge \
@@ -37,7 +38,12 @@ if [[ "$DISTRIB" == "conda" ]]; then
         pandas \
         psycopg2 \
         shapely \
-        fiona && source activate testenv
+        fiona  && source activate testenv
+
+    if [[ "$PYTHON_VERSION" == "3.5" ]]; then
+        # Pin libgcc as possible root cause of fiona/shapely shared library import errors
+        conda install --yes libgcc-ng==7.2.0
+    fi
 fi
 
 python setup.py develop
