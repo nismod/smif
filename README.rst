@@ -251,7 +251,7 @@ Here's an example BibTeX entry::
 
         @misc{smif,
               author       = {Will Usher and Tom Russell and Roald Schoenmakers},
-              title        = {nismod/smif v0.8.2},
+              title        = {nismod/smif vX.Y.Z},
               month        = Aug,
               year         = 2018,
               doi          = {10.5281/zenodo.1309336},
