@@ -2,6 +2,35 @@
 Changelog
 =========
 
+Version 1.0.2
+=============
+
+Minor updates:
+
+- Update smif app readme
+- Bump babel and webpack major versions, update other npm packages
+- Validate self-dependencies (between timesteps is okay)
+- Add validation methods for narratives
+- Make illegal parameters visible in narrative configuration
+- Pass path to binary filestore, extract method to parent class
+- Allow adaptors to be directly included in a system of systems model
+- Provide useful error message when there are missing data in a data array
+- Add profiling to some places in the program, provide summary at end of modelrun
+- Don't read dimension elements through API
+
+Fixes:
+
+- Fix and test reading from timeseries, including zero-d case
+- Fix API calling old store methods
+- Pin libgcc as possible cause of shared library import errors
+- Fix up test_validate to use conftest configs
+- Fix react-icons imports, drop reactstrap
+- Silence mocha deprecation warning.
+- Ensure smif npm package is private
+- Fix update_model method store
+- Adopt fix for DataFrame.to_dict('records') from future pandas
+
+
 Version 1.0
 ===========
 

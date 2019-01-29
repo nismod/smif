@@ -8,8 +8,8 @@ authors:
   - family-names: Schoenmakers
     given-names: Roald
 title: "smif: simulation modelling integration framework"
-version: 0.7.6
-date-released: 2018-05-01
+version: 1.0.2
+date-released: 2019-01-29
 repository-code: "https://github.com/nismod/smif/"
 license: MIT
 url: "http://smif.readthedocs.io/"
