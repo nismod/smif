@@ -111,7 +111,12 @@ class DataHandle(object):
         # Load in the concrete narrative and selected variants from the model run
         for narrative_name, variant_names in concrete_narratives.items():
             # Load the narrative
-            narrative = [x for x in sos_model['narratives'] if x['name'] == narrative_name][0]
+            try:
+                narrative = [x for x in sos_model['narratives']
+                             if x['name'] == narrative_name][0]
+            except IndexError:
+                msg = "Couldn't find a match for {} in {}"
+                raise IndexError(msg.format(narrative_name, sos_model['name']))
             self.logger.debug("Loaded narrative: %s", narrative)
             self.logger.debug("Considering variants: %s", variant_names)
 
