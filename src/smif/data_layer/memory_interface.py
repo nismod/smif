@@ -371,12 +371,7 @@ class MemoryDataStore(DataStore):
             raise SmifDataNotFoundError(msg.format(spec[0], spec[1]))
 
     def write_coefficients(self, source_spec, destination_spec, data):
-        spec = (source_spec.name, destination_spec.name)
-        if spec in self._coefficients:
-            msg = "Coefficients already exist for spec pair {}.{}"
-            raise SmifDataExistsError(msg.format(spec[0], spec[1]))
-        else:
-            self._coefficients[(source_spec.name, destination_spec.name)] = data
+        self._coefficients[(source_spec.name, destination_spec.name)] = data
     # endregion
 
     # region Results

@@ -8,9 +8,8 @@ from pytest import fixture, raises
 from smif.data_layer import DataHandle
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import ResultsHandle
-from smif.exception import (SmifDataError, SmifDataExistsError,
-                            SmifDataMismatchError, SmifDataNotFoundError,
-                            SmifTimestepResolutionError)
+from smif.exception import (SmifDataError, SmifDataMismatchError,
+                            SmifDataNotFoundError, SmifTimestepResolutionError)
 from smif.metadata import Spec
 from smif.model import SectorModel, SosModel
 
@@ -742,8 +741,6 @@ class TestDataHandleCoefficients:
 
         dh = DataHandle(store, 1, 2010, [2010], mock_model)
         dh.write_coefficients(source_spec, sink_spec, data)
-        with raises(SmifDataExistsError):
-            dh.write_coefficients(source_spec, sink_spec, data)
 
     def test_read_coefficient_(self, mock_store, mock_model):
         """
