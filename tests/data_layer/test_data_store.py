@@ -6,7 +6,7 @@ from smif.data_layer.data_array import DataArray
 from smif.data_layer.database_interface import DbDataStore
 from smif.data_layer.file.file_data_store import CSVDataStore, ParquetDataStore
 from smif.data_layer.memory_interface import MemoryDataStore
-from smif.exception import SmifDataNotFoundError
+from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 from smif.metadata import Spec
 
 
@@ -146,8 +146,16 @@ class TestCoefficients():
     """
     def test_read_write_coefficients(self, conversion_source_spec, conversion_sink_spec,
                                      handler):
+
+        with raises(SmifDataNotFoundError):
+            handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
+
         expected = np.array([[2]])
         handler.write_coefficients(conversion_source_spec, conversion_sink_spec, expected)
+
+        with raises(SmifDataExistsError):
+            handler.write_coefficients(conversion_source_spec, conversion_sink_spec, expected)
+
         actual = handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
         np.testing.assert_equal(actual, expected)
 

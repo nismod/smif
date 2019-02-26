@@ -364,15 +364,15 @@ class MemoryDataStore(DataStore):
     # region Conversion coefficients
     def read_coefficients(self, source_spec, destination_spec):
         spec = (source_spec.name, destination_spec.name)
-        if spec not in self._coefficients.keys():
+        try:
+            return self._coefficients[(source_spec.name, destination_spec.name)]
+        except KeyError:
             msg = "Could not find coefficients for spec pair {}.{}"
             raise SmifDataNotFoundError(msg.format(spec[0], spec[1]))
-        else:
-            return self._coefficients[(source_spec.name, destination_spec.name)]
 
     def write_coefficients(self, source_spec, destination_spec, data):
         spec = (source_spec.name, destination_spec.name)
-        if spec in self._coefficients.keys():
+        if spec in self._coefficients:
             msg = "Coefficients already exist for spec pair {}.{}"
             raise SmifDataExistsError(msg.format(spec[0], spec[1]))
         else:
