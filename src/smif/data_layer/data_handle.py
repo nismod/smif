@@ -555,6 +555,14 @@ class DataHandle(object):
             decision_iteration
         )
 
+    def read_coefficients(self, source_spec, destination_spec):
+        data = self._store.read_coefficients(source_spec, destination_spec)
+        return data
+
+    def write_coefficients(self, source_spec, destination_spec, data):
+        data = self._store.write_coefficients(source_spec, destination_spec, data)
+        return data
+
 
 class ResultsHandle(object):
     """Results access for decision modules

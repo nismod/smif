@@ -146,8 +146,13 @@ class TestCoefficients():
     """
     def test_read_write_coefficients(self, conversion_source_spec, conversion_sink_spec,
                                      handler):
+
+        with raises(SmifDataNotFoundError):
+            handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
+
         expected = np.array([[2]])
         handler.write_coefficients(conversion_source_spec, conversion_sink_spec, expected)
+
         actual = handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
         np.testing.assert_equal(actual, expected)
 
