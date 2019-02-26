@@ -8,7 +8,8 @@ from pytest import fixture, raises
 from smif.data_layer import DataHandle
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import ResultsHandle
-from smif.exception import (SmifDataError, SmifDataMismatchError,
+from smif.exception import (SmifDataError, SmifDataExistsError,
+                            SmifDataMismatchError, SmifDataNotFoundError,
                             SmifTimestepResolutionError)
 from smif.metadata import Spec
 from smif.model import SectorModel, SosModel
@@ -88,7 +89,7 @@ def mock_store(sample_dimensions, get_sector_model, empty_store):
 
     # convertor model
     # - test input matches test output from test_source
-    # - test ouput matches population input to energy demand
+    # - test output matches population input to energy demand
     store.write_model({
         'name': 'test_convertor',
         'description': '',
@@ -714,6 +715,51 @@ class TestDataHandleGetParameters:
         actual = dh.get_parameter('multi_savings')
 
         assert actual == expected
+
+
+class TestDataHandleCoefficients:
+    """Tests the interface for reading and writing coefficients
+    """
+    def test_read_coefficient_raises(self, mock_store, mock_model):
+        """
+        """
+        store = mock_store
+        source_spec = mock_model.outputs['gas_demand']
+        sink_spec = mock_model.outputs['gas_demand']
+
+        dh = DataHandle(store, 1, 2010, [2010], mock_model)
+        with raises(SmifDataNotFoundError):
+            dh.read_coefficients(source_spec, sink_spec)
+
+    def test_write_coefficients(self, mock_store, mock_model):
+        """
+        """
+
+        store = mock_store
+        source_spec = mock_model.outputs['gas_demand']
+        sink_spec = mock_model.outputs['gas_demand']
+        data = np.zeros(4)
+
+        dh = DataHandle(store, 1, 2010, [2010], mock_model)
+        dh.write_coefficients(source_spec, sink_spec, data)
+        with raises(SmifDataExistsError):
+            dh.write_coefficients(source_spec, sink_spec, data)
+
+    def test_read_coefficient_(self, mock_store, mock_model):
+        """
+        """
+        store = mock_store
+        source_spec = mock_model.outputs['gas_demand']
+        sink_spec = mock_model.outputs['gas_demand']
+
+        dh = DataHandle(store, 1, 2010, [2010], mock_model)
+
+        data = np.zeros(4)
+        dh.write_coefficients(source_spec, sink_spec, data)
+
+        actual = dh.read_coefficients(source_spec, sink_spec)
+
+        np.testing.assert_equal(actual, np.array([0, 0, 0, 0]))
 
 
 class TestResultsHandle:
