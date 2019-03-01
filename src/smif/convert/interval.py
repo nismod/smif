@@ -149,7 +149,7 @@ BASE_YEAR = 2010
 class IntervalAdaptor(Adaptor):
     """Convert intervals, assuming uniform distributions where necessary
     """
-    def generate_coefficients(self, from_spec, to_spec):
+    def generate_coefficients(self, from_spec, to_spec) -> np.ndarray:
         """Generate conversion coefficients for interval dimensions
 
         Assumes that the Coordinates elements contain an 'interval' key whose value corresponds

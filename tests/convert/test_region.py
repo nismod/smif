@@ -7,6 +7,7 @@ import numpy as np
 from pytest import fixture, raises
 from smif.convert.region import RegionAdaptor, RegionSet
 from smif.convert.register import NDimensionalRegister
+from smif.data_layer.data_array import DataArray
 from smif.metadata import Spec
 
 
@@ -56,8 +57,11 @@ class TestRegionAdaptor:
         np.testing.assert_allclose(actual_coefficients, expected, rtol=1e-3)
 
         data = np.array([24, 24])  # area a,b
+
+        data_array = DataArray(from_spec, data)
+
         data_handle = Mock()
-        data_handle.get_data = Mock(return_value=data)
+        data_handle.get_data = Mock(return_value=data_array)
         data_handle.read_coefficients = Mock(return_value=actual_coefficients)
         adaptor.simulate(data_handle)
 
@@ -95,8 +99,11 @@ class TestRegionAdaptor:
         np.testing.assert_allclose(actual_coefficients, expected, rtol=1e-3)
 
         data = np.ones((1, 12))  # area zero, months 1-12
+
+        data_array = DataArray(from_spec, data)
+
         data_handle = Mock()
-        data_handle.get_data = Mock(return_value=data)
+        data_handle.get_data = Mock(return_value=data_array)
         data_handle.read_coefficients = Mock(return_value=actual_coefficients)
         adaptor.simulate(data_handle)
 

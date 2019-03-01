@@ -11,7 +11,10 @@ class UnitAdaptor(Adaptor):
         self._register = UnitRegistry()
         super().__init__(name)
 
-    def convert(self, data, from_spec, to_spec, coefficients):
+    def convert(self, data_array, to_spec, coefficients):
+        data = data_array.data
+        from_spec = data_array.spec
+
         try:
             quantity = self._register.Quantity(data, from_spec.unit)
         except UndefinedUnitError:

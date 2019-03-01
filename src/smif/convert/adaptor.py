@@ -7,7 +7,10 @@ The method to override is `generate_coefficients`, which accepts two
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+from smif.data_layer.data_array import DataArray
+from smif.data_layer.data_handle import DataHandle
 from smif.exception import SmifDataNotFoundError
+from smif.metadata import Spec
 from smif.model import Model
 
 
@@ -18,18 +21,21 @@ class Adaptor(Model, metaclass=ABCMeta):
     :class:`~smif.metadata.spec.Spec` definitions.
 
     """
-    def simulate(self, data):
+    def simulate(self, data_handle: DataHandle):
         """Convert from input to output based on matching variable names
         """
         for from_spec in self.inputs.values():
             if from_spec.name in self.outputs:
                 to_spec = self.outputs[from_spec.name]
-                coefficients = self.get_coefficients(data, from_spec, to_spec)
-                data_in = data.get_data(from_spec.name)
-                data_out = self.convert(data_in, from_spec, to_spec, coefficients)
-                data.set_results(to_spec.name, data_out)
+                coefficients = self.get_coefficients(data_handle, from_spec, to_spec)
+                data_in = data_handle.get_data(from_spec.name)
+                data_out = self.convert(data_in, to_spec, coefficients)
+                data_handle.set_results(to_spec.name, data_out)
 
-    def get_coefficients(self, data_handle, from_spec, to_spec):
+    def get_coefficients(self,
+                         data_handle: DataHandle,
+                         from_spec: Spec,
+                         to_spec: Spec) -> np.ndarray:
         """Read coefficients, or generate and save if necessary
 
         Parameters
@@ -53,7 +59,7 @@ class Adaptor(Model, metaclass=ABCMeta):
         return coefficients
 
     @abstractmethod
-    def generate_coefficients(self, from_spec, to_spec):
+    def generate_coefficients(self, from_spec: Spec, to_spec: Spec) -> np.ndarray:
         """Generate coefficients for a pair of :class:`~smif.metadata.spec.Spec` definitions
 
         Parameters
@@ -67,13 +73,15 @@ class Adaptor(Model, metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def convert(self, data, from_spec, to_spec, coefficients):
+    def convert(self,
+                data_array: DataArray,
+                to_spec: Spec,
+                coefficients: np.ndarray):
         """Convert a dataset between :class:`~smif.metadata.spec.Spec` definitions
 
         Parameters
         ----------
-        data: numpy.ndarray
-        from_spec : smif.metadata.spec.Spec
+        data: smif.data_layer.data_array.DataArray
         to_spec : smif.metadata.spec.Spec
         coefficients : numpy.ndarray
 
@@ -81,6 +89,9 @@ class Adaptor(Model, metaclass=ABCMeta):
         -------
         numpy.ndarray
         """
+        data = data_array.data
+        from_spec = data_array.spec
+
         self.logger.debug("Converting from %s to %s.", from_spec.name, to_spec.name)
 
         from_convert_dim, to_convert_dim = self.get_convert_dims(from_spec, to_spec)
@@ -103,7 +114,9 @@ class Adaptor(Model, metaclass=ABCMeta):
         return converted
 
     @staticmethod
-    def convert_with_coefficients(data, coefficients, axis):
+    def convert_with_coefficients(data: np.ndarray,
+                                  coefficients: np.ndarray,
+                                  axis: int):
         """Unchecked conversion, given data, coefficients and axis
 
         Parameters

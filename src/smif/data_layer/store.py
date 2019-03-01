@@ -18,6 +18,7 @@ from copy import deepcopy
 from logging import getLogger
 from operator import itemgetter
 
+import numpy as np
 from smif.data_layer.file import CSVDataStore, ParquetDataStore
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
@@ -739,7 +740,9 @@ class Store():
     # endregion
 
     # region Conversion coefficients
-    def read_coefficients(self, source_spec, destination_spec):
+    def read_coefficients(self,
+                          source_spec: Spec,
+                          destination_spec: Spec) -> np.ndarray:
         """Reads coefficients from the store
 
         Coefficients are uniquely identified by their source/destination specs.
@@ -761,7 +764,10 @@ class Store():
         """
         return self.data_store.read_coefficients(source_spec, destination_spec)
 
-    def write_coefficients(self, source_spec, destination_spec, data):
+    def write_coefficients(self,
+                           source_spec: Spec,
+                           destination_spec: Spec,
+                           data: np.ndarray):
         """Writes coefficients to the store
 
         Coefficients are uniquely identified by their source/destination specs.

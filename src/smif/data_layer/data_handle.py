@@ -9,9 +9,10 @@ data (at any computed or pre-computed timestep) and write access to output data
 from logging import getLogger
 from types import MappingProxyType
 
+import numpy as np
 from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataError
-from smif.metadata import RelativeTimestep
+from smif.metadata import RelativeTimestep, Spec
 
 
 class DataHandle(object):
@@ -555,11 +556,43 @@ class DataHandle(object):
             decision_iteration
         )
 
-    def read_coefficients(self, source_spec, destination_spec):
+    def read_coefficients(self,
+                          source_spec: Spec,
+                          destination_spec: Spec) -> np.ndarray:
+        """Reads coefficients from the store
+
+        Coefficients are uniquely identified by their source/destination specs.
+        This method and `write_coefficients` implement caching of conversion
+        coefficients between dimensions.
+
+        Parameters
+        ----------
+        source_spec : ~smif.metadata.spec.Spec
+        destination_spec : ~smif.metadata.spec.Spec
+
+        Returns
+        -------
+        numpy.ndarray
+        """
         data = self._store.read_coefficients(source_spec, destination_spec)
         return data
 
-    def write_coefficients(self, source_spec, destination_spec, data):
+    def write_coefficients(self,
+                           source_spec: Spec,
+                           destination_spec: Spec,
+                           data: np.ndarray):
+        """Writes coefficients to the store
+
+        Coefficients are uniquely identified by their source/destination specs.
+        This method and `read_coefficients` implement caching of conversion
+        coefficients between dimensions.
+
+        Parameters
+        ----------
+        source_spec : ~smif.metadata.spec.Spec
+        destination_spec : ~smif.metadata.spec.Spec
+        data : numpy.ndarray
+        """
         data = self._store.write_coefficients(source_spec, destination_spec, data)
         return data
 

@@ -179,14 +179,14 @@ class NDimensionalRegister(Register):
             raise ValueError(msg.format(name))
         return self._register[name]
 
-    def _write_coefficients(self, source, destination, data):
+    def _write_coefficients(self, source, destination, data: np.ndarray):
         if self.store:
             self.store.write_coefficients(source, destination, data)
         else:
             msg = "Data interface not available to write coefficients"
             self.logger.warning(msg)
 
-    def get_coefficients(self, source, destination):
+    def get_coefficients(self, source, destination) -> np.ndarray:
         """Get coefficients representing intersection of sets
 
         Arguments
@@ -213,7 +213,7 @@ class NDimensionalRegister(Register):
 
         return coefficients
 
-    def generate_coefficients(self, from_set, to_set):
+    def generate_coefficients(self, from_set, to_set) -> np.ndarray:
         """Generate coefficients for converting between two :class:`ResolutionSet`s
 
         Coefficients for converting a single dimension will always be 2D, of shape

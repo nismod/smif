@@ -7,6 +7,7 @@ from numpy.testing import assert_equal
 from pytest import raises
 from smif.convert.interval import Interval, IntervalAdaptor, IntervalSet
 from smif.convert.register import NDimensionalRegister
+from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataNotFoundError
 from smif.metadata import Spec
 
@@ -41,8 +42,10 @@ class TestTimeRegisterConversion:
         adaptor.add_output(to_spec)
         actual_coefficients = adaptor.generate_coefficients(from_spec, to_spec)
 
+        data_array = DataArray(from_spec, monthly_data)
+
         data_handle = Mock()
-        data_handle.get_data = Mock(return_value=monthly_data)
+        data_handle.get_data = Mock(return_value=data_array)
         data_handle.read_coefficients = Mock(return_value=actual_coefficients)
 
         adaptor.simulate(data_handle)
@@ -51,7 +54,7 @@ class TestTimeRegisterConversion:
 
         assert np.allclose(actual, expected, rtol=1e-05, atol=1e-08)
 
-    def test_agggregate_from_hour_to_day(self, twenty_four_hours, one_day):
+    def test_aggregate_from_hour_to_day(self, twenty_four_hours, one_day):
         """Aggregate hours to a single value for a day
         """
         data = np.ones((24,))
@@ -77,8 +80,10 @@ class TestTimeRegisterConversion:
         adaptor.add_output(to_spec)
         actual_coefficients = adaptor.generate_coefficients(from_spec, to_spec)
 
+        data_array = DataArray(from_spec, data)
+
         data_handle = Mock()
-        data_handle.get_data = Mock(return_value=data)
+        data_handle.get_data = Mock(return_value=data_array)
         data_handle.read_coefficients = Mock(return_value=actual_coefficients)
 
         adaptor.simulate(data_handle)
@@ -112,8 +117,11 @@ class TestTimeRegisterConversion:
         actual_coefficients = adaptor.generate_coefficients(from_spec, to_spec)
 
         data = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+
+        data_array = DataArray(from_spec, data)
+
         data_handle = Mock()
-        data_handle.get_data = Mock(return_value=data)
+        data_handle.get_data = Mock(return_value=data_array)
         data_handle.read_coefficients = Mock(return_value=actual_coefficients)
 
         adaptor.simulate(data_handle)
@@ -146,8 +154,9 @@ class TestTimeRegisterConversion:
         actual_coefficients = adaptor.generate_coefficients(from_spec, to_spec)
 
         data = np.array([3, 3, 3, 3])
+        data_array = DataArray(from_spec, data)
         data_handle = Mock()
-        data_handle.get_data = Mock(return_value=data)
+        data_handle.get_data = Mock(return_value=data_array)
         data_handle.read_coefficients = Mock(return_value=actual_coefficients)
 
         adaptor.simulate(data_handle)
@@ -284,8 +293,10 @@ class TestConvertor:
         )
         adaptor.add_output(to_spec)
 
+        data_array = DataArray(from_spec, data)
+
         data_handle = Mock()
-        data_handle.get_data = Mock(return_value=data)
+        data_handle.get_data = Mock(return_value=data_array)
         data_handle.read_coefficients = Mock(side_effect=SmifDataNotFoundError)
 
         adaptor.simulate(data_handle)
@@ -366,8 +377,10 @@ class TestConvertor:
         )
         adaptor.add_output(to_spec)
 
+        data_array = DataArray(from_spec, data)
+
         data_handle = Mock()
-        data_handle.get_data = Mock(return_value=data)
+        data_handle.get_data = Mock(return_value=data_array)
         data_handle.read_coefficients = Mock(side_effect=SmifDataNotFoundError)
 
         adaptor.simulate(data_handle)
@@ -404,8 +417,10 @@ class TestConvertor:
         )
         adaptor.add_output(to_spec)
 
+        data_array = DataArray(from_spec, data)
+
         data_handle = Mock()
-        data_handle.get_data = Mock(return_value=data)
+        data_handle.get_data = Mock(return_value=data_array)
         data_handle.read_coefficients = Mock(side_effect=SmifDataNotFoundError)
 
         adaptor.simulate(data_handle)
@@ -448,8 +463,10 @@ class TestConvertor:
         )
         adaptor.add_output(to_spec)
 
+        data_array = DataArray(from_spec, data)
+
         data_handle = Mock()
-        data_handle.get_data = Mock(return_value=data)
+        data_handle.get_data = Mock(return_value=data_array)
         data_handle.read_coefficients = Mock(side_effect=SmifDataNotFoundError)
 
         adaptor.simulate(data_handle)
