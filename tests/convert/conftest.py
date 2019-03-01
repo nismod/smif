@@ -171,6 +171,7 @@ def monthly_data():
         30,
         31
     ])
+
     return data
 
 
