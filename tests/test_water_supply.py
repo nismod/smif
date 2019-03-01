@@ -53,9 +53,8 @@ def test_water_supply_with_reservoir():
 def test_water_supply_with_reservoir_negative_level():
     raininess = 1
     reservoir_level = -2
-    with raises(ValueError) as ex:
+    with raises(ValueError, message="Reservoir level cannot be negative"):
         ExampleWaterSupplySimulationModelWithReservoir(raininess, reservoir_level)
-    assert "Reservoir level cannot be negative" in str(ex)
 
 
 def test_process_results():
@@ -76,9 +75,8 @@ def test_raininess_oracle():
 
 def test_raininess_oracle_out_of_range():
     msg = "timestep 2051 is outside of the range [2010, 2050]"
-    with raises(AssertionError) as ex:
+    with raises(AssertionError, message=msg):
         a_raininess_oracle(2051)
-    assert msg in str(ex)
 
 
 def test_simulate_rain_cost_python():

@@ -348,7 +348,7 @@ class TestMissingData:
         expected = pd.DataFrame(columns=['test_data'], dtype=float)
         expected.index = pd.MultiIndex(
             levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-            codes=[[], [], []],
+            labels=[[], [], []],
             names=['a', 'b', 'c'])
 
         pd.testing.assert_frame_equal(actual, expected)
@@ -360,7 +360,7 @@ class TestMissingData:
         expected = pd.DataFrame(columns=['test_data'], dtype=str)
         expected.index = pd.MultiIndex(
             levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-            codes=[[], [], []],
+            labels=[[], [], []],
             names=['a', 'b', 'c'])
 
         pd.testing.assert_frame_equal(actual, expected)
@@ -372,7 +372,7 @@ class TestMissingData:
         actual = small_da_non_numeric._show_null(df)
         index = pd.MultiIndex(
             levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-            codes=[[1], [1], [1]],
+            labels=[[1], [1], [1]],
             names=['a', 'b', 'c'])
         expected = pd.DataFrame(data=numpy.array([[None]], dtype=numpy.object),
                                 index=index,
