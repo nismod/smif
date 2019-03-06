@@ -32,6 +32,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         python=$PYTHON_VERSION \
         pytest \
         pytest-cov \
+        gdal \
         numpy \
         rtree \
         xarray \
