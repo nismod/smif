@@ -59,3 +59,4 @@ energy_demand_data/*
 # Other files
 *.ipynb
 src/smif/app/.nyc_output
+.mypy_cache

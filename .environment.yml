@@ -28,4 +28,5 @@ dependencies:
 - xarray
 - pip:
   - better-apidoc  # docs
+  - mypy  # dev
   - pre-commit  # dev
