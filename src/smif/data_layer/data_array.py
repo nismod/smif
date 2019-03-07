@@ -255,14 +255,13 @@ def _reindex_xr_data_array(spec, xr_data_array):
 
     for dim in spec.dims:
         # all index values must exist in dimension
-        index_values = xr_data_array.coords[dim].values
-        # cast list to np.array then do set operation - alternative to python set() ops
-        dim_names = np.array(spec.dim_names(dim))
-        in_index_but_not_dim_names = np.setdiff1d(index_values, dim_names)
-        if in_index_but_not_dim_names.size > 0:
+        index_values = set(xr_data_array.coords[dim].values)
+        dim_names = set(spec.dim_names(dim))
+        in_index_but_not_dim_names = index_values - dim_names
+        if in_index_but_not_dim_names:
             raise ValueError(
                 "Unknown {} values {} in {}".format(
-                    dim, in_index_but_not_dim_names, spec.name))
+                    dim, list(in_index_but_not_dim_names), spec.name))
 
     # reindex to ensure data order
     coords = {c.name: c.ids for c in spec.coords}
