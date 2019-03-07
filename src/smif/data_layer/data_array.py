@@ -77,11 +77,15 @@ class DataArray():
         """
         return self.spec.name
 
+    @name.setter
+    def name(self, value):
+        self.spec.name = value
+
     @property
     def description(self):
         """A human-friendly description
         """
-        return self.spec._description
+        return self.spec.description
 
     @property
     def dims(self):
