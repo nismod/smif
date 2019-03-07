@@ -178,6 +178,10 @@ class Spec(object):
         """
         return self._name
 
+    @name.setter
+    def name(self, value):
+        self._name = value
+
     @property
     def description(self):
         """A human-friendly description
