@@ -468,7 +468,7 @@ class ParquetDataStore(FileDataStore):
         dataframe = data_array.as_df()
         if timestep is not None:
             dataframe['timestep'] = timestep
-        dataframe.to_parquet(path, engine='pyarrow')
+        dataframe.to_parquet(path, engine='pyarrow', compression='gzip')
 
     def _read_list_of_dicts(self, path):
         """Read file to list[dict]
