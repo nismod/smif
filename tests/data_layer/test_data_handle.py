@@ -1,6 +1,7 @@
 """Test ModelData
 """
 # pylint: disable=redefined-outer-name
+from copy import copy
 from unittest.mock import Mock
 
 import numpy as np
@@ -230,7 +231,8 @@ class TestDataHandle():
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         data = np.array([[1.0], [2.0]])
 
-        spec = mock_model.inputs['population']
+        spec = copy(mock_model.inputs['population'])
+        spec.name = 'test'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(
@@ -251,8 +253,9 @@ class TestDataHandle():
         data_handle = DataHandle(
             mock_store, modelrun_name, 2015, [2015, 2020], mock_model_with_conversion)
         data = np.array([[0.001], [0.002]])
-        spec = mock_model_with_conversion.inputs['test']
 
+        spec = copy(mock_model_with_conversion.inputs['test'])
+        spec.name = 'test_alt_dims'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(
@@ -274,7 +277,8 @@ class TestDataHandle():
         data_handle = DataHandle(mock_store, 1, 2025, [2015, 2020, 2025], mock_model)
         data = np.array([[1.0], [2.0]])
 
-        spec = mock_model.inputs['population']
+        spec = copy(mock_model.inputs['population'])
+        spec.name = 'test'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(
@@ -297,7 +301,8 @@ class TestDataHandle():
         data_handle = DataHandle(mock_store, 1, None, [2015, 2020, 2025], mock_model)
         data = np.array([[1.0], [2.0]])
 
-        spec = mock_model.inputs['population']
+        spec = copy(mock_model.inputs['population'])
+        spec.name = 'test'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(
@@ -317,7 +322,8 @@ class TestDataHandle():
         """
         data_handle = DataHandle(mock_store, 1, 2025, [2015, 2020, 2025], mock_model)
         data = np.random.rand(*mock_model.inputs['population'].shape)
-        spec = mock_model.inputs['population']
+        spec = copy(mock_model.inputs['population'])
+        spec.name = 'test'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(
@@ -339,7 +345,8 @@ class TestDataHandle():
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         data = np.random.rand(*mock_model.inputs['population'].shape)
 
-        spec = mock_model.inputs['population']
+        spec = copy(mock_model.inputs['population'])
+        spec.name = 'test'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(
