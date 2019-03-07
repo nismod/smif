@@ -297,7 +297,7 @@ class DataHandle(object):
             timestep)
 
         if dep['type'] == 'scenario':
-            data = self._get_scenario(dep, timestep)
+            data = self._get_scenario(dep, timestep, input_name)
         else:
             input_spec = self._inputs[input_name]
             data = self._get_result(dep, timestep, input_spec)
@@ -346,7 +346,7 @@ class DataHandle(object):
                 timestep,
                 self._decision_iteration
             )
-            data.name = input_spec.name
+            data.name = input_spec.name  # ensure name matches input (as caller expects)
         except SmifDataError as ex:
             msg = "Could not read data for output '{}' from '{}' in {}, iteration {}"
             raise SmifDataError(msg.format(
@@ -357,7 +357,7 @@ class DataHandle(object):
             )) from ex
         return data
 
-    def _get_scenario(self, dep, timestep):
+    def _get_scenario(self, dep, timestep, input_name):
         """Retrieves data from a scenario
 
         Arguments
@@ -377,6 +377,7 @@ class DataHandle(object):
                 dep['source_output_name'],  # using output (variable) name
                 timestep
             )
+            data.name = input_name  # ensure name matches input (as caller expects)
         except SmifDataError as ex:
             msg = "Could not read data for output '{}' from '{}.{}' in {}"
             raise SmifDataError(msg.format(
