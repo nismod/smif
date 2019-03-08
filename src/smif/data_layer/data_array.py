@@ -188,7 +188,8 @@ class DataArray():
             # reindex to ensure data order and fill out NaNs
             xr_data_array = _reindex_xr_data_array(spec, xr_data_array)
 
-        except ValueError as ex:
+        # xarray raises Exception in v0.10 (narrowed to ValueError in v0.11)
+        except Exception as ex:  # pylint: disable=broad-except
             dups = find_duplicate_indices(dataframe)
             if dups:
                 msg = "Data for '{name}' contains duplicate values at {dups}"
