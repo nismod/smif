@@ -230,12 +230,22 @@ class DataArray():
     def validate_as_full(self):
         """Check that the data array contains no NaN values
         """
-        df = self.as_df()
-        if np.any(df.isnull()):
-            missing_data = show_null(df)
+        dataframe = self.as_df()
+        if np.any(dataframe.isnull()):
+            expected_len = len(dataframe)
+            missing_data = show_null(dataframe)
+            actual_len = expected_len - len(missing_data)
+            dim_lens = "{" + ", ".join(
+                "{}: {}".format(dim, len_) for dim, len_ in zip(self.dims, self.shape)
+            ) + "}"
             self.logger.debug("Missing data:\n\n    %s", missing_data)
-            msg = "There are missing data points in '{}'"
-            raise SmifDataNotFoundError(msg.format(self.name))
+            msg = "Data for '{name}' had missing values - read {actual_len} but expected " + \
+                  "{expected_len} in total, from dims of length {dim_lens}"
+            raise SmifDataMismatchError(msg.format(
+                name=self.name,
+                actual_len=actual_len,
+                expected_len=expected_len,
+                dim_lens=dim_lens))
 
 
 def show_null(dataframe) -> pandas.DataFrame:
@@ -271,7 +281,7 @@ def _reindex_xr_data_array(spec, xr_data_array):
         in_index_but_not_dim_names = index_values - dim_names
         if in_index_but_not_dim_names:
             msg = "Data for '{name}' contained unexpected values in the set of " + \
-                    "coordinates for dimension '{dim}': {extras}"
+                  "coordinates for dimension '{dim}': {extras}"
             raise SmifDataMismatchError(msg.format(
                 dim=dim, extras=list(in_index_but_not_dim_names), name=spec.name))
 

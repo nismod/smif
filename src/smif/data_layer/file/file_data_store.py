@@ -399,8 +399,9 @@ class CSVDataStore(FileDataStore):
             # zero-dimensional case (scalar)
             data = dataframe[spec.name]
             if data.shape != (1,):
-                msg = "Expected single value for {}, found {} in {}"
-                raise SmifDataMismatchError(msg.format(spec.name, list(data.shape), path))
+                msg = "Data for '{}' should contain a single value, instead got {} while " + \
+                      "reading from {}"
+                raise SmifDataMismatchError(msg.format(spec.name, len(data), path))
             data_array = DataArray(spec, data.iloc[0])
         return data_array
 

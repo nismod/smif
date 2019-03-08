@@ -287,8 +287,61 @@ class TestNarrativeVariantData:
             for i in range(4):
                 writer.writerow({parameter_name: i})
 
-        with raises(SmifDataMismatchError):
+        with raises(SmifDataMismatchError) as ex:
             config_handler.read_model_parameter_default('default.csv', spec)
+
+        msg = "Data for 'smart_meter_savings' should contain a single value, instead got " + \
+              "4 while reading from"
+        assert msg in str(ex)
+
+    def test_error_wrong_name(self, config_handler):
+        spec = Spec(
+            name='test',
+            dims=['a', 'b'],
+            coords={'a': [1, 2], 'b': [3, 4]},
+            dtype='int'
+        )
+        path = os.path.join(config_handler.data_folders['parameters'], 'default.csv')
+        with open(path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['wrong_name', 'a', 'b'])
+            writer.writeheader()
+            writer.writerow({
+                'a': 1,
+                'b': 2,
+                'wrong_name': 0
+            })
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_model_parameter_default('default.csv', spec)
+
+        msg = "Data for 'test' expected a data column called 'test' and index names " + \
+              "['a', 'b'], instead got data columns ['wrong_name'] and index names ['a', 'b']"
+        assert msg in str(ex)
+
+    def test_error_not_full(self, config_handler):
+        spec = Spec(
+            name='test',
+            dims=['a', 'b'],
+            coords={'a': [1, 2], 'b': [3, 4]},
+            dtype='int'
+        )
+        path = os.path.join(config_handler.data_folders['parameters'], 'default.csv')
+        with open(path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['test', 'a', 'b'])
+            writer.writeheader()
+            writer.writerow({
+                'a': 1,
+                'b': 3,
+                'test': 0
+            })
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_model_parameter_default('default.csv', spec)
+
+        msg = "Data for 'test' had missing values - read 1 but expected 4 in total, from " + \
+              "dims of length {a: 2, b: 2}"
+        assert msg in str(ex)
+
 
 
 class TestResults:

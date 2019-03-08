@@ -320,8 +320,12 @@ class TestMissingData:
         da.validate_as_full()
         da.data[1, 1] = numpy.NaN
 
-        with raises(SmifDataNotFoundError):
+        with raises(SmifDataMismatchError) as ex:
             da.validate_as_full()
+
+        msg = "Data for 'test_data' had missing values - read 20 but expected 24 in " + \
+              "total, from dims of length {a: 2, b: 3, c: 4}"
+        assert msg in str(ex)
 
     def test_missing_data_message(self, small_da):
         """Should check for NaNs and raise SmifDataError
@@ -330,10 +334,11 @@ class TestMissingData:
         da.validate_as_full()
         da.data[1, 1, 1] = numpy.nan
         da.data[0, 0, 3] = numpy.nan
-        with raises(SmifDataNotFoundError) as ex:
+        with raises(SmifDataMismatchError) as ex:
             da.validate_as_full()
 
-        expected = "There are missing data points in 'test_data'"
+        expected = "Data for 'test_data' had missing values - read 22 but expected 24 in " + \
+                   "total, from dims of length {a: 2, b: 3, c: 4}"
         assert expected in str(ex)
 
     def test_missing_data_message_non_numeric(self, small_da_non_numeric):
@@ -343,10 +348,11 @@ class TestMissingData:
         da.validate_as_full()
         da.data[1, 1, 1] = None
         da.data[0, 0, 3] = None
-        with raises(SmifDataNotFoundError) as ex:
+        with raises(SmifDataMismatchError) as ex:
             da.validate_as_full()
 
-        expected = "There are missing data points in 'test_data'"
+        expected = "Data for 'test_data' had missing values - read 22 but expected 24 in " + \
+                   "total, from dims of length {a: 2, b: 3, c: 4}"
         assert expected in str(ex)
 
     def test_no_missing_data(self, small_da):
