@@ -172,9 +172,8 @@ class TestReadState:
         assert actual == expected
 
 
-def _write_scenario_csv(base_folder, data):
+def _write_scenario_csv(base_folder, data, keys):
     key = 'population_high.csv'
-    keys = data[0].keys()
     filepath = os.path.join(str(base_folder), 'data', 'scenarios', key)
     with open(filepath, 'w+') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
@@ -192,7 +191,8 @@ class TestScenarios:
         """If a scenario file has incorrect keys, raise a friendly error identifying
         missing keys
         """
-        key = _write_scenario_csv(setup_folder_structure, get_faulty_scenario_data)
+        key = _write_scenario_csv(setup_folder_structure, get_faulty_scenario_data,
+                                  ('population_count', 'county', 'season', 'year'))
 
         with raises(SmifDataMismatchError) as ex:
             config_handler.read_scenario_variant_data(key, scenario_spec, 2017)
@@ -210,15 +210,14 @@ class TestScenarios:
                 'region': datum['county'],
                 'season': datum['season']
             })
-        key = _write_scenario_csv(setup_folder_structure, data)
+        key = _write_scenario_csv(setup_folder_structure, data,
+                                  ('population_count', 'region', 'season'))
 
         with raises(SmifDataMismatchError) as ex:
             config_handler.read_scenario_variant_data(key, scenario_spec)
         msg = "Data for 'population_count' expected a data column called " + \
               "'population_count' and index names ['county', 'season'], instead got data " + \
               "columns ['population_count', 'region', 'season'] and index names [None]"
-        print(msg)
-        print(str(ex))
         assert msg in str(ex)
 
 
@@ -233,7 +232,8 @@ class TestScenarios:
 
         The set of unique region or interval names can be used instead.
         """
-        key = _write_scenario_csv(setup_folder_structure, get_remapped_scenario_data)
+        key = _write_scenario_csv(setup_folder_structure, get_remapped_scenario_data,
+                                  ('population_count', 'county', 'season', 'timestep'))
 
         expected_data = np.array([[100, 150, 200, 210]], dtype=float)
         expected = DataArray(scenario_spec, expected_data)

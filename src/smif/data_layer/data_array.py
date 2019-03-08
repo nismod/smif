@@ -197,7 +197,6 @@ class DataArray():
             else:
                 raise ex
 
-
         return cls(spec, xr_data_array.data)
 
     def as_xarray(self):
