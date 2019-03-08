@@ -1,12 +1,12 @@
 """Test DataArray
 """
+# pylint: disable=redefined-outer-name
 import numpy
 import pandas as pd
 import xarray as xr
 from numpy.testing import assert_array_equal
 from pytest import fixture, raises
-from smif.data_layer.data_array import DataArray
-from smif.exception import SmifDataNotFoundError
+from smif.data_layer.data_array import DataArray, show_null
 from smif.metadata import Spec
 
 
@@ -351,7 +351,7 @@ class TestMissingData:
     def test_no_missing_data(self, small_da):
 
         df = small_da.as_df()
-        actual = small_da._show_null(df)
+        actual = show_null(df)
         expected = pd.DataFrame(columns=['test_data'], dtype=float)
         expected.index = pd.MultiIndex(
             levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
@@ -363,7 +363,7 @@ class TestMissingData:
     def test_no_missing_data_non_numeric(self, small_da_non_numeric):
 
         df = small_da_non_numeric.as_df()
-        actual = small_da_non_numeric._show_null(df)
+        actual = show_null(df)
         expected = pd.DataFrame(columns=['test_data'], dtype=str)
         expected.index = pd.MultiIndex(
             levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
@@ -376,7 +376,7 @@ class TestMissingData:
 
         small_da_non_numeric.data[1, 1, 1] = None
         df = small_da_non_numeric.as_df()
-        actual = small_da_non_numeric._show_null(df)
+        actual = show_null(df)
         index = pd.MultiIndex(
             levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
             codes=[[1], [1], [1]],

@@ -215,23 +215,24 @@ class DataArray():
         """
         df = self.as_df()
         if np.any(df.isnull()):
-            missing_data = self._show_null(df)
+            missing_data = show_null(df)
             self.logger.debug("Missing data:\n\n    %s", missing_data)
             msg = "There are missing data points in '{}'"
             raise SmifDataNotFoundError(msg.format(self.name))
 
-    def _show_null(self, df) -> pandas.DataFrame:
-        """Shows missing data
 
-        Returns
-        -------
-        pandas.DataFrame
-        """
-        try:
-            missing_data = df[df.isnull().values]
-        except NameError as ex:
-            raise SmifDataError(INSTALL_WARNING) from ex
-        return missing_data
+def show_null(dataframe) -> pandas.DataFrame:
+    """Shows missing data
+
+    Returns
+    -------
+    pandas.DataFrame
+    """
+    try:
+        missing_data = dataframe[dataframe.isnull().values]
+    except NameError as ex:
+        raise SmifDataError(INSTALL_WARNING) from ex
+    return missing_data
 
 
 def _array_equal_nan(a, b):
