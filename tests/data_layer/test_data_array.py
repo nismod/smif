@@ -400,8 +400,8 @@ class TestMissingData:
         df = small_da.as_df()
         actual = show_null(df)
         expected = pd.DataFrame(columns=['test_data'], dtype=float)
-        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-        codes = [[], [], []],
+        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']]
+        codes = [[], [], []]
         names = ['a', 'b', 'c']
         try:
             expected.index = pd.MultiIndex(levels=levels, codes=codes, names=names)
@@ -415,8 +415,8 @@ class TestMissingData:
         df = small_da_non_numeric.as_df()
         actual = show_null(df)
         expected = pd.DataFrame(columns=['test_data'], dtype=str)
-        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-        codes = [[], [], []],
+        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']]
+        codes = [[], [], []]
         names = ['a', 'b', 'c']
         try:
             expected.index = pd.MultiIndex(levels=levels, codes=codes, names=names)
@@ -430,8 +430,8 @@ class TestMissingData:
         small_da_non_numeric.data[1, 1, 1] = None
         df = small_da_non_numeric.as_df()
         actual = show_null(df)
-        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-        codes = [[1], [1], [1]],
+        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']]
+        codes = [[1], [1], [1]]
         names = ['a', 'b', 'c']
         try:
             index = pd.MultiIndex(levels=levels, codes=codes, names=names)
