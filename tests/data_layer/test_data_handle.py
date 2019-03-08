@@ -1,6 +1,7 @@
 """Test ModelData
 """
 # pylint: disable=redefined-outer-name
+from copy import copy
 from unittest.mock import Mock
 
 import numpy as np
@@ -15,7 +16,7 @@ from smif.model import SectorModel, SosModel
 
 
 @fixture(scope='function')
-def mock_store(sample_dimensions, get_sector_model, empty_store):
+def mock_store(sample_dimensions, annual, get_sector_model, empty_store):
     """Store with minimal setup
     """
     store = empty_store
@@ -55,6 +56,42 @@ def mock_store(sample_dimensions, get_sector_model, empty_store):
         }
     }
     store.write_interventions('energy_demand', data)
+
+    # source scenario
+    pop_spec_data = {
+        'name': 'population_count',
+        'dtype': 'int',
+        'dims': ['lad', 'annual'],
+        'coords': {
+            'lad': sample_dimensions[0]['elements'],
+            'annual': annual
+        },
+        'absolute_range': [0, int(1e12)],
+        'expected_range': [0, 100000],
+        'unit': 'people'
+    }
+    store.write_scenario({
+        'name': 'population',
+        'description': 'Projected annual fertility rates',
+        'provides': [
+            pop_spec_data
+        ],
+        'variants': [
+            {
+                'name': 'low',
+                'description': 'Population (Low)',
+                'data': {
+                    'population_count': 'population_low_count',
+                },
+            }
+        ]
+    })
+    store.write_scenario_variant_data(
+        'population',
+        'low',
+        DataArray(Spec.from_dict(pop_spec_data), np.array([[1.0], [2.0]])),
+        2015
+    )
 
     # source model
     # - test output matches population input to energy demand
@@ -115,6 +152,21 @@ def mock_store(sample_dimensions, get_sector_model, empty_store):
         'parameters': [],
         'interventions': [],
         'initial_conditions': []
+    })
+
+    store.write_sos_model({
+        'name': 'energy_demand_only',
+        'sector_models': ['energy_demand'],
+        'model_dependencies': [],
+        'scenario_dependencies': [
+            {
+                'source': 'population',
+                'source_output': 'population_count',
+                'sink_input': 'population',
+                'sink': 'energy_demand'
+            }
+        ],
+        'narratives': []
     })
 
     store.write_sos_model({
@@ -184,6 +236,14 @@ def mock_store(sample_dimensions, get_sector_model, empty_store):
         'sos_model': 'test_converting_sos_model',
         'scenarios': {}
     })
+    store.write_model_run({
+        'name': 3,
+        'narratives': {},
+        'sos_model': 'energy_demand_only',
+        'scenarios': {
+            'population': 'low'
+        }
+    })
 
     return store
 
@@ -224,25 +284,42 @@ class TestDataHandle():
         """
         DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
 
-    def test_get_data(self, mock_store, mock_model):
-        """should allow read access to input data
+    def test_get_data_from_scenario(self, mock_store, mock_model):
+        """should allow read access to input data from scenarios
+        """
+        data_handle = DataHandle(mock_store, 3, 2015, [2015, 2020], mock_model)
+        data = np.array([[1.0], [2.0]])
+
+        input_spec = mock_model.inputs['population']
+        input_da = DataArray(input_spec, data)
+
+        actual = data_handle.get_data("population")
+        assert actual.name == 'population'
+        np.testing.assert_equal(actual, input_da)
+
+    def test_get_data_from_model_output(self, mock_store, mock_model):
+        """should allow read access to input data from model results
         """
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         data = np.array([[1.0], [2.0]])
 
-        spec = mock_model.inputs['population']
-        da = DataArray(spec, data)
+        input_spec = mock_model.inputs['population']
+        input_da = DataArray(input_spec, data)
+        output_spec = copy(input_spec)
+        output_spec.name = 'test'  # use source spec name
+        output_da = DataArray(output_spec, data)
 
         mock_store.write_results(
-            da,
+            output_da,
             1,
             'test_source',  # write source model results
             2015,
             None
         )
         actual = data_handle.get_data("population")
-
-        np.testing.assert_equal(actual, da)
+        assert output_da.name == 'test'
+        assert actual.name == 'population'
+        np.testing.assert_equal(actual, input_da)
 
     def test_get_data_with_conversion(self, mock_store, mock_model_with_conversion):
         """should convert liters to milliliters (1 -> 0.001)
@@ -251,8 +328,9 @@ class TestDataHandle():
         data_handle = DataHandle(
             mock_store, modelrun_name, 2015, [2015, 2020], mock_model_with_conversion)
         data = np.array([[0.001], [0.002]])
-        spec = mock_model_with_conversion.inputs['test']
 
+        spec = copy(mock_model_with_conversion.inputs['test'])
+        spec.name = 'test_alt_dims'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(
@@ -274,7 +352,8 @@ class TestDataHandle():
         data_handle = DataHandle(mock_store, 1, 2025, [2015, 2020, 2025], mock_model)
         data = np.array([[1.0], [2.0]])
 
-        spec = mock_model.inputs['population']
+        spec = copy(mock_model.inputs['population'])
+        spec.name = 'test'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(
@@ -297,7 +376,8 @@ class TestDataHandle():
         data_handle = DataHandle(mock_store, 1, None, [2015, 2020, 2025], mock_model)
         data = np.array([[1.0], [2.0]])
 
-        spec = mock_model.inputs['population']
+        spec = copy(mock_model.inputs['population'])
+        spec.name = 'test'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(
@@ -317,7 +397,8 @@ class TestDataHandle():
         """
         data_handle = DataHandle(mock_store, 1, 2025, [2015, 2020, 2025], mock_model)
         data = np.random.rand(*mock_model.inputs['population'].shape)
-        spec = mock_model.inputs['population']
+        spec = copy(mock_model.inputs['population'])
+        spec.name = 'test'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(
@@ -339,7 +420,8 @@ class TestDataHandle():
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         data = np.random.rand(*mock_model.inputs['population'].shape)
 
-        spec = mock_model.inputs['population']
+        spec = copy(mock_model.inputs['population'])
+        spec.name = 'test'  # use source spec name
         da = DataArray(spec, data)
 
         mock_store.write_results(

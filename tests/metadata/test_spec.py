@@ -56,6 +56,13 @@ class TestSpec():
             Coordinates('age', [">30", "<30"])
         ]
 
+    def test_rename(self, spec):
+        """Allow setting a Spec name
+        """
+        assert spec.name == 'population'
+        spec.name = 'test'
+        assert spec.name == 'test'
+
     def test_dim_coords_method(self, spec):
         assert spec.dim_coords('countries') == Coordinates('countries', ["England", "Wales"])
         with raises(KeyError) as err:

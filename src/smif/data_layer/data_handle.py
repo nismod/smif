@@ -6,6 +6,7 @@ transparent access to the relevant data and parameters for the current
 data (at any computed or pre-computed timestep) and write access to output data
 (at the current timestep).
 """
+from copy import copy
 from logging import getLogger
 from types import MappingProxyType
 
@@ -296,10 +297,10 @@ class DataHandle(object):
             timestep)
 
         if dep['type'] == 'scenario':
-            data = self._get_scenario(dep, timestep)
+            data = self._get_scenario(dep, timestep, input_name)
         else:
-            spec = self._inputs[input_name]
-            data = self._get_result(dep, timestep, spec)
+            input_spec = self._inputs[input_name]
+            data = self._get_result(dep, timestep, input_spec)
 
         return data
 
@@ -331,28 +332,32 @@ class DataHandle(object):
                 assert isinstance(timestep, int) and timestep <= self._current_timestep
         return timestep
 
-    def _get_result(self, dep, timestep, spec):
+    def _get_result(self, dep, timestep, input_spec):
         """Retrieves a model result for a dependency
         """
+        output_spec = copy(input_spec)
+        output_spec.name = dep['source_output_name']
+        self.logger.debug("Getting model result for %s via %s from %s", input_spec, dep, output_spec)
         try:
             data = self._store.read_results(
                 self._modelrun_name,
                 dep['source_model_name'],  # read from source model
-                spec,  # using source model output spec
+                output_spec,  # using source model output spec
                 timestep,
                 self._decision_iteration
             )
+            data.name = input_spec.name  # ensure name matches input (as caller expects)
         except SmifDataError as ex:
             msg = "Could not read data for output '{}' from '{}' in {}, iteration {}"
             raise SmifDataError(msg.format(
-                spec.name,
+                output_spec.name,
                 dep['source_model_name'],
                 timestep,
                 self._decision_iteration
             )) from ex
         return data
 
-    def _get_scenario(self, dep, timestep):
+    def _get_scenario(self, dep, timestep, input_name):
         """Retrieves data from a scenario
 
         Arguments
@@ -372,6 +377,7 @@ class DataHandle(object):
                 dep['source_output_name'],  # using output (variable) name
                 timestep
             )
+            data.name = input_name  # ensure name matches input (as caller expects)
         except SmifDataError as ex:
             msg = "Could not read data for output '{}' from '{}.{}' in {}"
             raise SmifDataError(msg.format(

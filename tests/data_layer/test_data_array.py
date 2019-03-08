@@ -92,6 +92,13 @@ class TestDataArray():
         numpy.testing.assert_equal(da.data, data)
         assert spec == da.spec
 
+    def test_rename(self, small_da):
+        """Allow setting a Spec name
+        """
+        assert small_da.name == 'test_data'
+        small_da.name = 'test'
+        assert small_da.name == 'test'
+
     def test_as_df(self, small_da, small_da_df):
         """Should create a pandas.DataFrame from a DataArray
         """

@@ -47,7 +47,7 @@ class FileDataStore(DataStore):
                 raise SmifDataNotFoundError(msg.format(abs_path))
             self.data_folders[folder] = dirname
 
-    # Abstract methods
+    # region Abstract methods
     @abstractmethod
     def _read_data_array(self, path, spec, timestep=None):
         """Read DataArray from file
