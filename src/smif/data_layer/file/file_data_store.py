@@ -384,7 +384,6 @@ class CSVDataStore(FileDataStore):
         dataframe = self._filter_on_timestep(timestep, dataframe, path, spec)
 
         if spec.dims:
-            dataframe.set_index(spec.dims, inplace=True)
             data_array = DataArray.from_df(spec, dataframe)
         else:
             # zero-dimensional case (scalar)
