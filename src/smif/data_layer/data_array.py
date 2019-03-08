@@ -178,11 +178,24 @@ class DataArray():
                 data_columns=data_columns,
                 index_names=index_names))
 
-        xr_dataset = dataframe.to_xarray()  # convert to dataset
-        xr_data_array = xr_dataset[spec.name]  # extract xr.DataArray
+        try:
+            # convert to dataset
+            xr_dataset = dataframe.to_xarray()
 
-        # reindex to ensure data order and fill out NaNs
-        xr_data_array = _reindex_xr_data_array(spec, xr_data_array)
+            # extract xr.DataArray
+            xr_data_array = xr_dataset[spec.name]
+
+            # reindex to ensure data order and fill out NaNs
+            xr_data_array = _reindex_xr_data_array(spec, xr_data_array)
+
+        except ValueError as ex:
+            dups = find_duplicate_indices(dataframe)
+            if dups:
+                msg = "Data for '{name}' contains duplicate values at {dups}"
+                raise SmifDataMismatchError(msg.format(name=name, dups=dups)) from ex
+            else:
+                raise ex
+
 
         return cls(spec, xr_data_array.data)
 
@@ -260,6 +273,20 @@ def show_null(dataframe) -> pandas.DataFrame:
     except NameError as ex:
         raise SmifDataError(INSTALL_WARNING) from ex
     return missing_data
+
+
+def find_duplicate_indices(dataframe):
+    """Find duplicate indices in a DataFrame
+
+    Returns
+    -------
+    list[dict]
+    """
+    # find duplicate index entries
+    dups_df = dataframe[dataframe.index.duplicated()]
+    # drop data columns, reset index to promote index to values
+    dups_index_df = dups_df.drop(dups_df.columns, axis=1).reset_index()
+    return dups_index_df.to_dict('records')
 
 
 def _array_equal_nan(a, b):

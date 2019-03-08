@@ -294,6 +294,54 @@ class TestNarrativeVariantData:
               "4 while reading from"
         assert msg in str(ex)
 
+    def test_error_duplicate_rows_single_index(self, config_handler):
+        spec = Spec(
+            name='test',
+            dims=['a'],
+            coords={'a': [1, 2]},
+            dtype='int'
+        )
+        path = os.path.join(config_handler.data_folders['parameters'], 'default.csv')
+        with open(path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['test', 'a'])
+            writer.writeheader()
+            writer.writerows([
+                {'a': 1, 'test': 0},
+                {'a': 2, 'test': 1},
+                {'a': 1, 'test': 2},
+            ])
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_model_parameter_default('default.csv', spec)
+
+        msg = "Data for 'test' contains duplicate values at [{'a': 1}]"
+        assert msg in str(ex)
+
+    def test_error_duplicate_rows_multi_index(self, config_handler):
+        spec = Spec(
+            name='test',
+            dims=['a', 'b'],
+            coords={'a': [1, 2], 'b': [3, 4]},
+            dtype='int'
+        )
+        path = os.path.join(config_handler.data_folders['parameters'], 'default.csv')
+        with open(path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['test', 'a', 'b'])
+            writer.writeheader()
+            writer.writerows([
+                {'a': 1, 'b': 3, 'test': 0},
+                {'a': 2, 'b': 3, 'test': 1},
+                {'a': 1, 'b': 4, 'test': 2},
+                {'a': 2, 'b': 4, 'test': 3},
+                {'a': 2, 'b': 4, 'test': 4},
+            ])
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_model_parameter_default('default.csv', spec)
+
+        msg = "Data for 'test' contains duplicate values at [{'a': 2, 'b': 4}]"
+        assert msg in str(ex)
+
     def test_error_wrong_name(self, config_handler):
         spec = Spec(
             name='test',

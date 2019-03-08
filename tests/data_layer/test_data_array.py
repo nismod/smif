@@ -310,6 +310,46 @@ class TestDataFrameInterop():
         df_from_da = da.as_df()
         pd.testing.assert_frame_equal(df_from_da, df)
 
+    def test_error_duplicate_rows_single_index(self):
+        spec = Spec(
+            name='test',
+            dims=['a'],
+            coords={'a': [1, 2]},
+            dtype='int'
+        )
+        df = pd.DataFrame([
+            {'a': 1, 'test': 0},
+            {'a': 2, 'test': 1},
+            {'a': 1, 'test': 2},
+        ])
+
+        with raises(SmifDataMismatchError) as ex:
+            DataArray.from_df(spec, df)
+
+        msg = "Data for 'test' contains duplicate values at [{'a': 1}]"
+        assert msg in str(ex)
+
+    def test_error_duplicate_rows_multi_index(self):
+        spec = Spec(
+            name='test',
+            dims=['a', 'b'],
+            coords={'a': [1, 2], 'b': [3, 4]},
+            dtype='int'
+        )
+        df = pd.DataFrame([
+            {'a': 1, 'b': 3, 'test': 0},
+            {'a': 2, 'b': 3, 'test': 1},
+            {'a': 1, 'b': 4, 'test': 2},
+            {'a': 2, 'b': 4, 'test': 3},
+            {'a': 2, 'b': 4, 'test': 4},
+        ])
+
+        with raises(SmifDataMismatchError) as ex:
+            DataArray.from_df(spec, df)
+
+        msg = "Data for 'test' contains duplicate values at [{'a': 2, 'b': 4}]"
+        assert msg in str(ex)
+
 
 class TestMissingData:
 
