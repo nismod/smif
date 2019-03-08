@@ -7,6 +7,7 @@ import xarray as xr
 from numpy.testing import assert_array_equal
 from pytest import fixture, raises
 from smif.data_layer.data_array import DataArray, show_null
+from smif.exception import SmifDataNotFoundError, SmifDataMismatchError
 from smif.metadata import Spec
 
 
@@ -225,10 +226,10 @@ class TestDataFrameInterop():
             dtype='float'
         )
         data = numpy.array([
-            # 4 2
+            #4  2
             [1, 2],  # c
             [5, 6],  # a
-            [9, 0]  # b
+            [9, 0]   # b
         ], dtype='float')
         da = DataArray(spec, data)
 
@@ -259,26 +260,25 @@ class TestDataFrameInterop():
         df = pd.DataFrame([
             {'region': 'oxford', 'other': 'else'}
         ]).set_index(['region'])
-        msg = "missing variable key (test)"
-        with raises(KeyError) as ex:
+        msg = "Data for 'test' expected a data column called 'test' and index names " + \
+              "['region'], instead got data columns ['other'] and index names ['region']"
+        with raises(SmifDataMismatchError) as ex:
             DataArray.from_df(spec, df)
         assert msg in str(ex)
+
+        # may not be indexed, if columns are otherwise all okay
+        df = pd.DataFrame([
+            {'region': 'oxford', 'test': 1}
+        ])
+        DataArray.from_df(spec, df)
 
         # must have an index level for each spec dimension
         df = pd.DataFrame([
             {'test': 3.14}
         ])
-        msg = "missing dimension keys ['region']"
-        with raises(KeyError) as ex:
-            DataArray.from_df(spec, df)
-        assert msg in str(ex)
-
-        # must have dimension labels that exist in the spec dimension
-        df = pd.DataFrame([
-            {'test': 3.14, 'region': 'missing'}
-        ]).set_index(['region'])
-        msg = "Unknown region values ['missing']"
-        with raises(ValueError) as ex:
+        msg = "Data for 'test' expected a data column called 'test' and index names " + \
+              "['region'], instead got data columns ['test'] and index names [None]"
+        with raises(SmifDataMismatchError) as ex:
             DataArray.from_df(spec, df)
         assert msg in str(ex)
 
@@ -287,8 +287,9 @@ class TestDataFrameInterop():
             {'test': 3.14, 'region': 'oxford'},
             {'test': 3.14, 'region': 'extra'}
         ]).set_index(['region'])
-        msg = "Unknown region values ['extra']"
-        with raises(ValueError) as ex:
+        msg = "Data for 'test' contained unexpected values in the set of coordinates for " + \
+              "dimension 'region': ['extra']"
+        with raises(SmifDataMismatchError) as ex:
             DataArray.from_df(spec, df)
         assert msg in str(ex)
 

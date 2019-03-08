@@ -155,18 +155,35 @@ class DataArray():
     def from_df(cls, spec, dataframe):
         """Create a DataArray from a :class:`pandas.DataFrame`
         """
-        xr_dataset = dataframe.to_xarray()  # convert to dataset
+        name = spec.name
+        dims = spec.dims
 
-        try:
-            xr_data_array = xr_dataset[spec.name]  # extract xr.DataArray
-        except KeyError:
-            # must have a column for the data variable (spec.name)
-            raise KeyError(
-                "Data missing variable key ({}), got {}".format(
-                    spec.name, dataframe.columns))
+        data_columns = dataframe.columns.values.tolist()
+        index_names = dataframe.index.names
+
+        if dims and len(index_names) == 1 and index_names[0] is None:
+            # case when an unindexed dataframe was passed in, try to recover automagically
+            if set(dims).issubset(set(data_columns)):
+                dataframe = dataframe.set_index(dims)
+                data_columns = dataframe.columns.values.tolist()
+                index_names = dataframe.index.names
+
+        if name not in data_columns or (dims and set(dims) != set(index_names)):
+            msg = "Data for '{name}' expected a data column called '{name}' and index " + \
+                  "names {dims}, instead got data columns {data_columns} and index names " + \
+                  "{index_names}"
+            raise SmifDataMismatchError(msg.format(
+                name=name,
+                dims=dims,
+                data_columns=data_columns,
+                index_names=index_names))
+
+        xr_dataset = dataframe.to_xarray()  # convert to dataset
+        xr_data_array = xr_dataset[spec.name]  # extract xr.DataArray
 
         # reindex to ensure data order and fill out NaNs
         xr_data_array = _reindex_xr_data_array(spec, xr_data_array)
+
         return cls(spec, xr_data_array.data)
 
     def as_xarray(self):
@@ -245,26 +262,19 @@ def _array_equal_nan(a, b):
 
 
 def _reindex_xr_data_array(spec, xr_data_array):
-    """Reindex, raise clear errors, error if extra dimension names
+    """Reindex to ensure full data, order
     """
-    # must have an index level for each dimension
-    missing_dims = [d for d in spec.dims if d not in xr_data_array.dims]
-    if missing_dims:
-        raise KeyError(
-            "Data missing dimension keys {}, got {}".format(
-                missing_dims, xr_data_array.dims))
-
+    # all index values must exist in dimension - extras would otherwise be silently dropped
     for dim in spec.dims:
-        # all index values must exist in dimension
         index_values = set(xr_data_array.coords[dim].values)
         dim_names = set(spec.dim_names(dim))
         in_index_but_not_dim_names = index_values - dim_names
         if in_index_but_not_dim_names:
-            raise ValueError(
-                "Unknown {} values {} in {}".format(
-                    dim, list(in_index_but_not_dim_names), spec.name))
+            msg = "Data for '{name}' contained unexpected values in the set of " + \
+                    "coordinates for dimension '{dim}': {extras}"
+            raise SmifDataMismatchError(msg.format(
+                dim=dim, extras=list(in_index_but_not_dim_names), name=spec.name))
 
-    # reindex to ensure data order
     coords = {c.name: c.ids for c in spec.coords}
     xr_data_array = xr_data_array.reindex(indexers=coords)
 
