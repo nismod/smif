@@ -400,10 +400,13 @@ class TestMissingData:
         df = small_da.as_df()
         actual = show_null(df)
         expected = pd.DataFrame(columns=['test_data'], dtype=float)
-        expected.index = pd.MultiIndex(
-            levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-            codes=[[], [], []],
-            names=['a', 'b', 'c'])
+        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
+        codes = [[], [], []],
+        names = ['a', 'b', 'c']
+        try:
+            expected.index = pd.MultiIndex(levels=levels, codes=codes, names=names)
+        except TypeError:
+            expected.index = pd.MultiIndex(levels=levels, labels=codes, names=names)
 
         pd.testing.assert_frame_equal(actual, expected)
 
@@ -412,10 +415,13 @@ class TestMissingData:
         df = small_da_non_numeric.as_df()
         actual = show_null(df)
         expected = pd.DataFrame(columns=['test_data'], dtype=str)
-        expected.index = pd.MultiIndex(
-            levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-            codes=[[], [], []],
-            names=['a', 'b', 'c'])
+        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
+        codes = [[], [], []],
+        names = ['a', 'b', 'c']
+        try:
+            expected.index = pd.MultiIndex(levels=levels, codes=codes, names=names)
+        except TypeError:
+            expected.index = pd.MultiIndex(levels=levels, labels=codes, names=names)
 
         pd.testing.assert_frame_equal(actual, expected)
 
@@ -424,10 +430,15 @@ class TestMissingData:
         small_da_non_numeric.data[1, 1, 1] = None
         df = small_da_non_numeric.as_df()
         actual = show_null(df)
-        index = pd.MultiIndex(
-            levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-            codes=[[1], [1], [1]],
-            names=['a', 'b', 'c'])
+        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
+        codes = [[1], [1], [1]],
+        names = ['a', 'b', 'c']
+        try:
+            index = pd.MultiIndex(levels=levels, codes=codes, names=names)
+        except TypeError:
+            index = pd.MultiIndex(levels=levels, labels=codes, names=names)
+
+
         expected = pd.DataFrame(data=numpy.array([[None]], dtype=numpy.object),
                                 index=index,
                                 columns=['test_data'])
