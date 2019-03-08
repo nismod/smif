@@ -1,5 +1,6 @@
 """Test CSV data store
 """
+# pylint: disable=redefined-outer-name
 import csv
 import os
 from tempfile import TemporaryDirectory
@@ -171,28 +172,55 @@ class TestReadState:
         assert actual == expected
 
 
+def _write_scenario_csv(base_folder, data):
+    key = 'population_high.csv'
+    keys = data[0].keys()
+    filepath = os.path.join(str(base_folder), 'data', 'scenarios', key)
+    with open(filepath, 'w+') as output_file:
+        dict_writer = csv.DictWriter(output_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(data)
+    return key
+
+
 class TestScenarios:
     """Scenario data should be readable, metadata is currently editable. May move to make it
     possible to import/edit/write data.
     """
-    def test_scenario_data_raises(self, setup_folder_structure, config_handler,
-                                  get_faulty_scenario_data, scenario_spec):
+    def test_missing_timestep(self, setup_folder_structure, config_handler,
+                              get_faulty_scenario_data, scenario_spec):
         """If a scenario file has incorrect keys, raise a friendly error identifying
         missing keys
         """
-        basefolder = setup_folder_structure
-        scenario_data = get_faulty_scenario_data
+        key = _write_scenario_csv(setup_folder_structure, get_faulty_scenario_data)
 
-        keys = scenario_data[0].keys()
-        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
-        with open(filepath, 'w+') as output_file:
-            dict_writer = csv.DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(scenario_data)
-
-        key = 'population_high.csv'
-        with raises(SmifDataMismatchError):
+        with raises(SmifDataMismatchError) as ex:
             config_handler.read_scenario_variant_data(key, scenario_spec, 2017)
+        msg = "Data for 'population_count' expected a column called 'timestep', instead " + \
+              "got data columns ['population_count', 'county', 'season', 'year'] and " + \
+              "index names [None]"
+        assert msg in str(ex)
+
+    def test_data_column_error(self, setup_folder_structure, config_handler, scenario_spec,
+                               get_scenario_data):
+        data = []
+        for datum in get_scenario_data:
+            data.append({
+                'population_count': datum['population_count'],
+                'region': datum['county'],
+                'season': datum['season']
+            })
+        key = _write_scenario_csv(setup_folder_structure, data)
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_scenario_variant_data(key, scenario_spec)
+        msg = "Data for 'population_count' expected a data column called " + \
+              "'population_count' and index names ['county', 'season'], instead got data " + \
+              "columns ['population_count', 'region', 'season'] and index names [None]"
+        print(msg)
+        print(str(ex))
+        assert msg in str(ex)
+
 
     def test_scenario_data_validates(self, setup_folder_structure, config_handler,
                                      get_remapped_scenario_data, scenario_spec):
@@ -205,21 +233,12 @@ class TestScenarios:
 
         The set of unique region or interval names can be used instead.
         """
-        basefolder = setup_folder_structure
-        scenario_data = get_remapped_scenario_data
-        spec = scenario_spec
-
-        keys = scenario_data[0].keys()
-        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
-        with open(filepath, 'w+') as output_file:
-            dict_writer = csv.DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(scenario_data)
+        key = _write_scenario_csv(setup_folder_structure, get_remapped_scenario_data)
 
         expected_data = np.array([[100, 150, 200, 210]], dtype=float)
-        expected = DataArray(spec, expected_data)
+        expected = DataArray(scenario_spec, expected_data)
 
-        actual = config_handler.read_scenario_variant_data('population_high.csv', spec, 2015)
+        actual = config_handler.read_scenario_variant_data(key, scenario_spec, 2015)
         assert actual == expected
 
 
