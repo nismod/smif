@@ -12,9 +12,9 @@ A subset of Local Authority Districts in England would be a region-based spatial
 The hours of an average annual day would be a temporal dimension::
 
     >>> hours = Coordinates('daily_hours', [
-    ...     {'name': 0, 'represents': '00:00-00:59:59'}
-    ...     {'name': 1, 'represents': '01:00-01:59:59'}
-    ...     {'name': 2, 'represents': '02:00-02:59:59'}
+    ...     {'name': 0, 'interval': [['PT0H', 'PT1H']]}
+    ...     {'name': 1, 'interval': [['PT1H', 'PT2H']]}
+    ...     {'name': 2, 'interval': [['PT2H', 'PT3H']]}
     ... ])
 
 The economic sectors from the International Standard Industrial Classification of All Economic
