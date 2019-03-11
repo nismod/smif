@@ -289,14 +289,13 @@ class TestStoreData():
         # read
         assert store.read_state('model_run_name', 0, 0) == state
 
-    def test_conversion_coefficients(self, store, conversion_coefficients,
-                                     conversion_source_spec, conversion_sink_spec):
+    def test_conversion_coefficients(self, store, conversion_coefficients):
         # write
         store.write_coefficients(
-            conversion_source_spec, conversion_sink_spec, conversion_coefficients)
+            'source_dim', 'sink_dim', conversion_coefficients)
         # read
         numpy.testing.assert_equal(
-            store.read_coefficients(conversion_source_spec, conversion_sink_spec),
+            store.read_coefficients('source_dim', 'sink_dim'),
             conversion_coefficients
         )
 

@@ -740,19 +740,19 @@ class Store():
     # endregion
 
     # region Conversion coefficients
-    def read_coefficients(self,
-                          source_spec: Spec,
-                          destination_spec: Spec) -> np.ndarray:
+    def read_coefficients(self, source_dim: str, destination_dim: str) -> np.ndarray:
         """Reads coefficients from the store
 
-        Coefficients are uniquely identified by their source/destination specs.
+        Coefficients are uniquely identified by their source/destination dimensions.
         This method and `write_coefficients` implement caching of conversion
         coefficients between dimensions.
 
         Parameters
         ----------
-        source_spec : ~smif.metadata.spec.Spec
-        destination_spec : ~smif.metadata.spec.Spec
+        source_dim : str
+            Dimension name
+        destination_dim : str
+            Dimension name
 
         Returns
         -------
@@ -762,29 +762,28 @@ class Store():
         -----
         To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
         """
-        return self.data_store.read_coefficients(source_spec, destination_spec)
+        return self.data_store.read_coefficients(source_dim, destination_dim)
 
-    def write_coefficients(self,
-                           source_spec: Spec,
-                           destination_spec: Spec,
-                           data: np.ndarray):
+    def write_coefficients(self, source_dim: str, destination_dim: str, data: np.ndarray):
         """Writes coefficients to the store
 
-        Coefficients are uniquely identified by their source/destination specs.
+        Coefficients are uniquely identified by their source/destination dimensions.
         This method and `read_coefficients` implement caching of conversion
         coefficients between dimensions.
 
         Parameters
         ----------
-        source_spec : ~smif.metadata.spec.Spec
-        destination_spec : ~smif.metadata.spec.Spec
+        source_dim : str
+            Dimension name
+        destination_dim : str
+            Dimension name
         data : numpy.ndarray
 
         Notes
         -----
         To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
         """
-        self.data_store.write_coefficients(source_spec, destination_spec, data)
+        self.data_store.write_coefficients(source_dim, destination_dim, data)
     # endregion
 
     # region Results
