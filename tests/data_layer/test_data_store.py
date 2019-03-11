@@ -144,16 +144,15 @@ class TestState():
 class TestCoefficients():
     """Read/write conversion coefficients
     """
-    def test_read_write_coefficients(self, conversion_source_spec, conversion_sink_spec,
-                                     handler):
+    def test_read_write_coefficients(self, handler):
 
         with raises(SmifDataNotFoundError):
-            handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
+            handler.read_coefficients('from_dim_name', 'to_dim_name')
 
         expected = np.array([[2]])
-        handler.write_coefficients(conversion_source_spec, conversion_sink_spec, expected)
+        handler.write_coefficients('from_dim_name', 'to_dim_name', expected)
 
-        actual = handler.read_coefficients(conversion_source_spec, conversion_sink_spec)
+        actual = handler.read_coefficients('from_dim_name', 'to_dim_name')
         np.testing.assert_equal(actual, expected)
 
 

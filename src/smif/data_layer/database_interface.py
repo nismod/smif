@@ -1271,10 +1271,10 @@ class DbDataStore(DataStore):
     # endregion
 
     # region Conversion coefficients
-    def read_coefficients(self, source_spec, destination_spec):
+    def read_coefficients(self, source_dim, destination_dim):
         raise NotImplementedError
 
-    def write_coefficients(self, source_spec, destination_spec, data):
+    def write_coefficients(self, source_dim, destination_dim, data):
         raise NotImplementedError()
     # endregion
 
