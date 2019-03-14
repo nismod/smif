@@ -1,5 +1,6 @@
 """Test CSV data store
 """
+# pylint: disable=redefined-outer-name
 import csv
 import os
 from tempfile import TemporaryDirectory
@@ -171,28 +172,54 @@ class TestReadState:
         assert actual == expected
 
 
+def _write_scenario_csv(base_folder, data, keys):
+    key = 'population_high.csv'
+    filepath = os.path.join(str(base_folder), 'data', 'scenarios', key)
+    with open(filepath, 'w+') as output_file:
+        dict_writer = csv.DictWriter(output_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(data)
+    return key
+
+
 class TestScenarios:
     """Scenario data should be readable, metadata is currently editable. May move to make it
     possible to import/edit/write data.
     """
-    def test_scenario_data_raises(self, setup_folder_structure, config_handler,
-                                  get_faulty_scenario_data, scenario_spec):
+    def test_missing_timestep(self, setup_folder_structure, config_handler,
+                              get_faulty_scenario_data, scenario_spec):
         """If a scenario file has incorrect keys, raise a friendly error identifying
         missing keys
         """
-        basefolder = setup_folder_structure
-        scenario_data = get_faulty_scenario_data
+        key = _write_scenario_csv(setup_folder_structure, get_faulty_scenario_data,
+                                  ('population_count', 'county', 'season', 'year'))
 
-        keys = scenario_data[0].keys()
-        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
-        with open(filepath, 'w+') as output_file:
-            dict_writer = csv.DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(scenario_data)
-
-        key = 'population_high.csv'
-        with raises(SmifDataMismatchError):
+        with raises(SmifDataMismatchError) as ex:
             config_handler.read_scenario_variant_data(key, scenario_spec, 2017)
+        msg = "Data for 'population_count' expected a column called 'timestep', instead " + \
+              "got data columns ['population_count', 'county', 'season', 'year'] and " + \
+              "index names [None]"
+        assert msg in str(ex)
+
+    def test_data_column_error(self, setup_folder_structure, config_handler, scenario_spec,
+                               get_scenario_data):
+        data = []
+        for datum in get_scenario_data:
+            data.append({
+                'population_count': datum['population_count'],
+                'region': datum['county'],
+                'season': datum['season']
+            })
+        key = _write_scenario_csv(setup_folder_structure, data,
+                                  ('population_count', 'region', 'season'))
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_scenario_variant_data(key, scenario_spec)
+        msg = "Data for 'population_count' expected a data column called " + \
+              "'population_count' and index names ['county', 'season'], instead got data " + \
+              "columns ['population_count', 'region', 'season'] and index names [None]"
+        assert msg in str(ex)
+
 
     def test_scenario_data_validates(self, setup_folder_structure, config_handler,
                                      get_remapped_scenario_data, scenario_spec):
@@ -205,21 +232,13 @@ class TestScenarios:
 
         The set of unique region or interval names can be used instead.
         """
-        basefolder = setup_folder_structure
-        scenario_data = get_remapped_scenario_data
-        spec = scenario_spec
-
-        keys = scenario_data[0].keys()
-        filepath = os.path.join(str(basefolder), 'data', 'scenarios', 'population_high.csv')
-        with open(filepath, 'w+') as output_file:
-            dict_writer = csv.DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(scenario_data)
+        key = _write_scenario_csv(setup_folder_structure, get_remapped_scenario_data,
+                                  ('population_count', 'county', 'season', 'timestep'))
 
         expected_data = np.array([[100, 150, 200, 210]], dtype=float)
-        expected = DataArray(spec, expected_data)
+        expected = DataArray(scenario_spec, expected_data)
 
-        actual = config_handler.read_scenario_variant_data('population_high.csv', spec, 2015)
+        actual = config_handler.read_scenario_variant_data(key, scenario_spec, 2015)
         assert actual == expected
 
 
@@ -268,8 +287,109 @@ class TestNarrativeVariantData:
             for i in range(4):
                 writer.writerow({parameter_name: i})
 
-        with raises(SmifDataMismatchError):
+        with raises(SmifDataMismatchError) as ex:
             config_handler.read_model_parameter_default('default.csv', spec)
+
+        msg = "Data for 'smart_meter_savings' should contain a single value, instead got " + \
+              "4 while reading from"
+        assert msg in str(ex)
+
+    def test_error_duplicate_rows_single_index(self, config_handler):
+        spec = Spec(
+            name='test',
+            dims=['a'],
+            coords={'a': [1, 2]},
+            dtype='int'
+        )
+        path = os.path.join(config_handler.data_folders['parameters'], 'default.csv')
+        with open(path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['test', 'a'])
+            writer.writeheader()
+            writer.writerows([
+                {'a': 1, 'test': 0},
+                {'a': 2, 'test': 1},
+                {'a': 1, 'test': 2},
+            ])
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_model_parameter_default('default.csv', spec)
+
+        msg = "Data for 'test' contains duplicate values at [{'a': 1}]"
+        assert msg in str(ex)
+
+    def test_error_duplicate_rows_multi_index(self, config_handler):
+        spec = Spec(
+            name='test',
+            dims=['a', 'b'],
+            coords={'a': [1, 2], 'b': [3, 4]},
+            dtype='int'
+        )
+        path = os.path.join(config_handler.data_folders['parameters'], 'default.csv')
+        with open(path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['test', 'a', 'b'])
+            writer.writeheader()
+            writer.writerows([
+                {'a': 1, 'b': 3, 'test': 0},
+                {'a': 2, 'b': 3, 'test': 1},
+                {'a': 1, 'b': 4, 'test': 2},
+                {'a': 2, 'b': 4, 'test': 3},
+                {'a': 2, 'b': 4, 'test': 4},
+            ])
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_model_parameter_default('default.csv', spec)
+
+        msg = "Data for 'test' contains duplicate values at [{'a': 2, 'b': 4}]"
+        assert msg in str(ex)
+
+    def test_error_wrong_name(self, config_handler):
+        spec = Spec(
+            name='test',
+            dims=['a', 'b'],
+            coords={'a': [1, 2], 'b': [3, 4]},
+            dtype='int'
+        )
+        path = os.path.join(config_handler.data_folders['parameters'], 'default.csv')
+        with open(path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['wrong_name', 'a', 'b'])
+            writer.writeheader()
+            writer.writerow({
+                'a': 1,
+                'b': 2,
+                'wrong_name': 0
+            })
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_model_parameter_default('default.csv', spec)
+
+        msg = "Data for 'test' expected a data column called 'test' and index names " + \
+              "['a', 'b'], instead got data columns ['wrong_name'] and index names ['a', 'b']"
+        assert msg in str(ex)
+
+    def test_error_not_full(self, config_handler):
+        spec = Spec(
+            name='test',
+            dims=['a', 'b'],
+            coords={'a': [1, 2], 'b': [3, 4]},
+            dtype='int'
+        )
+        path = os.path.join(config_handler.data_folders['parameters'], 'default.csv')
+        with open(path, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['test', 'a', 'b'])
+            writer.writeheader()
+            writer.writerow({
+                'a': 1,
+                'b': 3,
+                'test': 0
+            })
+
+        with raises(SmifDataMismatchError) as ex:
+            config_handler.read_model_parameter_default('default.csv', spec)
+
+        msg = "Data for 'test' had missing values - read 1 but expected 4 in total, from " + \
+              "dims of length {a: 2, b: 2}"
+        assert msg in str(ex)
+
 
 
 class TestResults:

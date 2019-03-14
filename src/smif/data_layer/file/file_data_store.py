@@ -353,15 +353,25 @@ class FileDataStore(DataStore):
     def _filter_on_timestep(self, timestep, dataframe, path, spec):
         if timestep is not None:
             if 'timestep' not in dataframe.columns:
-                dataframe = dataframe.reset_index()
-                if 'timestep' not in dataframe.columns:
-                    msg = "Missing 'timestep' key, found {} in {}"
-                    raise SmifDataMismatchError(msg.format(list(dataframe.columns), path))
+                if 'timestep' not in dataframe.index.names:
+                    msg = "Data for '{name}' expected a column called 'timestep', instead " + \
+                          "got data columns {data_columns} and index names {index_names} " + \
+                          "while reading from {path}"
+                    raise SmifDataMismatchError(msg.format(
+                        data_columns=dataframe.columns.values.tolist(),
+                        index_names=dataframe.index.names,
+                        name=spec.name,
+                        path=path))
+                dataframe = dataframe.reset_index(level='timestep')
+
             dataframe = dataframe[dataframe.timestep == timestep]
+
             if dataframe.empty:
                 raise SmifDataNotFoundError(
-                    "Data for {} not found for timestep {}".format(spec.name, timestep))
-            dataframe.drop('timestep', axis=1, inplace=True)
+                    "Data for '{}' not found for timestep {}".format(spec.name, timestep))
+
+            dataframe = dataframe.drop('timestep', axis=1)
+
         return dataframe
 
 
@@ -384,14 +394,14 @@ class CSVDataStore(FileDataStore):
         dataframe = self._filter_on_timestep(timestep, dataframe, path, spec)
 
         if spec.dims:
-            dataframe.set_index(spec.dims, inplace=True)
             data_array = DataArray.from_df(spec, dataframe)
         else:
             # zero-dimensional case (scalar)
             data = dataframe[spec.name]
             if data.shape != (1,):
-                msg = "Expected single value, found {} in {}"
-                raise SmifDataMismatchError(msg.format(list(data.shape), path))
+                msg = "Data for '{}' should contain a single value, instead got {} while " + \
+                      "reading from {}"
+                raise SmifDataMismatchError(msg.format(spec.name, len(data), path))
             data_array = DataArray(spec, data.iloc[0])
         return data_array
 

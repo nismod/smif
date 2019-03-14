@@ -1,12 +1,13 @@
 """Test DataArray
 """
+# pylint: disable=redefined-outer-name
 import numpy
 import pandas as pd
 import xarray as xr
 from numpy.testing import assert_array_equal
 from pytest import fixture, raises
-from smif.data_layer.data_array import DataArray
-from smif.exception import SmifDataNotFoundError
+from smif.data_layer.data_array import DataArray, show_null
+from smif.exception import SmifDataNotFoundError, SmifDataMismatchError
 from smif.metadata import Spec
 
 
@@ -225,10 +226,10 @@ class TestDataFrameInterop():
             dtype='float'
         )
         data = numpy.array([
-            # 4 2
+            #4  2
             [1, 2],  # c
             [5, 6],  # a
-            [9, 0]  # b
+            [9, 0]   # b
         ], dtype='float')
         da = DataArray(spec, data)
 
@@ -259,26 +260,25 @@ class TestDataFrameInterop():
         df = pd.DataFrame([
             {'region': 'oxford', 'other': 'else'}
         ]).set_index(['region'])
-        msg = "missing variable key (test)"
-        with raises(KeyError) as ex:
+        msg = "Data for 'test' expected a data column called 'test' and index names " + \
+              "['region'], instead got data columns ['other'] and index names ['region']"
+        with raises(SmifDataMismatchError) as ex:
             DataArray.from_df(spec, df)
         assert msg in str(ex)
+
+        # may not be indexed, if columns are otherwise all okay
+        df = pd.DataFrame([
+            {'region': 'oxford', 'test': 1}
+        ])
+        DataArray.from_df(spec, df)
 
         # must have an index level for each spec dimension
         df = pd.DataFrame([
             {'test': 3.14}
         ])
-        msg = "missing dimension keys ['region']"
-        with raises(KeyError) as ex:
-            DataArray.from_df(spec, df)
-        assert msg in str(ex)
-
-        # must have dimension labels that exist in the spec dimension
-        df = pd.DataFrame([
-            {'test': 3.14, 'region': 'missing'}
-        ]).set_index(['region'])
-        msg = "Unknown region values ['missing']"
-        with raises(ValueError) as ex:
+        msg = "Data for 'test' expected a data column called 'test' and index names " + \
+              "['region'], instead got data columns ['test'] and index names [None]"
+        with raises(SmifDataMismatchError) as ex:
             DataArray.from_df(spec, df)
         assert msg in str(ex)
 
@@ -287,8 +287,9 @@ class TestDataFrameInterop():
             {'test': 3.14, 'region': 'oxford'},
             {'test': 3.14, 'region': 'extra'}
         ]).set_index(['region'])
-        msg = "Unknown region values ['extra']"
-        with raises(ValueError) as ex:
+        msg = "Data for 'test' contained unexpected values in the set of coordinates for " + \
+              "dimension 'region': ['extra']"
+        with raises(SmifDataMismatchError) as ex:
             DataArray.from_df(spec, df)
         assert msg in str(ex)
 
@@ -309,6 +310,46 @@ class TestDataFrameInterop():
         df_from_da = da.as_df()
         pd.testing.assert_frame_equal(df_from_da, df)
 
+    def test_error_duplicate_rows_single_index(self):
+        spec = Spec(
+            name='test',
+            dims=['a'],
+            coords={'a': [1, 2]},
+            dtype='int'
+        )
+        df = pd.DataFrame([
+            {'a': 1, 'test': 0},
+            {'a': 2, 'test': 1},
+            {'a': 1, 'test': 2},
+        ])
+
+        with raises(SmifDataMismatchError) as ex:
+            DataArray.from_df(spec, df)
+
+        msg = "Data for 'test' contains duplicate values at [{'a': 1}]"
+        assert msg in str(ex)
+
+    def test_error_duplicate_rows_multi_index(self):
+        spec = Spec(
+            name='test',
+            dims=['a', 'b'],
+            coords={'a': [1, 2], 'b': [3, 4]},
+            dtype='int'
+        )
+        df = pd.DataFrame([
+            {'a': 1, 'b': 3, 'test': 0},
+            {'a': 2, 'b': 3, 'test': 1},
+            {'a': 1, 'b': 4, 'test': 2},
+            {'a': 2, 'b': 4, 'test': 3},
+            {'a': 2, 'b': 4, 'test': 4},
+        ])
+
+        with raises(SmifDataMismatchError) as ex:
+            DataArray.from_df(spec, df)
+
+        msg = "Data for 'test' contains duplicate values at [{'a': 2, 'b': 4}]"
+        assert msg in str(ex)
+
 
 class TestMissingData:
 
@@ -319,8 +360,12 @@ class TestMissingData:
         da.validate_as_full()
         da.data[1, 1] = numpy.NaN
 
-        with raises(SmifDataNotFoundError):
+        with raises(SmifDataMismatchError) as ex:
             da.validate_as_full()
+
+        msg = "Data for 'test_data' had missing values - read 20 but expected 24 in " + \
+              "total, from dims of length {a: 2, b: 3, c: 4}"
+        assert msg in str(ex)
 
     def test_missing_data_message(self, small_da):
         """Should check for NaNs and raise SmifDataError
@@ -329,10 +374,11 @@ class TestMissingData:
         da.validate_as_full()
         da.data[1, 1, 1] = numpy.nan
         da.data[0, 0, 3] = numpy.nan
-        with raises(SmifDataNotFoundError) as ex:
+        with raises(SmifDataMismatchError) as ex:
             da.validate_as_full()
 
-        expected = "There are missing data points in 'test_data'"
+        expected = "Data for 'test_data' had missing values - read 22 but expected 24 in " + \
+                   "total, from dims of length {a: 2, b: 3, c: 4}"
         assert expected in str(ex)
 
     def test_missing_data_message_non_numeric(self, small_da_non_numeric):
@@ -342,33 +388,40 @@ class TestMissingData:
         da.validate_as_full()
         da.data[1, 1, 1] = None
         da.data[0, 0, 3] = None
-        with raises(SmifDataNotFoundError) as ex:
+        with raises(SmifDataMismatchError) as ex:
             da.validate_as_full()
 
-        expected = "There are missing data points in 'test_data'"
+        expected = "Data for 'test_data' had missing values - read 22 but expected 24 in " + \
+                   "total, from dims of length {a: 2, b: 3, c: 4}"
         assert expected in str(ex)
 
     def test_no_missing_data(self, small_da):
 
         df = small_da.as_df()
-        actual = small_da._show_null(df)
+        actual = show_null(df)
         expected = pd.DataFrame(columns=['test_data'], dtype=float)
-        expected.index = pd.MultiIndex(
-            levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-            labels=[[], [], []],
-            names=['a', 'b', 'c'])
+        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']]
+        codes = [[], [], []]
+        names = ['a', 'b', 'c']
+        try:
+            expected.index = pd.MultiIndex(levels=levels, codes=codes, names=names)
+        except TypeError:
+            expected.index = pd.MultiIndex(levels=levels, labels=codes, names=names)
 
         pd.testing.assert_frame_equal(actual, expected)
 
     def test_no_missing_data_non_numeric(self, small_da_non_numeric):
 
         df = small_da_non_numeric.as_df()
-        actual = small_da_non_numeric._show_null(df)
+        actual = show_null(df)
         expected = pd.DataFrame(columns=['test_data'], dtype=str)
-        expected.index = pd.MultiIndex(
-            levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-            labels=[[], [], []],
-            names=['a', 'b', 'c'])
+        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']]
+        codes = [[], [], []]
+        names = ['a', 'b', 'c']
+        try:
+            expected.index = pd.MultiIndex(levels=levels, codes=codes, names=names)
+        except TypeError:
+            expected.index = pd.MultiIndex(levels=levels, labels=codes, names=names)
 
         pd.testing.assert_frame_equal(actual, expected)
 
@@ -376,11 +429,16 @@ class TestMissingData:
 
         small_da_non_numeric.data[1, 1, 1] = None
         df = small_da_non_numeric.as_df()
-        actual = small_da_non_numeric._show_null(df)
-        index = pd.MultiIndex(
-            levels=[['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']],
-            labels=[[1], [1], [1]],
-            names=['a', 'b', 'c'])
+        actual = show_null(df)
+        levels = [['a1', 'a2'], ['b1', 'b2', 'b3'], ['c1', 'c2', 'c3', 'c4']]
+        codes = [[1], [1], [1]]
+        names = ['a', 'b', 'c']
+        try:
+            index = pd.MultiIndex(levels=levels, codes=codes, names=names)
+        except TypeError:
+            index = pd.MultiIndex(levels=levels, labels=codes, names=names)
+
+
         expected = pd.DataFrame(data=numpy.array([[None]], dtype=numpy.object),
                                 index=index,
                                 columns=['test_data'])
