@@ -340,7 +340,8 @@ class TestNarrativeVariantData:
             config_handler.read_model_parameter_default('default.csv', spec)
 
         msg = "Data for 'test' contains duplicate values at [{'a': 2, 'b': 4}]"
-        assert msg in str(ex)
+        msg_alt = "Data for 'test' contains duplicate values at [{'b': 4, 'a': 2}]"
+        assert msg in str(ex) or msg_alt in str(ex)
 
     def test_error_wrong_name(self, config_handler):
         spec = Spec(
