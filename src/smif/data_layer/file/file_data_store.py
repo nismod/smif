@@ -203,27 +203,26 @@ class FileDataStore(DataStore):
     # endregion
 
     # region Conversion coefficients
-    def read_coefficients(self, source_spec, destination_spec):
-        results_path = self._get_coefficients_path(source_spec, destination_spec)
+    def read_coefficients(self, source_dim, destination_dim):
+        results_path = self._get_coefficients_path(source_dim, destination_dim)
         try:
             return self._read_ndarray(results_path)
         except FileNotFoundError:
             msg = "Could not find the coefficients file for %s to %s"
-            self.logger.warning(msg, source_spec, destination_spec)
-            raise SmifDataNotFoundError(msg.format(source_spec, destination_spec))
+            self.logger.warning(msg, source_dim, destination_dim)
+            raise SmifDataNotFoundError(msg.format(source_dim, destination_dim))
 
-    def write_coefficients(self, source_spec, destination_spec, data):
-        results_path = self._get_coefficients_path(source_spec, destination_spec)
-        header = "Conversion coefficients {}:{}".format(
-            source_spec.name, destination_spec.name)
+    def write_coefficients(self, source_dim, destination_dim, data):
+        results_path = self._get_coefficients_path(source_dim, destination_dim)
+        header = "Conversion coefficients {}:{}".format(source_dim, destination_dim)
         self._write_ndarray(results_path, data, header)
 
-    def _get_coefficients_path(self, source_spec, destination_spec):
+    def _get_coefficients_path(self, source_dim, destination_dim):
         path = os.path.join(
             self.data_folders['coefficients'],
-            "{}_{}.{}_{}.{}".format(
-                source_spec.name, "-".join(source_spec.dims),
-                destination_spec.name, "-".join(destination_spec.dims),
+            "{}.{}.{}".format(
+                source_dim,
+                destination_dim,
                 self.coef_ext
             )
         )

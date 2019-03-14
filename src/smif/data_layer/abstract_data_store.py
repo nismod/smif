@@ -180,17 +180,19 @@ class DataStore(metaclass=ABCMeta):
 
     # region Conversion coefficients
     @abstractmethod
-    def read_coefficients(self, source_spec, destination_spec):
+    def read_coefficients(self, source_dim, destination_dim):
         """Reads coefficients from the store
 
-        Coefficients are uniquely identified by their source/destination specs.
+        Coefficients are uniquely identified by their source/destination dimensions.
         This method and `write_coefficients` implement caching of conversion
-        coefficients between dimensions.
+        coefficients between a single pair of dimensions.
 
         Parameters
         ----------
-        source_spec : ~smif.metadata.spec.Spec
-        destination_spec : ~smif.metadata.spec.Spec
+        source_dim : str
+            dimension name
+        destination_dim : str
+            dimension name
 
         Returns
         -------
@@ -202,17 +204,19 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def write_coefficients(self, source_spec, destination_spec, data):
+    def write_coefficients(self, source_dim, destination_dim, data):
         """Writes coefficients to the store
 
-        Coefficients are uniquely identified by their source/destination specs.
+        Coefficients are uniquely identified by their source/destination dimensions.
         This method and `read_coefficients` implement caching of conversion
-        coefficients between dimensions.
+        coefficients between a single pair of dimensions.
 
         Parameters
         ----------
-        source_spec : ~smif.metadata.spec.Spec
-        destination_spec : ~smif.metadata.spec.Spec
+        source_dim : str
+            dimension name
+        destination_dim : str
+            dimension name
         data : numpy.ndarray
 
         Notes

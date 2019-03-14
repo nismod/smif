@@ -802,42 +802,32 @@ class TestDataHandleCoefficients:
     """Tests the interface for reading and writing coefficients
     """
     def test_read_coefficient_raises(self, mock_store, mock_model):
-        """
+        """Reading coefficients that aren't cached should raise SmifDataNotFoundError
         """
         store = mock_store
-        source_spec = mock_model.outputs['gas_demand']
-        sink_spec = mock_model.outputs['gas_demand']
-
         dh = DataHandle(store, 1, 2010, [2010], mock_model)
+
         with raises(SmifDataNotFoundError):
-            dh.read_coefficients(source_spec, sink_spec)
+            dh.read_coefficients('from_dim', 'to_dim')
 
     def test_write_coefficients(self, mock_store, mock_model):
+        """Writing coefficients should succeed
         """
-        """
-
         store = mock_store
-        source_spec = mock_model.outputs['gas_demand']
-        sink_spec = mock_model.outputs['gas_demand']
         data = np.zeros(4)
 
         dh = DataHandle(store, 1, 2010, [2010], mock_model)
-        dh.write_coefficients(source_spec, sink_spec, data)
+        dh.write_coefficients('from_dim', 'to_dim', data)
 
     def test_read_coefficient_(self, mock_store, mock_model):
-        """
+        """Reading written coefficients should return the cached data
         """
         store = mock_store
-        source_spec = mock_model.outputs['gas_demand']
-        sink_spec = mock_model.outputs['gas_demand']
-
         dh = DataHandle(store, 1, 2010, [2010], mock_model)
-
         data = np.zeros(4)
-        dh.write_coefficients(source_spec, sink_spec, data)
+        dh.write_coefficients('from_dim', 'to_dim', data)
 
-        actual = dh.read_coefficients(source_spec, sink_spec)
-
+        actual = dh.read_coefficients('from_dim', 'to_dim')
         np.testing.assert_equal(actual, np.array([0, 0, 0, 0]))
 
 

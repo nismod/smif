@@ -362,16 +362,15 @@ class MemoryDataStore(DataStore):
     # endregion
 
     # region Conversion coefficients
-    def read_coefficients(self, source_spec, destination_spec):
-        spec = (source_spec.name, destination_spec.name)
+    def read_coefficients(self, source_dim, destination_dim):
         try:
-            return self._coefficients[(source_spec.name, destination_spec.name)]
+            return self._coefficients[(source_dim, destination_dim)]
         except KeyError:
-            msg = "Could not find coefficients for spec pair {}.{}"
-            raise SmifDataNotFoundError(msg.format(spec[0], spec[1]))
+            msg = "Could not find coefficients for conversion from {}>{}"
+            raise SmifDataNotFoundError(msg.format(source_dim, destination_dim))
 
-    def write_coefficients(self, source_spec, destination_spec, data):
-        self._coefficients[(source_spec.name, destination_spec.name)] = data
+    def write_coefficients(self, source_dim, destination_dim, data):
+        self._coefficients[(source_dim, destination_dim)] = data
     # endregion
 
     # region Results

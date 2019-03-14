@@ -15,20 +15,29 @@ if [[ "$DISTRIB" == "conda" ]]; then
     deactivate
 
     # Use the miniconda installer for faster download / install of conda
-    # itself
-    wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh \
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
         -O miniconda.sh
     chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda -f
     export PATH=$HOME/miniconda/bin:$PATH
     rm miniconda.sh -f
+    # Don't ask for confirmation
+    conda config --set always_yes true
+    # Update conda
+    conda update conda
 
-    conda update --yes conda -c conda-forge
+    # Follow channel priority strictly
+    conda config --set channel_priority strict
+    # Don't change prompt
+    conda config --set changeps1 false
 
-    conda config --add channels conda-forge
+    if [[ "$PYTHON_VERSION" != "3.5" ]]; then
+        # Add conda-forge as priority channel
+        # conda-forge builds packages for Python 3.6 and above as of 2018-10-01
+        conda config --add channels conda-forge
+    fi
 
-    # Configure the conda environment and put it in the path using the
-    # provided versions
-    conda create -n testenv --yes -c conda-forge \
+    # Create the conda environment
+    conda create -n testenv --yes \
         python=$PYTHON_VERSION \
         pytest \
         pytest-cov \
@@ -39,12 +48,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
         pandas \
         psycopg2 \
         shapely \
-        fiona  && source activate testenv
+        fiona
 
-    if [[ "$PYTHON_VERSION" == "3.5" ]]; then
-        # Pin libgcc as possible root cause of fiona/shapely shared library import errors
-        conda install --yes libgcc-ng==7.2.0
-    fi
+    source activate testenv
 fi
 
 python setup.py develop

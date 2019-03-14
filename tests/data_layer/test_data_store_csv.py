@@ -340,7 +340,8 @@ class TestNarrativeVariantData:
             config_handler.read_model_parameter_default('default.csv', spec)
 
         msg = "Data for 'test' contains duplicate values at [{'a': 2, 'b': 4}]"
-        assert msg in str(ex)
+        msg_alt = "Data for 'test' contains duplicate values at [{'b': 4, 'a': 2}]"
+        assert msg in str(ex) or msg_alt in str(ex)
 
     def test_error_wrong_name(self, config_handler):
         spec = Spec(
@@ -626,26 +627,17 @@ class TestWarmStart:
 class TestCoefficients:
     """Dimension conversion coefficients should be cached to disk and read if available.
     """
-    @fixture
-    def from_spec(self):
-        return Spec(name='from_test_coef', dtype='int')
-
-    @fixture
-    def to_spec(self):
-        return Spec(name='to_test_coef', dtype='int')
-
-    def test_read_write(self, from_spec, to_spec, config_handler):
+    def test_read_write(self, config_handler):
         data = np.eye(1000)
         handler = config_handler
-        handler.write_coefficients(from_spec, to_spec, data)
-        actual = handler.read_coefficients(from_spec, to_spec)
+        handler.write_coefficients('from_dim_name', 'to_dim_name', data)
+        actual = handler.read_coefficients('from_dim_name', 'to_dim_name')
         np.testing.assert_equal(actual, data)
 
-    def test_read_raises(self, from_spec, to_spec, config_handler):
+    def test_read_raises(self, config_handler):
         handler = config_handler
-        missing_spec = Spec(name='missing_coef', dtype='int')
         with raises(SmifDataNotFoundError):
-            handler.read_coefficients(missing_spec, to_spec)
+            handler.read_coefficients('wrong_dim_name', 'to_dim_name')
 
     def test_dfi_raises_if_folder_missing(self):
         """Ensure we can write files, even if project directory starts empty

@@ -48,14 +48,15 @@ class Adaptor(Model, metaclass=ABCMeta):
         -------
         numpy.ndarray
         """
+        from_dim, to_dim = self.get_convert_dims(from_spec, to_spec)
         try:
-            coefficients = data_handle.read_coefficients(from_spec, to_spec)
+            coefficients = data_handle.read_coefficients(from_dim, to_dim)
         except SmifDataNotFoundError:
             msg = "Generating coefficients for %s to %s"
-            self.logger.info(msg, from_spec, to_spec)
+            self.logger.info(msg, from_dim, to_dim)
 
             coefficients = self.generate_coefficients(from_spec, to_spec)
-            data_handle.write_coefficients(from_spec, to_spec, coefficients)
+            data_handle.write_coefficients(from_dim, to_dim, coefficients)
         return coefficients
 
     @abstractmethod
