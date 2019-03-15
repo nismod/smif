@@ -21,7 +21,9 @@ from smif.metadata import RelativeTimestep
 class DataHandle(object):
     """Get/set model parameters and data
     """
-    def __init__(self, store, modelrun_name, current_timestep, timesteps, model,
+    _parameters: Dict[str, DataArray]
+
+    def __init__(self, store: Store, modelrun_name, current_timestep, timesteps, model,
                  decision_iteration=None):
         """Create a DataHandle for a Model to access data, parameters and state, and to
         communicate results.
@@ -39,7 +41,7 @@ class DataHandle(object):
         state : list, default=None
         """
         self.logger = getLogger(__name__)
-        self._store: Store = store
+        self._store = store
         self._modelrun_name = modelrun_name
         self._current_timestep = current_timestep
         self._timesteps = timesteps
