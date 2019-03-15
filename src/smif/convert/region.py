@@ -58,6 +58,7 @@ class RegionSet(ResolutionSet):
 
     """
     def __init__(self, set_name, elements):
+        super().__init__()
         self.name = set_name
         self._regions = []
         self.data = [e['feature'] for e in elements]

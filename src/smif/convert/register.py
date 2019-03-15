@@ -253,10 +253,9 @@ class ResolutionSet(metaclass=ABCMeta):
     """Abstract class which holds the Resolution definitions
     """
     def __init__(self):
-
         self.name = ''
         self.description = ''
-        self.data = []
+        self._data = []
         self.logger = logging.getLogger(__name__)
 
     def as_dict(self):
@@ -267,6 +266,20 @@ class ResolutionSet(metaclass=ABCMeta):
 
     def __iter__(self):
         return iter(self.data)
+
+    @property
+    def data(self):
+        """Resolution set data
+
+        Returns
+        -------
+        list
+        """
+        return self._data
+
+    @data.setter
+    def data(self, data):
+        self._data = data
 
     @abstractmethod
     def get_entry_names(self):

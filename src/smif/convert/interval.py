@@ -413,7 +413,7 @@ class IntervalSet(ResolutionSet):
     """
 
     def __init__(self, name, data, base_year=2010):
-        self._data = []
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.name = name
         self._base_year = base_year
@@ -551,17 +551,17 @@ class IntervalSet(ResolutionSet):
         return self._data
 
     @data.setter
-    def data(self, interval_data):
+    def data(self, data):
         """
 
         Arguments
         ---------
-        interval_data : list
+        data : list
             A list of dicts containing {name: interval_id, interval: list of interval tuples)
         """
         names = {}
 
-        for interval in interval_data:
+        for interval in data:
             name = interval['name']
             interval_list = [tuple(i) for i in interval['interval']]
             self._data.append(
@@ -580,7 +580,7 @@ class IntervalSet(ResolutionSet):
         if self.data:
             array = self._get_hourly_array()
             duplicate_hours = np.where(array > 1)[0]
-            if len(duplicate_hours):
+            if duplicate_hours.size > 0:
                 hour = duplicate_hours[0]
                 msg = "Duplicate entry for hour {} in interval set {}."
                 raise ValueError(msg.format(hour, self.name))
