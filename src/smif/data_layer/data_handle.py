@@ -9,11 +9,13 @@ data (at any computed or pre-computed timestep) and write access to output data
 from copy import copy
 from logging import getLogger
 from types import MappingProxyType
+from typing import Dict
 
-import numpy as np
+import numpy as np  # type: ignore
+from smif.data_layer.store import Store
 from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataError
-from smif.metadata import RelativeTimestep, Spec
+from smif.metadata import RelativeTimestep
 
 
 class DataHandle(object):
@@ -37,7 +39,7 @@ class DataHandle(object):
         state : list, default=None
         """
         self.logger = getLogger(__name__)
-        self._store = store
+        self._store: Store = store
         self._modelrun_name = modelrun_name
         self._current_timestep = current_timestep
         self._timesteps = timesteps
@@ -51,8 +53,8 @@ class DataHandle(object):
         modelrun = self._store.read_model_run(self._modelrun_name)
         sos_model = self._store.read_sos_model(modelrun['sos_model'])
 
-        self._scenario_dependencies = {}
-        self._model_dependencies = {}
+        self._scenario_dependencies: Dict[str, Dict] = {}
+        self._model_dependencies: Dict[str, Dict] = {}
         scenario_variants = modelrun['scenarios']
         self._load_dependencies(sos_model, scenario_variants)
         self.logger.debug(
@@ -332,7 +334,7 @@ class DataHandle(object):
                 assert isinstance(timestep, int) and timestep <= self._current_timestep
         return timestep
 
-    def _get_result(self, dep, timestep, input_spec):
+    def _get_result(self, dep, timestep, input_spec) -> DataArray:
         """Retrieves a model result for a dependency
         """
         output_spec = copy(input_spec)
@@ -357,7 +359,7 @@ class DataHandle(object):
             )) from ex
         return data
 
-    def _get_scenario(self, dep, timestep, input_name):
+    def _get_scenario(self, dep, timestep, input_name) -> DataArray:
         """Retrieves data from a scenario
 
         Arguments
@@ -388,7 +390,7 @@ class DataHandle(object):
             )) from ex
         return data
 
-    def _resolve_source(self, input_name) -> dict:
+    def _resolve_source(self, input_name) -> Dict:
         """Find best dependency to provide input data
 
         Returns
@@ -396,14 +398,17 @@ class DataHandle(object):
         dep : dict
             A scenario or model dependency dictionary
         """
+        scenario_dep = None
         try:
             scenario_dep = self._scenario_dependencies[input_name]
         except KeyError:
-            scenario_dep = None
+            pass
+
+        model_dep = None
         try:
             model_dep = self._model_dependencies[input_name]
         except KeyError:
-            model_dep = None
+            pass
 
         if scenario_dep is not None and model_dep is not None:
             # if multiple dependencies, use scenario for timestep 0, model for

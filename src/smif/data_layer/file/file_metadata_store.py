@@ -5,6 +5,7 @@ import json
 import os
 from functools import lru_cache
 from logging import getLogger
+from typing import Dict, List, Union
 
 import pandas  # type: ignore
 from pandas import compat as pandas_compat
@@ -33,7 +34,7 @@ class FileMetadataStore(MetadataStore):
         self.config_folder = os.path.join(base_folder, 'config', 'dimensions')
 
     # region Units
-    def read_unit_definitions(self):
+    def read_unit_definitions(self) -> List[str]:
         try:
             with open(self.units_path, 'r') as units_fh:
                 return [line.strip() for line in units_fh]
@@ -41,17 +42,17 @@ class FileMetadataStore(MetadataStore):
             self.logger.warning('Units file not found, expected at %s', str(self.units_path))
             return []
 
-    def write_unit_definitions(self, definitions):
+    def write_unit_definitions(self, definitions: List[str]):
         with open(self.units_path, 'w') as units_fh:
             units_fh.writelines(definitions)
     # endregion
 
     # region Dimensions
-    def read_dimensions(self, skip_coords=False):
+    def read_dimensions(self, skip_coords=False) -> List[dict]:
         dim_names = _read_filenames_in_dir(self.config_folder, '.yml')
         return [self.read_dimension(name, skip_coords) for name in dim_names]
 
-    def read_dimension(self, dimension_name, skip_coords=False):
+    def read_dimension(self, dimension_name: str, skip_coords=False):
         dim = _read_yaml_file(self.config_folder, dimension_name)
         if skip_coords:
             del dim['elements']
@@ -59,7 +60,7 @@ class FileMetadataStore(MetadataStore):
             dim['elements'] = self._read_dimension_file(dim['elements'])
         return dim
 
-    def write_dimension(self, dimension):
+    def write_dimension(self, dimension: Dict):
         # write elements to csv file (by default, can handle any nested data)
         elements_filename = "{}.csv".format(dimension['name'])
         elements = dimension['elements']
@@ -70,7 +71,7 @@ class FileMetadataStore(MetadataStore):
         dimension_with_ref['elements'] = elements_filename
         _write_yaml_file(self.config_folder, dimension['name'], dimension_with_ref)
 
-    def update_dimension(self, dimension_name, dimension):
+    def update_dimension(self, dimension_name: str, dimension: Dict):
         # look up elements filename and write elements
 
         old_dim = _read_yaml_file(self.config_folder, dimension_name)
@@ -84,7 +85,7 @@ class FileMetadataStore(MetadataStore):
 
         _write_yaml_file(self.config_folder, dimension_name, dimension_with_ref)
 
-    def delete_dimension(self, dimension_name):
+    def delete_dimension(self, dimension_name: str):
         # read to find filename
 
         old_dim = _read_yaml_file(self.config_folder, dimension_name)
@@ -95,12 +96,10 @@ class FileMetadataStore(MetadataStore):
         os.remove(os.path.join(self.config_folder, "{}.yml".format(dimension_name)))
 
     @lru_cache(maxsize=32)
-    def _read_dimension_file(self, filename):
+    def _read_dimension_file(self, filename: str) -> List[Dict]:
         filepath = os.path.join(self.data_folder, filename)
         filebasename, ext = os.path.splitext(filename)
-        if ext in ('.yml', '.yaml'):
-            data = _read_yaml_file(self.data_folder, filebasename)
-        elif ext == '.csv':
+        if ext == '.csv':
             dataframe = pandas.read_csv(filepath)
             data = _df_to_records(dataframe)
             if 'interval' in data[0]:
@@ -108,19 +107,17 @@ class FileMetadataStore(MetadataStore):
         elif ext in ('.geojson', '.shp'):
             data = self._read_spatial_file(filepath)
         else:
-            msg = "Extension '{}' not recognised, expected one of ('.csv', '.yml', '.yaml', "
+            msg = "Extension '{}' not recognised, expected one of ('.csv', "
             msg += "'.geojson', '.shp') when reading {}"
             raise SmifDataReadError(msg.format(ext, filepath))
         return data
 
-    def _write_dimension_file(self, filename, data):
+    def _write_dimension_file(self, filename: str, data: List[Dict]):
         # lru_cache may now be invalid, so clear it
         self._read_dimension_file.cache_clear()
         path = os.path.join(self.data_folder, filename)
         filebasename, ext = os.path.splitext(filename)
-        if ext in ('.yml', '.yaml'):
-            _write_yaml_file(self.data_folder, filebasename, data)
-        elif ext == '.csv':
+        if ext == '.csv':
             if 'interval' in data[0]:
                 data = self._stringify_interval(data)
             pandas.DataFrame.from_records(data).to_csv(path, index=False)
@@ -128,12 +125,12 @@ class FileMetadataStore(MetadataStore):
             raise NotImplementedError("Writing spatial dimensions not yet supported")
             # self._write_spatial_file(filepath)
         else:
-            msg = "Extension '{}' not recognised, expected one of ('.csv', '.yml', '.yaml', "
+            msg = "Extension '{}' not recognised, expected one of ('.csv', "
             msg += "'.geojson', '.shp') when writing {}"
             raise SmifDataReadError(msg.format(ext, path))
         return data
 
-    def _stringify_interval(self, data):
+    def _stringify_interval(self, data: List[Dict]) -> List[Dict]:
         output = []
         for item in data:
             output_item = copy.copy(item)
@@ -144,7 +141,7 @@ class FileMetadataStore(MetadataStore):
             output.append(output_item)
         return output
 
-    def _unstringify_interval(self, data):
+    def _unstringify_interval(self, data: List[Dict]) -> List[Dict]:
         output = []
         for item in data:
             output_item = copy.copy(item)
@@ -157,7 +154,7 @@ class FileMetadataStore(MetadataStore):
     # endregion
 
     @staticmethod
-    def _read_spatial_file(filepath):
+    def _read_spatial_file(filepath) -> List[Dict]:
         try:
             with fiona.drivers():
                 with fiona.open(filepath) as src:
@@ -239,7 +236,7 @@ def _read_filenames_in_dir(path, extension):
     return files
 
 
-def _df_to_records(dataframe):
+def _df_to_records(dataframe: pandas.DataFrame) -> List[Dict]:
     """Fix pandas conversion to list[dict] with python scalar values
 
     Ported here from future release of pandas 0.24.0
