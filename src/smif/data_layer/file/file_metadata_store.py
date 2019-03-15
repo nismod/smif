@@ -1,6 +1,7 @@
 """File-backed metadata store
 """
 import copy
+import json
 import os
 from functools import lru_cache
 from logging import getLogger
@@ -37,12 +38,12 @@ class FileMetadataStore(MetadataStore):
             with open(self.units_path, 'r') as units_fh:
                 return [line.strip() for line in units_fh]
         except FileNotFoundError:
-            self.logger.warn('Units file not found, expected at %s', str(self.units_path))
+            self.logger.warning('Units file not found, expected at %s', str(self.units_path))
             return []
 
-    def write_unit_definitions(self, units):
+    def write_unit_definitions(self, definitions):
         with open(self.units_path, 'w') as units_fh:
-            units_fh.writelines(units)
+            units_fh.writelines(definitions)
     # endregion
 
     # region Dimensions
@@ -59,8 +60,8 @@ class FileMetadataStore(MetadataStore):
         return dim
 
     def write_dimension(self, dimension):
-        # write elements to yml file (by default, can handle any nested data)
-        elements_filename = "{}.yml".format(dimension['name'])
+        # write elements to csv file (by default, can handle any nested data)
+        elements_filename = "{}.csv".format(dimension['name'])
         elements = dimension['elements']
         self._write_dimension_file(elements_filename, elements)
 
@@ -102,6 +103,8 @@ class FileMetadataStore(MetadataStore):
         elif ext == '.csv':
             dataframe = pandas.read_csv(filepath)
             data = _df_to_records(dataframe)
+            if 'interval' in data[0]:
+                data = self._unstringify_interval(data)
         elif ext in ('.geojson', '.shp'):
             data = self._read_spatial_file(filepath)
         else:
@@ -118,6 +121,8 @@ class FileMetadataStore(MetadataStore):
         if ext in ('.yml', '.yaml'):
             _write_yaml_file(self.data_folder, filebasename, data)
         elif ext == '.csv':
+            if 'interval' in data[0]:
+                data = self._stringify_interval(data)
             pandas.DataFrame.from_records(data).to_csv(path, index=False)
         elif ext in ('.geojson', '.shp'):
             raise NotImplementedError("Writing spatial dimensions not yet supported")
@@ -127,6 +132,28 @@ class FileMetadataStore(MetadataStore):
             msg += "'.geojson', '.shp') when writing {}"
             raise SmifDataReadError(msg.format(ext, path))
         return data
+
+    def _stringify_interval(self, data):
+        output = []
+        for item in data:
+            output_item = copy.copy(item)
+            try:
+                output_item['interval'] = json.dumps(item['interval'])
+            except KeyError:
+                self.logger.warning("Expected interval in element %s", item)
+            output.append(output_item)
+        return output
+
+    def _unstringify_interval(self, data):
+        output = []
+        for item in data:
+            output_item = copy.copy(item)
+            try:
+                output_item['interval'] = json.loads(item['interval'])
+            except KeyError:
+                self.logger.warning("Expected interval in element %s", item)
+            output.append(output_item)
+        return output
     # endregion
 
     @staticmethod
@@ -135,10 +162,10 @@ class FileMetadataStore(MetadataStore):
             with fiona.drivers():
                 with fiona.open(filepath) as src:
                     data = []
-                    for f in src:
+                    for feature in src:
                         element = {
-                            'name': f['properties']['name'],
-                            'feature': f
+                            'name': feature['properties']['name'],
+                            'feature': feature
                         }
                         data.append(element)
             return data
@@ -212,7 +239,7 @@ def _read_filenames_in_dir(path, extension):
     return files
 
 
-def _df_to_records(df):
+def _df_to_records(dataframe):
     """Fix pandas conversion to list[dict] with python scalar values
 
     Ported here from future release of pandas 0.24.0
@@ -230,5 +257,5 @@ def _df_to_records(df):
             (k, v)
             for k, v in pandas_compat.iteritems(row._asdict())
         )
-        for row in df.itertuples(index=False)
+        for row in dataframe.itertuples(index=False)
     ]
