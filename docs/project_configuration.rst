@@ -441,6 +441,8 @@ ending in the last hour of the year:
 
 Or to define a set of seasons, where winter covers January, February and December:
 
+.. code-block:: csv
+
     name,interval
     spring,"[[""P2M"", ""P5M""]]"
     summer,"[[""P5M"", ""P8M""]]"
