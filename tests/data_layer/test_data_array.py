@@ -348,7 +348,8 @@ class TestDataFrameInterop():
             DataArray.from_df(spec, df)
 
         msg = "Data for 'test' contains duplicate values at [{'a': 2, 'b': 4}]"
-        assert msg in str(ex)
+        msg_alt = "Data for 'test' contains duplicate values at [{'b': 4, 'a': 2}]"
+        assert msg in str(ex) or msg_alt in str(ex)
 
 
 class TestMissingData:

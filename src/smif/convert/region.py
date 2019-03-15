@@ -2,9 +2,9 @@
 """
 from collections import namedtuple
 
-from rtree import index
-from shapely.geometry import mapping, shape
-from shapely.validation import explain_validity
+from rtree import index  # type: ignore
+from shapely.geometry import mapping, shape  # type: ignore
+from shapely.validation import explain_validity  # type: ignore
 from smif.convert.adaptor import Adaptor
 from smif.convert.register import NDimensionalRegister, ResolutionSet
 
@@ -58,6 +58,7 @@ class RegionSet(ResolutionSet):
 
     """
     def __init__(self, set_name, elements):
+        super().__init__()
         self.name = set_name
         self._regions = []
         self.data = [e['feature'] for e in elements]

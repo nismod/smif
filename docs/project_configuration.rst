@@ -424,25 +424,36 @@ A temporal dimension definition specifies the mapping of model timesteps to dura
 year (assuming that each planning timestep models 365 days: no extra day in leap years, no leap
 seconds).
 
+A dimension definition is a list of one or more intervals, as expected by a model. Each
+interval is defined by one or more periods. The start and end of each period is measured from
+the beginning of a year.
+
 Use ISO 8601 [1]_ duration format to specify periods::
 
     P[n]Y[n]M[n]DT[n]H[n]M[n]S
 
-For example:
+For example, to define one year-long interval, starting in the first hour of the year and
+ending in the last hour of the year:
 
-.. literalinclude:: ../src/smif/sample_project/data/interval_definitions/annual_intervals.csv
+.. literalinclude:: ../src/smif/sample_project/data/dimensions/annual_intervals.csv
    :language: text
 
-In this example, the interval with id ``1`` begins in the first hour of the year and ends in
-the last hour of the year. This represents one, year-long interval.
+
+Or to define a set of seasons, where winter covers January, February and December:
+
+    name,interval
+    spring,"[[""P2M"", ""P5M""]]"
+    summer,"[[""P5M"", ""P8M""]]"
+    autumn,"[[""P8M"", ""P11M""]]"
+    winter,"[[""P0M"", ""P2M""], [""P11M"", ""P12M""]]"
+
 
 .. csv-table::
    :header: "Attribute", "Type", "Notes"
    :widths: 15, 10, 30
 
    id, string, "The unique identifier used by the simulation model"
-   start_hour, string, "Period since beginning of year"
-   end_hour, string, "Period since beginning of year"
+   interval, string, "list of [start, end] pairs (in CSV format, JSON-serialised and escaped)"
 
 
 Spatial dimensions

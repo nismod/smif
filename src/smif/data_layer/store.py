@@ -18,7 +18,8 @@ from copy import deepcopy
 from logging import getLogger
 from operator import itemgetter
 
-import numpy as np
+import numpy as np  # type: ignore
+from smif.data_layer import DataArray
 from smif.data_layer.file import CSVDataStore, ParquetDataStore
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
@@ -479,7 +480,8 @@ class Store():
     #
 
     # region Scenario Variant Data
-    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
+    def read_scenario_variant_data(
+            self, scenario_name, variant_name, variable, timestep=None) -> DataArray:
         """Read scenario data file
 
         Parameters
@@ -788,7 +790,7 @@ class Store():
 
     # region Results
     def read_results(self, model_run_name, model_name, output_spec, timestep=None,
-                     decision_iteration=None):
+                     decision_iteration=None) -> DataArray:
         """Return results of a `model_name` in `model_run_name` for a given `output_name`
 
         Parameters

@@ -1,6 +1,6 @@
 """Handles conversion between units used in the `SosModel`
 """
-from pint import DimensionalityError, UndefinedUnitError, UnitRegistry
+from pint import DimensionalityError, UndefinedUnitError, UnitRegistry  # type: ignore
 from smif.convert.adaptor import Adaptor
 
 

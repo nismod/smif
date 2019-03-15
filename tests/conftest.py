@@ -380,7 +380,7 @@ def get_sos_model(sample_narratives):
 
 
 @fixture
-def get_sector_model(annual, hourly):
+def get_sector_model(annual, hourly, lad):
     """Return sample sector_model
     """
     return {
@@ -395,7 +395,7 @@ def get_sector_model(annual, hourly):
                 'dtype': 'int',
                 'dims': ['lad', 'annual'],
                 'coords': {
-                    'lad': ['a', 'b'],
+                    'lad': lad,
                     'annual': annual
                 },
                 'absolute_range': [0, int(1e12)],
@@ -409,7 +409,7 @@ def get_sector_model(annual, hourly):
                 'dtype': 'float',
                 'dims': ['lad', 'hourly'],
                 'coords': {
-                    'lad': ['a', 'b'],
+                    'lad': lad,
                     'hourly': hourly
                 },
                 'absolute_range': [0, float('inf')],
@@ -741,14 +741,14 @@ def _pick_from_list(list_, name):
 
 
 @fixture
-def sample_dimensions(remap_months, hourly, annual):
+def sample_dimensions(remap_months, hourly, annual, lad):
     """Return sample dimensions
     """
     return [
         {
             'name': 'lad',
             'description': 'Local authority districts for the UK',
-            'elements': ['a', 'b']
+            'elements': lad
         },
         {
             'name': 'hourly',
@@ -799,19 +799,23 @@ def get_dimension():
         "elements":
             [
                 {
-                    "end": "PT8760H",
                     "id": 1,
-                    "start": "PT0H"
+                    "interval": [["PT0H", "PT8760H"]]
                 }
             ]
     }
 
 
 @fixture
+def lad():
+    return [{'name': 'a'}, {'name': 'b'}]
+
+
+@fixture
 def hourly():
     return [
         {
-            'name': str(n),
+            'name': n,
             'interval': [['PT{}H'.format(n), 'PT{}H'.format(n+1)]]
         }
         for n in range(8)  # should be 8760
@@ -889,7 +893,7 @@ def unit_definitions():
 
 @fixture
 def dimension():
-    return {'name': 'category', 'elements': [1, 2, 3]}
+    return {'name': 'category', 'elements': [{'name': 1}, {'name': 2}, {'name': 3}]}
 
 
 @fixture

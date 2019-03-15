@@ -62,18 +62,6 @@ class SectorModel(Model, metaclass=ABCMeta):
 
     - :py:meth:`SectorModel.before_model_run`
 
-    A number of utility methods are included to ease the integration of a
-    SectorModel wrapper within a System of Systems model.  These include:
-
-    * ``get_region_names(region_set_name)`` - Get a list of region names
-    * ``get_interval_names(interval_set_name)`` - Get a list of interval names
-
-    For example, within the implementation of the simulate method, call::
-
-        self.get_region_names('lad')
-
-    to return a list of region names defined in the region register at runtime.
-
     """
     def __init__(self, name):
         super().__init__(name)

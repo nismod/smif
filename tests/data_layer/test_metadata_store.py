@@ -59,14 +59,28 @@ class TestDimensions():
         assert handler.read_dimension('category') == dimension
 
     def test_write_dimension(self, handler, dimension, sample_dimensions):
-        another_dimension = {'name': '3rd', 'elements': ['a', 'b']}
+        another_dimension = {'name': '3rd', 'elements': [{'name': 'a'}, {'name': 'b'}]}
         handler.write_dimension(another_dimension)
         actual = handler.read_dimensions()
         expected = [dimension, another_dimension] + sample_dimensions
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
+    def test_write_interval_dimension(self, handler):
+        intervals = {
+            'name': 'seasons',
+            'elements': [
+                {'name': 'spring', 'interval': [['P2M', 'P5M']]},
+                {'name': 'summer', 'interval': [['P5M', 'P8M']]},
+                {'name': 'autumn', 'interval': [['P8M', 'P11M']]},
+                {'name': 'winter', 'interval': [['P0M', 'P2M'], ['P11M', 'P12M']]},
+            ]
+        }
+        handler.write_dimension(intervals)
+        actual = handler.read_dimension('seasons')
+        assert actual == intervals
+
     def test_update_dimension(self, handler, dimension, sample_dimensions):
-        another_dimension = {'name': 'category', 'elements': [4, 5, 6]}
+        another_dimension = {'name': 'category', 'elements': [{'name': 4}, {'name': 5}, {'name': 6}]}
         handler.update_dimension('category', another_dimension)
         actual = handler.read_dimensions()
         expected = [another_dimension] + sample_dimensions

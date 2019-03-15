@@ -207,30 +207,36 @@ database table ``ElecLoad`` using the psycopg2 library [2]_ ::
         # Open a cursor to perform database operations
         cur = conn.cursor()
 
-        # Returns a numpy array whose dimensions are defined by the interval and
-        # region definitions
-        elec_data = data.get_data('electricity_demand')
+        # Returns a smif.DataArray
+        demand = data.get_data('electricity_demand')
+
+        # Convert to DataFrame (could also convert to numpy.ndarray or xarray.DataArray)
+        demand_df = demand.as_df().reset_index()  # reset index for easier iteration later on
 
         # Build the SQL string
         sql = """INSERT INTO "ElecLoad" (Year, Interval, BusID, ElecLoad)
                  VALUES (%s, %s, %s, %s)"""
 
-        # Get the time interval definitions associated with the input
-        time_intervals = self.inputs[name].get_interval_names()
-        # Get the region definitions associated with the input
-        regions = self.inputs[name].get_region_names()
-        # Iterate over the regions and intervals (columns and rows) of the numpy
-        # array holding the energy demand data and write each value into the table
-        for i, region in enumerate(regions):
-            for j, interval in enumerate(time_intervals):
+        # Get the dimensions associated with the input
+        # e.g. ['bus_region', 'hour']
+        dims = demand.dims
+
+        # Get the dimension definitions associated with the input, here regions and intervals
+        regions = demand.dim_elements('bus_regions')
+        intervals = demand.dim_elements('hours')
+
+        # Iterate over the energy demand data and write each value into the table
+        for item in demand_df.itertuples():
                 # This line calls out to a helper method which associates
                 # electricity grid bus bars to energy demand regions
-                bus_number = get_bus_number(region)
+                bus_number = get_bus_number(item.bus_region)
                 # Build the tuple to write to the table
-                insert_data = (data.current_timestep,
-                               interval,
-                               bus_number,
-                               data[i, j])
+                insert_data = (
+                    data.current_timestep,
+                    item.hour,
+                    bus_number,
+                    item.electricity_demand
+                )
                 cur.execute(sql, insert_data)
 
         # Make the changes to the database persistent
@@ -258,22 +264,22 @@ A model wrapper can reflect on its outputs and their specs::
 
     # find the spec for a given output
     spec = self.outputs[output_name]
+
     # spec dimensions
     spec.dims  # e.g. ['lad', 'month', 'economic_sector']
+
     # spec shape (length of each dimension)
     spec.shape  # e.g. (370, 12, 46)
+
     # dimension names (labels for each element in a given dimension)
     spec.dim_names('lad')  # e.g. ['E070001', 'E060002', ...]
+
     # full metadata about dimension elements
-    spec.dim_elements('lad')  # [{'name': 'E070001', 'feature': {'properties': {...}, 'coordinates': {...}}}, ...]
+    spec.dim_elements('lad')
+    # e.g. [{'name': 'E070001', 'feature': {'properties': {...}, 'coordinates': {...}}}, ...]
 
 Results are expected to be set for each of the model outputs defined in the output
 configuration and a warning is raised if these are not present at runtime.
-
-The interval definitions associated with the output can be interrogated from within the
-SectorModel class using ``self.outputs[name].get_interval_names()`` and the regions using
-``self.outputs[name].get_region_names()`` and these can then be used to compose the numpy
-array.
 
 
 References
