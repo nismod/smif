@@ -21,8 +21,6 @@ from smif.metadata import RelativeTimestep
 class DataHandle(object):
     """Get/set model parameters and data
     """
-    _parameters: Dict[str, DataArray]
-
     def __init__(self, store: Store, modelrun_name, current_timestep, timesteps, model,
                  decision_iteration=None):
         """Create a DataHandle for a Model to access data, parameters and state, and to
@@ -55,8 +53,8 @@ class DataHandle(object):
         modelrun = self._store.read_model_run(self._modelrun_name)
         sos_model = self._store.read_sos_model(modelrun['sos_model'])
 
-        self._scenario_dependencies: Dict[str, Dict] = {}
-        self._model_dependencies: Dict[str, Dict] = {}
+        self._scenario_dependencies = {}  # type: Dict[str, Dict]
+        self._model_dependencies = {}  # type: Dict[str, Dict]
         scenario_variants = modelrun['scenarios']
         self._load_dependencies(sos_model, scenario_variants)
         self.logger.debug(
@@ -64,7 +62,7 @@ class DataHandle(object):
             len(self._scenario_dependencies),
             len(self._model_dependencies))
 
-        self._parameters = {}
+        self._parameters = {}  # type: Dict[str, DataArray]
         self._load_parameters(sos_model, modelrun['narratives'])
 
     def _load_dependencies(self, sos_model, scenario_variants):

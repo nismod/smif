@@ -220,7 +220,7 @@ class NDimensionalRegister(Register):
     """
     def __init__(self, axis=None):
         super().__init__(axis)
-        self._register: Dict[str, ResolutionSet] = OrderedDict()
+        self._register = OrderedDict()  # type: Dict[str, ResolutionSet]
         self._conversions = defaultdict(dict)
 
     def register(self, resolution_set: ResolutionSet):
