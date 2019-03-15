@@ -5,9 +5,9 @@ import os
 from abc import abstractmethod
 from logging import getLogger
 
-import numpy as np
-import pandas
-import pyarrow as pa
+import numpy as np  # type: ignore
+import pandas  # type: ignore
+import pyarrow as pa  # type: ignore
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.data_array import DataArray
 from smif.exception import SmifDataMismatchError, SmifDataNotFoundError

@@ -2,9 +2,9 @@
 """
 from collections import namedtuple
 
-from rtree import index
-from shapely.geometry import mapping, shape
-from shapely.validation import explain_validity
+from rtree import index  # type: ignore
+from shapely.geometry import mapping, shape  # type: ignore
+from shapely.validation import explain_validity  # type: ignore
 from smif.convert.adaptor import Adaptor
 from smif.convert.register import NDimensionalRegister, ResolutionSet
 

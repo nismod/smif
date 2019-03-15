@@ -6,16 +6,16 @@ import os
 from functools import lru_cache
 from logging import getLogger
 
-import pandas
+import pandas  # type: ignore
 from pandas import compat as pandas_compat
-from pandas.core import common as pandas_common
-from ruamel.yaml import YAML
+from pandas.core import common as pandas_common  # type: ignore
+from ruamel.yaml import YAML  # type: ignore
 from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.exception import SmifDataNotFoundError, SmifDataReadError
 
 # Import fiona if available (optional dependency)
 try:
-    import fiona
+    import fiona  # type: ignore
 except ImportError:
     pass
 

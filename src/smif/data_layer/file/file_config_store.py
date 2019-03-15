@@ -4,7 +4,7 @@ import copy
 import os
 from logging import getLogger
 
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML  # type: ignore
 from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
