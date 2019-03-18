@@ -518,7 +518,7 @@ class IntervalSet(ResolutionSet):
             intersect = np.nonzero(bool_array)[0]
             self.logger.debug(
                 "Interval '%s' intersects with '%s'",
-                to_entry.name, ",".join([self.data[x].name for x in intersect])
+                to_entry.name, ",".join([str(self.data[x].name) for x in intersect])
             )
             elements.extend(intersect)
 
