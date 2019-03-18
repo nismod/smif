@@ -21,6 +21,11 @@ def mock_store(sample_dimensions, annual, get_sector_model, empty_store):
     """
     store = empty_store
 
+    store.write_unit_definitions([
+        'people',
+        'million people = 1000000 * people'
+    ])
+
     for dim in sample_dimensions:
         store.write_dimension(dim)
 
@@ -829,6 +834,17 @@ class TestDataHandleCoefficients:
 
         actual = dh.read_coefficients('from_dim', 'to_dim')
         np.testing.assert_equal(actual, np.array([0, 0, 0, 0]))
+
+    def test_read_unit_definitions(self, mock_store, mock_model):
+        """Reading list of unit definition strings
+        """
+        store = mock_store
+        dh = DataHandle(store, 1, 2010, [2010], mock_model)
+        actual = dh.read_unit_definitions()
+        assert actual == [
+            'people',
+            'million people = 1000000 * people'
+        ]
 
 
 class TestResultsHandle:
