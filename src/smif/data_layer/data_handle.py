@@ -9,7 +9,7 @@ data (at any computed or pre-computed timestep) and write access to output data
 from copy import copy
 from logging import getLogger
 from types import MappingProxyType
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np  # type: ignore
 from smif.data_layer.store import Store
@@ -566,6 +566,15 @@ class DataHandle(object):
             timestep,
             decision_iteration
         )
+
+    def read_unit_definitions(self) -> List[str]:
+        """Read unit definitions
+
+        Returns
+        -------
+        list[str]
+        """
+        return self._store.read_unit_definitions()
 
     def read_coefficients(self, source_dim: str, destination_dim: str) -> np.ndarray:
         """Reads coefficients from the store
