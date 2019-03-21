@@ -8,7 +8,7 @@ environment:
     PGPORT: 5432
     PGPASSWORD: Password12!
   matrix:
-    - PYTHON_VERSION: 3.6
+    - PYTHON_VERSION: 3.7
       MINICONDA: C:\Miniconda3-x64
 init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
@@ -17,7 +17,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda config --add channels conda-forge
   - conda info -a
-  - "conda create -n testenv --yes python=%PYTHON_VERSION% \
+  - "conda create -n testenv python=%PYTHON_VERSION% \
         fiona \
         flask \
         gdal \
