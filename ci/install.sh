@@ -25,8 +25,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Update conda
     conda update conda
 
-    # Follow channel priority strictly
-    conda config --set channel_priority strict
     # Don't change prompt
     conda config --set changeps1 false
 
