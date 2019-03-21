@@ -85,12 +85,25 @@ def mock_data_interface(model_run, get_sos_model, get_sector_model,
 
 @pytest.fixture
 def app(request, mock_scheduler, mock_data_interface):
-
     """Return an app
     """
     test_app = create_app(
         static_folder=os.path.join(os.path.dirname(__file__), '..', 'fixtures', 'http'),
         template_folder=os.path.join(os.path.dirname(__file__), '..', 'fixtures', 'http'),
+        data_interface=mock_data_interface,
+        scheduler=mock_scheduler
+    )
+
+    with test_app.app_context():
+        yield test_app
+
+@pytest.fixture
+def app_fail(request, mock_scheduler, mock_data_interface):
+    """Return an app which will fail to find templates
+    """
+    test_app = create_app(
+        static_folder=os.path.join(os.path.dirname(__file__), '..', 'fixtures', '404'),
+        template_folder=os.path.join(os.path.dirname(__file__), '..', 'fixtures', '404'),
         data_interface=mock_data_interface,
         scheduler=mock_scheduler
     )
@@ -104,6 +117,19 @@ def client(request, app):
     """Return an API client
     """
     test_client = app.test_client()
+
+    def teardown():
+        pass
+
+    request.addfinalizer(teardown)
+    return test_client
+
+
+@pytest.fixture
+def client_fail(request, app_fail):
+    """Return an API client which will fail on request for home page
+    """
+    test_client = app_fail.test_client()
 
     def teardown():
         pass
@@ -134,6 +160,13 @@ def test_hello(client):
     """
     response = client.get('/')
     assert "Welcome to smif" in str(response.data)
+
+
+def test_template_not_found(client_fail):
+    """Clear error if template not found
+    """
+    response = client_fail.get('/')
+    assert "Error: smif app template not found" in str(response.data)
 
 
 def test_get_smif(client):
