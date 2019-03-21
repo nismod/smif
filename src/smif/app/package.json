@@ -13,7 +13,7 @@
     "report": "nyc report --reporter=lcov > coverage.lcov",
     "build": "webpack --mode production",
     "watch": "webpack --progress --watch --mode development",
-    "start": "webpack-dev-server --open"
+    "start": "webpack-dev-server --open --mode development"
   },
   "author": "Tom Russell",
   "license": "MIT",
