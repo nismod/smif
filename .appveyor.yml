@@ -14,8 +14,9 @@ init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
-  - conda config --set always_yes yes --set changeps1 no
-  - conda config --add channels conda-forge
+  - conda config --set always_yes yes
+  - conda config --set changeps1 no
+  - conda config --set channel_priority strict
   - conda info -a
   - "conda create -n testenv python=%PYTHON_VERSION% \
         fiona \
@@ -26,12 +27,10 @@ install:
         networkx \
         numpy \
         pandas \
-        pint \
         psycopg2 \
         pyarrow \
         pytest \
         python-dateutil \
-        ruamel.yaml \
         rtree \
         shapely \
         xarray"
