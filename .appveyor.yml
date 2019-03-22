@@ -14,8 +14,8 @@ init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
-  - conda update conda
   - conda config --set always_yes true
+  - conda update conda
   - conda config --set changeps1 false
   - conda config --set channel_priority strict
   - conda config --add channels conda-forge
