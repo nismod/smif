@@ -1,3 +1,5 @@
+import logging
+import jinja2.exceptions
 from flask import jsonify, render_template
 from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
                             SmifDataNotFoundError)
@@ -16,7 +18,24 @@ def register_routes(app):
     def home(path=None):
         """Render single page
         """
-        return render_template('index.html')
+        try:
+            return render_template('index.html')
+        except jinja2.exceptions.TemplateNotFound as ex:
+            logging.error(ex, exc_info=True)
+            return """<!doctype html>
+            <style>html, body { font-family: sans-serif; }</style>
+            <h1>Error: smif app template not found</h1>
+            <p>If you are running from a development build of smif, you may need to build the
+            app:</p>
+            <code><pre>
+cd ./src/smif/app
+npm install
+npm run build
+            </pre>
+            </code>
+            <p>Otherwise, please report the issue, including as much detail as possible, on
+            <a href="https://github.com/nismod/smif/issues">GitHub</a>.</p>
+            """
 
 
 def register_api_endpoints(app):
