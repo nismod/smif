@@ -12,8 +12,9 @@ from types import MappingProxyType
 from typing import Dict, List
 
 import numpy as np  # type: ignore
-from smif.data_layer.store import Store
+
 from smif.data_layer.data_array import DataArray
+from smif.data_layer.store import Store
 from smif.exception import SmifDataError
 from smif.metadata import RelativeTimestep
 
@@ -32,11 +33,12 @@ class DataHandle(object):
             Backing store for inputs, parameters, results
         modelrun_name : str
             Name of the current modelrun
+        current_timestep : str
+        timesteps : list
         model : Model
             Model which will use this DataHandle
         decision_iteration : int, default=None
             ID of the current Decision iteration
-        state : list, default=None
         """
         self.logger = getLogger(__name__)
         self._store = store
@@ -619,7 +621,7 @@ class DataHandle(object):
 class ResultsHandle(object):
     """Results access for decision modules
     """
-    def __init__(self, store, modelrun_name, sos_model, current_timestep, timesteps=None,
+    def __init__(self, store : Store, modelrun_name, sos_model, current_timestep, timesteps=None,
                  decision_iteration=None):
         self._store = store
         self._modelrun_name = modelrun_name
@@ -689,3 +691,31 @@ class ResultsHandle(object):
                                            decision_iteration)
 
         return results
+
+    def get_state(self) -> List:
+        """The current state of the model
+
+        If the DataHandle instance has a timestep, then state is
+        established from the state file.
+
+        Returns
+        -------
+        list of tuple
+            A list of (intervention name, build_year) installed in the current timestep
+
+        Raises
+        ------
+        ValueError
+            If self._current_timestep is None an error is raised.
+        """
+        if self._current_timestep is None:
+            raise ValueError("You must pass a timestep value to get state")
+        else:
+
+            sos_state = self._store.read_state(
+                self._modelrun_name,
+                self._current_timestep,
+                self._decision_iteration
+            )
+
+        return sos_state
