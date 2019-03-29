@@ -99,9 +99,6 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-LOGGER = logging.getLogger(__name__)
-
-
 def list_model_runs(args):
     """List the model runs defined in the config
     """
@@ -119,7 +116,8 @@ def run_model_runs(args):
     ----------
     args
     """
-    LOGGER.profiling_start('run_model_runs', '{:s}, {:s}, {:s}'.format(
+    logger = logging.getLogger(__name__)
+    logger.profiling_start('run_model_runs', '{:s}, {:s}, {:s}'.format(
         args.modelrun, args.interface, args.directory))
     if args.batchfile:
         with open(args.modelrun, 'r') as f:
@@ -129,9 +127,9 @@ def run_model_runs(args):
 
     store = _get_store(args)
     execute_model_run(model_run_ids, store, args.warm)
-    LOGGER.profiling_stop('run_model_runs', '{:s}, {:s}, {:s}'.format(
+    logger.profiling_stop('run_model_runs', '{:s}, {:s}, {:s}'.format(
         args.modelrun, args.interface, args.directory))
-    LOGGER.summary()
+    logger.summary()
 
 
 def _get_store(args):
