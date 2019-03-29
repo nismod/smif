@@ -9,7 +9,7 @@ data (at any computed or pre-computed timestep) and write access to output data
 from copy import copy
 from logging import getLogger
 from types import MappingProxyType
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np  # type: ignore
 
@@ -623,15 +623,16 @@ class ResultsHandle(object):
     """Results access for decision modules
     """
     def __init__(self, store: Store, modelrun_name: str, sos_model,
-                 current_timestep: int, timesteps=None,
-                 decision_iteration=None):
+                 current_timestep: int,
+                 timesteps: Optional[List[int]] = None,
+                 decision_iteration: Optional[int] = None):
         self._store = store
         self._modelrun_name = modelrun_name
         self._sos_model = sos_model
 
         self._current_timestep = current_timestep
-        self._timesteps: List[int] = timesteps
-        self._decision_iteration: int = decision_iteration
+        self._timesteps = timesteps
+        self._decision_iteration = decision_iteration
 
     @property
     def base_timestep(self) -> int:
@@ -671,9 +672,9 @@ class ResultsHandle(object):
         """
         # resolve timestep
         if hasattr(timestep, 'resolve_relative_to'):
-            timestep: Union[int, None] = \
+            timestep = \
                 timestep.resolve_relative_to(self._current_timestep,
-                                             self._timesteps)
+                                             self._timesteps)  # type: Union[int, None]
         else:
             assert isinstance(timestep, int) and timestep <= self._current_timestep
 
