@@ -66,7 +66,6 @@ and narrative combinations to be used in each run of the models.
 from __future__ import print_function
 
 import logging
-import logging.config
 import os
 import sys
 from argparse import ArgumentParser
@@ -331,6 +330,7 @@ def main(arguments=None):
     """
     parser = parse_arguments()
     args = parser.parse_args(arguments)
+    smif.cli.log.setup_logging(args.verbose)
 
     def exception_handler(exception_type, exception, traceback, debug_hook=sys.excepthook):
         if args.verbose:
