@@ -9,7 +9,7 @@ data (at any computed or pre-computed timestep) and write access to output data
 from copy import copy
 from logging import getLogger
 from types import MappingProxyType
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import numpy as np  # type: ignore
 
@@ -341,7 +341,8 @@ class DataHandle(object):
         """
         output_spec = copy(input_spec)
         output_spec.name = dep['source_output_name']
-        self.logger.debug("Getting model result for %s via %s from %s", input_spec, dep, output_spec)
+        self.logger.debug("Getting model result for %s via %s from %s",
+                          input_spec, dep, output_spec)
         try:
             data = self._store.read_results(
                 self._modelrun_name,
@@ -621,34 +622,38 @@ class DataHandle(object):
 class ResultsHandle(object):
     """Results access for decision modules
     """
-    def __init__(self, store : Store, modelrun_name, sos_model, current_timestep, timesteps=None,
+    def __init__(self, store: Store, modelrun_name: str, sos_model,
+                 current_timestep: int, timesteps=None,
                  decision_iteration=None):
         self._store = store
         self._modelrun_name = modelrun_name
         self._sos_model = sos_model
 
         self._current_timestep = current_timestep
-        self._timesteps = timesteps
-        self._decision_iteration = decision_iteration
+        self._timesteps: List[int] = timesteps
+        self._decision_iteration: int = decision_iteration
 
     @property
-    def base_timestep(self):
+    def base_timestep(self) -> int:
         return self._timesteps[0]
 
     @property
-    def current_timestep(self):
+    def current_timestep(self) -> int:
         return self._current_timestep
 
     @property
-    def previous_timestep(self):
+    def previous_timestep(self) -> Union[None, int]:
         rel = RelativeTimestep.PREVIOUS
         return rel.resolve_relative_to(self._current_timestep, self._timesteps)
 
     @property
-    def decision_iteration(self):
+    def decision_iteration(self) -> int:
         return self._decision_iteration
 
-    def get_results(self, model_name, output_name, timestep, decision_iteration):
+    def get_results(self, model_name: str,
+                    output_name: str,
+                    timestep: Union[int, RelativeTimestep],
+                    decision_iteration: int) -> DataArray:
         """Access model results
 
         Parameters
@@ -666,7 +671,9 @@ class ResultsHandle(object):
         """
         # resolve timestep
         if hasattr(timestep, 'resolve_relative_to'):
-            timestep = timestep.resolve_relative_to(self._current_timestep, self._timesteps)
+            timestep: Union[int, None] = \
+                timestep.resolve_relative_to(self._current_timestep,
+                                             self._timesteps)
         else:
             assert isinstance(timestep, int) and timestep <= self._current_timestep
 
@@ -692,7 +699,7 @@ class ResultsHandle(object):
 
         return results
 
-    def get_state(self) -> List:
+    def get_state(self) -> List[Dict]:
         """The current state of the model
 
         If the DataHandle instance has a timestep, then state is
