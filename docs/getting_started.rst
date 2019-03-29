@@ -18,7 +18,7 @@ Setup
 First, check smif has installed correctly by typing on the command line::
 
     $ smif
-    usage: smif [-h] [-V] [-v] {setup,list,app,run} ...
+    usage: smif [-h] [-V] {setup,list,app,run} ...
 
     Command line tools for smif
 
@@ -32,8 +32,6 @@ First, check smif has installed correctly by typing on the command line::
     optional arguments:
     -h, --help            show this help message and exit
     -V, --version         show the current version of smif
-    -v, --verbose         show messages: -v to see messages reporting on
-                            progress, -vv to see debug messages.
 
 
 You can also check which version is installed::

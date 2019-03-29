@@ -7,8 +7,9 @@ import sys
 from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
 
-import smif
 from pytest import fixture
+
+import smif
 from smif.cli import confirm, parse_arguments, setup_project_folder
 
 
@@ -16,7 +17,7 @@ from smif.cli import confirm, parse_arguments, setup_project_folder
 def tmp_sample_project(tmpdir_factory):
     test_folder = tmpdir_factory.mktemp("smif")
     subprocess.run(
-        ["smif", "-v", "setup", "-d", str(test_folder)],
+        ["smif", "setup", "-d", str(test_folder), "-v"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
@@ -49,8 +50,8 @@ def test_fixture_single_run(tmp_sample_project):
     """Test running the (default) binary-filesystem-based single_run fixture
     """
     config_dir = tmp_sample_project
-    output = subprocess.run(["smif", "-v", "run", "-d", config_dir,
-                             "energy_central"],
+    output = subprocess.run(["smif", "run", "-d", config_dir,
+                             "energy_central", "-v"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print(output.stdout.decode("utf-8"))
     print(output.stderr.decode("utf-8"), file=sys.stderr)
@@ -62,8 +63,8 @@ def test_fixture_single_run_csv(tmp_sample_project):
     """Test running the csv-filesystem-based single_run fixture
     """
     output = subprocess.run(
-        ["smif", "-v", "run", "-i", "local_csv", "-d", tmp_sample_project,
-         "energy_central"],
+        ["smif", "run", "-i", "local_csv", "-d", tmp_sample_project,
+         "energy_central", "-v"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
@@ -77,7 +78,7 @@ def test_fixture_single_run_warm(tmp_sample_project):
     """Test running the (default) single_run fixture with warm setting enabled
     """
     config_dir = tmp_sample_project
-    output = subprocess.run(["smif", "-v", "run", "-w", "-d", config_dir,
+    output = subprocess.run(["smif", "run", "-v", "-w", "-d", config_dir,
                              "energy_central"],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print(output.stdout.decode("utf-8"))
@@ -90,7 +91,7 @@ def test_fixture_batch_run(tmp_sample_project):
     """Test running the multiple modelruns using the batch_run option
     """
     config_dir = tmp_sample_project
-    output = subprocess.run(["smif", "-v", "run", "-b", "-d", config_dir,
+    output = subprocess.run(["smif", "run", "-v", "-b", "-d", config_dir,
                              os.path.join(config_dir, "batchfile")],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print(output.stdout.decode("utf-8"))

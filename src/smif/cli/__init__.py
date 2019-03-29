@@ -65,33 +65,34 @@ and narrative combinations to be used in each run of the models.
 """
 from __future__ import print_function
 
+import logging
+import logging.config
+import os
+import sys
+from argparse import ArgumentParser
+
+import pkg_resources
+
+import smif
+import smif.cli.log
+from smif.controller import (ModelRunScheduler, copy_project_folder,
+                             execute_model_run)
+from smif.data_layer import Store
+from smif.data_layer.file import (CSVDataStore, FileMetadataStore,
+                                  ParquetDataStore, YamlConfigStore)
+from smif.http_api import create_app
+
 try:
     import _thread
 except ImportError:
     import thread as _thread
 
-import logging
-import logging.config
-import os
-import pkg_resources
 
 try:
     import win32api
     USE_WIN32 = True
 except ImportError:
     USE_WIN32 = False
-
-from argparse import ArgumentParser
-import sys
-
-import smif
-import smif.cli.log
-
-from smif.controller import copy_project_folder, execute_model_run, ModelRunScheduler
-from smif.http_api import create_app
-from smif.data_layer import Store
-from smif.data_layer.file import (CSVDataStore, FileMetadataStore, ParquetDataStore,
-                                  YamlConfigStore)
 
 
 __author__ = "Will Usher, Tom Russell"
@@ -221,10 +222,6 @@ def parse_arguments():
                         action='version',
                         version="smif " + smif.__version__,
                         help='show the current version of smif')
-    parser.add_argument('-v', '--verbose',
-                        action='count',
-                        help='show messages: -v to see messages reporting on progress, ' +
-                        '-vv to see debug messages.')
 
     parent_parser = ArgumentParser(add_help=False)
     parent_parser.add_argument('-v', '--verbose',
