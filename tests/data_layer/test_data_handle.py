@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 import numpy as np
 from pytest import fixture, raises
+
 from smif.data_layer import DataHandle
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import ResultsHandle
@@ -850,6 +851,28 @@ class TestDataHandleCoefficients:
 class TestResultsHandle:
     """Get results from any model
     """
+
+    def test_get_state(self, mock_store, mock_model, mock_sos_model):
+        """should get decision module state for given timestep/decision_iteration
+
+        A call to ``get_state`` method on the data handle calls the read_state
+        method of the store with arguments for model run name, current
+        timestep and decision iteration.
+        """
+        mock_store.read_state = Mock(return_value=[{'name': 'test', 'build_year': 2010}])
+        mock_store.write_interventions('energy_demand', [{
+            'name': 'test',
+            'capital_cost': {'value': 2500, 'unit': '£/GW'}
+        }])
+        data_handle = ResultsHandle(mock_store, 1, mock_sos_model,
+                                    2015, timesteps=[2015, 2020])
+        expected = [{
+            'name': 'test',
+            'build_year': 2010
+        }]
+        actual = data_handle.get_state()
+        mock_store.read_state.assert_called_with(1, 2015, None)
+        assert actual == expected
 
     def test_get_results_sos_model(self, mock_store, mock_model, mock_sos_model):
         """Get results from a sector model within a sos model
