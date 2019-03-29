@@ -174,12 +174,12 @@ def test_version_display():
 def test_verbose_debug():
     """Expect debug message from `smif -vv`
     """
-    output = subprocess.run(['smif', '-vv'], stderr=subprocess.PIPE)
+    output = subprocess.run(['smif', 'list', '-vv'], stderr=subprocess.PIPE)
     assert 'DEBUG' in str(output.stderr)
 
 
 def test_verbose_debug_alt():
     """Expect debug message from `smif --verbose --verbose`
     """
-    output = subprocess.run(['smif', '--verbose', '--verbose'], stderr=subprocess.PIPE)
+    output = subprocess.run(['smif', 'list', '--verbose', '--verbose'], stderr=subprocess.PIPE)
     assert 'DEBUG' in str(output.stderr)
