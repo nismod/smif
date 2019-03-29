@@ -1,6 +1,7 @@
 from unittest.mock import Mock, PropertyMock
 
 from pytest import fixture, raises
+
 from smif.decision.decision import DecisionManager, PreSpecified, RuleBased
 from smif.exception import SmifDataNotFoundError
 
@@ -264,7 +265,7 @@ class TestRuleBased:
 class TestDecisionManager():
 
     @fixture(scope='function')
-    def decision_manager(self, empty_store):
+    def decision_manager(self, empty_store) -> DecisionManager:
         empty_store.write_model_run({'name': 'test', 'sos_model': 'test_sos_model'})
         empty_store.write_sos_model({'name': 'test_sos_model', 'sector_models': []})
         empty_store.write_strategies('test', [])
@@ -275,7 +276,7 @@ class TestDecisionManager():
         df = DecisionManager(empty_store, [2010, 2015], 'test', sos_model)
         return df
 
-    def test_decision_manager_init(self, decision_manager):
+    def test_decision_manager_init(self,  decision_manager: DecisionManager):
         df = decision_manager
         dm = df.decision_loop()
         bundle = next(dm)
@@ -286,7 +287,7 @@ class TestDecisionManager():
         with raises(StopIteration):
             next(dm)
 
-    def test_available_interventions(self, decision_manager):
+    def test_available_interventions(self, decision_manager: DecisionManager):
         df = decision_manager
         df._register = {'a': {'name': 'a'},
                         'b': {'name': 'b'},
@@ -300,7 +301,7 @@ class TestDecisionManager():
 
         assert df.available_interventions == expected
 
-    def test_get_intervention(self, decision_manager):
+    def test_get_intervention(self,  decision_manager: DecisionManager):
         df = decision_manager
         df._register = {'a': {'name': 'a'},
                         'b': {'name': 'b'},

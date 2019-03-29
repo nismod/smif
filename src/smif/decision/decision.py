@@ -16,6 +16,8 @@ import itertools
 import os
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
+from types import MappingProxyType
+from typing import Dict, List
 
 from smif.data_layer.data_handle import ResultsHandle
 from smif.data_layer.model_loader import ModelLoader
@@ -57,10 +59,10 @@ class DecisionManager(object):
         self._timesteps = timesteps
         self._decision_module = None
 
-        self._register = {}
+        self._register = {}  # type: Dict
         for sector_model in sos_model.sector_models:
             self._register.update(self._store.read_interventions(sector_model.name))
-        self.planned_interventions = {}
+        self.planned_interventions = set()  # type: set
 
         strategies = self._store.read_strategies(modelrun_name)
         self.logger.info("%s strategies found", len(strategies))
@@ -93,7 +95,7 @@ class DecisionManager(object):
             pre_spec_planning = PreSpecified(self._timesteps,
                                              self._register,
                                              planned_interventions)
-            self.planned_interventions = {x['name'] for x in planned_interventions}
+            self.planned_interventions = set([x['name'] for x in planned_interventions])
 
         return pre_spec_planning
 
@@ -116,7 +118,7 @@ class DecisionManager(object):
                     os.path.join(self._store.model_base_folder, strategy['path']))
                 strategy['timesteps'] = self._timesteps
                 # Pass a reference to the register of interventions
-                strategy['register'] = self.available_interventions
+                strategy['register'] = MappingProxyType(self.available_interventions)
 
                 strategy['name'] = strategy['classname'] + '_' + strategy['type']
 
@@ -125,13 +127,21 @@ class DecisionManager(object):
                 self._decision_module = decision_module
 
     @property
-    def available_interventions(self):
+    def available_interventions(self) -> Dict[str, Dict]:
         """Returns a register of available interventions, i.e. those not planned
+
+
         """
         edited_register = {name: self._register[name]
                            for name in self._register.keys() -
                            self.planned_interventions}
-        return edited_register
+        return MappingProxyType(edited_register)
+
+    def update_planned_interventions(self, decisions: List[Dict]):
+        """Adds a list of decisions to the set of planned interventions
+        """
+        for decision in decisions:
+            self.planned_interventions.add(decision['name'])
 
     def get_intervention(self, value):
         try:
@@ -235,6 +245,7 @@ class DecisionManager(object):
         decisions = []
         if self._decision_module:
             decisions.extend(self._decision_module.get_decision(results_handle))
+            self.update_planned_interventions(decisions)
 
         if self.pre_spec_planning:
             decisions.extend(self.pre_spec_planning.get_decision(results_handle))
@@ -267,23 +278,35 @@ class DecisionModule(metaclass=ABCMeta):
 
     """Current iteration of the decision module
     """
-    def __init__(self, timesteps, register):
+    def __init__(self, timesteps: List[int], register: MappingProxyType):
         self.timesteps = timesteps
         self._register = register
         self.logger = getLogger(__name__)
+        self.decisions = set()  # type: set
 
-    def __next__(self):
+    def __next__(self) -> List[Dict]:
         return self._get_next_decision_iteration()
 
     @property
-    def interventions(self):
+    def interventions(self) -> List:
         """Return the list of available interventions
 
         Returns
         -------
         list
         """
-        return self._register
+        edited_register = {name for name in self._register.keys()
+                           - self.decisions}
+        return list(edited_register)
+
+    def update_decisions(self, decisions: List[Dict]):
+        """Adds a list of decisions to the set of planned interventions
+        """
+        for decision in decisions:
+            if decision['name'] in self.decisions:
+                msg = "Decision {} already exists in decision history"
+                raise ValueError(msg.format(decision['name']))
+            self.decisions.add(decision['name'])
 
     def get_intervention(self, name):
         """Return an intervention dict
@@ -299,7 +322,7 @@ class DecisionModule(metaclass=ABCMeta):
             raise SmifDataNotFoundError(msg.format(name))
 
     @abstractmethod
-    def _get_next_decision_iteration(self):
+    def _get_next_decision_iteration(self) -> List[Dict]:
         """Implement to return the next decision iteration
 
         Within a list of decision-iteration/timestep pairs, the assumption is
