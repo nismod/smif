@@ -661,7 +661,7 @@ class ResultsHandle(object):
         ----------
         model_name : str
         output_name : str
-        timestep : int
+        timestep : [int, RelativeTimestep]
         decision_iteration : int
 
         Returns
@@ -672,11 +672,12 @@ class ResultsHandle(object):
         """
         # resolve timestep
         if hasattr(timestep, 'resolve_relative_to'):
-            timestep = \
+            timestep_value = \
                 timestep.resolve_relative_to(self._current_timestep,
                                              self._timesteps)  # type: Union[int, None]
         else:
             assert isinstance(timestep, int) and timestep <= self._current_timestep
+            timestep_value = timestep
 
         if model_name in [model.name for model in self._sos_model.models]:
             results_model = self._sos_model.get_model(model_name)
@@ -695,35 +696,28 @@ class ResultsHandle(object):
         results = self._store.read_results(self._modelrun_name,
                                            model_name,
                                            spec,
-                                           timestep,
+                                           timestep_value,
                                            decision_iteration)
 
         return results
 
-    def get_state(self) -> List[Dict]:
-        """The current state of the model
+    def get_state(self, timestep: int, decision_iteration: int) -> List[Dict]:
+        """Retrieve the pre-decision state of the model
 
         If the DataHandle instance has a timestep, then state is
         established from the state file.
 
         Returns
         -------
-        list of tuple
-            A list of (intervention name, build_year) installed in the current timestep
+        List[Dict]
+            A list of {'name', 'build_year'} dictionaries showing the history of
+            decisions made up to this point
 
-        Raises
-        ------
-        ValueError
-            If self._current_timestep is None an error is raised.
         """
-        if self._current_timestep is None:
-            raise ValueError("You must pass a timestep value to get state")
-        else:
+        state = self._store.read_state(
+            self._modelrun_name,
+            timestep,
+            decision_iteration
+        )
 
-            sos_state = self._store.read_state(
-                self._modelrun_name,
-                self._current_timestep,
-                self._decision_iteration
-            )
-
-        return sos_state
+        return state

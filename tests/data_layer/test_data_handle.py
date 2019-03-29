@@ -870,7 +870,7 @@ class TestResultsHandle:
             'name': 'test',
             'build_year': 2010
         }]
-        actual = data_handle.get_state()
+        actual = data_handle.get_state(2015, None)
         mock_store.read_state.assert_called_with(1, 2015, None)
         assert actual == expected
 
