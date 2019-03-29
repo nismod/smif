@@ -100,10 +100,6 @@ def setup_logging(loglevel):
             'level': 'DEBUG'
         }
     }
-    logging.Logger.profiling_start = profiling_start
-    logging.Logger.profiling_stop = profiling_stop
-    logging.Logger.summary = summary
-    logging.Logger._profile = OrderedDict()
 
     if loglevel is None:
         config['root']['level'] = logging.WARNING
@@ -113,5 +109,10 @@ def setup_logging(loglevel):
         config['root']['level'] = logging.DEBUG
 
     logging.config.dictConfig(config)
-    LOGGER = logging.getLogger(__name__)
-    LOGGER.debug('Debug logging enabled.')
+    logging.debug('Debug logging enabled.')
+
+
+logging.Logger.profiling_start = profiling_start
+logging.Logger.profiling_stop = profiling_stop
+logging.Logger.summary = summary
+logging.Logger._profile = OrderedDict()
