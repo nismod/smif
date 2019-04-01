@@ -222,7 +222,7 @@ and simulation model.
 To see all options and flags::
 
         $ smif --help
-        usage: smif [-h] [-V] [-v] {setup,list,run} ...
+        usage: smif [-h] [-V] {setup,list,run} ...
 
         Command line tools for smif
 
@@ -236,8 +236,6 @@ To see all options and flags::
         optional arguments:
         -h, --help        show this help message and exit
         -V, --version     show the current version of smif
-        -v, --verbose     show messages: -v to see messages reporting on progress,
-                            -vv to see debug messages.
 
 Citation
 ========
