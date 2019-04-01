@@ -9,11 +9,12 @@ data (at any computed or pre-computed timestep) and write access to output data
 from copy import copy
 from logging import getLogger
 from types import MappingProxyType
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 import numpy as np  # type: ignore
-from smif.data_layer.store import Store
+
 from smif.data_layer.data_array import DataArray
+from smif.data_layer.store import Store
 from smif.exception import SmifDataError
 from smif.metadata import RelativeTimestep
 
@@ -32,11 +33,12 @@ class DataHandle(object):
             Backing store for inputs, parameters, results
         modelrun_name : str
             Name of the current modelrun
+        current_timestep : str
+        timesteps : list
         model : Model
             Model which will use this DataHandle
         decision_iteration : int, default=None
             ID of the current Decision iteration
-        state : list, default=None
         """
         self.logger = getLogger(__name__)
         self._store = store
@@ -339,7 +341,8 @@ class DataHandle(object):
         """
         output_spec = copy(input_spec)
         output_spec.name = dep['source_output_name']
-        self.logger.debug("Getting model result for %s via %s from %s", input_spec, dep, output_spec)
+        self.logger.debug("Getting model result for %s via %s from %s",
+                          input_spec, dep, output_spec)
         try:
             data = self._store.read_results(
                 self._modelrun_name,
@@ -619,8 +622,10 @@ class DataHandle(object):
 class ResultsHandle(object):
     """Results access for decision modules
     """
-    def __init__(self, store, modelrun_name, sos_model, current_timestep, timesteps=None,
-                 decision_iteration=None):
+    def __init__(self, store: Store, modelrun_name: str, sos_model,
+                 current_timestep: int,
+                 timesteps: Optional[List[int]] = None,
+                 decision_iteration: Optional[int] = None):
         self._store = store
         self._modelrun_name = modelrun_name
         self._sos_model = sos_model
@@ -630,30 +635,33 @@ class ResultsHandle(object):
         self._decision_iteration = decision_iteration
 
     @property
-    def base_timestep(self):
+    def base_timestep(self) -> int:
         return self._timesteps[0]
 
     @property
-    def current_timestep(self):
+    def current_timestep(self) -> int:
         return self._current_timestep
 
     @property
-    def previous_timestep(self):
+    def previous_timestep(self) -> Union[None, int]:
         rel = RelativeTimestep.PREVIOUS
         return rel.resolve_relative_to(self._current_timestep, self._timesteps)
 
     @property
-    def decision_iteration(self):
+    def decision_iteration(self) -> int:
         return self._decision_iteration
 
-    def get_results(self, model_name, output_name, timestep, decision_iteration):
+    def get_results(self, model_name: str,
+                    output_name: str,
+                    timestep: Union[int, RelativeTimestep],
+                    decision_iteration: int) -> DataArray:
         """Access model results
 
         Parameters
         ----------
         model_name : str
         output_name : str
-        timestep : int
+        timestep : [int, RelativeTimestep]
         decision_iteration : int
 
         Returns
@@ -664,9 +672,12 @@ class ResultsHandle(object):
         """
         # resolve timestep
         if hasattr(timestep, 'resolve_relative_to'):
-            timestep = timestep.resolve_relative_to(self._current_timestep, self._timesteps)
+            timestep_value = \
+                timestep.resolve_relative_to(self._current_timestep,
+                                             self._timesteps)  # type: Union[int, None]
         else:
             assert isinstance(timestep, int) and timestep <= self._current_timestep
+            timestep_value = timestep
 
         if model_name in [model.name for model in self._sos_model.models]:
             results_model = self._sos_model.get_model(model_name)
@@ -685,7 +696,28 @@ class ResultsHandle(object):
         results = self._store.read_results(self._modelrun_name,
                                            model_name,
                                            spec,
-                                           timestep,
+                                           timestep_value,
                                            decision_iteration)
 
         return results
+
+    def get_state(self, timestep: int, decision_iteration: int) -> List[Dict]:
+        """Retrieve the pre-decision state of the model
+
+        If the DataHandle instance has a timestep, then state is
+        established from the state file.
+
+        Returns
+        -------
+        List[Dict]
+            A list of {'name', 'build_year'} dictionaries showing the history of
+            decisions made up to this point
+
+        """
+        state = self._store.read_state(
+            self._modelrun_name,
+            timestep,
+            decision_iteration
+        )
+
+        return state

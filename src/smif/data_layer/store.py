@@ -17,9 +17,13 @@ SmifDataReadError
 from copy import deepcopy
 from logging import getLogger
 from operator import itemgetter
+from typing import Dict, List, Optional
 
 import numpy as np  # type: ignore
+
 from smif.data_layer import DataArray
+from smif.data_layer.abstract_data_store import DataStore
+from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.data_layer.file import CSVDataStore, ParquetDataStore
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
@@ -36,7 +40,8 @@ class Store():
     metadata_store: ~smif.data_layer.abstract_metadata_store.MetadataStore
     data_store: ~smif.data_layer.abstract_data_store.DataStore
     """
-    def __init__(self, config_store, metadata_store, data_store, model_base_folder="."):
+    def __init__(self, config_store, metadata_store: MetadataStore,
+                 data_store: DataStore, model_base_folder="."):
         self.logger = getLogger(__name__)
         self.config_store = config_store
         self.metadata_store = metadata_store
@@ -387,7 +392,7 @@ class Store():
     #
 
     # region Units
-    def read_unit_definitions(self):
+    def read_unit_definitions(self) -> List[str]:
         """Reads custom unit definitions
 
         Returns
@@ -710,7 +715,7 @@ class Store():
     # endregion
 
     # region State
-    def read_state(self, model_run_name, timestep, decision_iteration=None):
+    def read_state(self, model_run_name, timestep, decision_iteration=None) -> List[Dict]:
         """Read list of (name, build_year) for a given model_run, timestep,
         decision
 
@@ -789,8 +794,12 @@ class Store():
     # endregion
 
     # region Results
-    def read_results(self, model_run_name, model_name, output_spec, timestep=None,
-                     decision_iteration=None) -> DataArray:
+    def read_results(self,
+                     model_run_name: str,
+                     model_name: str,
+                     output_spec: Spec,
+                     timestep: Optional[int] = None,
+                     decision_iteration: Optional[int] = None) -> DataArray:
         """Return results of a `model_name` in `model_run_name` for a given `output_name`
 
         Parameters

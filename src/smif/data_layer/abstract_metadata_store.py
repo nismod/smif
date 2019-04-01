@@ -4,6 +4,7 @@ outputs:
 - dimension definitions
 """
 from abc import ABCMeta, abstractmethod
+from typing import List
 
 
 class MetadataStore(metaclass=ABCMeta):
@@ -11,7 +12,7 @@ class MetadataStore(metaclass=ABCMeta):
     """
     # region Units
     @abstractmethod
-    def read_unit_definitions(self):
+    def read_unit_definitions(self) -> List[str]:
         """Reads custom unit definitions
 
         Returns
@@ -20,7 +21,7 @@ class MetadataStore(metaclass=ABCMeta):
             Pint-compatible unit definitions
         """
 
-    def write_unit_definitions(self, definitions):
+    def write_unit_definitions(self, definitions: List[str]):
         """Reads custom unit definitions
 
         Parameters
