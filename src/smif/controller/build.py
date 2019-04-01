@@ -8,8 +8,6 @@ from smif.data_layer.model_loader import ModelLoader
 from smif.exception import SmifDataNotFoundError
 from smif.model import ScenarioModel, SosModel
 
-LOGGER = logging.getLogger(__name__)
-
 
 def get_model_run_definition(store, modelrun):
     """Builds the model run
@@ -31,26 +29,26 @@ def get_model_run_definition(store, modelrun):
     try:
         model_run_config = store.read_model_run(modelrun)
     except SmifDataNotFoundError:
-        LOGGER.error("Model run %s not found. Run 'smif list' to see available model runs.",
+        logging.error("Model run %s not found. Run 'smif list' to see available model runs.",
                      modelrun)
         exit(-1)
 
-    LOGGER.info("Running %s", model_run_config['name'])
-    LOGGER.debug("Model Run: %s", model_run_config)
+    logging.info("Running %s", model_run_config['name'])
+    logging.debug("Model Run: %s", model_run_config)
     sos_model_config = store.read_sos_model(model_run_config['sos_model'])
 
     sector_models = get_sector_models(sos_model_config['sector_models'], store)
-    LOGGER.debug("Sector models: %s", sector_models)
+    logging.debug("Sector models: %s", sector_models)
 
     scenario_models = get_scenario_models(model_run_config['scenarios'], store)
-    LOGGER.debug("Scenario models: %s", [model.name for model in scenario_models])
+    logging.debug("Scenario models: %s", [model.name for model in scenario_models])
 
     sos_model = SosModel.from_dict(sos_model_config, sector_models + scenario_models)
     model_run_config['sos_model'] = sos_model
-    LOGGER.debug("Model list: %s", list(model.name for model in sos_model.models))
+    logging.debug("Model list: %s", list(model.name for model in sos_model.models))
 
     model_run_config['strategies'] = store.read_strategies(model_run_config['name'])
-    LOGGER.debug("Strategies: %s", [s['type'] for s in model_run_config['strategies']])
+    logging.debug("Strategies: %s", [s['type'] for s in model_run_config['strategies']])
 
     return model_run_config
 
@@ -78,7 +76,7 @@ def get_scenario_models(scenarios, handler):
         scenario_definition['outputs'] = scenario_definition['provides']
         del scenario_definition['provides']
 
-        LOGGER.debug("Scenario definition: %s", scenario_name)
+        logging.debug("Scenario definition: %s", scenario_name)
 
         scenario_model = ScenarioModel.from_dict(scenario_definition)
         scenario_models.append(scenario_model)
@@ -123,7 +121,8 @@ def build_model_run(model_run_config):
     -------
     `smif.controller.modelrun.ModelRun`
     """
-    LOGGER.profiling_start('build_model_run', model_run_config['name'])
+    logger = logging.getLogger()
+    logger.profiling_start('build_model_run', model_run_config['name'])
     try:
         builder = ModelRunBuilder()
         builder.construct(model_run_config)
@@ -133,10 +132,10 @@ def build_model_run(model_run_config):
         traceback.print_exception(err_type, err_value, err_traceback)
         err_msg = str(error)
         if err_msg:
-            LOGGER.error("An AssertionError occurred (%s) see details above.", err_msg)
+            logger.error("An AssertionError occurred (%s) see details above.", err_msg)
         else:
-            LOGGER.error("An AssertionError occurred, see details above.")
+            logger.error("An AssertionError occurred, see details above.")
         exit(-1)
 
-    LOGGER.profiling_stop('build_model_run', model_run_config['name'])
+    logger.profiling_stop('build_model_run', model_run_config['name'])
     return modelrun

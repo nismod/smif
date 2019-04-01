@@ -4,8 +4,6 @@ import shutil
 
 import pkg_resources
 
-LOGGER = logging.getLogger(__name__)
-
 
 def copy_project_folder(directory):
     """Creates folder structure in the target directory
@@ -20,7 +18,7 @@ def copy_project_folder(directory):
         dirname = "the current directory"
     else:
         dirname = directory
-    LOGGER.info("Created sample project in %s", dirname)
+    logging.info("Created sample project in %s", dirname)
 
 
 def _recursive_overwrite(pkg, src, dest):
