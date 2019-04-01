@@ -282,7 +282,7 @@ class DecisionModule(metaclass=ABCMeta):
         self.timesteps = timesteps
         self._register = register
         self.logger = getLogger(__name__)
-        self.decisions = set()  # type: set
+        self._decisions = set()  # type: set
 
     def __next__(self) -> List[Dict]:
         return self._get_next_decision_iteration()
@@ -290,6 +290,9 @@ class DecisionModule(metaclass=ABCMeta):
     @property
     def interventions(self) -> List:
         """Return the list of available interventions
+
+        Available interventions are the subset of interventions that have not
+        been implemented in a prior iteration or timestep
 
         Returns
         -------
@@ -299,14 +302,35 @@ class DecisionModule(metaclass=ABCMeta):
                            - self.decisions}
         return list(edited_register)
 
+    @property
+    def decisions(self) -> set:
+        """The set of historical decisions
+
+        Returns
+        -------
+        set
+
+        Raises
+        ------
+        ValueError
+            If a duplicate decision is added to the set of historical decisions
+        """
+        return self._decisions
+
+    @decisions.setter
+    def decisions(self, value: str):
+        if value in self._decisions:
+            msg = "Decision {} already exists in decision history"
+            raise ValueError(msg.format(value))
+        else:
+            self._decisions.add(value)
+
     def update_decisions(self, decisions: List[Dict]):
         """Adds a list of decisions to the set of planned interventions
         """
         for decision in decisions:
-            if decision['name'] in self.decisions:
-                msg = "Decision {} already exists in decision history"
-                raise ValueError(msg.format(decision['name']))
-            self.decisions.add(decision['name'])
+            self.decisions = decision['name']
+        self.logger.debug("Internal record of state updated to: %s", self.decisions)
 
     def get_intervention(self, name):
         """Return an intervention dict
