@@ -192,11 +192,21 @@ class TestRuleBasedProperties:
 
     def test_interventions(self):
 
-        interventions = Mock()
+        available_interventions = {'test': {'name': 'test_intervention'}}
 
         timesteps = [2010, 2015, 2020]
-        dm = RuleBased(timesteps, interventions)
-        assert dm.interventions == interventions
+        dm = RuleBased(timesteps, available_interventions)
+        assert dm.interventions == available_interventions
+
+    def test_interventions_planned(self):
+
+        available_interventions = {'test': {'name': 'test_intervention'},
+                                   'planned': {'name': 'planned_intervention'}}
+
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, available_interventions)
+        dm.update_decisions([{'name': 'planned'}])
+        assert dm.interventions == {'test': {'name': 'test_intervention'}}
 
     def test_get_intervention(self):
 

@@ -135,7 +135,7 @@ class DecisionManager(object):
         edited_register = {name: self._register[name]
                            for name in self._register.keys() -
                            self.planned_interventions}
-        return MappingProxyType(edited_register)
+        return edited_register
 
     def update_planned_interventions(self, decisions: List[Dict]):
         """Adds a list of decisions to the set of planned interventions
@@ -288,8 +288,8 @@ class DecisionModule(metaclass=ABCMeta):
         return self._get_next_decision_iteration()
 
     @property
-    def interventions(self) -> List:
-        """Return the list of available interventions
+    def interventions(self) -> Dict[str, Dict]:
+        """Return the collection of available interventions
 
         Available interventions are the subset of interventions that have not
         been implemented in a prior iteration or timestep
@@ -298,9 +298,9 @@ class DecisionModule(metaclass=ABCMeta):
         -------
         list
         """
-        edited_register = {name for name in self._register.keys()
+        edited_register = {name: self._register[name] for name in self._register.keys()
                            - self.decisions}
-        return list(edited_register)
+        return edited_register
 
     @property
     def decisions(self) -> set:
