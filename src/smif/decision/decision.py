@@ -73,7 +73,9 @@ class DecisionManager(object):
         self.pre_spec_planning = self._set_up_pre_spec_planning(modelrun_name, strategies)
         self._set_up_decision_modules(modelrun_name, strategies)
 
-    def _set_up_pre_spec_planning(self, modelrun_name, strategies):
+    def _set_up_pre_spec_planning(self,
+                                  modelrun_name: str,
+                                  strategies: List[Dict]) -> 'PreSpecified':
 
         pre_spec_planning = None
 
@@ -81,7 +83,7 @@ class DecisionManager(object):
         initial_conditions = self._store.read_all_initial_conditions(modelrun_name)
 
         # Read in strategies
-        planned_interventions = []
+        planned_interventions = []  # type: List
         planned_interventions.extend(initial_conditions)
 
         for index, strategy in enumerate(strategies):
@@ -274,19 +276,20 @@ class DecisionManager(object):
                           timestep, iteration, pre_decision_state)
 
         new_decisions = set()
-        if self._decision_module:
-            decisions = self._get_decisions(self._decision_module,
-                                            results_handle)
-            new_decisions.update(decisions)
         if self.pre_spec_planning:
             decisions = self._get_decisions(self.pre_spec_planning,
                                             results_handle)
             new_decisions.update(decisions)
+            self.update_planned_interventions(decisions)
+        if self._decision_module:
+            decisions = self._get_decisions(self._decision_module,
+                                            results_handle)
+            new_decisions.update(decisions)
+            self.update_planned_interventions(decisions)
 
         self.logger.debug("New decisions at timestep %s and iteration %s:\n%s",
                           timestep, iteration, new_decisions)
 
-        self.update_planned_interventions(new_decisions)
         # Post decision state is the union of the pre decision state set
         # and new decision set
         post_decision_state = self._untuplize_state(pre_decision_state | new_decisions)
@@ -360,10 +363,11 @@ class DecisionModule(metaclass=ABCMeta):
 
     @abstractmethod
     def get_previous_state(self, results_handle: ResultsHandle) -> List[Dict]:
+        """Return the state of the previous timestep
+        """
         raise NotImplementedError
 
-    @property
-    def interventions(self) -> Dict[str, Dict]:
+    def available_interventions(self, state: List[Dict]) -> List:
         """Return the collection of available interventions
 
         Available interventions are the subset of interventions that have not
@@ -371,41 +375,10 @@ class DecisionModule(metaclass=ABCMeta):
 
         Returns
         -------
-        list
+        List
         """
-        edited_register = {name: self._register[name] for name in self._register.keys()
-                           - self.decisions}
-        return edited_register
-
-    @property
-    def decisions(self) -> set:
-        """The set of historical decisions
-
-        Returns
-        -------
-        set
-
-        Raises
-        ------
-        ValueError
-            If a duplicate decision is added to the set of historical decisions
-        """
-        return self._decisions
-
-    @decisions.setter
-    def decisions(self, value: str):
-        if value in self._decisions:
-            msg = "Decision {} already exists in decision history"
-            raise ValueError(msg.format(value))
-        else:
-            self._decisions.add(value)
-
-    def update_decisions(self, decisions: List[Dict]):
-        """Adds a list of decisions to the set of planned interventions
-        """
-        for decision in decisions:
-            self.decisions = decision['name']
-        self.logger.debug("Internal record of state updated to: %s", self.decisions)
+        return [name for name in self._register.keys()
+                - set([x['name'] for x in state])]
 
     def get_intervention(self, name):
         """Return an intervention dict
@@ -495,14 +468,10 @@ class PreSpecified(DecisionModule):
         }
 
     def get_previous_state(self,
-                           results_handle: ResultsHandle,
-                           iteration: int = None) -> List[Dict]:
+                           results_handle: ResultsHandle) -> List[Dict]:
         try:
             prev_timestep = results_handle.previous_timestep
-            if iteration:
-                prev_iteration = iteration
-            else:
-                prev_iteration = results_handle.decision_iteration
+            prev_iteration = results_handle.decision_iteration
             return results_handle.get_state(prev_timestep, prev_iteration)
         except SmifTimestepResolutionError:
             return []
@@ -612,9 +581,16 @@ class RuleBased(DecisionModule):
         self.logger = getLogger(__name__)
 
     def get_previous_state(self, results_handle: ResultsHandle) -> List[Dict]:
-        if self.current_timestep > self.first_timestep:
-            prev_timestep = self.previous_timestep
-            prev_iteration = self.get_previous_year_iteration()
+
+        if (self.current_iteration > 1
+                and self.current_timestep == results_handle.base_timestep):
+            prev_iteration = self.current_iteration - 1
+            prev_timestep = self.current_timestep
+            return results_handle.get_state(prev_timestep, prev_iteration)
+        elif (self.current_iteration > 1
+                and self.current_timestep > self.first_timestep):
+            prev_iteration = self._max_iteration_by_timestep[self.previous_timestep]
+            prev_timestep = results_handle.previous_timestep
             return results_handle.get_state(prev_timestep, prev_iteration)
         else:
             return []

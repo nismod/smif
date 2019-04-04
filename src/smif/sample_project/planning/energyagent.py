@@ -32,8 +32,10 @@ class EnergyAgent(RuleBased):
         return EnergyAgent(timesteps, register)
 
     def get_decision(self, data_handle):
+
         budget = self.run_regulator(data_handle)
         decisions = self.run_power_producer(data_handle, budget)
+
         return decisions
 
     def run_regulator(self, data_handle):
@@ -60,9 +62,14 @@ class EnergyAgent(RuleBased):
         """
         data_handle
         budget : float
+
         """
         cheapest_first = []
-        for name, item in self.interventions.items():
+
+        state = self.get_previous_state(data_handle)
+
+        for name in self.available_interventions(state):
+            item = self.get_intervention(name)
             cheapest_first.append((name, float(item['capital_cost']['value'])))
         sorted(cheapest_first, key=lambda x: float(x[1]), reverse=True)
 

@@ -194,21 +194,22 @@ class TestRuleBasedProperties:
 
     def test_interventions(self):
 
-        available_interventions = {'test': {'name': 'test_intervention'}}
+        all_interventions = {'test_intervention': {'name': 'test_intervention'}}
 
         timesteps = [2010, 2015, 2020]
-        dm = RuleBased(timesteps, available_interventions)
-        assert dm.interventions == available_interventions
+        dm = RuleBased(timesteps, all_interventions)
+        assert dm.available_interventions([]) == ['test_intervention']
 
     def test_interventions_planned(self):
 
-        available_interventions = {'test': {'name': 'test_intervention'},
-                                   'planned': {'name': 'planned_intervention'}}
+        all_interventions = {'test_intervention': {'name': 'test_intervention'},
+                             'planned_intervention': {'name': 'planned_intervention'}}
 
         timesteps = [2010, 2015, 2020]
-        dm = RuleBased(timesteps, available_interventions)
-        dm.update_decisions([{'name': 'planned'}])
-        assert dm.interventions == {'test': {'name': 'test_intervention'}}
+        dm = RuleBased(timesteps, all_interventions)
+        actual = dm.available_interventions([{'name': 'planned_intervention'}])
+        expected = ['test_intervention']
+        assert actual == expected
 
     def test_get_intervention(self):
 
@@ -351,8 +352,10 @@ class TestDecisionManagerDecisions:
         expected = [(2010, 'test')]
         assert actual == expected
 
-    def test_get_and_save_decisions(self, decision_manager: DecisionManager):
-
+    def test_get_and_save_decisions_dm(self, decision_manager: DecisionManager):
+        """Test that the ``get_and_save_decisions`` method updates pre-decision
+        state with a new decision and writes it to store
+        """
         dm = decision_manager
 
         dm._decision_module = Mock()
@@ -365,3 +368,42 @@ class TestDecisionManagerDecisions:
         actual = dm._store  # type: Store
         expected = [{'name': 'test', 'build_year': 2010}]  # type: List[Dict]
         assert actual.read_state('test', 2010, decision_iteration=0) == expected
+
+    def test_get_and_save_decisions_prespec(self,
+                                            decision_manager: DecisionManager):
+        """Test that the ``get_and_save_decisions`` method updates pre-decision
+        state with a pre-specified planning and writes it to store
+        """
+        dm = decision_manager
+
+        dm.pre_spec_planning = Mock()
+        dm.pre_spec_planning.get_decision = Mock(
+            return_value=[{'name': 'test', 'build_year': 2010}])
+        dm.pre_spec_planning.get_previous_state = Mock(return_value=[])
+
+        dm.get_and_save_decisions(0, 2010)
+
+        actual = dm._store  # type: Store
+        expected = [{'name': 'test', 'build_year': 2010}]  # type: List[Dict]
+        assert actual.read_state('test', 2010, decision_iteration=0) == expected
+
+    def test_pre_spec_and_decision_module(self,
+                                          decision_manager: DecisionManager):
+        dm = decision_manager
+
+        dm._decision_module = Mock()
+        dm._decision_module.get_decision = Mock(
+            return_value=[{'name': 'decided', 'build_year': 2010}])
+        dm._decision_module.get_previous_state = Mock(return_value=[])
+
+        dm.pre_spec_planning = Mock()
+        dm.pre_spec_planning.get_decision = Mock(
+            return_value=[{'name': 'planned', 'build_year': 2010}])
+        dm.pre_spec_planning.get_previous_state = Mock(return_value=[])
+
+        dm.get_and_save_decisions(0, 2010)
+
+        actual = dm._store.read_state('test', 2010, decision_iteration=0)  # type: List[Dict]
+
+        expected = set([('decided', 2010), ('planned', 2010)])
+        assert set([(x['name'], x['build_year']) for x in actual]) == expected
