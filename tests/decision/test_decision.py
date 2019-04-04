@@ -1,7 +1,9 @@
+from typing import Dict, List
 from unittest.mock import Mock, PropertyMock
 
 from pytest import fixture, raises
 
+from smif.data_layer.store import Store
 from smif.decision.decision import DecisionManager, PreSpecified, RuleBased
 from smif.exception import SmifDataNotFoundError
 
@@ -321,3 +323,45 @@ class TestDecisionManager():
 
         with raises(SmifDataNotFoundError):
             df.get_intervention('z')
+
+
+class TestDecisionManagerDecisions:
+
+    @fixture(scope='function')
+    def decision_manager(self, empty_store) -> DecisionManager:
+        empty_store.write_model_run({'name': 'test', 'sos_model': 'test_sos_model'})
+        empty_store.write_sos_model({'name': 'test_sos_model', 'sector_models': []})
+        empty_store.write_strategies('test', [])
+        sos_model = Mock()
+        sos_model.name = 'test_sos_model'
+        sos_model.sector_models = []
+
+        df = DecisionManager(empty_store, [2010, 2015], 'test', sos_model)
+        return df
+
+    def test_get_decisions(self, decision_manager: DecisionManager):
+        dm = decision_manager
+
+        mock_handle = Mock()
+        dm._decision_module = Mock()
+        dm._decision_module.get_decision = Mock(
+            return_value=[{'name': 'test', 'build_year': 2010}])
+
+        actual = dm._get_decisions(dm._decision_module, mock_handle)
+        expected = [(2010, 'test')]
+        assert actual == expected
+
+    def test_get_and_save_decisions(self, decision_manager: DecisionManager):
+
+        dm = decision_manager
+
+        dm._decision_module = Mock()
+        dm._decision_module.get_decision = Mock(
+            return_value=[{'name': 'test', 'build_year': 2010}])
+        dm._decision_module.get_previous_state = Mock(return_value=[])
+
+        dm.get_and_save_decisions(0, 2010)
+
+        actual = dm._store  # type: Store
+        expected = [{'name': 'test', 'build_year': 2010}]  # type: List[Dict]
+        assert actual.read_state('test', 2010, decision_iteration=0) == expected
