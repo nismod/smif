@@ -292,7 +292,10 @@ class DecisionManager(object):
 
         # Post decision state is the union of the pre decision state set
         # and new decision set
-        post_decision_state = self._untuplize_state(pre_decision_state | new_decisions)
+        post_decision_state = pre_decision_state | new_decisions
+
+        post_decision_state = self.retire_interventions(post_decision_state, timestep)
+        post_decision_state = self._untuplize_state(post_decision_state)
 
         self.logger.debug("Post-decision state at timestep %s and iteration %s:\n%s",
                           timestep, iteration, post_decision_state)
@@ -301,8 +304,21 @@ class DecisionManager(object):
             "Writing state for timestep %s and interation %s", timestep, iteration)
 
         if not post_decision_state:
-            post_decision_state = [{'name': '', 'build_year': ''}]
+            post_decision_state = [{'name': '', 'build_year': timestep}]
         self._store.write_state(post_decision_state, self._modelrun_name, timestep, iteration)
+
+    def retire_interventions(self, state: List[Tuple[int, str]],
+                             timestep: int) -> List[Tuple[int, str]]:
+
+        alive = []
+        for intervention in state:
+            build_year = int(intervention[0])
+            data = self._register[intervention[1]]
+            lifetime = data['technical_lifetime']['value']
+            if (self.buildable(build_year, timestep) and
+                    self.within_lifetime(build_year, timestep, lifetime)):
+                alive.append(intervention)
+        return alive
 
     def _get_decisions(self,
                        decision_module: 'DecisionModule',
@@ -323,6 +339,72 @@ class DecisionManager(object):
     @staticmethod
     def _untuplize_state(state: List[Tuple[int, str]]) -> List[Dict]:
         return [{'build_year': x[0], 'name': x[1]} for x in state]
+
+    def buildable(self, build_year, timestep) -> bool:
+        """Interventions are deemed available if build_year is less than next timestep
+
+        For example, if `a` is built in 2011 and timesteps are
+        [2005, 2010, 2015, 2020] then buildable returns True for timesteps
+        2010, 2015 and 2020 and False for 2005.
+
+        Arguments
+        ---------
+        build_year: int
+            The build year of the intervention
+        timestep: int
+            The current timestep
+        """
+        if not isinstance(build_year, (int, float)):
+            msg = "Build Year should be an integer but is a {}"
+            raise TypeError(msg.format(type(build_year)))
+        if timestep not in self._timesteps:
+            raise ValueError("Timestep not in model timesteps")
+        index = self._timesteps.index(timestep)
+        if index == len(self._timesteps) - 1:
+            next_year = timestep + 1
+        else:
+            next_year = self._timesteps[index + 1]
+
+        if int(build_year) < next_year:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def within_lifetime(build_year, timestep, lifetime) -> bool:
+        """Interventions are deemed active if build_year + lifetime >= timestep
+
+        Arguments
+        ---------
+        build_year : int
+        timestep : int
+        lifetime : int
+
+        Returns
+        -------
+        bool
+        """
+        if not isinstance(build_year, (int, float)):
+            msg = "Build Year should be an integer but is a {}"
+            raise TypeError(msg.format(type(build_year)))
+
+        try:
+            build_year = int(build_year)
+        except ValueError:
+            raise ValueError(
+                "A build year must be a valid integer. Received {}.".format(build_year))
+
+        try:
+            lifetime = int(lifetime)
+        except ValueError:
+            lifetime = float("inf")
+        if lifetime < 0:
+            msg = "The value of lifetime cannot be negative"
+            raise ValueError(msg)
+        if timestep <= build_year + lifetime:
+            return True
+        else:
+            return False
 
 
 class DecisionModule(metaclass=ABCMeta):
@@ -498,73 +580,7 @@ class PreSpecified(DecisionModule):
         >>> dm.get_decision(results_handle)
         [{'name': intervention_a', 'build_year': 2010}]
         """
-        decisions = []
-        timestep = results_handle.current_timestep
-
-        for intervention in self._planned:
-            build_year = int(intervention['build_year'])
-
-            data = self._register[intervention['name']]
-            lifetime = data['technical_lifetime']['value']
-
-            if self.buildable(build_year, timestep) and \
-               self.within_lifetime(build_year, timestep, lifetime):
-                decisions.append(intervention)
-        return decisions
-
-    def buildable(self, build_year, timestep):
-        """Interventions are deemed available if build_year is less than next timestep
-
-        For example, if `a` is built in 2011 and timesteps are
-        [2005, 2010, 2015, 2020] then buildable returns True for timesteps
-        2010, 2015 and 2020 and False for 2005.
-        """
-        if not isinstance(build_year, (int, float)):
-            msg = "Build Year should be an integer but is a {}"
-            raise TypeError(msg.format(type(build_year)))
-        if timestep not in self.timesteps:
-            raise ValueError("Timestep not in model timesteps")
-        index = self.timesteps.index(timestep)
-        if index == len(self.timesteps) - 1:
-            next_year = timestep + 1
-        else:
-            next_year = self.timesteps[index + 1]
-
-        if int(build_year) < next_year:
-            return True
-        else:
-            return False
-
-    def within_lifetime(self, build_year, timestep, lifetime):
-        """Interventions are deemed active if build_year + lifetime >= timestep
-
-        Arguments
-        ---------
-        build_year : int
-        timestep : int
-        lifetime : int
-        """
-        if not isinstance(build_year, (int, float)):
-            msg = "Build Year should be an integer but is a {}"
-            raise TypeError(msg.format(type(build_year)))
-
-        try:
-            build_year = int(build_year)
-        except ValueError:
-            raise ValueError(
-                "A build year must be a valid integer. Received {}.".format(build_year))
-
-        try:
-            lifetime = int(lifetime)
-        except ValueError:
-            lifetime = float("inf")
-        if lifetime < 0:
-            msg = "The value of lifetime cannot be negative"
-            raise ValueError(msg)
-        if timestep <= build_year + lifetime:
-            return True
-        else:
-            return False
+        return self._planned
 
 
 class RuleBased(DecisionModule):

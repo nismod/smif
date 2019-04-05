@@ -79,7 +79,12 @@ class TestPreSpecified:
         actual = dm.get_decision(mock_handle)
         expected = [
             {'name': 'small_pumping_station_oxford',
-             'build_year': 2010}]
+             'build_year': 2010},
+            {'name': 'small_pumping_station_abingdon',
+             'build_year': 2015},
+            {'name': 'large_pumping_station_oxford',
+             'build_year': 2020}
+        ]
         assert actual == expected
 
         type(mock_handle).current_timestep = PropertyMock(return_value=2015)
@@ -88,7 +93,10 @@ class TestPreSpecified:
             {'name': 'small_pumping_station_oxford',
              'build_year': 2010},
             {'name': 'small_pumping_station_abingdon',
-             'build_year': 2015}]
+             'build_year': 2015},
+            {'name': 'large_pumping_station_oxford',
+             'build_year': 2020}
+        ]
         assert actual == expected
 
         type(mock_handle).current_timestep = PropertyMock(return_value=2020)
@@ -129,39 +137,6 @@ class TestPreSpecified:
             {'name': 'carrington_retire', 'build_year': 2011}
         ]
         assert (actual) == (expected)
-
-    def test_buildable(self, get_strategies):
-        dm = PreSpecified([2010, 2015], Mock(), get_strategies[0]['interventions'])
-        assert dm.timesteps == [2010, 2015]
-        assert dm.buildable(2010, 2010) is True
-        assert dm.buildable(2011, 2010) is True
-
-    def test_historical_intervention_buildable(self, get_strategies):
-        dm = PreSpecified([2020, 2030], Mock(), get_strategies[0]['interventions'])
-        assert dm.timesteps == [2020, 2030]
-        assert dm.buildable(1980, 2020) is True
-        assert dm.buildable(1990, 2020) is True
-
-    def test_buildable_raises(self, get_strategies):
-        dm = PreSpecified([2010, 2015], Mock(), get_strategies[0]['interventions'])
-        with raises(ValueError):
-            dm.buildable(2015, 2014)
-
-    def test_within_lifetime(self):
-        dm = PreSpecified([2010, 2015], Mock(), [])
-        assert dm.within_lifetime(2010, 2010, 1)
-
-    def test_within_lifetime_does_not_check_start(self):
-        """Note that the ``within_lifetime`` method does not check
-        that the build year is compatible with timestep
-        """
-        dm = PreSpecified([2010, 2015], Mock(), [])
-        assert dm.within_lifetime(2011, 2010, 1)
-
-    def test_negative_lifetime_raises(self):
-        dm = PreSpecified([2010, 2015], Mock(), [])
-        with raises(ValueError):
-            dm.within_lifetime(2010, 2010, -1)
 
 
 class TestRuleBasedProperties:
@@ -370,6 +345,36 @@ class TestDecisionManager():
         with raises(SmifDataNotFoundError):
             df.get_intervention('z')
 
+    def test_buildable(self, decision_manager):
+
+        decision_manager._timesteps = [2010, 2015]
+        assert decision_manager.buildable(2010, 2010) is True
+        assert decision_manager.buildable(2011, 2010) is True
+
+    def test_historical_intervention_buildable(self, decision_manager):
+        decision_manager._timesteps = [2020, 2030]
+        assert decision_manager.buildable(1980, 2020) is True
+        assert decision_manager.buildable(1990, 2020) is True
+
+    def test_buildable_raises(self, decision_manager):
+
+        with raises(ValueError):
+            decision_manager.buildable(2015, 2014)
+
+    def test_within_lifetime(self, decision_manager):
+
+        assert decision_manager.within_lifetime(2010, 2010, 1)
+
+    def test_within_lifetime_does_not_check_start(self, decision_manager):
+        """Note that the ``within_lifetime`` method does not check
+        that the build year is compatible with timestep
+        """
+        assert decision_manager.within_lifetime(2011, 2010, 1)
+
+    def test_negative_lifetime_raises(self, decision_manager):
+        with raises(ValueError):
+            decision_manager.within_lifetime(2010, 2010, -1)
+
 
 class TestDecisionManagerDecisions:
 
@@ -382,7 +387,13 @@ class TestDecisionManagerDecisions:
         sos_model.name = 'test_sos_model'
         sos_model.sector_models = []
 
+        interventions = {'test': {'technical_lifetime': {'value': 99}},
+                         'planned': {'technical_lifetime': {'value': 99}},
+                         'decided': {'technical_lifetime': {'value': 99}}
+                         }
+
         df = DecisionManager(empty_store, [2010, 2015], 'test', sos_model)
+        df._register = interventions
         return df
 
     def test_get_decisions(self, decision_manager: DecisionManager):
