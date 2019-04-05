@@ -17,12 +17,12 @@ import os
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 from types import MappingProxyType
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 from smif.data_layer.data_handle import ResultsHandle
 from smif.data_layer.model_loader import ModelLoader
 from smif.data_layer.store import Store
-from smif.exception import SmifDataNotFoundError, SmifTimestepResolutionError
+from smif.exception import SmifDataNotFoundError
 
 
 class DecisionManager(object):
@@ -66,7 +66,7 @@ class DecisionManager(object):
         self._register = {}  # type: Dict
         for sector_model in sos_model.sector_models:
             self._register.update(self._store.read_interventions(sector_model.name))
-        self.planned_interventions = set()  # type: set
+        self.planned_interventions = []  # type: List
 
         strategies = self._store.read_strategies(modelrun_name)
         self.logger.info("%s strategies found", len(strategies))
@@ -75,9 +75,7 @@ class DecisionManager(object):
 
     def _set_up_pre_spec_planning(self,
                                   modelrun_name: str,
-                                  strategies: List[Dict]) -> 'PreSpecified':
-
-        pre_spec_planning = None
+                                  strategies: List[Dict]):
 
         # Read in the historical interventions (initial conditions) directly
         initial_conditions = self._store.read_all_initial_conditions(modelrun_name)
@@ -97,13 +95,7 @@ class DecisionManager(object):
 
         # Create a Pre-Specified planning decision module with all
         # the planned interventions
-        if planned_interventions:
-            pre_spec_planning = PreSpecified(self._timesteps,
-                                             self._register,
-                                             planned_interventions)
-            self.planned_interventions = set([x['name'] for x in planned_interventions])
-
-        return pre_spec_planning
+        self.planned_interventions = self._tuplize_state(planned_interventions)
 
     def _set_up_decision_modules(self, modelrun_name, strategies):
 
@@ -136,15 +128,11 @@ class DecisionManager(object):
     def available_interventions(self) -> Dict[str, Dict]:
         """Returns a register of available interventions, i.e. those not planned
         """
+        planned_names = set([x[1] for x in self.planned_interventions])
         edited_register = {name: self._register[name]
                            for name in self._register.keys() -
-                           self.planned_interventions}
+                           planned_names}
         return edited_register
-
-    def update_planned_interventions(self, decisions: List[Tuple]):
-        """Adds a list of decisions to the set of planned interventions
-        """
-        self.planned_interventions.update([x[1] for x in decisions])
 
     def get_intervention(self, value):
         try:
@@ -267,42 +255,32 @@ class DecisionManager(object):
         if self._decision_module:
             previous_state = self._get_previous_state(self._decision_module, results_handle)
             pre_decision_state.update(previous_state)
-        elif self.pre_spec_planning:
-            previous_state = self._get_previous_state(self.pre_spec_planning, results_handle)
-            pre_decision_state.update(previous_state)
 
         msg = "Pre-decision state at timestep %s and iteration %s:\n%s"
         self.logger.debug(msg,
                           timestep, iteration, pre_decision_state)
 
         new_decisions = set()
-        if self.pre_spec_planning:
-            decisions = self._get_decisions(self.pre_spec_planning,
-                                            results_handle)
-            new_decisions.update(decisions)
-            self.update_planned_interventions(decisions)
         if self._decision_module:
             decisions = self._get_decisions(self._decision_module,
                                             results_handle)
             new_decisions.update(decisions)
-            self.update_planned_interventions(decisions)
 
         self.logger.debug("New decisions at timestep %s and iteration %s:\n%s",
                           timestep, iteration, new_decisions)
 
-        # Post decision state is the union of the pre decision state set
-        # and new decision set
-        post_decision_state = pre_decision_state | new_decisions
-
+        # Post decision state is the union of the pre decision state set, the
+        # new decision set and the set of planned interventions
+        post_decision_state = (pre_decision_state
+                               | new_decisions
+                               | set(self.planned_interventions))
         post_decision_state = self.retire_interventions(post_decision_state, timestep)
         post_decision_state = self._untuplize_state(post_decision_state)
 
         self.logger.debug("Post-decision state at timestep %s and iteration %s:\n%s",
                           timestep, iteration, post_decision_state)
 
-        self.logger.debug(
-            "Writing state for timestep %s and interation %s", timestep, iteration)
-
+        # Workaround to avoid issue nismod/smif#345
         if not post_decision_state:
             post_decision_state = [{'name': '', 'build_year': timestep}]
         self._store.write_state(post_decision_state, self._modelrun_name, timestep, iteration)
@@ -430,7 +408,7 @@ class DecisionModule(metaclass=ABCMeta):
         self.timesteps = timesteps
         self._register = register
         self.logger = getLogger(__name__)
-        self._decisions = set()  # type: set
+        self._decisions = set()  # type: Set
 
     def __next__(self) -> List[Dict]:
         return self._get_next_decision_iteration()
@@ -524,63 +502,6 @@ class DecisionModule(metaclass=ABCMeta):
         [{'name': 'intervention_a', 'build_year': 2010}])
         """
         raise NotImplementedError
-
-
-class PreSpecified(DecisionModule):
-    """Pre-specified planning
-
-    Parameters
-    ----------
-    timesteps : list
-        A list of the timesteps included in the model horizon
-    register : dict
-        A dict of intervention dictionaries keyed by unique intervention name
-    planned_interventions : list
-        A list of dicts ``{'name': 'intervention_name', 'build_year': 2010}``
-        representing historical or planned interventions
-    """
-    def __init__(self, timesteps, register, planned_interventions):
-        super().__init__(timesteps, register)
-        self._planned = planned_interventions
-
-    def _get_next_decision_iteration(self):
-        return {
-            'decision_iterations': [0],
-            'timesteps': [x for x in self.timesteps]
-        }
-
-    def get_previous_state(self,
-                           results_handle: ResultsHandle) -> List[Dict]:
-        try:
-            prev_timestep = results_handle.previous_timestep
-            prev_iteration = results_handle.decision_iteration
-            return results_handle.get_state(prev_timestep, prev_iteration)
-        except SmifTimestepResolutionError:
-            return []
-
-    def get_decision(self, results_handle) -> List[Dict]:
-        """Return a dict of historical or planned interventions in current timestep
-
-        Use lifetime attribute of named intervention to calculate if it is still
-        present in the current state of the system
-
-        Arguments
-        ---------
-        results_handle : smif.data_layer.data_handle.ResultsHandle
-            A reference to a smif results handle
-
-        Returns
-        -------
-        list of dict
-
-        Examples
-        --------
-        >>> dm = PreSpecified([2010, 2015], register,
-        [{'name': 'intervention_a', 'build_year': 2010}])
-        >>> dm.get_decision(results_handle)
-        [{'name': intervention_a', 'build_year': 2010}]
-        """
-        return self._planned
 
 
 class RuleBased(DecisionModule):

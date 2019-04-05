@@ -667,7 +667,7 @@ class Store():
         """
         return self.data_store.read_strategy_interventions(strategy)
 
-    def read_initial_conditions(self, model_name):
+    def read_initial_conditions(self, model_name) -> List[Dict]:
         """Read historical interventions for `model_name`
 
         Returns
@@ -695,14 +695,14 @@ class Store():
         self.data_store.write_initial_conditions(model['initial_conditions'][0],
                                                  initial_conditions)
 
-    def read_all_initial_conditions(self, model_run_name):
+    def read_all_initial_conditions(self, model_run_name) -> List[Dict]:
         """A list of all historical interventions
 
         Returns
         -------
         list[dict]
         """
-        historical_interventions = []
+        historical_interventions = []  # type: List
         model_run = self.read_model_run(model_run_name)
         sos_model_name = model_run['sos_model']
         sos_model = self.read_sos_model(sos_model_name)

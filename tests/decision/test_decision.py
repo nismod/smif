@@ -1,10 +1,10 @@
 from typing import Dict, List
-from unittest.mock import Mock, PropertyMock
+from unittest.mock import Mock
 
 from pytest import fixture, raises
 
 from smif.data_layer.store import Store
-from smif.decision.decision import DecisionManager, PreSpecified, RuleBased
+from smif.decision.decision import DecisionManager, RuleBased
 from smif.exception import SmifDataNotFoundError
 
 
@@ -41,102 +41,6 @@ def get_register():
                 'large_pumping_station_oxford': lifetime
                 }
     return register
-
-
-class TestPreSpecified:
-
-    def test_initialisation(self, plan):
-
-        timesteps = [2010, 2015, 2020]
-
-        actual = PreSpecified(timesteps, Mock(), plan)
-
-        assert actual.timesteps == timesteps
-
-    def test_generator(self, plan):
-
-        timesteps = [2010, 2015, 2020]
-        dm = PreSpecified(timesteps, Mock(), plan)
-
-        actual = next(dm)
-
-        expected = {
-            'decision_iterations': [0],
-            'timesteps': timesteps
-        }
-
-        assert actual == expected
-
-    def test_get_decision(self, plan, get_register):
-
-        register = get_register
-
-        timesteps = [2010, 2015, 2020]
-        dm = PreSpecified(timesteps, register, plan)
-
-        mock_handle = Mock()
-        type(mock_handle).current_timestep = PropertyMock(return_value=2010)
-        actual = dm.get_decision(mock_handle)
-        expected = [
-            {'name': 'small_pumping_station_oxford',
-             'build_year': 2010},
-            {'name': 'small_pumping_station_abingdon',
-             'build_year': 2015},
-            {'name': 'large_pumping_station_oxford',
-             'build_year': 2020}
-        ]
-        assert actual == expected
-
-        type(mock_handle).current_timestep = PropertyMock(return_value=2015)
-        actual = dm.get_decision(mock_handle)
-        expected = [
-            {'name': 'small_pumping_station_oxford',
-             'build_year': 2010},
-            {'name': 'small_pumping_station_abingdon',
-             'build_year': 2015},
-            {'name': 'large_pumping_station_oxford',
-             'build_year': 2020}
-        ]
-        assert actual == expected
-
-        type(mock_handle).current_timestep = PropertyMock(return_value=2020)
-        actual = dm.get_decision(mock_handle)
-        expected = [
-            {'name': 'small_pumping_station_oxford',
-             'build_year': 2010},
-            {'name': 'small_pumping_station_abingdon',
-             'build_year': 2015},
-            {'name': 'large_pumping_station_oxford',
-             'build_year': 2020}
-        ]
-        assert actual == expected
-
-    def test_get_decision_two(self, get_strategies, get_register):
-        register = get_register
-        dm = PreSpecified([2010, 2015], register, get_strategies[0]['interventions'])
-
-        mock_handle = Mock()
-        type(mock_handle).current_timestep = PropertyMock(return_value=2010)
-        actual = dm.get_decision(mock_handle)
-        expected = [
-            {'name': 'nuclear_large', 'build_year': 2012},
-            {'name': 'carrington_retire', 'build_year': 2011}
-        ]
-        # assert actual == expected
-        # we don't mind the order
-        assert (actual) == (expected)
-
-        # actual = dm.get_decision(2015)
-        # expected = [('carrington_retire', 2011)]
-        # assert actual == expected
-
-        type(mock_handle).current_timestep = PropertyMock(return_value=2015)
-        actual = dm.get_decision(mock_handle)
-        expected = [
-            {'name': 'nuclear_large', 'build_year': 2012},
-            {'name': 'carrington_retire', 'build_year': 2011}
-        ]
-        assert (actual) == (expected)
 
 
 class TestRuleBasedProperties:
@@ -328,7 +232,7 @@ class TestDecisionManager():
 
         assert df.available_interventions == df._register
 
-        df.planned_interventions = {'a', 'b'}
+        df.planned_interventions = {(2010, 'a'), (2010, 'b')}
 
         expected = {'c': {'name': 'c'}}
 
@@ -416,13 +320,13 @@ class TestDecisionManagerDecisions:
 
         dm._decision_module = Mock()
         dm._decision_module.get_decision = Mock(
-            return_value=[{'name': 'test', 'build_year': 2010}])
+            return_value=[{'name': 'decided', 'build_year': 2010}])
         dm._decision_module.get_previous_state = Mock(return_value=[])
 
         dm.get_and_save_decisions(0, 2010)
 
         actual = dm._store  # type: Store
-        expected = [{'name': 'test', 'build_year': 2010}]  # type: List[Dict]
+        expected = [{'name': 'decided', 'build_year': 2010}]  # type: List[Dict]
         assert actual.read_state('test', 2010, decision_iteration=0) == expected
 
     def test_get_and_save_decisions_prespec(self,
@@ -432,15 +336,12 @@ class TestDecisionManagerDecisions:
         """
         dm = decision_manager
 
-        dm.pre_spec_planning = Mock()
-        dm.pre_spec_planning.get_decision = Mock(
-            return_value=[{'name': 'test', 'build_year': 2010}])
-        dm.pre_spec_planning.get_previous_state = Mock(return_value=[])
+        dm.planned_interventions = [(2010, 'planned')]
 
         dm.get_and_save_decisions(0, 2010)
 
         actual = dm._store  # type: Store
-        expected = [{'name': 'test', 'build_year': 2010}]  # type: List[Dict]
+        expected = [{'name': 'planned', 'build_year': 2010}]  # type: List[Dict]
         assert actual.read_state('test', 2010, decision_iteration=0) == expected
 
     def test_pre_spec_and_decision_module(self,
@@ -452,10 +353,7 @@ class TestDecisionManagerDecisions:
             return_value=[{'name': 'decided', 'build_year': 2010}])
         dm._decision_module.get_previous_state = Mock(return_value=[])
 
-        dm.pre_spec_planning = Mock()
-        dm.pre_spec_planning.get_decision = Mock(
-            return_value=[{'name': 'planned', 'build_year': 2010}])
-        dm.pre_spec_planning.get_previous_state = Mock(return_value=[])
+        dm.planned_interventions = [(2010, 'planned')]
 
         dm.get_and_save_decisions(0, 2010)
 

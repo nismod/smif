@@ -126,7 +126,7 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def read_initial_conditions(self, key):
+    def read_initial_conditions(self, key) -> List[Dict]:
         """Read historical interventions for `key`
 
         Parameters
