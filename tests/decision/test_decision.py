@@ -226,6 +226,51 @@ class TestRuleBasedProperties:
         assert msg in str(ex)
 
 
+class TestRuleBasedIterationTimestepAccounting:
+    """Test that the iteration and timestep accounting methods properly follow
+    the path through the decision iterations
+
+    2010 - 0, 1
+    2015 - 2, 3
+    """
+
+    @fixture(scope='function')
+    def dm(self):
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, Mock())
+        return dm
+
+    def test_first_iteration_base_year(self, dm):
+
+        dm.current_timestep = 2010
+        dm.current_iteration = 1
+        dm._max_iteration_by_timestep[2010] = 1
+        assert dm.get_previous_iteration_timestep() == tuple()
+
+    def test_second_iteration_base_year(self, dm):
+
+        dm.current_timestep = 2010
+        dm.current_iteration = 2
+        dm._max_iteration_by_timestep[2010] = 2
+        assert dm.get_previous_iteration_timestep() == (2010, 1)
+
+    def test_second_iteration_next_year(self, dm):
+
+        dm.current_timestep = 2015
+        dm.current_iteration = 3
+        dm._max_iteration_by_timestep[2010] = 2
+        dm._max_iteration_by_timestep[2015] = 3
+        assert dm.get_previous_iteration_timestep() == (2010, 2)
+
+    def test_third_iteration_next_year(self, dm):
+
+        dm.current_timestep = 2015
+        dm.current_iteration = 4
+        dm._max_iteration_by_timestep[2010] = 2
+        dm._max_iteration_by_timestep[2015] = 4
+        assert dm.get_previous_iteration_timestep() == (2015, 3)
+
+
 class TestRuleBased:
 
     def test_initialisation(self):

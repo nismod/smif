@@ -354,11 +354,11 @@ class DecisionModule(metaclass=ABCMeta):
         return self._get_next_decision_iteration()
 
     @property
-    def first_timestep(self):
+    def first_timestep(self) -> int:
         return min(self.timesteps)
 
     @property
-    def last_timestep(self):
+    def last_timestep(self) -> int:
         return max(self.timesteps)
 
     @abstractmethod
@@ -573,25 +573,41 @@ class RuleBased(DecisionModule):
 
     def __init__(self, timesteps, register):
         super().__init__(timesteps, register)
-        self.satisfied = False
-        self.current_timestep = self.first_timestep
-        self.current_iteration = 0
+        self.satisfied = False  # type: bool
+        self.current_timestep = self.first_timestep  # type: int
+        self.current_iteration = 0  # type: int
         # keep internal account of max iteration reached per timestep
         self._max_iteration_by_timestep = {self.first_timestep: 0}
         self.logger = getLogger(__name__)
 
+    def get_previous_iteration_timestep(self) -> Tuple[int, int]:
+        """Returns the timestep, iteration pair that describes the previous
+        iteration
+
+        Returns
+        -------
+        tuple
+            Contains (timestep, iteration)
+        """
+        if self.current_iteration > 1:
+            iteration = self.current_iteration - 1
+
+            if self.current_timestep == self.first_timestep:
+                timestep = self.current_timestep
+            elif (iteration == self._max_iteration_by_timestep[self.previous_timestep]):
+                timestep = self.previous_timestep
+            elif (iteration >= self._max_iteration_by_timestep[self.previous_timestep]):
+                timestep = self.current_timestep
+        else:
+            return tuple()
+        return timestep, iteration
+
     def get_previous_state(self, results_handle: ResultsHandle) -> List[Dict]:
 
-        if (self.current_iteration > 1
-                and self.current_timestep == results_handle.base_timestep):
-            prev_iteration = self.current_iteration - 1
-            prev_timestep = self.current_timestep
-            return results_handle.get_state(prev_timestep, prev_iteration)
-        elif (self.current_iteration > 1
-                and self.current_timestep > self.first_timestep):
-            prev_iteration = self._max_iteration_by_timestep[self.previous_timestep]
-            prev_timestep = results_handle.previous_timestep
-            return results_handle.get_state(prev_timestep, prev_iteration)
+        timestep_iteration = self.get_previous_iteration_timestep()
+        if timestep_iteration:
+            timestep, iteration = timestep_iteration
+            return results_handle.get_state(timestep, iteration)
         else:
             return []
 
