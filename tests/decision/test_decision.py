@@ -1,7 +1,10 @@
-from unittest.mock import Mock, PropertyMock
+from typing import Dict, List
+from unittest.mock import Mock
 
 from pytest import fixture, raises
-from smif.decision.decision import DecisionManager, PreSpecified, RuleBased
+
+from smif.data_layer.store import Store
+from smif.decision.decision import DecisionManager, RuleBased
 from smif.exception import SmifDataNotFoundError
 
 
@@ -40,127 +43,6 @@ def get_register():
     return register
 
 
-class TestPreSpecified:
-
-    def test_initialisation(self, plan):
-
-        timesteps = [2010, 2015, 2020]
-
-        actual = PreSpecified(timesteps, Mock(), plan)
-
-        assert actual.timesteps == timesteps
-
-    def test_generator(self, plan):
-
-        timesteps = [2010, 2015, 2020]
-        dm = PreSpecified(timesteps, Mock(), plan)
-
-        actual = next(dm)
-
-        expected = {
-            'decision_iterations': [0],
-            'timesteps': timesteps
-        }
-
-        assert actual == expected
-
-    def test_get_decision(self, plan, get_register):
-
-        register = get_register
-
-        timesteps = [2010, 2015, 2020]
-        dm = PreSpecified(timesteps, register, plan)
-
-        mock_handle = Mock()
-        type(mock_handle).current_timestep = PropertyMock(return_value=2010)
-        actual = dm.get_decision(mock_handle)
-        expected = [
-            {'name': 'small_pumping_station_oxford',
-             'build_year': 2010}]
-        assert actual == expected
-
-        type(mock_handle).current_timestep = PropertyMock(return_value=2015)
-        actual = dm.get_decision(mock_handle)
-        expected = [
-            {'name': 'small_pumping_station_oxford',
-             'build_year': 2010},
-            {'name': 'small_pumping_station_abingdon',
-             'build_year': 2015}]
-        assert actual == expected
-
-        type(mock_handle).current_timestep = PropertyMock(return_value=2020)
-        actual = dm.get_decision(mock_handle)
-        expected = [
-            {'name': 'small_pumping_station_oxford',
-             'build_year': 2010},
-            {'name': 'small_pumping_station_abingdon',
-             'build_year': 2015},
-            {'name': 'large_pumping_station_oxford',
-             'build_year': 2020}
-        ]
-        assert actual == expected
-
-    def test_get_decision_two(self, get_strategies, get_register):
-        register = get_register
-        dm = PreSpecified([2010, 2015], register, get_strategies[0]['interventions'])
-
-        mock_handle = Mock()
-        type(mock_handle).current_timestep = PropertyMock(return_value=2010)
-        actual = dm.get_decision(mock_handle)
-        expected = [
-            {'name': 'nuclear_large', 'build_year': 2012},
-            {'name': 'carrington_retire', 'build_year': 2011}
-        ]
-        # assert actual == expected
-        # we don't mind the order
-        assert (actual) == (expected)
-
-        # actual = dm.get_decision(2015)
-        # expected = [('carrington_retire', 2011)]
-        # assert actual == expected
-
-        type(mock_handle).current_timestep = PropertyMock(return_value=2015)
-        actual = dm.get_decision(mock_handle)
-        expected = [
-            {'name': 'nuclear_large', 'build_year': 2012},
-            {'name': 'carrington_retire', 'build_year': 2011}
-        ]
-        assert (actual) == (expected)
-
-    def test_buildable(self, get_strategies):
-        dm = PreSpecified([2010, 2015], Mock(), get_strategies[0]['interventions'])
-        assert dm.timesteps == [2010, 2015]
-        assert dm.buildable(2010, 2010) is True
-        assert dm.buildable(2011, 2010) is True
-
-    def test_historical_intervention_buildable(self, get_strategies):
-        dm = PreSpecified([2020, 2030], Mock(), get_strategies[0]['interventions'])
-        assert dm.timesteps == [2020, 2030]
-        assert dm.buildable(1980, 2020) is True
-        assert dm.buildable(1990, 2020) is True
-
-    def test_buildable_raises(self, get_strategies):
-        dm = PreSpecified([2010, 2015], Mock(), get_strategies[0]['interventions'])
-        with raises(ValueError):
-            dm.buildable(2015, 2014)
-
-    def test_within_lifetime(self):
-        dm = PreSpecified([2010, 2015], Mock(), [])
-        assert dm.within_lifetime(2010, 2010, 1)
-
-    def test_within_lifetime_does_not_check_start(self):
-        """Note that the ``within_lifetime`` method does not check
-        that the build year is compatible with timestep
-        """
-        dm = PreSpecified([2010, 2015], Mock(), [])
-        assert dm.within_lifetime(2011, 2010, 1)
-
-    def test_negative_lifetime_raises(self):
-        dm = PreSpecified([2010, 2015], Mock(), [])
-        with raises(ValueError):
-            dm.within_lifetime(2010, 2010, -1)
-
-
 class TestRuleBasedProperties:
 
     def test_timesteps(self):
@@ -191,11 +73,22 @@ class TestRuleBasedProperties:
 
     def test_interventions(self):
 
-        interventions = Mock()
+        all_interventions = {'test_intervention': {'name': 'test_intervention'}}
 
         timesteps = [2010, 2015, 2020]
-        dm = RuleBased(timesteps, interventions)
-        assert dm.interventions == interventions
+        dm = RuleBased(timesteps, all_interventions)
+        assert dm.available_interventions([]) == ['test_intervention']
+
+    def test_interventions_planned(self):
+
+        all_interventions = {'test_intervention': {'name': 'test_intervention'},
+                             'planned_intervention': {'name': 'planned_intervention'}}
+
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, all_interventions)
+        actual = dm.available_interventions([{'name': 'planned_intervention'}])
+        expected = ['test_intervention']
+        assert actual == expected
 
     def test_get_intervention(self):
 
@@ -210,6 +103,51 @@ class TestRuleBasedProperties:
             dm.get_intervention('z')
         msg = "Intervention 'z' is not found in the list of available interventions"
         assert msg in str(ex)
+
+
+class TestRuleBasedIterationTimestepAccounting:
+    """Test that the iteration and timestep accounting methods properly follow
+    the path through the decision iterations
+
+    2010 - 0, 1
+    2015 - 2, 3
+    """
+
+    @fixture(scope='function')
+    def dm(self):
+        timesteps = [2010, 2015, 2020]
+        dm = RuleBased(timesteps, Mock())
+        return dm
+
+    def test_first_iteration_base_year(self, dm):
+
+        dm.current_timestep = 2010
+        dm.current_iteration = 1
+        dm._max_iteration_by_timestep[2010] = 1
+        assert dm.get_previous_iteration_timestep() is None
+
+    def test_second_iteration_base_year(self, dm):
+
+        dm.current_timestep = 2010
+        dm.current_iteration = 2
+        dm._max_iteration_by_timestep[2010] = 2
+        assert dm.get_previous_iteration_timestep() == (2010, 1)
+
+    def test_second_iteration_next_year(self, dm):
+
+        dm.current_timestep = 2015
+        dm.current_iteration = 3
+        dm._max_iteration_by_timestep[2010] = 2
+        dm._max_iteration_by_timestep[2015] = 3
+        assert dm.get_previous_iteration_timestep() == (2010, 2)
+
+    def test_third_iteration_next_year(self, dm):
+
+        dm.current_timestep = 2015
+        dm.current_iteration = 4
+        dm._max_iteration_by_timestep[2010] = 2
+        dm._max_iteration_by_timestep[2015] = 4
+        assert dm.get_previous_iteration_timestep() == (2015, 3)
 
 
 class TestRuleBased:
@@ -264,7 +202,7 @@ class TestRuleBased:
 class TestDecisionManager():
 
     @fixture(scope='function')
-    def decision_manager(self, empty_store):
+    def decision_manager(self, empty_store) -> DecisionManager:
         empty_store.write_model_run({'name': 'test', 'sos_model': 'test_sos_model'})
         empty_store.write_sos_model({'name': 'test_sos_model', 'sector_models': []})
         empty_store.write_strategies('test', [])
@@ -275,7 +213,7 @@ class TestDecisionManager():
         df = DecisionManager(empty_store, [2010, 2015], 'test', sos_model)
         return df
 
-    def test_decision_manager_init(self, decision_manager):
+    def test_decision_manager_init(self,  decision_manager: DecisionManager):
         df = decision_manager
         dm = df.decision_loop()
         bundle = next(dm)
@@ -286,7 +224,7 @@ class TestDecisionManager():
         with raises(StopIteration):
             next(dm)
 
-    def test_available_interventions(self, decision_manager):
+    def test_available_interventions(self, decision_manager: DecisionManager):
         df = decision_manager
         df._register = {'a': {'name': 'a'},
                         'b': {'name': 'b'},
@@ -294,13 +232,13 @@ class TestDecisionManager():
 
         assert df.available_interventions == df._register
 
-        df.planned_interventions = {'a', 'b'}
+        df.planned_interventions = {(2010, 'a'), (2010, 'b')}
 
         expected = {'c': {'name': 'c'}}
 
         assert df.available_interventions == expected
 
-    def test_get_intervention(self, decision_manager):
+    def test_get_intervention(self,  decision_manager: DecisionManager):
         df = decision_manager
         df._register = {'a': {'name': 'a'},
                         'b': {'name': 'b'},
@@ -310,3 +248,116 @@ class TestDecisionManager():
 
         with raises(SmifDataNotFoundError):
             df.get_intervention('z')
+
+    def test_buildable(self, decision_manager):
+
+        decision_manager._timesteps = [2010, 2015]
+        assert decision_manager.buildable(2010, 2010) is True
+        assert decision_manager.buildable(2011, 2010) is True
+
+    def test_historical_intervention_buildable(self, decision_manager):
+        decision_manager._timesteps = [2020, 2030]
+        assert decision_manager.buildable(1980, 2020) is True
+        assert decision_manager.buildable(1990, 2020) is True
+
+    def test_buildable_raises(self, decision_manager):
+
+        with raises(ValueError):
+            decision_manager.buildable(2015, 2014)
+
+    def test_within_lifetime(self, decision_manager):
+
+        assert decision_manager.within_lifetime(2010, 2010, 1)
+
+    def test_within_lifetime_does_not_check_start(self, decision_manager):
+        """Note that the ``within_lifetime`` method does not check
+        that the build year is compatible with timestep
+        """
+        assert decision_manager.within_lifetime(2011, 2010, 1)
+
+    def test_negative_lifetime_raises(self, decision_manager):
+        with raises(ValueError):
+            decision_manager.within_lifetime(2010, 2010, -1)
+
+
+class TestDecisionManagerDecisions:
+
+    @fixture(scope='function')
+    def decision_manager(self, empty_store) -> DecisionManager:
+        empty_store.write_model_run({'name': 'test', 'sos_model': 'test_sos_model'})
+        empty_store.write_sos_model({'name': 'test_sos_model', 'sector_models': []})
+        empty_store.write_strategies('test', [])
+        sos_model = Mock()
+        sos_model.name = 'test_sos_model'
+        sos_model.sector_models = []
+
+        interventions = {'test': {'technical_lifetime': {'value': 99}},
+                         'planned': {'technical_lifetime': {'value': 99}},
+                         'decided': {'technical_lifetime': {'value': 99}}
+                         }
+
+        df = DecisionManager(empty_store, [2010, 2015], 'test', sos_model)
+        df._register = interventions
+        return df
+
+    def test_get_decisions(self, decision_manager: DecisionManager):
+        dm = decision_manager
+
+        mock_handle = Mock()
+        dm._decision_module = Mock()
+        dm._decision_module.get_decision = Mock(
+            return_value=[{'name': 'test', 'build_year': 2010}])
+
+        actual = dm._get_decisions(dm._decision_module, mock_handle)
+        expected = [(2010, 'test')]
+        assert actual == expected
+
+    def test_get_and_save_decisions_dm(self, decision_manager: DecisionManager):
+        """Test that the ``get_and_save_decisions`` method updates pre-decision
+        state with a new decision and writes it to store
+        """
+        dm = decision_manager
+
+        dm._decision_module = Mock()
+        dm._decision_module.get_decision = Mock(
+            return_value=[{'name': 'decided', 'build_year': 2010}])
+        dm._decision_module.get_previous_state = Mock(return_value=[])
+
+        dm.get_and_save_decisions(0, 2010)
+
+        actual = dm._store  # type: Store
+        expected = [{'name': 'decided', 'build_year': 2010}]  # type: List[Dict]
+        assert actual.read_state('test', 2010, decision_iteration=0) == expected
+
+    def test_get_and_save_decisions_prespec(self,
+                                            decision_manager: DecisionManager):
+        """Test that the ``get_and_save_decisions`` method updates pre-decision
+        state with a pre-specified planning and writes it to store
+        """
+        dm = decision_manager
+
+        dm.planned_interventions = [(2010, 'planned')]
+
+        dm.get_and_save_decisions(0, 2010)
+
+        actual = dm._store  # type: Store
+        expected = [{'name': 'planned', 'build_year': 2010}]  # type: List[Dict]
+        assert actual.read_state('test', 2010, decision_iteration=0) == expected
+
+    def test_pre_spec_and_decision_module(self,
+                                          decision_manager: DecisionManager):
+        dm = decision_manager
+
+        dm._decision_module = Mock()
+        dm._decision_module.get_decision = Mock(
+            return_value=[{'name': 'decided', 'build_year': 2010}])
+        dm._decision_module.get_previous_state = Mock(return_value=[])
+
+        dm.planned_interventions = [(2010, 'planned')]
+
+        dm.get_and_save_decisions(0, 2010)
+
+        actual = dm._store.read_state('test', 2010, decision_iteration=0)  # type: List[Dict]
+
+        expected = set([('decided', 2010), ('planned', 2010)])
+        assert set([(x['name'], x['build_year']) for x in actual]) == expected

@@ -16,9 +16,12 @@ import itertools
 import os
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
+from types import MappingProxyType
+from typing import Dict, List, Optional, Set, Tuple
 
 from smif.data_layer.data_handle import ResultsHandle
 from smif.data_layer.model_loader import ModelLoader
+from smif.data_layer.store import Store
 from smif.exception import SmifDataNotFoundError
 
 
@@ -47,7 +50,10 @@ class DecisionManager(object):
     store: smif.data_layer.store.Store
     """
 
-    def __init__(self, store, timesteps, modelrun_name, sos_model):
+    def __init__(self, store: Store,
+                 timesteps: List[int],
+                 modelrun_name: str,
+                 sos_model):
 
         self.logger = getLogger(__name__)
 
@@ -57,25 +63,25 @@ class DecisionManager(object):
         self._timesteps = timesteps
         self._decision_module = None
 
-        self._register = {}
+        self._register = {}  # type: Dict
         for sector_model in sos_model.sector_models:
             self._register.update(self._store.read_interventions(sector_model.name))
-        self.planned_interventions = {}
+        self.planned_interventions = []  # type: List
 
         strategies = self._store.read_strategies(modelrun_name)
         self.logger.info("%s strategies found", len(strategies))
         self.pre_spec_planning = self._set_up_pre_spec_planning(modelrun_name, strategies)
         self._set_up_decision_modules(modelrun_name, strategies)
 
-    def _set_up_pre_spec_planning(self, modelrun_name, strategies):
-
-        pre_spec_planning = None
+    def _set_up_pre_spec_planning(self,
+                                  modelrun_name: str,
+                                  strategies: List[Dict]):
 
         # Read in the historical interventions (initial conditions) directly
         initial_conditions = self._store.read_all_initial_conditions(modelrun_name)
 
         # Read in strategies
-        planned_interventions = []
+        planned_interventions = []  # type: List
         planned_interventions.extend(initial_conditions)
 
         for index, strategy in enumerate(strategies):
@@ -89,13 +95,7 @@ class DecisionManager(object):
 
         # Create a Pre-Specified planning decision module with all
         # the planned interventions
-        if planned_interventions:
-            pre_spec_planning = PreSpecified(self._timesteps,
-                                             self._register,
-                                             planned_interventions)
-            self.planned_interventions = {x['name'] for x in planned_interventions}
-
-        return pre_spec_planning
+        self.planned_interventions = self._tuplize_state(planned_interventions)
 
     def _set_up_decision_modules(self, modelrun_name, strategies):
 
@@ -116,21 +116,22 @@ class DecisionManager(object):
                     os.path.join(self._store.model_base_folder, strategy['path']))
                 strategy['timesteps'] = self._timesteps
                 # Pass a reference to the register of interventions
-                strategy['register'] = self.available_interventions
+                strategy['register'] = MappingProxyType(self.available_interventions)
 
                 strategy['name'] = strategy['classname'] + '_' + strategy['type']
 
                 self.logger.debug("Trying to load strategy: %s", strategy['name'])
                 decision_module = loader.load(strategy)
-                self._decision_module = decision_module
+                self._decision_module = decision_module  # type: DecisionModule
 
     @property
-    def available_interventions(self):
+    def available_interventions(self) -> Dict[str, Dict]:
         """Returns a register of available interventions, i.e. those not planned
         """
+        planned_names = set(name for build_year, name in self.planned_interventions)
         edited_register = {name: self._register[name]
                            for name in self._register.keys() -
-                           self.planned_interventions}
+                           planned_names}
         return edited_register
 
     def get_intervention(self, value):
@@ -223,6 +224,21 @@ class DecisionManager(object):
         ---------
         timestep : int
         iteration : int
+
+        Notes
+        -----
+        State contains all intervention names which are present in the system at
+        the given ``timestep`` for the current ``iteration``. This must include
+        planned interventions from a previous timestep that are still within
+        their lifetime, and interventions picked by a decision module in the
+        previous timesteps.
+
+        After loading all historical interventions, and screening them to remove
+        interventions from the previous timestep that have reached the end
+        of their lifetime, new decisions are added to the list of current
+        interventions.
+
+        Finally, the new state is written to the store.
         """
         results_handle = ResultsHandle(
             store=self._store,
@@ -232,20 +248,141 @@ class DecisionManager(object):
             timesteps=self._timesteps,
             decision_iteration=iteration
         )
-        decisions = []
+
+        # Decision module overrides pre-specified planning for obtaining state
+        # from previous iteration
+        pre_decision_state = set()
         if self._decision_module:
-            decisions.extend(self._decision_module.get_decision(results_handle))
+            previous_state = self._get_previous_state(self._decision_module, results_handle)
+            pre_decision_state.update(previous_state)
 
-        if self.pre_spec_planning:
-            decisions.extend(self.pre_spec_planning.get_decision(results_handle))
+        msg = "Pre-decision state at timestep %s and iteration %s:\n%s"
+        self.logger.debug(msg,
+                          timestep, iteration, pre_decision_state)
 
-        self.logger.debug(
-            "Retrieved %s decisions from %s", len(decisions), str(self._decision_module))
+        new_decisions = set()
+        if self._decision_module:
+            decisions = self._get_decisions(self._decision_module,
+                                            results_handle)
+            new_decisions.update(decisions)
 
-        self.logger.debug(
-            "Writing state for timestep %s and interation %s", timestep, iteration)
+        self.logger.debug("New decisions at timestep %s and iteration %s:\n%s",
+                          timestep, iteration, new_decisions)
 
-        self._store.write_state(decisions, self._modelrun_name, timestep, iteration)
+        # Post decision state is the union of the pre decision state set, the
+        # new decision set and the set of planned interventions
+        post_decision_state = (pre_decision_state
+                               | new_decisions
+                               | set(self.planned_interventions))
+        post_decision_state = self.retire_interventions(post_decision_state, timestep)
+        post_decision_state = self._untuplize_state(post_decision_state)
+
+        self.logger.debug("Post-decision state at timestep %s and iteration %s:\n%s",
+                          timestep, iteration, post_decision_state)
+
+        # Workaround to avoid issue nismod/smif#345
+        if not post_decision_state:
+            post_decision_state = [{'name': '', 'build_year': timestep}]
+        self._store.write_state(post_decision_state, self._modelrun_name, timestep, iteration)
+
+    def retire_interventions(self, state: List[Tuple[int, str]],
+                             timestep: int) -> List[Tuple[int, str]]:
+
+        alive = []
+        for intervention in state:
+            build_year = int(intervention[0])
+            data = self._register[intervention[1]]
+            lifetime = data['technical_lifetime']['value']
+            if (self.buildable(build_year, timestep) and
+                    self.within_lifetime(build_year, timestep, lifetime)):
+                alive.append(intervention)
+        return alive
+
+    def _get_decisions(self,
+                       decision_module: 'DecisionModule',
+                       results_handle: ResultsHandle) -> List[Tuple[int, str]]:
+        decisions = decision_module.get_decision(results_handle)
+        return self._tuplize_state(decisions)
+
+    def _get_previous_state(self,
+                            decision_module: 'DecisionModule',
+                            results_handle: ResultsHandle) -> List[Tuple[int, str]]:
+        state_dict = decision_module.get_previous_state(results_handle)
+        return self._tuplize_state(state_dict)
+
+    @staticmethod
+    def _tuplize_state(state: List[Dict]) -> List[Tuple[int, str]]:
+        return [(x['build_year'], x['name']) for x in state]
+
+    @staticmethod
+    def _untuplize_state(state: List[Tuple[int, str]]) -> List[Dict]:
+        return [{'build_year': x[0], 'name': x[1]} for x in state]
+
+    def buildable(self, build_year, timestep) -> bool:
+        """Interventions are deemed available if build_year is less than next timestep
+
+        For example, if `a` is built in 2011 and timesteps are
+        [2005, 2010, 2015, 2020] then buildable returns True for timesteps
+        2010, 2015 and 2020 and False for 2005.
+
+        Arguments
+        ---------
+        build_year: int
+            The build year of the intervention
+        timestep: int
+            The current timestep
+        """
+        if not isinstance(build_year, (int, float)):
+            msg = "Build Year should be an integer but is a {}"
+            raise TypeError(msg.format(type(build_year)))
+        if timestep not in self._timesteps:
+            raise ValueError("Timestep not in model timesteps")
+        index = self._timesteps.index(timestep)
+        if index == len(self._timesteps) - 1:
+            next_year = timestep + 1
+        else:
+            next_year = self._timesteps[index + 1]
+
+        if int(build_year) < next_year:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def within_lifetime(build_year, timestep, lifetime) -> bool:
+        """Interventions are deemed active if build_year + lifetime >= timestep
+
+        Arguments
+        ---------
+        build_year : int
+        timestep : int
+        lifetime : int
+
+        Returns
+        -------
+        bool
+        """
+        if not isinstance(build_year, (int, float)):
+            msg = "Build Year should be an integer but is a {}"
+            raise TypeError(msg.format(type(build_year)))
+
+        try:
+            build_year = int(build_year)
+        except ValueError:
+            raise ValueError(
+                "A build year must be a valid integer. Received {}.".format(build_year))
+
+        try:
+            lifetime = int(lifetime)
+        except ValueError:
+            lifetime = float("inf")
+        if lifetime < 0:
+            msg = "The value of lifetime cannot be negative"
+            raise ValueError(msg)
+        if timestep <= build_year + lifetime:
+            return True
+        else:
+            return False
 
 
 class DecisionModule(metaclass=ABCMeta):
@@ -267,23 +404,41 @@ class DecisionModule(metaclass=ABCMeta):
 
     """Current iteration of the decision module
     """
-    def __init__(self, timesteps, register):
+    def __init__(self, timesteps: List[int], register: MappingProxyType):
         self.timesteps = timesteps
         self._register = register
         self.logger = getLogger(__name__)
+        self._decisions = set()  # type: Set
 
-    def __next__(self):
+    def __next__(self) -> List[Dict]:
         return self._get_next_decision_iteration()
 
     @property
-    def interventions(self):
-        """Return the list of available interventions
+    def first_timestep(self) -> int:
+        return min(self.timesteps)
+
+    @property
+    def last_timestep(self) -> int:
+        return max(self.timesteps)
+
+    @abstractmethod
+    def get_previous_state(self, results_handle: ResultsHandle) -> List[Dict]:
+        """Return the state of the previous timestep
+        """
+        raise NotImplementedError
+
+    def available_interventions(self, state: List[Dict]) -> List:
+        """Return the collection of available interventions
+
+        Available interventions are the subset of interventions that have not
+        been implemented in a prior iteration or timestep
 
         Returns
         -------
-        list
+        List
         """
-        return self._register
+        return [name for name in self._register.keys()
+                - set([x['name'] for x in state])]
 
     def get_intervention(self, name):
         """Return an intervention dict
@@ -299,7 +454,7 @@ class DecisionModule(metaclass=ABCMeta):
             raise SmifDataNotFoundError(msg.format(name))
 
     @abstractmethod
-    def _get_next_decision_iteration(self):
+    def _get_next_decision_iteration(self) -> List[Dict]:
         """Implement to return the next decision iteration
 
         Within a list of decision-iteration/timestep pairs, the assumption is
@@ -328,7 +483,7 @@ class DecisionModule(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_decision(self, results_handle):
+    def get_decision(self, results_handle: ResultsHandle) -> List[Dict]:
         """Return decisions for a given timestep and decision iteration
 
         Parameters
@@ -349,131 +504,49 @@ class DecisionModule(metaclass=ABCMeta):
         raise NotImplementedError
 
 
-class PreSpecified(DecisionModule):
-    """Pre-specified planning
-
-    Parameters
-    ----------
-    timesteps : list
-        A list of the timesteps included in the model horizon
-    register : dict
-        A dict of intervention dictionaries keyed by unique intervention name
-    planned_interventions : list
-        A list of dicts ``{'name': 'intervention_name', 'build_year': 2010}``
-        representing historical or planned interventions
-    """
-    def __init__(self, timesteps, register, planned_interventions):
-        super().__init__(timesteps, register)
-        self._planned = planned_interventions
-
-    def _get_next_decision_iteration(self):
-        return {
-            'decision_iterations': [0],
-            'timesteps': [x for x in self.timesteps]
-        }
-
-    def get_decision(self, results_handle):
-        """Return a dict of intervention names built in timestep
-
-        Arguments
-        ---------
-        results_handle : smif.data_layer.data_handle.ResultsHandle
-            A reference to a smif results handle
-
-        Returns
-        -------
-        list of dict
-
-        Examples
-        --------
-        >>> dm = PreSpecified([2010, 2015], register,
-        [{'name': 'intervention_a', 'build_year': 2010}])
-        >>> dm.get_decision(results_handle)
-        [{'name': intervention_a', 'build_year': 2010}]
-        """
-        decisions = []
-        timestep = results_handle.current_timestep
-
-        assert isinstance(self._planned, list)
-
-        for intervention in self._planned:
-            build_year = int(intervention['build_year'])
-
-            data = self._register[intervention['name']]
-            lifetime = data['technical_lifetime']['value']
-
-            if self.buildable(build_year, timestep) and \
-               self.within_lifetime(build_year, timestep, lifetime):
-                decisions.append(intervention)
-        return decisions
-
-    def buildable(self, build_year, timestep):
-        """Interventions are deemed available if build_year is less than next timestep
-
-        For example, if `a` is built in 2011 and timesteps are
-        [2005, 2010, 2015, 2020] then buildable returns True for timesteps
-        2010, 2015 and 2020 and False for 2005.
-        """
-        if not isinstance(build_year, (int, float)):
-            msg = "Build Year should be an integer but is a {}"
-            raise TypeError(msg.format(type(build_year)))
-        if timestep not in self.timesteps:
-            raise ValueError("Timestep not in model timesteps")
-        index = self.timesteps.index(timestep)
-        if index == len(self.timesteps) - 1:
-            next_year = timestep + 1
-        else:
-            next_year = self.timesteps[index + 1]
-
-        if int(build_year) < next_year:
-            return True
-        else:
-            return False
-
-    def within_lifetime(self, build_year, timestep, lifetime):
-        """Interventions are deemed active if build_year + lifetime >= timestep
-
-        Arguments
-        ---------
-        build_year : int
-        timestep : int
-        lifetime : int
-        """
-        if not isinstance(build_year, (int, float)):
-            msg = "Build Year should be an integer but is a {}"
-            raise TypeError(msg.format(type(build_year)))
-
-        try:
-            build_year = int(build_year)
-        except ValueError:
-            raise ValueError(
-                "A build year must be a valid integer. Received {}.".format(build_year))
-
-        try:
-            lifetime = int(lifetime)
-        except ValueError:
-            lifetime = float("inf")
-        if lifetime < 0:
-            msg = "The value of lifetime cannot be negative"
-            raise ValueError(msg)
-        if timestep <= build_year + lifetime:
-            return True
-        else:
-            return False
-
-
 class RuleBased(DecisionModule):
     """Rule-base decision modules
     """
 
     def __init__(self, timesteps, register):
         super().__init__(timesteps, register)
-        self.satisfied = False
-        self.current_timestep = self.first_timestep
-        self.current_iteration = 0
+        self.satisfied = False  # type: bool
+        self.current_timestep = self.first_timestep  # type: int
+        self.current_iteration = 0  # type: int
         # keep internal account of max iteration reached per timestep
         self._max_iteration_by_timestep = {self.first_timestep: 0}
         self.logger = getLogger(__name__)
+
+    def get_previous_iteration_timestep(self) -> Optional[Tuple[int, int]]:
+        """Returns the timestep, iteration pair that describes the previous
+        iteration
+
+        Returns
+        -------
+        tuple
+            Contains (timestep, iteration)
+        """
+        if self.current_iteration > 1:
+            iteration = self.current_iteration - 1
+
+            if self.current_timestep == self.first_timestep:
+                timestep = self.current_timestep
+            elif (iteration == self._max_iteration_by_timestep[self.previous_timestep]):
+                timestep = self.previous_timestep
+            elif (iteration >= self._max_iteration_by_timestep[self.previous_timestep]):
+                timestep = self.current_timestep
+        else:
+            return None
+        return timestep, iteration
+
+    def get_previous_state(self, results_handle: ResultsHandle) -> List[Dict]:
+
+        timestep_iteration = self.get_previous_iteration_timestep()
+        if timestep_iteration:
+            timestep, iteration = timestep_iteration
+            return results_handle.get_state(timestep, iteration)
+        else:
+            return []
 
     @property
     def next_timestep(self):
@@ -491,14 +564,6 @@ class RuleBased(DecisionModule):
         else:
             return None
 
-    @property
-    def first_timestep(self):
-        return min(self.timesteps)
-
-    @property
-    def last_timestep(self):
-        return max(self.timesteps)
-
     def _get_next_decision_iteration(self):
         if self.satisfied and (self.current_timestep == self.last_timestep):
             return None
@@ -513,6 +578,10 @@ class RuleBased(DecisionModule):
             self.current_iteration += 1
             return self._make_bundle()
 
+    def get_previous_year_iteration(self):
+        iteration = self._max_iteration_by_timestep[self.previous_timestep]
+        return iteration
+
     def _make_bundle(self):
         bundle = {'decision_iterations': [self.current_iteration],
                   'timesteps': [self.current_timestep]}
@@ -524,5 +593,5 @@ class RuleBased(DecisionModule):
             }
         return bundle
 
-    def get_decision(self, results_handle):
+    def get_decision(self, results_handle) -> List[Dict]:
         return []
