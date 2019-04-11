@@ -108,6 +108,57 @@ def list_model_runs(args):
         print(run['name'])
 
 
+def list_available_results(args):
+    """List the available results from previous model runs
+    """
+    store = _get_store(args)
+    model_run_configs = store.read_model_runs()
+
+    # print(sos_configs['name'])
+    all_output_names = []
+    models = store.read_models()
+    for model in models:
+        all_output_names += [output['name'] for output in model['outputs']]
+    max_output_length = max([len(output_name) for output_name in all_output_names])
+
+    for run in model_run_configs:
+        run_name = run['name']
+
+        available_results = store.available_results(run_name)
+        timesteps = sorted(run['timesteps'])
+
+        # Name of the model run
+        print('\nmodel run: {}'.format(run_name))
+
+        # Name of the associated sos model
+        sos_model_name = run['sos_model']
+        print('  - sos model: {}'.format(run['sos_model']))
+
+        # Names of each associated sector model
+        sos_config = store.read_sos_model(sos_model_name)
+        for sec_model_name in sos_config['sector_models']:
+            print('    - sector model: {}'.format(sec_model_name))
+
+            sec_model_config = store.read_model(sec_model_name)
+            outputs = sec_model_config['outputs']
+
+            # Names of each output for the sector model
+            for output in outputs:
+                output_name = output['name']
+
+                expected_tuples = [(t, 0, sec_model_name, output_name) for t in timesteps]
+                times_with_data = [str(t[0]) for t in expected_tuples if
+                                   t in available_results]
+
+                res_str = 'results: {}'.format(
+                    ', '.join(times_with_data)) if times_with_data else 'no results'
+
+                base = '      - output:'
+                ljust_width = len(base) + max_output_length + 7
+                ljust_output = '{} {} '.format(base, output_name).ljust(ljust_width, '.')
+                print('{} {}'.format(ljust_output, res_str))
+
+
 def run_model_runs(args):
     """Run the model runs as requested. Check if results exist and asks
     user for permission to overwrite
@@ -244,6 +295,11 @@ def parse_arguments():
     parser_list = subparsers.add_parser(
         'list', help='List available model runs', parents=[parent_parser])
     parser_list.set_defaults(func=list_model_runs)
+
+    # RESULTS
+    parser_list = subparsers.add_parser(
+        'available_results', help='List available results', parents=[parent_parser])
+    parser_list.set_defaults(func=list_available_results)
 
     # APP
     parser_app = subparsers.add_parser(
