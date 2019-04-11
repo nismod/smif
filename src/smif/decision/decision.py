@@ -128,7 +128,7 @@ class DecisionManager(object):
     def available_interventions(self) -> Dict[str, Dict]:
         """Returns a register of available interventions, i.e. those not planned
         """
-        planned_names = set([x[1] for x in self.planned_interventions])
+        planned_names = set(name for build_year, name in self.planned_interventions)
         edited_register = {name: self._register[name]
                            for name in self._register.keys() -
                            planned_names}
@@ -238,7 +238,7 @@ class DecisionManager(object):
         of their lifetime, new decisions are added to the list of current
         interventions.
 
-        Finally, the new state file is written to disk.
+        Finally, the new state is written to the store.
         """
         results_handle = ResultsHandle(
             store=self._store,
