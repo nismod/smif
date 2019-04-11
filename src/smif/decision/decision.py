@@ -280,9 +280,6 @@ class DecisionManager(object):
         self.logger.debug("Post-decision state at timestep %s and iteration %s:\n%s",
                           timestep, iteration, post_decision_state)
 
-        # Workaround to avoid issue nismod/smif#345
-        if not post_decision_state:
-            post_decision_state = [{'name': '', 'build_year': timestep}]
         self._store.write_state(post_decision_state, self._modelrun_name, timestep, iteration)
 
     def retire_interventions(self, state: List[Tuple[int, str]],
