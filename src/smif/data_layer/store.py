@@ -19,6 +19,7 @@ from logging import getLogger
 from operator import itemgetter
 
 import numpy as np  # type: ignore
+
 from smif.data_layer import DataArray
 from smif.data_layer.file import CSVDataStore, ParquetDataStore
 from smif.data_layer.validate import (validate_sos_model_config,
@@ -540,11 +541,21 @@ class Store():
         ~smif.data_layer.data_array.DataArray
         """
         sos_model = self.read_sos_model(sos_model_name)
+
         narrative = _pick_from_list(sos_model['narratives'], narrative_name)
+
+        if narrative is None:
+            msg = "Narrative name '{}' does not exist in sos_model '{}'"
+            raise SmifDataNotFoundError(msg.format(narrative_name, sos_model_name))
+
         variant = _pick_from_list(narrative['variants'], variant_name)
+
+        if variant is None:
+            msg = "Variant name '{}' does not exist in narrative '{}'"
+            raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
+
         key = self._key_from_data(variant['data'][parameter_name], narrative_name,
                                   variant_name, parameter_name)
-
         spec_dict = None
         # find sector model which needs this parameter, to get spec definition
         for model_name, params in narrative['provides'].items():
