@@ -140,6 +140,16 @@ class TestState():
         actual = handler.read_state(modelrun_name, timestep, decision_iteration)
         assert actual == expected
 
+    def test_read_write_empty_state(self, handler):
+        expected = []
+        modelrun_name = 'test_modelrun'
+        timestep = 2020
+        decision_iteration = None
+
+        handler.write_state(expected, modelrun_name, timestep, decision_iteration)
+        actual = handler.read_state(modelrun_name, timestep, decision_iteration)
+        assert actual == expected
+
 
 class TestCoefficients():
     """Read/write conversion coefficients
