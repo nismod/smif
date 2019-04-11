@@ -124,7 +124,7 @@ class TestRuleBasedIterationTimestepAccounting:
         dm.current_timestep = 2010
         dm.current_iteration = 1
         dm._max_iteration_by_timestep[2010] = 1
-        assert dm.get_previous_iteration_timestep() == tuple()
+        assert dm.get_previous_iteration_timestep() is None
 
     def test_second_iteration_base_year(self, dm):
 

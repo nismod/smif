@@ -17,7 +17,7 @@ import os
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 from types import MappingProxyType
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from smif.data_layer.data_handle import ResultsHandle
 from smif.data_layer.model_loader import ModelLoader
@@ -517,7 +517,7 @@ class RuleBased(DecisionModule):
         self._max_iteration_by_timestep = {self.first_timestep: 0}
         self.logger = getLogger(__name__)
 
-    def get_previous_iteration_timestep(self) -> Tuple[int, int]:
+    def get_previous_iteration_timestep(self) -> Optional[Tuple[int, int]]:
         """Returns the timestep, iteration pair that describes the previous
         iteration
 
@@ -536,7 +536,7 @@ class RuleBased(DecisionModule):
             elif (iteration >= self._max_iteration_by_timestep[self.previous_timestep]):
                 timestep = self.current_timestep
         else:
-            return tuple()
+            return None
         return timestep, iteration
 
     def get_previous_state(self, results_handle: ResultsHandle) -> List[Dict]:
