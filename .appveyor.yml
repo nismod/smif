@@ -18,9 +18,8 @@ install:
   - conda update conda
   - conda config --set changeps1 false
   - conda config --set channel_priority strict
-  - conda config --add channels conda-forge
   - conda info -a
-  - "conda create -n testenv python=%PYTHON_VERSION% \
+  - "conda create -n testenv python=3.7 \
         fiona \
         flask \
         gdal \
@@ -29,13 +28,11 @@ install:
         networkx \
         numpy \
         pandas \
-        pint \
         psycopg2 \
         pyarrow \
         pytest \
         python-dateutil \
         rtree \
-        ruamel.yaml \
         shapely \
         xarray"
   - activate testenv
