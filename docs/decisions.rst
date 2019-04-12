@@ -89,3 +89,71 @@ Set of pre-specified or planned interventions $P{\subset}I$
 Available interventions $A=P{\cap}I$
 
 Decisions at time t ${D_t}\subset{A}-{D_{t-1}}$
+
+Pre-Specified Planning
+----------------------
+
+In a pre-specified planning strategy, a pipeline of interventions is forced into
+the system-of-systems.
+
+This requires the provision of data and configuration, described step by step below
+
+- define the set of interventions
+- define the planning strategy
+- add the pre-specified strategy to the model run configuration
+
+Define interventions
+~~~~~~~~~~~~~~~~~~~~
+
+Interventions are associated with an individual model, listed in a csv file and
+added to the model configuration as described in the project configuration part
+of the documentation <project_configuration>.
+
+Note that each intervention is identified by a ``name`` entry that must be unique
+across the system of systems. To ensure this, one suggestion is to use a pre-fix
+with the initals of the sector model to which the intervention belows.
+
+An example intervention file has the headers
+
+- name
+- location
+- capacity_value
+- capacity_units
+- operational_lifetime_value
+- operational_lifetime_units
+- technical_lifetime_value
+- technical_lifetime_units
+- capital_cost_value
+- capital_cost_units
+
+and contents as follows::
+
+        nuclear_large,Oxford,1000,MW,40,years,25,years,2000,million £
+        carrington_retire,Oxford,-500,MW,0,years,0,years,0,million £
+
+Define the planning strategy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A planning strategy consists of the set of (name, build_timestep) tuples, where
+each name must belong to the set of interventions.
+
+An example from the sample project looks like this::
+
+        name,build_year
+        nuclear_large,2010
+        carrington_retire,2015
+        ac_line1,2010
+
+Add the pre-specified strategy to the model run configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The final step is to add the pre-specified planning stategy to the run
+configuration::
+
+    strategies:
+    - type: pre-specified-planning
+      description: Future energy plan
+      filename: energy_supply/strategies/plan.csv
+
+The entry should take the above format, where the filename entry refers to the
+planning strategy file composed in step two.
