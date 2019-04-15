@@ -65,6 +65,7 @@ and narrative combinations to be used in each run of the models.
 """
 from __future__ import print_function
 
+import itertools
 import logging
 import os
 import sys
@@ -104,8 +105,79 @@ def list_model_runs(args):
     """
     store = _get_store(args)
     model_run_configs = store.read_model_runs()
+
+    print('Model runs with an asterisk (*) have complete results available\n')
+
     for run in model_run_configs:
-        print(run['name'])
+        run_name = run['name']
+
+        expected_results = _get_canonical_expected_results(store, run_name)
+        available_results = _get_canonical_available_results(store, run_name)
+
+        complete = ' *' if expected_results == available_results else ''
+
+        print('{}{}'.format(run_name, complete))
+
+
+def _get_canonical_expected_results(store, model_run_name):
+    """Helper to list the results that are expected from a model run, collapsing all decision
+    iterations.
+
+    For a complete model run, this would coincide with the unique list returned
+    from `available_results`, where all decision iterations are set to 0.
+
+    This method is used to determine whether a model run is complete, given that it is
+    impossible to know how many decision iterations to expect: we simply check that each
+    expected timestep has been completed.
+    """
+
+    # Model results are returned as a tuple
+    # (timestep, decision_it, sec_model_name, output_name)
+    # so we first build the full list of expected results tuples.
+
+    expected_results = []
+
+    # Get the sos model name given the model run name, and the full list of timesteps
+    model_run = store.read_model_run(model_run_name)
+    timesteps = sorted(model_run['timesteps'])
+    sos_model_name = model_run['sos_model']
+
+    # Get the list of sector models in the sos model
+    sos_config = store.read_sos_model(sos_model_name)
+
+    # For each sector model, get the outputs and create the tuples
+    for sec_model_name in sos_config['sector_models']:
+
+        sec_model_config = store.read_model(sec_model_name)
+        outputs = sec_model_config['outputs']
+
+        for output, t in itertools.product(outputs, timesteps):
+            expected_results.append((t, 0, sec_model_name, output['name']))
+
+    # Return as a set to remove duplicates
+    return set(expected_results)
+
+
+def _get_canonical_available_results(store, model_run_name):
+    """Helper to list the results that are actually available from a model run, collapsing all
+    decision iterations.
+
+    This is the unique list from calling `available_results`, with all decision iterations set
+    to 0.
+
+    This method is used to determine whether a model run is complete, given that it is
+    impossible to know how many decision iterations to expect: we simply check that each
+    expected timestep has been completed.
+    """
+    available_results = store.available_results(model_run_name)
+
+    canonical_list = []
+
+    for t, d, sec_model_name, output_name in available_results:
+        canonical_list.append((t, 0, sec_model_name, output_name))
+
+    # Return as a set to remove duplicates
+    return set(canonical_list)
 
 
 def list_available_results(args):
