@@ -180,55 +180,69 @@ def _get_canonical_available_results(store, model_run_name):
     return set(canonical_list)
 
 
-def list_available_results(args):
-    """List the available results from previous model runs
+def _list_available_results(store, run):
+    """Helper to print the available results for a specific model run config.
     """
+
+    run_name = run['name']
+
+    available_results = store.available_results(run_name)
+
+    # Name of the model run
+    print('\nmodel run: {}'.format(run_name))
+
+    # Name of the associated sos model
+    sos_model_name = run['sos_model']
+    print('{}- sos model: {}'.format(' ' * 2, run['sos_model']))
+
+    # Names of each associated sector model
+    sos_config = store.read_sos_model(sos_model_name)
+    for sec_model_name in sos_config['sector_models']:
+        print('{}- sector model: {}'.format(' ' * 4, sec_model_name))
+
+        sec_model_config = store.read_model(sec_model_name)
+        outputs = sec_model_config['outputs']
+
+        # Names of each output for the sector model
+        for output in outputs:
+            output_name = output['name']
+            print('{}- output: {}'.format(' ' * 6, output_name))
+
+            output_results = [res for res in available_results if
+                              res[2] == sec_model_name and res[3] == output_name]
+
+            # Sorted list of all the decision iterations matching this model and output
+            decs = sorted(list(set([res[1] for res in output_results])))
+
+            if len(decs) == 0:
+                print('{}- no results'.format(' ' * 8))
+
+            for dec in decs:
+                base_str = '{}- decision {}:'.format(' ' * 8, dec)
+
+                # Get the timesteps in the results corresponding to this decision iteration
+                timesteps = [t for t, d, _sec, _out in output_results if d == dec]
+                time_strings = [str(t) for t in sorted(timesteps)]
+
+                res_str = ', '.join(time_strings) if len(timesteps) > 0 else 'no results'
+
+                print('{} {}'.format(base_str, res_str))
+
+
+def list_available_results(args):
+    """List the available results from previous model runs. A specific model run may be
+    specified my the subcommand `model_run`, else all available information is displayed.
+    """
+
     store = _get_store(args)
-    model_run_configs = store.read_model_runs()
 
-    # print(sos_configs['name'])
-    all_output_names = []
-    models = store.read_models()
-    for model in models:
-        all_output_names += [output['name'] for output in model['outputs']]
-    max_output_length = max([len(output_name) for output_name in all_output_names])
+    if args.model_run:
+        list_of_model_runs = [store.read_model_run(args.model_run)]
+    else:
+        list_of_model_runs = store.read_model_runs()
 
-    for run in model_run_configs:
-        run_name = run['name']
-
-        available_results = store.available_results(run_name)
-        timesteps = sorted(run['timesteps'])
-
-        # Name of the model run
-        print('\nmodel run: {}'.format(run_name))
-
-        # Name of the associated sos model
-        sos_model_name = run['sos_model']
-        print('  - sos model: {}'.format(run['sos_model']))
-
-        # Names of each associated sector model
-        sos_config = store.read_sos_model(sos_model_name)
-        for sec_model_name in sos_config['sector_models']:
-            print('    - sector model: {}'.format(sec_model_name))
-
-            sec_model_config = store.read_model(sec_model_name)
-            outputs = sec_model_config['outputs']
-
-            # Names of each output for the sector model
-            for output in outputs:
-                output_name = output['name']
-
-                expected_tuples = [(t, 0, sec_model_name, output_name) for t in timesteps]
-                times_with_data = [str(t[0]) for t in expected_tuples if
-                                   t in available_results]
-
-                res_str = 'results: {}'.format(
-                    ', '.join(times_with_data)) if times_with_data else 'no results'
-
-                base = '      - output:'
-                ljust_width = len(base) + max_output_length + 7
-                ljust_output = '{} {} '.format(base, output_name).ljust(ljust_width, '.')
-                print('{} {}'.format(ljust_output, res_str))
+    for model_run in list_of_model_runs:
+        _list_available_results(store, model_run)
 
 
 def run_model_runs(args):
@@ -369,9 +383,13 @@ def parse_arguments():
     parser_list.set_defaults(func=list_model_runs)
 
     # RESULTS
-    parser_list = subparsers.add_parser(
+    parser_results = subparsers.add_parser(
         'available_results', help='List available results', parents=[parent_parser])
-    parser_list.set_defaults(func=list_available_results)
+    parser_results.set_defaults(func=list_available_results)
+    parser_results.add_argument('model_run',
+                                help="Name of the model run to list available results",
+                                nargs='?',
+                                default=None)
 
     # APP
     parser_app = subparsers.add_parser(
