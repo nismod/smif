@@ -101,22 +101,27 @@ __license__ = "mit"
 
 
 def list_model_runs(args):
-    """List the model runs defined in the config
+    """List the model runs defined in the config, optionally indicating whether complete
+    results exist.
     """
     store = _get_store(args)
     model_run_configs = store.read_model_runs()
 
-    print('Model runs with an asterisk (*) have complete results available\n')
+    if args.complete:
+        print('Model runs with an asterisk (*) have complete results available\n')
 
     for run in model_run_configs:
         run_name = run['name']
 
-        expected_results = _get_canonical_expected_results(store, run_name)
-        available_results = _get_canonical_available_results(store, run_name)
+        if args.complete:
+            expected_results = _get_canonical_expected_results(store, run_name)
+            available_results = _get_canonical_available_results(store, run_name)
 
-        complete = ' *' if expected_results == available_results else ''
+            complete = ' *' if expected_results == available_results else ''
 
-        print('{}{}'.format(run_name, complete))
+            print('{}{}'.format(run_name, complete))
+        else:
+            print(run_name)
 
 
 def _get_canonical_expected_results(store, model_run_name):
@@ -381,6 +386,9 @@ def parse_arguments():
     parser_list = subparsers.add_parser(
         'list', help='List available model runs', parents=[parent_parser])
     parser_list.set_defaults(func=list_model_runs)
+    parser_list.add_argument('-c', '--complete',
+                             help="Show which model runs have complete results",
+                             action='store_true')
 
     # RESULTS
     parser_results = subparsers.add_parser(
