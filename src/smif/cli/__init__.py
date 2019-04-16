@@ -123,38 +123,35 @@ def list_model_runs(args):
             print(run_name)
 
 
-def _list_available_results(store, model_run_name):
-    """Helper to print the available results for a specific model run config.
+def list_available_results(args):
+    """List the available results from previous model runs. A specific model run may be
+    specified my the subcommand `model_run`, else all available information is displayed.
     """
 
-    run = store.read_model_run(model_run_name)
-    available_results = store.available_results(model_run_name)
+    store = _get_store(args)
+    expected = store.canonical_expected_results(args.model_run)
+    available = store.available_results(args.model_run)
 
-    # Name of the model run
-    print('\nmodel run: {}'.format(model_run_name))
-
-    # Name of the associated sos model
-    sos_model_name = run['sos_model']
+    # Print run and sos model
+    run = store.read_model_run(args.model_run)
+    print('\nmodel run: {}'.format(args.model_run))
     print('{}- sos model: {}'.format(' ' * 2, run['sos_model']))
 
-    # Names of each associated sector model
-    sos_config = store.read_sos_model(sos_model_name)
-    for sec_model_name in sos_config['sector_models']:
-        print('{}- sector model: {}'.format(' ' * 4, sec_model_name))
+    # List of expected sector models
+    sec_models = sorted({sec for _t, _d, sec, _out in expected})
 
-        sec_model_config = store.read_model(sec_model_name)
-        outputs = sec_model_config['outputs']
+    for sec_model in sec_models:
+        print('{}- sector model: {}'.format(' ' * 4, sec_model))
 
-        # Names of each output for the sector model
+        # List expected outputs for this sector model
+        outputs = sorted({out for _t, _d, sec, out in expected if sec == sec_model})
+
         for output in outputs:
-            output_name = output['name']
-            print('{}- output: {}'.format(' ' * 6, output_name))
+            print('{}- output: {}'.format(' ' * 6, output))
 
-            output_results = [res for res in available_results if
-                              res[2] == sec_model_name and res[3] == output_name]
-
-            # Sorted list of all the decision iterations matching this model and output
-            decs = sorted(list(set([res[1] for res in output_results])))
+            # List available decisions for this sector model and output
+            decs = sorted({d for _t, d, sec, out in available if
+                           sec == sec_model and out == output})
 
             if len(decs) == 0:
                 print('{}- no results'.format(' ' * 8))
@@ -162,22 +159,13 @@ def _list_available_results(store, model_run_name):
             for dec in decs:
                 base_str = '{}- decision {}:'.format(' ' * 8, dec)
 
-                # Get the timesteps in the results corresponding to this decision iteration
-                timesteps = [t for t, d, _sec, _out in output_results if d == dec]
-                time_strings = [str(t) for t in sorted(timesteps)]
+                # List available time steps for this decision, sector model and output
+                ts = sorted({t for t, d, sec, out in available if
+                             d == dec and sec == sec_model and out == output})
+                assert(len(ts) > 0), "If a decision is available, so is at least one time step"
 
-                res_str = ', '.join(time_strings) if len(timesteps) > 0 else 'no results'
-
+                res_str = ', '.join([str(t) for t in ts])
                 print('{} {}'.format(base_str, res_str))
-
-
-def list_available_results(args):
-    """List the available results from previous model runs. A specific model run may be
-    specified my the subcommand `model_run`, else all available information is displayed.
-    """
-
-    store = _get_store(args)
-    _list_available_results(store, args.model_run)
 
 
 def run_model_runs(args):
