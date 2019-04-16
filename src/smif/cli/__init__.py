@@ -113,8 +113,8 @@ def list_model_runs(args):
         run_name = run['name']
 
         if args.complete:
-            expected_results = store.get_canonical_expected_results(run_name)
-            available_results = store.get_canonical_available_results(run_name)
+            expected_results = store.canonical_expected_results(run_name)
+            available_results = store.canonical_available_results(run_name)
 
             complete = ' *' if expected_results == available_results else ''
 

@@ -872,7 +872,7 @@ class Store():
             max_timestep = None
         return max_timestep
 
-    def get_canonical_available_results(self, model_run_name):
+    def canonical_available_results(self, model_run_name):
         """List the results that are available from a model run, collapsing all decision
         iterations.
 
@@ -902,7 +902,7 @@ class Store():
         # Return as a set to remove duplicates
         return set(canonical_list)
 
-    def get_canonical_expected_results(self, model_run_name):
+    def canonical_expected_results(self, model_run_name):
         """List the results that are expected from a model run, collapsing all decision
         iterations.
 
