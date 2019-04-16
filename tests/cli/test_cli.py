@@ -116,7 +116,7 @@ def test_fixture_list_runs(tmp_sample_project):
 
 
 def test_fixture_available_results(tmp_sample_project):
-    """Test running the filesystem-based single_run fixture
+    """Test cli for listing available results
     """
     config_dir = tmp_sample_project
     output = subprocess.run(["smif", "available_results", "energy_central", "-d", config_dir],
@@ -153,6 +153,39 @@ def test_fixture_available_results(tmp_sample_project):
     assert(out_str.count(': 2010') == 4)
     assert(out_str.count(': 2015') == 2)
     assert(out_str.count(': 2020') == 2)
+
+
+def test_fixture_missing_results(tmp_sample_project):
+    """Test cli for listing missing results
+    """
+    config_dir = tmp_sample_project
+    output = subprocess.run(["smif", "missing_results", "energy_central", "-d", config_dir],
+                            stdout=subprocess.PIPE)
+
+    out_str = str(output.stdout)
+    assert(out_str.count('model run: energy_central') == 1)
+    assert(out_str.count('sos model: energy') == 1)
+    assert(out_str.count('sector model:') == 1)
+    assert(out_str.count('output:') == 2)
+    assert(out_str.count('output: cost') == 1)
+    assert(out_str.count('output: water_demand') == 1)
+    assert(out_str.count('no missing results') == 0)
+    assert(out_str.count('results missing for:') == 2)
+
+    # Run energy_central and re-check output with optional flag for completed results
+    subprocess.run(["smif", "run", "energy_central", "-d", config_dir], stdout=subprocess.PIPE)
+    output = subprocess.run(["smif", "missing_results", "energy_central", "-d", config_dir],
+                            stdout=subprocess.PIPE)
+
+    out_str = str(output.stdout)
+    assert(out_str.count('model run: energy_central') == 1)
+    assert(out_str.count('sos model: energy') == 1)
+    assert(out_str.count('sector model:') == 1)
+    assert(out_str.count('output:') == 2)
+    assert(out_str.count('output: cost') == 1)
+    assert(out_str.count('output: water_demand') == 1)
+    assert(out_str.count('no missing results') == 2)
+    assert(out_str.count('results missing for:') == 0)
 
 
 def test_setup_project_folder():

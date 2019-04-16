@@ -86,13 +86,12 @@ try:
 except ImportError:
     import thread as _thread
 
-
 try:
     import win32api
+
     USE_WIN32 = True
 except ImportError:
     USE_WIN32 = False
-
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -161,8 +160,46 @@ def list_available_results(args):
                 # List available time steps for this decision, sector model and output
                 ts = sorted({t for t, d, sec, out in available if
                              d == dec and sec == sec_model and out == output})
-                assert(len(ts) > 0), "If a decision is available, so is at least one time step"
+                assert (len(
+                    ts) > 0), "If a decision is available, so is at least one time step"
 
+                res_str = ', '.join([str(t) for t in ts])
+                print('{} {}'.format(base_str, res_str))
+
+
+def list_missing_results(args):
+    """List the missing results for a specified model run.
+    """
+
+    store = _get_store(args)
+    expected = store.canonical_expected_results(args.model_run)
+    missing = store.canonical_missing_results(args.model_run)
+
+    # Print run and sos model
+    run = store.read_model_run(args.model_run)
+    print('\nmodel run: {}'.format(args.model_run))
+    print('{}- sos model: {}'.format(' ' * 2, run['sos_model']))
+
+    # List of expected sector models
+    sec_models = sorted({sec for _t, _d, sec, _out in expected})
+
+    for sec_model in sec_models:
+        print('{}- sector model: {}'.format(' ' * 4, sec_model))
+
+        # List expected outputs for this sector model
+        outputs = sorted({out for _t, _d, sec, out in expected if sec == sec_model})
+
+        for output in outputs:
+            print('{}- output: {}'.format(' ' * 6, output))
+
+            # List missing time steps for this sector model and output
+            ts = sorted({t for t, d, sec, out in missing if
+                         sec == sec_model and out == output})
+
+            if len(ts) == 0:
+                print('{}- no missing results'.format(' ' * 8))
+            else:
+                base_str = '{}- results missing for:'.format(' ' * 8)
                 res_str = ', '.join([str(t) for t in ts])
                 print('{} {}'.format(base_str, res_str))
 
@@ -308,11 +345,21 @@ def parse_arguments():
                              action='store_true')
 
     # RESULTS
-    parser_results = subparsers.add_parser(
+    parser_available_results = subparsers.add_parser(
         'available_results', help='List available results', parents=[parent_parser])
-    parser_results.set_defaults(func=list_available_results)
-    parser_results.add_argument('model_run',
-                                help="Name of the model run to list available results")
+    parser_available_results.set_defaults(func=list_available_results)
+    parser_available_results.add_argument(
+        'model_run',
+        help="Name of the model run to list available results"
+    )
+
+    parser_missing_results = subparsers.add_parser(
+        'missing_results', help='List missing results', parents=[parent_parser])
+    parser_missing_results.set_defaults(func=list_missing_results)
+    parser_missing_results.add_argument(
+        'model_run',
+        help="Name of the model run to list missing results"
+    )
 
     # APP
     parser_app = subparsers.add_parser(
