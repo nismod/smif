@@ -314,3 +314,39 @@ class TestStoreData():
         timestep = 2020
         store.write_results(sample_results, 'test_model_run', 'model_name', timestep)
         assert store.prepare_warm_start('test_model_run') == timestep
+
+    def test_get_canonical_available_results(self, store, sample_results):
+
+        store.write_results(sample_results, 'model_run_name', 'model_name', 2010, 0)
+        store.write_results(sample_results, 'model_run_name', 'model_name', 2015, 0)
+        store.write_results(sample_results, 'model_run_name', 'model_name', 2010, 1)
+        store.write_results(sample_results, 'model_run_name', 'model_name', 2015, 1)
+        store.write_results(sample_results, 'model_run_name', 'model_name', 2020, 1)
+
+        output_name = sample_results.spec.name
+
+        correct_results = set()
+        correct_results.add((2010, 0, 'model_name', output_name))
+        correct_results.add((2015, 0, 'model_name', output_name))
+        correct_results.add((2020, 0, 'model_name', output_name))
+
+        assert(store.get_canonical_available_results('model_run_name') == correct_results)
+
+    def test_get_canonical_expected_results(
+            self, store, sample_dimensions, get_sos_model, get_sector_model,
+            energy_supply_sector_model, model_run
+    ):
+
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_sos_model(get_sos_model)
+        store.write_model_run(model_run)
+        store.write_model(get_sector_model)
+        store.write_model(energy_supply_sector_model)
+
+        correct_results = set()
+        correct_results.add((2015, 0, 'energy_demand', 'gas_demand'))
+        correct_results.add((2020, 0, 'energy_demand', 'gas_demand'))
+        correct_results.add((2025, 0, 'energy_demand', 'gas_demand'))
+
+        assert(store.get_canonical_expected_results(model_run['name']) == correct_results)

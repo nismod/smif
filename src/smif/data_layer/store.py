@@ -14,13 +14,13 @@ SmifDataReadError
     When unable to read data e.g. unable to handle file type or connect
     to database
 """
+import itertools
 from copy import deepcopy
 from logging import getLogger
 from operator import itemgetter
 from typing import Dict, List, Optional
 
 import numpy as np  # type: ignore
-
 from smif.data_layer import DataArray
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
@@ -871,6 +871,82 @@ class Store():
         else:
             max_timestep = None
         return max_timestep
+
+    def get_canonical_available_results(self, model_run_name):
+        """List the results that are available from a model run, collapsing all decision
+        iterations.
+
+        This is the unique items from calling `available_results`, with all decision iterations
+        set to 0.
+
+        This method is used to determine whether a model run is complete, given that it is
+        impossible to know how many decision iterations to expect: we simply check that each
+        expected timestep has been completed.
+
+        Parameters
+        ----------
+        model_run_name : str
+
+        Returns
+        -------
+        set Set of tuples representing available results
+        """
+
+        available_results = self.available_results(model_run_name)
+
+        canonical_list = []
+
+        for t, d, sec_model_name, output_name in available_results:
+            canonical_list.append((t, 0, sec_model_name, output_name))
+
+        # Return as a set to remove duplicates
+        return set(canonical_list)
+
+    def get_canonical_expected_results(self, model_run_name):
+        """List the results that are expected from a model run, collapsing all decision
+        iterations.
+
+        For a complete model run, this would coincide with the unique list returned from
+        `available_results`, where all decision iterations are set to 0.
+
+        This method is used to determine whether a model run is complete, given that it is
+        impossible to know how many decision iterations to expect: we simply check that each
+        expected timestep has been completed.
+
+        Parameters
+        ----------
+        model_run_name : str
+
+        Returns
+        -------
+        set Set of tuples representing expected results
+        """
+
+        # Model results are returned as a tuple
+        # (timestep, decision_it, sec_model_name, output_name)
+        # so we first build the full list of expected results tuples.
+
+        expected_results = []
+
+        # Get the sos model name given the model run name, and the full list of timesteps
+        model_run = self.read_model_run(model_run_name)
+        timesteps = sorted(model_run['timesteps'])
+        sos_model_name = model_run['sos_model']
+
+        # Get the list of sector models in the sos model
+        sos_config = self.read_sos_model(sos_model_name)
+
+        # For each sector model, get the outputs and create the tuples
+        for sec_model_name in sos_config['sector_models']:
+
+            sec_model_config = self.read_model(sec_model_name)
+            outputs = sec_model_config['outputs']
+
+            for output, t in itertools.product(outputs, timesteps):
+                expected_results.append((t, 0, sec_model_name, output['name']))
+
+        # Return as a set to remove duplicates
+        return set(expected_results)
     # endregion
 
     # region data store utilities
