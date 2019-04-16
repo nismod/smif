@@ -947,6 +947,26 @@ class Store():
 
         # Return as a set to remove duplicates
         return set(expected_results)
+
+    def canonical_missing_results(self, model_run_name):
+        """List the results that are missing from a model run, collapsing all decision
+        iterations.
+
+        For a complete model run, this is what is left after removing
+        canonical_available_results from canonical_expected_results.
+
+        Parameters
+        ----------
+        model_run_name : str
+
+        Returns
+        -------
+        set Set of tuples representing missing results
+        """
+
+        return self.canonical_expected_results(
+            model_run_name) - self.canonical_available_results(model_run_name)
+
     # endregion
 
     # region data store utilities
