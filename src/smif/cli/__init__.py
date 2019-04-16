@@ -123,16 +123,15 @@ def list_model_runs(args):
             print(run_name)
 
 
-def _list_available_results(store, run):
+def _list_available_results(store, model_run_name):
     """Helper to print the available results for a specific model run config.
     """
 
-    run_name = run['name']
-
-    available_results = store.available_results(run_name)
+    run = store.read_model_run(model_run_name)
+    available_results = store.available_results(model_run_name)
 
     # Name of the model run
-    print('\nmodel run: {}'.format(run_name))
+    print('\nmodel run: {}'.format(model_run_name))
 
     # Name of the associated sos model
     sos_model_name = run['sos_model']
@@ -178,14 +177,7 @@ def list_available_results(args):
     """
 
     store = _get_store(args)
-
-    if args.model_run:
-        list_of_model_runs = [store.read_model_run(args.model_run)]
-    else:
-        list_of_model_runs = store.read_model_runs()
-
-    for model_run in list_of_model_runs:
-        _list_available_results(store, model_run)
+    _list_available_results(store, args.model_run)
 
 
 def run_model_runs(args):
@@ -333,9 +325,7 @@ def parse_arguments():
         'available_results', help='List available results', parents=[parent_parser])
     parser_results.set_defaults(func=list_available_results)
     parser_results.add_argument('model_run',
-                                help="Name of the model run to list available results",
-                                nargs='?',
-                                default=None)
+                                help="Name of the model run to list available results")
 
     # APP
     parser_app = subparsers.add_parser(
