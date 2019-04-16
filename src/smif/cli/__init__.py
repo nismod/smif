@@ -124,8 +124,7 @@ def list_model_runs(args):
 
 
 def list_available_results(args):
-    """List the available results from previous model runs. A specific model run may be
-    specified my the subcommand `model_run`, else all available information is displayed.
+    """List the available results for a specified model run.
     """
 
     store = _get_store(args)
