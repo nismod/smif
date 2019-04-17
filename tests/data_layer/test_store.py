@@ -3,12 +3,15 @@
 Many methods simply proxy to config/metadata/data store implementations, but there is some
 cross-coordination and there are some convenience methods implemented at this layer.
 """
+import numpy as np
 import numpy.testing
 from pytest import fixture
 from smif.data_layer import Store
+from smif.data_layer.data_array import DataArray
 from smif.data_layer.memory_interface import (MemoryConfigStore,
                                               MemoryDataStore,
                                               MemoryMetadataStore)
+from smif.metadata import Spec
 
 
 @fixture
@@ -350,3 +353,32 @@ class TestStoreData():
         correct_results.add((2025, 0, 'energy_demand', 'gas_demand'))
 
         assert(store.canonical_expected_results(model_run['name']) == correct_results)
+
+    def test_canonical_missing_results(
+            self, store, sample_dimensions, get_sos_model, get_sector_model,
+            energy_supply_sector_model, model_run
+    ):
+
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_sos_model(get_sos_model)
+        store.write_model_run(model_run)
+        store.write_model(get_sector_model)
+        store.write_model(energy_supply_sector_model)
+
+        # All the results are missing
+        missing_results = set()
+        missing_results.add((2015, 0, 'energy_demand', 'gas_demand'))
+        missing_results.add((2020, 0, 'energy_demand', 'gas_demand'))
+        missing_results.add((2025, 0, 'energy_demand', 'gas_demand'))
+
+        assert(store.canonical_missing_results(model_run['name']) == missing_results)
+
+        spec = Spec(name='gas_demand', dtype='float')
+        data = np.array(1, dtype=float)
+        fake_data = DataArray(spec, data)
+
+        store.write_results(fake_data, model_run['name'], 'energy_demand', 2015, 0)
+        missing_results.remove((2015, 0, 'energy_demand', 'gas_demand'))
+
+        assert(store.canonical_missing_results(model_run['name']) == missing_results)
