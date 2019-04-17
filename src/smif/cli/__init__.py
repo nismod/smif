@@ -100,12 +100,71 @@ __license__ = "mit"
 
 
 def list_model_runs(args):
-    """List the model runs defined in the config
+    """List the model runs defined in the config, optionally indicating whether complete
+    results exist.
     """
     store = _get_store(args)
     model_run_configs = store.read_model_runs()
+
+    if args.complete:
+        print('Model runs with an asterisk (*) have complete results available\n')
+
     for run in model_run_configs:
-        print(run['name'])
+        run_name = run['name']
+
+        if args.complete:
+            expected_results = store.canonical_expected_results(run_name)
+            available_results = store.canonical_available_results(run_name)
+
+            complete = ' *' if expected_results == available_results else ''
+
+            print('{}{}'.format(run_name, complete))
+        else:
+            print(run_name)
+
+
+def list_available_results(args):
+    """List the available results for a specified model run.
+    """
+
+    store = _get_store(args)
+    expected = store.canonical_expected_results(args.model_run)
+    available = store.available_results(args.model_run)
+
+    # Print run and sos model
+    run = store.read_model_run(args.model_run)
+    print('\nmodel run: {}'.format(args.model_run))
+    print('{}- sos model: {}'.format(' ' * 2, run['sos_model']))
+
+    # List of expected sector models
+    sec_models = sorted({sec for _t, _d, sec, _out in expected})
+
+    for sec_model in sec_models:
+        print('{}- sector model: {}'.format(' ' * 4, sec_model))
+
+        # List expected outputs for this sector model
+        outputs = sorted({out for _t, _d, sec, out in expected if sec == sec_model})
+
+        for output in outputs:
+            print('{}- output: {}'.format(' ' * 6, output))
+
+            # List available decisions for this sector model and output
+            decs = sorted({d for _t, d, sec, out in available if
+                           sec == sec_model and out == output})
+
+            if len(decs) == 0:
+                print('{}- no results'.format(' ' * 8))
+
+            for dec in decs:
+                base_str = '{}- decision {}:'.format(' ' * 8, dec)
+
+                # List available time steps for this decision, sector model and output
+                ts = sorted({t for t, d, sec, out in available if
+                             d == dec and sec == sec_model and out == output})
+                assert(len(ts) > 0), "If a decision is available, so is at least one time step"
+
+                res_str = ', '.join([str(t) for t in ts])
+                print('{} {}'.format(base_str, res_str))
 
 
 def run_model_runs(args):
@@ -244,6 +303,16 @@ def parse_arguments():
     parser_list = subparsers.add_parser(
         'list', help='List available model runs', parents=[parent_parser])
     parser_list.set_defaults(func=list_model_runs)
+    parser_list.add_argument('-c', '--complete',
+                             help="Show which model runs have complete results",
+                             action='store_true')
+
+    # RESULTS
+    parser_results = subparsers.add_parser(
+        'available_results', help='List available results', parents=[parent_parser])
+    parser_results.set_defaults(func=list_available_results)
+    parser_results.add_argument('model_run',
+                                help="Name of the model run to list available results")
 
     # APP
     parser_app = subparsers.add_parser(
