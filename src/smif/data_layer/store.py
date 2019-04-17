@@ -967,6 +967,147 @@ class Store():
         return self.canonical_expected_results(
             model_run_name) - self.canonical_available_results(model_run_name)
 
+    def _get_result_darray_internal(self, model_run_name, sec_model_name, output_name,
+                                    t_d_tuples):
+        """Internal implementation for `get_result_darray`, after the unique list of
+        (timestep, decision) tuples has been generated and validated.
+
+        This method gets the spec for the output defined by the model_run_name, sec_model_name
+        and output_name and expands the spec to include an additional dimension for the list of
+        tuples.
+
+        Then, for each tuple, the data array from the corresponding read_results call is
+        stacked, and together with the new spec this information is returned as a new
+        DataArray.
+
+        Parameters
+        ----------
+        model_run_name : str
+        sec_model_name : str
+        output_name : str
+        t_d_tuples : list of unique (timestep, decision) tuples
+
+        Returns
+        -------
+        DataArray with expanded spec and data for each (timestep, decision) tuple
+        """
+
+        # Get the output spec given the name of the sector model and output
+        output_spec = None
+        sec_model = self.read_model(sec_model_name)
+
+        for output in sec_model['outputs']:
+
+            # Ignore if the output name doesn't match
+            if output_name != output['name']:
+                continue
+
+            output_spec = Spec.from_dict(output)
+
+        assert output_spec, "Output name was not found in model outputs"
+
+        # Read the results for each (timestep, decision) tuple and stack them
+        list_of_numpy_arrays = []
+
+        for t, d in t_d_tuples:
+            d_array = self.read_results(model_run_name, sec_model_name, output_spec, t, d)
+            list_of_numpy_arrays.append(d_array.data)
+
+        stacked_data = np.vstack(list_of_numpy_arrays)
+
+        # Add new dimensions to the data spec
+        output_dict = output_spec.as_dict()
+        output_dict['dims'].append('timestep_decision')
+        output_dict['coords']['timestep_decision'] = t_d_tuples
+
+        output_spec = Spec.from_dict(output_dict)
+
+        # Create a new DataArray from the modified spec and stacked data
+        return DataArray(output_spec, np.transpose(stacked_data))
+
+    def get_result_darray(self, model_run_name, sec_model_name, output_name, timesteps=None,
+                          decision_iteration=None, t_d_tuples=None):
+        """Return data for multiple timesteps and decision iterations for a given output from
+        a given sector model in a specific model run.
+
+        You can specify either:
+            a list of (timestep, decision) tuples
+                in which case data for all of those tuples matching the available results will
+                be returned
+        or:
+            a list of timesteps
+                in which case data for all of those timesteps (and any decision iterations)
+                matching the available results will be returned
+        or:
+            a list of decision iterations
+                in which case data for all of those decision iterations (and any timesteps)
+                matching the available results will be returned
+        or:
+            a list of timesteps and a list of decision iterations
+                in which case data for the Cartesian product of those timesteps and those
+                decision iterations matching the available results will be returned
+        or:
+            nothing
+                in which case all available results will be returned
+
+        Then, for each tuple, the data array from the corresponding read_results call is
+        stacked, and together with the new spec this information is returned as a new
+        DataArray.
+
+        Parameters
+        ----------
+        model_run_name : str
+        sec_model_name : str
+        output_name : str
+        timesteps : optional list of timesteps
+        decision_iteration : optional list of decision iterations
+        t_d_tuples : optional list of unique (timestep, decision) tuples
+
+        Returns
+        -------
+        DataArray with expanded spec and the data requested
+        """
+
+        # If a list of (t,d) tuples is supplied, disallow specifying timesteps or decision
+        # iterations
+        if t_d_tuples:
+            assert (not timesteps and not decision_iteration)
+
+        available = self.available_results(model_run_name)
+
+        # Build up the necessary list of tuples
+        if not timesteps and not decision_iteration and not t_d_tuples:
+            list_of_tuples = [(t, d) for t, d, sec, out in available if
+                              sec == sec_model_name and out == output_name]
+
+        elif timesteps and not decision_iteration and not t_d_tuples:
+            list_of_tuples = [(t, d) for t, d, sec, out in available if
+                              sec == sec_model_name and out == output_name and t in timesteps]
+
+        elif decision_iteration and not timesteps and not t_d_tuples:
+            list_of_tuples = [(t, d) for t, d, sec, out in available if
+                              sec == sec_model_name and out == output_name and
+                              d in decision_iteration]
+
+        elif t_d_tuples and not timesteps and not decision_iteration:
+            list_of_tuples = [(t, d) for t, d, sec, out in available if
+                              sec == sec_model_name and out == output_name and (
+                                  t, d) in t_d_tuples]
+
+        elif timesteps and decision_iteration and not t_d_tuples:
+            t_d = list(itertools.product(timesteps, decision_iteration))
+            list_of_tuples = [(t, d) for t, d, sec, out in available if
+                              sec == sec_model_name and out == output_name and (t, d) in t_d]
+
+        else:
+            assert False, "It should not have been possible to reach this line of code."
+
+        assert (len(list_of_tuples) > 0), "None of the requested data is available."
+
+        return self._get_result_darray_internal(
+            model_run_name, sec_model_name, output_name, sorted(list_of_tuples)
+        )
+
     # endregion
 
     # region data store utilities
@@ -985,40 +1126,3 @@ def _pick_from_list(list_of_dicts, name):
         if 'name' in item and item['name'] == name:
             return item
     return None
-
-    def get_result_darray(self,
-                          timesteps,
-                          model_name,
-                          output_name,
-                          model_run_name,
-                          decision_iteration):
-        """ Read results and build the corresponding DataArray
-
-        Returns
-        -------
-        DataArray
-        """
-        model = self.read_model(model_name)
-        i=0
-        for output in model['outputs']:
-            if(output_name == model['outputs'][i]['name']):
-                output_spec = Spec.from_dict(output)
-                data_container = np.zeros
-                for timestep in timesteps:
-                    # -------------------------------------------------------
-                    dArray = self.read_results(model_run_name, model_name,
-                                               output_spec, timestep,
-                                               decision_iteration)
-                    if 'result_data' in locals():
-                        result_data = np.vstack([result_data,dArray.data])
-                    else:
-                        result_data = dArray.data
-                        # ---------------------------------------------------
-                output_dict = output_spec.as_dict()
-                output_dict['dims'].append('timestep')
-                output_dict['coords']['timestep'] = timesteps
-                output_spec = Spec.from_dict(output_dict)
-
-                result_dArray = DataArray(output_spec,np.transpose(result_data))
-            i=i+1
-        return result_dArray
