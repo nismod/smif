@@ -985,3 +985,40 @@ def _pick_from_list(list_of_dicts, name):
         if 'name' in item and item['name'] == name:
             return item
     return None
+
+    def get_result_darray(self,
+                          timesteps,
+                          model_name,
+                          output_name,
+                          model_run_name,
+                          decision_iteration):
+        """ Read results and build the corresponding DataArray
+
+        Returns
+        -------
+        DataArray
+        """
+        model = self.read_model(model_name)
+        i=0
+        for output in model['outputs']:
+            if(output_name == model['outputs'][i]['name']):
+                output_spec = Spec.from_dict(output)
+                data_container = np.zeros
+                for timestep in timesteps:
+                    # -------------------------------------------------------
+                    dArray = self.read_results(model_run_name, model_name,
+                                               output_spec, timestep,
+                                               decision_iteration)
+                    if 'result_data' in locals():
+                        result_data = np.vstack([result_data,dArray.data])
+                    else:
+                        result_data = dArray.data
+                        # ---------------------------------------------------
+                output_dict = output_spec.as_dict()
+                output_dict['dims'].append('timestep')
+                output_dict['coords']['timestep'] = timesteps
+                output_spec = Spec.from_dict(output_dict)
+
+                result_dArray = DataArray(output_spec,np.transpose(result_data))
+            i=i+1
+        return result_dArray
