@@ -1108,6 +1108,32 @@ class Store():
             model_run_name, sec_model_name, output_name, sorted(list_of_tuples)
         )
 
+    def get_results_fixed_output(self, model_runs, sec_model_name, output_name, timesteps=None,
+                                 decision_iteration=None, t_d_tuples=None):
+        """Return data for multiple timesteps and decision iterations for a given output from
+        a given sector model for multiple model runs.
+
+        Parameters
+        ----------
+        model_runs : List of str (model run names)
+        sec_model_name : str
+        output_name : str
+        timesteps : optional list of timesteps
+        decision_iteration : optional list of decision iterations
+        t_d_tuples : optional list of unique (timestep, decision) tuples
+
+        Returns
+        -------
+        Dictionary of DataArray objects keyed on model run names.
+        Returned DataArrays include one extra (timestep,decision_iteration)
+        """
+        results_dict = {}
+        for model_run_name in model_runs:
+            results_dict[model_run_name] = self.get_result_darray(model_run_name, sec_model_name,
+                                                                  output_name, timesteps,
+                                                                  decision_iteration, t_d_tuples)
+        return results_dict
+            
     # endregion
 
     # region data store utilities
