@@ -6,8 +6,9 @@
 #         from smif.data_layer import DataHandle`
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import DataHandle
+from smif.data_layer.results import Results
 from smif.data_layer.store import Store
 
 # Define what should be imported as * ::
 #         from smif.data_layer import *
-__all__ = ['DataArray', 'DataHandle', 'Store']
+__all__ = ['DataArray', 'DataHandle', 'Results', 'Store']
