@@ -30,6 +30,7 @@ from smif.data_layer.validate import (validate_sos_model_config,
 from smif.exception import SmifDataNotFoundError
 from smif.metadata.spec import Spec
 
+import warnings
 
 class Store():
     """Common interface to data store, composed of config, metadata and data store implementations.
@@ -967,14 +968,14 @@ class Store():
         return self.canonical_expected_results(
             model_run_name) - self.canonical_available_results(model_run_name)
 
-    def _get_result_darray_internal(self, model_run_name, sec_model_name, output_name,
-                                    t_d_tuples):
+    def _get_result_darray_internal(self, model_run_name, sec_model_name, outputs,
+                                    dict_of_t_d_tuples):
         """Internal implementation for `get_result_darray`, after the unique list of
         (timestep, decision) tuples has been generated and validated.
 
         This method gets the spec for the output defined by the model_run_name, sec_model_name
-        and output_name and expands the spec to include an additional dimension for the list of
-        tuples.
+        and outputs and expands the spec to include an additional dimension for the list of
+        tuples, as well as for the queried outputs.
 
         Then, for each tuple, the data array from the corresponding read_results call is
         stacked, and together with the new spec this information is returned as a new
@@ -984,48 +985,50 @@ class Store():
         ----------
         model_run_name : str
         sec_model_name : str
-        output_name : str
-        t_d_tuples : list of unique (timestep, decision) tuples
+        outputs : list of str
+        dict_oft_d_tuples : Dictionary, keyed on outputs
+          Each entry contains a list of unique (timestep, decision) tuples
 
         Returns
         -------
-        DataArray with expanded spec and data for each (timestep, decision) tuple
+        DataArray with expanded spec and data for each (timestep, decision) tuple and outputs
         """
 
         # Get the output spec given the name of the sector model and output
         output_spec = None
         sec_model = self.read_model(sec_model_name)
 
+        list_of_numpy_arrays = []
         for output in sec_model['outputs']:
 
             # Ignore if the output name doesn't match
-            if output_name != output['name']:
-                continue
+            if output['name'] in outputs:
 
-            output_spec = Spec.from_dict(output)
-
-        assert output_spec, "Output name was not found in model outputs"
-
-        # Read the results for each (timestep, decision) tuple and stack them
-        list_of_numpy_arrays = []
-
-        for t, d in t_d_tuples:
-            d_array = self.read_results(model_run_name, sec_model_name, output_spec, t, d)
-            list_of_numpy_arrays.append(d_array.data)
+                output_spec = Spec.from_dict(output)
+            
+                # Read the results for each (timestep, decision) tuple and stack them
+                t_d_tuples = dict_of_t_d_tuples[output['name']]
+                for t, d in t_d_tuples:
+                    d_array = self.read_results(model_run_name, sec_model_name, output_spec, t, d)
+                    list_of_numpy_arrays.append(d_array.data)
 
         stacked_data = np.vstack(list_of_numpy_arrays)
+        stacked_data = np.transpose(stacked_data)
 
         # Add new dimensions to the data spec
         output_dict = output_spec.as_dict()
+        ## Add timestep_decision dimension
         output_dict['dims'].append('timestep_decision')
         output_dict['coords']['timestep_decision'] = t_d_tuples
+        ## Add output_number dimension: 1 coord for each output
+        output_dict['dims'].append('output_number')
+        output_dict['coords']['output_number'] = range(0,len(outputs))
 
         output_spec = Spec.from_dict(output_dict)
-
         # Create a new DataArray from the modified spec and stacked data
-        return DataArray(output_spec, np.transpose(stacked_data))
+        return DataArray(output_spec, stacked_data.reshape(output_spec.shape))
 
-    def get_result_darray(self, model_run_name, sec_model_name, output_name, timesteps=None,
+    def get_result_darray(self, model_run_name, sec_model_name, outputs, timesteps=None,
                           decision_iteration=None, t_d_tuples=None):
         """Return data for multiple timesteps and decision iterations for a given output from
         a given sector model in a specific model run.
@@ -1058,7 +1061,7 @@ class Store():
         ----------
         model_run_name : str
         sec_model_name : str
-        output_name : str
+        output_name : list of str
         timesteps : optional list of timesteps
         decision_iteration : optional list of decision iterations
         t_d_tuples : optional list of unique (timestep, decision) tuples
@@ -1072,41 +1075,62 @@ class Store():
         # iterations
         if t_d_tuples:
             assert (not timesteps and not decision_iteration)
+        assert(outputs), "Must provide at least one output"
 
         available = self.available_results(model_run_name)
+        available_outputs = [out for t, d, sec, out in available]
+        # Get a list that contains queried outputs names that are actually available.
+        # Issue a warning if this list do not coincide with the list of queried outputs
+        # The returned DataArray will only contain outputs that have been found available
+        found_outputs = [out for out in outputs if out in available_outputs]
+        if len(outputs) !=len(found_outputs):
+            warning_message = "output(s) "+", ".join(set(outputs)-set(found_outputs)) \
+                              +" not found."
+            warnings.warn(warning_message)
+        assert(len(found_outputs) > 0), "No output found"
 
-        # Build up the necessary list of tuples
-        if not timesteps and not decision_iteration and not t_d_tuples:
-            list_of_tuples = [(t, d) for t, d, sec, out in available if
-                              sec == sec_model_name and out == output_name]
+        # Dict. keyed on output name that contain the list of tuples for each found output
+        dict_of_list_of_tuples = {}        
+        for output_name in found_outputs:
 
-        elif timesteps and not decision_iteration and not t_d_tuples:
-            list_of_tuples = [(t, d) for t, d, sec, out in available if
-                              sec == sec_model_name and out == output_name and t in timesteps]
+            # Build up the necessary list of tuples
+            if not timesteps and not decision_iteration and not t_d_tuples:
+                list_of_tuples = [(t, d) for t, d, sec, out in available if
+                                  sec == sec_model_name and out == output_name]
+                dict_of_list_of_tuples[output_name] = list_of_tuples
+                
+            elif timesteps and not decision_iteration and not t_d_tuples:
+                list_of_tuples = [(t, d) for t, d, sec, out in available if
+                                  sec == sec_model_name and out == output_name and t in timesteps]
+                dict_of_list_of_tuples[output_name] = list_of_tuples
+                
+            elif decision_iteration and not timesteps and not t_d_tuples:
+                list_of_tuples = [(t, d) for t, d, sec, out in available if
+                                  sec == sec_model_name and out == output_name and
+                                  d in decision_iteration]
+                dict_of_list_of_tuples[output_name] = list_of_tuples
+                
+            elif t_d_tuples and not timesteps and not decision_iteration:
+                list_of_tuples = [(t, d) for t, d, sec, out in available if
+                                  sec == sec_model_name and out == output_name and (
+                                      t, d) in t_d_tuples]
+                dict_of_list_of_tuples[output_name] = list_of_tuples
+                
+            elif timesteps and decision_iteration and not t_d_tuples:
+                t_d = list(itertools.product(timesteps, decision_iteration))
+                list_of_tuples = [(t, d) for t, d, sec, out in available if
+                                  sec == sec_model_name and out == output_name and (t, d) in t_d]
+                dict_of_list_of_tuples[output_name] = list_of_tuples
 
-        elif decision_iteration and not timesteps and not t_d_tuples:
-            list_of_tuples = [(t, d) for t, d, sec, out in available if
-                              sec == sec_model_name and out == output_name and
-                              d in decision_iteration]
+            else:
+                assert False, "It should not have been possible to reach this line of code."
 
-        elif t_d_tuples and not timesteps and not decision_iteration:
-            list_of_tuples = [(t, d) for t, d, sec, out in available if
-                              sec == sec_model_name and out == output_name and (
-                                  t, d) in t_d_tuples]
-
-        elif timesteps and decision_iteration and not t_d_tuples:
-            t_d = list(itertools.product(timesteps, decision_iteration))
-            list_of_tuples = [(t, d) for t, d, sec, out in available if
-                              sec == sec_model_name and out == output_name and (t, d) in t_d]
-
-        else:
-            assert False, "It should not have been possible to reach this line of code."
-
-        assert (len(list_of_tuples) > 0), "None of the requested data is available."
+            assert (len(list_of_tuples) > 0), "None of the requested data is available."
 
         return self._get_result_darray_internal(
-            model_run_name, sec_model_name, output_name, sorted(list_of_tuples)
+           model_run_name, sec_model_name, outputs, dict_of_list_of_tuples
         )
+        pass
 
     def get_results_fixed_output(self, model_runs, sec_model_name, output_name, timesteps=None,
                                  decision_iteration=None, t_d_tuples=None):
