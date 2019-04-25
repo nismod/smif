@@ -1108,7 +1108,7 @@ class Store():
             model_run_name, sec_model_name, output_name, sorted(list_of_tuples)
         )
 
-    def get_results_fixed_output(self, model_runs, sec_model_name, output_name, timesteps=None,
+    def read_results(self, model_runs, sec_model_name, output_name, timesteps=None,
                                  decision_iteration=None, t_d_tuples=None):
         """Return data for multiple timesteps and decision iterations for a given output from
         a given sector model for multiple model runs.
