@@ -24,10 +24,31 @@ class Results:
 
     Parameters
     ----------
-    interface: str the requested interface (local_csv or local_parquet currently supported)
-    model_base_dir: str the base directory of the model
+    details_dict: dict optional dictionary of the form {'interface': <interface>, 'dir': <dir>}
+        where <interface> is either 'local_csv' or 'local_parquet', and <dir> is the model base
+        directory
+    store: Store optional pre-created Store object
     """
-    def __init__(self, interface='local_csv', model_base_dir='.'):
+    def __init__(self, details_dict: dict = None, store: Store = None):
+
+        assert bool(details_dict) != bool(store),\
+            'Results() accepts either a details dict or a store'
+
+        self._store = store
+        if store:
+            return
+
+        try:
+            interface = details_dict['interface']
+        except KeyError:
+            print('No interface provided for Results().  Assuming local_csv.')
+            interface = 'local_csv'
+
+        try:
+            directory = details_dict['dir']
+        except KeyError:
+            print('No directory provided for Results().  Assuming \'.\'.')
+            directory = '.'
 
         # Check that the provided interface is supported
         file_store = self._get_file_store(interface)
@@ -37,14 +58,14 @@ class Results:
                     interface))
 
         # Check that the directory is valid
-        if not os.path.isdir(model_base_dir):
-            raise ValueError('Expected {} to be a valid directory'.format(model_base_dir))
+        if not os.path.isdir(directory):
+            raise ValueError('Expected {} to be a valid directory'.format(directory))
 
         self._store = Store(
-            config_store=YamlConfigStore(model_base_dir),
-            metadata_store=FileMetadataStore(model_base_dir),
-            data_store=file_store(model_base_dir),
-            model_base_folder=model_base_dir
+            config_store=YamlConfigStore(directory),
+            metadata_store=FileMetadataStore(directory),
+            data_store=file_store(directory),
+            model_base_folder=directory
         )
 
     @staticmethod
