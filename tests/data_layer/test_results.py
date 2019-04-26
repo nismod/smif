@@ -7,42 +7,44 @@ cross-coordination and there are some convenience methods implemented at this la
 import os
 
 from pytest import fixture, raises
-from smif.data_layer import Results, Store
-from smif.data_layer.memory_interface import (MemoryConfigStore,
-                                              MemoryDataStore,
-                                              MemoryMetadataStore)
+from smif.data_layer import Results
 from smif.exception import SmifDataNotFoundError
 
 
 @fixture
-def store():
-    """Store fixture
+def results(empty_store, model_run):
+    """Results fixture
     """
-    return Store(
-        config_store=MemoryConfigStore(),
-        metadata_store=MemoryMetadataStore(),
-        data_store=MemoryDataStore()
-    )
+    empty_store.write_model_run(model_run)
+    return Results(store=empty_store)
 
 
 @fixture
-def results(store):
-    """Results fixture
+def results_with_results(empty_store, model_run, sample_results):
+    """Results fixture with a model run and fictional results
     """
-    return Results(store=store)
+    empty_store.write_model_run(model_run)
 
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'a_model', 2010, 0)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'a_model', 2015, 0)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'a_model', 2020, 0)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'a_model', 2015, 1)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'a_model', 2020, 1)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'a_model', 2015, 2)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'a_model', 2020, 2)
 
-@fixture
-def results_with_model_run(store, model_run):
-    """Results fixture
-    """
-    store.write_model_run(model_run)
-    return Results(store=store)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'b_model', 2010, 0)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'b_model', 2015, 0)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'b_model', 2020, 0)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'b_model', 2025, 0)
+    empty_store.write_results(sample_results, 'unique_model_run_name', 'b_model', 2030, 0)
+
+    return Results(store=empty_store)
 
 
 class TestNoResults:
 
-    def test_exceptions(self, store):
+    def test_exceptions(self, empty_store):
 
         # No arguments is not allowed
         with raises(AssertionError) as e:
@@ -51,11 +53,11 @@ class TestNoResults:
 
         # Both arguments is also not allowed
         with raises(AssertionError) as e:
-            Results(details_dict={'some': 'dict'}, store=store)
+            Results(details_dict={'some': 'dict'}, store=empty_store)
         assert 'either a details dict or a store' in str(e.value)
 
         # Check that constructing with just a store works fine
-        Results(store=store)
+        Results(store=empty_store)
 
         # Check that valid configurations do work (but expect a SmifDataNotFoundError
         # because the store creation will fall over
@@ -88,9 +90,10 @@ class TestNoResults:
             Results(details_dict={'interface': 'local_csv', 'dir': invalid_dir})
         assert 'to be a valid directory' in str(e.value)
 
-    def test_list_model_runs(self, results, model_run):
+    def test_list_model_runs(self, empty_store, model_run):
 
         # Should be no model runs in an empty Results()
+        results = Results(store=empty_store)
         assert results.list_model_runs() == []
 
         model_run_a = model_run.copy()
@@ -99,14 +102,14 @@ class TestNoResults:
         model_run_b = model_run.copy()
         model_run_b['name'] = 'b_model_run'
 
-        results._store.write_model_run(model_run_a)
-        results._store.write_model_run(model_run_b)
+        empty_store.write_model_run(model_run_a)
+        empty_store.write_model_run(model_run_b)
 
         assert results.list_model_runs() == ['a_model_run', 'b_model_run']
 
-    def test_available_results(self, results_with_model_run):
+    def test_available_results(self, results):
 
-        available = results_with_model_run.available_results('unique_model_run_name')
+        available = results.available_results('unique_model_run_name')
 
         assert available['model_run'] == 'unique_model_run_name'
         assert available['sos_model'] == 'energy'
@@ -115,34 +118,35 @@ class TestNoResults:
 
 class TestSomeResults:
 
-    def test_available_results(self, results_with_model_run, sample_results):
+    def test_available_results(self, results_with_results):
 
-        results_with_model_run._store.write_results(
-            sample_results, 'model_run_name', 'model_name', 0
-        )
+        available = results_with_results.available_results('unique_model_run_name')
 
-        available = results_with_model_run.available_results('unique_model_run_name')
-        assert available
+        assert available['model_run'] == 'unique_model_run_name'
+        assert available['sos_model'] == 'energy'
 
-        # assert (available['model_run'] == 'energy_central')
-        # assert (available['sos_model'] == 'energy')
-        #
-        # sec_models = available['sector_models']
-        # assert (sorted(sec_models.keys()) == ['energy_demand'])
-        #
-        # outputs = sec_models['energy_demand']['outputs']
-        # assert (sorted(outputs.keys()) == ['cost', 'water_demand'])
-        #
-        # output_answer = {1: [2010], 2: [2010], 3: [2015], 4: [2020]}
-        #
-        # assert outputs['cost'] == output_answer
-        # assert outputs['water_demand'] == output_answer
+        sec_models = available['sector_models']
+        assert sorted(sec_models.keys()) == ['a_model', 'b_model']
 
-    def test_read_exceptions(self, results_with_model_run):
+        # Check a_model outputs are correct
+        outputs_a = sec_models['a_model']['outputs']
+        assert sorted(outputs_a.keys()) == ['energy_use']
+
+        output_answer_a = {0: [2010, 2015, 2020], 1: [2015, 2020], 2: [2015, 2020]}
+        assert outputs_a['energy_use'] == output_answer_a
+
+        # Check b_model outputs are correct
+        outputs_b = sec_models['b_model']['outputs']
+        assert sorted(outputs_b.keys()) == ['energy_use']
+
+        output_answer_b = {0: [2010, 2015, 2020, 2025, 2030]}
+        assert outputs_b['energy_use'] == output_answer_b
+
+    def test_read_exceptions(self, results_with_results):
 
         # Passing anything other than one sector model or output is current not implemented
         with raises(NotImplementedError) as e:
-            results_with_model_run.read(
+            results_with_results.read(
                 model_run_names=['one', 'two'],
                 sec_model_names=[],
                 output_names=['one']
@@ -150,7 +154,7 @@ class TestSomeResults:
         assert 'requires exactly one sector model' in str(e.value)
 
         with raises(NotImplementedError) as e:
-            results_with_model_run.read(
+            results_with_results.read(
                 model_run_names=['one', 'two'],
                 sec_model_names=['one', 'two'],
                 output_names=['one']
@@ -158,7 +162,7 @@ class TestSomeResults:
         assert 'requires exactly one sector model' in str(e.value)
 
         with raises(NotImplementedError) as e:
-            results_with_model_run.read(
+            results_with_results.read(
                 model_run_names=['one', 'two'],
                 sec_model_names=['one'],
                 output_names=[]
@@ -166,9 +170,15 @@ class TestSomeResults:
         assert 'requires exactly one output' in str(e.value)
 
         with raises(NotImplementedError) as e:
-            results_with_model_run.read(
+            results_with_results.read(
                 model_run_names=['one', 'two'],
                 sec_model_names=['one'],
                 output_names=['one', 'two']
             )
         assert 'requires exactly one output' in str(e.value)
+
+    def test_read(self):
+        # This is difficult to test without fixtures defining an entire canonical project.
+        # See smif issue #304 (https://github.com/nismod/smif/issues/304).  For now, we rely
+        # on tests of the underling get_results() method on the Store.
+        pass
