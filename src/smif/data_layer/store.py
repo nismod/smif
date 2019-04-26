@@ -1024,7 +1024,7 @@ class Store():
         output_spec = Spec.from_dict(output_dict)
 
         # Create a new DataArray from the modified spec and stacked data
-        return DataArray(output_spec, np.reshape(data, output_sec.shape))
+        return DataArray(output_spec, np.reshape(data, output_spec.shape))
 
     def get_result_darray(self, model_run_name, sec_model_name, output_name, timesteps=None,
                           decision_iteration=None, t_d_tuples=None):
