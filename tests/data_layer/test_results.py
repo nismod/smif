@@ -137,3 +137,38 @@ class TestSomeResults:
         #
         # assert outputs['cost'] == output_answer
         # assert outputs['water_demand'] == output_answer
+
+    def test_read_exceptions(self, results_with_model_run):
+
+        # Passing anything other than one sector model or output is current not implemented
+        with raises(NotImplementedError) as e:
+            results_with_model_run.read(
+                model_run_names=['one', 'two'],
+                sec_model_names=[],
+                output_names=['one']
+            )
+        assert 'requires exactly one sector model' in str(e.value)
+
+        with raises(NotImplementedError) as e:
+            results_with_model_run.read(
+                model_run_names=['one', 'two'],
+                sec_model_names=['one', 'two'],
+                output_names=['one']
+            )
+        assert 'requires exactly one sector model' in str(e.value)
+
+        with raises(NotImplementedError) as e:
+            results_with_model_run.read(
+                model_run_names=['one', 'two'],
+                sec_model_names=['one'],
+                output_names=[]
+            )
+        assert 'requires exactly one output' in str(e.value)
+
+        with raises(NotImplementedError) as e:
+            results_with_model_run.read(
+                model_run_names=['one', 'two'],
+                sec_model_names=['one'],
+                output_names=['one', 'two']
+            )
+        assert 'requires exactly one output' in str(e.value)

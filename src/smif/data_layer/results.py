@@ -135,3 +135,46 @@ class Results:
                     results['sector_models'][model_name]['outputs'][output][dec] = ts
 
         return results
+
+    def read(self,
+             model_run_names: list,
+             sec_model_names: list,
+             output_names: list,
+             timesteps: list = None,
+             decisions: list = None,
+             time_decision_tuples: list = None,
+             ):
+        """ Return the results from the store.
+
+        Parameters
+        ----------
+        model_run_names: list the requested model run names
+        sec_model_names: list the requested sector model names (exactly one required)
+        output_names: list the requested output names (exactly one required)
+        timesteps: list the requested timesteps
+        decisions: list the requested decision iterations
+        time_decision_tuples: list a list of requested (timestep, decision) tuples
+
+        Returns
+        -------
+        A dictionary of DataArrays, a single DataArray for each model run
+        """
+
+        if len(sec_model_names) != 1:
+            raise NotImplementedError(
+                'Results.read() currently requires exactly one sector model'
+            )
+
+        if len(output_names) != 1:
+            raise NotImplementedError(
+                'Results.read() currently requires exactly one output'
+            )
+
+        return self._store.get_results(
+            model_run_names,
+            sec_model_names[0],
+            output_names[0],
+            timesteps,
+            decisions,
+            time_decision_tuples
+        )
