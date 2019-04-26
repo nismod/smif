@@ -1014,7 +1014,8 @@ class Store():
             list_of_numpy_arrays.append(d_array.data)
 
         stacked_data = np.vstack(list_of_numpy_arrays)
-
+        data = np.transpose(stacked_data)
+        
         # Add new dimensions to the data spec
         output_dict = output_spec.as_dict()
         output_dict['dims'].append('timestep_decision')
@@ -1023,7 +1024,7 @@ class Store():
         output_spec = Spec.from_dict(output_dict)
 
         # Create a new DataArray from the modified spec and stacked data
-        return DataArray(output_spec, np.transpose(stacked_data))
+        return DataArray(output_spec, np.reshape(data, output_sec.shape))
 
     def get_result_darray(self, model_run_name, sec_model_name, output_name, timesteps=None,
                           decision_iteration=None, t_d_tuples=None):
