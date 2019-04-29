@@ -1,7 +1,4 @@
-"""Test the Store interface
-
-Many methods simply proxy to config/metadata/data store implementations, but there is some
-cross-coordination and there are some convenience methods implemented at this layer.
+"""Test the Results interface
 """
 
 import os

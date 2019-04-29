@@ -1015,7 +1015,7 @@ class Store():
 
         stacked_data = np.vstack(list_of_numpy_arrays)
         data = np.transpose(stacked_data)
-        
+
         # Add new dimensions to the data spec
         output_dict = output_spec.as_dict()
         output_dict['dims'].append('timestep_decision')
@@ -1110,7 +1110,7 @@ class Store():
         )
 
     def get_results(self, model_runs, sec_model_name, output_name, timesteps=None,
-                                 decision_iteration=None, t_d_tuples=None):
+                    decision_iteration=None, t_d_tuples=None):
         """Return data for multiple timesteps and decision iterations for a given output from
         a given sector model for multiple model runs.
 
@@ -1126,15 +1126,20 @@ class Store():
         Returns
         -------
         Dictionary of DataArray objects keyed on model run names.
-        Returned DataArrays include one extra (timestep,decision_iteration)
+        Returned DataArrays include one extra (timestep, decision_iteration) dimension.
         """
         results_dict = {}
         for model_run_name in model_runs:
-            results_dict[model_run_name] = self.get_result_darray(model_run_name, sec_model_name,
-                                                                  output_name, timesteps,
-                                                                  decision_iteration, t_d_tuples)
+            results_dict[model_run_name] = self.get_result_darray(
+                model_run_name,
+                sec_model_name,
+                output_name,
+                timesteps,
+                decision_iteration,
+                t_d_tuples
+            )
         return results_dict
-            
+
     # endregion
 
     # region data store utilities

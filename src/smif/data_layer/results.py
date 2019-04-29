@@ -159,7 +159,7 @@ class Results:
 
         Returns
         -------
-        A dictionary of DataArrays, a single DataArray for each model run
+        A Pandas dataframe
         """
 
         if len(sec_model_names) != 1:
