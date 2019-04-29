@@ -14,6 +14,7 @@ SmifDataReadError
 
 import os
 
+import pandas as pd
 from smif.data_layer.file import (CSVDataStore, FileMetadataStore,
                                   ParquetDataStore, YamlConfigStore)
 from smif.data_layer.store import Store
@@ -29,9 +30,10 @@ class Results:
         directory
     store: Store optional pre-created Store object
     """
+
     def __init__(self, details_dict: dict = None, store: Store = None):
 
-        assert bool(details_dict) != bool(store),\
+        assert bool(details_dict) != bool(store), \
             'Results() accepts either a details dict or a store'
 
         self._store = store
@@ -170,7 +172,7 @@ class Results:
                 'Results.read() currently requires exactly one output'
             )
 
-        return self._store.get_results(
+        results_dict = self._store.get_results(
             model_run_names,
             sec_model_names[0],
             output_names[0],
@@ -178,3 +180,16 @@ class Results:
             decisions,
             time_decision_tuples
         )
+
+        # Get each DataArray as a pandas data frame and concatenate, resetting the index to
+        # give back a flat data array
+        list_of_df = [x.as_df() for x in results_dict.values()]
+        names_of_df = [x for x in results_dict.keys()]
+
+        results = pd.concat(list_of_df, keys=names_of_df, names=['model_run']).reset_index()
+
+        # Unpack the timestep_decision tuples into individual columns and return
+        results[['timestep', 'decision']] = pd.DataFrame(results['timestep_decision'].tolist(),
+                                                         index=results.index)
+
+        return results.drop(columns=['timestep_decision'])
