@@ -382,3 +382,12 @@ class TestStoreData():
         missing_results.remove((2015, 0, 'energy_demand', 'gas_demand'))
 
         assert(store.canonical_missing_results(model_run['name']) == missing_results)
+
+    def test_get_results(self):
+        # This is difficult to test without fixtures defining an entire canonical project.
+        # See smif issue #304 (https://github.com/nismod/smif/issues/304).
+        # Todo: mock a store with known results that can be obtained with get_results(...)
+        # This requires a model run with sector model, and a sector model with valid inputs and
+        # outputs, and results with valid spec, etc. Some of this functionality exists in
+        # fixtures provided in `conftest.py`.
+        pass
