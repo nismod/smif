@@ -203,20 +203,57 @@ def list_missing_results(args):
                 res_str = ', '.join([str(t) for t in ts])
                 print('{} {}'.format(base_str, res_str))
 
-def write_scenario_variants(scenario_file, list_of_variants):
-    pass
-def write_variant_model_runs(model_run_template, scenario_name, list_of_variants):
+def write_scenario_variants(config_store, scenario_name, list_of_variants):
+    """ Modifies {scenario_name}.yml scenario file to include multiple scenario variants.
+        The original scenario file is first duplicated in {scenario_name}_template.yml
+    """
+    scenario_file = scenario_name+'.yml'
+    
+    """Make a copy of the original file under {scenario_name}_template.yml in the
+       config/scenarios/ directory
+    """
+    full_path = os.path.join(config_store.config_folders['scenarios'], scenario_name)
+    copy_template_file = 'cp '+full_path+'.yml '+full_path+'_template.yml'
+    os.system(copy_template_file)
+
+    scenario = config_store.read_scenario(scenario_name)
+    root = {}
+    variant = config_store.read_scenario_variant(scenario_name,
+                                                         scenario_name+'_variant')
+    """ root is a dict. keyed on scenario outputs. 
+        Entries contain the root of the variants filename
+    """
+    for output in scenario['provides']:
+        root[output['name']], ext = os.path.splitext(variant['data'][output['name']])
+
+    # Now modify scenario file
+    first_variant = True
+    for ivar in list_of_variants:
+        for output in scenario['provides']:
+            variant['name'] = scenario_name+'_variant_{:d}'.format(ivar)
+            variant['data'][output['name']] = root[output['name']]+'{:d}'.format(ivar)+ext
+        
+        if(first_variant):
+            first_variant = False
+            config_store.update_scenario_variant(scenario_name,
+                                                    scenario_name+'_variant', variant)
+        else:
+            config_store.write_scenario_variant(scenario_name, variant)
+
+def write_variant_model_runs(config_store, model_run_template,
+                             scenario_name, list_of_variants):
     pass
 
 def prepare_ensemble_model_runs(args):
-    scenario_file = args.scenario_name+'.yml'
+    
+    store = _get_store(args)
     list_of_variants = range(args.variants_range[0], args.variants_range[1]+1)
     
     # args.variants_idx is a list containing the indexes of variants
-    write_scenario_variants(scenario_file, list_of_variants)
-    write_variant_model_runs(args.model_run, args.scenario_name, list_of_variants)
+    write_scenario_variants(store.config_store, args.scenario_name, list_of_variants)
+    write_variant_model_runs(store.config_store, args.model_run, args.scenario_name,
+                             list_of_variants)
     print(args.model_run)
-    print(scenario_file)
     print(args.scenario_name)
     print(list_of_variants[0])
     print(list_of_variants[-1])
