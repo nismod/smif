@@ -203,6 +203,25 @@ def list_missing_results(args):
                 res_str = ', '.join([str(t) for t in ts])
                 print('{} {}'.format(base_str, res_str))
 
+def write_scenario_variants(scenario_file, list_of_variants):
+    pass
+def write_variant_model_runs(model_run_template, scenario_name, list_of_variants):
+    pass
+
+def prepare_ensemble_model_runs(args):
+    scenario_file = args.scenario_name+'.yml'
+    list_of_variants = range(args.variants_range[0], args.variants_range[1]+1)
+    
+    # args.variants_idx is a list containing the indexes of variants
+    write_scenario_variants(scenario_file, list_of_variants)
+    write_variant_model_runs(args.model_run, args.scenario_name, list_of_variants)
+    print(args.model_run)
+    print(scenario_file)
+    print(args.scenario_name)
+    print(list_of_variants[0])
+    print(list_of_variants[-1])
+    
+
 
 def run_model_runs(args):
     """Run the model runs as requested. Check if results exist and asks
@@ -360,6 +379,18 @@ def parse_arguments():
         'model_run',
         help="Name of the model run to list missing results"
     )
+
+    # PREPARE
+    parser_prepare = subparsers.add_parser(
+        'prepare', help='Prepare ensemble model run', parents=[parent_parser])
+    parser_prepare.set_defaults(func=prepare_ensemble_model_runs)
+    parser_prepare.add_argument(
+        'model_run', help='Name of the model run')
+    parser_prepare.add_argument(
+        'scenario_name', help='Name of the scenario')
+    parser_prepare.add_argument(
+        'variants_range', nargs=2, type=int,
+        help='Two integers delimiting the range of variants')
 
     # APP
     parser_app = subparsers.add_parser(
