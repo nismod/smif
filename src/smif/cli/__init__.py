@@ -230,7 +230,7 @@ def write_scenario_variants(config_store, scenario_name, list_of_variants):
     first_variant = True
     for ivar in list_of_variants:
         for output in scenario['provides']:
-            variant['name'] = scenario_name+'_variant_{:d}'.format(ivar)
+            variant['name'] = 'replicate_{:d}'.format(ivar)
             variant['data'][output['name']] = root[output['name']]+'{:d}'.format(ivar)+ext
         
         if(first_variant):
@@ -240,9 +240,25 @@ def write_scenario_variants(config_store, scenario_name, list_of_variants):
         else:
             config_store.write_scenario_variant(scenario_name, variant)
 
-def write_variant_model_runs(config_store, model_run_template,
+def write_variant_model_runs(config_store, model_run_name,
                              scenario_name, list_of_variants):
-    pass
+    
+    model_run = config_store.read_model_run(model_run_name)
+    assert(scenario_name in model_run['scenarios']), "Error: Unknown scenario"
+   
+    # Open batchfile
+    f_handle = open(model_run_name+'.batch', 'w')
+    """ For each variant model_run, write a new model run file with corresponding
+    scenario variant and update batchfile.
+    """
+    for ivar in list_of_variants:
+        variant_model_run_name = model_run_name+'_{:d}'.format(ivar)
+        model_run['name'] = variant_model_run_name
+        model_run['scenarios'][scenario_name] = 'replicate_{:d}'.format(ivar)
+        config_store.write_model_run(model_run)
+        f_handle.write(variant_model_run_name+'\n')
+    
+    f_handle.close()
 
 def prepare_ensemble_model_runs(args):
     
