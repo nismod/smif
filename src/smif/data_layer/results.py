@@ -70,6 +70,9 @@ class Results:
             model_base_folder=directory
         )
 
+        # Create an empty dictionary for keeping tabs on the units of any read outputs
+        self._output_units = dict()
+
     @staticmethod
     def _get_file_store(interface):
         """ Return the appropriate derived FileDataStore class, or None if the requested
@@ -181,6 +184,10 @@ class Results:
             time_decision_tuples
         )
 
+        # Keep tabs on the units for each output
+        for x in results_dict.values():
+            self._output_units[x.name] = x.unit
+
         # Get each DataArray as a pandas data frame and concatenate, resetting the index to
         # give back a flat data array
         list_of_df = [x.as_df() for x in results_dict.values()]
@@ -193,3 +200,22 @@ class Results:
                                                          index=results.index)
 
         return results.drop(columns=['timestep_decision'])
+
+        # Rename the output columns to include units
+        renamed_cols = dict()
+        for key, val in self._output_units.items():
+            renamed_cols[key] = '{}_({})'.format(key, val)
+        results = results.rename(index=str, columns=renamed_cols)
+
+    def get_units(self, output_name: str):
+        """ Return the units of a given output.
+
+        Parameters
+        ----------
+        output_name: the name of the output
+
+        Returns
+        -------
+        str the units of the output
+        """
+        return self._output_units[output_name]
